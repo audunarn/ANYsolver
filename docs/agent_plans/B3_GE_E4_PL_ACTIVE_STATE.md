@@ -104,6 +104,28 @@ action replays its coupled shell state to 1.93e-17. Results and limits are in
 `.qualification/b3-ge-e4-pl/r8-e01-external-action-dev-20260929-v1/README.md`.
 E01/M1 acceptance, G0B and G1 remain open; no formal F03 authority was used.
 
+Next independent M1/V06 question: does the reference-linear owner recover the
+signed `EA_b e ε κ` transformed-section energy cross term for a compatible
+uniform axial/curvature field on the registered elastic panel, with native
+retained beam variables made stationary? Check both offset signs and three
+mesh levels while holding physical section/length fixed. A failed sign,
+constraint or refinement check directs repair to the point work map or native
+local operator; a pass supports the cross-term patch only, not full V06
+response, convergence or M1 acceptance. This check is independent of the
+unresolved E01 shell-formulation comparison and consumes no F03 authority.
+
+The V06 imposed-field patch passes at 2×1, 4×2 and 8×4 for both offset
+signs. Analytical axial and curvature energies and the signed `EA_b e ε κ`
+cross term match the assembled owner: worst relative axial error 8.10e-15,
+curvature error 7.13e-13 and cross error zero at recorded precision; point
+gaps and retained-variable stationarity are zero. Six focused source tests
+pass. This is a strong elastic energy/work-map regression, not a loaded
+response, installed V06 acceptance, or resolution of E01. Evidence:
+`.qualification/b3-ge-e4-pl/r8-v06-transformed-energy-dev-20260929-v2/`.
+Next V06 action is a loaded force/moment response with physical reactions
+against the same declared section idealization; retain the complete V06
+criteria and three-level envelope.
+
 The targeted flat-web comparison kept geometry, native section, normal offset,
 plate-root supports, and physical plate-Fy/beam-Mx actions identical. Both BL5
 P0 spans completed and closed equilibrium, constraint, support wrench, energy

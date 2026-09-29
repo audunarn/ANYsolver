@@ -58,9 +58,15 @@ candidate adjudication; a failed required case cannot disappear within it.
 - V inventory: V01, V02, V03, V04, V05, V06, V07, V08, V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23, V24, V25, V26, V27, V28.
 - B inventory: B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11, B12, B13, B14, B15, B16, B17, B18.
 
+V06 development evidence: the signed axial/bending/cross-energy imposed-field
+patch passes both offsets and three 2D grids, with 6/6 source regressions.
+Loaded response, reactions, installed-artifact checks, and complete V06
+adjudication remain open. See
+`.qualification/b3-ge-e4-pl/r8-v06-transformed-energy-dev-20260929-v2/`.
+
 | External comparison | Status | Current boundary |
 |---|---|---|
-| E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees signed point screens, including 2×1/4×2/8×4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. The 8×4 same-action/drilling-filtered replays localize only a small part of that coupled roll gap to the shell response under one fixed action. Six-channel straight-beam tip compliance matches the external beam to roundoff; coupled shell/connection idealization remains unresolved. Formal observables/floors, installed comparison and independent review remain open. |
+| E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees signed point screens, including 2×1/4×2/8×4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. The 8×4 external coupled shell action replays its field to 1.93e-17; changing the coupled action explains 93.6% of the native-to-external roll gap at fixed native shell stiffness, mainly through the physical Mx distribution. This allocates the numerical difference but does not determine whether shell formulation, point law, or their interaction causes it. Six-channel straight-beam compliance matches to roundoff. Formal observables/floors, matched physical reference, installed comparison and independent review remain open. |
 | E02 torque/footprint | NOT_STARTED | No executed matched comparison. |
 | E03 curved stiffener | NOT_STARTED | No executed matched comparison. |
 | E04 nonlinear GE/capacity | NOT_STARTED | No executed matched comparison. |
