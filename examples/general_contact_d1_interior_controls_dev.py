@@ -146,6 +146,112 @@ def displacement_program(ring_motion: float):
     )
 
 
+def _physical_skin_vertices(model, element, displacement, side):
+    """Reconstruct this example's small-rotation skin without contact code."""
+    reference = np.asarray([
+        (model.mesh.nodes[node].x, model.mesh.nodes[node].y,
+         model.mesh.nodes[node].z) for node in element.node_ids
+    ], dtype=float)
+    if len(element.node_ids) == 4:
+        director = np.cross(reference[1]-reference[0],
+                            reference[3]-reference[0])
+        director /= np.linalg.norm(director)
+        offset = (-0.5 if side == "bottom" else 0.5)*element.thickness
+    else:
+        director = (np.asarray(element.reference_normal, dtype=float)
+                    * element.director_polarity)
+        offset = 0.5*element.thickness-element.reference_surface_offset
+    vertices = []
+    for node_id, point in zip(element.node_ids, reference, strict=True):
+        dofs = model.mesh.dof_manager.get_node_dofs(node_id)
+        rotation = displacement[dofs[3:6]]
+        vertices.append(point+displacement[dofs[:3]]
+                        +offset*(director+np.cross(rotation, director)))
+    return np.asarray(vertices)
+
+
+def _independent_projected_gap_bound(model, definition, displacement,
+                                     gap_budget):
+    """Conservatively bound target-normal gap on the planar XY overlap.
+
+    The Q4 position and its distance to one planar S3 face are bilinear on
+    every parameter box. Boxes crossing the S3 footprint are subdivided;
+    unresolved boundaries fail. This does not cover closest-edge features.
+    """
+    source_surface, target_surface = definition.surfaces
+    sources = [_physical_skin_vertices(
+        model, model.mesh.elements[element_id], displacement,
+        source_surface.side) for element_id in source_surface.element_ids]
+    targets = [_physical_skin_vertices(
+        model, model.mesh.elements[element_id], displacement,
+        target_surface.side) for element_id in target_surface.element_ids]
+    lower = np.inf
+    retained = 0
+    visited = 0
+    scale = max(1.0, *(float(np.max(np.abs(face)))
+                       for face in (*sources, *targets)))
+    for source in sources:
+        for target in targets:
+            xy = np.column_stack((target[1, :2]-target[0, :2],
+                                  target[2, :2]-target[0, :2]))
+            inverse = np.linalg.inv(xy)
+            condition = (np.linalg.norm(xy, ord=np.inf)
+                         * np.linalg.norm(inverse, ord=np.inf))
+            if not np.isfinite(condition) or condition > 1.0e6:
+                raise RuntimeError("independent gap XY projection is ill-conditioned")
+            roundoff = 256*np.finfo(float).eps*condition*scale
+            bary_roundoff = (128*np.finfo(float).eps
+                             *(1.0+np.linalg.norm(inverse, ord=np.inf)*scale))
+            normal = np.cross(target[1]-target[0], target[2]-target[0])
+            normal /= np.linalg.norm(normal)
+            if normal[2] <= 0.5:
+                raise RuntimeError("independent target-normal direction is invalid")
+            boxes = [(0.0, 1.0, 0.0, 1.0, 0)]
+            while boxes:
+                a0, a1, b0, b1, depth = boxes.pop()
+                visited += 1
+                if visited > 100_000:
+                    raise RuntimeError("independent gap box budget exhausted")
+                parameters = ((a0, b0), (a1, b0), (a1, b1), (a0, b1))
+                corners = np.asarray([
+                    (1-a)*(1-b)*source[0]+a*(1-b)*source[1]
+                    +a*b*source[2]+(1-a)*b*source[3]
+                    for a, b in parameters
+                ])
+                transverse = (corners[:, :2]-target[0, :2]) @ inverse.T
+                barycentric = np.column_stack((
+                    1.0-transverse.sum(axis=1), transverse,
+                ))
+                if np.any(np.max(barycentric, axis=0) < -bary_roundoff):
+                    continue
+                corner_gap = (corners-target[0]) @ normal
+                local_lower = float(np.min(corner_gap)-roundoff)
+                interior = np.all(barycentric >= bary_roundoff, axis=1)
+                if np.any(interior & (corner_gap < -gap_budget-roundoff)):
+                    raise RuntimeError("independent projected gap violates budget")
+                if local_lower >= -gap_budget:
+                    lower = min(lower, local_lower)
+                    retained += 1
+                    continue
+                if np.all(np.min(barycentric, axis=0) >= bary_roundoff):
+                    raise RuntimeError(
+                        f"independent projected gap violates budget: {local_lower} m"
+                    )
+                if depth >= 14:
+                    raise RuntimeError("independent gap unresolved at overlap edge")
+                amid = 0.5*(a0+a1)
+                bmid = 0.5*(b0+b1)
+                boxes.extend((
+                    (a0, amid, b0, bmid, depth+1),
+                    (amid, a1, b0, bmid, depth+1),
+                    (a0, amid, bmid, b1, depth+1),
+                    (amid, a1, bmid, b1, depth+1),
+                ))
+    if retained == 0:
+        raise RuntimeError("independent projected gap has no represented overlap")
+    return float(lower)
+
+
 def _solve(model, definition, settings, program, **extra):
     capability = validate_general_contact(model, definition, settings)
     if not capability.valid:
@@ -161,9 +267,12 @@ def _solve(model, definition, settings, program, **extra):
     return result, capability.profile
 
 
-def _records(result):
+def _records(result, model, definition):
     output = []
-    for row in result.info["force_displacement_history"]:
+    history = result.info["force_displacement_history"]
+    if len(result.snapshots) != len(history):
+        raise RuntimeError("accepted contact pose snapshots are incomplete")
+    for row, snapshot in zip(history, result.snapshots, strict=True):
         contact = row["contact"]
         source = np.asarray(contact["integration_force"])
         target = np.asarray(contact["target_force"])
@@ -176,11 +285,19 @@ def _records(result):
                 or force_error > 1.0e-6 or moment_error > 1.0e-6):
             raise RuntimeError("contact gate failed at step "
                                + str(row["step_index"]))
+        independent_gap = _independent_projected_gap_bound(
+            model, definition, snapshot.displacements,
+            definition.interactions[0].gap_tolerance,
+        )
+        if independent_gap < -definition.interactions[0].gap_tolerance:
+            raise RuntimeError("independent gap failed at step "
+                               + str(row["step_index"]))
         output.append({
             "step": row["step_index"],
             "active_pressure_modes": contact["active_pressure_dofs"],
             "minimum_gap_m": contact["minimum_gap"],
             "sampled_overlap_gap_m": contact["sampled_overlap_gap"],
+            "independent_projected_lower_gap_m": independent_gap,
             "source_contact_force_n": source.tolist(),
             "generalized_reactions_n": row["reaction_generalized"],
             "complementarity_relative_force": row["complementarity_relative_force"],
@@ -205,8 +322,11 @@ def run():
         settings, complementarity_force_scale_n=0.019110708219619046,
     )
     model, definition, _ = build_model()
-    full, profile = _solve(model, definition, displacement_settings, control)
-    records = _records(full)
+    full, profile = _solve(
+        model, definition, displacement_settings, control,
+        record_increment_snapshots=True,
+    )
+    records = _records(full, model, definition)
     open_model, open_definition, _ = build_model()
     opened, _ = _solve(open_model, open_definition,
                        displacement_settings, control, max_load_factor=0.75)

@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 1.5480180000013206,
+  "peak_process_tree_memory_mb": 135.266304,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_independent_gap_saved_dev.py",
+    "docs/d1_review_support/d1_pressure_work_16q4_press_20260929.json",
+    "docs/d1_review_support/d1_independent_gap_16q4_press_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_independent_gap_16q4_press_20260929.log"
+}

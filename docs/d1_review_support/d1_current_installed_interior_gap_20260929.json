@@ -1,0 +1,176 @@
+{
+  "status": "completed",
+  "qualification_status": "development_only",
+  "capability_profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+  "source_q4_faces": 16,
+  "deformable_target_s3_faces": 2,
+  "gap_tolerance_m": 5e-05,
+  "force_control_press_active_pressure_modes": 1,
+  "ring_control_motion_m": -0.0001870229880012603,
+  "split_restart_verified": true,
+  "restart_maximum_displacement_difference_m": 0.0,
+  "restart_maximum_contact_force_difference_n": 0.0,
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\d1_installed_c0dfc7a1\\target\\anysolver\\__init__.py",
+  "steps": [
+    {
+      "step": 1,
+      "active_pressure_modes": 1,
+      "minimum_gap_m": -2.1035476296007383e-05,
+      "sampled_overlap_gap_m": -2.103547614821224e-05,
+      "independent_projected_lower_gap_m": -2.1035475643715276e-05,
+      "source_contact_force_n": [
+        -7.677762037421935e-09,
+        -1.3282513893181876e-08,
+        0.0004204911263027993
+      ],
+      "generalized_reactions_n": [
+        -0.00010753567466810744,
+        0.00010752799690606916,
+        -0.01958085710775224
+      ],
+      "complementarity_relative_force": 3.15658776320691e-14,
+      "pair_force_balance_n": 1.0842042424545437e-19,
+      "pair_moment_balance_nm": 7.666486762889445e-20
+    },
+    {
+      "step": 2,
+      "active_pressure_modes": 1,
+      "minimum_gap_m": -3.510563001923889e-05,
+      "sampled_overlap_gap_m": -3.5105629013539155e-05,
+      "independent_projected_lower_gap_m": -3.5105626639222374e-05,
+      "source_contact_force_n": [
+        4.509410507725386e-07,
+        -1.748948361420483e-08,
+        0.00200164997947686
+      ],
+      "generalized_reactions_n": [
+        -0.00036280287797617333,
+        0.0003632538190265529,
+        -0.03990563251253255
+      ],
+      "complementarity_relative_force": 1.1237933750859399e-12,
+      "pair_force_balance_n": 9.423355391027578e-22,
+      "pair_moment_balance_nm": 4.336808819188987e-19
+    },
+    {
+      "step": 3,
+      "active_pressure_modes": 1,
+      "minimum_gap_m": -3.516082447268413e-05,
+      "sampled_overlap_gap_m": -3.5160823466413834e-05,
+      "independent_projected_lower_gap_m": -3.5160821355518425e-05,
+      "source_contact_force_n": [
+        5.548282738244522e-07,
+        -1.3676037060304537e-08,
+        0.0022632830353067454
+      ],
+      "generalized_reactions_n": [
+        -0.0003824898478635854,
+        0.0003830446423413555,
+        -0.04012568110021698
+      ],
+      "complementarity_relative_force": 4.376302416410385e-10,
+      "pair_force_balance_n": 4.3368107649928e-19,
+      "pair_moment_balance_nm": 2.168407511519479e-19
+    },
+    {
+      "step": 4,
+      "active_pressure_modes": 1,
+      "minimum_gap_m": -3.513590845014704e-05,
+      "sampled_overlap_gap_m": -3.5135907446141655e-05,
+      "independent_projected_lower_gap_m": -3.513590563561248e-05,
+      "source_contact_force_n": [
+        6.922669761511021e-07,
+        -1.034761126212422e-08,
+        0.002589834632476052
+      ],
+      "generalized_reactions_n": [
+        -0.00040514038762987456,
+        0.0004058325990866455,
+        -0.04040033053934529
+      ],
+      "complementarity_relative_force": 6.095465017399811e-10,
+      "pair_force_balance_n": 4.336810119515514e-19,
+      "pair_moment_balance_nm": 4.848699980469078e-19
+    },
+    {
+      "step": 5,
+      "active_pressure_modes": 2,
+      "minimum_gap_m": -2.232023386393076e-05,
+      "sampled_overlap_gap_m": -2.2320233710452876e-05,
+      "independent_projected_lower_gap_m": -2.23202323348239e-05,
+      "source_contact_force_n": [
+        -4.7039477808549355e-09,
+        -1.0318701950693781e-08,
+        0.0004602433095697087
+      ],
+      "generalized_reactions_n": [
+        -0.00011234249479895896,
+        0.00011233779083776137,
+        -0.019615494771138865
+      ],
+      "complementarity_relative_force": 1.8238487773186113e-12,
+      "pair_force_balance_n": 5.421019089924976e-20,
+      "pair_moment_balance_nm": 5.421011023986233e-20
+    },
+    {
+      "step": 6,
+      "active_pressure_modes": 0,
+      "minimum_gap_m": 4.49999999363054e-05,
+      "sampled_overlap_gap_m": 4.499999997494991e-05,
+      "independent_projected_lower_gap_m": 4.499999966799656e-05,
+      "source_contact_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "generalized_reactions_n": [
+        -2.8025492590438847e-15,
+        2.8025491531647663e-15,
+        2.5796627629262867e-15
+      ],
+      "complementarity_relative_force": 0.0,
+      "pair_force_balance_n": 0.0,
+      "pair_moment_balance_nm": 0.0
+    },
+    {
+      "step": 7,
+      "active_pressure_modes": 2,
+      "minimum_gap_m": -2.2320233864374185e-05,
+      "sampled_overlap_gap_m": -2.2320233710896935e-05,
+      "independent_projected_lower_gap_m": -2.2320232335267863e-05,
+      "source_contact_force_n": [
+        -4.703947810973016e-09,
+        -1.0318701971360427e-08,
+        0.000460243308808754
+      ],
+      "generalized_reactions_n": [
+        -0.00011234249475944902,
+        0.00011233779081103141,
+        -0.019615494771060032
+      ],
+      "complementarity_relative_force": 1.0240904244936858e-13,
+      "pair_force_balance_n": 2.0474683576072607e-22,
+      "pair_moment_balance_nm": 7.666467261915715e-20
+    },
+    {
+      "step": 8,
+      "active_pressure_modes": 1,
+      "minimum_gap_m": -3.5135908430956606e-05,
+      "sampled_overlap_gap_m": -3.51359074269504e-05,
+      "independent_projected_lower_gap_m": -3.5135905616426056e-05,
+      "source_contact_force_n": [
+        6.922669771470622e-07,
+        -1.0347611278873537e-08,
+        0.0025898346356422225
+      ],
+      "generalized_reactions_n": [
+        -0.0004051403627964469,
+        0.000405832629772753,
+        -0.04040033054566934
+      ],
+      "complementarity_relative_force": 1.5326192755365613e-12,
+      "pair_force_balance_n": 4.33680928581595e-19,
+      "pair_moment_balance_nm": 1.0842033357076168e-19
+    }
+  ]
+}

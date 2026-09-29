@@ -73,17 +73,22 @@ def build_case(columns: int, *, four_phase: bool = False,
             source_rows == 16 and offline_structural_reference_y16):
         raise ValueError("this development case admits at most eight source rows; "
                          "sixteen require the offline structural-reference opt-in")
-    if source_y_profile not in (None, "rim8", "near_rim8", "near_rim8_ref16"):
+    if source_y_profile not in (None, "rim8", "near_rim8", "near_rim8_ref16",
+                                "uniform_ref16"):
         raise ValueError("unknown bounded source y profile")
-    if source_y_profile == "near_rim8_ref16":
+    if source_y_profile == "uniform_ref16":
+        if (not offline_structural_reference_y16 or source_rows != 16
+                or columns != 8):
+            raise ValueError("uniform sixteen-row reference is offline-only at eight columns")
+    elif source_y_profile == "near_rim8_ref16":
         if (not offline_structural_reference_y16 or source_rows != 16
                 or columns != 16):
             raise ValueError("near-rim sixteen-row reference is offline-only")
     elif source_rows == 16:
-        raise ValueError("sixteen source rows require the near-rim offline profile")
+        raise ValueError("sixteen source rows require an explicit offline profile")
     elif source_y_profile is not None and source_rows != 8:
         raise ValueError("rim profiles require eight source rows")
-    if source_y_profile is None:
+    if source_y_profile in (None, "uniform_ref16"):
         source_y_knots = np.linspace(0.0, 1.0, source_rows+1)
     else:
         coarse_y = np.asarray((0.0, 0.2, 0.4, 0.6, 0.75,

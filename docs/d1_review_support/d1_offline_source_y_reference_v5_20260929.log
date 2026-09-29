@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_two_body_oracle_dev.py", line 220, in <module>
+    offline_y_reference(Path(sys.argv[2]))
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_two_body_oracle_dev.py", line 174, in offline_y_reference
+    reference = solve_reference_singleton(
+        model, definition, program, 2, allow_multimode=(rows == 16))
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_reference_oracle.py", line 350, in solve_reference_singleton
+    cholesky = linalg.cholesky(gap_response, lower=True)
+  File "C:\Python\Python314\Lib\site-packages\scipy\_lib\_util.py", line 1181, in wrapper
+    return f(*arrays, *other_args, **kwargs)
+  File "C:\Python\Python314\Lib\site-packages\scipy\linalg\_decomp_cholesky.py", line 106, in cholesky
+    c, lower = _cholesky(a, lower=lower, overwrite_a=overwrite_a, clean=True,
+               ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                         check_finite=check_finite)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python\Python314\Lib\site-packages\scipy\linalg\_decomp_cholesky.py", line 39, in _cholesky
+    raise LinAlgError(
+        f"{info}-th leading minor of the array is not positive definite"
+    )
+numpy.linalg.LinAlgError: 18-th leading minor of the array is not positive definite

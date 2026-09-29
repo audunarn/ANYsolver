@@ -32,6 +32,8 @@ All three ordinary static force-control cases used 0.04 N interior-distributed l
 
 The independently clipped oracle freezes the reference XY footprint and vertical work. Its agreement checks a component of the work calculation at these shallow accepted poses. It does not independently validate rotating physical skins or the nonlinear coupled response. The three `γ` values are positive and within a factor of 1.92; they are **development observations**, not a mesh-uniform proof or a retrospective pass.
 
+An additional guarded, offline 8×16 Q4 / four-S3 press completed after this three-mesh screen. It has two active interior pressure nodes and 105 signed interior modes. The same procedure gives `β²=1.7686655e−7` and `γ=0.0132682`; the frozen-footprint oracle differs by 3.64e−6 relative. [Saved coupled pose](d1_coupled_source_y16_20260929.json) and [spectrum](d1_pressure_y16_spectrum_20260929.json). This new point does not create a frozen threshold or establish a uniform bound. Its finer y spacing changes the proposed `D/hmin⁴` scale, so interpret the increase in `γ` with that scaling in mind.
+
 ## Retained cut-front loss as a control
 
 The [two-hat counterexample](d1_cut_front_two_hat_counterexample_20260929.md) has fixed source `hmin=0.5 m` and a target rim cutting the upper Q4 row by fraction `θ`. Its saved v4 touching-pose records contain the actual two-body constrained structural energy dual norm for the exact signed pressure combination. The separable physical L² pressure norm follows independently from its stated Q1 coefficients. With `b=θ²/2−θ³/3`, `d=1/4+θ−θ²+θ³/3`, `η=−b/d`, upper/lower y coefficients `1, η, −η/2`, and x-hat coefficients `c₁,c₂`:

@@ -32,6 +32,8 @@ def build_interior_press(*, force_n: float = 0.08,
                          source_support: str = "left",
                          source_columns: int = 4,
                          source_rows: int = 2,
+                         source_y_profile: str | None = None,
+                         offline_structural_reference_y16: bool = False,
                          load_shape: str = "point",
                          four_phase: bool = False,
                          steps_per_segment: int = 2,
@@ -55,6 +57,8 @@ def build_interior_press(*, force_n: float = 0.08,
         target_right_x_m=1.3, common_reference_slope=reference_slope,
         target_columns=target_columns, target_rows=target_rows,
         load_profile="distributed", total_force_n=force_n,
+        source_y_profile=source_y_profile,
+        offline_structural_reference_y16=offline_structural_reference_y16,
     )
     target_start = (rows + 1) * (columns + 1) + 1
     target_left_top = target_start + (
@@ -157,6 +161,8 @@ def build_interior_press(*, force_n: float = 0.08,
 def main(output: Path, *, force_n: float, reference_slope: float,
          target_columns: int, target_rows: int, source_support: str,
          source_columns: int, source_rows: int, load_shape: str,
+         source_y_profile: str | None,
+         offline_structural_reference_y16: bool,
          max_path_fraction: float, four_phase: bool,
          steps_per_segment: int, slide_distance_m: float,
          slide_intervals: int, slide_body: str,
@@ -169,6 +175,8 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         target_columns=target_columns, target_rows=target_rows,
         source_support=source_support,
         source_columns=source_columns, source_rows=source_rows,
+        source_y_profile=source_y_profile,
+        offline_structural_reference_y16=offline_structural_reference_y16,
         load_shape=load_shape,
         four_phase=four_phase, steps_per_segment=steps_per_segment,
         slide_distance_m=slide_distance_m,
@@ -216,6 +224,8 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         "source_support": source_support,
         "source_rows": source_rows,
         "source_columns": source_columns,
+        "source_y_profile": source_y_profile,
+        "offline_structural_reference_y16": offline_structural_reference_y16,
         "load_shape": load_shape,
         "max_path_fraction": max_path_fraction,
         "four_phase": four_phase,
@@ -251,8 +261,12 @@ if __name__ == "__main__":
                         default=1)
     parser.add_argument("--source-support", choices=("left", "perimeter"),
                         default="left")
-    parser.add_argument("--source-rows", type=int, choices=(2, 4, 8), default=2)
+    parser.add_argument("--source-rows", type=int, choices=(2, 4, 8, 16), default=2)
     parser.add_argument("--source-columns", type=int, choices=(4, 8), default=4)
+    parser.add_argument("--source-y-profile", choices=("uniform_ref16",),
+                        default=None)
+    parser.add_argument("--offline-structural-reference-y16",
+                        action="store_true")
     parser.add_argument("--load-shape", choices=("point", "interior_distributed",
                                                  "interior_uniform"),
                         default="point")
@@ -275,6 +289,9 @@ if __name__ == "__main__":
          source_support=arguments.source_support,
          source_columns=arguments.source_columns,
          source_rows=arguments.source_rows, load_shape=arguments.load_shape,
+         source_y_profile=arguments.source_y_profile,
+         offline_structural_reference_y16=(
+             arguments.offline_structural_reference_y16),
          max_path_fraction=arguments.max_path_fraction,
          four_phase=arguments.four_phase,
          steps_per_segment=arguments.steps_per_segment,

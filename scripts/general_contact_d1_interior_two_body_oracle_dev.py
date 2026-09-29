@@ -8,7 +8,9 @@ import sys
 
 import numpy as np
 
-from docs.d1_review_support.d1_two_body_reference_oracle import solve_reference
+from docs.d1_review_support.d1_two_body_reference_oracle import (
+    solve_reference, solve_reference_singleton,
+)
 from scripts.general_contact_d1_interior_press_dev import build_interior_press
 
 
@@ -86,5 +88,202 @@ def main(saved_path: Path, output: Path) -> None:
                       and not key.startswith("oracle_displacements")}))
 
 
+def singleton_family(output: Path, inputs: list[Path]) -> None:
+    if output.exists() or len(inputs) != 3:
+        raise ValueError("singleton family needs new output and three saved poses")
+    cases = []
+    for path in inputs:
+        saved = json.loads(path.read_text(encoding="utf-8"))
+        expected = {
+            "status": "completed", "accepted_steps": 2,
+            "source_support": "perimeter", "load_shape": "interior_distributed",
+            "force_n": 0.04, "reference_slope": 1.0e-4,
+            "slide_body": "target", "four_phase": False,
+        }
+        if (any(saved.get(key) != value for key, value in expected.items())
+                or saved.get("source_columns") not in (4, 8)
+                or saved.get("source_rows") not in (4, 8)
+                or saved.get("target_s3_faces") not in (2, 4)):
+            raise ValueError(f"saved pose is outside singleton family: {path}")
+        model, definition, _settings, program = build_interior_press(
+            source_support="perimeter",
+            source_columns=saved["source_columns"],
+            source_rows=saved["source_rows"],
+            target_columns=saved["target_s3_faces"]//2,
+            target_rows=1, force_n=0.04, reference_slope=1.0e-4,
+            load_shape="interior_distributed", slide_body="target",
+        )
+        reference = solve_reference_singleton(model, definition, program, 2)
+        production = saved["history"][-1]["contact"]
+        pressure = np.asarray(production["numerical_pressure_pa"])
+        if tuple(production["source_pressure_node_ids"]) != (
+                reference["source_pressure_nodes"]):
+            raise ValueError("oracle pressure node order differs")
+        force_production = float(production["integration_force"][2])
+        force_reference = float(reference["integrated_force"])
+        displacement_production = np.asarray(saved["displacements"])
+        displacement_reference = reference["displacement"]
+        cases.append({
+            "input": str(path),
+            "source_q4_faces": saved["source_columns"]*saved["source_rows"],
+            "target_s3_faces": saved["target_s3_faces"],
+            "oracle_active_node_id": reference["active_node_id"],
+            "production_active_node_ids": [node for node, value in zip(
+                production["source_pressure_node_ids"], pressure)
+                if value > 0.0],
+            "oracle_integrated_normal_force_n": force_reference,
+            "production_integrated_normal_force_n": force_production,
+            "integrated_force_relative_difference": abs(
+                force_production-force_reference)/max(abs(force_reference), 1e-15),
+            "displacement_relative_l2_difference": float(np.linalg.norm(
+                displacement_production-displacement_reference)
+                /max(np.linalg.norm(displacement_reference), 1e-15)),
+            "pressure_relative_l2_difference": float(np.linalg.norm(
+                pressure-reference["pressure"])
+                /max(np.linalg.norm(reference["pressure"]), 1e-15)),
+            "oracle_initial_gap_m": reference["initial_gap"],
+            "oracle_structural_free_coordinates": reference[
+                "structural_free_coordinates"],
+        })
+    output.write_text(json.dumps({"cases": cases}, indent=2)+"\n",
+                      encoding="utf-8")
+    print(json.dumps(cases))
+
+
+def _source_vertical_samples(model, displacement, rows, sample_points):
+    values_at_points = []
+    for x, y in sample_points:
+        local_x = (x-0.1)*8
+        local_y = (y-0.1)*rows
+        column = min(int(local_x), 7)
+        row = min(int(local_y), rows-1)
+        x_fraction = local_x-column
+        y_fraction = local_y-row
+        values = np.array([
+            displacement[model.mesh.dof_manager.get_node_dofs(
+                1+j*(8+1)+i)[2]]
+            for j, i in ((row, column), (row, column+1),
+                         (row+1, column), (row+1, column+1))
+        ])
+        weights = np.array([(1-x_fraction)*(1-y_fraction),
+                            x_fraction*(1-y_fraction),
+                            (1-x_fraction)*y_fraction,
+                            x_fraction*y_fraction])
+        values_at_points.append(float(weights @ values))
+    return values_at_points
+
+
+def offline_y_reference(output: Path) -> None:
+    """Screen source-y resolution with one independently clipped linear oracle.
+
+    This keeps x resolution, target mesh, loads, support and initial opening
+    fixed. The 16-row case is guarded in the fixture builder and is never an
+    ordinary coupled-solve admission.
+    """
+    if output.exists():
+        raise FileExistsError(output)
+    cases = []
+    # Physical source coordinates start at (0.1, 0.1), unlike local fractions.
+    sample_points = ((0.6, 0.6), (0.6, 0.7), (0.6, 0.9))
+    for rows in (4, 8, 16):
+        model, definition, _settings, program = build_interior_press(
+            source_support="perimeter", source_columns=8, source_rows=rows,
+            source_y_profile="uniform_ref16" if rows == 16 else None,
+            offline_structural_reference_y16=(rows == 16),
+            target_columns=2, target_rows=1, force_n=0.04,
+            reference_slope=1.0e-4, load_shape="interior_distributed",
+            slide_body="target",
+        )
+        try:
+            reference = solve_reference_singleton(
+                model, definition, program, 2, allow_multimode=(rows == 16))
+        except ValueError as error:
+            output.write_text(json.dumps({"cases": cases, "failed_rows": rows,
+                                          "failure": str(error)}, indent=2)+"\n",
+                              encoding="utf-8")
+            raise
+        displacement = reference["displacement"]
+        source_values = _source_vertical_samples(
+            model, displacement, rows, sample_points)
+        cases.append({
+            "source_columns": 8, "source_rows": rows,
+            "target_s3_faces": 4,
+            "oracle_active_node_id": reference["active_node_id"],
+            "oracle_active_node_ids": reference["active_node_ids"],
+            "oracle_method": reference["reference_method"],
+            "integrated_normal_force_n": reference["integrated_force"],
+            "sample_xy_m": sample_points,
+            "source_vertical_displacement_m": source_values,
+            "structural_free_coordinates": reference[
+                "structural_free_coordinates"],
+        })
+    output.write_text(json.dumps({"cases": cases}, indent=2)+"\n",
+                      encoding="utf-8")
+    print(json.dumps(cases))
+
+
+def coupled_y_comparison(output: Path, reference_path: Path,
+                         saved_paths: list[Path]) -> None:
+    if output.exists() or len(saved_paths) != 2:
+        raise ValueError("coupled y comparison needs new output and two saved poses")
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    cases = []
+    for path in saved_paths:
+        saved = json.loads(path.read_text(encoding="utf-8"))
+        rows = saved["source_rows"]
+        if (rows not in (8, 16) or saved["source_columns"] != 8
+                or saved["target_s3_faces"] != 4
+                or saved["status"] != "completed"
+                or saved["accepted_steps"] != 2):
+            raise ValueError(f"saved pose is outside bounded y comparison: {path}")
+        corresponding = next(item for item in reference["cases"]
+                             if item["source_rows"] == rows)
+        model, _definition, _settings, _program = build_interior_press(
+            source_support="perimeter", source_columns=8,
+            source_rows=rows,
+            source_y_profile="uniform_ref16" if rows == 16 else None,
+            offline_structural_reference_y16=(rows == 16),
+            target_columns=2, target_rows=1, force_n=0.04,
+            reference_slope=1.0e-4, load_shape="interior_distributed",
+            slide_body="target",
+        )
+        production = saved["history"][-1]["contact"]
+        pressure = np.asarray(production["numerical_pressure_pa"])
+        production_force = float(production["integration_force"][2])
+        reference_force = corresponding["integrated_normal_force_n"]
+        samples = _source_vertical_samples(
+            model, np.asarray(saved["displacements"]), rows,
+            corresponding["sample_xy_m"])
+        reference_samples = corresponding["source_vertical_displacement_m"]
+        cases.append({
+            "saved_pose": str(path), "source_rows": rows,
+            "source_sample_xy_m": corresponding["sample_xy_m"],
+            "production_source_vertical_displacement_m": samples,
+            "oracle_source_vertical_displacement_m": reference_samples,
+            "relative_source_displacement_difference": [
+                abs(a-b)/max(abs(b), 1e-15)
+                for a, b in zip(samples, reference_samples)],
+            "production_active_node_ids": [node for node, value in zip(
+                production["source_pressure_node_ids"], pressure)
+                if value > 0.0],
+            "oracle_active_node_ids": corresponding["oracle_active_node_ids"],
+            "production_integrated_normal_force_n": production_force,
+            "oracle_integrated_normal_force_n": reference_force,
+            "relative_integrated_force_difference": abs(
+                production_force-reference_force)/max(abs(reference_force), 1e-15),
+        })
+    output.write_text(json.dumps({"cases": cases}, indent=2)+"\n",
+                      encoding="utf-8")
+    print(json.dumps(cases))
+
+
 if __name__ == "__main__":
-    main(Path(sys.argv[1]), Path(sys.argv[2]))
+    if len(sys.argv) > 1 and sys.argv[1] == "--singleton-family":
+        singleton_family(Path(sys.argv[2]), [Path(path) for path in sys.argv[3:]])
+    elif len(sys.argv) > 1 and sys.argv[1] == "--offline-y-reference":
+        offline_y_reference(Path(sys.argv[2]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--coupled-y-comparison":
+        coupled_y_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
+                             [Path(path) for path in sys.argv[4:]])
+    else:
+        main(Path(sys.argv[1]), Path(sys.argv[2]))

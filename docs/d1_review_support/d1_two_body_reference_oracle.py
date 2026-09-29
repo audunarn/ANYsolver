@@ -245,3 +245,158 @@ def solve_reference(model, definition, program, accepted_step: int,
         "initial_gap": initial_gap,
         "active_set_iterations": iteration+1,
     }
+
+
+def solve_reference_singleton(model, definition, program, accepted_step: int,
+                              *, allow_multimode: bool = False):
+    """Independently solve a linear contact KKT problem.
+
+    This is restricted to zero prescribed target-x motion and parallel
+    physical skins. By default it requires a unique open or singleton state.
+    The explicit multimode option uses a separately assembled convex NNLS
+    complementarity solve. Neither route calls the production contact law.
+    """
+    from scipy import linalg
+
+    controls = program.target_at(accepted_step)
+    if len(controls) != 2 or np.max(np.abs(controls)) != 0.0:
+        raise ValueError("singleton reference requires zero target-x controls")
+    model.apply_boundary_conditions()
+    stiffness, _ = assemble_stiffness_matrix(model)
+    ndof = model.mesh.dof_manager.total_dofs
+    _, _, transform, offset, _, _ = build_constraint_transformation(
+        stiffness, np.zeros(ndof), model)
+    if np.linalg.norm(offset) != 0.0:
+        raise ValueError("singleton reference requires homogeneous supports")
+    source_ids, support, work, area = independent_gap_work(
+        model, definition, 0.0)
+    first_source = model.mesh.elements[definition.surfaces[0].element_ids[0]]
+    first_target = model.mesh.elements[definition.surfaces[1].element_ids[0]]
+    source_node = model.mesh.nodes[first_source.node_ids[0]]
+    target_node = model.mesh.nodes[first_target.node_ids[0]]
+    source_normal = np.array(first_source.reference_normal, dtype=float,
+                             copy=True)
+    target_normal = np.array(first_target.reference_normal, dtype=float,
+                             copy=True)
+    source_normal /= np.linalg.norm(source_normal)
+    target_normal /= np.linalg.norm(target_normal)
+    source_skin = (np.array((source_node.x, source_node.y, source_node.z))
+                   -0.5*first_source.thickness*source_normal)
+    target_skin = (np.array((target_node.x, target_node.y, target_node.z))
+                   +(0.5*first_target.thickness
+                     -first_target.reference_surface_offset)*target_normal)
+    initial_gap = float(np.dot(source_skin-target_skin, target_normal))
+    if abs(initial_gap-4.0e-5) > 1.0e-12:
+        raise ValueError("singleton reference physical opening changed")
+    external = np.zeros(ndof)
+    for item, value in zip(program.nodal_forces,
+                           program.force_values_at(accepted_step), strict=True):
+        if item.dof != "uz":
+            raise ValueError("singleton reference admits vertical nodal load only")
+        external[model.mesh.dof_manager.get_node_dofs(item.node_id)[2]] += value
+    control_rows = np.zeros((2, ndof))
+    for row, control in enumerate(program.controls):
+        for node, name, weight in control.terms:
+            if name != "ux":
+                raise ValueError("singleton reference admits target-x controls only")
+            control_rows[row, model.mesh.dof_manager.get_node_dofs(node)[0]] += weight
+    reduced_controls = np.asarray(control_rows @ transform)
+    null = linalg.null_space(reduced_controls)
+    variations = np.asarray(transform @ null)
+    energy = np.asarray(variations.T @ stiffness @ variations)
+    energy = 0.5*(energy+energy.T)
+    linalg.cholesky(energy, lower=True)
+    force = np.asarray(variations.T @ external).reshape(-1)
+    weighted_work = np.asarray(work @ variations)
+    free_predictor = linalg.solve(energy, force, assume_a="pos")
+    compliance = linalg.solve(energy, weighted_work.T, assume_a="pos")
+    gap_base = initial_gap*support+weighted_work @ free_predictor
+    gap_response = weighted_work @ compliance
+    gap_response = 0.5*(gap_response+gap_response.T)
+    tolerance = 1.0e-11
+    candidates = []
+    if np.min(gap_base) >= -tolerance:
+        candidates.append((None, np.zeros(len(support)), gap_base,
+                           free_predictor))
+    for index in range(len(support)):
+        if gap_response[index, index] <= 0.0:
+            raise ValueError("singleton reference has nonpositive diagonal compliance")
+        pressure_value = -gap_base[index]/gap_response[index, index]
+        if pressure_value <= 0.0:
+            continue
+        gap = gap_base+gap_response[:, index]*pressure_value
+        if np.min(gap) < -tolerance:
+            continue
+        pressure = np.zeros(len(support))
+        pressure[index] = pressure_value
+        coordinates = free_predictor+compliance[:, index]*pressure_value
+        candidates.append((index, pressure, gap, coordinates))
+    if len(candidates) != 1 and not allow_multimode:
+        raise ValueError(
+            "singleton reference found no unique admissible state: "
+            f"admissible_candidates={len(candidates)}, "
+            f"negative_open_weighted_gaps={int(np.count_nonzero(gap_base < -tolerance))}, "
+            f"minimum_open_normalized_gap_m={float(np.min(gap_base/support)):.9g}"
+        )
+    method = "enumerated_singleton"
+    if len(candidates) == 1:
+        index, pressure, weighted_gap, coordinates = candidates[0]
+    else:
+        from scipy import optimize
+
+        # The D1 interior profile forbids pressure on the physical source
+        # boundary. Those supported Q1 hats can have zero free-coordinate
+        # work under the perimeter support and make the full Schur block
+        # singular. Keep their gap rows in the final KKT check.
+        coordinates_xy = np.asarray([
+            (model.mesh.nodes[node].x, model.mesh.nodes[node].y)
+            for node in source_ids])
+        lower = np.min(coordinates_xy, axis=0)
+        upper = np.max(coordinates_xy, axis=0)
+        eligible = np.flatnonzero(np.all(
+            (coordinates_xy > lower+1.0e-12)
+            & (coordinates_xy < upper-1.0e-12), axis=1))
+        if not len(eligible):
+            raise ValueError("multimode interior reference has no eligible modes")
+        active_response = gap_response[np.ix_(eligible, eligible)]
+        # min_{p>=0} 0.5 p.T G p + gap_base.T p, G = W K^-1 W.T.
+        # The Cholesky transform gives a standard nonnegative least-squares
+        # problem without imposing a penalty or changing the contact law.
+        cholesky = linalg.cholesky(active_response, lower=True)
+        rhs = -linalg.solve_triangular(cholesky, gap_base[eligible],
+                                      lower=True)
+        eligible_pressure, _ = optimize.nnls(
+            cholesky.T, rhs, maxiter=20*len(eligible))
+        pressure = np.zeros(len(support))
+        pressure[eligible] = eligible_pressure
+        weighted_gap = gap_base+gap_response @ pressure
+        coordinates = free_predictor+compliance @ pressure
+        index = None
+        method = "cholesky_nnls"
+        normalized = weighted_gap/support
+        if (np.min(normalized) < -1.0e-8
+                or np.max(np.abs(pressure*normalized)) > 1.0e-8):
+            raise ValueError(
+                "multimode linear KKT check failed: "
+                f"minimum_gap_m={np.min(normalized):.9g}, "
+                f"maximum_complementarity_pa_m="
+                f"{np.max(np.abs(pressure*normalized)):.9g}"
+            )
+    equilibrium = energy @ coordinates-force-weighted_work.T @ pressure
+    if np.linalg.norm(equilibrium) > 1.0e-8:
+        raise ValueError("singleton reference equilibrium check failed")
+    return {
+        "displacement": np.asarray(variations @ coordinates).reshape(-1),
+        "pressure": pressure,
+        "support": support,
+        "normalized_gap": weighted_gap/support,
+        "integrated_area": area,
+        "integrated_force": float(support @ pressure),
+        "initial_gap": initial_gap,
+        "source_pressure_nodes": source_ids,
+        "active_node_id": None if index is None else source_ids[index],
+        "active_node_ids": [source_ids[i] for i in np.flatnonzero(pressure > 0)],
+        "reference_method": method,
+        "candidate_count": len(candidates),
+        "structural_free_coordinates": int(energy.shape[0]),
+    }

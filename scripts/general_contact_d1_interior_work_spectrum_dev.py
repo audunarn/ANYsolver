@@ -52,13 +52,21 @@ def evaluate(path: Path):
                 "slide_body": "target", "force_n": 0.04,
                 "reference_slope": 1.0e-4}
     if (any(saved.get(key) != value for key, value in expected.items())
-            or saved.get("source_rows") not in (4, 8)
+            or saved.get("source_rows") not in (4, 8, 16)
             or saved.get("target_s3_faces") not in (2, 4)):
         raise ValueError(f"incompatible accepted press pose: {path}")
+    if saved["source_rows"] == 16 and (
+            saved.get("source_columns") != 8
+            or saved.get("source_y_profile") != "uniform_ref16"
+            or saved.get("offline_structural_reference_y16") is not True):
+        raise ValueError("sixteen-row spectrum requires saved offline identity")
     model, definition, settings, program = build_interior_press(
         source_support="perimeter", source_rows=saved["source_rows"],
         source_columns=saved["source_columns"],
         target_columns=saved["target_s3_faces"]//2,
+        source_y_profile=saved.get("source_y_profile"),
+        offline_structural_reference_y16=saved.get(
+            "offline_structural_reference_y16", False),
         load_shape="interior_distributed", force_n=0.04,
         reference_slope=1.0e-4, slide_body="target",
     )
