@@ -1,0 +1,1 @@
+{"enforcement_solver": "monolithic_active_set", "status": "completed", "accepted_steps": 2, "solve_seconds": 12.365603099999134}
