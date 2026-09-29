@@ -447,7 +447,7 @@ def test_s3_shell_j2_is_explicitly_experimental():
     owner = ExperimentalGEAnalysis(definition)
     assert owner.capabilities["status"] == "EXPERIMENTAL_NOT_QUALIFIED"
     assert "experimental_q4_s3_j2_finite_point" in owner.capabilities["analysis"]
-    assert "S3 corotational finite-rotation response" in owner.capabilities["excluded"]
+    assert "qualified S3 J2 finite-rotation response" in owner.capabilities["excluded"]
     assert owner.preflight()["stress_free_scaled_max"] <= 32.*np.finfo(float).eps
 
 
@@ -492,7 +492,7 @@ def test_s3_j2_checkpoint_restores_without_beam_yield():
     altered = encode_s3(owner._identity, generation,
                         tuple((name, arrays[name]) for name, _ in expected),
                         (wrong_blob,)+blobs[1:])
-    with pytest.raises(ValueError, match="disagrees with mixed owner"):
+    with pytest.raises(ValueError, match="disagrees with mixed owner|committed displacement binding mismatch"):
         ExperimentalGEAnalysis(definition).restore(altered)
     wrong_constitutive = dict(driver._shell_origins[0])
     shifted = np.asarray(wrong_constitutive["committed_constitutive_u"]).copy()

@@ -22,6 +22,7 @@ from scipy.sparse.csgraph import maximum_bipartite_matching
 from ._ge_beam3_native_definition import NativeBeamDefinition
 from ._ge_beam3_pose_joint import RigidPoseJoint
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
+from ._stiffened_shell_s3_algorithmic_pullback import POLICY as S3_J2_PULLBACK_POLICY
 from .corotational import corotational_element_response
 from .elements import create_shell_element
 from .fe_core import FEModel
@@ -489,6 +490,10 @@ class ExperimentalGEAnalysis:
         }
         if panel.j2_curve is not None:
             identity_payload["shell_j2_curve"] = panel.j2_curve.as_dict()
+            if panel.s3_elements:
+                # Experimental direct-coordinate histories must not silently
+                # resume with the new objective local constitutive map.
+                identity_payload["shell_s3_material_policy"] = S3_J2_PULLBACK_POLICY
         if definition.lines:
             identity_payload["lines"] = [line.descriptor() for line in
                                          definition.lines]
@@ -625,7 +630,7 @@ class ExperimentalGEAnalysis:
                      "modes", "buckling")+line_limits)
         if (self._definition.shell.s3_elements and shell_plastic and
                 not self._line_samples):
-            excluded += ("S3 corotational finite-rotation response",)
+            excluded += ("qualified S3 J2 finite-rotation response",)
         return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
                 "shell": (("experimental isotropic Q4/S3-V2D J2"
                            if self._definition.shell.s3_elements else

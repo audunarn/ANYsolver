@@ -22,6 +22,9 @@ from ._ge_beam3_generalized_ellipsoid_section import GeneralizedHistory
 from ._ge_beam3_p5.algebra import rotation
 from ._ge_beam3_p5.compensated_coordinates import split_sum
 from ._ge_beam3_variational_shell import response as variational_shell_response
+from ._stiffened_shell_s3_algorithmic_pullback import (
+    response as s3_algorithmic_response, local_coordinates as s3_local_coordinates,
+)
 from .control import cancellation_safe_point
 from .corotational import corotational_element_response
 from ._stiffened_shell_ge_experimental import (
@@ -153,8 +156,8 @@ def _shell_s3_recovery(parts, states):
     ) for part, state in zip(parts, states))
 
 
-def _require_direct_s3_state(state, local_q, *, accepted):
-    """Bind the native S3 constitutive chart to this owner's direct route."""
+def _require_s3_material_state(state, local_q, *, accepted):
+    """Bind native material history to the objective local constitutive chart."""
     expected = np.asarray(local_q, dtype=float)
     constitutive = np.asarray(state["committed_constitutive_u"], dtype=float)
     kinematics = "LINEAR" if accepted else "ELEMENT_LOCAL"
@@ -176,10 +179,11 @@ def _accepted_shell_material_origins(owner, trial, candidates):
             owner._shell_parts[q4_count:], candidates[q4_count:]):
         if len(slots) != 18:
             raise ValueError("native S3 material candidate required")
-        _require_direct_s3_state(candidate, trial.q[slots], accepted=False)
+        local_q = s3_local_coordinates(owner._shell_model, element, trial.q[slots])
+        _require_s3_material_state(candidate, local_q, accepted=False)
         origins.append(element.seal_solver_integrated_nonlinear_state(
             owner._shell_model.mesh, material, candidate, 3,
-            trial.q[slots], kinematics="LINEAR"))
+            local_q, kinematics="LINEAR"))
     return tuple(origins)
 
 
@@ -295,10 +299,8 @@ class FinitePointDriver:
                 force, tangent, candidate = variational_shell_response(
                     owner._shell_model, element, state.q[slots], origin, 3)
             elif len(slots) == 18:
-                force, tangent, candidate = element.compute_nonlinear_response(
-                    owner._shell_model.mesh,
-                    owner._shell_model.get_material("shell"),
-                    state.q[slots], origin, 3, True)
+                force, tangent, candidate = s3_algorithmic_response(
+                    owner._shell_model, element, state.q[slots], origin, 3)
             else:
                 force, tangent, candidate = corotational_element_response(
                     owner._shell_model, eid, element, state.q[slots], True,
@@ -645,10 +647,11 @@ class FinitePointDriver:
                 s3_origins = []
                 for (_eid, element, slots, _), blob in zip(
                         owner._shell_parts[q4_count:], blobs):
+                    local_q = s3_local_coordinates(owner._shell_model, element, q[slots])
                     restored = element.deserialize_nonlinear_state(
                         owner._shell_model.mesh, shell_material_def, blob, 3,
-                        expected_committed_total_u=q[slots])
-                    _require_direct_s3_state(restored, q[slots], accepted=True)
+                        expected_committed_total_u=local_q)
+                    _require_s3_material_state(restored, local_q, accepted=True)
                     s3_origins.append(restored)
                 shell_origins += tuple(s3_origins)
         else:

@@ -20,7 +20,7 @@ def _davenport(c):
                      [z[:, None], c+c.T-trace*np.eye(3)]])
 
 
-def rotation_jets(reference, current):
+def _quaternion_jets(reference, current, *, displacement=None):
     """Equal nodal-weight proper Procrustes fit and analytic two derivatives.
 
 Centered vectors retain their lengths (no unit-vector normalization). The
@@ -28,7 +28,7 @@ normalized largest quaternion eigenpair is differentiated implicitly. Only
 the top eigenvalue must be simple; repeated lower eigenvalues are harmless.
 """
     ref = np.asarray(reference, dtype=float)
-    x = np.asarray(current, dtype=float)
+    x = np.asarray(current if displacement is None else displacement, dtype=float)
     if (ref.ndim != 2 or ref.shape[1:] != (3,) or len(ref) not in (3, 4)
             or x.shape != ref.shape or not np.isfinite(ref).all() or not np.isfinite(x).all()):
         raise ValueError('finite three/four-node shell fit required')
@@ -41,15 +41,22 @@ the top eigenvalue must be simple; repeated lower eigenvalues are harmless.
     if not np.isfinite(scale) or scale == 0.:
         raise ValueError('degenerate reference shell fit')
     ref = ref/scale
-    c = (x/scale).T@ref
-    eigenvalues, vectors = np.linalg.eigh(_davenport(c))
+    if displacement is None:
+        matrix = _davenport((x/scale).T@ref)
+    else:
+        # Algebraically the same centered covariance, without forming ref+u.
+        # Build the linear Davenport contributions separately: subtracting
+        # O(1) covariance entries would erase tiny antisymmetric increments.
+        matrix = _davenport(ref.T@ref)+_davenport((x/scale).T@ref)
+    eigenvalues, vectors = np.linalg.eigh(matrix)
     gap = eigenvalues[-1]-eigenvalues[-2]
     if not gap > 1e-11*max(np.finfo(float).tiny, np.max(np.abs(eigenvalues))):
         raise ValueError('nonunique proper shell fit; refine or cut back')
     q = vectors[:, -1]
     inverse = (vectors[:, :-1]/(eigenvalues[-1]-eigenvalues[:-1]))@vectors[:, :-1].T
     derivatives = np.zeros((n, 4, 4))
-    for node, r in enumerate(ref):
+    derivative_reference = ref if displacement is None else ref-ref.mean(axis=0)
+    for node, r in enumerate(derivative_reference):
         for axis in range(3):
             dc = np.zeros((3, 3)); dc[axis] = r/scale
             derivatives[6*node+axis] = _davenport(dc)
@@ -59,30 +66,52 @@ the top eigenvalue must be simple; repeated lower eigenvalues are harmless.
     rhs = np.einsum('jab,bk->ajk', reduced, dq)
     ddq = np.einsum('ab,bjk->ajk', inverse, rhs+rhs.transpose(0, 2, 1))
     ddq -= q[:, None, None]*(dq.T@dq)[None, :, :]
-    w, a, b, d = [Jet2(q[i], dq[i], ddq[i]) for i in range(4)]
+    return [Jet2(q[i], dq[i], ddq[i]) for i in range(4)]
+
+
+def rotation_jets(reference, current):
+    """Proper Procrustes rotation with the historical two-argument contract."""
+    w, a, b, d = _quaternion_jets(reference, current)
     return [[w*w+a*a-b*b-d*d, 2*(a*b-w*d), 2*(a*d+w*b)],
             [2*(a*b+w*d), w*w-a*a+b*b-d*d, 2*(b*d-w*a)],
             [2*(a*d-w*b), 2*(b*d+w*a), w*w-a*a-b*b+d*d]]
 
 
-def deformation(reference, displacement):
+def deformation(reference, displacement, *, stable_translation=False):
     """Value, differential and Hessian of all corotated nodal coordinates."""
     ref = np.asarray(reference, dtype=float)
     u = np.asarray(displacement, dtype=float)
     if u.shape != (6*len(ref),) or not np.isfinite(u).all():
         raise ValueError('finite complete shell coordinates required')
     n = len(u)
-    current = ref+u.reshape(-1, 6)[:, :3]
-    rotation = rotation_jets(ref, current)
+    if stable_translation:
+        w, a, b, d = _quaternion_jets(
+            ref, None, displacement=u.reshape(-1, 6)[:, :3])
+        # Unit-quaternion R-I, including its full two derivatives. Avoid
+        # subtracting one from a near-unit diagonal after rotation evaluation.
+        increment = [[-2*(b*b+d*d), 2*(a*b-w*d), 2*(a*d+w*b)],
+                     [2*(a*b+w*d), -2*(a*a+d*d), 2*(b*d-w*a)],
+                     [2*(a*d-w*b), 2*(b*d+w*a), -2*(a*a+b*b)]]
+        rotation = [[increment[i][j]+float(i == j) for j in range(3)]
+                    for i in range(3)]
+    else:
+        current = ref+u.reshape(-1, 6)[:, :3]
+        rotation = rotation_jets(ref, current)
     rt = transpose(rotation)
     jets = [[Jet2.variable(u[6*i+j], 6*i+j, n) for j in range(6)] for i in range(len(ref))]
-    x = [[jets[i][j]+ref[i, j] for j in range(3)] for i in range(len(ref))]
+    x = [[jets[i][j]+(0. if stable_translation else ref[i, j])
+          for j in range(3)] for i in range(len(ref))]
     centre = [sum(row[j] for row in x)/len(x) for j in range(3)]
     refc = ref-ref.mean(axis=0)
     values = []
     for i in range(len(ref)):
         local = matvec(rt, [x[i][j]-centre[j] for j in range(3)])
-        values.extend(local[j]-refc[i, j] for j in range(3))
+        if stable_translation:
+            rotated_reference = [sum(increment[k][j]*refc[i, k]
+                                     for k in range(3)) for j in range(3)]
+            values.extend(local[j]+rotated_reference[j] for j in range(3))
+        else:
+            values.extend(local[j]-refc[i, j] for j in range(3))
         values.extend(so3_log(matmul(rt, so3_exp(jets[i][3:]))))
     return (np.array([v.value for v in values]),
             np.array([v.gradient for v in values]),

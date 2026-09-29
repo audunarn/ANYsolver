@@ -5,6 +5,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 from scipy.spatial.transform import Rotation
+from anymaterial import DNVC208MaterialCurve
 
 from anysolver._stiffened_shell_ge_experimental import ExperimentalGEAnalysis
 from anysolver._stiffened_shell_ge_finite_experimental import (
@@ -15,12 +16,16 @@ from test_stiffened_shell_ge_experimental import _panel
 
 
 @pytest.mark.parametrize("mixed", (False, True))
-def test_global_common_rigid_motion_annihilates_internal_and_point_work(mixed):
+@pytest.mark.parametrize("shell_j2", (False, True))
+def test_global_common_rigid_motion_annihilates_internal_and_point_work(mixed, shell_j2):
     definition = _panel()
     if mixed:
         definition = replace(definition, shell=replace(
             definition.shell, q4_elements=((1, 2, 5, 4),),
             s3_elements=((2, 3, 6), (2, 6, 5))))
+    if shell_j2:
+        curve = DNVC208MaterialCurve(80e6, 85e6, 100e6, .002, .02, 280e6, .18)
+        definition = replace(definition, shell=replace(definition.shell, j2_curve=curve))
     owner = ExperimentalGEAnalysis(definition)
     driver = FinitePointDriver(owner)
     vector = np.array((.13, -.21, .17))
@@ -40,7 +45,7 @@ def test_global_common_rigid_motion_annihilates_internal_and_point_work(mixed):
     cells = rotation@driver._state.cells
     state = _State(q, frames, cells, driver._state.resultants.copy(),
                    driver._state.multipliers.copy())
-    residual, _, _, _, _, _ = driver._assemble(
+    residual, _, _, _, shell_candidates, _ = driver._assemble(
         state, 1., driver._shell_origins, driver._beam_origins,
         pattern=driver._load(()))
     physical = owner._K.shape[0]
@@ -51,6 +56,8 @@ def test_global_common_rigid_motion_annihilates_internal_and_point_work(mixed):
         "beam": float(np.max(scaled[owner._shell_count:])),
     }
     assert np.max(np.abs(residual[physical:])) <= 1e-9
+    if shell_j2:
+        assert all(not np.any(candidate["alpha"]) for candidate in shell_candidates)
 
 
 def test_finite_point_rows_remain_spatial_at_nonzero_shell_chart():

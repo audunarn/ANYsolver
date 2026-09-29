@@ -8,6 +8,8 @@ amendment to frozen registrations or historical results. The
 requirements; the [active note](B3_GE_E4_PL_ACTIVE_STATE.md) identifies
 current evidence and failures. No aggregate gate or milestone is accepted.
 
+Development update, 29 September 2026: the objective S3 J2 algorithmic owner slice passes 49/49 source and 49/49 exact installed-wheel checks with independent review. Failures and exact inputs are preserved at `.qualification/b3-ge-e4-pl/r8-s3-j2-algorithmic-dev-20260929-v1/`. This does not close F05, V03/V17/V18/V28 or an aggregate gate.
+
 Statuses describe acceptance, not prototype progress. `IN_PROGRESS`
 includes incomplete or failed required cases; it never means a numerical
 pass.
