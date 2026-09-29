@@ -138,7 +138,7 @@ def _knots(length, cells, shift):
 
 
 def build_refined_case(source_columns, target_x_cells, target_y_cells,
-                       *, four_phase=False):
+                       *, four_phase=False, target_knots=None):
     if source_columns < 1:
         raise ValueError("positive source cell count required")
     model = FEModel("d1_two_body_target_grid_dev")
@@ -158,8 +158,17 @@ def build_refined_case(source_columns, target_x_cells, target_y_cells,
             reference_normal=(0.0, 0.0, 1.0),
         ))
 
-    x_knots = _knots(1.3, target_x_cells, 0.04)
-    y_knots = _knots(1.0, target_y_cells, 0.03)
+    if target_knots is None:
+        x_knots = _knots(1.3, target_x_cells, 0.04)
+        y_knots = _knots(1.0, target_y_cells, 0.03)
+    else:
+        x_knots, y_knots = (np.asarray(knots, dtype=float)
+                            for knots in target_knots)
+        if (len(x_knots) != target_x_cells+1
+                or len(y_knots) != target_y_cells+1
+                or not np.all(np.diff(x_knots) > 0.0)
+                or not np.all(np.diff(y_knots) > 0.0)):
+            raise ValueError("explicit target knots must be ordered and match cells")
     target_start = source_node_count+1
     target_stride = target_x_cells+1
 
