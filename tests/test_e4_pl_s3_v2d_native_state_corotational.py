@@ -296,6 +296,40 @@ def test_yielded_s3_corotational_tangent_uses_fixed_predecessor() -> None:
     assert canonical_json_bytes(committed) == predecessor_bytes
 
 
+def test_yielded_s3_solver_state_round_trip_preserves_next_trial() -> None:
+    model, element = _model(plastic=True)
+    material = model.get_material("steel")
+    virgin = element.init_model_bound_nonlinear_state(model.mesh, material, 5)
+    global_u = _rigid_rotation_field(model, np.radians(20.), (0.2, 0.6, 1.0))
+    global_u[6] += .012
+    global_u[12] -= .003
+    _force, _tangent, candidate = corotational_element_response(
+        model, 1, element, global_u, tangent=True,
+        committed_state=virgin, num_layers=5, tangent_mode="consistent")
+    assert float(np.max(candidate["alpha"])) > 0.
+    accepted = element.seal_solver_integrated_nonlinear_state(
+        model.mesh, material, candidate, 5, global_u,
+        kinematics="COROTATIONAL")
+    raw = element.serialize_nonlinear_state(model.mesh, material, accepted, 5)
+    restored = element.deserialize_nonlinear_state(
+        model.mesh, material, raw, 5,
+        expected_committed_total_u=global_u)
+    np.testing.assert_array_equal(restored["committed_total_u"], global_u)
+    assert restored["solver_kinematics"] == "COROTATIONAL"
+    trial = global_u.copy()
+    trial[6] += .0002
+    trial[12] -= .00005
+    first = corotational_element_response(
+        model, 1, element, trial, tangent=True,
+        committed_state=accepted, num_layers=5, tangent_mode="consistent")
+    repeated = corotational_element_response(
+        model, 1, element, trial, tangent=True,
+        committed_state=restored, num_layers=5, tangent_mode="consistent")
+    for original, resumed in zip(first[:2], repeated[:2]):
+        np.testing.assert_array_equal(original, resumed)
+    np.testing.assert_array_equal(first[2]["alpha"], repeated[2]["alpha"])
+
+
 def _rigid_rotation_field(model: FEModel, angle: float, axis: tuple[float, float, float]) -> np.ndarray:
     direction = np.asarray(axis, dtype=np.float64)
     direction /= float(np.linalg.norm(direction))

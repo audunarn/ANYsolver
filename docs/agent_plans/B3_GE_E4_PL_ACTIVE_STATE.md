@@ -180,6 +180,23 @@ adapter contract only;
 S3 mixed-owner state, restart, frame recovery and independent F05 acceptance
 remain open.
 
+**S3 ownership/checkpoint discriminator:** The native yielded S3 candidate is
+a sealed model-bound state, unlike the compact Q4 pair of plastic strain and
+alpha. Before admitting it to the mixed owner, determine whether the native
+serialize/deserialize and solver-integrated seal preserve a rotated yielded
+endpoint and what their per-element size costs. If they round-trip and re-evaluate,
+use the native state contract for an experimental owner slice; if not, correct
+that contract first. Do not invent a plastic/alpha-only S3 checkpoint or bypass
+its model identity.
+The bounded rotated/yielded round-trip passed: the native state serialized to
+5,771 bytes (1,129 with diagnostic zlib compression), preserved the accepted
+global configuration and `COROTATIONAL` identity, and produced exactly equal
+next-trial force, tangent and alpha after deserialization. Source and installed
+native-state suites passed 8/8. The forward implementation should retain the
+native sealed S3 state in memory and use a distinct model-bound mixed-owner
+checkpoint format for S3 blobs; V1–V4 contracts stay unchanged. This one
+element size is not a G5 scale measurement or checkpoint-size qualification.
+
 **Positive unloading/reloading development slice:** The same point owner now
 accepts changing positive load factors, preserves material history on
 unload/reload, and uses the separate V3 checkpoint for a nonmonotone elastic
