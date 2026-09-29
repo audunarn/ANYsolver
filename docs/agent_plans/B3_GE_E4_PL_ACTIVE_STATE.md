@@ -160,6 +160,26 @@ shell alpha and beam history at each later step; it passed with JIT enabled.
 The raw probe is retained separately. This is one positive-factor reversal of
 load direction, not a signed-load reversal or broad cyclic qualification.
 
+**Next F05 discriminator:** Existing S3-V2D checks separately establish a
+yielded local algorithmic tangent and an elastic corotational chart tangent.
+The remaining question is whether a yielded fixed predecessor retains the
+consistent derivative through the actual corotational update. Run one bounded
+smooth-branch directional check with a nonzero rotated configuration and
+committed S3 J2 state. A finite-difference plateau supports adapter reuse;
+a failure is split between the local update and chart pullback before any
+mixed-owner S3 J2 admission. This does not consume F03 authority.
+The bounded check passed at a rotated, yielded S3 predecessor: three actual
+chart-direction finite differences gave relative tangent errors
+`3.24e-8`, `6.75e-9`, and `3.62e-9`; the predecessor remained unchanged.
+Independent review found no fixed-predecessor/chart defect but requested
+branch-mask and force/moment separation. The tightened check held the yielded
+layer mask fixed across all perturbations and passed separate relative force
+and moment derivative checks; the affected S3 source and installed suites
+each passed 7/7 with package location verified. This supports the local
+adapter contract only;
+S3 mixed-owner state, restart, frame recovery and independent F05 acceptance
+remain open.
+
 **Positive unloading/reloading development slice:** The same point owner now
 accepts changing positive load factors, preserves material history on
 unload/reload, and uses the separate V3 checkpoint for a nonmonotone elastic
