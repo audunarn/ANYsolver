@@ -122,6 +122,34 @@ def test_invalid_action_does_not_change_accepted_prefix():
     assert analysis.checkpoint() == saved
 
 
+def test_compiled_panel_owns_mutable_caller_geometry_and_connectivity():
+    original = _panel()
+    coordinates = [list(xyz) for xyz in original.shell.coordinates_m]
+    cells = [list(cell) for cell in original.shell.q4_elements]
+    shell = replace(original.shell, coordinates_m=coordinates, q4_elements=cells)
+    caller_definition = replace(original, shell=shell)
+    owned = anysolver.stiffened_shell.create_analysis(definition=caller_definition)
+    control = anysolver.stiffened_shell.create_analysis(definition=original)
+    identity = owned._identity
+
+    # Mutation after compilation must not change the assembled operator,
+    # recovery layout, or model identity used by a later checkpoint.
+    coordinates[2][0] = 200.
+    cells[1][1] = 1
+    assert owned._identity == identity == control._identity
+    actions = (NodalAction("beam", 105, (0., 0., 100., 0., 0., 0.)),)
+    actual = owned.solve_linear(actions)
+    expected = control.solve_linear(actions)
+    np.testing.assert_array_equal(actual.shell_displacement,
+                                  expected.shell_displacement)
+    np.testing.assert_array_equal(actual.beam_coordinates,
+                                  expected.beam_coordinates)
+    np.testing.assert_array_equal(actual.reactions, expected.reactions)
+    restored = ExperimentalGEAnalysis(original).restore(owned.checkpoint())
+    np.testing.assert_array_equal(restored.shell_displacement,
+                                  expected.shell_displacement)
+
+
 def test_reference_linear_load_cases_reuse_one_factorization():
     analysis = ExperimentalGEAnalysis(_panel())
     assert analysis.preflight()["reference_linear_factorizations"] == 0
