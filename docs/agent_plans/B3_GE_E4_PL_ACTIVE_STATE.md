@@ -4,7 +4,7 @@ The [Revision 8 goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISI
 
 ## Delivered experimental behavior
 
-Integration branch `codex/b3-ge-e4-pl-integration`, reviewed HEAD `5a0e242c`. The sparse GE owner runs multi-element Q4, mixed Q4/S3 and all-S3 panels with native B3 members and point attachments through reference-linear and finite stepping, recovery, atomic accepted state, checkpoint/restore and continuation. The separate physical B2 route runs compatible 1/10/100 load cases with selected recovery and eligible factorization reuse. An initial ANYfem consumer exists. Both profiles remain experimental and reject unsupported operations. An unrelated dirty F03 script, `scripts/b3_e4_f03_c1_fy_supported_reference.py`, has separate ownership: do not edit, stage or execute it by implication.
+Integration branch `codex/b3-ge-e4-pl-integration`, development source through `391e8428`. The sparse GE owner runs multi-element Q4, mixed Q4/S3 and all-S3 panels with native B3 members and point attachments through reference-linear and finite stepping, recovery, atomic accepted state, checkpoint/restore and continuation. The separate physical B2 route runs compatible 1/10/100 load cases with selected recovery and eligible factorization reuse. An initial ANYfem consumer exists. Both profiles remain experimental and reject unsupported operations. A new Q4 caller-mutation/restore regression passes; the focused GE module passes 19/19 with JIT disabled, without closing V28. An unrelated dirty F03 script, `scripts/b3_e4_f03_c1_fy_supported_reference.py`, has separate ownership: do not edit, stage or execute it by implication.
 
 ## Decisions and remaining uncertainty
 
