@@ -65,6 +65,43 @@ def test_planar_q4_source_vertical_energy_tracks_q1_shear(width, slope):
                                atol=1.0e-12 if slope == 0.0 else 1.0e-7)
 
 
+@pytest.mark.parametrize("slope", (0.0, 1.0e-4, 0.1))
+def test_planar_q4_physical_normal_energy_matches_local_q1_shear(slope):
+    width = 0.25
+    model = FEModel("planar_q4_normal_energy_control")
+    model.add_material("elastic", 1.0e5, 0.3, density=1.0)
+    for node, point in enumerate(((0., 0., 0.),
+                                  (width, 0., slope*width),
+                                  (width, width, slope*width),
+                                  (0., width, 0.)), 1):
+        model.add_node(node, *point)
+    normal = np.asarray((-slope, 0., 1.))
+    normal /= np.linalg.norm(normal)
+    model.add_element(1, create_shell_element(
+        1, (1, 2, 3, 4), "elastic", thickness=0.05,
+        reference_normal=tuple(normal)))
+    stiffness, _ = assemble_stiffness_matrix(model)
+    test_space = np.zeros((stiffness.shape[0], 4))
+    for column, node in enumerate(range(1, 5)):
+        dofs = model.mesh.dof_manager.get_node_dofs(node)
+        test_space[dofs[0], column] = normal[0]
+        test_space[dofs[2], column] = normal[2]
+    actual = test_space.T @ stiffness @ test_space
+    shear_resultant = (5.0/6.0)*0.05*1.0e5/(2.0*(1.0+0.3))
+    m1 = np.asarray(((1/3, 1/6), (1/6, 1/3)))
+    k1 = np.asarray(((1., -1.), (-1., 1.)))
+    corners = ((0, 0), (1, 0), (1, 1), (0, 1))
+    hx = width*np.sqrt(1+slope*slope)
+    expected = np.asarray([
+        [shear_resultant*(
+            width/hx*k1[ix, jx]*m1[iy, jy]
+            + hx/width*m1[ix, jx]*k1[iy, jy])
+         for jx, jy in corners]
+        for ix, iy in corners
+    ])
+    np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=1e-10)
+
+
 def test_target_internal_s3_seam_is_covered_and_physical_rim_is_topological():
     model, definition, settings, _program = build_interior_press(
         source_support="perimeter", source_rows=4,
@@ -144,6 +181,52 @@ def test_saved_eight_s3_press_has_free_source_rotation_contact_tangent():
     assert abs(force[direction]) > 1.0e-8  # resolved physical couple
     assert np.linalg.norm(difference) > 1.0e-4  # nonzero mapped work change
     assert np.linalg.norm(derived-difference)/np.linalg.norm(difference) < 1.0e-5
+
+
+def test_saved_common_slope_press_has_consistent_small_source_couple():
+    saved = Path(__file__).resolve().parents[1] / (
+        "docs/d1_review_support/d1_sloped_source_couple_press_20260929.json"
+    )
+    pose = json.loads(saved.read_text(encoding="utf-8"))
+    assert pose["status"] == "completed" and pose["accepted_steps"] == 2
+    model, definition, settings, _program = build_interior_press(
+        force_n=0.04, reference_slope=0.01,
+        source_support="perimeter", source_columns=4, source_rows=4,
+        target_columns=1, target_rows=1,
+        load_shape="interior_distributed", slide_body="target",
+    )
+    manager = GeneralS3PatchManager(model, definition, settings)
+    manager.set_normal_multipliers(
+        pose["history"][-1]["contact"]["normal_multiplier_estimate_pa"])
+    displacement = np.asarray(pose["displacements"])
+    force, tangent, center = manager.evaluate(displacement, tangent=True)
+    free_source_nodes = (7, 8, 9, 12, 13, 14, 17, 18, 19)
+    selected = max(free_source_nodes, key=lambda node: abs(
+        force[model.mesh.dof_manager.get_node_dofs(node)[4]]))
+    dofs = model.mesh.dof_manager.get_node_dofs(selected)
+    # Common source/target slope leaves their normal traction nearly
+    # collinear with the source director; it is a negative couple control.
+    assert abs(force[dofs[4]]) < 1.0e-7
+    h = 1.0e-5
+    trial = displacement.copy()
+    trial[dofs[4]] += h
+    plus, _, plus_state = manager.evaluate(trial, tangent=False)
+    plus_skin = manager._positions(trial)[0][
+        manager.law.source_node_ids.index(selected)]
+    trial[dofs[4]] -= 2*h
+    minus, _, minus_state = manager.evaluate(trial, tangent=False)
+    minus_skin = manager._positions(trial)[0][
+        manager.law.source_node_ids.index(selected)]
+    assert center.active_pressure_dofs == plus_state.active_pressure_dofs == (
+        minus_state.active_pressure_dofs) == 1
+    assert center.integration_triangles == plus_state.integration_triangles == (
+        minus_state.integration_triangles)
+    mapped_couple = float(force[dofs[:3]] @ ((plus_skin-minus_skin)/(2*h)))
+    assert mapped_couple == pytest.approx(force[dofs[4]], rel=1e-5, abs=1e-10)
+    predicted = np.asarray(tangent[:, dofs[4]].toarray()).reshape(-1)
+    observed = (plus-minus)/(2*h)
+    assert np.linalg.norm(observed) > 1e-4
+    assert np.linalg.norm(predicted-observed)/np.linalg.norm(observed) < 1e-5
 
 
 def test_partial_target_boundary_cut_fails_before_solve():

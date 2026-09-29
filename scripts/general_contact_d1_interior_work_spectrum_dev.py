@@ -195,6 +195,49 @@ def evaluate(path: Path):
             or independent_restricted_min <= 0.0
             or independent_restricted_min > independent_values[0]*(1.0+1.0e-7)):
         raise ValueError("source-motion lower-bound inequality failed")
+    # Rotate the explicit source-motion subspace into the common physical
+    # reference normal. This removes a global-coordinate tilt from the
+    # source energy screen without changing the production work map.
+    slope = float(saved["reference_slope"])
+    normal = np.asarray((-slope, 0.0, 1.0))
+    normal /= np.linalg.norm(normal)
+    normal_columns = []
+    for node in saved["interior_pressure_node_ids"]:
+        rows = [constrained[model.mesh.dof_manager.get_node_dofs(node)[axis]]
+                for axis in (0, 2)]
+        if any(row.nnz != 1 or abs(row.data[0]-1.0) > 1e-12
+               for row in rows):
+            raise ValueError("interior source normal test motion is constrained")
+        if rows[0].indices[0] == rows[1].indices[0]:
+            raise ValueError("source normal components share one structural coordinate")
+        normal_columns.append(
+            normal[0]*constrained[:, rows[0].indices[0]].toarray().ravel()
+            + normal[2]*constrained[:, rows[1].indices[0]].toarray().ravel()
+        )
+    normal_space = np.column_stack(normal_columns)
+    if np.max(np.abs(controls @ normal_space)) > 1e-12:
+        raise ValueError("source normal test motions violate path controls")
+    normal_stiffness = np.asarray(normal_space.T @ stiffness @ normal_space)
+    normal_stiffness = 0.5*(normal_stiffness+normal_stiffness.T)
+    linalg.cholesky(normal_stiffness, lower=True)
+    normal_work = (supports[:, None]
+                   * np.asarray(state.gap_gradient @ normal_space)[selected])
+    normal_eta = float(linalg.svdvals(
+        inverse_mass_root @ normal_work @ inverse_mass_root)[-1])
+    normal_kappa = float(linalg.eigvalsh(
+        inverse_mass_root @ normal_stiffness @ inverse_mass_root,
+        subset_by_index=(len(selected)-1, len(selected)-1))[0]
+        * hmin**4/flexural_rigidity)
+    normal_response = linalg.solve(normal_stiffness, normal_work.T,
+                                   assume_a="pos")
+    normal_dual = 0.5*(normal_work @ normal_response
+                       + normal_response.T @ normal_work.T)
+    normal_restricted_min = float(linalg.eigh(normal_dual, mass,
+                                              eigvals_only=True)[0]
+                                  * flexural_rigidity/hmin**4)
+    normal_constructive = normal_eta**2/normal_kappa
+    if normal_constructive > normal_restricted_min*(1.0+1e-8):
+        raise ValueError("normal-motion constructive inequality failed")
     active_ids = [node for node, pressure in zip(
         saved["history"][-1]["contact"]["source_pressure_node_ids"],
         saved["history"][-1]["contact"]["numerical_pressure_pa"])
@@ -220,6 +263,11 @@ def evaluate(path: Path):
         "constructive_scaled_source_vertical_lower_bound": (
             constructive_scaled_lower),
         "actual_scaled_source_vertical_lower_bound": actual_scaled_lower,
+        "source_reference_normal": normal.tolist(),
+        "normalized_source_normal_work_minimum": normal_eta,
+        "scaled_source_normal_stiffness_upper": normal_kappa,
+        "constructive_scaled_source_normal_lower_bound": normal_constructive,
+        "actual_scaled_source_normal_lower_bound": normal_restricted_min,
         "independent_source_vertical_restricted_lower_bound": (
             independent_restricted_min),
         "independent_vertical_work_singular_values_squared": (

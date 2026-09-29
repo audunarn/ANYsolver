@@ -77,6 +77,42 @@ bound by only `7.1×10⁻⁹` relative; the numerical check permits `10⁻⁷`.
 The inclined contribution needs an explicit constitutive upper-bound
 derivation before using **2100** as a rigorous family constant.
 
+## Physical-normal subspace follow-up
+
+A second bounded readout uses the actual common reference normal
+`n=(-s,0,1)/sqrt(1+s²)` at each free interior source node, instead of a
+global vertical translation. Both `ux` and `uz` components are mapped through
+the structural constraint transform, and the path controls are checked.
+At the four retained poses, respectively, the mass-normalized work minima
+are `0.999999821`, `0.999999194`, `0.999998960`, `0.999998271`; the
+dimensionless stiffness maxima are `1386.396096`, `277.972572`,
+`469.295390`, `78.434690`. The constructive lower bounds are
+`0.0007212943`, `0.0035974714`, `0.0021308497`, `0.0127494166`.
+These match the vertical-motion results closely but use a physically aligned
+test space. [Raw readout](d1_pressure_normal_motion_20260929.json),
+[bounded resource record](d1_pressure_normal_motion_20260929_resource.json).
+
+For a planar affine source Q4 with local spans `hx=h_xy sqrt(1+s²)` and
+`hy=h_xy`, a new independent element control checks the physical-normal
+four-by-four stiffness against the exact tensor-Q1 shear matrix
+
+    K_ij = As [(hy/hx) K1(ix,jx) M1(iy,jy)
+               + (hx/hy) M1(ix,jx) K1(iy,jy)],
+
+where `K1=[[1,-1],[-1,1]]` and `M1=[[2,1],[1,2]]/6`. It passes at slopes
+`0`, `10⁻⁴` and `0.1` to a `10⁻¹²` relative local tolerance. The generalized
+mass/stiffness bound for this **physical-normal source-motion subspace** is
+therefore `λmax≤12 As(1/hx²+1/hy²)≤24 As/h_xy²` on square XY cells. With
+`hmin≤h_xy≤0.25 m` in the retained family, this gives the same 2100 scaled
+upper bound without a tilted-coordinate correction. [Element check](d1_source_normal_q4_shear_20260929.log).
+
+This establishes a sharper *conditional* stiffness argument for the planar
+affine E4-PL source profile. The full-cover nonlinear work factor, admissible
+front movement, three-mesh criteria and independent assessment remain open;
+the numerical `η` values alone are not a global lower bound. The retained
+cut-front control must be checked under the same physical-normal measure
+before any prospective stability criterion is frozen.
+
 For illustration only, a future **independently justified** admitted-work
 condition `η≥0.9` together with a rigorously enlarged stiffness bound near
 2100 would imply a scaled dual lower bound near `0.81/2100 = 3.857×10⁻⁴`.
