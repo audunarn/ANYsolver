@@ -80,9 +80,42 @@ After reset, `shell_frames` contains the physical matrices,
 `shell_rotation_anchors` the immutable anchors, and `shell_chart_coordinates`
 the local coordinates. `shell_displacement` retains translations and displays
 principal rotation vectors; those vectors cannot reconstruct a loading history.
-The existing Q4 adapter uses a total evaluation chart and rejects its pi branch.
+The historical Q4 adapter uses a total evaluation chart and rejects its pi branch.
 
 Anchored checkpoints have a separate V6 identity, inner policy and physical-pose
 witness. Restore checks mechanical consistency and continues without replay.
 Unrebased checkpoints retain their previous contracts. This development slice
 does not close F06, V18, G0B or broad chart/history qualification.
+
+## Selected Q4 full algorithmic pullback
+
+Q4 point panels can explicitly select a separate force-map policy:
+
+```python
+from dataclasses import replace
+from anysolver import stiffened_shell
+
+definition = replace(definition,
+    q4_pullback_policy=stiffened_shell.Q4_ALGORITHMIC_PULLBACK_V1)
+analysis = stiffened_shell.create_analysis(definition=definition)
+```
+
+This experimental policy uses the complete deformation pullback for the
+unchanged local Q4 elastic or isotropic DNVC-C208 J2 update. Each trial uses
+the same accepted material predecessor. The tangent includes deformation-map
+curvature and the spatial-row/additive-chart transformation, including owned
+rotation anchors. It is not a claim of a conservative plastic potential.
+Reference-linear and finite evaluations use the selected map consistently.
+
+The historical corotational policy remains the default. The selected policy
+changes model identity; checkpoints from the two maps cannot be interchanged.
+The existing anchor-envelope format is retained with that separate model
+identity. Selection requires at least one Q4 element and is currently admitted
+only for point panels, including mixed Q4/S3 panels. S3's existing map is
+unchanged. Unsupported material sections, line owners and all-S3 selection
+fail explicitly.
+
+ANYfem persists this selection in the separate experimental v3 panel schema;
+existing v1/v2 records retain their original selection and layout. These
+experimental records are distinct from ordinary native-project persistence.
+The policy does not qualify F05/F06 or broaden the shell strain/chart domain.

@@ -88,13 +88,18 @@ def test_yielded_algorithmic_tangent_uses_same_accepted_predecessor():
     model, material, element, reference, origin, trial = _fixture()
     before = element.serialize_nonlinear_state(model.mesh, material, origin, 3)
     trial = _moved(reference, trial, Rotation.from_rotvec((.7, -.4, .5)))
-    _, tangent, _ = response(model, element, trial, origin, 3)
+    _, tangent, candidate = response(model, element, trial, origin, 3)
+    active = np.asarray(candidate["alpha"]) > np.asarray(origin["alpha"])
+    assert active.any()
     direction = np.random.default_rng(9129).normal(size=18)
     predicted = tangent@direction
     errors = []
     for step in (2e-7, 1e-7):
-        positive = response(model, element, trial+step*direction, origin, 3)[0]
-        negative = response(model, element, trial-step*direction, origin, 3)[0]
+        positive, _, plus_state = response(model, element, trial+step*direction, origin, 3)
+        negative, _, minus_state = response(model, element, trial-step*direction, origin, 3)
+        for state in (plus_state, minus_state):
+            np.testing.assert_array_equal(
+                np.asarray(state["alpha"]) > np.asarray(origin["alpha"]), active)
         observed = (positive-negative)/(2*step)
         errors.append(np.linalg.norm(observed-predicted)/np.linalg.norm(predicted))
     assert max(errors) <= 1e-5, errors

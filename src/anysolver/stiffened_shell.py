@@ -28,6 +28,7 @@ from ._stiffened_shell_ge_experimental import (
     FixedCoordinate,
     LinearDefinition, LinearResult,
     NodalAction, PointConnection, ShellPanel,
+    Q4_ALGORITHMIC_PULLBACK_V1,
 )
 
 
@@ -113,6 +114,7 @@ def create_analysis(*, definition, resources=None):
 
 
 __all__ = [
+    "Q4_ALGORITHMIC_PULLBACK_V1",
     "B3_GE_E4_PL_STIFFENED_SHELL_V1", "B2_E4_PL_FAST_LINEAR_V1",
     "ShellPanel", "PointConnection",
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",

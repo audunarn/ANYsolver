@@ -25,6 +25,10 @@ from ._ge_beam3_native_definition import NativeBeamDefinition
 from ._ge_beam3_pose_joint import RigidPoseJoint
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._stiffened_shell_s3_algorithmic_pullback import POLICY as S3_J2_PULLBACK_POLICY
+from ._stiffened_shell_q4_algorithmic_pullback import (
+    POLICY as Q4_ALGORITHMIC_PULLBACK_V1, HISTORICAL_POLICY as Q4_HISTORICAL_POLICY,
+    response as q4_algorithmic_response,
+)
 from .corotational import corotational_element_response
 from .elements import create_shell_element
 from .fe_core import FEModel
@@ -148,6 +152,7 @@ class LinearDefinition:
     points: tuple[PointConnection, ...]
     fixed: tuple[FixedCoordinate, ...]
     lines: tuple[ExperimentalL1Line | ExperimentalBL5Line, ...] = ()
+    q4_pullback_policy: str = Q4_HISTORICAL_POLICY
 
 
 @dataclass(frozen=True)
@@ -268,7 +273,8 @@ def _beam_reference(definitions: tuple[NativeBeamDefinition, ...]):
     return ids, index, nodes, pieces, nodal+24*len(pieces)
 
 
-def _assemble_shell(model, pieces, count, coordinate_scale):
+def _assemble_shell(model, pieces, count, coordinate_scale,
+                    q4_pullback_policy=Q4_HISTORICAL_POLICY):
     rows, columns, data = [], [], []
     residual = np.zeros(count)
     local_error = 0.
@@ -277,6 +283,9 @@ def _assemble_shell(model, pieces, count, coordinate_scale):
             force, tangent, candidate = element.compute_nonlinear_response(
                 model.mesh, model.get_material("shell"), np.zeros(18),
                 origin, 3, True)
+        elif q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1:
+            force, tangent, candidate = q4_algorithmic_response(
+                model, element, np.zeros(24), origin, 3)
         else:
             force, tangent, candidate = corotational_element_response(
                 model, eid, element, np.zeros(24), True,
@@ -449,6 +458,12 @@ class ExperimentalGEAnalysis:
         panel = definition.shell
         if type(panel) is not ShellPanel:
             raise ValueError("owned Q4 panel required")
+        if (type(definition.q4_pullback_policy) is not str or
+                definition.q4_pullback_policy not in (Q4_HISTORICAL_POLICY, Q4_ALGORITHMIC_PULLBACK_V1)):
+            raise ValueError("explicit admitted Q4 pullback policy required")
+        if definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and (
+                not panel.q4_elements or definition.lines):
+            raise ValueError("algorithmic Q4 pullback requires a Q4-containing point model")
         shell_model, shell_ids, shell_xyz, shell_index, shell_parts = _shell_reference(panel)
         # The compiled owner must not consult caller-owned mutable connectivity
         # when selecting material recovery or decoding a later checkpoint.
@@ -461,14 +476,15 @@ class ExperimentalGEAnalysis:
         definition = LinearDefinition(
             definition.profile, panel, tuple(definition.beams),
             tuple(definition.points), tuple(definition.fixed),
-            definition.lines)
+            definition.lines, definition.q4_pullback_policy)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count = _beam_reference(
             definition.beams)
         shell_count = 6*len(shell_ids)
         reference_length, shell_scale, beam_scale = _reference_scales(
             shell_xyz, beam_nodes, beam_parts, shell_count, beam_count)
         shell_r, shell_k, shell_local_error = _assemble_shell(
-            shell_model, shell_parts, shell_count, shell_scale)
+            shell_model, shell_parts, shell_count, shell_scale,
+            definition.q4_pullback_policy)
         beam_r, beam_k, beam_local_error = _assemble_beam(
             beam_parts, beam_nodes, beam_index, beam_count, beam_scale)
         reference_error = max(
@@ -513,6 +529,8 @@ class ExperimentalGEAnalysis:
                 # Experimental direct-coordinate histories must not silently
                 # resume with the new objective local constitutive map.
                 identity_payload["shell_s3_material_policy"] = S3_J2_PULLBACK_POLICY
+        if definition.q4_pullback_policy != Q4_HISTORICAL_POLICY:
+            identity_payload["shell_q4_pullback_policy"] = definition.q4_pullback_policy
         if definition.lines:
             identity_payload["lines"] = [line.descriptor() for line in
                                          definition.lines]
@@ -662,6 +680,7 @@ class ExperimentalGEAnalysis:
                 "attachment": attachment,
                 "experimental_line_spaces": tuple(
                     line.multiplier_space for line in self._definition.lines),
+                "q4_force_map": self._definition.q4_pullback_policy,
                 "rotation_chart": ("unchanged reference-linear chart" if self._line_samples else
                                    "experimental owned shell anchors; full fixed/free rotational triples only"),
                 "analysis": (("reference_linear",) if self._line_samples else

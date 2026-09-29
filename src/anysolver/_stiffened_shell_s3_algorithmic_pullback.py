@@ -7,7 +7,7 @@ additive shell-chart columns. This does not assert a plastic energy potential.
 
 import numpy as np
 
-from ._ge_beam3_pose_joint import _exp_terms
+from ._stiffened_shell_algorithmic_pullback import spatial_response
 from ._ge_beam3_variational_shell import deformation
 from .e4_pl_s3_v2d_element import FORMULATION_ID
 from .material_curves import DNVC208MaterialCurve
@@ -48,23 +48,5 @@ def response(model, element, displacement, origin, layers, *, rotation_anchors=N
             not np.isfinite(force).all() or not np.isfinite(tangent).all() or
             candidate is None):
         raise ValueError("finite S3 J2 algorithmic trial required")
-    covector = differential.T@force
-    derivative = differential.T@tangent@differential+np.einsum(
-        "i,ijk->jk", force, second)
-    chart = np.eye(18)
-    chart_derivatives = []
-    for node, row in enumerate(u.reshape(3, 6)):
-        _, jacobian, curvature = _exp_terms(row[3:])
-        singular = np.linalg.svd(jacobian, compute_uv=False)
-        if singular[-1] <= 1e-11*max(1., singular[0]):
-            raise ValueError("singular additive shell chart; owner rebase required")
-        slots = slice(6*node+3, 6*node+6)
-        chart[slots, slots] = jacobian
-        chart_derivatives.append((slots, curvature))
-    residual = np.linalg.solve(chart.T, covector)
-    correction = np.zeros((18, 18))
-    for slots, curvature in chart_derivatives:
-        correction[slots, slots] = np.einsum(
-            "ijk,i->jk", curvature, residual[slots])
-    spatial_tangent = np.linalg.solve(chart.T, derivative-correction)
+    residual, spatial_tangent = spatial_response(u, force, tangent, differential, second)
     return residual, spatial_tangent, candidate

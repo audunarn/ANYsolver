@@ -38,6 +38,9 @@ from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_chec
 from ._stiffened_shell_ge_checkpoint_binary import encode_s3 as _encode_s3_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import encode_chart as _encode_chart_checkpoint
 from ._stiffened_shell_rotation_charts import owned_anchors, physical_frames, total_coordinates
+from ._stiffened_shell_q4_algorithmic_pullback import (
+    POLICY as Q4_ALGORITHMIC_PULLBACK_POLICY, response as q4_algorithmic_response,
+)
 
 
 MAX_JSON_CHECKPOINT_BYTES = 2_000_000
@@ -324,6 +327,10 @@ class FinitePointDriver:
                     rotation_anchors=anchors)
             elif len(slots) == 18:
                 force, tangent, candidate = s3_algorithmic_response(
+                    owner._shell_model, element, state.q[slots], origin, 3,
+                    rotation_anchors=anchors)
+            elif owner._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_POLICY:
+                force, tangent, candidate = q4_algorithmic_response(
                     owner._shell_model, element, state.q[slots], origin, 3,
                     rotation_anchors=anchors)
             else:
