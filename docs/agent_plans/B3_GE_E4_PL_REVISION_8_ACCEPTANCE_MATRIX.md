@@ -60,7 +60,7 @@ candidate adjudication; a failed required case cannot disappear within it.
 
 | External comparison | Status | Current boundary |
 |---|---|---|
-| E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees signed point screens, including 2×1/4×2/8×4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. The 8×4 same-action and drilling-filtered replays localize only a small part of that coupled roll gap to the shell response under one fixed action; causation and matched idealization remain open. Formal observables/floors, installed comparison and independent review remain open. |
+| E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees signed point screens, including 2×1/4×2/8×4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. The 8×4 same-action/drilling-filtered replays localize only a small part of that coupled roll gap to the shell response under one fixed action. Six-channel straight-beam tip compliance matches the external beam to roundoff; coupled shell/connection idealization remains unresolved. Formal observables/floors, installed comparison and independent review remain open. |
 | E02 torque/footprint | NOT_STARTED | No executed matched comparison. |
 | E03 curved stiffener | NOT_STARTED | No executed matched comparison. |
 | E04 nonlinear GE/capacity | NOT_STARTED | No executed matched comparison. |

@@ -127,6 +127,16 @@ independent beam/connection work check or focused mechanics review to decide
 whether the action difference reflects a wrong idealization or admissible
 formulation sensitivity. E01/M1 acceptance remains open. Raw files and source
 hashes: `.qualification/b3-ge-e4-pl/r8-e01-opensees-point-dev-20260929-v1/README.md`.
+The bounded independent beam-only control completed all six tip-load channels
+for the same straight section: native B3 with eight three-node elements and
+OpenSees with 16 two-node segments. Their nonzero tip compliance entries agree
+within `5.92e-14` relative, and both close work and support wrench. Thus a
+straight-beam section stiffness mismatch does not explain the coupled E01 roll
+gap. The differing shell/connection action remains an interaction question;
+neither beam parity nor matching gap equations alone qualifies its physical
+transfer. Seek a focused mechanics decision on shell rotation/point idealization
+before formal E01 scoring; continue independent M1/M3 work meanwhile. The two
+raw six-load files and exact script SHA are in the E01 evidence directory.
 No F03 authority was used. The separate ANYmesh heavy job was not interrupted.
 
 Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1. This is the short working checkpoint. The complete pre-compaction note is preserved byte-for-byte in B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20260929.md (SHA-256 2D5071E8A93FDCF35FC3AF49955E0B85F431A19B1DF2BF3742A8CA560584BCDA). The complete programme, acceptance matrix, frozen registrations, failures, and versioned evidence remain authoritative.
