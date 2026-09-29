@@ -1,0 +1,55 @@
+{
+  "status": "development_prescribed_edge_discrete_null",
+  "source_commit": "46b9c80ea002b63bfa7377d478e8b0f43b548bc0",
+  "probe_sha256": "ba5697b53e274841d0d038aa8483a77ff5f365c65a3ce196895ee21c5a5da62c",
+  "saved_source_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "runtime_identity": {
+    "python": "3.14.2",
+    "numpy": "2.4.6"
+  },
+  "pressure_modes": 153,
+  "free_source_transverse_coordinates": 144,
+  "predicted_discrete_work_rank": 144,
+  "saved_full_shell_scaled_rank_1e_10": 144,
+  "exact_x_null_mass_residual": 1.5948201437461423e-16,
+  "tensor_null_scaled_work": 1.4836500507775445e-18,
+  "tensor_pressure_gram_minimum_eigenvalue": 4.003004956591455e-08,
+  "physical_pressure_mass_norms_squared": [
+    3.6950417228136043,
+    7.390083445627209,
+    7.390083445627207,
+    6.466323014923807,
+    4.156921938165304,
+    2.3094010767585025,
+    1.2932646029847625,
+    0.6336451933963244,
+    0.000209469485420273
+  ],
+  "continuous_admissible_virtual_work": [
+    0.06666666666666665,
+    0.1333333333333333,
+    0.13333333333333328,
+    0.11666666666666664,
+    0.07499999999999998,
+    0.04166666666666666,
+    0.02333333333333335,
+    0.011432350718065013,
+    3.7792894935752195e-06
+  ],
+  "continuous_x_witness_work": 0.9999999999999999,
+  "source_uz_work_relative_tensor_mass_error_at_saved_pose": 2.8761401753250165e-08,
+  "shell_full_admissible_null_scaled_work_at_saved_pose": 3.854260720921215e-09,
+  "shell_null_residual_norm_by_y_mode": [
+    1.1067835001000022e-08,
+    1.5644128870986528e-08,
+    1.5645189493974503e-08,
+    1.3833046165584456e-08,
+    9.284521769419685e-09,
+    4.989945600904995e-09,
+    2.982703956678619e-09,
+    1.1794962057371729e-09,
+    1.8736724694189758e-11
+  ],
+  "elapsed_seconds": 9.075834600000235
+}
