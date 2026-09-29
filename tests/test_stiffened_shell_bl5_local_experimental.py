@@ -138,6 +138,60 @@ def test_bl5_common_rigid_motion_and_released_eccentric_spin():
         operator.evaluate(flipped, state, np.zeros(5))
 
 
+def test_bl5_rigid_pose_rows_match_five_channel_offset_chain():
+    """Check the proposed external comparator's declared linear work space."""
+    beam, reference, state, operator = _fixture()
+    local = operator.evaluate(np.zeros((2, 6)), state, np.zeros(5))
+    shell_mid = reference.mean(axis=0)
+    beam_station = np.array((.95, 0., .0675))
+    shell_arm = np.array((0., 0., .035/2))
+    beam_arm = np.array((0., 0., -.05))
+    np.testing.assert_allclose(shell_mid+shell_arm,
+                               beam_station+beam_arm, atol=1e-14)
+
+    def fields(direction):
+        shell_u, shell_r, beam_u, beam_r = direction.reshape(4, 3)
+        shell = np.zeros((2, 6))
+        for row, position in enumerate(reference):
+            shell[row, :3] = shell_u+np.cross(shell_r,
+                                              position-shell_mid)
+            shell[row, 3:] = shell_r
+        native = np.zeros(beam.context.count)
+        for node, position in enumerate(state.positions):
+            native[6*node:6*node+3] = beam_u+np.cross(
+                beam_r, position-beam_station)
+            native[6*node+3:6*node+6] = beam_r
+        for element in range(len(state.cell_rotations)):
+            for cell in range(2):
+                start = beam.context.nodal_count+24*element+3*cell
+                native[start:start+3] = beam_r
+        return shell.ravel(), native[local.beam_slots]
+
+    native_rows = []
+    chain_rows = []
+    for direction in np.eye(12):
+        shell, native = fields(direction)
+        native_rows.append(local.gap_jacobian@np.r_[shell, native])
+        shell_u, shell_r, beam_u, beam_r = direction.reshape(4, 3)
+        shell_top = shell_u+np.cross(shell_r, shell_arm)
+        beam_bottom = beam_u+np.cross(beam_r, beam_arm)
+        chain_rows.append(np.r_[shell_top-beam_bottom,
+                                shell_r[:2]-beam_r[:2]])
+    native_rows = np.column_stack(native_rows)
+    chain_rows = np.column_stack(chain_rows)
+    np.testing.assert_allclose(native_rows[:3], chain_rows[:3],
+                               rtol=0., atol=2e-12)
+    assert np.linalg.matrix_rank(native_rows) == 5
+    assert np.linalg.matrix_rank(chain_rows) == 5
+    def row_projector(rows):
+        return rows.T@np.linalg.solve(rows@rows.T, rows)
+    np.testing.assert_allclose(row_projector(native_rows),
+                               row_projector(chain_rows),
+                               rtol=0., atol=2e-12)
+    np.testing.assert_allclose(native_rows[:, (5, 11)]@np.array((1., 1.)),
+                               0., atol=2e-12)
+
+
 def test_bl5_preserves_independent_shell_director_shear():
     beam, reference, state, original = _fixture()
     sheared = np.zeros((2, 6))
