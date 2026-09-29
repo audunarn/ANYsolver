@@ -170,6 +170,17 @@ def test_contact_free_elastic_force_predictor_matches_diagonal_spring():
     assert reaction == pytest.approx(1.0, rel=1e-13)
 
 
+def test_contact_free_elastic_force_predictor_sums_two_control_reactions():
+    stiffness = sparse.diags([2.0, 3.0], format="csr")
+    transform = sparse.eye(2, format="csr")
+    reaction = _elastic_displacement_force_predictor(
+        stiffness, transform, np.eye(2),
+        ((0.5, 0.25), (0.25, -0.5)),
+    )
+    # The second waypoint has the larger absolute reaction sum.
+    assert reaction == pytest.approx(2.0, rel=1e-13)
+
+
 def test_ordinary_displacement_contact_and_split_restart():
     model, definition, settings, control = _case()
     full = solve_static_nonlinear(

@@ -287,32 +287,59 @@ def _program_from_simple_displacement_control(control, num_steps: int) -> Contac
 
 
 def _elastic_displacement_force_predictor(stiffness, transform, row,
-                                          target: float) -> float:
-    """Return the contact-free elastic reaction to one prescribed displacement."""
+                                          target) -> float:
+    """Bound a declared force scale by the contact-free control reactions.
+
+    For several controls, use the maximum absolute reaction sum over path
+    waypoints. This retains the one-control value and one physical force unit.
+    """
     reduced = sparse.csr_matrix(transform.T @ stiffness @ transform)
-    row = np.asarray(row, dtype=float).reshape(-1)
-    if reduced.shape != (len(row), len(row)) or not np.isfinite(target) or target == 0.0:
+    rows = np.asarray(row, dtype=float)
+    if rows.ndim == 1:
+        rows = rows[None, :]
+    targets = np.asarray(target, dtype=float)
+    if targets.ndim == 0:
+        targets = targets.reshape(1, 1)
+    elif targets.ndim == 1:
+        targets = targets[None, :]
+    controls, coordinates = rows.shape
+    if (reduced.shape != (coordinates, coordinates)
+            or not 1 <= controls <= 3
+            or targets.ndim != 2 or targets.shape[1] != controls
+            or not np.all(np.isfinite(targets))
+            or not np.any(targets != 0.0)):
         raise ValueError("displacement force predictor has incompatible dimensions")
     saddle = sparse.bmat((
-        (reduced, sparse.csr_matrix(-row[:, None])),
-        (sparse.csr_matrix(row[None, :]), sparse.csr_matrix((1, 1))),
+        (reduced, sparse.csr_matrix(-rows.T)),
+        (sparse.csr_matrix(rows), sparse.csr_matrix((controls, controls))),
     ), format="csr")
-    rhs = np.zeros(len(row)+1)
-    rhs[-1] = target
     try:
-        response = np.asarray(factorize(
+        solve = factorize(
             saddle, MatrixClass.GENERAL,
             signature="contact_path:elastic_displacement_force_predictor",
-        ).solve(rhs)).reshape(-1)
+        ).solve
     except Exception as exc:
         raise ValueError("contact-free displacement force predictor is unavailable") from exc
-    residual = np.asarray(saddle @ response - rhs).reshape(-1)
-    scale = abs(saddle) @ abs(response) + abs(rhs)
-    if (not np.all(np.isfinite(response))
-            or np.any(abs(residual) > 1e-12 + 1e-9*scale)
-            or not np.isfinite(response[-1]) or response[-1] == 0.0):
+    maximum_reaction = 0.0
+    for waypoint in targets:
+        rhs = np.zeros(coordinates+controls)
+        rhs[-controls:] = waypoint
+        try:
+            response = np.asarray(solve(rhs)).reshape(-1)
+        except Exception as exc:
+            raise ValueError("contact-free displacement force predictor is unavailable") from exc
+        residual = np.asarray(saddle @ response - rhs).reshape(-1)
+        scale = abs(saddle) @ abs(response) + abs(rhs)
+        reactions = response[-controls:]
+        if (not np.all(np.isfinite(response))
+                or np.any(abs(residual) > 1e-12 + 1e-9*scale)
+                or not np.all(np.isfinite(reactions))):
+            raise ValueError("contact-free displacement force predictor is unresolved")
+        maximum_reaction = max(maximum_reaction,
+                               float(np.sum(np.abs(reactions))))
+    if maximum_reaction <= 0.0:
         raise ValueError("contact-free displacement force predictor is unresolved")
-    return float(abs(response[-1]))
+    return maximum_reaction
 
 
 def solve_static_contact_path(
@@ -373,12 +400,12 @@ def solve_static_contact_path(
         raise ValueError("contact path currently requires a deformable shell pair")
     augmented = definition.interactions[0].normal_law == "augmented"
     semismooth = settings.enforcement_solver == "monolithic_active_set"
-    displacement_only = len(program.controls) == 1 and not program.nodal_forces
+    displacement_only = bool(program.controls) and not program.nodal_forces
     if len(program.controls) < 2 and not semismooth:
         raise ValueError("zero/one-control contact path requires monolithic_active_set")
     if len(program.controls) == 1 and program.nodal_forces:
         raise ValueError("one-control mixed force/displacement path is not admitted")
-    if displacement_only:
+    if displacement_only and len(program.controls) == 1:
         terms = program.controls[0].terms
         if (len(terms) != 1 or terms[0][2] != 1.0
                 or len(program.waypoints) != 2
@@ -528,19 +555,18 @@ def solve_static_contact_path(
                     raise ValueError("contact path requires zero reference control offsets")
                 displacement_force_predictor = None
                 if displacement_only:
-                    largest_target = max(
-                        program.waypoints, key=lambda item: abs(item[0]),
-                    )[0]
                     displacement_force_predictor = (
                         _elastic_displacement_force_predictor(
-                            stiffness, T, rows[0], largest_target,
+                            stiffness, T, rows, program.waypoints[1:],
                         )
                     )
                     if (settings.complementarity_force_scale_n
                             > displacement_force_predictor*(1.0+1.0e-12)):
                         raise ValueError(
                             "monolithic displacement force scale exceeds "
-                            "the contact-free elastic reaction predictor"
+                            "the contact-free elastic reaction predictor "
+                            f"(declared={settings.complementarity_force_scale_n:.9g} N, "
+                            f"predictor={displacement_force_predictor:.9g} N)"
                         )
                 reactions = rows.T
                 force_dofs = np.empty(len(program.nodal_forces), dtype=np.intp)

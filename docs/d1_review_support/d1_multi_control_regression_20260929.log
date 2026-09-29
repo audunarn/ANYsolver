@@ -1,0 +1,5 @@
+ERROR: not found: C:\ANYworkspaceWork\ANYsolver-general-contact\tests\test_general_contact_monolithic_restart.py::test_monolithic_rejects_unphysical_force_scale
+(no match in any of [<Module test_general_contact_monolithic_restart.py>])
+
+
+no tests ran in 1.26s

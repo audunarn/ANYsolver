@@ -15,6 +15,9 @@ from anysolver.general_contact import semismooth_path
 from anysolver.general_contact.semismooth import linearize
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from scripts.general_contact_d1_interior_press_dev import build_interior_press
+from scripts.general_contact_d1_target_displacement_dev import (
+    build_case as build_target_displacement_case,
+)
 from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
 
 
@@ -263,6 +266,18 @@ def test_guarded_left_edge_contact_exception_restores_model(monkeypatch):
         rtol=0.0, atol=1.0e-10,
     )
     assert rerun.to_restart_checkpoint() == fresh.to_restart_checkpoint()
+
+
+def test_two_target_displacement_controls_bound_force_reference():
+    model, definition, settings, program = build_target_displacement_case(
+        normal_motion_m=-1.0e-5, force_reference_n=0.04,
+    )
+    with pytest.raises(ValueError,
+                       match="force scale exceeds the contact-free elastic"):
+        solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=18,
+        )
 
 
 @pytest.mark.parametrize("slide_body", ["target_diagonal_dev", "target"])

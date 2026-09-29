@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 22.493540399998892,
+  "peak_process_tree_memory_mb": 285.548544,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_target_displacement_dev.py",
+    "docs/d1_review_support/d1_target_normal_displacement_integrated_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_target_normal_displacement_integrated_20260929.log"
+}
