@@ -13,8 +13,10 @@ from anysolver._b2_physical_flexibility_linear import LinearSection
 from anysolver._b2_physical_linear_definition import PhysicalB2Member
 from anysolver.control import CancellationToken
 from anysolver._stiffened_shell_b2_q4_panel_experimental import (
-    ExperimentalB2Q4PanelError, Q4B2Point, Q4PanelShell,
-    _require_independent_supported_point_rows, _scaled_point_kkt,
+    ExperimentalB2Q4PanelAnalysis, ExperimentalB2Q4PanelError,
+    Q4B2Point, Q4PanelShell,
+    _NumericalFailure, _require_independent_supported_point_rows,
+    _scaled_point_kkt,
 )
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
 from anysolver.fe_core import FEModel
@@ -386,9 +388,11 @@ def test_mixed_force_scales_report_insufficient_resolution():
     analysis.close()
 
 
-@pytest.mark.parametrize("width,depth", ((.012, .003), (.004, .001)))
+@pytest.mark.parametrize("width,depth,prescribed", (
+    (.012, .003, False), (.004, .001, False), (.012, .003, True),
+))
 def test_slender_physical_b2_panel_matches_independent_high_precision_system(
-        width, depth):
+        width, depth, prescribed):
     """Mixed-system scaling restores a sound weak beam/strong shell solve."""
     nodes, shells, members, points, free = _panel()
     shells = tuple(replace(shell, E=210e9, thickness_m=.07)
@@ -401,11 +405,15 @@ def test_slender_physical_b2_panel_matches_independent_high_precision_system(
         # physical solution after the mixed-system coordinate scaling.
         transformation[6*2, 0] = .25
     transformation = transformation.tocsr()
+    u0 = np.zeros(54)
+    if prescribed:
+        u0[0] = 1e-10
+        u0[6*8+2] = 2e-10
     analysis = stiffened_shell.create_analysis(definition=
         stiffened_shell.B2Q4PanelDefinition(
             stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
             nodes, shells, members, points,
-            transformation, np.zeros(54)))
+            transformation, u0))
     load = np.zeros(54)
     load[6*8+1] = 100.
     load[6*8+3] = 10.
@@ -427,8 +435,8 @@ def test_slender_physical_b2_panel_matches_independent_high_precision_system(
         [reduced_constraint, np.zeros((12, 12))],
     ]))
     oracle = _high_precision_rounded_matrix_solve(
-        matrix, np.r_[basis.T@load, np.zeros(12)])
-    expected = basis@oracle[:basis.shape[1]]
+        matrix, np.r_[basis.T@(load-stiffness@u0), -constraint@u0])
+    expected = basis@oracle[:basis.shape[1]]+u0
     np.testing.assert_allclose(result.displacements, expected,
                                rtol=1e-8, atol=1e-12)
     multipliers = np.array([value for _, row in result.point_multipliers
@@ -437,6 +445,75 @@ def test_slender_physical_b2_panel_matches_independent_high_precision_system(
                                rtol=1e-8, atol=1e-9)
     assert np.max(np.abs(constraint@np.asarray(result.displacements))) < 1e-12
     analysis.close()
+
+
+def test_prescribed_offset_only_rejects_a_zero_numerical_solution():
+    nodes, shells, members, points, free = _panel()
+    u0 = np.zeros(54)
+    u0[0] = 1e-5
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            sparse.eye(54, format="csr")[:, free], u0))
+    load = np.zeros(54)
+    assert analysis.solve_linear(load).status == "completed"
+    tiny = load.copy()
+    tiny[6*8+1] = 1e-12
+    underresolved = analysis.solve_linear(tiny)
+    assert underresolved.status == "failed"
+    assert underresolved.failure_reason == "panel mixed-load resolution insufficient"
+    original = analysis._handle
+    analysis._handle = SimpleNamespace(
+        solve=lambda rhs: np.zeros_like(rhs),
+        factorization_count=original.factorization_count,
+        solve_count=original.solve_count)
+    failed = analysis.solve_linear(load)
+    assert failed.status == "failed"
+    assert failed.failure_reason == "panel point gap or equilibrium failed"
+    analysis.close()
+
+
+def test_affine_work_projection_preserves_a_cancelled_explicit_load():
+    nodes, shells, members, points, free = _panel()
+    transformation = sparse.eye(54, format="lil")[:, free]
+    # An admissible reduced translation has three physical contributions.
+    # The stored binary64 dot must retain the 1 N work between the two
+    # opposing 1e16 N terms, regardless of CSR accumulation order.
+    transformation[free[1], 0] = 1.
+    transformation[free[2], 0] = 1.
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            transformation.tocsr(), np.zeros(54)))
+    load = np.zeros(54)
+    load[free[0]] = 1e16
+    load[free[1]] = 1.
+    load[free[2]] = -1e16
+    projected = analysis._project(load)
+    assert projected[0] == 1.
+    assert np.count_nonzero(projected[1:]) == 2
+    # A normal-sized exact dot can be recovered after cancellation, but a
+    # subnormal projected work row cannot meet the relative resolution rule.
+    subnormal = np.zeros(54)
+    subnormal[free[0]] = np.nextafter(0., 1.)
+    with pytest.raises(_NumericalFailure, match="not representable"):
+        analysis._project(subnormal)
+    analysis.close()
+
+
+def test_affine_projection_rejects_underresolved_subnormal_products():
+    tiny = np.nextafter(0., 1.)
+    for row in ((.3, .3), (.3,)):
+        projection = sparse.csr_matrix(np.array([row]))
+        owner = SimpleNamespace(
+            _Tt=projection,
+            _projection_multi=np.array([0] if len(row) > 1 else [], dtype=int),
+            _projection_single=np.array([0] if len(row) == 1 else [], dtype=int))
+        with pytest.raises(_NumericalFailure, match="not representable"):
+            ExperimentalB2Q4PanelAnalysis._project(
+                owner, np.full(len(row), tiny))
 
 
 def test_disconnected_supported_panels_fail_topology_preflight():

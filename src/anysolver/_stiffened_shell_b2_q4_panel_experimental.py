@@ -8,6 +8,7 @@ nonlinear state or qualification is inferred from the point-joint assembly.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from fractions import Fraction
 from math import isfinite
 from typing import Callable, Mapping, Sequence
 
@@ -409,6 +410,11 @@ class ExperimentalB2Q4PanelAnalysis:
         self._K = K
         self._C = C
         self._T = T
+        self._Tt = T.T.tocsr()
+        self._projection_multi = np.flatnonzero(
+            np.diff(self._Tt.indptr) > 1)
+        self._projection_single = np.flatnonzero(
+            np.diff(self._Tt.indptr) == 1)
         # Reuse the immutable CSR patterns; only the absolute values need
         # separate storage for repeated RHS validation.
         self._abs_K = sparse.csr_matrix(
@@ -423,6 +429,57 @@ class ExperimentalB2Q4PanelAnalysis:
         self._factor_scale = factor_scale
         self._handle = handle
         self._closed = False
+
+    def _project(self, values: np.ndarray) -> np.ndarray:
+        """Affine-transpose work with exact stored-input dots on cancellation.
+
+        Ordinary selection columns retain the sparse fast path. Only rows
+        whose rounded dot cannot meet the panel's 1e-9 work resolution use
+        exact products of the stored binary64 operands.
+        """
+        rows = self._Tt
+        if not np.isfinite(values).all():
+            raise _NumericalFailure("finite panel affine projection required")
+        result = np.asarray(rows @ values).reshape(-1)
+        eps = np.finfo(float).eps
+        for row in self._projection_multi:
+            start, stop = rows.indptr[row:row+2]
+            terms = [(float(a), float(values[j])) for a, j in zip(
+                rows.data[start:stop], rows.indices[start:stop])]
+            magnitude = sum(abs(a*v) for a, v in terms)
+            uncertainty = (2*len(terms)+2)*eps*magnitude
+            if (not isfinite(float(result[row])) or
+                    not isfinite(magnitude) or
+                    (result[row] == 0. and
+                     any(a != 0. and v != 0. for a, v in terms)) or
+                    uncertainty > 1e-9*abs(float(result[row]))):
+                exact = sum((Fraction(a)*Fraction(v) for a, v in terms),
+                            Fraction(0))
+                try:
+                    result[row] = float(exact)
+                except OverflowError as exc:
+                    raise _NumericalFailure(
+                        "panel affine projection is not representable") from exc
+                if exact != 0 and result[row] == 0.:
+                    raise _NumericalFailure(
+                        "panel affine projection is not representable")
+        # Single-product underflow must not erase a nonzero applied work row.
+        singles = self._projection_single
+        for row in singles[result[singles] == 0.]:
+            slot = rows.indptr[row]
+            a = float(rows.data[slot])
+            v = float(values[rows.indices[slot]])
+            if a != 0. and v != 0.:
+                raise _NumericalFailure(
+                    "panel affine projection is not representable")
+        # Subnormal output cannot meet a 1e-9 relative work resolution.
+        if np.any((result != 0.) &
+                  (np.abs(result) < np.finfo(float).tiny)):
+            raise _NumericalFailure(
+                "panel affine projection is not representable")
+        if not np.isfinite(result).all():
+            raise _NumericalFailure("finite panel affine projection required")
+        return result
 
     @property
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
@@ -440,8 +497,12 @@ class ExperimentalB2Q4PanelAnalysis:
             raise ValueError("finite panel load vector required") from exc
         if applied.shape != self._u0.shape or not np.isfinite(applied).all():
             raise ValueError("finite panel load vector required")
-        rhs = np.r_[np.asarray(self._T.T @ (applied-self._ku0)).reshape(-1),
-                    -self._cu0]
+        try:
+            rhs = np.r_[self._project(applied-self._ku0), -self._cu0]
+        except _NumericalFailure as exc:
+            return ExperimentalB2Q4PanelResult(
+                "failed", factorization_count=self._handle.factorization_count,
+                solve_count=self._handle.solve_count, failure_reason=str(exc))
         with np.errstate(over="ignore", under="ignore", invalid="ignore"):
             scaled_rhs = self._factor_scale*rhs
         if (not np.isfinite(scaled_rhs).all() or
@@ -468,7 +529,7 @@ class ExperimentalB2Q4PanelAnalysis:
             force = np.asarray(self._K @ u).reshape(-1)
             constraint_force = np.asarray(self._C.T @ lam).reshape(-1)
             reaction = force+constraint_force-applied
-            projected = np.asarray(self._T.T @ reaction).reshape(-1)
+            projected = self._project(reaction)
             # Each row uses the absolute contribution sum in its own physical
             # work unit. A 1 N floor would mask a failed micro-/nano-load;
             # a single mixed force/moment norm would depend on chosen units.
@@ -493,10 +554,16 @@ class ExperimentalB2Q4PanelAnalysis:
             roundoff_fraction = len(rhs)*np.finfo(float).eps
             if roundoff_fraction >= 1e-9:
                 raise _NumericalFailure("panel equilibrium resolution insufficient")
-            active_rhs = np.abs(rhs[:len(projected)])
-            active = active_rhs > 0.
-            if np.any(roundoff_fraction*projected_roundoff[active] >
-                      1e-9*active_rhs[active]):
+            explicit_rhs = np.abs(self._project(applied))
+            resolution_floor = roundoff_fraction*projected_roundoff
+            # Prescribed offsets can induce reduced loads much smaller than
+            # the model-wide reaction scale. Their physical effect is checked
+            # by the full equilibrium/compatibility test below. This extra
+            # small-load resolution guard applies to explicit applied work,
+            # so a superposed tiny external load cannot disappear silently.
+            active = explicit_rhs > 0.
+            if np.any(resolution_floor[active] >
+                      1e-9*explicit_rhs[active]):
                 raise _NumericalFailure("panel mixed-load resolution insufficient")
             equilibrium_tolerance = (1e-9*equilibrium_scale+
                                      roundoff_fraction*projected_roundoff)
