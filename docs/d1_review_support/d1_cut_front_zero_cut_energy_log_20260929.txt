@@ -1,0 +1,1 @@
+{"status": "development_zero_cut_structural_energy", "free_coordinates": 84, "minimum_eigenvalue": 0.09306774473613608, "maximum_eigenvalue": 30584.513832248907, "symmetry_relative": 0.0}

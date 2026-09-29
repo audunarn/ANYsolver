@@ -1,0 +1,162 @@
+{
+  "status": "development_fixed_pose_work_map",
+  "theta": 0.05,
+  "source_commit": "664b023ce202a243c72f09f1e4f6ce77c3ebfad2",
+  "probe_sha256": "34a430e2cf3a87e0eafeb9b42089cb1278bd311136b217326c68da4cc4d1cd01",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "environment": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "openblas_threads": "1",
+    "omp_threads": "1"
+  },
+  "source_faces": 8,
+  "target_faces": 2,
+  "two_hat_mode": true,
+  "touching": true,
+  "x_hat_coefficients": [
+    0.3430831936537267,
+    -0.939305020870409
+  ],
+  "pressure_modes": 15,
+  "pressure_node_ids": [
+    3,
+    8,
+    13,
+    4,
+    9,
+    14
+  ],
+  "pressure_coefficients": [
+    0.0006966400095195405,
+    -0.0019072850864894182,
+    -0.001393280019039081,
+    0.0038145701729788363,
+    0.3430831936537267,
+    -0.939305020870409
+  ],
+  "pressure_support_m2": [
+    0.24999999999999994,
+    0.24999999999999992,
+    0.27437499999999976,
+    0.2743749999999997,
+    0.0006249999999999901,
+    0.0006249999999999901
+  ],
+  "minimum_gap_m": -1.6718227977012552e-18,
+  "expected_scalar_last_y_work": 3.67595574849461e-05,
+  "expected_scalar_continuous_witness_work": -3.3842132287728154e-05,
+  "source_full_work_l2": 1.0978336421043303e-05,
+  "target_full_work_l2": 2.1722161110770456e-05,
+  "all_full_work_l2": 2.4338778808639395e-05,
+  "source_normal_work_l2": 1.0978336421043303e-05,
+  "source_rotation_work_l2": 1.381711553708854e-22,
+  "target_normal_work_l2": 2.1722161110770453e-05,
+  "source_normal_work_by_node": [
+    0.0,
+    6.776263578034403e-21,
+    0.0,
+    0.0,
+    2.710505431213761e-20,
+    0.0,
+    6.776263578034403e-20,
+    1.6263032587282567e-19,
+    -6.505213034913027e-19,
+    -1.4907779871675686e-19,
+    0.0,
+    1.050965531602754e-06,
+    1.3264923838623273e-06,
+    -1.0458513438591995e-05,
+    -2.8773697425486888e-06
+  ],
+  "target_normal_work_by_node": [
+    8.103712581926733e-07,
+    -9.966487355283041e-06,
+    1.9265075100079502e-05,
+    8.49466262687041e-07
+  ],
+  "source_free_normal_work_l2": 1.0978336421043303e-05,
+  "target_free_normal_work_l2": 2.1690412370785394e-05,
+  "target_rotation_work_l2": 1.0676948552257684e-22,
+  "energy_check": {
+    "free_coordinates": 84,
+    "stiffness_symmetry_relative": 0.0,
+    "stiffness_minimum_eigenvalue": 0.09306774473613608,
+    "stiffness_maximum_eigenvalue": 30584.513832248907,
+    "reduced_work_l2": 2.431044753574738e-05,
+    "discrete_energy_dual_work": 2.556352823401342e-05,
+    "energy_response_relative_residual": 6.633687995340813e-13
+  },
+  "active_baseline_check": {
+    "strict_positive_pressure_modes": 6,
+    "selected_support_minimum_m2": 0.0006249999999999901,
+    "selected_gap_maximum_abs_m": 1.6718227977012552e-18,
+    "selected_complementarity_l1_n": 3.1924392026893407e-14,
+    "selected_projected_active_modes": 6,
+    "signed_half_pascal_perturbation_minimum_pressure_pa": 0.5303474895647955,
+    "free_contact_force_l2": 0.6496157382580967,
+    "manufactured_nodal_loads": [
+      {
+        "node_id": 2,
+        "uz_n": -0.04166666666666667
+      },
+      {
+        "node_id": 3,
+        "uz_n": -0.20833333333333326
+      },
+      {
+        "node_id": 4,
+        "uz_n": -0.2083333333333332
+      },
+      {
+        "node_id": 5,
+        "uz_n": -0.04166666666666666
+      },
+      {
+        "node_id": 7,
+        "uz_n": -0.04572916666666662
+      },
+      {
+        "node_id": 8,
+        "uz_n": -0.228645833333333
+      },
+      {
+        "node_id": 9,
+        "uz_n": -0.22864583333333297
+      },
+      {
+        "node_id": 10,
+        "uz_n": -0.04572916666666665
+      },
+      {
+        "node_id": 12,
+        "uz_n": -0.00010416666666666648
+      },
+      {
+        "node_id": 13,
+        "uz_n": -0.0005208333333333327
+      },
+      {
+        "node_id": 14,
+        "uz_n": -0.0005208333333333327
+      },
+      {
+        "node_id": 15,
+        "uz_n": -0.0001041666666666666
+      },
+      {
+        "node_id": 17,
+        "uz_n": 0.41661669755872194
+      },
+      {
+        "node_id": 18,
+        "uz_n": 0.22228955244127752
+      }
+    ],
+    "other_free_component_maximum": 2.223941807385791e-19,
+    "manufactured_reduced_residual_l2": 3.538058043348207e-19
+  },
+  "virtual_work_residual_l2": 1.0875903867348912e-19,
+  "elapsed_s": 1.591803000002983
+}

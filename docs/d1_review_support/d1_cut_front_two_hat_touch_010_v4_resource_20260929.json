@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.2817466000124114,
+  "peak_process_tree_memory_mb": 170.807296,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs\\d1_review_support\\d1_cut_front_shell_work.py",
+    "--theta",
+    "0.1",
+    "--two-hat-mode",
+    "--touching",
+    "--output",
+    "docs\\d1_review_support\\d1_cut_front_two_hat_touch_010_v4_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_cut_front_two_hat_touch_010_v4_log_20260929.txt"
+}

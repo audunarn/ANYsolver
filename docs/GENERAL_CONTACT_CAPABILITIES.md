@@ -13,6 +13,12 @@ evidence](d1_review_support/d1_same_side_search_20260928.md). A bounded
 completed with the sparse direct solver; common-bin forces shifted 0.2521%
 L2 while physical-support Q1 pressure shifted 7.8166% L2. These observations
 do not close pressure-space stability, y/rim convergence or D1 acceptance.
+The [reviewed two-body cut-front counterexample](d1_review_support/d1_cut_front_two_hat_counterexample_20260929.md)
+now contradicts a cut-uniform pressure-work stability claim for unchanged
+fine-Q1 pressure on an admitted touching eight-Q4/two-S3 family. This is a
+known D1 method blocker for unrestricted partial overlap, not a failure
+claim for every saved finite load path. A new derived pairing or consistent
+stabilization requires its own pressure, response and timing evidence.
 
 | Profile and geometry | Analysis and lifecycle | Status | Evidence and dependency |
 |---|---|---|---|
