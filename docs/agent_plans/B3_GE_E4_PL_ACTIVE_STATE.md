@@ -49,9 +49,10 @@ with the M1 panel coordinates, edge station pairs, signed eccentric offset,
 shell supports and six linearized pose equations. Check reference geometry,
 row independence, rigid-work identity and section assumptions before any
 numerical run. If CalculiX accepts a full elastic increment, next establish
-reaction/work interpretation and section matching, then register the refined
-E01 comparison. If it fails, revise the external representation. Neither
-outcome changes F03 or consumes its formal authority. Concurrent ANYmesh
+the expanded rotational MPC work map, reaction interpretation and section
+matching, then register the refined E01 comparison. If it fails, revise the
+external representation. Neither outcome changes F03 or consumes its formal
+authority. Concurrent ANYmesh
 numerical jobs observed on 29 September prevent launching this screen now.
 The inert signed decks and manifest are in
 `.qualification/b3-ge-e4-pl/r8-e01-matching-point-canary-dev-20260929-v1/`.
@@ -63,6 +64,15 @@ unverified. A one-case runner with pinned executable/deck hashes, 120 s and
 8 GiB limits, raw-output retention and warning checks is prepared; its exact
 command is in the evidence README. Run it only when the heavy-job slot is
 free, then decide whether this route can support a refined E01 comparison.
+Before treating a successful solve as mechanically valid, inspect the
+expansion trace for knots at every rotational-MPC station and check rigid
+motion/work there. CalculiX 2.23 section 10.3.6 disallows rotational MPC
+terms at nodes without knots; the prior footprint comparator completed yet
+failed a rigid-motion check for that reason. A completed increment alone
+cannot promote this deck. Its B31 rectangular section also does not establish
+native generalized shear/torsion parity, and printed RF cannot be assumed to
+be the complete support wrench under MPCs. Source: CalculiX 2.23 manual,
+https://www.dhondt.de/ccx_2.23.pdf, sections 6.2, 10.3.6 and NODE PRINT.
 
 Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1. This is the short working checkpoint. The complete pre-compaction note is preserved byte-for-byte in B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20260929.md (SHA-256 2D5071E8A93FDCF35FC3AF49955E0B85F431A19B1DF2BF3742A8CA560584BCDA). The complete programme, acceptance matrix, frozen registrations, failures, and versioned evidence remain authoritative.
 
