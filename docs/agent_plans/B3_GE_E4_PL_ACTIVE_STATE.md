@@ -226,6 +226,14 @@ SHA-256 `637671357D66400361FCA99FEFEB2D2A5DA403877DB7760CE7CA34116E293849`.
 The earlier installed 50/52 run and its two authority failures are retained
 as development history. This is a positive-load precision improvement, not
 support for sign reversal, shell J2, fibre plasticity, F03, G3 or G5 acceptance.
+The same solver wheel was paired with the unchanged ANYfem consumer wheel for
+one consolidated installed run: 40/40 GE, B2 and consumer checks passed,
+including construction, save/reopen, finite restart and B2 batching. Both
+imports resolved inside the disposable site and OpenBLAS used one thread.
+The complete run log, both wheels, hashes and test inventory are retained in
+`.qualification/b3-ge-e4-pl/r7-ge-centered-combined-installed-dev-20260929-v1/`.
+This confirms the current experimental integration slice on Windows; it does
+not satisfy the remaining G0–G6 or cross-platform acceptance.
 
 A separate finite-support flat-Q4 shell-pose prototype has exact box-window
 centroid/covariance weights, objective rigid-motion recovery, a bounded
