@@ -16,7 +16,7 @@ pass.
 |---|---|---|
 | M1 matching-station GE | IMPLEMENTED_NOT_QUALIFIED | Current installed GE/ANYfem checks pass; matched E01, complete V01–V06/V17/V18/V28 evidence and independent acceptance open. |
 | M2 bonded line | IN_PROGRESS | BL5 physical law, multiplier resolution, F03 and ratios/refinement/transfer open. |
-| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Current 1/10/100 installed checks pass; F09–F11/F13, point/consumer domain and E01 B2 comparison open. |
+| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/B2 point-panel 1/10/100 and distinct ANYfem experimental input save/reopen pass installed checks; F09–F11/F13 acceptance, native-project persistence and E01 B2 comparison remain open. |
 | M4 remaining mechanics | IN_PROGRESS | Materials, footprints, topology, loads, spectra, imperfections and capacity remain mandatory. |
 | M5 scale/release | NOT_STARTED | Practical scale, platforms, external programme and authorized release remain mandatory. |
 
