@@ -27,6 +27,20 @@ route and identify a genuinely matched E01 point-connection reference;
 resume this plastic ticket only for a specific accepted scope or derivative
 repair hypothesis. No formal F03 authority was used.
 
+The current M1 integration screen built solver wheel
+`2a458326c52ec19f5a50c86b598e00252d521c956df62e429181a94e24a9cc25`
+from `2f3161b3` and ANYfem wheel
+`edc1457950fc250e5a283c47b2cf98246e21dfb59198dfc6f697c88c0336c3a8`
+from `8c8a4823`. Actual installed imports were verified. Four focused ANYfem
+GE panel tests and five B2 batch tests passed on Windows/Python 3.14 with
+JIT disabled and one numerical thread; the first B2 collection setup failure
+is preserved. See `.qualification/b3-ge-e4-pl/r8-m1-combined-installed-dev-20260929-v1/`.
+This confirms the current combined experimental workflow, not M1/M3
+acceptance. M1 still needs V01–V06, V17/V18/V28 coverage reconciliation,
+matched E01, Linux/platform checks and independent review of the complete
+candidate. Do not use the earlier rigid-footprint CalculiX canary as a
+matching-station six-row point-bond oracle.
+
 Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1. This is the short working checkpoint. The complete pre-compaction note is preserved byte-for-byte in B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20260929.md (SHA-256 2D5071E8A93FDCF35FC3AF49955E0B85F431A19B1DF2BF3742A8CA560584BCDA). The complete programme, acceptance matrix, frozen registrations, failures, and versioned evidence remain authoritative.
 
 ## Decision and gates
