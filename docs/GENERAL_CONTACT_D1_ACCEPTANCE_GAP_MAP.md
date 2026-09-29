@@ -134,6 +134,16 @@ does not explain the observed physical pressure-field shift or prove
 mesh-uniform stability. The fixed-target guided scalar scope, other D1 gates
 and the cap on further refinement remain unchanged.
 
+The [deformable-target pressure-work preflight](d1_review_support/d1_two_body_pressure_work_20260929.md)
+replays accepted slide and recontact poses of the four-Q4/two-S3 cycle. Its
+complete constrained two-body pressure work has numerical rank 10/10 on all
+supported modes at both poses; independent clipped support, gap and Q1 Gram
+agree with production, and the reduced structural tangent is positive. This
+rules out a numerically resolved local work null at those poses, including
+one-sided pressure directions. It leaves the changing-front, nonlinear
+two-body spatial-response and mesh-family acceptance questions open. The
+dimensional compliance/Gram eigenvalues are not a new stability threshold.
+
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
 bound at all eight accepted poses. Local and installed fields match; a forced

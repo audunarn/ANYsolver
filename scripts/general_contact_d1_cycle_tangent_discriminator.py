@@ -7,14 +7,20 @@ fixed-multiplier smooth branches. A branch change is reported as inconclusive.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
+import subprocess
 
 import numpy as np
+from scipy import linalg
+
+import anysolver
 
 from anysolver import solve_static_nonlinear
 from anysolver.assembly import build_constraint_transformation
 from anysolver.general_contact.core import contact_scope, suspend_contact
+from anysolver.general_contact.semismooth import linearize
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from anysolver.nonlinear_static import _prepare_initial_states
 from examples.general_contact_free_target_cycle_dev import build_case
@@ -35,7 +41,141 @@ def _relative_error(actual, expected):
     return float(np.linalg.norm(actual-expected))/scale, scale
 
 
-def run():
+def _pressure_cone_preflight(model, definition, settings, program, result,
+                             history, manager, transform, independent):
+    """Offline pressure-work null screen at accepted two-body poses only."""
+    from docs.d1_review_support.d1_two_body_current_skin_quadrature import (
+        integrate_current_skin,
+    )
+
+    if len(program.controls) != 2:
+        raise AssertionError("two-body preflight requires its two ux controls")
+    index = {int(dof): col for col, dof in enumerate(independent)}
+    control_dofs = [int(model.mesh.dof_manager.get_node_dofs(node)[0])
+                    for node in (1, 6)]
+    free = np.setdiff1d(np.arange(transform.shape[1]),
+                        [index[dof] for dof in control_dofs])
+    physical = transform[:, free]
+
+    def work_rank(work, modes):
+        matrix = np.asarray(work[modes], dtype=float)
+        if not len(matrix):
+            return {"modes": 0, "scaled_rank": 0}
+        row_norm = np.linalg.norm(matrix, axis=1)
+        if np.any(row_norm == 0.0):
+            return {"modes": int(len(modes)), "scaled_rank": 0,
+                    "zero_work_mode_ids": np.asarray(modes)[
+                        row_norm == 0.0].tolist()}
+        normalized = matrix/row_norm[:, None]
+        singular = linalg.svdvals(normalized)
+        rank = int(np.count_nonzero(singular > 1.0e-10*singular[0]))
+        return {"modes": int(len(modes)), "scaled_rank": rank,
+                "smallest_to_largest_singular_ratio": float(
+                    singular[-1]/singular[0])}
+
+    records = []
+    for step in (4, 7):
+        snapshot = result.snapshots[step-1]
+        certificate = history[step-1]["contact"]
+        pose = np.asarray(snapshot.displacements, dtype=float)
+        pressure = np.asarray(certificate["numerical_pressure_pa"],
+                              dtype=float)
+        support = np.asarray(certificate["reference_support_m2"],
+                             dtype=float)
+        manager.set_normal_multipliers(np.asarray(
+            certificate["normal_multiplier_estimate_pa"], dtype=float))
+        contact = linearize(manager, pose, pressure*support, tangent=False)
+        oracle = integrate_current_skin(
+            model, definition, pose, pressure_gram=True)
+        independent_gram = oracle[5]
+        if np.any(support <= 0.0):
+            raise AssertionError("two-body pressure support must be positive")
+        support_error = float(np.linalg.norm(oracle[0]-support)
+                              /np.linalg.norm(support))
+        production_support_error = float(np.linalg.norm(
+            contact.state.reference_support-support)/np.linalg.norm(support))
+        gap_error = float(np.max(np.abs(
+            oracle[1]/oracle[0]-contact.state.normalized_gap)))
+        gram_error = float(np.linalg.norm(
+            independent_gram-contact.state.pressure_gram)
+            /np.linalg.norm(independent_gram))
+        if (support_error > 1.0e-8 or production_support_error > 1.0e-8
+                or gap_error > 1.0e-9 or gram_error > 1.0e-8):
+            raise AssertionError("two-body independent overlap check failed")
+        pressure_gram_diagonal = np.sqrt(np.diag(independent_gram))
+        gram_min = float(np.linalg.eigvalsh(
+            independent_gram/np.outer(
+                pressure_gram_diagonal, pressure_gram_diagonal))[0])
+        if gram_min <= 1.0e-10:
+            raise AssertionError("two-body physical pressure Gram is singular")
+        work = np.asarray(
+            support[:, None]*contact.gap_gradient @ physical)
+        with suspend_contact():
+            _internal, stiffness = _assemble(
+                model, pose, snapshot.element_states, tangent=True)
+        energy = np.asarray(
+            (physical.T @ stiffness @ physical).toarray())
+        symmetry = float(np.linalg.norm(energy-energy.T)
+                         /max(np.linalg.norm(energy), 1.0e-30))
+        if symmetry > 1.0e-8:
+            raise AssertionError("two-body structural tangent is not symmetric")
+        energy = 0.5*(energy+energy.T)
+        energy_diagonal = np.sqrt(np.diag(energy))
+        energy_min = float(np.linalg.eigvalsh(
+            energy/np.outer(energy_diagonal, energy_diagonal))[0])
+        if energy_min <= 1.0e-10:
+            raise AssertionError("two-body structural energy is not positive")
+        compliance = work @ linalg.solve(
+            energy, work.T, assume_a="pos")
+        compliance = 0.5*(compliance+compliance.T)
+        full_ratio = linalg.eigvalsh(compliance, independent_gram)
+        active = np.flatnonzero(pressure > 0.0)
+        gap = np.asarray(contact.state.normalized_gap)
+        strict_front = np.flatnonzero((pressure == 0.0)
+                                      & (np.abs(gap) <= 1.0e-9))
+        near_front = np.flatnonzero((pressure == 0.0)
+                                    & (gap <= definition.interactions[0]
+                                       .gap_tolerance))
+        full_rank = work_rank(work, np.arange(len(pressure)))
+        records.append({
+            "step": step,
+            "pressure_modes": int(len(pressure)),
+            "active_pressure_modes": int(len(active)),
+            "strict_biactive_modes": strict_front.tolist(),
+            "enlarged_near_front_modes": near_front.tolist(),
+            "independent_support_relative_error": support_error,
+            "production_support_relative_certificate_error":
+                production_support_error,
+            "independent_gap_maximum_error_m": gap_error,
+            "independent_pressure_gram_relative_error": gram_error,
+            "independent_gram_scaled_minimum_eigenvalue": gram_min,
+            "structural_tangent_symmetry_relative": symmetry,
+            "structural_energy_scaled_minimum_eigenvalue": energy_min,
+            "full_supported_work": full_rank,
+            "no_numerically_resolved_supported_work_null": (
+                full_rank["scaled_rank"] == len(pressure)),
+            "dimensional_compliance_to_gram_eigenvalue_range_m3_per_n": [
+                float(full_ratio[0]), float(full_ratio[-1])],
+            "strict_active_plus_biactive_work": work_rank(
+                work, np.unique(np.r_[active, strict_front])),
+            "enlarged_near_front_work": work_rank(
+                work, np.unique(np.r_[active, near_front])),
+        })
+    return {
+        "status": ("development_two_body_pressure_work_null_preflight"
+                   if all(row["no_numerically_resolved_supported_work_null"]
+                          for row in records)
+                   else "development_two_body_pressure_work_rank_deficient"),
+        "scope": "saved guided four-Q4/two-free-S3 slide and recontact only",
+        "source_commit": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), text=True).strip(),
+        "anysolver_module": str(Path(anysolver.__file__).resolve()),
+        "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "records": records,
+    }
+
+
+def run(*, pressure_cone_preflight=False):
     model, definition, settings, program = build_case()
     result = solve_static_nonlinear(
         model, contact=definition, contact_settings=settings,
@@ -91,6 +231,10 @@ def run():
         }
         axis = {"ux": 0, "uz": 2, "ry": 4}
         states, _ = _prepare_initial_states(replay_model, None, None, 5)
+        if pressure_cone_preflight:
+            return _pressure_cone_preflight(
+                replay_model, replay_definition, replay_settings,
+                program, result, history, manager, transform, independent)
         records = []
         source_ry_screen = []
         source_ry_dofs = np.asarray([
@@ -339,10 +483,13 @@ def run():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--pressure-cone-preflight", action="store_true")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
-    args.output.write_text(json.dumps(run(), indent=2)+"\n", encoding="utf-8")
+    args.output.write_text(json.dumps(run(
+        pressure_cone_preflight=args.pressure_cone_preflight), indent=2)+"\n",
+        encoding="utf-8")
 
 
 if __name__ == "__main__":

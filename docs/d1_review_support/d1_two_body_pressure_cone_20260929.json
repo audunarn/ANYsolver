@@ -1,0 +1,83 @@
+{
+  "status": "development_two_body_pressure_cone_preflight",
+  "scope": "saved guided four-Q4/two-free-S3 slide and recontact only",
+  "probe_sha256": "7430f3abab8eda31b56b61792ef145b4bf8c87cf79294a0381f95bddb3f8f90f",
+  "records": [
+    {
+      "step": 4,
+      "pressure_modes": 10,
+      "active_pressure_modes": 2,
+      "strict_biactive_modes": [],
+      "enlarged_near_front_modes": [
+        0,
+        1,
+        2,
+        4,
+        5,
+        6,
+        7,
+        9
+      ],
+      "independent_support_relative_error": 2.4340923859796062e-14,
+      "independent_gap_maximum_error_m": 7.062581788386084e-13,
+      "independent_gram_scaled_minimum_eigenvalue": 0.21525260318704165,
+      "structural_tangent_symmetry_relative": 3.40532183263674e-17,
+      "structural_energy_scaled_minimum_eigenvalue": 0.05284351187054047,
+      "full_supported_work_rank": 10,
+      "full_supported_compliance_gram_eigenvalue_range": [
+        3.3879264523104007e-09,
+        0.1783918788046897
+      ],
+      "strict_critical_cone": {
+        "eligible_modes": 2,
+        "scaled_rank": 2,
+        "smallest_to_largest_singular_ratio": 0.3000335084894707,
+        "feasible_null": false
+      },
+      "enlarged_near_front_sensitivity_cone": {
+        "eligible_modes": 10,
+        "scaled_rank": 10,
+        "smallest_to_largest_singular_ratio": 0.001978930517647279,
+        "feasible_null": false
+      }
+    },
+    {
+      "step": 7,
+      "pressure_modes": 10,
+      "active_pressure_modes": 2,
+      "strict_biactive_modes": [],
+      "enlarged_near_front_modes": [
+        0,
+        1,
+        2,
+        3,
+        5,
+        6,
+        7,
+        8
+      ],
+      "independent_support_relative_error": 1.6885929715766659e-15,
+      "independent_gap_maximum_error_m": 2.1563198275564854e-13,
+      "independent_gram_scaled_minimum_eigenvalue": 0.2152526014825398,
+      "structural_tangent_symmetry_relative": 3.405321704877484e-17,
+      "structural_energy_scaled_minimum_eigenvalue": 0.05284351187054047,
+      "full_supported_work_rank": 10,
+      "full_supported_compliance_gram_eigenvalue_range": [
+        3.3879373085501236e-09,
+        0.1783927938849671
+      ],
+      "strict_critical_cone": {
+        "eligible_modes": 2,
+        "scaled_rank": 2,
+        "smallest_to_largest_singular_ratio": 0.30027196350778307,
+        "feasible_null": false
+      },
+      "enlarged_near_front_sensitivity_cone": {
+        "eligible_modes": 10,
+        "scaled_rank": 10,
+        "smallest_to_largest_singular_ratio": 0.001978933793589113,
+        "feasible_null": false
+      }
+    }
+  ]
+}
