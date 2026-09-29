@@ -69,6 +69,7 @@ class ExperimentalBL5Line:
     beam_halfcells: tuple[tuple[int, int], ...]
     multiplier_span: int = 1
     expected_beam_arm: tuple[float, float, float] = (0., 0., -.05)
+    basis: str = "p0"
 
     def __post_init__(self):
         n = len(self.beam_halfcells)
@@ -85,6 +86,10 @@ class ExperimentalBL5Line:
                 type(self.multiplier_span) is not int or
                 self.multiplier_span not in (1, 2) or
                 n % self.multiplier_span or
+                type(self.basis) is not str or
+                self.basis not in ("p0", "continuous_p1") or
+                (self.basis == "continuous_p1" and
+                 self.multiplier_span != 1) or
                 type(self.expected_beam_arm) is not tuple or
                 len(self.expected_beam_arm) != 3 or
                 any(isinstance(v, (bool, np.bool_)) or
@@ -94,19 +99,27 @@ class ExperimentalBL5Line:
 
     @property
     def multiplier_space(self):
+        if self.basis == "continuous_p1":
+            return "BL5_P1_continuous"
         return f"BL5_P0_span_{self.multiplier_span}"
 
     def descriptor(self):
-        return dict(law=LAW_ID, shell_nodes=self.shell_nodes,
-                    beam_halfcells=self.beam_halfcells,
-                    multiplier_span=self.multiplier_span,
-                    expected_beam_arm=self.expected_beam_arm)
+        result = dict(law=LAW_ID, shell_nodes=self.shell_nodes,
+                      beam_halfcells=self.beam_halfcells,
+                      multiplier_span=self.multiplier_span,
+                      expected_beam_arm=self.expected_beam_arm)
+        if self.basis == "continuous_p1":
+            result["basis"] = self.basis
+        return result
 
 
 def _sample_rows(line: ExperimentalL1Line | ExperimentalBL5Line,
                  edge: int, alpha: float,
                  channel: int):
     if type(line) is ExperimentalBL5Line:
+        if line.basis == "continuous_p1":
+            base = channel*(len(line.beam_halfcells)+1)
+            return ((base+edge, 1.-alpha), (base+edge+1, alpha))
         return ((channel*(len(line.beam_halfcells)//line.multiplier_span)+
                  edge//line.multiplier_span, 1.),)
     n = len(line.beam_halfcells)
@@ -123,6 +136,8 @@ def _sample_rows(line: ExperimentalL1Line | ExperimentalBL5Line,
 def _row_count(line: ExperimentalL1Line):
     n = len(line.beam_halfcells)
     if type(line) is ExperimentalBL5Line:
+        if line.basis == "continuous_p1":
+            return 5*(n+1)
         return 5*n//line.multiplier_span
     return 4*(n+1)+2*n if line.multiplier_space == SPACE_A else 4*n+n
 

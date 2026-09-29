@@ -328,6 +328,62 @@ def _bl5_joint_mesh_definition(shell_edges, beam_halfcells, span):
     return replace(base, beams=beams, lines=(line,))
 
 
+def test_bl5_continuous_p1_is_distinct_and_does_not_change_p0_identity():
+    base = _bl5_joint_mesh_definition(4, 4, 1)
+    p0 = base.lines[0]
+    assert "basis" not in p0.descriptor()
+    p1 = replace(p0, basis="continuous_p1")
+    assert p1.multiplier_space == "BL5_P1_continuous"
+    assert p1.descriptor()["basis"] == "continuous_p1"
+    with pytest.raises(ValueError, match="ordered even-edge"):
+        replace(p1, multiplier_span=2)
+    with pytest.raises(ValueError, match="ordered even-edge"):
+        replace(p1, basis="unknown")
+    first = stiffened_shell.create_analysis(definition=base)
+    second = stiffened_shell.create_analysis(definition=
+        replace(base, lines=(p1,)))
+    assert first.preflight()["identity"] != second.preflight()["identity"]
+    assert first.capabilities["experimental_line_spaces"] == ("BL5_P0_span_1",)
+    assert second.capabilities["experimental_line_spaces"] == (
+        "BL5_P1_continuous",)
+    assert first._C.shape[0] == 20
+    assert second._C.shape[0] == 25
+    second.solve_linear((stiffened_shell.NodalAction(
+        "beam", 105, (0., 100., 0., 0., 0., 0.)),))
+    snapshot = second.checkpoint()
+    with pytest.raises(ValueError, match="incompatible mixed linear checkpoint"):
+        first.restore(snapshot)
+    restored = stiffened_shell.create_analysis(definition=
+        replace(base, lines=(p1,)))
+    np.testing.assert_array_equal(
+        restored.restore(snapshot).shell_displacement,
+        second.recover().shell_displacement)
+    first.close()
+    second.close()
+    restored.close()
+
+
+@pytest.mark.parametrize("wrench,work", (
+    ((0., 100., 0., 0., 0., 0.), .0004059937141791822),
+    ((0., 0., 0., 10., 0., 0.), .00006240563717080719),
+))
+def test_bl5_continuous_p1_reproduces_independent_bounded_work(wrench, work):
+    base = _bl5_joint_mesh_definition(16, 16, 1)
+    definition = replace(base, lines=(replace(
+        base.lines[0], basis="continuous_p1"),))
+    owner = stiffened_shell.create_analysis(definition=definition)
+    result = owner.solve_linear((stiffened_shell.NodalAction(
+        "beam", 117, wrench),))
+    assert result.status == "completed"
+    assert result.free_equilibrium_ratio < 1e-8
+    assert result.constraint_max < 1e-9
+    tip = result.beam_coordinates[6*owner._beam_index[117]:
+                                  6*owner._beam_index[117]+6]
+    np.testing.assert_allclose(np.dot(wrench, tip), work,
+                               rtol=1e-10, atol=1e-13)
+    owner.close()
+
+
 def test_bl5_single_p0_support_misses_a_free_beam_yaw():
     """One five-row mean support cannot anchor all six beam rigid motions."""
     for span in (1, 2):
