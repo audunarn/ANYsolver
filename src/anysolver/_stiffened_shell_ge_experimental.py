@@ -154,8 +154,8 @@ def _owned(values, shape=None):
 def _shell_reference(panel: ShellPanel):
     ids = tuple(panel.node_ids)
     xyz = _owned(panel.coordinates_m, (len(ids), 3))
-    if (len(ids) < 6 or len(ids) != len(set(ids)) or
-            len(panel.q4_elements)+len(panel.s3_elements) < 2 or
+    if (len(ids) < 3 or len(ids) != len(set(ids)) or
+            len(panel.q4_elements)+len(panel.s3_elements) < 1 or
             any(type(v) is not int or v <= 0 for v in ids) or
             not np.allclose(xyz[:, 2], xyz[0, 2], rtol=0., atol=1e-12) or
             not (np.isfinite(panel.thickness_m) and panel.thickness_m > 0. and
@@ -218,9 +218,9 @@ def _shell_reference(panel: ShellPanel):
 
 
 def _beam_reference(definitions: tuple[NativeBeamDefinition, ...]):
-    if len(definitions) < 2 or any(type(v) is not NativeBeamDefinition
+    if len(definitions) < 1 or any(type(v) is not NativeBeamDefinition
                                    for v in definitions):
-        raise ValueError("multiple explicit native B3 definitions required")
+        raise ValueError("explicit native B3 definition required")
     elements = []
     nodes = {}
     for definition in definitions:
