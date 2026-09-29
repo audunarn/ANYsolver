@@ -33,16 +33,16 @@ M4 reference-modal development: the existing B2/Q4 facade now returns checked ex
 | Gate | Status | Boundary |
 |---|---|---|
 | G0A | IN_PROGRESS | Reconcile prior registration before a pass claim. |
-| G0B | IN_PROGRESS | No F01–F13 foundation fully accepted; F03 open. |
+| G0B | IN_PROGRESS | Scoped F05 passed; other foundations, including F03, open. |
 | G1 | IMPLEMENTED_NOT_QUALIFIED | Experimental sparse owner exists; foundation and full G1 acceptance open. |
 | G2 | IN_PROGRESS | Candidate line/footprint and topology incomplete. |
-| G3 | IN_PROGRESS | Some yielded histories work; F05 and full material domain open. |
+| G3 | IN_PROGRESS | F05 fixed-predecessor foundation passed; full material domain open. |
 | G4A–G4D | NOT_STARTED | No aggregate load, stability, imperfection or capacity acceptance. |
 | G5 | IN_PROGRESS | Development scale screens do not meet practical-scale qualification. |
 | G6A–G6D | IN_PROGRESS | Focused installed/consumer checks exist; final graph, external, reviews and release open. |
 
-Every foundation remains open. The earlier bounded F04 distinction result
-does not close F04:
+F05 is accepted only for its scoped fixed-predecessor foundation. Other
+foundations remain open; the earlier bounded F04 distinction does not close F04:
 
 | Foundation | Status |
 |---|---|
@@ -50,7 +50,7 @@ does not close F04:
 | F02 | IN_PROGRESS |
 | F03 | IN_PROGRESS |
 | F04 | IN_PROGRESS |
-| F05 | IN_PROGRESS |
+| F05 | PASSED — selected Q4/existing S3 fixed-predecessor foundation |
 | F06 | IN_PROGRESS |
 | F07 | IN_PROGRESS |
 | F08 | IN_PROGRESS |
@@ -96,3 +96,87 @@ without changing the accepted 40 N state. See the active note and
 `.qualification/b3-ge-e4-pl/r8-f05-45n-ticket-dev-20260929-v1/`.
 Formal F03 execution authority is unconsumed. This matrix changes no
 scientific criterion, resource limit, release authority or final scope.
+
+## Prospective F05 foundation assessment — 30 September 2026, v1
+
+**Status: PASSED, scoped independent adjudication.** This Level B assessment answers whether
+the selected Q4 and existing S3 full algorithmic pullbacks give the admitted
+fixed-predecessor derivative, including their assembled owner composition and
+one-sided yield limits. It does not accept G3 material breadth, F06 chart-history
+coverage, attachments, F03, G0B or a release. Historical diagnostics, failures
+and their consumed authorities remain unchanged. Revision 8 permits this new
+assessment; no separate unconsumed F05 authority is recorded.
+
+Candidate tests: `23cb71cd8d315dc536ce146ab3c165b1d6b81f49`; product remains
+`0da6cd12b755ab78b9634e2a4b5b880058f2e457`. Policies are
+`STIFFENED_SHELL_Q4_ALGORITHMIC_PULLBACK_V1` and the existing S3 algorithmic
+pullback; the elastic-only historical variational adapter remains guarded.
+Use the existing solver wheel SHA-256
+`314ea0dffd9c5fa7f70b80538373e42ffd10b5083f231b69a8bd4784773b1a2d`.
+All 384 wheel Python modules match the candidate source and isolated installed
+site byte-for-byte. The prior [91-check evidence](../../.qualification/b3-ge-e4-pl/r8-q4-pullback-dev-20260930-v1/manifest.json)
+is reused for local objective pose/work oracles, active smooth derivatives,
+ownership, admission, guarded legacy behavior and selected-owner lifecycle.
+Only two test files changed after that product; no wheel or consumer rebuild
+is justified. This reuse does not turn its development disposition into a pass.
+
+New inventory is **10 cases**:
+
+- Two selected mixed Q4/S3/native-beam assembled derivatives, before and after
+  an actual owned anchor reset. Accepted prefix `.5, 1`; trial target `2`, half
+  Newton step plus supported axial strain `2e-5*x`; fixed shell/beam predecessors.
+  Two directions, central steps `.01, .001`. Require active updating in every
+  shell and native beams, stable sampled masks, nonzero multiplier curvature,
+  and unchanged accepted checkpoint/predecessor bytes. Shell, beam and free-primal
+  raw and work-scaled relative errors must each be <=`1e-5`; scaled constraint
+  derivative error <=`1e-9`. Physical coordinate and constraint scales come from
+  the unchanged owner. This unaccepted trial is not an equilibrium solution.
+- Eight Q4/S3 × virgin/yielded-reload × elastic-left/plastic-right local limits.
+  Centered unit polygons, E=210 GPa, nu=.3, t=.02, C208 100/105/110 MPa,
+  plastic strains .005/.01, K=400 MPa, n=.2; Q4 three and S3 five layers.
+  Independent biaxial constitutive and boundary-traction identities determine
+  yield position, force and branch slopes. Outward second-order one-sided
+  stencils use first-yield strain times `.02, .01`, outside the native guard and
+  within the first linear hardening branch. Fixed native tolerance is `1e-10`.
+  The analytically bounded stopping noise amplified by `4/h` must be below the
+  unchanged derivative limit before evaluation: elastic <=`1e-6`, plastic
+  <=`1e-5`. Tangent/analytic/stencil comparisons must all meet those limits;
+  force, stress and strain oracles <=`1e-8`; plastic state rtol `1e-8`, atol
+  `1e-12`; finite states, correct side masks and unchanged predecessors mandatory.
+  No behavior inside the numerical yield guard is asserted. Earlier insufficient
+  finite-difference resolution and inactive-S3 fixture failures remain evidence.
+
+Exact inputs, six copied fixtures, runner hashes and 384-module identity are
+frozen in `C:/Users/AudunArnesenNyhus/AppData/Local/Temp/r8-f05-foundation-installed-v1/inputs.json`,
+SHA-256 `2d8c63567791cddef73e2a0b282e81a3c83c294cabcfbe8c18b7e5f6756cd2f0`.
+Selected test hashes: assembled
+`7a24bec72a3c07dad2dd39ff3deb74fbd8c0244538816c624ed9a989c167de77`, yield
+`fd64fb14c29272d8f490bdba3733e0344735a810df1b844136ab8efaced870b8`.
+Command: `python -u run_bounded.py` in that exclusive output directory.
+The retained supervisor launches `run_installed.py` against the existing isolated
+site, enforces 600 s and 8 GiB process-tree memory, and checks actual imports,
+Python/dependency identities, one numerical thread and disabled JIT. Maximum
+assembled size must remain below 100,000 rows; one heavy programme job at a time.
+Baseline dependencies remain Python 3.14.2, numpy 2.4.6, scipy 1.17.1,
+pytest 9.0.3, numba .65.1, ANYmaterial .2.0 at
+`d8a233ef4c5e38d25dbba0eb20e6cfa8d44ec5a2`, curves SHA-256
+`0d090a1ddc19bdc788a129b5b2ba9261642d05f94378cf097f7220c9ed2bd12e`;
+the input record binds imported package paths and remaining dependency versions.
+
+Retain command/log, junit inventory, ten scientific JSON reports, effective
+settings, imports, supervision outcomes, failed development evidence and an
+independent adjudication. A skip, missing report, identity drift, resource breach,
+failed scientific predicate or unresolved review finding leaves F05 open.
+Only complete evidence and independent acceptance can mark the scoped foundation
+PASSED. Unaffected scientific criteria and all downstream gates remain binding.
+
+**Disposition:** installed execution passed 10/10 with ten complete scientific
+reports, unchanged predecessors and accepted bytes. Independent review found no
+unresolved correctness finding; source/wheel/site, fixture and runner identities
+were independently rehashed. Assembled raw/work-scaled maxima `2.29903e-7` /
+`2.29414e-7`; scaled constraint `4.23963e-15`; plastic yield `1.09125e-6`;
+force oracle `7.25036e-11`. One numerical thread, JIT disabled, 19.988 s,
+220,020,736 bytes observed process-tree peak RSS. See
+[immutable results and review](../../.qualification/b3-ge-e4-pl/r8-f05-foundation-20260930-v1/results.md).
+The frozen pre-execution matrix remains `contract.snapshot.md` in that evidence;
+this disposition does not rewrite it. G0B and unrelated obligations stay open.
