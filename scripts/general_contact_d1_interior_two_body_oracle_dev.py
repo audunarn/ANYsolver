@@ -273,6 +273,159 @@ def offline_x_reference(output: Path) -> None:
     print(json.dumps(cases))
 
 
+def offline_target_reference(output: Path) -> None:
+    if output.exists():
+        raise FileExistsError(output)
+    from examples.general_contact_d1_interior_controls_dev import (
+        _independent_projected_gap_bound,
+    )
+
+    cases = []
+    points = ((0.6, 0.6), (0.6, 0.7), (0.6, 0.9))
+    for target_rows in (1, 2, 3):
+        model, definition, _settings, program = build_interior_press(
+            source_support="perimeter", source_columns=16,
+            source_rows=16, source_y_profile="uniform_ref16",
+            offline_structural_reference_y16=True,
+            target_columns=2, target_rows=target_rows, force_n=0.04,
+            reference_slope=1.0e-4, load_shape="physical_bump",
+            slide_body="target",
+            target_reference_full_left_clamp=(target_rows > 1),
+        )
+        target_first = 17*17+1
+        middle_left = tuple(target_first+3*row
+                            for row in range(1, target_rows))
+        reference = solve_reference_singleton(
+            model, definition, program, 2, allow_multimode=True)
+        try:
+            lower_gap = _independent_projected_gap_bound(
+                model, definition, reference["displacement"],
+                definition.interactions[0].gap_tolerance)
+        except RuntimeError as error:
+            output.write_text(json.dumps({
+                "cases": cases, "failed_target_rows": target_rows,
+                "failure": str(error)}, indent=2)+"\n", encoding="utf-8")
+            raise
+        cases.append({
+            "source_columns": 16, "source_rows": 16,
+            "target_columns": 2, "target_rows": target_rows,
+            "target_s3_faces": 4*target_rows,
+            "fixed_middle_left_nodes": middle_left,
+            "load_shape": "physical_bump",
+            "integrated_normal_force_n": reference["integrated_force"],
+            "active_node_ids": reference["active_node_ids"],
+            "independent_projected_lower_gap_m": lower_gap,
+            "sample_xy_m": points,
+            "source_vertical_displacement_m": _source_vertical_samples(
+                model, reference["displacement"], 16, points,
+                columns=16),
+            "structural_free_coordinates": reference[
+                "structural_free_coordinates"],
+        })
+    output.write_text(json.dumps({"cases": cases}, indent=2)+"\n",
+                      encoding="utf-8")
+    print(json.dumps(cases))
+
+
+def target8s3_coupled_oracle(output: Path) -> None:
+    if output.exists():
+        raise FileExistsError(output)
+    from examples.general_contact_d1_interior_controls_dev import (
+        _independent_projected_gap_bound,
+    )
+
+    model, definition, _settings, program = build_interior_press(
+        source_support="perimeter", source_columns=8, source_rows=8,
+        target_columns=2, target_rows=2,
+        target_reference_full_left_clamp=True,
+        force_n=0.04, reference_slope=1.0e-4,
+        load_shape="physical_bump", slide_body="target",
+    )
+    reference = solve_reference_singleton(
+        model, definition, program, 2, allow_multimode=True)
+    gap = _independent_projected_gap_bound(
+        model, definition, reference["displacement"],
+        definition.interactions[0].gap_tolerance)
+    record = {
+        "source_q4_faces": 64, "target_s3_faces": 8,
+        "load_shape": "physical_bump",
+        "fixed_middle_left_node_id": 1+9*9+3,
+        "integrated_normal_force_n": reference["integrated_force"],
+        "active_node_ids": reference["active_node_ids"],
+        "independent_projected_lower_gap_m": gap,
+        "sample_xy_m": ((0.6, 0.6), (0.6, 0.7), (0.6, 0.9)),
+        "source_vertical_displacement_m": _source_vertical_samples(
+            model, reference["displacement"], 8,
+            ((0.6, 0.6), (0.6, 0.7), (0.6, 0.9))),
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps(record))
+
+
+def target8s3_coupled_comparison(output: Path, reference_path: Path,
+                                saved_path: Path) -> None:
+    if output.exists():
+        raise FileExistsError(output)
+    from examples.general_contact_d1_interior_controls_dev import (
+        _independent_projected_gap_bound,
+    )
+
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    reference = json.loads(reference_path.read_text(encoding="utf-8"))
+    if (saved["status"] != "completed" or saved["accepted_steps"] != 2
+            or saved["source_columns"] != 8 or saved["source_rows"] != 8
+            or saved["target_s3_faces"] != 8
+            or saved["target_reference_full_left_clamp"] is not True
+            or saved["load_shape"] != "physical_bump"
+            or saved["q4_gap_certificate"] != "overlap_local_dev"):
+        raise ValueError("saved pose is outside selected target8s3 comparison")
+    model, definition, _settings, _program = build_interior_press(
+        source_support="perimeter", source_columns=8, source_rows=8,
+        target_columns=2, target_rows=2,
+        target_reference_full_left_clamp=True,
+        force_n=0.04, reference_slope=1.0e-4,
+        load_shape="physical_bump", slide_body="target",
+    )
+    displacement = np.asarray(saved["displacements"])
+    contact = saved["history"][-1]["contact"]
+    pressure = np.asarray(contact["numerical_pressure_pa"])
+    force = float(contact["integration_force"][2])
+    reference_force = reference["integrated_normal_force_n"]
+    samples = _source_vertical_samples(
+        model, displacement, 8, reference["sample_xy_m"])
+    independent_lower = _independent_projected_gap_bound(
+        model, definition, displacement,
+        definition.interactions[0].gap_tolerance)
+    record = {
+        "saved_pose": str(saved_path), "oracle": str(reference_path),
+        "solver_status": saved["status"],
+        "accepted_steps": saved["accepted_steps"],
+        "certificate": saved["q4_gap_certificate"],
+        "production_integrated_normal_force_n": force,
+        "oracle_integrated_normal_force_n": reference_force,
+        "relative_integrated_force_difference": abs(
+            force-reference_force)/abs(reference_force),
+        "production_active_node_ids": [node for node, value in zip(
+            contact["source_pressure_node_ids"], pressure) if value > 0.0],
+        "oracle_active_node_ids": reference["active_node_ids"],
+        "relative_source_displacement_difference": [
+            abs(a-b)/max(abs(b), 1.0e-15) for a, b in zip(
+                samples, reference["source_vertical_displacement_m"])],
+        "independent_projected_lower_gap_m": independent_lower,
+        "registered_gap_tolerance_m": (
+            definition.interactions[0].gap_tolerance),
+        "production_contact_force_balance_n": [
+            a+b for a, b in zip(contact["integration_force"],
+                                contact["target_force"])],
+        "production_contact_moment_balance_nm": [
+            a+b for a, b in zip(contact["integration_moment"],
+                                contact["target_moment"])],
+        "active_rim_pressure_pa": saved["history"][-1]["rim_pressure_pa"],
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps(record))
+
+
 def coupled_y_comparison(output: Path, reference_path: Path,
                          saved_paths: list[Path]) -> None:
     if output.exists() or len(saved_paths) not in (1, 2):
@@ -381,6 +534,13 @@ if __name__ == "__main__":
         offline_y_reference(Path(sys.argv[2]), load_shape="physical_bump")
     elif len(sys.argv) > 1 and sys.argv[1] == "--offline-x-reference":
         offline_x_reference(Path(sys.argv[2]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--offline-target-reference":
+        offline_target_reference(Path(sys.argv[2]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--target8s3-coupled-oracle":
+        target8s3_coupled_oracle(Path(sys.argv[2]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--target8s3-coupled-comparison":
+        target8s3_coupled_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
+                                    Path(sys.argv[4]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--coupled-y-comparison":
         coupled_y_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
                              [Path(path) for path in sys.argv[4:]])

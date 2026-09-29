@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 2.064495899991016,
+  "peak_process_tree_memory_mb": 139.751424,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_two_body_oracle_dev.py",
+    "--target8s3-coupled-oracle",
+    "docs/d1_review_support/d1_target8s3_coupled_oracle_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_target8s3_coupled_oracle_20260929.log"
+}

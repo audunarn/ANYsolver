@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 33.97674289999122,
+  "peak_process_tree_memory_mb": 174.116864,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_press_dev.py",
+    "docs/d1_review_support/d1_target8s3_swept_full_replay_20260929.json",
+    "--replay-captured-sweep",
+    "docs/d1_review_support/d1_target8s3_swept_capture_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_target8s3_swept_full_replay_20260929.log"
+}

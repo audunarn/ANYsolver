@@ -61,6 +61,7 @@ def build_interior_press(*, force_n: float = 0.08,
                          slide_distance_m: float = 0.05,
                          slide_intervals: int = 1,
                          slide_body: str = "source",
+                         target_reference_full_left_clamp: bool = False,
                          shared_edge_tie: bool = False):
     if not np.isfinite(slide_distance_m) or slide_distance_m <= 0.0:
         raise ValueError("slide distance must be positive and finite")
@@ -71,6 +72,9 @@ def build_interior_press(*, force_n: float = 0.08,
     if (slide_body == "target_diagonal_dev"
             and (target_columns != 1 or target_rows != 1)):
         raise ValueError("diagonal target development control needs two S3 faces")
+    if target_reference_full_left_clamp and (
+            target_rows <= 1 or slide_body != "target"):
+        raise ValueError("full target left clamp requires multirow target control")
     columns, rows = source_columns, source_rows
     stride = columns + 1
     model, definition, settings, _program = build_case(
@@ -119,6 +123,13 @@ def build_interior_press(*, force_n: float = 0.08,
                                     if slide_body == "source"
                                     else ("uy", "uz", "rx", "ry", "rz"))},
     ))
+    if target_reference_full_left_clamp:
+        middle_left = tuple(target_start+row*(target_columns+1)
+                            for row in range(1, target_rows))
+        model.add_boundary_condition(BoundaryCondition(
+            "target_reference_middle_left_clamp", middle_left,
+            {name: 0.0 for name in ("ux", "uy", "uz", "rx", "ry", "rz")},
+        ))
     if slide_body != "source":
         model.add_boundary_condition(BoundaryCondition(
             "source_x_anchor", (1,), {"ux": 0.0},
@@ -199,7 +210,10 @@ def main(output: Path, *, force_n: float, reference_slope: float,
          max_path_fraction: float, four_phase: bool,
          steps_per_segment: int, slide_distance_m: float,
          slide_intervals: int, slide_body: str,
-         shared_edge_tie: bool):
+         target_reference_full_left_clamp: bool,
+         shared_edge_tie: bool,
+         capture_swept_failure: bool,
+         q4_gap_certificate: str | None):
     if output.exists():
         raise FileExistsError(output)
     started = time.perf_counter()
@@ -215,17 +229,42 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         slide_distance_m=slide_distance_m,
         slide_intervals=slide_intervals,
         slide_body=slide_body,
+        target_reference_full_left_clamp=target_reference_full_left_clamp,
         shared_edge_tie=shared_edge_tie,
     )
+    if q4_gap_certificate is not None:
+        settings = replace(settings,
+                           q4_source_gap_certificate=q4_gap_certificate)
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
         raise ValueError(f"fixture capability rejected: {report.issues}")
-    result = solve_static_nonlinear(
-        model, contact=definition, contact_settings=settings,
-        contact_path_program=program, max_iterations=18,
-        max_load_factor=max_path_fraction,
-        emit_restart_checkpoint=True,
-    )
+    captured = []
+    original_admissible_fraction = None
+    if capture_swept_failure:
+        from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+
+        original_admissible_fraction = (
+            GeneralS3PatchManager.admissible_step_fraction)
+
+        def capture_fraction(owner, start, end):
+            fraction = original_admissible_fraction(owner, start, end)
+            if fraction == 0.0:
+                captured.append((owner, np.asarray(start).copy(),
+                                 np.asarray(end).copy()))
+            return fraction
+
+        GeneralS3PatchManager.admissible_step_fraction = capture_fraction
+    try:
+        result = solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=18,
+            max_load_factor=max_path_fraction,
+            emit_restart_checkpoint=True,
+        )
+    finally:
+        if original_admissible_fraction is not None:
+            GeneralS3PatchManager.admissible_step_fraction = (
+                original_admissible_fraction)
     step_records = []
     stride = source_columns + 1
     interior_nodes = tuple(1 + row * stride + column
@@ -251,6 +290,7 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         "source_q4_faces": source_columns * source_rows,
         "target_s3_faces": 2 * target_columns * target_rows,
         "target_rows": target_rows,
+        "target_columns": target_columns,
         "interior_pressure_node_ids": list(interior_nodes),
         "force_n": force_n,
         "reference_slope": reference_slope,
@@ -266,7 +306,9 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         "slide_distance_m": slide_distance_m,
         "slide_intervals": slide_intervals,
         "slide_body": slide_body,
+        "target_reference_full_left_clamp": target_reference_full_left_clamp,
         "shared_edge_tie": shared_edge_tie,
+        "q4_gap_certificate": settings.q4_source_gap_certificate,
         "status": result.status,
         "failure_reason": result.failure_reason,
         "accepted_steps": len(result.steps),
@@ -275,12 +317,152 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         "history": step_records,
         "contact_failure": result.info.get("contact_failure"),
     }
+    if capture_swept_failure:
+        from anysolver.general_contact.q4_overlap_local_bound import (
+            overlap_local_swept_lower,
+        )
+        from anysolver.general_contact.s3_pair_static import _normal_controls
+        from examples.general_contact_d1_interior_controls_dev import (
+            _independent_projected_gap_bound,
+        )
+
+        diagnostic = {"zero_fraction_proposals": len(captured)}
+        if captured:
+            owner, start, proposed = captured[-1]
+            start_position = owner._positions(start)
+            trials = []
+            for fraction in (1/32, 1/16, 1/8):
+                endpoint = start+fraction*(proposed-start)
+                end_position = owner._positions(endpoint)
+                local_lowers = [overlap_local_swept_lower(
+                    start_position[0][si], end_position[0][si],
+                    start_position[1][ti], end_position[1][ti], 3,
+                )[0] for si in owner.law.source_face_indices
+                    for ti in owner.law.target_face_indices]
+                orientation_min = min(float(control @ reference)
+                                      for side, indices, reference in (
+                                          (0, owner.law.source_face_indices,
+                                           owner.reference_normals[0]),
+                                          (1, owner.law.target_face_indices,
+                                           owner.reference_normals[1]))
+                                      for face in indices
+                                      for triple in (((0, 1, 2),)
+                                                     if len(face) == 3 else
+                                                     ((0, 1, 2), (1, 2, 3),
+                                                      (2, 3, 0), (3, 0, 1)))
+                                      for control in _normal_controls(
+                                          start_position[side][face[list(triple)]],
+                                          end_position[side][face[list(triple)]]))
+                try:
+                    independent_lower = _independent_projected_gap_bound(
+                        model, definition, endpoint,
+                        definition.interactions[0].gap_tolerance)
+                    independent_issue = None
+                except RuntimeError as error:
+                    independent_lower = None
+                    independent_issue = str(error)
+                trials.append({
+                    "fraction": fraction,
+                    "projected_endpoint_lower_gap_m": owner._gap_lower(
+                        end_position),
+                    "overlap_local_swept_lower_gap_m": min(local_lowers),
+                    "swept_orientation_minimum": orientation_min,
+                    "independent_endpoint_lower_gap_m": independent_lower,
+                    "independent_endpoint_issue": independent_issue,
+                })
+            diagnostic.update({
+                "captured_start_displacement": start.tolist(),
+                "captured_proposed_displacement": proposed.tolist(),
+                "start_projected_lower_gap_m": owner._gap_lower(
+                    start_position),
+                "trials": trials,
+            })
+        payload["swept_failure_discriminator"] = diagnostic
     output.write_text(json.dumps(payload, indent=2, default=_json_default) + "\n",
                       encoding="utf-8")
     print(json.dumps({key: payload[key] for key in (
         "status", "failure_reason", "accepted_steps", "elapsed_seconds",
         "contact_failure",
     )}, default=_json_default))
+
+
+def replay_captured_sweep(capture: Path, output: Path):
+    """Check a saved rejected proposal without advancing the nonlinear solve."""
+    if output.exists():
+        raise FileExistsError(output)
+    saved = json.loads(capture.read_text(encoding="utf-8"))
+    if saved.get("swept_failure_discriminator", {}).get(
+            "zero_fraction_proposals") != 1:
+        raise ValueError("expected one captured zero-fraction proposal")
+    model, definition, settings, _ = build_interior_press(
+        force_n=saved["force_n"], reference_slope=saved["reference_slope"],
+        target_columns=saved.get(
+            "target_columns", saved["target_s3_faces"] //
+            (2*saved["target_rows"])),
+        target_rows=saved["target_rows"],
+        source_support=saved["source_support"],
+        source_columns=saved["source_columns"],
+        source_rows=saved["source_rows"],
+        source_y_profile=saved["source_y_profile"],
+        offline_structural_reference_y16=(
+            saved["offline_structural_reference_y16"]),
+        load_shape=saved["load_shape"],
+        slide_intervals=saved["slide_intervals"],
+        slide_body=saved["slide_body"],
+        target_reference_full_left_clamp=(
+            saved["target_reference_full_left_clamp"]),
+        shared_edge_tie=saved["shared_edge_tie"],
+    )
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+    from examples.general_contact_d1_interior_controls_dev import (
+        _independent_projected_gap_bound,
+    )
+
+    manager = GeneralS3PatchManager(
+        model, definition,
+        replace(settings, q4_source_gap_certificate="overlap_local_dev"),
+    )
+    captured = saved["swept_failure_discriminator"]
+    start = np.asarray(captured["captured_start_displacement"], dtype=float)
+    proposed = np.asarray(captured["captured_proposed_displacement"], dtype=float)
+    if start.size != manager.n_dof or proposed.size != manager.n_dof:
+        raise ValueError("saved proposal does not fit reconstructed fixture")
+    trials = []
+    for fraction in (1/8, 1/4, 1/2, 1.0):
+        endpoint = start+fraction*(proposed-start)
+        source, target = manager._positions(endpoint)
+        try:
+            manager.require_d1_coverage(source, target)
+            coverage_issue = None
+        except ValueError as error:
+            coverage_issue = str(error)
+        try:
+            independent_lower = _independent_projected_gap_bound(
+                model, definition, endpoint,
+                definition.interactions[0].gap_tolerance)
+            independent_issue = None
+        except RuntimeError as error:
+            independent_lower = None
+            independent_issue = str(error)
+        trials.append({
+            "fraction": fraction,
+            "overlap_local_swept_admissible": manager._swept_admissible(
+                start, endpoint),
+            "overlap_local_endpoint_lower_gap_m": manager._gap_lower(
+                (source, target)),
+            "independent_endpoint_lower_gap_m": independent_lower,
+            "independent_endpoint_issue": independent_issue,
+            "coverage_issue": coverage_issue,
+        })
+    payload = {
+        "capture": str(capture),
+        "certificate": "overlap_local_dev",
+        "gap_tolerance_m": manager.gap_tolerance,
+        "trials": trials,
+    }
+    output.write_text(json.dumps(payload, indent=2, default=_json_default) + "\n",
+                      encoding="utf-8")
+    print(json.dumps(payload, default=_json_default))
 
 
 if __name__ == "__main__":
@@ -312,9 +494,19 @@ if __name__ == "__main__":
                                                  "target_diagonal_dev"),
                         default="source")
     parser.add_argument("--shared-edge-tie", action="store_true")
+    parser.add_argument("--target-reference-full-left-clamp",
+                        action="store_true")
+    parser.add_argument("--capture-swept-failure", action="store_true")
+    parser.add_argument("--q4-gap-certificate",
+                        choices=("projected_matching", "overlap_local_dev"))
+    parser.add_argument("--replay-captured-sweep", type=Path)
     parser.add_argument("--steps-per-segment", type=int, choices=(1, 2),
                         default=2)
     arguments = parser.parse_args()
+    if arguments.replay_captured_sweep is not None:
+        replay_captured_sweep(arguments.replay_captured_sweep,
+                              arguments.output)
+        raise SystemExit(0)
     main(arguments.output, force_n=arguments.force_n,
          reference_slope=arguments.reference_slope,
          target_columns=arguments.target_columns,
@@ -331,4 +523,8 @@ if __name__ == "__main__":
          slide_distance_m=arguments.slide_distance_m,
          slide_intervals=arguments.slide_intervals,
          slide_body=arguments.slide_body,
-         shared_edge_tie=arguments.shared_edge_tie)
+         target_reference_full_left_clamp=(
+             arguments.target_reference_full_left_clamp),
+         shared_edge_tie=arguments.shared_edge_tie,
+         capture_swept_failure=arguments.capture_swept_failure,
+         q4_gap_certificate=arguments.q4_gap_certificate)

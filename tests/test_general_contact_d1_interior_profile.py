@@ -14,6 +14,9 @@ from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from anysolver.general_contact import semismooth_path
 from anysolver.general_contact.semismooth import linearize
 from anysolver.matrix_assembly import assemble_stiffness_matrix
+from examples.general_contact_d1_interior_controls_dev import (
+    _independent_projected_gap_bound,
+)
 from scripts.general_contact_d1_interior_press_dev import build_interior_press
 from scripts.general_contact_d1_target_displacement_dev import (
     build_case as build_target_displacement_case,
@@ -42,6 +45,73 @@ def test_target_internal_s3_seam_is_covered_and_physical_rim_is_topological():
     assert manager.require_d1_coverage(*manager._positions(
         np.zeros(model.mesh.dof_manager.total_dofs),
     )) is None
+
+
+def test_interior_trial_swept_cutback_respects_independent_gap_budget():
+    model, definition, settings, _program = build_interior_press(
+        source_support="perimeter", source_rows=4, source_columns=4,
+        target_columns=1, target_rows=1,
+        reference_slope=1.0e-4,
+        load_shape="interior_distributed", slide_body="target",
+    )
+    manager = GeneralS3PatchManager(model, definition, settings)
+    start = np.zeros(model.mesh.dof_manager.total_dofs)
+    end = start.copy()
+    for row in range(1, 4):
+        for column in range(1, 4):
+            node = 1+row*5+column
+            end[model.mesh.dof_manager.get_node_dofs(node)[2]] = -1.0e-3
+    assert not manager.swept_increment_admissible(start, end, 0.0, 1.0)
+    fraction = manager.admissible_step_fraction(start, end)
+    # At an interior vertex the 40 µm opening reaches the −50 µm budget
+    # after 90 µm of this 1 mm affine physical-skin trial.
+    assert 0.0 < fraction <= 0.0900001
+    assert manager.swept_increment_admissible(
+        start, fraction*end, 0.0, fraction)
+    independent_lower = _independent_projected_gap_bound(
+        model, definition, fraction*end,
+        definition.interactions[0].gap_tolerance,
+    )
+    assert independent_lower >= -definition.interactions[0].gap_tolerance
+
+
+def test_saved_eight_s3_press_has_free_source_rotation_contact_tangent():
+    saved = Path(__file__).resolve().parents[1] / (
+        "docs/d1_review_support/d1_coupled_target8s3_bump_overlap_20260929.json"
+    )
+    pose = json.loads(saved.read_text(encoding="utf-8"))
+    assert pose["status"] == "completed" and pose["accepted_steps"] == 2
+    model, definition, settings, _program = build_interior_press(
+        force_n=0.04, reference_slope=1.0e-4,
+        source_support="perimeter", source_columns=8, source_rows=8,
+        target_columns=2, target_rows=2,
+        target_reference_full_left_clamp=True,
+        load_shape="physical_bump", slide_body="target",
+    )
+    manager = GeneralS3PatchManager(
+        model, definition,
+        replace(settings, q4_source_gap_certificate="overlap_local_dev"),
+    )
+    manager.set_normal_multipliers(
+        pose["history"][-1]["contact"]["normal_multiplier_estimate_pa"])
+    displacement = np.asarray(pose["displacements"])
+    direction = model.mesh.dof_manager.get_node_dofs(40)[4]  # source ry
+    force, tangent, center = manager.evaluate(displacement, tangent=True)
+    h = 1.0e-5
+    trial = displacement.copy()
+    trial[direction] += h
+    plus, _, plus_state = manager.evaluate(trial, tangent=False)
+    trial[direction] -= 2*h
+    minus, _, minus_state = manager.evaluate(trial, tangent=False)
+    derived = np.asarray(tangent[:, direction].toarray()).reshape(-1)
+    difference = (plus-minus)/(2*h)
+    assert center.active_pressure_dofs == plus_state.active_pressure_dofs == (
+        minus_state.active_pressure_dofs) == 1
+    assert center.integration_triangles == plus_state.integration_triangles == (
+        minus_state.integration_triangles)
+    assert abs(force[direction]) > 1.0e-8  # resolved physical couple
+    assert np.linalg.norm(difference) > 1.0e-4  # nonzero mapped work change
+    assert np.linalg.norm(derived-difference)/np.linalg.norm(difference) < 1.0e-5
 
 
 def test_partial_target_boundary_cut_fails_before_solve():

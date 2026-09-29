@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 14.93373530000099,
+  "peak_process_tree_memory_mb": 228.626432,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_d1_interior_profile.py::test_saved_eight_s3_press_has_free_source_rotation_contact_tangent"
+  ],
+  "log": "docs\\d1_review_support\\d1_target8s3_free_rotation_tangent_20260929.log"
+}
