@@ -18,6 +18,10 @@ from anysolver.general_contact.q4_overlap_local_bound import (
     overlap_local_swept_lower,
 )
 from scripts.general_contact_d1_2d_target_press_dev import build_case
+from scripts.general_contact_d1_interior_press_dev import build_interior_press
+from examples.general_contact_d1_interior_controls_dev import (
+    _independent_projected_gap_bound,
+)
 
 
 def test_partial_planar_overlap_bound_is_conservative_and_tightens():
@@ -78,6 +82,18 @@ def test_linear_sweep_bound_covers_independent_planar_overlap_samples():
     assert swept <= min(samples) + 1.0e-11
     zero, _ = overlap_local_swept_lower(source, source, target, target, 4)
     assert zero <= samples[0] + 1.0e-11
+    reversed_lower, _ = overlap_local_swept_lower(
+        source_end, source, target_end, target, 4)
+    assert reversed_lower <= min(samples) + 1.0e-11
+    angle = 0.37
+    rotation = np.asarray(((np.cos(angle), -np.sin(angle), 0.0),
+                           (np.sin(angle), np.cos(angle), 0.0),
+                           (0.0, 0.0, 1.0)))
+    shift = np.asarray((0.15, -0.21, 0.07))
+    transformed, _ = overlap_local_swept_lower(
+        source@rotation.T+shift, source_end@rotation.T+shift,
+        target@rotation.T+shift, target_end@rotation.T+shift, 4)
+    assert abs(transformed-swept) < 1.0e-9
 
 
 def test_sweep_cannot_prune_a_midpath_crossing():
@@ -186,3 +202,33 @@ def test_saved_first_step_profile_is_explicit_and_binds_restart_identity():
         for ti in new.law.target_face_indices)
     assert old_lower < -new.gap_tolerance
     assert new_lower >= -new.gap_tolerance
+
+
+def test_saved_eight_s3_rejected_proposal_has_admissible_local_sweep():
+    saved = Path(__file__).resolve().parents[1] / (
+        "docs/d1_review_support/d1_target8s3_swept_capture_20260929.json"
+    )
+    capture = json.loads(saved.read_text(encoding="utf-8"))[
+        "swept_failure_discriminator"]
+    model, definition, settings, _program = build_interior_press(
+        force_n=0.04, reference_slope=1.0e-4,
+        source_support="perimeter", source_columns=8, source_rows=8,
+        target_columns=2, target_rows=2,
+        target_reference_full_left_clamp=True,
+        load_shape="physical_bump", slide_body="target",
+    )
+    old = GeneralS3PatchManager(model, definition, settings)
+    new = GeneralS3PatchManager(
+        model, definition,
+        replace(settings, q4_source_gap_certificate="overlap_local_dev"),
+    )
+    start = np.asarray(capture["captured_start_displacement"])
+    proposed = np.asarray(capture["captured_proposed_displacement"])
+    assert not old._swept_admissible(start, proposed)
+    assert new._swept_admissible(start, proposed)
+    source, target = new._positions(proposed)
+    assert new.require_d1_coverage(source, target) is None
+    independent = _independent_projected_gap_bound(
+        model, definition, proposed,
+        definition.interactions[0].gap_tolerance)
+    assert independent >= -definition.interactions[0].gap_tolerance
