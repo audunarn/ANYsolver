@@ -729,6 +729,105 @@ def lowload_geometry_decomposition(output: Path, saved_path: Path) -> None:
     print(json.dumps(record))
 
 
+def lowload_current_skin_check(output: Path, saved_path: Path) -> None:
+    """Check moving contact values/work against independent current-skin integration."""
+    if output.exists():
+        raise FileExistsError(output)
+    from dataclasses import replace
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+    from anysolver.general_contact.semismooth import linearize
+    from docs.d1_review_support.d1_two_body_current_skin_quadrature import (
+        integrate_current_skin,
+    )
+
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    if (saved["status"] != "completed" or saved["accepted_steps"] != 2
+            or saved["force_n"] != 0.001
+            or saved["source_reference_downshift_m"] != 35.0e-6
+            or saved["source_columns"] != 4 or saved["source_rows"] != 4
+            or saved["target_columns"] != 4 or saved["target_rows"] != 4
+            or saved["q4_gap_certificate"] != "overlap_local_dev"):
+        raise ValueError("saved pose is outside the low-load discriminator")
+    model, definition, settings, _program = build_interior_press(
+        force_n=0.001, reference_slope=1.0e-4,
+        source_support="perimeter", source_columns=4, source_rows=4,
+        target_columns=4, target_rows=4, target_young_multiplier=5.0,
+        target_reference_full_left_clamp=True,
+        source_reference_downshift_m=35.0e-6,
+        load_shape="physical_bump", slide_body="target",
+    )
+    manager = GeneralS3PatchManager(
+        model, definition,
+        replace(settings, q4_source_gap_certificate="overlap_local_dev"),
+    )
+    contact = saved["history"][-1]["contact"]
+    pose = np.asarray(saved["displacements"], dtype=float)
+    support_saved = np.asarray(contact["reference_support_m2"], dtype=float)
+    pressure = np.asarray(contact["numerical_pressure_pa"], dtype=float)
+    state = linearize(manager, pose, pressure*support_saved, tangent=False)
+    independent_support, weighted_gap, _area, count, signature = (
+        integrate_current_skin(model, definition, pose))
+    if tuple(contact["source_pressure_node_ids"]) != tuple(manager.law.source_node_ids):
+        raise ValueError("pressure node ordering changed")
+    active = np.flatnonzero(pressure > 0.0)
+    if len(active) != 1 or manager.law.source_node_ids[int(active[0])] != 13:
+        raise ValueError("active node changed")
+    row = int(active[0])
+    production_gradient = (state.gap_gradient.toarray()
+                           if hasattr(state.gap_gradient, "toarray")
+                           else np.asarray(state.gap_gradient))
+    target_ids = sorted({node for element_id in definition.surfaces[1].element_ids
+                         for node in model.mesh.elements[element_id].node_ids})
+    dofs = model.mesh.dof_manager
+    checks = [("source13_ux", int(dofs.get_node_dofs(13)[0]), 1e-7),
+              ("source13_uz", int(dofs.get_node_dofs(13)[2]), 1e-7)]
+    checks.extend(("source13_ry", int(dofs.get_node_dofs(13)[4]), step)
+                  for step in (1e-6, 1e-5, 1e-4))
+    for axis, name in ((0, "ux"), (2, "uz"), (4, "ry")):
+        target_dof = max((int(dofs.get_node_dofs(node)[axis])
+                          for node in target_ids),
+                         key=lambda dof: abs(production_gradient[row, dof]))
+        checks.extend((f"target_{target_dof}_{name}", target_dof, step)
+                      for step in ((1e-6, 1e-5, 1e-4) if axis == 4
+                                   else (1e-7,)))
+    derivatives = []
+    for label, dof, step in checks:
+        plus = pose.copy()
+        minus = pose.copy()
+        plus[dof] += step
+        minus[dof] -= step
+        sp, wp, _area_p, _count_p, signature_p = integrate_current_skin(
+            model, definition, plus)
+        sm, wm, _area_m, _count_m, signature_m = integrate_current_skin(
+            model, definition, minus)
+        if signature_p != signature or signature_m != signature:
+            raise ValueError(f"clip topology changed for {label}")
+        independent = float(((wp/sp-wm/sm)/(2*step))[row])
+        production = float(production_gradient[row, dof])
+        derivatives.append({
+            "direction": label, "dof": dof, "step": step,
+            "independent_gap_derivative": independent,
+            "production_gap_derivative": production,
+            "relative_difference": abs(independent-production)
+                /max(abs(independent), abs(production), 1e-8),
+        })
+    record = {
+        "status": "development_lowload_independent_current_skin_check",
+        "saved_pose": str(saved_path),
+        "quadrature_points": count,
+        "active_node_id": 13,
+        "max_support_relative_difference": float(np.max(np.abs(
+            independent_support-np.asarray(state.state.reference_support))
+            /independent_support)),
+        "active_gap_difference_m": float(
+            weighted_gap[row]/independent_support[row]
+            -np.asarray(state.state.normalized_gap)[row]),
+        "derivatives": derivatives,
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps(record))
+
+
 def coupled_y_comparison(output: Path, reference_path: Path,
                          saved_paths: list[Path]) -> None:
     if output.exists() or len(saved_paths) not in (1, 2):
@@ -884,6 +983,8 @@ if __name__ == "__main__":
                                     Path(sys.argv[4]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--lowload-geometry-decomposition":
         lowload_geometry_decomposition(Path(sys.argv[2]), Path(sys.argv[3]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--lowload-current-skin-check":
+        lowload_current_skin_check(Path(sys.argv[2]), Path(sys.argv[3]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--coupled-y-comparison":
         coupled_y_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
                              [Path(path) for path in sys.argv[4:]])

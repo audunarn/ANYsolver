@@ -58,6 +58,26 @@ def q4_derivatives(vertices, xi, eta):
     return along_x, along_y
 
 
+def source_shape_current_xy(point, vertices):
+    """Invert a convex bilinear Q4 independently in the projected plane."""
+    xi = eta = 0.5
+    for _ in range(12):
+        shape = q4_shape(xi, eta)
+        difference = shape @ vertices-point
+        dx, dy = q4_derivatives(vertices, xi, eta)
+        correction = np.linalg.solve(np.column_stack((dx, dy)), difference)
+        xi -= float(correction[0])
+        eta -= float(correction[1])
+        if np.linalg.norm(correction, ord=np.inf) < 2e-14:
+            break
+    if (not -1e-10 <= xi <= 1+1e-10
+            or not -1e-10 <= eta <= 1+1e-10
+            or np.linalg.norm(q4_shape(xi, eta) @ vertices-point,
+                              ord=np.inf) > 1e-11):
+        raise ValueError("independent current Q4 inverse failed")
+    return q4_shape(xi, eta)
+
+
 def overlap_incidence(source_xy, target_xy, polygon):
     """Identify the source and target edges incident to clipped vertices.
 
@@ -116,8 +136,6 @@ def integrate_current_skin(model, definition, pose, *, pressure_gram=False):
         reference_source, current_source = physical_vertices(
             model, source_element, pose, "bottom")
         source_xy = current_source[:, :2]
-        assert np.max(abs(source_xy[[0, 1], 1]-source_xy[0, 1])) < 1e-12
-        assert np.max(abs(source_xy[[2, 3], 1]-source_xy[2, 1])) < 1e-12
         for target_id in definition.surfaces[1].element_ids:
             target_element = model.mesh.elements[target_id]
             _reference_target, current_target = physical_vertices(
@@ -128,7 +146,7 @@ def integrate_current_skin(model, definition, pose, *, pressure_gram=False):
             for fan in range(1, len(polygon)-1):
                 triangle = polygon[[0, fan, fan+1]]
                 for point, weight in _triangle_quadrature(triangle):
-                    source_shape = _source_shape(point, source_xy)
+                    source_shape = source_shape_current_xy(point, source_xy)
                     target_shape = _target_shape(point, current_target[:, :2])
                     xi = source_shape[1]+source_shape[2]
                     eta = source_shape[2]+source_shape[3]

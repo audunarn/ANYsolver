@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_two_body_oracle_dev.py", line 985, in <module>
+    lowload_current_skin_check(Path(sys.argv[2]), Path(sys.argv[3]))
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_two_body_oracle_dev.py", line 769, in lowload_current_skin_check
+    integrate_current_skin(model, definition, pose))
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_current_skin_quadrature.py", line 119, in integrate_current_skin
+    assert np.max(abs(source_xy[[0, 1], 1]-source_xy[0, 1])) < 1e-12
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

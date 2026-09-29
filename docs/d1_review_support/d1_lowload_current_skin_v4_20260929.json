@@ -1,0 +1,90 @@
+{
+  "status": "development_lowload_independent_current_skin_check",
+  "saved_pose": "docs\\d1_review_support\\d1_lowload_clearance5_coupled_20260929.json",
+  "quadrature_points": 2368,
+  "active_node_id": 13,
+  "max_support_relative_difference": 1.3100631625073692e-14,
+  "active_gap_difference_m": -1.8960991664900873e-16,
+  "derivatives": [
+    {
+      "direction": "source13_ux",
+      "dof": 72,
+      "step": 1e-07,
+      "independent_gap_derivative": -4.327781069611779e-05,
+      "production_gap_derivative": -4.327780994735072e-05,
+      "relative_difference": 1.7301408212518927e-08
+    },
+    {
+      "direction": "source13_uz",
+      "dof": 74,
+      "step": 1e-07,
+      "independent_gap_derivative": 0.44444444223241153,
+      "production_gap_derivative": 0.4444444423607364,
+      "relative_difference": 2.8873091553114036e-10
+    },
+    {
+      "direction": "source13_ry",
+      "dof": 76,
+      "step": 1e-06,
+      "independent_gap_derivative": -2.9165077599201303e-08,
+      "production_gap_derivative": -2.916585707224386e-08,
+      "relative_difference": 2.6725531865072254e-05
+    },
+    {
+      "direction": "source13_ry",
+      "dof": 76,
+      "step": 1e-05,
+      "independent_gap_derivative": -2.9165880950810725e-08,
+      "production_gap_derivative": -2.916585707224386e-08,
+      "relative_difference": 8.187157763730408e-07
+    },
+    {
+      "direction": "source13_ry",
+      "dof": 76,
+      "step": 0.0001,
+      "independent_gap_derivative": -2.91658639459573e-08,
+      "production_gap_derivative": -2.916585707224386e-08,
+      "relative_difference": 2.3567666139380432e-07
+    },
+    {
+      "direction": "target_222_ux",
+      "dof": 222,
+      "step": 1e-07,
+      "independent_gap_derivative": 5.233346868908084e-05,
+      "production_gap_derivative": 5.233346951882094e-05,
+      "relative_difference": 1.585486508758236e-08
+    },
+    {
+      "direction": "target_224_uz",
+      "dof": 224,
+      "step": 1e-07,
+      "independent_gap_derivative": -0.5375408767353033,
+      "production_gap_derivative": -0.5375408769239655,
+      "relative_difference": 3.509727447252039e-10
+    },
+    {
+      "direction": "target_226_ry",
+      "dof": 226,
+      "step": 1e-06,
+      "independent_gap_derivative": -2.1309680735748542e-08,
+      "production_gap_derivative": -2.130927249708772e-08,
+      "relative_difference": 1.9157427362890576e-05
+    },
+    {
+      "direction": "target_226_ry",
+      "dof": 226,
+      "step": 1e-05,
+      "independent_gap_derivative": -2.1309299395396467e-08,
+      "production_gap_derivative": -2.130927249708772e-08,
+      "relative_difference": 1.2622802959272169e-06
+    },
+    {
+      "direction": "target_226_ry",
+      "dof": 226,
+      "step": 0.0001,
+      "independent_gap_derivative": -2.1309271737487876e-08,
+      "production_gap_derivative": -2.130927249708772e-08,
+      "relative_difference": 3.56464465933642e-08
+    }
+  ]
+}

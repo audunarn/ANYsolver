@@ -64,3 +64,36 @@ nonlinear route. [Decomposition](d1_lowload_geometry_decomposition_v2_20260929.j
 The first oracle probe used an incorrect result key; the first shifted
 probe hit the oracle's previous 40 µm opening guard. Their logs are retained
 as diagnostic-tool defects, separate from the completed mechanics run.
+
+## Current-skin discriminator
+
+The previously independent current-skin quadrature could only invert Q4
+footprints with exactly horizontal rows. This pose has small in-plane Q4
+motion, so its first invocation stopped at that oracle assumption. The
+oracle was extended with an independent bilinear Q4 inverse; it still uses
+its own polygon clipping, physical skin reconstruction and integration.
+At the *same saved nonlinear pose*, its reference support differs from
+production by at most `1.31×10⁻¹⁴` relatively, and the active normalized
+gap differs by `1.90×10⁻¹⁶ m`. Source/target `ux` and `uz` first variations
+agree to at most `1.73×10⁻⁸` relatively. The rotational derivatives are
+only about `2–3×10⁻⁸ m/rad`; a `10⁻⁶ rad` difference step has roundoff
+dominated relative error above `10⁻⁵`, while both `10⁻⁵` and `10⁻⁴ rad`
+steps give relative errors below `1.27×10⁻⁶` with identical clipping
+topology. The check took `15.96 s/180 MB` under the routine cap.
+
+This closes the *local moving-geometry value/first-variation question* on
+the selected smooth pose. It does not turn the failed full-solve linear
+comparison into a pass, verify the production tangent at this pose, or
+independently derive nonlinear structural equilibrium. The next code
+verification method must use a common structural operator with an
+independently assembled current contact map, or a genuinely nonlinear
+structural oracle; no further load/clearance sweep is justified.
+[Current-skin result](d1_lowload_current_skin_v4_20260929.json),
+[resource](d1_lowload_current_skin_v4_resource_20260929.json).
+An earlier run used the host checkout instead of this worktree, and the
+first worktree run met the oracle's horizontal-row assertion. Both logs are
+retained as invocation/oracle-scope failures. On the earlier horizontal-row
+slide fixture, the generalized inverse preserved independent support to
+`2.43×10⁻¹⁴` relative and gap to `7.06×10⁻¹³ m`; the largest scaled
+directional difference was `4.92×10⁻⁸`.
+[Compatibility resource](d1_current_skin_general_inverse_compat_resource_20260929.json).
