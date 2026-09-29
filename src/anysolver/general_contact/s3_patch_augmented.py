@@ -141,15 +141,7 @@ def _q4_s3_pair_value_rtol(local_area: float, derivative_area: float,
     relative_area = difference/minimum_area
     relative = 4.0*relative_area
     subresolved = area_resolution >= 1.0e-3*minimum_area
-    # Keep the ordinary sharp comparison when it passes. If its 0.25 ppm
-    # area cap alone rejects a wedge whose propagated area resolution is at
-    # least 1 ppm, use the existing 1 ppm bounded-value branch. This does not
-    # widen the allowance for better-resolved or already-agreeing pairs.
-    resolution_limited = (not subresolved
-                          and relative_area > 2.5e-7
-                          and area_resolution >= 1.0e-6*minimum_area)
-    maximum_area_disagreement = (1.0e-6 if subresolved or resolution_limited
-                                 else 2.5e-7)
+    maximum_area_disagreement = 1.0e-6 if subresolved else 2.5e-7
     if (not np.isfinite(relative) or not np.isfinite(area_resolution)
             or difference > area_resolution
             or relative_area > maximum_area_disagreement):
@@ -164,7 +156,7 @@ def _q4_s3_pair_value_rtol(local_area: float, derivative_area: float,
     # material relative to the tiny overlap. Allow a bounded 1e-6 comparison
     # only in that subresolved geometry regime. The wedge is still integrated
     # and its derivative and mechanical gates remain in force.
-    if subresolved or resolution_limited:
+    if subresolved:
         return 1.0e-6
     return 1.0e-9+relative
 
@@ -1159,8 +1151,9 @@ class MovingS3PatchProjectedNormal:
         absolute_gap_difference = np.zeros(source_count)
         tiny_wedge_verified = False
         tiny_wedge_scenarios = None
-        weighted_hessian = np.zeros((len(active_coordinates),
-                                     len(active_coordinates))) if tangent else None
+        # Keep all residual rows, including prescribed-coordinate reactions.
+        # Only columns need restriction to reachable solution variations.
+        weighted_hessian = np.zeros((count, len(active_coordinates))) if tangent else None
         support_hessian = np.zeros_like(weighted_hessian) if tangent else None
         evaluations = len(self.geometry.pair_laws)
         zero_area_overlap_pairs = []
@@ -1440,15 +1433,15 @@ class MovingS3PatchProjectedNormal:
                     local_pressure = fine_pressure[source_nodes]
                     weighted = np.einsum(
                         "i,ijk->jk", local_pressure,
-                        derivative.weighted_gap_hessian[:, local_active][:, :, local_active],
+                        derivative.weighted_gap_hessian[:, :, local_active],
                     )
                     supported = np.einsum(
                         "i,ijk->jk",
                         fine_support_pressure[source_nodes],
-                        derivative.support_hessian[:, local_active][:, :, local_active],
+                        derivative.support_hessian[:, :, local_active],
                     )
-                    weighted_hessian[np.ix_(indices, indices)] += weighted
-                    support_hessian[np.ix_(indices, indices)] += supported
+                    weighted_hessian[np.ix_(coordinate_map, indices)] += weighted
+                    support_hessian[np.ix_(coordinate_map, indices)] += supported
         # Pair-wise values have passed the bounded geometry comparison.
         # Summing signed contributions can make the assembled total tiny;
         # compare against the sum of contribution magnitudes so roundoff and
@@ -1568,11 +1561,10 @@ class MovingS3PatchProjectedNormal:
                 / base.reference_support[supported, None]
             )
             cross = np.einsum("i,ij,ik->jk", base.pressure,
-                              js[:, active_coordinates],
-                              dg[:, active_coordinates])
+                              js, dg[:, active_coordinates])
             tangent_matrix = np.zeros((count, count))
-            tangent_matrix[np.ix_(active_coordinates, active_coordinates)] = -(
-                gap_variation[:, active_coordinates].T @ dp_geometry
+            tangent_matrix[:, active_coordinates] = -(
+                gap_variation.T @ dp_geometry
                 + weighted_hessian - cross - support_hessian
             )
             return NodalForceLinearization(base, residual, tangent_matrix, dg,
@@ -1584,11 +1576,10 @@ class MovingS3PatchProjectedNormal:
         dg[active] = (gap_variation[np.ix_(active, active_coordinates)]
                       / base.reference_support[active, None])
         dp = -self.stiffness*dg
-        cross = np.einsum("i,ij,ik->jk", base.pressure,
-                          js[:, active_coordinates], dg)
+        cross = np.einsum("i,ij,ik->jk", base.pressure, js, dg)
         tangent_matrix = np.zeros((count, count))
-        tangent_matrix[np.ix_(active_coordinates, active_coordinates)] = -(
-            gap_variation[:, active_coordinates].T @ dp
+        tangent_matrix[:, active_coordinates] = -(
+            gap_variation.T @ dp
             + weighted_hessian - cross - support_hessian
         )
         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)

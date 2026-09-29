@@ -1,0 +1,80 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________ test_corrected_left_edge_slide_contact_directional_tangent __________
+
+    def test_corrected_left_edge_slide_contact_directional_tangent():
+        fixture = json.loads((Path(__file__).parent / "fixtures" /
+                              "general_contact_d1_left_edge_slide_pose.json").read_text())
+        model, definition, settings, program = build_interior_press(
+            source_support="perimeter", source_rows=4,
+            load_shape="interior_distributed", force_n=0.04,
+            reference_slope=1.0e-4, four_phase=True,
+            slide_body="target",
+        )
+        assert program.total_steps == 8
+        nodal_force = np.asarray(fixture["nodal_force_n"])
+        assert np.count_nonzero(nodal_force > 0.0) == 1
+        manager = GeneralS3PatchManager(model, definition, settings)
+        transform = _free_map(model)
+        manager.restrict_tangent_to_reduced_variations(transform)
+        displacement = np.asarray(fixture["displacements"])
+        base = linearize(manager, displacement, nodal_force, tangent=True)
+    
+        desired = np.zeros_like(displacement)
+        source_dofs = model.mesh.dof_manager.get_node_dofs(13)
+        target_lower = model.mesh.dof_manager.get_node_dofs(27)
+        target_upper = model.mesh.dof_manager.get_node_dofs(28)
+        desired[source_dofs[0]] = 0.25
+        desired[source_dofs[2]] = 1.0
+        desired[source_dofs[4]] = 0.2
+        desired[target_lower[2]] = -0.7
+        desired[target_lower[4]] = 0.15
+        desired[target_upper[2]] = 0.3
+        direction = np.asarray(transform @ (transform.T @ desired)).reshape(-1)
+        predicted_force = np.asarray(base.tangent @ direction).reshape(-1)
+        predicted_gap = base.gap_gradient @ direction
+        assert np.linalg.norm(predicted_force) > 1.0e-8
+        assert np.linalg.norm(predicted_gap) > 1.0e-8
+    
+        errors = []
+        for step_m in (1.0e-6, 5.0e-7, 2.5e-7):
+            plus = linearize(manager, displacement+step_m*direction,
+                             nodal_force, tangent=False)
+            minus = linearize(manager, displacement-step_m*direction,
+                              nodal_force, tangent=False)
+            observed_force = (plus.force-minus.force)/(2.0*step_m)
+            observed_gap = ((plus.state.normalized_gap
+                             - minus.state.normalized_gap)/(2.0*step_m))
+            force_error = np.linalg.norm(observed_force-predicted_force)/max(
+                np.linalg.norm(observed_force), np.linalg.norm(predicted_force),
+                1.0e-12,
+            )
+            gap_error = np.linalg.norm(observed_gap-predicted_gap)/max(
+                np.linalg.norm(observed_gap), np.linalg.norm(predicted_gap),
+                1.0e-12,
+            )
+            force_from_gap_gradient = -nodal_force @ (
+                (plus.gap_gradient-minus.gap_gradient)/(2.0*step_m))
+            gradient_force_error = np.linalg.norm(
+                observed_force-force_from_gap_gradient,
+            )/max(np.linalg.norm(observed_force), 1.0e-12)
+            errors.append((step_m, force_error, gap_error,
+                           gradient_force_error,
+                           np.linalg.norm(transform.T @ (
+                               observed_force-predicted_force))
+                           / max(np.linalg.norm(transform.T @ observed_force),
+                                 1.0e-12)))
+>       assert all(force_error <= 1.0e-5 and gap_error <= 1.0e-5
+                   for _, force_error, gap_error, _, _ in errors), {
+                       "errors": errors,
+                       "largest_force_rows": np.argsort(np.abs(
+                           predicted_force-observed_force))[-8:].tolist(),
+                   }
+E       AssertionError: {'errors': [(1e-06, np.float64(0.055483747733817486), np.float64(2.2714210898016444e-12), np.float64(6.79216223064702e...(3.27992754920199e-10), np.float64(1.2658860702725592e-09))], 'largest_force_rows': [74, 172, 173, 154, 171, 170, ...]}
+E       assert False
+E        +  where False = all(<generator object test_corrected_left_edge_slide_contact_directional_tangent.<locals>.<genexpr> at 0x000001D5AE185A40>)
+
+tests\test_general_contact_d1_interior_profile.py:279: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_d1_interior_profile.py::test_corrected_left_edge_slide_contact_directional_tangent
+1 failed in 8.91s

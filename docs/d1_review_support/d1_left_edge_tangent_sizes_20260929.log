@@ -1,0 +1,72 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________ test_corrected_left_edge_slide_contact_directional_tangent __________
+
+    def test_corrected_left_edge_slide_contact_directional_tangent():
+        model, definition, settings, program = build_interior_press(
+            source_support="perimeter", source_rows=4,
+            load_shape="interior_distributed", force_n=0.04,
+            reference_slope=1.0e-4, four_phase=True,
+            slide_body="target",
+        )
+        solved = solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=18,
+            max_load_factor=0.375,
+        )
+        assert solved.status == "completed", solved.failure_reason
+        assert len(solved.steps) == 3
+        certificate = solved.info["force_displacement_history"][-1]["contact"]
+        assert certificate["active_pressure_dofs"] == 1
+        nodal_force = (np.asarray(certificate["numerical_pressure_pa"])
+                       * np.asarray(certificate["reference_support_m2"]))
+        manager = GeneralS3PatchManager(model, definition, settings)
+        transform = _free_map(model)
+        manager.restrict_tangent_to_reduced_variations(transform)
+        displacement = solved.displacements
+        base = linearize(manager, displacement, nodal_force, tangent=True)
+    
+        desired = np.zeros_like(displacement)
+        source_dofs = model.mesh.dof_manager.get_node_dofs(13)
+        target_lower = model.mesh.dof_manager.get_node_dofs(27)
+        target_upper = model.mesh.dof_manager.get_node_dofs(28)
+        desired[source_dofs[0]] = 0.25
+        desired[source_dofs[2]] = 1.0
+        desired[source_dofs[4]] = 0.2
+        desired[target_lower[2]] = -0.7
+        desired[target_lower[4]] = 0.15
+        desired[target_upper[2]] = 0.3
+        direction = np.asarray(transform @ (transform.T @ desired)).reshape(-1)
+        predicted_force = np.asarray(base.tangent @ direction).reshape(-1)
+        predicted_gap = base.gap_gradient @ direction
+        assert np.linalg.norm(predicted_force) > 1.0e-8
+        assert np.linalg.norm(predicted_gap) > 1.0e-8
+    
+        errors = []
+        for step_m in (1.0e-6, 5.0e-7, 2.5e-7):
+            plus = linearize(manager, displacement+step_m*direction,
+                             nodal_force, tangent=False)
+            minus = linearize(manager, displacement-step_m*direction,
+                              nodal_force, tangent=False)
+            observed_force = (plus.force-minus.force)/(2.0*step_m)
+            observed_gap = ((plus.state.normalized_gap
+                             - minus.state.normalized_gap)/(2.0*step_m))
+            force_error = np.linalg.norm(observed_force-predicted_force)/max(
+                np.linalg.norm(observed_force), np.linalg.norm(predicted_force),
+                1.0e-12,
+            )
+            gap_error = np.linalg.norm(observed_gap-predicted_gap)/max(
+                np.linalg.norm(observed_gap), np.linalg.norm(predicted_gap),
+                1.0e-12,
+            )
+            errors.append((step_m, force_error, gap_error))
+>       assert all(force_error <= 1.0e-5 and gap_error <= 1.0e-5
+                   for _, force_error, gap_error in errors), errors
+E       AssertionError: [(1e-06, np.float64(0.055483747733817486), np.float64(2.2714210898016444e-12)), (5e-07, np.float64(0.05548374779674115), np.float64(1.0999793625818456e-12)), (2.5e-07, np.float64(0.05548374802839708), np.float64(3.811734088557736e-12))]
+E       assert False
+E        +  where False = all(<generator object test_corrected_left_edge_slide_contact_directional_tangent.<locals>.<genexpr> at 0x00000253B2CDFF10>)
+
+tests\test_general_contact_d1_interior_profile.py:273: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_d1_interior_profile.py::test_corrected_left_edge_slide_contact_directional_tangent
+1 failed in 40.08s

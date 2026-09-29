@@ -1,6 +1,8 @@
 """Admission checks for the opt-in planar Q4/S3 interior slice."""
 
 from dataclasses import replace
+import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -8,6 +10,7 @@ import pytest
 from anysolver import BoundaryCondition, solve_static_nonlinear
 from anysolver.assembly import build_constraint_transformation
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from anysolver.general_contact.semismooth import linearize
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from scripts.general_contact_d1_interior_press_dev import build_interior_press
 from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
@@ -160,13 +163,14 @@ def test_guarded_active_press_restarts_and_binds_profile_settings():
     )
 
 
-def test_guarded_diagonal_target_motion_open_recontact_split_restart():
+@pytest.mark.parametrize("slide_body", ["target_diagonal_dev", "target"])
+def test_guarded_target_motion_open_recontact_split_restart(slide_body):
     def case():
         return build_interior_press(
             source_support="perimeter", source_rows=4,
             load_shape="interior_distributed", force_n=0.04,
             reference_slope=1.0e-4, four_phase=True,
-            slide_body="target_diagonal_dev",
+            slide_body=slide_body,
         )
 
     model, definition, settings, program = case()
@@ -209,3 +213,76 @@ def test_guarded_diagonal_target_motion_open_recontact_split_restart():
             full_row["contact"]["integration_force"],
             rtol=0.0, atol=1.0e-10,
         )
+
+
+def test_corrected_left_edge_slide_contact_directional_tangent():
+    fixture = json.loads((Path(__file__).parent / "fixtures" /
+                          "general_contact_d1_left_edge_slide_pose.json").read_text())
+    model, definition, settings, program = build_interior_press(
+        source_support="perimeter", source_rows=4,
+        load_shape="interior_distributed", force_n=0.04,
+        reference_slope=1.0e-4, four_phase=True,
+        slide_body="target",
+    )
+    assert program.total_steps == 8
+    nodal_force = np.asarray(fixture["nodal_force_n"])
+    assert np.count_nonzero(nodal_force > 0.0) == 1
+    manager = GeneralS3PatchManager(model, definition, settings)
+    transform = _free_map(model)
+    manager.restrict_tangent_to_reduced_variations(transform)
+    displacement = np.asarray(fixture["displacements"])
+    base = linearize(manager, displacement, nodal_force, tangent=True)
+
+    desired = np.zeros_like(displacement)
+    source_dofs = model.mesh.dof_manager.get_node_dofs(13)
+    target_lower = model.mesh.dof_manager.get_node_dofs(27)
+    target_upper = model.mesh.dof_manager.get_node_dofs(28)
+    desired[source_dofs[0]] = 0.25
+    desired[source_dofs[2]] = 1.0
+    desired[source_dofs[4]] = 0.2
+    desired[target_lower[2]] = -0.7
+    desired[target_lower[4]] = 0.15
+    desired[target_upper[2]] = 0.3
+    direction = np.asarray(transform @ (transform.T @ desired)).reshape(-1)
+    predicted_force = np.asarray(base.tangent @ direction).reshape(-1)
+    predicted_gap = base.gap_gradient @ direction
+    assert np.linalg.norm(predicted_force) > 1.0e-8
+    assert np.linalg.norm(predicted_gap) > 1.0e-8
+
+    errors = []
+    for step_m in (1.0e-6, 5.0e-7, 2.5e-7):
+        plus = linearize(manager, displacement+step_m*direction,
+                         nodal_force, tangent=False)
+        minus = linearize(manager, displacement-step_m*direction,
+                          nodal_force, tangent=False)
+        observed_force = (plus.force-minus.force)/(2.0*step_m)
+        observed_gap = ((plus.state.normalized_gap
+                         - minus.state.normalized_gap)/(2.0*step_m))
+        force_error = np.linalg.norm(observed_force-predicted_force)/max(
+            np.linalg.norm(observed_force), np.linalg.norm(predicted_force),
+            1.0e-12,
+        )
+        gap_error = np.linalg.norm(observed_gap-predicted_gap)/max(
+            np.linalg.norm(observed_gap), np.linalg.norm(predicted_gap),
+            1.0e-12,
+        )
+        force_from_gap_gradient = -nodal_force @ (
+            (plus.gap_gradient-minus.gap_gradient)/(2.0*step_m))
+        gradient_force_error = np.linalg.norm(
+            observed_force-force_from_gap_gradient,
+        )/max(np.linalg.norm(observed_force), 1.0e-12)
+        errors.append((step_m, force_error, gap_error,
+                       gradient_force_error,
+                       np.linalg.norm(transform.T @ (
+                           observed_force-predicted_force))
+                       / max(np.linalg.norm(transform.T @ observed_force),
+                             1.0e-12)))
+    assert all(force_error <= 1.0e-5 and gap_error <= 1.0e-5
+               and gradient_force_error <= 1.0e-5
+               and reduced_force_error <= 1.0e-5
+               for _, force_error, gap_error, gradient_force_error,
+               reduced_force_error in errors), {
+                   "errors": errors,
+                   "largest_force_rows": np.argsort(np.abs(
+                       predicted_force-observed_force))[-8:].tolist(),
+               }

@@ -10,7 +10,8 @@ from pathlib import Path
 from scripts.general_contact_d1_coupled_refinement import build_case
 from anysolver import create_shell_element
 from anysolver.general_contact.core import ContactSolverSettings
-from anysolver.general_contact.overlap import PlanarFace
+from anysolver.general_contact.overlap import PlanarFace, planar_projected_overlap
+from anysolver.general_contact.q4_source_overlap import projected_q4_source_face
 from anysolver.general_contact.q4_s3_overlap_derivatives import UnsupportedQ4S3Branch
 from anysolver.general_contact.s3_patch_augmented import (
     MovingS3PatchProjectedNormal,
@@ -56,19 +57,30 @@ def test_moving_physical_edge_wedge_value_agreement_stays_bounded():
             <= second_allowance*second_support)
 
 
-def test_shallow_interior_wedge_uses_its_measured_area_resolution():
-    # Captured from a four-Q4/two-S3 flat-neighbor development candidate.
-    # The 0.43 ppm float/Jet2 difference lies inside the independently
-    # propagated 1.52 ppm area resolution; it cannot justify the former
-    # 0.25 ppm resolved-pair cutoff. The 1 ppm value cap remains explicit.
-    local = 8.01600452682e-12
-    derivative = local + 3.43284325019e-18
-    resolution = 1.21650205632e-17
-    assert abs(local-derivative) < resolution
-    assert _q4_s3_pair_value_rtol(local, derivative, resolution) == 1.0e-6
-    with pytest.raises(UnsupportedQ4S3Branch,
-                       match="area agreement is unresolved"):
-        _q4_s3_pair_value_rtol(local, local*(1.0+1.1e-6), resolution)
+def test_captured_tiny_q4_s3_overlap_agrees_with_decimal_area_oracle():
+    # Physical coordinates from a rejected left-edge D1 press candidate.
+    # Independent 80-digit Decimal projection and clipping gives the area
+    # below. The former global-coordinate shoelace lost 1.31 ppm here.
+    source = np.array((
+        (0.09999669777838385, 0.6, 0.014984999744974806),
+        (0.3499982279944439, 0.6, 0.014959007393097431),
+        (0.34999954835060437, 0.8500029552441929, 0.014974181631346554),
+        (0.09999844804776516, 0.8500000882463871, 0.014984999920000677),
+    ))
+    target = np.array((
+        (1.2999985000000076, -0.1, 0.015064999925000003),
+        (1.2999985000000076, 1.2, 0.015064999925000003),
+        (-1.4999999925000002e-6, 1.2, 0.014934999925000001),
+    ))
+    source_face, normal = projected_q4_source_face(source)
+    projected_target = (target-((target-source_face.corners[0]) @ normal)
+                        [:, None]*normal)
+    overlap = planar_projected_overlap(
+        source_face, PlanarFace((2, 1), projected_target),
+    )
+    assert overlap is not None
+    decimal_area = 8.0125108710039545e-12
+    assert abs(overlap.area-decimal_area)/decimal_area < 1.0e-8
 
 
 def test_subresolved_wedge_compares_full_q1_vector_at_shared_scale():

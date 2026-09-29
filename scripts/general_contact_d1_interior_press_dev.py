@@ -221,6 +221,7 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         "failure_reason": result.failure_reason,
         "accepted_steps": len(result.steps),
         "elapsed_seconds": time.perf_counter() - started,
+        "displacements": result.displacements.tolist(),
         "history": step_records,
         "contact_failure": result.info.get("contact_failure"),
     }

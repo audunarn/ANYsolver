@@ -148,9 +148,12 @@ def _to_frame(points: np.ndarray, origin: np.ndarray,
 def _signed_area(polygon: np.ndarray) -> float:
     if len(polygon) < 3:
         return 0.0
-    following = np.roll(polygon, -1, axis=0)
-    return 0.5 * float(np.sum(polygon[:, 0] * following[:, 1]
-                              - polygon[:, 1] * following[:, 0]))
+    # The overlap can be a tiny triangle far from the frame origin. A global
+    # shoelace sum subtracts O(face_size**2) terms to recover its small area.
+    # Fan triangles about one polygon vertex retain the local length scale.
+    edges = polygon[1:] - polygon[0]
+    return 0.5 * float(np.sum(edges[:-1, 0]*edges[1:, 1]
+                              - edges[:-1, 1]*edges[1:, 0]))
 
 
 def _cross2(first: np.ndarray, second: np.ndarray) -> float:
