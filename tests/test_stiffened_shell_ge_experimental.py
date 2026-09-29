@@ -150,6 +150,86 @@ def test_compiled_panel_owns_mutable_caller_geometry_and_connectivity():
                                   expected.shell_displacement)
 
 
+def test_equivalent_shell_and_beam_renumbering_preserves_physical_result():
+    original = _panel()
+    shell_map = {1: 64, 2: 17, 3: 90, 4: 28, 5: 55, 6: 41}
+    beam_map = {101: 330, 102: 415, 103: 205, 104: 580, 105: 125}
+    order = (4, 1, 6, 2, 5, 3)
+    original_xyz = dict(zip(original.shell.node_ids,
+                            original.shell.coordinates_m))
+    shell = replace(
+        original.shell,
+        node_ids=tuple(shell_map[node] for node in order),
+        coordinates_m=tuple(original_xyz[node] for node in order),
+        q4_elements=tuple(tuple(shell_map[node] for node in cell)
+                          for cell in reversed(original.shell.q4_elements)))
+    beams = []
+    for index, definition in enumerate(reversed(original.beams)):
+        element, inertia = definition.instantiate()
+        reference = element.operator.reference
+        beams.append(b3_ge.define_beam(
+            "b3-ge", 70+index,
+            tuple(beam_map[node] for node in element.node_ids),
+            reference.coordinates, reference.nodal_triads,
+            element.section, inertia))
+    remapped = replace(
+        original, shell=shell, beams=tuple(beams),
+        points=tuple(PointConnection(shell_map[tie.shell_node],
+                                     beam_map[tie.beam_node])
+                     for tie in reversed(original.points)),
+        fixed=tuple(FixedCoordinate("shell", shell_map[item.node],
+                                    item.component)
+                    for item in reversed(original.fixed)))
+    baseline_owner = ExperimentalGEAnalysis(original)
+    remapped_owner = ExperimentalGEAnalysis(remapped)
+    baseline = baseline_owner.solve_linear((
+        NodalAction("beam", 105, (0., 0., 100., 0., 0., 0.)),))
+    candidate = remapped_owner.solve_linear((
+        NodalAction("beam", beam_map[105], (0., 0., 100., 0., 0., 0.)),))
+
+    shell_rows = baseline.shell_displacement.reshape(-1, 6)
+    changed_shell_rows = candidate.shell_displacement.reshape(-1, 6)
+    for node in original.shell.node_ids:
+        np.testing.assert_allclose(
+            shell_rows[baseline_owner._shell_index[node]],
+            changed_shell_rows[remapped_owner._shell_index[shell_map[node]]],
+            rtol=1e-10, atol=1e-12)
+        np.testing.assert_allclose(
+            baseline.reactions[:baseline_owner._shell_count].reshape(-1, 6)
+            [baseline_owner._shell_index[node]],
+            candidate.reactions[:remapped_owner._shell_count].reshape(-1, 6)
+            [remapped_owner._shell_index[shell_map[node]]],
+            rtol=1e-10, atol=1e-8)
+    original_nodal = 6*len(baseline_owner._beam_ids)
+    changed_nodal = 6*len(remapped_owner._beam_ids)
+    for node in baseline_owner._beam_ids:
+        np.testing.assert_allclose(
+            baseline.beam_coordinates[
+                6*baseline_owner._beam_index[node]:
+                6*baseline_owner._beam_index[node]+6],
+            candidate.beam_coordinates[
+                6*remapped_owner._beam_index[beam_map[node]]:
+                6*remapped_owner._beam_index[beam_map[node]]+6],
+            rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(
+        baseline.beam_coordinates[original_nodal:].reshape(-1, 24),
+        candidate.beam_coordinates[changed_nodal:].reshape(-1, 24)[::-1],
+        rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(
+        baseline.multipliers.reshape(-1, 6),
+        candidate.multipliers.reshape(-1, 6)[::-1],
+        rtol=1e-10, atol=1e-12)
+    assert baseline_owner.preflight()["identity"] != remapped_owner.preflight()["identity"]
+    with pytest.raises(ValueError, match="incompatible"):
+        ExperimentalGEAnalysis(remapped).restore(baseline_owner.checkpoint())
+    restarted = ExperimentalGEAnalysis(remapped).restore(
+        remapped_owner.checkpoint())
+    np.testing.assert_array_equal(restarted.shell_displacement,
+                                  candidate.shell_displacement)
+    np.testing.assert_array_equal(restarted.beam_coordinates,
+                                  candidate.beam_coordinates)
+
+
 def test_reference_linear_load_cases_reuse_one_factorization():
     analysis = ExperimentalGEAnalysis(_panel())
     assert analysis.preflight()["reference_linear_factorizations"] == 0
