@@ -82,3 +82,96 @@ def p1_dual_gram(n_cells: int, length_m: float, last_mode: int,
     if not np.isfinite(lower).all() or not np.isfinite(upper).all():
         raise ValueError("P1 spectral Gram is not representable")
     return lower, upper
+
+
+def nonuniform_hat_cosine_moments(knots_m, first_mode: int,
+                                 stop_mode: int) -> np.ndarray:
+    """Exact P1-hat/cosine moments on declared physical reference knots.
+
+    The Neumann cosines use xi=(x-x0)/(xN-x0), as in the uniform convention.
+    This is a scalar multiplier-space construction, not a structural norm.
+    """
+    knots = np.asarray(knots_m, dtype=float)
+    if (knots.ndim != 1 or not 2 <= len(knots) <= 129 or
+            not np.isfinite(knots).all() or
+            np.any(np.diff(knots) <= 0.) or
+            not np.isfinite(knots[-1]-knots[0]) or knots[-1] <= knots[0]):
+        raise ValueError("strictly increasing finite P1 reference knots required")
+    if (type(first_mode) is not int or type(stop_mode) is not int or
+            first_mode < 0 or stop_mode < first_mode or stop_mode > 65536):
+        raise ValueError("invalid nonnegative mode interval")
+    xi = (knots-knots[0])/(knots[-1]-knots[0])
+    widths = np.diff(xi)
+    if np.any(widths <= 0.):
+        raise ValueError("representable distinct normalized P1 knots required")
+    modes = np.arange(first_mode, stop_mode, dtype=np.float64)
+    out = np.zeros((len(knots), len(modes)))
+    if not len(modes):
+        return out
+    zero = modes == 0
+    active = ~zero
+    for cell, h in enumerate(widths):
+        a, b = xi[cell], xi[cell+1]
+        if np.any(zero):
+            out[cell, zero] += h/2
+            out[cell+1, zero] += h/2
+        if np.any(active):
+            frequency = np.pi*modes[active]
+            difference = (np.cos(frequency*a)-np.cos(frequency*b))/(
+                h*frequency**2)
+            out[cell, active] += np.sqrt(2.)*(
+                -np.sin(frequency*a)/frequency+difference)
+            out[cell+1, active] += np.sqrt(2.)*(
+                np.sin(frequency*b)/frequency-difference)
+    return out
+
+
+def p1_nonuniform_dual_gram(knots_m, last_mode: int, *,
+                            chunk_size: int = 2048) -> tuple[np.ndarray, np.ndarray]:
+    """Floating scalar H^(-1/2) Gram bounds for nonuniform physical P1 hats.
+
+    The length scaling matches p1_dual_gram for identical uniform knots.
+    Positive tail enclosure follows Parseval in exact arithmetic; binary64
+    evaluation and its clipped roundoff are not interval certification.
+    """
+    knots = np.asarray(knots_m, dtype=float)
+    if (knots.ndim != 1 or not 2 <= len(knots) <= 129 or
+            not np.isfinite(knots).all() or
+            np.any(np.diff(knots) <= 0.) or
+            not np.isfinite(knots[-1]-knots[0]) or knots[-1] <= knots[0]):
+        raise ValueError("strictly increasing finite P1 reference knots required")
+    if type(last_mode) is not int or not len(knots)-1 <= last_mode <= 65535:
+        raise ValueError("last_mode must include all P1 hat directions")
+    if type(chunk_size) is not int or not 1 <= chunk_size <= 65536:
+        raise ValueError("chunk_size must be a positive integer")
+    length = float(knots[-1]-knots[0])
+    widths = np.diff((knots-knots[0])/length)
+    if np.any(widths <= 0.):
+        raise ValueError("representable distinct normalized P1 knots required")
+    mass = np.zeros((len(knots), len(knots)))
+    for cell, h in enumerate(widths):
+        mass[cell, cell] += h/3
+        mass[cell+1, cell+1] += h/3
+        mass[cell, cell+1] += h/6
+        mass[cell+1, cell] += h/6
+    weighted = np.zeros_like(mass)
+    projection = np.zeros_like(mass)
+    for start in range(0, last_mode+1, chunk_size):
+        stop = min(start+chunk_size, last_mode+1)
+        moments = nonuniform_hat_cosine_moments(knots, start, stop)
+        modes = np.arange(start, stop, dtype=np.float64)
+        weights = 1./np.sqrt(1.+(np.pi*modes)**2)
+        weighted += (moments*weights[None, :])@moments.T
+        projection += moments@moments.T
+    residual = (mass-projection+mass.T-projection.T)/2
+    eigenvalues, vectors = np.linalg.eigh(residual)
+    if eigenvalues[0] < -1e-10/(len(knots)-1):
+        raise ArithmeticError("cosine projection exceeds nonuniform P1 mass")
+    residual = (vectors*np.maximum(eigenvalues, 0.))@vectors.T
+    first_omitted = 1./np.sqrt(1.+(np.pi*(last_mode+1))**2)
+    lower = length**2*(weighted+weighted.T)/2
+    upper = lower+length**2*first_omitted*residual
+    upper = (upper+upper.T)/2
+    if not np.isfinite(lower).all() or not np.isfinite(upper).all():
+        raise ValueError("nonuniform P1 spectral Gram is not representable")
+    return lower, upper
