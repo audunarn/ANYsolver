@@ -528,6 +528,7 @@ def solve_static_contact_path(
                     contract["augmentation_acceleration"] = settings.augmentation_acceleration
                 if semismooth:
                     contract["enforcement_solver"] = "monolithic_active_set"
+                    contract["control_residual_scaling"] = "per_control_waypoint_max_v1"
                 if displacement_only:
                     contract["force_reference_method"] = (
                         "contact_free_elastic_displacement_v1"
@@ -681,6 +682,11 @@ def solve_static_contact_path(
                 failure_reason = None
                 scale = max(1.0e-9, max((abs(value) for row in program.waypoints
                                          for value in row), default=0.0))
+                control_scales = np.maximum(
+                    1.0e-9, np.max(np.abs(np.asarray(program.waypoints)), axis=0),
+                ) if semismooth else None
+                if semismooth:
+                    info["contact_path_control_scales_m"] = control_scales.tolist()
                 for step in range(accepted_step + 1, requested_step + 1):
                     cancellation_safe_point(cancellation_token,
                                             f"contact_path.step:{step}")
@@ -703,7 +709,7 @@ def solve_static_contact_path(
                             control_reactions=reactions, target=target,
                             reduced_external=reduced_external,
                             num_layers=num_layers, max_iterations=max_iterations,
-                            tolerance=tolerance, control_scale=scale,
+                            tolerance=tolerance, control_scales=control_scales,
                             path_force_magnitude=float(np.sum(np.abs(force_values))),
                             cancellation_token=cancellation_token, step=step,
                         )

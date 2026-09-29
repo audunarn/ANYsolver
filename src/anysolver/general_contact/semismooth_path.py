@@ -65,12 +65,17 @@ def _assemble_direct_matrix(kqq, kqz, gap_q, control_reactions,
 def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                     committed_states, transform, offset, control_rows,
                     control_reactions, target, reduced_external, num_layers,
-                    max_iterations, tolerance, control_scale,
+                    max_iterations, tolerance, control_scales,
                     path_force_magnitude, cancellation_token, step):
     """Solve one declared path step without committing its material state."""
     q = np.asarray(q, dtype=float).copy()
     mu = np.asarray(reactions, dtype=float).copy()
     z = np.asarray(nodal_forces, dtype=float).copy()
+    control_scales = np.asarray(control_scales, dtype=float).reshape(-1)
+    if (control_scales.shape != mu.shape
+            or not np.all(np.isfinite(control_scales))
+            or np.any(control_scales <= 0.0)):
+        raise ValueError("contact-path control scales must match positive controls")
     scale = settings.complementarity_force_scale_n
     support_ref = reference_nodal_support(manager.law)
     c = manager.stiffness*support_ref
@@ -100,7 +105,7 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
             contact.state, at_z, c, contact.gap_gradient, tangent=tangent,
         )
         value = max(float(np.linalg.norm(residual))/scale,
-                    float(np.max(np.abs(constraint), initial=0.0))/control_scale,
+                    float(np.max(np.abs(constraint)/control_scales, initial=0.0)),
                     float(np.sum(np.abs(ncp)))/scale)
         return (u, material_trial, contact, stiffness, residual, constraint,
                 ncp, active, ncp_q, ncp_z, value)
@@ -134,7 +139,7 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                                       + control_reactions @ mu)),
         )
         if (residual_norm <= force_limit
-                and constraint_norm <= tolerance*control_scale
+                and np.all(np.abs(constraint) <= tolerance*control_scales)
                 and ncp_norm <= 1.0e-8
                 and instantaneous_ncp_met
                 and np.all(z[~unsupported] >= 0.0)
@@ -282,7 +287,8 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                 candidate_error = None
                 candidate_norms = {
                     "equilibrium": float(np.linalg.norm(candidate[4]))/scale,
-                    "constraint": float(np.max(np.abs(candidate[5]), initial=0.0))/control_scale,
+                    "constraint": float(np.max(
+                        np.abs(candidate[5])/control_scales, initial=0.0)),
                     "complementarity": float(np.sum(np.abs(candidate[6])))/scale,
                     "active_modes": int(np.count_nonzero(candidate[7])),
                 }
@@ -384,7 +390,9 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                                   constraint_norm, ncp_norm, evaluations, backtracks,
                                   {"iteration": iteration, "merit": merit,
                                    "equilibrium": residual_norm/scale,
-                                   "constraint": constraint_norm/control_scale,
+                                   "constraint": float(np.max(
+                                       np.abs(constraint)/control_scales,
+                                       initial=0.0)),
                                    "complementarity": ncp_norm,
                                    "active_modes": int(np.count_nonzero(active)),
                                    "z": z.tolist(),

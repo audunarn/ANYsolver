@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 23.653124499993282,
+  "peak_process_tree_memory_mb": 324.214784,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_open_ring_displacement_dev.py",
+    "docs/d1_review_support/d1_pressure_work_16q4_press_20260929.json",
+    "docs/d1_review_support/d1_open_ring_displacement_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_open_ring_displacement_20260929.log"
+}
