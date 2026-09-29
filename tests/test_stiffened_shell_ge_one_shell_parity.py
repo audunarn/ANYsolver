@@ -11,11 +11,13 @@ from anysolver._stiffened_shell_ge_experimental import (
 )
 
 from test_ge_beam3_coupled_modes import fixture as legacy_fixture
+from test_ge_beam3_coupled_free_beam import build as legacy_direct_fixture
 from test_ge_beam3_native_generalized_modal import inertia
 
 
-def _matching_owners(topology):
-    legacy = legacy_fixture(topology, False)
+def _matching_owners(topology, *, direct_q4=False):
+    legacy = (legacy_direct_fixture(topology, False) if direct_q4
+              else legacy_fixture(topology, False))
     assembly = legacy.assembly
     node_ids = tuple(range(1, len(assembly.coordinates)+1))
     panel = ShellPanel(
@@ -72,33 +74,44 @@ def test_matching_one_shell_reference_tangent_solution_and_reactions(topology):
                                rtol=1e-10, atol=1e-14)
 
 
-@pytest.mark.parametrize("topology", ("S3-V2D",))
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
 def test_matching_one_shell_finite_elastic_history(topology):
-    legacy, current = _matching_owners(topology)
-    old = legacy.solve(stop_after=2)
-    new = current.solve((NodalAction(
-        "beam", 3, (0., .0001, .0002, 0., 0., 0.)),),
-        (.5, 1.), max_iterations=20, max_backtracks=12)
-    assert old.status == "paused" and new.status == "completed"
-    assert new.accepted_factors == (.5, 1.)
-    np.testing.assert_allclose(new.shell_displacement,
-                               old.state.shell_u, rtol=1e-9, atol=1e-11)
-    np.testing.assert_allclose(new.beam_positions,
-                               old.state.mechanical.positions
-                               +old.state.mechanical.position_low,
-                               rtol=1e-9, atol=1e-11)
-    np.testing.assert_allclose(new.beam_frames,
-                               old.state.mechanical.nodal_frames,
-                               rtol=1e-9, atol=1e-11)
-    np.testing.assert_allclose(new.cell_frames,
-                               old.state.mechanical.cell_rotations,
-                               rtol=1e-9, atol=1e-11)
-    np.testing.assert_allclose(new.cell_resultants,
-                               old.state.mechanical.resultants,
-                               rtol=1e-9, atol=1e-11)
-    np.testing.assert_allclose(new.multipliers,
-                               old.state.multipliers,
-                               rtol=1e-9, atol=1e-11)
+    # The finite mixed owner uses the direct corotational Q4 response and the
+    # elastic variational S3 response. Match that existing local law in the
+    # bounded legacy owner; its optional variational Q4 law is distinct.
+    legacy, current = _matching_owners(topology, direct_q4=topology == "Q4")
+    actions = (NodalAction(
+        "beam", 3, (0., .0001, .0002, 0., 0., 0.)),)
+    for stop, factor in ((1, .5), (2, 1.)):
+        old = legacy.solve(stop_after=stop)
+        new = current.solve(actions, (factor,), max_iterations=20,
+                            max_backtracks=12)
+        assert old.status == "paused" and new.status == "completed"
+        assert new.accepted_factors == (.5, 1.)[:stop]
+        np.testing.assert_allclose(new.shell_displacement,
+                                   old.state.shell_u, rtol=1e-9, atol=1e-11)
+        np.testing.assert_allclose(new.beam_positions,
+                                   old.state.mechanical.positions
+                                   +old.state.mechanical.position_low,
+                                   rtol=1e-9, atol=1e-11)
+        np.testing.assert_allclose(new.beam_frames,
+                                   old.state.mechanical.nodal_frames,
+                                   rtol=1e-9, atol=1e-11)
+        np.testing.assert_allclose(new.cell_frames,
+                                   old.state.mechanical.cell_rotations,
+                                   rtol=1e-9, atol=1e-11)
+        np.testing.assert_allclose(new.cell_resultants,
+                                   old.state.mechanical.resultants,
+                                   rtol=1e-9, atol=1e-11)
+        np.testing.assert_allclose(new.multipliers,
+                                   old.state.multipliers,
+                                   rtol=1e-9, atol=1e-11)
+        _, old_residual, _, _ = legacy._evaluate(
+            old.state, old.state.mechanical, old.state.shell_u,
+            old.state.multipliers, stop)
+        np.testing.assert_allclose(new.support_reactions[current._fixed],
+                                   old_residual[current._fixed],
+                                   rtol=1e-9, atol=1e-11)
 
 
 @pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
