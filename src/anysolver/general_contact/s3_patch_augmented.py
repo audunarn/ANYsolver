@@ -141,7 +141,15 @@ def _q4_s3_pair_value_rtol(local_area: float, derivative_area: float,
     relative_area = difference/minimum_area
     relative = 4.0*relative_area
     subresolved = area_resolution >= 1.0e-3*minimum_area
-    maximum_area_disagreement = 1.0e-6 if subresolved else 2.5e-7
+    # Keep the ordinary sharp comparison when it passes. If its 0.25 ppm
+    # area cap alone rejects a wedge whose propagated area resolution is at
+    # least 1 ppm, use the existing 1 ppm bounded-value branch. This does not
+    # widen the allowance for better-resolved or already-agreeing pairs.
+    resolution_limited = (not subresolved
+                          and relative_area > 2.5e-7
+                          and area_resolution >= 1.0e-6*minimum_area)
+    maximum_area_disagreement = (1.0e-6 if subresolved or resolution_limited
+                                 else 2.5e-7)
     if (not np.isfinite(relative) or not np.isfinite(area_resolution)
             or difference > area_resolution
             or relative_area > maximum_area_disagreement):
@@ -156,7 +164,7 @@ def _q4_s3_pair_value_rtol(local_area: float, derivative_area: float,
     # material relative to the tiny overlap. Allow a bounded 1e-6 comparison
     # only in that subresolved geometry regime. The wedge is still integrated
     # and its derivative and mechanical gates remain in force.
-    if subresolved:
+    if subresolved or resolution_limited:
         return 1.0e-6
     return 1.0e-9+relative
 

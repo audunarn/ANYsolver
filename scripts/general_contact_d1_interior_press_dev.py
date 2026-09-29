@@ -42,8 +42,10 @@ def build_interior_press(*, force_n: float = 0.08,
         raise ValueError("slide distance must be positive and finite")
     if type(slide_intervals) is not int or not 1 <= slide_intervals <= 10:
         raise ValueError("slide intervals must be an integer in [1, 10]")
-    if slide_body not in {"source", "target"}:
-        raise ValueError("slide body must be source or target")
+    if slide_body not in {"source", "target", "target_diagonal_dev"}:
+        raise ValueError("slide body must be source, target or target_diagonal_dev")
+    if slide_body == "target_diagonal_dev" and target_columns != 1:
+        raise ValueError("diagonal target development control needs two S3 faces")
     columns, rows = source_columns, source_rows
     stride = columns + 1
     model, definition, settings, _program = build_case(
@@ -53,6 +55,10 @@ def build_interior_press(*, force_n: float = 0.08,
         load_profile="distributed", total_force_n=force_n,
     )
     target_start = (rows + 1) * (columns + 1) + 1
+    target_left_top = target_start + (3 if target_columns == 1
+                                      else target_columns + 1)
+    target_control_top = (target_start + 2 if slide_body == "target_diagonal_dev"
+                          else target_left_top)
     model.boundary_conditions = [
         bc for bc in model.boundary_conditions
         if bc.name not in {"target_fixed", "source_guide"}
@@ -80,13 +86,12 @@ def build_interior_press(*, force_n: float = 0.08,
     else:
         raise ValueError("source support must be left or perimeter")
     model.add_boundary_condition(BoundaryCondition(
-        "target_left_clamp", (target_start,
-                              target_start + target_columns + 1),
+        "target_control_support", (target_start, target_control_top),
         {name: 0.0 for name in (("ux", "uy", "uz", "rx", "ry", "rz")
                                     if slide_body == "source"
                                     else ("uy", "uz", "rx", "ry", "rz"))},
     ))
-    if slide_body == "target":
+    if slide_body != "source":
         model.add_boundary_condition(BoundaryCondition(
             "source_x_anchor", (1,), {"ux": 0.0},
         ))
@@ -130,7 +135,7 @@ def build_interior_press(*, force_n: float = 0.08,
         waypoints += ((slide_distance_m, slide_distance_m),) * 2
         force_factors += (1.0,) * slide_intervals + (0.0, 1.0)
     controlled_nodes = ((1, columns + 2) if slide_body == "source" else
-                        (target_start, target_start + target_columns + 1))
+                        (target_start, target_control_top))
     program = ContactPathProgram(
         controls=tuple(ContactPathControl.node(node, "ux")
                        for node in controlled_nodes),
@@ -245,7 +250,8 @@ if __name__ == "__main__":
     parser.add_argument("--four-phase", action="store_true")
     parser.add_argument("--slide-distance-m", type=float, default=0.05)
     parser.add_argument("--slide-intervals", type=int, default=1)
-    parser.add_argument("--slide-body", choices=("source", "target"),
+    parser.add_argument("--slide-body", choices=("source", "target",
+                                                 "target_diagonal_dev"),
                         default="source")
     parser.add_argument("--shared-edge-tie", action="store_true")
     parser.add_argument("--steps-per-segment", type=int, choices=(1, 2),

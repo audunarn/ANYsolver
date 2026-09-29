@@ -158,3 +158,54 @@ def test_guarded_active_press_restarts_and_binds_profile_settings():
         full.info["general_contact"]["integration_force"],
         rtol=0.0, atol=1.0e-10,
     )
+
+
+def test_guarded_diagonal_target_motion_open_recontact_split_restart():
+    def case():
+        return build_interior_press(
+            source_support="perimeter", source_rows=4,
+            load_shape="interior_distributed", force_n=0.04,
+            reference_slope=1.0e-4, four_phase=True,
+            slide_body="target_diagonal_dev",
+        )
+
+    model, definition, settings, program = case()
+    full = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    assert full.status == "completed", full.failure_reason
+    assert len(full.steps) == 8
+    full_history = full.info["force_displacement_history"]
+    assert full_history[3]["contact"]["active_pressure_dofs"] > 0
+    assert full_history[5]["contact"]["active_pressure_dofs"] == 0
+    assert full_history[7]["contact"]["active_pressure_dofs"] > 0
+
+    model, definition, settings, program = case()
+    opened = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        max_load_factor=0.75, emit_restart_checkpoint=True,
+    )
+    assert opened.status == "completed", opened.failure_reason
+    assert len(opened.steps) == 6
+    assert opened.restart_checkpoint is not None
+
+    model, definition, settings, program = case()
+    resumed = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        restart_checkpoint=opened.to_restart_checkpoint(),
+    )
+    assert resumed.status == "completed", resumed.failure_reason
+    assert len(resumed.steps) == 8
+    np.testing.assert_allclose(resumed.displacements, full.displacements,
+                               rtol=0.0, atol=1.0e-10)
+    for resumed_row, full_row in zip(
+            resumed.info["force_displacement_history"], full_history):
+        np.testing.assert_allclose(
+            resumed_row["contact"]["integration_force"],
+            full_row["contact"]["integration_force"],
+            rtol=0.0, atol=1.0e-10,
+        )

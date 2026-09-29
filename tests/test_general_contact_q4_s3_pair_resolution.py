@@ -56,6 +56,21 @@ def test_moving_physical_edge_wedge_value_agreement_stays_bounded():
             <= second_allowance*second_support)
 
 
+def test_shallow_interior_wedge_uses_its_measured_area_resolution():
+    # Captured from a four-Q4/two-S3 flat-neighbor development candidate.
+    # The 0.43 ppm float/Jet2 difference lies inside the independently
+    # propagated 1.52 ppm area resolution; it cannot justify the former
+    # 0.25 ppm resolved-pair cutoff. The 1 ppm value cap remains explicit.
+    local = 8.01600452682e-12
+    derivative = local + 3.43284325019e-18
+    resolution = 1.21650205632e-17
+    assert abs(local-derivative) < resolution
+    assert _q4_s3_pair_value_rtol(local, derivative, resolution) == 1.0e-6
+    with pytest.raises(UnsupportedQ4S3Branch,
+                       match="area agreement is unresolved"):
+        _q4_s3_pair_value_rtol(local, local*(1.0+1.1e-6), resolution)
+
+
 def test_subresolved_wedge_compares_full_q1_vector_at_shared_scale():
     # Captured from pair 12 during the eight-Q4 slide. One almost-zero Q1
     # component has large relative error while the whole support vector
