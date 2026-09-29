@@ -255,6 +255,25 @@ failures are retained, and the production `<=2` guard remains intact.
 
 The original targets remain: smooth directional tangent ≤1e−5; normalized equilibrium and wrench ≤1e−6; analytical linear response ≤0.1% after discretization/enforcement convergence; representative integrated response within 2% of its registered reference; integration error at most one tenth of response budget; independent dimensional gap tolerance, with 10−3 thickness as a qualification starting setting. State/restart and installed-artifact requirements remain in force. Existing stricter case-specific gates and frozen inputs take precedence. A candidate acceptance record freezes its case inputs, scales, references and criteria **before** the claim-bearing run, retains raw evidence and receives independent assessment.
 
+**Current-source direct-matrix code verification (`851da3f2`):** The existing
+eccentric Q4/S3 fixture now checks raw active-branch `uu`, `uz`, `zu` and `zz`
+contact derivatives, with separate source/target translation and director
+force rows. A reduced three-coordinate test differentiates the complete
+structural-plus-contact/control/complementarity residual against the actual
+direct Newton matrix, exercising source rotation, controlled vertical motion,
+target rotation, pressure and reaction columns. Independent read-only review
+found the extracted matrix algebraically equal to the prior inline form and
+closed two test blind spots (control-row and coordinate-reduction coverage).
+The bounded focused suite passed 3 tests in 11.26 s / 331.02 MB; one ordinary
+two-body static route passed in 13.22 s / 356.08 MB; and the block-response
+comparison passed in 15.71 s / 366.01 MB. Raw logs and resource records are
+`d1_eccentric_direct_matrix_*` and `d1_monolithic_matrix_{integrated,block}_*`
+in `d1_review_support`. This verifies one smooth **non-equilibrium** active
+branch and preserves the old accepted-step checks. It does not close pressure
+stability, clipping transitions, coupled source-rotation path response or D1
+acceptance. No ordinary no-contact source file changed; the final 5% route
+regression gate remains open.
+
 **No-contact source impact at `a306432d`:** Relative to the `cd13ec70` paired no-contact development screens, only `src/anysolver/general_contact/s3_patch_augmented.py` and `src/anysolver/general_contact/s3_patch_mortar_energy.py` changed under the production source tree; package metadata and shared solver/no-contact source did not. The earlier lazy-import check showed the contact core remains unloaded on those no-contact routes. Reuse the prior screens for unchanged-path development decisions. This impact analysis does not promote their limited paired samples into the final 5% regression qualification; retain that gate for the claim-bearing source identity.
 
 **Saved near-rim reference applicability, development only:** The corrected structural discriminator at the hash-bound 16×8 pose eliminates both prescribed `ux` controls. Nonlinear-minus-linear source force differs by 1.263e−5 N in `ux` and only 3.668e−13 N in `uz`; the corresponding linear response is 1.633 nm in `ux` and 1.454e−16 m in `uz`. Independent read-only review finds the linear finite-volume obstacle a defensible spatial comparator for this fixed-target, rotation-guided small-motion transverse field, together with the independent same-mesh Q1 comparison (pressure L2 5.98e−11, 8×9 bin L2 2.24e−11). The 0.3344% FV bin L2 discrepancy is a narrow saved-field observation. The first discriminator's 11.59 nm compliance estimate omitted the prescribed controls, retained a rigid translation and is withdrawn. Corrected and failed outputs remain under `reports/general_contact_d1_saved_nonlinearity_discriminator*20260928.txt`; saved coupled result SHA is `8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852`. This does not resolve general nonlinear matching, deformable-target spatial response or formal qualification.
