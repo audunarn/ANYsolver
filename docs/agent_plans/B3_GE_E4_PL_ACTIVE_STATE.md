@@ -6,7 +6,7 @@ Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_
 
 Deliver one complete G0–G6 release, with native B3-GE/E4-PL principal and a separate mandatory physical B2 option. Experimental integration is allowed while G0 remains open. G0B/F03 are open, none of F01–F13 is fully accepted, and G1 acceptance and production qualification are barred. Formal F03 execution authority remains unconsumed. Historical one-use authorities are not replayed. The dirty factor-4 Fy fallback script belongs to another ongoing investigation; do not edit, stage, or execute it by default.
 
-Integration branch: codex/b3-ge-e4-pl-integration in this isolated worktree, source HEAD d760f64b plus the reviewed Q4 shell precision edit in progress. Element/joint mechanics remain at b702e50d. Preserve concurrent work and check actual process identity before launching a heavy job.
+Integration branch: codex/b3-ge-e4-pl-integration in this isolated worktree, reviewed through 55e79c19. Element/joint mechanics remain at b702e50d. Preserve concurrent work and check actual process identity before launching a heavy job.
 
 ## Delivered experimental behavior
 
