@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 import json
 from pathlib import Path
 import sys
@@ -9,7 +10,7 @@ import sys
 import numpy as np
 
 from docs.d1_review_support.d1_two_body_reference_oracle import (
-    solve_reference, solve_reference_singleton,
+    independent_gap_work, solve_reference, solve_reference_singleton,
 )
 from scripts.general_contact_d1_interior_press_dev import build_interior_press
 
@@ -333,6 +334,7 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
                                 source_cells: int = 16,
                                 force_n: float = 0.04,
                                 target_y0_m: float = -0.1,
+                                source_reference_downshift_m: float = 0.0,
                                 ) -> None:
     """Screen x/y S3 refinement under the same fixed physical source load."""
     if output.exists():
@@ -343,8 +345,18 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
 
     if target_young_multiplier not in (1.0, 5.0):
         raise ValueError("unsupported target contrast")
-    if force_n not in (0.04, 0.08):
+    if force_n not in (0.001, 0.04, 0.08):
         raise ValueError("unsupported bounded force screen")
+    if source_reference_downshift_m not in (0.0, 35.0e-6):
+        raise ValueError("unsupported source reference downshift")
+    if force_n == 0.001 and not (
+            source_reference_downshift_m == 35.0e-6
+            and target_young_multiplier == 5.0 and source_cells == 4
+            and target_cells_to_run == (4,) and target_y0_m == -0.1
+            and baseline_path is None):
+        raise ValueError("low-load oracle is limited to the 5 µm opening fixture")
+    if force_n != 0.001 and source_reference_downshift_m != 0.0:
+        raise ValueError("downshift is limited to the low-load fixture")
     if target_y0_m not in (-0.1, -0.113):
         raise ValueError("unsupported bounded target row offset")
     if source_cells not in (4, 8, 12, 16, 24):
@@ -374,12 +386,15 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
             target_columns=target_cells, target_rows=target_cells,
             target_young_multiplier=target_young_multiplier,
             target_y0_m=target_y0_m,
+            source_reference_downshift_m=source_reference_downshift_m,
             force_n=force_n, reference_slope=1.0e-4,
             load_shape="physical_bump", slide_body="target",
             target_reference_full_left_clamp=True,
         )
         reference = solve_reference_singleton(
-            model, definition, program, 2, allow_multimode=True)
+            model, definition, program, 2, allow_multimode=True,
+            expected_initial_gap_m=(5.0e-6 if source_reference_downshift_m
+                                    else 4.0e-5))
         lower_gap = _independent_projected_gap_bound(
             model, definition, reference["displacement"],
             definition.interactions[0].gap_tolerance)
@@ -391,6 +406,7 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
             "target_young_multiplier": target_young_multiplier,
             "target_y0_m": target_y0_m,
             "force_n": force_n,
+            "source_reference_downshift_m": source_reference_downshift_m,
             "fixed_middle_left_nodes": tuple(
                 target_first+(target_cells+1)*row
                 for row in range(1, target_cells)),
@@ -543,7 +559,9 @@ def coupled_contrast_comparison(output: Path, reference_path: Path,
                 and case["target_rows"] == saved["target_rows"]
                 and case["target_young_multiplier"] == 5.0
                 and case.get("target_y0_m", -0.1) == saved.get("target_y0_m", -0.1)
-                and case.get("force_n", 0.04) == saved["force_n"]]
+                and case.get("force_n", 0.04) == saved["force_n"]
+                and case.get("source_reference_downshift_m", 0.0) ==
+                saved.get("source_reference_downshift_m", 0.0)]
     if len(matching) != 1:
         raise ValueError("one matching independent reference is required")
     oracle = matching[0]
@@ -556,6 +574,8 @@ def coupled_contrast_comparison(output: Path, reference_path: Path,
         target_rows=saved["target_rows"],
         target_young_multiplier=5.0,
         target_y0_m=saved.get("target_y0_m", -0.1),
+        source_reference_downshift_m=saved.get(
+            "source_reference_downshift_m", 0.0),
         target_reference_full_left_clamp=True,
         force_n=saved["force_n"],
         reference_slope=saved["reference_slope"],
@@ -611,6 +631,102 @@ def coupled_contrast_comparison(output: Path, reference_path: Path,
         "production_contact_force_balance_n",
         "production_contact_moment_balance_nm",
         "active_rim_pressure_pa")}))
+
+
+def lowload_geometry_decomposition(output: Path, saved_path: Path) -> None:
+    """Compare moving contact geometry with the independent frozen map."""
+    if output.exists():
+        raise FileExistsError(output)
+    from scipy import sparse
+    from anysolver.assembly import build_constraint_transformation
+    from anysolver.general_contact.core import suspend_contact
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+    from anysolver.general_contact.semismooth import linearize
+    from anysolver.matrix_assembly import assemble_stiffness_matrix
+    from anysolver.nonlinear_static import _assemble_nonlinear_system
+
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    if (saved["status"] != "completed" or saved["accepted_steps"] != 2
+            or saved["force_n"] != 0.001
+            or saved["source_reference_downshift_m"] != 35.0e-6
+            or saved["source_columns"] != 4 or saved["source_rows"] != 4
+            or saved["target_columns"] != 4 or saved["target_rows"] != 4
+            or saved["q4_gap_certificate"] != "overlap_local_dev"):
+        raise ValueError("saved pose is outside the low-load discriminator")
+    model, definition, settings, _program = build_interior_press(
+        force_n=0.001, reference_slope=1.0e-4,
+        source_support="perimeter", source_columns=4, source_rows=4,
+        target_columns=4, target_rows=4, target_young_multiplier=5.0,
+        target_reference_full_left_clamp=True,
+        source_reference_downshift_m=35.0e-6,
+        load_shape="physical_bump", slide_body="target",
+    )
+    manager = GeneralS3PatchManager(
+        model, definition,
+        replace(settings, q4_source_gap_certificate="overlap_local_dev"),
+    )
+    contact = saved["history"][-1]["contact"]
+    pressure = np.asarray(contact["numerical_pressure_pa"], dtype=float)
+    support_saved = np.asarray(contact["reference_support_m2"], dtype=float)
+    displacement = np.asarray(saved["displacements"], dtype=float)
+    state = linearize(manager, displacement, pressure*support_saved,
+                      tangent=False)
+    node_ids, support_reference, reference_work, reference_area = (
+        independent_gap_work(model, definition, 0.0))
+    if (tuple(node_ids) != tuple(manager.law.source_node_ids)
+            or tuple(contact["source_pressure_node_ids"]) != tuple(node_ids)):
+        raise ValueError("production and oracle pressure identities differ")
+    support_production = np.asarray(state.state.reference_support)
+    np.testing.assert_allclose(support_production, support_saved,
+                               rtol=1e-9, atol=1e-12)
+    reference_work = (reference_work.toarray() if sparse.issparse(reference_work)
+                      else np.asarray(reference_work))
+    gradient = (state.gap_gradient.toarray()
+                if sparse.issparse(state.gap_gradient)
+                else np.asarray(state.gap_gradient))
+    production_work = support_production[:, None]*gradient
+    reference_gap = 5.0e-6 + reference_work @ displacement/support_reference
+    production_gap = np.asarray(state.state.normalized_gap)
+    model.apply_boundary_conditions()
+    stiffness, _ = assemble_stiffness_matrix(model)
+    _, _, transform, _offset, _, _ = build_constraint_transformation(
+        stiffness, np.zeros(len(displacement)), model,
+    )
+    with suspend_contact():
+        nonlinear_internal, _, _ = _assemble_nonlinear_system(
+            model, displacement, {}, 5, tangent=False,
+            kinematics="von_karman", require_full_coordinates=True,
+        )
+    structural_difference = np.asarray(nonlinear_internal-stiffness @ displacement)
+    reduced_difference = np.asarray(transform.T @ structural_difference).reshape(-1)
+    active = np.flatnonzero(pressure > 0.0)
+    if active.size != 1 or node_ids[int(active[0])] != 13:
+        raise ValueError("saved low-load active pressure identity changed")
+    i = int(active[0])
+    record = {
+        "status": "development_lowload_geometry_decomposition",
+        "saved_pose": str(saved_path),
+        "oracle_scope": "frozen_reference_xy_work_map",
+        "active_node_id": node_ids[i],
+        "production_gap_m": float(production_gap[i]),
+        "frozen_oracle_gap_at_production_pose_m": float(reference_gap[i]),
+        "active_gap_difference_m": float(production_gap[i]-reference_gap[i]),
+        "active_support_relative_difference": float(
+            (support_production[i]-support_reference[i])/
+            support_reference[i]),
+        "active_work_row_relative_l2_difference": float(np.linalg.norm(
+            production_work[i]-reference_work[i])/
+            np.linalg.norm(reference_work[i])),
+        "active_work_on_production_pose_difference_m3": float(
+            (production_work[i]-reference_work[i]) @ displacement),
+        "structural_nonlinear_minus_linear_free_l2_n": float(
+            np.linalg.norm(reduced_difference)),
+        "structural_nonlinear_minus_linear_active_uz_n": float(
+            structural_difference[model.mesh.dof_manager.get_node_dofs(13)[2]]),
+        "independent_reference_overlap_area_m2": float(reference_area),
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps(record))
 
 
 def coupled_y_comparison(output: Path, reference_path: Path,
@@ -766,6 +882,8 @@ if __name__ == "__main__":
     elif len(sys.argv) > 1 and sys.argv[1] == "--coupled-contrast-comparison":
         coupled_contrast_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
                                     Path(sys.argv[4]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--lowload-geometry-decomposition":
+        lowload_geometry_decomposition(Path(sys.argv[2]), Path(sys.argv[3]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--coupled-y-comparison":
         coupled_y_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
                              [Path(path) for path in sys.argv[4:]])

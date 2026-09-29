@@ -1,0 +1,47 @@
+{
+  "status": "development_grid_comparison_not_error_bound",
+  "source_files": [
+    "d1_fixed_bump_target_contrast_reference_20260929.json",
+    "d1_spatial_ref_source24_target4_20260929.json",
+    "d1_fixed_bump_contrast_source24_20260929.json",
+    "d1_coupled_contrast_12q4_32s3_compare_v2_20260929.json"
+  ],
+  "rows": [
+    {
+      "observable": "force",
+      "reference": 0.01853665992883531,
+      "production": 0.01859519320535152,
+      "relative_production_error_percent": 0.31577035313225643,
+      "source_16_to_24_percent": 0.8033775530755911,
+      "target_4_to_6_percent": 0.363542299708757,
+      "mixed_interaction_percent": 0.0010440971324660753
+    },
+    {
+      "observable": "uz_0.6_0.6",
+      "reference": -0.0001920684362666934,
+      "production": -0.00019294817299968104,
+      "relative_production_error_percent": 0.4580329543403501,
+      "source_16_to_24_percent": 0.22564350697737318,
+      "target_4_to_6_percent": 0.8276372820566695,
+      "mixed_interaction_percent": 0.01348360701576449
+    },
+    {
+      "observable": "uz_0.6_0.7",
+      "reference": -0.00018093448641288593,
+      "production": -0.0001808498778110128,
+      "relative_production_error_percent": 0.04676200958177514,
+      "source_16_to_24_percent": 0.5378974227420951,
+      "target_4_to_6_percent": 0.7220974926754924,
+      "mixed_interaction_percent": 0.04120623475222946
+    },
+    {
+      "observable": "uz_0.6_0.9",
+      "reference": -0.0001055017074455973,
+      "production": -0.00010527535234980688,
+      "relative_production_error_percent": 0.21455112080260325,
+      "source_16_to_24_percent": 0.39717423253299444,
+      "target_4_to_6_percent": 0.5781710240743143,
+      "mixed_interaction_percent": 0.07584647856473975
+    }
+  ]
+}

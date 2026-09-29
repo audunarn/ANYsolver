@@ -52,6 +52,7 @@ def build_interior_press(*, force_n: float = 0.08,
                          target_rows: int = 1,
                          target_young_multiplier: float = 1.0,
                          target_y0_m: float = -0.1,
+                         source_reference_downshift_m: float = 0.0,
                          source_support: str = "left",
                          source_columns: int = 4,
                          source_rows: int = 2,
@@ -68,6 +69,8 @@ def build_interior_press(*, force_n: float = 0.08,
                          shared_edge_tie: bool = False):
     if not np.isfinite(slide_distance_m) or slide_distance_m <= 0.0:
         raise ValueError("slide distance must be positive and finite")
+    if source_reference_downshift_m not in (0.0, 35.0e-6):
+        raise ValueError("bounded source downshift must be 0 or 35 µm")
     if type(slide_intervals) is not int or not 1 <= slide_intervals <= 10:
         raise ValueError("slide intervals must be an integer in [1, 10]")
     if slide_body not in {"source", "target", "target_diagonal_dev"}:
@@ -92,6 +95,13 @@ def build_interior_press(*, force_n: float = 0.08,
         offline_structural_reference_y24=offline_structural_reference_y24,
     )
     target_start = (rows + 1) * (columns + 1) + 1
+    if source_reference_downshift_m:
+        for node_id in range(1, target_start):
+            node = model.mesh.nodes[node_id]
+            model.set_node_coordinates(
+                node_id, node.x, node.y,
+                node.z-source_reference_downshift_m,
+            )
     target_left_top = target_start + (
         3 if target_columns == 1 and target_rows == 1
         else target_rows*(target_columns+1))
@@ -212,6 +222,7 @@ def main(output: Path, *, force_n: float, reference_slope: float,
          target_columns: int, target_rows: int, source_support: str,
          target_young_multiplier: float,
          target_y0_m: float,
+         source_reference_downshift_m: float,
          source_columns: int, source_rows: int, load_shape: str,
          source_y_profile: str | None,
          offline_structural_reference_y16: bool,
@@ -231,6 +242,7 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         target_columns=target_columns, target_rows=target_rows,
         target_young_multiplier=target_young_multiplier,
         target_y0_m=target_y0_m,
+        source_reference_downshift_m=source_reference_downshift_m,
         source_support=source_support,
         source_columns=source_columns, source_rows=source_rows,
         source_y_profile=source_y_profile,
@@ -309,6 +321,7 @@ def main(output: Path, *, force_n: float, reference_slope: float,
         "target_columns": target_columns,
         "target_young_multiplier": target_young_multiplier,
         "target_y0_m": target_y0_m,
+        "source_reference_downshift_m": source_reference_downshift_m,
         "interior_pressure_node_ids": list(interior_nodes),
         "force_n": force_n,
         "reference_slope": reference_slope,
@@ -422,6 +435,8 @@ def replay_captured_sweep(capture: Path, output: Path):
         target_rows=saved["target_rows"],
         target_young_multiplier=saved.get("target_young_multiplier", 1.0),
         target_y0_m=saved.get("target_y0_m", -0.1),
+        source_reference_downshift_m=saved.get(
+            "source_reference_downshift_m", 0.0),
         source_support=saved["source_support"],
         source_columns=saved["source_columns"],
         source_rows=saved["source_rows"],
@@ -508,6 +523,8 @@ def saved_rotation_probe(saved_path: Path, output: Path) -> None:
         target_rows=saved["target_rows"],
         target_young_multiplier=saved.get("target_young_multiplier", 1.0),
         target_y0_m=saved.get("target_y0_m", -0.1),
+        source_reference_downshift_m=saved.get(
+            "source_reference_downshift_m", 0.0),
         target_reference_full_left_clamp=(
             saved["target_reference_full_left_clamp"]),
         load_shape=saved["load_shape"], slide_body=saved["slide_body"],
@@ -582,6 +599,8 @@ if __name__ == "__main__":
                         choices=(1.0, 5.0), default=1.0)
     parser.add_argument("--target-y0-m", type=float,
                         choices=(-0.1, -0.113), default=-0.1)
+    parser.add_argument("--source-reference-downshift-m", type=float,
+                        choices=(0.0, 35.0e-6), default=0.0)
     parser.add_argument("--source-support", choices=("left", "perimeter"),
                         default="left")
     parser.add_argument("--source-rows", type=int, choices=(2, 4, 8, 12, 16), default=2)
@@ -627,6 +646,8 @@ if __name__ == "__main__":
          target_rows=arguments.target_rows,
          target_young_multiplier=arguments.target_young_multiplier,
          target_y0_m=arguments.target_y0_m,
+         source_reference_downshift_m=(
+             arguments.source_reference_downshift_m),
          source_support=arguments.source_support,
          source_columns=arguments.source_columns,
          source_rows=arguments.source_rows, load_shape=arguments.load_shape,

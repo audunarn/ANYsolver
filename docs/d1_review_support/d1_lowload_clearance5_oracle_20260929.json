@@ -1,0 +1,20 @@
+{
+  "status": "independent_linear_lowload_clearance_screen",
+  "force_n": 0.001,
+  "source_downshift_m": 3.5e-05,
+  "source_cells": [
+    4,
+    4
+  ],
+  "target_cells": [
+    4,
+    4
+  ],
+  "active_node_ids": [
+    13
+  ],
+  "integrated_normal_force_n": 0.00010345737461146679,
+  "target_maximum_vertical_displacement_m": 3.0871212453640666e-06,
+  "minimum_normalized_gap_m": 0.0,
+  "structural_free_coordinates": 228
+}

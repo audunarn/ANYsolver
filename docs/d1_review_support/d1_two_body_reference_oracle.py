@@ -248,7 +248,8 @@ def solve_reference(model, definition, program, accepted_step: int,
 
 
 def solve_reference_singleton(model, definition, program, accepted_step: int,
-                              *, allow_multimode: bool = False):
+                              *, allow_multimode: bool = False,
+                              expected_initial_gap_m: float = 4.0e-5):
     """Independently solve a linear contact KKT problem.
 
     This is restricted to zero prescribed target-x motion and parallel
@@ -286,7 +287,9 @@ def solve_reference_singleton(model, definition, program, accepted_step: int,
                    +(0.5*first_target.thickness
                      -first_target.reference_surface_offset)*target_normal)
     initial_gap = float(np.dot(source_skin-target_skin, target_normal))
-    if abs(initial_gap-4.0e-5) > 1.0e-12:
+    if expected_initial_gap_m not in (4.0e-5, 5.0e-6):
+        raise ValueError("singleton reference opening outside registered development fixtures")
+    if abs(initial_gap-expected_initial_gap_m) > 1.0e-12:
         raise ValueError("singleton reference physical opening changed")
     external = np.zeros(ndof)
     for item, value in zip(program.nodal_forces,

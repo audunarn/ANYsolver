@@ -1,0 +1,17 @@
+{
+  "status": "independent_linear_lowload_screen",
+  "force_n": 0.001,
+  "source_cells": [
+    4,
+    4
+  ],
+  "target_cells": [
+    4,
+    4
+  ],
+  "active_node_ids": [],
+  "integrated_normal_force_n": 0.0,
+  "target_maximum_vertical_displacement_m": 0.0,
+  "minimum_normalized_gap_m": 3.3190649896091484e-05,
+  "structural_free_coordinates": 228
+}
