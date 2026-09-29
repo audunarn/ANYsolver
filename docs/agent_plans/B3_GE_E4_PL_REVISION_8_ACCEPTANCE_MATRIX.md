@@ -60,11 +60,13 @@ candidate adjudication; a failed required case cannot disappear within it.
 
 V06 development evidence: the signed axial/bending/cross-energy patch and
 independently derived boundary-load solves pass both offsets and three 2D
-grids, with 6/6 source regressions. The finest-grid force-like retained
+grids, with 6/6 source and isolated installed-wheel regressions on Windows.
+The finest-grid force-like retained
 coordinates show a 4.40e-9 scaled numerical drift. Representative
-engineering-boundary response, installed-artifact checks, and complete V06
+engineering-boundary response, broader installed/platform checks, and complete V06
 adjudication remain open. See
-`.qualification/b3-ge-e4-pl/r8-v06-transformed-energy-dev-20260929-v5/`.
+`.qualification/b3-ge-e4-pl/r8-v06-transformed-energy-dev-20260929-v5/`
+and `.qualification/b3-ge-e4-pl/r8-v06-installed-dev-20260929-v1/`.
 
 | External comparison | Status | Current boundary |
 |---|---|---|

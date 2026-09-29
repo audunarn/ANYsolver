@@ -129,9 +129,16 @@ signal for V02/M1. Six source regressions pass. This is a scoped elastic
 patch, not broad V06, installed acceptance or E01 resolution. Evidence:
 `.qualification/b3-ge-e4-pl/r8-v06-transformed-energy-dev-20260929-v5/`.
 The v1–v4 development outputs remain preserved, including the earlier
-preconstraint-residual interpretation. Next V06 action is a representative
-load-response/convergence case with its actual engineering boundary
-conditions and installed verification; retain complete V06 criteria.
+preconstraint-residual interpretation. Retain complete V06 criteria.
+
+The unchanged product source at `3f7a1ee8` was built as an isolated wheel
+(SHA-256 `86aa6958163ff21bd36bf7ad5f8b866f3b4ff0246d35c64b80a1438ae8e6130f`).
+The six V06 regressions also pass from its verified installed import on
+Windows/Python 3.14; both effective BLAS pools used one thread. Evidence:
+`.qualification/b3-ge-e4-pl/r8-v06-installed-dev-20260929-v1/`.
+The remaining V06 work is a representative engineering-boundary response,
+independent mechanics review and the required broader installed/platform
+checks; this focused wheel screen does not accept V06.
 
 The targeted flat-web comparison kept geometry, native section, normal offset,
 plate-root supports, and physical plate-Fy/beam-Mx actions identical. Both BL5
