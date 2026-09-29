@@ -121,6 +121,33 @@ point-law change or automatic refinement. Evidence:
 `.qualification/b3-ge-e4-pl/r8-e01-pure-torque-dev-20260929-v3/`.
 E01/M1 remain open; no formal F03 authority was used.
 
+Bounded torque-action discriminator: capture each coupled 8×4 model's shell
+covector under the same +100 N m torque and replay each action on both
+isolated shell operators. A large same-action response difference directs
+review to shell torsional compliance; a large action-distribution effect
+directs review to coupled shell/point transfer. Require exact replay of the
+external coupled shell state, work and wrench closure, and no changed mesh,
+load or connection law. Neither outcome alone qualifies E01 or authorizes a
+law/stabilization change; stop after this allocation and seek the matched
+physical mechanics decision.
+
+The four torque-action replays completed and reproduce coupled shell states
+to 9.54e-19 native / 1.33e-17 external maximum absolute nodal difference.
+At the bonded tip, native/external shell roll is 2.14142e-5/2.11314e-5 rad
+under the *native* action, and 2.68949e-5/2.64368e-5 under the *external*
+action. At fixed native shell stiffness the changed coupled action adds
+5.48070e-6 rad (109.1% of the 5.02259e-6 coupled gap); the external shell
+under that action subtracts 4.58109e-7 rad. The action difference drives
+roll chiefly through physical Mx (+5.76365e-6 rad), partly offset by Fz;
+Mz contributes zero on this fixture. This localizes the observed difference
+to coupled torque-action distribution, **not** to an isolated-shell
+compliance deficit or sparse-solve roundoff. It still cannot allocate cause
+between the different shell formulations and their point-connected
+interaction. Stop E01 diagnostic refinement and obtain focused mechanics
+review/a genuinely matched resolved torque-transfer reference before any
+law or qualification decision. Evidence:
+`.qualification/b3-ge-e4-pl/r8-e01-pure-torque-dev-20260929-v4/`.
+
 Next independent M1/V06 question: does the reference-linear owner recover the
 signed `EA_b e ε κ` transformed-section energy cross term for a compatible
 uniform axial/curvature field on the registered elastic panel, with native
