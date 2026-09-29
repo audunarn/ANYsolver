@@ -192,7 +192,7 @@ def test_bl5_sparse_rows_work_reaction_and_restart(span, rows):
     assert owner.capabilities["analysis"] == ("reference_linear",)
     assert owner.capabilities["experimental_line_spaces"] == (
         f"BL5_P0_span_{span}",)
-    assert "nonmatching line mapping" in owner.capabilities["excluded"]
+    assert "curved/reversed BL5 line mapping" in owner.capabilities["excluded"]
     action = (stiffened_shell.NodalAction(
         "beam", 105, (0., 0., 100., 0., 0., 0.)),)
     result = owner.solve_linear(action)
@@ -230,6 +230,10 @@ def test_bl5_sparse_rows_work_reaction_and_restart(span, rows):
 
 def test_bl5_line_rejects_wrong_reference_arm_and_duplicate():
     base = _definition()
+    with pytest.raises(ValueError, match="ordered even-edge"):
+        stiffened_shell.ExperimentalBL5Line(
+            base.lines[0].shell_nodes, base.lines[0].beam_halfcells,
+            expected_beam_arm=(0., 0., "invalid"))
     line = stiffened_shell.ExperimentalBL5Line(
         base.lines[0].shell_nodes, base.lines[0].beam_halfcells,
         expected_beam_arm=(0., 0., .05))
@@ -285,3 +289,95 @@ def test_bl5_sparse_rows_equal_sampled_weak_work(span):
     np.testing.assert_allclose(
         multiplier@(owner._C@direction),
         (owner._C.T@multiplier)@direction, rtol=0., atol=1e-11)
+
+
+def _bl5_nonmatching_definition(shell_edges, span=1):
+    base = _definition()
+    xs = np.linspace(0., 1., shell_edges+1)
+    row = shell_edges+1
+    shell = replace(
+        base.shell,
+        node_ids=tuple(range(1, 2*row+1)),
+        coordinates_m=(tuple((float(x), 0., 0.) for x in xs)+
+                       tuple((float(x), .2, 0.) for x in xs)),
+        q4_elements=tuple((i, i+1, i+row+1, i+row)
+                          for i in range(1, row)))
+    line = stiffened_shell.ExperimentalBL5Line(
+        tuple(range(1, row+1)), base.lines[0].beam_halfcells,
+        multiplier_span=span)
+    fixed = tuple(stiffened_shell.FixedCoordinate("shell", node, axis)
+                  for node in (1, row+1) for axis in range(6))
+    return replace(base, shell=shell, fixed=fixed, lines=(line,))
+
+
+@pytest.mark.parametrize("shell_edges,span,segments", (
+    (2, 1, 4), (2, 2, 4), (3, 1, 6), (3, 2, 6),
+    (8, 1, 8), (8, 2, 8)))
+def test_bl5_fixed_reference_nonmatching_segmentation_and_work(
+        shell_edges, span, segments):
+    definition = _bl5_nonmatching_definition(shell_edges, span)
+    owner = stiffened_shell.create_analysis(definition=definition)
+    assert len(owner._line_samples) == 2*segments
+    np.testing.assert_allclose(
+        sum(sample[2] for sample in owner._line_samples), 1.,
+        rtol=0., atol=2e-15)
+    positions = np.array([owner._beam_nodes[node][0] for node in owner._beam_ids])
+    frames = np.array([owner._beam_nodes[node][1] for node in owner._beam_ids])
+    state = Mechanical(positions, np.zeros_like(positions), frames,
+                       np.tile(np.eye(3), (len(owner._beam_parts), 2, 1, 1)),
+                       np.zeros((len(owner._beam_parts), 18)))
+    scattered = np.zeros(owner._C.shape)
+    for operator, slots, weight, beam_edge, _ in owner._line_samples:
+        local = operator.evaluate(np.zeros((2, 6)), state, np.zeros(5))
+        np.testing.assert_allclose(local.gap, 0., atol=2e-13)
+        for channel in range(5):
+            row = channel*(4//span)+beam_edge//span
+            scattered[row, slots] += weight*local.gap_jacobian[channel]
+    np.testing.assert_allclose(owner._C.toarray(), scattered,
+                               rtol=0., atol=4e-14)
+    spin = np.array((.17, -.11, .09))
+    rigid = np.zeros(owner._K.shape[0])
+    for i, point in enumerate(owner._shell_xyz):
+        rigid[6*i:6*i+3] = np.cross(spin, point)
+        rigid[6*i+3:6*i+6] = spin
+    beam_nodal = 6*len(owner._beam_ids)
+    for i, point in enumerate(positions):
+        start = owner._shell_count+6*i
+        rigid[start:start+3] = np.cross(spin, point)
+        rigid[start+3:start+6] = spin
+    for i in range(len(owner._beam_parts)):
+        start = owner._shell_count+beam_nodal+24*i
+        rigid[start:start+3] = spin
+        rigid[start+3:start+6] = spin
+    np.testing.assert_allclose(owner._C@rigid, 0., atol=2e-12)
+    result = owner.solve_linear((stiffened_shell.NodalAction(
+        "beam", 105, (0., 0., 100., 0., 0., 0.)),))
+    assert result.status == "completed"
+    assert result.free_equilibrium_ratio < 1e-8
+    assert result.constraint_max < 1e-9
+    support = result.reactions[:owner._shell_count].reshape(-1, 6)
+    np.testing.assert_allclose(support[:, :3].sum(axis=0),
+                               (0., 0., -100.), atol=1e-6)
+    support_moment = (support[:, 3:].sum(axis=0)+
+                      np.cross(np.asarray(definition.shell.coordinates_m),
+                               support[:, :3]).sum(axis=0))
+    np.testing.assert_allclose(support_moment, (0., 100., 0.), atol=1e-5)
+    restored = stiffened_shell.create_analysis(definition=definition)
+    np.testing.assert_array_equal(
+        restored.restore(owner.checkpoint()).shell_displacement,
+        result.shell_displacement)
+
+
+def test_bl5_nonmatching_rejects_reversed_and_incomplete_reference():
+    definition = _bl5_nonmatching_definition(2)
+    line = definition.lines[0]
+    reversed_cells = replace(line, beam_halfcells=line.beam_halfcells[::-1])
+    with pytest.raises(ValueError, match="contiguous ordered"):
+        stiffened_shell.create_analysis(
+            definition=replace(definition, lines=(reversed_cells,)))
+    longer = _bl5_nonmatching_definition(8)
+    short_shell = replace(longer.lines[0],
+                          shell_nodes=longer.lines[0].shell_nodes[:5])
+    with pytest.raises(ValueError, match="aligned straight BL5"):
+        stiffened_shell.create_analysis(
+            definition=replace(longer, lines=(short_shell,)))

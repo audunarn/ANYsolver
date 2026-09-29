@@ -31,9 +31,14 @@ whole-body state-manager step, so the objectivity check transforms the local
 pose directly; the actual-update derivative check uses the state manager.
 BL5 now also has a separate reference-linear weak-line descriptor in the
 existing sparse owner, with complete P0 spans of one or two trace edges.
-It currently pairs each shell edge with one native half-cell; genuinely
-nonmatching mapping remains unsupported and explicitly excluded in capabilities.
-The four-edge elastic panel solves for both spans; direct sampled-work rows,
+It now intersects explicitly ordered straight shell and native half-cell
+partitions once at compilation. Bounded 1:2 and 2:1 shell:beam traces, using
+two or eight shell edges against four beam half-cells, and a nonnested 3:4
+trace pass both P0 spans.
+Curved, reversed and noncollinear BL5 traces remain explicitly excluded.
+The bounded nonmatching rows annihilate a common infinitesimal rigid spin;
+their sampled work, support force/moment, and restart checks pass. The
+four-edge elastic panel solves for both spans; direct sampled-work rows,
 sparse/dense physical coordinates, full KKT residuals, support force/moment,
 checkpoint restoration, and span-bound checkpoint incompatibility pass. The
 span-one fixture exposes a retained
@@ -41,10 +46,11 @@ resultant difference of 1.25e-6 (9.6e-8 relative) between two numerically
 equilibrated sparse/dense solves, while physical coordinates differ by at
 most 1.36e-14 and both KKT residuals are below 1.6e-11. This is a numerical
 conditioning finding, not V02 acceptance or a reason to relax its criterion.
-The changed source plus existing GE and L1 checks pass 38/38 with JIT disabled
-and one numerical thread. Next test the saved supported off-ratio mode and
-growing interface spaces before any multiplier decision. No installed,
-physically matched, or formal F03 acceptance is implied.
+The changed source plus existing GE and L1 checks pass 45/45 with JIT disabled
+and one numerical thread. These are small source-development screens, not the
+required seven-ratio/growing-space assessment. Next test the saved supported
+off-ratio mode and a coherent growing interface rule before any multiplier
+decision. No installed, physically matched, or formal F03 acceptance is implied.
 
 The bounded M1 low-yield ticket restored the existing accepted 40 N checkpoint
 and reproduced the 45 N backtrack-budget failure (163 assemblies, best free

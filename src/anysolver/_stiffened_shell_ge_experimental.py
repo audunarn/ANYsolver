@@ -599,14 +599,18 @@ class ExperimentalGEAnalysis:
                 "experimental BL5 director-bond candidate"
                 for line in self._definition.lines))
         shell_plastic = self._definition.shell.j2_curve is not None
+        line_limits = tuple(dict.fromkeys(
+            "nonmatching L1 line mapping" if type(line) is ExperimentalL1Line
+            else "curved/reversed BL5 line mapping"
+            for line in self._definition.lines))
         excluded = ((("shell J2 plastic",) if not shell_plastic else ()) +
                     ("physical-fibre B3 finite",
                      "nonpositive finite load factors", "line", "footprint",
                      "modes", "buckling")
                     if not self._line_samples else
                     ("shell J2 plastic", "physical-fibre B3 finite",
-                     "qualified bonded line", "nonmatching line mapping", "footprint",
-                     "modes", "buckling"))
+                     "qualified bonded line", "footprint",
+                     "modes", "buckling")+line_limits)
         if self._definition.shell.s3_elements and not self._line_samples:
             excluded += ("S3 corotational finite-rotation response",)
         return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
