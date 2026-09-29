@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
-from typing import Mapping, Sequence
+from typing import Callable, Mapping, Sequence
 
 import numpy as np
 from scipy import sparse
@@ -20,6 +20,8 @@ from ._b2_physical_linear_definition import (
     PROFILE_ID, CompiledPhysicalB2Member, PhysicalB2Member,
     PhysicalB2OperatorCache,
 )
+from ._b2_physical_linear_batch_dev import _load_value_snapshot
+from .control import CancellationToken
 from .e4_pl_element import QualifiedE4PLShellElement
 from .fe_core import FEModel
 from .linalg import MatrixClass, factorize_cached
@@ -85,7 +87,7 @@ class ExperimentalB2Q4PanelCapabilities:
     shell_domain: str = "multiple flat elastic Q4"
     beam_domain: str = "multiple physical B2 members"
     attachment: str = "F10 reference points only"
-    operations: tuple[str, ...] = ("solve_linear", "close")
+    operations: tuple[str, ...] = ("solve_linear", "solve_linear_many", "close")
 
 
 @dataclass(frozen=True)
@@ -103,12 +105,57 @@ class ExperimentalB2Q4PanelResult:
     production_qualified: bool = False
 
 
+@dataclass(frozen=True)
+class ExperimentalB2Q4PanelSelectedCase:
+    case_id: str
+    selected_displacements: tuple[float, ...]
+    selected_affine_reactions: tuple[float, ...]
+    point_multipliers: tuple[tuple[str, tuple[float, ...]], ...]
+    point_gaps: tuple[tuple[str, tuple[float, ...]], ...]
+    beam_resultants_local: tuple[tuple[str, tuple[tuple[float, ...], ...]], ...]
+    internal_strain_energy: float
+
+
+@dataclass(frozen=True)
+class ExperimentalB2Q4PanelBatchResult:
+    status: str
+    selected_dofs: tuple[int, ...]
+    selected_points: tuple[str, ...]
+    cases: tuple[ExperimentalB2Q4PanelSelectedCase, ...]
+    factorization_count: int
+    solve_count: int
+    maximum_rhs_chunk: int = 1
+    failure_reason: str | None = None
+    production_qualified: bool = False
+
+
 def _unique_ids(items, name):
     ids = [getattr(item, name) for item in items]
     if any(not isinstance(value, str) or not value.strip() for value in ids):
         raise ValueError(f"nonempty {name} required")
     if len(set(ids)) != len(ids):
         raise ValueError(f"unique {name} required")
+
+
+def _checked_recovery(recover_members, available):
+    if recover_members is None:
+        return None
+    if not isinstance(recover_members, Mapping):
+        raise ValueError("selected physical B2 recovery mapping required")
+    selected = {}
+    for member_id, requested in recover_members.items():
+        if member_id not in available:
+            raise ValueError("selected physical B2 member is not compiled")
+        try:
+            stations = np.asarray(requested, dtype=float).copy()
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("finite normalized recovery stations required") from exc
+        if (stations.ndim != 1 or not len(stations) or
+                not np.isfinite(stations).all() or
+                np.any((stations < 0.) | (stations > 1.))):
+            raise ValueError("finite normalized recovery stations required")
+        selected[member_id] = tuple(float(value) for value in stations)
+    return selected
 
 
 def _flat_vertices(vertices):
@@ -319,9 +366,12 @@ class ExperimentalB2Q4PanelAnalysis:
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
         return ExperimentalB2Q4PanelCapabilities()
 
-    def solve_linear(self, load) -> ExperimentalB2Q4PanelResult:
+    def solve_linear(self, load, *, recover_members=None
+                     ) -> ExperimentalB2Q4PanelResult:
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        recovery = _checked_recovery(
+            recover_members, {member_id for member_id, _ in self._members})
         try:
             applied = np.array(load, dtype=float, copy=True)
         except (TypeError, ValueError, OverflowError) as exc:
@@ -392,6 +442,8 @@ class ExperimentalB2Q4PanelAnalysis:
                 solve_count=self._handle.solve_count, failure_reason=str(exc))
         recovered = []
         for member_id, (member, slots) in self._members:
+            if recovery is not None and member_id not in recovery:
+                continue
             local = member.local_dof_map() @ u[slots]
             if not np.isfinite(local).all():
                 return ExperimentalB2Q4PanelResult(
@@ -399,7 +451,8 @@ class ExperimentalB2Q4PanelAnalysis:
                     solve_count=self._handle.solve_count,
                     failure_reason="finite physical B2 recovery coordinates required")
             result = member.operator.recover_sections(
-                local, stations=(0., .5, 1.))
+                local, stations=(0., .5, 1.) if recovery is None
+                else recovery[member_id])
             if (not np.isfinite(result.resultants).all() or
                     not np.isfinite(result.strains).all()):
                 return ExperimentalB2Q4PanelResult(
@@ -422,6 +475,92 @@ class ExperimentalB2Q4PanelAnalysis:
             tuple((point_id, tuple(map(float, gap[6*i:6*i+6])))
                   for i, point_id in enumerate(self.point_ids)),
             tuple(recovered), energy, self._handle.factorization_count,
+            self._handle.solve_count)
+
+    def solve_linear_many(
+            self, cases: Sequence[tuple[str, object]], *,
+            selected_dofs: Sequence[int],
+            selected_points: Sequence[str] = (),
+            recover_members: Mapping[str, Sequence[float]] | None = None,
+            cancellation_token: CancellationToken | None = None,
+            on_case: Callable[[str], None] | None = None,
+            ) -> ExperimentalB2Q4PanelBatchResult:
+        """Solve ordered cases with one factorization and bounded case storage.
+
+        Each result is complete before it joins the returned prefix. Numerical
+        failure or cooperative cancellation stops further cases; callbacks and
+        programming errors propagate. This development route uses one RHS at a
+        time, avoiding full displacement/reaction batches for large panels.
+        """
+        if self._closed:
+            raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        try:
+            chosen = tuple(selected_dofs)
+            chosen_points = tuple(selected_points)
+            submitted = tuple(cases)
+        except TypeError as exc:
+            raise ValueError("ordered B2 panel cases and selection required") from exc
+        if (not chosen or any(type(value) is not int or
+                              not 0 <= value < len(self._u0)
+                              for value in chosen) or
+                len(set(chosen)) != len(chosen)):
+            raise ValueError("unique selected panel coordinate indices required")
+        if (any(type(point_id) is not str or
+                point_id not in self.point_ids for point_id in chosen_points) or
+                len(set(chosen_points)) != len(chosen_points)):
+            raise ValueError("unique selected panel point IDs required")
+        if (not submitted or
+                any(type(item) not in (tuple, list) or len(item) != 2 or
+                    type(item[0]) is not str or not item[0].strip()
+                    for item in submitted) or
+                len({item[0] for item in submitted}) != len(submitted)):
+            raise ValueError("unique nonempty ordered B2 panel case IDs required")
+        if cancellation_token is not None and not isinstance(
+                cancellation_token, CancellationToken):
+            raise TypeError("B2 panel cancellation token required")
+        if on_case is not None and not callable(on_case):
+            raise TypeError("B2 panel case callback required")
+        recovery = _checked_recovery(
+            {} if recover_members is None else recover_members,
+            {member_id for member_id, _ in self._members})
+        fingerprints = []
+        for _case_id, load in submitted:
+            if cancellation_token is not None and cancellation_token.is_cancelled:
+                break
+            snapshot, fingerprint = _load_value_snapshot(load, self._u0.shape)
+            fingerprints.append(fingerprint)
+            del snapshot
+        completed = []
+        for index, (case_id, load) in enumerate(submitted):
+            if cancellation_token is not None and cancellation_token.is_cancelled:
+                break
+            snapshot, fingerprint = _load_value_snapshot(load, self._u0.shape)
+            if fingerprint != fingerprints[index]:
+                raise ValueError("B2 panel load case changed after submission")
+            result = self.solve_linear(snapshot, recover_members=recovery)
+            if result.status != "completed":
+                return ExperimentalB2Q4PanelBatchResult(
+                    "failed", chosen, chosen_points, tuple(completed),
+                    self._handle.factorization_count, self._handle.solve_count,
+                    failure_reason=f"{case_id}: {result.failure_reason}")
+            point_multipliers = dict(result.point_multipliers)
+            point_gaps = dict(result.point_gaps)
+            completed.append(ExperimentalB2Q4PanelSelectedCase(
+                case_id,
+                tuple(result.displacements[index] for index in chosen),
+                tuple(result.affine_reactions[index] for index in chosen),
+                tuple((point_id, point_multipliers[point_id])
+                      for point_id in chosen_points),
+                tuple((point_id, point_gaps[point_id])
+                      for point_id in chosen_points),
+                result.beam_resultants_local,
+                result.internal_strain_energy))
+            if on_case is not None:
+                on_case(case_id)
+        return ExperimentalB2Q4PanelBatchResult(
+            "cancelled" if len(completed) != len(submitted) else "completed",
+            chosen, chosen_points, tuple(completed),
+            self._handle.factorization_count,
             self._handle.solve_count)
 
     def close(self) -> None:

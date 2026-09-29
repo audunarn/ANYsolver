@@ -11,6 +11,7 @@ from anysolver import stiffened_shell
 from anysolver._b2_f10_f11_point_attachment import compile_reference_point
 from anysolver._b2_physical_flexibility_linear import LinearSection
 from anysolver._b2_physical_linear_definition import PhysicalB2Member
+from anysolver.control import CancellationToken
 from anysolver._stiffened_shell_b2_q4_panel_experimental import (
     Q4B2Point, Q4PanelShell, _require_independent_supported_point_rows,
 )
@@ -182,6 +183,140 @@ def test_multi_q4_multi_b2_panel_matches_bounded_dense_oracle():
         assert abs(u @ load - 2*result.internal_strain_energy) < 1e-9
         assert len(result.beam_resultants_local) == 2
         assert len(result.point_gaps) == 2
+    analysis.close()
+
+
+@pytest.mark.parametrize("count", (1, 10, 100))
+def test_point_panel_batch_reuses_factorization_and_selects_recovery(count):
+    nodes, shells, members, points, free = _panel()
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            sparse.eye(54, format="csr")[:, free], np.zeros(54)))
+    selected = (6*8+1, 6*5+2)
+    cases = []
+    for index in range(count):
+        load = np.zeros(54)
+        load[6*8+1] = .08*(1.+index/count)
+        load[6*5+2] = -.16*(1.+index/count)
+        cases.append((f"load-{index:03d}", load))
+    result = analysis.solve_linear_many(
+        cases, selected_dofs=selected, selected_points=("joint-right",),
+        recover_members={"beam-right": (.25, .75)})
+    assert result.status == "completed"
+    assert len(result.cases) == count
+    assert tuple(case.case_id for case in result.cases) == tuple(
+        name for name, _ in cases)
+    assert result.factorization_count == 1
+    assert result.solve_count == count
+    assert result.maximum_rhs_chunk == 1
+    assert result.selected_points == ("joint-right",)
+    assert all(len(case.selected_displacements) == 2 and
+               len(case.selected_affine_reactions) == 2 and
+               len(case.beam_resultants_local) == 1 and
+               case.beam_resultants_local[0][0] == "beam-right" and
+               len(case.beam_resultants_local[0][1]) == 2
+               for case in result.cases)
+    single = analysis.solve_linear(
+        cases[-1][1], recover_members={"beam-right": (.25, .75)})
+    assert single.status == "completed"
+    np.testing.assert_allclose(
+        result.cases[-1].selected_displacements,
+        np.asarray(single.displacements)[list(selected)], rtol=0., atol=0.)
+    np.testing.assert_allclose(
+        result.cases[-1].selected_affine_reactions,
+        np.asarray(single.affine_reactions)[list(selected)], rtol=0., atol=0.)
+    assert result.cases[-1].point_multipliers == single.point_multipliers[1:]
+    assert result.cases[-1].point_gaps == single.point_gaps[1:]
+    assert result.cases[-1].internal_strain_energy == single.internal_strain_energy
+    assert analysis._handle.factorization_count == 1
+    analysis.close()
+
+
+def test_point_panel_batch_cancellation_keeps_complete_prefix():
+    nodes, shells, members, points, free = _panel()
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            sparse.eye(54, format="csr")[:, free], np.zeros(54)))
+    token = CancellationToken()
+    load = np.zeros(54)
+    load[6*8+1] = .08
+    names = []
+
+    def after_case(case_id):
+        names.append(case_id)
+        if len(names) == 3:
+            token.cancel("bounded panel prefix")
+
+    result = analysis.solve_linear_many(
+        tuple((f"case-{index}", load) for index in range(10)),
+        selected_dofs=(6*8+1,), cancellation_token=token,
+        on_case=after_case)
+    assert result.status == "cancelled"
+    assert names == ["case-0", "case-1", "case-2"]
+    assert tuple(case.case_id for case in result.cases) == tuple(names)
+    assert result.factorization_count == 1
+    assert result.solve_count == 3
+    assert all(case.internal_strain_energy > 0. for case in result.cases)
+    assert all(not case.point_multipliers and not case.point_gaps
+               for case in result.cases)
+    with pytest.raises(ValueError, match="selected physical B2 member"):
+        analysis.solve_linear_many(
+            (("bad", load),), selected_dofs=(0,),
+            recover_members={"missing": (.5,)})
+    assert analysis._handle.solve_count == 3
+    analysis.close()
+
+
+def test_point_panel_batch_rejects_mutated_load_and_preserves_failed_prefix():
+    nodes, shells, members, points, free = _panel()
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            sparse.eye(54, format="csr")[:, free], np.zeros(54)))
+    first = np.zeros(54)
+    first[6*8+1] = .08
+    second = first.copy()
+    cases = (("first", first), ("second", second))
+
+    def mutate_next(_case_id):
+        second[6*8+1] = .16
+
+    with pytest.raises(ValueError, match="changed after submission"):
+        analysis.solve_linear_many(
+            cases, selected_dofs=(6*8+1,), on_case=mutate_next)
+    assert analysis._handle.factorization_count == 1
+    assert analysis._handle.solve_count == 1
+
+    original = analysis._handle
+
+    class FailSecond:
+        @property
+        def factorization_count(self):
+            return original.factorization_count
+
+        @property
+        def solve_count(self):
+            return original.solve_count
+
+        def solve(self, rhs):
+            if original.solve_count == 2:
+                raise RuntimeError("injected backend failure")
+            return original.solve(rhs)
+
+    analysis._handle = FailSecond()
+    failed = analysis.solve_linear_many(
+        (("accepted", first), ("broken", first), ("later", first)),
+        selected_dofs=(6*8+1,))
+    assert failed.status == "failed"
+    assert tuple(item.case_id for item in failed.cases) == ("accepted",)
+    assert failed.failure_reason == "broken: injected backend failure"
+    assert failed.factorization_count == 1
+    assert failed.solve_count == 2
     analysis.close()
 
 
