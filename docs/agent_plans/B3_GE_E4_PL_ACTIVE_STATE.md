@@ -114,17 +114,24 @@ local operator; a pass supports the cross-term patch only, not full V06
 response, convergence or M1 acceptance. This check is independent of the
 unresolved E01 shell-formulation comparison and consumes no F03 authority.
 
-The V06 imposed-field patch passes at 2×1, 4×2 and 8×4 for both offset
-signs. Analytical axial and curvature energies and the signed `EA_b e ε κ`
-cross term match the assembled owner: worst relative axial error 8.10e-15,
-curvature error 7.13e-13 and cross error zero at recorded precision; point
-gaps and retained-variable stationarity are zero. Six focused source tests
-pass. This is a strong elastic energy/work-map regression, not a loaded
-response, installed V06 acceptance, or resolution of E01. Evidence:
-`.qualification/b3-ge-e4-pl/r8-v06-transformed-energy-dev-20260929-v2/`.
-Next V06 action is a loaded force/moment response with physical reactions
-against the same declared section idealization; retain the complete V06
-criteria and three-level envelope.
+The V06 transformed-section patch now includes independently derived shell
+edge tractions/couples and beam-end actions at 2×1, 4×2 and 8×4, both
+offset signs. Analytical axial/curvature energies and signed `EA_b e ε κ`
+cross terms match; worst relative axial/curvature errors are 8.10e-15/
+7.13e-13. Loaded physical translation/rotation errors are at most
+3.70e-11 m/5.87e-11 rad, work error 3.47e-11 relative, global force/moment
+errors 1.94e-8 N/7.49e-9 N m, and the exact field's normalized mixed
+residual after point transfer 4.62e-15. The raw free-row residual without
+point transfer was 0.234–0.572 and must not be scored as equilibrium.
+The finest-grid retained force-like coordinates drift by up to 0.0104 in
+their units (4.40e-9 relative to frozen coordinate scale), a conditioning
+signal for V02/M1. Six source regressions pass. This is a scoped elastic
+patch, not broad V06, installed acceptance or E01 resolution. Evidence:
+`.qualification/b3-ge-e4-pl/r8-v06-transformed-energy-dev-20260929-v5/`.
+The v1–v4 development outputs remain preserved, including the earlier
+preconstraint-residual interpretation. Next V06 action is a representative
+load-response/convergence case with its actual engineering boundary
+conditions and installed verification; retain complete V06 criteria.
 
 The targeted flat-web comparison kept geometry, native section, normal offset,
 plate-root supports, and physical plate-Fy/beam-Mx actions identical. Both BL5

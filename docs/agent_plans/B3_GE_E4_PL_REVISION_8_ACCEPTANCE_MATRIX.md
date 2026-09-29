@@ -58,11 +58,13 @@ candidate adjudication; a failed required case cannot disappear within it.
 - V inventory: V01, V02, V03, V04, V05, V06, V07, V08, V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23, V24, V25, V26, V27, V28.
 - B inventory: B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11, B12, B13, B14, B15, B16, B17, B18.
 
-V06 development evidence: the signed axial/bending/cross-energy imposed-field
-patch passes both offsets and three 2D grids, with 6/6 source regressions.
-Loaded response, reactions, installed-artifact checks, and complete V06
+V06 development evidence: the signed axial/bending/cross-energy patch and
+independently derived boundary-load solves pass both offsets and three 2D
+grids, with 6/6 source regressions. The finest-grid force-like retained
+coordinates show a 4.40e-9 scaled numerical drift. Representative
+engineering-boundary response, installed-artifact checks, and complete V06
 adjudication remain open. See
-`.qualification/b3-ge-e4-pl/r8-v06-transformed-energy-dev-20260929-v2/`.
+`.qualification/b3-ge-e4-pl/r8-v06-transformed-energy-dev-20260929-v5/`.
 
 | External comparison | Status | Current boundary |
 |---|---|---|

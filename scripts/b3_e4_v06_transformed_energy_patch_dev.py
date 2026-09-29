@@ -13,10 +13,11 @@ import math
 from pathlib import Path
 
 import numpy as np
-from scipy.sparse.linalg import spsolve
+from scipy.sparse.linalg import lsqr, spsolve
 
 from scripts.b3_e4_e01_native_point_refinement_screen import E, NU, definition
 from anysolver.stiffened_shell import create_analysis
+from anysolver._stiffened_shell_ge_experimental import NodalAction
 
 
 LENGTH_M = 2.0
@@ -59,6 +60,121 @@ def _field(owner, *, axial: float, curvature: float, offset: float):
     return q, gap, stationarity
 
 
+def _analytic_actions(intervals: int, sign: int):
+    """Consistent boundary tractions/couples for the declared section field."""
+    transverse = intervals//2
+    dx = LENGTH_M/intervals
+    dy = SHELL_WIDTH_M/transverse
+    membrane = E*SHELL_THICKNESS_M/(1.-NU*NU)
+    bending = E*SHELL_THICKNESS_M**3/(12.*(1.-NU*NU))
+    nx = membrane*AXIAL_STRAIN
+    ny = NU*nx
+    my = bending*CURVATURE_PER_M
+    mx = NU*my
+    actions = []
+    for row in range(transverse+1):
+        wy = dy*(0.5 if row in (0, transverse) else 1.)
+        for col in range(1, intervals+1):
+            wx = dx*(0.5 if col == intervals else 1.)
+            edge_sign = -1. if row == 0 else (1. if row == transverse else 0.)
+            wrench = (nx*wy if col == intervals else 0.,
+                      edge_sign*ny*wx, 0.,
+                      -edge_sign*mx*wx, my*wy if col == intervals else 0.,
+                      0.)
+            if any(wrench):
+                node = 1+row*(intervals+1)+col
+                actions.append(NodalAction("shell", node, wrench))
+    tip = 101+2*intervals
+    beam_axial = E*BEAM_AREA_M2*(AXIAL_STRAIN+
+                                  sign*OFFSET_M*CURVATURE_PER_M)
+    beam_my = E*BEAM_IY_M4*CURVATURE_PER_M
+    actions.append(NodalAction("beam", tip,
+                               (beam_axial, 0., 0., 0., beam_my, 0.)))
+    return tuple(actions)
+
+
+def _loaded_patch(owner, intervals: int, sign: int, imposed: np.ndarray):
+    actions = _analytic_actions(intervals, sign)
+    result = owner.solve_linear(actions)
+    if result.status != "completed":
+        raise RuntimeError(f"loaded V06 patch: {result.status}")
+    q = np.r_[result.shell_displacement, result.beam_coordinates]
+    physical_end = owner._shell_count+6*len(owner._beam_ids)
+    translation_slots = np.r_[np.arange(0, owner._shell_count, 6),
+                              np.arange(owner._shell_count, physical_end, 6)]
+    translations = np.concatenate([q[translation_slots+d]-
+                                   imposed[translation_slots+d]
+                                   for d in range(3)])
+    rotations = np.concatenate([q[translation_slots+d]-
+                                imposed[translation_slots+d]
+                                for d in range(3, 6)])
+    load = np.zeros(owner._K.shape[0])
+    for action in actions:
+        if action.domain == "shell":
+            base = 6*owner._shell_index[action.node]
+        else:
+            base = owner._shell_count+6*owner._beam_index[action.node]
+        load[base:base+6] += action.wrench
+    exact_residual = np.asarray(owner._K@imposed-load)
+    free_exact_residual = float(np.max(np.abs(exact_residual[owner._free]),
+                                       initial=0.))
+    load_scale = max(float(np.max(np.abs(load), initial=0.)), 1.)
+    transfer = owner._C[:, owner._free].T.tocsr()
+    fitted = lsqr(transfer, -exact_residual[owner._free],
+                  atol=1e-13, btol=1e-13, iter_lim=1000)
+    mixed_residual = exact_residual[owner._free]+transfer@fitted[0]
+    mixed_residual_max = float(np.max(np.abs(mixed_residual), initial=0.))
+    applied_force = np.zeros(3)
+    applied_moment = np.zeros(3)
+    for action in actions:
+        if action.domain == "shell":
+            position = owner._shell_xyz[owner._shell_index[action.node]]
+        else:
+            position = owner._beam_nodes[action.node][0]
+        applied_force += action.wrench[:3]
+        applied_moment += (np.asarray(action.wrench[3:])+
+                           np.cross(position, action.wrench[:3]))
+    support_force = np.zeros(3)
+    support_moment = np.zeros(3)
+    for i, position in enumerate(owner._shell_xyz):
+        reaction = result.reactions[6*i:6*i+6]
+        support_force += reaction[:3]
+        support_moment += reaction[3:]+np.cross(position, reaction[:3])
+    force_error = float(np.max(np.abs(applied_force+support_force)))
+    moment_error = float(np.max(np.abs(applied_moment+support_moment)))
+    work = float(q@load)
+    self_energy = 0.5*float(imposed@(owner._K@imposed))
+    return {
+        "status": result.status,
+        "action_count": len(actions),
+        "max_translation_error_m": float(np.max(np.abs(translations))),
+        "max_rotation_error_rad": float(np.max(np.abs(rotations))),
+        "max_retained_error": float(np.max(np.abs(q[physical_end:]-
+                                                imposed[physical_end:]),
+                                           initial=0.)),
+        "max_retained_scale_error": float(np.max(
+            np.abs(q[physical_end:]-imposed[physical_end:])/
+            owner._coordinate_scale[physical_end:], initial=0.)),
+        "exact_field_free_residual_before_point_transfer":
+            free_exact_residual,
+        "exact_field_free_ratio_before_point_transfer":
+            free_exact_residual/load_scale,
+        "exact_field_free_residual_after_point_transfer":
+            mixed_residual_max,
+        "exact_field_free_ratio_after_point_transfer":
+            mixed_residual_max/load_scale,
+        "point_transfer_fit_stop_code": int(fitted[1]),
+        "point_transfer_fit_iterations": int(fitted[2]),
+        "support_force_error_n": force_error,
+        "support_moment_error_nm": moment_error,
+        "constraint_max": result.constraint_max,
+        "free_equilibrium_ratio": result.free_equilibrium_ratio,
+        "half_applied_work_j": 0.5*work,
+        "imposed_energy_j": self_energy,
+        "relative_energy_error": abs(0.5*work-self_energy)/self_energy,
+    }
+
+
 def evaluate(intervals: int, sign: int):
     if intervals not in (2, 4, 8) or sign not in (-1, +1):
         raise ValueError("registered development grids/signs required")
@@ -79,6 +195,7 @@ def evaluate(intervals: int, sign: int):
                          b[:owner._shell_count]))
     expected = (E*BEAM_AREA_M2*sign*OFFSET_M*AXIAL_STRAIN*
                 CURVATURE_PER_M*LENGTH_M)
+    loaded = _loaded_patch(owner, intervals, sign, a+b)
     shell_axial = E*SHELL_THICKNESS_M*SHELL_WIDTH_M/(1.-NU*NU)
     shell_bending = (E*SHELL_THICKNESS_M**3*SHELL_WIDTH_M/
                      (12.*(1.-NU*NU)))
@@ -112,6 +229,7 @@ def evaluate(intervals: int, sign: int):
         "retained_dofs": k.shape[0]-owner._shell_count-
                          6*len(owner._beam_ids),
         "nnz": int(k.nnz),
+        "loaded_patch": loaded,
     }
 
 
@@ -134,7 +252,8 @@ def main(output: Path):
                             "curvature_per_m": CURVATURE_PER_M},
         "cases": cases,
         "limit": ("Imposed compatible field and stationary beam retained variables; "
-                  "not a solved load-response or V06 acceptance result."),
+                  "analytical boundary-action solve remains a finite patch, "
+                  "not a complete V06 acceptance result."),
     }
     output.write_text(json.dumps(record, indent=2, sort_keys=True,
                                  allow_nan=False)+"\n", encoding="utf-8")
@@ -154,5 +273,8 @@ if __name__ == "__main__":
             case["curvature_relative_excess"] for case in record["cases"]
             if case["offset_sign"] == 1],
         "max_point_gap": max(case["max_point_gap"] for case in record["cases"]),
+        "max_loaded_translation_error_m": max(
+            case["loaded_patch"]["max_translation_error_m"]
+            for case in record["cases"]),
         "max_normalized_skew": max(case["normalized_skew"]
                                    for case in record["cases"])}))
