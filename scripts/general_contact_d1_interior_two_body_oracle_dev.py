@@ -828,6 +828,378 @@ def lowload_current_skin_check(output: Path, saved_path: Path) -> None:
     print(json.dumps(record))
 
 
+def interior_saved_kkt_check(output: Path, saved_path: Path) -> None:
+    """Independently integrate an interior active contact row on all free DOFs."""
+    if output.exists():
+        raise FileExistsError(output)
+    import time
+    from anysolver.assembly import build_constraint_transformation
+    from anysolver.general_contact.core import suspend_contact
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+    from anysolver.general_contact.semismooth import linearize
+    from anysolver.matrix_assembly import assemble_stiffness_matrix
+    from anysolver.nonlinear_static import _assemble_nonlinear_system
+    from docs.d1_review_support.d1_two_body_current_skin_quadrature import (
+        integrate_current_skin,
+    )
+
+    started = time.perf_counter()
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    if (saved["status"] != "completed" or saved["accepted_steps"] != 1
+            or saved["force_n"] != 0.04 or saved["source_columns"] != 4
+            or saved["source_rows"] != 4 or saved["target_columns"] != 1
+            or saved["target_rows"] != 1
+            or saved["load_shape"] != "interior_distributed"
+            or saved["q4_gap_certificate"] != "overlap_local_dev"):
+        raise ValueError("saved pose is outside the D1 interior KKT fixture")
+    model, definition, settings, program = build_interior_press(
+        force_n=0.04, reference_slope=1.0e-4,
+        source_support="perimeter", source_columns=4, source_rows=4,
+        target_columns=1, target_rows=1,
+        load_shape="interior_distributed", slide_body="target",
+        steps_per_segment=1,
+    )
+    manager = GeneralS3PatchManager(
+        model, definition,
+        replace(settings, q4_source_gap_certificate="overlap_local_dev"),
+    )
+    model.apply_boundary_conditions()
+    ndof = model.mesh.dof_manager.total_dofs
+    stiffness, _ = assemble_stiffness_matrix(model)
+    _, _, transform, offset, _, _ = build_constraint_transformation(
+        stiffness, np.zeros(ndof), model)
+    if np.linalg.norm(offset) != 0.0:
+        raise ValueError("KKT fixture requires zero model boundary values")
+    transform = transform.tocsr()
+    control_values = np.asarray(program.target_at(1), dtype=float)
+    if len(control_values) != len(program.controls) or np.any(control_values):
+        raise ValueError("KKT fixture requires zero-valued path controls")
+    controlled = []
+    for control in program.controls:
+        if len(control.terms) != 1 or control.terms[0][1:] != ("ux", 1.0):
+            raise ValueError("KKT fixture needs simple nodal ux controls")
+        dof = int(model.mesh.dof_manager.get_node_dofs(
+            control.terms[0][0])[0])
+        row = transform.getrow(dof)
+        if row.nnz != 1 or row.data[0] != 1.0:
+            raise ValueError("control is not one retained coordinate")
+        controlled.append(int(row.indices[0]))
+    free = np.setdiff1d(np.arange(transform.shape[1]), controlled)
+    columns = np.asarray(transform[:, free].toarray())
+    if np.any(np.sum(np.abs(columns) > 0.0, axis=0) != 1):
+        raise ValueError("KKT fixture requires one physical DOF per free column")
+    pose = np.asarray(saved["displacements"], dtype=float)
+    if pose.shape != (ndof,) or np.max(abs(columns @ (columns.T @ pose)-pose)) > 1e-12:
+        raise ValueError("saved pose is inconsistent with fixture constraints")
+    contact = saved["history"][-1]["contact"]
+    support_saved = np.asarray(contact["reference_support_m2"], dtype=float)
+    pressure = np.asarray(contact["numerical_pressure_pa"], dtype=float)
+    active = np.flatnonzero(pressure > 0.0)
+    if (len(active) != 1 or manager.law.source_node_ids[int(active[0])]
+            not in saved["interior_pressure_node_ids"]):
+        raise ValueError("saved active mode is not one interior source node")
+    row = int(active[0])
+    force = float(pressure[row]*support_saved[row])
+    independent_support, weighted, _area, points, signature = (
+        integrate_current_skin(model, definition, pose))
+    independent_gap = weighted/independent_support
+    active_source_faces = {element_id
+        for element_id in definition.surfaces[0].element_ids
+        if manager.law.source_node_ids[row]
+        in model.mesh.elements[element_id].node_ids}
+    active_signature = tuple(item for item in signature
+                             if item[0] in active_source_faces)
+    gradient = np.empty(len(free))
+    for index in range(len(free)):
+        full_dof = int(np.flatnonzero(columns[:, index])[0])
+        step = 1e-5 if full_dof % 6 >= 3 else 1e-7
+        plus = pose+step*columns[:, index]
+        minus = pose-step*columns[:, index]
+        support_plus, weighted_plus, _, _, signature_plus = (
+            integrate_current_skin(model, definition, plus))
+        support_minus, weighted_minus, _, _, signature_minus = (
+            integrate_current_skin(model, definition, minus))
+        if (tuple(item for item in signature_plus
+                  if item[0] in active_source_faces) != active_signature
+                or tuple(item for item in signature_minus
+                         if item[0] in active_source_faces) != active_signature):
+            raise ValueError(
+                f"active-support clipping changed at free column {index}")
+        gradient[index] = (
+            (weighted_plus[row]/support_plus[row]
+             -weighted_minus[row]/support_minus[row])/(2*step))
+    with suspend_contact():
+        internal, _, _ = _assemble_nonlinear_system(
+            model, pose, {}, 5, tangent=False,
+            kinematics="von_karman", require_full_coordinates=True)
+    external = np.zeros(ndof)
+    for load, value in zip(program.nodal_forces,
+                           program.force_values_at(1), strict=True):
+        if load.dof != "uz":
+            raise ValueError("KKT fixture only admits vertical dead forces")
+        external[model.mesh.dof_manager.get_node_dofs(load.node_id)[2]] += value
+    structural = columns.T @ (np.asarray(internal)-external)
+    independent_residual = structural-gradient*force
+    seed = solve_reference_singleton(
+        model, definition, program, 1, allow_multimode=True)
+    seed_pose = np.asarray(seed["displacement"])
+    seed_pressure = np.asarray(seed["pressure"])
+    production_state = linearize(manager, pose, pressure*support_saved,
+                                 tangent=False)
+    production_gradient = (production_state.gap_gradient.toarray()
+                           if hasattr(production_state.gap_gradient, "toarray")
+                           else np.asarray(production_state.gap_gradient))
+    production_reduced_gradient = production_gradient[row] @ columns
+    record = {
+        "status": "development_d1_interior_saved_pose_independent_kkt",
+        "saved_pose": str(saved_path),
+        "active_node_id": manager.law.source_node_ids[row],
+        "active_force_n": force,
+        "free_coordinates": len(free),
+        "independent_geometry_evaluations": 1+2*len(free),
+        "quadrature_points_per_evaluation": points,
+        "maximum_support_relative_difference": float(np.max(np.abs(
+            independent_support-np.asarray(production_state.state.reference_support))
+            /independent_support)),
+        "active_gap_difference_m": float(independent_gap[row]
+            -np.asarray(production_state.state.normalized_gap)[row]),
+        "active_gradient_relative_l2_difference": float(np.linalg.norm(
+            gradient-production_reduced_gradient)
+            /np.linalg.norm(production_reduced_gradient)),
+        "independent_free_equilibrium_residual_n": float(np.linalg.norm(
+            independent_residual)),
+        "independent_free_equilibrium_residual_over_force_scale": float(
+            np.linalg.norm(independent_residual)/0.04),
+        "minimum_inactive_normalized_gap_m": float(np.min(np.delete(
+            independent_gap, active))),
+        "linear_seed_active_node_ids": [manager.law.source_node_ids[i]
+            for i in np.flatnonzero(seed_pressure > 0.0)],
+        "linear_seed_relative_displacement_l2_difference": float(
+            np.linalg.norm(seed_pose-pose)/np.linalg.norm(pose)),
+        "linear_seed_relative_integrated_force_difference": float(
+            abs(float(seed["integrated_force"])-force)/force),
+        "elapsed_seconds": time.perf_counter()-started,
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps(record))
+
+
+def interior_nonlinear_kkt_compare(output: Path, saved_path: Path) -> None:
+    """Solve the interior fixed active branch with independent current contact."""
+    if output.exists():
+        raise FileExistsError(output)
+    import time
+    from scipy import sparse
+    from anysolver.assembly import build_constraint_transformation
+    from anysolver.general_contact.core import suspend_contact
+    from anysolver.matrix_assembly import assemble_stiffness_matrix
+    from anysolver.nonlinear_static import _assemble_nonlinear_system
+    from docs.d1_review_support.d1_two_body_current_skin_quadrature import (
+        integrate_current_skin,
+    )
+
+    started = time.perf_counter()
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    if (saved["status"] != "completed" or saved["accepted_steps"] != 1
+            or saved["force_n"] != 0.04 or saved["source_columns"] != 4
+            or saved["source_rows"] != 4 or saved["target_columns"] != 1
+            or saved["target_rows"] != 1
+            or saved["load_shape"] != "interior_distributed"
+            or saved["q4_gap_certificate"] != "overlap_local_dev"):
+        raise ValueError("saved pose is outside the D1 interior KKT fixture")
+    model, definition, _settings, program = build_interior_press(
+        force_n=0.04, reference_slope=1.0e-4,
+        source_support="perimeter", source_columns=4, source_rows=4,
+        target_columns=1, target_rows=1,
+        load_shape="interior_distributed", slide_body="target",
+        steps_per_segment=1,
+    )
+    model.apply_boundary_conditions()
+    ndof = model.mesh.dof_manager.total_dofs
+    stiffness, _ = assemble_stiffness_matrix(model)
+    _, _, transform, offset, _, _ = build_constraint_transformation(
+        stiffness, np.zeros(ndof), model)
+    if np.linalg.norm(offset) != 0.0:
+        raise ValueError("KKT fixture requires zero model boundary values")
+    transform = transform.tocsr()
+    controls = np.asarray(program.target_at(1), dtype=float)
+    if len(controls) != len(program.controls) or np.any(controls):
+        raise ValueError("KKT fixture requires zero path-control values")
+    controlled = []
+    for control in program.controls:
+        if len(control.terms) != 1 or control.terms[0][1:] != ("ux", 1.0):
+            raise ValueError("KKT fixture needs simple nodal ux controls")
+        dof = int(model.mesh.dof_manager.get_node_dofs(
+            control.terms[0][0])[0])
+        row = transform.getrow(dof)
+        if row.nnz != 1 or row.data[0] != 1.0:
+            raise ValueError("control is not one retained coordinate")
+        controlled.append(int(row.indices[0]))
+    free = np.setdiff1d(np.arange(transform.shape[1]), controlled)
+    columns = np.asarray(transform[:, free].toarray())
+    if np.any(np.sum(np.abs(columns) > 0.0, axis=0) != 1):
+        raise ValueError("KKT fixture requires one physical DOF per free column")
+    seed = solve_reference_singleton(
+        model, definition, program, 1, allow_multimode=True)
+    seed_pressure = np.asarray(seed["pressure"])
+    seed_active = np.flatnonzero(seed_pressure > 0.0)
+    saved_contact = saved["history"][-1]["contact"]
+    saved_pressure = np.asarray(saved_contact["numerical_pressure_pa"])
+    saved_active = np.flatnonzero(saved_pressure > 0.0)
+    source_nodes = tuple(seed["source_pressure_nodes"])
+    if (len(seed_active) != 1 or not np.array_equal(seed_active, saved_active)
+            or source_nodes[int(seed_active[0])]
+            not in saved["interior_pressure_node_ids"]):
+        raise ValueError("independent seed does not select the saved interior branch")
+    active = int(seed_active[0])
+    active_faces = {element_id
+        for element_id in definition.surfaces[0].element_ids
+        if source_nodes[active] in model.mesh.elements[element_id].node_ids}
+    pose = np.asarray(seed["displacement"])
+    q = columns.T @ pose
+    if np.max(abs(columns @ q-pose)) > 1e-12:
+        raise ValueError("seed does not satisfy the declared constraints")
+    z = float(seed_pressure[active]*np.asarray(seed["support"])[active])
+    external = np.zeros(ndof)
+    for load, value in zip(program.nodal_forces,
+                           program.force_values_at(1), strict=True):
+        if load.dof != "uz":
+            raise ValueError("KKT fixture only admits vertical dead forces")
+        external[model.mesh.dof_manager.get_node_dofs(load.node_id)[2]] += value
+    steps = np.array([1e-5 if int(np.flatnonzero(columns[:, index])[0]) % 6 >= 3
+                      else 1e-7 for index in range(len(free))])
+    evaluations = 0
+    initial_signature = None
+
+    def evaluate(coordinates, nodal_force):
+        nonlocal evaluations, initial_signature
+        if time.perf_counter()-started > 165.0:
+            raise TimeoutError("interior independent KKT budget exhausted")
+        candidate_pose = columns @ coordinates
+        support, weighted, _area, points, signature = (
+            integrate_current_skin(model, definition, candidate_pose))
+        evaluations += 1
+        active_signature = tuple(item for item in signature
+                                 if item[0] in active_faces)
+        if initial_signature is None:
+            initial_signature = active_signature
+        elif active_signature != initial_signature:
+            raise ValueError("independent KKT crossed an active clipping branch")
+        gaps = weighted/support
+        gradient = np.empty(len(free))
+        for index, step in enumerate(steps):
+            plus_support, plus_weighted, _, _, plus_signature = (
+                integrate_current_skin(model, definition,
+                                       candidate_pose+step*columns[:, index]))
+            minus_support, minus_weighted, _, _, minus_signature = (
+                integrate_current_skin(model, definition,
+                                       candidate_pose-step*columns[:, index]))
+            evaluations += 2
+            for perturbed in (plus_signature, minus_signature):
+                if tuple(item for item in perturbed
+                         if item[0] in active_faces) != active_signature:
+                    raise ValueError("independent KKT derivative crossed a clip branch")
+            gradient[index] = (
+                plus_weighted[active]/plus_support[active]
+                -minus_weighted[active]/minus_support[active])/(2*step)
+        with suspend_contact():
+            internal, tangent, _ = _assemble_nonlinear_system(
+                model, candidate_pose, {}, 5, tangent=True,
+                kinematics="von_karman", require_full_coordinates=True)
+        structural = columns.T @ (np.asarray(internal)-external)
+        residual = structural-gradient*nodal_force
+        reduced_tangent = (columns.T @ sparse.csr_matrix(tangent) @ columns)
+        merit = float(np.hypot(np.linalg.norm(residual)/0.04,
+                               abs(gaps[active])/5e-5))
+        return (candidate_pose, support, gaps, gradient, residual,
+                np.asarray(reduced_tangent), merit, points)
+
+    trace = []
+    previous_merit = float("inf")
+    for iteration in range(4):
+        (pose, support, gaps, gradient, residual, tangent,
+         merit, points) = evaluate(q, z)
+        trace.append({"iteration": iteration,
+                      "scaled_merit": merit,
+                      "free_residual_n": float(np.linalg.norm(residual)),
+                      "active_gap_m": float(gaps[active]),
+                      "active_force_n": z})
+        if merit >= previous_merit:
+            raise RuntimeError("independent nonlinear KKT merit did not decrease")
+        if merit <= 1e-8:
+            break
+        previous_merit = merit
+        matrix = np.block([
+            [tangent, -gradient[:, None]],
+            [gradient[None, :], np.zeros((1, 1))],
+        ])
+        correction = np.linalg.solve(matrix, -np.r_[residual, gaps[active]])
+        candidate_z = z+float(correction[-1])
+        if candidate_z <= 0.0:
+            raise RuntimeError("independent KKT left the active pressure branch")
+        q += correction[:-1]
+        z = candidate_z
+    else:
+        raise RuntimeError("independent nonlinear KKT iteration budget exhausted")
+    production_pose = np.asarray(saved["displacements"])
+    production_force = float(saved_pressure[active]
+                             *np.asarray(saved_contact["reference_support_m2"])[active])
+    (face_check_support, _weighted, _face_area, _face_points,
+     _face_signature, support_by_face) = integrate_current_skin(
+         model, definition, pose, support_by_source_face=True)
+    if abs(np.sum(support_by_face[:, active])
+           -face_check_support[active]) > 1e-12:
+        raise AssertionError("independent per-face support does not partition")
+    independent_face_force = (z*support_by_face[:, active]
+                              /face_check_support[active])
+    production_face_force = np.zeros(len(independent_face_force))
+    reference_face_support = np.zeros(len(independent_face_force))
+    for index, face_id in enumerate(definition.surfaces[0].element_ids):
+        element = model.mesh.elements[face_id]
+        if source_nodes[active] not in element.node_ids:
+            continue
+        vertices = np.asarray([(model.mesh.nodes[node].x,
+                                model.mesh.nodes[node].y,
+                                model.mesh.nodes[node].z)
+                               for node in element.node_ids])
+        area = float(np.linalg.norm(np.cross(vertices[1]-vertices[0],
+                                             vertices[3]-vertices[0])))
+        reference_face_support[index] = area/4.0
+        production_face_force[index] = saved_pressure[active]*area/4.0
+    support_face_error = float(np.max(np.abs(
+        support_by_face[:, active]-reference_face_support)))
+    face_force_l1_error = float(np.sum(np.abs(
+        independent_face_force-production_face_force))
+        /np.sum(np.abs(production_face_force)))
+    record = {
+        "status": "development_d1_interior_independent_contact_nonlinear_kkt",
+        "saved_pose": str(saved_path),
+        "active_node_id": source_nodes[active],
+        "free_coordinates": len(free),
+        "geometry_evaluations": evaluations,
+        "quadrature_points_per_evaluation": points,
+        "trace": trace,
+        "maximum_displacement_difference_m_or_rad": float(np.max(abs(
+            pose-production_pose))),
+        "relative_displacement_l2_difference": float(np.linalg.norm(
+            pose-production_pose)/np.linalg.norm(production_pose)),
+        "independent_integrated_force_n": z,
+        "production_integrated_force_n": production_force,
+        "relative_integrated_force_difference": float(abs(z-production_force)
+            /abs(production_force)),
+        "maximum_per_face_support_difference_m2": support_face_error,
+        "relative_per_face_bin_force_l1_difference": face_force_l1_error,
+        "active_source_face_ids": [int(face_id)
+            for face_id, force in zip(definition.surfaces[0].element_ids,
+                                      independent_face_force, strict=True)
+            if force > 0.0],
+        "minimum_inactive_gap_m": float(np.min(np.delete(gaps, active))),
+        "elapsed_seconds": time.perf_counter()-started,
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps(record))
+
+
 def coupled_y_comparison(output: Path, reference_path: Path,
                          saved_paths: list[Path]) -> None:
     if output.exists() or len(saved_paths) not in (1, 2):
@@ -985,6 +1357,10 @@ if __name__ == "__main__":
         lowload_geometry_decomposition(Path(sys.argv[2]), Path(sys.argv[3]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--lowload-current-skin-check":
         lowload_current_skin_check(Path(sys.argv[2]), Path(sys.argv[3]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--interior-saved-kkt-check":
+        interior_saved_kkt_check(Path(sys.argv[2]), Path(sys.argv[3]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--interior-nonlinear-kkt-compare":
+        interior_nonlinear_kkt_compare(Path(sys.argv[2]), Path(sys.argv[3]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--coupled-y-comparison":
         coupled_y_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
                              [Path(path) for path in sys.argv[4:]])

@@ -1,12 +1,12 @@
 # D1 shell-static acceptance gap map
 
-**Current D1-interior delivery basis:** [goal](../GENERAL_CONTACT_GOAL.md) and [plan](../GENERAL_CONTACT_PLAN.md) revision 2026-09-29.3. Development is active. The historical cases and verdicts below retain their original scopes; three boundary cases move to D2 prospectively.
+**Current D1-interior delivery basis:** [goal](../GENERAL_CONTACT_GOAL.md) revision 2026-09-29.3 and [plan](../GENERAL_CONTACT_PLAN.md) revision 2026-09-29.4. Development is active. The historical cases and verdicts below retain their original scopes; three boundary cases move to D2 prospectively.
 
 | D1-interior row, 29 September | Current disposition | Next decisive action |
 |---|---|---|
 | Nonmatching force and displacement workflow, open/recontact and restart | Local cases completed; not independently accepted | Freeze one representative source and verify final installed workflow |
 | Analytical 0.1% code case | Exactly Q1-representable 2D fixture locally below target; not formal | Independent derivation/source review, then registered run |
-| Two-body 10⁻⁶ code comparison | A bounded 4×4-Q4/4×4-cell-S3 low-load pose is active and balanced but differs from its same-mesh linear oracle by 1.43×10⁻⁵ force; the current-skin independent oracle matches its local moving gap/work derivatives, so the failed full-solve comparison cannot be assigned to a contact-map defect | Select a common-structure coupled contact oracle or derived nonlinear reference before another claim-bearing comparison |
+| Two-body 10⁻⁶ code comparison | A local same-structural-model nonlinear KKT solve on the admitted 4×4-Q4/two-S3 interior fixture agrees with production to 3.62×10⁻⁹ relative displacement and 4.10×10⁻⁸ force/face-bin error; its independent gap/work preflight also passes. The separate high-contrast frozen-linear comparison remains failed at 1.43×10⁻⁵ force | Independently assess the nonlinear contact oracle and freeze a claim-bearing comparison; retain the linear-oracle failure under its own scope |
 | Representative 2% spatial response | Deformable contrast case locally feasible; a completed 16/24-source × 4/6-target oracle grid shows small cross interaction but nonmonotone source refinement | Independently assess the proposed refined reference and uncertainty treatment before formal comparison |
 | Pressure-space stability | Full-cover constructive bound proposed; old-geometry saved 12×12/target4 pose meets provisional η/κ levels locally; original 8×8/target4 family member rejects exact clipping branch, shifted variant timed out at routine cap | Independent review of norm, nonlinear equivalence and corrected family before a longer preflight or freeze |
 | Free source rotation and both-body work | Accepted-pose 2.23×10⁻⁷ N·m `ry` action and 1.40×10⁻⁹ local tangent error; development evidence | Independent work-map assessment and claim-bearing route check |

@@ -59,6 +59,25 @@ saved `overlap_local_dev` certificate setting and matched its reference
 support; the measures did not change. [Current screen](d1_pressure_gate_saved12_screen_v3_20260929.json),
 [resource](d1_pressure_gate_saved12_screen_v3_resource_20260929.json).
 
+**Acceleration question for review, not an adopted gate:** Pressure-space
+stability is a property of the constrained discrete gap/work operator at a
+pose, not of the nonlinear iteration used to reach that pose. One possible
+three-mesh check would transport one smooth, physically admissible
+deformable-target press geometry to source `4×4/8×8/12×12` grids, using a
+fixed physical interpolation rule and the same shifted target reference
+mesh. It would evaluate the complete signed interior `B`, exact `M`,
+constrained `Q` and structural-energy bound at those poses without three
+expensive coupled solves. The actual accepted source4/source12 presses and
+the exact-Q1 source8 analytical workflow would remain separate equilibrium
+controls; the transported source8 pose would make **no** accepted-solve
+claim. The reviewer should decide whether this construction supports the
+intended pressure-space claim, what gap/coverage and current-pose checks it
+needs, and whether an additional source8 coupled solution remains necessary.
+Do not substitute a transported pose into the currently proposed accepted-
+pose family or freeze it without that decision. This could avoid repeating
+the source8 run that exhausted the routine cap while retaining the
+three-mesh pressure-space calculation.
+
 Development preflight on 29 September at the original `y=−0.1 m` target
 selected interior nodes `(12,13)` on source `4×4` and `(40)` on source
 `8×8`, with independent gaps `−45.12` and `−26.20 µm`. The original
