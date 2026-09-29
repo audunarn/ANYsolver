@@ -62,8 +62,11 @@ on the same meshes differ from OpenSees by at most 0.077% in tip axial motion,
 roll and yaw components differ materially, so neither full physical agreement
 nor E01/M1 acceptance follows. Evidence and failed attempts are preserved at
 `.qualification/b3-ge-e4-pl/r8-e01-opensees-point-dev-20260929-v1/`.
-Next identify the secondary-response cause and freeze E01 observables,
-absolute floors and shell idealization before a formal installed comparison.
+At eight cells the bonded shell `u_y` agrees closely, while its `r_x` and
+`r_z` differ; the exact rigid-arm relation accounts for the beam-tip lateral
+difference. Next check matched shell rotational response before adjusting the
+point law, and freeze E01 observables, absolute floors and shell idealization
+before a formal installed comparison.
 No F03 authority was used. The separate ANYmesh heavy job was not interrupted.
 
 Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1. This is the short working checkpoint. The complete pre-compaction note is preserved byte-for-byte in B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20260929.md (SHA-256 2D5071E8A93FDCF35FC3AF49955E0B85F431A19B1DF2BF3742A8CA560584BCDA). The complete programme, acceptance matrix, frozen registrations, failures, and versioned evidence remain authoritative.
