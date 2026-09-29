@@ -37,12 +37,13 @@ LOADS = {"fy": (0., 100., 0., 0., 0., 0.),
          "mx": (0., 0., 0., 10., 0., 0.)}
 
 
-def analyze():
+def analyze(*, ratio_probe: bool = False):
     expected = (ROOT / "src" / "anysolver" / "__init__.py").resolve()
     if Path(anysolver.__file__).resolve() != expected:
         raise RuntimeError("off-grid screen imported another ANYsolver")
     report = {
-        "status": "BL5_P1_OFFGRID_DEVELOPMENT_ONLY",
+        "status": ("BL5_P1_SEVEN_RATIO_FEASIBILITY_ONLY" if ratio_probe else
+                   "BL5_P1_OFFGRID_DEVELOPMENT_ONLY"),
         "source_git": subprocess.check_output(
             ("git", "rev-parse", "HEAD"), cwd=ROOT, text=True).strip(),
         "runner_sha256": sha256(Path(__file__).read_bytes()).hexdigest(),
@@ -54,17 +55,22 @@ def analyze():
                        "beam_axis_height": .0675},
         "loads": LOADS, "cases": [],
         "limitations": ("Flat Q4, native B3, reference-linear development "
-                        "screen only. No physical external comparator, "
-                        "inf-sup/mixed-system stability, locking, three-level "
-                        "convergence, seven-ratio envelope, or F03 acceptance."),
+                        "screen only. Ratios are one small resolution each. "
+                        "No physical external comparator, inf-sup/mixed-system "
+                        "stability, locking, three-level convergence, or F03 "
+                        "acceptance."),
     }
+    layouts = (((2, 16), (4, 16), (8, 16), (16, 16),
+                (16, 8), (16, 4), (16, 2)) if ratio_probe else LAYOUTS)
+    bases = (("p0", "continuous_p1_coarse") if ratio_probe else
+             ("p0", "continuous_p1"))
     with threadpool_limits(limits=1):
         report["threadpools"] = threadpool_info()
         if any(pool.get("num_threads", 1) != 1
                for pool in report["threadpools"]):
             raise RuntimeError("numerical thread limit not effective")
-        for shell_edges, beam_halfcells in LAYOUTS:
-            for basis in ("p0", "continuous_p1"):
+        for shell_edges, beam_halfcells in layouts:
+            for basis in bases:
                 definition = _bl5_joint_mesh_definition(
                     shell_edges, beam_halfcells, 1)
                 if basis != "p0":
@@ -85,6 +91,9 @@ def analyze():
                     })
                     continue
                 try:
+                    scaled = (owner._C[:, owner._free].toarray()*
+                              owner._coordinate_scale[owner._free][None, :] /
+                              owner._constraint_scale[:, None])
                     terminal = 101 + beam_halfcells
                     entry = {
                         "shell_edges": shell_edges,
@@ -95,6 +104,8 @@ def analyze():
                         "matrix_order": int(owner._A.shape[0]),
                         "matrix_nnz": int(owner._A.nnz),
                         "multiplier_rows": int(owner._C.shape[0]),
+                        "bounded_scaled_row_rank": int(
+                            np.linalg.matrix_rank(scaled)),
                         "cases": {name: _case(owner, terminal, name, load)
                                   for name, load in LOADS.items()},
                         "factorizations": owner.preflight()[
@@ -302,13 +313,14 @@ def probe_coarse_trace():
 
 
 def main(output: Path, *, rank_only: bool = False,
-         coarse_probe: bool = False):
+         coarse_probe: bool = False, ratio_probe: bool = False):
     if output.exists():
         raise FileExistsError("preserve prior off-grid evidence")
-    if rank_only and coarse_probe:
+    if sum((rank_only, coarse_probe, ratio_probe)) > 1:
         raise ValueError("one diagnostic mode per execution")
     report = (probe_rank() if rank_only else
-              probe_coarse_trace() if coarse_probe else analyze())
+              probe_coarse_trace() if coarse_probe else
+              analyze(ratio_probe=ratio_probe))
     output.write_text(json.dumps(report, indent=2, sort_keys=True,
                                  allow_nan=False) + "\n", encoding="utf-8")
     print(json.dumps({"status": report["status"],
@@ -320,7 +332,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rank-only", action="store_true")
     parser.add_argument("--coarse-probe", action="store_true")
+    parser.add_argument("--ratio-probe", action="store_true")
     parser.add_argument("output", type=Path)
     args = parser.parse_args()
     main(args.output, rank_only=args.rank_only,
-         coarse_probe=args.coarse_probe)
+         coarse_probe=args.coarse_probe,
+         ratio_probe=args.ratio_probe)
