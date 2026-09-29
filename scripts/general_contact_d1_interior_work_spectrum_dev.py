@@ -131,6 +131,49 @@ def evaluate(path: Path):
         + independent_response.T @ independent_work.T)
     independent_values = linalg.eigh(independent_dual, mass,
                                      eigvals_only=True)
+
+    # A pressure functional's dual norm over all admissible structural
+    # variations is at least its dual norm over this explicit source-motion
+    # subspace. Select columns through the actual constraint transform so
+    # support equations and any linked coordinates remain intact.
+    constrained = transform.tocsr()
+    source_vertical_columns = []
+    for node in saved["interior_pressure_node_ids"]:
+        dof = model.mesh.dof_manager.get_node_dofs(node)[2]
+        row = constrained[dof]
+        if row.nnz != 1 or abs(row.data[0]-1.0) > 1.0e-12:
+            raise ValueError("interior source vertical test motion is constrained")
+        source_vertical_columns.append(int(row.indices[0]))
+    if len(set(source_vertical_columns)) != len(source_vertical_columns):
+        raise ValueError("source vertical test motions are not independent")
+    test_space = np.asarray(constrained[:, source_vertical_columns].toarray())
+    if np.max(np.abs(controls @ test_space)) > 1.0e-12:
+        raise ValueError("source vertical test motions violate path controls")
+    test_stiffness = np.asarray(test_space.T @ stiffness @ test_space)
+    test_stiffness = 0.5*(test_stiffness+test_stiffness.T)
+    linalg.cholesky(test_stiffness, lower=True)
+    restricted_work = (supports[:, None]
+                       * np.asarray(state.gap_gradient @ test_space)[selected])
+    restricted_response = linalg.solve(test_stiffness,
+                                       restricted_work.T, assume_a="pos")
+    restricted_dual = 0.5*(restricted_work @ restricted_response
+                           + restricted_response.T @ restricted_work.T)
+    restricted_min = float(linalg.eigh(restricted_dual, mass,
+                                       eigvals_only=True)[0])
+    independent_restricted_work = np.asarray(
+        oracle_work @ test_space)[selected]
+    independent_restricted_response = linalg.solve(
+        test_stiffness, independent_restricted_work.T, assume_a="pos")
+    independent_restricted_dual = 0.5*(
+        independent_restricted_work @ independent_restricted_response
+        + independent_restricted_response.T @ independent_restricted_work.T)
+    independent_restricted_min = float(linalg.eigh(
+        independent_restricted_dual, mass, eigvals_only=True)[0])
+    if (restricted_min <= 0.0
+            or restricted_min > values[0]*(1.0+1.0e-7)
+            or independent_restricted_min <= 0.0
+            or independent_restricted_min > independent_values[0]*(1.0+1.0e-7)):
+        raise ValueError("source-motion lower-bound inequality failed")
     active_ids = [node for node, pressure in zip(
         saved["history"][-1]["contact"]["source_pressure_node_ids"],
         saved["history"][-1]["contact"]["numerical_pressure_pa"])
@@ -149,6 +192,10 @@ def evaluate(path: Path):
         "independent_frozen_support_m2": oracle_support[selected].tolist(),
         "independent_frozen_overlap_area_m2": oracle_area,
         "production_work_singular_values_squared": values.tolist(),
+        "admissible_source_vertical_test_columns": len(source_vertical_columns),
+        "source_vertical_restricted_lower_bound": restricted_min,
+        "independent_source_vertical_restricted_lower_bound": (
+            independent_restricted_min),
         "independent_vertical_work_singular_values_squared": (
             independent_values.tolist()),
         "smallest_signed_mode_mass_normalized": vectors[:, 0].tolist(),

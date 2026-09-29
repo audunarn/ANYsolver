@@ -1,0 +1,10 @@
+{
+  "status": "development_preflight_passed",
+  "active_node_ids": [
+    76,
+    85
+  ],
+  "integrated_normal_force_n": 0.004737850999721624,
+  "independent_projected_lower_gap_m": -9.34306790924616e-06,
+  "gap_tolerance_m": 5e-05
+}

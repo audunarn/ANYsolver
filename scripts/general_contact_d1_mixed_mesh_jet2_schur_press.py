@@ -78,8 +78,8 @@ def build_case(columns: int, *, four_phase: bool = False,
         raise ValueError("unknown bounded source y profile")
     if source_y_profile == "uniform_ref16":
         if (not offline_structural_reference_y16 or source_rows != 16
-                or columns != 8):
-            raise ValueError("uniform sixteen-row reference is offline-only at eight columns")
+                or columns not in (8, 16)):
+            raise ValueError("uniform sixteen-row reference is offline-only at eight or sixteen columns")
     elif source_y_profile == "near_rim8_ref16":
         if (not offline_structural_reference_y16 or source_rows != 16
                 or columns != 16):

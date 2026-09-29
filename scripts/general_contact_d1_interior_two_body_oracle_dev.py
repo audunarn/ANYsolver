@@ -150,18 +150,19 @@ def singleton_family(output: Path, inputs: list[Path]) -> None:
     print(json.dumps(cases))
 
 
-def _source_vertical_samples(model, displacement, rows, sample_points):
+def _source_vertical_samples(model, displacement, rows, sample_points,
+                             *, columns=8):
     values_at_points = []
     for x, y in sample_points:
-        local_x = (x-0.1)*8
+        local_x = (x-0.1)*columns
         local_y = (y-0.1)*rows
-        column = min(int(local_x), 7)
+        column = min(int(local_x), columns-1)
         row = min(int(local_y), rows-1)
         x_fraction = local_x-column
         y_fraction = local_y-row
         values = np.array([
             displacement[model.mesh.dof_manager.get_node_dofs(
-                1+j*(8+1)+i)[2]]
+                1+j*(columns+1)+i)[2]]
             for j, i in ((row, column), (row, column+1),
                          (row+1, column), (row+1, column+1))
         ])
@@ -173,7 +174,7 @@ def _source_vertical_samples(model, displacement, rows, sample_points):
     return values_at_points
 
 
-def offline_y_reference(output: Path) -> None:
+def offline_y_reference(output: Path, *, load_shape: str = "interior_distributed") -> None:
     """Screen source-y resolution with one independently clipped linear oracle.
 
     This keeps x resolution, target mesh, loads, support and initial opening
@@ -191,12 +192,24 @@ def offline_y_reference(output: Path) -> None:
             source_y_profile="uniform_ref16" if rows == 16 else None,
             offline_structural_reference_y16=(rows == 16),
             target_columns=2, target_rows=1, force_n=0.04,
-            reference_slope=1.0e-4, load_shape="interior_distributed",
+            reference_slope=1.0e-4, load_shape=load_shape,
             slide_body="target",
         )
+        nodal_forces = np.asarray(program.force_values_at(2), dtype=float)
+        if abs(float(np.sum(nodal_forces))+0.04) > 1.0e-12:
+            raise ValueError("reference load does not balance to 0.04 N")
+        centroid = [float(sum(
+            -force*getattr(model.mesh.nodes[item.node_id], axis)
+            for item, force in zip(program.nodal_forces, nodal_forces,
+                                   strict=True))/0.04)
+            for axis in ("x", "y")]
+        if load_shape == "physical_bump" and np.max(
+                np.abs(np.asarray(centroid)-0.6)) > 1.0e-12:
+            raise ValueError("physical bump load centroid changed")
         try:
             reference = solve_reference_singleton(
-                model, definition, program, 2, allow_multimode=(rows == 16))
+                model, definition, program, 2,
+                allow_multimode=(rows == 16 or load_shape == "physical_bump"))
         except ValueError as error:
             output.write_text(json.dumps({"cases": cases, "failed_rows": rows,
                                           "failure": str(error)}, indent=2)+"\n",
@@ -208,6 +221,8 @@ def offline_y_reference(output: Path) -> None:
         cases.append({
             "source_columns": 8, "source_rows": rows,
             "target_s3_faces": 4,
+            "load_shape": load_shape,
+            "load_centroid_xy_m": centroid,
             "oracle_active_node_id": reference["active_node_id"],
             "oracle_active_node_ids": reference["active_node_ids"],
             "oracle_method": reference["reference_method"],
@@ -222,10 +237,46 @@ def offline_y_reference(output: Path) -> None:
     print(json.dumps(cases))
 
 
+def offline_x_reference(output: Path) -> None:
+    if output.exists():
+        raise FileExistsError(output)
+    cases = []
+    points = ((0.6, 0.6), (0.6, 0.7), (0.6, 0.9))
+    for columns in (8, 16):
+        model, definition, _settings, program = build_interior_press(
+            source_support="perimeter", source_columns=columns,
+            source_rows=16, source_y_profile="uniform_ref16",
+            offline_structural_reference_y16=True,
+            target_columns=2, target_rows=1, force_n=0.04,
+            reference_slope=1.0e-4, load_shape="physical_bump",
+            slide_body="target",
+        )
+        reference = solve_reference_singleton(
+            model, definition, program, 2, allow_multimode=True)
+        forces = np.asarray(program.force_values_at(2))
+        if abs(float(np.sum(forces))+0.04) > 1.0e-12:
+            raise ValueError("x-reference load does not balance")
+        cases.append({
+            "source_columns": columns, "source_rows": 16,
+            "target_s3_faces": 4, "load_shape": "physical_bump",
+            "integrated_normal_force_n": reference["integrated_force"],
+            "active_node_ids": reference["active_node_ids"],
+            "sample_xy_m": points,
+            "source_vertical_displacement_m": _source_vertical_samples(
+                model, reference["displacement"], 16, points,
+                columns=columns),
+            "structural_free_coordinates": reference[
+                "structural_free_coordinates"],
+        })
+    output.write_text(json.dumps({"cases": cases}, indent=2)+"\n",
+                      encoding="utf-8")
+    print(json.dumps(cases))
+
+
 def coupled_y_comparison(output: Path, reference_path: Path,
                          saved_paths: list[Path]) -> None:
-    if output.exists() or len(saved_paths) != 2:
-        raise ValueError("coupled y comparison needs new output and two saved poses")
+    if output.exists() or len(saved_paths) not in (1, 2):
+        raise ValueError("coupled y comparison needs new output and one or two saved poses")
     reference = json.loads(reference_path.read_text(encoding="utf-8"))
     cases = []
     for path in saved_paths:
@@ -238,13 +289,16 @@ def coupled_y_comparison(output: Path, reference_path: Path,
             raise ValueError(f"saved pose is outside bounded y comparison: {path}")
         corresponding = next(item for item in reference["cases"]
                              if item["source_rows"] == rows)
+        if saved["load_shape"] != corresponding.get(
+                "load_shape", "interior_distributed"):
+            raise ValueError("coupled and oracle load fields differ")
         model, _definition, _settings, _program = build_interior_press(
             source_support="perimeter", source_columns=8,
             source_rows=rows,
             source_y_profile="uniform_ref16" if rows == 16 else None,
             offline_structural_reference_y16=(rows == 16),
             target_columns=2, target_rows=1, force_n=0.04,
-            reference_slope=1.0e-4, load_shape="interior_distributed",
+            reference_slope=1.0e-4, load_shape=saved["load_shape"],
             slide_body="target",
         )
         production = saved["history"][-1]["contact"]
@@ -277,13 +331,60 @@ def coupled_y_comparison(output: Path, reference_path: Path,
     print(json.dumps(cases))
 
 
+def bump_gap_preflight(output: Path) -> None:
+    if output.exists():
+        raise FileExistsError(output)
+    from examples.general_contact_d1_interior_controls_dev import (
+        _independent_projected_gap_bound,
+    )
+
+    model, definition, _settings, program = build_interior_press(
+        source_support="perimeter", source_columns=8, source_rows=16,
+        source_y_profile="uniform_ref16",
+        offline_structural_reference_y16=True,
+        target_columns=2, target_rows=1, force_n=0.04,
+        reference_slope=1.0e-4, load_shape="physical_bump",
+        slide_body="target",
+    )
+    reference = solve_reference_singleton(
+        model, definition, program, 2, allow_multimode=True)
+    tolerance = definition.interactions[0].gap_tolerance
+    try:
+        gap = _independent_projected_gap_bound(
+            model, definition, reference["displacement"], tolerance)
+    except RuntimeError as error:
+        output.write_text(json.dumps({
+            "status": "development_preflight_failed",
+            "failure": str(error),
+            "active_node_ids": reference["active_node_ids"],
+            "integrated_normal_force_n": reference["integrated_force"],
+            "gap_tolerance_m": tolerance,
+        }, indent=2)+"\n", encoding="utf-8")
+        raise
+    record = {
+        "status": "development_preflight_passed",
+        "active_node_ids": reference["active_node_ids"],
+        "integrated_normal_force_n": reference["integrated_force"],
+        "independent_projected_lower_gap_m": gap,
+        "gap_tolerance_m": tolerance,
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps(record))
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--singleton-family":
         singleton_family(Path(sys.argv[2]), [Path(path) for path in sys.argv[3:]])
     elif len(sys.argv) > 1 and sys.argv[1] == "--offline-y-reference":
         offline_y_reference(Path(sys.argv[2]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "--offline-y-reference-bump":
+        offline_y_reference(Path(sys.argv[2]), load_shape="physical_bump")
+    elif len(sys.argv) > 1 and sys.argv[1] == "--offline-x-reference":
+        offline_x_reference(Path(sys.argv[2]))
     elif len(sys.argv) > 1 and sys.argv[1] == "--coupled-y-comparison":
         coupled_y_comparison(Path(sys.argv[2]), Path(sys.argv[3]),
                              [Path(path) for path in sys.argv[4:]])
+    elif len(sys.argv) > 1 and sys.argv[1] == "--bump-gap-preflight":
+        bump_gap_preflight(Path(sys.argv[2]))
     else:
         main(Path(sys.argv[1]), Path(sys.argv[2]))

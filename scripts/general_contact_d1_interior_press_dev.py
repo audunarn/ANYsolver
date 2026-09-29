@@ -25,6 +25,27 @@ from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import (
 )
 
 
+def _physical_bump_axis_weights(count: int) -> np.ndarray:
+    """Consistent Q1 loads from one fixed physical-axis traction shape."""
+    roots, quadrature = np.polynomial.legendre.leggauss(8)
+    nodal = np.zeros(count+1)
+    for element in range(count):
+        cell_left, cell_right = element/count, (element+1)/count
+        left, right = max(cell_left, 0.25), min(cell_right, 0.75)
+        if right <= left:
+            continue
+        position = 0.5*(left+right)+0.5*(right-left)*roots
+        weight = 0.5*(right-left)*quadrature
+        density = np.sin(2*np.pi*(position-0.25))**2
+        local = (position-cell_left)*count
+        nodal[element] += float(np.sum(weight*density*(1-local)))
+        nodal[element+1] += float(np.sum(weight*density*local))
+    # Integral of sin² over the fixed half-width support is 1/4.
+    if abs(float(np.sum(nodal))-0.25) > 1.0e-12:
+        raise RuntimeError("physical bump load quadrature did not converge")
+    return nodal/0.25
+
+
 def build_interior_press(*, force_n: float = 0.08,
                          reference_slope: float = 0.01,
                          target_columns: int = 1,
@@ -134,8 +155,20 @@ def build_interior_press(*, force_n: float = 0.08,
         load_weights = {node: weight / total for node, weight in raw.items()}
     elif load_shape == "interior_uniform":
         load_weights = {node: 1.0 / len(interior) for node in interior}
+    elif load_shape == "physical_bump":
+        if source_y_profile not in (None, "uniform_ref16"):
+            raise ValueError("physical bump requires uniform source coordinates")
+        x_weights = _physical_bump_axis_weights(columns)
+        y_weights = _physical_bump_axis_weights(rows)
+        load_weights = {
+            1+row*stride+column: float(x_weights[column]*y_weights[row])
+            for row in range(rows+1) for column in range(columns+1)
+            if x_weights[column]*y_weights[row] > 1.0e-15
+        }
+        if abs(sum(load_weights.values())-1.0) > 1.0e-11:
+            raise RuntimeError("physical bump nodal loads do not balance")
     else:
-        raise ValueError("load shape must be point, interior_distributed or interior_uniform")
+        raise ValueError("unknown bounded interior load shape")
     waypoints = ((0.0, 0.0), (0.0, 0.0))
     force_factors = (0.0, 1.0)
     if four_phase:
@@ -268,7 +301,7 @@ if __name__ == "__main__":
     parser.add_argument("--offline-structural-reference-y16",
                         action="store_true")
     parser.add_argument("--load-shape", choices=("point", "interior_distributed",
-                                                 "interior_uniform"),
+                                                 "interior_uniform", "physical_bump"),
                         default="point")
     parser.add_argument("--max-path-fraction", type=float,
                         default=1.0)

@@ -24,6 +24,8 @@ If the full signed-space Rayleigh minimum has a valid lower bound at a pose, eve
 
 All three ordinary static force-control cases used 0.04 N interior-distributed loading, perimeter source support, deformable S3 target, physical skins, free source rotations, the fine nodal Q1/monolithic route and the unchanged 50 µm gap budget. The 4×4/two-S3 and 8×4/four-S3 presses were retained from earlier development. The new 8×8/four-S3 press completed both increments in 107.31 s/432 MB with one interior active node, no rim pressure and final certified gap −28.644 µm (sampled −10.015 µm). A 4×2/two-S3 alternative failed at the genuine gap limit before first acceptance and is excluded from this family, not regraded.
 
+**Spatial-comparison correction:** `interior_distributed` assigns weights by each mesh's node indices and renormalizes them. Although total force and centroid agree, these are not exactly one fixed physical traction across refinements. The accepted-pose work spectra remain valid finite-matrix observations; this family cannot by itself support a matched-load spatial-response claim. A later fixed physical bump load gave 3.84% force change from 8×8 to 8×16 and 2.29% from 8×16 to an offline 16×16 linear reference. [Matched-load y reference](d1_fixed_bump_linear_family_20260929.json), [x reference](d1_fixed_bump_x_reference_20260929.json). Do not infer a 2% continuum response pass from the earlier mesh-index-load comparisons.
+
 | Source / target | Full interior modes | Minimum `β²` | `γ` | Frozen-footprint oracle relative difference |
 |---|---:|---:|---:|---:|
 | 4×4 Q4 / 2 S3 | 9 | 1.0209094e−5 | 0.00299168 | 4.99e−6 |
@@ -33,6 +35,25 @@ All three ordinary static force-control cases used 0.04 N interior-distributed l
 The independently clipped oracle freezes the reference XY footprint and vertical work. Its agreement checks a component of the work calculation at these shallow accepted poses. It does not independently validate rotating physical skins or the nonlinear coupled response. The three `γ` values are positive and within a factor of 1.92; they are **development observations**, not a mesh-uniform proof or a retrospective pass.
 
 An additional guarded, offline 8×16 Q4 / four-S3 press completed after this three-mesh screen. It has two active interior pressure nodes and 105 signed interior modes. The same procedure gives `β²=1.7686655e−7` and `γ=0.0132682`; the frozen-footprint oracle differs by 3.64e−6 relative. [Saved coupled pose](d1_coupled_source_y16_20260929.json) and [spectrum](d1_pressure_y16_spectrum_20260929.json). This new point does not create a frozen threshold or establish a uniform bound. Its finer y spacing changes the proposed `D/hmin⁴` scale, so interpret the increase in `γ` with that scaling in mind.
+
+## Explicit admissible-motion lower bound
+
+At each accepted pose, select the independent structural columns `Q` from the actual constraint transform corresponding to the interior source-node vertical motions. Check that they satisfy both target-x path controls. With `B` as above and `B_Q=BQ`, the complete admissible variation space contains `range(Q)`, so
+
+```text
+β² >= λmin(B_Q (Qᵀ Kstruct Q)⁻¹ B_Qᵀ, M).
+```
+
+This is a **finite-discretization lower bound**, not a continuum or mesh-uniform inf-sup theorem. It uses the full physical work derivative at the saved pose, including moving geometry, but only one explicit class of structural witnesses. The independently clipped frozen-footprint work map supplies a second calculation of the restricted contact block. The exact same physical Q1 mass and structural stiffness are shared, so this independent calculation checks contact work, not the shell stiffness model.
+
+| Source Q4 | Interior modes | Restricted `β²` lower bound | Bound/full | Restricted-work oracle relative difference |
+|---:|---:|---:|---:|---:|
+| 16 | 9 | 2.4614180e−6 | 0.2411 | 9.03e−8 |
+| 32 | 21 | 7.6727455e−7 | 0.7349 | 1.72e−7 |
+| 64 | 49 | 4.5447130e−7 | 0.8353 | 1.88e−7 |
+| 128 guarded offline | 105 | 1.6995134e−7 | 0.9609 | 1.83e−7 |
+
+[Raw bounded calculation](d1_pressure_source_motion_bound_20260929.json) completed in 28.36 s/236 MB. The restricted lower bound is positive and close to the full-work minimum on the finer saved poses. The governing D1 acceptance still requires a prospective quantitative criterion, independently scrutinized derivation, relevant open/recontact states and spatial response evidence. A positive bound on four finite matrices cannot be promoted by choosing a threshold after seeing these values.
 
 ## Retained cut-front loss as a control
 

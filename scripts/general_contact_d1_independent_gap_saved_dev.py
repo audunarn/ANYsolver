@@ -48,7 +48,8 @@ def interior_press(saved_path: Path, output: Path) -> None:
             or saved.get("accepted_steps") != 2
             or saved.get("source_support") != "perimeter"
             or saved.get("target_rows") != 1
-            or saved.get("load_shape") != "interior_distributed"
+            or saved.get("load_shape") not in (
+                "interior_distributed", "physical_bump")
             or saved.get("slide_body") != "target"
             or saved.get("force_n") != 0.04
             or saved.get("reference_slope") != 1.0e-4):
@@ -62,7 +63,7 @@ def interior_press(saved_path: Path, output: Path) -> None:
             "offline_structural_reference_y16", False),
         target_columns=saved["target_s3_faces"]//2,
         target_rows=1, force_n=0.04, reference_slope=1.0e-4,
-        load_shape="interior_distributed", slide_body="target",
+        load_shape=saved["load_shape"], slide_body="target",
     )
     lower = _independent_projected_gap_bound(
         model, definition, np.asarray(saved["displacements"], dtype=float),
