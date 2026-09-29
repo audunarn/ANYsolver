@@ -11,6 +11,29 @@ historical evidence, consumed authorities and complete release boundary below
 remain intact. The current milestone is M1's matching-station elastic GE panel.
 M2 connection mechanics and M3 physical B2 remain open parallel paths.
 
+Current M2 local-law decision: can the proposed BL5 five-row physical-director
+bond remain objective, stress-free, shear-admissible and work-conjugate while
+releasing spin about the director? The bounded discriminator is one private
+native-half-cell local operator plus rigid motion, released-spin, reference,
+actual-update derivative and nonzero-multiplier work checks. A failure changes
+the local law before any multiplier or loaded comparison; a pass permits the
+separate interface-resolution study but does not select BL5 or consume formal
+F03 authority. Existing six-row point and L1 identities remain unchanged.
+
+The private BL5 local operator and six focused checks now pass, alongside five
+unchanged L1 local checks (11/11 total, source checkout, JIT disabled). They
+establish the reference gap, owned derivative outputs, finite common-motion
+objectivity, eccentric released spin, an independent sheared shell director,
+antipodal/degenerate-geometry rejection, physical force/moment balance at a
+lateral/eccentric arm, and first/second directional work derivatives at the
+virgin pose. The fixture's clamp correctly prevents a
+whole-body state-manager step, so the objectivity check transforms the local
+pose directly; the actual-update derivative check uses the state manager.
+BL5 remains a local development candidate. Next verify wrench recovery in
+the assembled representation, then test supported off-ratio modes and a
+coherent growing multiplier rule. No installed, loaded, or formal F03
+acceptance is implied.
+
 The bounded M1 low-yield ticket restored the existing accepted 40 N checkpoint
 and reproduced the 45 N backtrack-budget failure (163 assemblies, best free
 ratio 0.1069403). The accepted checkpoint was byte-identical after rejection.

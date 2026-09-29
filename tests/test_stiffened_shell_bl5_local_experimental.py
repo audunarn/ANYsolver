@@ -1,0 +1,155 @@
+"""Bounded mechanics checks for the private BL5 director-bond candidate."""
+
+from dataclasses import replace
+
+import numpy as np
+import pytest
+from scipy.spatial.transform import Rotation
+
+from anysolver._stiffened_shell_bl5_local_experimental import BL5LocalOperator
+from anysolver._stiffened_shell_l1_local_experimental import NativeHalfCellPort
+from scripts._b3_e4_f03_native_fixture import build
+
+
+def _fixture(shell_y=0.):
+    beam = build(4, z_offset=.0675, assemble=False)
+    element, cell, weight, _ = beam._locate(.95)
+    reference = np.array(((.9, shell_y, 0.), (1., shell_y, 0.)))
+    state = beam.context.initial.mechanical
+    native_reference = beam.context.elements[element][1].operator.reference
+    port = NativeHalfCellPort.from_reference(
+        native_reference, beam.context.nodes[element], element, cell, weight,
+        beam.context.nodal_count, beam.context.count)
+    operator = BL5LocalOperator.at_reference(
+        reference, np.zeros((2, 6)), .035, port, state)
+    return beam, reference, state, operator
+
+
+def _rigid_beam_state(state, omega, pivot, translation=(0., 0., 0.)):
+    """Transform a local test pose without invoking the clamped model driver."""
+    q = Rotation.from_rotvec(omega).as_matrix()
+    return replace(
+        state,
+        positions=(state.positions-pivot)@q.T+pivot+translation,
+        position_low=np.zeros_like(state.position_low),
+        nodal_frames=np.einsum('ij,njk->nik', q, state.nodal_frames),
+        cell_rotations=np.einsum('ij,abjk->abik', q, state.cell_rotations),
+    )
+
+
+def test_bl5_reference_work_and_owned_derivatives():
+    beam, reference, state, operator = _fixture()
+    dual = np.array((120., -85., 150., 5., -7.))
+    local = operator.evaluate(np.zeros((2, 6)), state, dual)
+    np.testing.assert_allclose(local.gap, 0., atol=2e-15)
+    assert local.gap.shape == (5,)
+    assert local.gap_jacobian.shape == (5, 21)
+    assert local.hessian.shape == (21, 21)
+    np.testing.assert_allclose(local.gradient,
+                               local.gap_jacobian.T@dual, atol=2e-12)
+    np.testing.assert_allclose(local.hessian, local.hessian.T, atol=2e-12)
+    assert abs(local.value) <= 2e-12
+    reference[:] = 100.
+    np.testing.assert_allclose(operator.evaluate(
+        np.zeros((2, 6)), state, dual).gap, 0., atol=2e-15)
+    with pytest.raises(ValueError):
+        local.gradient[:] = 1.
+    np.testing.assert_allclose(operator.evaluate(
+        np.zeros((2, 6)), state, dual).gradient,
+        local.gap_jacobian.T@dual, atol=2e-12)
+
+
+def test_bl5_common_rigid_motion_and_released_eccentric_spin():
+    beam, reference, state, operator = _fixture(shell_y=.03)
+    omega = np.array((.16, -.11, .19))
+    shift = np.array((.13, -.07, .09))
+    q = Rotation.from_rotvec(omega).as_matrix()
+    advanced = _rigid_beam_state(state, omega, np.zeros(3), shift)
+    total = np.zeros((2, 6))
+    for i, position in enumerate(reference):
+        total[i, :3] = q@position+shift-position
+        total[i, 3:] = omega
+    np.testing.assert_allclose(operator.evaluate(
+        total, advanced, np.ones(5)).gap, 0., atol=2e-11)
+
+    # The shell remains fixed while the whole beam spins about the actual
+    # attachment point. Its axis must move around the eccentric lateral arm.
+    pivot = np.array((.95, .03, .0175))
+    spin = np.array((0., 0., .21))
+    released = _rigid_beam_state(state, spin, pivot)
+    np.testing.assert_allclose(operator.evaluate(
+        np.zeros((2, 6)), released, np.ones(5)).gap, 0., atol=2e-11)
+    assert np.linalg.norm(released.positions-state.positions) > 1e-3
+    with pytest.raises(ValueError, match="antipodal"):
+        flipped = np.zeros((2, 6))
+        flipped[:, 3] = np.pi
+        operator.evaluate(flipped, state, np.zeros(5))
+
+
+def test_bl5_preserves_independent_shell_director_shear():
+    beam, reference, state, original = _fixture()
+    sheared = np.zeros((2, 6))
+    sheared[:, 3] = .12
+    operator = BL5LocalOperator.at_reference(
+        reference, sheared, .035, original.port, state)
+    np.testing.assert_allclose(operator.evaluate(
+        sheared, state, np.ones(5)).gap, 0., atol=2e-14)
+    assert abs(operator.reference_director[1]) > .1
+
+
+def test_bl5_rejects_degenerate_material_tangent():
+    _beam, reference, state, original = _fixture()
+    tangent_director = np.zeros((2, 6))
+    tangent_director[:, 4] = np.pi/2
+    with pytest.raises(ValueError, match="projected material-line tangent"):
+        BL5LocalOperator.at_reference(
+            reference, tangent_director, .035, original.port, state)
+
+
+def test_bl5_physical_force_and_moment_work_balance():
+    _beam, reference, state, operator = _fixture(shell_y=.03)
+    local = operator.evaluate(
+        np.zeros((2, 6)), state, np.array((115., -87., 49., 6., -4.)))
+    shell_forces = np.stack((local.gradient[:3], local.gradient[6:9]))
+    beam_forces = np.stack((local.gradient[12:15], local.gradient[15:18]))
+    np.testing.assert_allclose(
+        shell_forces.sum(axis=0)+beam_forces.sum(axis=0),
+        0., atol=2e-12)
+    shell_moment = sum((np.cross(position, force) for position, force in
+                        zip(reference, shell_forces)), np.zeros(3))
+    beam_moment = sum((np.cross(state.positions[node], force)
+                       for node, force in zip(operator.port.nodes, beam_forces)),
+                      np.zeros(3))
+    total = (shell_moment+beam_moment+local.gradient[3:6]+
+             local.gradient[9:12]+local.gradient[18:21])
+    np.testing.assert_allclose(total, 0., atol=2e-11)
+
+
+def test_bl5_actual_update_directional_first_and_second_variation():
+    beam, _reference, state, operator = _fixture(shell_y=.03)
+    rng = np.random.default_rng(1307)
+    direction = rng.normal(size=21)
+    direction[3:6] *= .3
+    direction[9:12] *= .3
+    direction[18:21] *= .3
+    dual = np.array((90., -35., 70., 3., -5.))
+    base = operator.evaluate(np.zeros((2, 6)), state, dual)
+
+    def trial(signed_step):
+        beam_step = np.zeros(beam.context.count)
+        beam_step[base.beam_slots.astype(int)] = signed_step*direction[12:]
+        moved = beam.context.advance(state, beam_step)
+        shell = signed_step*direction[:12].reshape(2, 6)
+        return operator.evaluate(shell, moved, dual)
+
+    for step in (1e-4, 1e-5):
+        plus, minus = trial(step), trial(-step)
+        numerical_gap = (plus.gap-minus.gap)/(2*step)
+        np.testing.assert_allclose(
+            numerical_gap, base.gap_jacobian@direction,
+            rtol=2e-6, atol=1e-8)
+        numerical_curvature = (plus.value-2*base.value+minus.value)/step**2
+        predicted_curvature = direction@base.hessian@direction
+        np.testing.assert_allclose(
+            numerical_curvature, predicted_curvature,
+            rtol=3e-5, atol=3e-6)
