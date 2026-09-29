@@ -87,8 +87,9 @@ class ExperimentalBL5Line:
                 self.multiplier_span not in (1, 2) or
                 n % self.multiplier_span or
                 type(self.basis) is not str or
-                self.basis not in ("p0", "continuous_p1") or
-                (self.basis == "continuous_p1" and
+                self.basis not in ("p0", "continuous_p1",
+                                   "continuous_p1_coarse") or
+                (self.basis in ("continuous_p1", "continuous_p1_coarse") and
                  self.multiplier_span != 1) or
                 type(self.expected_beam_arm) is not tuple or
                 len(self.expected_beam_arm) != 3 or
@@ -96,9 +97,20 @@ class ExperimentalBL5Line:
                     not isinstance(v, (int, float, np.integer, np.floating)) or
                     not np.isfinite(v) for v in self.expected_beam_arm)):
             raise ValueError("ordered even-edge experimental BL5 line required")
+        if (self.basis == "continuous_p1" and
+                n > len(self.shell_nodes)-1):
+            # This beam-node basis has dependent pitch rows on tested
+            # beam-finer traces. The large sparse structural audit cannot
+            # certify their numerical independence, so fail closed pending
+            # a separately derived off-grid resolution rule.
+            raise ValueError(
+                "experimental beam-node continuous-P1 requires shell "
+                "trace resolution at least as fine as beam half-cells")
 
     @property
     def multiplier_space(self):
+        if self.basis == "continuous_p1_coarse":
+            return "BL5_P1_coarse_trace"
         if self.basis == "continuous_p1":
             return "BL5_P1_continuous"
         return f"BL5_P0_span_{self.multiplier_span}"
@@ -108,34 +120,48 @@ class ExperimentalBL5Line:
                       beam_halfcells=self.beam_halfcells,
                       multiplier_span=self.multiplier_span,
                       expected_beam_arm=self.expected_beam_arm)
-        if self.basis == "continuous_p1":
+        if self.basis != "p0":
             result["basis"] = self.basis
         return result
 
 
 def _sample_rows(line: ExperimentalL1Line | ExperimentalBL5Line,
-                 edge: int, alpha: float,
+                 shell_edge: int, shell_alpha: float,
+                 beam_edge: int, beam_alpha: float,
                  channel: int):
     if type(line) is ExperimentalBL5Line:
+        if line.basis == "continuous_p1_coarse":
+            shell_edges = len(line.shell_nodes)-1
+            beam_edges = len(line.beam_halfcells)
+            if shell_edges < beam_edges:
+                count, edge, alpha = shell_edges, shell_edge, shell_alpha
+            else:
+                count, edge, alpha = beam_edges, beam_edge, beam_alpha
+            base = channel*(count+1)
+            return ((base+edge, 1.-alpha), (base+edge+1, alpha))
         if line.basis == "continuous_p1":
             base = channel*(len(line.beam_halfcells)+1)
-            return ((base+edge, 1.-alpha), (base+edge+1, alpha))
+            return ((base+beam_edge, 1.-beam_alpha),
+                    (base+beam_edge+1, beam_alpha))
         return ((channel*(len(line.beam_halfcells)//line.multiplier_span)+
-                 edge//line.multiplier_span, 1.),)
+                 beam_edge//line.multiplier_span, 1.),)
     n = len(line.beam_halfcells)
     if line.multiplier_space == SPACE_A:
         if channel < 4:
             base = channel*(n+1)
-            return ((base+edge, 1.-alpha), (base+edge+1, alpha))
-        return ((4*(n+1)+(channel-4)*n+edge, 1.),)
+            return ((base+beam_edge, 1.-beam_alpha),
+                    (base+beam_edge+1, beam_alpha))
+        return ((4*(n+1)+(channel-4)*n+beam_edge, 1.),)
     if channel < 4:
-        return ((channel*n+edge, 1.),)
-    return ((4*n+(channel-4)*(n//2)+edge//2, 1.),)
+        return ((channel*n+beam_edge, 1.),)
+    return ((4*n+(channel-4)*(n//2)+beam_edge//2, 1.),)
 
 
 def _row_count(line: ExperimentalL1Line):
     n = len(line.beam_halfcells)
     if type(line) is ExperimentalBL5Line:
+        if line.basis == "continuous_p1_coarse":
+            return 5*(min(n, len(line.shell_nodes)-1)+1)
         if line.basis == "continuous_p1":
             return 5*(n+1)
         return 5*n//line.multiplier_span
@@ -297,7 +323,8 @@ def compile_lines(lines, *, shell_ids, shell_xyz, shell_cells,
                                  shell_count+local.beam_slots]
             for channel in range(len(local.gap)):
                 for row, coefficient in _sample_rows(
-                        line, beam_edge, float(beam_alpha), channel):
+                        line, shell_edge, float(shell_alpha),
+                        beam_edge, float(beam_alpha), channel):
                     jacobian = weight*coefficient*local.gap_jacobian[channel]
                     row_indices.extend([line_row+row]*len(global_slots))
                     columns.extend(global_slots.tolist())

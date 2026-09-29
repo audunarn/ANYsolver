@@ -363,6 +363,100 @@ def test_bl5_continuous_p1_is_distinct_and_does_not_change_p0_identity():
     restored.close()
 
 
+@pytest.mark.parametrize("shell_edges,beam_halfcells", ((4, 8), (8, 16)))
+def test_bl5_beam_node_p1_rejects_dependent_beam_finer_layouts(
+        shell_edges, beam_halfcells):
+    base = _bl5_joint_mesh_definition(shell_edges, beam_halfcells, 1)
+    with pytest.raises(ValueError, match="shell trace resolution at least"):
+        replace(base.lines[0], basis="continuous_p1")
+    owner = stiffened_shell.create_analysis(definition=base)
+    result = owner.solve_linear((stiffened_shell.NodalAction(
+        "beam", 101+beam_halfcells, (0., 100., 0., 0., 0., 0.)),))
+    assert result.status == "completed"
+    owner.close()
+
+
+@pytest.mark.parametrize("shell_edges,beam_halfcells,fy_work,mx_work", (
+    (4, 4, .000352265689, .0000599026925),
+    (4, 8, .000390131356, .0000639474129),
+    (8, 8, .000389823091, .0000613108626),
+    (8, 16, .000412168212, .0000636340064),
+))
+def test_bl5_coarse_trace_p1_offgrid_work_and_supported_rank(
+        shell_edges, beam_halfcells, fy_work, mx_work):
+    base = _bl5_joint_mesh_definition(shell_edges, beam_halfcells, 1)
+    line = replace(base.lines[0], basis="continuous_p1_coarse")
+    assert line.multiplier_space == "BL5_P1_coarse_trace"
+    assert line.descriptor()["basis"] == "continuous_p1_coarse"
+    owner = stiffened_shell.create_analysis(definition=replace(
+        base, lines=(line,)))
+    assert owner._C.shape[0] == 5*(min(shell_edges, beam_halfcells)+1)
+    scaled = (owner._C[:, owner._free].toarray()*
+              owner._coordinate_scale[owner._free][None, :] /
+              owner._constraint_scale[:, None])
+    assert np.linalg.matrix_rank(scaled) == owner._C.shape[0]
+    for wrench, work in (((0., 100., 0., 0., 0., 0.), fy_work),
+                         ((0., 0., 0., 10., 0., 0.), mx_work)):
+        result = owner.solve_linear((stiffened_shell.NodalAction(
+            "beam", 101+beam_halfcells, wrench),))
+        assert result.status == "completed"
+        assert result.free_equilibrium_ratio < 1e-8
+        assert result.constraint_max < 1e-9
+        tip = result.beam_coordinates[
+            6*owner._beam_index[101+beam_halfcells]:
+            6*owner._beam_index[101+beam_halfcells]+6]
+        np.testing.assert_allclose(np.dot(wrench, tip), work,
+                                   rtol=2e-8, atol=1e-12)
+    owner.close()
+
+
+def test_bl5_coarse_trace_p1_keeps_existing_p1_checkpoint_identity():
+    base = _bl5_joint_mesh_definition(4, 4, 1)
+    old = stiffened_shell.create_analysis(definition=replace(
+        base, lines=(replace(base.lines[0], basis="continuous_p1"),)))
+    coarse = stiffened_shell.create_analysis(definition=replace(
+        base, lines=(replace(base.lines[0],
+                                  basis="continuous_p1_coarse"),)))
+    np.testing.assert_allclose(coarse._C.toarray(), old._C.toarray(),
+                               rtol=0., atol=2e-14)
+    assert coarse.preflight()["identity"] != old.preflight()["identity"]
+    coarse.solve_linear((stiffened_shell.NodalAction(
+        "beam", 105, (0., 100., 0., 0., 0., 0.)),))
+    with pytest.raises(ValueError, match="incompatible mixed linear checkpoint"):
+        old.restore(coarse.checkpoint())
+    old.close()
+    coarse.close()
+
+
+def test_bl5_coarse_trace_p1_uses_nonuniform_reference_knots():
+    base = _bl5_joint_mesh_definition(4, 8, 1)
+    knots = (0., .19, .45, .76, 1.)
+    shell_coordinates = tuple((knots[i % 5], xyz[1], xyz[2])
+                              for i, xyz in enumerate(base.shell.coordinates_m))
+    shell = replace(base.shell, coordinates_m=shell_coordinates)
+    line = replace(base.lines[0], basis="continuous_p1_coarse")
+    owner = stiffened_shell.create_analysis(definition=replace(
+        base, shell=shell, lines=(line,)))
+    lam = np.zeros(owner._C.shape[0])
+    lam[4*len(knots):5*len(knots)] = knots
+    actual = np.asarray(owner._C.T@lam).reshape(-1)
+    positions = np.array([owner._beam_nodes[node][0]
+                          for node in owner._beam_ids])
+    frames = np.array([owner._beam_nodes[node][1]
+                       for node in owner._beam_ids])
+    state = Mechanical(positions, np.zeros_like(positions), frames,
+                       np.tile(np.eye(3), (len(owner._beam_parts), 2, 1, 1)),
+                       np.zeros((len(owner._beam_parts), 18)))
+    expected = np.zeros(owner._K.shape[0])
+    for local, slots, weight, beam_edge, beam_alpha in owner._line_samples:
+        station = (beam_edge+beam_alpha)/8
+        jacobian = local.evaluate(
+            np.zeros((2, 6)), state, np.zeros(5)).gap_jacobian[4]
+        np.add.at(expected, slots, weight*station*jacobian)
+    np.testing.assert_allclose(actual, expected, rtol=0., atol=2e-14)
+    owner.close()
+
+
 @pytest.mark.parametrize("wrench,work", (
     ((0., 100., 0., 0., 0., 0.), .0004059937141791822),
     ((0., 0., 0., 10., 0., 0.), .00006240563717080719),
