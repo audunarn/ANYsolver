@@ -47,6 +47,7 @@ def reference_nodal_support(law) -> np.ndarray:
 def linearize(manager, displacement, nodal_forces, *, tangent=True):
     """Pull the local unprojected force and all gap rows to structural DOFs."""
     source, target = manager._positions(displacement)
+    manager.require_d1_coverage(source, target)
     raw = manager.law.nodal_force_linearization(
         source, target, nodal_forces, tangent=tangent,
     )

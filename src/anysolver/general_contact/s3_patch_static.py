@@ -21,6 +21,10 @@ from .pressure_basis import (
     build_q4_source_macro_q1_pair_basis,
     build_q4_source_selected_q1_basis,
 )
+from .d1_interior_profile import (
+    active_boundary_issue, physical_q4_rim_node_ids,
+    projected_coverage_issue,
+)
 
 
 PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
@@ -412,6 +416,10 @@ class GeneralS3PatchManager:
         adapters = _adapters(model, (source, target))
         faces = _patch_faces(adapters)
         source_faces = tuple(face.node_ids for face in faces[0])
+        self.d1_physical_rim_node_ids = (
+            physical_q4_rim_node_ids(model, faces[0])
+            if self.settings.d1_interior_profile else frozenset()
+        )
         pressure_basis = (
             build_q4_source_macro_q1_pair_basis(source_faces)
             if self.settings.q4_source_pressure_basis == "macro_q1_pair_dev"
@@ -476,6 +484,7 @@ class GeneralS3PatchManager:
         )
         initial = np.zeros(self.n_dof) if initial_displacement is None else initial_displacement
         current = self._positions(initial)
+        self.require_d1_coverage(*current)
         lower = self._gap_lower(current)
         scale = max(1.0, *(float(np.max(np.abs(item))) for item in current))
         if lower < -256.0*np.finfo(float).eps*scale:
@@ -490,6 +499,36 @@ class GeneralS3PatchManager:
         ).reshape(-1, 3)
         source_count = len(self.law.source_node_ids)
         return current[:source_count], current[source_count:]
+
+    def require_d1_coverage(self, source, target):
+        if not self.settings.d1_interior_profile:
+            return
+        issue = projected_coverage_issue(
+            source, target, self.law.source_face_indices,
+            self.law.target_face_indices,
+            self.settings.d1_interior_coverage_tolerance_m2,
+        )
+        if issue is not None:
+            raise ValueError("D1 interior profile: " + issue)
+
+    def d1_interior_admission_issue(self, certificate, displacement,
+                                    transform):
+        if not self.settings.d1_interior_profile:
+            return None
+        source, target = self._positions(displacement)
+        issue = projected_coverage_issue(
+            source, target, self.law.source_face_indices,
+            self.law.target_face_indices,
+            self.settings.d1_interior_coverage_tolerance_m2,
+        )
+        if issue is not None:
+            return issue
+        return active_boundary_issue(
+            certificate, source, self.law.source_face_indices,
+            self.law.source_node_ids, self.d1_physical_rim_node_ids,
+            self.map, transform,
+            self.settings.d1_interior_boundary_force_tolerance_n,
+        )
 
     def _gap_lower(self, positions):
         source, target = positions
@@ -522,6 +561,7 @@ class GeneralS3PatchManager:
 
     def evaluate(self, displacement, *, tangent=True):
         source, target = self._positions(displacement)
+        self.require_d1_coverage(source, target)
         lower = self._gap_lower((source, target))
         prepared = (self.law.prepare_work_state(
             source, target, self.normal_multipliers,
@@ -787,6 +827,12 @@ class GeneralS3PatchManager:
                             "normal_law": interaction.normal_law},
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
+                         **({"d1_interior_profile": True,
+                             "d1_interior_coverage_tolerance_m2":
+                             self.settings.d1_interior_coverage_tolerance_m2,
+                             "d1_interior_boundary_force_tolerance_n":
+                             self.settings.d1_interior_boundary_force_tolerance_n}
+                            if self.settings.d1_interior_profile else {}),
                          **({"enforcement_solver": self.settings.enforcement_solver}
                             if self.settings.enforcement_solver != "nested_augmented" else {}),
                          **({"complementarity_force_scale_n":

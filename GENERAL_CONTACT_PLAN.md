@@ -1,8 +1,8 @@
 # General contact — plan
 
-**Revision:** 2026-09-29.3. **Status:** planning complete; development paused at the user's request; no acceptance claim. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md). **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Source at the implementation pause was 97fcf81f; ef915da5 subsequently added the full-programme document. Current state was verified during planning.
+**Revision:** 2026-09-29.3. **Status:** D1-interior development resumed; no acceptance claim. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md). **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Source at the implementation pause was 97fcf81f; ef915da5 subsequently added the full-programme document. Resumption baseline is 7ff465c0.
 
-The goal owns outcome, acceptance, authority, budget and stop rules. This plan is the current best route, not a mandatory sequence of investigations. On development resumption, the lead should change it when evidence supports faster delivery within the goal, briefly recording the decision. This review does not start development.
+The goal owns outcome, acceptance, authority, budget and stop rules. This plan is the current best route, not a mandatory sequence of investigations. The lead should change it when evidence supports faster delivery within the goal, briefly recording the decision. Development has resumed on the user's instruction.
 
 ## 1. Prospective transition
 
@@ -10,7 +10,7 @@ Apply ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2. Th
 
 Use one short living note, one delivery candidate, one parameterized case runner where practical, and the existing capability ledger. Routine development is not subject to a formal registration/review cycle. Keep numerical targets, independent assessment, installed verification, no-contact regression, state safety and all prior failed/frozen evidence. Retain raw important failures; separate records are needed only for claim-bearing evidence or findings that change direction.
 
-The dirty optimization has been preserved and parked as described in Section 3A. On development resumption, build a small integrated D1-interior path with its admission checks. No further permission is needed for choices delegated by the goal once development resumes. Scope/criterion changes and merge/publication/release remain user decisions.
+The dirty optimization has been preserved and parked as described in Section 3A. Build a small integrated D1-interior path with its admission checks. No further permission is needed for choices delegated by the goal. Scope/criterion changes and merge/publication/release remain user decisions.
 
 ## 2. What the evidence supports
 

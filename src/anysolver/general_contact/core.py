@@ -226,8 +226,21 @@ class ContactSolverSettings:
     q4_source_support_hessian_tolerance: float | None = None
     q4_source_weighted_gap_gradient_tolerance: float | None = None
     q4_source_weighted_gap_hessian_tolerance: float | None = None
+    d1_interior_profile: bool = False
+    d1_interior_coverage_tolerance_m2: float | None = None
+    d1_interior_boundary_force_tolerance_n: float | None = None
 
     def __post_init__(self) -> None:
+        if type(self.d1_interior_profile) is not bool:
+            raise TypeError("d1_interior_profile must be bool")
+        interior_controls = (self.d1_interior_coverage_tolerance_m2,
+                             self.d1_interior_boundary_force_tolerance_n)
+        if self.d1_interior_profile:
+            if any(value is None or not np.isfinite(value) or value <= 0.0
+                   for value in interior_controls):
+                raise ValueError("D1 interior profile needs positive dimensional coverage and boundary-force tolerances")
+        elif any(value is not None for value in interior_controls):
+            raise ValueError("D1 interior controls require d1_interior_profile")
         if self.enforcement_solver not in {"nested_augmented", "monolithic_active_set"}:
             raise ValueError("enforcement_solver must be nested_augmented or monolithic_active_set")
         if (self.enforcement_solver == "monolithic_active_set"
@@ -562,6 +575,16 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if settings is not None and settings.d1_interior_profile:
+        if (not _refined_q4_s3_patch(model, definition)
+                or definition.interactions[0].normal_law != "augmented"
+                or settings.pair_motion != "general"
+                or settings.normal_discretization != "primal_mortar"
+                or settings.q4_source_pressure_basis != "fine_nodal_q1"
+                or settings.general_s3_differentiation != "jet2_q4_s3_dev"):
+            return ContactValidationReport("invalid", (
+                "D1 interior profile requires a refined augmented Q4/S3 fine-Q1 Jet2 general patch",
+            ))
     if (settings is not None
             and settings.q4_source_pressure_basis == "macro_q1_pair_dev"
             and (not _refined_q4_s3_patch(model, definition)

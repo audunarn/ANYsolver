@@ -171,17 +171,26 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
         pivot_active = active.copy()
         seen_sets = set()
         pivot_trace = []
+        current_branch_delta = None
         pivot_limit = min(settings.monolithic_maximum_pivots, modes+2)
         for pivot in range(pivot_limit):
             cancellation_safe_point(cancellation_token,
                                     f"contact_path.step:{step}.semismooth.pivot:{pivot}")
             signature = tuple(np.flatnonzero(pivot_active))
             if signature in seen_sets:
-                _discard_nonlinear_state_candidate(committed_states)
-                return SemismoothStep(False, "contact_semismooth_pivot_cycle",
-                                      q, mu, z, None, None, iteration, residual_norm,
-                                      constraint_norm, ncp_norm, evaluations, backtracks,
-                                      {"pivot_trace": pivot_trace})
+                # The current active branch is a valid generalized Newton
+                # derivative even when full-step active-set prediction cycles.
+                # Let the existing swept check and residual merit decide its
+                # step length instead of rejecting the whole increment.
+                if current_branch_delta is None:
+                    raise RuntimeError("active-set pivot cycle has no initial direction")
+                delta = current_branch_delta
+                dq = delta[:q_size]
+                dmu = delta[q_size:q_size+mu_size]
+                dz = delta[q_size+mu_size:]
+                pivot_trace.append({"cycle": list(signature),
+                                    "fallback": "current_branch"})
+                break
             seen_sets.add(signature)
             try:
                 if block_response is None:
@@ -221,6 +230,8 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                                       q, mu, z, None, None, iteration, residual_norm,
                                       constraint_norm, ncp_norm, evaluations, backtracks,
                                       {"pivot_trace": pivot_trace})
+            if current_branch_delta is None:
+                current_branch_delta = delta.copy()
             dq = delta[:q_size]
             dmu = delta[q_size:q_size+mu_size]
             dz = delta[q_size+mu_size:]
@@ -237,14 +248,20 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                 break
             pivot_active = predicted_active
         else:
-            _discard_nonlinear_state_candidate(committed_states)
-            return SemismoothStep(False, "contact_semismooth_pivot_limit",
-                                  q, mu, z, None, None, iteration, residual_norm,
-                                  constraint_norm, ncp_norm, evaluations, backtracks,
-                                  {"pivot_limit": pivot_limit,
-                                   "pivot_trace": pivot_trace})
+            # A bounded predictor that has not stabilized still leaves the
+            # current branch's generalized Newton direction available. The
+            # swept certificate and residual merit decide whether to take it.
+            if current_branch_delta is None:
+                raise RuntimeError("active-set pivot limit has no initial direction")
+            delta = current_branch_delta
+            dq = delta[:q_size]
+            dmu = delta[q_size:q_size+mu_size]
+            dz = delta[q_size+mu_size:]
+            pivot_trace.append({"limit": pivot_limit,
+                                "fallback": "current_branch"})
         proposed_u = np.asarray(transform @ (q+dq) + offset).reshape(-1)
         fraction = min(1.0, manager.admissible_step_fraction(u, proposed_u))
+        swept_initial_fraction = fraction
         _discard_nonlinear_state_candidate(committed_states)
         improved = False
         attempts = []
@@ -341,6 +358,16 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                                    "direction_q_norm": float(np.linalg.norm(dq)),
                                    "direction_z_min": float(np.min(dz)),
                                    "direction_z_max": float(np.max(dz)),
+                                   "pivot_trace": pivot_trace,
+                                   "swept_initial_fraction": swept_initial_fraction,
+                                   "swept_start_gap_lower_m": manager._gap_lower(
+                                       manager._positions(u)),
+                                   "swept_proposed_gap_lower_m": manager._gap_lower(
+                                       manager._positions(proposed_u)),
+                                   "minimum_sampled_gap_m":
+                                   contact.state.minimum_physical_gap,
+                                   "overlap_signature":
+                                   list(contact.state.overlap_signature),
                                    "attempts": attempts})
     return SemismoothStep(False, "contact_semismooth_iterations_exhausted",
                           q, mu, z, None, None, max_iterations, residual_norm,

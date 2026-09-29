@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 194, in <module>
+    main(arguments.output, force_n=arguments.force_n,
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         reference_slope=arguments.reference_slope,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+         source_rows=arguments.source_rows, load_shape=arguments.load_shape,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         max_path_fraction=arguments.max_path_fraction)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 127, in main
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+    ...<2 lines>...
+        emit_restart_checkpoint=True,
+    )
+TypeError: solve_static_nonlinear() got an unexpected keyword argument 'max_path_fraction'. Did you mean 'min_step_fraction'?

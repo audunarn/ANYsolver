@@ -1,0 +1,24 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 67.56684539999696,
+  "peak_process_tree_memory_mb": 424.992768,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_interior_cycle_004_fallback_v2_20260929.json",
+    "--source-support",
+    "perimeter",
+    "--source-rows",
+    "4",
+    "--load-shape",
+    "interior_distributed",
+    "--force-n",
+    "0.04",
+    "--four-phase"
+  ],
+  "log": "docs\\d1_review_support\\d1_interior_cycle_004_fallback_v2_20260929.log"
+}

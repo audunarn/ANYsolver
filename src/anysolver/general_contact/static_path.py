@@ -716,6 +716,22 @@ def solve_static_contact_path(
                         certificate = raw_certificate(
                             manager, accepted_u, raw_contact, certificate,
                         )
+                        admission = getattr(manager,
+                                            "d1_interior_admission_issue", None)
+                        issue = (admission(certificate, accepted_u, T)
+                                 if admission is not None else None)
+                        if issue is not None:
+                            failure_reason = "contact_d1_interior_profile_rejected"
+                            info["contact_failure"] = {
+                                "step_index": step, "issue": issue,
+                            }
+                            _discard_nonlinear_state_candidate(committed_states)
+                            q = start_q
+                            multipliers = start_multipliers
+                            normal_forces = start_normal_forces
+                            manager.set_normal_multipliers(start_normal_multipliers)
+                            status = "stopped_at_limit" if previous_steps else "diverged"
+                            break
                         committed_states = _commit_nonlinear_state_candidate(
                             committed_states, step_result.candidate_states,
                             model=model, accepted_displacements=accepted_u,
@@ -1486,6 +1502,22 @@ def solve_static_contact_path(
                         status = "stopped_at_limit" if previous_steps else "diverged"
                         break
                     accepted_u = np.asarray(T @ q + u0).reshape(-1)
+                    admission = getattr(manager,
+                                        "d1_interior_admission_issue", None)
+                    issue = (admission(certificate, accepted_u, T)
+                             if admission is not None else None)
+                    if issue is not None:
+                        failure_reason = "contact_d1_interior_profile_rejected"
+                        info["contact_failure"] = {
+                            "step_index": step, "issue": issue,
+                        }
+                        _discard_nonlinear_state_candidate(committed_states)
+                        q = start_q
+                        multipliers = start_multipliers
+                        if augmented:
+                            manager.set_normal_multipliers(start_normal_multipliers)
+                        status = "stopped_at_limit" if previous_steps else "diverged"
+                        break
                     committed_states = _commit_nonlinear_state_candidate(
                         committed_states, candidate_states,
                         model=model, accepted_displacements=accepted_u,

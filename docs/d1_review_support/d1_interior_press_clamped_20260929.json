@@ -1,0 +1,205 @@
+{
+  "candidate": "d1_interior_free_rotation_press_development",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "capability_profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+  "source_q4_faces": 8,
+  "target_s3_faces": 2,
+  "interior_pressure_node_ids": [
+    7,
+    8,
+    9
+  ],
+  "force_n": 0.08,
+  "reference_slope": 0.01,
+  "status": "diverged",
+  "failure_reason": "contact_semismooth_pivot_cycle",
+  "accepted_steps": 0,
+  "elapsed_seconds": 5.055073499999708,
+  "history": [],
+  "contact_failure": {
+    "pivot_trace": [
+      {
+        "from": [],
+        "to": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ]
+      },
+      {
+        "from": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "to": [
+          0,
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14
+        ]
+      },
+      {
+        "from": [
+          0,
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14
+        ],
+        "to": [
+          1,
+          2,
+          6,
+          7,
+          8,
+          10,
+          13,
+          14
+        ]
+      },
+      {
+        "from": [
+          1,
+          2,
+          6,
+          7,
+          8,
+          10,
+          13,
+          14
+        ],
+        "to": [
+          2,
+          7,
+          9,
+          10,
+          14
+        ]
+      },
+      {
+        "from": [
+          2,
+          7,
+          9,
+          10,
+          14
+        ],
+        "to": [
+          3,
+          7,
+          8,
+          9,
+          12,
+          13,
+          14
+        ]
+      },
+      {
+        "from": [
+          3,
+          7,
+          8,
+          9,
+          12,
+          13,
+          14
+        ],
+        "to": [
+          4,
+          5,
+          8,
+          10,
+          11,
+          12
+        ]
+      },
+      {
+        "from": [
+          4,
+          5,
+          8,
+          10,
+          11,
+          12
+        ],
+        "to": [
+          1,
+          2,
+          3,
+          6,
+          7,
+          8,
+          10
+        ]
+      },
+      {
+        "from": [
+          1,
+          2,
+          3,
+          6,
+          7,
+          8,
+          10
+        ],
+        "to": [
+          2,
+          4,
+          7,
+          9,
+          10
+        ]
+      },
+      {
+        "from": [
+          2,
+          4,
+          7,
+          9,
+          10
+        ],
+        "to": [
+          3,
+          7,
+          8,
+          9,
+          12,
+          13,
+          14
+        ]
+      }
+    ]
+  }
+}
