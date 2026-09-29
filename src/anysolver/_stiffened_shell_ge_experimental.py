@@ -429,6 +429,18 @@ class ExperimentalGEAnalysis:
         if type(panel) is not ShellPanel:
             raise ValueError("owned Q4 panel required")
         shell_model, shell_ids, shell_xyz, shell_index, shell_parts = _shell_reference(panel)
+        # The compiled owner must not consult caller-owned mutable connectivity
+        # when selecting material recovery or decoding a later checkpoint.
+        panel = ShellPanel(
+            tuple(shell_ids), tuple(map(tuple, shell_xyz.tolist())),
+            tuple(tuple(cell) for cell in panel.q4_elements),
+            panel.thickness_m, panel.young_pa, panel.poisson,
+            panel.density_kg_m3,
+            tuple(tuple(cell) for cell in panel.s3_elements), panel.j2_curve)
+        definition = LinearDefinition(
+            definition.profile, panel, tuple(definition.beams),
+            tuple(definition.points), tuple(definition.fixed),
+            definition.lines)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count = _beam_reference(
             definition.beams)
         shell_count = 6*len(shell_ids)

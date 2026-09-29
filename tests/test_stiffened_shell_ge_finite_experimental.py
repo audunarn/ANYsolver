@@ -210,7 +210,28 @@ def test_mixed_q4_s3_j2_and_beam_yield_checkpoint(monkeypatch):
     definition = replace(base, shell=replace(
         base.shell, q4_elements=((1, 2, 5, 4),),
         s3_elements=((2, 3, 6), (2, 6, 5))))
-    owner = ExperimentalGEAnalysis(definition)
+    caller_coordinates = np.array(definition.shell.coordinates_m, copy=True)
+    caller_q4 = list(definition.shell.q4_elements)
+    caller_s3 = list(definition.shell.s3_elements)
+    caller_beams = list(definition.beams)
+    caller_points = list(definition.points)
+    caller_fixed = list(definition.fixed)
+    caller_definition = replace(
+        definition, shell=replace(
+            definition.shell, coordinates_m=caller_coordinates,
+            q4_elements=caller_q4, s3_elements=caller_s3),
+        beams=caller_beams, points=caller_points, fixed=caller_fixed)
+    owner = ExperimentalGEAnalysis(caller_definition)
+    original_capabilities = owner.capabilities
+    original_identity = owner.preflight()["identity"]
+    caller_coordinates[:, :] += 10.
+    caller_q4.clear()
+    caller_s3.clear()
+    caller_beams.clear()
+    caller_points.clear()
+    caller_fixed.clear()
+    assert owner.capabilities == original_capabilities
+    assert owner.preflight()["identity"] == original_identity
     accepted = owner.solve(_actions(), (.5, 1.), max_iterations=20,
                            max_backtracks=12)
     assert accepted.status == "completed"
