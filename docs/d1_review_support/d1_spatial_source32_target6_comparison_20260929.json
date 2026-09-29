@@ -1,0 +1,98 @@
+{
+  "conclusion": "Force nested differences contract, but central displacement reverses sign and grows. The source16-to24 force direction reverses on24-to32. A common asymptotic regime or continuum-tail bound is not established; no further refinement executed.",
+  "status": "development_discriminator_no_continuum_tail_bound",
+  "inputs": {
+    "source8": {
+      "sha256": "1d312e843ce8b70287aaf7818127f6035b629875c2929ec49340724e3e5d7b01",
+      "path": "docs/d1_review_support/d1_fixed_bump_contrast_source8_20260929.json"
+    },
+    "source24": {
+      "sha256": "5b46ce4f8d163a40480475f7c57d8e19fec96d8edb25c0653e71df06e141f4aa",
+      "path": "docs/d1_review_support/d1_fixed_bump_contrast_source24_20260929.json"
+    },
+    "production12": {
+      "sha256": "9f701b9914b545d01ad980abb229e6e0e1c619a7415527caaa31403bb8333727",
+      "path": "docs/d1_review_support/d1_coupled_contrast_12q4_32s3_compare_v2_20260929.json"
+    },
+    "source32": {
+      "sha256": "b5b3b8fc4d9288438e4f8dd1809d997fac5a0dafce273b6d51869b3d16dc249a",
+      "path": "docs/d1_review_support/d1_spatial_source32_target6_reference_20260929.json"
+    },
+    "source16": {
+      "sha256": "66ce77d14f205413e6da545b690bd023bc5e4f941d49af4b18e006e92e6bc0a3",
+      "path": "docs/d1_review_support/d1_fixed_bump_target_contrast_reference_20260929.json"
+    }
+  },
+  "nested_difference_ratio_formula": "abs((R32-R16)/(R16-R8))",
+  "percent_denominator": "absolute source32 target6 value of the same observable",
+  "rows": [
+    {
+      "values": {
+        "source8": 0.01923674177899663,
+        "source24": 0.01853665992883531,
+        "source16": 0.018685579293793532,
+        "source32": 0.018584645828208245,
+        "production12": 0.01859519320535152
+      },
+      "signed_source16_to32_percent_of_source32": -0.5431013672161952,
+      "absolute_production12_target4_difference_percent": 0.05675317808459663,
+      "observable": "force_n",
+      "signed_source16_to32": -0.00010093346558528657,
+      "nested_difference_sign_reversal": false,
+      "signed_source24_to32_percent_of_source32": 0.25820185015363567,
+      "nested_difference_ratio": 0.18312833020210673,
+      "signed_source8_to16": -0.0005511624852030973
+    },
+    {
+      "values": {
+        "source8": -0.00019220699099605567,
+        "source24": -0.0001920684362666934,
+        "source16": -0.00019163504631130462,
+        "source32": -0.0001922587795001431,
+        "production12": -0.00019294817299968104
+      },
+      "signed_source16_to32_percent_of_source32": -0.32442377427971003,
+      "absolute_production12_target4_difference_percent": 0.35857582230070967,
+      "observable": "source_uz_0.6_0.6_m",
+      "signed_source16_to32": -6.237331888384696E-07,
+      "nested_difference_sign_reversal": true,
+      "signed_source24_to32_percent_of_source32": -0.09900366263875097,
+      "nested_difference_ratio": 1.0905480992623755,
+      "signed_source8_to16": 5.719446847510441E-07
+    },
+    {
+      "values": {
+        "source8": -0.00017792722836948408,
+        "source24": -0.00018093448641288593,
+        "source16": -0.00017996124447361937,
+        "source32": -0.0001813019644656258,
+        "production12": -0.0001808498778110128
+      },
+      "signed_source16_to32_percent_of_source32": -0.7394955680475398,
+      "absolute_production12_target4_difference_percent": 0.249355629402853,
+      "observable": "source_uz_0.6_0.7_m",
+      "signed_source16_to32": -1.3407199920064284E-06,
+      "nested_difference_sign_reversal": false,
+      "signed_source24_to32_percent_of_source32": -0.20268840099057023,
+      "nested_difference_ratio": 0.6591491528905075,
+      "signed_source8_to16": -2.0340161041352927E-06
+    },
+    {
+      "values": {
+        "source8": -0.00010353708205250228,
+        "source24": -0.0001055017074455973,
+        "source16": -0.00010508268184874104,
+        "source32": -0.00010547485367496923,
+        "production12": -0.00010527535234980688
+      },
+      "signed_source16_to32_percent_of_source32": -0.3718154731332518,
+      "absolute_production12_target4_difference_percent": 0.18914586577871018,
+      "observable": "source_uz_0.6_0.9_m",
+      "signed_source16_to32": -3.9217182622819184E-07,
+      "nested_difference_sign_reversal": false,
+      "signed_source24_to32_percent_of_source32": 0.02545987948067385,
+      "nested_difference_ratio": 0.2537343930702814,
+      "signed_source8_to16": -1.545599796238758E-06
+    }
+  ]
+}

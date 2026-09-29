@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 7.438739599994733,
+  "peak_process_tree_memory_mb": 164.63872,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_radial_guided_preflight_v3_20260929.json",
+    "--radial-preflight"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_guided_preflight_v3_20260929.log"
+}

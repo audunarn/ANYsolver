@@ -43,6 +43,17 @@ def _coupled_contact_blocks(structural_tangent, contact, transform):
     return kqq, kqz, gap_q
 
 
+def _proposal_gap_diagnostic(manager, proposed_u):
+    """Keep invalid rejected geometry from masking the solver's non-success."""
+    try:
+        lower = manager._gap_lower(manager._positions(proposed_u))
+    except ValueError as exc:
+        return {"swept_proposed_gap_lower_m": None,
+                "swept_proposed_geometry_error": f"{type(exc).__name__}: {exc}"}
+    return {"swept_proposed_gap_lower_m": lower,
+            "swept_proposed_geometry_error": None}
+
+
 def _assemble_direct_matrix(kqq, kqz, gap_q, control_reactions,
                             control_rows, scales, active):
     """Assemble one fixed active branch of the direct monolithic Newton system."""
@@ -414,8 +425,7 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                                    "swept_initial_fraction": swept_initial_fraction,
                                    "swept_start_gap_lower_m": manager._gap_lower(
                                        manager._positions(u)),
-                                   "swept_proposed_gap_lower_m": manager._gap_lower(
-                                       manager._positions(proposed_u)),
+                                   **_proposal_gap_diagnostic(manager, proposed_u),
                                    "minimum_sampled_gap_m":
                                    contact.state.minimum_physical_gap,
                                    "overlap_signature":

@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 60.484603699995205,
+  "peak_process_tree_memory_mb": 284.8768,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_s3_jet2_patch_work.py",
+    "tests/test_general_contact_q4_s3_jet2_static_owner.py",
+    "tests/test_general_contact_q4_s3_pair_resolution.py",
+    "tests/test_general_contact_same_side_broad_phase.py",
+    "tests/test_general_contact_s3_patch_mortar_energy.py",
+    "tests/test_general_contact_q4_s3_sliver_derivatives.py",
+    "tests/test_general_contact_q4_s3_refined_patch.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_candidate_budget_regression_20260930.log"
+}

@@ -1,0 +1,64 @@
+{
+  "status": "development_preflight_only",
+  "seed": "docs\\d1_review_support\\d1_coupled_contrast_12q4_32s3_20260929.json",
+  "pose_rule": "smooth_analytic",
+  "records": [
+    {
+      "source_cells": 4,
+      "maximum_source_displacement_m": 3e-05,
+      "maximum_target_displacement_m": 5e-06,
+      "path_controls": [
+        0.0,
+        0.0
+      ],
+      "status": "geometry_preflight_complete",
+      "interior_modes": 9,
+      "interior_negative_gap_nodes": 0,
+      "minimum_interior_gap_m": 1.3649273987976036e-05,
+      "minimum_interior_support_m2": 0.06250000031249901,
+      "reference_overlap_area_m2": 1.0000000049999993,
+      "current_overlap_area_m2": 1.000000006491169,
+      "source_nodes": 25,
+      "target_start": 26,
+      "elapsed_seconds": 6.020384600007674
+    },
+    {
+      "source_cells": 8,
+      "maximum_source_displacement_m": 3e-05,
+      "maximum_target_displacement_m": 5e-06,
+      "path_controls": [
+        0.0,
+        0.0
+      ],
+      "status": "geometry_preflight_complete",
+      "interior_modes": 49,
+      "interior_negative_gap_nodes": 0,
+      "minimum_interior_gap_m": 9.511495324120627e-06,
+      "minimum_interior_support_m2": 0.01562500007812417,
+      "reference_overlap_area_m2": 1.0000000049999995,
+      "current_overlap_area_m2": 1.0000000070253927,
+      "source_nodes": 81,
+      "target_start": 82,
+      "elapsed_seconds": 17.70370159999584
+    },
+    {
+      "source_cells": 12,
+      "maximum_source_displacement_m": 3e-05,
+      "maximum_target_displacement_m": 5e-06,
+      "path_controls": [
+        0.0,
+        0.0
+      ],
+      "status": "geometry_preflight_complete",
+      "interior_modes": 121,
+      "interior_negative_gap_nodes": 0,
+      "minimum_interior_gap_m": 8.66925045203534e-06,
+      "minimum_interior_support_m2": 0.0069444444791662676,
+      "reference_overlap_area_m2": 1.0000000049999989,
+      "current_overlap_area_m2": 1.0000000071327706,
+      "source_nodes": 169,
+      "target_start": 170,
+      "elapsed_seconds": 41.790196299989475
+    }
+  ]
+}

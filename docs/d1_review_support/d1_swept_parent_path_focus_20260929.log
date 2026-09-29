@@ -1,0 +1,36 @@
+.F                                                                       [100%]
+================================== FAILURES ===================================
+__________ test_conditioned_bound_admits_saved_deformable_press_path __________
+
+    def test_conditioned_bound_admits_saved_deformable_press_path():
+        root = Path(__file__).resolve().parents[1]
+        saved = json.loads((root / "docs/d1_review_support/"
+                           "d1_pressure_family_source4_coupled_preflight_20260929.json"
+                           ).read_text())
+        model, definition, settings, _ = build_interior_press(
+            force_n=.04, reference_slope=1e-4,
+            source_support="perimeter", source_columns=4, source_rows=4,
+            target_columns=4, target_rows=4, target_young_multiplier=5.,
+            target_reference_full_left_clamp=True, load_shape="physical_bump",
+            slide_body="target")
+        manager = GeneralS3PatchManager(
+            model, definition,
+            replace(settings, q4_source_gap_certificate="overlap_local_dev"))
+>       assert manager.swept_increment_admissible(
+            np.zeros(model.mesh.dof_manager.total_dofs),
+            np.asarray(saved["displacements"]), 0., 1.)
+E       AssertionError: assert False
+E        +  where False = swept_increment_admissible(array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0., 0., 0., 0., 0., 0., 0., ...0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]), array([ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00, -1.11123045e-05,\n        9.11720772e-06, -1.48419573e-08,  1...9532e-08,  2.92744686e-06, -3.80722166e-07,\n       -3.01734247e-04,  3.73208050e-05,  2.89900247e-04,  1.12253673e-07]), 0.0, 1.0)
+E        +    where swept_increment_admissible = <anysolver.general_contact.s3_patch_static.GeneralS3PatchManager object at 0x0000019798529090>.swept_increment_admissible
+E        +    and   array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0., 0., 0., 0., 0., 0., 0., ...0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,\n       0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]) = <built-in function zeros>(300)
+E        +      where <built-in function zeros> = np.zeros
+E        +      and   300 = <anysolver.fe_core.DOFManager object at 0x00000197983DFB10>.total_dofs
+E        +        where <anysolver.fe_core.DOFManager object at 0x00000197983DFB10> = FEMesh(nodes={1: Node(id=1, x=0.1, y=np.float64(0.1), z=np.float64(0.0399850002002), dofs=[0, 1, 2, 3, 4, 5]), 2: Node...ons={'topology': 98, 'geometry': 50, 'material': 2, 'mass': 0, 'load': 0, 'boundary': 8, 'mpc': 48, 'result_state': 0}).dof_manager
+E        +          where FEMesh(nodes={1: Node(id=1, x=0.1, y=np.float64(0.1), z=np.float64(0.0399850002002), dofs=[0, 1, 2, 3, 4, 5]), 2: Node...ons={'topology': 98, 'geometry': 50, 'material': 2, 'mass': 0, 'load': 0, 'boundary': 8, 'mpc': 48, 'result_state': 0}) = FEModel(name='mixed_4_q4_x_jet2_schur_press', mesh=FEMesh(nodes={1: Node(id=1, x=0.1, y=np.float64(0.1), z=np.float64(...hor', node_ids=(1,), dof_constraints={'ux': 0.0})], load_cases=[], current_material='default', constraint_equations=[]).mesh
+E        +    and   array([ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00, -1.11123045e-05,\n        9.11720772e-06, -1.48419573e-08,  1...9532e-08,  2.92744686e-06, -3.80722166e-07,\n       -3.01734247e-04,  3.73208050e-05,  2.89900247e-04,  1.12253673e-07]) = <built-in function asarray>([0.0, 0.0, 0.0, -1.1112304455089543e-05, 9.117207715904482e-06, -1.4841957321182613e-08, ...])
+E        +      where <built-in function asarray> = np.asarray
+
+tests\test_general_contact_overlap_local_swept_roundoff.py:86: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_overlap_local_swept_roundoff.py::test_conditioned_bound_admits_saved_deformable_press_path
+1 failed, 1 passed, 26 deselected in 6.24s

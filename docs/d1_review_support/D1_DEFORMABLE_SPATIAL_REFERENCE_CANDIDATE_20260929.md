@@ -55,3 +55,23 @@ independent refinement that discriminates source-tail from target-tail error,
 preflight its memory first, and retain the current nonmonotone sequence.
 Do not infer the 2% result from close force agreement or silently convert
 the linear oracle into a general nonlinear/deformable-work proof.
+
+## 29 September bounded source-tail discriminator
+
+One offline source32/target6 reference completed in 21.73 s with 1.72 GB
+peak process-tree memory, after a 3.10 GB allocation inventory. The general
+coupled fixture and its energy-evaluation cap were not expanded.
+[Reference](d1_spatial_source32_target6_reference_20260929.json) and
+[comparison](d1_spatial_source32_target6_comparison_20260929.json) retain
+the full input identities and failed initial import preflight.
+
+The contact force is 0.0185846458 N. Source16-to32 force changes by 0.5431%
+and source24-to32 by 0.2582%; production12/target4 differs by 0.0568%.
+The three production displacement differences are 0.3586%, 0.2494% and
+0.1891%. These close differences remain development observations.
+Nested force differences contract, but the central displacement reverses
+direction and its last nested difference grows. There is no established
+common asymptotic tail bound. **Stop this empirical refinement branch.**
+The 2% spatial gate remains open pending an independently assessed error
+method or an alternative representative reference; no threshold or
+uncertainty factor is inferred from these outputs.

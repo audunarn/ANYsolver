@@ -1,0 +1,63 @@
+{
+  "status": "exploratory_transport_pose_pressure_screen",
+  "saved_pose": "docs\\d1_review_support\\d1_coupled_contrast_12q4_32s3_20260929.json",
+  "pose_rule": "smooth_analytic_press",
+  "source_cells": [
+    8,
+    8
+  ],
+  "target_cells": [
+    4,
+    4
+  ],
+  "target_y0_m": -0.113,
+  "source_reference_normal": [
+    -9.999999949998899e-05,
+    0.0,
+    0.999999995
+  ],
+  "signed_interior_modes": 49,
+  "active_modes": 0,
+  "negative_gap_interior_modes": 10,
+  "minimum_interior_gap_m": -1.4445597560979702e-05,
+  "reference_support_min_m2": 0.015625000078124555,
+  "reference_support_max_m2": 0.015625000078125856,
+  "mass_minimum_eigenvalue_m2": 0.002010477892948441,
+  "path_control_error": 0.0,
+  "structural_constraint_error": 6.735557395310443e-21,
+  "full_constrained_energy_dimension": 492,
+  "full_constrained_stiffness_symmetry_error": 1.1072863669684128e-18,
+  "full_constrained_minimum_cholesky_pivot": 0.9970670066237963,
+  "eta": 0.9999999849445157,
+  "kappa": 469.2953902620741,
+  "gamma_constructive": 0.0021308540220916937,
+  "provisional_eta_level": 0.9,
+  "provisional_kappa_level": 2110.0,
+  "provisional_levels_met": true,
+  "scope_note": "Reference-energy saved-pose screen only; no nonlinear norm equivalence or acceptance claim.",
+  "independent_current_skin": {
+    "quadrature_points": 5440,
+    "support_max_relative": 5.528910634988729e-14,
+    "gap_max_absolute_m": 1.2323332661940377e-12,
+    "directions": [
+      {
+        "direction": "center_normal",
+        "algorithmic_map_relative_l2": 2.9206718686683596e-08,
+        "fixed_pressure_work_extra_l2": 1.3235167689486329e-15,
+        "independent_map_l2_m2": 0.007812499933092603
+      },
+      {
+        "direction": "signed_checker",
+        "algorithmic_map_relative_l2": 2.5553704390660777e-08,
+        "fixed_pressure_work_extra_l2": 6.5008761900589026e-15,
+        "independent_map_l2_m2": 0.01649305565260553
+      },
+      {
+        "direction": "smallest_singular",
+        "algorithmic_map_relative_l2": 2.6590258176013117e-08,
+        "fixed_pressure_work_extra_l2": 4.705502204068841e-15,
+        "independent_map_l2_m2": 0.011758391846571285
+      }
+    ]
+  }
+}

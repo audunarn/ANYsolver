@@ -1,0 +1,82 @@
+.FF............                                                          [100%]
+================================== FAILURES ===================================
+____ test_finite_difference_poisson_equations_on_both_sides_of_front[1.0] _____
+
+target_ratio = 1.0
+
+    @pytest.mark.parametrize("target_ratio", [.02, 1., 5.])
+    def test_finite_difference_poisson_equations_on_both_sides_of_front(target_ratio):
+        reference = RadialTwoBodyReference(1600., 1600.*target_ratio)
+        points = np.array(((.6, .6), (.7, .65), (.85, .7),
+                           (1.05, .65), (1.2, .8), (.1, .2)))
+        step = 2.e-4
+        field = reference.fields_xy(points)
+        laplacian = {body: np.zeros(len(points)) for body in ("source_w", "target_w")}
+        for axis in range(2):
+            direction = np.eye(2)[axis]*step
+            first = reference.fields_xy(points+direction)
+            last = reference.fields_xy(points-direction)
+            for body in laplacian:
+                laplacian[body] += (first[body]-2*field[body]+last[body])/step**2
+        # Independent Cartesian differences test the equations, not derivatives
+        # coded into the reference. Points remain clear of the discontinuous front.
+        np.testing.assert_allclose(reference.ds*laplacian["source_w"],
+                                   reference.load_pa-field["pressure"],
+                                   rtol=4.e-6, atol=2.e-9)
+>       np.testing.assert_allclose(reference.dt*laplacian["target_w"],
+                                   field["pressure"], rtol=4.e-6, atol=2.e-9)
+E       AssertionError: 
+E       Not equal to tolerance rtol=4e-06, atol=2e-09
+E       
+E       Mismatched elements: 1 / 6 (16.7%)
+E       Mismatch at index:
+E        [3]: -2.100641709190665e-09 (ACTUAL), 0.0 (DESIRED)
+E       Max absolute difference among violations: 2.10064171e-09
+E       Max relative difference among violations: inf
+E        ACTUAL: array([ 4.000000e-02,  4.000000e-02,  4.000000e-02, -2.100642e-09,
+E              -1.736418e-10,  5.082198e-10])
+E        DESIRED: array([0.04, 0.04, 0.04, 0.  , 0.  , 0.  ])
+
+tests\test_general_contact_d1_radial_reference.py:33: AssertionError
+____ test_finite_difference_poisson_equations_on_both_sides_of_front[5.0] _____
+
+target_ratio = 5.0
+
+    @pytest.mark.parametrize("target_ratio", [.02, 1., 5.])
+    def test_finite_difference_poisson_equations_on_both_sides_of_front(target_ratio):
+        reference = RadialTwoBodyReference(1600., 1600.*target_ratio)
+        points = np.array(((.6, .6), (.7, .65), (.85, .7),
+                           (1.05, .65), (1.2, .8), (.1, .2)))
+        step = 2.e-4
+        field = reference.fields_xy(points)
+        laplacian = {body: np.zeros(len(points)) for body in ("source_w", "target_w")}
+        for axis in range(2):
+            direction = np.eye(2)[axis]*step
+            first = reference.fields_xy(points+direction)
+            last = reference.fields_xy(points-direction)
+            for body in laplacian:
+                laplacian[body] += (first[body]-2*field[body]+last[body])/step**2
+        # Independent Cartesian differences test the equations, not derivatives
+        # coded into the reference. Points remain clear of the discontinuous front.
+        np.testing.assert_allclose(reference.ds*laplacian["source_w"],
+                                   reference.load_pa-field["pressure"],
+                                   rtol=4.e-6, atol=2.e-9)
+>       np.testing.assert_allclose(reference.dt*laplacian["target_w"],
+                                   field["pressure"], rtol=4.e-6, atol=2.e-9)
+E       AssertionError: 
+E       Not equal to tolerance rtol=4e-06, atol=2e-09
+E       
+E       Mismatched elements: 1 / 6 (16.7%)
+E       Mismatch at index:
+E        [3]: -3.536362554786704e-09 (ACTUAL), 0.0 (DESIRED)
+E       Max absolute difference among violations: 3.53636255e-09
+E       Max relative difference among violations: inf
+E        ACTUAL: array([ 6.666667e-02,  6.666667e-02,  6.666667e-02, -3.536363e-09,
+E              -3.017555e-10,  8.735027e-10])
+E        DESIRED: array([0.066667, 0.066667, 0.066667, 0.      , 0.      , 0.      ])
+
+tests\test_general_contact_d1_radial_reference.py:33: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_d1_radial_reference.py::test_finite_difference_poisson_equations_on_both_sides_of_front[1.0]
+FAILED tests/test_general_contact_d1_radial_reference.py::test_finite_difference_poisson_equations_on_both_sides_of_front[5.0]
+2 failed, 13 passed in 0.36s

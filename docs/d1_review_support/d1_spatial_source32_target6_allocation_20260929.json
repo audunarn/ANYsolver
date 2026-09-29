@@ -1,0 +1,171 @@
+{
+  "status": "allocation_inventory_fits",
+  "question": "nested source8->16->32 contraction versus mesh/contact-front cancellation",
+  "identity": {
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "python_version": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "numpy_version": "2.4.6",
+    "git_head": "250871682540d824ec55317d034274874a4ac042",
+    "helper_sha256": {
+      "scripts/general_contact_d1_interior_two_body_oracle_dev.py": "51966ec74607c014f6398a759cf8d0dfd05ad0e380b3ad48aaf57b9892403c6f",
+      "scripts/general_contact_d1_interior_press_dev.py": "ddce87bebeabbfd984b24f77f317177fd673dab4a6f8042493610a8c39a8091d",
+      "scripts/general_contact_d1_mixed_mesh_jet2_schur_press.py": "d3d63ab646129c776a6fd4d6f43e1243ef6be81724b7bca8c33f02d07d485829",
+      "docs/d1_review_support/d1_two_body_reference_oracle.py": "01e555611f59c5661c01882458b966f6a063f3c19afe810d51d98672937d52f1",
+      "examples/general_contact_d1_interior_controls_dev.py": "4fc744756387b64b777d9ddf1a3d4efaa539cf64138ebe881a636801b66da885",
+      "src/anysolver/assembly.py": "919601e6aed8adf6039b3c32269baa4ec15172b81e91f247ddd2091bc01b6a3f",
+      "src/anysolver/matrix_assembly.py": "80222fc1a6401ae756612cb9f732b997c61d4b32c140d227b6344532ce92d558",
+      "docs/d1_review_support/d1_bounded_single.py": "e37d1b08e107dbefb41aedb76924d68674c07e4360f99a31be3ea5976e87b272"
+    },
+    "inputs": {
+      "source_columns": 32,
+      "source_rows": 32,
+      "source_y_profile": "uniform_ref32",
+      "offline_structural_reference_y32": true,
+      "target_columns": 6,
+      "target_rows": 6,
+      "target_young_multiplier": 5.0,
+      "target_y0_m": -0.1,
+      "force_n": 0.04,
+      "reference_slope": 0.0001,
+      "source_support": "perimeter",
+      "load_shape": "physical_bump",
+      "slide_body": "target",
+      "target_reference_full_left_clamp": true,
+      "source_reference_downshift_m": 0.0,
+      "accepted_step": 2,
+      "expected_initial_gap_m": 4e-05
+    }
+  },
+  "dimensions": {
+    "full_dofs": 6828,
+    "uncontrolled_free_coordinates": 5570,
+    "control_rank": 2,
+    "structural_free_coordinates": 5568,
+    "source_pressure_nodes": 1089
+  },
+  "dense_buffers": {
+    "full_work": {
+      "shape": [
+        1089,
+        6828
+      ],
+      "copies": 1,
+      "bytes": 59485536
+    },
+    "null_space_vh_and_returned_basis": {
+      "shape": [
+        5570,
+        5570
+      ],
+      "copies": 2,
+      "bytes": 496398400
+    },
+    "physical_variations": {
+      "shape": [
+        6828,
+        5568
+      ],
+      "copies": 1,
+      "bytes": 304146432
+    },
+    "energy": {
+      "shape": [
+        5568,
+        5568
+      ],
+      "copies": 1,
+      "bytes": 248020992
+    },
+    "weighted_work": {
+      "shape": [
+        1089,
+        5568
+      ],
+      "copies": 1,
+      "bytes": 48508416
+    },
+    "compliance": {
+      "shape": [
+        5568,
+        1089
+      ],
+      "copies": 1,
+      "bytes": 48508416
+    },
+    "gap_response_and_symmetry_copy": {
+      "shape": [
+        1089,
+        1089
+      ],
+      "copies": 2,
+      "bytes": 18974736
+    },
+    "solution_vectors": {
+      "shape": [
+        56696
+      ],
+      "copies": 1,
+      "bytes": 453568
+    }
+  },
+  "phase_scratch_buffers": {
+    "energy_assembly_symmetry": {
+      "sparse_product_and_layout_copy": {
+        "shape": [
+          6828,
+          5568
+        ],
+        "copies": 2,
+        "bytes": 608292864
+      },
+      "old_energy_sum_and_final_copy": {
+        "shape": [
+          5568,
+          5568
+        ],
+        "copies": 2,
+        "bytes": 496041984
+      }
+    },
+    "energy_factorization_compliance": {
+      "layout_finite_check_factor_and_work_copy": {
+        "shape": [
+          5568,
+          5568
+        ],
+        "copies": 3,
+        "bytes": 744062976
+      },
+      "rhs_and_result_copy": {
+        "shape": [
+          1089,
+          5568
+        ],
+        "copies": 2,
+        "bytes": 97016832
+      }
+    },
+    "contact_cholesky_nnls": {
+      "eligible_response_factor_nnls_copies": {
+        "shape": [
+          961,
+          961
+        ],
+        "copies": 6,
+        "bytes": 44329008
+      }
+    }
+  },
+  "phase_predicted_bytes": {
+    "energy_assembly_symmetry": 3098453360,
+    "energy_factorization_compliance": 2835198320,
+    "contact_cholesky_nnls": 2038447520
+  },
+  "measured_inventory_base_rss_bytes": 232751104,
+  "native_workspace_allowance_bytes": 536870912,
+  "predicted_peak_bytes": 3098453360,
+  "run_memory_limit_bytes": 4000000000,
+  "production_energy_evaluation_cap": 14144,
+  "physical_load_sum_n": -0.03999999999999994,
+  "limitations": "allocation planning; actual hard process-tree RSS cap remains required"
+}

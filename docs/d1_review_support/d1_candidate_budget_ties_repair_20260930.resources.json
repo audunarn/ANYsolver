@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 8.011445199983427,
+  "peak_process_tree_memory_mb": 241.360896,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_jet2_candidate_budget.py::test_sparse_shared_edge_four_pass_reserve_counts_actual_candidates",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_candidate_budget_ties_repair_20260930.log"
+}

@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 889, in <module>
+    radial_preflight(arguments.output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 652, in radial_preflight
+    raise ValueError(f"radial fixture rejected: {report.issues}")
+ValueError: radial fixture rejected: ('S3 patch Hessian exceeds declared energy evaluation budget',)

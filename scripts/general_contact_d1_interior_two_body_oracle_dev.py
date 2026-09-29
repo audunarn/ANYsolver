@@ -328,6 +328,168 @@ def offline_target_reference(output: Path) -> None:
     print(json.dumps(cases))
 
 
+def _spatial_source32_identity():
+    import anysolver
+    import hashlib
+    import subprocess
+
+    root = Path(__file__).resolve().parents[1]
+    module_path = Path(anysolver.__file__).resolve()
+    if module_path != (root/"src/anysolver/__init__.py").resolve():
+        raise ValueError("source32 reference must import the intended worktree source")
+    paths = (
+        "scripts/general_contact_d1_interior_two_body_oracle_dev.py",
+        "scripts/general_contact_d1_interior_press_dev.py",
+        "scripts/general_contact_d1_mixed_mesh_jet2_schur_press.py",
+        "docs/d1_review_support/d1_two_body_reference_oracle.py",
+        "examples/general_contact_d1_interior_controls_dev.py",
+        "src/anysolver/assembly.py", "src/anysolver/matrix_assembly.py",
+        "docs/d1_review_support/d1_bounded_single.py",
+    )
+    return {
+        "anysolver_module": str(module_path),
+        "python_version": sys.version, "numpy_version": np.__version__,
+        "git_head": subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
+        "helper_sha256": {path: hashlib.sha256((root/path).read_bytes()).hexdigest()
+                          for path in paths},
+        "inputs": {
+            "source_columns": 32, "source_rows": 32,
+            "source_y_profile": "uniform_ref32", "offline_structural_reference_y32": True,
+            "target_columns": 6, "target_rows": 6, "target_young_multiplier": 5.0,
+            "target_y0_m": -0.1, "force_n": 0.04, "reference_slope": 1.0e-4,
+            "source_support": "perimeter", "load_shape": "physical_bump",
+            "slide_body": "target", "target_reference_full_left_clamp": True,
+            "source_reference_downshift_m": 0.0, "accepted_step": 2,
+            "expected_initial_gap_m": 4.0e-5,
+        },
+    }
+
+
+def _build_spatial_reference_case(source_cells, target_cells,
+                                  target_young_multiplier, force_n,
+                                  target_y0_m, source_reference_downshift_m):
+    return build_interior_press(
+        source_support="perimeter", source_columns=source_cells,
+        source_rows=source_cells,
+        source_y_profile=("uniform_ref16" if source_cells == 16 else
+                          "uniform_ref24" if source_cells == 24 else
+                          "uniform_ref32" if source_cells == 32 else None),
+        offline_structural_reference_y16=source_cells == 16,
+        offline_structural_reference_y24=source_cells == 24,
+        offline_structural_reference_y32=source_cells == 32,
+        target_columns=target_cells, target_rows=target_cells,
+        target_young_multiplier=target_young_multiplier, target_y0_m=target_y0_m,
+        source_reference_downshift_m=source_reference_downshift_m,
+        force_n=force_n, reference_slope=1.0e-4, load_shape="physical_bump",
+        slide_body="target", target_reference_full_left_clamp=True,
+    )
+
+
+def spatial_source32_allocation_inventory(output: Path) -> None:
+    """Build sparse matrices and inventory future dense buffers before a solve.
+
+    The current oracle retains a null-space SVD basis, physical variations,
+    energy, work, compliance and pressure response. Phase estimates include
+    simultaneous layout/symmetry copies and factorization buffers. A fixed
+    512 MiB native-workspace planning allowance is added; native allocation is
+    not rigorously bounded, so the actual process-tree cap remains mandatory.
+    This is a resource estimate, never a scientific uncertainty estimator.
+    """
+    import psutil
+    from anysolver.assembly import build_constraint_transformation
+    from anysolver.matrix_assembly import assemble_stiffness_matrix
+    from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import build_case
+
+    if output.exists():
+        raise FileExistsError(output)
+    for kwargs in (
+            {"source_y_profile": "uniform_ref32"},
+            {"offline_structural_reference_y32": True}):
+        try:
+            build_case(32, source_rows=32, **kwargs)
+        except ValueError:
+            pass
+        else:
+            raise ValueError("uniform32 must require both an offline opt-in and explicit profile")
+    model, definition, settings, program = _build_spatial_reference_case(
+        32, 6, 5.0, 0.04, -0.1, 0.0)
+    if settings.maximum_general_s3_energy_evaluations != 14144:
+        raise ValueError("production contact energy cap changed")
+    model.apply_boundary_conditions()
+    stiffness, _ = assemble_stiffness_matrix(model)
+    d = model.mesh.dof_manager.total_dofs
+    _, _, transform, offset, _, _ = build_constraint_transformation(
+        stiffness, np.zeros(d), model)
+    if np.linalg.norm(offset) != 0.0:
+        raise ValueError("inventory requires homogeneous supports")
+    rows = np.zeros((2, d))
+    for row, control in enumerate(program.controls):
+        for node, name, weight in control.terms:
+            if name != "ux":
+                raise ValueError("inventory requires target-x controls")
+            rows[row, model.mesh.dof_manager.get_node_dofs(node)[0]] += weight
+    rank = int(np.linalg.matrix_rank(np.asarray(rows @ transform)))
+    if rank != 2 or np.max(np.abs(program.target_at(2))) != 0.0:
+        raise ValueError("inventory requires two independent zero controls")
+    q = int(transform.shape[1])
+    n = q-rank
+    p = len({node for element in definition.surfaces[0].element_ids
+             for node in model.mesh.elements[element].node_ids})
+
+    def allocation(shape, copies=1):
+        return {"shape": list(shape), "copies": copies,
+                "bytes": int(np.prod(shape))*8*copies}
+
+    buffers = {
+        "full_work": allocation((p, d)),
+        "null_space_vh_and_returned_basis": allocation((q, q), 2),
+        "physical_variations": allocation((d, n)), "energy": allocation((n, n)),
+        "weighted_work": allocation((p, n)), "compliance": allocation((n, p)),
+        "gap_response_and_symmetry_copy": allocation((p, p), 2),
+        "solution_vectors": allocation((d+q+6*n+10*p,)),
+    }
+    retained = sum(item["bytes"] for item in buffers.values())
+    scratch = {
+        "energy_assembly_symmetry": {
+            "sparse_product_and_layout_copy": allocation((d, n), 2),
+            "old_energy_sum_and_final_copy": allocation((n, n), 2)},
+        "energy_factorization_compliance": {
+            "layout_finite_check_factor_and_work_copy": allocation((n, n), 3),
+            "rhs_and_result_copy": allocation((p, n), 2)},
+        "contact_cholesky_nnls": {
+            "eligible_response_factor_nnls_copies": allocation(((32-1)**2,)*2, 6)},
+    }
+    base = int(psutil.Process().memory_info().rss)
+    native_allowance = 512*1024**2
+    phases = {name: base+native_allowance+retained
+              +sum(item["bytes"] for item in copies.values())
+              for name, copies in scratch.items()}
+    predicted = max(phases.values())
+    record = {
+        "status": "allocation_inventory_fits" if predicted < 4_000_000_000
+                  else "allocation_inventory_exceeds_cap",
+        "question": "nested source8->16->32 contraction versus mesh/contact-front cancellation",
+        "identity": _spatial_source32_identity(),
+        "dimensions": {"full_dofs": d, "uncontrolled_free_coordinates": q,
+                       "control_rank": rank, "structural_free_coordinates": n,
+                       "source_pressure_nodes": p},
+        "dense_buffers": buffers, "phase_scratch_buffers": scratch,
+        "phase_predicted_bytes": phases, "measured_inventory_base_rss_bytes": base,
+        "native_workspace_allowance_bytes": native_allowance,
+        "predicted_peak_bytes": predicted, "run_memory_limit_bytes": 4_000_000_000,
+        "production_energy_evaluation_cap": settings.maximum_general_s3_energy_evaluations,
+        "physical_load_sum_n": float(sum(program.force_values_at(2))),
+        "limitations": "allocation planning; actual hard process-tree RSS cap remains required",
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps({key: record[key] for key in
+                      ("status", "dimensions", "predicted_peak_bytes",
+                       "production_energy_evaluation_cap", "physical_load_sum_n")}))
+    if predicted >= 4_000_000_000:
+        raise ValueError("source32 reference allocation inventory exceeds cap")
+
+
 def offline_target_xy_reference(output: Path, baseline_path: Path | None,
                                 target_cells_to_run: tuple[int, ...] = (3, 4),
                                 target_young_multiplier: float = 1.0,
@@ -335,6 +497,7 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
                                 force_n: float = 0.04,
                                 target_y0_m: float = -0.1,
                                 source_reference_downshift_m: float = 0.0,
+                                allocation_inventory_path: Path | None = None,
                                 ) -> None:
     """Screen x/y S3 refinement under the same fixed physical source load."""
     if output.exists():
@@ -359,8 +522,21 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
         raise ValueError("downshift is limited to the low-load fixture")
     if target_y0_m not in (-0.1, -0.113):
         raise ValueError("unsupported bounded target row offset")
-    if source_cells not in (4, 8, 12, 16, 24):
+    if source_cells not in (4, 8, 12, 16, 24, 32):
         raise ValueError("unsupported source contrast screen")
+    identity = None
+    if source_cells == 32:
+        if (target_cells_to_run != (6,) or target_young_multiplier != 5.0
+                or force_n != 0.04 or target_y0_m != -0.1
+                or source_reference_downshift_m != 0.0 or baseline_path is not None
+                or allocation_inventory_path is None):
+            raise ValueError("source32 is limited to the inventoried offline target6 reference")
+        inventory = json.loads(allocation_inventory_path.read_text(encoding="utf-8"))
+        identity = _spatial_source32_identity()
+        if (inventory["status"] != "allocation_inventory_fits"
+                or inventory["predicted_peak_bytes"] >= 4_000_000_000
+                or inventory["identity"] != identity):
+            raise ValueError("source32 allocation inventory is failed or stale")
     if baseline_path is None:
         cases = []
     else:
@@ -376,21 +552,9 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
     for target_cells in target_cells_to_run:
         if target_cells not in (3, 4, 6):
             raise ValueError("unsupported offline target-XY screen")
-        model, definition, _settings, program = build_interior_press(
-            source_support="perimeter", source_columns=source_cells,
-            source_rows=source_cells,
-            source_y_profile=("uniform_ref16" if source_cells == 16 else
-                              "uniform_ref24" if source_cells == 24 else None),
-            offline_structural_reference_y16=source_cells == 16,
-            offline_structural_reference_y24=source_cells == 24,
-            target_columns=target_cells, target_rows=target_cells,
-            target_young_multiplier=target_young_multiplier,
-            target_y0_m=target_y0_m,
-            source_reference_downshift_m=source_reference_downshift_m,
-            force_n=force_n, reference_slope=1.0e-4,
-            load_shape="physical_bump", slide_body="target",
-            target_reference_full_left_clamp=True,
-        )
+        model, definition, _settings, program = _build_spatial_reference_case(
+            source_cells, target_cells, target_young_multiplier, force_n,
+            target_y0_m, source_reference_downshift_m)
         reference = solve_reference_singleton(
             model, definition, program, 2, allow_multimode=True,
             expected_initial_gap_m=(5.0e-6 if source_reference_downshift_m
@@ -425,10 +589,14 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
                     node)[2]])) for node in range(
                         target_first, target_first+(target_cells+1)**2)),
         })
-    output.write_text(json.dumps({"baseline": str(baseline_path)
-                                  if baseline_path is not None else None,
-                                  "cases": cases}, indent=2)+"\n",
-                      encoding="utf-8")
+    payload = {"baseline": str(baseline_path) if baseline_path is not None else None,
+               "cases": cases}
+    if identity is not None:
+        payload.update({"identity": identity,
+                        "allocation_inventory": str(allocation_inventory_path),
+                        "reference_scope": "independent_frozen_footprint_linear_q1_s3_mortar_kkt",
+                        "status": "development_reference_not_spatial_acceptance"})
+    output.write_text(json.dumps(payload, indent=2)+"\n", encoding="utf-8")
     print(json.dumps([{key: item[key] for key in (
         "target_columns", "target_rows", "integrated_normal_force_n",
         "independent_projected_lower_gap_m")}

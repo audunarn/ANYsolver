@@ -57,11 +57,13 @@ def build_case(columns: int, *, four_phase: bool = False,
                source_y_profile: str | None = None,
                offline_structural_reference_64: bool = False,
                offline_structural_reference_y16: bool = False,
-               offline_structural_reference_y24: bool = False):
-    if columns not in (4, 8, 12, 16, 24, 32) and not (
+               offline_structural_reference_y24: bool = False,
+               offline_structural_reference_y32: bool = False,
+               guided_radial_target_refinement: bool = False):
+    if columns not in (4, 6, 8, 12, 16, 24, 32) and not (
             columns == 64 and offline_structural_reference_64):
         raise ValueError(
-            "only bounded 4/8/12/16/24/32-column Q4 refinements are admitted; "
+            "only bounded 4/6/8/12/16/24/32-column Q4 refinements are admitted; "
             "64 columns require the offline structural-reference opt-in")
     if target_right_x_m not in (1.0, 1.3):
         raise ValueError("this probe admits only 1.0 or 1.3 m target right edges")
@@ -73,17 +75,24 @@ def build_case(columns: int, *, four_phase: bool = False,
     if not 0.0 <= common_reference_slope <= 0.1 or (
             common_reference_slope and target_reference_slope):
         raise ValueError("common slope must be in [0, 0.1] without target-only slope")
-    if target_columns not in (1, 2, 3, 4, 6) or target_rows not in (1, 2, 3, 4, 6):
+    radial_target = (guided_radial_target_refinement and columns == source_rows == 12
+                     and target_columns == target_rows == 12 and full_width_target
+                     and common_reference_slope == target_reference_slope == 0.0)
+    if guided_radial_target_refinement and not radial_target:
+        raise ValueError("radial target opt-in is limited to the flat 12/12 fixture")
+    if not radial_target and (target_columns not in (1, 2, 3, 4, 6)
+                              or target_rows not in (1, 2, 3, 4, 6)):
         raise ValueError("this development case admits 1/2/3/4/6 target rows and columns")
     if target_young_multiplier not in (1.0, 5.0):
         raise ValueError("development target contrast must be one or five")
-    if source_rows not in (1, 2, 4, 8, 12) and not (
+    if source_rows not in (1, 2, 4, 6, 8, 12) and not (
             source_rows == 16 and offline_structural_reference_y16) and not (
-            source_rows == columns == 24 and offline_structural_reference_y24):
+            source_rows == columns == 24 and offline_structural_reference_y24) and not (
+            source_rows == columns == 32 and offline_structural_reference_y32):
         raise ValueError("this development case admits at most twelve source rows; "
                          "larger grids require the offline structural-reference opt-in")
     if source_y_profile not in (None, "rim8", "near_rim8", "near_rim8_ref16",
-                                "uniform_ref16", "uniform_ref24"):
+                                "uniform_ref16", "uniform_ref24", "uniform_ref32"):
         raise ValueError("unknown bounded source y profile")
     if source_y_profile == "uniform_ref16":
         if (not offline_structural_reference_y16 or source_rows != 16
@@ -93,15 +102,19 @@ def build_case(columns: int, *, four_phase: bool = False,
         if (not offline_structural_reference_y24 or source_rows != 24
                 or columns != 24):
             raise ValueError("uniform twenty-four-row reference is offline-only")
+    elif source_y_profile == "uniform_ref32":
+        if (not offline_structural_reference_y32 or source_rows != 32
+                or columns != 32):
+            raise ValueError("uniform thirty-two-row reference is offline-only")
     elif source_y_profile == "near_rim8_ref16":
         if (not offline_structural_reference_y16 or source_rows != 16
                 or columns != 16):
             raise ValueError("near-rim sixteen-row reference is offline-only")
-    elif source_rows in (16, 24):
+    elif source_rows in (16, 24, 32):
         raise ValueError("large source rows require an explicit offline profile")
     elif source_y_profile is not None and source_rows != 8:
         raise ValueError("rim profiles require eight source rows")
-    if source_y_profile in (None, "uniform_ref16", "uniform_ref24"):
+    if source_y_profile in (None, "uniform_ref16", "uniform_ref24", "uniform_ref32"):
         source_y_knots = np.linspace(0.0, 1.0, source_rows+1)
     else:
         coarse_y = np.asarray((0.0, 0.2, 0.4, 0.6, 0.75,

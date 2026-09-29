@@ -1,0 +1,154 @@
+.....F........                                                           [100%]
+================================== FAILURES ===================================
+__ test_sparse_shared_edge_four_pass_reserve_counts_actual_candidates[True] ___
+
+nodal_force = True
+
+    @pytest.mark.parametrize("nodal_force", (False, True))
+    def test_sparse_shared_edge_four_pass_reserve_counts_actual_candidates(nodal_force):
+        geometry = _geometry(q4=True, count=20, budget=883)
+        normal = MovingS3PatchProjectedNormal(geometry)
+        normal.set_shared_edge_tie(3e-8, (1., 0., 0.), 1e-6)
+        source, target = geometry.reference_source.copy(), geometry.reference_target.copy()
+        source[:, 2] -= .01
+        if nodal_force:
+            force = 10.*geometry.evaluate(source, target).reference_support
+>           work = normal._shared_edge_nodal_force_limit(
+                source, target, force, tangent=True, recoverable_pair=None)
+
+tests\test_general_contact_jet2_candidate_budget.py:116: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <anysolver.general_contact.s3_patch_augmented.MovingS3PatchProjectedNormal object at 0x00000138B0EBF790>
+current_source = array([[ 0.00e+00,  0.00e+00, -1.00e-02],
+       [ 1.00e+00,  0.00e+00, -1.00e-02],
+       [ 1.00e+00,  1.00e+00, -1.0...[ 2.57e+01,  0.00e+00, -1.00e-02],
+       [ 2.57e+01,  1.00e+00, -1.00e-02],
+       [ 2.47e+01,  1.00e+00, -1.00e-02]])
+current_target = array([[ 0.2,  0.1,  0. ],
+       [ 0.6,  0.1,  0. ],
+       [ 0.2,  0.3,  0. ],
+       [ 1.5,  0.1,  0. ],
+       [ 1....1,  0. ],
+       [23.6,  0.3,  0. ],
+       [24.9,  0.1,  0. ],
+       [25.3,  0.1,  0. ],
+       [24.9,  0.3,  0. ]])
+z = array([0.22133333, 0.112     , 0.02133333, 0.04533333, 0.22133333,
+       0.112     , 0.02133333, 0.04533333, 0.221333...33, 0.04533333, 0.22133333, 0.112     , 0.02133333,
+       0.04533333, 0.22133333, 0.112     , 0.02133333, 0.04533333])
+
+    def _shared_edge_nodal_force_limit(self, current_source, current_target, z,
+                                      *, tangent, recoverable_pair):
+        """Guard a fixed-force generalized derivative at the artificial S3 seam."""
+        step, direction, tolerance = self.shared_edge_tie
+        lengths = [np.linalg.norm(face[i]-face[(i+1) % len(face)])
+                   for faces, positions in (
+                       (self.source_face_indices, self.reference_source),
+                       (self.target_face_indices, self.reference_target))
+                   for ids in faces for face in (positions[ids],)
+                   for i in range(len(face))]
+        if step > 1.0e-4*min(lengths):
+            raise UnsupportedQ4S3Branch("raw shared-edge tie step exceeds local geometry scale")
+        exact = self.geometry.evaluate(current_source, current_target)
+        support = exact.reference_support
+        supported = support > 0.0
+        pressure = np.zeros_like(support)
+        np.divide(z, support, out=pressure, where=supported)
+        exact = replace(exact, pressure=pressure, energy=0.0)
+        observations = []
+        evaluations = 4*self.geometry._candidate_evaluation_count(
+            self.geometry._candidate_pair_indices(current_source, current_target))
+        self.geometry._check_energy_evaluation_budget(evaluations)
+        for offset in (step, step/2.0):
+            sides = []
+            for sign in (-1.0, 1.0):
+                shifted = np.asarray(current_source, dtype=float).copy()
+                shifted += sign*offset*direction
+                try:
+                    candidate = self._nodal_force_unresolved(
+                        shifted, current_target, z, tangent=tangent,
+                        tiny_wedge_pair=recoverable_pair,
+                    )
+                except (UnsupportedQ4S3Branch, ValueError) as exc:
+                    raise UnsupportedQ4S3Branch(
+                        f"raw shared-edge tie smooth neighbor unresolved "
+                        f"(offset_m={sign*offset:.12g}): {exc}"
+                    ) from exc
+                evaluations += candidate.energy_evaluations
+                if evaluations > self.geometry.maximum_energy_evaluations:
+                    raise MemoryError("raw Q4/S3 shared-edge tie evaluation budget exhausted")
+                if not np.array_equal(candidate.state.reference_support > 0.0, supported):
+                    raise UnsupportedQ4S3Branch("raw shared-edge tie changes pressure support")
+                for name in ("reference_support", "reference_weighted_gap",
+                             "normalized_gap"):
+                    observed = getattr(candidate.state, name)
+                    reference = getattr(exact, name)
+                    scale = max(float(np.max(np.abs(reference))), 1.0e-20)
+                    if np.any(np.abs(observed-reference)
+                              > tolerance*np.maximum(np.abs(reference),
+                                                     1.0e-8*scale)):
+                        raise UnsupportedQ4S3Branch(
+                            f"raw shared-edge tie {name} disagrees with exact state"
+                        )
+                sides.append(candidate)
+            observations.append(sides)
+    
+        def relative_difference(a, b):
+            return float(np.linalg.norm(a-b)/max(np.linalg.norm(a),
+                                                  np.linalg.norm(b), 1.0e-12))
+    
+        def limit(field):
+            values = [[getattr(candidate, field) for candidate in sides]
+                      for sides in observations]
+            means = [0.5*(side[0]+side[1]) for side in values]
+            extrapolated = (4.0*means[1]-means[0])/3.0
+            errors = [relative_difference(side[0], side[1]) for side in values]
+            errors.extend((relative_difference(means[0], means[1]),
+                           relative_difference(means[1], extrapolated)))
+            if (not np.all(np.isfinite(extrapolated)) or max(errors) > tolerance):
+                raise UnsupportedQ4S3Branch(
+                    f"raw shared-edge tie {field} limit unresolved "
+                    f"(relative_error={max(errors):.12g})"
+                )
+            return extrapolated
+    
+        gap_gradient = limit("gap_gradient")
+        residual = limit("residual")
+        tangent_matrix = limit("tangent") if tangent else None
+        if relative_difference(residual, -(z @ gap_gradient)) > tolerance:
+            raise UnsupportedQ4S3Branch("raw shared-edge tie force/gap work disagrees")
+        for row in np.flatnonzero(supported):
+            first, second = observations
+            coarse = 0.5*(first[0].gap_gradient[row]
+                          + first[1].gap_gradient[row])
+            fine = 0.5*(second[0].gap_gradient[row]
+                        + second[1].gap_gradient[row])
+            errors = (
+                relative_difference(first[0].gap_gradient[row],
+                                    first[1].gap_gradient[row]),
+                relative_difference(second[0].gap_gradient[row],
+                                    second[1].gap_gradient[row]),
+                relative_difference(coarse, fine),
+                relative_difference(fine, gap_gradient[row]),
+            )
+            if max(errors) > tolerance:
+                raise UnsupportedQ4S3Branch(
+                    "raw shared-edge tie supported gap row is nonunique"
+                )
+        action = np.concatenate((np.tile(direction, len(current_source)),
+                                 np.zeros(3*len(current_target))))
+        # Geometry-value subtraction at nanometre offsets is less accurate
+        # than the directly differentiated row limit. Keep this independent
+        # directional check within the existing 1e-5 smooth-branch gate.
+        directional_tolerance = max(tolerance, 1.0e-5)
+        if (relative_difference((observations[0][1].state.normalized_gap
+                                - observations[0][0].state.normalized_gap)/(2.0*step),
+                                gap_gradient @ action) > directional_tolerance):
+>           raise UnsupportedQ4S3Branch("raw shared-edge tie gap direction disagrees")
+E           anysolver.general_contact.q4_s3_overlap_derivatives.UnsupportedQ4S3Branch: raw shared-edge tie gap direction disagrees
+
+src\anysolver\general_contact\s3_patch_augmented.py:512: UnsupportedQ4S3Branch
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_jet2_candidate_budget.py::test_sparse_shared_edge_four_pass_reserve_counts_actual_candidates[True]
+1 failed, 13 passed in 21.47s

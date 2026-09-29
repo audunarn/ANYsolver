@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.6308231000148226,
+  "peak_process_tree_memory_mb": 214.761472,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_development_recording.py",
+    "-q",
+    "-k",
+    "radial or invalid_rejected"
+  ],
+  "log": "docs\\d1_review_support\\d1_failure_recording_focus_20260929.log"
+}

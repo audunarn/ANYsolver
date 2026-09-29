@@ -421,7 +421,9 @@ class MovingS3PatchProjectedNormal:
         np.divide(z, support, out=pressure, where=supported)
         exact = replace(exact, pressure=pressure, energy=0.0)
         observations = []
-        evaluations = 4*len(self.geometry.pair_laws)
+        evaluations = 4*self.geometry._candidate_evaluation_count(
+            self.geometry._candidate_pair_indices(current_source, current_target))
+        self.geometry._check_energy_evaluation_budget(evaluations)
         for offset in (step, step/2.0):
             sides = []
             for sign in (-1.0, 1.0):
@@ -832,7 +834,9 @@ class MovingS3PatchProjectedNormal:
         observations = []
         # Failed first work: base patch plus local float/Jet2 pair passes.
         # The exact state is evaluated again below; charge all four passes.
-        evaluations = 4*len(self.geometry.pair_laws)
+        evaluations = 4*self.geometry._candidate_evaluation_count(
+            self.geometry._candidate_pair_indices(current_source, current_target))
+        self.geometry._check_energy_evaluation_budget(evaluations)
         for offset in (step, step/2.0):
             sides = []
             for sign in (-1.0, 1.0):
@@ -1155,15 +1159,26 @@ class MovingS3PatchProjectedNormal:
         # Only columns need restriction to reachable solution variations.
         weighted_hessian = np.zeros((count, len(active_coordinates))) if tangent else None
         support_hessian = np.zeros_like(weighted_hessian) if tangent else None
-        evaluations = (len(self.geometry.pair_laws) if base.pair_states is None
-                       else sum(local is not None for local in base.pair_states))
         zero_area_overlap_pairs = []
         source = np.asarray(current_source, dtype=float)
         target = np.asarray(current_target, dtype=float)
+        candidate_indices = self.geometry._candidate_pair_indices(source, target)
+        self.geometry._preflight_jet2_candidates(candidate_indices)
+        candidate_count = self.geometry._candidate_evaluation_count(candidate_indices)
         basis = self.pressure_basis
         pair_states = base.pair_states
         if pair_states is not None and len(pair_states) != len(self.geometry.pair_laws):
             raise ValueError("prepared contact pair count does not match geometry")
+        if pair_states is not None and any(
+            (local is not None) != (candidate_indices is None or i in candidate_indices)
+            for i, local in enumerate(pair_states)
+        ):
+            raise ValueError("prepared contact candidates do not match current geometry")
+        evaluations = candidate_count  # Same-pose base float integration.
+        self.geometry._check_energy_evaluation_budget(evaluations)
+        if basis is not None:
+            evaluations += candidate_count
+            self.geometry._check_energy_evaluation_budget(evaluations)
         fine_base = (self.geometry.evaluate(source, target)
                      if basis is not None else base)
         if basis is None:
@@ -1180,6 +1195,8 @@ class MovingS3PatchProjectedNormal:
             np.divide(fine_support_pressure, fine_pressure, out=fine_work_gap,
                       where=fine_pressure > 0.0)
         for pair_index, law in enumerate(self.geometry.pair_laws):
+            if candidate_indices is not None and pair_index not in candidate_indices:
+                continue
             source_face = pair_index // len(self.geometry.target_faces)
             target_face = pair_index % len(self.geometry.target_faces)
             source_nodes = self.source_face_indices[source_face]
@@ -1187,8 +1204,9 @@ class MovingS3PatchProjectedNormal:
             local_source = source[source_nodes]
             local_target = target[target_nodes]
             if pair_states is None:
-                local = law.evaluate(local_source, local_target)
                 evaluations += 1
+                self.geometry._check_energy_evaluation_budget(evaluations)
+                local = law.evaluate(local_source, local_target)
             else:
                 local = pair_states[pair_index]
             if local is None:
@@ -1206,6 +1224,8 @@ class MovingS3PatchProjectedNormal:
                 support_magnitude[source_nodes] += np.abs(local.reference_support)
                 gap_magnitude[source_nodes] += np.abs(local.reference_weighted_gap)
                 continue
+            evaluations += 1
+            self.geometry._check_energy_evaluation_budget(evaluations)
             if len(source_nodes) == 4:
                 try:
                     tolerances = self.geometry.q4_source_derivative_tolerances or (None,)*4
@@ -1235,7 +1255,6 @@ class MovingS3PatchProjectedNormal:
                     self.geometry.source_faces[source_face].reference_positions,
                     local_source, local_target,
                 )
-            evaluations += 1
             support_scale = max(float(np.max(np.abs(local.reference_support))),
                                 float(np.max(np.abs(derivative.reference_support))))
             weighted_gap_scale = max(
@@ -1362,6 +1381,7 @@ class MovingS3PatchProjectedNormal:
                         raise UnsupportedQ4S3Branch(
                             "tiny seam wedge has no resolved absolute nodal force"
                         )
+                    self.geometry._check_energy_evaluation_budget(evaluations+1)
                     used, scenarios = verify_tiny_wedge_derivatives(
                         law, local_source, local_target, derivative,
                         fine_pressure[source_nodes],
@@ -1373,6 +1393,7 @@ class MovingS3PatchProjectedNormal:
                             self.geometry.maximum_energy_evaluations-evaluations),
                     )
                     evaluations += used
+                    self.geometry._check_energy_evaluation_budget(evaluations)
                     tiny_wedge_verified = True
                     tiny_wedge_scenarios = (
                         source_nodes.copy(), coordinate_map,

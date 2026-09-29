@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 2.6464323999825865,
+  "peak_process_tree_memory_mb": 152.30976,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Github/ANYsolver/.venv/Scripts/python.exe",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_radial_observables.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_observables_checks_v1_20260930.log"
+}

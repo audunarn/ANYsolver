@@ -15,7 +15,10 @@ from .q4_source_overlap import (
     q4_source_gap_lower, q4_source_projected_gap_lower,
     q4_source_projected_swept_gap_lower, q4_source_swept_gap_lower,
 )
-from .q4_overlap_local_bound import overlap_local_lower, overlap_local_swept_lower
+from .q4_overlap_local_bound import (
+    overlap_local_lower, overlap_local_swept_lower,
+    _normal_controls_interval, _dot, _interval,
+)
 from .fixed_projection_graph import fixed_projection_graph_swept_certificate
 from .pressure_space import supported_pressure_gram
 from .pressure_basis import (
@@ -24,8 +27,25 @@ from .pressure_basis import (
 )
 from .d1_interior_profile import (
     active_boundary_issue, physical_q4_rim_node_ids,
-    projected_coverage_issue,
+    projected_coverage_issue, swept_projected_coverage_admissible,
 )
+
+
+def _affine_midpoint_with_error(left, right, left_error, right_error):
+    """Enclose the original path midpoint, including rounded representatives."""
+    middle = tuple(0.5*(a+b) for a, b in zip(left, right))
+    if left_error is None:
+        return middle, None
+    errors = []
+    for a, b, ae, be, value in zip(left, right, left_error, right_error, middle):
+        low = np.nextafter(0.5*np.nextafter(
+            np.nextafter(a-ae, -np.inf)
+            + np.nextafter(b-be, -np.inf), -np.inf), -np.inf)
+        high = np.nextafter(0.5*np.nextafter(
+            np.nextafter(a+ae, np.inf)
+            + np.nextafter(b+be, np.inf), np.inf), np.inf)
+        errors.append(np.nextafter(np.maximum(value-low, high-value), np.inf))
+    return middle, tuple(errors)
 
 
 PROFILE = "S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_PENALTY_STATIC_DEV_V0"
@@ -755,10 +775,41 @@ class GeneralS3PatchManager:
         last = self._positions(end)
         if self._gap_lower(first) < -self.gap_tolerance:
             raise ValueError("committed general S3 patch gap exceeds tolerance")
-        if self._gap_lower(last) < -self.gap_tolerance:
+        try:
+            last_lower = self._gap_lower(last)
+        except ValueError:
+            # A Newton proposal may leave the projection/geometry domain.
+            # Reject it so the existing bounded path cutback can shorten it;
+            # the committed endpoint above must still validate normally.
+            return False
+        if np.isnan(last_lower) or last_lower < -self.gap_tolerance:
             return False
 
-        def certify(left, right, depth):
+        if self.settings.d1_interior_profile:
+            # Certify material polarity on the original path as well. A
+            # rounded child's positive orientation cannot repair ambiguity
+            # in the true path near a reference-normal sign change.
+            for side, indices, reference in (
+                (0, self.law.source_face_indices, self.reference_normals[0]),
+                (1, self.law.target_face_indices, self.reference_normals[1]),
+            ):
+                for face in indices:
+                    for corner in range(len(face)):
+                        bounds = _normal_controls_interval(
+                            first[side][face], last[side][face], corner)
+                        lower = _dot(bounds, _interval(reference))[0]
+                        if not np.all(np.isfinite(lower)) or np.min(lower) <= 0.0:
+                            return False
+
+        # Certify union coverage on the original path, never rounded child
+        # paths. Gap bounds may still subdivide with endpoint enclosures.
+        if (self.settings.d1_interior_profile
+                and not swept_projected_coverage_admissible(
+                    first[0], last[0], first[1], last[1],
+                    self.law.source_face_indices, self.law.target_face_indices)):
+            return False
+
+        def certify(left, right, depth, left_error=None, right_error=None):
             orientation_ok = True
             for side, indices, reference in (
                 (0, self.law.source_face_indices, self.reference_normals[0]),
@@ -788,6 +839,10 @@ class GeneralS3PatchManager:
                     overlap_local_swept_lower(
                         left[0][si], right[0][si],
                         left[1][ti], right[1][ti], 3,
+                        endpoint_errors=(
+                            left_error[0][si], right_error[0][si],
+                            left_error[1][ti], right_error[1][ti])
+                        if left_error is not None else None,
                     )[0] >= -self.gap_tolerance
                     for si in self.law.source_face_indices
                     for ti in self.law.target_face_indices
@@ -810,14 +865,23 @@ class GeneralS3PatchManager:
                 )
             if orientation_ok and gap_ok:
                 return True
+            if (self.settings.d1_interior_profile
+                    and self.settings.q4_source_gap_certificate != "overlap_local_dev"):
+                # Other development bounds do not yet enclose rounded
+                # subdivision endpoints. Retry a shorter complete trial.
+                return False
             if depth >= self.settings.maximum_swept_subdivisions:
                 return False
-            middle = tuple(0.5*(a+b) for a, b in zip(left, right))
+            middle, middle_error = _affine_midpoint_with_error(
+                left, right, left_error, right_error)
             if self._gap_lower(middle) < -self.gap_tolerance:
                 return False
-            return certify(left, middle, depth+1) and certify(middle, right, depth+1)
+            return (certify(left, middle, depth+1, left_error, middle_error)
+                    and certify(middle, right, depth+1, middle_error, right_error))
 
-        return certify(first, last, 0)
+        errors = (tuple(np.zeros_like(item) for item in first)
+                  if self.settings.d1_interior_profile else None)
+        return certify(first, last, 0, errors, errors)
 
     def swept_increment_admissible(self, start, end, _start_factor, _end_factor):
         admitted = self._swept_admissible(start, end)
@@ -855,6 +919,8 @@ class GeneralS3PatchManager:
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
                          **({"d1_interior_profile": True,
+                             "d1_swept_certificate_revision":
+                             "affine_union_outward_v1",
                              "d1_interior_coverage_tolerance_m2":
                              self.settings.d1_interior_coverage_tolerance_m2,
                              "d1_interior_boundary_force_tolerance_n":

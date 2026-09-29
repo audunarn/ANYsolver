@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 55.13017600000603,
+  "peak_process_tree_memory_mb": 216.6784,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_pressure_gate_screen_dev",
+    "docs/d1_review_support/d1_coupled_contrast_12q4_32s3_20260929.json",
+    "docs/d1_review_support/d1_pressure_analytic12_corrected_20260929.json",
+    "--analytic-cells",
+    "12",
+    "--independent-check"
+  ],
+  "log": "docs\\d1_review_support\\d1_pressure_analytic12_corrected_20260929.log"
+}

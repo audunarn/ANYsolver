@@ -26,6 +26,27 @@ def _settings(settings):
     )
 
 
+def _check_restricted_reference_and_reaction_rows(model, candidate, displacement,
+                                                 tangent, old_tangent, transform):
+    # The old FD route restricts both residual rows and variation columns.
+    # Jet2 retains prescribed reaction rows: compare the common free operator,
+    # then verify those additional rows against actual force variations.
+    np.testing.assert_allclose((transform.T @ tangent @ transform).toarray(),
+        (transform.T @ old_tangent @ transform).toarray(), rtol=3e-3, atol=3e-4)
+    direction = np.zeros(candidate.n_dof)
+    for node in range(1, 7):
+        direction[model.mesh.dof_manager.get_node_dofs(node)[2]] = 1.
+    action = np.asarray(tangent @ direction)
+    free = np.flatnonzero(np.asarray(abs(transform).sum(axis=1)).reshape(-1))
+    prescribed = np.setdiff1d(np.arange(candidate.n_dof), free)
+    assert np.linalg.norm(action[prescribed]) > 1e-6
+    for step in (1e-6, 3e-7, 1e-7):
+        plus, _, _ = candidate.evaluate(displacement+step*direction, tangent=False)
+        minus, _, _ = candidate.evaluate(displacement-step*direction, tangent=False)
+        finite_difference = (plus-minus)/(2*step)
+        assert np.linalg.norm(finite_difference-action)/np.linalg.norm(action) <= 1e-5
+
+
 def test_q4_s3_jet2_mode_requires_explicit_derivative_resolution():
     model, definition, settings = _two_q4_two_s3()
     missing = replace(settings, general_s3_differentiation="jet2_q4_s3_dev")
@@ -53,8 +74,8 @@ def test_q4_s3_jet2_static_work_matches_existing_smooth_patch():
     force, tangent, state = candidate.evaluate(displacement)
     assert state.active_pressure_dofs == old_state.active_pressure_dofs == 6
     np.testing.assert_allclose(force, old_force, rtol=3e-4, atol=1e-6)
-    np.testing.assert_allclose(tangent.toarray(), old_tangent.toarray(),
-                               rtol=3e-3, atol=3e-4)
+    _check_restricted_reference_and_reaction_rows(
+        model, candidate, displacement, tangent, old_tangent, transform)
     assert state.energy_evaluations < old_state.energy_evaluations
 
 
@@ -83,8 +104,8 @@ def test_q4_s3_jet2_partial_shared_pressure_work(press_shift, inactive_faces):
     assert sum(not np.any(np.asarray(state.numerical_pressure_pa)[face])
                for face in candidate.law.source_face_indices) == inactive_faces
     np.testing.assert_allclose(force, old_force, rtol=3e-4, atol=1e-6)
-    np.testing.assert_allclose(tangent.toarray(), old_tangent.toarray(),
-                               rtol=3e-3, atol=3e-4)
+    _check_restricted_reference_and_reaction_rows(
+        model, candidate, displacement, tangent, old_tangent, transform)
 
 
 def test_q4_s3_manager_reuses_its_candidate_geometry(monkeypatch):

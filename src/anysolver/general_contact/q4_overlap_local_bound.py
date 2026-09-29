@@ -10,10 +10,101 @@ from __future__ import annotations
 import numpy as np
 
 from .q4_source_overlap import (
-    _q4_corner_normals,
     projected_q4_source_face,
-    q4_source_swept_gap_lower,
 )
+
+
+def _outward(value, direction):
+    return np.nextafter(value, direction)
+
+
+def _interval(value):
+    value = np.asarray(value, dtype=float)
+    return value, value
+
+
+def _add(a, b):
+    return (_outward(a[0]+b[0], -np.inf),
+            _outward(a[1]+b[1], np.inf))
+
+
+def _neg(a):
+    return -a[1], -a[0]
+
+
+def _sub(a, b):
+    return _add(a, _neg(b))
+
+
+def _mul(a, b):
+    products = np.stack((a[0]*b[0], a[0]*b[1],
+                         a[1]*b[0], a[1]*b[1]))
+    return (_outward(np.min(products, axis=0), -np.inf),
+            _outward(np.max(products, axis=0), np.inf))
+
+
+def _dot(a, b):
+    products = _mul(a, b)
+    value = (products[0][..., 0], products[1][..., 0])
+    for index in (1, 2):
+        value = _add(value, (products[0][..., index],
+                             products[1][..., index]))
+    return value
+
+
+def _cross(a, b):
+    values = []
+    for j, k in ((1, 2), (2, 0), (0, 1)):
+        values.append(_sub(
+            _mul((a[0][..., j], a[1][..., j]),
+                 (b[0][..., k], b[1][..., k])),
+            _mul((a[0][..., k], a[1][..., k]),
+                 (b[0][..., j], b[1][..., j]))))
+    return tuple(np.stack([value[side] for value in values], axis=-1)
+                 for side in (0, 1))
+
+
+def _normal_controls_interval(start, end, corner=0,
+                              start_error=0.0, end_error=0.0):
+    # For affine edges e(t), f(t), the middle quadratic Bernstein
+    # coefficient of e x f is (e0 x f1 + e1 x f0)/2.
+    next_corner, previous_corner = ((corner+1) % len(start),
+                                    (corner-1) % len(start))
+    first_positions = _enclose_positions(start, start_error)
+    last_positions = _enclose_positions(end, end_error)
+    def at(positions, index):
+        return positions[0][index], positions[1][index]
+    e0 = _sub(at(first_positions, next_corner), at(first_positions, corner))
+    f0 = _sub(at(first_positions, previous_corner), at(first_positions, corner))
+    e1 = _sub(at(last_positions, next_corner), at(last_positions, corner))
+    f1 = _sub(at(last_positions, previous_corner), at(last_positions, corner))
+    first, last = _cross(e0, f0), _cross(e1, f1)
+    middle = _mul(_add(_cross(e0, f1), _cross(e1, f0)), _interval(0.5))
+    return tuple(np.stack((first[side], middle[side], last[side]))
+                 for side in (0, 1))
+
+
+def _norm_upper(a):
+    magnitude = np.maximum(np.abs(a[0]), np.abs(a[1]))
+    squared = _mul(_interval(magnitude), _interval(magnitude))
+    total = _add(_add((squared[0][..., 0], squared[1][..., 0]),
+                      (squared[0][..., 1], squared[1][..., 1])),
+                 (squared[0][..., 2], squared[1][..., 2]))
+    return _outward(np.sqrt(total[1]), np.inf)
+
+
+def _positive_divide_upper(numerator, denominator):
+    return _outward(numerator/denominator, np.inf)
+
+
+def _enclose_positions(positions, error):
+    error = np.broadcast_to(np.asarray(error, dtype=float), positions.shape)
+    if not np.all(np.isfinite(error)) or np.any(error < 0.0):
+        raise ValueError("swept endpoint enclosure must be finite and nonnegative")
+    if not np.any(error):
+        return _interval(positions)
+    return (_outward(positions-error, -np.inf),
+            _outward(positions+error, np.inf))
 
 def _point(corners: np.ndarray, u: float, v: float) -> np.ndarray:
     return ((1-u)*(1-v)*corners[0] + u*(1-v)*corners[1]
@@ -75,7 +166,7 @@ def overlap_local_lower(source: np.ndarray, target: np.ndarray,
 def overlap_local_swept_lower(
         source_start: np.ndarray, source_end: np.ndarray,
         target_start: np.ndarray, target_end: np.ndarray,
-        depth: int) -> tuple[float, int]:
+        depth: int, *, endpoint_errors=None) -> tuple[float, int]:
     """Experimental bound along a *linear physical nodal* Q4/S3 path.
 
     A fixed frame encloses moving projected boxes. The expansion bounds the
@@ -88,8 +179,14 @@ def overlap_local_swept_lower(
     a0, a1, b0, b1 = (np.asarray(item, dtype=float) for item in (
         source_start, source_end, target_start, target_end,
     ))
+    errors = ((0.0,)*4 if endpoint_errors is None else endpoint_errors)
+    if len(errors) != 4:
+        raise ValueError("swept gap needs four endpoint enclosures")
+    input_bounds = tuple(_enclose_positions(item, error)
+                         for item, error in zip((a0, a1, b0, b1), errors))
     if (a0.shape != (4, 3) or a1.shape != (4, 3)
-            or b0.shape != (3, 3) or b1.shape != (3, 3)):
+            or b0.shape != (3, 3) or b1.shape != (3, 3)
+            or not all(np.all(np.isfinite(item)) for item in (a0, a1, b0, b1))):
         raise ValueError("experimental sweep needs Q4/S3 endpoints")
     _, reference = projected_q4_source_face(a0)
     projected_q4_source_face(a1)
@@ -100,33 +197,66 @@ def overlap_local_swept_lower(
     frame = np.stack((tangent, bitangent), axis=1)
     scale = max(1.0, *(float(np.max(np.abs(item)))
                        for item in (a0, a1, b0, b1)))
-    margin = 1024.0*np.finfo(float).eps*scale
-
-    def normal(corners):
-        return np.cross(corners[1]-corners[0], corners[3]-corners[0])
-
-    def controls(start, middle, end):
-        return np.stack((start, 2.0*middle-0.5*(start+end), end))
-
-    parent = controls(normal(a0), normal(0.5*(a0+a1)), normal(a1))
-    parent_height_min = float(np.min(parent @ reference))
-    if parent_height_min <= 0.0:
-        return q4_source_swept_gap_lower(a0, a1, b0, b1, reference), 1
-    drift_slope = np.max(np.abs(parent @ frame), axis=0)/parent_height_min
+    # Treat stored endpoint/frame floats as exact inputs to this bound.
+    # Directed outward arithmetic encloses normal controls and denominators;
+    # a positive rounded normal height alone cannot certify a grazing path.
+    parent = _normal_controls_interval(a0, a1,
+                                       start_error=errors[0], end_error=errors[1])
+    if not all(np.all(np.isfinite(value)) for value in parent):
+        return -float("inf"), 1
+    parent_height_min = float(np.min(_dot(parent, _interval(reference))[0]))
+    if not np.isfinite(parent_height_min) or parent_height_min <= 0.0:
+        return -float("inf"), 1
+    lateral = [_dot(parent, _interval(frame[:, axis_index]))
+               for axis_index in (0, 1)]
+    drift_slope = np.asarray([
+        _positive_divide_upper(
+            np.max(np.maximum(np.abs(value[0]), np.abs(value[1]))),
+            parent_height_min) for value in lateral])
+    if not np.all(np.isfinite(drift_slope)):
+        return -float("inf"), 1
     axis = np.cross(b0[1]-b0[0], b0[2]-b0[0])
-    axis /= np.linalg.norm(axis)
+    axis_length = np.linalg.norm(axis)
+    if not np.isfinite(axis_length) or axis_length <= 0.0:
+        return -float("inf"), 1
+    axis /= axis_length
     if axis @ reference < 0.0:
         axis = -axis
 
+    axis_norm_upper = float(_norm_upper(_interval(axis)))
+
     def cone_cosine(values):
-        maximum = float(np.max(np.linalg.norm(values, axis=-1)))
-        return (float(np.min(values @ axis))/maximum
-                if maximum > 0.0 else -float("inf"))
+        maximum = float(np.max(_norm_upper(values)))
+        denominator = _outward(maximum*axis_norm_upper, np.inf)
+        numerator = float(np.min(_dot(values, _interval(axis))[0]))
+        return (float(_outward(numerator/denominator, -np.inf))
+                if np.isfinite(numerator) and np.isfinite(denominator)
+                and denominator > 0.0 else -float("inf"))
 
     parent_cosine = cone_cosine(parent)
-    target_box = np.vstack((b0 @ frame, b1 @ frame))
-    target_low, target_high = (np.min(target_box, axis=0),
-                               np.max(target_box, axis=0))
+    physical_cosines = [cone_cosine(_normal_controls_interval(
+        a0, a1, corner, errors[0], errors[1]))
+                        for corner in range(4)]
+    if parent_cosine <= 0.75 or min(physical_cosines) <= 0.75:
+        return -float("inf"), 1
+    target_endpoints = tuple(np.vstack((input_bounds[2][side],
+                                       input_bounds[3][side]))
+                             for side in (0, 1))
+    target_box = [_dot(target_endpoints, _interval(frame[:, index]))
+                  for index in (0, 1)]
+    target_low = np.asarray([np.min(value[0]) for value in target_box])
+    target_high = np.asarray([np.max(value[1]) for value in target_box])
+    target_heights = _dot(target_endpoints, _interval(reference))
+    if not all(np.all(np.isfinite(value))
+               for bounds in (*target_box, target_heights) for value in bounds):
+        return -float("inf"), 1
+    # Dyadic subdivision coordinates through depth 7 have exact shape
+    # coefficients. Seven rounded multiply/add operations evaluate _point;
+    # gamma_8 bounds its componentwise error for the convex Q1 weights.
+    unit = np.finfo(float).eps/2.0
+    point_error = _outward((8*unit/(1-8*unit))*scale + np.maximum(
+        np.max(np.broadcast_to(np.asarray(errors[0]), a0.shape), axis=0),
+        np.max(np.broadcast_to(np.asarray(errors[1]), a1.shape), axis=0)), np.inf)
     visited = 0
 
     def recurse(u0: float, u1: float, v0: float, v1: float,
@@ -141,37 +271,34 @@ def overlap_local_swept_lower(
             _point(a1, u0, v0), _point(a1, u1, v0),
             _point(a1, u1, v1), _point(a1, u0, v1),
         ))
-        heights = np.r_[a_start @ reference, a_end @ reference]
-        target_heights = np.r_[b0 @ reference, b1 @ reference]
+        endpoints = np.vstack((a_start, a_end))
+        positions = (_outward(endpoints-point_error, -np.inf),
+                     _outward(endpoints+point_error, np.inf))
+        heights = _dot(positions, _interval(reference))
         difference_max = max(
-            abs(float(np.max(heights)-np.min(target_heights))),
-            abs(float(np.min(heights)-np.max(target_heights))),
+            float(_outward(np.max(heights[1])-np.min(target_heights[0]), np.inf)),
+            float(_outward(np.max(target_heights[1])-np.min(heights[0]), np.inf)),
         )
-        drift = difference_max*drift_slope + margin
-        box = np.vstack((a_start @ frame, a_end @ frame))
-        if np.any(np.max(box, axis=0) + drift < target_low) or np.any(
-                target_high + drift < np.min(box, axis=0)):
+        drift = _outward(difference_max*drift_slope, np.inf)
+        box = [_dot(positions, _interval(frame[:, index])) for index in (0, 1)]
+        box_low = np.asarray([np.min(value[0]) for value in box])
+        box_high = np.asarray([np.max(value[1]) for value in box])
+        if np.any(_outward(box_high+drift, np.inf) < target_low) or np.any(
+                _outward(target_high+drift, np.inf) < box_low):
             return float("inf")
         if remaining == 0:
-            middle = 0.5*(a_start+a_end)
-            first_normals = _q4_corner_normals(a_start)
-            middle_normals = _q4_corner_normals(middle)
-            last_normals = _q4_corner_normals(a_end)
-            physical = np.stack([
-                controls(first_normals[index], middle_normals[index],
-                         last_normals[index])
-                for index in range(4)
-            ])
-            if (parent_cosine <= 0.75
-                    or any(cone_cosine(item) <= 0.75 for item in physical)):
-                return q4_source_swept_gap_lower(
-                    a_start, a_end, b0, b1, reference,
-                )
-            numerator = min(
-                float(np.min((a_start[:, None]-b0[None, :]) @ axis)),
-                float(np.min((a_end[:, None]-b1[None, :]) @ axis)),
-            )
-            return min(0.0, numerator/parent_cosine) - margin/parent_cosine
+            differences = _sub(
+                (positions[0].reshape(2, 4, 3)[:, :, None],
+                 positions[1].reshape(2, 4, 3)[:, :, None]),
+                tuple(np.stack((input_bounds[2][side],
+                                input_bounds[3][side]))[:, None, :]
+                      for side in (0, 1)))
+            numerator = float(np.min(_dot(differences, _interval(axis))[0]))
+            denominator = _outward(parent_cosine*axis_norm_upper, -np.inf)
+            if (not np.isfinite(numerator) or not np.isfinite(denominator)
+                    or denominator <= 0.0):
+                return -float("inf")
+            return float(_outward(min(0.0, numerator)/denominator, -np.inf))
         um, vm = 0.5*(u0+u1), 0.5*(v0+v1)
         return min(recurse(*bounds, remaining-1) for bounds in (
             (u0, um, v0, vm), (um, u1, v0, vm),

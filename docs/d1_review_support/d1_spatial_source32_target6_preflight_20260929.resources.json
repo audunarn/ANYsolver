@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 1.2247801999910735,
+  "peak_process_tree_memory_mb": 138.067968,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-c",
+    "from pathlib import Path; from scripts.general_contact_d1_interior_two_body_oracle_dev import spatial_source32_allocation_inventory; spatial_source32_allocation_inventory(Path('docs/d1_review_support/d1_spatial_source32_target6_allocation_20260929.json'))"
+  ],
+  "log": "docs\\d1_review_support\\d1_spatial_source32_target6_preflight_20260929.log"
+}

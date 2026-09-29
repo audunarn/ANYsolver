@@ -156,7 +156,8 @@ class MovingS3PatchPrimalMortarPenalty:
         self.n_coordinates = 3*(len(self.source_node_ids)+len(self.target_node_ids))
         self.required_hessian_evaluations = (
             1+2*self.n_coordinates**2 if differentiation == "global" else
-            3*len(self.source_faces)*len(self.target_faces)
+            3*self._candidate_evaluation_count(self._candidate_pair_indices(
+                self.reference_source, self.reference_target))
             if differentiation in {"jet2_s3", "jet2_q4_s3"} else
             sum(2+2*(3*(len(source.node_ids)+len(target.node_ids)))**2
                 for source in self.source_faces for target in self.target_faces)
@@ -185,6 +186,22 @@ class MovingS3PatchPrimalMortarPenalty:
         )
         self._check_same_side_overlap(self.reference_source, self.source_face_indices)
         self._check_same_side_overlap(self.reference_target, self.target_face_indices)
+
+    def _candidate_evaluation_count(self, candidate_indices: set[int] | None) -> int:
+        return (len(self.source_faces)*len(self.target_faces)
+                if candidate_indices is None else len(candidate_indices))
+
+    def _check_energy_evaluation_budget(self, evaluations: int) -> None:
+        if evaluations > self.maximum_energy_evaluations:
+            raise MemoryError("S3 patch differentiation budget exhausted")
+
+    def _preflight_jet2_candidates(self, candidate_indices: set[int] | None) -> None:
+        if self.differentiation in {"jet2_s3", "jet2_q4_s3"}:
+            # Reserve a base float pass, a fallback float pass and one AD
+            # pass for every conservative candidate. Tiny-wedge verification
+            # consumes the remaining budget under its own runtime guard.
+            self._check_energy_evaluation_budget(
+                3*self._candidate_evaluation_count(candidate_indices))
 
     @staticmethod
     def _unique_reference(faces: tuple[S3PatchFace, ...],
@@ -294,6 +311,7 @@ class MovingS3PatchPrimalMortarPenalty:
         self._check_same_side_overlap(source, self.source_face_indices)
         self._check_same_side_overlap(target, self.target_face_indices)
         candidate_indices = self._candidate_pair_indices(source, target)
+        self._preflight_jet2_candidates(candidate_indices)
         support = np.zeros(len(self.source_node_ids))
         weighted_gap = np.zeros_like(support)
         gram = np.zeros((len(support), len(support)))
@@ -305,6 +323,7 @@ class MovingS3PatchPrimalMortarPenalty:
         integration_triangles = 0
         area_error = 0.0
         pair_states = []
+        evaluations = 0
         for index, law in enumerate(self.pair_laws):
             if candidate_indices is not None and index not in candidate_indices:
                 pair_states.append(None)
@@ -312,6 +331,9 @@ class MovingS3PatchPrimalMortarPenalty:
                 continue
             source_face = index // len(self.target_faces)
             target_face = index % len(self.target_faces)
+            evaluations += 1
+            if self.differentiation in {"jet2_s3", "jet2_q4_s3"}:
+                self._check_energy_evaluation_budget(evaluations)
             state = law.evaluate(source[self.source_face_indices[source_face]],
                                  target[self.target_face_indices[target_face]])
             pair_states.append(state)
@@ -357,7 +379,8 @@ class MovingS3PatchPrimalMortarPenalty:
         hull lies in the full target-depth prism used for the tree query.
         Inclusive padded boxes retain zero-area touching branches.
         """
-        if not self.pair_broadphase or len(self.pair_laws) <= 64:
+        if (not self.pair_broadphase
+                or len(self.source_faces)*len(self.target_faces) <= 64):
             return None
         from .contact_search import ContactAABBIndex
 

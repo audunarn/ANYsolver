@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 6.501860999997007,
+  "peak_process_tree_memory_mb": 216.551424,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_swept_coverage.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_swept_coverage_worker_test_20260929b.log"
+}

@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "<string>", line 2, in <module>
+    import anysolver.general_contact.s3_patch_mortar_energy as geometry
+ModuleNotFoundError: No module named 'anysolver.general_contact'

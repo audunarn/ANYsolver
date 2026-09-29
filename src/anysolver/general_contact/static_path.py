@@ -568,7 +568,7 @@ def solve_static_contact_path(
                             stiffness, T, rows, program.waypoints[1:],
                         )
                     )
-                    if (settings.complementarity_force_scale_n
+                    if (semismooth and settings.complementarity_force_scale_n
                             > displacement_force_predictor*(1.0+1.0e-12)):
                         raise ValueError(
                             "monolithic displacement force scale exceeds "
