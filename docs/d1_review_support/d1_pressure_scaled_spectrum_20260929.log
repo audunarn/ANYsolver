@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_pressure_family_preflight_dev.py", line 162, in <module>
+    main(Path(sys.argv[1]), spectrum="--spectrum" in sys.argv[2:])
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_pressure_family_preflight_dev.py", line 139, in main
+    for columns, rows, slope, load_shape in (
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: not enough values to unpack (expected 4, got 3)

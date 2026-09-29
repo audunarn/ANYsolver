@@ -47,14 +47,16 @@ def _reference_mass(manager):
 def evaluate(path: Path):
     saved = json.loads(path.read_text(encoding="utf-8"))
     expected = {"status": "completed", "accepted_steps": 2,
-                "source_support": "perimeter", "source_rows": 4,
+                "source_support": "perimeter",
                 "load_shape": "interior_distributed", "four_phase": False,
                 "slide_body": "target", "force_n": 0.04,
                 "reference_slope": 1.0e-4}
-    if any(saved.get(key) != value for key, value in expected.items()):
+    if (any(saved.get(key) != value for key, value in expected.items())
+            or saved.get("source_rows") not in (4, 8)
+            or saved.get("target_s3_faces") not in (2, 4)):
         raise ValueError(f"incompatible accepted press pose: {path}")
     model, definition, settings, program = build_interior_press(
-        source_support="perimeter", source_rows=4,
+        source_support="perimeter", source_rows=saved["source_rows"],
         source_columns=saved["source_columns"],
         target_columns=saved["target_s3_faces"]//2,
         load_shape="interior_distributed", force_n=0.04,

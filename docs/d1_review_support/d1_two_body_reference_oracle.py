@@ -138,7 +138,8 @@ def independent_gap_work(model, definition, source_shift_x: float,
 
 def solve_reference(model, definition, program, accepted_step: int,
                     target_skin_xy: dict[int, np.ndarray] | None = None,
-                    source_skin_xy: dict[int, np.ndarray] | None = None):
+                    source_skin_xy: dict[int, np.ndarray] | None = None,
+                    physical_parallel_skin: bool = False):
     """Solve the small linearized two-body contact KKT system."""
     controls = program.target_at(accepted_step)
     if len(controls) != 2 or abs(controls[0]-controls[1]) > 1e-14:
@@ -160,7 +161,22 @@ def solve_reference(model, definition, program, accepted_step: int,
     source_skin_z = source_node.z-0.5*source_element.thickness
     target_skin_z = (target_node.z+0.5*target_element.thickness
                      -target_element.reference_surface_offset)
-    initial_gap = source_skin_z-target_skin_z
+    if physical_parallel_skin:
+        source_normal = np.array(source_element.reference_normal, dtype=float,
+                                 copy=True)
+        source_normal /= np.linalg.norm(source_normal)
+        target_normal = np.array(target_element.reference_normal, dtype=float,
+                                 copy=True)
+        target_normal /= np.linalg.norm(target_normal)
+        source_reference = np.array((source_node.x, source_node.y, source_node.z))
+        target_reference = np.array((target_node.x, target_node.y, target_node.z))
+        source_skin = source_reference-0.5*source_element.thickness*source_normal
+        target_skin = (target_reference
+                       +(0.5*target_element.thickness
+                         -target_element.reference_surface_offset)*target_normal)
+        initial_gap = float(np.dot(source_skin-target_skin, target_normal))
+    else:
+        initial_gap = source_skin_z-target_skin_z
     assert abs(initial_gap-40e-6) < 1e-12
     external = np.zeros(ndof)
     for force, value in zip(program.nodal_forces,

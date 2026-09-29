@@ -16,12 +16,15 @@ from scipy import linalg
 from anysolver import ContactPathNodalForce
 from anysolver.assembly import build_constraint_transformation
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from anysolver.general_contact.semismooth import linearize
 from anysolver.matrix_assembly import assemble_stiffness_matrix
 from scripts.general_contact_d1_interior_press_dev import build_interior_press
+from scripts.general_contact_d1_interior_work_spectrum_dev import _reference_mass
 
 
 def screen(columns: int, rows: int, slope: float,
-           load_shape: str) -> dict:
+           load_shape: str, *, spectrum: bool = False,
+           open_pose: bool = False) -> dict:
     model, definition, settings, program = build_interior_press(
         force_n=0.04, reference_slope=slope, source_support="perimeter",
         source_columns=columns, source_rows=rows, target_columns=1,
@@ -69,6 +72,13 @@ def screen(columns: int, rows: int, slope: float,
     displacement = np.asarray(admissible @ linalg.solve(
         0.5*(reduced+reduced.T), rhs, assume_a="pos",
     )).reshape(-1)
+    if open_pose:
+        # A small prescribed target translation removes exact diagonal ties
+        # while keeping the 40 µm reference opening and full target coverage.
+        displacement[:] = 0.0
+        target_start = (rows+1)*(columns+1)+1
+        for node in range(target_start, target_start+4):
+            displacement[dof_manager.get_node_dofs(node)[0]] = 1.0e-6
     manager = GeneralS3PatchManager(model, definition, settings)
     source, target = manager._positions(displacement)
     geometry = manager.law.geometry.evaluate(source, target)
@@ -82,12 +92,13 @@ def screen(columns: int, rows: int, slope: float,
     min_gap = float(np.min(interior_gaps))
     # Counts ask whether the unconstrained shape presents several comparable
     # interior candidates; no positive-pressure or equilibrium claim is made.
-    return {
+    result = {
         "source_q4_faces": columns*rows,
         "target_s3_faces": 2,
         "source_columns": columns, "source_rows": rows,
         "reference_slope": slope,
         "load_shape": load_shape,
+        "pose": "open_target_x_shift_1um" if open_pose else "contact_free_force_predictor",
         "interior_pressure_modes": len(selected),
         "contact_free_minimum_interior_weighted_gap_m": min_gap,
         "interior_gap_spread_m": float(np.max(interior_gaps)-min_gap),
@@ -99,17 +110,51 @@ def screen(columns: int, rows: int, slope: float,
             interior, interior_gaps)},
         "maximum_absolute_structural_displacement_m": float(np.max(np.abs(displacement))),
     }
+    if spectrum:
+        state = linearize(
+            manager, displacement,
+            np.zeros(len(manager.law.source_node_ids)), tangent=False,
+        )
+        selected_support = np.asarray(state.state.reference_support)[selected]
+        if np.any(selected_support <= 0.0):
+            raise ValueError("pressure spectrum contains unsupported interior modes")
+        mass = _reference_mass(manager)[np.ix_(selected, selected)]
+        work = (selected_support[:, None]
+                * np.asarray(state.gap_gradient @ admissible)[selected])
+        response = linalg.solve(0.5*(reduced+reduced.T), work.T,
+                                assume_a="pos")
+        dual = 0.5*(work @ response+response.T @ work.T)
+        values = linalg.eigh(dual, mass, eigvals_only=True)
+        h_min = min(1.0/columns, 1.0/rows)
+        bending_rigidity = 1.0e5*0.05**3/(12*(1-0.3**2))
+        result.update({
+            "full_signed_interior_modes": len(selected),
+            "minimum_energy_dual_work_per_l2_pressure": float(values[0]),
+            "second_energy_dual_work_per_l2_pressure": float(values[1]),
+            "h_min_m": h_min,
+            "source_bending_rigidity_nm": bending_rigidity,
+            "dimensionless_minimum_work_over_h4": float(
+                values[0]*bending_rigidity/h_min**4),
+            "structural_energy_symmetry_relative": float(np.linalg.norm(
+                reduced-reduced.T)/max(1.0, np.linalg.norm(reduced))),
+        })
+    return result
 
 
-def main(output: Path) -> None:
+def main(output: Path, *, spectrum: bool = False,
+         uniform_family: bool = False, open_pose: bool = False) -> None:
     if output.exists():
         raise FileExistsError(output)
-    cases = [screen(columns, rows, slope, load_shape)
-             for columns, rows, slope, load_shape in (
-                 (4, 4, 1.0e-4, "four_lobe_dev"),
-                 (8, 4, 1.0e-4, "four_lobe_dev"),
-                 (8, 8, 1.0e-4, "four_lobe_dev"),
-             )]
+    if uniform_family and not spectrum:
+        raise ValueError("uniform family requires the pressure spectrum")
+    if open_pose and not spectrum:
+        raise ValueError("open pose requires the pressure spectrum")
+    load_shape = "interior_uniform" if spectrum else "four_lobe_dev"
+    grids = ((4, 2), (8, 4), (16, 8)) if uniform_family else (
+        (4, 4), (8, 4), (8, 8))
+    cases = [screen(columns, rows, 1.0e-4, load_shape,
+                    spectrum=spectrum, open_pose=open_pose)
+             for columns, rows in grids]
     output.write_text(json.dumps({"cases": cases}, indent=2)+"\n",
                       encoding="utf-8")
     print(json.dumps([{
@@ -119,8 +164,12 @@ def main(output: Path) -> None:
         "spread_um": item["interior_gap_spread_m"]*1e6,
         "within_5um": item["interior_nodes_within_5um_of_minimum"],
         "within_20um": item["interior_nodes_within_20um_of_minimum"],
+        **({"scaled_minimum_work": item["dimensionless_minimum_work_over_h4"]}
+           if spectrum else {}),
     } for item in cases]))
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]))
+    main(Path(sys.argv[1]), spectrum="--spectrum" in sys.argv[2:],
+         uniform_family="--uniform-family" in sys.argv[2:],
+         open_pose="--open-pose" in sys.argv[2:])

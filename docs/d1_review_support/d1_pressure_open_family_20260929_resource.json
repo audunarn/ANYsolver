@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 19.057238200010033,
+  "peak_process_tree_memory_mb": 238.534656,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_pressure_family_preflight_dev.py",
+    "docs/d1_review_support/d1_pressure_open_family_20260929.json",
+    "--spectrum",
+    "--uniform-family",
+    "--open-pose"
+  ],
+  "log": "docs\\d1_review_support\\d1_pressure_open_family_20260929.log"
+}

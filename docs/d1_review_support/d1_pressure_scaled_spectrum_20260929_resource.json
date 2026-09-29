@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 1.5477774000028148,
+  "peak_process_tree_memory_mb": 137.19552,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_pressure_family_preflight_dev.py",
+    "docs/d1_review_support/d1_pressure_scaled_spectrum_20260929.json",
+    "--spectrum"
+  ],
+  "log": "docs\\d1_review_support\\d1_pressure_scaled_spectrum_20260929.log"
+}
