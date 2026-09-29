@@ -372,6 +372,140 @@ def test_s3_j2_checkpoint_restores_without_beam_yield():
     assert resumed_owner.checkpoint() == prefix
 
 
+def test_yielded_s3_checkpoint_rejection_and_continuation(monkeypatch):
+    base = _panel()
+    pressure = 20_000.
+    curve = DNVC208MaterialCurve(
+        pressure, 1.05*pressure, 1.1*pressure,
+        .005, .01, 4.*pressure, .2)
+    definition = replace(base, shell=replace(
+        base.shell, q4_elements=(),
+        s3_elements=((1, 2, 5), (1, 5, 4), (2, 3, 6), (2, 6, 5)),
+        j2_curve=curve))
+    owner = ExperimentalGEAnalysis(definition)
+    accepted = owner.solve(_actions(), (.05,), max_iterations=20,
+                           max_backtracks=12)
+    assert max(max(row) for row in accepted.shell_layer_alpha) > 0.
+    assert max(max(row) for row in accepted.beam_station_accumulated) == 0.
+    assert accepted.free_equilibrium_ratio <= 1e-8
+    saved = owner.checkpoint()
+    assert saved.startswith(S3_BINARY_CHECKPOINT_MAGIC)
+    resumed_owner = ExperimentalGEAnalysis(definition)
+    restored = resumed_owner.restore(saved)
+    assert restored.shell_layer_alpha == accepted.shell_layer_alpha
+    for original, repeated in zip(accepted.shell_s3_material,
+                                  restored.shell_s3_material):
+        for field in ("layer_stress", "plastic_strain", "alpha"):
+            np.testing.assert_allclose(getattr(original, field),
+                                       getattr(repeated, field),
+                                       rtol=1e-10, atol=1e-8)
+
+    original_assemble = finite_experimental.FinitePointDriver._assemble
+
+    rejected_assemblies = 0
+
+    def reject_next(self, state, factor, *args, **kwargs):
+        nonlocal rejected_assemblies
+        response = original_assemble(self, state, factor, *args, **kwargs)
+        if factor == .06:
+            rejected_assemblies += 1
+            if rejected_assemblies == 2:
+                assert not np.array_equal(state.q, self._state.q)
+                raise RuntimeError("fixture rejected yielded S3 trial")
+        return response
+
+    with monkeypatch.context() as patcher:
+        patcher.setattr(finite_experimental.FinitePointDriver,
+                        "_assemble", reject_next)
+        with pytest.raises(RuntimeError, match="rejected yielded S3 trial"):
+            owner.solve(_actions(), (.06,), max_iterations=20,
+                        max_backtracks=12)
+    assert rejected_assemblies == 2
+    assert owner.checkpoint() == saved
+    token = CancellationToken()
+    cancelled_assemblies = 0
+
+    def cancel_next(self, state, factor, *args, **kwargs):
+        nonlocal cancelled_assemblies
+        response = original_assemble(self, state, factor, *args, **kwargs)
+        if factor == .06:
+            cancelled_assemblies += 1
+            if cancelled_assemblies == 2:
+                assert not np.array_equal(state.q, self._state.q)
+                token.cancel("yielded S3 accepted-prefix cancellation")
+        return response
+
+    with monkeypatch.context() as patcher:
+        patcher.setattr(finite_experimental.FinitePointDriver,
+                        "_assemble", cancel_next)
+        with pytest.raises(SolveCancelled, match="yielded S3 accepted-prefix"):
+            owner.solve(_actions(), (.06,), cancellation_token=token,
+                        max_iterations=20, max_backtracks=12)
+    assert cancelled_assemblies == 2
+    assert owner.checkpoint() == saved
+
+    direct_next = owner.solve(_actions(), (.06,), max_iterations=20,
+                              max_backtracks=12)
+    resumed_next = resumed_owner.solve(_actions(), (.06,), max_iterations=20,
+                                      max_backtracks=12)
+    assert direct_next.accepted_factors == resumed_next.accepted_factors
+    assert direct_next.shell_layer_alpha == resumed_next.shell_layer_alpha
+    assert (direct_next.beam_station_accumulated ==
+            resumed_next.beam_station_accumulated)
+    for field in ("shell_displacement", "beam_positions", "beam_frames",
+                  "cell_frames", "cell_resultants", "multipliers",
+                  "support_reactions"):
+        np.testing.assert_allclose(getattr(direct_next, field),
+                                   getattr(resumed_next, field),
+                                   rtol=1e-10, atol=1e-12)
+    for original, repeated in zip(direct_next.shell_s3_material,
+                                  resumed_next.shell_s3_material):
+        for field in ("layer_stress", "plastic_strain", "alpha"):
+            np.testing.assert_allclose(getattr(original, field),
+                                       getattr(repeated, field),
+                                       rtol=1e-10, atol=1e-8)
+
+
+def test_s3_shell_yielded_beam_actual_update_tangent():
+    base = _q4_shell_j2_panel()
+    definition = replace(base, shell=replace(
+        base.shell, q4_elements=(),
+        s3_elements=((1, 2, 5), (1, 5, 4), (2, 3, 6), (2, 6, 5))))
+    owner = ExperimentalGEAnalysis(definition)
+    accepted = owner.solve(_actions(), (.5,), max_iterations=20,
+                           max_backtracks=12)
+    assert accepted.generation == 1
+    assert max(max(row) for row in accepted.beam_station_accumulated) > 0.
+    assert max(max(row) for row in accepted.shell_layer_alpha) == 0.
+
+    driver = owner._finite_driver
+    state = driver._state
+    args = (1., driver._shell_origins, driver._beam_origins)
+    residual, tangent, *_ = driver._assemble(
+        state, *args, pattern=driver._pattern)
+    count = owner._K.shape[0]
+    free = np.r_[owner._free, np.arange(count, tangent.shape[0])]
+    direction = np.zeros(tangent.shape[0])
+    direction[free] = finite_experimental.spla.spsolve(
+        tangent[free, :][:, free], -residual[free])
+    predicted = tangent@direction
+    for magnitude in (1e-6, 1e-7):
+        positive = driver._assemble(
+            driver._advance(state, direction, magnitude), *args,
+            pattern=driver._pattern)[0]
+        negative = driver._assemble(
+            driver._advance(state, direction, -magnitude), *args,
+            pattern=driver._pattern)[0]
+        observed = (positive-negative)/(2*magnitude)
+        for indices in (slice(0, owner._shell_count),
+                        slice(owner._shell_count, count), free):
+            relative = (np.linalg.norm((observed-predicted)[indices]) /
+                        np.linalg.norm(predicted[indices]))
+            assert relative < 1e-5
+        assert np.linalg.norm((observed-predicted)[count:]) < 1e-9
+    assert owner._generation == 1
+
+
 def test_generalized_beam_plastic_history_is_atomic_and_restartable(monkeypatch):
     definition = _plastic_panel()
     owner = ExperimentalGEAnalysis(definition)
