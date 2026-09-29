@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "src"), str(ROOT / "tests")]
 
 import anysolver
+from anysolver import corotational
 from anymaterial import DNVC208MaterialCurve
 from anysolver._stiffened_shell_ge_experimental import ExperimentalGEAnalysis
 from test_stiffened_shell_ge_finite_experimental import _actions, _panel
@@ -51,10 +52,42 @@ def _blocks(owner, size):
             "free_all": np.r_[owner._free, np.arange(count, size)]}
 
 
-def run(checkpoint: Path, intermediate: float | None = None):
+def _install_stable_shell_pullback():
+    """Match the diagnostic chart used to create the accepted 40 N state."""
+    original_pullback = corotational._corotational_deformation_state
+
+    def stable(reference, element, u_element):
+        if reference.category != "shell":
+            return original_pullback(reference, element, u_element)
+        count = int(element.num_nodes)
+        u = np.asarray(u_element, dtype=float).reshape(count, 6)
+        translation, rotations = u[:, :3], u[:, 3:]
+        deformed = reference.coordinates+translation
+        rigid = (
+            corotational._shell_center_frame(element, deformed)@
+            reference.frame.T)
+        local = np.zeros((count, 6))
+        arm = reference.coordinates-reference.centroid
+        shifted = translation-translation.mean(axis=0)
+        rotation_difference = rigid.T-np.eye(3)
+        for node in range(count):
+            local[node, :3] = (
+                rigid.T@shifted[node]+rotation_difference@arm[node])
+            nodal = corotational.rotation_matrix_from_vector(rotations[node])
+            local[node, 3:] = (
+                corotational.rotation_vector_from_matrix(rigid.T@nodal))
+        return local.reshape(-1), rigid, deformed
+
+    corotational._corotational_deformation_state = stable
+
+
+def run(checkpoint: Path, intermediate: float | None = None,
+        *, stable_pullback: bool = False):
     expected = (ROOT / "src" / "anysolver" / "__init__.py").resolve()
     if Path(anysolver.__file__).resolve() != expected:
         raise RuntimeError("diagnostic imported another checkout")
+    if stable_pullback:
+        _install_stable_shell_pullback()
     raw = checkpoint.read_bytes()
     base = _panel()
     pressure = 20_000.
@@ -90,6 +123,7 @@ def run(checkpoint: Path, intermediate: float | None = None):
                     "source": str(expected), "checkpoint": str(checkpoint.resolve()),
                     "checkpoint_sha256": sha256(raw).hexdigest(),
                     "threadpools": threadpool_info(), "preliminary": preliminary,
+                    "stable_pullback_counterfactual": stable_pullback,
                     "outcome": {"status": "not_attempted"},
                     "accepted_checkpoint_unchanged": owner.checkpoint() == before,
                     "assemblies_in_attempt": 0,
@@ -231,6 +265,7 @@ def run(checkpoint: Path, intermediate: float | None = None):
             "source": str(expected), "checkpoint": str(checkpoint.resolve()),
             "checkpoint_sha256": sha256(raw).hexdigest(),
             "threadpools": threadpool_info(), "preliminary": preliminary,
+            "stable_pullback_counterfactual": stable_pullback,
             "outcome": outcome,
             "accepted_checkpoint_unchanged": unchanged,
             "assemblies_in_attempt": assemblies,
@@ -243,10 +278,12 @@ if __name__ == "__main__":
     parser.add_argument("checkpoint", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--intermediate", type=float)
+    parser.add_argument("--stable-pullback", action="store_true")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError("preserve existing diagnostic evidence")
-    output = run(args.checkpoint, args.intermediate)
+    output = run(args.checkpoint, args.intermediate,
+                 stable_pullback=args.stable_pullback)
     args.output.write_text(json.dumps(output, indent=2, sort_keys=True,
                                       allow_nan=False)+"\n", encoding="utf-8")
     print(json.dumps({"status": output["outcome"]["status"],
