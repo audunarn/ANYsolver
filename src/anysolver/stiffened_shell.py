@@ -12,6 +12,7 @@ from ._b2_physical_linear_definition import (
     PROFILE_ID as B2_E4_PL_FAST_LINEAR_V1,
     PhysicalB2Member, CompiledPhysicalB2Member,
 )
+from ._b2_physical_flexibility_linear import LinearSection
 from ._stiffened_shell_b2_experimental import ExperimentalB2Analysis
 from ._stiffened_shell_b2_q4_point_experimental import (
     ExperimentalB2Q4PointAnalysis,
@@ -115,6 +116,6 @@ __all__ = [
     "ShellPanel", "PointConnection",
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
-    "Q4PanelShell", "Q4B2Point",
+    "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "create_analysis",
 ]
