@@ -84,12 +84,38 @@ def test_q4_shell_and_beam_yield_atomically_and_restart(monkeypatch):
     assert accepted.constraint_max <= 1e-9
     assert max(max(row) for row in accepted.shell_layer_alpha) > 0.
     assert max(max(row) for row in accepted.beam_station_accumulated) > 0.
+    assert tuple(item.element_id for item in accepted.shell_q4_material) == (1, 2)
+    e = definition.shell.young_pa
+    nu = definition.shell.poisson
+    plane_stress = e/(1.-nu*nu)*np.array(
+        ((1., nu, 0.), (nu, 1., 0.), (0., 0., (1.-nu)/2.)))
+    for index, response in enumerate(accepted.shell_q4_material):
+        assert response.layer_stress.shape == (12, 3)
+        assert response.layer_strain.shape == (12, 3)
+        assert np.isfinite(response.layer_stress).all()
+        assert not response.layer_stress.flags.writeable
+        assert not response.plastic_strain.flags.writeable
+        with pytest.raises(ValueError):
+            response.layer_stress.setflags(write=True)
+        np.testing.assert_array_equal(response.alpha,
+                                      accepted.shell_layer_alpha[index])
+        np.testing.assert_allclose(
+            response.layer_stress,
+            (response.layer_strain-response.plastic_strain)@plane_stress.T,
+            rtol=1e-10, atol=1e-6)
     saved = direct_owner.checkpoint()
     assert saved.startswith(BINARY_CHECKPOINT_MAGIC)
     restored_owner = ExperimentalGEAnalysis(definition)
     restored = restored_owner.restore(saved)
     assert restored.shell_layer_alpha == accepted.shell_layer_alpha
     assert restored.beam_station_accumulated == accepted.beam_station_accumulated
+    for original, repeated in zip(accepted.shell_q4_material,
+                                  restored.shell_q4_material):
+        assert original.element_id == repeated.element_id
+        for field in ("layer_strain", "layer_stress", "plastic_strain", "alpha"):
+            np.testing.assert_allclose(getattr(original, field),
+                                       getattr(repeated, field),
+                                       rtol=1e-10, atol=1e-8)
     np.testing.assert_array_equal(restored.shell_displacement,
                                   accepted.shell_displacement)
 
@@ -134,6 +160,11 @@ def test_q4_shell_and_beam_yield_atomically_and_restart(monkeypatch):
     assert direct.accepted_factors == resumed.accepted_factors
     assert direct.shell_layer_alpha == resumed.shell_layer_alpha
     assert direct.beam_station_accumulated == resumed.beam_station_accumulated
+    for current, restarted in zip(direct.shell_q4_material,
+                                  resumed.shell_q4_material):
+        np.testing.assert_allclose(current.layer_stress,
+                                   restarted.layer_stress,
+                                   rtol=1e-10, atol=1e-8)
     np.testing.assert_array_equal(direct.shell_displacement,
                                   resumed.shell_displacement)
     np.testing.assert_array_equal(direct.cell_resultants,

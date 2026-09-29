@@ -141,6 +141,17 @@ during development and is not a formulation verdict. S3 J2, physical beam
 fibres, reversal, complete material recovery, F05/G3 and production acceptance
 remain open.
 
+**Q4 accepted-layer recovery follow-up:** The experimental finite result now
+copies the converged Q4 layer strain, plane stress, plastic strain and alpha
+from the same accepted material trial. V4 restoration re-evaluates those
+responses at the saved endpoint; the arrays are owned and read-only. A focused
+constitutive check verifies stress from total minus plastic strain, and the
+source and fresh-wheel combined suites each passed 52/52. Independent review
+found no accepted-state mismatch. The values are local Q4 plane-stress layers,
+not global stress, transverse shear, resultants or a full shell stress tensor.
+The remaining frame/order/work, unload/reversal and material-family checks
+still bar complete material recovery, F05/G3 and production acceptance.
+
 **Positive unloading/reloading development slice:** The same point owner now
 accepts changing positive load factors, preserves material history on
 unload/reload, and uses the separate V3 checkpoint for a nonmonotone elastic

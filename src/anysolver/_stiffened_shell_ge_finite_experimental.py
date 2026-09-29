@@ -96,6 +96,34 @@ def _shell_material_states(plastic, alpha):
 
 
 @dataclass(frozen=True)
+class ShellQ4MaterialRecovery:
+    """Owned local Q4 plane-stress response, not a full shell stress tensor.
+
+    Rows follow four native Q4 Gauss stations, each with three Lobatto layers
+    from bottom to top. Strain columns are (xx, yy, engineering xy); stress
+    columns are (xx, yy, tensor xy) in the element frame, in pascals.
+    """
+
+    element_id: int
+    layer_strain: np.ndarray
+    layer_stress: np.ndarray
+    plastic_strain: np.ndarray
+    alpha: np.ndarray
+
+
+def _shell_q4_recovery(parts, states):
+    if len(parts) != len(states):
+        raise ValueError("complete Q4 shell material recovery required")
+    return tuple(ShellQ4MaterialRecovery(
+        int(part[0]),
+        _owned(state["layer_strain"], (12, 3)),
+        _owned(state["layer_stress"], (12, 3)),
+        _owned(state["plastic_strain"], (12, 3)),
+        _owned(state["alpha"], (12,)),
+    ) for part, state in zip(parts, states))
+
+
+@dataclass(frozen=True)
 class FinitePointResult:
     """Experimental finite result with dimensionless work/row-scaled errors."""
     status: str
@@ -114,6 +142,7 @@ class FinitePointResult:
     accepted_factors: tuple[float, ...]
     beam_station_accumulated: tuple[tuple[float, ...], ...] = ()
     shell_layer_alpha: tuple[tuple[float, ...], ...] = ()
+    shell_q4_material: tuple[ShellQ4MaterialRecovery, ...] = ()
     production_qualified: bool = False
 
 
@@ -338,6 +367,8 @@ class FinitePointDriver:
                         _material_observables(beam_next),
                         (tuple(tuple(float(v) for v in state["alpha"])
                                for state in shell_next)
+                         if owner._definition.shell.j2_curve is not None else ()),
+                        (_shell_q4_recovery(owner._shell_parts, shell_next)
                          if owner._definition.shell.j2_curve is not None else ()))
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.publish")
@@ -560,7 +591,9 @@ class FinitePointDriver:
             value["generation"], tuple(factors),
             _material_observables(beam_origins),
             (tuple(tuple(float(v) for v in state["alpha"])
-                   for state in shell_origins) if shell_material else ()))
+                   for state in shell_origins) if shell_material else ()),
+            (_shell_q4_recovery(owner._shell_parts, shell_next)
+             if shell_material else ()))
         self._state = trial
         self._pattern = pattern
         self._shell_origins = shell_origins if shell_material else shell_next
