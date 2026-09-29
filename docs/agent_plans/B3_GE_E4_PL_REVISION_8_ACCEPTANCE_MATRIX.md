@@ -1,7 +1,7 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
-**Updated:** 29 September 2026. **Candidate:** integration branch through
-`3009b3d0`, plus the E01 development screen recorded in the active state.
+**Updated:** 29 September 2026. **Candidate:** current integration branch;
+exact development-screen source identities are recorded with their raw evidence.
 This is the forward status index, not an
 amendment to frozen registrations or historical results. The
 [complete programme](B3_GE_E4_PL_B2_COMPLETE_PROGRAMME.md) defines
@@ -60,7 +60,7 @@ candidate adjudication; a failed required case cannot disappear within it.
 
 | External comparison | Status | Current boundary |
 |---|---|---|
-| E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees 2/4/8-interval signed point screens and native source comparisons passed primary-response, link, work and wrench development checks, but secondary responses disagree; formal observable/floor registration, installed comparison, refinement adjudication and independent review remain open. |
+| E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees signed point screens, including 2×1/4×2/8×4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. The 8×4 same-action and drilling-filtered replays localize only a small part of that coupled roll gap to the shell response under one fixed action; causation and matched idealization remain open. Formal observables/floors, installed comparison and independent review remain open. |
 | E02 torque/footprint | NOT_STARTED | No executed matched comparison. |
 | E03 curved stiffener | NOT_STARTED | No executed matched comparison. |
 | E04 nonlinear GE/capacity | NOT_STARTED | No executed matched comparison. |

@@ -34,39 +34,49 @@ def _sha(path: Path):
     return sha256(path.read_bytes()).hexdigest()
 
 
-def solve(ops, sign: int, intervals: int):
+def solve(ops, sign: int, intervals: int, transverse_intervals: int = 1):
     ops.wipe()
     ops.model("basic", "-ndm", 3, "-ndf", 6)
-    upper_start = intervals + 2
+    def shell_id(row, column):
+        return 1 + row * (intervals + 1) + column
+
+    root_nodes = tuple(shell_id(row, 0)
+                       for row in range(transverse_intervals + 1))
+    shell_elements = intervals * transverse_intervals
     tip_node = 101 + 2 * intervals
     shell_nodes = {
-        **{1 + i: (2. * i / intervals, -.5, 0.)
-           for i in range(intervals + 1)},
-        **{upper_start + i: (2. * i / intervals, .5, 0.)
-           for i in range(intervals + 1)},
+        shell_id(row, i): (2. * i / intervals,
+                           -.5 + row / transverse_intervals, 0.)
+        for row in range(transverse_intervals + 1)
+        for i in range(intervals + 1)
     }
     beam_nodes = {101 + i: (i / intervals, -.5, sign * .1)
                   for i in range(2 * intervals + 1)}
     nodes = shell_nodes | beam_nodes
-    pairs = tuple((1 + i, 101 + 2 * i) for i in range(intervals + 1))
+    pairs = tuple((shell_id(0, i), 101 + 2 * i)
+                  for i in range(intervals + 1))
     for tag, xyz in nodes.items():
         ops.node(tag, *xyz)
 
     ops.section("ElasticMembranePlateSection", 1, E, NU,
                 SHELL_THICKNESS, 7850.)
-    for i in range(intervals):
-        ops.element("ASDShellQ4", 1 + i,
-                    1 + i, 2 + i, upper_start + i + 1,
-                    upper_start + i, 1)
+    shell_connectivity = []
+    for row in range(transverse_intervals):
+        for i in range(intervals):
+            element = 1 + row * intervals + i
+            corners = (shell_id(row, i), shell_id(row, i + 1),
+                       shell_id(row + 1, i + 1), shell_id(row + 1, i))
+            ops.element("ASDShellQ4", element, *corners, 1)
+            shell_connectivity.append((element, corners))
     ops.geomTransf("Linear", 1, 0., 0., 1.)
     for i in range(2 * intervals):
-        ops.element("ElasticTimoshenkoBeam", intervals + 1 + i,
+        ops.element("ElasticTimoshenkoBeam", shell_elements + 1 + i,
                     101 + i, 102 + i,
                     E, G, AREA, TORSION, SECOND_MOMENT, SECOND_MOMENT,
                     SHEAR_AREA, SHEAR_AREA, 1)
     for shell, beam in pairs:
         ops.rigidLink("beam", shell, beam)
-    for tag in (1, upper_start):
+    for tag in root_nodes:
         ops.fix(tag, 1, 1, 1, 1, 1, 1)
 
     ops.timeSeries("Linear", 1)
@@ -88,20 +98,19 @@ def solve(ops, sign: int, intervals: int):
     ops.reactions()
     disp = {tag: tuple(float(v) for v in ops.nodeDisp(tag)) for tag in nodes}
     printed_support = {tag: tuple(float(v) for v in ops.nodeReaction(tag))
-                       for tag in (1, upper_start)}
+                       for tag in root_nodes}
     beam_root_force = tuple(float(v) for v in ops.eleResponse(
-        intervals + 1, "globalForce"))
+        shell_elements + 1, "globalForce"))
     if len(beam_root_force) != 12 or not all(map(math.isfinite, beam_root_force)):
         raise ValueError("global beam-end resisting-force inventory required")
     arm = tuple(nodes[101][d] - nodes[1][d] for d in range(3))
     arm_moment = _cross(arm, beam_root_force[:3])
-    support = {
-        1: tuple(printed_support[1][d] + beam_root_force[d]
-                 for d in range(3))
+    support = dict(printed_support)
+    support[1] = (
+        tuple(printed_support[1][d] + beam_root_force[d]
+              for d in range(3))
         + tuple(printed_support[1][d + 3] + beam_root_force[d + 3]
-                + arm_moment[d] for d in range(3)),
-        upper_start: printed_support[upper_start],
-    }
+                + arm_moment[d] for d in range(3)))
     if any(len(row) != 6 or not all(map(math.isfinite, row))
            for row in (*disp.values(), *support.values(),
                        *printed_support.values())):
@@ -118,22 +127,17 @@ def solve(ops, sign: int, intervals: int):
     if not any(abs(v) > 1e-15 for v in tip[:3]):
         raise ValueError("zero tip response to applied load")
     internal_work = 0.
-    for i in range(intervals):
-        shell_element_nodes = (1 + i, 2 + i, upper_start + i + 1,
-                               upper_start + i)
-        for element, element_nodes in (
-                (1 + i, shell_element_nodes),
-                (intervals + 1 + 2 * i,
-                 (101 + 2 * i, 102 + 2 * i)),
-                (intervals + 2 + 2 * i,
-                 (102 + 2 * i, 103 + 2 * i))):
-            forces = tuple(float(v) for v in ops.eleResponse(
-                element, "globalForce"))
-            if len(forces) != 6 * len(element_nodes):
-                raise ValueError("element global resisting-force inventory")
-            internal_work += sum(disp[node][d] * forces[6 * j + d]
-                                 for j, node in enumerate(element_nodes)
-                                 for d in range(6))
+    all_elements = shell_connectivity + [
+        (shell_elements + 1 + i, (101 + i, 102 + i))
+        for i in range(2 * intervals)]
+    for element, element_nodes in all_elements:
+        forces = tuple(float(v) for v in ops.eleResponse(
+            element, "globalForce"))
+        if len(forces) != 6 * len(element_nodes):
+            raise ValueError("element global resisting-force inventory")
+        internal_work += sum(disp[node][d] * forces[6 * j + d]
+                             for j, node in enumerate(element_nodes)
+                             for d in range(6))
     external_work = LOAD_N * tip[0]
     work_error = abs(internal_work - external_work)
     force = tuple(sum(support[tag][d] for tag in support) for d in range(3))
@@ -151,6 +155,7 @@ def solve(ops, sign: int, intervals: int):
                          f"{work_error=:.6g}")
     return {
         "offset_sign": sign, "shell_intervals": intervals,
+        "transverse_intervals": transverse_intervals,
         "point_stations": len(pairs), "tip_translation_m": tip[:3],
         "tip_rotation_rad": tip[3:], "support_reactions": support,
         "printed_support_reactions": printed_support,
@@ -165,11 +170,13 @@ def solve(ops, sign: int, intervals: int):
     }
 
 
-def main(site: Path, output: Path, intervals: int):
+def main(site: Path, output: Path, intervals: int,
+         transverse_intervals: int = 1):
     if sys.version_info[:2] != (3, 12):
         raise RuntimeError("the installed OpenSeesPy binary requires Python 3.12")
-    if intervals not in (2, 4, 8):
-        raise ValueError("bounded screen admits 2, 4, or 8 intervals")
+    if (intervals not in (2, 4, 8)
+            or transverse_intervals not in (1, intervals // 2)):
+        raise ValueError("bounded screen admits x=2/4/8 and y=1 or x/2")
     if output.exists():
         raise FileExistsError("preserve previous external screen")
     sys.path.insert(0, str(site))
@@ -187,11 +194,13 @@ def main(site: Path, output: Path, intervals: int):
         "load": "+1000 N x at beam tip; linear elastic",
         "joint": "OpenSees 3D rigidLink beam, shell retained and beam constrained",
         "shell_intervals": intervals,
+        "transverse_intervals": transverse_intervals,
         "cases": [], "failure": None,
     }
     try:
         for sign in (-1, 1):
-            record["cases"].append(solve(ops, sign, intervals))
+            record["cases"].append(solve(
+                ops, sign, intervals, transverse_intervals))
     except Exception as exc:
         record["failure"] = f"{type(exc).__name__}: {exc}"
     finally:
@@ -206,8 +215,10 @@ if __name__ == "__main__":
     parser.add_argument("--site", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--intervals", type=int, default=2)
+    parser.add_argument("--transverse-intervals", type=int, default=1)
     args = parser.parse_args()
-    result = main(args.site, args.output, args.intervals)
+    result = main(args.site, args.output, args.intervals,
+                  args.transverse_intervals)
     print(json.dumps({"failure": result["failure"],
                       "intervals": result["shell_intervals"],
                       "cases": len(result["cases"]),

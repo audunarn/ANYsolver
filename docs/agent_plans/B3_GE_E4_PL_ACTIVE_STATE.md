@@ -67,6 +67,66 @@ At eight cells the bonded shell `u_y` agrees closely, while its `r_x` and
 difference. Next check matched shell rotational response before adjusting the
 point law, and freeze E01 observables, absolute floors and shell idealization
 before a formal installed comparison.
+Bounded discriminator: on the same eight-cell shell with identical root
+supports, apply separate lower-edge tip `F_y` and `F_z` to the isolated native
+and external shells. Compare displacement, physical director rotation and
+drilling response with work/balance checks. If the secondary rotational
+discrepancy persists without the beam or links, assess the shell idealization;
+otherwise examine coupled beam/joint force distribution. Neither outcome
+alone qualifies E01 or changes the point law.
+The two shell-only cases completed with work and wrench closure. At the
+bonded tip `F_y` gives `u_y` within 0.8%, but drilling `r_z` differs 24%; at
+the free edge the `r_z` difference is 59%. Under `F_z`, bonded-tip transverse
+motion differs 1.3% and physical `r_x` 3.4%. Thus a shell formulation
+difference exists without beam or link; it does not by itself allocate the
+larger coupled `r_x` difference. One next same-action check will apply the
+native coupled shell-interface covector to both isolated shells. If the
+external shell then reproduces most of the coupled rotation difference, the
+shell operator is implicated; otherwise compare actual interface actions.
+Keep this development diagnostic distinct from E01 acceptance.
+The first full same-action replay closed external shell work/balance and puts
+the bonded-tip external `r_x` at `3.492e-7 rad`, versus `3.986e-7` coupled
+external and `1.893e-7` native. It points toward shell-operator sensitivity,
+but includes native numerical drilling covectors: their absolute moment
+inventory is `12.84 N m` and signed work is 0.8% of shell-port work.
+External drilling rotation under this input is not physically comparable.
+Filter only that nonphysical channel in one paired native/external shell
+solve. If the physical `r_x` discrepancy persists, assess shell bending/shear;
+if it disappears, investigate drilling contamination of the point response.
+The filtered paired solve closed both balances. At the bonded tip physical
+`r_x` is unchanged to reported precision: native `1.893e-7`, external
+same-action `3.492e-7`, and external coupled `3.986e-7 rad`. In this linear
+decomposition the external shell response under the common action accounts
+for about 76% of that coupled roll difference; the remaining 24% comes from
+the changed coupled action. Drilling action does affect in-plane displacement
+slightly, so this is a bounded physical-roll result, not a general claim.
+The 2/4/8 comparison refined only along the beam and has one shell cell
+across the width. It cannot establish two-dimensional shell convergence.
+The bounded comparison used matched `2×1`, `4×2`, `8×4` shell grids with the
+same eccentric point-chain semantics, section, clamped root edge and signed
+load. Its decision rule was: if secondary differences decay, proceed toward a
+frozen E01 acceptance case; if not, review shell/connection idealization rather
+than choosing a subset of convenient observables.
+That bounded comparison now passed six source-development solves. The external
+2×1 case exactly reproduced its earlier tip displacement. At positive offset,
+beam-tip roll differs by 4.6%, 17.6%, 35.4% across 2×1, 4×2, 8×4, while axial
+translation differs by 0.077%, 0.089%, 0.172%; pitch differs by 0.94%, 0.28%,
+0.047%. Lateral translation and yaw also differ and are not discarded. Native
+free-equation ratio at 8×4 is 5.52e-9 and gap 4.36e-13; external work and
+wrench balances close. Thus two-direction refinement does not remove the roll
+discrepancy. The 8×4 same-action replay closed force, moment and work on both
+shell operators. At the bonded tip, native coupled/same-action roll is
+`4.07548e-7 rad`; external same-action is `4.28172e-7`, while external coupled
+is `6.31255e-7`. Only about 9.2% of the coupled roll difference appears under
+the identical native shell action; the remainder accompanies a changed coupled
+action. Filtering only the native numerical drilling moments leaves the
+physical roll values unchanged to reported precision. This bounds shell-only
+response for that action but does not uniquely allocate causation among shell,
+beam and connection. Stop automatic E01 refinement. Next use one targeted
+independent beam/connection work check or focused mechanics review to decide
+whether the action difference reflects a wrong idealization or admissible
+formulation sensitivity. E01/M1 acceptance remains open. Raw files and source
+hashes: `.qualification/b3-ge-e4-pl/r8-e01-opensees-point-dev-20260929-v1/README.md`.
 No F03 authority was used. The separate ANYmesh heavy job was not interrupted.
 
 Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1. This is the short working checkpoint. The complete pre-compaction note is preserved byte-for-byte in B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20260929.md (SHA-256 2D5071E8A93FDCF35FC3AF49955E0B85F431A19B1DF2BF3742A8CA560584BCDA). The complete programme, acceptance matrix, frozen registrations, failures, and versioned evidence remain authoritative.
