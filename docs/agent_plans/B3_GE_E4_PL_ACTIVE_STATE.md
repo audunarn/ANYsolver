@@ -29,10 +29,22 @@ lateral/eccentric arm, and first/second directional work derivatives at the
 virgin pose. The fixture's clamp correctly prevents a
 whole-body state-manager step, so the objectivity check transforms the local
 pose directly; the actual-update derivative check uses the state manager.
-BL5 remains a local development candidate. Next verify wrench recovery in
-the assembled representation, then test supported off-ratio modes and a
-coherent growing multiplier rule. No installed, loaded, or formal F03
-acceptance is implied.
+BL5 now also has a separate reference-linear weak-line descriptor in the
+existing sparse owner, with complete P0 spans of one or two trace edges.
+It currently pairs each shell edge with one native half-cell; genuinely
+nonmatching mapping remains unsupported and explicitly excluded in capabilities.
+The four-edge elastic panel solves for both spans; direct sampled-work rows,
+sparse/dense physical coordinates, full KKT residuals, support force/moment,
+checkpoint restoration, and span-bound checkpoint incompatibility pass. The
+span-one fixture exposes a retained
+resultant difference of 1.25e-6 (9.6e-8 relative) between two numerically
+equilibrated sparse/dense solves, while physical coordinates differ by at
+most 1.36e-14 and both KKT residuals are below 1.6e-11. This is a numerical
+conditioning finding, not V02 acceptance or a reason to relax its criterion.
+The changed source plus existing GE and L1 checks pass 38/38 with JIT disabled
+and one numerical thread. Next test the saved supported off-ratio mode and
+growing interface spaces before any multiplier decision. No installed,
+physically matched, or formal F03 acceptance is implied.
 
 The bounded M1 low-yield ticket restored the existing accepted 40 N checkpoint
 and reproduced the 45 N backtrack-budget failure (163 assemblies, best free

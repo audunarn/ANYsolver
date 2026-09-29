@@ -33,8 +33,9 @@ from ._stiffened_shell_ge_checkpoint_binary import (
     decode_s3 as _decode_s3_binary_checkpoint,
 )
 from ._stiffened_shell_l1_assembly_experimental import (
-    ExperimentalL1Line, compile_lines as _compile_l1_lines,
-    _row_count as _l1_row_count,
+    ExperimentalL1Line, ExperimentalBL5Line,
+    compile_lines as _compile_weak_lines,
+    _row_count as _weak_line_row_count,
 )
 
 
@@ -126,7 +127,7 @@ class LinearDefinition:
     beams: tuple[NativeBeamDefinition, ...]
     points: tuple[PointConnection, ...]
     fixed: tuple[FixedCoordinate, ...]
-    lines: tuple[ExperimentalL1Line, ...] = ()
+    lines: tuple[ExperimentalL1Line | ExperimentalBL5Line, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -473,9 +474,9 @@ class ExperimentalGEAnalysis:
         self._beam_parts = tuple(beam_parts)
         self._definition = definition
         if (type(definition.lines) is not tuple or
-                any(type(line) is not ExperimentalL1Line
+                any(type(line) not in (ExperimentalL1Line, ExperimentalBL5Line)
                     for line in definition.lines)):
-            raise ValueError("typed experimental L1 lines required")
+            raise ValueError("typed experimental weak lines required")
         identity_payload = {
             "profile": PROFILE, "shell_ids": shell_ids,
             "shell_xyz": shell_xyz.tolist(), "shell_cells": panel.q4_elements,
@@ -535,7 +536,7 @@ class ExperimentalGEAnalysis:
         self._C = sparse.coo_matrix((c_data, (c_row, c_col)),
                                     shape=(6*len(constraint_rows), count)).tocsr()
         if definition.lines:
-            line_c, self._line_samples = _compile_l1_lines(
+            line_c, self._line_samples = _compile_weak_lines(
                 definition.lines, shell_ids=shell_ids, shell_xyz=shell_xyz,
                 shell_cells=panel.q4_elements+panel.s3_elements,
                 thickness=panel.thickness_m, beam_ids=beam_ids,
@@ -545,7 +546,7 @@ class ExperimentalGEAnalysis:
             row_sources.extend(
                 f"line {index} shell={line.shell_nodes[0]}..{line.shell_nodes[-1]} row={row}"
                 for index, line in enumerate(definition.lines)
-                for row in range(_l1_row_count(line)))
+                for row in range(_weak_line_row_count(line)))
         else:
             self._line_samples = ()
         self._constraint_scale = _owned(
@@ -592,7 +593,11 @@ class ExperimentalGEAnalysis:
     def capabilities(self):
         attachment = (("reference point pose",) if self._connections else ())
         if self._line_samples:
-            attachment += ("experimental L1 weak-line candidate",)
+            attachment += tuple(dict.fromkeys(
+                "experimental L1 weak-line candidate"
+                if type(line) is ExperimentalL1Line else
+                "experimental BL5 director-bond candidate"
+                for line in self._definition.lines))
         shell_plastic = self._definition.shell.j2_curve is not None
         excluded = ((("shell J2 plastic",) if not shell_plastic else ()) +
                     ("physical-fibre B3 finite",
@@ -600,7 +605,7 @@ class ExperimentalGEAnalysis:
                      "modes", "buckling")
                     if not self._line_samples else
                     ("shell J2 plastic", "physical-fibre B3 finite",
-                     "qualified bonded line", "footprint",
+                     "qualified bonded line", "nonmatching line mapping", "footprint",
                      "modes", "buckling"))
         if self._definition.shell.s3_elements and not self._line_samples:
             excluded += ("S3 corotational finite-rotation response",)
@@ -702,7 +707,7 @@ class ExperimentalGEAnalysis:
         """Advance point-coupled finite trials from one accepted predecessor."""
         self._require_open()
         if self._line_samples:
-            raise ValueError("experimental L1 line admits reference-linear analysis only")
+            raise ValueError("experimental weak line admits reference-linear analysis only")
         if self._accepted is not None:
             raise RuntimeError("finite and reference-linear states cannot be mixed")
         if self._finite_driver is None:
@@ -843,7 +848,7 @@ class ExperimentalGEAnalysis:
                  FINITE_S3_MATERIAL_CHECKPOINT)):
             if self._line_samples:
                 raise ValueError(
-                    "experimental L1 line admits reference-linear checkpoints only")
+                    "experimental weak line admits reference-linear checkpoints only")
             from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
             driver = FinitePointDriver(self)
             result = driver.restore(value)

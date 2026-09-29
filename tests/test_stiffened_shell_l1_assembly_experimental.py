@@ -176,3 +176,112 @@ def test_sparse_line_rows_match_independent_sampled_weak_work(space):
     np.testing.assert_allclose(multiplier@(owner._C@q),
                                (samples@multiplier)@(weights*(gaps@q)),
                                rtol=0., atol=1e-11)
+
+
+@pytest.mark.parametrize("span,rows", ((1, 20), (2, 10)))
+def test_bl5_sparse_rows_work_reaction_and_restart(span, rows):
+    base = _definition()
+    line = stiffened_shell.ExperimentalBL5Line(
+        base.lines[0].shell_nodes, base.lines[0].beam_halfcells,
+        multiplier_span=span)
+    definition = replace(base, lines=(line,))
+    owner = stiffened_shell.create_analysis(definition=definition)
+    assert owner._C.shape[0] == rows
+    assert owner.capabilities["attachment"] == (
+        "experimental BL5 director-bond candidate",)
+    assert owner.capabilities["analysis"] == ("reference_linear",)
+    assert owner.capabilities["experimental_line_spaces"] == (
+        f"BL5_P0_span_{span}",)
+    assert "nonmatching line mapping" in owner.capabilities["excluded"]
+    action = (stiffened_shell.NodalAction(
+        "beam", 105, (0., 0., 100., 0., 0., 0.)),)
+    result = owner.solve_linear(action)
+    assert result.status == "completed"
+    assert result.free_equilibrium_ratio < 1e-8
+    assert result.constraint_max < 1e-9
+    q = np.r_[result.shell_displacement, result.beam_coordinates]
+    load = owner._accepted[1]
+    rhs = np.r_[load[owner._free], np.zeros(rows)]
+    scale = np.r_[owner._coordinate_scale[owner._free],
+                  1./owner._constraint_scale]
+    dense = scale*np.linalg.solve(
+        scale[:, None]*owner._A.toarray()*scale[None, :], scale*rhs)
+    # The BL5 span-1 fixture has an ill-conditioned retained resultant;
+    # compare physical coordinates and complete KKT residuals separately.
+    physical = owner._free < owner._shell_count+6*len(owner._beam_ids)
+    np.testing.assert_allclose(q[owner._free][physical],
+                               dense[:len(owner._free)][physical],
+                               rtol=2e-8, atol=1e-11)
+    assert np.max(np.abs(owner._A@dense-rhs)) < 1e-8
+    assert np.max(np.abs(owner._A@np.r_[q[owner._free], result.multipliers]-rhs)) < 1e-8
+    np.testing.assert_allclose(owner._C@q, 0., atol=1e-9)
+    support = result.reactions[:owner._shell_count].reshape(-1, 6)
+    np.testing.assert_allclose(support[:, :3].sum(axis=0),
+                               (0., 0., -100.), atol=1e-6)
+    support_moment = (support[:, 3:].sum(axis=0)+
+                      np.cross(np.asarray(definition.shell.coordinates_m),
+                               support[:, :3]).sum(axis=0))
+    np.testing.assert_allclose(support_moment, (0., 100., 0.), atol=1e-5)
+    saved = owner.checkpoint()
+    restored = stiffened_shell.create_analysis(definition=definition)
+    np.testing.assert_array_equal(restored.restore(saved).beam_coordinates,
+                                  result.beam_coordinates)
+
+
+def test_bl5_line_rejects_wrong_reference_arm_and_duplicate():
+    base = _definition()
+    line = stiffened_shell.ExperimentalBL5Line(
+        base.lines[0].shell_nodes, base.lines[0].beam_halfcells,
+        expected_beam_arm=(0., 0., .05))
+    with pytest.raises(ValueError, match="reference correspondence"):
+        stiffened_shell.create_analysis(definition=replace(base, lines=(line,)))
+    line = replace(line, expected_beam_arm=(0., 0., -.05))
+    with pytest.raises(ValueError, match="repeated experimental BL5"):
+        stiffened_shell.create_analysis(
+            definition=replace(base, lines=(line, line)))
+
+
+def test_bl5_multiplier_span_changes_checkpoint_identity():
+    base = _definition()
+    first = stiffened_shell.ExperimentalBL5Line(
+        base.lines[0].shell_nodes, base.lines[0].beam_halfcells,
+        multiplier_span=1)
+    second = replace(first, multiplier_span=2)
+    owner = stiffened_shell.create_analysis(
+        definition=replace(base, lines=(first,)))
+    owner.solve_linear((stiffened_shell.NodalAction(
+        "beam", 105, (0., 0., 100., 0., 0., 0.)),))
+    other = stiffened_shell.create_analysis(
+        definition=replace(base, lines=(second,)))
+    assert owner.preflight()["identity"] != other.preflight()["identity"]
+    with pytest.raises(ValueError, match="incompatible mixed linear checkpoint"):
+        other.restore(owner.checkpoint())
+
+
+@pytest.mark.parametrize("span", (1, 2))
+def test_bl5_sparse_rows_equal_sampled_weak_work(span):
+    base = _definition()
+    line = stiffened_shell.ExperimentalBL5Line(
+        base.lines[0].shell_nodes, base.lines[0].beam_halfcells,
+        multiplier_span=span)
+    owner = stiffened_shell.create_analysis(
+        definition=replace(base, lines=(line,)))
+    positions = np.array([owner._beam_nodes[node][0] for node in owner._beam_ids])
+    frames = np.array([owner._beam_nodes[node][1] for node in owner._beam_ids])
+    state = Mechanical(positions, np.zeros_like(positions), frames,
+                       np.tile(np.eye(3), (len(owner._beam_parts), 2, 1, 1)),
+                       np.zeros((len(owner._beam_parts), 18)))
+    independently_scattered = np.zeros(owner._C.shape)
+    for operator, slots, weight, edge, _alpha in owner._line_samples:
+        local = operator.evaluate(np.zeros((2, 6)), state, np.zeros(5))
+        for channel in range(5):
+            row = channel*(len(line.beam_halfcells)//span)+edge//span
+            independently_scattered[row, slots] += weight*local.gap_jacobian[channel]
+    np.testing.assert_allclose(owner._C.toarray(), independently_scattered,
+                               rtol=0., atol=3e-14)
+    rng = np.random.default_rng(913)
+    multiplier = rng.normal(size=owner._C.shape[0])
+    direction = rng.normal(size=owner._K.shape[0])
+    np.testing.assert_allclose(
+        multiplier@(owner._C@direction),
+        (owner._C.T@multiplier)@direction, rtol=0., atol=1e-11)
