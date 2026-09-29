@@ -11,6 +11,7 @@ from hashlib import sha256
 import argparse
 import json
 from pathlib import Path
+import subprocess
 import sys
 import time
 
@@ -84,6 +85,8 @@ def run(checkpoint: Path, intermediate: float | None = None):
                            "detail": str(exc),
                            "accepted_factors": list(driver._accepted_factors)}
             return {"classification": "bounded cutback diagnostic; no F05/G3 acceptance",
+                    "source_git": subprocess.check_output(
+                        ("git", "rev-parse", "HEAD"), cwd=ROOT, text=True).strip(),
                     "source": str(expected), "checkpoint": str(checkpoint.resolve()),
                     "checkpoint_sha256": sha256(raw).hexdigest(),
                     "threadpools": threadpool_info(), "preliminary": preliminary,
@@ -223,6 +226,8 @@ def run(checkpoint: Path, intermediate: float | None = None):
             "multiplier_probes": multiplier_probes}
 
     return {"classification": "bounded development diagnostic; no F05/G3 acceptance",
+            "source_git": subprocess.check_output(
+                ("git", "rev-parse", "HEAD"), cwd=ROOT, text=True).strip(),
             "source": str(expected), "checkpoint": str(checkpoint.resolve()),
             "checkpoint_sha256": sha256(raw).hexdigest(),
             "threadpools": threadpool_info(), "preliminary": preliminary,

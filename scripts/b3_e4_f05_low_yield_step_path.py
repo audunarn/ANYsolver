@@ -12,6 +12,7 @@ from hashlib import sha256
 import argparse
 import json
 from pathlib import Path
+import subprocess
 import sys
 import time
 
@@ -183,6 +184,8 @@ def run(step_n: int = 5, max_force_n: int = 50, *,
     checkpoint = owner.checkpoint() if owner._generation else None
     return {
         "classification": "development load-path discriminator; no F05/G3 acceptance",
+        "source_git": subprocess.check_output(
+            ("git", "rev-parse", "HEAD"), cwd=ROOT, text=True).strip(),
         "imported_anysolver": str(expected),
         "threadpools": threadpool_info(),
         "targets": list(targets),
