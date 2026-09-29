@@ -225,6 +225,43 @@ def test_mixed_q4_s3_j2_and_beam_yield_checkpoint(monkeypatch):
     assert max(max(row) for row in accepted.beam_station_accumulated) > 0.
 
     saved = owner.checkpoint()
+    driver = owner._finite_driver
+    state = driver._state
+    args = (1.05, driver._shell_origins, driver._beam_origins)
+    residual, tangent, *_ = driver._assemble(
+        state, *args, pattern=driver._pattern)
+    count = owner._K.shape[0]
+    free = np.r_[owner._free, np.arange(count, tangent.shape[0])]
+    direction = np.zeros(tangent.shape[0])
+    direction[free] = finite_experimental.spla.spsolve(
+        tangent[free, :][:, free], -residual[free])
+    candidate = driver._advance(state, direction, .5)
+    base_eval = driver._assemble(candidate, *args, pattern=driver._pattern)
+    predicted = base_eval[1]@direction
+    origin_alpha = np.asarray(driver._shell_origins[0]["alpha"])
+    active = np.asarray(base_eval[4][0]["alpha"]) > origin_alpha+1e-12
+    assert 0 < np.count_nonzero(active) < active.size
+    for amount in (1e-2, 1e-3):
+        positive = driver._assemble(
+            driver._advance(candidate, direction, amount), *args,
+            pattern=driver._pattern)
+        negative = driver._assemble(
+            driver._advance(candidate, direction, -amount), *args,
+            pattern=driver._pattern)
+        observed = (positive[0]-negative[0])/(2*amount)
+        for response in (positive, negative):
+            np.testing.assert_array_equal(
+                np.asarray(response[4][0]["alpha"]) > origin_alpha+1e-12,
+                active)
+        for indices in (slice(0, owner._shell_count),
+                        slice(owner._shell_count, count), free):
+            error = np.linalg.norm((observed-predicted)[indices])
+            scale = np.linalg.norm(predicted[indices])
+            assert scale > 1.
+            assert error/scale < 1e-5
+        assert np.linalg.norm((observed-predicted)[count:]) < 1e-12
+    assert owner.checkpoint() == saved
+
     restored_owner = ExperimentalGEAnalysis(definition)
     restored = restored_owner.restore(saved)
     assert restored.shell_layer_alpha == accepted.shell_layer_alpha
