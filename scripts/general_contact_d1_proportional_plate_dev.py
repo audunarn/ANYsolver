@@ -16,8 +16,6 @@ import json
 from pathlib import Path
 import time
 
-import numpy as np
-
 from anysolver import (
     BoundaryCondition, ContactDefinition, ContactInteraction, ContactSurface,
     ContactSolverSettings, LoadCase, create_shell_element,

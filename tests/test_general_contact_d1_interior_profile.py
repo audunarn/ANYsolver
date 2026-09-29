@@ -7,9 +7,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from anysolver import BoundaryCondition, solve_static_nonlinear
+from anysolver import BoundaryCondition, create_shell_element, solve_static_nonlinear
 from anysolver.assembly import build_constraint_transformation
 from anysolver.control import SolveCancelled
+from anysolver.fe_core import FEModel
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 from anysolver.general_contact import semismooth_path
 from anysolver.general_contact.semismooth import linearize
@@ -31,6 +32,37 @@ def _free_map(model):
     return build_constraint_transformation(
         stiffness, zeros, model,
     )[2]
+
+
+@pytest.mark.parametrize("width", (0.25, 0.0625))
+@pytest.mark.parametrize("slope", (0.0, 1.0e-4))
+def test_planar_q4_source_vertical_energy_tracks_q1_shear(width, slope):
+    model = FEModel("planar_q4_vertical_energy_control")
+    model.add_material("elastic", 1.0e5, 0.3, density=1.0)
+    for node, point in enumerate(((0.0, 0.0, 0.0),
+                                  (width, 0.0, slope*width),
+                                  (width, width, slope*width),
+                                  (0.0, width, 0.0)), 1):
+        model.add_node(node, *point)
+    normal = np.asarray((-slope, 0.0, 1.0))
+    normal /= np.linalg.norm(normal)
+    model.add_element(1, create_shell_element(
+        1, (1, 2, 3, 4), "elastic", thickness=0.05,
+        reference_normal=tuple(normal)))
+    stiffness, _ = assemble_stiffness_matrix(model)
+    vertical = [model.mesh.dof_manager.get_node_dofs(node)[2]
+                for node in range(1, 5)]
+    actual = stiffness[np.ix_(vertical, vertical)].toarray()
+    shear_resultant = (5.0/6.0)*0.05*1.0e5/(2.0*(1.0+0.3))
+    exact_q1 = np.asarray((
+        (2/3, -1/6, -1/3, -1/6),
+        (-1/6, 2/3, -1/6, -1/3),
+        (-1/3, -1/6, 2/3, -1/6),
+        (-1/6, -1/3, -1/6, 2/3),
+    ))
+    np.testing.assert_allclose(actual/shear_resultant, exact_q1,
+                               rtol=0.0,
+                               atol=1.0e-12 if slope == 0.0 else 1.0e-7)
 
 
 def test_target_internal_s3_seam_is_covered_and_physical_rim_is_topological():

@@ -160,6 +160,27 @@ def evaluate(path: Path):
                            + restricted_response.T @ restricted_work.T)
     restricted_min = float(linalg.eigh(restricted_dual, mass,
                                        eigvals_only=True)[0])
+    mass_values, mass_vectors = linalg.eigh(mass)
+    if mass_values[0] <= 0.0:
+        raise ValueError("interior pressure mass is not positive")
+    inverse_mass_root = ((mass_vectors / np.sqrt(mass_values))
+                         @ mass_vectors.T)
+    normalized_work = (inverse_mass_root @ restricted_work
+                       @ inverse_mass_root)
+    work_detection_minimum = float(linalg.svdvals(normalized_work)[-1])
+    normalized_stiffness = (inverse_mass_root @ test_stiffness
+                            @ inverse_mass_root)
+    stiffness_upper = float(linalg.eigvalsh(
+        normalized_stiffness, subset_by_index=(len(selected)-1,
+                                               len(selected)-1))[0])
+    flexural_rigidity = 1.0e5*0.05**3/(12*(1-0.3**2))
+    hmin = min(1/saved["source_columns"], 1/saved["source_rows"])
+    scaled_stiffness_upper = stiffness_upper*hmin**4/flexural_rigidity
+    constructive_scaled_lower = (
+        work_detection_minimum**2/scaled_stiffness_upper)
+    actual_scaled_lower = restricted_min*flexural_rigidity/hmin**4
+    if constructive_scaled_lower > actual_scaled_lower*(1.0+1.0e-8):
+        raise ValueError("constructive pressure bound exceeds actual response")
     independent_restricted_work = np.asarray(
         oracle_work @ test_space)[selected]
     independent_restricted_response = linalg.solve(
@@ -194,6 +215,11 @@ def evaluate(path: Path):
         "production_work_singular_values_squared": values.tolist(),
         "admissible_source_vertical_test_columns": len(source_vertical_columns),
         "source_vertical_restricted_lower_bound": restricted_min,
+        "normalized_source_vertical_work_minimum": work_detection_minimum,
+        "scaled_source_vertical_stiffness_upper": scaled_stiffness_upper,
+        "constructive_scaled_source_vertical_lower_bound": (
+            constructive_scaled_lower),
+        "actual_scaled_source_vertical_lower_bound": actual_scaled_lower,
         "independent_source_vertical_restricted_lower_bound": (
             independent_restricted_min),
         "independent_vertical_work_singular_values_squared": (
