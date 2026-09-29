@@ -39,7 +39,8 @@ def _knots(length, cells, shift):
     return values
 
 
-def build_refined_case(source_columns, target_x_cells, target_y_cells):
+def build_refined_case(source_columns, target_x_cells, target_y_cells,
+                       *, four_phase=False):
     if source_columns < 1:
         raise ValueError("positive source cell count required")
     model = FEModel("d1_two_body_target_grid_dev")
@@ -123,33 +124,42 @@ def build_refined_case(source_columns, target_x_cells, target_y_cells):
             /source_columns*0.5
         for row in range(2) for column in range(source_stride)
     }
+    force_factors = ((0.0, 1.0, 1.0, 0.0, 1.0)
+                     if four_phase else (0.0, 1.0))
+    waypoints = (((0.0, 0.0), (0.0, 0.0), (0.05, 0.05),
+                  (0.05, 0.05), (0.05, 0.05))
+                 if four_phase else ((0.0, 0.0), (0.0, 0.0)))
     program = ContactPathProgram(
         controls=(ContactPathControl.node(1, "ux"),
                   ContactPathControl.node(1+source_stride, "ux")),
-        waypoints=((0.0, 0.0), (0.0, 0.0)),
+        waypoints=waypoints,
         steps_per_segment=2,
         nodal_forces=tuple(ContactPathNodalForce(
-            node, "uz", (0.0, -0.3*weight))
+            node, "uz", tuple(-0.3*weight*factor
+                              for factor in force_factors))
             for node, weight in force_weights.items()),
     )
     return model, definition, settings, program, x_knots, y_knots
 
 
-def run(source_columns, target_x_cells, target_y_cells, *, original_two_s3=False):
+def run(source_columns, target_x_cells, target_y_cells, *, original_two_s3=False,
+        four_phase=False):
     started = time.perf_counter()
     if original_two_s3:
         if (source_columns, target_x_cells, target_y_cells) != (4, 1, 1):
             raise ValueError("original control is the four-Q4/two-S3 case")
         model, definition, settings, program = build_case()
-        program = replace(
-            program, waypoints=program.waypoints[:2],
-            nodal_forces=tuple(replace(force, values_n=force.values_n[:2])
-                               for force in program.nodal_forces),
-        )
+        if not four_phase:
+            program = replace(
+                program, waypoints=program.waypoints[:2],
+                nodal_forces=tuple(replace(force, values_n=force.values_n[:2])
+                                   for force in program.nodal_forces),
+            )
         x_knots, y_knots = np.asarray((0.0, 1.3)), np.asarray((0.0, 1.0))
     else:
         model, definition, settings, program, x_knots, y_knots = (
-            build_refined_case(source_columns, target_x_cells, target_y_cells))
+            build_refined_case(source_columns, target_x_cells, target_y_cells,
+                               four_phase=four_phase))
     result = solve_static_nonlinear(
         model, contact=definition, contact_settings=settings,
         contact_path_program=program, max_iterations=18,
@@ -168,6 +178,7 @@ def run(source_columns, target_x_cells, target_y_cells, *, original_two_s3=False
         "source_q4_faces": source_columns,
         "target_s3_faces": 2*target_x_cells*target_y_cells,
         "original_two_s3_control": original_two_s3,
+        "four_phase": four_phase,
         "target_x_knots_m": x_knots.tolist(),
         "target_y_knots_m": y_knots.tolist(),
         "gap_tolerance_m": definition.interactions[0].gap_tolerance,
@@ -203,13 +214,15 @@ def main():
     parser.add_argument("--target-x-cells", type=int, required=True)
     parser.add_argument("--target-y-cells", type=int, required=True)
     parser.add_argument("--original-two-s3", action="store_true")
+    parser.add_argument("--four-phase", action="store_true")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists():
         parser.error("output already exists")
     record = run(args.source_columns, args.target_x_cells,
                  args.target_y_cells,
-                 original_two_s3=args.original_two_s3)
+                 original_two_s3=args.original_two_s3,
+                 four_phase=args.four_phase)
     args.output.write_text(json.dumps(record, indent=2)+"\n",
                            encoding="utf-8")
     print(json.dumps({key: record[key] for key in (

@@ -36,14 +36,15 @@ def main():
     source_path = args.saved_record
     saved_bytes = source_path.read_bytes()
     saved = json.loads(saved_bytes)
-    assert saved["status"] == "completed" and saved["accepted_steps"] == 2
+    assert saved["status"] == "completed"
+    assert 1 <= args.accepted_step <= saved["accepted_steps"]
     assert saved["source_q4_faces"] == 4 and saved["target_s3_faces"] == 32
     model, definition, settings, _program, _x, _y = build_refined_case(4, 4, 4)
-    if args.accepted_step == 2:
+    step = saved["steps"][args.accepted_step-1]
+    if "accepted_displacements" in step:
+        pose = np.asarray(step["accepted_displacements"], dtype=float)
+    elif args.accepted_step == saved["accepted_steps"]:
         pose = np.asarray(saved["final_displacements"], dtype=float)
-    elif args.accepted_step == 1 and "accepted_displacements" in saved["steps"][0]:
-        pose = np.asarray(saved["steps"][0]["accepted_displacements"],
-                          dtype=float)
     else:
         raise ValueError("requested accepted pose is not saved")
     assert pose.shape == (model.mesh.dof_manager.total_dofs,)

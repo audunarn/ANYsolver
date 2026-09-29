@@ -116,6 +116,51 @@ above unchanged.
 
 ## Evidence and decision
 
+### Refined-target eight-step workflow
+
+The parameterized runner was extended with an opt-in `--four-phase` path that
+uses the original example's five waypoints and load factors. The 4-Q4/32-S3
+case completed all eight press/slide/open/recontact steps in **96.19 s** at
+**433.61 MB** sampled process-tree peak, within the unchanged 180 s/1 GB
+development caps. Its first two step displacement vectors and integrated
+contact forces match the earlier two-step press exactly. [Raw cycle](d1_target_grid_4x4_cycle_20260929.json),
+[captured log](d1_target_grid_4x4_cycle_log_20260929.txt), and
+[resource record](d1_target_grid_4x4_cycle_resource_20260929.json) preserve
+the source, runner hash, snapshots and diagnostics.
+
+| Step | State | Active pressure modes | Source normal contact force (N) | Independent projected target-normal gap lower bound (µm) | Positive-area Q4/S3 pairs |
+|---:|---|---:|---:|---:|---:|
+| 1 | press | 2 | 0.0000183951 | −4.256 | 54 |
+| 2 | press | 2 | 0.0004282033 | −22.938 | 54 |
+| 3 | slide | 3 | 0.0003632720 | −24.190 | 55 |
+| 4 | slide | 4 | 0.0002852520 | −25.692 | 55 |
+| 5 | release | 2 | 0.0000158944 | −4.373 | 55 |
+| 6 | open | 0 | 0 | +40.000 | 55 |
+| 7 | recontact | 2 | 0.0000158944 | −4.373 | 55 |
+| 8 | recontact | 4 | 0.0002852520 | −25.692 | 55 |
+
+Every accepted pose satisfies the registered 50 µm independent projected-gap
+budget. Independent current-skin clipping and quadrature at steps 3–8 agree
+with production support within 5.11e−14 relative L2, pressure Gram within
+1.95e−13 relative Frobenius and normalized gap within 7.19e−13 m maximum.
+The six [pose logs and resource records](d1_target_grid_cycle_pose_3_log_20260929.txt)
+use the same offline probe and saved-cycle hash; steps 1–2 have the separate
+checks above. Integrated source/target contact-force imbalance is at most
+1.09e−19 N in these six later steps. The changing positive-overlap count
+exercises a smooth clipping-topology change, but these saved-pose values do
+not check generalized derivatives through its transition.
+
+This establishes a refined, generic-position deformable-target development
+workflow with accepted-pose independent gap and quadrature checks. It does
+not establish a converged two-body spatial response, a full integration-error
+budget, swept/rejected-path geometry, moment work, pressure-space stability
+or D1 qualification. Timings across different mesh sizes do not measure an
+optimization speedup.
+Independent read-only review found no concrete defect in the optional
+four-phase path, old/new first-step identity or saved-pose quadrature binding.
+Its endorsement is limited to the completed generic-position development
+cycle and accepted-pose checks stated here.
+
 Each case has a raw result, bounded resource record and captured log under
 `docs/d1_review_support/d1_target_grid_<case>_20260929.*`, where `<case>` is
 `original_control`, `baseline_final`, `2x1_final`, `2x2`, `2x4` or `4x4`.

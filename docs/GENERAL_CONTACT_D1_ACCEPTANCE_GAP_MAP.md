@@ -166,6 +166,17 @@ This narrows accepted-pose geometry and gap uncertainty for that press;
 nonlinear spatial convergence, swept/rejected-path gaps, complete integration
 error and pressure stability remain open.
 
+The [generic-position refined-target cycle](d1_review_support/d1_two_body_target_grid_preflight_20260929.md#refined-target-eight-step-workflow)
+now completes eight press/slide/open/recontact steps on four Q4 source faces
+and 32 deformable S3 target faces in 96.19 s/433.61 MB under the existing
+180 s/1 GB development cap. Its first two steps exactly replay the prior
+press. All eight accepted poses meet the independent projected 50 µm gap
+budget; offline support, pressure Gram and normalized gap agree at the six
+new slide/open/recontact poses. The overlap changes from 54 to 55 positive
+Q4/S3 pairs. This strengthens the full-workflow development route but does
+not close two-body spatial convergence, pressure stability, full moment work,
+swept-path or transition-derivative qualification.
+
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap
 bound at all eight accepted poses. Local and installed fields match; a forced
