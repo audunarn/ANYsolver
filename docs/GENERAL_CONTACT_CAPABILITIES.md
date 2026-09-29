@@ -20,13 +20,17 @@ known D1 method blocker for unrestricted partial overlap, not a failure
 claim for every saved finite load path. A new derived pairing or consistent
 stabilization requires its own pressure, response and timing evidence.
 
-ANYfem contact-intent persistence is implemented and locally tested on the
-separate `codex/anyfem-contact-intent` branch at `878bbde`
-(23 focused suite tests at `45bdf688`, plus 6 focused file-round-trip tests at
-`878bbde`). It stores geometry-region selections and rejects a selected
-contact job while ordinary jobs remain usable. This C9 storage slice has no
-mesh map, contact solve or results adapter, and is neither independently
-accepted nor released. See its `docs/contact_intent_task.md` in that branch.
+ANYfem contact-intent persistence and exact source-face-to-mesh mapping are
+implemented and locally tested on the separate `codex/anyfem-contact-intent`
+branch at `afc7c3ad`. The 29 September focused run against the active solver
+source passed 32 tests. Independent mapping review found an ambiguous mesh
+element-ID case and a misleading skip gate; both were corrected and retested.
+Stored geometry-region selections survive file save/load. A selected contact
+job is rejected while ordinary jobs remain usable. The mapping produces a
+development contact definition and conservative solver capability report;
+application admission remains false. This C9 slice has no contact solve or
+results adapter and is neither independently accepted nor released. See its
+`docs/contact_intent_task.md` in that branch.
 
 The public `report_general_contact_capability(model, definition, settings)`
 reports the static validator's implementation verdict together with selected
