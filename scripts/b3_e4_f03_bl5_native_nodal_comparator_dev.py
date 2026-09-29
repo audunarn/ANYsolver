@@ -160,7 +160,43 @@ def _strong_case(owner, rows, case):
         raise ValueError("finite native nodal comparison required")
     q = np.zeros(owner._K.shape[0])
     q[free] = solution[:len(free)]
-    return _metrics(owner, q, solution[len(free):], rows, load), matrix
+    lam = solution[len(free):]
+    return _metrics(owner, q, lam, rows, load), matrix, q, lam
+
+
+def _same_shell_action(owner, rows, q, lam, external):
+    count = owner._shell_count
+    native = np.asarray(-rows.T[:count, :]@lam).ravel()
+    reference = np.zeros(count)
+    keys = {str(node) for node in range(2, INTERVALS+2)}
+    if set(external["shell_interface_action"]) != keys:
+        raise ValueError("complete external nonroot edge action required")
+    for key, wrench in external["shell_interface_action"].items():
+        index = owner._shell_index[int(key)]
+        reference[6*index:6*index+6] = wrench
+    free = np.setdiff1d(np.arange(count),
+                        owner._fixed[owner._fixed < count])
+    shell = owner._K[:count, :count].tocsc()
+    response = np.zeros(count)
+    response[free] = splu(shell[free, :][:, free]).solve(reference[free])
+    own_work = float(native@q[:count])
+    reference_work = float(reference@response)
+    cross_work = float(reference@q[:count])
+    difference = own_work+reference_work-2*cross_work
+    if (own_work <= 0. or reference_work <= 0. or
+            difference < -1e-10*max(own_work, reference_work)):
+        raise ValueError("positive same-shell action work required")
+    delta = (native-reference).reshape(-1, 6)[
+        [owner._shell_index[node] for node in range(2, INTERVALS+2)]]
+    return {
+        "external_on_native_shell_work_j": reference_work,
+        "native_shell_action_work_j": own_work,
+        "cross_work_j": cross_work,
+        "relative_action_difference_compliance_norm": float(np.sqrt(
+            max(difference, 0.)/reference_work)),
+        "nonroot_force_difference_l2_n": float(np.linalg.norm(delta[:, :3])),
+        "nonroot_moment_difference_l2_nm": float(np.linalg.norm(delta[:, 3:])),
+    }
 
 
 def main(external_path: Path, output: Path):
@@ -207,7 +243,8 @@ def main(external_path: Path, output: Path):
                     weak_metrics = _metrics(
                         owner, weak_q, weak.multipliers,
                         owner._C, _load(owner, case))
-                    strong_metrics, matrix = _strong_case(owner, nodal, case)
+                    strong_metrics, matrix, strong_q, strong_lam = (
+                        _strong_case(owner, nodal, case))
                     if (strong_metrics["free_equilibrium_relative"] > 1e-8 or
                             strong_metrics["gap_max"] > 1e-9 or
                             abs(strong_metrics["shell_work_error_j"]) > 1e-8):
@@ -215,6 +252,12 @@ def main(external_path: Path, output: Path):
                     report["cases"].append({
                         "span": span, "case": case,
                         "weak": weak_metrics, "native_nodal": strong_metrics,
+                        "weak_vs_external_action": _same_shell_action(
+                            owner, owner._C, weak_q, weak.multipliers,
+                            references[INTERVALS, case]),
+                        "nodal_vs_external_action": _same_shell_action(
+                            owner, nodal, strong_q, strong_lam,
+                            references[INTERVALS, case]),
                         "native_nodal_matrix_order": int(matrix.shape[0]),
                         "native_nodal_matrix_nnz": int(matrix.nnz),
                         "external_applied_work_j": float(
