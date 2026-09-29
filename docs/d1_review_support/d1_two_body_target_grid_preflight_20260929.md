@@ -78,6 +78,42 @@ offline quadrature or scoped interpretation. The smallest counted overlap is
 count uses the same offline clipper as the quadrature, so it is independent of
 production geometry but not a second independent clipping implementation.
 
+## Both accepted press poses: independent dimensional gap and quadrature
+
+The same 4×4 target case was rerun once with accepted displacement snapshots.
+Final displacement coordinates and integrated contact force are **bitwise
+identical** to the earlier record. Its complete route took 27.56 s with
+362.59 MB sampled process-tree RSS under the unchanged 180 s/1 GB caps.
+The [snapshot record](d1_target_grid_4x4_path_gap_20260929.json),
+[resource record](d1_target_grid_4x4_path_gap_resource_20260929.json) and
+[captured log](d1_target_grid_4x4_path_gap_log_20260929.txt) bind source
+`366f69f9` and runner hash
+`2c4a6621ba506fb81500a3ede4984d2c78bf3a3d64184c60cc44e0c3dacfea83`.
+
+| Accepted press step | Independent projected target-normal gap lower bound (µm) | Registered budget (µm) | Independent support error | Independent Gram error | Maximum normalized-gap difference (m) |
+|---:|---:|---:|---:|---:|---:|
+| 1 | −4.256 | 50 | 2.84e−15 | 4.35e−15 | 2.19e−13 |
+| 2 | −22.938 | 50 | 5.72e−14 | 2.03e−13 | 6.96e−13 |
+
+Both poses have 54 positive-area pairs. The independent physical-gap checker
+from the existing deformable-target example bounds target-normal distance
+over projected overlap. This is a different normal convention from the
+solver's reported source-normal sampled minimum, so their numerical minima
+must not be equated. Both independent bounds satisfy the dimensional budget.
+The [first-pose quadrature output](d1_target_grid_first_pose_geometry_log_20260929.txt)
+and [second-pose output](d1_target_grid_second_pose_geometry_log_20260929.txt)
+were obtained offline from the saved snapshots with the same probe version;
+their corresponding resource records are alongside them. This narrows
+accepted-pose geometry and integration uncertainty for this two-step press.
+It does not certify gap along rejected trials or swept solver paths,
+directional derivatives, independent coupled response or the full D1
+integration-error budget.
+An independent read-only follow-up found no defect in applying the existing
+projected target-normal bound to this finer S3 grid or in the saved-pose
+identity. It endorsed only the two accepted-pose dimensional-gap and smooth
+quadrature evidence, with the path, derivative and full integration limits
+above unchanged.
+
 ## Evidence and decision
 
 Each case has a raw result, bounded resource record and captured log under

@@ -6,6 +6,7 @@ does not solve equilibrium or certify a spatial reference.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -15,6 +16,9 @@ import numpy as np
 
 import anysolver
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+from examples.general_contact_free_target_cycle_dev import (
+    _independent_projected_gap_bound,
+)
 from docs.d1_review_support.d1_two_body_current_skin_quadrature import (
     integrate_current_skin, physical_vertices,
 )
@@ -23,13 +27,25 @@ from docs.d1_review_support.d1_two_body_refined_target_route import build_refine
 
 
 def main():
-    source_path = Path(__file__).with_name("d1_target_grid_4x4_20260929.json")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--saved-record", type=Path,
+                        default=Path(__file__).with_name(
+                            "d1_target_grid_4x4_20260929.json"))
+    parser.add_argument("--accepted-step", type=int, default=2)
+    args = parser.parse_args()
+    source_path = args.saved_record
     saved_bytes = source_path.read_bytes()
     saved = json.loads(saved_bytes)
     assert saved["status"] == "completed" and saved["accepted_steps"] == 2
     assert saved["source_q4_faces"] == 4 and saved["target_s3_faces"] == 32
     model, definition, settings, _program, _x, _y = build_refined_case(4, 4, 4)
-    pose = np.asarray(saved["final_displacements"], dtype=float)
+    if args.accepted_step == 2:
+        pose = np.asarray(saved["final_displacements"], dtype=float)
+    elif args.accepted_step == 1 and "accepted_displacements" in saved["steps"][0]:
+        pose = np.asarray(saved["steps"][0]["accepted_displacements"],
+                          dtype=float)
+    else:
+        raise ValueError("requested accepted pose is not saved")
     assert pose.shape == (model.mesh.dof_manager.total_dofs,)
 
     independent = integrate_current_skin(
@@ -45,6 +61,10 @@ def main():
     }))
     assert np.all(support > 0.0)
     assert np.array_equal(production.reference_support > 0.0, support > 0.0)
+    gap_budget = definition.interactions[0].gap_tolerance
+    independent_gap_lower = _independent_projected_gap_bound(
+        model, definition, pose, gap_budget,
+    )
 
     face_counts = {}
     pair_areas = []
@@ -86,6 +106,7 @@ def main():
             ("git", "rev-parse", "HEAD"), text=True,
         ).strip(),
         "saved_source_sha256": hashlib.sha256(saved_bytes).hexdigest(),
+        "accepted_step": args.accepted_step,
         "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "oracle_source_sha256": hashlib.sha256(Path(
             "docs/d1_review_support/d1_two_body_current_skin_quadrature.py",
@@ -102,6 +123,8 @@ def main():
         "support_relative_l2": scaled_support,
         "pressure_gram_relative_frobenius": scaled_gram,
         "maximum_normalized_gap_difference_m": normalized_gap_difference,
+        "registered_gap_budget_m": gap_budget,
+        "independent_projected_gap_lower_m": independent_gap_lower,
         "production_integration_triangles": production.integration_triangles,
     }
     print(json.dumps(record, indent=2))

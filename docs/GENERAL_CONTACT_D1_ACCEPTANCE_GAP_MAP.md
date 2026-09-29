@@ -151,16 +151,20 @@ builders are exactly equivalent after node permutation, with all final grid
 comparisons bound to one probe hash. Final integrated force changes +57.43%,
 +45.21%, +17.10% and −5.93% over the recorded target refinements; active
 pressure modes also change. The two-S3 workflow is therefore not a spatial
-reference for this press. The new grids lack independent gap/integration
+reference for this press. Most new grids lack independent gap/integration
 checks and do not close the nonlinear two-body response or partial-front
 acceptance rows. The guarded exact three-face seam case remains separate.
 At the saved 4-Q4/32-S3 pose, an [independent current-skin geometry check](d1_review_support/d1_two_body_target_grid_preflight_20260929.md#saved-pose-independent-geometry-discriminator)
 finds 54 positive-area Q4/S3 pairs, with 8–16 target faces per source Q4.
 Independent support, pressure Gram and normalized gap agree with production at
 5.72e−14 relative L2, 2.03e−13 relative Frobenius and 6.96e−13 m maximum,
-respectively. This narrows the saved-pose geometry hypothesis; nonlinear
-spatial convergence, independent path gap/integration budgets and pressure
-stability remain open.
+respectively. A same-mechanics 4-Q4/32-S3 replay saved both accepted press
+poses; its independent projected target-normal gap lower bounds are −4.256
+and −22.938 µm within the registered 50 µm budget. Offline support/Gram/gap
+quadrature agrees at both accepted poses. See the [bounded path record](d1_review_support/d1_two_body_target_grid_preflight_20260929.md#both-accepted-press-poses-independent-dimensional-gap-and-quadrature).
+This narrows accepted-pose geometry and gap uncertainty for that press;
+nonlinear spatial convergence, swept/rejected-path gaps, complete integration
+error and pressure stability remain open.
 
 **Independent gap in installed example:** The standalone deformable-target
 example now reconstructs physical Q4/S3 skins and checks a conservative gap

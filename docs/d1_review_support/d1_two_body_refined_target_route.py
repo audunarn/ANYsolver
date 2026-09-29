@@ -24,7 +24,9 @@ from anysolver import (
     ContactSurface, create_shell_element, solve_static_nonlinear,
 )
 from anysolver.fe_core import FEModel
-from examples.general_contact_free_target_cycle_dev import build_case
+from examples.general_contact_free_target_cycle_dev import (
+    _independent_projected_gap_bound, build_case,
+)
 
 
 def _knots(length, cells, shift):
@@ -154,6 +156,8 @@ def run(source_columns, target_x_cells, target_y_cells, *, original_two_s3=False
         record_increment_snapshots=True,
     )
     history = result.info.get("force_displacement_history", ())
+    if len(history) != len(result.snapshots):
+        raise RuntimeError("accepted pose snapshots and history differ")
     return {
         "status": result.status,
         "failure_reason": result.failure_reason,
@@ -178,10 +182,16 @@ def run(source_columns, target_x_cells, target_y_cells, *, original_two_s3=False
             "source_contact_force_n": row["contact"]["integration_force"],
             "target_contact_force_n": row["contact"].get("target_force"),
             "minimum_gap_m": row["contact"]["minimum_gap"],
+            "independent_projected_gap_lower_m":
+                _independent_projected_gap_bound(
+                    model, definition, snapshot.displacements,
+                    definition.interactions[0].gap_tolerance,
+                ),
             "complementarity_relative_force": row.get(
                 "complementarity_relative_force"),
             "equilibrium_residual_norm": row["residual_norm"],
-        } for row in history],
+            "accepted_displacements": snapshot.displacements.tolist(),
+        } for row, snapshot in zip(history, result.snapshots, strict=True)],
         "final_displacements": result.displacements.tolist(),
         "elapsed_seconds": time.perf_counter()-started,
     }
