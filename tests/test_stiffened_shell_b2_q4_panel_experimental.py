@@ -13,11 +13,15 @@ from anysolver._b2_physical_flexibility_linear import LinearSection
 from anysolver._b2_physical_linear_definition import PhysicalB2Member
 from anysolver.control import CancellationToken
 from anysolver._stiffened_shell_b2_q4_panel_experimental import (
-    Q4B2Point, Q4PanelShell, _require_independent_supported_point_rows,
+    ExperimentalB2Q4PanelError, Q4B2Point, Q4PanelShell,
+    _require_independent_supported_point_rows, _scaled_point_kkt,
 )
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
 from anysolver.fe_core import FEModel
 from anysolver.linalg import MatrixClass, factorize_cached
+from test_b2_f09_physical_off_axis_elbow import (
+    _high_precision_rounded_matrix_solve, _physical_section,
+)
 
 
 def _panel():
@@ -141,6 +145,22 @@ def test_supported_point_row_audit_bounds_dense_work(monkeypatch):
                        (proportional, None)), format="csc")
     factor = factorize_cached(kkt, MatrixClass.SYMMETRIC_INDEFINITE)
     assert factor.status == "failed"
+
+
+def test_kkt_scaling_retains_constraint_anchored_zero_energy_coordinate():
+    stiffness = sparse.diags((4., 0.), format="csc")
+    constraint = sparse.csr_matrix(((1e-9,), ((0,), (1,))), shape=(1, 2))
+    scaled, factors = _scaled_point_kkt(stiffness, constraint)
+    physical_rhs = np.array((8., 3e-6, 2e-9))
+    solution = factors*np.linalg.solve(
+        scaled.toarray(), factors*physical_rhs)
+    np.testing.assert_allclose(solution, (2., 2., 3000.), rtol=1e-14)
+    original = sparse.bmat(((stiffness, constraint.T),
+                            (constraint, None)), format="csr")
+    np.testing.assert_allclose(original@solution, physical_rhs, rtol=1e-14)
+    with pytest.raises(ExperimentalB2Q4PanelError,
+                       match="unanchored zero-energy"):
+        _scaled_point_kkt(stiffness, sparse.csr_matrix((1, 2)))
 
 
 def test_multi_q4_multi_b2_panel_matches_bounded_dense_oracle():
@@ -363,6 +383,59 @@ def test_mixed_force_scales_report_insufficient_resolution():
     result = analysis.solve_linear(load)
     assert result.status == "failed"
     assert result.failure_reason == "panel mixed-load resolution insufficient"
+    analysis.close()
+
+
+@pytest.mark.parametrize("width,depth", ((.012, .003), (.004, .001)))
+def test_slender_physical_b2_panel_matches_independent_high_precision_system(
+        width, depth):
+    """Mixed-system scaling restores a sound weak beam/strong shell solve."""
+    nodes, shells, members, points, free = _panel()
+    shells = tuple(replace(shell, E=210e9, thickness_m=.07)
+                   for shell in shells)
+    section = LinearSection.generalized(_physical_section(width, depth)[0])
+    members = tuple(replace(member, section=section) for member in members)
+    transformation = sparse.eye(54, format="lil")[:, free]
+    if width == .012:
+        # A full-rank, non-orthogonal affine basis must recover the same
+        # physical solution after the mixed-system coordinate scaling.
+        transformation[6*2, 0] = .25
+    transformation = transformation.tocsr()
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            transformation, np.zeros(54)))
+    load = np.zeros(54)
+    load[6*8+1] = 100.
+    load[6*8+3] = 10.
+    result = analysis.solve_linear(load)
+    assert result.status == "completed"
+    assert result.factorization_count == result.solve_count == 1
+    assert np.min(analysis._factor_scale) > 0.
+    assert np.max(analysis._factor_scale)/np.min(analysis._factor_scale) > 1e3
+
+    # Separate dense gather/scatter and a 100-digit solve of its stored
+    # binary64 equations avoid using the owner's factorization as the oracle.
+    stiffness, constraint = _independent_dense(
+        nodes, shells, members, points)
+    basis = transformation.toarray()
+    reduced_stiffness = basis.T@stiffness@basis
+    reduced_constraint = constraint@basis
+    matrix = sparse.csr_matrix(np.block([
+        [reduced_stiffness, reduced_constraint.T],
+        [reduced_constraint, np.zeros((12, 12))],
+    ]))
+    oracle = _high_precision_rounded_matrix_solve(
+        matrix, np.r_[basis.T@load, np.zeros(12)])
+    expected = basis@oracle[:basis.shape[1]]
+    np.testing.assert_allclose(result.displacements, expected,
+                               rtol=1e-8, atol=1e-12)
+    multipliers = np.array([value for _, row in result.point_multipliers
+                            for value in row])
+    np.testing.assert_allclose(multipliers, oracle[basis.shape[1]:],
+                               rtol=1e-8, atol=1e-9)
+    assert np.max(np.abs(constraint@np.asarray(result.displacements))) < 1e-12
     analysis.close()
 
 

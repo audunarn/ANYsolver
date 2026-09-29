@@ -39,6 +39,63 @@ _MAX_DENSE_AUDIT_ROWS = 48
 _MAX_DENSE_AUDIT_VALUES = 16_384
 
 
+def _scaled_point_kkt(reduced_k: sparse.spmatrix,
+                      reduced_c: sparse.spmatrix) -> tuple[sparse.csc_matrix, np.ndarray]:
+    """Representable congruence for the elastic point-constrained KKT.
+
+    A zero-energy primal coordinate is valid when a constraint anchors it;
+    its scale then follows that constraint column. This owner admits no
+    negative-energy primal diagonal or unanchored zero-energy coordinate.
+    """
+    diagonal = reduced_k.diagonal()
+    if not np.isfinite(diagonal).all() or np.any(diagonal < 0.):
+        raise ExperimentalB2Q4PanelError(
+            "panel factorization requires nonnegative finite primal diagonal")
+    primal_scale = np.empty(len(diagonal))
+    positive = diagonal > 0.
+    with np.errstate(over="ignore", under="ignore", divide="ignore",
+                     invalid="ignore"):
+        primal_scale[positive] = 1./np.sqrt(diagonal[positive])
+        if np.any(~positive):
+            # For a positive-semidefinite elastic K, a zero diagonal has a
+            # zero row. An off-diagonal term instead signals invalid data.
+            zero_rows = reduced_k.tocsr()[np.flatnonzero(~positive)]
+            if np.any(zero_rows.data != 0.):
+                raise ExperimentalB2Q4PanelError(
+                    "zero-energy primal row has nonzero stiffness coupling")
+            column_max = np.asarray(
+                abs(reduced_c).max(axis=0).toarray()).reshape(-1)
+            if (not np.isfinite(column_max[~positive]).all() or
+                    np.any(column_max[~positive] <= 0.)):
+                raise ExperimentalB2Q4PanelError(
+                    "unanchored zero-energy primal coordinate")
+            primal_scale[~positive] = 1./column_max[~positive]
+        if (not np.isfinite(primal_scale).all() or
+                np.any(primal_scale <= 0.)):
+            raise ExperimentalB2Q4PanelError(
+                "panel factorization scaling is not representable")
+        scaled_rows = reduced_c @ sparse.diags(primal_scale)
+        row_max = np.asarray(abs(scaled_rows).max(axis=1).toarray()).reshape(-1)
+        multiplier_scale = 1./row_max
+        factor_scale = np.r_[primal_scale, multiplier_scale]
+        kkt = sparse.bmat(
+            ((reduced_k, reduced_c.T), (reduced_c, None)), format="csc")
+        scaling = sparse.diags(factor_scale, format="csc")
+        scaled_kkt = (scaling @ kkt @ scaling).tocsc()
+    kkt.sort_indices()
+    scaled_kkt.sort_indices()
+    if (not np.isfinite(factor_scale).all() or
+            np.any(factor_scale <= 0.) or
+            not np.isfinite(scaled_kkt.data).all() or
+            kkt.nnz != scaled_kkt.nnz or
+            not np.array_equal(kkt.indptr, scaled_kkt.indptr) or
+            not np.array_equal(kkt.indices, scaled_kkt.indices) or
+            np.any((kkt.data != 0.) & (scaled_kkt.data == 0.))):
+        raise ExperimentalB2Q4PanelError(
+            "panel factorization scaling is not representable")
+    return scaled_kkt, factor_scale
+
+
 def _require_independent_supported_point_rows(reduced_c: sparse.spmatrix) -> None:
     """Bound the dense audit; defer large numerical rank to KKT factorization.
 
@@ -335,9 +392,13 @@ class ExperimentalB2Q4PanelAnalysis:
         reduced_c = (C @ T).tocsc()
         _require_independent_supported_point_rows(reduced_c)
         reduced_k = (T.T @ K @ T).tocsc()
-        kkt = sparse.bmat(
-            ((reduced_k, reduced_c.T), (reduced_c, None)), format="csc")
-        handle = factorize_cached(kkt, MatrixClass.SYMMETRIC_INDEFINITE)
+        # Congruence scaling changes factorization coordinates only. The
+        # physical displacement and multiplier are both restored after solve.
+        # Without this, a valid slender B2 section can leave point gaps above
+        # the physical acceptance tolerance despite a sound local operator.
+        scaled_kkt, factor_scale = _scaled_point_kkt(reduced_k, reduced_c)
+        handle = factorize_cached(
+            scaled_kkt, MatrixClass.SYMMETRIC_INDEFINITE)
         if handle.status != "ok":
             raise ExperimentalB2Q4PanelError(
                 "panel factorization failed: " + str(handle.failure_reason))
@@ -359,6 +420,7 @@ class ExperimentalB2Q4PanelAnalysis:
         self._u0 = u0
         self._ku0 = np.asarray(K @ u0).reshape(-1)
         self._cu0 = np.asarray(C @ u0).reshape(-1)
+        self._factor_scale = factor_scale
         self._handle = handle
         self._closed = False
 
@@ -380,8 +442,17 @@ class ExperimentalB2Q4PanelAnalysis:
             raise ValueError("finite panel load vector required")
         rhs = np.r_[np.asarray(self._T.T @ (applied-self._ku0)).reshape(-1),
                     -self._cu0]
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            scaled_rhs = self._factor_scale*rhs
+        if (not np.isfinite(scaled_rhs).all() or
+                np.any((rhs != 0.) & (scaled_rhs == 0.))):
+            return ExperimentalB2Q4PanelResult(
+                "failed", factorization_count=self._handle.factorization_count,
+                solve_count=self._handle.solve_count,
+                failure_reason="panel right-hand side scaling is not representable")
         try:
-            answer = np.asarray(self._handle.solve(rhs), dtype=float)
+            answer = self._factor_scale*np.asarray(
+                self._handle.solve(scaled_rhs), dtype=float)
         except RuntimeError as exc:
             return ExperimentalB2Q4PanelResult(
                 "failed", factorization_count=self._handle.factorization_count,
