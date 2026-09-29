@@ -176,6 +176,8 @@ def solve(ops, intervals: int, case: str, *, constraint_form: str) -> dict:
         cut_moment = [0., 0., 0.]
         shell_work = 0.
         beam_work = 0.
+        shell_nodal_force = {tag: [0.]*6 for connectivity in
+                             model["shell_cells"] for tag in connectivity}
         ops.reactions()
         for node in model["root_shell_nodes"]:
             reaction = tuple(float(v) for v in ops.nodeReaction(node))
@@ -196,6 +198,9 @@ def solve(ops, intervals: int, case: str, *, constraint_form: str) -> dict:
                 internal_work += work
                 if domain == "shell":
                     shell_work += work
+                    for j, node in enumerate(connectivity):
+                        for axis in range(6):
+                            shell_nodal_force[node][axis] += forces[6*j+axis]
                 else:
                     beam_work += work
                 if index == 1:
@@ -224,12 +229,25 @@ def solve(ops, intervals: int, case: str, *, constraint_form: str) -> dict:
         fixed_moment_error = max(abs(a+b) for a, b in zip(
             fixed_node_moment, applied_moment))
         work_error = abs(internal_work-applied_work)
+        interface_nodes = tuple(1+i for i in range(1, intervals+1))
+        upper_free_nodes = tuple(intervals+2+i for i in range(1, intervals+1))
+        interface_action = {node: shell_nodal_force[node]
+                            for node in interface_nodes}
+        interface_work = sum(sum(a*b for a, b in zip(
+            interface_action[node], displacement[node]))
+            for node in interface_nodes)
+        interface_work_error = abs(interface_work-shell_work)
+        upper_free_force_max = max(abs(value) for node in upper_free_nodes
+                                   for value in shell_nodal_force[node])
         if (max_gap > 1e-9 or max_rigid_gap > 1e-9 or
                 cut_force_error > 1e-5 or cut_moment_error > 1e-5 or
-                work_error > 1e-8*max(abs(applied_work), 1e-12)):
+                work_error > 1e-8*max(abs(applied_work), 1e-12) or
+                interface_work_error > 1e-8*max(abs(shell_work), 1e-12) or
+                upper_free_force_max > 1e-5):
             raise ValueError("external five-channel gap, cut balance or work failed: "
                              f"{max_gap=}, {max_rigid_gap=}, {cut_force_error=}, "
-                             f"{cut_moment_error=}, {work_error=}")
+                             f"{cut_moment_error=}, {work_error=}, "
+                             f"{interface_work_error=}, {upper_free_force_max=}")
         return {"intervals": intervals, "case": case,
                 "constraint_form": constraint_form,
                 "shell_elements": len(model["shell_cells"]),
@@ -240,6 +258,11 @@ def solve(ops, intervals: int, case: str, *, constraint_form: str) -> dict:
                 "applied_work_j": applied_work,
                 "shell_internal_work_j": shell_work,
                 "beam_internal_work_j": beam_work,
+                "shell_interface_action": interface_action,
+                "shell_edge_displacement": {node: displacement[node]
+                                             for node in interface_nodes},
+                "shell_interface_work_error_j": interface_work_error,
+                "shell_upper_free_force_max": upper_free_force_max,
                 "max_five_channel_gap": max_gap,
                 "max_rigid_link_gap": max_rigid_gap,
                 "section_cut_force_error_n": cut_force_error,
