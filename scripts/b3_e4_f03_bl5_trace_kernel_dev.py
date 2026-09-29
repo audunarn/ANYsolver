@@ -18,6 +18,8 @@ import subprocess
 import anysolver
 from anysolver import stiffened_shell
 from anysolver._stiffened_shell_l1_local_experimental import NativeHalfCellPort
+from anysolver._ge_beam3_retained_generalized_state import Mechanical
+from scripts._b3_e4_f03_p1_dual_norm import p1_nonuniform_dual_gram
 import numpy as np
 from scipy import linalg
 from threadpoolctl import threadpool_info, threadpool_limits
@@ -75,6 +77,106 @@ def _feature(owner):
     return np.vstack(features)
 
 
+def _multiplier_contract_probe(owner):
+    """Check actual coarse knots, five-channel work and scalar dual units."""
+    line = owner._definition.lines[0]
+    shell_index = {node: i for i, node in enumerate(owner._shell_ids)}
+    shell_points = owner._shell_xyz[[shell_index[node] for node in line.shell_nodes]]
+    axis = shell_points[-1]-shell_points[0]
+    length = float(np.linalg.norm(axis))
+    axis /= length
+    shell_knots = (shell_points-shell_points[0])@axis
+    beam_ids = []
+    for element_index, cell in line.beam_halfcells:
+        pair = owner._beam_parts[element_index][0].node_ids[cell:cell+2]
+        if beam_ids and beam_ids[-1] != pair[0]:
+            raise ArithmeticError("noncontiguous diagnostic beam trace")
+        if not beam_ids:
+            beam_ids.append(pair[0])
+        beam_ids.append(pair[1])
+    beam_points = np.array([owner._beam_nodes[node][0] for node in beam_ids])
+    beam_knots = (beam_points-beam_points[0])@axis
+    knots = shell_knots if len(shell_knots) <= len(beam_knots) else beam_knots
+    if (len(knots) != min(len(shell_knots), len(beam_knots)) or
+            owner._C.shape[0] != 5*len(knots) or
+            np.any(np.diff(knots) <= 0.) or
+            abs(knots[-1]-length) > 1e-12):
+        raise ArithmeticError("compiled BL5 row/knot inventory mismatch")
+
+    # Independently scatter the local first variations against physical hats.
+    # This verifies the channel-major compiler rows, including nonuniform knots.
+    manual = np.zeros(owner._C.shape)
+    positions = np.array([owner._beam_nodes[node][0] for node in owner._beam_ids])
+    frames = np.array([owner._beam_nodes[node][1] for node in owner._beam_ids])
+    state = Mechanical(positions, np.zeros_like(positions), frames,
+                       np.tile(np.eye(3), (len(owner._beam_parts), 2, 1, 1)),
+                       np.zeros((len(owner._beam_parts), 18)))
+    for local, slots, weight, _beam_edge, _beam_alpha in owner._line_samples:
+        sample = local.reference[0]+local.station*(
+            local.reference[1]-local.reference[0])
+        station = float((sample-shell_points[0])@axis)
+        edge = min(int(np.searchsorted(knots, station))-1, len(knots)-2)
+        alpha = (station-knots[edge])/(knots[edge+1]-knots[edge])
+        local_rows = local.evaluate(
+            np.zeros((2, 6)), state,
+            np.zeros(5)).gap_jacobian
+        for channel in range(5):
+            manual[channel*len(knots)+edge, slots] += (
+                weight*(1.-alpha)*local_rows[channel])
+            manual[channel*len(knots)+edge+1, slots] += (
+                weight*alpha*local_rows[channel])
+    row_error = float(np.max(np.abs(manual-owner._C.toarray())))
+    if row_error > 3e-13:
+        raise ArithmeticError("actual BL5 rows disagree with physical knots")
+
+    lower, upper = p1_nonuniform_dual_gram(knots, 1023)
+    # lambda=(lambda_t [N/m], lambda_d [N]) is physical density. With
+    # ell [m], mu=(lambda_t, lambda_d/ell) has five N/m channels.
+    # A nonunit scale exposes wrong channel ordering in this algebraic check.
+    # It is not a selected production characteristic length.
+    ell = .2*length
+    units = np.repeat((1., 1., 1., ell, ell), len(knots))
+    rng = np.random.default_rng(93029)
+    lam = rng.normal(size=owner._C.shape[0])
+    mu = lam/units
+    q = rng.normal(size=len(owner._free))*owner._coordinate_scale[owner._free]
+    rows = owner._C[:, owner._free].toarray()
+    physical_work = float(lam@(rows@q))
+    x = q/owner._coordinate_scale[owner._free]
+    scaled_work = float(mu@((units[:, None]*rows*
+                             owner._coordinate_scale[owner._free][None, :])@x))
+    work_error = abs(physical_work-scaled_work)/max(
+        abs(physical_work), abs(scaled_work), 1e-30)
+    if work_error > 1e-12:
+        raise ArithmeticError("BL5 physical multiplier work conversion failed")
+    gram = np.kron(np.eye(5), lower)  # channel-major, not station-major
+    force_norm = float(mu@gram@mu)
+    millimetre_lower, _ = p1_nonuniform_dual_gram(1000.*knots, 1023)
+    unit_gram_error = float(np.linalg.norm(
+        millimetre_lower/1e6-lower)/np.linalg.norm(lower))
+    millimetre_norm = float((mu/1000.)@np.kron(
+        np.eye(5), millimetre_lower)@(mu/1000.))
+    unit_norm_error = abs(millimetre_norm-force_norm)/force_norm
+    if max(unit_gram_error, unit_norm_error) > 1e-10:
+        raise ArithmeticError("BL5 multiplier norm changes under metre/mm conversion")
+    eigenvalues = linalg.eigvalsh(lower, check_finite=True)
+    return {
+        "shell_knots_m": shell_knots.tolist(),
+        "beam_knots_m": beam_knots.tolist(),
+        "selected_coarse_knots_m": knots.tolist(),
+        "row_order": "five channel-major P1 blocks",
+        "manual_row_max_error": row_error,
+        "physical_multiplier_units": ("N/m", "N/m", "N/m", "N", "N"),
+        "characteristic_length_m": ell,
+        "relative_work_conversion_error": work_error,
+        "scalar_gram_min_eigenvalue": float(eigenvalues[0]),
+        "scalar_gram_condition": float(eigenvalues[-1]/eigenvalues[0]),
+        "metre_mm_gram_relative_error": unit_gram_error,
+        "metre_mm_force_norm_relative_error": unit_norm_error,
+        "limitations": "Algebraic coefficient-norm/work check on one fixture; positive physical primal norm, norm calibration and KKT remain open.",
+    }
+
+
 def analyze():
     expected = (ROOT/"src"/"anysolver"/"__init__.py").resolve()
     if Path(anysolver.__file__).resolve() != expected:
@@ -91,6 +193,7 @@ def analyze():
             raise RuntimeError("one numerical thread was not effective")
         owner = stiffened_shell.create_analysis(definition=definition)
         try:
+            multiplier_contract = _multiplier_contract_probe(owner)
             beam_free = owner._free[owner._free >= owner._shell_count]-owner._shell_count
             scale = owner._coordinate_scale[owner._shell_count+beam_free]
             feature = _feature(owner)[:, beam_free]*scale
@@ -149,6 +252,7 @@ def analyze():
                     "combined_rank": negative_rank,
                     "kernel_leakage": negative_leakage,
                 },
+                "multiplier_contract_probe": multiplier_contract,
                 "limitations": "One supported nonuniform small fixture only; chosen physical surface trace needs mechanics review. No quotient, inf-sup, KKT, locking, accuracy or F03 acceptance.",
             }
         finally:
