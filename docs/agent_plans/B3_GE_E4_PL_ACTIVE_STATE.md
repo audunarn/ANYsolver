@@ -71,6 +71,23 @@ parity guard. All are preserved at
 `.qualification/b3-ge-e4-pl/r8-bl5-saved-mode-screen-dev-20260929-v1/`.
 No formal F03 authority was consumed.
 
+The targeted flat-web comparison kept geometry, native section, normal offset,
+plate-root supports, and physical plate-Fy/beam-Mx actions identical. Both BL5
+P0 spans completed and closed equilibrium, constraint, support wrench, energy
+and reciprocal work, using one factorization per operator. Under 10 Nm beam
+torque, tip Rx is 1.77277e-4 rad for span one and 3.17770e-4 for span two:
+**79.25% compliance sensitivity** on this mesh. Plate-tip Uy under Fy differs
+little, so it cannot stand in for torque transfer. The L1-A result is a
+different-law control, not a fidelity ranking. The original dual root clamps
+failed preflight as redundant; all three successful laws use plate-root support
+only and therefore do not match the older external web deck. Raw output and
+preserved failures are in
+`.qualification/b3-ge-e4-pl/r8-bl5-flat-web-load-screen-dev-20260929-v1/`.
+This is a decision to withhold multiplier selection: next establish physical
+torque-transfer meaning and actual mixed-system convergence/stability with
+independent mechanics scrutiny, not another automatic axial refinement.
+No formal F03 authority was consumed.
+
 The bounded M1 low-yield ticket restored the existing accepted 40 N checkpoint
 and reproduced the 45 N backtrack-budget failure (163 assemblies, best free
 ratio 0.1069403). The accepted checkpoint was byte-identical after rejection.
