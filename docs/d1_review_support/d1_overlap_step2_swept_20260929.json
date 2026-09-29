@@ -1,0 +1,121 @@
+{
+  "candidate": "d1_actual_rejected_newton_proposal_swept_geometry_screen",
+  "saved_proposal": "docs\\d1_review_support\\d1_2d_overlap_step2_proposal_20260929.json",
+  "production_swept_fraction": 0.0,
+  "registered_gap_tolerance_m": 5e-05,
+  "results": [
+    {
+      "fraction": 1.0,
+      "depth": 3,
+      "swept_lower_gap_m": -0.00010777421149305354,
+      "limiting_faces": [
+        10,
+        7
+      ],
+      "subrectangles_visited": 3288,
+      "pairs_with_possible_overlap": 50,
+      "independent_sampled_gap_m": null,
+      "independent_sampled_hits": null,
+      "admissible_under_unchanged_gap_budget": false
+    },
+    {
+      "fraction": 1.0,
+      "depth": 4,
+      "swept_lower_gap_m": -0.0001050389958194912,
+      "limiting_faces": [
+        10,
+        7
+      ],
+      "subrectangles_visited": 12000,
+      "pairs_with_possible_overlap": 50,
+      "independent_sampled_gap_m": -1.1650868186130464e-05,
+      "independent_sampled_hits": 7056,
+      "admissible_under_unchanged_gap_budget": false
+    },
+    {
+      "fraction": 0.5,
+      "depth": 3,
+      "swept_lower_gap_m": -7.888625381660085e-05,
+      "limiting_faces": [
+        10,
+        7
+      ],
+      "subrectangles_visited": 3288,
+      "pairs_with_possible_overlap": 50,
+      "independent_sampled_gap_m": null,
+      "independent_sampled_hits": null,
+      "admissible_under_unchanged_gap_budget": false
+    },
+    {
+      "fraction": 0.5,
+      "depth": 4,
+      "swept_lower_gap_m": -7.667318439034368e-05,
+      "limiting_faces": [
+        10,
+        7
+      ],
+      "subrectangles_visited": 12000,
+      "pairs_with_possible_overlap": 50,
+      "independent_sampled_gap_m": -1.0246264316817788e-05,
+      "independent_sampled_hits": 7056,
+      "admissible_under_unchanged_gap_budget": false
+    },
+    {
+      "fraction": 0.25,
+      "depth": 3,
+      "swept_lower_gap_m": -6.444256534579541e-05,
+      "limiting_faces": [
+        10,
+        7
+      ],
+      "subrectangles_visited": 3288,
+      "pairs_with_possible_overlap": 50,
+      "independent_sampled_gap_m": null,
+      "independent_sampled_hits": null,
+      "admissible_under_unchanged_gap_budget": false
+    },
+    {
+      "fraction": 0.25,
+      "depth": 4,
+      "swept_lower_gap_m": -6.249056379425692e-05,
+      "limiting_faces": [
+        10,
+        7
+      ],
+      "subrectangles_visited": 12000,
+      "pairs_with_possible_overlap": 50,
+      "independent_sampled_gap_m": -1.0064143678146004e-05,
+      "independent_sampled_hits": 7056,
+      "admissible_under_unchanged_gap_budget": false
+    },
+    {
+      "fraction": 0.125,
+      "depth": 3,
+      "swept_lower_gap_m": -5.72207936912449e-05,
+      "limiting_faces": [
+        10,
+        7
+      ],
+      "subrectangles_visited": 3288,
+      "pairs_with_possible_overlap": 50,
+      "independent_sampled_gap_m": null,
+      "independent_sampled_hits": null,
+      "admissible_under_unchanged_gap_budget": false
+    },
+    {
+      "fraction": 0.125,
+      "depth": 4,
+      "swept_lower_gap_m": -5.539932476502757e-05,
+      "limiting_faces": [
+        10,
+        7
+      ],
+      "subrectangles_visited": 12000,
+      "pairs_with_possible_overlap": 50,
+      "independent_sampled_gap_m": -9.97308336440996e-06,
+      "independent_sampled_hits": 7056,
+      "admissible_under_unchanged_gap_budget": false
+    }
+  ],
+  "scope": "development linear physical nodal path; samples are not a conservative certificate"
+}

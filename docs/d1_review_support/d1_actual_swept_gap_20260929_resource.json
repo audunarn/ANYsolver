@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 19.56323980000161,
+  "peak_process_tree_memory_mb": 160.72704,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_actual_swept_gap_dev.py",
+    "docs/d1_review_support/d1_2d_gap_proposal_20260929.json",
+    "docs/d1_review_support/d1_actual_swept_gap_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_actual_swept_gap_20260929.log"
+}

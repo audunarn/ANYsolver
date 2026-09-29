@@ -286,8 +286,9 @@ class ContactSolverSettings:
                      or self.maximum_q4_source_integration_triangles < 1)):
             raise ValueError("maximum_q4_source_integration_triangles must be a positive integer")
         if self.q4_source_gap_certificate not in {
-                "whole_face", "projected_matching", "fixed_projection_graph"}:
-            raise ValueError("q4_source_gap_certificate must be whole_face, projected_matching or fixed_projection_graph")
+                "whole_face", "projected_matching", "fixed_projection_graph",
+                "overlap_local_dev"}:
+            raise ValueError("q4_source_gap_certificate must be whole_face, projected_matching, fixed_projection_graph or overlap_local_dev")
         if self.q4_source_pressure_basis not in {
                 "fine_nodal_q1", "macro_q1_pair_dev",
                 "selected_q1_knots_dev"}:
@@ -652,7 +653,8 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             return ContactValidationReport("invalid", (
                 "roundoff pressure support requires the refined Q4/S3 augmented patch profile",
             ))
-    if settings is not None and settings.q4_source_gap_certificate == "projected_matching":
+    if settings is not None and settings.q4_source_gap_certificate in {
+            "projected_matching", "overlap_local_dev"}:
         if not (settings.pair_motion == "general"
                 and not definition.rigid_bodies
                 and len(definition.interactions) == 1
@@ -662,6 +664,11 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                      or _refined_q4_s3_patch(model, definition))):
             return ContactValidationReport("invalid", (
                 "projected-matching Q4 gap certificate requires an explicit augmented Q4/Q4 or Q4/S3 general pair",
+            ))
+    if settings is not None and settings.q4_source_gap_certificate == "overlap_local_dev":
+        if not _refined_q4_s3_patch(model, definition):
+            return ContactValidationReport("invalid", (
+                "overlap-local development gap requires a refined Q4/S3 patch",
             ))
     if settings is not None and settings.q4_source_gap_certificate == "fixed_projection_graph":
         if not (settings.pair_motion == "general"

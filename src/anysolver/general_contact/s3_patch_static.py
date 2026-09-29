@@ -15,6 +15,7 @@ from .q4_source_overlap import (
     q4_source_gap_lower, q4_source_projected_gap_lower,
     q4_source_projected_swept_gap_lower, q4_source_swept_gap_lower,
 )
+from .q4_overlap_local_bound import overlap_local_lower, overlap_local_swept_lower
 from .fixed_projection_graph import fixed_projection_graph_swept_certificate
 from .pressure_space import supported_pressure_gram
 from .pressure_basis import (
@@ -40,6 +41,7 @@ Q4_PAIR_PROJECTED_AUGMENTED_PROFILE = "Q4_Q4_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENT
 REFINED_AUGMENTED_PROFILE = "S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
 REFINED_Q4_S3_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
 REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0"
+REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_OVERLAP_LOCAL_AUGMENTED_STATIC_DEV_V0"
 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_ROUNDOFF_AUGMENTED_STATIC_DEV_V2"
 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_FIXED_PROJECTION_GRAPH_AUGMENTED_STATIC_DEV_V0"
 
@@ -218,7 +220,9 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
     if augmented:
-        profile = (REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE
+        profile = (REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE
+                   if refined_q4 and settings.q4_source_gap_certificate == "overlap_local_dev" else
+                   REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE
                    if refined_q4 and settings.q4_source_gap_certificate == "fixed_projection_graph" else
                    REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE
                    if refined_q4 and settings.q4_source_gap_certificate == "projected_matching" else
@@ -233,9 +237,12 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
                    if source_q4 and settings.q4_source_gap_certificate == "projected_matching" else
                    SOURCE_Q4_AUGMENTED_PROFILE if source_q4 else
                    AUGMENTED_MIXED_PROFILE if target_q4 else AUGMENTED_PROFILE)
-    if (settings.q4_source_gap_certificate == "projected_matching"
+    if (settings.q4_source_gap_certificate in {"projected_matching", "overlap_local_dev"}
             and not (augmented and (q4_pair or source_q4))):
         issues.append("projected-matching Q4 gap certificate requires augmented Q4/Q4 or Q4/two-S3")
+    if (settings.q4_source_gap_certificate == "overlap_local_dev"
+            and not refined_q4):
+        issues.append("overlap-local development gap requires a refined Q4/S3 patch")
     if settings.q4_source_gap_certificate == "fixed_projection_graph" and not (
             refined_q4 and augmented
             and settings.augmentation_support_resolution == "exact"
@@ -261,7 +268,8 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
     if settings.enforcement_solver == "monolithic_active_set" and (
             not augmented
             or profile not in {REFINED_Q4_S3_AUGMENTED_PROFILE,
-                               REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE}
+                               REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
+                               REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE}
             or settings.general_s3_differentiation != "jet2_q4_s3_dev"
             or settings.q4_source_pressure_basis != "fine_nodal_q1"
             or settings.augmentation_support_resolution != "exact"):
@@ -450,6 +458,7 @@ class GeneralS3PatchManager:
             differentiation="jet2_s3" if self.settings.general_s3_differentiation == "jet2_s3_dev" else "jet2_q4_s3" if self.settings.general_s3_differentiation == "jet2_q4_s3_dev" else "pair_local" if self.profile in {
                 REFINED_AUGMENTED_PROFILE, REFINED_Q4_S3_AUGMENTED_PROFILE,
                 REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
+                REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE,
                 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
             }
@@ -532,6 +541,13 @@ class GeneralS3PatchManager:
 
     def _gap_lower(self, positions):
         source, target = positions
+        if self.settings.q4_source_gap_certificate == "overlap_local_dev":
+            return min(
+                max(q4_source_projected_gap_lower(source[si], target[ti]),
+                    overlap_local_lower(source[si], target[ti], 3)[0])
+                for si in self.law.source_face_indices
+                for ti in self.law.target_face_indices
+            )
         if self.settings.q4_source_gap_certificate == "fixed_projection_graph":
             lowers = []
             for si in self.law.source_face_indices:
@@ -602,6 +618,7 @@ class GeneralS3PatchManager:
                             SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
+                            REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE}:
             eigenvalues = np.linalg.eigvalsh(state.pressure_gram)
@@ -688,6 +705,7 @@ class GeneralS3PatchManager:
                                 Q4_PAIR_PROJECTED_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
+                                REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE}:
             return
@@ -762,6 +780,15 @@ class GeneralS3PatchManager:
                         left[1][ti], right[1][ti],
                         self.gap_tolerance,
                     ).admissible
+                    for si in self.law.source_face_indices
+                    for ti in self.law.target_face_indices
+                )
+            elif self.settings.q4_source_gap_certificate == "overlap_local_dev":
+                gap_ok = all(
+                    overlap_local_swept_lower(
+                        left[0][si], right[0][si],
+                        left[1][ti], right[1][ti], 3,
+                    )[0] >= -self.gap_tolerance
                     for si in self.law.source_face_indices
                     for ti in self.law.target_face_indices
                 )

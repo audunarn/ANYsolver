@@ -1,0 +1,108 @@
+{
+  "candidate": "d1_saved_pose_experimental_instantaneous_overlap_local_gap",
+  "saved_pose": "docs\\d1_review_support\\d1_2d_gap_pair_20260929.json",
+  "production_reported_gap_lower_m": -4.999997895234383e-05,
+  "registered_gap_tolerance_m": 5e-05,
+  "production_worst_pair_lower_m": -4.999997895234383e-05,
+  "depth_results": [
+    {
+      "depth": 0,
+      "minimum_lower_gap_m": -4.999997913424243e-05,
+      "limiting_source_target_faces": [
+        10,
+        7
+      ],
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 128
+    },
+    {
+      "depth": 1,
+      "minimum_lower_gap_m": -4.999997913424243e-05,
+      "limiting_source_target_faces": [
+        10,
+        7
+      ],
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 328
+    },
+    {
+      "depth": 2,
+      "minimum_lower_gap_m": -4.999997913424243e-05,
+      "limiting_source_target_faces": [
+        10,
+        7
+      ],
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 976
+    },
+    {
+      "depth": 3,
+      "minimum_lower_gap_m": -4.6736486015139674e-05,
+      "limiting_source_target_faces": [
+        10,
+        7
+      ],
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 3288
+    },
+    {
+      "depth": 4,
+      "minimum_lower_gap_m": -4.510473945558624e-05,
+      "limiting_source_target_faces": [
+        10,
+        7
+      ],
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 12000
+    },
+    {
+      "depth": 5,
+      "minimum_lower_gap_m": -4.510473945558624e-05,
+      "limiting_source_target_faces": [
+        10,
+        7
+      ],
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 45800
+    }
+  ],
+  "zero_path_swept_depth_results": [
+    {
+      "depth": 0,
+      "minimum_lower_gap_m": -4.999997913424255e-05,
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 128
+    },
+    {
+      "depth": 1,
+      "minimum_lower_gap_m": -4.999997913424255e-05,
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 328
+    },
+    {
+      "depth": 2,
+      "minimum_lower_gap_m": -4.999997913424255e-05,
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 976
+    },
+    {
+      "depth": 3,
+      "minimum_lower_gap_m": -4.673648601513933e-05,
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 3288
+    },
+    {
+      "depth": 4,
+      "minimum_lower_gap_m": -4.5104739455586844e-05,
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 12000
+    },
+    {
+      "depth": 5,
+      "minimum_lower_gap_m": -4.5104739455586844e-05,
+      "pairs_with_possible_projected_overlap": 50,
+      "subrectangles_visited": 45800
+    }
+  ],
+  "scope": "experimental Q4/S3 linear physical nodal paths; full solver path and production admission unverified"
+}
