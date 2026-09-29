@@ -1,0 +1,16 @@
+{
+  "saved_pose": "docs\\d1_review_support\\d1_coupled_contrast_force08_20260929.json",
+  "selected_source_node": 84,
+  "selected_rotation_axis": "ry",
+  "selected_rotation_dof": 502,
+  "source_free_rotation_count": 242,
+  "maximum_free_rx_contact_moment_nm": 9.924650920140047e-09,
+  "maximum_free_ry_contact_moment_nm": 2.2296204446462148e-07,
+  "selected_contact_moment_nm": 2.2296204446462148e-07,
+  "contact_directional_response_norm": 0.0013318939204767252,
+  "relative_tangent_direction_error": 1.4004722679876739e-09,
+  "branch_stable": true,
+  "active_pressure_modes": 2,
+  "integration_triangles": 2416,
+  "perturbation_rad": 1e-05
+}

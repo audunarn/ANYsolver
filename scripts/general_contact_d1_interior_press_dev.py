@@ -473,6 +473,87 @@ def replay_captured_sweep(capture: Path, output: Path):
     print(json.dumps(payload, default=_json_default))
 
 
+def saved_rotation_probe(saved_path: Path, output: Path) -> None:
+    """Read-only contact-work probe at a saved accepted development pose."""
+    if output.exists():
+        raise FileExistsError(output)
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    if (saved["status"] != "completed" or saved["accepted_steps"] != 2
+            or saved["source_support"] != "perimeter"
+            or saved["q4_gap_certificate"] != "overlap_local_dev"):
+        raise ValueError("rotation probe requires an accepted interior pose")
+    columns, rows = saved["source_columns"], saved["source_rows"]
+    model, definition, settings, _ = build_interior_press(
+        force_n=saved["force_n"], reference_slope=saved["reference_slope"],
+        source_support=saved["source_support"],
+        source_columns=columns, source_rows=rows,
+        source_y_profile=saved["source_y_profile"],
+        target_columns=saved["target_columns"],
+        target_rows=saved["target_rows"],
+        target_young_multiplier=saved.get("target_young_multiplier", 1.0),
+        target_reference_full_left_clamp=(
+            saved["target_reference_full_left_clamp"]),
+        load_shape=saved["load_shape"], slide_body=saved["slide_body"],
+    )
+    manager = GeneralS3PatchManager(
+        model, definition,
+        replace(settings, q4_source_gap_certificate="overlap_local_dev"),
+    )
+    manager.set_normal_multipliers(
+        saved["history"][-1]["contact"]["normal_multiplier_estimate_pa"])
+    displacement = np.asarray(saved["displacements"], dtype=float)
+    free_nodes = tuple(1+row*(columns+1)+column
+                       for row in range(1, rows)
+                       for column in range(1, columns))
+    directions = tuple((node, axis, model.mesh.dof_manager.get_node_dofs(node)[axis])
+                       for node in free_nodes for axis in (3, 4))
+    force, tangent, center = manager.evaluate(displacement, tangent=True)
+    selected = int(np.argmax(np.abs(np.asarray(force)[
+        [entry[2] for entry in directions]])))
+    node, axis, direction = directions[selected]
+    h = 1.0e-5
+    plus_displacement = displacement.copy()
+    plus_displacement[direction] += h
+    plus, _, plus_state = manager.evaluate(plus_displacement, tangent=False)
+    minus_displacement = displacement.copy()
+    minus_displacement[direction] -= h
+    minus, _, minus_state = manager.evaluate(minus_displacement, tangent=False)
+    difference = (np.asarray(plus)-np.asarray(minus))/(2*h)
+    derived = np.asarray(tangent[:, direction].toarray()).reshape(-1)
+    branch_stable = (center.active_pressure_dofs ==
+                     plus_state.active_pressure_dofs ==
+                     minus_state.active_pressure_dofs and
+                     center.integration_triangles ==
+                     plus_state.integration_triangles ==
+                     minus_state.integration_triangles)
+    record = {
+        "saved_pose": str(saved_path),
+        "selected_source_node": node,
+        "selected_rotation_axis": "rx" if axis == 3 else "ry",
+        "selected_rotation_dof": direction,
+        "source_free_rotation_count": len(directions),
+        "maximum_free_rx_contact_moment_nm": float(np.max(np.abs(
+            np.asarray(force)[[entry[2] for entry in directions
+                               if entry[1] == 3]]))),
+        "maximum_free_ry_contact_moment_nm": float(np.max(np.abs(
+            np.asarray(force)[[entry[2] for entry in directions
+                               if entry[1] == 4]]))),
+        "selected_contact_moment_nm": float(force[direction]),
+        "contact_directional_response_norm": float(np.linalg.norm(difference)),
+        "relative_tangent_direction_error": float(
+            np.linalg.norm(derived-difference)/
+            max(np.linalg.norm(difference), 1.0e-30)),
+        "branch_stable": branch_stable,
+        "active_pressure_modes": center.active_pressure_dofs,
+        "integration_triangles": center.integration_triangles,
+        "perturbation_rad": h,
+    }
+    output.write_text(json.dumps(record, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps(record))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
@@ -510,12 +591,17 @@ if __name__ == "__main__":
     parser.add_argument("--q4-gap-certificate",
                         choices=("projected_matching", "overlap_local_dev"))
     parser.add_argument("--replay-captured-sweep", type=Path)
+    parser.add_argument("--saved-rotation-probe", type=Path)
     parser.add_argument("--steps-per-segment", type=int, choices=(1, 2),
                         default=2)
     arguments = parser.parse_args()
     if arguments.replay_captured_sweep is not None:
         replay_captured_sweep(arguments.replay_captured_sweep,
                               arguments.output)
+        raise SystemExit(0)
+    if arguments.saved_rotation_probe is not None:
+        saved_rotation_probe(arguments.saved_rotation_probe,
+                             arguments.output)
         raise SystemExit(0)
     main(arguments.output, force_n=arguments.force_n,
          reference_slope=arguments.reference_slope,

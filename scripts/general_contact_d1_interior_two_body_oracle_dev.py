@@ -331,6 +331,7 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
                                 target_cells_to_run: tuple[int, ...] = (3, 4),
                                 target_young_multiplier: float = 1.0,
                                 source_cells: int = 16,
+                                force_n: float = 0.04,
                                 ) -> None:
     """Screen x/y S3 refinement under the same fixed physical source load."""
     if output.exists():
@@ -341,6 +342,8 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
 
     if target_young_multiplier not in (1.0, 5.0):
         raise ValueError("unsupported target contrast")
+    if force_n not in (0.04, 0.08):
+        raise ValueError("unsupported bounded force screen")
     if source_cells not in (8, 12, 16, 24):
         raise ValueError("unsupported source contrast screen")
     if baseline_path is None:
@@ -367,7 +370,7 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
             offline_structural_reference_y24=source_cells == 24,
             target_columns=target_cells, target_rows=target_cells,
             target_young_multiplier=target_young_multiplier,
-            force_n=0.04, reference_slope=1.0e-4,
+            force_n=force_n, reference_slope=1.0e-4,
             load_shape="physical_bump", slide_body="target",
             target_reference_full_left_clamp=True,
         )
@@ -382,6 +385,7 @@ def offline_target_xy_reference(output: Path, baseline_path: Path | None,
             "target_columns": target_cells, "target_rows": target_cells,
             "target_s3_faces": 2*target_cells**2,
             "target_young_multiplier": target_young_multiplier,
+            "force_n": force_n,
             "fixed_middle_left_nodes": tuple(
                 target_first+(target_cells+1)*row
                 for row in range(1, target_cells)),
@@ -532,7 +536,8 @@ def coupled_contrast_comparison(output: Path, reference_path: Path,
                 and case["source_rows"] == saved["source_rows"]
                 and case["target_columns"] == saved["target_columns"]
                 and case["target_rows"] == saved["target_rows"]
-                and case["target_young_multiplier"] == 5.0]
+                and case["target_young_multiplier"] == 5.0
+                and case.get("force_n", 0.04) == saved["force_n"]]
     if len(matching) != 1:
         raise ValueError("one matching independent reference is required")
     oracle = matching[0]
@@ -728,6 +733,10 @@ if __name__ == "__main__":
         offline_target_xy_reference(Path(sys.argv[2]), None, (4, 6),
                                     target_young_multiplier=5.0,
                                     source_cells=12)
+    elif len(sys.argv) > 1 and sys.argv[1] == "--offline-rotation-load-screen":
+        offline_target_xy_reference(Path(sys.argv[2]), None, (4,),
+                                    target_young_multiplier=5.0,
+                                    source_cells=12, force_n=0.08)
     elif len(sys.argv) > 1 and sys.argv[1] == "--offline-target-contrast-source24":
         offline_target_xy_reference(Path(sys.argv[2]), None, (6,),
                                     target_young_multiplier=5.0,
