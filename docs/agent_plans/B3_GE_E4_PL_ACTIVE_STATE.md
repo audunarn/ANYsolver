@@ -1,5 +1,32 @@
 # B3-GE / E4-PL / B2 active state
 
+## Revision 8 prospective transition — 29 September 2026
+
+The [Revision 8 plan](B3_GE_E4_PL_REVISION_8_PLAN.md) and
+[goal](B3_GE_E4_PL_REVISION_8_GOAL.md) govern forward work after resumption.
+They change milestone order and owner decision rights; the scientific criteria,
+historical evidence, consumed authorities and complete release boundary below
+remain intact. The current milestone is M1's matching-station elastic GE panel.
+M2 connection mechanics and M3 physical B2 remain open parallel paths.
+
+The bounded M1 low-yield ticket restored the existing accepted 40 N checkpoint
+and reproduced the 45 N backtrack-budget failure (163 assemblies, best free
+ratio 0.1069403). The accepted checkpoint was byte-identical after rejection.
+At the final rejected Newton base, the actual-update merit has a negative
+directional slope near zero; alpha=1e-4 reduced it, whereas the smallest
+permitted backtrack, alpha=2^-12, did not. The free-equation directional
+derivative discrepancy was 0.00123 at step 1e-5 and worsened at 1e-6; this
+does not establish a sufficiently accurate plastic tangent or a physical limit
+point. A single 40→42.5 N cutback hit the Newton iteration limit without
+changing the accepted prefix. Raw outputs and the bounded runner are in
+`.qualification/b3-ge-e4-pl/r8-f05-45n-ticket-dev-20260929-v1/` and
+`scripts/b3_e4_f05_45n_trial_diagnostic.py`. F05/G3 and this material path
+remain open. Do not broaden or advertise its material domain from the 40 N
+success. Next M1 action: advance the already working elastic public/ANYfem
+route and identify a genuinely matched E01 point-connection reference;
+resume this plastic ticket only for a specific accepted scope or derivative
+repair hypothesis. No formal F03 authority was used.
+
 Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1. This is the short working checkpoint. The complete pre-compaction note is preserved byte-for-byte in B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20260929.md (SHA-256 2D5071E8A93FDCF35FC3AF49955E0B85F431A19B1DF2BF3742A8CA560584BCDA). The complete programme, acceptance matrix, frozen registrations, failures, and versioned evidence remain authoritative.
 
 ## Decision and gates

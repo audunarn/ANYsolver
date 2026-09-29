@@ -2,6 +2,12 @@
 
 Revision: 26 September 2026, programme revision 5 (continuous connection-law decision and risk-proportionate execution).
 Status: governing development and qualification contract; no new product capability qualified.
+Prospective execution from 29 September 2026 follows the
+[Revision 8 plan](B3_GE_E4_PL_REVISION_8_PLAN.md) and
+[goal](B3_GE_E4_PL_REVISION_8_GOAL.md). Their explicit amendments change
+development order and owner decisions; the unaffected scientific and final
+release obligations in this programme remain binding. Historical evidence
+and this document's earlier revision record are not reinterpreted.
 Accepted main at registration: be41a77a62e1cd7e1767bda6e955253af0819f91 (ANYsolver 0.4.7).
 Current reviewed integration head: 85ede9d356d0ee5ce5469cb02f33079ccde34351; the living checkpoint records subsequent uncommitted work.
 First application: eccentric stiffened flat panel.
