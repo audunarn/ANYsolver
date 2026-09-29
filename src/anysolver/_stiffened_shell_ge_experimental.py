@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+from functools import wraps
+from threading import RLock
 import json
 import warnings
 
@@ -32,6 +34,7 @@ from ._stiffened_shell_ge_checkpoint_binary import (
     encode as _encode_binary_checkpoint, S3_MAGIC as S3_BINARY_CHECKPOINT_MAGIC,
     S3_SCHEMA as FINITE_S3_MATERIAL_CHECKPOINT,
     decode_s3 as _decode_s3_binary_checkpoint,
+    CHART_MAGIC as CHART_CHECKPOINT_MAGIC, decode_chart as _decode_chart_checkpoint,
 )
 from ._stiffened_shell_l1_assembly_experimental import (
     ExperimentalL1Line, ExperimentalBL5Line,
@@ -51,6 +54,22 @@ MAX_JSON_CHECKPOINT_BYTES = 2_000_000
 MAX_JSON_CHECKPOINT_VALUES = 50_000
 _MAX_DENSE_CONSTRAINT_ROWS = 48
 _MAX_DENSE_CONSTRAINT_VALUES = 16_384
+
+
+def _state_writer(method):
+    @wraps(method)
+    def call(self, *args, **kwargs):
+        with self._operation_lock:
+            return method(self, *args, **kwargs)
+    return call
+
+
+def _accepted_snapshot(method):
+    @wraps(method)
+    def call(self, *args, **kwargs):
+        with self._commit_lock:
+            return method(self, *args, **kwargs)
+    return call
 
 
 def _require_independent_supported_rows(constraints, free, coordinate_scale,
@@ -594,6 +613,8 @@ class ExperimentalGEAnalysis:
             [self._C[:, self._free], None]], format="csc")
         if self._A.shape[0] < 1 or self._A.nnz == 0:
             raise ValueError("nonempty constrained mixed operator required")
+        self._operation_lock = RLock()
+        self._commit_lock = RLock()
         self._accepted = None
         self._finite_driver = None
         self._generation = 0
@@ -641,6 +662,8 @@ class ExperimentalGEAnalysis:
                 "attachment": attachment,
                 "experimental_line_spaces": tuple(
                     line.multiplier_space for line in self._definition.lines),
+                "rotation_chart": ("unchanged reference-linear chart" if self._line_samples else
+                                   "experimental owned shell anchors; full fixed/free rotational triples only"),
                 "analysis": (("reference_linear",) if self._line_samples else
                              ("reference_linear", "experimental_elastic_finite_point",
                               "experimental_generalized_plastic_finite_point") +
@@ -667,6 +690,7 @@ class ExperimentalGEAnalysis:
                 "unsupported_modes": self._unsupported_modes,
                 "production_qualified": False}
 
+    @_state_writer
     def solve_linear(self, actions: tuple[NodalAction, ...], *,
                      cancellation_token=None) -> LinearResult:
         self._require_open()
@@ -718,14 +742,16 @@ class ExperimentalGEAnalysis:
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.commit")
         support = np.zeros_like(equilibrium)
         support[self._fixed] = equilibrium[self._fixed]
-        self._generation += 1
-        result = LinearResult("completed", _owned(q[:self._shell_count]),
-                              _owned(q[self._shell_count:]),
-                              _owned(multipliers), _owned(support),
-                              relative, constraint, self._generation)
-        self._accepted = (result, _owned(load))
+        with self._commit_lock:
+            self._generation += 1
+            result = LinearResult("completed", _owned(q[:self._shell_count]),
+                                  _owned(q[self._shell_count:]),
+                                  _owned(multipliers), _owned(support),
+                                  relative, constraint, self._generation)
+            self._accepted = (result, _owned(load))
         return result
 
+    @_state_writer
     def solve(self, actions: tuple[NodalAction, ...],
               targets: tuple[float, ...] = (1.,), *, cancellation_token=None,
               max_iterations: int = 12, max_backtracks: int = 8):
@@ -748,6 +774,7 @@ class ExperimentalGEAnalysis:
             if self._finite_driver is None and driver._accepted is not None:
                 self._finite_driver = driver
 
+    @_accepted_snapshot
     def recover(self) -> LinearResult:
         self._require_open()
         if self._finite_driver is not None:
@@ -756,6 +783,16 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("no accepted mixed linear result")
         return self._accepted[0]
 
+    @_state_writer
+    def rebase_rotations(self, expected_generation: int, *, cancellation_token=None):
+        """Issue an experimental physical shell-anchor reset at the same load."""
+        self._require_open()
+        if self._finite_driver is None:
+            raise RuntimeError("shell rebase requires an accepted finite point state")
+        return self._finite_driver.rebase_rotations(
+            expected_generation, cancellation_token=cancellation_token)
+
+    @_accepted_snapshot
     def checkpoint(self) -> bytes:
         self._require_open()
         if self._finite_driver is not None:
@@ -781,6 +818,8 @@ class ExperimentalGEAnalysis:
                 "linear", self._identity, self._generation, arrays)
         return raw
 
+    @_state_writer
+    @_accepted_snapshot
     def restore(self, raw: bytes) -> LinearResult:
         self._require_open()
         if self._finite_driver is not None:
@@ -789,8 +828,18 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
+        chart = None
+        if raw.startswith(CHART_CHECKPOINT_MAGIC):
+            if self._line_samples:
+                raise ValueError("owned shell charts require a finite point model")
+            event_generation, anchors, witness, raw = _decode_chart_checkpoint(
+                raw, self._identity, len(self._shell_ids))
+            chart = (event_generation, anchors, witness)
         if raw.startswith(BINARY_CHECKPOINT_MAGIC):
             def expected_shapes(kind, generation):
+                if ("_chart" in kind) != (chart is not None):
+                    raise ValueError("numeric shell chart snapshot requires matching outer policy")
+                kind = kind.replace("_chart", "")
                 if kind in ("finite", "finite_material", "finite_shell_material") and self._line_samples:
                     raise ValueError(
                         "experimental L1 line admits reference-linear checkpoints only")
@@ -822,6 +871,7 @@ class ExperimentalGEAnalysis:
 
             kind, generation, arrays = _decode_binary_checkpoint(
                 raw, self._identity, expected_shapes)
+            kind = kind.replace("_chart", "")
             schema = (CHECKPOINT if kind == "linear" else
                       FINITE_MATERIAL_CHECKPOINT if kind == "finite_material" else
                       FINITE_SHELL_MATERIAL_CHECKPOINT if kind == "finite_shell_material"
@@ -855,7 +905,7 @@ class ExperimentalGEAnalysis:
 
             generation, arrays, states = _decode_s3_binary_checkpoint(
                 raw, self._identity, expected_s3_shapes,
-                len(self._definition.shell.s3_elements))
+                len(self._definition.shell.s3_elements), anchored=chart is not None)
             value = {"schema": FINITE_S3_MATERIAL_CHECKPOINT,
                      "model": self._identity, "generation": generation,
                      **arrays, "s3_states": states,
@@ -876,7 +926,9 @@ class ExperimentalGEAnalysis:
                     "experimental weak line admits reference-linear checkpoints only")
             from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
             driver = FinitePointDriver(self)
-            result = driver.restore(value)
+            result = (driver.restore(value) if chart is None else
+                      driver.restore(value, rotation_anchors=chart[1],
+                                     pose_witness=chart[2], accepted_generation=chart[0]))
             self._finite_driver = driver
             return result
         if (type(value) is not dict or set(value) !=
@@ -906,6 +958,8 @@ class ExperimentalGEAnalysis:
         self._generation = value["generation"]
         return result
 
+    @_state_writer
+    @_accepted_snapshot
     def close(self):
         self._accepted = None
         self._finite_driver = None

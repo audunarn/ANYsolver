@@ -19,6 +19,9 @@ import numpy as np
 MAGIC = b"ANYSGECP2\0"
 S3_MAGIC = b"ANYSGECP5\0"
 S3_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_S3_J2_V5"
+CHART_MAGIC = b"ANYSGECP6\0"
+CHART_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_OWNED_CHART_V6"
+CHART_S3_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_ANCHORED_S3_J2_V6"
 MAX_HEADER_BYTES = 8192
 MAX_CHECKPOINT_BYTES = 128 * 1024 * 1024
 MAX_S3_STATE_BYTES = 128 * 1024
@@ -27,6 +30,9 @@ SCHEMAS = {
     "finite": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V2",
     "finite_material": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_MATERIAL_V3",
     "finite_shell_material": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_SHELL_J2_V4",
+    "finite_chart": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_ANCHORED_FINITE_V6",
+    "finite_chart_material": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_ANCHORED_MATERIAL_V6",
+    "finite_chart_shell_material": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_ANCHORED_SHELL_J2_V6",
 }
 
 
@@ -128,7 +134,7 @@ def decode(raw: bytes, model: str, expected_shapes) -> tuple[str, int, dict]:
 
 def encode_s3(model: str, generation: int,
               arrays: tuple[tuple[str, np.ndarray], ...],
-              states: tuple[bytes, ...]) -> bytes:
+              states: tuple[bytes, ...], *, anchored: bool = False) -> bytes:
     """Pack fixed numeric state and bounded native S3 model-bound blobs.
 
     V1–V4 framing and decoding are unaffected. Native S3 deserialization and
@@ -161,7 +167,9 @@ def encode_s3(model: str, generation: int,
         total += 4 + len(state)
         if total > MAX_CHECKPOINT_BYTES:
             raise ValueError("S3 checkpoint exceeds resource envelope")
-    metadata = {"schema": S3_SCHEMA, "model": model,
+    if type(anchored) is not bool:
+        raise ValueError("explicit S3 checkpoint chart policy required")
+    metadata = {"schema": CHART_S3_SCHEMA if anchored else S3_SCHEMA, "model": model,
                 "generation": generation, "arrays": shapes,
                 "s3_states": len(states)}
     header = json.dumps(metadata, sort_keys=True, separators=(",", ":"),
@@ -178,7 +186,7 @@ def encode_s3(model: str, generation: int,
 
 
 def decode_s3(raw: bytes, model: str, expected_shapes,
-              expected_s3_states: int) -> tuple[int, dict, tuple[bytes, ...]]:
+              expected_s3_states: int, *, anchored: bool = False) -> tuple[int, dict, tuple[bytes, ...]]:
     """Decode V5 only after digest, compiled shapes, and blob counts agree."""
     if (type(raw) is not bytes or not raw.startswith(S3_MAGIC) or
             len(raw) > MAX_CHECKPOINT_BYTES or
@@ -205,7 +213,7 @@ def decode_s3(raw: bytes, model: str, expected_shapes,
         raise ValueError("noncanonical S3 checkpoint metadata")
     if (type(header) is not dict or set(header) !=
             {"schema", "model", "generation", "arrays", "s3_states"} or
-            header["schema"] != S3_SCHEMA or header["model"] != model or
+            header["schema"] != (CHART_S3_SCHEMA if anchored else S3_SCHEMA) or header["model"] != model or
             type(header["generation"]) is not int or
             not 1 <= header["generation"] <= MAX_CHECKPOINT_BYTES // 8 or
             type(header["arrays"]) is not list or
@@ -242,3 +250,72 @@ def decode_s3(raw: bytes, model: str, expected_shapes,
     if offset != content_end:
         raise ValueError("unexpected S3 checkpoint trailing data")
     return generation, arrays, tuple(states)
+
+
+def encode_chart(model, generation, anchors, physical_witness, inner):
+    """Distinct pose-chart framing around a distinctly identified numeric layout.
+
+    Event generation is separate from the inner accepted load-step count.
+    The witness is the issued accepted physical orientation, not authentication.
+    """
+    from ._stiffened_shell_rotation_charts import owned_anchors
+    anchors = np.asarray(anchors, dtype=float)
+    if anchors.ndim != 3:
+        raise ValueError("complete shell chart anchors required")
+    anchors = owned_anchors(anchors, len(anchors))
+    witness = owned_anchors(physical_witness, len(anchors))
+    if (type(model) is not str or type(generation) is not int or generation < 2 or
+            type(inner) is not bytes or not inner.startswith((MAGIC, S3_MAGIC))):
+        raise ValueError("accepted chart event and bounded numeric snapshot required")
+    metadata = {"schema": CHART_SCHEMA, "model": model,
+                "generation": generation, "inner_bytes": len(inner)}
+    header = json.dumps(metadata, sort_keys=True, separators=(",", ":"),
+                        allow_nan=False).encode("ascii")
+    total = len(CHART_MAGIC)+4+len(header)+2*anchors.size*8+len(inner)+32
+    if len(header) > MAX_HEADER_BYTES or total > MAX_CHECKPOINT_BYTES:
+        raise ValueError("shell chart checkpoint exceeds resource envelope")
+    content = (CHART_MAGIC+len(header).to_bytes(4, "little")+header+
+               anchors.astype("<f8", copy=False).tobytes()+
+               witness.astype("<f8", copy=False).tobytes()+inner)
+    return content+sha256(content).digest()
+
+
+def decode_chart(raw, model, nodes):
+    """Validate framing and compiled pose shape before exposing owned arrays."""
+    from ._stiffened_shell_rotation_charts import owned_anchors
+    if (type(raw) is not bytes or not raw.startswith(CHART_MAGIC) or
+            type(nodes) is not int or nodes < 1 or len(raw) > MAX_CHECKPOINT_BYTES or
+            len(raw) < len(CHART_MAGIC)+4+32):
+        raise ValueError("bounded shell chart checkpoint required")
+    end = len(raw)-32
+    if sha256(raw[:end]).digest() != raw[end:]:
+        raise ValueError("shell chart checkpoint digest mismatch")
+    start = len(CHART_MAGIC)+4
+    size = int.from_bytes(raw[len(CHART_MAGIC):start], "little")
+    if not 1 <= size <= MAX_HEADER_BYTES or start+size > end:
+        raise ValueError("invalid shell chart checkpoint header")
+    try:
+        metadata = json.loads(raw[start:start+size].decode("ascii"))
+        canonical = json.dumps(metadata, sort_keys=True, separators=(",", ":"),
+                               allow_nan=False).encode("ascii")
+    except (ValueError, UnicodeError, RecursionError, TypeError) as exc:
+        raise ValueError("invalid shell chart checkpoint metadata") from exc
+    if (canonical != raw[start:start+size] or type(metadata) is not dict or
+            set(metadata) != {"schema", "model", "generation", "inner_bytes"} or
+            metadata["schema"] != CHART_SCHEMA or metadata["model"] != model or
+            type(metadata["generation"]) is not int or
+            not 2 <= metadata["generation"] <= MAX_CHECKPOINT_BYTES//8 or
+            type(metadata["inner_bytes"]) is not int or metadata["inner_bytes"] < 1):
+        raise ValueError("incompatible shell chart checkpoint")
+    offset = start+size
+    length = nodes*9*8
+    if offset+2*length+metadata["inner_bytes"] != end:
+        raise ValueError("shell chart checkpoint shape mismatch")
+    anchors = owned_anchors(np.frombuffer(raw, dtype="<f8", count=nodes*9,
+                                          offset=offset).reshape(nodes, 3, 3), nodes)
+    witness = owned_anchors(np.frombuffer(raw, dtype="<f8", count=nodes*9,
+                                          offset=offset+length).reshape(nodes, 3, 3), nodes)
+    inner = raw[offset+2*length:end]
+    if not inner.startswith((MAGIC, S3_MAGIC)):
+        raise ValueError("distinct numeric chart snapshot required")
+    return metadata["generation"], anchors, witness, inner

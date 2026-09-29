@@ -7,7 +7,7 @@ nor grants production qualification. See GE_BEAM3_VARIATIONAL_SHELL_MAP.md.
 """
 import numpy as np
 
-from ._ge_beam3_mixed_ad import Jet2, matmul, matvec, transpose, so3_exp, so3_log
+from ._ge_beam3_mixed_ad import Jet2, constant_matrix, matmul, matvec, transpose, so3_exp, so3_log
 from ._ge_beam3_pose_joint import _exp_terms
 
 POLICY = 'GE_BEAM3_PROCRUSTES_VARIATIONAL_SHELL_PULLBACK_V2'
@@ -77,13 +77,16 @@ def rotation_jets(reference, current):
             [2*(a*d-w*b), 2*(b*d+w*a), w*w-a*a-b*b+d*d]]
 
 
-def deformation(reference, displacement, *, stable_translation=False):
+def deformation(reference, displacement, *, stable_translation=False, rotation_anchors=None):
     """Value, differential and Hessian of all corotated nodal coordinates."""
     ref = np.asarray(reference, dtype=float)
     u = np.asarray(displacement, dtype=float)
     if u.shape != (6*len(ref),) or not np.isfinite(u).all():
         raise ValueError('finite complete shell coordinates required')
     n = len(u)
+    if rotation_anchors is not None:
+        from ._stiffened_shell_rotation_charts import owned_anchors
+        rotation_anchors = owned_anchors(rotation_anchors, len(ref))
     if stable_translation:
         w, a, b, d = _quaternion_jets(
             ref, None, displacement=u.reshape(-1, 6)[:, :3])
@@ -112,13 +115,16 @@ def deformation(reference, displacement, *, stable_translation=False):
             values.extend(local[j]+rotated_reference[j] for j in range(3))
         else:
             values.extend(local[j]-refc[i, j] for j in range(3))
-        values.extend(so3_log(matmul(rt, so3_exp(jets[i][3:]))))
+        physical = so3_exp(jets[i][3:])
+        if rotation_anchors is not None:
+            physical = matmul(physical, constant_matrix(rotation_anchors[i], n))
+        values.extend(so3_log(matmul(rt, physical)))
     return (np.array([v.value for v in values]),
             np.array([v.gradient for v in values]),
             np.array([v.hessian for v in values]))
 
 
-def response(model, element, displacement, origin, layers, *, split=False):
+def response(model, element, displacement, origin, layers, *, split=False, rotation_anchors=None):
     """Spatial wrench rows, additive columns, and unchanged local trial state.
 
 g=D.T f; H=D.T K D + sum(f_i Hess(d_i)). Spatial rows then follow
@@ -126,7 +132,7 @@ P.T r=g and P.T J=H-dP.T r. No post-hoc symmetrization is performed.
 """
     ref = np.array([model.mesh.nodes[i].coords() for i in element.node_ids])
     u = np.asarray(displacement, dtype=float)
-    local, differential, second = deformation(ref, u)
+    local, differential, second = deformation(ref, u, rotation_anchors=rotation_anchors)
     material = model.get_material(element.material_name)
     # This successor currently owns virgin elastic shells only. Do not imply
     # a conservative potential for active plastic/unsupported section states.

@@ -16,13 +16,14 @@ from .material_curves import DNVC208MaterialCurve
 POLICY = "STIFFENED_SHELL_S3_J2_ALGORITHMIC_PULLBACK_V1"
 
 
-def local_coordinates(model, element, displacement):
+def local_coordinates(model, element, displacement, *, rotation_anchors=None):
     reference = np.array([model.mesh.nodes[node].coords()
                           for node in element.node_ids])
-    return deformation(reference, displacement, stable_translation=True)[0]
+    return deformation(reference, displacement, stable_translation=True,
+                       rotation_anchors=rotation_anchors)[0]
 
 
-def response(model, element, displacement, origin, layers):
+def response(model, element, displacement, origin, layers, *, rotation_anchors=None):
     """Return one objective trial and owned local material candidate.
 
     With d(q), D=dd/dq: g=D.T f and dg/dq=D.T K_alg D+sum(f_i Hess d_i).
@@ -38,7 +39,8 @@ def response(model, element, displacement, origin, layers):
     reference = np.array([model.mesh.nodes[node].coords()
                           for node in element.node_ids])
     u = np.asarray(displacement, dtype=float)
-    local, differential, second = deformation(reference, u, stable_translation=True)
+    local, differential, second = deformation(reference, u, stable_translation=True,
+                                              rotation_anchors=rotation_anchors)
     force, tangent, candidate = element.compute_nonlinear_response(
         model.mesh, material, local, origin, layers, True)
     force, tangent = np.asarray(force), np.asarray(tangent)

@@ -50,3 +50,39 @@ consumer execution remain unfinished.
 Development evidence and exact installed identities are linked from the
 [active state](agent_plans/B3_GE_E4_PL_ACTIVE_STATE.md). This document does not
 establish G0/G1, F07/F12 or G4B acceptance.
+
+## Experimental GE shell-anchor reset
+
+After an accepted finite point-coupled step, the same owner can reset its shell
+rotation chart without advancing the physical load:
+
+```python
+accepted = analysis.recover()
+rebased = analysis.rebase_rotations(expected_generation=accepted.generation)
+saved = analysis.checkpoint()
+resumed = stiffened_shell.create_analysis(definition=definition)
+resumed.restore(saved)
+```
+
+The owned physical orientation is `Q = Exp(eta) @ A`; the event sets `A = Q`
+and `eta = 0`. It preserves beam poses, native retained variables, material
+histories and accepted load factors. The event advances the accepted generation
+once. Stale predecessors, cancellation before publication and failed mechanical
+checks leave the accepted prefix intact. This operation does not extend the
+admitted element strain, distortion or relative-rotation domains.
+
+Only fully free or fully fixed shell rotation triples are admitted for reset.
+Partially fixed total-rotation components require transformed support equations
+and are explicitly rejected. Line owners remain reference-linear. Native beam
+rotations retain their existing physical storage; this is a shell-chart event.
+
+After reset, `shell_frames` contains the physical matrices,
+`shell_rotation_anchors` the immutable anchors, and `shell_chart_coordinates`
+the local coordinates. `shell_displacement` retains translations and displays
+principal rotation vectors; those vectors cannot reconstruct a loading history.
+The existing Q4 adapter uses a total evaluation chart and rejects its pi branch.
+
+Anchored checkpoints have a separate V6 identity, inner policy and physical-pose
+witness. Restore checks mechanical consistency and continues without replay.
+Unrebased checkpoints retain their previous contracts. This development slice
+does not close F06, V18, G0B or broad chart/history qualification.

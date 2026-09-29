@@ -6,7 +6,7 @@ increment. Q4 shell J2 and generalized B3 yielding are experimental.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import localcontext
 import json
 from math import fsum
@@ -15,6 +15,7 @@ import warnings
 import numpy as np
 from scipy import sparse
 from scipy.sparse import linalg as spla
+from scipy.spatial.transform import Rotation
 
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._ge_beam3_generalized_cell import GeneralizedCellHistory
@@ -35,6 +36,8 @@ from ._stiffened_shell_ge_experimental import (
 )
 from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import encode_s3 as _encode_s3_checkpoint
+from ._stiffened_shell_ge_checkpoint_binary import encode_chart as _encode_chart_checkpoint
+from ._stiffened_shell_rotation_charts import owned_anchors, physical_frames, total_coordinates
 
 
 MAX_JSON_CHECKPOINT_BYTES = 2_000_000
@@ -179,7 +182,9 @@ def _accepted_shell_material_origins(owner, trial, candidates):
             owner._shell_parts[q4_count:], candidates[q4_count:]):
         if len(slots) != 18:
             raise ValueError("native S3 material candidate required")
-        local_q = s3_local_coordinates(owner._shell_model, element, trial.q[slots])
+        anchors = None if trial.shell_anchors is None else trial.shell_anchors[slots[::6]//6]
+        local_q = s3_local_coordinates(owner._shell_model, element, trial.q[slots],
+                                      rotation_anchors=anchors)
         _require_s3_material_state(candidate, local_q, accepted=False)
         origins.append(element.seal_solver_integrated_nonlinear_state(
             owner._shell_model.mesh, material, candidate, 3,
@@ -209,6 +214,9 @@ class FinitePointResult:
     shell_q4_material: tuple[ShellQ4MaterialRecovery, ...] = ()
     shell_s3_material: tuple[ShellS3MaterialRecovery, ...] = ()
     production_qualified: bool = False
+    shell_frames: np.ndarray | None = None
+    shell_rotation_anchors: np.ndarray | None = None
+    shell_chart_coordinates: np.ndarray | None = None
 
 
 @dataclass(frozen=True)
@@ -218,6 +226,20 @@ class _State:
     cells: np.ndarray
     resultants: np.ndarray
     multipliers: np.ndarray
+    shell_anchors: np.ndarray | None = None
+
+
+def _with_shell_chart(result, state, shell_count):
+    if state.shell_anchors is None:
+        return result
+    local = state.q[:shell_count]
+    frames = physical_frames(local, state.shell_anchors)
+    display = local.copy().reshape(-1, 6)
+    display[:, 3:] = Rotation.from_matrix(frames).as_rotvec()
+    return replace(result, shell_displacement=_owned(display.ravel()),
+                   shell_frames=_owned(frames),
+                   shell_rotation_anchors=state.shell_anchors,
+                   shell_chart_coordinates=_owned(local))
 
 
 class _RotationStepTooLarge(ValueError):
@@ -295,17 +317,23 @@ class FinitePointDriver:
             data.extend(tangent.ravel())
 
         for (eid, element, slots, _), origin in zip(owner._shell_parts, shell_origins):
+            anchors = None if state.shell_anchors is None else state.shell_anchors[slots[::6]//6]
             if len(slots) == 18 and owner._definition.shell.j2_curve is None:
                 force, tangent, candidate = variational_shell_response(
-                    owner._shell_model, element, state.q[slots], origin, 3)
+                    owner._shell_model, element, state.q[slots], origin, 3,
+                    rotation_anchors=anchors)
             elif len(slots) == 18:
                 force, tangent, candidate = s3_algorithmic_response(
-                    owner._shell_model, element, state.q[slots], origin, 3)
+                    owner._shell_model, element, state.q[slots], origin, 3,
+                    rotation_anchors=anchors)
             else:
+                total, chart_map = (state.q[slots], None) if anchors is None else total_coordinates(state.q[slots], anchors)
                 force, tangent, candidate = corotational_element_response(
-                    owner._shell_model, eid, element, state.q[slots], True,
+                    owner._shell_model, eid, element, total, True,
                     committed_state=origin, num_layers=3,
                     tangent_mode="consistent", centered_shell_reference=True)
+                if chart_map is not None:
+                    tangent = tangent@chart_map
             scatter(slots, force, tangent)
             shell_candidates.append(candidate)
 
@@ -330,7 +358,8 @@ class FinitePointDriver:
             positions = np.array((
                 shell_position, beam_positions[beam_node]))
             position_low = np.array((shell_low, beam_low[beam_node]))
-            anchors = np.array((np.eye(3), state.frames[beam_node]))
+            anchors = np.array((np.eye(3) if state.shell_anchors is None else
+                                state.shell_anchors[shell_node], state.frames[beam_node]))
             coordinates = np.zeros((2, 3))
             coordinates[0] = state.q[slots[3:6]]
             trial = joint.evaluate_ports(
@@ -384,7 +413,7 @@ class FinitePointDriver:
                 cells[i, cell] = rotation(angle)@cells[i, cell]
             resultants[i] += delta[base+6:base+24]
         multipliers = state.multipliers+delta[len(q):]
-        return _State(q, frames, cells, resultants, multipliers)
+        return _State(q, frames, cells, resultants, multipliers, state.shell_anchors)
 
     def solve(self, actions, targets, *, cancellation_token=None,
               max_iterations=12, max_backtracks=8):
@@ -446,14 +475,18 @@ class FinitePointDriver:
                          if owner._definition.shell.j2_curve is not None else ()))
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.publish")
-                    self._state = trial
-                    self._shell_origins = next_shell_origins
-                    self._beam_origins = beam_next
-                    self._load_factor = float(factor)
-                    self._accepted_factors = next_factors
-                    self._pattern = pattern
-                    owner._generation += 1
-                    self._accepted = next_result
+                    next_result = _with_shell_chart(next_result, trial, owner._shell_count)
+                    with owner._commit_lock:
+                        self._state = trial
+                        self._shell_origins = next_shell_origins
+                        self._beam_origins = beam_next
+                        self._load_factor = float(factor)
+                        self._accepted_factors = next_factors
+                        self._pattern = pattern
+                        owner._generation += 1
+                        self._accepted = next_result
+                        if owner._finite_driver is None:
+                            owner._finite_driver = self
                     break
                 if iteration == max_iterations:
                     raise RuntimeError("finite mixed Newton iteration limit")
@@ -495,10 +528,61 @@ class FinitePointDriver:
             raise RuntimeError("no accepted finite mixed increment")
         return self._accepted
 
-    def checkpoint(self):
+    def rebase_rotations(self, expected_generation, *, cancellation_token=None):
+        """Atomic same-load chart event; constitutive histories are untouched."""
+        owner = self.owner
+        if type(expected_generation) is not int:
+            raise ValueError("integer accepted predecessor generation required")
+        with owner._commit_lock:
+            if self._accepted is None or expected_generation != owner._generation:
+                raise ValueError("stale or missing accepted rebase predecessor")
+            previous = self._state
+        fixed = set(owner._fixed)
+        for node in range(len(owner._shell_ids)):
+            restrained = [6*node+j in fixed for j in (3, 4, 5)]
+            if any(restrained) and not all(restrained):
+                raise ValueError("shell anchor reset requires full rotational triples; partial supports need transformed equations")
+        cancellation_safe_point(cancellation_token, "stiffened-shell.rebase.prepare")
+        local = previous.q[:owner._shell_count]
+        if not np.any(local.reshape(-1, 6)[:, 3:] != 0.):
+            raise ValueError("no nonzero shell chart coordinates to rebase")
+        frames = physical_frames(local, previous.shell_anchors)
+        anchors = owned_anchors(frames, len(owner._shell_ids))
+        q = previous.q.copy()
+        q[:owner._shell_count].reshape(-1, 6)[:, 3:] = 0.
+        trial = replace(previous, q=_owned(q), shell_anchors=anchors)
+        if not np.allclose(physical_frames(q[:owner._shell_count], anchors), frames,
+                           rtol=0., atol=1e-12):
+            raise ValueError("rebase changed physical shell orientations")
+        residual, _, relative, gap, _, _ = self._assemble(
+            trial, self._load_factor, self._shell_origins, self._beam_origins)
+        if not np.isfinite(relative) or not np.isfinite(gap) or relative > 1e-8 or gap > 1e-9:
+            raise ValueError("mechanically inconsistent shell anchor reset")
+        support = np.zeros(owner._K.shape[0]); support[owner._fixed] = residual[owner._fixed]
+        result = _with_shell_chart(replace(self._accepted,
+            support_reactions=_owned(support), free_equilibrium_ratio=relative,
+            constraint_max=gap, generation=expected_generation+1), trial, owner._shell_count)
+        cancellation_safe_point(cancellation_token, "stiffened-shell.rebase.commit")
+        with owner._commit_lock:
+            if owner._generation != expected_generation or self._state is not previous:
+                raise ValueError("stale accepted rebase predecessor")
+            self._state = trial
+            self._accepted = result
+            owner._generation += 1
+        return result
+
+    def checkpoint(self, *, _encode_anchors=True):
         if self._accepted is None:
             raise RuntimeError("no accepted finite mixed increment")
         state = self._state
+        anchored = state.shell_anchors is not None
+        if anchored and _encode_anchors:
+            return _encode_chart_checkpoint(
+                self.owner._identity, self.owner._generation, state.shell_anchors,
+                self._accepted.shell_frames, self.checkpoint(_encode_anchors=False))
+        generation = len(self._accepted_factors) if anchored else self.owner._generation
+        def kind(name):
+            return name.replace("finite", "finite_chart", 1) if anchored else name
         arrays = (("q", state.q), ("frames", state.frames),
                   ("cells", state.cells), ("resultants", state.resultants),
                   ("multipliers", state.multipliers),
@@ -519,17 +603,17 @@ class FinitePointDriver:
                     self.owner._shell_parts[q4_count:],
                     self._shell_origins[q4_count:]))
             return _encode_s3_checkpoint(
-                self.owner._identity, self.owner._generation,
+                self.owner._identity, generation,
                 arrays + (("beam_plastic", beam_plastic),
                           ("beam_accumulated", beam_accumulated),
                           ("shell_plastic", shell_plastic),
-                          ("shell_alpha", shell_alpha)), s3_states)
+                          ("shell_alpha", shell_alpha)), s3_states, anchored=anchored)
         if self.owner._definition.shell.j2_curve is not None:
             beam_plastic, beam_accumulated = _material_arrays(self._beam_origins)
             shell_plastic, shell_alpha = _shell_material_arrays(self._shell_origins)
             return _encode_binary_checkpoint(
-                "finite_shell_material", self.owner._identity,
-                self.owner._generation,
+                kind("finite_shell_material"), self.owner._identity,
+                generation,
                 arrays + (("beam_plastic", beam_plastic),
                           ("beam_accumulated", beam_accumulated),
                           ("shell_plastic", shell_plastic),
@@ -539,13 +623,13 @@ class FinitePointDriver:
                for station in history.stations)):
             plastic, accumulated = _material_arrays(self._beam_origins)
             return _encode_binary_checkpoint(
-                "finite_material", self.owner._identity,
-                self.owner._generation,
+                kind("finite_material"), self.owner._identity,
+                generation,
                 arrays + (("beam_plastic", plastic),
                           ("beam_accumulated", accumulated)))
-        if sum(value.size for _name, value in arrays) > MAX_JSON_CHECKPOINT_VALUES:
+        if anchored or sum(value.size for _name, value in arrays) > MAX_JSON_CHECKPOINT_VALUES:
             return _encode_binary_checkpoint(
-                "finite", self.owner._identity, self.owner._generation, arrays)
+                kind("finite"), self.owner._identity, generation, arrays)
         payload = {
             "schema": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1",
             "model": self.owner._identity,
@@ -565,7 +649,8 @@ class FinitePointDriver:
                 "finite", self.owner._identity, self.owner._generation, arrays)
         return raw
 
-    def restore(self, value):
+    def restore(self, value, *, rotation_anchors=None, pose_witness=None,
+                accepted_generation=None):
         """Restore an accepted endpoint after mechanical consistency checks.
 
         V3 checks material admissibility and re-evaluation from the saved
@@ -614,6 +699,22 @@ class FinitePointDriver:
                         zip(factors, factors[1:]))))):
             raise ValueError("invalid accepted finite load history")
         q = _owned(value["q"], (owner._K.shape[0],))
+        if rotation_anchors is not None:
+            rotation_anchors = owned_anchors(rotation_anchors, len(owner._shell_ids))
+            witness = owned_anchors(pose_witness, len(owner._shell_ids))
+            if (type(accepted_generation) is not int or
+                    accepted_generation <= value["generation"]):
+                raise ValueError("shell chart event generation must exceed its load-step count")
+            if not np.allclose(physical_frames(q[:owner._shell_count], rotation_anchors),
+                               witness, rtol=0., atol=1e-11):
+                raise ValueError("shell chart anchor disagrees with physical pose witness")
+            fixed = set(owner._fixed)
+            for i, anchor in enumerate(rotation_anchors):
+                if (any(6*i+j in fixed for j in (3, 4, 5)) and
+                        np.linalg.norm(anchor-np.eye(3)) > 1e-12):
+                    raise ValueError("anchored partial or fixed shell support is unsupported")
+        elif pose_witness is not None or accepted_generation is not None:
+            raise ValueError("complete owned shell chart snapshot required")
         frames = _owned(value["frames"], self._reference_frames.shape)
         cells = _owned(value["cells"], self._state.cells.shape)
         resultants = _owned(value["resultants"], self._state.resultants.shape)
@@ -647,7 +748,9 @@ class FinitePointDriver:
                 s3_origins = []
                 for (_eid, element, slots, _), blob in zip(
                         owner._shell_parts[q4_count:], blobs):
-                    local_q = s3_local_coordinates(owner._shell_model, element, q[slots])
+                    anchors = None if rotation_anchors is None else rotation_anchors[slots[::6]//6]
+                    local_q = s3_local_coordinates(owner._shell_model, element, q[slots],
+                                                  rotation_anchors=anchors)
                     restored = element.deserialize_nonlinear_state(
                         owner._shell_model.mesh, shell_material_def, blob, 3,
                         expected_committed_total_u=local_q)
@@ -669,7 +772,7 @@ class FinitePointDriver:
             if any(np.linalg.norm(frame.T@frame-np.eye(3)) > 1e-9 or
                    abs(np.linalg.det(frame)-1.) > 1e-9 for frame in family):
                 raise ValueError("nonphysical finite checkpoint rotation")
-        trial = _State(q, frames, cells, resultants, multipliers)
+        trial = _State(q, frames, cells, resultants, multipliers, rotation_anchors)
         residual, _, relative, gap, shell_next, beam_next = self._assemble(
             trial, factors[-1], shell_origins, beam_origins,
             pattern=pattern)
@@ -719,7 +822,7 @@ class FinitePointDriver:
             "completed", factors[-1], _owned(q[:owner._shell_count]),
             _owned(self._beam_positions(trial)), frames, cells, resultants,
             multipliers, _owned(support), relative, gap, 0,
-            value["generation"], tuple(factors),
+            value["generation"] if accepted_generation is None else accepted_generation, tuple(factors),
             _material_observables(beam_origins),
             (tuple(tuple(float(v) for v in state["alpha"])
                    for state in shell_origins) if shell_material else ()),
@@ -729,6 +832,7 @@ class FinitePointDriver:
             (_shell_s3_recovery(owner._shell_parts[q4_count:],
                                 shell_next[q4_count:])
              if s3_material else ()))
+        result = _with_shell_chart(result, trial, owner._shell_count)
         self._state = trial
         self._pattern = pattern
         self._shell_origins = shell_origins if shell_material else shell_next
@@ -736,5 +840,5 @@ class FinitePointDriver:
         self._load_factor = factors[-1]
         self._accepted_factors = tuple(factors)
         self._accepted = result
-        owner._generation = value["generation"]
+        owner._generation = result.generation
         return result
