@@ -59,8 +59,10 @@ Their 18 rows have distinct beam pivots and rigid/wrench work balance to
 roundoff. A separate native-joint Jacobian comparison passed both offset
 signs (2/2). This establishes only reference-linear connection-row
 equivalence; B31 section, S4 response, recovery and execution remain
-unverified. Run one pinned CalculiX screen when the heavy-job slot is free,
-then decide whether this route can support a refined E01 comparison.
+unverified. A one-case runner with pinned executable/deck hashes, 120 s and
+8 GiB limits, raw-output retention and warning checks is prepared; its exact
+command is in the evidence README. Run it only when the heavy-job slot is
+free, then decide whether this route can support a refined E01 comparison.
 
 Updated 29 September 2026 under Revision 7 and ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1. This is the short working checkpoint. The complete pre-compaction note is preserved byte-for-byte in B3_GE_E4_PL_ACTIVE_STATE_HISTORY_20260929.md (SHA-256 2D5071E8A93FDCF35FC3AF49955E0B85F431A19B1DF2BF3742A8CA560584BCDA). The complete programme, acceptance matrix, frozen registrations, failures, and versioned evidence remain authoritative.
 

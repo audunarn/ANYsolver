@@ -35,3 +35,16 @@ solve advances to section/reaction/work interpretation and a prospectively
 specified three-level signed-offset E01 comparison. A failed assembly
 requires a different external representation. Neither outcome spends F03's
 formal execution authority.
+
+The prepared bounded runner is
+`scripts/b3_e4_e01_run_matching_point_canary.py` (SHA-256
+`0e54d09801554d63de66b6ba344a01bdd595a201ea0f5d49c2fafd2e2260569e`).
+It verifies the input and executable hashes, sets one OpenMP thread, stops
+after 120 s or 8 GiB observed process-tree memory, retains raw solver files,
+and flags warnings or incomplete output. Its CLI parsed successfully; no
+CalculiX process has been started for these decks. The next command, after
+confirming the numerical slot is free, is:
+
+```text
+.venv/Scripts/python.exe -B scripts/b3_e4_e01_run_matching_point_canary.py .qualification/b3-ge-e4-pl/r8-e01-matching-point-canary-dev-20260929-v1/point-plus.inp .qualification/b3-ge-e4-pl/r8-e01-matching-point-canary-dev-20260929-v1/ccx-plus 71b05b0e6c29dc0e44db9f499bde32ec936b4cb77c526634367601da8e113cb3
+```
