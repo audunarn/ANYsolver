@@ -70,9 +70,11 @@ result.
 An independent read-only reviewer checked the wrapper, driver, raw path and
 resource records and confirmed this bounded coupled-solve interpretation.
 The reviewer found no state flaw invalidating this elastic fixture. The
-wrapper relies on the matching preflight for supported seed forces and
-independent endpoint gap instead of recomputing those at injection. Tighten
-those guards before reusing the wrapper with a changed builder. The final gap
+executed wrapper relied on the matching preflight for supported seed forces
+and independent endpoint gap instead of recomputing those at injection. A
+subsequent source edit added both direct guards for future use; that edited
+wrapper has not been timed or used for a second fine solve. The exact executed
+version remains available in commit `647e1a52`. The final gap
 bound has only 4.86e-6 m margin to the declared tolerance. The saved
 4×4→8×8→16×16 final source-force sequence is
 4.2820329e-4→4.3102895e-4→4.3076922e-4 N; it supplies no convergence

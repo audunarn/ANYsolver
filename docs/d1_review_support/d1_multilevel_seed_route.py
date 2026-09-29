@@ -16,6 +16,9 @@ from unittest.mock import patch
 import numpy as np
 
 from anysolver.general_contact import static_path
+from examples.general_contact_free_target_cycle_dev import (
+    _independent_projected_gap_bound,
+)
 from docs.d1_review_support.d1_two_body_refined_target_route import (
     build_refined_case, run,
 )
@@ -89,6 +92,23 @@ def main():
             if seed_z.shape != kwargs["nodal_forces"].shape or not np.all(
                     np.isfinite(seed_z)) or np.any(seed_z < 0):
                 reasons.append("nodal_force")
+            endpoint_gap = None
+            if not reasons:
+                try:
+                    source, target = manager._positions(seed_u)
+                    support = manager.law.geometry.evaluate(
+                        source, target,
+                    ).reference_support
+                    if np.any((seed_z > 0) & (support <= 0)):
+                        reasons.append("unsupported_nodal_force")
+                    endpoint_gap = float(_independent_projected_gap_bound(
+                        model, manager.definition, seed_u,
+                        manager.definition.interactions[0].gap_tolerance,
+                    ))
+                    if endpoint_gap < -manager.definition.interactions[0].gap_tolerance:
+                        reasons.append("independent_endpoint_gap")
+                except (ValueError, RuntimeError, MemoryError):
+                    reasons.append("seed_geometry_or_gap_unresolved")
             # Unlike the proxy preflight, this starts from the actual fine
             # accepted pose. The driver does not otherwise check this path
             # when a seeded q happens to satisfy Newton convergence at entry.
@@ -100,6 +120,7 @@ def main():
             event(step=step, seed_used=not reasons, rejection_reasons=reasons,
                   reconstruction_error=reconstruction,
                   control_error=control_error,
+                  independent_endpoint_gap_lower_m=endpoint_gap,
                   actual_previous_fine_to_seed_swept=swept)
             if not reasons:
                 kwargs = dict(kwargs, q=seed_q, nodal_forces=seed_z)
