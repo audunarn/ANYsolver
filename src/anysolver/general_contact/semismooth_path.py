@@ -35,6 +35,33 @@ class SemismoothStep:
     diagnostics: dict | None = None
 
 
+def _coupled_contact_blocks(structural_tangent, contact, transform):
+    """Map the structural/contact tangent and gap work to free coordinates."""
+    gap_q = np.asarray(contact.gap_gradient @ transform)
+    kqq = (transform.T @ (structural_tangent+contact.tangent) @ transform).tocsr()
+    kqz = sparse.csr_matrix(-gap_q.T)
+    return kqq, kqz, gap_q
+
+
+def _assemble_direct_matrix(kqq, kqz, gap_q, control_reactions,
+                            control_rows, scales, active):
+    """Assemble one fixed active branch of the direct monolithic Newton system."""
+    modes = len(scales)
+    branch_q = np.zeros_like(gap_q)
+    branch_q[active] = scales[active, None]*gap_q[active]
+    branch_z = np.ones(modes)
+    branch_z[active] = 0.0
+    return sparse.bmat((
+        (kqq, sparse.csr_matrix(-control_reactions), kqz),
+        (sparse.csr_matrix(control_rows),
+         sparse.csr_matrix((control_rows.shape[0], control_rows.shape[0])),
+         sparse.csr_matrix((control_rows.shape[0], modes))),
+        (sparse.csr_matrix(branch_q),
+         sparse.csr_matrix((modes, control_rows.shape[0])),
+         sparse.diags(branch_z, format="csr")),
+    ), format="csr")
+
+
 def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                     committed_states, transform, offset, control_rows,
                     control_reactions, target, reduced_external, num_layers,
@@ -119,9 +146,9 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                 return SemismoothStep(True, None, q, mu, z, trial, contact,
                                       iteration, residual_norm, constraint_norm,
                                       ncp_norm, evaluations, backtracks)
-        stiffness = structural_k + contact.tangent
-        kqq = (transform.T @ stiffness @ transform).tocsr()
-        kqz = sparse.csr_matrix(-transform.T @ contact.gap_gradient.T)
+        kqq, kqz, gap_q = _coupled_contact_blocks(
+            structural_k, contact, transform,
+        )
         q_size, mu_size = len(q), len(mu)
         block_response = None
         if settings.monolithic_linear_solver == "block_response_dev":
@@ -129,7 +156,7 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                 block_response = prepare_frozen_block_response(
                     kqq=kqq, control_reactions=control_reactions,
                     control_rows=control_rows, kqz=kqz,
-                    gap_q=np.asarray(contact.gap_gradient @ transform),
+                    gap_q=gap_q,
                     residual=residual, constraint=constraint,
                     signature=f"contact_path:{step}:semismooth:{iteration}:block",
                 )
@@ -160,21 +187,10 @@ def solve_increment(*, model, manager, settings, q, reactions, nodal_forces,
                 if block_response is None:
                     branch_c = np.where(pivot_active,
                                         c*contact.state.normalized_gap, z)
-                    branch_q = np.zeros_like(contact.gap_gradient)
-                    branch_q[pivot_active] = (
-                        c[pivot_active, None]*contact.gap_gradient[pivot_active]
+                    matrix = _assemble_direct_matrix(
+                        kqq, kqz, gap_q, control_reactions,
+                        control_rows, c, pivot_active,
                     )
-                    branch_z = np.ones(modes)
-                    branch_z[pivot_active] = 0.0
-                    matrix = sparse.bmat((
-                        (kqq, sparse.csr_matrix(-control_reactions), kqz),
-                        (sparse.csr_matrix(control_rows),
-                         sparse.csr_matrix((len(target), len(target))),
-                         sparse.csr_matrix((len(target), modes))),
-                        (sparse.csr_matrix(branch_q @ transform),
-                         sparse.csr_matrix((modes, len(target))),
-                         sparse.diags(branch_z, format="csr")),
-                    ), format="csr")
                     rhs = np.r_[residual, constraint, -branch_c]
                     delta = np.asarray(factorize(
                         matrix, MatrixClass.GENERAL,
