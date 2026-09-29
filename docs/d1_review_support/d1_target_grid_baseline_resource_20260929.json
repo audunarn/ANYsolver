@@ -1,0 +1,21 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 8.981957699994382,
+  "peak_process_tree_memory_mb": 275.37408,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs/d1_review_support/d1_two_body_refined_target_route.py",
+    "--source-columns",
+    "4",
+    "--target-x-cells",
+    "1",
+    "--target-y-cells",
+    "1",
+    "--output",
+    "docs/d1_review_support/d1_target_grid_baseline_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_target_grid_baseline_log_20260929.txt"
+}
