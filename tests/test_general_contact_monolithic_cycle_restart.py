@@ -151,6 +151,38 @@ def _independent_skin_vertices(model, element, displacement, side):
     return np.asarray(vertices)
 
 
+def test_physical_skin_path_matches_linear_swept_certificate_assumption():
+    """The admitted small-rotation work map is affine along a solver trial."""
+    model, definition, settings, _program = _case()
+    manager = GeneralS3PatchManager(model, definition, settings)
+    rng = np.random.default_rng(20260929)
+    start = rng.uniform(-0.002, 0.002, manager.n_dof)
+    end = start + rng.uniform(-0.01, 0.01, manager.n_dof)
+    first = manager._positions(start)
+    last = manager._positions(end)
+    for fraction in (0.0, 0.17, 0.5, 0.83, 1.0):
+        displacement = (1-fraction)*start + fraction*end
+        mapped = manager._positions(displacement)
+        for side_index, side_name in enumerate(("bottom", "top")):
+            by_node = {}
+            for element_id in definition.surfaces[side_index].element_ids:
+                element = model.mesh.elements[element_id]
+                vertices = _independent_skin_vertices(
+                    model, element, displacement, side_name,
+                )
+                by_node.update(zip(element.node_ids, vertices, strict=True))
+            node_ids = (manager.law.source_node_ids if side_index == 0
+                        else manager.law.target_node_ids)
+            independent = np.asarray([by_node[node_id] for node_id in node_ids])
+            np.testing.assert_allclose(mapped[side_index], independent,
+                                       rtol=0.0, atol=1e-14)
+            np.testing.assert_allclose(
+                mapped[side_index],
+                (1-fraction)*first[side_index]+fraction*last[side_index],
+                rtol=0.0, atol=1e-14,
+            )
+
+
 def _sampled_physical_gap(model, definition, displacement, subdivisions):
     """Independent vertical projection onto each current S3 triangle."""
     sources = [_independent_skin_vertices(model, model.mesh.elements[element_id],

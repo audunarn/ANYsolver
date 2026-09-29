@@ -175,6 +175,35 @@ def test_swept_bound_covers_independent_warped_surface_samples():
     assert tested > 100
 
 
+def test_warped_source_bound_uses_signed_physical_normal_work():
+    """An independently computed warped-corner gap stays above each bound."""
+    source = np.asarray((
+        (0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
+        (1.0, 1.0, -0.5), (0.0, 1.0, 0.0),
+    ))
+    target = np.asarray((
+        (-1.0, -1.0, 0.0), (4.0, -1.0, 0.0),
+        (-1.0, 4.0, 0.0),
+    ))
+    # The source corner (1, 1) projects inside the target triangle. Its
+    # physical normal follows directly from the two bilinear tangents.
+    du = source[2]-source[3]
+    dv = source[2]-source[1]
+    normal = np.cross(du, dv)
+    normal /= np.linalg.norm(normal)
+    physical_gap = float(normal @ (source[2]-np.array((1.0, 1.0, 0.0))))
+    assert np.isclose(physical_gap, -1.0/np.sqrt(6.0), atol=1e-15)
+
+    bounds = (
+        q4_source_projected_gap_lower(source, target),
+        q4_source_projected_swept_gap_lower(
+            source, source, target, target, np.array((0.0, 0.0, 1.0)),
+        ),
+        overlap_local_swept_lower(source, source, target, target, 0)[0],
+    )
+    assert all(lower <= physical_gap for lower in bounds)
+
+
 def test_saved_first_step_profile_is_explicit_and_binds_restart_identity():
     saved = Path(__file__).resolve().parents[1] / (
         "docs/d1_review_support/d1_2d_gap_proposal_20260929.json"

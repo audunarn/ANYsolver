@@ -284,3 +284,57 @@ def test_monolithic_zero_swept_fraction_rolls_back_accepted_prefix(monkeypatch):
     )
     assert rerun.status == fresh.status == "completed"
     assert rerun.to_restart_checkpoint() == fresh.to_restart_checkpoint()
+
+
+def test_monolithic_accepted_swept_fraction_reaches_same_committed_state(
+        monkeypatch):
+    """A shortened admissible trial can converge without committing a trial."""
+    original = GeneralS3PatchManager.admissible_step_fraction
+    shortened = []
+
+    def shorten_first_admissible_trial(self, start, end):
+        fraction = original(self, start, end)
+        if not shortened and fraction == 1.0:
+            shortened.append(True)
+            return 0.5
+        return fraction
+
+    monkeypatch.setattr(GeneralS3PatchManager, "admissible_step_fraction",
+                        shorten_first_admissible_trial)
+    model, definition, settings, program = _case()
+    shortened_result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    assert shortened and shortened_result.status == "completed", (
+        shortened_result.failure_reason)
+    assert shortened_result.info["force_displacement_history"][0]["backtracks"] == 0
+
+    monkeypatch.setattr(GeneralS3PatchManager, "admissible_step_fraction",
+                        original)
+    fresh_model, fresh_definition, fresh_settings, fresh_program = _case()
+    fresh = solve_static_nonlinear(
+        fresh_model, contact=fresh_definition, contact_settings=fresh_settings,
+        contact_path_program=fresh_program, max_iterations=18,
+        emit_restart_checkpoint=True,
+    )
+    assert fresh.status == "completed", fresh.failure_reason
+    np.testing.assert_allclose(shortened_result.displacements,
+                               fresh.displacements, rtol=0.0, atol=1e-10)
+    np.testing.assert_allclose(
+        shortened_result.info["general_contact"]["integration_force"],
+        fresh.info["general_contact"]["integration_force"],
+        rtol=0.0, atol=1e-10,
+    )
+    shortened_checkpoint = shortened_result.to_restart_checkpoint()
+    fresh_checkpoint = fresh.to_restart_checkpoint()
+    assert (shortened_checkpoint["model_fingerprint"]
+            == fresh_checkpoint["model_fingerprint"])
+    assert (shortened_checkpoint["path_state"]["accepted_step"]
+            == fresh_checkpoint["path_state"]["accepted_step"] == 2)
+    np.testing.assert_allclose(
+        shortened_checkpoint["path_state"]["normal_forces"],
+        fresh_checkpoint["path_state"]["normal_forces"],
+        rtol=0.0, atol=1e-10,
+    )
