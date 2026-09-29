@@ -230,6 +230,38 @@ def test_equivalent_shell_and_beam_renumbering_preserves_physical_result():
                                   candidate.beam_coordinates)
 
 
+def test_reversed_native_member_parameter_preserves_point_panel_response():
+    original = _panel()
+    reversal = np.diag((-1., 1., -1.))
+    reversed_beams = []
+    for definition in reversed(original.beams):
+        element, inertia = definition.instantiate()
+        reference = element.operator.reference
+        reversed_beams.append(b3_ge.define_beam(
+            "b3-ge", element.element_id+30, element.node_ids[::-1],
+            reference.coordinates[::-1],
+            reference.nodal_triads[::-1]@reversal,
+            element.section, inertia))
+    changed = replace(original, beams=tuple(reversed_beams))
+    initial = ExperimentalGEAnalysis(original)
+    reversed_owner = ExperimentalGEAnalysis(changed)
+    for wrench in ((0., 0., 100., 0., 0., 0.),
+                   (0., 100., 0., 0., 0., 0.),
+                   (0., 0., 0., 10., 0., 0.)):
+        action = (NodalAction("beam", 105, wrench),)
+        baseline = initial.solve_linear(action)
+        candidate = reversed_owner.solve_linear(action)
+        np.testing.assert_allclose(candidate.shell_displacement,
+                                   baseline.shell_displacement,
+                                   rtol=1e-10, atol=1e-12)
+        np.testing.assert_allclose(candidate.beam_coordinates[:30],
+                                   baseline.beam_coordinates[:30],
+                                   rtol=1e-10, atol=1e-12)
+        np.testing.assert_allclose(candidate.reactions[:initial._shell_count],
+                                   baseline.reactions[:initial._shell_count],
+                                   rtol=1e-10, atol=1e-8)
+
+
 def test_reference_linear_load_cases_reuse_one_factorization():
     analysis = ExperimentalGEAnalysis(_panel())
     assert analysis.preflight()["reference_linear_factorizations"] == 0
