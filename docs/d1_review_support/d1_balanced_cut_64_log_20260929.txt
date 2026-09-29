@@ -1,0 +1,15 @@
+{
+  "status": "development_balanced_cut_scalar",
+  "cells_each_axis": 64,
+  "cut_fraction": 0.1,
+  "minimum_squared_detection_ratio_interval": [
+    0.5191468711406556,
+    0.5380252513328838
+  ],
+  "alternating_mode_ratio_interval": [
+    0.6278093500207765,
+    0.6452202729311932
+  ],
+  "maximum_relative_fourier_tail_bound": 0.03636731755303879,
+  "elapsed_seconds": 0.6120210000008228
+}
