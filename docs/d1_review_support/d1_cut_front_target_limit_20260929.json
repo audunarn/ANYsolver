@@ -1,0 +1,21 @@
+{
+  "status": "independent_flat_target_limit",
+  "target_free_node_ids": [
+    17,
+    18
+  ],
+  "bulk_limit": [
+    -0.025416078530063595,
+    -0.09880267146993639
+  ],
+  "rim_delta_limit": [
+    0.0,
+    0.12421875000000002
+  ],
+  "total_limit": [
+    -0.025416078530063595,
+    0.025416078530063627
+  ],
+  "l2_limit": 0.03594376295955559,
+  "quadrature": "3-point x by 2-point y, split at x-hat knot and S3 diagonal"
+}
