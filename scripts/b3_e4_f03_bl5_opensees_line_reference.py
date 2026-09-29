@@ -170,8 +170,10 @@ def solve(ops, intervals: int, case: str, *, constraint_form: str) -> dict:
                        bu[2]-su[2], bu[3]-su[3], bu[4]-su[4])
                 max_gap = max(max_gap, *(abs(value) for value in gap))
         internal_work = 0.
-        support_force = [0., 0., 0.]
-        support_moment = [0., 0., 0.]
+        fixed_node_force = [0., 0., 0.]
+        fixed_node_moment = [0., 0., 0.]
+        cut_force = [0., 0., 0.]
+        cut_moment = [0., 0., 0.]
         shell_work = 0.
         beam_work = 0.
         ops.reactions()
@@ -181,8 +183,8 @@ def solve(ops, intervals: int, case: str, *, constraint_form: str) -> dict:
                 raise ValueError("finite root-node reaction required")
             arm = _cross(nodes[node], reaction[:3])
             for axis in range(3):
-                support_force[axis] += reaction[axis]
-                support_moment[axis] += reaction[axis+3]+arm[axis]
+                fixed_node_force[axis] += reaction[axis]
+                fixed_node_moment[axis] += reaction[axis+3]+arm[axis]
         for domain, elements in (("shell", model["shell_cells"]),
                                  ("beam", model["beam_cells"])):
             for index, connectivity in enumerate(elements, 1):
@@ -196,20 +198,38 @@ def solve(ops, intervals: int, case: str, *, constraint_form: str) -> dict:
                     shell_work += work
                 else:
                     beam_work += work
+                if index == 1:
+                    # Entire x=0+ section: both shell and beam left-end
+                    # element actions. Their connection forces cancel in
+                    # total physical force and moment about the origin.
+                    for j, node in enumerate(connectivity):
+                        if node not in model["root_shell_nodes"] and not (
+                                domain == "beam" and j == 0):
+                            continue
+                        force = forces[6*j:6*j+3]
+                        moment = forces[6*j+3:6*j+6]
+                        arm = _cross(nodes[node], force)
+                        for axis in range(3):
+                            cut_force[axis] += force[axis]
+                            cut_moment[axis] += moment[axis]+arm[axis]
         tip = displacement[model["beam_tip"]]
         applied_work = sum(a*b for a, b in zip(load, tip))
         applied_moment = tuple(load[d+3]+v for d, v in enumerate(
             _cross(nodes[model["beam_tip"]], load[:3])))
-        force_error = max(abs(a+b) for a, b in zip(support_force, load[:3]))
-        moment_error = max(abs(a+b) for a, b in zip(
-            support_moment, applied_moment))
+        cut_force_error = max(abs(a+b) for a, b in zip(cut_force, load[:3]))
+        cut_moment_error = max(abs(a+b) for a, b in zip(
+            cut_moment, applied_moment))
+        fixed_force_error = max(abs(a+b) for a, b in zip(
+            fixed_node_force, load[:3]))
+        fixed_moment_error = max(abs(a+b) for a, b in zip(
+            fixed_node_moment, applied_moment))
         work_error = abs(internal_work-applied_work)
         if (max_gap > 1e-9 or max_rigid_gap > 1e-9 or
-                force_error > 1e-5 or moment_error > 1e-5 or
+                cut_force_error > 1e-5 or cut_moment_error > 1e-5 or
                 work_error > 1e-8*max(abs(applied_work), 1e-12)):
-            raise ValueError("external five-channel gap, balance or work failed: "
-                             f"{max_gap=}, {max_rigid_gap=}, {force_error=}, "
-                             f"{moment_error=}, {work_error=}")
+            raise ValueError("external five-channel gap, cut balance or work failed: "
+                             f"{max_gap=}, {max_rigid_gap=}, {cut_force_error=}, "
+                             f"{cut_moment_error=}, {work_error=}")
         return {"intervals": intervals, "case": case,
                 "constraint_form": constraint_form,
                 "shell_elements": len(model["shell_cells"]),
@@ -222,8 +242,10 @@ def solve(ops, intervals: int, case: str, *, constraint_form: str) -> dict:
                 "beam_internal_work_j": beam_work,
                 "max_five_channel_gap": max_gap,
                 "max_rigid_link_gap": max_rigid_gap,
-                "support_force_error_n": force_error,
-                "support_moment_error_nm": moment_error,
+                "section_cut_force_error_n": cut_force_error,
+                "section_cut_moment_error_nm": cut_moment_error,
+                "fixed_node_reaction_force_error_n": fixed_force_error,
+                "fixed_node_reaction_moment_error_nm": fixed_moment_error,
                 "internal_applied_work_error_j": work_error}
     finally:
         ops.wipe()
