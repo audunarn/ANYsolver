@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import localcontext
 import json
+from math import fsum
 import warnings
 
 import numpy as np
@@ -19,6 +20,7 @@ from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._ge_beam3_generalized_cell import GeneralizedCellHistory
 from ._ge_beam3_generalized_ellipsoid_section import GeneralizedHistory
 from ._ge_beam3_p5.algebra import rotation
+from ._ge_beam3_p5.compensated_coordinates import split_sum
 from .control import cancellation_safe_point
 from .corotational import corotational_element_response
 from ._stiffened_shell_ge_experimental import (
@@ -30,6 +32,18 @@ from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_chec
 
 MAX_JSON_CHECKPOINT_BYTES = 2_000_000
 MAX_JSON_CHECKPOINT_VALUES = 50_000
+
+
+def _position_pair(reference, displacement):
+    """Keep the rounded remainder when a physical displacement joins a reference."""
+    if reference.shape != displacement.shape:
+        raise ValueError("matching finite position coordinates required")
+    high = np.empty_like(reference)
+    low = np.empty_like(reference)
+    for index in np.ndindex(reference.shape):
+        high[index], low[index] = split_sum(
+            (float(reference[index]), float(displacement[index])))
+    return high, low
 
 
 def _material_arrays(histories):
@@ -145,10 +159,15 @@ class FinitePointDriver:
             raise RuntimeError("finite load pattern has not been supplied")
         count = owner._K.shape[0]
         size = count+len(state.multipliers)
-        residual = np.zeros(size)
+        force_terms = [[] for _ in range(size)]
         rows, columns, data = [], [], []
         shell_candidates = []
         beam_candidates = []
+        beam_displacement = state.q[
+            owner._shell_count:owner._shell_count+self._beam_nodal
+        ].reshape(-1, 6)[:, :3]
+        beam_positions, beam_low = _position_pair(
+            self._reference_positions, beam_displacement)
 
         def scatter(slots, force, tangent):
             slots = np.asarray(slots, dtype=int)
@@ -158,7 +177,8 @@ class FinitePointDriver:
                     tangent.shape != (len(slots), len(slots)) or
                     not np.isfinite(force).all() or not np.isfinite(tangent).all()):
                 raise RuntimeError("finite local mixed trial operator required")
-            np.add.at(residual, slots, force)
+            for slot, value in zip(slots, force):
+                force_terms[int(slot)].append(float(value))
             rows.extend(np.repeat(slots, len(slots)))
             columns.extend(np.tile(slots, len(slots)))
             data.extend(tangent.ravel())
@@ -180,12 +200,8 @@ class FinitePointDriver:
         for i, ((element, slots, _), origin) in enumerate(
                 zip(owner._beam_parts, beam_origins)):
             nodes = np.array([owner._beam_index[node] for node in element.node_ids])
-            positions = self._reference_positions[nodes].copy()
-            for local, node in enumerate(nodes):
-                offset = owner._shell_count+6*node
-                positions[local] += state.q[offset:offset+3]
             response = element.operator.evaluate(
-                positions, np.zeros((3, 3)), state.frames[nodes],
+                beam_positions[nodes], beam_low[nodes], state.frames[nodes],
                 state.cells[i], state.resultants[i], origin=origin,
                 check=element.operator.guard)
             tangent = spatial_jacobian(
@@ -197,20 +213,25 @@ class FinitePointDriver:
                                                owner._joint_slots)):
             shell_node = slots[0]//6
             beam_node = (slots[6]-owner._shell_count)//6
+            shell_position, shell_low = _position_pair(
+                owner._shell_xyz[shell_node], state.q[slots[:3]])
             positions = np.array((
-                owner._shell_xyz[shell_node]+state.q[slots[:3]],
-                self._reference_positions[beam_node]+state.q[slots[6:9]]))
+                shell_position, beam_positions[beam_node]))
+            position_low = np.array((shell_low, beam_low[beam_node]))
             anchors = np.array((np.eye(3), state.frames[beam_node]))
             coordinates = np.zeros((2, 3))
             coordinates[0] = state.q[slots[3:6]]
             trial = joint.evaluate_ports(
                 positions, anchors, state.multipliers[6*i:6*i+6],
                 rotation_coordinates=coordinates,
-                charted_ports=(True, False))
+                charted_ports=(True, False), position_low=position_low)
             extended = np.r_[slots, np.arange(count+6*i, count+6*i+6)]
             scatter(extended, trial.residual, trial.tangent)
 
-        residual[:count] -= factor*load_pattern
+        for row, value in enumerate(factor*load_pattern):
+            force_terms[row].append(-float(value))
+        residual = np.fromiter((fsum(terms) for terms in force_terms),
+                               dtype=float, count=size)
         matrix = sparse.coo_matrix(
             (data, (rows, columns)), shape=(size, size)).tocsc()
         if not np.isfinite(residual).all() or not np.isfinite(matrix.data).all():

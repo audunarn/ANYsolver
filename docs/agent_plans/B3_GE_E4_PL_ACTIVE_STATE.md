@@ -181,6 +181,31 @@ sweeps; next pursue a mechanically justified precision or convergence-scale
 remedy with trustworthy checkpoint reference before sign-crossing work. No
 product criterion changes or F03 authority are involved.
 
+**Finite-position precision development slice:** The GE
+finite owner now passes existing high/low position pairs to the native beam and
+point-joint operators and sums already rounded local residual contributions
+with `fsum`. Without the improved summation, the paired-coordinate path fails
+the previously accepted `0.4 → 0.2` unload (best ratio `1.54e-8`); together
+they pass it at `8.31e-9`. A new integrated test confirms the joint's weak
+constraint detects a `2^-54 m` beam motion at a 1 m reference coordinate.
+The focused source check and same-process installed-wheel finite suite pass
+14/14. The disposable wheel hash is
+`9360502F4B52E23D8DBB687D60D9AFD917B5AD6B3088DDACE7DD43E64EA2549A`.
+At `0.2 → 0.1`, the best ratio improves from `1.77e-8` with legacy positions
+and improved summation to `1.46e-8` with paired positions, but both still reject
+the step at the unchanged `1e-8` limit. A five-sample warm assembly screen on
+one small elastic panel measured medians `0.07275 s` before and `0.07494 s`
+for the candidate (about 3% overhead); this is not a scale qualification.
+The source import needed a temporary Numba cache because cache writes inside
+this protected worktree stalled; the wheel test process imported its installed
+site. Independent read-only review found no atomicity defect and checked that
+beam and joint consume the same beam high/low pair. The shell element still
+uses its existing geometry path and recovery exposes only rounded beam
+positions; full coupled sub-spacing work/tangent and actual-position claims
+need separate evidence and, if required, a recovery contract. `fsum` sums
+already rounded local values. Its Python list cost needs G5-scale measurement.
+No near-zero, reversal, G3, or G5 acceptance follows from this slice.
+
 A separate finite-support flat-Q4 shell-pose prototype has exact box-window
 centroid/covariance weights, objective rigid-motion recovery, a bounded
 endpoint-witness screen, and first variations through actual shell/native

@@ -20,6 +20,36 @@ def _actions():
     return (NodalAction("beam", 105, (0., 0., 1000., 0., 0., 0.)),)
 
 
+def test_finite_position_pair_preserves_sub_spacing_motion():
+    reference = np.array([[1., 0., 0.]])
+    displacement = np.array([[2.**-54, 0., 0.]])
+    high, low = finite_experimental._position_pair(reference, displacement)
+    assert high[0, 0] == 1.
+    assert low[0, 0] == displacement[0, 0]
+    reference[0, 0] = 2.
+    displacement[0, 0] = 0.
+    assert high[0, 0] == 1. and low[0, 0] == 2.**-54
+
+
+def test_finite_joint_resolves_sub_spacing_beam_motion():
+    owner = ExperimentalGEAnalysis(_panel())
+    driver = finite_experimental.FinitePointDriver(owner)
+    count = owner._K.shape[0]
+    pattern = np.zeros(count)
+    state = driver._state
+    shifted_q = state.q.copy()
+    shifted_q[owner._shell_count+6*owner._beam_index[103]] = 2.**-54
+    shifted = replace(state, q=shifted_q)
+    baseline = driver._assemble(
+        state, 0., driver._shell_origins, driver._beam_origins,
+        pattern=pattern)[0]
+    changed = driver._assemble(
+        shifted, 0., driver._shell_origins, driver._beam_origins,
+        pattern=pattern)[0]
+    assert baseline[count+6] == 0.
+    assert changed[count+6] == 2.**-54
+
+
 def _plastic_panel():
     base = _panel()
     beams = []
