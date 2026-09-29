@@ -1,7 +1,7 @@
 """Bounded finite-step trial driver for the experimental GE point panel.
 
 All shell, beam and joint evaluations use one accepted predecessor per load
-increment. Shells remain elastic; generalized B3 yielding is experimental.
+increment. Q4 shell J2 and generalized B3 yielding are experimental.
 """
 
 from __future__ import annotations
@@ -24,7 +24,8 @@ from ._ge_beam3_p5.compensated_coordinates import split_sum
 from .control import cancellation_safe_point
 from .corotational import corotational_element_response
 from ._stiffened_shell_ge_experimental import (
-    FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT, NodalAction, _owned,
+    FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
+    FINITE_SHELL_MATERIAL_CHECKPOINT, NodalAction, _owned,
     _linear_equilibrium, _scaled_constraint_gap,
 )
 from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_checkpoint
@@ -79,6 +80,21 @@ def _material_observables(histories):
                  for history in histories)
 
 
+def _shell_material_arrays(histories):
+    plastic = np.asarray([state["plastic_strain"] for state in histories],
+                         dtype=float)
+    alpha = np.asarray([state["alpha"] for state in histories], dtype=float)
+    if plastic.shape != (len(histories), 12, 3) or alpha.shape != (len(histories), 12):
+        raise ValueError("complete Q4 shell J2 station state required")
+    return _owned(plastic), _owned(alpha)
+
+
+def _shell_material_states(plastic, alpha):
+    return tuple({"plastic_strain": _owned(plastic[i], (12, 3)),
+                  "alpha": _owned(alpha[i], (12,))}
+                 for i in range(len(plastic)))
+
+
 @dataclass(frozen=True)
 class FinitePointResult:
     """Experimental finite result with dimensionless work/row-scaled errors."""
@@ -97,6 +113,7 @@ class FinitePointResult:
     generation: int
     accepted_factors: tuple[float, ...]
     beam_station_accumulated: tuple[tuple[float, ...], ...] = ()
+    shell_layer_alpha: tuple[tuple[float, ...], ...] = ()
     production_qualified: bool = False
 
 
@@ -304,6 +321,12 @@ class FinitePointDriver:
                     support = np.zeros(owner._K.shape[0])
                     support[owner._fixed] = residual[owner._fixed]
                     next_factors = self._accepted_factors+(float(factor),)
+                    if owner._definition.shell.j2_curve is not None:
+                        shell_plastic, shell_alpha = _shell_material_arrays(shell_next)
+                        next_shell_origins = _shell_material_states(
+                            shell_plastic, shell_alpha)
+                    else:
+                        next_shell_origins = shell_next
                     next_result = FinitePointResult(
                         "completed", float(factor),
                         _owned(trial.q[:owner._shell_count]),
@@ -312,11 +335,14 @@ class FinitePointDriver:
                         _owned(trial.resultants), _owned(trial.multipliers),
                         _owned(support), relative, gap, iteration,
                         owner._generation+1, next_factors,
-                        _material_observables(beam_next))
+                        _material_observables(beam_next),
+                        (tuple(tuple(float(v) for v in state["alpha"])
+                               for state in shell_next)
+                         if owner._definition.shell.j2_curve is not None else ()))
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.publish")
                     self._state = trial
-                    self._shell_origins = shell_next
+                    self._shell_origins = next_shell_origins
                     self._beam_origins = beam_next
                     self._load_factor = float(factor)
                     self._accepted_factors = next_factors
@@ -375,6 +401,16 @@ class FinitePointDriver:
                   ("accepted_factors", np.asarray(self._accepted_factors)))
         nonmonotone = any(b <= a for a, b in zip(
             self._accepted_factors, self._accepted_factors[1:]))
+        if self.owner._definition.shell.j2_curve is not None:
+            beam_plastic, beam_accumulated = _material_arrays(self._beam_origins)
+            shell_plastic, shell_alpha = _shell_material_arrays(self._shell_origins)
+            return _encode_binary_checkpoint(
+                "finite_shell_material", self.owner._identity,
+                self.owner._generation,
+                arrays + (("beam_plastic", beam_plastic),
+                          ("beam_accumulated", beam_accumulated),
+                          ("shell_plastic", shell_plastic),
+                          ("shell_alpha", shell_alpha)))
         if (nonmonotone or any(station.accumulated != (0., 0.)
                for history in self._beam_origins
                for station in history.stations)):
@@ -420,15 +456,21 @@ class FinitePointDriver:
                      "pattern"}
         if type(value) is not dict:
             raise ValueError("incompatible experimental finite checkpoint")
-        material = value.get("schema") == FINITE_MATERIAL_CHECKPOINT
+        shell_material = value.get("schema") == FINITE_SHELL_MATERIAL_CHECKPOINT
+        material = value.get("schema") in (
+            FINITE_MATERIAL_CHECKPOINT, FINITE_SHELL_MATERIAL_CHECKPOINT)
         expected_keys = (base_keys | {"beam_plastic", "beam_accumulated"}
                          if material else base_keys)
+        if shell_material:
+            expected_keys |= {"shell_plastic", "shell_alpha"}
         if (set(value) != expected_keys or
                 value["schema"] not in
-                (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT) or
+                (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
+                 FINITE_SHELL_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
                 type(value["generation"]) is not int or
-                value["generation"] < 1):
+                value["generation"] < 1 or
+                shell_material != (owner._definition.shell.j2_curve is not None)):
             raise ValueError("incompatible experimental finite checkpoint")
         factors = value["accepted_factors"]
         if (type(factors) is not list or len(factors) != value["generation"] or
@@ -457,6 +499,15 @@ class FinitePointDriver:
                 raise ValueError("material checkpoint requires yielded or reversed history")
         else:
             beam_origins = self._beam_origins
+        if shell_material:
+            shell_count = len(owner._shell_parts)
+            shell_plastic = _owned(value["shell_plastic"], (shell_count, 12, 3))
+            shell_alpha = _owned(value["shell_alpha"], (shell_count, 12))
+            if np.any(shell_alpha < 0.):
+                raise ValueError("nonphysical shell J2 checkpoint state")
+            shell_origins = _shell_material_states(shell_plastic, shell_alpha)
+        else:
+            shell_origins = self._shell_origins
         beam_nodal = q[owner._shell_count:
                        owner._shell_count+self._beam_nodal].reshape(-1, 6)
         if (np.any(q[owner._fixed] != 0.) or
@@ -472,7 +523,7 @@ class FinitePointDriver:
                 raise ValueError("nonphysical finite checkpoint rotation")
         trial = _State(q, frames, cells, resultants, multipliers)
         residual, _, relative, gap, shell_next, beam_next = self._assemble(
-            trial, factors[-1], self._shell_origins, beam_origins,
+            trial, factors[-1], shell_origins, beam_origins,
             pattern=pattern)
         if (not np.isfinite(relative) or relative > 1e-8 or gap > 1e-9 or
                 (not material and any(station.accumulated != (0., 0.)
@@ -490,6 +541,16 @@ class FinitePointDriver:
                 if np.max(np.abs(saved-repeated), initial=0.) > (
                         64.*np.finfo(float).eps*scale):
                     raise ValueError("mechanically inconsistent material checkpoint")
+        if shell_material:
+            next_plastic, next_alpha = _shell_material_arrays(shell_next)
+            for saved, repeated in ((shell_plastic, next_plastic),
+                                    (shell_alpha, next_alpha)):
+                scale = max(float(np.max(np.abs(saved), initial=0.)),
+                            float(np.max(np.abs(repeated), initial=0.)),
+                            np.finfo(float).tiny)
+                if np.max(np.abs(saved-repeated), initial=0.) > (
+                        64.*np.finfo(float).eps*scale):
+                    raise ValueError("mechanically inconsistent shell J2 checkpoint")
         support = np.zeros(owner._K.shape[0])
         support[owner._fixed] = residual[owner._fixed]
         result = FinitePointResult(
@@ -497,10 +558,12 @@ class FinitePointDriver:
             _owned(self._beam_positions(trial)), frames, cells, resultants,
             multipliers, _owned(support), relative, gap, 0,
             value["generation"], tuple(factors),
-            _material_observables(beam_origins))
+            _material_observables(beam_origins),
+            (tuple(tuple(float(v) for v in state["alpha"])
+                   for state in shell_origins) if shell_material else ()))
         self._state = trial
         self._pattern = pattern
-        self._shell_origins = shell_next
+        self._shell_origins = shell_origins if shell_material else shell_next
         self._beam_origins = beam_origins if material else beam_next
         self._load_factor = factors[-1]
         self._accepted_factors = tuple(factors)

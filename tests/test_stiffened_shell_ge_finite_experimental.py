@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from dataclasses import replace
 
+from anymaterial import DNVC208MaterialCurve
 from anysolver import b3_ge
 from anysolver._stiffened_shell_ge_experimental import (
     ExperimentalGEAnalysis, NodalAction,
@@ -63,6 +64,152 @@ def _plastic_panel():
             element.operator.reference.nodal_triads, section, inertia,
             quadrature=element.operator.order))
     return replace(base, beams=tuple(beams))
+
+
+def _q4_shell_j2_panel():
+    base = _plastic_panel()
+    pressure = 1.0e6
+    curve = DNVC208MaterialCurve(
+        pressure, 1.05*pressure, 1.1*pressure,
+        .005, .01, 4.*pressure, .2)
+    return replace(base, shell=replace(base.shell, j2_curve=curve))
+
+
+def test_q4_shell_and_beam_yield_atomically_and_restart(monkeypatch):
+    definition = _q4_shell_j2_panel()
+    direct_owner = ExperimentalGEAnalysis(definition)
+    accepted = direct_owner.solve(
+        _actions(), (.5, 1.), max_iterations=20, max_backtracks=12)
+    assert accepted.free_equilibrium_ratio <= 1e-8
+    assert accepted.constraint_max <= 1e-9
+    assert max(max(row) for row in accepted.shell_layer_alpha) > 0.
+    assert max(max(row) for row in accepted.beam_station_accumulated) > 0.
+    saved = direct_owner.checkpoint()
+    assert saved.startswith(BINARY_CHECKPOINT_MAGIC)
+    restored_owner = ExperimentalGEAnalysis(definition)
+    restored = restored_owner.restore(saved)
+    assert restored.shell_layer_alpha == accepted.shell_layer_alpha
+    assert restored.beam_station_accumulated == accepted.beam_station_accumulated
+    np.testing.assert_array_equal(restored.shell_displacement,
+                                  accepted.shell_displacement)
+
+    original = finite_experimental.FinitePointDriver._assemble
+
+    def fail_trial(self, state, factor, *args, **kwargs):
+        if factor == 1.1:
+            raise RuntimeError("fixture rejected mixed material trial")
+        return original(self, state, factor, *args, **kwargs)
+
+    with monkeypatch.context() as patcher:
+        patcher.setattr(finite_experimental.FinitePointDriver,
+                        "_assemble", fail_trial)
+        with pytest.raises(RuntimeError, match="rejected mixed material trial"):
+            direct_owner.solve(_actions(), (1.1,), max_iterations=20,
+                               max_backtracks=12)
+    assert direct_owner.checkpoint() == saved
+    assert direct_owner.recover() is accepted
+    def fail_shell_state(_states):
+        raise RuntimeError("fixture shell state preparation failure")
+
+    with monkeypatch.context() as patcher:
+        patcher.setattr(finite_experimental, "_shell_material_arrays",
+                        fail_shell_state)
+        with pytest.raises(RuntimeError, match="shell state preparation failure"):
+            direct_owner.solve(_actions(), (1.1,), max_iterations=20,
+                               max_backtracks=12)
+    assert direct_owner.checkpoint() == saved
+    assert direct_owner.recover() is accepted
+    token = CancellationToken()
+    token.cancel("mixed J2 accepted prefix")
+    with pytest.raises(SolveCancelled, match="mixed J2 accepted prefix"):
+        direct_owner.solve(_actions(), (1.1,), cancellation_token=token)
+    assert direct_owner.checkpoint() == saved
+
+    shell_parent = direct_owner._finite_driver._shell_origins
+    beam_parent = direct_owner._finite_driver._beam_origins
+    direct = direct_owner.solve(_actions(), (1.1,), max_iterations=20,
+                                max_backtracks=12)
+    resumed = restored_owner.solve(_actions(), (1.1,), max_iterations=20,
+                                    max_backtracks=12)
+    assert direct.accepted_factors == resumed.accepted_factors
+    assert direct.shell_layer_alpha == resumed.shell_layer_alpha
+    assert direct.beam_station_accumulated == resumed.beam_station_accumulated
+    np.testing.assert_array_equal(direct.shell_displacement,
+                                  resumed.shell_displacement)
+    np.testing.assert_array_equal(direct.cell_resultants,
+                                  resumed.cell_resultants)
+
+    driver = direct_owner._finite_driver
+    state = driver._state
+    _, tangent, _, _, shell_trial, _ = driver._assemble(
+        state, 1.1, shell_parent, beam_parent, pattern=driver._pattern)
+    assert max(float(np.max(new["alpha"]-old["alpha"]))
+               for new, old in zip(shell_trial, shell_parent)) > 0.
+    rng = np.random.default_rng(20260929)
+    count = direct_owner._K.shape[0]
+    end_nodal = direct_owner._shell_count+6*len(direct_owner._beam_ids)
+    direction = np.zeros(tangent.shape[0])
+    direction[:end_nodal] = rng.normal(size=end_nodal)*1e-7
+    direction[end_nodal:count] = rng.normal(size=count-end_nodal)*1e-3
+    direction[count:] = rng.normal(size=len(direction)-count)*1e-3
+    direction[direct_owner._fixed] = 0.
+    predicted = tangent@direction
+    for step in (.5, .25):
+        plus = driver._advance(state, direction, step)
+        minus = driver._advance(state, direction, -step)
+        positive = driver._assemble(
+            plus, 1.1, shell_parent, beam_parent,
+            pattern=driver._pattern)[0]
+        negative = driver._assemble(
+            minus, 1.1, shell_parent, beam_parent,
+            pattern=driver._pattern)[0]
+        observed = (positive-negative)/(2*step)
+        for left, right in ((0, direct_owner._shell_count),
+                            (direct_owner._shell_count, count),
+                            (count, len(direction))):
+            relative = (np.linalg.norm((observed-predicted)[left:right]) /
+                        np.linalg.norm(predicted[left:right]))
+            assert relative < 1e-5
+
+
+def test_q4_j2_checkpoint_rejects_corrupt_shell_history():
+    definition = _q4_shell_j2_panel()
+    owner = ExperimentalGEAnalysis(definition)
+    owner.solve(_actions(), (.5, 1.), max_iterations=20,
+                max_backtracks=12)
+    saved = bytearray(owner.checkpoint())
+    saved[-1] ^= 1
+    with pytest.raises(ValueError, match="digest mismatch"):
+        ExperimentalGEAnalysis(definition).restore(bytes(saved))
+
+    driver = owner._finite_driver
+    state = driver._state
+    beam_plastic, beam_accumulated = finite_experimental._material_arrays(
+        driver._beam_origins)
+    shell_plastic, shell_alpha = finite_experimental._shell_material_arrays(
+        driver._shell_origins)
+    changed_plastic = shell_plastic.copy()
+    changed_plastic[0, 0, 0] += .01
+    reencoded = encode_binary_checkpoint(
+        "finite_shell_material", owner._identity, owner._generation,
+        (("q", state.q), ("frames", state.frames),
+         ("cells", state.cells), ("resultants", state.resultants),
+         ("multipliers", state.multipliers), ("pattern", driver._pattern),
+         ("accepted_factors", np.asarray(owner.recover().accepted_factors)),
+         ("beam_plastic", beam_plastic),
+         ("beam_accumulated", beam_accumulated),
+         ("shell_plastic", changed_plastic), ("shell_alpha", shell_alpha)))
+    with pytest.raises(ValueError, match="mechanically inconsistent"):
+        ExperimentalGEAnalysis(definition).restore(reencoded)
+
+
+def test_s3_shell_j2_requires_separate_material_adapter():
+    base = _q4_shell_j2_panel()
+    definition = replace(base, shell=replace(
+        base.shell, q4_elements=(),
+        s3_elements=((1, 2, 5), (1, 5, 4), (2, 3, 6), (2, 6, 5))))
+    with pytest.raises(ValueError, match="Q4 DNVC-C208"):
+        ExperimentalGEAnalysis(definition)
 
 
 def test_generalized_beam_plastic_history_is_atomic_and_restartable(monkeypatch):

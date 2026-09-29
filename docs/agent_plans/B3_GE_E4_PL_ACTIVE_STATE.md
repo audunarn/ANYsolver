@@ -108,8 +108,38 @@ cancellation, tangent, or legacy restore paths. It identified a V3 boundary:
 endpoint checks do not prove that a re-encoded material history arose from the
 recorded path. The digest checks bytes, not trusted provenance. Fast restore
 therefore remains an experimental endpoint consistency check; path
-reachability needs independent replay or trusted provenance. This does not
-admit shell J2, fibre sections, reversal, or G3 acceptance.
+reachability needs independent replay or trusted provenance. That earlier
+generalized-beam slice did not admit shell J2, fibre sections, reversal, or
+G3 acceptance; the later experimental Q4 J2 slice below changes only the
+first of those boundaries.
+
+**Next material integration decision (29 September):** Determine whether the
+existing qualified Q4 DNVC-C208 J2 update can be evaluated from one accepted
+predecessor and published atomically with generalized B3 histories in the
+experimental point owner. A bounded Q4-only vertical slice must include
+typed material admission, actual-update tangent, rejection, checkpoint and
+restart; a local yielded response alone is insufficient. If its candidate
+state cannot round-trip and re-evaluate from the saved endpoint, correct the
+state contract before adding S3-V2D. S3-V2D has distinct model-bound state and
+remains explicit follow-up. No F05/G3 or production acceptance is inferred.
+
+**Q4 J2 mixed-material development result (29 September):** The point owner
+now admits a separate experimental Q4 DNVC-C208 J2 definition alongside a
+yielding generalized B3 section. A bounded two-shell/two-beam panel yielded
+in both domains, rejected trials and cancellation preserved the accepted
+prefix, and a binary V4 snapshot restored and continued the same state.
+The actual-update fixed-predecessor tangent check passed on the active branch.
+The consumer uses an explicit experimental v2 schema while its elastic v1
+schema remains unchanged. Source affected checks passed 48/48 and the first
+combined installed-wheel run passed 52/52; the enlarged J2 consumer
+save/reopen/solve/restore/continue check passed against the installed site.
+Independent read-only review found no accepted-predecessor or atomic-publish
+defect. V4 restore proves endpoint consistency, not history reachability;
+the owner exposes shell alpha diagnostics but not full accepted shell stress
+or algorithmic-tangent recovery. A low-yield trial failed its backtrack budget
+during development and is not a formulation verdict. S3 J2, physical beam
+fibres, reversal, complete material recovery, F05/G3 and production acceptance
+remain open.
 
 **Positive unloading/reloading development slice:** The same point owner now
 accepts changing positive load factors, preserves material history on

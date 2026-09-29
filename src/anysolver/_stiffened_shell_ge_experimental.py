@@ -13,6 +13,7 @@ from hashlib import sha256
 import json
 import warnings
 
+from anymaterial import DNVC208MaterialCurve
 import numpy as np
 from scipy import linalg, sparse
 from scipy.sparse import linalg as spla
@@ -40,6 +41,8 @@ CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_LINEAR_V1"
 FINITE_CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"
 FINITE_MATERIAL_CHECKPOINT = (
     "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_MATERIAL_V3")
+FINITE_SHELL_MATERIAL_CHECKPOINT = (
+    "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_SHELL_J2_V4")
 MAX_JSON_CHECKPOINT_BYTES = 2_000_000
 MAX_JSON_CHECKPOINT_VALUES = 50_000
 _MAX_DENSE_CONSTRAINT_ROWS = 48
@@ -91,6 +94,7 @@ class ShellPanel:
     poisson: float
     density_kg_m3: float
     s3_elements: tuple[tuple[int, int, int], ...] = ()
+    j2_curve: DNVC208MaterialCurve | None = None
 
 
 @dataclass(frozen=True)
@@ -156,10 +160,19 @@ def _shell_reference(panel: ShellPanel):
                  np.isfinite(panel.poisson) and -1. < panel.poisson < .5 and
                  np.isfinite(panel.density_kg_m3) and panel.density_kg_m3 > 0.)):
         raise ValueError("experimental connected flat Q4/S3 panel required")
+    if panel.j2_curve is not None:
+        if (type(panel.j2_curve) is not DNVC208MaterialCurve or
+                panel.s3_elements or
+                any(not np.isfinite(value)
+                    for value in panel.j2_curve.as_dict().values())):
+            raise ValueError("experimental shell J2 requires finite Q4 DNVC-C208 data")
     index = {node: i for i, node in enumerate(ids)}
     model = FEModel("experimental-stiffened-shell-q4")
     model.add_material("shell", panel.young_pa, panel.poisson,
-                       density=panel.density_kg_m3)
+                       density=panel.density_kg_m3,
+                       yield_stress=(panel.j2_curve.sigma_prop
+                                     if panel.j2_curve is not None else 0.),
+                       hardening_curve=panel.j2_curve)
     for node, point in zip(ids, xyz):
         model.add_node(node, *map(float, point))
     pieces = []
@@ -460,6 +473,8 @@ class ExperimentalGEAnalysis:
             "points": [(v.shell_node, v.beam_node) for v in definition.points],
             "fixed": [(v.domain, v.node, v.component) for v in definition.fixed],
         }
+        if panel.j2_curve is not None:
+            identity_payload["shell_j2_curve"] = panel.j2_curve.as_dict()
         if definition.lines:
             identity_payload["lines"] = [line.descriptor() for line in
                                          definition.lines]
@@ -565,7 +580,9 @@ class ExperimentalGEAnalysis:
         attachment = (("reference point pose",) if self._connections else ())
         if self._line_samples:
             attachment += ("experimental L1 weak-line candidate",)
-        excluded = (("shell J2 plastic", "physical-fibre B3 finite",
+        shell_plastic = self._definition.shell.j2_curve is not None
+        excluded = ((("S3 shell J2 plastic",) if shell_plastic else
+                     ("shell J2 plastic",)) + ("physical-fibre B3 finite",
                      "nonpositive finite load factors", "line", "footprint",
                      "modes", "buckling")
                     if not self._line_samples else
@@ -573,7 +590,8 @@ class ExperimentalGEAnalysis:
                      "qualified bonded line", "footprint",
                      "modes", "buckling"))
         return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
-                "shell": "elastic flat Q4/S3",
+                "shell": ("experimental isotropic Q4 J2" if shell_plastic else
+                          "elastic flat Q4/S3"),
                 "beam": ("generalized B3 retained" if self._line_samples else
                          "generalized B3 retained, including experimental yielding"),
                 "attachment": attachment,
@@ -581,7 +599,9 @@ class ExperimentalGEAnalysis:
                     line.multiplier_space for line in self._definition.lines),
                 "analysis": (("reference_linear",) if self._line_samples else
                              ("reference_linear", "experimental_elastic_finite_point",
-                              "experimental_generalized_plastic_finite_point")),
+                              "experimental_generalized_plastic_finite_point") +
+                             (("experimental_q4_j2_finite_point",) if shell_plastic
+                              else ())),
                 "excluded": excluded}
 
     def preflight(self):
@@ -721,7 +741,7 @@ class ExperimentalGEAnalysis:
             raise ValueError("bounded mixed linear checkpoint required")
         if raw.startswith(BINARY_CHECKPOINT_MAGIC):
             def expected_shapes(kind, generation):
-                if kind in ("finite", "finite_material") and self._line_samples:
+                if kind in ("finite", "finite_material", "finite_shell_material") and self._line_samples:
                     raise ValueError(
                         "experimental L1 line admits reference-linear checkpoints only")
                 count = self._K.shape[0]
@@ -737,21 +757,28 @@ class ExperimentalGEAnalysis:
                         ("multipliers", (constraints,)),
                         ("pattern", (count,)),
                         ("accepted_factors", (generation,)))
-                if kind == "finite_material":
+                if kind in ("finite_material", "finite_shell_material"):
                     stations = sum(len(part[0].operator.cell.stations)
                                    for part in self._beam_parts)
-                    return base + (("beam_plastic", (stations, 6, 2)),
-                                   ("beam_accumulated", (stations, 2)))
+                    material = base + (("beam_plastic", (stations, 6, 2)),
+                                       ("beam_accumulated", (stations, 2)))
+                    if kind == "finite_shell_material":
+                        if self._definition.shell.j2_curve is None:
+                            raise ValueError("shell J2 checkpoint requires matching material")
+                        material += (("shell_plastic", (len(self._shell_parts), 12, 3)),
+                                     ("shell_alpha", (len(self._shell_parts), 12)))
+                    return material
                 return base
 
             kind, generation, arrays = _decode_binary_checkpoint(
                 raw, self._identity, expected_shapes)
             schema = (CHECKPOINT if kind == "linear" else
-                      FINITE_MATERIAL_CHECKPOINT if kind == "finite_material"
+                      FINITE_MATERIAL_CHECKPOINT if kind == "finite_material" else
+                      FINITE_SHELL_MATERIAL_CHECKPOINT if kind == "finite_shell_material"
                       else FINITE_CHECKPOINT)
             value = {"schema": schema, "model": self._identity,
                      "generation": generation, **arrays}
-            if kind in ("finite", "finite_material"):
+            if kind in ("finite", "finite_material", "finite_shell_material"):
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
         else:
             if len(raw) > MAX_JSON_CHECKPOINT_BYTES:
@@ -761,7 +788,8 @@ class ExperimentalGEAnalysis:
             except (UnicodeError, json.JSONDecodeError, RecursionError) as exc:
                 raise ValueError("invalid mixed linear checkpoint") from exc
         if (type(value) is dict and value.get("schema") in
-                (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT)):
+                (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
+                 FINITE_SHELL_MATERIAL_CHECKPOINT)):
             if self._line_samples:
                 raise ValueError(
                     "experimental L1 line admits reference-linear checkpoints only")
