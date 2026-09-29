@@ -46,6 +46,7 @@ parser.add_argument(
 parser.add_argument("--structural-energy", action="store_true")
 parser.add_argument("--source-transverse-witness", action="store_true")
 parser.add_argument("--fourier-modes", type=int, default=0)
+parser.add_argument("--regular-support-discriminator", action="store_true")
 parser.add_argument("--coarse-pressure-transfer", type=Path)
 parser.add_argument("--enriched-source-x2", action="store_true")
 parser.add_argument("--enriched-source-x4", action="store_true")
@@ -69,6 +70,9 @@ if args.fourier_modes < 0 or (args.fourier_modes
     parser.error("Fourier modes require a source witness or pressure transfer")
 if args.coarse_pressure_transfer and not args.fourier_modes:
     parser.error("pressure transfer requires a positive Fourier mode count")
+if args.regular_support_discriminator and (
+        not args.source_transverse_witness or args.fourier_modes != 512):
+    parser.error("regular-support check needs source witness and 512 Fourier modes")
 started = time.perf_counter()
 path = args.saved.resolve()
 saved_bytes = path.read_bytes()
@@ -908,6 +912,79 @@ if args.source_transverse_witness:
             "maximum_discrete_to_continuum_squared_ratio_upper": float(
                 discrete_to_continuum_upper[-1]),
         }
+        if args.regular_support_discriminator:
+            # Select only Q1 hats whose entire *reference* support lies in
+            # each fixed physical rectangle. The regular rectangle excludes
+            # the partial-contact rim; the strict one also excludes the free
+            # right and lower edges. Keep the settled active set as the parent.
+            def subspace(name, x_lower, x_upper, y_lower, y_upper):
+                rows = []
+                for local, mode in enumerate(active):
+                    column = int(mode % len(x_knots))
+                    row = int(mode // len(x_knots))
+                    support_box = (
+                        x_knots[max(0, column-1)]-x_knots[0],
+                        x_knots[min(len(x_knots)-1, column+1)]-x_knots[0],
+                        y_knots[max(0, row-1)]-y_knots[0],
+                        y_knots[min(len(y_knots)-1, row+1)]-y_knots[0],
+                    )
+                    if (support_box[0] >= x_lower-1e-12
+                            and support_box[1] <= x_upper+1e-12
+                            and support_box[2] >= y_lower-1e-12
+                            and support_box[3] <= y_upper+1e-12):
+                        rows.append(local)
+                if len(rows) < 2:
+                    raise AssertionError(f"{name} has too few settled active modes")
+                selected = np.asarray(rows, dtype=int)
+                chosen = np.ix_(selected, selected)
+                discrete = full_compliance[chosen]
+                spectral = finite[chosen]
+                upper = continuum_upper[chosen]
+                lower_spectrum, lower_vectors = linalg.eigh(discrete, upper)
+                upper_spectrum = linalg.eigvalsh(discrete, spectral)
+                mode = lower_vectors[:, 0]
+                pivot = int(np.argmax(np.abs(mode)))
+                mode *= np.sign(mode[pivot])/abs(mode[pivot])
+                row_energy = {}
+                for coefficient, local in zip(mode, selected, strict=True):
+                    y_index = int(active[local] // len(x_knots))
+                    row_energy[y_index] = row_energy.get(y_index, 0.0) + float(
+                        coefficient*coefficient)
+                total = sum(row_energy.values())
+                dominant = np.argsort(np.abs(mode))[-8:][::-1]
+                return {
+                    "name": name,
+                    "fixed_relative_support_rectangle_m": [
+                        x_lower, x_upper, y_lower, y_upper,
+                    ],
+                    "mode_count": int(len(selected)),
+                    "selected_pressure_node_ids": [
+                        int(active_nodes[local]) for local in selected],
+                    "minimum_squared_ratio_interval": [
+                        float(lower_spectrum[0]), float(upper_spectrum[0])],
+                    "minimum_mode_relative_coefficients": [
+                        float(value) for value in mode],
+                    "minimum_mode_coefficient_energy_by_y_row": {
+                        str(row): value/total for row, value in row_energy.items()},
+                    "dominant_mode_nodes": [{
+                        "node_id": int(active_nodes[selected[local]]),
+                        "x_column": int(active[selected[local]] % len(x_knots)),
+                        "y_row": int(active[selected[local]] // len(x_knots)),
+                        "relative_coefficient": float(mode[local]),
+                    } for local in dominant],
+                }
+
+            fourier_record["regular_support_discriminator"] = {
+                "full_settled_active_control": subspace(
+                    "full_settled_active", 0.0, 1.0, 0.0, 1.0,
+                ),
+                "regular_rim_excluded": subspace(
+                    "regular_rim_excluded", 0.125, 1.0, 0.0, 0.75,
+                ),
+                "strict_interior": subspace(
+                    "strict_interior", 0.125, 0.875, 0.2, 0.75,
+                ),
+            }
     record = {
         "status": "development_source_transverse_active_witness",
         "source_commit": subprocess.check_output(
