@@ -1,5 +1,7 @@
 # ANYsolver General Contact — full delivery programme
 
+**Current delivery basis:** [D1-interior goal](../GENERAL_CONTACT_GOAL.md) and [adaptable plan](../GENERAL_CONTACT_PLAN.md) revision 2026-09-29.3. Development is paused. The historical D1 breadth below remains the full programme dependency; the goal stages three boundary cases into D2 without removing them from C0–C9.
+
 **Current basis:** User's 28 September 2026 *General Contact — Review-adjusted Delivery Plan*, read with the 26 September full implementation and acceptance scope. **Status:** paused for consideration on 29 September 2026. This document provides a stable link to the whole programme; it does not alter scientific decisions, qualification gates, failed evidence, frozen or consumed execution authorities, or the user's pause.
 
 ## Objective and delivery boundary

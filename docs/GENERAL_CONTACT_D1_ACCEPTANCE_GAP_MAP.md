@@ -1,5 +1,7 @@
 # D1 shell-static acceptance gap map
 
+**Current D1-interior delivery basis:** [goal](../GENERAL_CONTACT_GOAL.md) and [plan](../GENERAL_CONTACT_PLAN.md) revision 2026-09-29.3. Development is paused. The historical cases and verdicts below retain their original scopes; three boundary cases move to D2 prospectively.
+
 **Current cost discriminator:** Same-side overlap validation dominated one
 saved 16×8 ordinary geometry evaluation. Conservative projected-bound
 pruning, with exhaustive small-scene controls and independent read-only
