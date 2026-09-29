@@ -1,8 +1,9 @@
 """Small elastic multi-Q4/multi-B2 panel with existing F10 point joints.
 
 This is an experimental reference-linear owner. Shell and beam node identities
-are explicit and separate. No line, footprint, inertia, geometric stiffness,
-nonlinear state or qualification is inferred from the point-joint assembly.
+are explicit and separate. Reference modes require explicit physical mass.
+No line, footprint, geometric stiffness, nonlinear state or qualification is
+inferred from the point-joint assembly.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from typing import Callable, Mapping, Sequence
 
 import numpy as np
 from scipy import sparse
+from scipy.sparse.linalg import LinearOperator, eigs, ArpackError
 from scipy.sparse.csgraph import maximum_bipartite_matching
 
 from ._b2_f10_f11_point_attachment import LAW_ID, compile_reference_point
@@ -22,7 +24,8 @@ from ._b2_physical_linear_definition import (
     PhysicalB2OperatorCache,
 )
 from ._b2_physical_linear_batch_dev import _load_value_snapshot
-from .control import CancellationToken
+from .control import CancellationToken, SolveCancelled
+from ._stiffened_shell_physical_q4_mass import physical_mass
 from .e4_pl_element import QualifiedE4PLShellElement
 from .fe_core import FEModel
 from .linalg import MatrixClass, factorize_cached
@@ -125,6 +128,7 @@ class Q4PanelShell:
     nu: float
     thickness_m: float
     reference_normal: tuple[float, float, float] = (0., 0., 1.)
+    density_kg_m3: float | None = None
 
 
 @dataclass(frozen=True)
@@ -146,6 +150,38 @@ class ExperimentalB2Q4PanelCapabilities:
     beam_domain: str = "multiple physical B2 members"
     attachment: str = "F10 reference points only"
     operations: tuple[str, ...] = ("solve_linear", "solve_linear_many", "close")
+    spectral_domain: str = "unavailable without explicit physical mass"
+
+
+@dataclass(frozen=True)
+class B2ReferenceModesRequest:
+    """Supported elastic reference modes; no prestress or rigid-mode request."""
+
+    count: int = 3
+    shift_hz: float = 1.
+    max_iterations: int = 600
+
+    def __post_init__(self):
+        if (type(self.count) is not int or self.count <= 0 or
+                type(self.max_iterations) is not int or self.max_iterations <= 0 or
+                isinstance(self.shift_hz, (bool, np.bool_)) or
+                not isinstance(self.shift_hz, (int, float, np.floating)) or
+                not np.isfinite(self.shift_hz) or self.shift_hz <= 0.):
+            raise ValueError("positive finite reference-mode controls required")
+
+
+@dataclass(frozen=True)
+class B2ReferenceModesResult:
+    status: str
+    frequencies_hz: tuple[float, ...] = ()
+    physical_modes: tuple[tuple[float, ...], ...] = ()
+    point_multiplier_modes: tuple[tuple[float, ...], ...] = ()
+    equation_residuals: tuple[float, ...] = ()
+    constraint_residuals: tuple[float, ...] = ()
+    factorization_count: int = 0
+    solve_count: int = 0
+    failure_reason: str | None = None
+    production_qualified: bool = False
 
 
 @dataclass(frozen=True)
@@ -326,6 +362,10 @@ class ExperimentalB2Q4PanelAnalysis:
         for node_id in shell_ids:
             model.add_node(node_id, *positions[node_id])
         rows, columns, values = [], [], []
+        mass_rows, mass_columns, mass_values = [], [], []
+        complete_mass = all(shell.density_kg_m3 is not None for shell in shells)
+        complete_mass = complete_mass and all(member.definition.mass is not None
+                                             for member in compiled)
         shell_lookup = {}
         for index, shell in enumerate(shells, 1):
             if (len(shell.node_ids) != 4 or len(set(shell.node_ids)) != 4 or
@@ -348,6 +388,13 @@ class ExperimentalB2Q4PanelAnalysis:
                               for node_id in shell.node_ids
                               for component in range(6)])
             _scatter(rows, columns, values, slots, local)
+            if shell.density_kg_m3 is not None:
+                local_mass = physical_mass(
+                    vertices, density_kg_m3=shell.density_kg_m3,
+                    thickness_m=shell.thickness_m,
+                    reference_normal=shell.reference_normal)
+                if complete_mass:
+                    _scatter(mass_rows, mass_columns, mass_values, slots, local_mass)
             shell_lookup[shell.shell_id] = (vertices, slots)
         member_lookup = {}
         for member in compiled:
@@ -359,6 +406,11 @@ class ExperimentalB2Q4PanelAnalysis:
                               for node_id in member.definition.node_ids
                               for component in range(6)])
             _scatter(rows, columns, values, slots, local)
+            if complete_mass:
+                local_mass = frame.T@member.local_candidate_mass_matrix()@frame
+                if not np.isfinite(local_mass).all():
+                    raise ValueError("physical B2 mass assembly is not representable")
+                _scatter(mass_rows, mass_columns, mass_values, slots, local_mass)
             member_lookup[member.definition.member_id] = (member, slots)
         K = sparse.coo_matrix((values, (rows, columns)),
                               shape=(total, total)).tocsr()
@@ -408,6 +460,11 @@ class ExperimentalB2Q4PanelAnalysis:
         self.point_ids = tuple(point.point_id for point in points)
         self._members = tuple(member_lookup.items())
         self._K = K
+        self._M = (sparse.coo_matrix((mass_values, (mass_rows, mass_columns)),
+                                    shape=(total, total)).tocsr()
+                   if complete_mass else None)
+        if self._M is not None and not np.isfinite(self._M.data).all():
+            raise ValueError("physical panel mass assembly is not representable")
         self._C = C
         self._T = T
         self._Tt = T.T.tocsr()
@@ -483,7 +540,146 @@ class ExperimentalB2Q4PanelAnalysis:
 
     @property
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
-        return ExperimentalB2Q4PanelCapabilities()
+        if self._M is None:
+            return ExperimentalB2Q4PanelCapabilities()
+        return ExperimentalB2Q4PanelCapabilities(
+            operations=("solve_linear", "solve_linear_many", "modes", "close"),
+            spectral_domain="experimental reference B2/Q4 finite pairs with coordinate supports; completeness unqualified")
+
+    def modes(self, request: B2ReferenceModesRequest, *,
+              cancellation: CancellationToken | None = None) -> B2ReferenceModesResult:
+        """Sparse descriptor modes with physical inertia and massless multipliers.
+
+        Reuse compiled K/C/T and mass, never a global nullspace or dense inverse.
+        A shifted general inverse-product is not Euclidean symmetric, so use
+        eigs rather than eigsh. The static route still requires supported KKT;
+        free-free and loaded/prestressed modes are outside this initial route.
+        """
+        if self._closed:
+            raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        if type(request) is not B2ReferenceModesRequest:
+            raise ValueError("typed reference-mode request required")
+        if self._M is None:
+            raise ValueError("explicit shell density and beam physical mass required")
+        selector = self._T.copy()
+        selector.eliminate_zeros()
+        if (np.any(np.diff(selector.tocsc().indptr) != 1) or
+                np.any(np.diff(selector.indptr) > 1)):
+            raise ValueError("reference modes currently require coordinate supports without MPCs")
+        if cancellation is not None and not isinstance(cancellation, CancellationToken):
+            raise ValueError("CancellationToken required")
+        n = self._T.shape[1]
+        rows = self._C.shape[0]
+        if request.count >= min(n-rows, n+rows-1):
+            raise ValueError("reference mode count exceeds supported sparse spectrum")
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            sigma = -float(np.square(2.*np.pi*np.float64(request.shift_hz)))
+        if not np.isfinite(sigma) or sigma == 0.:
+            raise ValueError("reference mode shift is not representable")
+
+        def safe_point(stage):
+            if cancellation is not None:
+                cancellation.checkpoint(stage)
+
+        handle = None
+        try:
+            safe_point("reference modes before factorization")
+            k = (self._T.T@self._K@self._T).tocsc()
+            m = (self._T.T@self._M@self._T).tocsc()
+            c = (self._C@self._T).tocsc()
+            a = sparse.bmat(((k, c.T), (c, None)), format="csc")
+            b = sparse.block_diag((m, sparse.csc_matrix((rows, rows))), format="csc")
+            try:
+                shifted, scale = _scaled_point_kkt(k-sigma*m, c)
+            except ExperimentalB2Q4PanelError as exc:
+                raise _NumericalFailure("reference modal scaling failed: "+str(exc)) from exc
+            scaling = sparse.diags(scale, format="csc")
+            bs = (scaling@b@scaling).tocsc()
+            b.eliminate_zeros(); b.sort_indices()
+            bs.eliminate_zeros(); bs.sort_indices()
+            if (not np.isfinite(bs.data).all() or b.nnz != bs.nnz or
+                    not np.array_equal(b.indptr, bs.indptr) or
+                    not np.array_equal(b.indices, bs.indices) or
+                    np.any((b.data != 0.) & (bs.data == 0.))):
+                raise _NumericalFailure("reference modal mass scaling is not representable")
+            handle = factorize_cached(shifted, MatrixClass.GENERAL)
+            safe_point("reference modes after factorization")
+            if handle.status != "ok":
+                raise _NumericalFailure("reference modal factorization failed: "+str(handle.failure_reason))
+
+            def action(vector):
+                safe_point("reference modal iteration")
+                try:
+                    answer = handle.solve(bs@vector)
+                except RuntimeError as exc:
+                    # These are explicit numerical failures of the shared
+                    # backend. Unclassified/programming errors still propagate.
+                    if (str(exc) == "Sparse solve produced NaN/Inf values" or
+                            str(exc).startswith("Cannot solve with failed factorization:")):
+                        raise _NumericalFailure("reference modal sparse solve failed: "+str(exc)) from exc
+                    raise
+                safe_point("reference modal iteration completed")
+                return answer
+
+            operator = LinearOperator(a.shape, matvec=action, dtype=float)
+            values, vectors = eigs(operator, k=request.count, which="LM",
+                                  v0=np.sin(np.arange(a.shape[0])+.23),
+                                  tol=1e-11, maxiter=request.max_iterations)
+            safe_point("reference modes after eigensolve")
+            abs_a, abs_b, abs_c = abs(a), abs(b), abs(c)
+            recovered = []
+            for mu, y in zip(values, vectors.T):
+                if (not np.isfinite(mu) or abs(mu.imag) > 1e-9*abs(mu.real) or
+                        mu.real <= 0. or not np.isfinite(y).all() or
+                        np.linalg.norm(y.imag) > 1e-9*np.linalg.norm(y.real)):
+                    raise _NumericalFailure("nonphysical or unresolved finite modal pair")
+                lam = sigma+1./mu.real
+                x = scale*y.real
+                mass_norm = float(x@b@x)
+                if not np.isfinite(lam) or lam <= 0. or not np.isfinite(mass_norm) or mass_norm <= 0.:
+                    raise _NumericalFailure("positive finite supported mode and physical inertia required")
+                x /= np.sqrt(mass_norm)
+                physical = np.asarray(self._T@x[:n])
+                if not np.isfinite(x).all() or not np.isfinite(physical).all():
+                    raise _NumericalFailure("physical mode normalization is not representable")
+                residual = a@x-lam*(b@x)
+                bound = abs_a@abs(x)+abs(lam)*(abs_b@abs(x))
+                equation = _modal_scaled_residual(residual, bound, scale)
+                constraint = _modal_scaled_residual(c@x[:n], abs_c@abs(x[:n]), scale[n:])
+                physical_gap = _modal_scaled_residual(
+                    self._C@physical, abs(self._C)@abs(physical), scale[n:])
+                physical_balance = self._K@physical+self._C.T@x[n:]-lam*(self._M@physical)
+                physical_bound = (abs(self._K)@abs(physical)+abs(self._C.T)@abs(x[n:])+
+                                  abs(lam)*(abs(self._M)@abs(physical)))
+                physical_equation = _modal_scaled_residual(
+                    self._project(physical_balance), abs(self._T.T)@physical_bound, scale[:n])
+                equation = max(equation, physical_equation)
+                constraint = max(constraint, physical_gap)
+                if equation > 1e-8 or constraint > 1e-9:
+                    raise _NumericalFailure("reference modal equation or constraint residual failed")
+                recovered.append((float(np.sqrt(lam)/(2.*np.pi)),
+                                  tuple(physical), tuple(x[n:]),
+                                  equation, constraint))
+            recovered.sort(key=lambda mode: mode[0])
+            primal = np.array([mode[1] for mode in recovered]).T
+            modal_gram = primal.T@self._M@primal
+            if (not np.isfinite(modal_gram).all() or
+                    np.max(abs(modal_gram-np.eye(request.count))) > 1e-7):
+                raise _NumericalFailure("modal physical-mass orthogonality failed")
+            safe_point("reference modes before publication")
+            return B2ReferenceModesResult(
+                "ok", tuple(mode[0] for mode in recovered),
+                tuple(mode[1] for mode in recovered), tuple(mode[2] for mode in recovered),
+                tuple(mode[3] for mode in recovered), tuple(mode[4] for mode in recovered),
+                handle.factorization_count, handle.solve_count)
+        except SolveCancelled as exc:
+            return B2ReferenceModesResult(
+                "cancelled", factorization_count=handle.factorization_count if handle else 0,
+                solve_count=handle.solve_count if handle else 0, failure_reason=str(exc))
+        except (ArpackError, _NumericalFailure) as exc:
+            return B2ReferenceModesResult(
+                "failed", factorization_count=handle.factorization_count if handle else 0,
+                solve_count=handle.solve_count if handle else 0, failure_reason=str(exc))
 
     def solve_linear(self, load, *, recover_members=None
                      ) -> ExperimentalB2Q4PanelResult:
@@ -711,6 +907,25 @@ def _scatter(rows, columns, values, slots, local):
     rows.extend(np.repeat(slots, width))
     columns.extend(np.tile(slots, width))
     values.extend(np.asarray(local).ravel())
+
+
+def _modal_scaled_residual(residual, bound, row_scale):
+    """Infinity backward error in the fixed congruence row representation.
+
+    Near-zero components of an uncoupled mode are not separate relative-error
+    denominators. Scaling the rows before the norm keeps their units consistent
+    with the factorization coordinates without an arbitrary physical floor.
+    """
+    residual, bound = np.asarray(residual), np.asarray(bound)
+    if not np.isfinite(residual).all() or not np.isfinite(bound).all():
+        return float("inf")
+    numerator = np.max(abs(residual)*row_scale, initial=0.)
+    denominator = np.max(bound*row_scale, initial=0.)
+    if not np.isfinite(numerator) or not np.isfinite(denominator):
+        return float("inf")
+    if denominator == 0.:
+        return 0. if numerator == 0. else float("inf")
+    return float(numerator/denominator)
 
 
 def create_experimental_b2_q4_panel_analysis(*args, **kwargs):

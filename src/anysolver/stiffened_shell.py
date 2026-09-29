@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from ._b2_physical_linear_definition import (
     PROFILE_ID as B2_E4_PL_FAST_LINEAR_V1,
-    PhysicalB2Member, CompiledPhysicalB2Member,
+    PhysicalB2Member, CompiledPhysicalB2Member, MassMetadata,
 )
 from ._b2_physical_flexibility_linear import LinearSection
 from ._stiffened_shell_b2_experimental import ExperimentalB2Analysis
@@ -19,6 +19,7 @@ from ._stiffened_shell_b2_q4_point_experimental import (
 )
 from ._stiffened_shell_b2_q4_panel_experimental import (
     ExperimentalB2Q4PanelAnalysis, Q4PanelShell, Q4B2Point,
+    B2ReferenceModesRequest, B2ReferenceModesResult,
 )
 
 from ._stiffened_shell_ge_experimental import (
@@ -117,5 +118,6 @@ __all__ = [
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
+    "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
     "create_analysis",
 ]
