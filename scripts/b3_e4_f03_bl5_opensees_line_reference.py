@@ -148,6 +148,15 @@ def solve(ops, intervals: int, case: str) -> dict:
         support_moment = [0., 0., 0.]
         shell_work = 0.
         beam_work = 0.
+        ops.reactions()
+        for node in model["root_shell_nodes"]:
+            reaction = tuple(float(v) for v in ops.nodeReaction(node))
+            if len(reaction) != 6 or not all(map(math.isfinite, reaction)):
+                raise ValueError("finite root-node reaction required")
+            arm = _cross(nodes[node], reaction[:3])
+            for axis in range(3):
+                support_force[axis] += reaction[axis]
+                support_moment[axis] += reaction[axis+3]+arm[axis]
         for domain, elements in (("shell", model["shell_cells"]),
                                  ("beam", model["beam_cells"])):
             for index, connectivity in enumerate(elements, 1):
@@ -161,17 +170,6 @@ def solve(ops, intervals: int, case: str) -> dict:
                     shell_work += work
                 else:
                     beam_work += work
-                if index == 1:
-                    for j, node in enumerate(connectivity):
-                        if node not in model["root_shell_nodes"] and not (
-                                domain == "beam" and j == 0):
-                            continue
-                        force = forces[6*j:6*j+3]
-                        moment = forces[6*j+3:6*j+6]
-                        arm = _cross(nodes[node], force)
-                        for axis in range(3):
-                            support_force[axis] += force[axis]
-                            support_moment[axis] += moment[axis]+arm[axis]
         tip = displacement[model["beam_tip"]]
         applied_work = sum(a*b for a, b in zip(load, tip))
         applied_moment = tuple(load[d+3]+v for d, v in enumerate(
