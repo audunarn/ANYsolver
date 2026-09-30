@@ -113,3 +113,8 @@ docs/d1_review_support/d2_partial_swept*20260930*.source.py -text -whitespace
 docs/d1_review_support/d2_partial_installed*20260930*.json -text -whitespace
 docs/d1_review_support/d2_partial_installed*20260930*.log -text -whitespace
 docs/d1_review_support/D2_PARTIAL_SHELL_HANDOFF_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d6_native_midpoint*20260930*.json -text -whitespace
+docs/d1_review_support/d6_native_midpoint*20260930*.log -text -whitespace
+docs/d1_review_support/d6_native_midpoint*20260930*.xml -text -whitespace
+docs/d1_review_support/d6_native_midpoint*20260930*.py -text -whitespace
+docs/d1_review_support/D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md -text whitespace=cr-at-eol

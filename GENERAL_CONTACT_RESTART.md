@@ -78,8 +78,15 @@ nonzero-spin/descriptor/rollback slice allowed180s/1GB; static commit guards
 unchanged. Reviewer /root/checkpoint_review owns the D2 handoff review only now.
 First eight-step midpoint/derivative/descriptor/momentum process passes27.105s/
 200MB; transaction publication exit-guard rollback receives a separate targeted
-repair/check. Raw d6_native_midpoint_v{1,2,3}_20260930, owned session86696;
-inspect actual process and worker disposition before acting. Independent midpoint
+repair/check PASS3.382s/198MB; no mechanics replay. Raw
+d6_native_midpoint_v{1,2,3}_20260930; all worker numeric processes closed.
+Final managed midpoint module6f5607ae/test38cdec0d,14inertia checks plus the
+eight-step and separate transaction checks remain development. Reviewer now owns
+D6_NATIVE_MIDPOINT_REVIEW_20260930.md. Worker is idle pending review.
+Free definitions are legal, but static Context rejects no supports and uses a
+static genesis inverse. Next native free-motion slice needs a separate dynamic
+structural/material evaluator using existing retained work; never weaken the
+static Context guard or add supports/mass. Independent midpoint
 assessment and C7 free-motion/vibration/torque/load/refinement gates remain open.
 Mainpackage433files untouched by D6. Managedartifact mustremainrecoverable until
 integration; no archive. ANYfemsummarybridge c138d41 remainsreviewed, admissionfalse.
