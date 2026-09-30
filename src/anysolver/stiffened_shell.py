@@ -18,6 +18,10 @@ from ._b2_physical_flexibility_linear import (
     OUTPUT_REPRESENTATION_ID as B2_BOUNDED_OUTPUT_REPRESENTATION_V1,
 )
 from ._stiffened_shell_b2_experimental import ExperimentalB2Analysis
+from ._stiffened_shell_increment_control import (
+    AdaptiveIncrementControl, IncrementAttempt, FiniteIncrementFailure,
+    AdaptiveIncrementExhausted,
+)
 from ._stiffened_shell_b2_q4_point_experimental import (
     ExperimentalB2Q4PointAnalysis,
 )
@@ -118,6 +122,8 @@ def create_analysis(*, definition, resources=None):
 
 
 __all__ = [
+    "AdaptiveIncrementControl", "IncrementAttempt", "FiniteIncrementFailure",
+    "AdaptiveIncrementExhausted",
     "Q4_ALGORITHMIC_PULLBACK_V1",
     "B3_GE_E4_PL_STIFFENED_SHELL_V1", "B2_E4_PL_FAST_LINEAR_V1",
     "ShellPanel", "PointConnection",

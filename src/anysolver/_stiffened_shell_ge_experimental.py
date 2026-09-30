@@ -42,6 +42,9 @@ from ._stiffened_shell_ge_checkpoint_binary import (
     CHART_MAGIC as CHART_CHECKPOINT_MAGIC, decode_chart as _decode_chart_checkpoint,
     NATIVE_SHELL_MAGIC, NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA,
 )
+from ._stiffened_shell_increment_control import (
+    MAGIC as INCREMENT_CONTROL_MAGIC, decode_control, validate_control,
+)
 from ._stiffened_shell_l1_assembly_experimental import (
     ExperimentalL1Line, ExperimentalBL5Line,
     compile_lines as _compile_weak_lines,
@@ -701,6 +704,8 @@ class ExperimentalGEAnalysis:
                 "experimental_line_spaces": tuple(
                     line.multiplier_space for line in self._definition.lines),
                 "q4_force_map": self._definition.q4_pullback_policy,
+                "increment_control": (() if self._line_samples else
+                    ("fixed", "experimental_adaptive_halving")),
                 "rotation_chart": ("unchanged reference-linear chart"
                                    if self._line_samples else
                                    "experimental owned shell anchors; full fixed/free rotational triples only"),
@@ -796,7 +801,8 @@ class ExperimentalGEAnalysis:
     @_state_writer
     def solve(self, actions: tuple[NodalAction, ...],
               targets: tuple[float, ...] = (1.,), *, cancellation_token=None,
-              max_iterations: int = 12, max_backtracks: int = 8):
+              max_iterations: int = 12, max_backtracks: int = 8,
+              increment_control=None):
         """Advance point-coupled finite trials from one accepted predecessor."""
         self._require_open()
         if self._line_samples:
@@ -811,7 +817,8 @@ class ExperimentalGEAnalysis:
         try:
             return driver.solve(
                 actions, targets, cancellation_token=cancellation_token,
-                max_iterations=max_iterations, max_backtracks=max_backtracks)
+                max_iterations=max_iterations, max_backtracks=max_backtracks,
+                increment_control=increment_control)
         finally:
             if self._finite_driver is None and driver._accepted is not None:
                 self._finite_driver = driver
@@ -870,6 +877,9 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
+        adaptive = None
+        if raw.startswith(INCREMENT_CONTROL_MAGIC):
+            adaptive, raw = decode_control(raw, self._identity)
         chart = None
         if self._has_physical_fibre and raw.startswith(S3_BINARY_CHECKPOINT_MAGIC):
             raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
@@ -1004,12 +1014,17 @@ class ExperimentalGEAnalysis:
                 raise ValueError(
                     "experimental weak line admits reference-linear checkpoints only")
             from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
+            if adaptive is not None:
+                validate_control(adaptive, value["accepted_factors"])
             driver = FinitePointDriver(self)
-            result = (driver.restore(value) if chart is None else
+            result = (driver.restore(value, adaptive_state=adaptive) if chart is None else
                       driver.restore(value, rotation_anchors=chart[1],
-                                     pose_witness=chart[2], accepted_generation=chart[0]))
+                                     pose_witness=chart[2], accepted_generation=chart[0],
+                                     adaptive_state=adaptive))
             self._finite_driver = driver
             return result
+        if adaptive is not None:
+            raise ValueError("adaptive checkpoint requires a finite point state")
         if (type(value) is not dict or set(value) !=
                 {"schema", "model", "generation", "q", "multipliers", "load"} or
                 value["schema"] != CHECKPOINT or value["model"] != self._identity or

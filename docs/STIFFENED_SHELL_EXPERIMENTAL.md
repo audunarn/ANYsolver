@@ -218,6 +218,47 @@ original translation arithmetic, validation criteria and checkpoint bytes.
 Schema and model admission precede mechanical validation and publication.
 
 The tested pure-fibre S3 elastic and partial-yield cases complete monotonic
-loading and restart at unchanged tolerances. Partial-yield unloading still
+loading and restart at unchanged tolerances. Fixed-step partial-yield unloading
 exhausts backtracking in the retained diagnostic. Atomic rejection preserves
-the accepted prefix; it does not qualify that unloading history or full G3.
+the accepted prefix. The optional controller below completes that same bounded
+history with a midpoint; neither result qualifies full G3.
+
+## Optional adaptive finite increments
+
+```python
+from anysolver.stiffened_shell import AdaptiveIncrementControl
+
+control = AdaptiveIncrementControl(max_cutbacks=4, max_attempts=24)
+result = analysis.solve(actions, targets=(.5, 1., .5),
+                        increment_control=control)
+```
+
+The experimental point-owner controller halves an interval after typed Newton
+iteration or backtrack exhaustion, starting each retry from the last accepted
+state. It holds the reduced step until the requested target and then starts
+the next interval. Every accepted midpoint appears in `accepted_factors`.
+Physical equilibrium, compatibility and material checks remain unchanged.
+Default fixed stepping is preserved. Backend, programming, memory, cancellation
+and unclassified local failures propagate; they do not trigger these cutbacks.
+
+`increment_attempts` records accepted and rejected factors, actual evaluation,
+linear-solve and rejected-trial counts, and failure details. A cancelled pending
+sequence recovers `status="accepted_prefix"`; reaching all requested targets
+returns `status="completed"`. `AdaptiveIncrementExhausted` reports the incomplete
+sequence and its failed work. An accepted prefix is not requested completion.
+
+Distinct V10 checkpoints wrap the physical snapshot and durable controller state.
+Resume with the same original targets, controls, Newton limits and load pattern.
+An exhausted attempt budget is terminal for that pending sequence. Checkpoints
+record work through their accepted boundary; exceptions can include additional
+uncommitted rejected work. Restore validates dyadic decisions and the accepted
+factor history before mechanical validation/publication. A rebase preserves the
+pending plan and updates its charted physical snapshot. Prospective checkpoint
+size is checked before commit; returned snapshots retain exact bytes. The
+controller performs no mechanical history replay or topology recompilation.
+
+The unchanged partial-yield S3 load/unload screen completes with a .75 midpoint
+and matches a fixed solve at the identical accepted increments. The strong
+full-section Q4 screen still exhausts four cutbacks after accepting .0625.
+These are case-specific development results, not complete material or G3
+qualification. Full limits, external validation and practical scale remain open.
