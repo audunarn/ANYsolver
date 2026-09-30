@@ -5,6 +5,29 @@ the explicitly selected GE or physical B2 profile. Both remain experimental;
 implemented behavior is distinct from programme qualification. Legacy selectors,
 element mass kernels and package versions are unchanged.
 
+## Native physical-fibre reference-linear point panels
+
+The existing GE owner admits native physical axial/biaxial-fibre sections at
+their stress-free reference linearization, including generalized and physical
+sections in the same point-connected Q4/S3 panel. It retains all 24 internal
+coordinates per beam and uses the existing native residual/Hessian and physical
+section derivative. No material law or legacy selector changes.
+
+Run the installed headless example with `--beam-family physical_fibre` or
+`--beam-family mixed`:
+
+```text
+python scripts/experimental_stiffened_ge_panel.py --beam-family mixed
+```
+
+This route supports linear solve, physical support reactions, owned coordinates,
+checkpoint/restore and subsequent compatible loads with factorization reuse.
+Capabilities report `EXPERIMENTAL_NOT_QUALIFIED` and `reference_linear` only.
+Finite analysis/checkpoints, line attachments and fibre stress recovery remain
+explicitly unsupported for models containing these sections. Their material
+histories must enter the shared atomic owner before a nonlinear capability is
+admitted; a linear result does not predict yielding or fibre stress evolution.
+
 ## Physical B2 numerical output admission
 
 The physical section law is checked for exact positive definiteness of its
@@ -69,10 +92,11 @@ and physical-mass orthogonality are checked before publication. Numerical
 failure or cancellation publishes no partial pairs and leaves static operation
 available. Unclassified programming errors propagate.
 
-The current ANYfem experimental B2 input format does not encode shell density
-or beam mass; it explicitly rejects these definitions rather than discarding
-them. Static input round-trip remains unchanged. Native modal persistence and
-consumer execution remain unfinished.
+The ANYfem experimental B2 `mass-v2` input format preserves explicit shell
+density and beam mass metadata for this route. The historical static-v1 format
+still rejects these fields rather than discarding them. Experimental input
+persistence is distinct from ordinary native-project persistence, which remains
+unfinished along with complete modal qualification.
 
 Development evidence and exact installed identities are linked from the
 [active state](agent_plans/B3_GE_E4_PL_ACTIVE_STATE.md). This document does not

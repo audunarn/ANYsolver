@@ -10,6 +10,13 @@ current evidence and failures. No aggregate gate or milestone is accepted.
 
 Development update, 29 September 2026: the objective S3 J2 algorithmic owner slice passes 49/49 source and 49/49 exact installed-wheel checks with independent review. Failures and exact inputs are preserved at `.qualification/b3-ge-e4-pl/r8-s3-j2-algorithmic-dev-20260929-v1/`. This does not close F05, V03/V17/V18/V28 or an aggregate gate.
 
+Native fibre-linear integration,30 September: product `6b0b1131` admits existing
+physical fibre sections and mixed native elastic families in the reference-linear
+Q4/S3 point owner. Fresh installed54/54 plus three public examples and separate
+ANYfem input save/reopen2/2 pass independent review. This is verified experimental
+behavior only; finite fibre histories/stresses and ordinary persistence remain
+open. [Exact results, retained failures and review](../../.qualification/b3-ge-e4-pl/r8-ge-fibre-linear-dev-20260930-v1/results.md).
+
 Statuses describe acceptance, not prototype progress. `IN_PROGRESS`
 includes incomplete or failed required cases; it never means a numerical
 pass.
@@ -35,7 +42,7 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 | Gate | Status | Boundary |
 |---|---|---|
 | G0A | IN_PROGRESS | Reconcile prior registration before a pass claim. |
-| G0B | IN_PROGRESS | Scoped F05 passed; other foundations, including F03, open. |
+| G0B | IN_PROGRESS | Scoped F05/F08/F09 passed; other foundations, including F03, open. |
 | G1 | IMPLEMENTED_NOT_QUALIFIED | Experimental sparse owner exists; foundation and full G1 acceptance open. |
 | G2 | IN_PROGRESS | Candidate line/footprint and topology incomplete. |
 | G3 | IN_PROGRESS | F05 fixed-predecessor foundation passed; full material domain open. |

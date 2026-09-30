@@ -1,39 +1,86 @@
 # B3-GE / E4-PL / B2 active state — 30 September 2026
 
-[Revision 8 goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md), [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) and [complete programme](B3_GE_E4_PL_B2_COMPLETE_PROGRAMME.md) govern under `ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1`, revision 2026-09-24.2. **Scoped F05/F08/F09 PASSED; F06 and G0B open; formal G1 acceptance barred.** Experimental integration is permitted. Full G0–G6/V01–V28/B01–B18/external/scale/consumer/release obligations remain. No main merge/publication authority.
+[Revision 8 goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md),
+[acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) and
+[complete programme](B3_GE_E4_PL_B2_COMPLETE_PROGRAMME.md) govern.
+Policy: ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1,2026-09-24.2.
+**Scoped F05/F08/F09 PASSED. G0B and formal G1 acceptance remain open.**
+Experimental integration is permitted; full G0–G6/F01–F13/V01–V28/B01–B18,
+external/scale/platform/consumer/release obligations remain. Goal active.
+No main merge/publication authority; this task has not changed main.
 
-## State, ownership and delivered behavior
+## Source, ownership and delivered behavior
 
-Solver worktree `C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling`, branch `codex/b3-ge-e4-pl-integration`; guarded B2 product `227d5ea833231eddf306080cf787ec77fd2fb1bb`. ANYfem worktree `C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer` is clean at `a615c4b299e603264f67d292c8a4415168b1b9c6`.
+Solver: C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
+branch codex/b3-ge-e4-pl-integration; latest product `6b0b1131a9dcf055811901d55daabac049a4e2a0`.
+ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
+tests-only commit `69184db3bc7e6ccdde0c7e1642fc6bb78afd7cf8`;
+runtime remains `a615c4b`.
 
-**Preserve separately owned dirty `scripts/b3_e4_f03_c1_fy_supported_reference.py`: do not edit, stage, run or interrupt by implication.** Formal F03 authority is unconsumed; historical consumed authorities stay consumed. Main is unchanged.
+**Separately owned dirty scripts/b3_e4_f03_c1_fy_supported_reference.py:
+do not edit/stage/run/interrupt.** Formal F03 authority is unconsumed;
+historical consumed authorities remain consumed. No outside job was interrupted.
 
-GE multi-Q4/S3 point panels support experimental solve/recovery/atomic state/restart; selected Q4/S3 algorithmic pullbacks and owned shell anchors retain legacy defaults/guards. F05 fixed-predecessor foundation was independently accepted at `abfd69be`: frozen installed 10/10 plus applicable prior 91/91; [evidence](../../.qualification/b3-ge-e4-pl/r8-f05-foundation-20260930-v1/results.md). This is not G3 breadth or aggregate acceptance.
+GE Q4/S3 point panels support experimental finite generalized-beam/shell J2,
+owned shell anchors, atomic state and restart. Selected fixed-predecessor F05
+is accepted; full material/rotation-history scope remains open.
 
-ANYfem mass-v2 B2 inputs preserve explicit nullable shell density and mass source/origin/full matrix; static v1 remains unchanged. Public reference modes preserve operation admission, cancellation/failure and owner closure. Source 19/19, installed 43/43 and independent code/artifact review pass; [evidence](../../.qualification/b3-ge-e4-pl/r8-b2-consumer-mass-dev-20260930-v1/results.md). Both formats remain experimental input persistence, distinct from ordinary native projects. Modal completeness/repeated spaces, free-free, prestress/buckling/GE and G4B/G6 acceptance remain open.
+New native integration: the same owner now handles reference-linear physical
+axial/biaxial-fibre beams and mixed generalized/fibre members with Q4/S3.
+Native42-coordinate operators/equations remain unchanged. Public headless
+example options physical_fibre/mixed solve/recover/checkpoint/restore/continue.
+ANYfem's existing experimental input v1 preserves their raw definitions.
+Finite fibre histories/stresses and line+fibre are explicitly unsupported.
 
-## Current decision and next action
+## Accepted evidence and remaining uncertainty
 
-**F09:** the existing fixed-wrench physical aspect family now passes the public session as well as its direct private control: 4/4 exact installed. Max tip error 1.75313e-4 of the existing allowance, work 2.63442e-11, recovered wrench 6.25455e-10. No session defect or further physical sweep is indicated.
+- [F08 foundation](../../.qualification/b3-ge-e4-pl/r8-f08-foundation-20260930-v1/results.md):
+  current local extraction17/17 installed, independent acceptance; accepted
+  predecessors,18+24/shared/disjoint blocks, actual-update derivatives and
+  exact history/checkpoint checks. V1 collection failure remains preserved.
+  This is not independent material-law, yield-switch semismooth, line or scale acceptance.
+- [Fibre-linear integration](../../.qualification/b3-ge-e4-pl/r8-ge-fibre-linear-dev-20260930-v1/results.md):
+  source52/52 plus focused extras; fresh installed54/54, three headless families,
+  distinct ANYfem2/2, independent code/mechanics/artifact review clear.
+  Source fixture failures retained. Wheel56deb65e...; unchanged consumerff143e5f....
+  This is verified experimental behavior, not an aggregate gate or speedup.
+- [F09 foundation](../../.qualification/b3-ge-e4-pl/r8-f09-foundation-20260930-v1/results.md):
+  physical B2 section/local operator/station trace accepted; guard200, exact
+  threshold6 and candidate legacy14 retained with unchanged-input reuse.
+  Arbitrary graph accuracy, attachments/mass/prestress and M3 acceptance remain open.
+- [F05 foundation](../../.qualification/b3-ge-e4-pl/r8-f05-foundation-20260930-v1/results.md):
+  selected Q4/existing S3 fixed-predecessor pullback accepted; not full G3.
+- [F06 failed discriminator](../../.qualification/b3-ge-e4-pl/r8-f06-noncommuting-dev-20260930-v1/results.md):
+  Q4 coverage bounds missed; S3 first-step Newton limit. Do not automatically
+  retune/repeat; not formulation failure. Native total energy remains unmeasured.
 
-The arbitrary exact-LDL normalized pivot veto is replaced by an enforced bounded output guard before local construction returns. Independent review accepts its narrow purpose. It uses basic-energy Loewner bounds (eta=1e-8) and separate bounded physical rigid/cross checks (wrench 1e-9, work 1e-8). R has node one fixed; Z is centroid rigid motion, translation scale L and unit rotation. F=max(section force diagonals, moment diagonals/L²); M=FL, E=FL. Absolute entry sums bound normalized amplitudes <=1; these are neither one total-energy bound nor all-amplitude relative energy near rigid modes. A uses the implemented law, so independent force-method oracles remain necessary.
+BL5 physical transfer, norms, indefinite mixed-system interpretation and multiplier
+resolution remain open; no selection from a quotient or automatic axial refinement.
+Ordinary native persistence, complete spectra/capacity and practical scale remain open.
 
-The historical nonphysical 2^-80 stress **also passes locally**; this is not graph stability or continuous physical admission. [Mathematical design evidence](../../.qualification/b3-ge-e4-pl/r8-f09-admission-dev-20260930-v1/results.md) remains unchanged. Typed local errors, immutable certified tangent reuse and foreign compiled-operator rejection pass installed 200/200 with independent review; [product evidence](../../.qualification/b3-ge-e4-pl/r8-b2-output-guard-dev-20260930-v1/results.md). Source 37/37 initially; broader 175 pass/1 counting-factory failure; canonical type identity repaired with 15/15 affected checks. Failed evidence is retained.
+## Next action and restart
 
-**Completed discriminator:** the exact historical F09-S-v1 inputs now pass source 6/6 and installed 6/6 through the public profile: both y/z, A=(1e-14,2e-12,1e-10), same E/nu/L/inertias/shear factors and .01 translation. Max external/recovered energy discrepancy 2.038e-16/4.076e-16 versus frozen 1e-12. Historical below-floor ratio remains 184.6923; parity holds only at/above it. Independent fixture/artifact review accepts this specific dispatch distinction. No product correction or further physical sweep is indicated.
+**Decision sought:** extend the existing finite owner to physical-fibre material
+histories without independent component commits or loss of old checkpoint meaning.
+The reference-linear seam is now verified. Read FinitePointDriver's history,
+recovery and checkpoint contracts and the existing native fibre history/force
+driver. Choose a family-aware immutable accepted-state layout using those
+operators; preserve generalized-only schemas and use a distinct identity for
+new mixed/fibre histories. Begin with one bounded point-panel load/unload,
+rejection and fresh-restore slice; verify actual accepted material recovery and
+predecessor ownership before broader histories. If the existing adapter cannot
+supply a faithful candidate/history, resolve that seam rather than inventing
+another beam law. Do not restart F03/F06 diagnostics by implication.
 
-**F09 decision complete:** scoped physical B2 section/local operator/station-trace foundation is independently accepted under the prospective candidate contract. Current-wheel legacy preservation passed the same ten selectors/14 instances; earlier 200+6 evidence is explicitly reused by unchanged identities and stays labeled Level A. [Frozen contract, raw results and adjudication](../../.qualification/b3-ge-e4-pl/r8-f09-foundation-20260930-v1/results.md). Arbitrary graph accuracy, attachments, mass/prestress, F10–F13/M3 and aggregate qualification do not follow. The historical installed baseline and adverse extreme graph remain distinct.
+No owned numerical job remains: source94277, installed94839 and consumer adjunct
+completed. Installed54 guard202.673s/239112192B; adjunct4.121s/206434304B.
+Observed Python3.14.2, one numerical thread/JIT off;384solver+97consumer modules
+match artifacts,268/267 imports onsite. Reviewer finished without jobs/edits.
+Keep100000rows/600s/8GiB/eight-thread ceilings, one heavy programme job and
+at most three workers. No completed campaign needs repeating without changed inputs.
 
-**F08 accepted:** current native local extraction passes source changed checks 2/2 and frozen installed 17/17, with independent code/scientific/artifact acceptance. Generalized and yielded-fibre current 18+24/shared/disjoint blocks, actual-update derivatives and exact accepted history/checkpoint predicates pass. [Raw evidence, frozen contracts and review](../../.qualification/b3-ge-e4-pl/r8-f08-foundation-20260930-v1/results.md). V1's two collection errors remain preserved. No semismooth yield-switch, independent constitutive, mixed-shell or scale claim follows.
-
-**Current native integration slice:** the existing GE point owner now accepts virgin reference-linear physical-fibre sections and mixed generalized/fibre members, preserving the native 42-coordinate operator and sparse owner. Compile-time scales use the physical section's existing virgin derivative. Q4/S3 matched-section source checks pass; broad linear/finite regression 52/52, added binary/cancellation check1/1 and corrected line-negative fixture1/1. Two test-fixture failures are retained (fresh-restore contract, then invalid L1 trace length). Public example `--beam-family mixed` completes linear solve, reactions, restore/continue and factor reuse. Independent initial review found no mechanics/state defect; final installed artifact review remains pending. Finite fibre histories, fibre stress recovery and line+fibre remain explicitly unsupported. Next: fresh isolated wheel, 54-case installed slice and all three headless example family routes. No line investigation or failed F06 fixture is restarted.
-
-**F06:** the fixed noncommuting-history discriminator failed; do not retune/repeat it automatically. V1 reference geometry failed; corrected V2 Q4 completed but missed frozen rotation/commutator bounds, while S3 hit its first-step Newton limit. Native total energy is unmeasured. This is not formulation failure. [Preserved failures](../../.qualification/b3-ge-e4-pl/r8-f06-noncommuting-dev-20260930-v1/results.md). BL5 transfer, physical norms, indefinite mixed-system interpretation and multiplier resolution remain open; no selection from a quotient or automatic axial refinement.
-
-## Execution and restart
-
-No owned numerical job remains. F08 V2 installed 17/17 completed under 600 s/8 GiB, observed one thread/JIT off/Python 3.14.2, guard25.135s/217,370,624bytes. Source/wheel/site/test rehashes have zero mismatches and imports are on site. Independent scoped F08 acceptance complete. No outside activity interrupted.
-
-Keep 100,000 rows, 600 s/run, eight numerical threads, 8 GiB process tree, one heavy programme job and at most three workers. On resume verify relevant identities/ownership, then advance the next concrete native integration obligation; do not replay completed campaigns. The unbounded goal remains active.
-
-Previous living record, including prospective decision contracts, is preserved byte-for-byte in [B2/F09 history](B3_GE_E4_PL_ACTIVE_STATE_HISTORY_R8_20260930_B2_F09.md), SHA-256 `032997bff3475a066482006dde6bae3d05f55d554ce96e909bb35b6d15ca7607`. Older protected evidence/notes remain unchanged.
+Prior longer note preserved byte-for-byte in
+[pre-consolidation history](B3_GE_E4_PL_ACTIVE_STATE_HISTORY_R8_20260930_F08_FIBRE.md),
+SHA-256 fe37ee289e5ee35847e092befd76f474ee82f792ab9f009ee1f671b7ceff6506.
+Earlier [B2/F09 history](B3_GE_E4_PL_ACTIVE_STATE_HISTORY_R8_20260930_B2_F09.md)
+and protected evidence retain their original dispositions.
