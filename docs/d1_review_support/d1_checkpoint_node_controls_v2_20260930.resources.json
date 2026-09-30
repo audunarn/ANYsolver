@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.9537087999924552,
+  "peak_process_tree_memory_mb": 153.055232,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_checkpoint_inert_node_observation.py"
+  ],
+  "log": "docs\\d1_review_support\\d1_checkpoint_node_controls_v2_20260930.log"
+}

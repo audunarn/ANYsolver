@@ -1,0 +1,36 @@
+{
+  "inputs": [
+    {
+      "sha256": "aec299d8f419cec2bc1d7fe9ad6a527363a9ca4f94003a39f98b15407c4b0d81",
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\e4_pl_s3_state.py"
+    },
+    {
+      "sha256": "67ee3a63738d257e919ae7046c5464c3fac3156665105e03b6893a1305892445",
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_restart.py"
+    },
+    {
+      "sha256": "d91a4956eff3bee2aec611a2d58c3d60f4e3953d37670e39391ca7b30fd26c5c",
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_saved_checkpoint_roundtrip_dev.py"
+    },
+    {
+      "sha256": "843dc2e36904c8d587ab4840aa16d287300134c70ed6c689e24016a45ed1cec5",
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_installed_entry.py"
+    },
+    {
+      "sha256": "e37d1b08e107dbefb41aedb76924d68674c07e4360f99a31be3ea5976e87b272",
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_bounded_single.py"
+    },
+    {
+      "sha256": "89fb91a83c3575038dabba16106cf48a13ab2d21073ea6c282362acc3bcad4e8",
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\scripts\\general_contact_d1_interior_press_dev.py"
+    },
+    {
+      "sha256": "96f0bcec3b5a3fcc6bd913d3cff192e8b66a7ba9d34e2d3d0dedeaea7c0fc001",
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_radial_nonmatching_swept_search_coupled_v8_20260930.json"
+    }
+  ],
+  "time_limit_seconds": 900,
+  "source_head": "90baf01a1b6f75ede074d2eedab880c7eed91c92",
+  "scope": "development complete saved432-state radial boundary; no solve/qualification",
+  "memory_limit_bytes": 4000000000
+}

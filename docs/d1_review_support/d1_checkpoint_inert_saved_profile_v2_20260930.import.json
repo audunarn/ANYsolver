@@ -1,0 +1,12 @@
+{
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "anysolver_file_sha256": "677237ea706773bfa0e511c77e368f37f55a3289b073a872437909be51d82ebe",
+  "script": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_saved_checkpoint_roundtrip_dev.py",
+  "script_sha256": "e7259391ca6140624b11af45037751113e3c712e832099213de12dff862b5c03",
+  "python_executable": "C:\\Python\\Python314\\python.exe",
+  "python_version": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "numpy_version": "2.4.6",
+  "scipy_version": "1.17.1",
+  "pythonpath": "C:/ANYworkspaceWork/ANYsolver-general-contact/src;C:/ANYworkspaceWork/ANYsolver-general-contact",
+  "wrapper_sha256": "843dc2e36904c8d587ab4840aa16d287300134c70ed6c689e24016a45ed1cec5"
+}
