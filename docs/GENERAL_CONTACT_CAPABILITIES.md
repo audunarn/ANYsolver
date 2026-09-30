@@ -22,6 +22,20 @@ warped geometry, friction/material/native/dynamic rows remainopen. SpatialV5/V6
 NONPASS and every historical failed gate remain retained. Savedcheckpoint-route
 median improvement28.37% is not a complete-solve speedclaim.
 
+**D2 projected finite penalty — development only:** additive opt-in
+`projected_penalty` uses refined Q4/S3 fine-Q1 Jet2 overlap-local geometry with
+zero contact multipliers and a generally nonsymmetric projected-work tangent.
+Storage is labeled separately from work. Nine focused checks pass in incremental
+runs; independent implementation review closed the derivative-reduction and
+ordinary-API boundary findings. The1e7 partial-overlap press/open/recontact passes all3pose checks; a first1e6
+roundoff-guard nonpass remains retained, with only its saved final pose assessed.
+Stiffness sensitivity is1.70%reaction/2.77%normalresponse, not continuum accuracy.
+Ordinary force and active-prefix splitrestart pass with actual GENERAL
+factorization and matching final pose; custom nested path still needstwo controls.
+Active prescribed-source pressures, physical rims/edge-only collisions, arbitrary
+cut accuracy and installed admission are not qualified. **Independently accepted:
+no; released: no.** D1's accepted installed artifact remains0b2ac9be.
+
 **30 September source87c53913 update:** D1-interior stages target-boundary cuts,
 prescribed source edges and source rim contact to D2 under the controlling goal.
 The cut-front counterexample below remains valid for its original unrestricted

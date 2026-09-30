@@ -83,3 +83,76 @@
 **Actual proposal and explicit profile:** A third replay captured the first-step rejected Newton proposal (d1_2d_gap_proposal_20260929.*, 96.9 s/413 MB). Against the unchanged −50 µm gap budget, the old swept certificate admitted fraction zero; the experimental depth-3/4 overlap-local bounds admitted the full proposal at −47.401/−45.757 µm, while independent path samples reached −9.849 µm. The same was true for fractions 1/2, 1/4 and 1/8 (d1_actual_swept_gap_20260929.*, successful 22.2 s/161 MB). The first evaluator run failed only at JSON encoding of a NumPy bool; its log is retained. The candidate was then added behind explicit `overlap_local_dev`, a distinct capability profile and restart identity; default certificate and contact law remain. Eight focused geometry/work/rollback checks passed in 30.4 s/372 MB (d1_overlap_profile_focused_tests_20260929.*).
 
 **Named integrated outcome and stop:** The explicit-profile 16-Q4/eight-S3 two-step press accepted step 1 with conservative gap −47.401 µm, sampled gap −9.849 µm and source/target wrenches equal and opposite to roundoff. Step 2 stopped at iteration 5 with equilibrium merit 0.17943, complementarity 2.86e−9, conservative start gap −49.9991 µm and zero admissible swept fraction (d1_2d_overlap_profile_20260929.*, 60.85 s/357 MB). The second-step proposal was captured in a 59.3 s/356 MB replay and independently sampled along its linear physical nodal path. At fraction 1/8, depth-3/4 lower bounds were −57.221/−55.399 µm, while sampled gap was −9.973 µm (d1_overlap_step2_swept_20260929.*, 19.0 s/161 MB). Source-only subdivision of its limiting face through depth 7 remained −55.172 µm, showing target-side variation still controls this bound. A saved-first-step test confirmed the profile/restart distinction and old/new swept decision; five geometry/profile tests passed in 6.7 s/215 MB (d1_overlap_profile_saved_test_20260929.*). The 2D fixture branch stops here. This is a partial development capability, not a D1 handoff, independent acceptance or evidence of a complete-route speedup. Joint source/target subdivision may be considered only under a new discriminating task; retain the unchanged gap budget and pressure-space questions.
+
+
+## D2 projected finite-penalty slice — 30 September 2026
+
+D1-interior is accepted at package0b2; checkpointb38cb6ce. Selected the
+explicit projected weak-gap penalty over new agglomerated/dual spaces after
+early independent equations review. New opt-in `projected_penalty` keeps
+algorithmic multipliers zero, fineQ1 supports and the full generally nonsymmetric
+Jet2 moving-support Jacobian. Existing `penalty` and D1 augmented definitions
+and restart contracts stay distinct. Storage is not projected contact work.
+The bounded scalar discriminator and its interpretation retain the failed
+reaction-sign/branch-crossing checks; no rerun. Small-cut supports stay positive;
+stiffness sensitivity remains unresolved. Next question: can one compatible
+partially covered, prescribed-boundary coupled shell fixture meet equilibrium
+and independent physical gaps while showing controlled stiffness sensitivity?
+Use one routine180s/1GB slice before further refinement; no rim/edge-only or
+finite-rotation claim. Review consequential work/state wiring independently.
+
+
+**D2 wiring review/checks:** checkpoint_review independently identified and
+closed the omitted projected-profile reduced-variation whitelist, ordinary API
+law mislabeling and unsupported-control bypass. The new law now validates actual
+force/displacement control before ordinary scope creation and reports selected
+identity; zero multipliers are read-only. Reviewer found no legacy/default change.
+Seven scalar/plane/admission/restart controls passV2 (4.68s/219.46MB), a separate
+both-body physical-skin tangent check passes over1e-6/3e-7/1e-7 steps (4.89s/225.27MB),
+and unsupported ordinary/scope control guard passes (4.17s/212.22MB). InitialV1
+three invalid-settings test fixtures failed before reaching profile validation;
+corrected fixture controls preserve those failed logs. A development metadata
+witness matches the installed0b2 augmented restart+open-result bytes exactly:
+2421bytes SHA86323f87e317bc3e71858ea7e86436b991a1b1dd9456272aa43f7ff3c35dfd3f.
+Its first JSON helper attempt failed on numpy.bool encoding, then converted only
+NumPy scalar item(); no accepted solve was repeated. This is compatibility
+evidence, not fresh D1 scientific qualification.
+
+**First coupled pilot:** finite1e6Pa/m shell path completed press/open/recontact,
+active counts2/0/2, in10.49s/275.08MB. The independent diagnostic stopped on
+exact-zero guided coordinates despite deviations<=1.04e-23m. Raw nonpass remains;
+saved-only assessment is underway before any second-stiffness solve. Prescribed
+left support pressures are zero in this fixture; active prescribed-pressure
+contact remains open. No full D2 acceptance or runtime-speedup claim.
+
+
+**Integrated outcomes and next decision:** first1e6 pilot's retained final pose
+passes saved-only assessment (7.03s/274.93MB), physical penetration31.1739µm,
+wrench1.89e-13, virtualwork5.55e-17. Original raw nonpass and missing earlier
+pose vectors stay explicit. Second-only1e7 run passes all3pose checks in
+12.31s/275.35MB, allposevectors/final4states retained. Gap26.7827µm; wrench
+1.64e-12. Targetreaction+1.69843% and normal-displacementL2+2.76810% relative
+to1e6; this is stiffness sensitivity, not continuum accuracy. Prescribed pressure
+rows remain inactive; their force map is checked independently with active
+pressures and excluded variation columns (4.29s/220.55MB).
+
+Ordinary-driver review found projected work was incorrectly classed symmetric
+when augmentation was off. Both force/displacement branches now use GENERAL
+without enabling augmentation; reviewer verified full assembly, residual merit,
+gap/swept checks, commit/discard/cleanup and contract-bound restart hooks.
+The direct ordinary-force check preserves pilot controls as BCs, solves load
+factor.5 prefix then resumes1.0 with a strict checkpoint. It passes12.60s/275.63MB,
+all7factorizations actuallyGENERAL, correctlawreporting, independent gap budget,
+zeroµ and finaldisplacement/pressure differences2.31e-10/3.91e-8 versuspilot.
+Raw docs/d1_review_support/d2_projected_penalty_ordinary_force_v1_20260930.*.
+No freshD1 run. Ordinary force now has no artificial two-path-control limitation;
+custom nested path programs still needtwo controls. This is development proof,
+not independently accepted/releasedD2.
+
+Principal remaining uncertainty: response/gap accuracy on partially cut/contact
+fronts, rather than a solver-wiring failure. A next stiffness value is justified
+only as a single test of1/k asymptotic response (predict fromsaved1e6/1e7 before
+run); persistent local gap must be addressed by spatial/contact resolution, not
+an indefinite stiffness increase. Physical rim/edge-only/collision, active
+prescribed-edge equilibrium, finite-rotation/search/self-contact and future
+programme rows remain open.

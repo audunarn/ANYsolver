@@ -129,8 +129,8 @@ class ContactInteraction:
     def __post_init__(self) -> None:
         if not self.name or not self.surface or not self.target:
             raise ValueError("contact interaction needs a name and two participants")
-        if self.normal_law not in {"penalty", "augmented"}:
-            raise ValueError("normal_law must be penalty or augmented")
+        if self.normal_law not in {"penalty", "augmented", "projected_penalty"}:
+            raise ValueError("normal_law must be penalty, augmented or projected_penalty")
         for name in ("normal_stiffness", "line_stiffness", "endpoint_stiffness"):
             if getattr(self, name) is None:
                 continue
@@ -576,6 +576,20 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if any(item.normal_law == "projected_penalty" for item in definition.interactions):
+        if (settings is None or settings.pair_motion != "general"
+                or not _refined_q4_s3_patch(model, definition)
+                or len(definition.interactions) != 1
+                or settings.general_s3_differentiation != "jet2_q4_s3_dev"
+                or settings.q4_source_gap_certificate != "overlap_local_dev"
+                or settings.q4_source_pressure_basis != "fine_nodal_q1"
+                or settings.augmentation_support_resolution != "exact"
+                or settings.augmentation_acceleration != "none"
+                or settings.enforcement_solver != "nested_augmented"
+                or settings.d1_interior_profile):
+            return ContactValidationReport("invalid", (
+                "projected_penalty requires the separate refined Q4/S3 fine-Q1 Jet2 overlap-local profile without augmentation or D1 admission",
+            ))
     if settings is not None and settings.d1_interior_profile:
         if (not _refined_q4_s3_patch(model, definition)
                 or definition.interactions[0].normal_law != "augmented"
@@ -621,7 +635,7 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         )
         if (settings.pair_motion != "general" or definition.rigid_bodies
                 or len(definition.interactions) != 1
-                or definition.interactions[0].normal_law != "augmented"
+                or definition.interactions[0].normal_law not in {"augmented", "projected_penalty"}
                 or not _refined_q4_s3_patch(model, definition)
                 or any(value is None for value in derivative_tolerances)):
             return ContactValidationReport("invalid", (
@@ -658,7 +672,7 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         if not (settings.pair_motion == "general"
                 and not definition.rigid_bodies
                 and len(definition.interactions) == 1
-                and definition.interactions[0].normal_law == "augmented"
+                and definition.interactions[0].normal_law in {"augmented", "projected_penalty"}
                 and (_exact_single_q4_pair(model, definition)
                      or _exact_q4_s3_patch(model, definition)
                      or _refined_q4_s3_patch(model, definition))):
@@ -1150,6 +1164,12 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
         if not report.valid:
             raise ValueError("unsupported warped Q4 plane contact: "
                              + "; ".join(report.issues))
+    if any(item.normal_law == "projected_penalty" for item in definition.interactions):
+        report = validate_general_contact(
+            model, definition, settings, analysis_control=analysis_control,
+        )
+        if not report.valid:
+            raise ValueError("unsupported projected penalty contact: " + "; ".join(report.issues))
     if any(item.normal_law == "augmented" for item in definition.interactions):
         if not allow_augmented:
             raise ValueError("augmented contact requires the contact path analysis owner")

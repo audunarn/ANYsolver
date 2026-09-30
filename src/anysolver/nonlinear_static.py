@@ -3814,7 +3814,8 @@ def _solve_static_displacement_control(
     augmented_contact_manager = (
         contact_manager if getattr(contact_manager, "augmented", False) else None
     )
-    if augmented_contact_manager is not None:
+    if (augmented_contact_manager is not None
+            or getattr(contact_manager, "projected_work", False)):
         # Normalized pressure differentiates changing overlap support; its
         # fixed-multiplier Jacobian need not be symmetric.
         general_tangent = True
@@ -5345,7 +5346,7 @@ def _solve_static_nonlinear_under_lease(
     general_tangent = follower_active or (
         kinematics == "corotational"
         and resolved_corotational_tangent == "consistent"
-    ) or augmented_contact_manager is not None
+    ) or augmented_contact_manager is not None or getattr(active_manager, "projected_work", False)
     native_spatial_couples = False
     native_combined_couples = False
     native_generalized_combined_couples = False
@@ -7813,6 +7814,9 @@ def solve_static_nonlinear(
                     "ordinary supported Schur development requires elastic "
                     "von Karman force control with one dead nodal load case"
                 )
+        if (any(item.normal_law == "projected_penalty" for item in contact.interactions)
+                and str(control).lower() not in {"force", "displacement"}):
+            raise ValueError("projected penalty contact requires force or displacement control")
         augmented_contact_requested = any(
             interaction.normal_law == "augmented"
             for interaction in contact.interactions
@@ -7960,7 +7964,7 @@ def solve_static_nonlinear(
                 summary = contact_manager.evaluate(result.displacements, tangent=False)[2]
                 summary_payload = summary.to_dict()
                 summary_payload.update(
-                    normal_law=("augmented" if augmented_contact_requested else "penalty"),
+                    normal_law=contact.interactions[0].normal_law,
                     gap_tolerance=contact_manager.gap_tolerance,
                     maximum_candidate_pairs=(
                         contact_manager.settings.maximum_candidate_pairs

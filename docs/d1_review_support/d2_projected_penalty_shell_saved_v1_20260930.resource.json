@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 7.028074600006221,
+  "peak_process_tree_memory_mb": 274.927616,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "docs/d1_review_support/d2_projected_penalty_shell_dev.py",
+    "--saved",
+    "docs/d1_review_support/d2_projected_penalty_shell_v1_20260930.json",
+    "--output",
+    "docs/d1_review_support/d2_projected_penalty_shell_saved_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d2_projected_penalty_shell_saved_v1_20260930.log"
+}

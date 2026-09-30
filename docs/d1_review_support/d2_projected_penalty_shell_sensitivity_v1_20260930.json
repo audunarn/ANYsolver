@@ -1,0 +1,117 @@
+{
+  "status": "development_saved_finite_penalty_shell_response_sensitivity",
+  "accepted": false,
+  "released": false,
+  "comparison_is_continuum_accuracy": false,
+  "epsilon_pa_per_m": [
+    1000000.0,
+    10000000.0
+  ],
+  "inputs": [
+    {
+      "path": "d2_projected_penalty_shell_v1_20260930.json",
+      "sha256": "AA141CFDCB68456C26A3A65F2B7C3B4B67FD47E043CD3B48B42E6C669946D2EF"
+    },
+    {
+      "path": "d2_projected_penalty_shell_saved_v1_20260930.json",
+      "sha256": "4DB6F2AFAEE54FB4B72F503AB8A7F3FF8D216F32B63523522B22666F58710D19"
+    },
+    {
+      "path": "d2_projected_penalty_shell_v2_20260930.json",
+      "sha256": "2CAC6A68482706B1BAF70AEFE638BFF80BACFCF4F2C16B01B5735262BD60E094"
+    }
+  ],
+  "normal_displacements": [
+    {
+      "global_dof": 8,
+      "epsilon_1e6_m": -4.8162527047281385E-05,
+      "epsilon_1e7_m": -4.76316844534938E-05,
+      "difference_m": 5.308425937875855E-07
+    },
+    {
+      "global_dof": 14,
+      "epsilon_1e6_m": -0.00014599877819493953,
+      "epsilon_1e7_m": -0.00014574463722462062,
+      "difference_m": 2.5414097031890197E-07
+    },
+    {
+      "global_dof": 26,
+      "epsilon_1e6_m": -5.1126503061552686E-05,
+      "epsilon_1e7_m": -4.804459265806656E-05,
+      "difference_m": 3.0819104034861256E-06
+    },
+    {
+      "global_dof": 32,
+      "epsilon_1e6_m": -0.00015184439328046472,
+      "epsilon_1e7_m": -0.00014655897991135982,
+      "difference_m": 5.285413369104897E-06
+    }
+  ],
+  "normal_displacement_l2_relative_to_1e6": 0.027681035391201026,
+  "target_normal_reaction_n": [
+    0.34088296187700357,
+    0.3466726304270714
+  ],
+  "target_normal_reaction_relative_to_1e6": 0.01698432951353216,
+  "source_normal_reaction_n": [
+    0.15911703812309097,
+    0.1533273695721095
+  ],
+  "minimum_represented_physical_gap_m": [
+    -3.117388650955894E-05,
+    -2.6782696881674643E-05
+  ],
+  "second_stiffness_all_pose_checks": [
+    {
+      "represented_gap": true,
+      "both_body_wrench": true,
+      "full_virtual_work": true,
+      "pressure_nonnegative": true,
+      "six_positive_support_rows_retained": true,
+      "permanent_zero_algorithmic_multipliers": true
+    },
+    {
+      "represented_gap": true,
+      "both_body_wrench": true,
+      "full_virtual_work": true,
+      "pressure_nonnegative": true,
+      "six_positive_support_rows_retained": true,
+      "permanent_zero_algorithmic_multipliers": true
+    },
+    {
+      "represented_gap": true,
+      "both_body_wrench": true,
+      "full_virtual_work": true,
+      "pressure_nonnegative": true,
+      "six_positive_support_rows_retained": true,
+      "permanent_zero_algorithmic_multipliers": true
+    }
+  ],
+  "second_active_counts": [
+    2,
+    0,
+    2
+  ],
+  "second_iteration_counts": [
+    4,
+    4,
+    4
+  ],
+  "second_prescribed_pressure_rows": [
+    {
+      "node_id": 1,
+      "pressure_pa": 0.0,
+      "support_m2": 0.1237500000000117
+    },
+    {
+      "node_id": 4,
+      "pressure_pa": 0.0,
+      "support_m2": 0.10125000000001005
+    }
+  ],
+  "second_maximum_wrench_relative": 1.6381340728344185E-12,
+  "second_accepted_pose_vector_count": 3,
+  "restart_checkpoint_available": true,
+  "split_restart_executed": false,
+  "split_restart_limitation": "Only final complete checkpoint collected; no saved active/open prefix checkpoints. No additional fresh solve performed."
+}

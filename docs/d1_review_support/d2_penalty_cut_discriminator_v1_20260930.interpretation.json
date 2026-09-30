@@ -1,0 +1,89 @@
+{
+  "status": "development_data_only_interpretation_no_new_execution",
+  "accepted": false,
+  "released": false,
+  "execution_count": 1,
+  "raw_file": "d2_penalty_cut_discriminator_v1_20260930.json",
+  "raw_sha256": "782E1B936176F4CDCA8DE8A35A37497B99AE20FD4FD61A827931FCDBC5E5AC42",
+  "executed_adapter_sha256": "d6f68c4d94a3f278d20f8b4bd2b4c56de95a39964c775cb4acac2d4e4b12b267",
+  "current_adapter_sha256": "9EF21A518FB6F933D4A15FC69021E4222DA4F195ED55D79C8CC9672D30820A00",
+  "future_checker_correction": "Normal reaction balance is sum(reactions)+sum(external_load), not sum(reactions)+positive_load_magnitude. Failed raw criterion is preserved; no rerun.",
+  "normal_reaction_balance_from_retained_raw_relative": 7.112366251504909E-14,
+  "unaltered_raw_criterion_results": {
+    "jacobian": false,
+    "residual": true,
+    "full_work": true,
+    "equilibrium": true,
+    "reactions": false,
+    "both_body_balance": true,
+    "positive_pressure": true,
+    "coercive_supported_response": true,
+    "zero_constant_gap_cut_work": true,
+    "last_two_epsilon_response": false,
+    "bounded_cut_response_epsilon_1000": true,
+    "bounded_cut_response_epsilon_10000": true,
+    "bounded_cut_response_epsilon_100000": true
+  },
+  "smooth_branch_rows": 15,
+  "active_branch_crossing_rows": 3,
+  "smooth_branch_max_jacobian_error": 1.918032622427981E-11,
+  "fd_crossing_explanation": "The declared 1e-8 m normal perturbation crosses contact active sets in three epsilon=1e4 cases, with 13 total changed perturbation branches. Their 0.338 error is not a smooth-branch Jacobian comparison.",
+  "finite_regularization_sensitivity": [
+    {
+      "theta": 0.1,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.01750859045424664,
+      "force_relative": 0.01461853978670048
+    },
+    {
+      "theta": 0.05,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.02719114759221288,
+      "force_relative": 0.25874673796556247
+    },
+    {
+      "theta": 0.025,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.0044390281849696536,
+      "force_relative": 0.13211175144659695
+    },
+    {
+      "theta": 0.001,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.001352315236413854,
+      "force_relative": 0.0019456656121853739
+    },
+    {
+      "theta": 1E-05,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.0013517109549340137,
+      "force_relative": 0.0019410294240018808
+    },
+    {
+      "theta": 1E-07,
+      "epsilon_pair_pa_per_m": [
+        10000.0,
+        100000.0
+      ],
+      "free_response_relative": 0.0013516949898450949,
+      "force_relative": 0.0019442689981506727
+    }
+  ],
+  "decision": "Projected finite-penalty mechanics are feasible in this supported scalar space; proceed only to the planned bounded coupled shell slice with an explicit finite epsilon and physical response/gap reference. The sampled epsilon pair does not establish the 2% response/force sensitivity target, so no method admission or further tuning is justified by this run.",
+  "limits": "Unit-width scalar strips, normal coordinates plus moving overlap endpoint; no offsets/rotations, shell acceptance, cut-uniform exact-pressure stability or physical-gap qualification. Uncovered source tip excluded from represented contact region."
+}

@@ -1,6 +1,6 @@
 # General contact — plan
 
-**Revision:** 2026-09-30.24. **Status:** D1-interior independently accepted; D2 next. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.1. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
+**Revision:** 2026-09-30.26. **Status:** D1-interior independently accepted; D2 projected-penalty slice active. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.1. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
 
 The goal owns outcome, acceptance, authority, budget and stop rules. This plan is the current best route, not a mandatory sequence of investigations. The lead should change it when evidence supports faster delivery within the goal, briefly recording the decision. Development has resumed on the user's instruction.
 
@@ -26,28 +26,55 @@ has exact complete mechanical/state parity. Current checkpoint and freshQ4
 no-contact timing have independent scoped PASS; genericBeam timing is impact-reused.
 All V5/V6 failures remainNONPASS; no reliable complete-solve speedratio or release.
 
-**Next integrated result:** choose one D2 method for partial target overlap and
-prescribed-source boundary constraints. First assess the finite penalty weak-gap
-route already represented in the local kernel, because it avoids adding an
-independent multiplier-space implementation. Reuse only verified geometry/work
-interfaces. Derive its full residual/Jacobian including moving support/projections,
-separate regularization storage from work during support changes, and verify
-positive physical pressure/vanishing overlap behaviour. It is a candidate, not
-an accepted law or permission to silently weaken gates. Compare the other two
-authorized routes briefly on mechanism/implementation cost; do not build all three.
+**D2 selected candidate:** explicit finite projected weak-gap penalty,
+`normal_law="projected_penalty"`, distinct from existing stored-energy `penalty`
+and D1 augmented laws. It reuses fine-Q1 Jet2 geometry/work with identically-zero
+algorithmic multipliers and a structural-only Newton solve. For positive support,
+`g=W/S`, `B=DW-g DS`, `p=k[-g]+`, `R=-sum(p B)`; retain the full generally
+nonsymmetric moving-support Jacobian. Report regularization storage separately:
+`dE=R du + (k/2) sum(g_negative² dS)`. No exact-complementarity or uniform
+pressure-space-stability claim follows from this finite law.
 
-Use one small analytic supported-space cut/boundary case and one coupled shell
-slice with independent reaction/virtual-work/tangent/gap controls. Vary geometry
-cut and explicit regularization only to distinguish bounded response from the
-known exact-law deterioration. Require a declared finite-regularization sensitivity
-and resource decision. If the candidate cannot credibly meet the common gates,
-choose agglomeration/dual-boundary modification immediately; no endless tuning.
-Begin partial static pressing/opening/recontact, shifting target geometry while
-open. Moving active physical rims and edge-only collision need their own feature
-kernels/acceptance; this initial surface slice cannot admit them. Keep the accepted
-D1 exact-law route and checkpoint identity unchanged; a new profile gets explicit
-restart/capability identity. Routine development180s/1GB, named integrated cases
-up to900s/4GB; no new administrative framework. Full D2/D3–D8 remains required.
+Early independent equations review prefers this route over implementing new
+agglomerated/dual pressure spaces first. The scalar cut discriminator retains
+positive supports down to5e-15m² and accurate smooth derivatives; its original
+reaction-sign and branch-crossing checker failures remain on disk with data-only
+interpretation. Its stiffness sensitivity does not establish response accuracy.
+
+The additive profile is wired, with seven focused checks and one independent
+both-body physical-skin tangent check passing. The reviewer identified a missing
+reduced-variation whitelist; it is fixed, preserving full residual/reaction rows.
+Current scope: refined Q4-source/S3-target, fine nodalQ1, Jet2, overlap-local
+physical-gap certificate, no support dropping or augmentation. Initial path
+requires at least two independent controls. Public/model admission remains
+provisional. D1 definitions/defaults/result/restart contracts remain separate.
+
+**Integrated slice result:** the1e6 run completed press/open/recontact; its
+roundoff diagnostic failure is retained and only its saved final pose was
+independently assessed. The1e7 run passes all3pose checks in12.31s/275MB with
+26.78µm represented penetration. Targetreaction sensitivity is1.70%, normal
+response sensitivity2.77%; no continuum-accuracy claim. Prescribed-source rows
+remain supported but inactive. A separate exact plane control checks their
+active-force map without admitting the active-boundary coupled workflow.
+
+The ordinary-force driver now correctly selects general factorization for the
+projected-work tangent. Its same-problem force prefix/split restart passes in
+12.60s/276MB with displacement/pressure agreement2.31e-10/3.91e-8 relative to
+the path pilot. Ordinary force avoids the two artificial controls; custom nested
+path programs still requiretwo. Independent reviewer closed the consequential
+wiring findings. No D2 acceptance or full-solve speedclaim.
+
+**Next integrated result:** test the declared1/k regularization-response hypothesis
+once, using predictions from the saved1e6/1e7 fields before the next stiffness
+run. Couple that decision to an independent guided fixed-target contact reference
+and spatial-gap assessment; do not tune indefinitely. If the method cannot meet
+common gates, redirect to an authorized pairing alternative. Subsequently cover
+active prescribed-edge equilibrium and target motion while open. Physical rims,
+edge-only collision and unresolved clipping ties require their own feature work.
+
+Preserve the accepted D1 artifact and every consumed/frozen execution identity.
+Routine development180s/1GB, named integrated cases up to900s/4GB. Full C0–C9
+remains required. No release/publication/merge authority is created.
 
 ### Retained decision chronology
 

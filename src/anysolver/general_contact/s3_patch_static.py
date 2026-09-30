@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 from scipy import sparse
@@ -64,6 +64,8 @@ REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_PROJECTED_NODAL
 REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_OVERLAP_LOCAL_AUGMENTED_STATIC_DEV_V0"
 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_ROUNDOFF_AUGMENTED_STATIC_DEV_V2"
 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_FIXED_PROJECTION_GRAPH_AUGMENTED_STATIC_DEV_V0"
+
+REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE = "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0"
 
 
 class SupportResetForceBudgetExceeded(ValueError):
@@ -152,7 +154,8 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
     except ValueError as exc:
         return ContactValidationReport("invalid", (str(exc),), profile)
     augmented = interaction.normal_law == "augmented"
-    if (interaction.normal_law not in {"penalty", "augmented"}
+    projected_penalty = interaction.normal_law == "projected_penalty"
+    if (interaction.normal_law not in {"penalty", "augmented", "projected_penalty"}
             or interaction.normal_stiffness is None
             or interaction.line_stiffness is not None
             or interaction.endpoint_stiffness is not None):
@@ -174,7 +177,7 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
                   and len(source.element_ids) >= 2
                   and len(target.element_ids) >= 1
                   and (len(source.element_ids) > 2 or len(target.element_ids) > 2))
-    refined_q4 = (augmented and len(source.element_ids) >= 2
+    refined_q4 = ((augmented or projected_penalty) and len(source.element_ids) >= 2
                   and len(source_q4) == len(source.element_ids)
                   and not target_q4 and len(target.element_ids) >= 1)
     refined = refined_s3 or refined_q4
@@ -245,6 +248,17 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
     profile = (Q4_PAIR_PROFILE if q4_pair else
                SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
+    if projected_penalty:
+        profile = REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE
+        if (not refined_q4
+                or settings.general_s3_differentiation != "jet2_q4_s3_dev"
+                or settings.q4_source_gap_certificate != "overlap_local_dev"
+                or settings.q4_source_pressure_basis != "fine_nodal_q1"
+                or settings.augmentation_support_resolution != "exact"
+                or settings.augmentation_acceleration != "none"
+                or settings.enforcement_solver != "nested_augmented"
+                or settings.d1_interior_profile):
+            issues.append("projected penalty needs refined Q4/S3 fine-Q1 Jet2 overlap-local geometry without augmentation or D1 admission")
     if augmented:
         profile = (REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE
                    if refined_q4 and settings.q4_source_gap_certificate == "overlap_local_dev" else
@@ -264,7 +278,7 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
                    SOURCE_Q4_AUGMENTED_PROFILE if source_q4 else
                    AUGMENTED_MIXED_PROFILE if target_q4 else AUGMENTED_PROFILE)
     if (settings.q4_source_gap_certificate in {"projected_matching", "overlap_local_dev"}
-            and not (augmented and (q4_pair or source_q4))):
+            and not ((augmented or projected_penalty) and (q4_pair or source_q4))):
         issues.append("projected-matching Q4 gap certificate requires augmented Q4/Q4 or Q4/two-S3")
     if (settings.q4_source_gap_certificate == "overlap_local_dev"
             and not refined_q4):
@@ -406,6 +420,8 @@ class _PatchResults:
     tie_resolution_relative_error: float | None = None
     pressure_basis_version: str | None = None
     source_geometry_node_ids: tuple[int, ...] = ()
+    contact_work_convention: str | None = None
+    regularization_storage_j: float | None = None
 
     def to_dict(self):
         result = dict(vars(self))
@@ -435,6 +451,9 @@ class _PatchResults:
             result.pop("source_geometry_node_ids")
         else:
             result["source_geometry_node_ids"] = list(self.source_geometry_node_ids)
+        if self.contact_work_convention is None:
+            result.pop("contact_work_convention")
+            result.pop("regularization_storage_j")
         return result
 
 
@@ -467,10 +486,11 @@ class GeneralS3PatchManager:
         )
         self.stiffness = interaction.normal_stiffness
         self.augmented = interaction.normal_law == "augmented"
+        self.projected_work = self.augmented or interaction.normal_law == "projected_penalty"
         self.gap_tolerance = interaction.gap_tolerance
         self.swept_trial_cutbacks = 0
         self.law = potential
-        if self.augmented:
+        if self.projected_work:
             from .s3_patch_augmented import MovingS3PatchProjectedNormal
 
             self.law = MovingS3PatchProjectedNormal(
@@ -485,6 +505,8 @@ class GeneralS3PatchManager:
                     self.settings.q4_s3_shared_edge_tie_relative_tolerance,
                 )
             self.normal_multipliers = np.zeros(len(self.law.pressure_mode_ids))
+            if not self.augmented:
+                self.normal_multipliers.setflags(write=False)
             self.last_support_reset = None
         source_ref, source_map = _unique_work_map(adapters[0], self.law.source_node_ids)
         target_ref, target_map = _unique_work_map(adapters[1], self.law.target_node_ids)
@@ -548,7 +570,7 @@ class GeneralS3PatchManager:
     def _gap_lower(self, positions):
         source, target = positions
         if self.settings.q4_source_gap_certificate == "overlap_local_dev":
-            geometry = self.law.geometry if self.augmented else self.law
+            geometry = self.law.geometry if self.projected_work else self.law
             # Validate every feature before pruning: a remote invalid face
             # cannot disappear from admission merely because it is far away.
             geometry._check_same_side_overlap(source, geometry.source_face_indices)
@@ -602,9 +624,9 @@ class GeneralS3PatchManager:
         lower = self._gap_lower((source, target))
         prepared = (self.law.prepare_work_state(
             source, target, self.normal_multipliers,
-        ) if self.augmented else None)
-        state = prepared.state if self.augmented else self.law.evaluate(source, target)
-        local_derivatives = (self.augmented
+        ) if self.projected_work else None)
+        state = prepared.state if self.projected_work else self.law.evaluate(source, target)
+        local_derivatives = (self.projected_work
                              and self.law.geometry.differentiation
                              in {"pair_local", "jet2_s3", "jet2_q4_s3"})
         pair_evaluations = len(self.law.geometry.pair_laws) if local_derivatives else 0
@@ -617,7 +639,7 @@ class GeneralS3PatchManager:
         else:
             work = (self.law.work(source, target, self.normal_multipliers,
                                   tangent=tangent, _prepared_state=prepared)
-                    if self.augmented else self.law.work(source, target, tangent=tangent))
+                    if self.projected_work else self.law.work(source, target, tangent=tangent))
             local_force = work.residual
             local_tangent = sparse.csr_matrix(work.tangent) if tangent else None
             evaluations = work.energy_evaluations
@@ -641,7 +663,8 @@ class GeneralS3PatchManager:
                             REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
-                            REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE}:
+                            REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
+                            REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE}:
             eigenvalues = np.linalg.eigvalsh(state.pressure_gram)
             greatest = max(0.0, float(eigenvalues[-1]))
             threshold = (len(eigenvalues)*np.finfo(float).eps*greatest)
@@ -663,13 +686,13 @@ class GeneralS3PatchManager:
             )
         result = _PatchResults(
             self.profile, lower, state.minimum_physical_gap,
-            0.0 if self.augmented else state.energy,
+            0.0 if self.projected_work else state.energy,
             state.overlap_area, state.reference_overlap_area,
             state.overlapping_pairs,
             tuple(map(float, source_force)), tuple(map(float, target_force)),
             tuple(map(float, source_moment)), tuple(map(float, target_moment)),
             lower >= -self.gap_tolerance, state.active_pressure_dofs,
-            self.law.pressure_mode_ids if self.augmented else self.law.source_node_ids,
+            self.law.pressure_mode_ids if self.projected_work else self.law.source_node_ids,
             tuple(map(float, state.normalized_gap)),
             tuple(map(float, state.pressure)),
             tuple(map(float, state.reference_support)), evaluations,
@@ -688,6 +711,10 @@ class GeneralS3PatchManager:
             self.law.pressure_basis.version if self.augmented and self.law.pressure_basis is not None else None,
             self.law.source_node_ids if self.augmented and self.law.pressure_basis is not None else (),
         )
+        if self.projected_work and not self.augmented:
+            result = replace(result,
+                contact_work_convention="projected_weak_gap_nonpotential_v1",
+                regularization_storage_j=float(state.energy))
         return force, stiffness, result
 
     def set_normal_multipliers(self, values):
@@ -728,7 +755,8 @@ class GeneralS3PatchManager:
                                 REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
-                                REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE}:
+                                REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
+                                REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE}:
             return
         variations = (self.map @ transform).tocsr()
         variations.eliminate_zeros()
@@ -837,7 +865,7 @@ class GeneralS3PatchManager:
                 )
             elif self.settings.q4_source_gap_certificate == "overlap_local_dev":
                 from .swept_patch_broadphase import conservative_swept_pair_indices
-                geometry = self.law.geometry if self.augmented else self.law
+                geometry = self.law.geometry if self.projected_work else self.law
                 target_count = len(self.law.target_face_indices)
                 count = len(self.law.source_face_indices)*target_count
                 candidates = None
@@ -939,6 +967,12 @@ class GeneralS3PatchManager:
                             "normal_stiffness": self.stiffness,
                             "gap_tolerance": self.gap_tolerance,
                             "normal_law": interaction.normal_law},
+            **({"projected_penalty_contract": {
+                "revision": "finite_projected_weak_gap_v1",
+                "multipliers": "identically_zero",
+                "work": "projected_weak_gap_nonpotential_v1",
+                "storage": "support_weighted_penalty_not_work",
+            }} if self.projected_work and not self.augmented else {}),
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
                          **({"d1_interior_profile": True,

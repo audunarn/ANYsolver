@@ -1,0 +1,1 @@
+{"development_checks_met": true, "elapsed_seconds": 10.440758399985498, "checks": {"displacement_match": true, "pressure_match": true, "gap_budget": true, "general_matrix": true, "law_reporting": true, "restart_completed": true, "zero_multipliers": true}}

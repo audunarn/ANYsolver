@@ -1,8 +1,8 @@
 # D1 interior Q4/S3 shell contact — current handoff
 
 **30 September 2026. Independently accepted D1-interior handoff; not release or full-programme completion.**
-The [goal](../GENERAL_CONTACT_GOAL.md) rev2026-09-29.3 and
-[plan](../GENERAL_CONTACT_PLAN.md) rev2026-09-30.23 control the scope.
+The [goal](../GENERAL_CONTACT_GOAL.md) rev2026-09-30.1 and
+[plan](../GENERAL_CONTACT_PLAN.md) rev2026-09-30.26 control the scope.
 The independently reviewed passes below belong to installed `87c53913`.
 SpatialV5/590d and V6/90baf timed out during checkpoint creation; no spatial pass.
 Candidate0b2ac9be has independent installed complete checkpointV2 and fresh Q4

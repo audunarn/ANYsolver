@@ -1,7 +1,7 @@
 # ANYsolver General Contact — full delivery programme
 
 **Current controlling basis:** [D1-interior goal](../GENERAL_CONTACT_GOAL.md)
-revision2026-09-29.3 and [adaptable plan](../GENERAL_CONTACT_PLAN.md). Development
+revision2026-09-30.1 and [adaptable plan](../GENERAL_CONTACT_PLAN.md). Development
 is ACTIVE30September2026, current installed0b2ac9be with physics87c53913.
 Installed force/displacement/restart, analytical/matched-code, pressure and
 immediate elastic rollback rows retain scoped independent PASS through explicit
