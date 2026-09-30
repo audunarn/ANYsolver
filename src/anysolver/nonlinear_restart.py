@@ -236,11 +236,15 @@ def _normalize_json(
         return _normalize_json(observed, path=path, **guard_arguments)
     if isinstance(value, Mapping):
         observed_items = tuple(value.items())
-        _checkpoint_observation_guard(
-            _exact_guard,
-            _guard_model,
-            context=f"nonlinear checkpoint mapping observation at {path}",
-        )
+        # Snapshotting an exact dict with exact string keys invokes no caller
+        # methods. Every member still follows its own guarded normalization;
+        # subclasses and effectful keys retain the observation boundary.
+        if type(value) is not dict or any(type(key) is not str for key, _ in observed_items):
+            _checkpoint_observation_guard(
+                _exact_guard,
+                _guard_model,
+                context=f"nonlinear checkpoint mapping observation at {path}",
+            )
         result: Dict[str, Any] = {}
         for key, item in observed_items:
             if not isinstance(key, str):
