@@ -42,6 +42,17 @@ Statuses describe acceptance, not prototype progress. `IN_PROGRESS`
 includes incomplete or failed required cases; it never means a numerical
 pass.
 
+Native elastic S3 precision development,30 September: product `86d3759a`
+uses the existing stable translation map only in eligible native-fibre elastic
+S3 finite owners, with a distinct V9 checkpoint policy. Unchanged monotonic
+elastic/partial-fibre S3 loading, physical balance and restart pass; V7 restores
+retain their original arithmetic and bytes. Source11/11 plus3 codec checks,
+installed113/113 and focused ANYfem1/1 pass; independent review is clear for
+this slice. Earlier helper/test/installed-collection failures and yielded S3
+unloading failure are retained. Yielded unloading, strong full-section Q4 yield,
+simultaneous active yielding and full G3 remain IN_PROGRESS. No speedup or
+aggregate gate claim. [Exact evidence](../../.qualification/b3-ge-e4-pl/r8-stable-native-s3-dev-20260930-v1/results.md).
+
 F05/F06 development: solver `0da6cd12` selects a distinct Q4 full algorithmic pullback without changing the historical default. ANYfem `b0185b4` persists it in experimental v3. Exact installed solver/consumer checks pass 91/91, including independent local work/active-branch derivatives and yielded Q4/mixed Q4/S3 unload/reload, physical balance, actual rebase and restart. Independent review reports no actionable defect in this slice. Evidence: `.qualification/b3-ge-e4-pl/r8-q4-pullback-dev-20260930-v1/`. The missing active selected-Q4/S3 assembled and one-sided yield predicates now pass a separate frozen 10-case installed assessment. Independent adjudication accepts scoped F05; see `.qualification/b3-ge-e4-pl/r8-f05-foundation-20260930-v1/` and the contract below. The earlier 91 cases are reused by unchanged dependency identity, not retroactively relabeled. No aggregate pass follows.
 
 F06 development: product `ffc1afd0` adds actual owned shell-anchor resets, immutable state, atomic generation events and a distinct anchored checkpoint/restore contract. Source 33/33 and exact installed 77/77 pass with independent review findings closed; mixed Q4/S3 elastic/J2 continuation matches controls. Evidence: `.qualification/b3-ge-e4-pl/r8-owned-shell-chart-dev-20260930-v1/`. The fixed curved loaded-history discriminator is unsuccessful: v1 reference admission failed, v2 selected-Q4 rotations/commutators missed frozen coverage bounds despite completed reset/restore/continuation, and v2 S3 hit its first-step Newton limit. See `.qualification/b3-ge-e4-pl/r8-f06-noncommuting-dev-20260930-v1/`. Stop this fixture without automatic tuning/refinement; F06 remains open, not a formulation failure. Native total energy is unmeasured. The prior all-S3 `.5→.55` failure stays retained. Large noncommuting history, broader supports and chart/history qualification remain unfinished; F06/V18/G0B and aggregate acceptance stay IN_PROGRESS.

@@ -12,9 +12,9 @@ No main merge/publication authority; this task has not changed main.
 ## Source, ownership and delivered behavior
 
 Solver: C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration; latest product `565685c1ea6fa1a42509f132a8bd4396977ca709`.
+branch codex/b3-ge-e4-pl-integration; latest product `86d3759a2441ab22735c3e195e5bb44ed62beee8`.
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-tests-only commit `933d4e5d201afc9c752af631cd6401fcff2a71b0`;
+tests-only commit `2a5352c0adc5fcbce25bbb1484553108c906157f`;
 runtime remains `a615c4b`.
 
 **Separately owned dirty scripts/b3_e4_f03_c1_fy_supported_reference.py:
@@ -36,8 +36,11 @@ dissipation. Distinct V8 stores coupled shell-J2/beam predecessors and accepted
 histories with S3 chart bindings; restore repeats/validates before publication.
 V7/legacy contracts remain. Positive cases: Q4 partial-fibre yield with elastic
 shell-J2-defined response, and mixed all-S3 shell yield with elastic fibres.
-Simultaneous active yielding, pure-fibre S3, strong full-section yield, line+fibre
-and total-system energy remain open. Failure-contract tests are not physical acceptance.
+Pure-fibre elastic S3 and partial-fibre S3 now complete unchanged monotonic
+loading with stable translation arithmetic and checkpoint-bound V9 policy.
+V7 restores retain legacy arithmetic. Simultaneous active yielding, yielded
+S3 unloading, strong full-section yield, line+fibre and total-system energy
+remain open. Failure-contract tests are not physical acceptance.
 
 ## Accepted evidence and remaining uncertainty
 
@@ -78,21 +81,34 @@ Ordinary native persistence, complete spectra/capacity and practical scale remai
 
 ## Next action and restart
 
-**Decision sought:** discriminate the existing native global-step failure from
-an incorrect Jacobian/state/chart or a representability/roundoff limit, using a
-fixed accepted predecessor and unchanged failing fixture. First add bounded
-failure/iteration diagnostics needed to inspect the actual residual, correction
-and rejected work; do not automatically retune increments or flow laws. Capture
-the obstructing rows and actual-update directional consistency before choosing
-a repair or declaring a mechanics limitation. Simultaneous yielding still needs
-direct evidence; the Q4 zero-alpha fixture does not supply it. Energy and coupled
-snapshot seams are delivered—do not rebuild them or rerun F03/F06.
+**Established:** the bounded native diagnosis isolated a shell-coordinate
+roundoff floor for monotonic S3 partial-fibre yielding. The existing stable
+map repairs that case at unchanged tolerances. Sparse equilibration/refinement
+does not repair Q4 full-section yield or yielded S3 unloading. Their rejected
+trials switch fibre branches and retain large residuals; small same-branch
+actual-update derivatives are consistent in the inspected unload direction.
+Do not treat this as a complete Jacobian qualification or formulation failure.
 
-No owned numerical job remains: source90870,installed81301,consumer79207 completed.
-Installed124 guard387.694s/245346304B; consumer7 guard76.702s/218615808B.
-Observed Python3.14.2, one numerical thread/JIT off;385solver+97consumer modules
-match artifacts,279/270 imports onsite. Consumer worker finished; only its tests
-changed and were independently inspected, verified and committed.
+[Current results and raw failures](../../.qualification/b3-ge-e4-pl/r8-stable-native-s3-dev-20260930-v1/results.md):
+source11/11 plus3 codec checks; installed113/113 and ANYfem1/1 focused S3
+save/reopen/restore/continue. Wheel953f20d9...; unchanged consumerff143e5f....
+385solver+97consumer modules match source/wheel/site;288/269 imports onsite.
+Old-wheel V7 restores byte-identically, including its original failure status.
+Independent review is clear within this slice. No aggregate gate closes.
+
+**Decision sought next:** determine an admissible global stepping route through
+the retained branch-switching failures. Prepare the already-required adaptive
+increment controller against this persistent owner, with atomic cutback and
+unchanged physical acceptance; preserve the fixed-increment failures as controls.
+Before its numerical batch, specify the branch/step hypothesis and physical
+history comparison. Do not tune constitutive laws, fixtures or tolerances, reuse
+the closed Armijo experiment, or rebuild delivered energy/checkpoint seams.
+Simultaneous yielding, actual-history coverage and full G3 remain mandatory.
+
+No owned numerical job remains: source73148/13098 and installed28642 completed;
+consumer bounded run completed directly. Installed guard413.402s/246206464B;
+consumer6.199s/214282240B. Actual Python3.14.2, one numerical thread/JIT off.
+Consumer worker finished read-only review. Foreign F03 work remains untouched.
 Keep100000rows/600s/8GiB/eight-thread ceilings, one heavy programme job and
 at most three workers. No completed campaign needs repeating without changed inputs.
 
