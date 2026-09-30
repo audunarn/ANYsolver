@@ -43,7 +43,7 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 | G5 | IN_PROGRESS | Development scale screens do not meet practical-scale qualification. |
 | G6A–G6D | IN_PROGRESS | Focused installed/consumer checks exist; final graph, external, reviews and release open. |
 
-F05 and F09 are accepted only for their scoped foundations. Other
+F05, F08 and F09 are accepted only for their scoped foundations. Other
 foundations remain open; the earlier bounded F04 distinction does not close F04:
 
 | Foundation | Status |
@@ -55,7 +55,7 @@ foundations remain open; the earlier bounded F04 distinction does not close F04:
 | F05 | PASSED — selected Q4/existing S3 fixed-predecessor foundation |
 | F06 | IN_PROGRESS |
 | F07 | IN_PROGRESS |
-| F08 | IN_PROGRESS |
+| F08 | PASSED — native generalized/physical-fibre local extraction |
 | F09 | PASSED — physical B2 section/local operator and station trace |
 | F10 | IN_PROGRESS |
 | F11 | IN_PROGRESS |
@@ -385,3 +385,9 @@ installed runner SHA-256
 `32ba667603700c758465e5bd201cd9192142a5701503f6b804a444f88bd7219c`;
 supervisor remains `527535441e819612a59c78326a0fc5c54f091265ee126df741693d54164bba56`.
 Keep V1 raw failure and initial pre-review binding correction alongside V2.
+
+**F08 disposition:** the distinct corrected installed assessment passed 17/17,
+with both accepted-block reports, 32/32 frozen inputs and zero module mismatches.
+Independent review accepts scoped native local extraction only. Preserve V1's
+two collection errors and yield-switch limitations; no aggregate gate follows.
+[Immutable results and review](../../.qualification/b3-ge-e4-pl/r8-f08-foundation-20260930-v1/results.md).
