@@ -63,7 +63,12 @@ class ExperimentalL1Line:
 
 @dataclass(frozen=True)
 class ExperimentalBL5Line:
-    """Separate five-row director bond for bounded reference-linear studies."""
+    """Separate five-row director bond for experimental mixed analyses.
+
+    P0 ``multiplier_span`` counts whole consecutive native half-cells per
+    support. It must divide the trace; no final partial support is inferred.
+    Choosing that count does not qualify an interface-resolution policy.
+    """
 
     shell_nodes: tuple[int, ...]
     beam_halfcells: tuple[tuple[int, int], ...]
@@ -84,7 +89,7 @@ class ExperimentalBL5Line:
                     for pair in self.beam_halfcells) or
                 len(set(self.beam_halfcells)) != n or
                 type(self.multiplier_span) is not int or
-                self.multiplier_span not in (1, 2) or
+                not 1 <= self.multiplier_span <= n or
                 n % self.multiplier_span or
                 type(self.basis) is not str or
                 self.basis not in ("p0", "continuous_p1",

@@ -11,8 +11,8 @@ No main merge/publication authority. Formal F03 unconsumed; spent authorities st
 ## Identity and ownership
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration. Source parent8b8bf6bb plus the current
-physical-transfer/evidence commit (use actual git HEAD). Product wheel61559673....
+branch codex/b3-ge-e4-pl-integration. Source parent015b16a9 plus the current
+aggregation/admission commit (use actual git HEAD). Product wheel5079b270....
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 branch codex/experimental-ge-panel-consumer, commit6226230; wheel0b6c51af....
 Full hashes/source-wheel-site maps are in the latest record below.
@@ -83,6 +83,27 @@ system together. A work/norm defect requires repair; stable/converging transfer
 permits the full envelope; an unresolved mode goes to focused mechanics review.
 Do not tune bases from candidate values or repeat isolated axial refinements.
 Foreign contact run finished without intervention; no owned numerical job active.
+
+[Aggregation/admission slice](../../.qualification/b3-ge-e4-pl/r8-bl5-coherent-aggregation-dev-20260930-v1/results.md):
+explicit P0 span admits positive divisors with unchanged span1/2 semantics.
+Known single-support modes now reject finite zero-load acceptance and restore.
+Wheel5079b270 passes73 installed checks; source fixture and collection failures
+are retained. Coherent uniform span=ceil(c_lambda*n_beam/n_shell),minimum1,
+complete c_lambda1/2 alternatives, same rule for all five channels. Small
+reciprocal ratios plus two-direction8x2/16x4/32x8 beam:shell2:1 complete21 physical
+routes with growing rows40/80/160 versus20/40/80. Mz work differences shrink
+17.457%→6.244%→1.845%; transfer components are not uniformly monotone.
+Retain both policies, no fourth mesh or basis selection from response/gaps.
+
+Next: implement independently derived
+[positive reference Riesz controls](B3_GE_E4_PL_M2_TRACE_NORM_CONTRACT_DEV.md),
+continuous beam-axis translations/cellwise directors plus supported five-field
+shell norm. Verify physical work, gauge annihilation, sparse inverse actions,
+enrichment and independent good/bad controls before freezing criteria/candidate
+beta assessment. Reference norm elimination never replaces mechanical K.
+Then full seven-ratio/physical-transfer/actual-KKT envelope. Missing controls or
+bad work map require repair; genuine unresolved modes go to mechanics review.
+Norm derivation is not numerical acceptance; formalF03 remains unconsumed.
 
 Materials/simultaneous yielding, footprints/topology, loads, spectra,
 imperfections/capacity, scale, external references, platforms and release remain

@@ -117,6 +117,20 @@ accuracy, drilling-response independence, multiplier selection, F03 authority
 consumption or aggregate acceptance:
 [physical-transfer evidence](../../.qualification/b3-ge-e4-pl/r8-bl5-physical-transfer-dev-20260930-v1/results.md).
 
+M2 aggregation slice,30 September: the same explicit P0 span now admits complete
+positive-divisor supports. Independent review identified and repaired finite
+zero-load acceptance/restore of a known single-support rigid mode. Wheel5079b270...
+passes73 installed checks. Two complete uniform c_lambda1/2 policies were
+screened at reciprocal ratios, then at three two-direction levels for beam:shell
+2:1; rows grow40/80/160 versus20/40/80. Mz policy-work difference contracts
+17.457%→6.244%→1.845%, with non-monotone transfer components still reported.
+No policy is selected and no fourth mesh follows. Independently derived
+[reference norm contract](B3_GE_E4_PL_M2_TRACE_NORM_CONTRACT_DEV.md) resolves the
+supported continuous-axis/cell-director function-space question; inverse-actions,
+controls, enrichment, numerical criteria and actual KKT stability remain open.
+[Candidate, failures and results](../../.qualification/b3-ge-e4-pl/r8-bl5-coherent-aggregation-dev-20260930-v1/results.md).
+This is implemented/tested development, not M2/F03/G0B/G2 acceptance.
+
 | Gate | Status | Boundary |
 |---|---|---|
 | G0A | IN_PROGRESS | Reconcile prior registration before a pass claim. |

@@ -647,8 +647,9 @@ class ExperimentalGEAnalysis:
             ("single-support BL5 leaves a free native beam rigid mode",)
             if (len(definition.lines) == 1 and
                 type(definition.lines[0]) is ExperimentalBL5Line and
-                len(definition.lines[0].beam_halfcells) == 2 and
-                definition.lines[0].multiplier_span == 2 and
+                definition.lines[0].basis == "p0" and
+                len(definition.lines[0].beam_halfcells) ==
+                definition.lines[0].multiplier_span and
                 not definition.points and
                 not any(support.domain == "beam" for support in definition.fixed))
             else ())
@@ -838,6 +839,8 @@ class ExperimentalGEAnalysis:
               increment_control=None):
         """Advance supported finite trials from one accepted predecessor."""
         self._require_open()
+        if self._unsupported_modes:
+            raise ValueError(self._unsupported_modes[0])
         if self._line_samples and not self._finite_bl5:
             raise ValueError("experimental weak line admits reference-linear analysis only")
         if self._accepted is not None:
@@ -904,6 +907,8 @@ class ExperimentalGEAnalysis:
     @_accepted_snapshot
     def restore(self, raw: bytes) -> LinearResult:
         self._require_open()
+        if self._unsupported_modes:
+            raise ValueError(self._unsupported_modes[0])
         if self._finite_driver is not None:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if self._accepted is not None:
