@@ -155,3 +155,14 @@ docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART24.md -text 
 docs/d1_review_support/d3_deformable_beam_s3_*_20261001.* -text -whitespace
 docs/d1_review_support/native_vibration*_20261001.* -text -whitespace
 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART25.md -text -whitespace
+
+# Exact opt-in native dynamics integration and API evidence bytes.
+docs/d1_review_support/native_dynamic*_20261001.* -text -whitespace
+src/anysolver/_ge_beam3_centered_finite_inertia.py -text whitespace=cr-at-eol
+src/anysolver/_ge_beam3_dynamic_elastic_state.py -text whitespace=cr-at-eol
+src/anysolver/_ge_beam3_native_midpoint.py -text whitespace=cr-at-eol
+src/anysolver/_ge_beam3_native_dynamic_analysis.py -text whitespace=cr-at-eol
+src/anysolver/ge_beam3_native_dynamics.py -text whitespace=cr-at-eol
+examples/native_contact_free_finite_velocity_dev.py -text whitespace=cr-at-eol
+tests/test_native_dynamic_main_example.py -text whitespace=cr-at-eol
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART26.md -text -whitespace

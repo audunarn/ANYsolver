@@ -7,6 +7,8 @@ This development profile does not admit rims, multiple faces or finite rotations
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 from scipy import sparse
 
@@ -15,6 +17,28 @@ from .deformable_beam_s3_line import DeformableBeamS3Line
 from .s3_skin_work import S3SkinWorkAdapter
 
 PROFILE = "JET2_ROUND_BEAM_DEFORMABLE_FIXED_DIRECTOR_S3_STATIC_DEV_V0"
+
+
+@dataclass(frozen=True)
+class DeformableBeamS3Results(_BeamShellResults):
+    pair_name: str
+    beam_surface: str
+    shell_surface: str
+    beam_element: int
+    shell_element: int
+
+    def to_dict(self):
+        payload = super().to_dict()
+        payload.update(pair_identity=self.pair_name,
+                       physical_features={"beam": {"surface":self.beam_surface,
+                                                   "element_id":self.beam_element},
+                                          "shell": {"surface":self.shell_surface,
+                                                    "element_id":self.shell_element}},
+                       moment_origin_m=[0.,0.,0.],
+                       contact_integration_measure="reference_line_length",
+                       integration_rule="three_gauss_points_per_exact_active_interval",
+                       integration_error_semantics="polynomial_truncation_only")
+        return payload
 
 
 class DeformableBeamS3Manager:
@@ -73,10 +97,13 @@ class DeformableBeamS3Manager:
         nb = len(b)
         bf, sf = forces[:nb].sum(axis=0), forces[nb:].sum(axis=0)
         bm, sm = np.cross(b, forces[:nb]).sum(axis=0), np.cross(s, forces[nb:]).sum(axis=0)
-        result = _BeamShellResults(PROFILE, state.minimum_gap, state.potential,
+        result = DeformableBeamS3Results(PROFILE, state.minimum_gap, state.potential,
                     state.active_line_length, len(state.active_intervals), state.integration_points,
                     0., state.minimum_rim_clearance, tuple(bf), tuple(sf), tuple(bm), tuple(sm),
-                    state.minimum_gap >= -self.gap_tolerance, self.line_stiffness)
+                    state.minimum_gap >= -self.gap_tolerance, self.line_stiffness,
+                    self.definition.interactions[0].name, self.beam_surface.name,
+                    self.shell_surface.name, self.beam_surface.element_ids[0],
+                    self.shell_surface.element_ids[0])
         return residual, K, result
 
     def _swept(self, start, end):

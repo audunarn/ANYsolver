@@ -563,3 +563,27 @@ composition/public physical coordinate mapping; read-only design identifies no
 mechanics blocker in the exact tested centered elastic single-element scope.
 Do not borrow static restart for finite velocities. Worker reconnaissance is
 complete; interface review fixes ownership before authoring.
+
+### Result and integration handoff follow-through
+Checkpoint1d1faa50 contains101exact owned paths, concurrent/historical dirty
+work preserved. One new result-only check passes5.338s/269.29MB: pair/feature
+identity, common moment origin and reference-line/error semantics now explicit.
+No R/K/law/state change; prior mechanics review/evidence reused by impact.
+Exact executed source retained; a test-only trailing-space cleanup is noted.
+Three byte-identical reviewed native owners (3334699c/9586af43/36da8260) are
+added to main as an unverified integration candidate; no prior native/default
+files changed. Worker owns four NEW factory/composition/test/example files in
+managedtree, after exact interface clearance. Main test/import follows reviewed
+source transfer; static restart will not be reused for dynamic restoration.
+
+### Native composition integration — 2026-10-01
+
+Exact five reviewed native production files copied to the main opt-in route.
+Private/default API reviewV4 closes at two endpoints; strictV3 retained NONPASS.
+Actual main example executes its distinct initial velocities and passes one
+routing check in6.282s/197.93MB with448 unchangedsource bindings. Effective default
+stage tolerance1e-11 is verified in the created owner. No old native guard edit,
+C7/temporal claim or installed broadening. Next principal question is complete
+finite-velocity restart/reissuance. Worker proposes the contract before codec
+changes; reviewer checks state completeness/atomicity. If unavailable, keep
+explicit unsupported behavior rather than issue reconstructed states.

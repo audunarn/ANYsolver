@@ -1,0 +1,22 @@
+{
+  "status": "unverified_main_integration_candidate",
+  "public_old_profile_unchanged": true,
+  "records": [
+    {
+      "path": "src/anysolver/_ge_beam3_centered_finite_inertia.py",
+      "sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+      "origin": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_dynamic_elastic_state.py",
+      "sha256": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498",
+      "origin": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_midpoint.py",
+      "sha256": "36da82603885f6f110adf40404331a5d519c7dccbe284dc67bb93ec44f75d1ac",
+      "origin": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py"
+    }
+  ],
+  "basis": "Scoped independent native inertia/dynamic/midpoint development reviews; no additional mechanics changes"
+}

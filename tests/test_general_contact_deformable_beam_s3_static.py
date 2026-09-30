@@ -162,4 +162,8 @@ def test_line_units_and_public_source_example():
     result=runpy.run_path('examples/general_contact_deformable_round_beam_s3.py')['main']()
     contact=result.info['general_contact']
     assert 'normal_stiffness' not in contact
+    assert contact['pair_identity']=='line'
+    assert contact['physical_features']=={'beam':{'surface':'tube','element_id':1},'shell':{'surface':'skin','element_id':2}}
+    assert contact['moment_origin_m']==[0.,0.,0.]
+    assert contact['contact_integration_measure']=='reference_line_length'
     assert contact['line_stiffness_N_per_m2']==1.e5 and contact['gap_tolerance_met']

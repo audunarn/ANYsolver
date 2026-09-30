@@ -558,3 +558,15 @@ fixture failure. The affected ten-pose partial-front lifecycle and active/open
 prefix continuation pass34.547s/316MB, including rejection of an authentic older
 partial-contract checkpoint. D1 restart serialization is unchanged. This is local
 development evidence, not general rotating-director CCD or installed acceptance.
+
+## Native dynamic composition owner — development tested/reviewed
+
+The opt-in public factory and five exact reviewed owners now run in the main
+worktree. Default API fixtureV4 passes two endpoints and issuance/cancellation/
+rollback controls (7.301s/201.49MB); independent review reconciles signed stage
+work and endpoint energy/momenta. Actual source example passes6.282s/197.93MB,
+with448 bindings and effective1e-11 tolerance checked. StrictV3 remains NONPASS
+before its first endpoint. No fullC7 or installed admission follows. Scope and
+usage: [native development guide](GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md).
+Durable finite-velocity restart remains unsupported pending complete codec and
+fresh-owner validation. Existing historical native selector/guards unchanged.

@@ -15,7 +15,9 @@ Select `ContactSolverSettings(beam_shell_geometry='jet2_deformable_s3_dev',
 beam_shell_maximum_swept_intervals=128, pair_motion='general',
 beam_shell_rim_clearance=0.02, line_integration_relative_tolerance=1e-8)`.
 The interaction explicitly declares radius, `line_stiffness` (N/m²), and
-`gap_tolerance` (m). No pressure stiffness is inferred.
+`gap_tolerance` (m). No pressure stiffness is inferred. Results carry stable pair/physical feature
+identities, moments about the explicitly reported global origin, reference-line
+measure and labelled polynomial-truncation error semantics.
 
 ## Bounded mechanics
 

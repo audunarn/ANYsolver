@@ -1,0 +1,30 @@
+{
+  "status": "exact reviewed source import; main example routing verified",
+  "sources": [
+    {
+      "path": "src/anysolver/_ge_beam3_centered_finite_inertia.py",
+      "sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_dynamic_elastic_state.py",
+      "sha256": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_midpoint.py",
+      "sha256": "36da82603885f6f110adf40404331a5d519c7dccbe284dc67bb93ec44f75d1ac"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_dynamic_analysis.py",
+      "sha256": "79b173131e9cde52c07f3bb00721e6d07ebc5a68d8f92e0115a42649cb5d0914"
+    },
+    {
+      "path": "src/anysolver/ge_beam3_native_dynamics.py",
+      "sha256": "cec497e3bcee79d50d8a52cc6358dd3a8249ccdff315d95db808fc78e74cefa7"
+    },
+    {
+      "path": "examples/native_contact_free_finite_velocity_dev.py",
+      "sha256": "10c6b29cb66676a4c263c88830e8821da0626d706b2d380b0d1e26b0bb502298"
+    }
+  ],
+  "evidence": "native_dynamic_main_example_v1_20261001.summary.json"
+}

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.42. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.43. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -24,17 +24,23 @@ unchanged0.1% linearized structural comparison; earlier reference/gap and
 metadata/preflight failures remain retained. This does not close allD3 or confer
 installed/scientific admission. Reuse unchanged checks by impact analysis.
 
-D6: the smaller-amplitude default-solve fixture passed trajectory/energy but
-failed momentum refinement. One new identity-bound1e-15 stage tolerance passes
-all20steps45.739s/210.56MB with unchanged inputs/gates; signed precommit audits
-reconcile. Momentum defects lie below the unchanged floor, so no order claim.
-Default1e-11 and old failures remain. The next useful slice composes a dedicated
-opt-in native dynamic analysis owner around the tested private equations, rather
-than repeating timesteps. Its initial scope is one centered elastic generalized
-ellipsoid, free or fully first-node-clamped; no implicit admission of other
-sections/boundaries/materials. Durable finite-velocity restart requires an actual
-state codec/reissuance contract; the static codec cannot substitute. Independent
-interface review precedes edits, and public historical guards remain unchanged.
+D6: the dedicated `ge_beam3_native_dynamics` opt-in composition owner is now
+integrated into the main worktree. Its reviewed default-tolerance API fixture
+passes two endpoints and ownership controls (7.301s/201.49MB). The actual public
+example also passes from the main source (6.282s/197.93MB), with exact source
+imports and effective tolerance checked. The five production files are exact
+copies of the reviewed owners; old native guards/defaults remain unchanged.
+See [development usage](docs/GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md).
+
+The strict1e-15 API fixture failed before its first accepted step and remains
+NONPASS with unassigned cause. Earlier default momentum-refinement and other
+failures remain. Separate small-vibration tighter-solve20-step evidence passes
+its unchanged gates; momentum below the frozen floor does not establish order.
+Current scope is one centered elastic generalized ellipsoid, free or fully
+first-node-clamped, with retained physical internal inertia. Restart is explicitly
+unsupported. Next: implement the complete dynamic codec and fresh-owner reissuance
+under atomic state validation; do not substitute the static codec. The interface
+check is not full C7 or installed/scientific admission.
 
 ## 1. Current position
 
@@ -47,7 +53,7 @@ interface review precedes edits, and public historical guards remain unchanged.
 | D2 named partial-support/cycle handoff | Independently accepted for the exact foundation and installed cycle parameter sets | Remaining shell combinations, geometry and explicit multi-pair ownership |
 | D2 S3-source/Q4-target | Shared P1 pressure, complete both-body tangent, four-corner swept rejection, public lifecycle/open restart and mixed-load/pure-press deforming-target KKT comparisons locally pass | Spatial/geometry qualification, broader pair composition and installed admission remain open |
 | D3 classical beam static | Foundation and multiple-tool rows pass locally; new moving-normal, fixed-director deformable S3 work/tangent, coupled response and split restart pass | Scientific/installed qualification, free directors, broader pairings and geometry remain open |
-| D6 physical inertia/time integration | Free/loaded and tighter-solve small-vibration controls pass locally; all prior energy/velocity/default-solve failures remain | Integrate a usable dedicated opt-in analysis owner; broader temporal/state/native qualification remains open |
+| D6 physical inertia/time integration | Free/loaded and tighter-solve small-vibration controls pass locally; all prior energy/velocity/default-solve failures remain | Complete actual dynamic restart; broader temporal/state/native qualification remains open |
 | D3–D8 | Required programme remains open | Bounded integrated deliveries |
 
 The [D1 handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md)
