@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 2.94671260000905,
+  "peak_process_tree_memory_mb": 215.437312,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_radial_linear_saved_assessment.py"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_linear_saved_unit_v1_20260930.log"
+}

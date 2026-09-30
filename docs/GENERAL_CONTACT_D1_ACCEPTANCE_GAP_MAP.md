@@ -1,6 +1,23 @@
 # D1 shell-static acceptance gap map
 
-**Current D1-interior delivery basis:** [goal](../GENERAL_CONTACT_GOAL.md) revision 2026-09-29.3 and [plan](../GENERAL_CONTACT_PLAN.md) revision 2026-09-29.7. Development is active. The historical cases and verdicts below retain their original scopes; three boundary cases move to D2 prospectively.
+**Current D1-interior delivery basis:** [goal](../GENERAL_CONTACT_GOAL.md) revision 2026-09-29.3 and [plan](../GENERAL_CONTACT_PLAN.md) revision 2026-09-30.12. Development is active. The historical cases and verdicts below retain their original scopes; three boundary cases move to D2 prospectively.
+
+**30 September:** Target12 radial coupled v1 failed an internal clipping tie,
+zero accepted steps. Corrected nonmatching x=1.297m passes admission and the
+independent linear force discriminator (0.9303%); coupled v2 then timed out
+at900s/561MB without a completed result. After targeted correction, the saved setup/residual profile fell247.65 to122.22s with exact residual parity. The complete4/4 cycle remained mechanically identical,234.35 to216.71s in one timing pair; no twofold route claim. One unchanged radial12/12 case will test executability within the existing900s/4GB cap. This does not close spatial acceptance. Local source-bin physical
+work and complete support/load moments remain explicit assessment gaps.
+
+**Latest completed slice:** The traced radial v8 completed2/2 steps in891.87s/
+570.46MB. Saved physical source-bin L1/L2 errors are0.9303%/0.9536%; both-body
+wrench and action/reaction checks pass locally. Corrected independent-reference
+v3 includes active-branch solution uncertainty; aggregate v12 passes34 development
+predicates. Reference v2 and aggregate v11 have invalid uncertainty claims and are
+retained as failures. Read-only scrutiny closed these findings and the new actual
+path-control admission fix (seven focused checks). These results support prospective
+qualification, not retrospective acceptance. The final source/artifact, state,
+regression and independent acceptance rows remain open. No further exploratory
+radial solve is needed; historical checkpoints bind their historical revisions.
 
 | D1-interior row, 29 September | Current disposition | Next decisive action |
 |---|---|---|

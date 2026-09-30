@@ -381,7 +381,7 @@ def projected_coverage_issue(source: np.ndarray, target: np.ndarray,
 def active_boundary_issue(certificate, source: np.ndarray,
                           source_indices, source_node_ids,
                           physical_rim_node_ids, work_map, transform,
-                          force_tolerance_n: float) -> str | None:
+                          force_tolerance_n: float, *, control_rows=None) -> str | None:
     """Reject active rim pressure and zero physical normal work directions."""
     pressure_ids = tuple(certificate.source_pressure_node_ids)
     pressure = np.asarray(certificate.numerical_pressure_pa, dtype=float)
@@ -389,6 +389,16 @@ def active_boundary_issue(certificate, source: np.ndarray,
     if (pressure.shape != support.shape
             or pressure.shape != (len(pressure_ids),)):
         raise ValueError("D1 interior pressure report has inconsistent modes")
+    control_basis = None
+    if control_rows is not None:
+        rows = np.asarray(control_rows, dtype=float)
+        if (rows.ndim != 2 or rows.shape[1] != transform.shape[1]
+                or not np.isfinite(rows).all()):
+            raise ValueError("D1 interior control rows have invalid size or values")
+        if rows.shape[0] and rows.shape[1]:
+            _, values, vectors = np.linalg.svd(rows, full_matrices=False)
+            cutoff = max(rows.shape)*np.finfo(float).eps*values[0]
+            control_basis = vectors[values > cutoff].T
     source_index = {node: index for index, node in enumerate(source_node_ids)}
     normal_sums = np.zeros_like(source)
     for indices in source_indices:
@@ -406,6 +416,10 @@ def active_boundary_issue(certificate, source: np.ndarray,
         rows = work_map[3 * index:3 * index + 3, :]
         full_variation = np.asarray(rows.T @ normal).reshape(-1)
         free_variation = np.asarray((rows @ transform).T @ normal).reshape(-1)
+        if control_basis is not None:
+            # Restrict the physical normal covector to the path's actual
+            # free span. A coupled control need not prescribe either node.
+            free_variation -= control_basis @ (control_basis.T @ free_variation)
         numerical_zero = (256.0 * np.finfo(float).eps
                           * max(1.0, float(np.max(np.abs(full_variation)))))
         if np.max(np.abs(free_variation), initial=0.0) <= numerical_zero:

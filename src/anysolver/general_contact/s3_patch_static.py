@@ -124,6 +124,12 @@ def _unique_work_map(adapters, node_ids):
 
 def validate_general_s3_patch(model, definition: ContactDefinition,
                               settings: ContactSolverSettings) -> ContactValidationReport:
+    return _validate_general_s3_patch(model, definition, settings)
+
+
+def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
+    # A manager may consume this preparation immediately in the same call.
+    # There is no model/global cache or reuse across poses or definitions.
     issues: list[str] = []
     from anysolver.e4_pl_element import QualifiedE4PLShellElement
     from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
@@ -359,6 +365,8 @@ def validate_general_s3_patch(model, definition: ContactDefinition,
             issues.append("source S3 patch reference normal must point from target to source")
     except (ValueError, MemoryError) as exc:
         issues.append(str(exc))
+    if not issues and prepared is not None:
+        prepared.append((adapters, faces, potential))
     return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
@@ -435,14 +443,15 @@ class GeneralS3PatchManager:
                  settings: ContactSolverSettings | None = None,
                  initial_displacement: np.ndarray | None = None):
         self.settings = ContactSolverSettings() if settings is None else settings
-        report = validate_general_s3_patch(model, definition, self.settings)
+        prepared = []
+        report = _validate_general_s3_patch(
+            model, definition, self.settings, prepared=prepared)
         if not report.valid:
             raise ValueError("unsupported general S3 patch: " + "; ".join(report.issues))
         self.definition = definition
         self.profile = report.profile
         source, target, interaction = _selected(definition)
-        adapters = _adapters(model, (source, target))
-        faces = _patch_faces(adapters)
+        adapters, faces, potential = prepared[0]
         source_faces = tuple(face.node_ids for face in faces[0])
         self.d1_physical_rim_node_ids = (
             physical_q4_rim_node_ids(model, faces[0])
@@ -460,31 +469,7 @@ class GeneralS3PatchManager:
         self.augmented = interaction.normal_law == "augmented"
         self.gap_tolerance = interaction.gap_tolerance
         self.swept_trial_cutbacks = 0
-        self.law = MovingS3PatchPrimalMortarPenalty(
-            faces[0], faces[1], self.stiffness,
-            difference_step=self.settings.general_s3_difference_step,
-            maximum_energy_evaluations=self.settings.maximum_general_s3_energy_evaluations,
-            q4_weighted_gap_tolerance=self.settings.q4_target_weighted_gap_tolerance,
-            maximum_q4_integration_triangles=self.settings.maximum_q4_target_integration_triangles,
-            q4_source_area_tolerance=self.settings.q4_source_area_tolerance,
-            q4_source_weighted_gap_tolerance=self.settings.q4_source_weighted_gap_tolerance,
-            maximum_q4_source_integration_triangles=self.settings.maximum_q4_source_integration_triangles,
-            q4_source_derivative_tolerances=(
-                self.settings.q4_source_support_gradient_tolerance,
-                self.settings.q4_source_support_hessian_tolerance,
-                self.settings.q4_source_weighted_gap_gradient_tolerance,
-                self.settings.q4_source_weighted_gap_hessian_tolerance,
-            ),
-            differentiation="jet2_s3" if self.settings.general_s3_differentiation == "jet2_s3_dev" else "jet2_q4_s3" if self.settings.general_s3_differentiation == "jet2_q4_s3_dev" else "pair_local" if self.profile in {
-                REFINED_AUGMENTED_PROFILE, REFINED_Q4_S3_AUGMENTED_PROFILE,
-                REFINED_Q4_S3_PROJECTED_AUGMENTED_PROFILE,
-                REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE,
-                REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
-                REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
-            }
-            else "global",
-            maximum_candidate_pairs=self.settings.maximum_candidate_pairs,
-        )
+        self.law = potential
         if self.augmented:
             from .s3_patch_augmented import MovingS3PatchProjectedNormal
 
@@ -541,7 +526,7 @@ class GeneralS3PatchManager:
             raise ValueError("D1 interior profile: " + issue)
 
     def d1_interior_admission_issue(self, certificate, displacement,
-                                    transform):
+                                    transform, *, control_rows=None):
         if not self.settings.d1_interior_profile:
             return None
         source, target = self._positions(displacement)
@@ -557,16 +542,32 @@ class GeneralS3PatchManager:
             self.law.source_node_ids, self.d1_physical_rim_node_ids,
             self.map, transform,
             self.settings.d1_interior_boundary_force_tolerance_n,
+            control_rows=control_rows,
         )
 
     def _gap_lower(self, positions):
         source, target = positions
         if self.settings.q4_source_gap_certificate == "overlap_local_dev":
+            geometry = self.law.geometry if self.augmented else self.law
+            # Validate every feature before pruning: a remote invalid face
+            # cannot disappear from admission merely because it is far away.
+            geometry._check_same_side_overlap(source, geometry.source_face_indices)
+            geometry._check_same_side_overlap(target, geometry.target_face_indices)
+            candidates = geometry._candidate_pair_indices(source, target)
+            target_count = len(geometry.target_face_indices)
+            pairs = (range(len(geometry.pair_laws)) if candidates is None
+                     else sorted(candidates))
+            # The bound applies to matched points over represented overlap.
+            # The existing full-depth projection prisms enclose the actual
+            # bilinear corners at any normal separation, including warping.
             return min(
-                max(q4_source_projected_gap_lower(source[si], target[ti]),
-                    overlap_local_lower(source[si], target[ti], 3)[0])
-                for si in self.law.source_face_indices
-                for ti in self.law.target_face_indices
+                (max(q4_source_projected_gap_lower(
+                    source[geometry.source_face_indices[index // target_count]],
+                    target[geometry.target_face_indices[index % target_count]]),
+                    overlap_local_lower(
+                    source[geometry.source_face_indices[index // target_count]],
+                    target[geometry.target_face_indices[index % target_count]], 3)[0])
+                 for index in pairs), default=float("inf")
             )
         if self.settings.q4_source_gap_certificate == "fixed_projection_graph":
             lowers = []
@@ -835,17 +836,39 @@ class GeneralS3PatchManager:
                     for ti in self.law.target_face_indices
                 )
             elif self.settings.q4_source_gap_certificate == "overlap_local_dev":
+                from .swept_patch_broadphase import conservative_swept_pair_indices
+                geometry = self.law.geometry if self.augmented else self.law
+                target_count = len(self.law.target_face_indices)
+                count = len(self.law.source_face_indices)*target_count
+                candidates = None
+                if geometry.pair_broadphase and count > 64:
+                    try:
+                        candidates = conservative_swept_pair_indices(
+                            left[0], right[0], left[1], right[1],
+                            self.law.source_face_indices, self.law.target_face_indices,
+                            endpoint_errors=(left_error[0], right_error[0],
+                                             left_error[1], right_error[1])
+                            if left_error is not None else None)
+                    except ValueError:
+                        # Invalid proposed/subdivision geometry is a rejected
+                        # path, never an empty candidate set. The committed
+                        # endpoint and original global guards already ran.
+                        return False
+                pairs = range(count) if candidates is None else sorted(candidates)
                 gap_ok = all(
                     overlap_local_swept_lower(
-                        left[0][si], right[0][si],
-                        left[1][ti], right[1][ti], 3,
+                        left[0][self.law.source_face_indices[index // target_count]],
+                        right[0][self.law.source_face_indices[index // target_count]],
+                        left[1][self.law.target_face_indices[index % target_count]],
+                        right[1][self.law.target_face_indices[index % target_count]], 3,
                         endpoint_errors=(
-                            left_error[0][si], right_error[0][si],
-                            left_error[1][ti], right_error[1][ti])
+                            left_error[0][self.law.source_face_indices[index // target_count]],
+                            right_error[0][self.law.source_face_indices[index // target_count]],
+                            left_error[1][self.law.target_face_indices[index % target_count]],
+                            right_error[1][self.law.target_face_indices[index % target_count]])
                         if left_error is not None else None,
                     )[0] >= -self.gap_tolerance
-                    for si in self.law.source_face_indices
-                    for ti in self.law.target_face_indices
+                    for index in pairs
                 )
             else:
                 q4_swept_lower = (
@@ -919,8 +942,11 @@ class GeneralS3PatchManager:
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
                          **({"d1_interior_profile": True,
+                             "d1_normal_admission_revision": "model_and_path_constraints_v2",
                              "d1_swept_certificate_revision":
-                             "affine_union_outward_v1",
+                             ("affine_union_outward_swept_search_v2"
+                              if self.settings.q4_source_gap_certificate == "overlap_local_dev"
+                              else "affine_union_outward_v1"),
                              "d1_interior_coverage_tolerance_m2":
                              self.settings.d1_interior_coverage_tolerance_m2,
                              "d1_interior_boundary_force_tolerance_n":

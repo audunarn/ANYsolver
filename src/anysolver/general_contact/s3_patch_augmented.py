@@ -44,6 +44,7 @@ class NodalForceLinearization:
     tangent: np.ndarray | None
     gap_gradient: np.ndarray
     energy_evaluations: int
+    gradient_only_pairs: int = 0
 
 
 def _prepared_inputs(*arrays):
@@ -253,6 +254,12 @@ class MovingS3PatchProjectedNormal:
         self.stiffness = geometry.stiffness
         self.tangent_active_coordinates: np.ndarray | None = None
         self.shared_edge_tie: tuple[float, np.ndarray, float] | None = None
+        # Verification may disable this implementation specialization. The
+        # force law, supported gap rows and active nonzero-weight Hessians
+        # are unchanged; seam/tiny-wedge recovery retains its full derivative.
+        # Verified prototype, but the saved-candidate profile was slower
+        # than batched Jet2. Keep it available only for explicit experiments.
+        self.zero_weight_first_order = False
 
     def set_shared_edge_tie(self, step_m, direction, relative_tolerance):
         """Opt in to a bounded local limit at the D1 two-face S3 diagonal."""
@@ -385,7 +392,8 @@ class MovingS3PatchProjectedNormal:
             )
 
     def _nodal_force_unresolved(self, current_source, current_target, z, *,
-                                tangent, tiny_wedge_pair=None):
+                                tangent, tiny_wedge_pair=None,
+                                allow_gradient_only=True):
         """Differentiate fixed nodal-force work on one smooth overlap branch."""
         base = self.geometry.evaluate(current_source, current_target)
         support = base.reference_support
@@ -400,6 +408,8 @@ class MovingS3PatchProjectedNormal:
         return self._jet2_s3_work(
             current_source, current_target, base, tangent=tangent,
             tiny_wedge_pair=tiny_wedge_pair, nodal_force_mode=True,
+            allow_gradient_only=allow_gradient_only,
+            zero_force_modes=(z == 0.0),
         )
 
     def _shared_edge_nodal_force_limit(self, current_source, current_target, z,
@@ -433,6 +443,7 @@ class MovingS3PatchProjectedNormal:
                     candidate = self._nodal_force_unresolved(
                         shifted, current_target, z, tangent=tangent,
                         tiny_wedge_pair=recoverable_pair,
+                        allow_gradient_only=False,
                     )
                 except (UnsupportedQ4S3Branch, ValueError) as exc:
                     raise UnsupportedQ4S3Branch(
@@ -1133,7 +1144,8 @@ class MovingS3PatchProjectedNormal:
         return MovingS3PatchMortarWork(base, residual, tangent_matrix, evaluations)
 
     def _jet2_s3_work(self, current_source, current_target, base, *, tangent,
-                      tiny_wedge_pair=None, nodal_force_mode=False):
+                      tiny_wedge_pair=None, nodal_force_mode=False,
+                      allow_gradient_only=True, zero_force_modes=None):
         """Assemble differentiated pair geometry into shared pressure nodes."""
         count = self.n_coordinates
         source_count = len(self.source_node_ids)
@@ -1155,6 +1167,7 @@ class MovingS3PatchProjectedNormal:
         absolute_gap_difference = np.zeros(source_count)
         tiny_wedge_verified = False
         tiny_wedge_scenarios = None
+        gradient_only_pairs = 0
         # Keep all residual rows, including prescribed-coordinate reactions.
         # Only columns need restriction to reachable solution variations.
         weighted_hessian = np.zeros((count, len(active_coordinates))) if tangent else None
@@ -1226,6 +1239,7 @@ class MovingS3PatchProjectedNormal:
                 continue
             evaluations += 1
             self.geometry._check_energy_evaluation_budget(evaluations)
+            gradient_only = False
             if len(source_nodes) == 4:
                 try:
                     tolerances = self.geometry.q4_source_derivative_tolerances or (None,)*4
@@ -1235,7 +1249,24 @@ class MovingS3PatchProjectedNormal:
                         "support_hessian_tolerance": tolerances[1],
                         "weighted_gap_hessian_tolerance": tolerances[3],
                     }
-                    derivative = q4_s3_overlap_derivatives(
+                    evaluator = q4_s3_overlap_derivatives
+                    if (self.zero_weight_first_order and allow_gradient_only
+                            and nodal_force_mode
+                            and tiny_wedge_pair is None
+                            and zero_force_modes is not None
+                            and np.all(zero_force_modes[source_nodes])
+                            and not np.any(fine_pressure[source_nodes])
+                            and not np.any(fine_support_pressure[source_nodes])
+                            and np.isfinite(fine_work_gap[source_nodes]).all()):
+                        # All coefficients of this pair's local support/gap
+                        # Hessians vanish EXACTLY. Its gradients remain in
+                        # every pressure row and global normalization term.
+                        gradient_only = True
+                        gradient_only_pairs += 1
+                        evaluator = q4_s3_overlap_first_derivatives
+                        derivative_options.pop("support_hessian_tolerance")
+                        derivative_options.pop("weighted_gap_hessian_tolerance")
+                    derivative = evaluator(
                         self.geometry.source_faces[source_face].reference_positions,
                         local_source, local_target,
                         area_tolerance=self.geometry.q4_source_area_tolerance,
@@ -1449,7 +1480,7 @@ class MovingS3PatchProjectedNormal:
             )
             jw[np.ix_(source_nodes, coordinate_map)] += derivative.weighted_gap_gradient
             js[np.ix_(source_nodes, coordinate_map)] += derivative.support_gradient
-            if tangent:
+            if tangent and not gradient_only:
                 local_active = np.flatnonzero(np.isin(coordinate_map, active_coordinates))
                 if len(local_active):
                     global_active = coordinate_map[local_active]
@@ -1577,7 +1608,7 @@ class MovingS3PatchProjectedNormal:
                              / base.reference_support[supported, None])
             if not tangent:
                 return NodalForceLinearization(base, residual, None, dg,
-                                               evaluations)
+                                               evaluations, gradient_only_pairs)
             dp_geometry = np.zeros((len(base.pressure), len(active_coordinates)))
             dp_geometry[supported] = (
                 -base.pressure[supported, None]
@@ -1592,7 +1623,7 @@ class MovingS3PatchProjectedNormal:
                 + weighted_hessian - cross - support_hessian
             )
             return NodalForceLinearization(base, residual, tangent_matrix, dg,
-                                           evaluations)
+                                           evaluations, gradient_only_pairs)
         if not tangent:
             return MovingS3PatchMortarWork(base, residual, None, evaluations)
         active = base.pressure > 0.0

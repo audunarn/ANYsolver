@@ -220,8 +220,6 @@ class MovingS3PatchPrimalMortarPenalty:
     @staticmethod
     def _check_same_side_overlap(positions: np.ndarray,
                                  indices: tuple[np.ndarray, ...]) -> None:
-        if len(indices) < 2:
-            return
         scale = max(1.0, float(np.max(np.abs(positions))))
         checked = []
         for face_index, nodes in enumerate(indices):
@@ -236,6 +234,8 @@ class MovingS3PatchPrimalMortarPenalty:
                                   face_positions[2]-face_positions[0])
                 normal /= np.linalg.norm(normal)
             checked.append((face, normal))
+        if len(indices) < 2:
+            return
         margin = 64.0*np.finfo(float).eps*scale
         # A projected overlap can occur at any separation along the first
         # face normal. Query a conservative world-space box around that whole

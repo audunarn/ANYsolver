@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.579500799998641,
+  "peak_process_tree_memory_mb": 116.49024,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_radial_spatial_assessment.py",
+    "-k",
+    "nonfinite_gap"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_gap_evidence_checks_v3_20260930.log"
+}

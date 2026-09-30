@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 19, in <module>
+    from anysolver import (
+    ...<2 lines>...
+    )
+ImportError: cannot import name 'ContactPathControl' from 'anysolver' (C:\Github\ANYsolver\src\anysolver\__init__.py)

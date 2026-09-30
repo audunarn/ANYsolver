@@ -1,13 +1,88 @@
-# General contact — restart note
+# General contact - restart note
 
-**30 September 2026, active.** Worktree `C:/ANYworkspaceWork/ANYsolver-general-contact`, branch `codex/general-contact-core`, HEAD `25087168` plus owned changes being consolidated. Goal rev2026-09-29.3, plan rev.7. About14 of120 active hours used; read goal clock on resume. D1 is development only. [Preceding detailed history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART11.md).
+**30 September 2026, ACTIVE.** Worktree C:/ANYworkspaceWork/ANYsolver-general-contact,
+branch codex/general-contact-core, HEAD0dcb9532 plus owned changes. Goal rev2026-09-29.3,
+plan rev2026-09-30.12; full C0-C9 remains required. About17 of120 active hours used;
+read goal clock on resume. No D1 independent acceptance or release claim.
+[Previous note/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART12.md).
 
-**Integrated advance:** Original-target4/4 fine-Q1 monolithic workflow completed8/8 press,50mm slide,open/recontact steps (232.78s/376MB), with whole-clamp-edge motion. All8 independent gaps/equilibrium/complementarity/contact-wrench checks pass locally; pressure zero at open. Versioned split restart exactly matches full-cycle displacement,pressure,wrench,gap and generalized reactions. [Cycle](docs/d1_review_support/d1_pressure_family4_moving_edge_cycle_v4_20260929.json), [checks](docs/d1_review_support/d1_pressure_family4_cycle_independent_v5_20260929.json), [split](docs/d1_review_support/d1_pressure_family4_split_compare_v6_20260929.json). Individual cancellation143s/507MB and exception rollback130s/507MB pass; initial grouped timeout retained.
+## Current owned activity and next decision
 
-**Pressure/safety:** Saved accepted4/6/12 press poses and4 recontact support the proposed finite reference-energy bound and independent current-skin map. Cut discriminator detects O(theta³) loss with all historical hats retained. Reviewer supports reuse of unchanged endpoint work maps, not historical path certification. [V4 proposal](docs/d1_review_support/D1_INTERIOR_PRESSURE_GATE_CANDIDATE_V4_20260929.md). Swept union/roundoff corrections bind restart revision affine_union_outward_v1; old checkpoints reject. Invalid proposed geometry cuts back; invalid committed geometry raises. Failure diagnostics no longer mask backtracking failure.
+v8 COMPLETED2/2 in891.87s/570.46MB; session6418 closed.
+v9 saved wrench completed79.56s/419.83MB; v10 physical bins completed86.01s/428.05MB.
+No owned numerical process active. Both workers have finished. Reference v3
+includes reviewed active-branch solution uncertainty; data-only v12 passes all34
+development predicates. v2/v11 uncertainty claims are invalid and remain retained.
+Outputs d1_radial_nonmatching_swept_search_coupled_v8_20260930.*;900s/4GB.
+v5 TIMED OUT900.07s/569.08MB with no
+completed result/checkpoint; session27258 is closed. One saved-path probe then
+measured109s/41,472 swept pair checks. New swept_patch_broadphase.py uses outward
+Bernstein parent-normal world-axis prisms over the COMPLETE affine corner path,
+endpoint/child error enclosures and ALL-pair legacy angular guards. No endpoint
+candidate union. Unresolved => exhaustive; invalid => rejection. Independent
+read-only scrutiny supports the bound and integration;21 kernel +14 owner/rounding
+checks pass. Old v1 checkpoint rejection passes; revision now
+`affine_union_outward_swept_search_v2` for overlap_local_dev.
+Same saved valid path154.13 ->52.66s,41,472 ->968 calls, kernel109 ->7.39s.
+v8 trace confirms2Newton iterations/step, NCP1.06e-12 and force error0.9303%,
+source samples<0.2%, target samples<1.9%, gap lower−0.124micrometres.
+These are local development results, not accepted spatial gates. No new exploratory
+coupled solve needed. Per-body work/reactions and action/reaction pass1e-6; physical
+source-bin L1/L2 errors0.9303%/0.9536%, all uncertainty budgets pass locally.
+Actual path controls now enter the physical prescribed-normal admission test through
+rank-aware row-space projection; both driver branches pass controls@T. Seven focused
+checks pass and read-only scrutiny found no remaining concrete blocker. Restart
+binds `model_and_path_constraints_v2`; old D1 checkpoints intentionally reject.
+Next: checkpoint owned source/evidence, freeze the prospective acceptance programme,
+then execute only missing/affected final checks and installed/regression work.
+No independent acceptance from current development evidence. The accepted pose,
+trace and source identity are retained. Do not repeat consumed v1/v2/v5 paths.
 
-**Spatial decision:** Stop nonmonotone empirical continuum-tail refinement and coarse radial12/4 coupled attempts. Its independently clipped linear force error is14.43%; one target12 discriminator gives0.9292%. Actual nonlinear normal tangent matches its frozen MIN3 operator to1.47e-16, first-step normal internal-force difference7.13e-11. [Target12 data](docs/d1_review_support/d1_radial_linear_discriminator_target12_v2_20260929.json), [structural check](docs/d1_review_support/d1_radial_structure_check_v1_20260929.json). Source12/target12 guided fixture now passes preflight33.67s/193MB with unchanged14144 evaluation cap. Conservative candidate-count admission replaces the Cartesian worst-case count; float/AD/tiny/tie counters remain bounded.10 new checks plus4 seam/tiny controls pass with exhaustive parity. Prior57-pass/2-skip/5-failure batch is retained: all5 failures reproduced with old methods; the2 nested-driver None-scale errors and3 reaction-row comparison defects are now corrected and their focused checks pass.
+## Measured advance
 
-**Next owned action:** ONE radial target12 coupled development run,900s/4GB, no tolerance or cap increase. Exact coefficients/inputs are in [prospective specification](docs/d1_review_support/D1_RADIAL_SPATIAL_CANDIDATE_20260930.md). Independent disk/Q1-bin helper passes20 checks; numerical reference-pressure bins are labelled separately from physical traction. Inspect status, full saved failure, force/displacements and conversion diagnostics before any repeat. Success advances final acceptance specification; failure gets one discriminating corrective action, no automatic mesh campaign. No workers have edits underway; no known owned run active at checkpoint creation.
+Profile found duplicate pair preparation and exhaustive instantaneous gap cost.
+Manager now consumes its validation geometry immediately, no global cache.
+Overlap-local instantaneous gap uses existing conservative projected-prism search,
+with all features validated (including singleton target). Swept checks unchanged.
+Independent scrutiny supports scope;7 focused checks pass. Gradient-only prototype
+passes work/activation tests but was slower; default DISABLED, evidence retained.
 
-**Open acceptance:** Freeze force/wrench/resultant/bin predicates and source/reference/environment identities; independent pre-run/spec and final evidence assessment; missing complete support-reaction/local-bin work interpretation; final installed wheel/example/capability; named5% no-contact gate. Prepared coordinator `docs/d1_review_support/d1_no_contact_paired_dev.py` verifies archived be41a77a source and final clean source,12 balanced pairs per named route; no performance runs launched. Routine180s/1GB, named900s/4GB process-tree caps; consumed authorities stay consumed. Owned paths are the plan/note/gap map, general-contact kernels/driver, parameterized runners, focused tests and d1_review_support evidence. Main checkout/concurrent work preserved. No merge,push,publication/release; full C0–C9 remains required.
+Saved setup/residual profile247.65 ->122.22s,185.73 ->78.01s preparation;
+residual exactly equal, gap-gradient relative difference1.14e-16, evaluationcount1772
+unchanged. Profile peak291.52 ->285.56MB. This is local profiled evidence.
+Complete original4/4 cycle8/8 is exactly mechanically identical (all saved poses,
+pressures, both-body forces/moments, gaps and reactions),234.35 ->216.71s wrapper,
+375.71 ->416.01MB in one comparison. No reliable twofold whole-route/memory claim.
+[Profile](docs/d1_review_support/d1_radial_preparation_profile_v4_20260930.json),
+[cycle](docs/d1_review_support/d1_pressure_family4_preparation_cycle_v7_20260930.json),
+[parity](docs/d1_review_support/d1_preparation_cycle_compare_v8_20260930.json).
+Stop optimization campaign and proceed to D1 closure.
+
+## Evidence and assessment gaps
+
+Radial v1 failed a grid clipping tie,0 accepted.1.317m setup rejected outside
+reference disk. Corrected1.297m independent linear force error0.9303%, preflight
+passes; coupled v2 timed900.03s/560.89MB with no completed result. All failures,
+exact launch snapshot and source identities retained. Previous note links them.
+
+Source-bin helper uses actual kappa=(ns.n0)*nt_z/(nt.n0), reference-area transport,
+independent clipped integration and outward slope allowance.19 focused checks;
+review supports frozenXY/zero-director whole-face source bins only. Production
+comparison must be measured; not_checked is missing evidence. Apply uncertainties,
+conversion and actual pair-gradient differences to frozen budget and reassembled Fz.
+Guided wrench helper recovers all constraint/path reactions once, then checks each
+body separately so equal/opposite defects cannot cancel.10 focused checks including
+that discriminator. Actual radial accepted-pose accounting completed in v9/v10;
+aggregate v12 includes exact-disk arithmetic and corrected reference uncertainty.
+
+Prior cycle independent8-pose gaps, full4/6/12 signed pressure-map bound proposal,
+open/recontact split restart and individual cancellation/exception checks remain
+valid subject to documented source impact. Freeze acceptance spec/source/environment,
+independent assessment, current installed wheel/example/capability and named5%
+no-contact gate remain open. No-contact paired coordinator prepared but not run.
+
+Owned changes: three general-contact kernels/owner, existing parameterized runners,
+new preparation/zero-weight/source-bin/wrench helpers and focused tests, plan/note/gap
+map and d1_review_support raw evidence. Main checkout/concurrent work preserved.
+Workers candidate_budget and radial_observables have bounded independent review;
+no worker numerical process active. No merge,push,publication or release.

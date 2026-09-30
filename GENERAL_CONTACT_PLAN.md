@@ -1,6 +1,6 @@
 # General contact — plan
 
-**Revision:** 2026-09-29.7. **Status:** D1-interior development active; no acceptance claim. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md). **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Current resumption baseline is 25087168 with preserved development changes; earlier source identities remain in restart history.
+**Revision:** 2026-09-30.12. **Status:** D1-interior development active; no acceptance claim. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md). **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Current checkpoint is 0dcb9532 plus owned changes; earlier identities remain in restart history.
 
 The goal owns outcome, acceptance, authority, budget and stop rules. This plan is the current best route, not a mandatory sequence of investigations. The lead should change it when evidence supports faster delivery within the goal, briefly recording the decision. Development has resumed on the user's instruction.
 
@@ -13,6 +13,71 @@ Use one short living note, one delivery candidate, one parameterized case runner
 The dirty optimization has been preserved and parked as described in Section 3A. Build a small integrated D1-interior path with its admission checks. No further permission is needed for choices delegated by the goal. Scope/criterion changes and merge/publication/release remain user decisions.
 
 ## 2. What the evidence supports
+
+**Latest integrated result:** The unchanged radial12/12 case completed both steps
+in891.87s/570.46MB under900s/4GB, after the conservative swept-search correction.
+Physical force error0.9303%; source samples below0.2%; target samples below1.9%;
+independent gap lower−0.124micrometres against50micrometres. Saved-pose checks
+complete per-body reaction/work recovery and measured physical source bins:
+L1/L2 errors0.9303%/0.9536%, with local conversion/integration estimates far
+below their budgets. This closes local feasibility and the physical-bin/wrench
+measurement gaps, not independent acceptance. The data-only assessor includes
+explicit net contact wrench, physical resultant and missing-evidence predicates.
+Saved-reference v3 now accounts for active-branch solution uncertainty; the
+data-only v12 assessment passes all34 development predicates. Independent scrutiny
+closed the uncertainty and path-control admission findings. Preserve invalid v2/v11
+uncertainty evidence. Freeze the compact candidate and perform the remaining
+independent/installed/state/regression gates. Admission now includes actual path
+controls and binds `model_and_path_constraints_v2` into D1 restart identity;
+historical D1 checkpoints require their historical source.
+Do not launch another exploratory coupled solve or mesh campaign for these rows.
+The trace leaves substantial report-recovery cost; no reliable twofold complete-
+route improvement is established. Further optimization needs a measured delivery
+obstacle, not the improvement target alone.
+
+**30 September spatial decision:** Candidate-count admission preserves Cartesian
+memory limits and actual float/AD/tiny/tie guards. Radial target12 v1 failed an
+exact internal-grid clipping tie with zero accepted steps. A single width
+correction to1.297m retains counts, laws, tolerances and budgets; its independently
+clipped linear force error is0.9303%. Corrected coupled v2 timed out at900s/561MB
+without a completed result. No further grid tuning or automatic budget increase.
+
+**Measured cost decision:** Saved-pose profiling found two identical preparations:
+82,944 pair constructions took114.09s. The zero-weight first-order prototype
+passed local work/activation checks but451 local calls took29.73s, slower than
+batched Jet2; keep it disabled by default. Reuse validated geometry immediately
+within the same synchronous manager construction, with no global cache. Reuse
+conservative projected-prism search for instantaneous overlap-local gap checks,
+validating all features including singletons; swept checks remain unchanged.
+Independent review supports these boundaries and7 focused checks pass.
+
+**Cost-slice outcome:** The instrumented setup/residual fell247.65 to122.22s;
+residuals are exactly equal and gap gradients agree to1.14e-16 relative.
+The complete original4/4 cycle remains8/8 with exactly equal saved displacements,
+pressures, both-body wrenches, gaps and reactions. Wrapper time changed234.35 to
+216.71s; peak memory375.71 to416.01MB in one comparison. This is not a reliable
+twofold complete-route or memory benefit. Stop optimization now. Run one unchanged
+radial12/12,1.297m candidate under900s/4GB to test spatial-route executability.
+No new grids or increased budget. Source-bin assessment requires the actual
+corner projection/varying normal work law and measured production-bin comparison.
+Support/load assessment must check source and target wrenches separately so equal
+and opposite errors cannot cancel. These are remaining D1 assessment gaps.
+
+**Swept-path correction:** The corrected coupled v5 still timed out900.07s/569MB,
+without a completed result. One180s saved-path probe then isolated108.9997s in
+41,472 swept pair checks (total154.13s; coverage0.96s). This was outside the
+residual profile. Implement the conservative full-affine-path normal-cone search
+behind overlap_local_dev: use outward Bernstein controls, endpoint/child errors,
+world-axis projection prisms and all-pair legacy angular guards. Unresolved bounds
+fall back to exhaustive evaluation; invalid geometry rejects, never empty search.
+Independent read-only review supports the proof and integration boundaries.
+Twenty-one local checks plus14 owner/rounding checks pass; old revision checkpoint
+rejection also passes. Numerical restart identity binds the new search revision.
+The identical saved path remains admissible with968 swept pair calls taking7.39s,
+total52.66s. This closes a measured complete-path bottleneck; it is not whole-solve
+acceptance. Run one unchanged radial candidate under900s/4GB with flushed scalar
+phase/active-set traces. No further mesh or law changes. The evidence package must
+still assess physical bins, both-body wrenches and installed/state workflows.
 
 **Latest integrated decision:** The original-target 4/4 pressure-family fixture
 completes press, 50 mm slide, opening and recontact in 233 s after moving the

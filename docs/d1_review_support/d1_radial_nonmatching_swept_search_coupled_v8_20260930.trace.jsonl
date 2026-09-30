@@ -1,0 +1,60 @@
+{"event": "trace_begin", "elapsed_seconds": 0.00028210002346895635, "imported_source": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py", "scope": "development observer only; no state or numerical setting changes"}
+{"event": "preparation_begin", "elapsed_seconds": 61.9655211000063, "call": 1}
+{"event": "preparation_end", "elapsed_seconds": 100.99593460001051, "call": 1, "seconds": 39.030325400002766}
+{"event": "structural_begin", "elapsed_seconds": 103.49911240002257, "call": 1, "tangent": true}
+{"event": "structural_end", "elapsed_seconds": 105.97304130002158, "call": 1, "seconds": 2.4734106000105385}
+{"event": "contact_begin", "elapsed_seconds": 105.97318620001897, "call": 1, "positive_force_modes": 0, "total_nodal_force_n": 0.0, "tangent": true}
+{"event": "contact_end", "elapsed_seconds": 136.1531952000223, "call": 1, "seconds": 30.179990700009512, "contact_residual_norm_n": 0.0, "minimum_normalized_gap_m": 7.741263872129155e-06, "candidate_evaluations": 1772}
+{"event": "complementarity_begin", "elapsed_seconds": 136.15333950001514, "call": 1}
+{"event": "complementarity_end", "elapsed_seconds": 136.15371930002584, "call": 1, "seconds": 0.00036780000664293766, "complementarity_l1_n": 0.0, "active_modes": 0}
+{"event": "factorization_begin", "elapsed_seconds": 136.1553905000037, "call": 1, "shape": [415, 415], "nnz": 4873}
+{"event": "factorization_end", "elapsed_seconds": 136.15663880002103, "call": 1, "seconds": 0.0012287000135984272}
+{"event": "swept_begin", "elapsed_seconds": 136.15697880001971, "call": 1}
+{"event": "swept_end", "elapsed_seconds": 150.21724090000498, "call": 1, "seconds": 14.060244399996009, "admissible": true}
+{"event": "structural_begin", "elapsed_seconds": 150.21737389999907, "call": 2, "tangent": false}
+{"event": "structural_end", "elapsed_seconds": 151.035443700006, "call": 2, "seconds": 0.8180564000213053}
+{"event": "contact_begin", "elapsed_seconds": 151.03549890001887, "call": 2, "positive_force_modes": 0, "total_nodal_force_n": 0.0, "tangent": false}
+{"event": "contact_end", "elapsed_seconds": 180.6015330000082, "call": 2, "seconds": 29.56602080000448, "contact_residual_norm_n": 0.0, "minimum_normalized_gap_m": 2.3418079983394452e-06, "candidate_evaluations": 1772}
+{"event": "complementarity_begin", "elapsed_seconds": 180.60165500000585, "call": 2}
+{"event": "complementarity_end", "elapsed_seconds": 180.60168880000128, "call": 2, "seconds": 2.1800020476803184e-05, "complementarity_l1_n": 0.0, "active_modes": 0}
+{"event": "structural_begin", "elapsed_seconds": 180.60176499999943, "call": 3, "tangent": true}
+{"event": "structural_end", "elapsed_seconds": 181.38936720002675, "call": 3, "seconds": 0.7875902999949176}
+{"event": "contact_begin", "elapsed_seconds": 181.38943320000544, "call": 3, "positive_force_modes": 0, "total_nodal_force_n": 0.0, "tangent": true}
+{"event": "contact_end", "elapsed_seconds": 213.86547430002247, "call": 3, "seconds": 32.47602599998936, "contact_residual_norm_n": 0.0, "minimum_normalized_gap_m": 2.3418079983394452e-06, "candidate_evaluations": 1772}
+{"event": "complementarity_begin", "elapsed_seconds": 213.8656566000136, "call": 3}
+{"event": "complementarity_end", "elapsed_seconds": 213.8660944000003, "call": 3, "seconds": 0.0004216000088490546, "complementarity_l1_n": 0.0, "active_modes": 0}
+{"event": "structural_begin", "elapsed_seconds": 239.05152140001883, "call": 4, "tangent": true}
+{"event": "structural_end", "elapsed_seconds": 239.85961569999927, "call": 4, "seconds": 0.8080451999849174}
+{"event": "contact_begin", "elapsed_seconds": 239.8596878000244, "call": 4, "positive_force_modes": 0, "total_nodal_force_n": 0.0, "tangent": true}
+{"event": "contact_end", "elapsed_seconds": 270.6545051000139, "call": 4, "seconds": 30.794803700002376, "contact_residual_norm_n": 0.0, "minimum_normalized_gap_m": 2.3418079983394452e-06, "candidate_evaluations": 1772}
+{"event": "complementarity_begin", "elapsed_seconds": 270.65465710000717, "call": 4}
+{"event": "complementarity_end", "elapsed_seconds": 270.65504140002304, "call": 4, "seconds": 0.00037120000342838466, "complementarity_l1_n": 0.0, "active_modes": 0}
+{"event": "factorization_begin", "elapsed_seconds": 270.65697430001455, "call": 2, "shape": [415, 415], "nnz": 4873}
+{"event": "factorization_end", "elapsed_seconds": 270.65830860001734, "call": 2, "seconds": 0.0013055999879725277}
+{"event": "factorization_begin", "elapsed_seconds": 270.6593630000134, "call": 3, "shape": [415, 415], "nnz": 7099}
+{"event": "factorization_end", "elapsed_seconds": 270.66204819999984, "call": 3, "seconds": 0.0026666000194381922}
+{"event": "factorization_begin", "elapsed_seconds": 270.6629267000244, "call": 4, "shape": [415, 415], "nnz": 6172}
+{"event": "factorization_end", "elapsed_seconds": 270.66470350002055, "call": 4, "seconds": 0.0017582000000402331}
+{"event": "factorization_begin", "elapsed_seconds": 270.66554490002454, "call": 5, "shape": [415, 415], "nnz": 6408}
+{"event": "factorization_end", "elapsed_seconds": 270.66732960002264, "call": 5, "seconds": 0.0017659000004641712}
+{"event": "factorization_begin", "elapsed_seconds": 270.66808660002425, "call": 6, "shape": [415, 415], "nnz": 5889}
+{"event": "factorization_end", "elapsed_seconds": 270.6698691000056, "call": 6, "seconds": 0.0017607999907340854}
+{"event": "factorization_begin", "elapsed_seconds": 270.6706059999997, "call": 7, "shape": [415, 415], "nnz": 5928}
+{"event": "factorization_end", "elapsed_seconds": 270.6722202000092, "call": 7, "seconds": 0.0015958999865688384}
+{"event": "factorization_begin", "elapsed_seconds": 270.67296520000673, "call": 8, "shape": [415, 415], "nnz": 5817}
+{"event": "factorization_end", "elapsed_seconds": 270.67504890001146, "call": 8, "seconds": 0.00206529998104088}
+{"event": "swept_begin", "elapsed_seconds": 270.67545440001413, "call": 2}
+{"event": "swept_end", "elapsed_seconds": 284.2677272000001, "call": 2, "seconds": 13.592252100002952, "admissible": true}
+{"event": "structural_begin", "elapsed_seconds": 284.26784549999866, "call": 5, "tangent": false}
+{"event": "structural_end", "elapsed_seconds": 285.07345640001586, "call": 5, "seconds": 0.8055969999986701}
+{"event": "contact_begin", "elapsed_seconds": 285.07351720001316, "call": 5, "positive_force_modes": 49, "total_nodal_force_n": 0.02024511245521705, "tangent": false}
+{"event": "contact_end", "elapsed_seconds": 315.22079300001496, "call": 5, "seconds": 30.14726120000705, "contact_residual_norm_n": 0.0042711002631887615, "minimum_normalized_gap_m": 1.0325450800814853e-18, "candidate_evaluations": 1772}
+{"event": "complementarity_begin", "elapsed_seconds": 315.22090169999865, "call": 5}
+{"event": "complementarity_end", "elapsed_seconds": 315.2209411000076, "call": 5, "seconds": 2.7399975806474686e-05, "complementarity_l1_n": 8.47334128773102e-14, "active_modes": 49}
+{"event": "structural_begin", "elapsed_seconds": 315.2210124999983, "call": 6, "tangent": true}
+{"event": "structural_end", "elapsed_seconds": 316.0323051000014, "call": 6, "seconds": 0.8112803999974858}
+{"event": "contact_begin", "elapsed_seconds": 316.0323860000062, "call": 6, "positive_force_modes": 49, "total_nodal_force_n": 0.02024511245521705, "tangent": true}
+{"event": "contact_end", "elapsed_seconds": 347.6073093000159, "call": 6, "seconds": 31.57490420000977, "contact_residual_norm_n": 0.0042711002631887615, "minimum_normalized_gap_m": 1.0325450800814853e-18, "candidate_evaluations": 1772}
+{"event": "complementarity_begin", "elapsed_seconds": 347.6076097000041, "call": 6}
+{"event": "complementarity_end", "elapsed_seconds": 347.6085223000264, "call": 6, "seconds": 0.0008926999871619046, "complementarity_l1_n": 8.47334128773102e-14, "active_modes": 49}
+{"event": "trace_end", "elapsed_seconds": 887.711984900001, "calls": {"preparation": 1, "structural": 6, "contact": 6, "complementarity": 6, "factorization": 8, "swept": 2}}

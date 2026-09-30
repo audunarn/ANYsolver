@@ -65,8 +65,8 @@ def build_case(columns: int, *, four_phase: bool = False,
         raise ValueError(
             "only bounded 4/6/8/12/16/24/32-column Q4 refinements are admitted; "
             "64 columns require the offline structural-reference opt-in")
-    if target_right_x_m not in (1.0, 1.3):
-        raise ValueError("this probe admits only 1.0 or 1.3 m target right edges")
+    if target_right_x_m not in (1.0, 1.3, 1.297):
+        raise ValueError("unsupported bounded target right edge")
     if full_width_target_y0_m not in (-0.1, -0.113) or (
             not full_width_target and full_width_target_y0_m != -0.1):
         raise ValueError("unsupported full-width target lower edge")
@@ -80,6 +80,8 @@ def build_case(columns: int, *, four_phase: bool = False,
                      and common_reference_slope == target_reference_slope == 0.0)
     if guided_radial_target_refinement and not radial_target:
         raise ValueError("radial target opt-in is limited to the flat 12/12 fixture")
+    if target_right_x_m == 1.297 and not radial_target:
+        raise ValueError("1.297 m right edge is limited to the radial 12/12 fixture")
     if not radial_target and (target_columns not in (1, 2, 3, 4, 6)
                               or target_rows not in (1, 2, 3, 4, 6)):
         raise ValueError("this development case admits 1/2/3/4/6 target rows and columns")

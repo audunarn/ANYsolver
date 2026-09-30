@@ -757,7 +757,7 @@ def solve_static_contact_path(
                         )
                         admission = getattr(manager,
                                             "d1_interior_admission_issue", None)
-                        issue = (admission(certificate, accepted_u, T)
+                        issue = (admission(certificate, accepted_u, T, control_rows=rows)
                                  if admission is not None else None)
                         if issue is not None:
                             failure_reason = "contact_d1_interior_profile_rejected"
@@ -1543,7 +1543,7 @@ def solve_static_contact_path(
                     accepted_u = np.asarray(T @ q + u0).reshape(-1)
                     admission = getattr(manager,
                                         "d1_interior_admission_issue", None)
-                    issue = (admission(certificate, accepted_u, T)
+                    issue = (admission(certificate, accepted_u, T, control_rows=rows)
                              if admission is not None else None)
                     if issue is not None:
                         failure_reason = "contact_d1_interior_profile_rejected"

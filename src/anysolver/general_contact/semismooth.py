@@ -16,6 +16,7 @@ class ContactLinearization:
     gap_gradient: np.ndarray
     local_force: np.ndarray
     evaluations: int
+    gradient_only_pairs: int = 0
 
 
 def reference_nodal_support(law) -> np.ndarray:
@@ -56,7 +57,8 @@ def linearize(manager, displacement, nodal_forces, *, tangent=True):
     stiffness = (sparse.csr_matrix(manager.map.T @ raw.tangent @ manager.map)
                  if tangent else None)
     return ContactLinearization(raw.state, force, stiffness, gap_gradient,
-                                raw.residual, raw.energy_evaluations)
+                                raw.residual, raw.energy_evaluations,
+                                raw.gradient_only_pairs)
 
 
 def complementarity(state, nodal_forces, scales, gap_gradient, *, tangent=True):

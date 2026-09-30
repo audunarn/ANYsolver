@@ -567,12 +567,13 @@ def compare_saved_cycles(reference_path: Path, candidate_path: Path, output: Pat
         raise RuntimeError("split restart differs beyond the declared development tolerance")
 
 
-def build_radial_guided_case(*, target_cells=4, target_y0_m=-0.113):
+def build_radial_guided_case(*, target_cells=4, target_y0_m=-0.113,
+                            target_right_x_m=1.3):
     """A physical-load spatial benchmark; target MIN3 shear is retained."""
     from docs.d1_review_support.d1_radial_two_body_reference import RadialTwoBodyReference
     model, definition, settings, _ = build_case(
         12, source_rows=12, target_columns=target_cells, target_rows=target_cells,
-        full_width_target=True, target_right_x_m=1.3,
+        full_width_target=True, target_right_x_m=target_right_x_m,
         full_width_target_y0_m=target_y0_m,
         target_young_multiplier=5.0,
         guided_radial_target_refinement=target_cells == 12)
@@ -658,6 +659,7 @@ def build_radial_guided_case(*, target_cells=4, target_y0_m=-0.113):
         target_p1_energy_max_relative_error=max(scalar_errors),
         target_cells=target_cells,
         target_y0_m=target_y0_m,
+        target_right_x_m=target_right_x_m,
         gap_m=reference.gap_m, exact_force_n=reference.force_n)
 
 
@@ -672,7 +674,9 @@ def radial_structure_check(output: Path, linear_record: Path):
         _discard_nonlinear_state_candidate)
     saved = json.loads(linear_record.read_text())
     model, _definition, _settings, _program, _reference, record = build_radial_guided_case(
-        target_cells=saved["target_cells"])
+        target_cells=saved["target_cells"],
+        target_y0_m=saved.get("target_y0_m", -0.113),
+        target_right_x_m=saved.get("target_right_x_m", 1.3))
     model.apply_boundary_conditions()
     stiffness, _ = assemble_stiffness_matrix(model)
     zero = np.zeros(model.mesh.dof_manager.total_dofs)
@@ -704,11 +708,11 @@ def radial_structure_check(output: Path, linear_record: Path):
     print(json.dumps(record))
 
 
-def radial_preflight(output: Path, *, target_cells=4):
+def radial_preflight(output: Path, *, target_cells=4, target_right_x_m=1.3):
     if output.exists():
         raise FileExistsError(output)
     model, definition, settings, program, reference, record = build_radial_guided_case(
-        target_cells=target_cells)
+        target_cells=target_cells, target_right_x_m=target_right_x_m)
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
         raise ValueError(f"radial fixture rejected: {report.issues}")
@@ -721,12 +725,13 @@ def radial_preflight(output: Path, *, target_cells=4):
     record["source_trace_error_bound"] = reference.rectangle_trace_error_bound(
         (.1, 1.1), (.1, 1.1), 12, 12, "source")
     record["target_trace_error_bound"] = reference.rectangle_trace_error_bound(
-        (0., 1.3), (record["target_y0_m"], 1.2),
+        (0., record["target_right_x_m"]), (record["target_y0_m"], 1.2),
         record["target_cells"], record["target_cells"], "target")
     output.write_text(json.dumps(record, indent=2, default=_json_default), encoding="utf-8")
 
 
-def radial_linear_discriminator(output: Path, *, target_cells=4):
+def radial_linear_discriminator(output: Path, *, target_cells=4,
+                                target_right_x_m=1.3):
     """Separate a bad fixture/predictor from nonlinear globalization failure."""
     if output.exists():
         raise FileExistsError(output)
@@ -736,7 +741,7 @@ def radial_linear_discriminator(output: Path, *, target_cells=4):
     from docs.d1_review_support.d1_two_body_reference_oracle import independent_gap_work
     started = time.perf_counter()
     model, definition, settings, program, reference, record = build_radial_guided_case(
-        target_cells=target_cells)
+        target_cells=target_cells, target_right_x_m=target_right_x_m)
     model.apply_boundary_conditions()
     stiffness, _ = assemble_stiffness_matrix(model)
     size = model.mesh.dof_manager.total_dofs
@@ -796,20 +801,304 @@ def radial_linear_discriminator(output: Path, *, target_cells=4):
         "steps": [{k: v for k, v in item.items() if k not in ("displacements", "nodal_force_n")} for item in records]}))
 
 
-def radial_solve(output: Path, *, target_cells=4):
+def radial_swept_profile(output: Path, saved_path: Path):
+    """One saved full-path certificate, with flushed scalar cost traces."""
+    from functools import wraps
+    from anysolver.general_contact import s3_patch_static as owner
+    if output.exists():
+        raise FileExistsError(output)
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    model, definition, settings, _program, _reference, record = build_radial_guided_case(
+        target_cells=saved["target_cells"], target_y0_m=saved["target_y0_m"],
+        target_right_x_m=saved.get("target_right_x_m", 1.3))
+    pose = np.asarray(saved["steps"][-1]["displacements"])
+    counters, originals = {}, []
+    started = time.perf_counter()
+    print(json.dumps(dict(event="preparation_begin", imported_source=anysolver.__file__)), flush=True)
+    manager = owner.GeneralS3PatchManager(model, definition, settings)
+    print(json.dumps(dict(event="preparation_end", elapsed_seconds=time.perf_counter()-started)), flush=True)
+
+    def instrument(obj, name):
+        original = getattr(obj, name)
+        counters[name] = dict(calls=0, seconds=0.)
+        @wraps(original)
+        def measured(*args, **kwargs):
+            before = time.perf_counter()
+            try:
+                return original(*args, **kwargs)
+            finally:
+                item = counters[name]
+                item["calls"] += 1
+                item["seconds"] += time.perf_counter()-before
+                if item["calls"] == 1 or item["calls"] % 500 == 0:
+                    print(json.dumps(dict(event=name, **item,
+                        elapsed_seconds=time.perf_counter()-started)), flush=True)
+        originals.append((obj, name, original))
+        setattr(obj, name, measured)
+    instrument(owner.GeneralS3PatchManager, "_gap_lower")
+    instrument(owner, "swept_projected_coverage_admissible")
+    instrument(owner, "overlap_local_swept_lower")
+    try:
+        admitted = manager._swept_admissible(np.zeros_like(pose), pose)
+        record.update(status="development_saved_swept_profile", admissible=bool(admitted))
+    finally:
+        for obj, name, original in reversed(originals):
+            setattr(obj, name, original)
+        record.update(elapsed_seconds=time.perf_counter()-started,
+            coarse_inclusive_counters=counters,
+            input_sha256=hashlib.sha256(saved_path.read_bytes()).hexdigest(),
+            scope="one zero-to-saved-linear-pose path; no solve or swept acceptance claim")
+        output.write_text(json.dumps(record, indent=2), encoding="utf-8")
+
+
+def radial_candidate_profile(output: Path, saved_path: Path):
+    """One saved-pose residual evaluation; no advancement or mesh sweep."""
+    import cProfile
+    import pstats
+    from functools import wraps
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+    from anysolver.general_contact.semismooth import linearize
+    from anysolver.general_contact import s3_patch_augmented as augmented
+    from anysolver.general_contact.s3_patch_mortar_energy import MovingS3PatchPrimalMortarPenalty
+    from anysolver.general_contact.q4_source_mortar_energy import MovingQ4PrimalMortarPenalty
+    if output.exists() or output.with_suffix(".pstats").exists():
+        raise FileExistsError(output)
+    saved = json.loads(saved_path.read_text())
+    model, definition, settings, _program, _reference, record = build_radial_guided_case(
+        target_cells=saved["target_cells"], target_y0_m=saved["target_y0_m"],
+        target_right_x_m=saved.get("target_right_x_m", 1.3))
+    pose = np.asarray(saved["steps"][-1]["displacements"])
+    forces = np.asarray(saved["steps"][-1]["nodal_force_n"])
+    counters = {}
+    originals = []
+    def instrument(owner, name, label):
+        original = getattr(owner, name)
+        originals.append((owner, name, original))
+        @wraps(original)
+        def measured(*args, **kwargs):
+            started = time.perf_counter()
+            try:
+                return original(*args, **kwargs)
+            finally:
+                counter = counters.setdefault(label, dict(calls=0, seconds=0.))
+                counter["calls"] += 1
+                counter["seconds"] += time.perf_counter()-started
+        setattr(owner, name, measured)
+    instrument(MovingS3PatchPrimalMortarPenalty, "evaluate", "float_geometry")
+    instrument(MovingQ4PrimalMortarPenalty, "__init__", "pair_preparation")
+    instrument(augmented, "q4_s3_overlap_derivatives", "pair_jet2")
+    instrument(augmented, "q4_s3_overlap_first_derivatives", "pair_gradient_only")
+    instrument(augmented.MovingS3PatchProjectedNormal, "_jet2_s3_work", "work_assembly_inclusive")
+    profiler, started = cProfile.Profile(), time.perf_counter()
+    try:
+        profiler.enable()
+        preparation_started = time.perf_counter()
+        manager = GeneralS3PatchManager(model, definition, settings)
+        record["manager_preparation_seconds"] = time.perf_counter()-preparation_started
+        result = linearize(manager, pose, forces, tangent=False)
+        record.update(status="development_saved_candidate_profile", residual_norm_n=float(np.linalg.norm(result.force)),
+                      energy_evaluations=result.evaluations,
+                      gradient_only_pairs=result.gradient_only_pairs,
+                      residual=result.force.tolist(), gap_gradient=result.gap_gradient.tolist())
+    except Exception as exc:
+        record.update(status="candidate_exception", failure_reason=f"{type(exc).__name__}: {exc}")
+        raise
+    finally:
+        profiler.disable()
+        elapsed = time.perf_counter()-started
+        for owner, name, original in reversed(originals):
+            setattr(owner, name, original)
+        profiler.dump_stats(str(output.with_suffix(".pstats")))
+        with output.with_suffix(".profile.txt").open("x", encoding="utf-8") as stream:
+            pstats.Stats(profiler, stream=stream).sort_stats("cumulative").print_stats(40)
+        record.update(elapsed_seconds=elapsed, coarse_inclusive_counters=counters,
+            input_sha256=hashlib.sha256(saved_path.read_bytes()).hexdigest(),
+            runner_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            changed_kernel_sha256={path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+                for path in (Path(anysolver.__file__).parent / "general_contact").glob("*.py")},
+            scope="one profiled residual at saved independent linear pose; no route speed claim")
+        output.write_text(json.dumps(record, indent=2, default=_json_default), encoding="utf-8")
+
+
+def radial_wrench_check(output: Path, saved_path: Path):
+    """Recover complete guided reactions at saved elastic poses, without solve."""
+    if output.exists():
+        raise FileExistsError(output)
+    from scipy import linalg
+    from anysolver.assembly import build_constraint_transformation
+    from anysolver.matrix_assembly import assemble_stiffness_matrix
+    from anysolver.nonlinear_static import (_prepare_initial_states,
+        _prepare_qualified_q4_states_for_nonlinear_solve,
+        _activate_nonlinear_state_storage, _assemble_nonlinear_system,
+        _discard_nonlinear_state_candidate)
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+    from anysolver.general_contact.semismooth import linearize
+    from docs.d1_review_support.d1_guided_reaction_wrench import guided_wrench_diagnostics
+    saved = json.loads(saved_path.read_text())
+    poses, history = saved.get("accepted_pose_displacements", ()), saved.get("history", ())
+    if saved["status"] != "completed" or len(poses) != len(history) or len(poses) != 2:
+        raise ValueError("wrench recovery requires the completed two-step radial fixture")
+    model, definition, settings, program, _reference, record = build_radial_guided_case(
+        target_cells=saved["target_cells"], target_y0_m=saved["target_y0_m"],
+        target_right_x_m=saved.get("target_right_x_m", 1.3))
+    model.apply_boundary_conditions()
+    stiffness, _ = assemble_stiffness_matrix(model)
+    size = model.mesh.dof_manager.total_dofs
+    _, _, transform, offset, _, _ = build_constraint_transformation(
+        stiffness, np.zeros(size), model)
+    if np.any(offset != 0.):
+        raise ValueError("radial fixture requires homogeneous structural constraints")
+    controls = np.zeros((len(program.controls), size))
+    for row, control in enumerate(program.controls):
+        for node, name, coefficient in control.terms:
+            if name != "uz":
+                raise ValueError("guided radial path requires vertical controls")
+            controls[row, model.mesh.dof_manager.get_node_dofs(node)[2]] += coefficient
+    free_map = np.asarray(transform @ linalg.null_space(np.asarray(controls @ transform)))
+    if free_map.shape[1] != 121+(saved["target_cells"]-1)**2:
+        raise ValueError("guided joint free span has an unexpected nullity")
+    zero, info = np.zeros(size), {}
+    states, _ = _prepare_initial_states(model, None, None, 5)
+    states = _prepare_qualified_q4_states_for_nonlinear_solve(
+        model, zero, states, 5, info, supplied_element_ids=(), ordinary_restart=False)
+    states = _activate_nonlinear_state_storage(model, states, 5, info,
+        kinematics="von_karman", committed_displacements=zero)
+    manager = GeneralS3PatchManager(model, definition, settings)
+    origin = np.array((.6, .6, 0.))
+    records = []
+    for pose, row in zip(poses, history, strict=True):
+        u, certificate = np.asarray(pose), row["contact"]
+        internal, _, _ = _assemble_nonlinear_system(model, u, states, 5,
+            tangent=False, kinematics="von_karman", require_full_coordinates=True)
+        _discard_nonlinear_state_candidate(states)
+        z = (np.asarray(certificate["numerical_pressure_pa"])
+             * np.asarray(certificate["reference_support_m2"]))
+        if np.any(z != 0.):
+            contact = linearize(manager, u, z, tangent=False).force
+        else:
+            contact = np.zeros(size)
+        external = np.zeros(size)
+        for force, value in zip(program.nodal_forces,
+                                program.force_values_at(row["step_index"]), strict=True):
+            external[model.mesh.dof_manager.get_node_dofs(force.node_id)[2]] += value
+        physical_force = np.asarray(certificate["integration_force"])+certificate["target_force"]
+        physical_moment = (np.asarray(certificate["integration_moment"])
+                           +certificate["target_moment"]-np.cross(origin, physical_force))
+        bodies = {}
+        for name, surface, prefix in zip(('source', 'target'), definition.surfaces,
+                                        ('integration', 'target'), strict=True):
+            force = np.asarray(certificate[prefix+'_force'])
+            bodies[name] = dict(node_ids=sorted({node
+                for element in surface.element_ids
+                for node in model.mesh.elements[element].node_ids}),
+                physical_contact_force=force,
+                physical_contact_moment=np.asarray(certificate[prefix+'_moment'])
+                                        -np.cross(origin, force))
+        diagnostics = guided_wrench_diagnostics(model, u, internal, contact, external,
+            free_map, physical_contact_force=physical_force,
+            physical_contact_moment=physical_moment, origin=origin, bodies=bodies)
+        records.append(dict(step=row["step_index"], **diagnostics))
+    record.update(status="development_saved_guided_wrench_check", rows=records,
+        input_sha256=hashlib.sha256(saved_path.read_bytes()).hexdigest(),
+        joint_free_dimension=free_map.shape[1],
+        development_checks_met=all(max(r["constraint_reconstruction_relative_force"],
+            r["balance_relative_force"], r["balance_relative_moment"],
+            r["contact_conversion_max_scaled"], r["structural_internal_max_scaled"]) <= 1e-6
+            and all(max(body['balance_relative_force'], body['balance_relative_moment'],
+                body['contact_conversion_max_scaled'], body['structural_internal_max_scaled'])
+                <= 1e-6 for body in r['bodies'].values()) for r in records))
+    output.write_text(json.dumps(record, indent=2, default=_json_default), encoding="utf-8")
+    print(json.dumps({k: record[k] for k in ("status", "development_checks_met", "joint_free_dimension")}))
+
+
+def radial_source_bin_check(output: Path, saved_path: Path):
+    """Assess one completed saved pose; do not repeat its coupled solve."""
+    if output.exists():
+        raise FileExistsError(output)
+    from dataclasses import asdict
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+    from docs.d1_review_support.d1_radial_source_bin_work import check_guided_source_bins
+    from docs.d1_review_support.d1_radial_reference_observables import uniform_disk_pressure_observables
+    from docs.d1_review_support.d1_radial_bin_assessment import assess_physical_source_bins
+    started = time.perf_counter()
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    if (saved.get("status") != "completed" or saved.get("accepted_steps") != 2
+            or len(saved.get("accepted_pose_displacements", ())) != 2):
+        raise ValueError("physical bins require the completed two-step radial fixture")
+    for name, expected in saved["changed_kernel_sha256"].items():
+        path = Path(anysolver.__file__).parent / "general_contact" / name
+        if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            raise ValueError(f"saved-pose contact source changed: {name}")
+    model, definition, settings, _program, reference, record = build_radial_guided_case(
+        target_cells=saved["target_cells"], target_y0_m=saved["target_y0_m"],
+        target_right_x_m=saved["target_right_x_m"])
+    certificate = saved["history"][-1]["contact"]
+    z = dict(zip(certificate["source_pressure_node_ids"],
+        np.asarray(certificate["numerical_pressure_pa"])
+        * np.asarray(certificate["reference_support_m2"]), strict=True))
+    record.update(status="development_saved_physical_source_bins",
+        input_sha256=hashlib.sha256(saved_path.read_bytes()).hexdigest(),
+        anysolver_module=str(Path(anysolver.__file__).resolve()),
+        quadrature_tolerance_n=reference.force_n*1e-8, maximum_triangles=14144)
+    try:
+        manager = GeneralS3PatchManager(model, definition, settings)
+        evidence = check_guided_source_bins(model, definition,
+            np.asarray(saved["accepted_pose_displacements"][-1]), z,
+            quadrature_tolerance_n=record["quadrature_tolerance_n"],
+            maximum_triangles=record["maximum_triangles"],
+            production_geometry=manager.law.geometry)
+        exact = uniform_disk_pressure_observables(reference.pressure_pa,
+            material_force_threshold_n=8e-8)
+        exact_bins = [[item.force_n for item in row] for row in exact.bins]
+        record.update(evidence=evidence, exact_disk_observables=asdict(exact),
+            assessment=assess_physical_source_bins(evidence, exact_bins,
+                certificate["integration_force"][2], exact_bin_error_n=[
+                    [item.estimated_absolute_error[0] for item in row] for row in exact.bins]))
+    except (ValueError, MemoryError) as exc:
+        record.update(status="development_saved_physical_source_bins_failure",
+            failure_reason=f"{type(exc).__name__}: {exc}")
+    record["elapsed_seconds"] = time.perf_counter()-started
+    output.write_text(json.dumps(record, indent=2, default=_json_default), encoding="utf-8")
+    print(json.dumps({key: record.get(key) for key in
+        ("status", "elapsed_seconds", "failure_reason", "assessment")}))
+
+
+def radial_spatial_assess(output: Path, saved_path: Path, bin_path: Path,
+                          wrench_path: Path, linear_path: Path):
+    """Aggregate existing evidence without another solve or reassembly."""
+    if output.exists():
+        raise FileExistsError(output)
+    from docs.d1_review_support.d1_radial_spatial_assessment import assess_saved_radial_spatial
+    paths = (saved_path, bin_path, wrench_path, linear_path)
+    records = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
+    assessment = assess_saved_radial_spatial(*records,
+        input_sha256=hashlib.sha256(saved_path.read_bytes()).hexdigest())
+    assessment["evidence_sha256"] = {str(path): hashlib.sha256(path.read_bytes()).hexdigest()
+                                    for path in paths}
+    assessment.update(independently_accepted=False, released=False)
+    output.write_text(json.dumps(assessment, indent=2, default=_json_default), encoding="utf-8")
+    print(json.dumps({key: assessment.get(key) for key in
+        ("status", "development_checks_met", "remaining_gates", "missing_or_invalid_evidence")}))
+
+
+def radial_solve(output: Path, *, target_cells=4, target_right_x_m=1.3):
     if output.exists():
         raise FileExistsError(output)
     started = time.perf_counter()
     model, definition, settings, program, reference, record = build_radial_guided_case(
-        target_cells=target_cells)
+        target_cells=target_cells, target_right_x_m=target_right_x_m)
     record.update(anysolver_module=str(Path(anysolver.__file__).resolve()),
         changed_kernel_sha256={path.name: hashlib.sha256(path.read_bytes()).hexdigest()
             for path in (Path(anysolver.__file__).parent / "general_contact").glob("*.py")},
         runner_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
     try:
-        result = solve_static_nonlinear(model, contact=definition, contact_settings=settings,
-            contact_path_program=program, max_iterations=18, emit_restart_checkpoint=True,
-            record_increment_snapshots=True)
+        from docs.d1_review_support.d1_radial_scalar_trace import radial_solver_trace
+        trace_path = output.with_suffix('.trace.jsonl')
+        record['scalar_trace'] = str(trace_path)
+        with radial_solver_trace(trace_path):
+            result = solve_static_nonlinear(model, contact=definition, contact_settings=settings,
+                contact_path_program=program, max_iterations=18, emit_restart_checkpoint=True,
+                record_increment_snapshots=True)
     except Exception as exc:
         record.update(status="solver_exception", elapsed_seconds=time.perf_counter()-started,
             failure_reason=f"{type(exc).__name__}: {exc}", restart_checkpoint=None)
@@ -1121,21 +1410,54 @@ if __name__ == "__main__":
     parser.add_argument("--radial-solve", action="store_true")
     parser.add_argument("--radial-linear-discriminator", action="store_true")
     parser.add_argument("--radial-target-cells", type=int, choices=(4, 12), default=4)
+    parser.add_argument("--radial-target-right-x-m", type=float,
+                        choices=(1.3, 1.297), default=1.3)
     parser.add_argument("--radial-structure-check", type=Path)
+    parser.add_argument("--radial-wrench-check", type=Path)
+    parser.add_argument("--radial-source-bin-check", type=Path)
+    parser.add_argument("--radial-spatial-assess", type=Path)
+    parser.add_argument("--radial-bin-evidence", type=Path)
+    parser.add_argument("--radial-wrench-evidence", type=Path)
+    parser.add_argument("--radial-linear-assessment", type=Path)
+    parser.add_argument("--radial-candidate-profile", type=Path)
+    parser.add_argument("--radial-swept-profile", type=Path)
     parser.add_argument("--steps-per-segment", type=int, choices=(1, 2),
                         default=2)
     arguments = parser.parse_args()
+    if arguments.radial_spatial_assess is not None:
+        if any(p is None for p in (arguments.radial_bin_evidence,
+                arguments.radial_wrench_evidence, arguments.radial_linear_assessment)):
+            parser.error("radial spatial assessment requires bin, wrench and linear assessment evidence")
+        radial_spatial_assess(arguments.output, arguments.radial_spatial_assess,
+            arguments.radial_bin_evidence, arguments.radial_wrench_evidence,
+            arguments.radial_linear_assessment)
+        raise SystemExit(0)
+    if arguments.radial_source_bin_check is not None:
+        radial_source_bin_check(arguments.output, arguments.radial_source_bin_check)
+        raise SystemExit(0)
+    if arguments.radial_swept_profile is not None:
+        radial_swept_profile(arguments.output, arguments.radial_swept_profile)
+        raise SystemExit(0)
+    if arguments.radial_candidate_profile is not None:
+        radial_candidate_profile(arguments.output, arguments.radial_candidate_profile)
+        raise SystemExit(0)
+    if arguments.radial_wrench_check is not None:
+        radial_wrench_check(arguments.output, arguments.radial_wrench_check)
+        raise SystemExit(0)
     if arguments.radial_structure_check is not None:
         radial_structure_check(arguments.output, arguments.radial_structure_check)
         raise SystemExit(0)
     if arguments.radial_linear_discriminator:
-        radial_linear_discriminator(arguments.output, target_cells=arguments.radial_target_cells)
+        radial_linear_discriminator(arguments.output, target_cells=arguments.radial_target_cells,
+                                    target_right_x_m=arguments.radial_target_right_x_m)
         raise SystemExit(0)
     if arguments.radial_solve:
-        radial_solve(arguments.output, target_cells=arguments.radial_target_cells)
+        radial_solve(arguments.output, target_cells=arguments.radial_target_cells,
+                     target_right_x_m=arguments.radial_target_right_x_m)
         raise SystemExit(0)
     if arguments.radial_preflight:
-        radial_preflight(arguments.output, target_cells=arguments.radial_target_cells)
+        radial_preflight(arguments.output, target_cells=arguments.radial_target_cells,
+                         target_right_x_m=arguments.radial_target_right_x_m)
         raise SystemExit(0)
     if arguments.compare_saved_cycle is not None:
         if arguments.cycle_reference is None:

@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 2.7404026000003796,
+  "peak_process_tree_memory_mb": 196.079616,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_swept_patch_broadphase.py",
+    "-k",
+    "source_endpoint_enclosure or normal_component_selection"
+  ],
+  "log": "docs\\d1_review_support\\d1_swept_search_enclosures_axes_20260930.log"
+}

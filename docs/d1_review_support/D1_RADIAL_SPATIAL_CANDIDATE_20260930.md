@@ -7,9 +7,9 @@ It neither qualifies ordinary bending response nor changes the shell model.
 
 ## Mechanical inputs and reference
 
-Use `build_radial_guided_case(target_cells=12)` in the existing parameterized
+Use `build_radial_guided_case(target_cells=12, target_right_x_m=1.297)` in the existing parameterized
 runner. Source: 12×12 qualified Q4, [0.1,1.1]² m; target: 12×12 congruent
-rectangular cells split into S3 V2D, x=[0,1.3], y=[−0.113,1.2] m.
+rectangular cells split into S3 V2D, x=[0,1.297], y=[−0.113,1.2] m.
 Both use isotropic elasticity, thickness 0.05 m, ν=0.3; source E=10⁵ Pa,
 target E=5×10⁵ Pa. Keep the declared physical skins and target 0.01 m offset.
 All in-plane translations and directors are prescribed; transverse interior
@@ -24,22 +24,27 @@ Physical initial separation is 7.741263872132846×10⁻⁶ m.
 The exact radial reference is `d1_radial_two_body_reference.py`, independently
 derived from Ds Δws=F−p and Dt Δwt=p with complementarity. Source
 Ds=1602.5641025641025 N/m. Retain the actual S3 guided block's MIN3 factor:
-φ²≈0.3942384633669111 and Dt=3158.962046209225 N/m. The reference pressure
+φ²≈0.394792388278660 and Dt=3163.40054710465 N/m. The reference pressure
 is uniform inside the disk, p=F Dt/(Ds+Dt); force is
-0.02042556989989151 N. Moments about the disk centre are zero.
+0.020435219974701 N. Moments about the disk centre are zero.
 
 This is a **frozen guided operator** at these mesh/material inputs. Target4
 and target12 have distinct MIN3 coefficients; their comparisons do not show
 convergence to one common target4 operator. Continuous analytical Dirichlet
 traces define the benchmark. Their nodal interpolation belongs to spatial
 error. The independently tested boundary bound concerns displacement, not an
-inferred force uncertainty. Reference evaluation error must be recorded.
+  inferred force uncertainty. Reference evaluation error must be recorded.
 
-Development discriminator: the independently clipped linear QP gives 0.9292%
+Development discriminator: the independently clipped linear QP gives 0.9303%
 force error, versus 14.43% on target4. The actual nonlinear structural owner
 matches the zero-state guided normal tangent to 1.47×10⁻¹⁶ and differs from
 the linear first-step normal force by 7.14×10⁻¹¹ relative. These are setup
-checks, not nonlinear contact acceptance.
+checks, not nonlinear contact acceptance. The x=1.3 coupled case failed at an
+exact internal-grid clipping tie with zero accepted steps; retain its raw output.
+A first x=1.317 setup was rejected because a target corner left the radius-R
+reference disk. The x=1.297 fixture stays within that disk and removes the exact
+x-grid coincidence, without changing counts, law, tolerance or resource caps.
+Its actual preflight passed in35.58s/193MB. This prospective draft is not frozen.
 
 ## Prospective observables and scales
 
@@ -78,6 +83,28 @@ Required final-state spatial predicates:
 The current-skin/nonlinear difference needs an explicit bound or matched
 same-discrete independent comparison; structural zero-state agreement alone
 does not supply it. An observed force-only pass cannot close all predicates.
+
+### Finite-fixture assessment conventions
+
+Prospectively allocate each physical-bin uncertainty budget as0.002 times its
+exact bin force, stricter than an allocation of0.002Fref. Include independent
+integration, production-map difference, physical conversion, source-pressure
+integration arithmetic and exact-disk arithmetic contributions. Apply the2%
+L1/L2 predicates to absolute observed errors plus these allowances. Missing or
+unmeasured production bins do not pass.
+
+Define the physical position as the moment-equivalent wrench point at z=0:
+x=Ox-My/Fz, y=Oy+Mx/Fz. Retain the residual vertical couple and the full moment
+predicate. This is not a pressure centroid. Use the registered force threshold.
+Independently require the net source-plus-target contact force and moment to
+meet1e-6; support reaction balance cannot substitute for action/reaction.
+
+The matched saved linear-QP comparison is observed discrepancy at this final
+state, not a uniform nonlinear bound. Its KKT residual compliance alone does not
+bound observable error. Assess one correction on its original active linear KKT
+branch, verify the branch remains admissible, and charge correction magnitude,
+remaining residual sensitivity and arithmetic/integration allowances to the
+unchanged0.2% comparison budget. Reject unresolved reference uncertainty.
 
 ## Execution and disposition
 

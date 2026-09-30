@@ -1,0 +1,48 @@
+         607608810 function calls (607318586 primitive calls) in 247.081 seconds
+
+   Ordered by: cumulative time
+   List reduced from 740 to 40 due to restriction <40>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.014    0.014  185.731  185.731 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py:434(__init__)
+83750/82946    0.155    0.000  165.423    0.002 C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py:827(measured)
+  5172284   43.928    0.000  130.171    0.000 C:\Python\Python314\Lib\site-packages\numpy\_core\numeric.py:1567(cross)
+        2    0.020    0.010  116.645   58.322 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_mortar_energy.py:70(__init__)
+    82946    0.131    0.000  114.267    0.001 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_mortar_energy.py:169(<genexpr>)
+    82944    0.402    0.000  113.943    0.001 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_mortar_energy.py:48(__init__)
+    83912    1.818    0.000   98.897    0.001 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py:255(q4_source_overlap_integrals)
+   636587   13.996    0.000   97.303    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\overlap.py:21(__post_init__)
+ 15516852   20.612    0.000   77.686    0.000 C:\Python\Python314\Lib\site-packages\numpy\_core\numeric.py:1493(moveaxis)
+   209624    2.541    0.000   66.623    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py:40(projected_q4_source_face)
+        1    0.001    0.001   62.380   62.380 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py:125(validate_general_s3_patch)
+        1    0.000    0.000   61.913   61.913 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth.py:48(linearize)
+1016344/817976    0.187    0.000   58.135    0.000 {built-in method builtins.min}
+        1    0.000    0.000   54.368   54.368 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py:562(_gap_lower)
+    41473    0.260    0.000   54.358    0.001 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py:565(<genexpr>)
+        1    0.000    0.000   51.294   51.294 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py:351(nodal_force_linearization)
+        1    0.000    0.000   51.294   51.294 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py:392(_nodal_force_unresolved)
+ 31033705   30.237    0.000   47.897    0.000 C:\Python\Python314\Lib\site-packages\numpy\_core\numeric.py:1431(normalize_axis_tuple)
+        1    0.070    0.070   39.460   39.460 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py:1144(_jet2_s3_work)
+      804    0.083    0.000   39.163    0.049 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py:576(_evaluate)
+     1408    0.089    0.000   37.110    0.026 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py:724(integrate)
+    41472    0.606    0.000   34.530    0.001 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py:112(q4_source_projected_gap_lower)
+      451    0.006    0.000   29.732    0.066 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py:918(q4_s3_overlap_first_derivatives)
+     3910    0.803    0.000   28.744    0.007 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py:668(rule)
+     4224    0.067    0.000   28.256    0.007 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py:342(integrate)
+    21120    0.312    0.000   28.144    0.001 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py:326(rule)
+   156888    2.485    0.000   28.075    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py:302(sample)
+   251096    1.898    0.000   27.235    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py:32(_q4_corner_normals)
+        2    0.000    0.000   21.216   10.608 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py:532(require_d1_coverage)
+        2    0.459    0.229   21.216   10.608 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\d1_interior_profile.py:352(projected_coverage_issue)
+   174571    2.155    0.000   20.560    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\overlap.py:198(planar_projected_overlap)
+    41472    0.847    0.000   19.561    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_overlap_local_bound.py:114(overlap_local_lower)
+    41472    0.226    0.000   18.930    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py:69(q4_source_gap_lower)
+   313776    0.347    0.000   15.237    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\overlap.py:71(values)
+    27370    0.383    0.000   14.890    0.001 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py:315(_natural_first)
+  1180631    2.006    0.000   13.494    0.000 {built-in method builtins.sum}
+   859294    0.272    0.000   13.210    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py:277(_sum_first)
+   313776    2.939    0.000   12.643    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\overlap.py:100(_shape_from_xy)
+        1    0.024    0.024   11.834   11.834 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_mortar_energy.py:302(evaluate)
+  5558447   10.003    0.000   11.568    0.000 C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py:241(__mul__)
+
+
