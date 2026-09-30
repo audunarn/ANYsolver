@@ -445,3 +445,38 @@ does not close spatial qualification. No whole-D1 or application admission.
 
 ## S3 finite-penalty normal lifecycle — local development only
 Two controls plus explicit normal ties prescribe both-body press/open/recontact. Six actual poses pass independent P1 pressure/control-reaction, complete work/wrench and50um gap checks. Authentic active/open restart on fresh models has exact complete checkpoint and mechanical parity; incompatible stiffness rejects untouched checkpoint. Review: d1_review_support/D2_S3_NORMAL_CONTROL_REVIEW_20260930.md. Not spatial acceptance, moving-front qualification, installed broadening or release.
+
+## Finite-law radial spatial discriminator — development NONPASS
+
+κ=10⁷ coupled run completes755.098s/480MB; independent saved-data wrench/work
+and physical-bin gates pass, but targety=.85 displacement2.125080% exceeds2%.
+Wrapper scalar-gap postprocessing exception remains separately NONPASS.
+Independent finite reference reproduces338normal coordinates within1.361e-16m,
+identifying finite-penalty bias versus hard same-mesh error1.887257%.
+Oneκ=10⁸ preflight predicts accounted targetmax1.913214%; actual coupled run
+times out900.0605s/486.519MB without final result. No spatial PASS follows.
+[D2 radial review](d1_review_support/D2_RADIAL_K1E8_REVIEW_20260930.md) binds
+the unchanged mechanics/criteria and retains failures. Separate guided partial-
+support response work begins; it cannot replace or regrade these results.
+
+## Guided partial-support finite-law benchmark — development PASS
+
+The unchanged projected law atκ1e6Pa/m reproduces a separately defined guided
+Q4/fixedS3 continuum fixture with uniform.5Pa load,100um skinsgap and.9m support.
+ActualQ4operator matches independentD/h to3.27e-15. nx79/159 pass14/14work/
+reaction/gap/support checks in118.56/214.84s,336/363MB. Physical-bin L1 error
+improves.157142% to.0305162%. Decimal80/all-midpoint Lipschitz bounds givefine
+global displacement upper.0048481%,L2upper.00201793%,reactionupper.000688334%,
+below.1%; refinement intervals are disjoint. Independent scoped development
+review: [benchmark](d1_review_support/D2_GUIDED_PARTIAL_FOUNDATION_REVIEW_20260930.md).
+No radial regrade, installed broadening, uniform stability or fullD2acceptance.
+
+## Native finite inertia — additive development only
+
+A separate private centered finite-inertia owner is implemented in the attached
+native-dynamics worktree.14distinct focused checks locally pass; original rest
+guards and mainpackage unchanged. This is physical finitework/M/p/I/derivatives
+and compensatedmomentum, not a timestep or native dynamic admission.
+[Source/evidence note](d1_review_support/D6_CENTERED_FINITE_INERTIA_DEVELOPMENT_20260930.md)
+binds source3334699c/testa15cf51f, retained collection/fixture failures and
+algebraic-zero scope. [Independent development review](d1_review_support/D6_CENTERED_FINITE_INERTIA_REVIEW_20260930.md) passes this inertial owner only; midpoint/state integration and dynamic acceptance remain open.

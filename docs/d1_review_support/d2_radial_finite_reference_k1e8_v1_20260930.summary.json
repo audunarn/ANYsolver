@@ -1,0 +1,176 @@
+{
+  "status": "development_candidate_preflight_complete",
+  "accepted": false,
+  "released": false,
+  "candidate_kappa_pa_per_m": 100000000.0,
+  "source_and_evidence_sha256": {
+    "docs\\d1_review_support\\d2_radial_finite_reference_dev.py": "c875c9c0fb6e0ce96bc0ca0b6d1832ee5f66029f156f297f5678c82b0b0995a0",
+    "docs\\d1_review_support\\d2_radial_finite_reference_k1e8_v1_20260930.runner.source.py": "c875c9c0fb6e0ce96bc0ca0b6d1832ee5f66029f156f297f5678c82b0b0995a0",
+    "docs\\d1_review_support\\d2_radial_finite_reference_k1e8_v1_20260930.json": "f2c47a919d66d933230c5997a70c16e1e690d73b9cc8cb0c00c33eff88ccdd13",
+    "docs\\d1_review_support\\d2_radial_finite_reference_k1e8_v1_20260930.inputs.json": "baf30863693fed65d8ee578f8ebd6bd51a4299671132fdff9d7875436554a4a7",
+    "docs\\d1_review_support\\d2_radial_finite_reference_k1e8_v1_20260930.log": "ff4ba2bc22bcebcb7168fa86c6b9b1ac3891e4f5cf08c5ad959170e43d1dfe7f",
+    "docs\\d1_review_support\\d2_radial_finite_reference_k1e8_v1_20260930.resource.json": "9d40bedaa407ccdf2c8a1ac79bbfde765510eae2da9fda4c799ab4fb5fc98654",
+    "docs\\d1_review_support\\d2_radial_finite_reference_v1_20260930.runner.source.py": "812428b39dcced3bf0b4aed946d17cd77c469723f809241308ff30dd5a6b8d43"
+  },
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 6.996777500025928,
+    "peak_process_tree_memory_mb": 212.70528,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/d2_radial_finite_reference_dev.py",
+      "--normal-regularization",
+      "1e8",
+      "--actual",
+      "docs/d1_review_support/d2_projected_penalty_radial_v1_20260930.json",
+      "--hard",
+      "docs/d1_review_support/d1_radial_linear_nonmatching_v3_20260930.json",
+      "--hard-assessment",
+      "docs/d1_review_support/d1_final_spatial_v7_20260930_radial_linear_assess.json",
+      "--output",
+      "docs/d1_review_support/d2_radial_finite_reference_k1e8_v1_20260930.json",
+      "--inputs-output",
+      "docs/d1_review_support/d2_radial_finite_reference_k1e8_v1_20260930.inputs.json"
+    ],
+    "log": "docs\\d1_review_support\\d2_radial_finite_reference_k1e8_v1_20260930.log"
+  },
+  "candidate_preflight": {
+    "target_samples_with_uncertainty_pass": true,
+    "force_relative_error_upper": 0.009895509760847904,
+    "force_gate": 0.02,
+    "minimum_physical_gap_lower_m": -1.5801735978217956e-06,
+    "gap_gate_m": -5e-05,
+    "candidate_eligible_for_coupled_check": true,
+    "accepted": false
+  },
+  "candidate_accounted_samples": [
+    {
+      "xy_m": [
+        0.6,
+        0.6
+      ],
+      "source": {
+        "raw_relative_error": 0.0010962760975438328,
+        "solution_uncertainty_m": 6.29625025815553e-14,
+        "analytical_roundoff_envelope_m": 3.1662124893962454e-21,
+        "accounted_relative_error_upper": 0.0010962828425589216,
+        "gate": 0.02,
+        "preflight_pass": true
+      },
+      "target": {
+        "raw_relative_error": 0.01776757057176382,
+        "solution_uncertainty_m": 6.219458760163483e-14,
+        "analytical_roundoff_envelope_m": 1.3758586772445668e-22,
+        "accounted_relative_error_upper": 0.017767609604183422,
+        "gate": 0.02,
+        "preflight_pass": true
+      }
+    },
+    {
+      "xy_m": [
+        0.6,
+        0.85
+      ],
+      "source": {
+        "raw_relative_error": 0.0018676566867439877,
+        "solution_uncertainty_m": 4.977090946537656e-14,
+        "analytical_roundoff_envelope_m": 2.021015650554139e-21,
+        "accounted_relative_error_upper": 0.0018676621727161372,
+        "gate": 0.02,
+        "preflight_pass": true
+      },
+      "target": {
+        "raw_relative_error": 0.0191321064533475,
+        "solution_uncertainty_m": 4.970301055936515e-14,
+        "analytical_roundoff_envelope_m": 1.2233285685112772e-23,
+        "accounted_relative_error_upper": 0.01913214379224988,
+        "gate": 0.02,
+        "preflight_pass": true
+      }
+    },
+    {
+      "xy_m": [
+        0.6,
+        1.0
+      ],
+      "source": {
+        "raw_relative_error": 0.0019079571621620584,
+        "solution_uncertainty_m": 2.8190886385649067e-14,
+        "analytical_roundoff_envelope_m": 2.5396769989733817e-21,
+        "accounted_relative_error_upper": 0.0019079604311979669,
+        "gate": 0.02,
+        "preflight_pass": true
+      },
+      "target": {
+        "raw_relative_error": 0.01256249697776225,
+        "solution_uncertainty_m": 3.143806559877059e-14,
+        "analytical_roundoff_envelope_m": 9.525748552843916e-23,
+        "accounted_relative_error_upper": 0.012562530349379982,
+        "gate": 0.02,
+        "preflight_pass": true
+      }
+    }
+  ],
+  "candidate_physical_gap": {
+    "minimum_gap_m": -4.2547980110461353e-08,
+    "xy_m": [
+      0.9333333333333333,
+      0.6833333333333332
+    ],
+    "source_element_id": 82,
+    "target_element_id": 329,
+    "polygon_edge": 2,
+    "edge_parameter": 1.0,
+    "common_polygon_count": 804,
+    "scope": "complete Q1-P1 boundary quadratic minimization on independently clipped floating polygons",
+    "solution_uncertainty_m": 1.259250051631106e-13,
+    "convex_nodal_physical_gap_lower_m": -1.5801735978217956e-06,
+    "lower_bound_scope": "nonnegative Q1/P1 partition unity on full represented coverage; nodal lower bound avoids dependence on floating polygon clipping"
+  },
+  "matrix_condition": {
+    "reduced_structural_eigenvalue_min_n_per_m": 215.9433158519502,
+    "reduced_structural_eigenvalue_max_n_per_m": 24877.91310084638,
+    "reduced_structural_condition_2": 115.20575667135986,
+    "final_active_tangent_eigenvalue_min_n_per_m": 313.06134469866237,
+    "final_active_tangent_eigenvalue_max_n_per_m": 1670164.0505455541,
+    "final_active_tangent_condition_2": 5334.941789613703
+  },
+  "reference_consistency": {
+    "force_relative_gate": 1e-06,
+    "pose_projection_relative_reference_gap_gate": 1e-06,
+    "finite_force_pass": true,
+    "pose_projection_pass": {
+      "finite": true,
+      "nonlinear_saved": true,
+      "hard_saved": true
+    },
+    "reference_consistent": true
+  },
+  "final_newton": {
+    "iteration": 8,
+    "energy_j": -2.3954934712911217e-06,
+    "relative_force_residual": 4.317310684952752e-14,
+    "active_modes": 49,
+    "minimum_gap_m": -8.844988014021737e-10,
+    "estimated_maximum_newton_gap_correction_m": 4.6689609237876836e-21,
+    "estimated_active_set_stable": true
+  },
+  "saved_nonlinear_model_comparison": {
+    "candidate_kappa_pa_per_m": 100000000.0,
+    "saved_kappa_pa_per_m": 10000000.0,
+    "same_penalty_model": false,
+    "scope": "different-model response sensitivity when kappa differs; no same-kappa agreement gate applied"
+  },
+  "recommendation": "The explicit kappa=1e8 candidate is eligible for the one separately authorized coupled check using unchanged geometry, loading, traces, reference and scientific gates. This fixed-geometry prediction is not coupled/scientific acceptance. Retain old kappa=1e7 NONPASS and use no automatic sweep.",
+  "uncertainty_scope": "exact rational supplied binary-XY contact coefficients; shared K/bases/load/clearance frozen; no material/model uncertainty",
+  "physical_gap_scope": "Reported minimum uses complete bilinear Q1-minus-P1 edge extrema on independently clipped floating polygons. The unchanged gap gate uses a conservative nonnegative-hat nodal lower bound independent of clipping arithmetic.",
+  "limits": [
+    "fixed reference overlap/projection/normal, linear shared structural K and final fixed traces only",
+    "does not test exact moving-support derivative terms or nonlinear stability",
+    "hard saved pressure need not satisfy the finite constitutive law",
+    "no continuum/scientific acceptance, penalty sweep, mesh change or new coupled solve"
+  ]
+}

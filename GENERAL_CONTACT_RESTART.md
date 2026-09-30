@@ -1,78 +1,70 @@
 # General contact — restart
 
-**30 September2026: active. D1-interior accepted; D2 development.**
+**30 September2026: active; full C0–C9 continues.**
 Worktree C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
-Production source checkpoint6bd7f023; deformable-target checkpoint29e99c92.
-Reviewed normal-control lifecycle/restart changes are owned and ready to checkpoint.
-Main checkout and historical dirty work untouched. No publication/merge/release.
+This checkpoint follows23e845e1; production source6bd7f023 unchanged. Owned helpers/raw proofs,
+reviews and plan/restart are preserved together. Historical dirty work,
+C6 prototype and main checkout preserved. No publication/merge/release.
 
 [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3;
-[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.30;
-[full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md);
-[living development record](docs/d1_review_support/GENERAL_CONTACT_DEVELOPMENT_20260929.md);
-[retained prior restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART18.md).
+[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.33;
+[programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md);
+[prior restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART20.md).
 
-## Accepted work and preserved boundaries
+## Accepted and closed development rows
 
-D1-interior independently accepted on installed0b2ac9be; exact scope/artifact
-identities in [handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md).
-Installed target C:/ANYworkspaceWork/general-contact-final-0b2ac9be/target.
-Every old frozen execution consumed; no replay or fingerprint override.
-D1 is not full C0–C9 completion or arbitrary application admission.
-D2 Q4/S3 projected finite penalty: active prescribed-source moving front,
-opening/recontact and authentic active/open restart locally pass; complete
-final checkpoint/mechanics parity exact. Refined point-load gap/operator
-NONPASS remains. Development only; endpoint checks do not qualify swept motion.
+D1-interior accepted on installed0b2ac9be, exact scope in
+[handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md).
+No automatic arbitrary-model/application/D2 admission. All old consumed
+execution authorities and historical failures remain; no replay/rebinding.
 
-## Latest S3 pairing slice
+D2 finite projected penalty is still development. Q4/S3 moving prescribed-edge
+lifecycle/restart and S3/S3 manufactured both-body force/path plus true normal
+lifecycle/restart locally pass. Checkpoint23e845e1 binds latest S3 work.
+Point-load physical-gap/operator failures remain NONPASS.
 
-Exact S3-V2D/S3-V2D Jet2/P1 projected-penalty profile, whole-face gap unchanged.
-Thirty unique focused controls pass (21mechanics,9conditioned-operand checks).
-S3-only value-roundoff includes source/projected-target conditioning, carries
-positive row budgets and rejects unresolved frames/origins; not a universal
-clipping certificate. Manufactured ordinary force and actual path pass
-3.354/3.227s,about210MB: independent q/p/force error<5e-12, physical gap-.990um,
-conservative bound-2.590um, both-body wrench<2e-12. Raw stems in docs/d1_review_support:
-d2_s3_manufactured_force_v1_20260930 and d2_s3_manufactured_force_path_v2_20260930.
-Ordinary raw force_n=.5 label stale; explicit loads/used scales6.218454N are
-correct. Exact executed helper snapshot retained. Pathv1 helper-only forbidden
-num_steps rejection retained and repaired for v2.
+Radialκ1e7 completes755.098s/480MB but target2.125080% exceeds2%; independent
+finite reference reproduces all338normal coordinates within1.361e-16m,
+explaining finite-penalty bias. Oneκ1e8 preflight passes, actualsolve TIMEOUT
+900.0605s/486.519MB without result. Reviewer recordsNONPASS. Branch stopped;
+no capincrease, oldcase rerun or spatialpass. Rawstems d2_projected_penalty_radial*
+and d2_radial_finite_reference*20260930 retain exactsnapshots/failures.
 
-Partial-cut point-load v3 is physical NONPASS35.024s (gap limit,last fraction
-.015869); covered point-load reference predicts1.0476mm penetration, so v1
-solve WITHHELD. Manufactured code verification does not repair either failure.
-Initial diagnostic/value-agreement failures retained. No method accuracy,
-D2 acceptance or installed broadening claim. Scoped independent review closed:
-[S3 review](docs/d1_review_support/D2_S3_PROJECTED_PENALTY_REVIEW_20260930.md).
-ANYfem separate C:/ANYworkspaceWork/ANYfem-contact-intent checkpointc138d41:
-reviewed summary-result persistence,16baseline+6affected checks; appadmissionfalse.
+The distinct guided partial-support fixture is locally/scoped reviewed PASS:
+Q4/fixedS3,.5Pa uniformload,100um skinsgap,κ1e6,.9of1m support, guides/ties.
+ActualQ4operator matchesD/h to3.27e-15. nx79/159 complete118.56/214.84s,
+336/363MB,14/14checks. PhysicalbinL1 improves.157142% to.0305162%.
+Decimal80/all-midpoint Lipschitz enclosure60.017s/120MB givesfine global
+qerrorupper.0048481%,L2upper.00201793%,reactionupper.000688334%, below.1%.
+FineL2upper<coarselower. Source433hashes unchanged, no furthermeshsolve needed.
+[Scoped review](docs/d1_review_support/D2_GUIDED_PARTIAL_FOUNDATION_REVIEW_20260930.md)
+SHA17592fdd98c9c2af0cd55956a026bde0f34e5f0d89b21dfb740c44e2c08870bb.
+Rawstems d2_guided_partial_foundation_{reference,n79,n159,enclosure}_v1_20260930.
+This is its own benchmark; not radialregrade, installed/D2 acceptance or generalCCD.
 
-## Next action and budget
+## Current ownership, next action and budget
 
-Deformable S3 target manufactured ordinary/path cases pass 3.614/2.985s,
-about210MB. Both-body displacement error<=2.6e-8, full normal reaction/work
-error<1e-12; independent gap-1.226um. Review closed in
-[two-body review](docs/d1_review_support/D2_S3_DEFORMABLE_MMS_REVIEW_20260930.md).
-These use a force ramp and zero in-plane controls, not normal-displacement
-lifecycle or restart. Exact runner snapshots and independent P1 cross-mass
-oracle retained; production source unchanged.
+No lead numeric process:74330TIMEOUT,44565/42219/9420completed and closed.
+Next lead slice: certify state/swept path appropriate to bounded partial-support
+profile and installed handoff. Reuse unaffected restart/work evidence; endpoint
+checks alone do not certify a swept path. FullremainingD2geometry/search and
+D3–D8 remain required. No new pressure-mode/mesh campaign.
 
-Normal-control lifecycle/restart now reviewed local PASS: two controls with
-explicit source/target normal ties, six poses, active6/6/6/0/6/6. Grouped reaction
-error<=1.87e-12, named supports exact, normal work<=5.35e-13. 4.058s/211MB.
-Authentic active/open roots at steps2/4 resume on fresh models; all pose mechanics
-and complete final checkpoint exactly equal full path. Changed stiffness rejects
-untouched root. 4.569s/212MB. Six-control setup rejection remains NONPASS.
-[Lifecycle review](docs/d1_review_support/D2_S3_NORMAL_CONTROL_REVIEW_20260930.md).
-Next: reuse accepted radial continuum reference in a new explicitly finite-law
-development case, identical spatial mechanics,900s/4GB, to resolve integrated
-spatial accuracy without another point-load mesh campaign. New settings and
-outputs; no reuse of consumed D1 execution authorities.
-Stop point-load refinement/tuning. Continue D2 and D3–D8 after this bounded slice.
-Full programme active; no method acceptance or installed broadening claimed.
-Original120active-hour clock unchanged (29September08:04:33UTC). Latest tool
-106286s=29.52h used,about90.48h remaining; check usage, never reset.
-Routine180s/1GB; named integrated/qualification900s/4GB. Up to2workers authorized.
-Lead handle70667 closed; no lead numeric process. Geometry worker stopped;
-reviewer owns only its scoped review note. Historical handles/authorities retain
-prior restart disposition. No publication, merge, release or goal completion.
+Separate managed D6 worktree:
+C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver,
+base23e845e1. Only new _ge_beam3_centered_finite_inertia.py and focusedtestdirty.
+Module3334699c/testa15cf51f, exactsnapshots retained in main rawstems
+ d6_centered_finite_inertia_v{1,2,3}_20260930.14distinct checks locally pass:
+finitework/derivatives, compensatedmomenta, exactzeroalgebraic inertia. V1cache
+collection andV2fixtureadmission NONPASS preserved. No midpoint/publicguard change.
+Worker /root/saved_radial_boundary now authors only D6_NATIVE_MIDPOINT_CONTRACT_20260930.md;
+no new module or numerical run before contract review. Reviewer /root/checkpoint_review
+closed D6_CENTERED_FINITE_INERTIA_REVIEW_20260930.md as scoped development PASS.
+Midpoint/state integration and D6 acceptance remain open.
+Mainpackage433files untouched by D6. Managedartifact mustremainrecoverable until
+integration; no archive. ANYfemsummarybridge c138d41 remainsreviewed, admissionfalse.
+
+Original120active-hour clock unchanged, resumed29September08:04:33UTC.
+Latestusage115004s=31.95h,about88.05h remaining; checkactual, neverreset.
+Routine180s/1GB; named integrated900s/4GB or stricteroldcaps. Up to2workers.
+No goalcompletion, release or full-programme forecast asserted.

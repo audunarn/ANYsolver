@@ -1,0 +1,46 @@
+{
+  "accepted": false,
+  "released": false,
+  "checks": {
+    "completed_two_steps": true,
+    "finite_law_profile": true,
+    "force_response": true,
+    "independent_physical_gap": true,
+    "physical_bins": true,
+    "both_body_reaction_and_work": true,
+    "source_displacement_response": true,
+    "target_displacement_response": false
+  },
+  "development_checks_met": false,
+  "metrics": {
+    "source_accounted_relative_errors": [
+      0.0009360373428996151,
+      0.001387918858984462,
+      0.0018964048762501043
+    ],
+    "target_accounted_relative_errors": [
+      0.01924373979932528,
+      0.02125079997996638,
+      0.013327892022006849
+    ]
+  },
+  "source_record": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_radial_v1_20260930.json",
+    "sha256": "a49b9238be5e2abdd77ba4e3e47116115bcb0dc8e58053552a9ec9706c7101fa"
+  },
+  "bins_record": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_radial_bins_v1_20260930.json",
+    "sha256": "fb8d195144adb8a298027f22d5618c38db3b373a4f86d10acc48eebc7f82f59f"
+  },
+  "wrench_record": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_radial_wrench_v1_20260930.json",
+    "sha256": "4305d73c6186fbdc9fa85f87b7c5c2b08747fdb5336fe1bdeca17997f961b6c3"
+  },
+  "force_relative_error": 0.012055158363070952,
+  "independent_gap_lower_m": -1.2947813419354068e-07,
+  "limits": "hard-contact continuum reference: penalty, spatial and trace errors combined; no exact finite-law KKT or boundary acceptance",
+  "adapter": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_radial_assess_dev.py",
+    "sha256": "077e6bb1f3dfc4040b62e9aed83367b18e1e15da13f86aa1a4a1900c27ef6c5d"
+  }
+}

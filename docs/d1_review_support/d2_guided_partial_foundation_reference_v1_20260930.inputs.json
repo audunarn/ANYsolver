@@ -1,0 +1,33 @@
+{
+  "parameters": {
+    "D": 1602.5641025641025,
+    "q": 0.5,
+    "gap": 0.0001,
+    "kappa": 1000000.0,
+    "length": 1.0,
+    "supported_length": 0.9,
+    "width": 1.0
+  },
+  "source": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_guided_partial_foundation_reference.py",
+  "source_sha256": "ce407a6078eb76e01b552a6cb2353cf1b09bef847a1b2ccd5dc3adeb3c6373c1",
+  "resource_caps": {
+    "seconds": 180,
+    "process_tree_bytes": 1073741824
+  },
+  "argv": [
+    "docs/d1_review_support/d2_guided_partial_foundation_reference.py",
+    "--output",
+    "docs/d1_review_support/d2_guided_partial_foundation_reference_v1_20260930.json",
+    "--inputs-output",
+    "docs/d1_review_support/d2_guided_partial_foundation_reference_v1_20260930.inputs.json"
+  ],
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "executable": "C:\\Python\\Python314\\python.exe",
+    "numpy": "2.4.6",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "production_contact_calls": 0,
+  "accepted": false,
+  "released": false
+}
