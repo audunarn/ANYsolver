@@ -445,3 +445,23 @@ with both accepted-block reports, 32/32 frozen inputs and zero module mismatches
 Independent review accepts scoped native local extraction only. Preserve V1's
 two collection errors and yield-switch limitations; no aggregate gate follows.
 [Immutable results and review](../../.qualification/b3-ge-e4-pl/r8-f08-foundation-20260930-v1/results.md).
+
+### M2 finite BL5 development — 30 September 2026
+
+Product `2d9ab38dd4037eda5ad808ffe6e4eb000b326970` adds experimental elastic
+nonmatching finite load/unload, actual station-port work, rejection/cancellation,
+chart rebase and distinct V11 restoration to the existing BL5 law and owner.
+Source55/55. Installedv2 retained140passes/3legacy-message failures; corrected
+v3 passed16/16 and both public histories(.5,1,.75,.9), exact restart and oldV7
+policy. Independent review accepts combined coverage with exact exception-only
+impact, not a full143-case v3 rerun. Wheel82ea8d42...,386solver/97unchanged
+consumer modules bound. [Evidence and limitations](../../.qualification/b3-ge-e4-pl/r8-bl5-finite-dev-20260930-v1/results.md).
+
+This implements a finite experimental route, not M2/F02/F03/G2 acceptance or a
+multiplier-space selection. Physical transfer, growing-space stability, ratios,
+material lines, complete consumers and all aggregate gates remain open.
+ANYfem product7cf1fd7e and wheele3f755fe add separate experimental BL5 input
+persistence, public controls and restored continuation. Installed21/21 (seven
+new/fourteen historical) pass with exact artifacts and independent review clear.
+This verifies experimental input roundtrip, not native-project persistence or
+physical/aggregate qualification; no speedup or release claim follows.
