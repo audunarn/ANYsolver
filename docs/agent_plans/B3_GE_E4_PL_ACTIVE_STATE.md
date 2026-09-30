@@ -11,6 +11,7 @@ Previous living-note/history bytes remain in integration commits, including48404
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
 branch codex/b3-ge-e4-pl-integration; product000d2fa3, mechanical commitd31936c2.
+Latest staged product/evidence commit9057067d; preparation-only source follows it.
 Product observer slice is reviewed on source base484043fa; new wheel
 243b2d8a2f1b03a6f08c49624f449e6e282749203b77b37b4be7817cd8758317.
 Installed sites TEMP/r8-accepted-observer-installed-v1/V2/V3/site;55 current
@@ -127,6 +128,17 @@ transfer mismatch from missing reference evidence; it cannot establish converged
 1% accuracy alone. No fourth native grid or new norm campaign follows by default.
 Keep root connection versus direct-ground bookkeeping distinct. Worker owns only
 the new reference runner/applicability note; no new numerical reference run yet.
+Prepared runner: scripts/b3_e4_bl5_matched_mz_reference_dev.py, SHA6e1b3f25...
+(AST-only10functions, unexecuted). [Applicability audit](B3_GE_E4_PL_BL5_PHYSICAL_REFERENCE_APPLICABILITY_20261001.md)
+records actual118poses/96element covectors/160strong rows versus native40weak
+rows, common reference derivative/rigid/release controls, complete domain cuts
+and fixed-region atom conventions. Execute fresh Fy/Mz cases serially after
+recording exact inputs; if route/work controls fail, repair that reference first.
+If Fy agrees but Mz transfer/response differs, investigate that physical channel
+through common work and declared spaces; if both agree, advance the required
+matched convergence assessment. Neither outcome alone selects a space or closes
+locking/accuracy. Saved native outputs lack full poses, so recover those two
+same-fixture actions only if needed for the missing common-field comparison.
 
 All remaining topology/footprints, materials/cyclic simultaneous yielding, loads,
 spectra, imperfections/capacity, scale, external references, installed platforms
