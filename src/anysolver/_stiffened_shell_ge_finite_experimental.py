@@ -20,6 +20,11 @@ from scipy.spatial.transform import Rotation
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._ge_beam3_generalized_cell import GeneralizedCellHistory
 from ._ge_beam3_generalized_ellipsoid_section import GeneralizedHistory
+from ._ge_beam3_fibre_section import PhysicalFibreSection
+from ._stiffened_shell_beam_history import (
+    arrays as native_history_arrays, histories as native_histories,
+    shapes as native_history_shapes, observables as native_observables,
+)
 from ._ge_beam3_p5.algebra import rotation
 from ._ge_beam3_p5.compensated_coordinates import split_sum
 from ._ge_beam3_variational_shell import response as variational_shell_response
@@ -35,6 +40,7 @@ from ._stiffened_shell_ge_experimental import (
     _linear_equilibrium, _scaled_constraint_gap,
 )
 from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_checkpoint
+from ._stiffened_shell_ge_checkpoint_binary import SCHEMAS as _BINARY_SCHEMAS
 from ._stiffened_shell_ge_checkpoint_binary import encode_s3 as _encode_s3_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import encode_chart as _encode_chart_checkpoint
 from ._stiffened_shell_rotation_charts import owned_anchors, physical_frames, total_coordinates
@@ -45,6 +51,7 @@ from ._stiffened_shell_q4_algorithmic_pullback import (
 
 MAX_JSON_CHECKPOINT_BYTES = 2_000_000
 MAX_JSON_CHECKPOINT_VALUES = 50_000
+NATIVE_MATERIAL_CHECKPOINT = _BINARY_SCHEMAS["finite_native_material"]
 
 
 def _position_pair(reference, displacement):
@@ -87,9 +94,48 @@ def _material_histories(owner, plastic, accumulated):
 
 
 def _material_observables(histories):
-    return tuple(tuple(float(sum(station.accumulated))
-                       for station in history.stations)
-                 for history in histories)
+    return native_observables(histories)
+
+
+@dataclass(frozen=True)
+class BeamFibreStationRecovery:
+    """Native accepted station response from its last material predecessor.
+
+    Fibre strains/stresses and plastic increments retain native high/low pairs.
+    This record does not label material potential as stored energy/dissipation.
+    """
+    element_id: int
+    cell: int
+    station: int
+    xi: float
+    measure: float
+    strain: np.ndarray
+    strain_low: np.ndarray
+    resultants: np.ndarray
+    resultants_low: np.ndarray
+    reference_frame: np.ndarray
+    current_frame: np.ndarray
+    fibres: tuple
+
+
+def _fibre_recovery(owner, state, predecessors, accepted_histories):
+    records = []
+    for i, ((element, _, _), predecessor, accepted) in enumerate(zip(
+            owner._beam_parts, predecessors, accepted_histories)):
+        if type(element.section) is not PhysicalFibreSection:
+            continue
+        rows = element.operator.recover(state.cells[i], state.resultants[i],
+                                        origin=predecessor,
+                                        check=element.operator.guard)
+        if tuple(row["history"] for row in rows) != accepted.stations:
+            raise ValueError("native accepted fibre recovery history mismatch")
+        for row in rows:
+            records.append(BeamFibreStationRecovery(
+                element.element_id, row["cell"], row["station"], row["xi"],
+                row["measure"], *(_owned(row[name]) for name in (
+                    "strain", "strain_low", "resultants", "resultants_low",
+                    "reference_frame", "current_frame")), row["fibres"]))
+    return tuple(records)
 
 
 def _shell_material_arrays(histories):
@@ -220,6 +266,7 @@ class FinitePointResult:
     shell_frames: np.ndarray | None = None
     shell_rotation_anchors: np.ndarray | None = None
     shell_chart_coordinates: np.ndarray | None = None
+    beam_fibre_material: tuple[BeamFibreStationRecovery, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -267,6 +314,7 @@ class FinitePointDriver:
             np.zeros(6*len(owner._connections)))
         self._shell_origins = tuple(part[3] for part in owner._shell_parts)
         self._beam_origins = tuple(part[2] for part in owner._beam_parts)
+        self._beam_predecessors = self._beam_origins
         self._pattern = None
         self._load_factor = 0.
         self._accepted = None
@@ -483,9 +531,15 @@ class FinitePointDriver:
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.publish")
                     next_result = _with_shell_chart(next_result, trial, owner._shell_count)
+                    if owner._has_physical_fibre:
+                        next_result = replace(next_result, beam_fibre_material=
+                            _fibre_recovery(owner, trial, self._beam_origins, beam_next))
+                        cancellation_safe_point(cancellation_token,
+                                                "stiffened-shell.finite.material-publish")
                     with owner._commit_lock:
                         self._state = trial
                         self._shell_origins = next_shell_origins
+                        self._beam_predecessors = self._beam_origins
                         self._beam_origins = beam_next
                         self._load_factor = float(factor)
                         self._accepted_factors = next_factors
@@ -595,6 +649,13 @@ class FinitePointDriver:
                   ("multipliers", state.multipliers),
                   ("pattern", self._pattern),
                   ("accepted_factors", np.asarray(self._accepted_factors)))
+        if self.owner._has_physical_fibre:
+            return _encode_binary_checkpoint(kind("finite_native_material"),
+                self.owner._identity, generation, arrays +
+                native_history_arrays(self.owner._beam_parts,
+                                      self._beam_predecessors, "origin") +
+                native_history_arrays(self.owner._beam_parts,
+                                      self._beam_origins, "accepted"))
         nonmonotone = any(b <= a for a, b in zip(
             self._accepted_factors, self._accepted_factors[1:]))
         if (self.owner._definition.shell.j2_curve is not None and
@@ -671,6 +732,7 @@ class FinitePointDriver:
                      "pattern"}
         if type(value) is not dict:
             raise ValueError("incompatible experimental finite checkpoint")
+        native_material = value.get("schema") == NATIVE_MATERIAL_CHECKPOINT
         s3_material = value.get("schema") == FINITE_S3_MATERIAL_CHECKPOINT
         shell_material = value.get("schema") in (
             FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT)
@@ -679,13 +741,16 @@ class FinitePointDriver:
             FINITE_S3_MATERIAL_CHECKPOINT)
         expected_keys = (base_keys | {"beam_plastic", "beam_accumulated"}
                          if material else base_keys)
+        if native_material:
+            expected_keys |= {name for prefix in ("origin", "accepted")
+                for name, _ in native_history_shapes(owner._beam_parts, prefix)}
         if shell_material:
             expected_keys |= {"shell_plastic", "shell_alpha"}
         if s3_material:
             expected_keys |= {"s3_states"}
         if (set(value) != expected_keys or
                 value["schema"] not in
-                (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
+                (FINITE_CHECKPOINT, NATIVE_MATERIAL_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
@@ -699,9 +764,9 @@ class FinitePointDriver:
         if (type(factors) is not list or len(factors) != value["generation"] or
                 not factors or any(type(v) is not float or not np.isfinite(v)
                                    for v in factors) or
-                (not material and (factors[0] <= 0. or
+                (not material and not native_material and (factors[0] <= 0. or
                     any(b <= a for a, b in zip(factors, factors[1:])))) or
-                (material and (factors[0] <= 0. or
+                ((material or native_material) and (factors[0] <= 0. or
                     any(b <= 0. or b == a for a, b in
                         zip(factors, factors[1:]))))):
             raise ValueError("invalid accepted finite load history")
@@ -727,7 +792,12 @@ class FinitePointDriver:
         resultants = _owned(value["resultants"], self._state.resultants.shape)
         multipliers = _owned(value["multipliers"], self._state.multipliers.shape)
         pattern = _owned(value["pattern"], (owner._K.shape[0],))
-        if material:
+        if native_material:
+            if not owner._has_physical_fibre or owner._definition.shell.j2_curve is not None:
+                raise ValueError("native material checkpoint requires elastic-shell fibre model")
+            beam_origins = native_histories(owner._beam_parts, value, "origin")
+            beam_accepted = native_histories(owner._beam_parts, value, "accepted")
+        elif material:
             stations = sum(len(part[0].operator.cell.stations)
                            for part in owner._beam_parts)
             plastic = _owned(value["beam_plastic"], (stations, 6, 2))
@@ -784,9 +854,11 @@ class FinitePointDriver:
             trial, factors[-1], shell_origins, beam_origins,
             pattern=pattern)
         if (not np.isfinite(relative) or relative > 1e-8 or gap > 1e-9 or
-                (not material and any(station.accumulated != (0., 0.)
+                (not material and not native_material and any(station.accumulated != (0., 0.)
                     for history in beam_next for station in history.stations))):
             raise ValueError("mechanically inconsistent finite checkpoint")
+        if native_material and beam_next != beam_accepted:
+            raise ValueError("native material checkpoint update disagrees with accepted history")
         if material:
             next_plastic, next_accumulated = _material_arrays(beam_next)
             for saved, repeated in ((plastic, next_plastic),
@@ -830,7 +902,7 @@ class FinitePointDriver:
             _owned(self._beam_positions(trial)), frames, cells, resultants,
             multipliers, _owned(support), relative, gap, 0,
             value["generation"] if accepted_generation is None else accepted_generation, tuple(factors),
-            _material_observables(beam_origins),
+            _material_observables(beam_accepted if native_material else beam_origins),
             (tuple(tuple(float(v) for v in state["alpha"])
                    for state in shell_origins) if shell_material else ()),
             (_shell_q4_recovery(owner._shell_parts[:q4_count],
@@ -840,10 +912,14 @@ class FinitePointDriver:
                                 shell_next[q4_count:])
              if s3_material else ()))
         result = _with_shell_chart(result, trial, owner._shell_count)
+        if native_material:
+            result = replace(result, beam_fibre_material=
+                _fibre_recovery(owner, trial, beam_origins, beam_accepted))
         self._state = trial
         self._pattern = pattern
         self._shell_origins = shell_origins if shell_material else shell_next
-        self._beam_origins = beam_origins if material else beam_next
+        self._beam_predecessors = beam_origins
+        self._beam_origins = beam_accepted if native_material else beam_origins if material else beam_next
         self._load_factor = factors[-1]
         self._accepted_factors = tuple(factors)
         self._accepted = result

@@ -22,11 +22,27 @@ python scripts/experimental_stiffened_ge_panel.py --beam-family mixed
 
 This route supports linear solve, physical support reactions, owned coordinates,
 checkpoint/restore and subsequent compatible loads with factorization reuse.
-Capabilities report `EXPERIMENTAL_NOT_QUALIFIED` and `reference_linear` only.
-Finite analysis/checkpoints, line attachments and fibre stress recovery remain
-explicitly unsupported for models containing these sections. Their material
-histories must enter the shared atomic owner before a nonlinear capability is
-admitted; a linear result does not predict yielding or fibre stress evolution.
+Capabilities report `EXPERIMENTAL_NOT_QUALIFIED`. The same point owner also
+admits experimental finite physical-fibre and mixed-family histories with
+elastic Q4/S3 shells. Native cell coordinates are retained; each trial uses
+the same accepted material predecessor and acceptance is atomic. Accepted
+station recovery supplies paired fibre strains, stresses and plastic increments
+from the actual native material response. `beam_station_accumulated` reports
+maximum fibre accumulation per physical-fibre station, and generalized
+accumulation for generalized stations; these are different material measures.
+
+The distinct binary native-material V7 checkpoint stores the last predecessor
+and resulting history in model-defined order, preserving every high/low pair.
+Restoration re-evaluates that increment and requires matching accepted history
+before publishing state. This validates the endpoint and its last material
+update, not the provenance of an entire loading path. Generalized-only formats
+keep their existing contracts.
+
+Simultaneous shell J2/fibre histories, line attachments and integrated fibre
+energy/dissipation remain unfinished and explicitly excluded. Strong full-section
+yielding and small-load/pure-fibre S3 convergence failures remain development
+findings; tolerances have not been relaxed. The passing partial-yield histories
+do not qualify those cases or G3. A linear result does not predict yielding.
 
 ## Physical B2 numerical output admission
 

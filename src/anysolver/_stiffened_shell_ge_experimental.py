@@ -677,8 +677,7 @@ class ExperimentalGEAnalysis:
             else "curved/reversed BL5 line mapping"
             for line in self._definition.lines))
         excluded = ((("shell J2 plastic",) if not shell_plastic else ()) +
-                    ("physical-fibre B3 finite",
-                     "nonpositive finite load factors", "line", "footprint",
+                    ("nonpositive finite load factors", "line", "footprint",
                      "modes", "buckling")
                     if not self._line_samples else
                     ("shell J2 plastic", "physical-fibre B3 finite",
@@ -688,14 +687,14 @@ class ExperimentalGEAnalysis:
                 not self._line_samples):
             excluded += ("qualified S3 J2 finite-rotation response",)
         if self._has_physical_fibre:
-            excluded += ("finite analysis of mixed native section families",
-                         "physical-fibre stress recovery")
+            excluded += ("coupled shell J2/physical-fibre finite histories",
+                         "integrated physical-fibre energy/dissipation recovery")
         return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
                 "shell": (("experimental isotropic Q4/S3-V2D J2"
                            if self._definition.shell.s3_elements else
                            "experimental isotropic Q4 J2") if shell_plastic else
                           "elastic flat Q4/S3"),
-                "beam": ("native B3 retained, reference-linear physical fibres"
+                "beam": ("native B3 retained, experimental physical-fibre histories"
                          if self._has_physical_fibre else
                          "generalized B3 retained" if self._line_samples else
                          "generalized B3 retained, including experimental yielding"),
@@ -705,9 +704,12 @@ class ExperimentalGEAnalysis:
                     line.multiplier_space for line in self._definition.lines),
                 "q4_force_map": self._definition.q4_pullback_policy,
                 "rotation_chart": ("unchanged reference-linear chart"
-                                   if self._line_samples or self._has_physical_fibre else
+                                   if self._line_samples or (self._has_physical_fibre and shell_plastic) else
                                    "experimental owned shell anchors; full fixed/free rotational triples only"),
-                "analysis": (("reference_linear",) if self._line_samples or self._has_physical_fibre else
+                "analysis": (("reference_linear",) if self._line_samples else
+                             ("reference_linear", "experimental_native_fibre_finite_point")
+                             if self._has_physical_fibre and not shell_plastic else
+                             ("reference_linear",) if self._has_physical_fibre else
                              ("reference_linear", "experimental_elastic_finite_point",
                               "experimental_generalized_plastic_finite_point") +
                              (("experimental_q4_s3_j2_finite_point",)
@@ -802,8 +804,8 @@ class ExperimentalGEAnalysis:
         self._require_open()
         if self._line_samples:
             raise ValueError("experimental weak line admits reference-linear analysis only")
-        if self._has_physical_fibre:
-            raise ValueError("physical-fibre mixed owner admits reference-linear analysis only")
+        if self._has_physical_fibre and self._definition.shell.j2_curve is not None:
+            raise ValueError("coupled shell J2/physical-fibre finite histories are not implemented")
         if self._accepted is not None:
             raise RuntimeError("finite and reference-linear states cannot be mixed")
         if self._finite_driver is None:
@@ -874,8 +876,7 @@ class ExperimentalGEAnalysis:
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
         chart = None
-        if self._has_physical_fibre and raw.startswith(
-                (CHART_CHECKPOINT_MAGIC, S3_BINARY_CHECKPOINT_MAGIC)):
+        if self._has_physical_fibre and raw.startswith(S3_BINARY_CHECKPOINT_MAGIC):
             raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
         if raw.startswith(CHART_CHECKPOINT_MAGIC):
             if self._line_samples:
@@ -888,7 +889,7 @@ class ExperimentalGEAnalysis:
                 if ("_chart" in kind) != (chart is not None):
                     raise ValueError("numeric shell chart snapshot requires matching outer policy")
                 kind = kind.replace("_chart", "")
-                if kind != "linear" and self._has_physical_fibre:
+                if kind not in ("linear", "finite_native_material") and self._has_physical_fibre:
                     raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
                 if kind in ("finite", "finite_material", "finite_shell_material") and self._line_samples:
                     raise ValueError(
@@ -906,6 +907,11 @@ class ExperimentalGEAnalysis:
                         ("multipliers", (constraints,)),
                         ("pattern", (count,)),
                         ("accepted_factors", (generation,)))
+                if kind == "finite_native_material":
+                    if not self._has_physical_fibre or self._definition.shell.j2_curve is not None:
+                        raise ValueError("native material checkpoint requires elastic-shell fibre model")
+                    from ._stiffened_shell_beam_history import shapes
+                    return base + shapes(self._beam_parts, "origin") + shapes(self._beam_parts, "accepted")
                 if kind in ("finite_material", "finite_shell_material"):
                     stations = sum(len(part[0].operator.cell.stations)
                                    for part in self._beam_parts)
@@ -923,12 +929,14 @@ class ExperimentalGEAnalysis:
                 raw, self._identity, expected_shapes)
             kind = kind.replace("_chart", "")
             schema = (CHECKPOINT if kind == "linear" else
+                      "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"
+                      if kind == "finite_native_material" else
                       FINITE_MATERIAL_CHECKPOINT if kind == "finite_material" else
                       FINITE_SHELL_MATERIAL_CHECKPOINT if kind == "finite_shell_material"
                       else FINITE_CHECKPOINT)
             value = {"schema": schema, "model": self._identity,
                      "generation": generation, **arrays}
-            if kind in ("finite", "finite_material", "finite_shell_material"):
+            if kind in ("finite", "finite_material", "finite_shell_material", "finite_native_material"):
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
         elif raw.startswith(S3_BINARY_CHECKPOINT_MAGIC):
             if (self._line_samples or self._definition.shell.j2_curve is None or
@@ -967,11 +975,15 @@ class ExperimentalGEAnalysis:
                 value = json.loads(raw.decode("ascii"))
             except (UnicodeError, json.JSONDecodeError, RecursionError) as exc:
                 raise ValueError("invalid mixed linear checkpoint") from exc
+            if (type(value) is dict and value.get("schema") ==
+                    "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"):
+                raise ValueError("native material checkpoint requires binary framing")
         if (type(value) is dict and value.get("schema") in
                 (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
-                 FINITE_S3_MATERIAL_CHECKPOINT)):
-            if self._has_physical_fibre:
+                 FINITE_S3_MATERIAL_CHECKPOINT,
+                 "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7")):
+            if self._has_physical_fibre and value["schema"] != "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7":
                 raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
             if self._line_samples:
                 raise ValueError(

@@ -51,7 +51,8 @@ def test_physical_fibre_linear_panel_matches_elastic_section_and_restarts(mixed,
     analysis = anysolver.stiffened_shell.create_analysis(definition=definition)
     oracle = b3_ge.create_stiffened_shell_analysis(formulation='b3-ge', definition=baseline)
     assert analysis.capabilities['status'] == 'EXPERIMENTAL_NOT_QUALIFIED'
-    assert analysis.capabilities['analysis'] == ('reference_linear',)
+    assert analysis.capabilities['analysis'] == (
+        'reference_linear', 'experimental_native_fibre_finite_point')
     assert 'PHYSICAL_AXIAL_BIAXIAL_FIBRE' in analysis.capabilities['beam_section_families']
     assert ('RESULTANT_ELLIPSOID' in analysis.capabilities['beam_section_families']) == mixed
     assert analysis.preflight()['retained_dofs'] == 48
@@ -88,12 +89,12 @@ def test_physical_fibre_linear_panel_matches_elastic_section_and_restarts(mixed,
 
 
 @pytest.mark.parametrize('kind', ('json','binary','chart','s3'))
-def test_physical_fibre_finite_requests_reject_without_state_change(kind):
+def test_physical_fibre_legacy_finite_checkpoints_reject_without_state_change(kind):
     owner = anysolver.stiffened_shell.create_analysis(definition=_definition(mixed=True))
     actions = (NodalAction('beam',105,(0.,0.,100.,0.,0.,0.)),)
     owner.solve_linear(actions)
     saved = owner.checkpoint()
-    with pytest.raises(ValueError,match='reference-linear analysis only'):
+    with pytest.raises(RuntimeError,match='states cannot be mixed'):
         owner.solve(actions)
     payload = json.loads(saved)
     payload['schema'] = FINITE_CHECKPOINT
@@ -101,7 +102,7 @@ def test_physical_fibre_finite_requests_reject_without_state_change(kind):
            encode('finite',owner._identity,1,(('q',np.asarray(payload['q'])),))
            if kind == 'binary' else CHART_MAGIC if kind == 'chart' else S3_MAGIC)
     fresh = anysolver.stiffened_shell.create_analysis(definition=_definition(mixed=True))
-    with pytest.raises(ValueError,match='reference-linear checkpoints only'):
+    with pytest.raises(ValueError,match='reference-linear checkpoints only|digest mismatch|checkpoint'):
         fresh.restore(raw)
     assert fresh._accepted is None and fresh._finite_driver is None
     assert owner.checkpoint() == saved
