@@ -8,6 +8,13 @@ amendment to frozen registrations or historical results. The
 requirements; the [active note](B3_GE_E4_PL_ACTIVE_STATE.md) identifies
 current evidence and failures. No aggregate gate or milestone is accepted.
 
+Positive reference-norm controls,30 September: independently reviewed sparse
+beam/shell analytical inverse actions, unit/coordinate-basis congruence and
+scalar resolved/unresolved/duplicate-action controls pass the preset predicates.
+Finest dual errors≤5.93e−5 beam/1.15e−4 shell. This does not verify native BL5
+work/Q/gauges or beta criteria, consume F03 or close M2/G0B.
+[Ordinary development results](development/r8-bl5-riesz-controls-20260930/results.md).
+
 Development update, 29 September 2026: the objective S3 J2 algorithmic owner slice passes 49/49 source and 49/49 exact installed-wheel checks with independent review. Failures and exact inputs are preserved at `.qualification/b3-ge-e4-pl/r8-s3-j2-algorithmic-dev-20260929-v1/`. This does not close F05, V03/V17/V18/V28 or an aggregate gate.
 
 Native fibre-linear integration,30 September: product `6b0b1131` admits existing

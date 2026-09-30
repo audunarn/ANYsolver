@@ -11,8 +11,8 @@ No main merge/publication authority. Formal F03 unconsumed; spent authorities st
 ## Identity and ownership
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration. Source parent015b16a9 plus the current
-aggregation/admission commit (use actual git HEAD). Product wheel5079b270....
+branch codex/b3-ge-e4-pl-integration. Product commit855610d9 plus the current
+auxiliary-controls commit (use actual git HEAD). Product wheel5079b270....
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 branch codex/experimental-ge-panel-consumer, commit6226230; wheel0b6c51af....
 Full hashes/source-wheel-site maps are in the latest record below.
@@ -58,14 +58,6 @@ Retain this point map; preserve footprint extent in any new matched comparison.
 [Work/envelopes](../../.qualification/b3-ge-e4-pl/r8-b2-work-envelope-dev-20260930-v1/results.md)
 127/127 installed and prior scoped foundation records remain valid for their inputs.
 
-Next: return principal GE work to a bounded physical torque/shear and actual
-BL5 trace-action decision, using accepted point/line transfer provenance and the
-saved support/action evidence. Read applicable current fixtures/contracts before
-choosing the discriminator. Separate nodal six-channel, L1 six-channel, BL5
-released-normal-spin and B2 finite-support laws. Do not infer physical fidelity
-from recovered balance alone or resume isolated axial refinement. Independently
-advance concrete remaining foundations where dependencies permit.
-
 Current decision: retain BL5 ports/support declaration after
 [physical-transfer screen](../../.qualification/b3-ge-e4-pl/r8-bl5-physical-transfer-dev-20260930-v1/results.md).
 Native16/16/P0 Mz/Mx/Fy station work/equilibrium pass; normal couple10Nm transfers
@@ -76,11 +68,8 @@ and independently reviewed. Work differences−0.4650%/+0.0872%; beam pose
 nodal reference and weak retained BL5 are distinct discrete operators.
 Installed61559673 BL5 finite impact9/9 passes(39.40s,215138304B,210onsiteimports).
 No response drilling independence, converged accuracy or formalF03 acceptance.
-Remaining uncertainty is growing-space compatibility versus physical transfer
-convergence. Next bounded batch freezes ratios/supports/actions and common
-physical test fields/regions; assesses norm-scaled native trace and actual mixed
-system together. A work/norm defect requires repair; stable/converging transfer
-permits the full envelope; an unresolved mode goes to focused mechanics review.
+Growing-space compatibility and physical convergence remain unaccepted.
+Separate nodal six-channel, L1 six-channel, BL5 released-normal-spin and B2 laws.
 Do not tune bases from candidate values or repeat isolated axial refinements.
 Foreign contact run finished without intervention; no owned numerical job active.
 
@@ -95,15 +84,23 @@ routes with growing rows40/80/160 versus20/40/80. Mz work differences shrink
 17.457%→6.244%→1.845%; transfer components are not uniformly monotone.
 Retain both policies, no fourth mesh or basis selection from response/gaps.
 
-Next: implement independently derived
+Implemented bounded independently derived
 [positive reference Riesz controls](B3_GE_E4_PL_M2_TRACE_NORM_CONTRACT_DEV.md),
-continuous beam-axis translations/cellwise directors plus supported five-field
-shell norm. Verify physical work, gauge annihilation, sparse inverse actions,
-enrichment and independent good/bad controls before freezing criteria/candidate
-beta assessment. Reference norm elimination never replaces mechanical K.
-Then full seven-ratio/physical-transfer/actual-KKT envelope. Missing controls or
-bad work map require repair; genuine unresolved modes go to mechanics review.
-Norm derivation is not numerical acceptance; formalF03 remains unconsumed.
+continuous beam-axis translations/cellwise directors and five-field shell norm.
+[Raw outputs and independent review](development/r8-bl5-riesz-controls-20260930/results.md):
+three-level analytic dual errors≤5.93e−5 beam/1.15e−4 shell, expected convergence,
+metres/millimetres and coordinate-basis invariance pass. Scalar unresolved P2
+action is invisible to coarse P1 but has positive independent reference dual.
+This is a reference-control result, not native gauge/beta or acceptance.
+
+Next discriminator: independently assemble actual BL5 physical domain actions
+into this reference norm; compare them to native C-transpose work, including
+arms, cell moments, mapped supports and Q density scaling. Fixed reference
+enrichment distinguishes work-map defects from approximation error. Defects
+require repair; accurate native/reference pairing permits justified criterion
+freeze and full seven-ratio/actual-KKT assessment. No automatic fourth loaded
+mesh. Reference norm elimination never replaces mechanical K. General gauge,
+native multiplier-basis and accuracy checks remain open; formalF03 unconsumed.
 
 Materials/simultaneous yielding, footprints/topology, loads, spectra,
 imperfections/capacity, scale, external references, platforms and release remain
