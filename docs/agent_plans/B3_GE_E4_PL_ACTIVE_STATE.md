@@ -12,14 +12,16 @@ No main merge/publication authority. Formal F03 unconsumed; spent authorities st
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
 branch codex/b3-ge-e4-pl-integration. Product commit855610d9 plus the current
-auxiliary-controls commit (use actual git HEAD). Product wheel5079b270....
+auxiliary-controls7987074b and current work-map commit (use actual git HEAD).
+Product wheel5079b270....
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 branch codex/experimental-ge-panel-consumer, commit6226230; wheel0b6c51af....
 Full hashes/source-wheel-site maps are in the latest record below.
 Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py:
 SHA c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
 Do not edit/stage/run/interrupt. Main untouched. No owned numerical job active.
-All workers finished their bounded slices; no concurrent writer remains.
+Root owns source integration; independent workers write assigned TEMP notes only.
+No concurrent source writer or owned numerical job remains.
 
 ## Delivered behavior and current decision
 
@@ -93,14 +95,22 @@ metres/millimetres and coordinate-basis invariance pass. Scalar unresolved P2
 action is invisible to coarse P1 but has positive independent reference dual.
 This is a reference-control result, not native gauge/beta or acceptance.
 
-Next discriminator: independently assemble actual BL5 physical domain actions
-into this reference norm; compare them to native C-transpose work, including
-arms, cell moments, mapped supports and Q density scaling. Fixed reference
-enrichment distinguishes work-map defects from approximation error. Defects
-require repair; accurate native/reference pairing permits justified criterion
-freeze and full seven-ratio/actual-KKT assessment. No automatic fourth loaded
-mesh. Reference norm elimination never replaces mechanical K. General gauge,
-native multiplier-basis and accuracy checks remain open; formalF03 unconsumed.
+[Native reference work](development/r8-bl5-native-reference-work-20260930/results.md):
+one8x2/16/span2 fixture, all40 basis columns including supported rows match
+physical covectors exactly. All222 omitted kinematic slots have C entries zero;
+Q/reciprocal row-basis work parity passes. No omitted slot is removed from K.
+Seven independent auxiliary actions at2/4/8 pass sparse inverse checks; mixed
+final dual increment0.21055% leaves reference error unproven. Installed wheel
+unchanged,387modules/207imports bound;V1 import failure retained, V2/V3 pass.
+Independent review clear for this bounded map/quotient, not native stability.
+
+Next: finish independent approximation/control argument and reference-error
+criteria before native spectra. One bounded worker derivation is pending at
+TEMP/r8-bl5-stability-criterion-argument.md; inspect actual completion, no
+numerical run is involved. Identify the exact unjustified inequality if no
+criterion follows; use scalar good/bad controls without calibrating to native
+trends. Then full seven-ratio/actual-KKT assessment. No automatic fourth loaded
+mesh, global dense inverse, mechanical gauge removal or F03 consumption.
 
 Materials/simultaneous yielding, footprints/topology, loads, spectra,
 imperfections/capacity, scale, external references, platforms and release remain
