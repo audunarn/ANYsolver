@@ -379,3 +379,39 @@ is preserved byte-for-byte. These checks close local code integration only;
 partial-cut v3 NONPASS and covered point-load preflight NONPASS remain separate.
 No arbitrary point-load/continuum accuracy, method acceptance, installed
 capability broadening or full D2 completion follows.
+
+**Next bounded two-body code slice:** same covered S3 geometry/law; release
+only target8/9 normal DOFs and retain target7/10 plus all target in-plane/
+rotation constraints. Known independent field: source[0,-1,-1,0,-1,-1]um,
+target[0,.3,.3,0]um. Worker owns new independent common-refinement M/H/S
+module; lead owns parameterized solver runner. G=[M,-H], all six pressure rows
+retained; manufacture only the six joint free-normal loads from shared K0 and
+independent contact work. Compare actual source/target q, pressure, full normal
+residual/work including fixed rows, both-body wrenches and common-polygon
+physical gap at the unchanged1e-6/50um gates. One ordinary run180s/1GB after
+new oracle verification; then affected path dispatch only if needed. This is
+two-body code integration, not point-load spatial acceptance. Reviewer
+scrutinizes reference/work early; no kernel change, D1 replay or load sweep.
+
+**Two-body ordinary result:** independent oracle passed1.535s/137MB; seven
+common polygons reproduce partitions/affine moments to2.22e-16 and literal
+wrenches4.44e-16. Actual ordinary solve passes3.614s/211MB: source/target q
+errors1.914e-9/1.480e-8, pressure2.475e-11, full normal residual9.567e-13,
+prescribed-row virtual work5.347e-13. Independent gap-1.225714um, conservative
+bound-2.890um, all six pressures positive, zero multipliers. One affected path
+check is required for the changed joint reduction/control assembly (six joint
+free normals versus four source-only), with identical manufactured loading and
+gates. Use unique d2_s3_deformable_mms_force_path_v1_20260930 outputs180s/1GB;
+no repetition of the prior fixed-target path. This does not qualify spatial
+accuracy or repair the point-load failures.
+
+**Two-body slice closed:** affected path passes2.985s/210MB, actual S3 path
+profile, two accepted increments/six complete element states. Source/target
+q errors3.355e-9/2.591e-8, pressure4.379e-11, full normal residual9.567e-13,
+prescribed-row work5.347e-13, both-body wrench1.037e-13. Ordinary/path numeric
+differences stay within the registered code target; no exact-parity claim.
+Independent review closes local code integration only. Both targets actually
+deform; zero in-plane path controls do not qualify a normal-displacement
+lifecycle. Next meaningful S3 workflow is true normal control press/open/
+recontact with control reaction reconciliation and restart. Spatial point-load
+failures remain separate; do not launch another stiffness/mesh diagnostic.

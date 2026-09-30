@@ -58,6 +58,16 @@ These limits remain open; manufactured code checks do not confer continuum
 accuracy or rehabilitate either point-load failure. No accepted or installed
 capability broadening follows.
 
+The separately manufactured deformable-target S3 case also passes ordinary
+force and the actual two-zero-control path, with source and target normal
+motion assembled together. Maximum displacement-reference error2.592e-8,
+full ten-row normal residual/work errors below1e-12, and independent gap
+-1.225714um versus whole-face lower bound-2.890um. Independent common-refinement
+cross-mass reproduces constant/affine force and moment. Scoped local review
+closed in [two-body review](d1_review_support/D2_S3_DEFORMABLE_MMS_REVIEW_20260930.md).
+This does not establish normal-displacement press/open/recontact, restart,
+spatial accuracy or independent D2 acceptance for S3/S3.
+
 The independent fixed-geometry Q1 normal reference matches saved coarse cases;
 its unchanged1e7 4x2 prediction gives62.7135µm penetration, outside50µm.
 All15positive supports remain. This is retained development evidence against

@@ -27,7 +27,7 @@ XY = np.array(((.1, .1), (.6, .1), (1.1, .1), (.1, 1.1), (.6, 1.1), (1.1, 1.1)))
 CELLS = ((1, 2, 4), (2, 5, 4), (2, 3, 5), (3, 6, 5))
 
 
-def build(target_extent=1.):
+def build(target_extent=1., deformable_target=False):
     m = FEModel("d2_s3_projected_small_motion")
     m.add_material("elastic", 1e5, .3, density=1.)
     for n, (x, y) in enumerate(XY, 1): m.add_node(n, float(x), float(y), .04+1e-8)
@@ -40,6 +40,11 @@ def build(target_extent=1.):
     for name, ids in (("left", (1, 4)), ("target", (7, 8, 9, 10))):
         m.add_boundary_condition(BoundaryCondition(name, ids,
             {d: 0. for d in ("ux", "uy", "uz", "rx", "ry", "rz")}))
+    if deformable_target:
+        m.boundary_conditions = [replace(bc, node_ids=(7, 10))
+            if bc.name == "target" else bc for bc in m.boundary_conditions]
+        m.add_boundary_condition(BoundaryCondition("target_guided", (8, 9),
+            {d: 0. for d in ("ux", "uy", "rx", "ry", "rz")}))
     m.add_boundary_condition(BoundaryCondition("guided", (2, 3, 5, 6),
         {d: 0. for d in ("ux", "uy", "rx", "ry", "rz")}))
     d = ContactDefinition(surfaces=(ContactSurface("source", (1, 2, 3, 4), "bottom"),
@@ -121,7 +126,8 @@ def reference(model, support, mass, prescribed_force=None):
     return answers[0]
 
 
-def assess(model, definition, settings, result, support, oracle, cells, force, force_scale):
+def assess(model, definition, settings, result, support, oracle, cells, force, force_scale,
+           deformable_target=False):
     u = result.displacements
     manager = GeneralS3PatchManager(model, definition, settings)
     contact, _, cert = manager.evaluate(u, tangent=False)
@@ -140,25 +146,55 @@ def assess(model, definition, settings, result, support, oracle, cells, force, f
     _discard_nonlinear_state_candidate(trials)
     _discard_nonlinear_state_candidate(result.element_states)
     external = np.zeros(len(u))
-    for n, value in zip((2, 3, 5, 6), force, strict=True):
+    force_nodes = tuple(range(1, 11)) if deformable_target else (2, 3, 5, 6)
+    for n, value in zip(force_nodes, force, strict=True):
         external[model.mesh.dof_manager.get_node_dofs(n)[2]] = value
-    free = np.eye(len(u))[:, [model.mesh.dof_manager.get_node_dofs(n)[2] for n in (2, 3, 5, 6)]]
+    free_nodes = (2, 3, 5, 6, 8, 9) if deformable_target else (2, 3, 5, 6)
+    free = np.eye(len(u))[:, [model.mesh.dof_manager.get_node_dofs(n)[2] for n in free_nodes]]
     wrench = guided_wrench_diagnostics(model, u, internal, contact, external, free,
         physical_contact_force=sum((b["physical_contact_force"] for b in bodies.values()), np.zeros(3)),
         physical_contact_moment=sum((b["physical_contact_moment"] for b in bodies.values()), np.zeros(3)),
         origin=origin, force_scale_n=force_scale, moment_scale_nm=force_scale, bodies=bodies)
     q = np.array([u[model.mesh.dof_manager.get_node_dofs(n)[2]] for n in range(1, 7)])
     gaps = []
+    target_q = np.array([u[model.mesh.dof_manager.get_node_dofs(n)[2]] for n in range(7, 11)])
     for cell in cells:
-        ix = np.array(cell["ids"])-1
-        values = np.c_[np.asarray(cell["clipped_vertices_xy_m"]), np.ones(len(cell["clipped_vertices_xy_m"]))]@np.asarray(cell["basis_coefficients"])
-        gaps.extend((1e-8+values@q[ix]).tolist())
+        if deformable_target:
+            values = np.asarray(cell["source_values"])
+            target_values = np.asarray(cell["target_values"])
+            gaps.extend((1e-8+values@q[cell["source_indices"]]
+                -target_values@target_q[cell["target_indices"]]).tolist())
+        else:
+            ix = np.array(cell["ids"])-1
+            values = np.c_[np.asarray(cell["clipped_vertices_xy_m"]), np.ones(len(cell["clipped_vertices_xy_m"]))]@np.asarray(cell["basis_coefficients"])
+            gaps.extend((1e-8+values@q[ix]).tolist())
     pressure_by_id = dict(zip(cert.source_pressure_node_ids, cert.numerical_pressure_pa, strict=True))
     pressure = np.array([pressure_by_id[n] for n in range(1, 7)])
-    qref, pref = np.asarray(oracle["source_normal_displacements_m"]), np.asarray(oracle["pressure_pa"])
+    qref = np.asarray(oracle["normal_displacements_m"][:6] if deformable_target
+        else oracle["source_normal_displacements_m"])
+    pref = np.asarray(oracle["pressure_pa"])
     compared = {"normal_displacement_relative": float(np.linalg.norm(q-qref)/np.linalg.norm(qref)),
         "normal_pressure_relative": float(np.linalg.norm(pressure-pref)/np.linalg.norm(pref)),
         "contact_force_relative": abs(float(bodies["source"]["physical_contact_force"][2])-oracle["contact_force_n"])/force_scale}
+    normal_work = None
+    if deformable_target:
+        compared["target_normal_displacement_relative"] = float(
+            np.linalg.norm(target_q-np.asarray(oracle["normal_displacements_m"])[6:])
+            /np.linalg.norm(np.asarray(oracle["normal_displacements_m"])[6:]))
+        normal_dofs = [model.mesh.dof_manager.get_node_dofs(n)[2] for n in range(1, 11)]
+        full_normal_contact = contact[normal_dofs]
+        independent_normal_contact = -np.asarray(oracle["G"]).T@pressure
+        compared["full_normal_contact_residual_relative"] = float(
+            np.linalg.norm(full_normal_contact-independent_normal_contact)/force_scale)
+        directions = np.array([[1., -.2, .3, -.4, .5, -.6, 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0., 0., .7, -.8, .9, -1.],
+            [.2, 0., 0., -.4, 0., 0., -.1, 0., 0., .3]])
+        normal_work = {"virtual_displacements_m": directions.tolist(),
+            "production_virtual_work_j": (directions@full_normal_contact).tolist(),
+            "independent_virtual_work_j": (directions@independent_normal_contact).tolist(),
+            "work_scale_j": force_scale,
+            "relative_error": float(np.max(abs(directions@(full_normal_contact-independent_normal_contact)))/force_scale)}
+        compared["both_body_prescribed_row_normal_work_relative"] = normal_work["relative_error"]
     keys = ("balance_relative_force", "balance_relative_moment", "contact_conversion_max_scaled", "structural_internal_max_scaled")
     max_wrench = max([wrench[k] for k in keys]+[wrench["constraint_reconstruction_relative_force"]]+
         [b[k] for b in wrench["bodies"].values() for k in keys])
@@ -167,6 +203,7 @@ def assess(model, definition, settings, result, support, oracle, cells, force, f
         "production_gap": bool(cert.gap_tolerance_met), "all_six_supports_retained": len(pressure) == 6 and bool(np.all(np.asarray(cert.reference_support_m2) > 0)),
         "nonnegative_pressure": bool(np.all(pressure >= 0)), "zero_multipliers": bool(np.all(manager.normal_multipliers == 0))}
     return {"certificate": cert.to_dict(), "wrench": wrench, "comparison": compared,
+        "both_body_normal_virtual_work": normal_work,
         "independent_target_normal_gap_m": min(gaps), "checks": checks,
         "limits": "fixed-XY/vertical-normal oracle; tangential geometry and general continuum accuracy outside this comparison"}
 
@@ -180,12 +217,19 @@ def main():
         help="upper x/y of target square; 1.4 covers the source faces")
     parser.add_argument("--manufactured", action="store_true",
         help="independent manufactured normal field on covered source, not point-load accuracy")
+    parser.add_argument("--deformable-target", action="store_true",
+        help="manufactured two-body code fixture with target8/9 normal motion")
     args = parser.parse_args()
     if args.output.exists(): raise FileExistsError(args.output)
     if args.target_extent not in (1., 1.4):
         parser.error("registered development fixtures use target extent1.0 or1.4")
     if args.manufactured and args.target_extent != 1.4:
         parser.error("manufactured code check uses the covered-source fixture")
+    if args.deformable_target and not args.manufactured:
+        parser.error("deformable target requires the independent manufactured code fixture")
+    runner_snapshot = args.output.with_suffix(".runner.source.py")
+    if runner_snapshot.exists(): raise FileExistsError(runner_snapshot)
+    runner_snapshot.write_bytes(Path(__file__).read_bytes())
     started = time.perf_counter()
     record = {"accepted": False, "released": False, "kind": "s3_s3_projected_penalty_force_code_verification_development",
         "adapter": file_identity(__file__), "production": {name: file_identity(Path("src/anysolver")/name) for name in (
@@ -196,8 +240,9 @@ def main():
             "gap_budget_m": 5e-5, "code_comparison_relative": 1e-6, "force_and_moment_scales": [.5, .5],
             "time_cap_s": 180, "memory_cap_bytes": 1000000000}}
     try:
-        model, definition, settings, load = build(args.target_extent)
+        model, definition, settings, load = build(args.target_extent, args.deformable_target)
         record["inputs"]["target_extent_m"] = args.target_extent
+        record["inputs"]["deformable_target"] = args.deformable_target
         program = None
         if args.force_path:
             model.boundary_conditions = [replace(bc, node_ids=(3, 5, 6))
@@ -205,9 +250,32 @@ def main():
             model.add_boundary_condition(BoundaryCondition("controlled_node_rotations", (2,),
                 {d: 0. for d in ("rx", "ry", "rz")}))
         model.apply_boundary_conditions()
-        support, mass, cells = integrals(args.target_extent)
+        oracle = None
         force = np.array([0., -.25, 0., -.25])
-        if args.manufactured:
+        if args.deformable_target:
+            from docs.d1_review_support import d2_s3_deformable_mms_reference_dev as two_body_reference
+            target_xy = np.array(((0., 0.), (1.4, 0.), (1.4, 1.4), (0., 1.4)))
+            support, mass, cross_mass, cells = two_body_reference.independent_p1_integrals(
+                XY, CELLS, target_xy, ((7, 8, 10), (8, 9, 10)))
+            k, _ = assemble_stiffness_matrix(model)
+            joint_normal_dofs = [model.mesh.dof_manager.get_node_dofs(n)[2] for n in range(1, 11)]
+            free_indices = np.array((1, 2, 4, 5, 7, 8))
+            free_dofs = np.asarray(joint_normal_dofs)[free_indices]
+            known_q = np.array((0., -1e-6, -1e-6, 0., -1e-6, -1e-6, 0., .3e-6, .3e-6, 0.))
+            oracle = two_body_reference.normal_reference(
+                k.toarray()[np.ix_(free_dofs, free_dofs)], free_indices,
+                support, mass, cross_mass, known_q, gap0=1e-8, kappa=1e7)
+            force = np.zeros(10)
+            force[free_indices] = oracle["free_normal_forces_n"]
+            load = LoadCase("independent_two_body_manufactured_normal_field")
+            for n, value in enumerate(force, 1):
+                if value != 0.: load.add_nodal_load(n, forces=np.array((0., 0., value)))
+            record["reference_source"] = file_identity(two_body_reference.__file__)
+            record["manufactured"] = {"known_normal_displacements_m": known_q.tolist(),
+                "scope": "two-body code verification; no point-load or continuum accuracy claim"}
+        else:
+            support, mass, cells = integrals(args.target_extent)
+        if args.manufactured and not args.deformable_target:
             k, _ = assemble_stiffness_matrix(model)
             free_dofs = [model.mesh.dof_manager.get_node_dofs(n)[2] for n in (2, 3, 5, 6)]
             known_q = np.array([0., -1e-6, -1e-6, 0., -1e-6, -1e-6])
@@ -227,17 +295,26 @@ def main():
                 controls=(ContactPathControl.node(2, "ux"), ContactPathControl.node(2, "uy")),
                 waypoints=((0., 0.), (0., 0.)), steps_per_segment=2,
                 nodal_forces=tuple(ContactPathNodalForce(n, "uz", (0., value))
-                    for n, value in zip((2, 3, 5, 6), force, strict=True) if value != 0.))
+                    for n, value in zip(tuple(range(1, 11)) if args.deformable_target
+                        else (2, 3, 5, 6), force, strict=True) if value != 0.))
             record["program"] = program.contract()
-        oracle = reference(model, support, mass, force)
+        if oracle is None: oracle = reference(model, support, mass, force)
         record["oracle"] = oracle
         record["independent_integrals"] = {"support_m2": support.tolist(), "mass_m2": mass.tolist(), "cells": cells}
+        if args.deformable_target:
+            record["independent_integrals"]["cross_mass_m2"] = cross_mass.tolist()
         reference_gaps = []
         for cell in cells:
-            ix = np.array(cell["ids"])-1
-            values = np.c_[np.asarray(cell["clipped_vertices_xy_m"]),
-                np.ones(len(cell["clipped_vertices_xy_m"]))]@np.asarray(cell["basis_coefficients"])
-            reference_gaps.extend((1e-8+values@np.asarray(oracle["source_normal_displacements_m"])[ix]).tolist())
+            if args.deformable_target:
+                source_q = np.asarray(oracle["normal_displacements_m"])[:6]
+                target_q = np.asarray(oracle["normal_displacements_m"])[6:]
+                reference_gaps.extend((1e-8+np.asarray(cell["source_values"])@source_q[cell["source_indices"]]
+                    -np.asarray(cell["target_values"])@target_q[cell["target_indices"]]).tolist())
+            else:
+                ix = np.array(cell["ids"])-1
+                values = np.c_[np.asarray(cell["clipped_vertices_xy_m"]),
+                    np.ones(len(cell["clipped_vertices_xy_m"]))]@np.asarray(cell["basis_coefficients"])
+                reference_gaps.extend((1e-8+values@np.asarray(oracle["source_normal_displacements_m"])[ix]).tolist())
         record["independent_reference_gap_preflight_m"] = min(reference_gaps)
         if min(reference_gaps) < -5e-5:
             raise RuntimeError("independent reference predicts physical gap outside declared budget; coupled solve withheld")
@@ -249,7 +326,8 @@ def main():
         record.update(status=result.status, failure=result.failure_reason, info=result.info,
             displacements=result.displacements.tolist(), steps=[s.to_dict() for s in result.steps], checkpoint=result.restart_checkpoint)
         if result.status != "completed": raise RuntimeError("S3/S3 ordinary force solve did not complete")
-        record["assessment"] = assess(model, definition, settings, result, support, oracle, cells, force, force_scale)
+        record["assessment"] = assess(model, definition, settings, result, support, oracle, cells,
+            force, force_scale, args.deformable_target)
         record["development_checks_met"] = all(record["assessment"]["checks"].values())
         if not record["development_checks_met"]: raise RuntimeError("S3/S3 code-verification predicate failed")
     except Exception as exc:

@@ -65,3 +65,7 @@ src/anysolver/general_contact/s3_patch_augmented.py text eol=lf
 src/anysolver/general_contact/static_path.py text eol=lf
 tests/test_general_contact_s3_projected_penalty.py text eol=lf
 docs/d1_review_support/d2_s3_projected_penalty_coupled_dev.py text eol=lf
+docs/d1_review_support/d2_s3_deformable*20260930*.json -text
+docs/d1_review_support/d2_s3_deformable*20260930*.log -text
+docs/d1_review_support/d2_s3_*20260930.runner.source.py -text
+docs/d1_review_support/d2_s3_deformable_mms_reference_dev.py text eol=lf

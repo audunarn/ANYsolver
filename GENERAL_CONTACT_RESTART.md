@@ -2,11 +2,12 @@
 
 **30 September2026: active. D1-interior accepted; D2 development.**
 Worktree C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
-Source checkpoint6bd7f023; owned S3 integration/evidence/doc changes committed.
+Source checkpoint6bd7f023; byte-preserving evidence checkpoint8677917f.
+Reviewed deformable-target fixture/evidence/doc changes are owned and ready to checkpoint.
 Main checkout and historical dirty work untouched. No publication/merge/release.
 
 [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3;
-[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.28;
+[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.29;
 [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md);
 [living development record](docs/d1_review_support/GENERAL_CONTACT_DEVELOPMENT_20260929.md);
 [retained prior restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART18.md).
@@ -48,11 +49,20 @@ reviewed summary-result persistence,16baseline+6affected checks; appadmissionfal
 
 ## Next action and budget
 
-Proceed to the next bounded delivery row. Stop point-load refinement/tuning;
-qualify the working Q4/S3 boundary method
-under its actual scope, continue D2 geometry/search and D3–D8. Full programme active.
+Deformable S3 target manufactured ordinary/path cases pass 3.614/2.985s,
+about210MB. Both-body displacement error<=2.6e-8, full normal reaction/work
+error<1e-12; independent gap-1.226um. Review closed in
+[two-body review](docs/d1_review_support/D2_S3_DEFORMABLE_MMS_REVIEW_20260930.md).
+These use a force ramp and zero in-plane controls, not normal-displacement
+lifecycle or restart. Exact runner snapshots and independent P1 cross-mass
+oracle retained; production source unchanged.
+
+Next: genuine six-normal-control press/open/recontact using this same fixture,
+independently reconciled control reactions, then authentic active/open restart.
+Stop point-load refinement/tuning. Continue D2 and D3–D8 after this bounded slice.
+Full programme active; no method acceptance or installed broadening claimed.
 Original120active-hour clock unchanged (29September08:04:33UTC). Latest tool
-102715s=28.53h used,about91.47h remaining; check usage, never reset.
+106286s=29.52h used,about90.48h remaining; check usage, never reset.
 Routine180s/1GB; named integrated/qualification900s/4GB. Up to2workers authorized.
 Lead handle70667 closed; no lead numeric process. Geometry worker stopped;
 reviewer owns only its scoped review note. Historical handles/authorities retain

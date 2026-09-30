@@ -1,6 +1,6 @@
 # General contact — plan
 
-**Revision:** 2026-09-30.28. **Status:** D1-interior independently accepted; D2 projected-penalty slice active. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
+**Revision:** 2026-09-30.29. **Status:** D1-interior independently accepted; D2 projected-penalty slice active. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
 
 The goal owns outcome, acceptance, authority, budget and stop rules. This plan is the current best route, not a mandatory sequence of investigations. The lead should change it when evidence supports faster delivery within the goal, briefly recording the decision. Development has resumed on the user's instruction.
 
@@ -326,6 +326,15 @@ then progress remaining geometry/search rather than tune pressure modes or
 point-load meshes. Rims/edge-only collisions, continuous
 swept qualification, finite rotation, warped geometry and remaining D2–D8
 rows remain open. Current installed accepted package remains0b2ac9be.
+
+The independently checked S3 two-body manufactured case now passes ordinary
+force and the actual zero-in-plane-control path with a deformable target.
+It closes the joint normal assembly/reaction/work code question, not spatial
+acceptance. Next workflow slice uses genuine normal displacement controls for
+press/open/recontact, then restart; verify reported generalized control actions
+against the independent two-body residual. Keep point-load physical-gap
+failures and wider S3 geometry/accuracy rows open. Do not add another oracle
+or pressure-mode tuning branch for these lifecycle checks.
 
 0b2 immutable-signature/proven-inert observation changes preserve contact equations
 and guard decisions. Four balanced complete saved-root runs show median32.037
