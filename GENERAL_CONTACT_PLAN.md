@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-09-30.35. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-09-30.36. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -126,15 +126,25 @@ does not interpolate between their stiffnesses or accept arbitrary cuts.
 The D6 common-stage contract has prospective independent scrutiny; implementation
 must establish algebraic-block invertibility before assuming an index-one system.
 
-Next lead slice: compose multiple explicitly declared projected-penalty pairs
-through the existing contributor/evaluation boundary, preserving each pair's
-work, dimensional gap gate, feature identity and restart contract. This is
-needed before automatic-domain/self-contact ownership; do not introduce another
-single-pair driver. Begin with a bounded planar independent-work/reaction case,
-reject duplicate feature pairs and enforce aggregate resource caps. Native
-midpoint implementation progresses separately under the reviewed contract;
-its first eight-step prototype passes locally, pending transaction closure and
-independent assessment. Neither slice broadens current accepted artifacts.
+Multiple explicit projected-penalty shell pairs now compose through the existing
+contributor and static drivers. Local checks close uniform both-body work/tangent,
+duplicate ownership, aggregate admission, per-pair swept gates, ordinary distinct-
+settings displacement publication, press/open/recontact and authentic restart.
+The ordinary force case now activates both pairs and passes wrench/gap checks.
+The oversized initial-load timeout and the weak-open and report-fixture failures
+remain NONPASS; independent structural and Q1 support integrals explain the latter
+load selection. This is a development profile, not broader D2 acceptance or an
+update of the accepted installed artifact. Close its scoped independent review
+and preserve one checkpoint before extending geometry or automatic domains.
+
+Native midpoint local review now closes the bounded clamped eight-step/state
+slice. A separately reviewed dynamic elastic evaluator admits zero supports
+without a static genesis inverse: free algebraic rank27, physical mass15 SPD,
+six expected static rigid modes, work/tangent and objectivity checks pass. Next
+compose it through one authenticated shared operation session with the existing
+midpoint equations. Verify actual free translation/rotation and discrete impulse/
+energy accounting; instantaneous momentum checks do not substitute. Keep public
+native guards unchanged. Neither native slice establishes complete C7 acceptance.
 
 ## 4. Accelerating delivery without weakening it
 

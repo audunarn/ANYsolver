@@ -1,0 +1,181 @@
+.F                                                                       [100%]
+================================== FAILURES ===================================
+___ test_ordinary_displacement_publication_preserves_distinct_pair_settings ___
+
+    def test_ordinary_displacement_publication_preserves_distinct_pair_settings():
+        model,definition,settings,_=build()
+        definition=replace(definition,interactions=(definition.interactions[0],replace(
+            definition.interactions[1],normal_stiffness=2e7,gap_tolerance=8e-5)))
+        # One declared displacement control drives two otherwise independent
+        # source patches through an explicit normal tie. No hidden support.
+        first=int(model.mesh.dof_manager.get_node_dofs(1)[2])
+        second=int(model.mesh.dof_manager.get_node_dofs(11)[2])
+        model.add_constraint_equation(terms=((second,1.),(first,-1.)),source_id="common_press")
+        control=DisplacementControl(node_id=1,dof="uz",target_displacement=-130e-6)
+>       result=solve_static_nonlinear(model,control="displacement",displacement_control=control,
+            contact=definition,contact_settings=settings,num_steps=2,tolerance=1e-8,
+            emit_restart_checkpoint=True)
+
+tests\test_general_contact_multiple_projected_pairs.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\nonlinear_static.py:8025: in solve_static_nonlinear
+    return run_under_lease(
+src\anysolver\matrix_assembly.py:3651: in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+src\anysolver\matrix_assembly.py:3626: in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+             ^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:7963: in operation
+    result = run_solver()
+             ^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:7897: in run_solver
+    return _run_with_nonlinear_state_cleanup(
+src\anysolver\nonlinear_state.py:271: in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\threading_policy.py:412: in wrapped
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_analysis_diagnostics.py:443: in wrapped
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_static.py:6138: in _solve_static_nonlinear_under_lease
+    controlled_result = _solve_static_displacement_control(
+src\anysolver\nonlinear_performance.py:1490: in _solve_static_displacement_control_block
+    return solver(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def _solve_static_displacement_control(
+        *,
+        model: "FEModel",
+        T: sparse.csr_matrix,
+        u0: np.ndarray,
+        F_const: np.ndarray,
+        F_prop: np.ndarray,
+        stage_vectors: Sequence[np.ndarray],
+        load_case: Optional["LoadCase"],
+        constant_load_case: Optional["LoadCase"],
+        load_program: Optional[NonlinearLoadProgram],
+        displacement_control: DisplacementControl,
+        committed_states: Dict[int, Any],
+        num_layers: int,
+        num_steps: int,
+        max_iterations: int,
+        tolerance: float,
+        info: Dict[str, Any],
+        start_time: float,
+        resource_config: Optional[ResourceConfig] = None,
+        kinematics: str = "von_karman",
+        corotational_tangent: str = "not_applicable",
+        initial_reduced_displacements: Optional[np.ndarray] = None,
+        cancellation_token: Optional[CancellationToken] = None,
+        progress_callback: Optional[ProgressCallback] = None,
+        record_increment_snapshots: bool = False,
+        initial_load_factor: float = 0.0,
+        step_index_offset: int = 0,
+        initial_steps: Sequence[NonlinearStaticStep] = (),
+        initial_history: Sequence[Mapping[str, Any]] = (),
+        initial_total_iterations: int = 0,
+        restart_analysis_contract: Optional[Mapping[str, Any]] = None,
+        _exact_guard: Any = None,
+    ) -> NonlinearStaticResult:
+        """Displacement-control Newton solve with load factor as an unknown."""
+        exact_guard = _exact_guard or _EXACT_QUALIFIED_LIFECYCLE_GUARD
+        exact_guard(
+            model,
+            context="nonlinear static displacement-control preflight",
+        )
+        if load_program is not None:
+            if len(load_program.stages) == 1:
+                constant_terms = [(constant_load_case, 1.0)]
+                proportional_term = (
+                    load_program.stages[0].load_case,
+                    load_program.stages[0].target_factor,
+                )
+                F_const_static = F_const
+                F_prop_static = load_program.stages[0].target_factor * stage_vectors[0]
+                active_stage = load_program.stages[0].name
+            else:
+                constant_terms = [(constant_load_case, 1.0)] + [
+                    (stage.load_case, stage.target_factor)
+                    for stage in load_program.stages[:-1]
+                ]
+                proportional_term = (
+                    load_program.stages[-1].load_case,
+                    load_program.stages[-1].target_factor,
+                )
+                F_const_static = F_const.copy()
+                for stage, vector in zip(load_program.stages[:-1], stage_vectors[:-1]):
+                    F_const_static += stage.target_factor * vector
+                F_prop_static = load_program.stages[-1].target_factor * stage_vectors[-1]
+                active_stage = load_program.stages[-1].name
+            info["displacement_control_load_split"] = {
+                "constant_stages": [stage.name for stage in load_program.stages[:-1]],
+                "proportional_stage": active_stage,
+            }
+        else:
+            constant_terms = [(constant_load_case, 1.0)]
+            proportional_term = (load_case, 1.0)
+            F_const_static = F_const
+            F_prop_static = F_prop
+            active_stage = "displacement_control"
+    
+        n_red = int(T.shape[1])
+        if initial_reduced_displacements is None:
+            q = np.zeros(n_red, dtype=float)
+        else:
+            q = np.asarray(initial_reduced_displacements, dtype=float).reshape(-1).copy()
+            if q.size != n_red:
+                raise ValueError(
+                    f"initial_reduced_displacements has {q.size} entries; expected {n_red}"
+                )
+        lam = float(initial_load_factor)
+        steps: List[NonlinearStaticStep] = list(initial_steps)
+        snapshots: List[NonlinearIncrementSnapshot] = []
+        history: List[Dict[str, Any]] = copy.deepcopy(list(initial_history))
+        status = "completed"
+        failure_reason: Optional[str] = None
+        total_iterations = int(initial_total_iterations)
+    
+        row_full = displacement_control.full_row(model)
+        exact_guard(model, context="nonlinear static displacement-control row")
+        row_red = np.asarray(row_full @ T, dtype=float).reshape(-1)
+        row_u0 = float(row_full @ u0)
+        if float(np.linalg.norm(row_red)) <= 0.0:
+            raise ValueError("Displacement control target is fixed or dependent and cannot be used as an unknown")
+    
+        initial_u = np.asarray(u0, dtype=float).reshape(-1)
+        follower_active = any(
+            _has_follower_pressure(
+                case,
+                model=model,
+                _exact_guard=exact_guard,
+            )
+            for case, _factor in [*constant_terms, proportional_term]
+        )
+        general_tangent = follower_active or (
+            str(kinematics) == "corotational"
+            and str(corotational_tangent) == "consistent"
+        )
+        if follower_active:
+            F_prop_initial, _ = _weighted_external_load_system(
+                model,
+                [proportional_term],
+                initial_u,
+                tangent=False,
+            )
+            exact_guard(
+                model,
+                context="nonlinear static displacement-control initial load",
+            )
+        else:
+            F_prop_initial = F_prop_static
+        F_prop_red = np.asarray(T.T @ F_prop_initial, dtype=float).reshape(-1)
+        if float(np.linalg.norm(F_prop_red)) <= 0.0:
+>           raise ValueError("Displacement control requires a non-zero proportional load vector")
+E           ValueError: Displacement control requires a non-zero proportional load vector
+
+src\anysolver\nonlinear_static.py:3799: ValueError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_multiple_projected_pairs.py::test_ordinary_displacement_publication_preserves_distinct_pair_settings
+1 failed, 1 passed, 4 deselected in 4.22s

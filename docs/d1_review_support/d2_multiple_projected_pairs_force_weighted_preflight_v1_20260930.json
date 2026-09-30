@@ -1,0 +1,12 @@
+{
+  "source": "docs\\d1_review_support\\d2_multiple_projected_pairs_force_preflight_v1_20260930.json",
+  "tip_q_per_unit_force_m": 0.0018719999999999984,
+  "far_pressure_mode_weighted_q_per_unit_force_m": 0.0015807999999999987,
+  "old_load_n": 0.05608974358974361,
+  "old_weighted_excursion_m": 8.866666666666664e-05,
+  "new_load_per_node_n": 0.066422064777328,
+  "new_weighted_excursion_m": 0.000105,
+  "new_physical_excursion_m": 0.00012434210526315791,
+  "gap_budget_m": 5e-05,
+  "derivation": "constant-y field; Q1 far-node weight xi; integral0_.8 xi^2 / integral0_.8 xi=2*.8/3"
+}

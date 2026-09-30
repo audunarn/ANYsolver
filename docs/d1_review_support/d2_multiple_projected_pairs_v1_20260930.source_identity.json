@@ -1,0 +1,6 @@
+{
+  "src/anysolver/general_contact/multiple_projected_pairs.py": "7c170bf326aaf6442997ca57bd3a3ba523653668911520e72f3525c0ca3492bf",
+  "src/anysolver/general_contact/core.py": "85c2f2d27f086d576b714b023e100fe777cc54261a1d6c840b1480bf1b820075",
+  "src/anysolver/general_contact/static_path.py": "44b11ab1cecdc020a6c1ef71a7e40f166f0656c94e0502fdeb5ad212f02c353e",
+  "tests/test_general_contact_multiple_projected_pairs.py": "c199540fc3544d46a0c856d584d5818e0a26d8c5146d505cc5d427e7c6d827ed"
+}

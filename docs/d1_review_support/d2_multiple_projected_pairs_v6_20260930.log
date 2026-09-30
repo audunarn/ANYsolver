@@ -1,0 +1,28 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________ test_ordinary_force_control_activates_both_supported_pairs __________
+
+    def test_ordinary_force_control_activates_both_supported_pairs():
+        model,definition,settings,_=build(rigid_normal=False)
+        load=LoadCase("two_clamped_sources")
+        # Independent structural K preflight: this load has a 105 um maximum
+        # unconstrained excursion, against 100 um initial clearance. The original
+        # 10 N/node fixture predicted 18.72 mm and exhausted its swept-event budget.
+        force_per_node=0.05608974358974361
+        for part in range(2):
+            for node in (2,3,5,6):
+                load.add_nodal_load(node+10*part,forces=(0.,0.,-force_per_node))
+        result=solve_static_nonlinear(model,load,contact=definition,contact_settings=settings,
+            control="force",num_steps=2,max_iterations=12,tolerance=1e-8,
+            emit_restart_checkpoint=True)
+        assert result.status=="completed",result.failure_reason
+        summary=result.info["general_contact"]
+        assert summary["gap_tolerance_met"]
+>       assert all(pair["contact"]["active_pressure_dofs"]>0 for pair in summary["pairs"])
+E       assert False
+E        +  where False = all(<generator object test_ordinary_force_control_activates_both_supported_pairs.<locals>.<genexpr> at 0x000002D2CFDF1A40>)
+
+tests\test_general_contact_multiple_projected_pairs.py:182: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_multiple_projected_pairs.py::test_ordinary_force_control_activates_both_supported_pairs
+1 failed, 7 deselected in 8.80s

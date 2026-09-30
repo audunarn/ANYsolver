@@ -576,6 +576,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if len(definition.interactions) > 1:
+        from .multiple_projected_pairs import validate_multiple_projected_pairs
+        return validate_multiple_projected_pairs(
+            model, definition, settings, analysis_control=analysis_control)
     if any(item.normal_law == "projected_penalty" for item in definition.interactions):
         from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 
@@ -1173,6 +1177,16 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
                    *, allow_augmented: bool = False,
                    analysis_control: str = "force") -> Iterator[object]:
     settings = ContactSolverSettings() if settings is None else settings
+    if len(definition.interactions) > 1:
+        from .multiple_projected_pairs import MultipleProjectedPairManager
+        manager = MultipleProjectedPairManager(model, definition, settings, initial_displacement,
+                                              analysis_control=analysis_control)
+        token = _ACTIVE_CONTACT.set(manager)
+        try:
+            yield manager
+        finally:
+            _ACTIVE_CONTACT.reset(token)
+        return
     if settings.warped_q4_plane:
         report = validate_general_contact(
             model, definition, settings, analysis_control=analysis_control,

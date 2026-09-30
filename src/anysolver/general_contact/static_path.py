@@ -385,6 +385,7 @@ def solve_static_contact_path(
     from .s3_patch_static import REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE as refined_q4_s3_graph_profile
     from .s3_patch_static import REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE as refined_q4_s3_projected_penalty_profile
     from .s3_patch_static import S3_PROJECTED_PENALTY_PROFILE as s3_projected_penalty_profile
+    from .multiple_projected_pairs import PROFILE as multiple_projected_profile, PATH_PROFILE as multiple_path_profile
     from .s3_patch_static import SupportResetForceBudgetExceeded
     from .q4_s3_overlap_derivatives import UnsupportedQ4S3Branch
 
@@ -393,7 +394,7 @@ def solve_static_contact_path(
         q4_pair_profile, general_augmented_profile, mixed_augmented_profile,
         refined_augmented_profile, refined_q4_s3_augmented_profile,
         refined_q4_s3_projected_profile, refined_q4_s3_projected_penalty_profile,
-        s3_projected_penalty_profile,
+        s3_projected_penalty_profile, multiple_projected_profile,
         refined_q4_s3_overlap_local_profile,
         refined_q4_s3_roundoff_profile, refined_q4_s3_graph_profile,
         source_q4_augmented_profile,
@@ -461,7 +462,8 @@ def solve_static_contact_path(
                 refined_q4_s3_overlap_local_profile,
             }):
         raise ValueError("supported Schur route requires the refined Q4/S3 augmented patch profile")
-    profile = (GENERAL_S3_PATCH_PROJECTED_PENALTY_PROFILE
+    profile = (multiple_path_profile if report.profile == multiple_projected_profile else
+               GENERAL_S3_PATCH_PROJECTED_PENALTY_PROFILE
                if report.profile == s3_projected_penalty_profile else
                GENERAL_Q4_S3_PATCH_REFINED_PROJECTED_PENALTY_PROFILE
                if report.profile == refined_q4_s3_projected_penalty_profile else

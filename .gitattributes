@@ -118,3 +118,14 @@ docs/d1_review_support/d6_native_midpoint*20260930*.log -text -whitespace
 docs/d1_review_support/d6_native_midpoint*20260930*.xml -text -whitespace
 docs/d1_review_support/d6_native_midpoint*20260930*.py -text -whitespace
 docs/d1_review_support/D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md -text whitespace=cr-at-eol
+# Exact new multiple-pair and dynamic elastic development evidence.
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.json -text -whitespace
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.log -text -whitespace
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.source.py -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.json -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.log -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.xml -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.source.py -text -whitespace
+docs/d1_review_support/D2_MULTIPLE_PROJECTED_PAIRS_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D6_DYNAMIC_ELASTIC_STATE_REVIEW_20260930.md -text whitespace=cr-at-eol

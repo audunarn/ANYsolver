@@ -7967,9 +7967,15 @@ def solve_static_nonlinear(
                     )
                 summary = contact_manager.evaluate(result.displacements, tangent=False)[2]
                 summary_payload = summary.to_dict()
+                pair_settings = getattr(contact_manager, "summary_settings", None)
+                if pair_settings is not None:
+                    summary_payload.update(pair_settings())
+                else:
+                    summary_payload.update(
+                        normal_law=contact.interactions[0].normal_law,
+                        gap_tolerance=contact_manager.gap_tolerance,
+                    )
                 summary_payload.update(
-                    normal_law=contact.interactions[0].normal_law,
-                    gap_tolerance=contact_manager.gap_tolerance,
                     maximum_candidate_pairs=(
                         contact_manager.settings.maximum_candidate_pairs
                     ),
@@ -7991,7 +7997,7 @@ def solve_static_nonlinear(
                     summary_payload["projection_evaluations"] = (
                         contact_manager.last_projection_evaluations
                     )
-                if not hasattr(contact_manager, "end_caps"):
+                if not hasattr(contact_manager, "end_caps") and pair_settings is None:
                     summary_payload["normal_stiffness"] = contact_manager.stiffness
                 if (hasattr(contact_manager, "path_translation")
                         and np.any(contact_manager.path_translation)):

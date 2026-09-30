@@ -1,5 +1,24 @@
 # General-contact capability ledger
 
+## Current multiple-pair and native development increments
+
+The explicit multiple projected-penalty shell-pair profile composes existing
+contributors on authoritative coordinates. Local work/tangent, duplicate/resource
+admission, individual swept gates, ordinary displacement settings, press/open/
+recontact and authentic restart checks pass. A clamped ordinary force fixture
+activates both pairs, passes the unchanged gap and wrench checks, and completes
+13.171s/337.506MB. Earlier timeout180.044s, weak-open fixture and NumPy report
+failures remain retained. Nested result export has a focused standard-JSON check.
+**Status: implemented and locally tested; not independently accepted or released.**
+The accepted installed shell artifact is unchanged; automatic/self-contact and
+arbitrary geometry admission do not follow from explicit composition.
+
+Native finite inertia, the clamped midpoint and the free/clamped dynamic elastic
+evaluator have scoped independent development reviews. Free algebraic rank27
+and physical mass15 SPD remove the static genesis obstruction. No free time step
+or full C7 acceptance follows. Actual discrete impulse/energy and free temporal
+verification remain open. [Evaluator assessment](d1_review_support/D6_DYNAMIC_ELASTIC_STATE_REVIEW_20260930.md).
+
 This ledger reports the new opt-in subsystem only. The historical rigid-sphere
 impact API has a separate contract. Status terms are deliberately distinct:
 **implemented**, **locally tested**, **independently accepted**, and
