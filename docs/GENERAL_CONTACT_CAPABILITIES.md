@@ -480,3 +480,13 @@ and compensatedmomentum, not a timestep or native dynamic admission.
 [Source/evidence note](d1_review_support/D6_CENTERED_FINITE_INERTIA_DEVELOPMENT_20260930.md)
 binds source3334699c/testa15cf51f, retained collection/fixture failures and
 algebraic-zero scope. [Independent development review](d1_review_support/D6_CENTERED_FINITE_INERTIA_REVIEW_20260930.md) passes this inertial owner only; midpoint/state integration and dynamic acceptance remain open.
+
+## Partial-overlap swept enclosure successor
+
+The affine physical skin-node path now carries rounded-child endpoint enclosures
+and interval polarity checks outside D1 interior too.36distinct focused checks
+pass across retained v1/v2 runs; v1's missing required test metadata remains a
+fixture failure. The affected ten-pose partial-front lifecycle and active/open
+prefix continuation pass34.547s/316MB, including rejection of an authentic older
+partial-contract checkpoint. D1 restart serialization is unchanged. This is local
+development evidence, not general rotating-director CCD or installed acceptance.

@@ -2,12 +2,13 @@
 
 **30 September2026: active; full C0–C9 continues.**
 Worktree C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
-This checkpoint follows23e845e1; production source6bd7f023 unchanged. Owned helpers/raw proofs,
-reviews and plan/restart are preserved together. Historical dirty work,
+Previous checkpoint97a277d8 preserves analytical evidence. Current owned changes
+strengthen partial swept enclosures/restart identity, add a public example and
+installed verification. Historical dirty work,
 C6 prototype and main checkout preserved. No publication/merge/release.
 
 [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3;
-[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.33;
+[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.34;
 [programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md);
 [prior restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART20.md).
 
@@ -44,11 +45,17 @@ This is its own benchmark; not radialregrade, installed/D2 acceptance or general
 
 ## Current ownership, next action and budget
 
-No lead numeric process:74330TIMEOUT,44565/42219/9420completed and closed.
-Next lead slice: certify state/swept path appropriate to bounded partial-support
-profile and installed handoff. Reuse unaffected restart/work evidence; endpoint
-checks alone do not certify a swept path. FullremainingD2geometry/search and
-D3–D8 remain required. No new pressure-mode/mesh campaign.
+No lead numeric process. New swept/workflow/installed sessions19231/16494/84219
+closed.36distinct focused checks pass across v1/v2; sole fixture-metadata failure
+retained. Current ten-pose lifecycle and active/open restart PASS34.547s/316MB;
+old unchanged D2 root rejects new revision. Scoped swept review closes.
+Installed public example PASS19.486s/276MB,433exact source matches, exact q/
+forces/gaps/control/material-state parity. Artifact target:
+C:/ANYworkspaceWork/general-contact-partial-swept-dev/target.
+Example examples/general_contact_partial_shell_cycle.py; guide
+docs/GENERAL_CONTACT_PARTIAL_SHELL_HANDOFF_20260930.md. Not D2 acceptance yet.
+Reviewer closes the bounded handoff disposition; then choose the next actual
+remaining D2 capability. No new pressure-mode/mesh campaign.
 
 Separate managed D6 worktree:
 C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver,
@@ -57,10 +64,13 @@ Module3334699c/testa15cf51f, exactsnapshots retained in main rawstems
  d6_centered_finite_inertia_v{1,2,3}_20260930.14distinct checks locally pass:
 finitework/derivatives, compensatedmomenta, exactzeroalgebraic inertia. V1cache
 collection andV2fixtureadmission NONPASS preserved. No midpoint/publicguard change.
-Worker /root/saved_radial_boundary now authors only D6_NATIVE_MIDPOINT_CONTRACT_20260930.md;
-no new module or numerical run before contract review. Reviewer /root/checkpoint_review
-closed D6_CENTERED_FINITE_INERTIA_REVIEW_20260930.md as scoped development PASS.
-Midpoint/state integration and D6 acceptance remain open.
+Midpoint contract now prospectively reviewed without blocker, conditional on
+nonsingular algebraic block, SPD physical mass and atomic owner identity.
+Worker /root/saved_radial_boundary authors only new _ge_beam3_native_midpoint.py,
+its focused test and D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md. One bounded
+nonzero-spin/descriptor/rollback slice allowed180s/1GB; static commit guards
+unchanged. Reviewer /root/checkpoint_review owns the D2 handoff review only now.
+Midpoint tests and D6 acceptance remain open; inspect owned process before acting.
 Mainpackage433files untouched by D6. Managedartifact mustremainrecoverable until
 integration; no archive. ANYfemsummarybridge c138d41 remainsreviewed, admissionfalse.
 

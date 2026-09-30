@@ -1,0 +1,6 @@
+{"status": "completed", "development_checks_met": true, "elapsed_seconds": 16.903040700010024, "error": null}
+public prefix/continuation fraction 0.6
+public prefix/continuation fraction 0.8
+public prefix/continuation fraction 1.0
+{"development_checks_met": true, "elapsed_seconds": 15.27851920001558, "error": null}
+{"development_checks_met": true, "checks": {"baseline": true, "authentic_restart": true, "old_analysis_rejected": true, "old_bytes_unchanged": true, "source_unchanged": true}}

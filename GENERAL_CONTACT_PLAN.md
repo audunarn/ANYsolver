@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-09-30.33. **Status:** D1-interior independently accepted; D2 development active.
+**Revision:** 2026-09-30.34. **Status:** D1-interior independently accepted; D2 development active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -112,6 +112,17 @@ certify the represented path rather than infer it from endpoint gaps. This does
 not close radial failures or arbitrary rims/continuous swept collision.
 [Benchmark review](docs/d1_review_support/D2_GUIDED_PARTIAL_FOUNDATION_REVIEW_20260930.md)
 binds the scope; no full D2 acceptance is asserted.
+
+The existing affine skin-path interval bounds are retained. Partial-overlap
+subdivision now carries outward endpoint enclosures and checks interval polarity,
+with a distinct non-interior restart revision.36distinct focused checks pass;
+one test-metadata failure is retained. The affected ten-pose lifecycle and authentic
+active/open prefix restart pass together34.547s/316MB; an unchanged older partial
+checkpoint rejects explicitly. The installed public example passes19.486s/276MB,
+with433exact source matches and exact mechanical/material-state parity. The
+scoped handoff assessment follows, not another geometry algorithm or mesh sweep.
+The D6 common-stage contract has prospective independent scrutiny; implementation
+must establish algebraic-block invertibility before assuming an index-one system.
 
 ## 4. Accelerating delivery without weakening it
 

@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.1642054000112694,
+  "peak_process_tree_memory_mb": 212.389888,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_partial_swept_enclosure.py",
+    "-k",
+    "partial_revision",
+    "-q",
+    "--junitxml=docs/d1_review_support/d2_partial_swept_enclosure_v2_20260930.xml"
+  ],
+  "log": "docs\\d1_review_support\\d2_partial_swept_enclosure_v2_20260930.log"
+}

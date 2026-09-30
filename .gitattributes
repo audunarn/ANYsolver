@@ -104,3 +104,11 @@ docs/d1_review_support/d6_centered_finite_inertia*20260930*.source.py -text -whi
 docs/d1_review_support/D2_FINITE_PENALTY_RADIAL_REVIEW_20260930.md -text whitespace=cr-at-eol
 docs/d1_review_support/D2_RADIAL_K1E8_REVIEW_20260930.md -text whitespace=cr-at-eol
 docs/d1_review_support/D2_GUIDED_PARTIAL_FOUNDATION_REVIEW_20260930.md -text whitespace=cr-at-eol
+
+# Exact partial swept development evidence and executed snapshots.
+docs/d1_review_support/d2_partial_swept*20260930*.json -text -whitespace
+docs/d1_review_support/d2_partial_swept*20260930*.log -text -whitespace
+docs/d1_review_support/d2_partial_swept*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_partial_swept*20260930*.source.py -text -whitespace
+docs/d1_review_support/d2_partial_installed*20260930*.json -text -whitespace
+docs/d1_review_support/d2_partial_installed*20260930*.log -text -whitespace

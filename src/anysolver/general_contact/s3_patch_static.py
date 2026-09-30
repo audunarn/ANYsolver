@@ -865,8 +865,18 @@ class GeneralS3PatchManager:
                     )
                     for triple in corners:
                         local = face[list(triple)]
-                        controls = _normal_controls(left[side][local], right[side][local])
-                        if min(float(item@reference) for item in controls) <= 0.0:
+                        if left_error is not None:
+                            controls = _normal_controls_interval(
+                                left[side][local], right[side][local],
+                                start_error=left_error[side][local],
+                                end_error=right_error[side][local])
+                            lower = _dot(controls, _interval(reference))[0]
+                            positive = (np.all(np.isfinite(lower))
+                                        and np.min(lower) > 0.0)
+                        else:
+                            controls = _normal_controls(left[side][local], right[side][local])
+                            positive = min(float(item@reference) for item in controls) > 0.0
+                        if not positive:
                             orientation_ok = False
             if self.settings.q4_source_gap_certificate == "fixed_projection_graph":
                 gap_ok = all(
@@ -945,8 +955,13 @@ class GeneralS3PatchManager:
             return (certify(left, middle, depth+1, left_error, middle_error)
                     and certify(middle, right, depth+1, middle_error, right_error))
 
+        # A rounded child endpoint represents the original affine path only
+        # with its enclosure. This also applies to partial-overlap development
+        # profiles, which do not require the D1 interior coverage guard.
         errors = (tuple(np.zeros_like(item) for item in first)
-                  if self.settings.d1_interior_profile else None)
+                  if (self.settings.d1_interior_profile
+                      or self.settings.q4_source_gap_certificate == "overlap_local_dev")
+                  else None)
         return certify(first, last, 0, errors, errors)
 
     def swept_increment_admissible(self, start, end, _start_factor, _end_factor):
@@ -990,6 +1005,11 @@ class GeneralS3PatchManager:
             }} if self.projected_work and not self.augmented else {}),
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
+                         **({"partial_overlap_swept_certificate_revision":
+                             "affine_outward_endpoint_enclosures_v1"}
+                            if (not self.settings.d1_interior_profile
+                                and self.settings.q4_source_gap_certificate == "overlap_local_dev")
+                            else {}),
                          **({"d1_interior_profile": True,
                              "d1_normal_admission_revision": "model_and_path_constraints_v2",
                              "d1_swept_certificate_revision":

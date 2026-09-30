@@ -1,0 +1,42 @@
+...F................................                                     [100%]
+================================== FAILURES ===================================
+______ test_partial_revision_is_explicit_and_interior_revision_unchanged ______
+
+    def test_partial_revision_is_explicit_and_interior_revision_unchanged():
+        _, manager = _manager()
+        settings = manager.restart_contract()["settings"]
+        assert settings["partial_overlap_swept_certificate_revision"] == "affine_outward_endpoint_enclosures_v1"
+        # Interior admission owns its separate existing contract. This checks
+        # serialization only, without admitting this partial fixture as interior.
+>       manager.settings = replace(manager.settings, d1_interior_profile=True)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_general_contact_partial_swept_enclosure.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Python\Python314\Lib\dataclasses.py:1770: in replace
+    return _replace(obj, **changes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\dataclasses.py:1804: in _replace
+    return self.__class__(**changes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+<string>:67: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ContactSolverSettings(maximum_candidate_pairs=100000, pair_motion='general', sliding_difference_step=None, maximum_gap...e=1e-05, d1_interior_profile=True, d1_interior_coverage_tolerance_m2=None, d1_interior_boundary_force_tolerance_n=None)
+
+    def __post_init__(self) -> None:
+        if type(self.d1_interior_profile) is not bool:
+            raise TypeError("d1_interior_profile must be bool")
+        interior_controls = (self.d1_interior_coverage_tolerance_m2,
+                             self.d1_interior_boundary_force_tolerance_n)
+        if self.d1_interior_profile:
+            if any(value is None or not np.isfinite(value) or value <= 0.0
+                   for value in interior_controls):
+>               raise ValueError("D1 interior profile needs positive dimensional coverage and boundary-force tolerances")
+E               ValueError: D1 interior profile needs positive dimensional coverage and boundary-force tolerances
+
+src\anysolver\general_contact\core.py:241: ValueError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_partial_swept_enclosure.py::test_partial_revision_is_explicit_and_interior_revision_unchanged
+1 failed, 35 passed in 14.70s
