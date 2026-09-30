@@ -30,6 +30,9 @@ class MovingS3MortarState:
     overlap_vertices: int
     weighted_gap_integration_error: float = 0.0
     integration_triangles: int = 0
+    projection_residual_m: float = 0.0
+    natural_coordinate_bound: float = 1.0
+    absolute_reference_support: np.ndarray | None = None
 
     @property
     def active_pressure_dofs(self) -> int:
@@ -142,6 +145,8 @@ class MovingS3PrimalMortarPenalty:
                 integrals.overlap_area, ratio*integrals.overlap_area,
                 integrals.minimum_sampled_gap, integrals.overlap_vertices,
                 integrals.weighted_gap_error, integrals.integration_triangles,
+                integrals.projection_residual_m, integrals.natural_coordinate_bound,
+                integrals.absolute_reference_support,
             )
         support = np.zeros(3)
         weighted_gap = np.zeros(3)

@@ -1050,7 +1050,9 @@ class GeneralS3PatchManager:
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
                          **({"s3_q4_swept_certificate_revision":
-                             "affine_all_projected_corners_outward_v1"}
+                             "affine_all_projected_corners_outward_v1",
+                             "s3_q4_value_resolution_revision":
+                             "measured_bilinear_inverse_operand_v1"}
                             if self.profile == S3_Q4_PROJECTED_PENALTY_PROFILE else {}),
                          **({"partial_overlap_swept_certificate_revision":
                              "affine_outward_endpoint_enclosures_v1"}

@@ -39,3 +39,25 @@ Temporal V1 (`05e77d96…`, test `40417905…`) used new public `scale/length` a
 [Repair evidence](d6_native_midpoint_gate_binding_v1_20260930.json) records two new route-specific controls PASS, zero steps/three old checks deselected, **4.098055s/204.398592MB**. All eight evidence hashes and436 final package bindings match. The living development note was appended after the frozen processes; it is not an unchanged post-handoff input. Frozen V1 sources/data and prior failures remain preserved.
 
 No remaining concrete blocker was found for this named private development slice. Principal remaining mechanics boundary: applied load/torque impulse and work balance and broader time/horizon convergence have not been demonstrated. Contact, yielding, multiple elements and durable dynamic restart also remain outside this result. Two short free trajectories and decreasing energy defect do not establish general temporal order, C7 qualification or application admission.
+
+## Addendum — loaded finite-motion V2, independent post-run disposition
+
+2026-09-30. **Scoped local development PASS.** The preceding6076 bytes and their24-step unloaded verdict are preserved exactly, SHA256 `ddc65ace65c9769e9fd1fa671b05f52082bc79a78d224865eefe3b6c744d33f8`. No reviewer numerical execution or renewed audit.
+
+Loaded V1 remains **NOT_EXECUTED**. Independent prospective review found that cloning the supplied load pattern regenerated its signatures before validation. V2 requires the supplied exact pattern against the actual mesh before cloning, revalidates it, compares original/owned canonical values and validates the owned copy. Stale line/couple and forged distributed-signature construction controls passed; changed current pattern and cancelled publication reject atomically without losing the ready candidate. The default None payload is preserved.
+
+Reviewed V2 SHA256:
+
+- Midpoint: `5931f8d1d5c123e85acaf22bb58ec94a80f4dd86f8e2beeba76f7149a143526c`.
+- Dynamic elastic/load owner: `9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498`.
+- Test: `426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d`.
+- [Frozen inputs](d6_native_loaded_temporal_v2_20260930.inputs.json): `3e3e38aba71d70492509a538e62c7f6f01a1e3306dffc1607a485ac431fc8ef9`.
+- [Summary](d6_native_loaded_temporal_summary_v2_20260930.json): `5289a05c6cffc71fed9b1e627db9040c079963f59e9446c893968a1c7f5678d6`.
+
+[Raw endpoints](d6_native_loaded_temporal_v2_20260930.json), source snapshots, [log](d6_native_loaded_temporal_v2_20260930.log), XML and [resource](d6_native_loaded_temporal_v2_20260930.resource.json) reconcile with all nine summary-bound hashes. The runtime verified managed imports, thread1 settings/cache and441 frozen bindings;436 package identities remain unchanged. The living development note was appended afterward. One new test PASS/five old checks deselected: exactly4 coarse/8 fine accepted epochs through0.004s, **31.4128209s/208.756736MB**, exit0 within180s/1GiB.
+
+Actual stage and initial/end work/acceleration/consistency use the bound pattern at parameter1. The full physical load42 and spatial load Jacobian retain exact algebraic zeros. Independent scalar station integrals check nodal force, physical lift torque, constant spatial couple and `outer(lift,f)-(lift dot f)I`; map/J/wrench error is at most1.1233e-16. Full loaded-stage directional error is at most1.1274e-11.
+
+Saved-data reconciliation independently reconstructs actual endpoint P/H changes and `T+Pi` minus accumulated exact physical work. Exact force work uses endpoint line displacement, couple work uses the issued left-Exp increment C dot phi, and path angular impulse uses its analytic average rotation. Midpoint generalized work and midpoint angular impulse remain separate. Normalized exact-work cumulative energy defects are4.366163299e-9/1.091924362e-9, fine/coarse **0.250087843**. The individual midpoint-minus-exact work difference remains visible, at most2.3106e-15J coarse/2.8954e-16J fine. P/path-H/midpoint-H defects are below the declared1e-10 floor; no measured momentum order is claimed. Endpoint energy is still T+Pi, not load work redefined as storage.
+
+This closes the named12-step private loaded Level A slice. It establishes neither general temporal order nor fullC7 qualification/public finite-speed admission, and does not close contact, yielding, multiple elements or durable dynamic restart. V1 nonexecution and all earlier evidence retain their original scope.

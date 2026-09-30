@@ -2,80 +2,69 @@
 
 ## Objective and source
 
-Continue the full C0–C9 programme under the120active-hour goal. Worktree:
+Continue full C0–C9 under the original120active-hour goal. Worktree
 C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
-Last committed checkpoint e27d44d0; new owned S3/Q4 and native temporal evidence
-checkpoint being prepared. Preserve all concurrent/historical dirty work.
-No publication/merge/release/default change. Goal remains active.
-
-[Goal](GENERAL_CONTACT_GOAL.md); [plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.37;
+Base checkpoint09f1c522; the reviewed resolution/native-loaded increment is
+being checkpointed with an exact owned manifest. Verify gitHEAD on resume and
+preserve unrelated dirty work. Goal active; no publication/merge/release/default change.
+[Goal](GENERAL_CONTACT_GOAL.md); [plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.39;
 [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md);
-[prior detailed state](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART22.md).
+[prior state](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART23.md).
 
-## Accepted boundaries remain
+## Accepted boundaries
 
-D1-interior accepted on installed0b2ac9be. D2 acceptance ONLY exact named guided
-foundation/installed partial-cycle inputs in GENERAL_CONTACT_PARTIAL_SHELL_HANDOFF_20260930.md.
-Installed wheel8af00b06/433source bindings unchanged. New development source is
-not that artifact. ANYfem c138d41 bridge remains reviewed/admissionfalse.
-Radial1e8 TIMEOUT900.0605s retained; stopped without replay/cap increase.
-No fullD2/C7 acceptance or reliable2x complete-solve claim.
+D1-interior accepted on installed0b2ac9be. D2 acceptance ONLY exact named
+foundation/partial-cycle inputs in GENERAL_CONTACT_PARTIAL_SHELL_HANDOFF_20260930.md.
+Installed wheel8af00b06/433source identities unchanged; new source is not that artifact.
+ANYfem c138d41 bridge remains reviewed/admissionfalse. Radial1e8 TIMEOUT900.0605s
+retained/stopped without replay/cap increase. No completeD2/C7 or reliable2x claim.
 
-## Current lead increment
+## Latest lead slice — closed local development
 
-S3-source/Q4-target finite projected penalty uses explicit jet2_s3_q4_dev and
-separate static/path profiles through existing managers/drivers. Two sourceS3,
-one original bilinear Q4 target, elastic small rotations/physical skins only.
-Existing Jet2/implicit projection and shared P1 support aggregate before pressure;
-complete both-body maps/tangent and scalar-value agreement remain. Six local
-primitive checks reused. Adaptive controls are measured differences, not true
-quadrature/CCD guarantees; near-cancelled shape4 scalar disagreement still rejects.
-All four projected Q4 corner Jacobians and original affine paths have outward
-bounds including rounded endpoints. Reviewer corrected rounded reference norm.
+S3-source/Q4-target explicit jet2_s3_q4_dev/projected finite-penalty static/path
+profiles retain original bilinear geometry, shared P1 pressure and bothbody work.
+Earlier five integrated/six local derivative checks are reused by impact.
+Legitimate zero contact-free reporting predictor now allowed only this exact
+new profile after unchanged constrained factorization/mechanism checks.
+PurepressV1 passes that guard then fails triangular-only cancellation fallback;
+retained NONPASS8.424s/358MB. Separate Q4 value envelope uses actual forward
+projection residuals, conditioned corner bounds and absolute support envelopes,
+with unresolved-coordinate rejection and no mechanical/gap tolerance change.
+Helper22f63a8d/testc6770bdd:14checksV1PASS2.902s/195MB plus2directed-rounding
+controlsV2PASS2.866s/195MB, old14 excluded. Corrected boundary findings retained.
+PurepressV2:1PASS/6old excluded8.404s/337MB; no external target load; independent
+P1-Q1 KKTq/p errors4.579e-11/2.140e-11, Fsource.004685859773460N.
+Summary5db0b73f; independent review5f758796 (all old review bytes preserved).
+New value-resolution revision binds this profile's restart only. No warped,
+finite-rotation, automatic/self-contact, global quadrature/CCD or installed promotion.
+Next lead: existing classical beam-plane owner, independent small-motion
+Timoshenko unilateral finite-foundation reference and one bounded coupled
+accuracy discriminator before mesh/enforcement qualification. No production
+rewrite or renewed radial/mode tuning. Use reusable contact_development_check.py.
 
-Five integrated checks locally pass: reactions/sharedpressure/bothbody tangent,
-invalid-fourth-corner and through-path collapse rejection, Decimal80 tilted
-negative-gap bound, public press/slide/open/recontact with target motion and
-canonical open-prefix fresh-model exact q/material/history restart, and a
-structurally deforming target against independent P1-Q1 moment/KKT reference.
-Mixed target-load case PASS8.519s/334MB, q/p/sourceforce1e-6 comparisons.
-Pure rigid-source pressing with zero contact-free reaction predictor is rejected;
-retain this open route-admission limit. The passing mixed fixture has explicit
-.01N upward per free targetnode in both public programme and oracle.
-V1/V2 path accessor/API keyword failures and zero-predictor failure remain.
-S3/Q4 development summaryc58a80b6, review2bcd4c36 (original review prefix preserved).
-No spatial/warped/distorted/generalCCD scientific admission or installed promotion.
+## Native parallel ownership and next action
 
-Next lead: preserve scoped source/evidence checkpoint, then choose next required
-shell geometry/pairing or static beam slice; no renewed radial/mode tuning campaign.
-
-## Native parallel increment and ownership
-
-Managed private worktree:
+Private managed worktree:
 C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver.
-Do not archive before integration. Private native modules are not main publicpackage.
-Worker /root/saved_radial_boundary owns those modules/tests and D6 livingnote;
-/root/checkpoint_review owns independent read-only mechanics scrutiny.
+Do not archive; these production modules are not in main public package.
+Worker /root/saved_radial_boundary owns NEW test_ge_beam3_native_vibration.py
+and D6livingnote; reviewer /root/checkpoint_review independently scrutinizes.
+Free24steps PASS42.281s/203MB, spinE ratio.250104. Mutable gate binding corrected
+with2controls/no step replay. LoadedV1NOT_EXECUTED after preclone authorityfinding;
+loadedV2 passes12steps31.413s/209MB, exact-work E ratio.250088, impulses belowfloor,
+midpoint diagnostics separate. Finalmidpoint5931f8d1/dynamic9586af43/test426f673d,
+summary5289a05c, temporalreview28eea851 preserves original prefix exactly.
+Vibration proposal20steps reviewed: physical15 mass, algebraic27-only Schur,
+sixrigid-mode/rank/SPD checks; onepositive mode, no supports/load, actual initial
+consistency, continuous/discrete midpoint cosine and half-amplitude controls.
+Worker authoring/freeze next; one180s/1GiB run,120s internal deadline, no oldreplay.
+FullC7, durable restart, multi-element/yielding/contact and public admission open.
 
-Free temporal24steps PASS42.281s/203.620MB: translation analytic; spinE5.839e-9
-→1.460e-9 ratio.250104; cumulativeP/H below floor (no order claim).
-Scale/length alias gate finding fixed: two mutation controls PASS4.098s/204MB,
-zero time steps/no temporal replay. Final reviewed midpoint211665de/dynamic8c3cd98e/
-test191409ab; temporal reviewddc65ace. Raw and frozen source remain retained.
-Legacy clamp default, public/static guards and permanent issued states unchanged.
+## Resources and ownership
 
-Next loadedfinite-motion proposal is independently scrutinized: explicit owned
-constant physical distributedforce/couple on dynamic_elastic; exact endpoint
-forcework/couplework and pathintegratedangularimpulse separate from midpoint
-approximations.12steps(4coarse+8fine),T=.004,180s/1GiB. Worker authors/freezes
-new candidate; numerical execution held pending exact source/binding scrutiny.
-Review source/status messages before any run; do not replay old temporal authority.
-Loaded work, vibration, broader temporal/state/restart qualification and fullC7 open.
-
-## Resources and processes
-
-Original120active-hour budget unchanged: latest126757s=35.21hused/~84.79hleft.
-Routine180s/1GiB; namedintegrated900s/4GB or stricter frozen caps. Two authorized
-workers. Lead numerical processes closed. Git metadata requires escalation for
-owned exact-path stage/commit; use manifest, never broad stage/reset/clean.
-Historical dirty scripts/tests/C6 prototype and main checkout remain preserved.
+Latest goal132076s=36.69hused/~83.31hleft; budget not reset.
+Routine180s/1GiB; namedintegrated900s/4GB or stricter frozen caps.
+No owned numerical process active at this checkpoint; native worker may start
+the named frozen vibration run afterward. Main package edits held only during
+source-bound main tests. Gitmetadata needs escalation for exact owned stage/commit;
+never broad stage/reset/clean. Preserve concurrent/historical dirty scripts/tests/C6.

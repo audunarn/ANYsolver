@@ -25,6 +25,9 @@ class Q4TargetOverlapIntegrals:
     overlap_vertices: int
     weighted_gap_error: float
     integration_triangles: int
+    projection_residual_m: float = 0.0
+    natural_coordinate_bound: float = 1.0
+    absolute_reference_support: np.ndarray | None = None
 
 
 def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray,
@@ -73,9 +76,36 @@ def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray
     support *= reference_area_ratio
     gram *= reference_area_ratio
 
+    # Diagnostics retain actual returned inverse values, not Newton thresholds.
+    # They do not alter the interpolation, integration or pressure law.
+    projected_xy = np.column_stack((
+        (projected_face.corners-overlap.origin)@overlap.tangent,
+        (projected_face.corners-overlap.origin)@overlap.binormal,
+    ))
+    projection_residual = 0.0
+    natural_bound = 1.0
+    absolute_shape_bound = np.zeros(3)
+
     def sample(point):
+        nonlocal projection_residual, natural_bound, absolute_shape_bound
         shape_a = overlap.shape_values(source, point)
         shape_b = overlap.shape_values(projected_face, point)
+        point_xy = np.array(((point-overlap.origin)@overlap.tangent,
+                             (point-overlap.origin)@overlap.binormal))
+        projection_residual = max(projection_residual,
+                                  float(np.linalg.norm(shape_b@projected_xy-point_xy)))
+        # Q1 partition identities recover the returned natural coordinates.
+        r = shape_b[1]+shape_b[2]-shape_b[0]-shape_b[3]
+        s = shape_b[2]+shape_b[3]-shape_b[0]-shape_b[1]
+        gamma4 = 4*np.finfo(float).eps/(1-4*np.finfo(float).eps)
+        # Four operations per Q1 shape and per recovery sum. Include both
+        # shape-evaluation and recovery error, using actual absolute operands.
+        shape_l1_upper = np.nextafter(np.sum(np.abs(shape_b))/(1-gamma4), np.inf)
+        recovery_error = (gamma4+gamma4/(1-gamma4))*shape_l1_upper
+        natural_bound = max(natural_bound,
+            float(np.nextafter(abs(float(r))+recovery_error, np.inf)),
+            float(np.nextafter(abs(float(s))+recovery_error, np.inf)))
+        absolute_shape_bound = np.maximum(absolute_shape_bound, np.abs(shape_a))
         gap = float((point-shape_b@target)@normal)
         return shape_a*gap, gap
 
@@ -137,4 +167,6 @@ def q4_target_overlap_integrals(source: PlanarFace, target_positions: np.ndarray
     return Q4TargetOverlapIntegrals(
         support, weighted, gram, overlap.area, minimum_sampled,
         len(overlap.polygon), measured_error, leaves,
+        projection_residual, float(np.nextafter(natural_bound, np.inf)),
+        reference_area_ratio*overlap.area*absolute_shape_bound,
     )

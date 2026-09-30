@@ -143,3 +143,6 @@ docs/d1_review_support/D2_S3_Q4_STATIC_REVIEW_20260930.md -text whitespace=cr-at
 docs/d1_review_support/d6_native_free_temporal*20260930* -text -whitespace
 docs/d1_review_support/d6_native_midpoint_gate_binding*20260930* -text -whitespace
 docs/d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d2_s3_q4*20260930*.source.py -text -whitespace
+docs/d1_review_support/d6_native_loaded_temporal*20260930* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART23.md -text -whitespace

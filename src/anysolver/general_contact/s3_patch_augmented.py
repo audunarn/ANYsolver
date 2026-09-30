@@ -1448,10 +1448,24 @@ class MovingS3PatchProjectedNormal:
                     rtol=value_rtol, atol=weighted_gap_roundoff,
                 )
                 if not gap_agrees:
-                    s3_operand_allowance = _s3_gap_operand_roundoff(
-                        local_source, local_target,
-                        np.maximum(local.reference_support, derivative.reference_support),
-                    )
+                    support_scale_rows = np.maximum(
+                        local.reference_support, derivative.reference_support)
+                    if len(target_nodes) == 4:
+                        from .s3_q4_gap_resolution import s3_q4_gap_operand_allowance
+                        s3_operand_allowance = s3_q4_gap_operand_allowance(
+                            local_source, local_target, support_scale_rows,
+                            scalar_projection_residual_m=local.projection_residual_m,
+                            jet_projection_residual_m=derivative.projection_residual_m,
+                            natural_coordinate_bound=max(local.natural_coordinate_bound,
+                                                         derivative.natural_coordinate_bound),
+                            absolute_support_scale=np.maximum(
+                                local.absolute_reference_support,
+                                derivative.absolute_reference_support),
+                        )
+                    else:
+                        s3_operand_allowance = _s3_gap_operand_roundoff(
+                            local_source, local_target, support_scale_rows,
+                        )
                     gap_agrees = np.allclose(
                         derivative.reference_weighted_gap, local.reference_weighted_gap,
                         rtol=value_rtol,

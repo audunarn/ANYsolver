@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-09-30.37. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-09-30.39. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -19,8 +19,8 @@ No publication, merge, release or historical-default change is authorized.
 | D2 finite-law S3/S3 | Both-body manufactured force/path work and genuine normal-control lifecycle/restart locally tested and reviewed | Geometry/response admission beyond manufacture |
 | D2 radial spatial response | κ=10⁷ misses one target-response gate; fixed-geometry independent solution explains the penalty bias | κ=10⁸ timed out; retain discrepancy and switch to missing partial-boundary row |
 | D2 named partial-support/cycle handoff | Independently accepted for the exact foundation and installed cycle parameter sets | Remaining shell combinations, geometry and explicit multi-pair ownership |
-| D2 S3-source/Q4-target | Shared P1 pressure, complete both-body tangent, four-corner swept rejection, public lifecycle/open restart and independently checked structurally deforming target locally pass | Spatial/geometry qualification and installed admission; zero contact-free reaction predictor remains a pure-press route limit |
-| D6 physical inertia/time integration | Inertia, free elastic owner and 24 accepted free translation/spin steps pass scoped development review; scale-binding fix passes two controls without temporal replay | Loaded finite-motion work/impulse, vibration and broader temporal qualification; no complete C7 admission |
+| D2 S3-source/Q4-target | Shared P1 pressure, complete both-body tangent, four-corner swept rejection, public lifecycle/open restart and mixed-load/pure-press deforming-target KKT comparisons locally pass | Spatial/geometry qualification, broader pair composition and installed admission remain open |
+| D6 physical inertia/time integration | Inertia, free elastic owner, 24 free translation/spin steps and 12 physically loaded finite-motion steps pass scoped development review | Vibration, broader temporal qualification and durable native integration; no complete C7 admission |
 | D3–D8 | Required programme remains open | Bounded integrated deliveries |
 
 The [D1 handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md)
@@ -155,11 +155,28 @@ checked without replaying the time steps. Next: one reviewed bounded physically
 loaded finite-motion slice, reporting exact-path work/impulses separately from
 midpoint approximations. Private native source remains in its managed worktree.
 
+The loaded V2 slice passes12 accepted steps in31.413s/208.757MB. Exact-path
+work gives energy defects4.366e-9 to1.092e-9, ratio.250088; linear/angular
+impulse defects remain below the registered resolution floor. The supplied
+load-pattern identity must validate before ownership cloning; V1 was therefore
+NOT_EXECUTED and preserved. Independent addendum28eea851 closes local development
+review only. Native production remains private in the managed worktree.
+
 The opposite S3/Q4 shell role uses the existing contributor/static driver,
 explicit `jet2_s3_q4_dev`, original bilinear Q4 target and shared P1 support.
 Local/coupled checks pass, including a mixed-load structurally deforming target
-against an independent fixed-geometry KKT oracle. Preserve the pure-press
-zero-predictor rejection rather than injecting stiffness or hidden forces.
+against an independent fixed-geometry KKT oracle. The new-profile-only reporting
+predictor may be zero after the unchanged constrained factorization checks.
+Its first retry failed a shape3-only cancellation fallback. A separate original
+bilinear-Q4 numerical resolution envelope now passes16 focused controls,
+including independent Decimal, conditioning and directed-rounding checks.
+The changed pure-press case passes8.404s/337.342MB with no external target load:
+relative displacement/pressure errors4.579e-11/2.140e-11 against the existing
+fixed-geometry KKT reference. Mechanical, derivative and physical-gap tolerances
+are unchanged; unresolvable coordinates still reject. The value-resolution
+revision binds this new profile's restart only. Retain the failed first run.
+Next lead slice moves to a missing pairing/geometry or beam requirement rather
+than repeating these controls.
 Guided open-prefix restart is exact. These development results do not expand
 the accepted installed handoff or establish general warped/CCD admission.
 

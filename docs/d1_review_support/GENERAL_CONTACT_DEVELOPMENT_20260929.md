@@ -460,3 +460,55 @@ failures remain separate; do not launch another stiffness/mesh diagnostic.
 **Deforming-target discriminator:** independent simplex P1-Q1 moments plus existing linear structural operator enumerate four pressure-row KKT on two actual free Q4 normal coordinates. Pure rigid-source pressing at1um clearance/1.3um control gives exactly zero contact-free force predictor and is rejected before mechanics (V1 NONPASS3.932s/247MB); retain this route-admission limitation. One explicit mixed fixture applies .01N upward at each free target node, with the identical loads in the oracle and public programme. V2 PASS8.519s/334MB; q, pressure and integrated force satisfy unchanged local1e-6 comparison. No spring, hidden load or production tolerance/predictor change. Small-motion model/reference scope remains explicit; spatial qualification remains open. Final source/evidence identities: d2_s3_q4_development_summary_v1_20260930.json.
 
 **Native temporal increment:** shared authenticated disposable work sessions and the explicit free dynamic_elastic route pass24 accepted translation/spin steps42.281s/203.620MB. Exact endpoint impulse/energy used; spinE5.839e-9→1.460e-9 ratio.250104, momentum below resolution floor. Reviewer-found mutable scale/length aliases now reject and actual gates read guarded owner inputs; two controls PASS4.098s/204MB, zero time steps, no replay. D6_NATIVE_FREE_TEMPORAL_REVIEW closes local development only. Next independently scrutinized bounded loaded-motion fixture keeps exact-path work/impulses separate from midpoint approximations; private native production remains managed, no C7/public admission.
+
+**Next pure-press admission slice:** zero contact-free reaction is legitimate for a fully prescribed rigid source; the scaled saddle solve already checks uncontrolled mechanisms. In the new nonmonolithic S3/Q4 finite-penalty route the predictor is reporting only, not force normalization, so its strictpositive reporting guard incorrectly excludes the coupled pure-press case. Add an internal default-false allow_zero flag only for this new profile, preserve scaled solve/residual/finite checks and all legacy/monolithic defaults, and report actual0. Verify original independent-KKT purepress target with no externalforces and a small scalar guard fixture distinguishing controlledzero from true uncontrolledsingularity. One180s/1GiB changed-only run, unchanged1e-6 response comparisons. No hidden load/stiffness or normal-law/tolerance change; old rejection remains historical.
+
+**Pure-press V1 disposition and one corrective slice:** the zero-reporting guard
+passes, including legacy and uncontrolled-singularity negatives, but the actual
+pure-press solve fails the triangular-only cancellation fallback with four Q4
+corners. Retain NONPASS8.424s/358.248MB. The principal question is whether scalar
+versus Jet2 near-zero weighted-gap discrepancy is resolved interpolation/frame
+arithmetic or a mechanics defect. Add diagnostics for actual returned Q1 forward
+residuals, recovered natural coordinates and absolute P1 support envelopes;
+mechanical values and derivatives remain unchanged. Derive a separate original
+bilinear Q4 condition/operand allowance, retaining the triangular proof and all
+integration, derivative and physical-gap gates. Independent scrutiny and local
+Decimal/non-affine/error-injection/poor-conditioning checks precede one changed
+pure-press retry under180s/1GiB. An unresolved inverse/roundoff budget still
+rejects; no tolerance increase or second corrective campaign is authorized by
+this slice. The new resolution identity binds this development profile's restart.
+
+**Loaded native V2 disposition:** twelve accepted finite-motion steps pass
+31.413s/208.757MB, with exact-work energy defect4.366e-9 to1.092e-9,
+ratio.250088. Actual physical path work/impulses and midpoint diagnostics are
+separate; momentum is resolution-limited. The supplied load definition now
+validates before cloning, preserving V1NOT_EXECUTED. Summary5289a05c and
+independent addendum28eea851 close local development review only; the original
+24-step review prefix remains byte-identical. Main installed/native public
+admission remains unchanged. Next C7 uncertainty is vibration and wider temporal
+coverage plus durable native owner integration, not replay of these passed steps.
+
+**S3/Q4 corrective slice closed:** the separate value-only original-bilinear
+envelope passes14 new controls in2.902s/195.486MB and2 directed-boundary controls
+in2.866s/195.236MB. Independent scrutiny identified and corrected nearest-rounded
+certificate comparisons; prior14 passed inputs were excluded from the delta.
+One changed pure-press solve passes8.404s/337.342MB with no external target force.
+Displacement/pressure relative errors4.579e-11/2.140e-11 and sourceforce
+.004685859773460N agree with independent P1-Q1 moments/KKT plus existing linear
+structural stiffness. Thirteen source bindings and imported workspace/BLAS1
+settings were verified in the target process. Mechanical, derivative and gap
+gates are unchanged; current new-profile restart binds the resolution revision.
+Summary5db0b73f and review5f758796 close Level A only; previous V1 and acceptance
+boundaries remain unchanged. Subsequent checks use the parameterized
+contact_development_check.py entry rather than another per-case driver.
+
+**Next lead delivery choice:** move to the missing classical beam static
+accuracy/enforcement requirement using the existing B2/B3 round-tube plane owner.
+An independently derived small-motion Timoshenko beam on a finite unilateral
+line foundation can distinguish contact discretization from structural
+interpolation and shear effects without another two-dimensional pressure campaign.
+First bounded development case verifies the analytical active interval and
+ordinary coupled response; only then choose prospective mesh/enforcement
+qualification. Preserve explicit radius, dimensioned line stiffness, true-end
+policy, existing material/kinematic limits and all C0–C9 obligations. No new
+production driver or hidden structural stiffness is proposed.

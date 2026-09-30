@@ -290,11 +290,14 @@ def _program_from_simple_displacement_control(control, num_steps: int) -> Contac
 
 
 def _elastic_displacement_force_predictor(stiffness, transform, row,
-                                          target) -> float:
+                                          target, *, allow_zero=False) -> float:
     """Bound a declared force scale by the contact-free control reactions.
 
     For several controls, use the maximum absolute reaction sum over path
     waypoints. This retains the one-control value and one physical force unit.
+    A fully controlled rigid tool can have exactly zero contact-free reaction;
+    the explicit new finite-penalty profile may report that zero without using
+    it as a force normalization. Singular uncontrolled systems still reject.
     """
     reduced = sparse.csr_matrix(transform.T @ stiffness @ transform)
     rows = np.asarray(row, dtype=float)
@@ -340,7 +343,7 @@ def _elastic_displacement_force_predictor(stiffness, transform, row,
             raise ValueError("contact-free displacement force predictor is unresolved")
         maximum_reaction = max(maximum_reaction,
                                float(np.sum(np.abs(reactions))))
-    if maximum_reaction <= 0.0:
+    if maximum_reaction <= 0.0 and not allow_zero:
         raise ValueError("contact-free displacement force predictor is unresolved")
     return maximum_reaction
 
@@ -580,6 +583,7 @@ def solve_static_contact_path(
                     displacement_force_predictor = (
                         _elastic_displacement_force_predictor(
                             stiffness, T, rows, program.waypoints[1:],
+                            allow_zero=manager.profile == s3_q4_projected_penalty_profile,
                         )
                     )
                     if (semismooth and settings.complementarity_force_scale_n

@@ -144,7 +144,8 @@ def test_rotated_negative_gap_bound_against_independent_decimal_corners():
     assert np.isfinite(bound)
 
 
-def test_structurally_deforming_target_against_independent_fixed_geometry_kkt():
+@pytest.mark.parametrize('load',(.01,0.),ids=('mixed_load','pure_press'))
+def test_structurally_deforming_target_against_independent_fixed_geometry_kkt(load):
     from itertools import product
     from math import factorial
     from anysolver.matrix_assembly import assemble_stiffness_matrix
@@ -177,9 +178,9 @@ def test_structurally_deforming_target_against_independent_fixed_geometry_kkt():
     structural=stiffness[np.ix_(free,free)].toarray()
     clearance=1e-6;press=-1.3e-6;kappa=1e7
     # Explicit upward target loads exercise mixed physical force/control work.
-    # Pure rigid-source pressing has zero contact-free reaction scale and is
-    # separately rejected by the existing public path admission contract.
-    target_load=np.full(2,.01)
+    # Pure pressing has zero contact-free reporting reaction; the exact new
+    # profile permits it after the unchanged constrained mechanism checks.
+    target_load=np.full(2,load)
     candidates=[]
     for flags in product((False,True),repeat=4):
         active=np.array(flags)
@@ -193,7 +194,7 @@ def test_structurally_deforming_target_against_independent_fixed_geometry_kkt():
     reference,pressure=candidates[0]
     program=ContactPathProgram(controls=(ContactPathControl.node(1,'uz'),ContactPathControl.node(1,'ux')),
         waypoints=((0.,0.),(press,0.)),steps_per_segment=1,
-        nodal_forces=tuple(ContactPathNodalForce(node,'uz',(0.,.01)) for node in (7,8)))
+        nodal_forces=tuple(ContactPathNodalForce(node,'uz',(0.,load)) for node in (7,8)) if load else ())
     result=solve_static_nonlinear(model,contact=definition,contact_settings=settings,
         contact_path_program=program,tolerance=1e-10)
     assert result.converged,result.failure_reason
@@ -204,3 +205,30 @@ def test_structurally_deforming_target_against_independent_fixed_geometry_kkt():
     assert np.linalg.norm(reported-pressure)/np.linalg.norm(pressure)<1e-6
     expected_force=support@pressure
     np.testing.assert_allclose(result.info['general_contact']['integration_force'][2],expected_force,rtol=1e-6)
+    if not load:
+        assert result.info['contact_free_elastic_force_predictor_n']==0.
+    # Retained by the bounded run's -s log; ordinary pytest still captures it.
+    import json
+    print('S3_Q4_KKT_RESPONSE',json.dumps({
+        'target_load_per_node_n':load,
+        'reference_displacement_m':reference.tolist(),
+        'actual_displacement_m':actual.tolist(),
+        'relative_displacement_error':float(np.linalg.norm(actual-reference)/np.linalg.norm(reference)),
+        'reference_pressure_pa':pressure.tolist(),
+        'actual_pressure_pa':reported.tolist(),
+        'relative_pressure_error':float(np.linalg.norm(reported-pressure)/np.linalg.norm(pressure)),
+        'reference_source_force_n':float(expected_force),
+        'actual_source_force_n':float(result.info['general_contact']['integration_force'][2]),
+    },sort_keys=True))
+
+
+def test_zero_predictor_keeps_legacy_and_uncontrolled_mechanism_rejection():
+    from scipy import sparse
+    from anysolver.general_contact.static_path import _elastic_displacement_force_predictor
+    stiffness=sparse.diags((0.,2.),format='csr')
+    transform=sparse.eye(2,format='csr');row=np.array(((1.,0.),));target=np.array(((.1,),))
+    with pytest.raises(ValueError,match='unresolved'):
+        _elastic_displacement_force_predictor(stiffness,transform,row,target)
+    assert _elastic_displacement_force_predictor(stiffness,transform,row,target,allow_zero=True)==0.
+    with pytest.raises(ValueError,match='unavailable'):
+        _elastic_displacement_force_predictor(sparse.csr_matrix((2,2)),transform,row,target,allow_zero=True)

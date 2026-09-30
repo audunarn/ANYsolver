@@ -31,6 +31,9 @@ class S3Q4OverlapDerivatives:
     branch_signature: tuple
     integration_triangles: int
     measured_errors: tuple
+    projection_residual_m: float
+    natural_coordinate_bound: float
+    absolute_reference_support: np.ndarray
 
 
 def _p1(point, corners):
@@ -94,7 +97,13 @@ def s3_q4_overlap_derivatives(reference_source, current_source, current_target, 
         raise UnsupportedQ4S3Branch("S3/Q4 overlap area is unresolved at propagated vertex resolution")
     ratio = reference_area/(sqrt(_dot(raw_normal, raw_normal))*.5)
 
+    projection_residual = 0.0
+    natural_bound = 1.0
+    absolute_shape_bound = np.zeros(3)
+    projected_values = np.array([[x.value for x in corner] for corner in target_xy])
+
     def rule(triangle):
+        nonlocal projection_residual, natural_bound, absolute_shape_bound
         a = _cross2(_sub(triangle[1], triangle[0]), _sub(triangle[2], triangle[0]))*.5
         if a.value <= 0:
             raise UnsupportedQ4S3Branch("degenerate integration triangle")
@@ -103,6 +112,20 @@ def s3_q4_overlap_derivatives(reference_source, current_source, current_target, 
             point = [_sum(barycentric[i]*triangle[i][k] for i in range(3)) for k in range(2)]
             shape_a = _p1(point, source_xy)
             shape_b, _, _ = _natural(point, target_xy)
+            values_b = np.array([x.value for x in shape_b])
+            values_a = np.array([x.value for x in shape_a])
+            values_point = np.array([x.value for x in point])
+            projection_residual = max(projection_residual,
+                float(np.linalg.norm(values_b@projected_values-values_point)))
+            r = values_b[1]+values_b[2]-values_b[0]-values_b[3]
+            q = values_b[2]+values_b[3]-values_b[0]-values_b[1]
+            gamma4 = 4*np.finfo(float).eps/(1-4*np.finfo(float).eps)
+            shape_l1_upper = np.nextafter(np.sum(np.abs(values_b))/(1-gamma4), np.inf)
+            recovery_error = (gamma4+gamma4/(1-gamma4))*shape_l1_upper
+            natural_bound = max(natural_bound,
+                float(np.nextafter(abs(float(r))+recovery_error, np.inf)),
+                float(np.nextafter(abs(float(q))+recovery_error, np.inf)))
+            absolute_shape_bound = np.maximum(absolute_shape_bound, np.abs(values_a))
             target_point = [_sum(shape_b[i]*t[i][k] for i in range(4)) for k in range(3)]
             gap = _dot(_sub(s[0], target_point), normal)
             for node in range(3):
@@ -150,4 +173,6 @@ def s3_q4_overlap_derivatives(reference_source, current_source, current_target, 
     if min(sv) <= 0 or not all(np.all(np.isfinite(x)) for x in (sv, sg, sh, wv, wg, wh)):
         raise UnsupportedQ4S3Branch("nonpositive supported mode or nonfinite derivative")
     return S3Q4OverlapDerivatives(sv, wv, sg, sh, wg, wh, area.value,
-        (ratio*area).value, area_resolution, signature, evaluations, tuple(measured))
+        (ratio*area).value, area_resolution, signature, evaluations, tuple(measured),
+        projection_residual, float(np.nextafter(natural_bound, np.inf)),
+        (ratio*area).value*absolute_shape_bound)

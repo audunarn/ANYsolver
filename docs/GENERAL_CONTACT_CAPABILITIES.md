@@ -18,8 +18,11 @@ evaluator have scoped independent development reviews. Free algebraic rank27
 and physical mass15 SPD remove the static genesis obstruction. Twenty-four free
 translation/spin steps pass scoped independent development review in42.281s/
 203.620MB. A residual-scale identity finding was fixed with two controls and no
-temporal replay. Loaded finite motion, vibration, broader temporal qualification
-and full C7 acceptance remain open. [Temporal assessment](d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md).
+temporal replay. Twelve physically loaded finite-motion steps also pass local
+review in31.413s/208.757MB: exact-path work gives energy-defect ratio.250088,
+with separately reported midpoint diagnostics. Load identity validates before
+cloning; the rejected V1 was NOT_EXECUTED. Vibration, broader temporal/state
+qualification and full C7 acceptance remain open. [Temporal assessment](d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md).
 
 The explicit S3-source/Q4-target projected-penalty development profile now shares
 the existing static contributor/driver, P1 supports and original bilinear target.
@@ -27,7 +30,15 @@ Local both-body tangents, affine four-corner geometry rejection, guided public
 press/slide/open/recontact and authentic open restart pass. A mixed physical-load
 fixture with a structurally deforming Q4 target agrees with an independent
 fixed-geometry KKT oracle within1e-6. Pure rigid-source pressing with an exactly
-zero contact-free reaction predictor is rejected by the existing path contract.
+zero contact-free reaction predictor now passes a new-profile-only reporting
+guard, retaining actual0 and the constrained mechanism checks. The first retry
+failed the old triangular-target cancellation fallback. A separate Q4 numerical
+value envelope passes16 focused controls; the changed pure-press case passes
+8.404s/337.342MB with no external target load, displacement/pressure errors
+4.579e-11/2.140e-11 against the independent fixed-geometry KKT reference. Failed
+V1 remains retained; unresolvable conditioning still rejects. Its restart
+resolution identity is separate from other profiles. No broader geometry or
+installed admission follows.
 **Implemented and locally tested; not scientifically accepted or released.**
 The accepted installed artifact and application admission are unchanged.
 
