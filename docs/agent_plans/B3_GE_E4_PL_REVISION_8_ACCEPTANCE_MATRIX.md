@@ -163,7 +163,7 @@ The individual V01–V28 and B01–B18 obligations below are all
 and criteria remain in the programme. Split a group when a row reaches
 candidate adjudication; a failed required case cannot disappear within it.
 
-### F08 candidate binding — frozen prospective v1, not a pass
+### F08 candidate binding — frozen prospective v1, failed collection
 
 Independent pre-execution review by `/root/anyfem_consumer` accepts the
 scientific scope and corrected hash assertion: 28/28 fixture/config matches,
@@ -358,3 +358,30 @@ force oracle `7.25036e-11`. One numerical thread, JIT disabled, 19.988 s,
 [immutable results and review](../../.qualification/b3-ge-e4-pl/r8-f05-foundation-20260930-v1/results.md).
 The frozen pre-execution matrix remains `contract.snapshot.md` in that evidence;
 this disposition does not rewrite it. G0B and unrelated obligations stay open.
+### F08 corrected execution binding — frozen prospective v2, not a pass
+
+Independent repair review by `/root/anyfem_consumer` confirms complete static
+closure, 32/32 matching fixture/config hashes, unchanged prior fixture bytes
+and scientific inventory, and no diagnostic execution at module import.
+Namespace-package directories match source semantics. No remaining pre-run
+import-closure or scope finding was identified.
+
+V1 ran once at source `af5048ba` under its byte-exact snapshot
+`9eea7ff839fef160282ff3fdf7de89814c814bd22e4c231c886576fc375a6d20`.
+It failed before any numerical case: two collection errors for missing
+`docs.reference_cases.ge_beam3_station_resultant_cell`. Observed exit 2,
+4.120 s, 216,625,152 bytes process-tree RSS. Its directory and outputs remain
+unchanged. This is an isolation-fixture defect, not scientific rejection.
+
+V2 changes only the exclusive copied import closure, adding four recursive
+`docs/reference_cases` Python modules. No existing fixture, product, tolerance,
+selected case, or claim changes. V1 execution is not replayed. Run V2 once after
+independent repair review under the same 17-case scientific/terminal predicates,
+one thread/JIT off/600 s/8 GiB and existing native cooperative limits.
+Directory: `C:/Users/AudunArnesenNyhus/AppData/Local/Temp/r8-f08-adapter-installed-v2`.
+Frozen 32-file fixture/config manifest SHA-256
+`f52a7bc425bf6151cd76eb08c1288437bfdfecbfed40ad54a9e0ecbdccde6f7d`;
+installed runner SHA-256
+`32ba667603700c758465e5bd201cd9192142a5701503f6b804a444f88bd7219c`;
+supervisor remains `527535441e819612a59c78326a0fc5c54f091265ee126df741693d54164bba56`.
+Keep V1 raw failure and initial pre-review binding correction alongside V2.
