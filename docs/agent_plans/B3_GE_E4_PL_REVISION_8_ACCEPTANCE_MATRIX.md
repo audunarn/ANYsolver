@@ -104,6 +104,19 @@ law/gate acceptance or formalF03 consumption follows. Metadata, arithmetic and
 rank-solver failures are retained with corrected results and independent review:
 [decision evidence](../../.qualification/b3-ge-e4-pl/r8-bl5-port-boundary-decision-dev-20260930-v1/results.md).
 
+M2 physical-transfer screen,30 September: matched ground supports retain BL5
+ports. A +10Nm normal couple transfers entirely by distributed force arms with
+zero direct normal couples/drilling constraint columns. Unchanged16-interval
+isolated OpenSees Fy/Mx runs retain full poses/covectors and verified equation
+work/root provenance; applied-work differences−0.4650%/+0.0872%, but Fy shell
+pose1.9279% and transfer-shape/root partitions remain different. Independent
+review finds no work-map defect. Installed61559673 BL5 finite impact9/9 passed.
+Proceed to growing-space/ratio and common-field, fixed-distance transfer
+assessment, not a port rewrite or isolated axial campaign. No converged1%
+accuracy, drilling-response independence, multiplier selection, F03 authority
+consumption or aggregate acceptance:
+[physical-transfer evidence](../../.qualification/b3-ge-e4-pl/r8-bl5-physical-transfer-dev-20260930-v1/results.md).
+
 | Gate | Status | Boundary |
 |---|---|---|
 | G0A | IN_PROGRESS | Reconcile prior registration before a pass claim. |

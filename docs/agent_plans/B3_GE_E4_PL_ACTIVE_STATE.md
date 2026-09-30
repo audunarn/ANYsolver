@@ -11,8 +11,8 @@ No main merge/publication authority. Formal F03 unconsumed; spent authorities st
 ## Identity and ownership
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration. Source parent371aa573 plus the current
-point-recovery/evidence commit (use actual git HEAD). Product wheel61559673....
+branch codex/b3-ge-e4-pl-integration. Source parent8b8bf6bb plus the current
+physical-transfer/evidence commit (use actual git HEAD). Product wheel61559673....
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 branch codex/experimental-ge-panel-consumer, commit6226230; wheel0b6c51af....
 Full hashes/source-wheel-site maps are in the latest record below.
@@ -65,6 +65,24 @@ choosing the discriminator. Separate nodal six-channel, L1 six-channel, BL5
 released-normal-spin and B2 finite-support laws. Do not infer physical fidelity
 from recovered balance alone or resume isolated axial refinement. Independently
 advance concrete remaining foundations where dependencies permit.
+
+Current decision: retain BL5 ports/support declaration after
+[physical-transfer screen](../../.qualification/b3-ge-e4-pl/r8-bl5-physical-transfer-dev-20260930-v1/results.md).
+Native16/16/P0 Mz/Mx/Fy station work/equilibrium pass; normal couple10Nm transfers
+by force arms with no direct normal couples/drilling constraint columns.
+Unchanged external16 direct Fy/Mx full poses/covectors/root actions now recovered
+and independently reviewed. Work differences−0.4650%/+0.0872%; beam pose
+0.4989%/0.0570%, shell1.9279%/0.3690%. Root/line transfer shape differs; strong
+nodal reference and weak retained BL5 are distinct discrete operators.
+Installed61559673 BL5 finite impact9/9 passes(39.40s,215138304B,210onsiteimports).
+No response drilling independence, converged accuracy or formalF03 acceptance.
+Remaining uncertainty is growing-space compatibility versus physical transfer
+convergence. Next bounded batch freezes ratios/supports/actions and common
+physical test fields/regions; assesses norm-scaled native trace and actual mixed
+system together. A work/norm defect requires repair; stable/converging transfer
+permits the full envelope; an unresolved mode goes to focused mechanics review.
+Do not tune bases from candidate values or repeat isolated axial refinements.
+Foreign contact run finished without intervention; no owned numerical job active.
 
 Materials/simultaneous yielding, footprints/topology, loads, spectra,
 imperfections/capacity, scale, external references, platforms and release remain
