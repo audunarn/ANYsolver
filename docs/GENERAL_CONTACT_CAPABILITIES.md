@@ -5,8 +5,38 @@ impact API has a separate contract. Status terms are deliberately distinct:
 **implemented**, **locally tested**, **independently accepted**, and
 **released**. A local passing test does not confer engineering acceptance.
 
-The current fine-Q1 monolithic Q4/S3 D1 profile remains **implemented and
-locally tested**, with independent acceptance and release open. Conservative
+**Current source0b2ac9be — D1-interior independently accepted30September:**
+Final [independent disposition](d1_review_support/D1_CHECKPOINT_SUCCESSOR_REVIEW_20260930.md)
+closes the documented planar, frictionless, elastic small-rotation/vonKarman
+Q4/S3 interior static profile, with force/weighted-displacement controls,
+deformable target, physical skins, reactions/work, gap checks and restart.
+Current spatialV7 passes35/35criteria (733.119s/568.046MB); current public-prefix
+replay has exact complete state/mechanics parity. Current installed checkpoint
+and fresh namedQ4 timing have scoped PASS; genericBeam timing is impact-reused.
+Old87c science retains its execution scope through explicit impact, not relabeling.
+[Installed handoff and limits](GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md).
+**Released: no.** Exact-model/application-admission flags remainfalse; this is a
+profile-family evidence disposition, not automatic qualification of arbitrary
+models. Partialtargetcuts, active prescribedsource edges/rims/tips, finite rotation,
+warped geometry, friction/material/native/dynamic rows remainopen. SpatialV5/V6
+NONPASS and every historical failed gate remain retained. Savedcheckpoint-route
+median improvement28.37% is not a complete-solve speedclaim.
+
+**30 September source87c53913 update:** D1-interior stages target-boundary cuts,
+prescribed source edges and source rim contact to D2 under the controlling goal.
+The cut-front counterexample below remains valid for its original unrestricted
+claim. The frozen installed .018N/.04m 4x4 Q4/S3 force lifecycle has independent
+scoped PASS for8poses, physical gaps, per-body work/reactions, director derivatives,
+complete source parity and actual active2/open6 restart forks. Raw programme:
+[d1_final_lifecycle_v1_20260930.freeze.json](d1_review_support/d1_final_lifecycle_v1_20260930.freeze.json).
+This is one verification row; displacement/reference/pressure/spatial/state-impact
+and final D1 capability disposition remain open. Public exact-model application
+admission and release flags remain false. The two named no-contact gates now pass
+(Q4V1, independent fixed36-pair beamV2); V1beam nonpass remains retained.
+
+The unrestricted fine-Q1 monolithic Q4/S3 profile remains **implemented and
+locally tested**, with broader independent acceptance and release open. Its
+bounded D1-interior subset is accepted as stated above. Conservative
 same-side overlap pruning has [source-bound development parity and cost
 evidence](d1_review_support/d1_same_side_search_20260928.md). A bounded
 [16×8→32×8 coupled x-refinement](d1_review_support/d1_16_32_near_rim_coupled_comparison_20260928.md)
@@ -44,6 +74,7 @@ not turn `validation.valid` or `implemented` into user-facing admission.
 
 | Profile and geometry | Analysis and lifecycle | Status | Evidence and dependency |
 |---|---|---|---|
+| D1-interior planar Q4/S3, fully target-union-covered positive source overlap, no active source rim/tip or prescribed normal | Elastic small-rotation/vonKarman static; monolithic force/weighted displacement, press/slide/open/recontact and restart | Implemented, tested, **independently accepted**; not released/application-admitted | Current0b2 installed/spatial/public-prefix/checkpoint/Q4 joins plus explicitly impact-reused87c finite scientific rows; [handoff](GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md). |
 | Planar qualified E4-PL Q4 skin against one fixed rigid plane; midsurface/top/bottom; frictionless penalty mortar | Nonlinear static force or displacement control; version-2 penalty checkpoint under von Karman kinematics | Implemented, locally tested | `tests/test_general_contact_plane.py`, `examples/general_contact_planar_plate.py`; corotational restart, independent review and registered numerical qualification open |
 | Planar S3 V2D physical skin against one fixed rigid plane; S3 reference-surface offset and P1 pressure | Von Karman nonlinear static force/displacement control; state-free version-2 checkpoint | Implemented, locally tested exploratory slice | `tests/test_general_contact_s3_plane.py`, `examples/general_contact_s3_plane.py`; see [S3 plane limits](GENERAL_CONTACT_C1_S3_PLANE.md) |
 | Qualified planar Q4 or S3 V2D physical skin against one fixed analytic sphere | Von Karman nonlinear static force/displacement control; frictionless penalty pressure, independent represented-gap and swept checks, version-2 checkpoint | Implemented, locally tested development profile; C1 still open | Q4/S3 work and geometry checks, Q4 force/displacement/restart, two-face sliding, under-resolved spot rejection and through-crossing trial; see [sphere limits](GENERAL_CONTACT_C1_SPHERE.md) |
@@ -278,3 +309,68 @@ The test and package outputs are retained under
 `c1-patch-regression2.txt`, `wheel-1ab13962-build.txt`,
 `wheel-1ab13962-install.txt` and `c1-patch-example-installed.txt`.
 This remains local development and package smoke evidence.
+
+## 30 September — finite normal response and pressure rows
+
+Physics87c53913, installed wheel9de057da: independently scoped PASS for exact-Q1
+weak manufacture4/8/16 (all11 finite checks each;16offline structural reference)
+and matched-model nonlinear contact KKT including all29x6 nodal work coordinates.
+Accounted work error9.25010e-8<=1e-6; complete pose/bin/mortar-coordinate checks pass.
+Evidence: responseV2freeze51e0708d, actual same-process installed import identities
+and retained raw `d1_final_response_v2_20260930_analytic*` / `*_kkt*`.
+
+Independently scoped PASS for the registered signed9/25/121-mode finite reference-
+energy pressure-work family and representative8th-pose recontact. Eta>=.99999754,
+kappa<=1386.397; constructive/actual dual bounds and24 independent derivative
+checks pass (worst3.771e-6<=1e-5). Pressure4 uses V3,6/12/recontact V4freeze3f75753c.
+Default family.04N and recontact.018N explicitly bound. The six-mesh metadata parser
+nonpass before mechanics remains preserved, followed by reviewed exact-identity
+adapter correction. No mesh-uniform/current-Newton stability claim, pressure
+positivity theorem or repair of historical larger-load work failures follows.
+
+Weighted-source displacement development cycle8/8 completes172.227s/434.88MB;
+all-body/admission/gap/open/recontact saved checks pass. It is not independently
+accepted yet; formal inputs/calibration/commands frozen under displacementV1
+16b5ae5a before execution. FullD1, applications and release remain incomplete.
+
+## 30 September closure update (prospective continuation)
+Formal displacementV1 full8/8 and all-pose assessment have scoped independent
+PASS (178.728s/426.60MB;30.203s/399.60MB). Finite pressure maps and analytical/
+complete nodal-work rows also independently scoped PASS; frozen sources retain
+their original scope. Formal radialV2 TIMEOUT900.074s/568.14MB is NONPASS, with
+no completed result. TransactionV1 interruption group3FAIL before intended
+assertions (legacy dict has no has_active_trial); admission/physical commands
+were unissued. Corrected observer/new candidate must not regrade that failure.
+FullD1 remains open. One isolated conservative boundary-reporting cost patch is
+developmental; old installed87c evidence remains bound to its exact artifact.
+
+## Immediate-state row — independently scoped disposition
+Reviewer radial_observables scopedPASS: V2interruption3PASS73.064s/398.83MB plus
+V2admission1PASS39.577s/384MB and V3actualphysicalcutback1PASS57.923s/337.23MB.
+Actual oldinstalled87c, all433package identities match; immediate original
+elastic-dictionary owner/payload/bindings/history/q/control/pressure/loadtarget
+checks and genuine admitted-cutback checkpoint parity passed. No native-trial,
+generation, plasticity or deletion admission. Original V1observer failures and
+V2physical guard failure remain NONPASS; plugin-isolated V3 is a new candidate.
+Newreporting590d artifact is not the tested production identity of this row.
+RemainingD1 issue: same-input spatial case must meet all35gates within cap, and
+final new-artifact impact/installed handoff requires independent disposition.
+
+## 30 September checkpoint normalization successor (90baf01a)
+
+SpatialV5 on installed590d is NONPASS900.048s/596.00MB, stuck at checkpoint
+creation after428.014s. No postchecks executed. Contact equations/settings are
+unchanged by90baf's inert exact-dictionary guard fastpath. Thirteen focused
+checkpoint controls pass; saved complete canonical normalization parity is exact
+(48.223s->0.114s locally). This does not promote old artifact-specific restart
+or timing evidence. New installed433files match wheel/source; complete saved
+active/open producer/consumer checks and prospectively frozen SpatialV6 remain
+pending independent disposition. Full D1 and C0–C9 remain incomplete.
+
+Complete current90baf installed checkpoint producer/consumer now has scoped
+independent PASS (35.829s/251.77MB; complete active2/open6 canonical bytes/hash).
+[Source-impact and boundary disposition](d1_review_support/D1_CHECKPOINT_SUCCESSOR_REVIEW_20260930.md)
+identifies unchanged scientific/no-contact reuse separately from fresh serialization.
+SpatialV6 is NONPASS900.077s/570.73MB during checkpoint creation; no result
+or spatial postchecks. Saved diagnostic profile completes with exact parity but
+does not close spatial qualification. No whole-D1 or application admission.

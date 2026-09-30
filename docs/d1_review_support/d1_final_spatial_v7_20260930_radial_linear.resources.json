@@ -1,0 +1,22 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 5.548572800005786,
+  "peak_process_tree_memory_mb": 201.293824,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d1_installed_entry.py",
+    "--expected-root",
+    "C:\\ANYworkspaceWork\\general-contact-final-0b2ac9be\\target",
+    "--identity-output",
+    "docs/d1_review_support/d1_final_spatial_v7_20260930_radial_linear.import.json",
+    "--script",
+    "docs/d1_review_support/d1_radial_linear_saved_assessment.py",
+    "--",
+    "docs\\d1_review_support\\d1_radial_linear_nonmatching_v3_20260930.json",
+    "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial_linear_assess.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial_linear.log"
+}

@@ -1,12 +1,33 @@
 # General contact — goal
 
-**Revision:** 2026-09-29.3. **Status:** D1-interior development resumed 29 September 2026 at 08:04:33 UTC; no acceptance claim. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md). **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-09-30.1. **Status:** D1-interior independently accepted30September2026 on installed0b2ac9be; D2 development next. Original programme clock resumed29September2026 at08:04:33UTC. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md). **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's instruction; this status does not establish numerical acceptance.
 
 On resumption, this goal prevails over conflicting future instructions in the 28 September Review-adjusted Delivery Plan, the [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md), the [D1 gap map](docs/GENERAL_CONTACT_D1_ACCEPTANCE_GAP_MAP.md) and the [living note](GENERAL_CONTACT_RESTART.md). Preserve their unaffected requirements and historical dispositions. Frozen or consumed case registrations and execution authorities are not renewed.
 
-## Outcome
+## Current milestone and next delivery
+
+D1-interior is independently accepted in its bounded documented profile, through
+current installed0b2ac9be evidence and explicit impact reuse of scoped87c science.
+[Handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md) and
+[final assessment](docs/d1_review_support/D1_CHECKPOINT_SUCCESSOR_REVIEW_20260930.md)
+bind the exact controls, materials, geometry, finite qualification and limitations.
+This establishes neither release, arbitrary exact-model/application admission nor
+full C0–C9 completion. Every historical failure and consumed authority remains.
+
+**D2 next outcome:** deliver contact with partial target-boundary overlap and
+prescribed-source boundary constraints through an explicit, independently checked
+method profile; then complete the remaining D2 shell/rigid/search capabilities.
+Select one authorized method using the shortest bounded discriminating experiment,
+with early scrutiny of its equations/work/derivatives. Prospective method-specific
+criteria accompany the inherited response, work, integration and dimensional-gap
+gates. Do not apply exact-complementarity or exact-pairing stability claims to a
+finite penalty method, or hide numerical penetration/regularization dependence.
+The existing exact D1 law, evidence and defaults remain intact. Later D3–D8 and the
+original120active-hour budget/resources continue without reset.
+
+## Accepted D1 outcome and preserved contract
 
 Deliver **D1-interior**: an independently assessed, installed ANYsolver capability for planar, nonmatching Q4/S3 frictionless shell-static contact through the ordinary nonlinear static solver. It covers press, slide, opening and recontact; force and displacement control; physical skins and offsets; a deformable S3 target; both-body work and reactions; independent physical gaps; rejected trials, cutback, cancellation and exception rollback; and deterministic restart.
 

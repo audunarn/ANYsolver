@@ -1,8 +1,21 @@
 # ANYsolver General Contact — full delivery programme
 
-**Current delivery basis:** [D1-interior goal](../GENERAL_CONTACT_GOAL.md) and [adaptable plan](../GENERAL_CONTACT_PLAN.md) revision 2026-09-29.3. Development is paused. The historical D1 breadth below remains the full programme dependency; the goal stages three boundary cases into D2 without removing them from C0–C9.
+**Current controlling basis:** [D1-interior goal](../GENERAL_CONTACT_GOAL.md)
+revision2026-09-29.3 and [adaptable plan](../GENERAL_CONTACT_PLAN.md). Development
+is ACTIVE30September2026, current installed0b2ac9be with physics87c53913.
+Installed force/displacement/restart, analytical/matched-code, pressure and
+immediate elastic rollback rows retain scoped independent PASS through explicit
+impact. Current checkpoint and fresh Q4 no-contact gates have scoped PASS;
+SpatialV7 all35criteria and installed public-prefix comparison have independent
+PASS; documented D1-interior is independently accepted through explicit source
+impact and current-artifact evidence. D2 is next. Full C0–C9 acceptance/release remains
+incomplete. Exact next actions and consumed identities are in
+[restart](../GENERAL_CONTACT_RESTART.md).
 
-**Current basis:** User's 28 September 2026 *General Contact — Review-adjusted Delivery Plan*, read with the 26 September full implementation and acceptance scope. **Status:** paused for consideration on 29 September 2026. This document provides a stable link to the whole programme; it does not alter scientific decisions, qualification gates, failed evidence, frozen or consumed execution authorities, or the user's pause.
+**Historical basis:** User's28September review-adjusted plan and26September full
+scope remain scientific background; the goal stages partial-overlap, prescribed-
+edge and source rim/tip cases intoD2 without removing them. Historical pauses and
+execution routes below are retained observations, not new run authorities.
 
 ## Objective and delivery boundary
 
@@ -10,7 +23,7 @@ Complete the required C0–C9 programme: qualified deformable Q4/S3 shell contac
 
 Historical sphere APIs, element defaults, no-contact behaviour and accepted formulation identities remain valid. Permanent beam–shell attachment and F03 are independent capabilities. Solids, exact non-round beam flank contact, thermal/adhesive/wear laws, S6/S8, deletion, a new explicit integrator and GPU work remain outside the required programme. Merging, publication and release are separate actions.
 
-## Current state and critical decision
+## Retained 29 September checkpoint and decision (historical)
 
 The isolated solver worktree is `C:\ANYworkspaceWork\ANYsolver-general-contact`, branch `codex/general-contact-core`. At the pause its committed HEAD was `97fcf81f`, with an uncommitted Q4 projected-shape inversion candidate and its bounded local benchmark. The precise dirty-file and process checkpoint is in [GENERAL_CONTACT_RESTART.md](../GENERAL_CONTACT_RESTART.md). Do not treat the local 2.81× inversion timing as a complete-solve speedup.
 
@@ -34,7 +47,7 @@ The next qualified pressure-method candidate must be derived and identified sepa
 
 Application records may advance against the stable public API, but user-facing admission follows solver acceptance. The current isolated ANYfem branch stores and maps contact intent; it is not a general-contact job execution or application acceptance route.
 
-## D1 execution on resumption
+## Retained 29 September execution route (superseded by current goal/plan)
 
 1. **Preserve the paused candidate.** Inspect the exact dirty state before editing. Verify the Q4 inverse against the original on smooth, near-edge and ill-conditioned valid geometry; run affected focused geometry/contact checks. Keep or revert according to parity and actual route cost. Do not infer a complete-route saving from the local benchmark.
 2. **Settle the pressure method before expensive refinement.** Derive a complete consistent law, dimensions, moving-overlap derivatives, pressure positivity and active-set response for one selected candidate. Check the exact two-hat mode, constant/bilinear traction, smooth partial-front consistency, physical gap and a small independent structural system before a costly coupled run.

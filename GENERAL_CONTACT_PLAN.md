@@ -1,6 +1,6 @@
 # General contact — plan
 
-**Revision:** 2026-09-30.12. **Status:** D1-interior development active; no acceptance claim. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md). **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Current checkpoint is 0dcb9532 plus owned changes; earlier identities remain in restart history.
+**Revision:** 2026-09-30.24. **Status:** D1-interior independently accepted; D2 next. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.1. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
 
 The goal owns outcome, acceptance, authority, budget and stop rules. This plan is the current best route, not a mandatory sequence of investigations. The lead should change it when evidence supports faster delivery within the goal, briefly recording the decision. Development has resumed on the user's instruction.
 
@@ -13,6 +13,80 @@ Use one short living note, one delivery candidate, one parameterized case runner
 The dirty optimization has been preserved and parked as described in Section 3A. Build a small integrated D1-interior path with its admission checks. No further permission is needed for choices delegated by the goal. Scope/criterion changes and merge/publication/release remain user decisions.
 
 ## 2. What the evidence supports
+
+**D1 disposition:** independently accepted30September on installed0b2ac9be.
+[Handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md) gives exact
+scope, source/environment identities and usable commands. Explicit final impact
+reuses87c eight-pose force/displacement/restart, elastic transaction, finite
+pressure and analytical/code rows.430of433 packagefiles are unchanged; the3
+reviewed reporting/observation joins have fresh parity/control evidence.
+Current spatialV7 passed35/35criteria at733.119s/568.046MB, including independent
+physical bins/work/gaps and solution-reference uncertainty. Current public-prefix
+has exact complete mechanical/state parity. Current checkpoint and freshQ4
+no-contact timing have independent scoped PASS; genericBeam timing is impact-reused.
+All V5/V6 failures remainNONPASS; no reliable complete-solve speedratio or release.
+
+**Next integrated result:** choose one D2 method for partial target overlap and
+prescribed-source boundary constraints. First assess the finite penalty weak-gap
+route already represented in the local kernel, because it avoids adding an
+independent multiplier-space implementation. Reuse only verified geometry/work
+interfaces. Derive its full residual/Jacobian including moving support/projections,
+separate regularization storage from work during support changes, and verify
+positive physical pressure/vanishing overlap behaviour. It is a candidate, not
+an accepted law or permission to silently weaken gates. Compare the other two
+authorized routes briefly on mechanism/implementation cost; do not build all three.
+
+Use one small analytic supported-space cut/boundary case and one coupled shell
+slice with independent reaction/virtual-work/tangent/gap controls. Vary geometry
+cut and explicit regularization only to distinguish bounded response from the
+known exact-law deterioration. Require a declared finite-regularization sensitivity
+and resource decision. If the candidate cannot credibly meet the common gates,
+choose agglomeration/dual-boundary modification immediately; no endless tuning.
+Begin partial static pressing/opening/recontact, shifting target geometry while
+open. Moving active physical rims and edge-only collision need their own feature
+kernels/acceptance; this initial surface slice cannot admit them. Keep the accepted
+D1 exact-law route and checkpoint identity unchanged; a new profile gets explicit
+restart/capability identity. Routine development180s/1GB, named integrated cases
+up to900s/4GB; no new administrative framework. Full D2/D3–D8 remains required.
+
+### Retained decision chronology
+
+**Acceptance closure decision:** The first prospective no-contact timing screen
+passes Q4 but fails the beam upper-median5% gate (median+3.845%, upper+5.900%).
+Physics/import/environment parity passed. Bounded warm/cold attribution profiles
+did not identify a sizeable contact-hook hotspot; retain the nonpass and do not
+append favourable pairs. Exact saved-pressure waypoint/admission checks and complete
+restart-state assessment remain required. Per-body current-lever recovery on the
+original0.04N eight-pose cycle exposes four physical moment/work failures, up to
+5.015e-6 against1e-6; global cancellation did not detect them. Independent scrutiny
+supports higher-order affine small-rotation conversion/structural defects, not a
+sign error. One prospective0.018N cycle at Fref=.018N/Mref=.018Nm is the bounded
+next experiment, with unchanged geometry/law/tolerances, complete per-pose gates
+and measurable director work. No automatic load sweep; it cannot rehabilitate the
+larger-load failure or broaden finite-rotation admission. Goal/scope unchanged.
+
+**Current discriminating experiment:** The prospective0.018N cycle accepted the
+press steps but stopped during the first slide after200.84s/411.56MB. All twelve
+backtracking trials failed local geometry (inverse convergence or an unresolved
+fan triangle), not pressure feasibility. Preserve this nonpass. Replay only the
+failed step from its committed prefix to capture the first local failure of each
+category, under900s/4GB (`d1_cycle_geometry_capture_v3_20260930`). The wrapper leaves
+all equations/tolerances unchanged. Use those local data to choose one geometric
+correction; do not sweep loads or repeatedly run the complete cycle. If ordinary
+area is resolved but a fan is numerically degenerate, improve triangulation without
+discarding pressure contributions. If projection derivative residual remains
+unresolved, retain explicit rejection. This does not renew old qualification runs.
+
+**Selected workflow fixture:** Local capture confirms source and target vertical
+edges are nearly coincident at the .025m slide waypoint; inverse Hessian residual
+3.8e-6 and unresolved fan-area error persist. No kernel fix is justified by this
+record. Independent scrutiny supports a prospective .04m slide (.02/.04m
+waypoints) at the same .018N, meshes/materials/law/tolerances. It still crosses the
+.025m alignment during the swept second segment; unresolved trials remain rejected,
+and existing one-sided ownership evidence remains required. One complete integrated
+case `d1_cycle_force018_slide040_v5_20260930`,900s/4GB, decides whether this fixture
+passes all original per-body/gap/NCP/admission and meaningful-director-work checks.
+No load sweep, no generic near-coincident geometry claim, no renewed old authority.
 
 **Latest integrated result:** The unchanged radial12/12 case completed both steps
 in891.87s/570.46MB under900s/4GB, after the conservative swept-search correction.
@@ -189,3 +263,12 @@ Complete the remaining D2 shell combinations, finite rotation, warped geometry, 
 D3 classical/native beam static contact, D4 friction/materials/continuation, D5 shell/classical impact, D6 native contact-free dynamics, D7 native/coupled impact and D8 applications/packages remain as defined by the [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md). Carry their open requirements forward explicitly; do not treat a narrower milestone as completion of C0–C9.
 
 This revision removes unsupported general stability and thickness-band assertions, corrects the descriptions of agglomeration/dual/penalty methods, and replaces a rigid serial route with early integrated development plus prospective acceptance. It retains the supplied D1-interior scope, programme numerical targets and historical failures. Further review should identify a concrete correctness risk or missing requirement and distinguish it from an optional improvement; it should not add a new framework or an unbounded research obligation by default.
+
+## Completed checkpoint closure and acceleration evidence
+0b2 immutable-signature/proven-inert observation changes preserve contact equations
+and guard decisions. Four balanced complete saved-root runs show median32.037
+->22.947s(-28.37%), producer15.043->8.173s. This is saved-route development cost,
+not coupled-solve speed. SpatialV7 now completed under its unchanged900s/4GB cap;
+checkpoint187.212s. Stop checkpoint optimization. Old radialv8 is genuinely
+analysis-incompatible; no fingerprint override. Current accepted handoff/ledger
+and retained raw failures are the restart basis; proceed to D2.
