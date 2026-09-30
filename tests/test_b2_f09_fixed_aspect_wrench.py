@@ -7,10 +7,14 @@ This is private development evidence, not a continuous admission range.
 """
 
 from fractions import Fraction as F
+import json
 
 import numpy as np
 from scipy import sparse
 from scipy.sparse.linalg import splu
+import pytest
+
+from anysolver import stiffened_shell
 
 from anysolver._b2_physical_flexibility_linear import LinearSection
 from anysolver._b2_physical_linear_definition import PhysicalB2Member
@@ -197,3 +201,62 @@ def test_same_small_mixed_wrench_across_constant_area_aspect_family():
         assert root_moment_ratio < 1e-9
         assert tip_error < 1
         assert work_error < 1e-8
+
+
+@pytest.mark.parametrize("second", WIDTH_DEPTH_M)
+def test_public_session_retains_fixed_physical_wrench_and_selected_recovery(second, tmp_path):
+    """Public session, not the direct private factorization used above."""
+    members, compliances = _members(second)
+    physical_tip = np.array([float(value) for value in _physical_tip(compliances)])
+    physical_energy = float(_cut_energy(compliances, TIP))
+    definition = stiffened_shell.B2LinearDefinition(
+        stiffened_shell.B2_E4_PL_FAST_LINEAR_V1, members,
+        sparse.eye(18, format="csr")[:, 6:], np.zeros(18),
+        tuple(range(12, 18)), max_rhs_chunk=1)
+    owner = stiffened_shell.create_analysis(definition=definition)
+    load = np.r_[np.zeros(12), TIP_FLOAT]
+    try:
+        result = owner.solve_linear_many(
+            (("fixed-wrench", load),),
+            recover_members={"m0": (0., .5, 1.), "m1": (0., .5, 1.)})
+        assert result.status == "completed", result.failure_reason
+        assert result.factorization_count == result.solve_count == 1
+        assert not result.production_qualified
+        case, = result.cases
+        actual_tip = np.asarray(case.values)
+        tip_error = float(np.max(np.abs(actual_tip-physical_tip) /
+                                (1e-10+1e-8*np.abs(physical_tip))))
+        work_error = abs(.5*float(TIP_FLOAT@actual_tip)-physical_energy)/physical_energy
+        measurements = {
+            "second_width_depth_m": [float(v) for v in second],
+            "tip_wrench": TIP_FLOAT.tolist(), "physical_tip": physical_tip.tolist(),
+            "public_tip": actual_tip.tolist(), "physical_energy": physical_energy,
+            "tip_scaled_error": tip_error, "relative_work_error": work_error,
+            "status": result.status, "factorization_count": result.factorization_count,
+            "solve_count": result.solve_count, "station_wrench_scaled_errors": [],
+        }
+        assert tip_error < 1
+        assert work_error < 1e-8
+        assert tuple(r.member_id for r in case.members) == ("m0", "m1")
+        for member, compliance, recovered in zip(members, compliances, case.members):
+            start, end = map(np.asarray, member.reference_points_m)
+            frame = member.local_frame_rows()
+            law = np.array([[float(v) for v in row] for row in compliance])
+            for station, resultant, strain in zip(
+                    recovered.stations, recovered.resultants_local, recovered.strains_local):
+                cut = start+station*(end-start)
+                expected = np.r_[frame@TIP_FLOAT[:3], frame@(
+                    TIP_FLOAT[3:]+np.cross(np.asarray(members[-1].reference_points_m[-1])-cut,
+                                           TIP_FLOAT[:3]))]
+                # Undriven/small channels use the frozen separate force/moment
+                # scales rather than dividing by a near-zero cut component.
+                scales = np.r_[np.full(3, max(abs(TIP_FLOAT[:3]))),
+                               np.full(3, max(max(abs(TIP_FLOAT[3:])),
+                                              2*max(abs(TIP_FLOAT[:3]))))]
+                error = float(np.max(np.abs(np.asarray(resultant)-expected)/scales))
+                measurements["station_wrench_scaled_errors"].append(error)
+                assert error < 1e-8
+                np.testing.assert_allclose(strain, law@expected, rtol=1e-8, atol=1e-12)
+        (tmp_path / "public-fixed-wrench.json").write_text(json.dumps(measurements, indent=2))
+    finally:
+        owner.close()

@@ -62,6 +62,8 @@ foundations remain open; the earlier bounded F04 distinction does not close F04:
 | F12 | IN_PROGRESS |
 | F13 | IN_PROGRESS |
 
+F09 public-path/admission decision, 30 September: unchanged product passes the fixed-wrench physical constant-area aspect family through the public session (4/4 installed including its private control). Exact independent cut-work, tip and station predicates pass. A bounded exact basic-energy plus separate rigid/cross certificate passes seven physical/unit controls and rejects injected defects; independent mathematical review accepts this only as a local guard basis. Historical nonphysical shear-soft stress also passes locally, so graph stability is not inferred. The provisional pivot veto remains, no final range is accepted, and F09 stays open pending enforced guard, full physical/unit/numerical scope and independent acceptance. Evidence: `.qualification/b3-ge-e4-pl/r8-f09-admission-dev-20260930-v1/`.
+
 The individual V01–V28 and B01–B18 obligations below are all
 **IN_PROGRESS for acceptance**; none is marked PASSED. Their exact cases
 and criteria remain in the programme. Split a group when a row reaches
