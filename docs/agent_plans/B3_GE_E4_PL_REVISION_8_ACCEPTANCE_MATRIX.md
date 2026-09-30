@@ -1,12 +1,24 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
-**Updated:** 30 September 2026. **Candidate:** current integration branch;
+**Updated:** 1 October 2026. **Candidate:** current integration branch;
 exact development-screen source identities are recorded with their raw evidence.
 This is the forward status index, not an
 amendment to frozen registrations or historical results. The
 [complete programme](B3_GE_E4_PL_B2_COMPLETE_PROGRAMME.md) defines
 requirements; the [active note](B3_GE_E4_PL_ACTIVE_STATE.md) identifies
 current evidence and failures. No aggregate gate or milestone is accepted.
+
+F06 scoped loaded point-owner portion,1 October: prospectively declared
+independent-direction staged Q4/S3 paths pass control/reset/direct restart and
+same eight accepted positions. Actual physical rotations/commutators clear the
+unchanged .05rad/1e−5rad floors in every shell/beam branch. Two installed cases,
+388 byte-matched modules and210 canonical imports; independent raw SO(3),
+material and reaction review has no finding. The integration owner accepts this
+large-elastic point-owner foundation portion only, under Revision8 §6.
+Earlier curved/proportional failures and the old closure review remain unchanged.
+Aggregate F06/V18 is IN_PROGRESS: plastic/cyclic, partial-support, curved/line/
+topology breadth, branch ownership and native-energy obligations remain open.
+[Exact evidence and disposition](development/r8-f06-staged-transport-20261001/results.md).
 
 Staged translation dead loads,1 October: the existing finite point-owner facade
 accepts an immutable model-bound absolute endpoint programme, continuous affine

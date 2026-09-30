@@ -1,145 +1,81 @@
-# B3-GE / E4-PL / B2 active state — 1 October2026
+# B3-GE / E4-PL / B2 active state � 1 October2026
 
 [Revision8 goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md),
 [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) and complete programme govern.
 Policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1,2026-09-24.2. Goal active.
-Scoped F05/F08/F09 and F10/F11 point/static passed only; aggregate gates remain open.
-No main merge/publication authority. Formal F03 unconsumed; spent authorities stay spent.
-Previous living-note/history bytes remain in integration commits, including484043fa.
+No aggregate milestone/gate accepted; no main merge/publication authority.
+FormalF03 is unconsumed; frozen/failed records and spent authorities stay unchanged.
+Prior living-note bytes remain in integration history, including5bee12f6.
 
-## Identity and ownership
+## Identity, ownership and execution
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration; product000d2fa3, mechanical commitd31936c2.
-Latest staged product/evidence commit9057067d; preparation-only source follows it.
-Product observer slice is reviewed on source base484043fa; new wheel
-243b2d8a2f1b03a6f08c49624f449e6e282749203b77b37b4be7817cd8758317.
-Installed sites TEMP/r8-accepted-observer-installed-v1/V2/V3/site;55 current
-checks pass across retained campaigns with unchanged-input reuse and review clear.
+codex/b3-ge-e4-pl-integration; committedHEAD5bee12f6, product9057067d.
+Installed wheel0c45666609355e654cb726a0e4e0780d386bccfaafef1209ffd994bdd3b9d09c,
+TEMP/r8-staged-load-installed-v1/site;388 source/wheel/site modules match.
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer,6226230; wheel0b6c51af.... Main untouched.
+codex/experimental-ge-panel-consumer,6226230; prior wheel0b6c51af.... Main untouched.
 Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py SHA
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481;
-do not edit/stage/run/interrupt. Root owns integration; workers own assigned paths.
-At most3workers and one owned heavy job. Ceiling100krows/600s/8GiB/8threads;
-normally1effective BLAS thread/JIT off. F06V3 and observerV1/V2/V3 are terminal.
-Local-kernelV1/V2 are terminal; no owned numerical job active. V1 reporting
-failure and all earlier failures remain; V2 passes21.31s/196288512bytes.
+do not edit/stage/run/interrupt. Root owns integration/evidence/current notes.
+Workers: b2_point_acceptance_gap owns read-only matched comparison review;
+bl5_consumer owns ANYfem staged input persistence source/tests/docs only.
+At most3workers/one heavy job; ceilings100krows/600s/8GiB/8 numerical threads.
+All owned numerical jobs terminal. Native1effectiveBLAS/Numba/JIT off verified;
+externalFy/Mz requested1thread, effective numerical threads still unverified.
 
-## Delivered behavior and established evidence
+## Delivered behavior and accepted portions
 
-Experimental sparse Q4/S3 GE point/line owners retain native coordinates/material
-histories, adaptation, chart reset and durable restart. Separate physical B2
-batches/envelopes reuse eligible factors. GE physical point actions and ordinary
-ANYfem native input save/reopen work; input persistence is distinct from checkpoints.
-[Installed consumer slice](../../.qualification/b3-ge-e4-pl/r8-ge-point-native-project-dev-20260930-v1/results.md)
-covers171 predicates with retained fixture failure/correction and independent review.
+Experimental sparse Q4/S3 GE owners retain native variables/material histories,
+finite/adaptive stepping, physical recovery, atomic state, chart reset and restart.
+Separate physical B2 batches/envelopes reuse eligible factors. Ordinary ANYfem
+input persistence is distinct from checkpoints; [installed consumer evidence](../../.qualification/b3-ge-e4-pl/r8-ge-point-native-project-dev-20260930-v1/results.md).
+Scoped F05/F08/F09 and F10/F11 point/static passed; aggregate/general portions open.
 
-Retain declared BL5 ports/ground supports. Root-transfer actions are not ground
-reactions; six-channel nodal/L1, historical finite-pad and five-channel BL5 laws
-remain distinct. [Physical transfer](../../.qualification/b3-ge-e4-pl/r8-bl5-physical-transfer-dev-20260930-v1/results.md)
-checks station work/force-arm normal torque and matched external Fy/Mx actions;
-no response drilling independence or converged external accuracy follows.
-[B2 reference](../../.qualification/b3-ge-e4-pl/r8-b2-e01-finite-point-dev-20260930-v1/results.md)
-retains6.8574% worst full-pose discrepancy; converged1% physical accuracy remains open.
+[Staged loads](development/r8-staged-load-20261001/results.md): immutable model-bound
+absolute translation endpoints, continuous affine paths and atomic progress/checkpoint.
+Installed119/119 checks, exact prior-wheel legacy checkpoint/seven-array parity,
+independent complete review clear. Staged yielding, follower/moment/line programmes,
+consumer persistence and zero-force numerical completion are not claimed.
 
-[Norm contract](B3_GE_E4_PL_M2_TRACE_NORM_CONTRACT_DEV.md) and independent
-[reference bounds](development/r8-bl5-reference-error-bounds-20260930/results.md)
-freeze physical work/scales, all-column error and0.43 floor before native values.
-[Native family](development/r8-bl5-native-stability-20260930/results.md):21halfcell
-cases plus3whole-element8:1 endpoints pass. Whole-element ratios1:8..8:1,
-three shell levels and growing spaces are covered; extra1:16 remains diagnostic.
-Beta0.793239..0.917197; all eigenvalues retained. Original inverse/serialization
-failures remain.64endpoint first eligible auxiliary grid meets total error0.000926481
-and inverse7.256e-12, beta0.867138. No norm/physical mesh/criterion relaxation.
-Independent reviews clear;724 committed evidence blobs byte-verified at484043fa.
+[F06 result](development/r8-f06-staged-transport-20261001/results.md): installed Q4/S3
+control/reset/direct-restored direction-changing paths pass the same eight accepted
+positions. Actual .05rad/1e-5rad rotation/commutator floors pass in every branch/domain;
+independent raw SO(3), material and reaction review clear. Root accepts the loaded
+large-elastic point-owner foundation portion underR8�6 only. Historical failures
+remain unchanged. AggregateF06/V18 remains open for plastic/cyclic, partial supports,
+curved/line/topology, branch ownership and native-energy breadth.
 
-[Actual mechanical supplement](development/r8-bl5-native-stability-20260930/mechanical-results.md):
-one16x4/32halfcell/c2 fixture retains769 physical/cell coordinates and checked
-288negative stationary resultants. Complete kernel minimum1.738e-5 clears
-composed uncertainty3.106e-11; native inertia769+/328-/0zero modes. Three-load
-native/reconstructed parity<=3.17e-12 passes independent review.5.72s/206MB.
-No global dense production route or universal refinement proof added.
+## Connection decision, evidence and next action
 
-## Current decision, uncertainty and next action
-
-Native trace resolution is no longer the present numerical obstruction. Actual
-mechanical kernel is resolved for one fixture only. Reuse distinct local-energy/
-rigid-kernel/support detection checks to extend its applicability; do not run24
-large dense oracles by default. Locking, physical transfer/convergence, off-grid
-Q4/S3 and actual ratio-domain mechanics remain unaccepted. Inf-sup alone cannot
-select a multiplier policy or close F03/M2. No automatic finer axial campaign.
-
-F06 installedV1 failed: Q4 rotation0.0481<0.05 and commutator1.41e-6<1e-5;
-S3 whole-origin fingerprint differs only after new continued solves. Exact
-prefix/reset/restore hashes pass. Complete S3 recorder shows derived endpoint
-roundoff only (positions/frames~1e-15, stress<=0.000257Pa), exact irreversible
-histories. [Raw failure/diagnostic](development/r8-f06-loaded-transport-20260930/).
-This explains the hash but does not meet coverage or confer F06 acceptance.
-
-F06 installedV2 preserves the same stronger pattern: both prefix/reset/restore
-checks pass, but the final direct increment hits20Newton iterations. Raw failure
-is retained alongsideV1. No floor or Newton budget changed. Decision: can existing
-typed cutback finish that pattern with genuine accepted-state coverage? The
-missing public substep observation is now implemented as optional on_accepted:
-postcommit detached result, readable checkpoint/recovery, no reentrant writes,
-callback errors propagate without retry. Verify this coherent lifecycle slice
-and one adaptive F06 check before drawing transport conclusions. V3 completes
-both formulations with matching actual factor paths and all substep physical/
-material comparisons. S3 meets coverage; Q4 commutator9.913424e-6 misses1e-5.
-Preserve that failure, no proportional-load tuning or floor relaxation. The
-diagnostic is scripts/b3_e4_f06_loaded_chart_transport_dev.py, outside CI discovery.
-V3's8.3-path import guard also fails; a separate no-solve route replay verifies
-the canonical installed directory and209imports, with that scope explicit.
-ObserverV1 used a stale fixture:50pass/2fixture failures;V2 has14pass/2convergence
-fixture failures. Only the ownership fixture uses10N inV3; its two checks pass.
-39broader+14unchanged+2repaired checks give55current passes, review clear.
-[Combined lifecycle results](development/r8-f06-loaded-transport-20260930/results.md).
-Next F06 development should use the mandatory model-bound staged-load capability
-if genuine independent rotations are needed; no new pattern experiment launched.
-Native local source1edb7628 resolves44 local premises/24finite-family definitions,
-22translation pairs and actual support/common-rigid/yaw detection; independent
-actual review clear. V1 reporting failure remains; V2 modes are byte-identical.
+BL5 is position+physical-director, normal spin released; distinct from six-row
+point/weld and historicalQ6/finite-pad laws. Actual retained halfcell fields/lifts
+remain. Root-transfer actions are not ground reactions.
+[Norm family](development/r8-bl5-native-stability-20260930/results.md): seven ratios,
+growing spaces, three levels; beta .793239�.917197 versus independently frozen .43.
+[Mechanical supplement](development/r8-bl5-native-stability-20260930/mechanical-results.md)
+resolves one actual16x4/32halfcell/c2 kernel and negative stationary blocks.
 [Local supplement](development/r8-bl5-native-stability-20260930/local-kernel-results.md)
-supports a conditional nominal finite-family energy/nullspace argument, not exact
-PSD, quantitative global coercivity, locking, physical accuracy or F03 acceptance.
-No more dense-family kernels are needed absent a contrary observation.
+supports a conditional nominal finite-family energy/nullspace argument only.
+Original failures retained; no exactPSD/uniform coercivity/locking/physical accuracy/
+F03 acceptance. No more routine large dense family campaign needed.
 
-Delivered current slice: immutable staged translation dead loads through the
-existing point-owner solve/atomic checkpoint boundary. Installed wheel0c456666...
-passes119/119 affected checks;388modules/211onsite imports bound exactly. Prior
-wheel control gives identical checkpoint bytes and seven physical array fields.
-Complete independent review clear. [Results](development/r8-staged-load-20261001/results.md)
-retains wheel, source/fixture hashes, commands, raw checks and reviews. This is
-experimental behavior on small elastic staged cases, not staged yielding/F06
-or broad load acceptance. No coverage floor or equilibrium norm changed.
-Next F06 step: freeze one independent force-direction path using this capability,
-then compare control/reset/restored actual Q4/S3 accepted paths. Keep0.05rad/
-1e-5commutator floors and earlier Q4 coverage failure visible; no amplitude tuning.
-Staged installed and legacy-parity jobs are terminal; no owned job running.
+Matched comparison sources6e1b3f25.../92fa4515... use16x4Q4/32beam stations,
+common properties/frames/normal arms/roots/five-channel law, but external160strong
+rows versus native40weak rows. Both Fy100N/Mz10Nm complete with physical controls.
+Raw full poses/covectors/cuts/window records: TEMP/r8-bl5-matched-mz-reference-v1,
+TEMP/r8-bl5-matched-mz-native-v1; archived development/r8-bl5-matched-comparison-20261001/raw.
+Native applied work is2.23298% higher Fy and12.74762% higher Mz. Common nodalL2
+fields differ about3.4% Fy; Mz beam6.63%/shell4.07%. Full-root balance agrees.
+External endpoint atoms and native distributed windows remain distinct.
+No converged1% accuracy or unique law/space/beam/shell allocation follows. External
+threads are unverified; OpenSees supplement does not replace mandatory CalculiX.
 
-BL5 accuracy decision: saved direct OpenSees Fy/Mx shares physical idealization
-and five-channel law, but strong nodal and native weak rows differ and no matched
-two-direction external refinement sequence or Mz result exists. Older six-row
-solid/Q6 references are not that comparator. Prepare one16x4/32-halfcell matched
-external Mz10Nm discriminator plus Fy100N route control, retaining common work,
-full poses and fixed-distance transfer. It distinguishes normal torque/physical
-transfer mismatch from missing reference evidence; it cannot establish converged
-1% accuracy alone. No fourth native grid or new norm campaign follows by default.
-Keep root connection versus direct-ground bookkeeping distinct. Worker owns only
-the new reference runner/applicability note; no new numerical reference run yet.
-Prepared runner: scripts/b3_e4_bl5_matched_mz_reference_dev.py, SHA6e1b3f25...
-(AST-only10functions, unexecuted). [Applicability audit](B3_GE_E4_PL_BL5_PHYSICAL_REFERENCE_APPLICABILITY_20261001.md)
-records actual118poses/96element covectors/160strong rows versus native40weak
-rows, common reference derivative/rigid/release controls, complete domain cuts
-and fixed-region atom conventions. Execute fresh Fy/Mz cases serially after
-recording exact inputs; if route/work controls fail, repair that reference first.
-If Fy agrees but Mz transfer/response differs, investigate that physical channel
-through common work and declared spaces; if both agree, advance the required
-matched convergence assessment. Neither outcome alone selects a space or closes
-locking/accuracy. Saved native outputs lack full poses, so recover those two
-same-fixture actions only if needed for the missing common-field comparison.
-
-All remaining topology/footprints, materials/cyclic simultaneous yielding, loads,
-spectra, imperfections/capacity, scale, external references, installed platforms
-and release obligations remain mandatory. No aggregate M1–M5/G0B/G1–G6 accepted.
+Next: independently review the complete comparison, then choose the smallest
+same-action/operator discriminator allocating the torque response difference.
+No automatic fourth native grid or norm campaign. In parallel finish staged
+consumer round-trip via existing facade; avoid assembly just for metadata save,
+check actual model binding at public execution/preflight boundaries.
+All footprint/topology, material breadth, loads, spectra, imperfections/capacity,
+scale, CalculiX, installed-platform and release obligations remain mandatory.
+B2 reference full-pose6.8574% discrepancy remains open. No aggregate acceptance.
