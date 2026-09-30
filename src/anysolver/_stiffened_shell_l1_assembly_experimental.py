@@ -228,7 +228,7 @@ def _bl5_segments(line, shell_index, shell_xyz, beam_nodes, beam_parts,
 
 def compile_lines(lines, *, shell_ids, shell_xyz, shell_cells,
                   thickness, beam_ids, beam_nodes, beam_parts,
-                  shell_count, beam_count):
+                  shell_count, beam_count, with_terms=False):
     """Build the fixed sparse C rows and keep local operators for later work.
 
     The returned rows are derivatives of integrated constraint work with
@@ -238,6 +238,9 @@ def compile_lines(lines, *, shell_ids, shell_xyz, shell_cells,
                                        (ExperimentalL1Line, ExperimentalBL5Line)
                                        for line in lines):
         raise ValueError("typed experimental weak lines required")
+    if type(with_terms) is not bool:
+        raise ValueError("explicit finite line term selection required")
+    terms = []
     shell_index = {node: i for i, node in enumerate(shell_ids)}
     beam_index = {node: i for i, node in enumerate(beam_ids)}
     shell_edges = {frozenset((cell[j], cell[(j+1) % len(cell)]))
@@ -321,6 +324,7 @@ def compile_lines(lines, *, shell_ids, shell_xyz, shell_cells,
                 raise ValueError(f"{label} material reference gap is not zero")
             global_slots = np.r_[shell_slots,
                                  shell_count+local.beam_slots]
+            row_terms = []
             for channel in range(len(local.gap)):
                 for row, coefficient in _sample_rows(
                         line, shell_edge, float(shell_alpha),
@@ -329,10 +333,19 @@ def compile_lines(lines, *, shell_ids, shell_xyz, shell_cells,
                     row_indices.extend([line_row+row]*len(global_slots))
                     columns.extend(global_slots.tolist())
                     values.extend(jacobian.tolist())
+                    row_terms.append((channel, line_row+row, coefficient))
             samples.append((local_operator, global_slots, weight,
                             beam_edge, float(beam_alpha)))
+            if with_terms:
+                row_ids = np.array(sorted({row for _, row, _ in row_terms}), dtype=int)
+                interpolation = np.zeros((len(local.gap), len(row_ids)))
+                for channel, row, coefficient in row_terms:
+                    interpolation[channel, np.searchsorted(row_ids, row)] += coefficient
+                row_ids.setflags(write=False)
+                interpolation.setflags(write=False)
+                terms.append((row_ids, interpolation))
         line_row += _row_count(line)
     matrix = sparse.coo_matrix((values, (row_indices, columns)),
                                shape=(line_row, count)).tocsr()
     matrix.eliminate_zeros()
-    return matrix, tuple(samples)
+    return (matrix, tuple(samples), tuple(terms)) if with_terms else (matrix, tuple(samples))

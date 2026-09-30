@@ -262,3 +262,32 @@ and matches a fixed solve at the identical accepted increments. The strong
 full-section Q4 screen still exhausts four cutbacks after accepting .0625.
 These are case-specific development results, not complete material or G3
 qualification. Full limits, external validation and practical scale remain open.
+
+## Experimental finite BL5 line
+
+The separate BL5 position/top-surface director bond now admits elastic finite
+force control on the existing persistent GE owner. Normal spin is released;
+this does not alter six-row point semantics. Native retained half-cell poses,
+fixed reference segmentation and the declared P0/P1 basis remain explicit.
+No basis is selected or qualified by this implementation.
+
+Physical left-port derivatives include multiplier curvature and rotational
+gauge corrections. Only shell increment columns pass through their additive
+charts. Returned `beam_shell_line_work` contains owned integer index maps,
+station gaps, multiplier densities and integrated spatial gradients. These
+are endpoint forces/couples and native cell couples; raw multiplier coefficients
+are not display moments. Station gaps differ from accepted integrated weak rows.
+
+Finite BL5 uses distinct V11 binary checkpoint identities (including anchored
+states), preserving old point and reference-linear records. The optional V10
+adaptive envelope can wrap V11. Unloading/reloading, cancellation, actual rebase,
+restoration and continuation preserve accepted-prefix semantics. Only typed
+candidate director/trace-chart failures backtrack; unclassified errors propagate.
+Shell J2, physical-fibre lines, generalized plastic BL5 response, L1 finite
+analysis and qualified bonded-line claims remain excluded. Broader programme
+material/attachment requirements remain unfinished.
+
+Run `scripts/experimental_stiffened_ge_bl5_history.py` with an installed
+development wheel for a3-Q4/2-B3, nonmatching3:4 elastic history and byte-exact
+restart/continue. Physical torque/shear reference, interface stability, ratios,
+scale and G2/F03 acceptance remain open.

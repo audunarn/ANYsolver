@@ -189,7 +189,8 @@ def test_bl5_sparse_rows_work_reaction_and_restart(span, rows):
     assert owner._C.shape[0] == rows
     assert owner.capabilities["attachment"] == (
         "experimental BL5 director-bond candidate",)
-    assert owner.capabilities["analysis"] == ("reference_linear",)
+    assert owner.capabilities["analysis"] == (
+        "reference_linear", "experimental_elastic_finite_bl5")
     assert owner.capabilities["experimental_line_spaces"] == (
         f"BL5_P0_span_{span}",)
     assert "curved/reversed BL5 line mapping" in owner.capabilities["excluded"]

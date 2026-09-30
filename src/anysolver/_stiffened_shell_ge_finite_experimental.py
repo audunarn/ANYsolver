@@ -20,6 +20,11 @@ from scipy.sparse import linalg as spla
 from scipy.spatial.transform import Rotation
 
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
+from ._ge_beam3_pose_joint import _exp_terms
+from ._ge_beam3_p5.algebra import skew
+from ._ge_beam3_retained_generalized_state import Mechanical
+from ._stiffened_shell_bl5_local_experimental import BL5TrialDomainError
+from ._stiffened_shell_l1_local_experimental import _owned_slots
 from ._ge_beam3_generalized_cell import GeneralizedCellHistory
 from ._ge_beam3_generalized_ellipsoid_section import GeneralizedHistory
 from ._ge_beam3_fibre_section import PhysicalFibreSection
@@ -315,6 +320,23 @@ class FinitePointResult:
     beam_fibre_material: tuple[BeamFibreStationRecovery, ...] = ()
     beam_fibre_energy: tuple[BeamFibreEnergyRecovery, ...] = ()
     increment_attempts: tuple[IncrementAttempt, ...] = ()
+    beam_shell_line_work: tuple = ()
+
+
+@dataclass(frozen=True)
+class FiniteLineStationWork:
+    """Accepted physical station action, before any display smoothing.
+
+    The integrated gradient contains two shell endpoint wrenches, two beam
+    endpoint forces and the native retained-cell couple. Weak-row multipliers
+    are not display moments. Station gap is distinct from integrated row gap.
+    """
+    physical_slots: np.ndarray
+    constraint_rows: np.ndarray
+    reference_measure_m: float
+    gap: np.ndarray
+    multiplier_density: np.ndarray
+    integrated_spatial_gradient: np.ndarray
 
 
 @dataclass(frozen=True)
@@ -364,7 +386,7 @@ class FinitePointDriver:
             np.zeros(owner._K.shape[0]), self._reference_frames.copy(),
             np.tile(np.eye(3), (len(owner._beam_parts), 2, 1, 1)),
             np.zeros((len(owner._beam_parts), 18)),
-            np.zeros(6*len(owner._connections)))
+            np.zeros(owner._C.shape[0]))
         self._shell_origins = tuple(part[3] for part in owner._shell_parts)
         if owner._has_physical_fibre and owner._definition.shell.j2_curve is not None:
             material = owner._shell_model.get_material("shell")
@@ -385,6 +407,7 @@ class FinitePointDriver:
         self._accepted_factors = ()
         self._adaptive_state = None
         self._adaptive_checkpoint = None
+        self._line_trial_recovery = None
 
     def _load(self, actions):
         owner = self.owner
@@ -468,6 +491,9 @@ class FinitePointDriver:
             tangent = spatial_jacobian(
                 response.residual, response.hessian+response.hessian_low)
             scatter(slots+owner._shell_count, response.residual, tangent)
+            if getattr(owner, "_finite_bl5", False) and any(
+                    station.accumulated != (0., 0.) for station in response.history.stations):
+                raise ValueError("experimental finite BL5 admits elastic beam response only")
             beam_candidates.append(response.history)
 
         for i, (joint, slots) in enumerate(zip(owner._connections,
@@ -494,6 +520,38 @@ class FinitePointDriver:
             scatter(extended, trial.pose.residual,
                     trial.pose.spatial_jacobian@trial.coordinate_map)
 
+        line_records = []
+        if getattr(owner, "_finite_bl5", False):
+            shell_frames = physical_frames(state.q[:owner._shell_count], state.shell_anchors)
+            mechanical = Mechanical(beam_positions, beam_low, state.frames,
+                                    state.cells, state.resultants)
+            point_rows = 6*len(owner._connections)
+            for sample, (line_rows, basis) in zip(owner._line_samples, owner._line_terms):
+                operator, slots, weight, _edge, _alpha = sample
+                rows_at = line_rows+point_rows
+                shell_nodes = slots[:12:6]//6
+                density = basis@state.multipliers[rows_at]
+                local = operator.evaluate_spatial(
+                    state.q[slots[:12]].reshape(2, 6), shell_frames[shell_nodes],
+                    mechanical, density)
+                jacobian = local.hessian.copy()
+                column_map = np.eye(21)
+                for start in (3, 9, 18):
+                    jacobian[start:start+3, start:start+3] -= .5*skew(local.gradient[start:start+3])
+                for start, node in zip((3, 9), shell_nodes):
+                    left = _exp_terms(state.q[6*node+3:6*node+6])[1]
+                    if np.linalg.svd(left, compute_uv=False)[-1] <= 1e-11:
+                        raise ValueError("singular BL5 shell chart; owner must rebase")
+                    column_map[start:start+3, start:start+3] = left
+                mapped = local.gap_jacobian@column_map
+                tangent = np.block([[jacobian@column_map, local.gap_jacobian.T@basis],
+                                    [basis.T@mapped, np.zeros((len(rows_at),len(rows_at)))]])
+                force = np.r_[local.gradient, basis.T@local.gap]
+                scatter(np.r_[slots, count+rows_at], weight*force, weight*tangent)
+                line_records.append(FiniteLineStationWork(
+                    _owned_slots(slots,(21,)), _owned_slots(rows_at,(len(rows_at),)), float(weight), _owned(local.gap),
+                    _owned(density), _owned(weight*local.gradient)))
+
         for row, value in enumerate(factor*load_pattern):
             force_terms[row].append(-float(value))
         residual = np.fromiter((fsum(terms) for terms in force_terms),
@@ -507,6 +565,7 @@ class FinitePointDriver:
             owner._coordinate_scale[owner._free])
         constraint = _scaled_constraint_gap(
             residual[count:], owner._constraint_scale)
+        self._line_trial_recovery = (state, tuple(line_records))
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)
 
     def _advance(self, state, increment, amount):
@@ -667,6 +726,11 @@ class FinitePointDriver:
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.publish")
                     next_result = _with_shell_chart(next_result, trial, owner._shell_count)
+                    if getattr(owner, "_finite_bl5", False):
+                        if self._line_trial_recovery[0] is not trial:
+                            raise ValueError("stale finite BL5 station recovery")
+                        next_result = replace(next_result,
+                            beam_shell_line_work=self._line_trial_recovery[1])
                     if owner._has_physical_fibre:
                         fibre_records, fibre_energies = _fibre_recovery(
                             owner, trial, self._beam_origins, beam_next)
@@ -734,7 +798,11 @@ class FinitePointDriver:
                     except _RotationStepTooLarge:
                         counts["rejected_trials"] += 1
                         continue
-                    changed = evaluated(candidate)
+                    try:
+                        changed = evaluated(candidate)
+                    except BL5TrialDomainError:
+                        counts["rejected_trials"] += 1
+                        continue
                     if max(changed[2], changed[3]) < old_merit:
                         trial = candidate
                         break
@@ -839,6 +907,9 @@ class FinitePointDriver:
                   ("multipliers", state.multipliers),
                   ("pattern", self._pattern),
                   ("accepted_factors", np.asarray(self._accepted_factors)))
+        if getattr(self.owner, "_finite_bl5", False):
+            return _encode_binary_checkpoint(kind("finite_bl5"),
+                self.owner._identity, generation, arrays)
         if self.owner._has_physical_fibre:
             if self.owner._definition.shell.j2_curve is not None:
                 owner = self.owner
@@ -944,6 +1015,9 @@ class FinitePointDriver:
                      "pattern"}
         if type(value) is not dict:
             raise ValueError("incompatible experimental finite checkpoint")
+        if (value.get("schema") == _BINARY_SCHEMAS["finite_bl5"]) != bool(
+                getattr(owner, "_finite_bl5", False)):
+            raise ValueError("finite BL5 checkpoint requires its matching line policy")
         native_shell = value.get("schema") == NATIVE_SHELL_SCHEMA
         stable_s3 = value.get("schema") == STABLE_NATIVE_SCHEMA
         if stable_s3 and not self._stable_s3:
@@ -972,7 +1046,7 @@ class FinitePointDriver:
                               "shell_origin_q", "shell_origin_anchors", "s3_states"}
         if (set(value) != expected_keys or
                 value["schema"] not in
-                (FINITE_CHECKPOINT, NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
+                (FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
@@ -986,9 +1060,9 @@ class FinitePointDriver:
         if (type(factors) is not list or len(factors) != value["generation"] or
                 not factors or any(type(v) is not float or not np.isfinite(v)
                                    for v in factors) or
-                (not material and not native_material and (factors[0] <= 0. or
+                (not material and not native_material and not getattr(owner,"_finite_bl5",False) and (factors[0] <= 0. or
                     any(b <= a for a, b in zip(factors, factors[1:])))) or
-                ((material or native_material) and (factors[0] <= 0. or
+                ((material or native_material or getattr(owner,"_finite_bl5",False)) and (factors[0] <= 0. or
                     any(b <= 0. or b == a for a, b in
                         zip(factors, factors[1:]))))):
             raise ValueError("invalid accepted finite load history")
@@ -1176,6 +1250,8 @@ class FinitePointDriver:
                                 shell_next[q4_count:])
              if s3_material else ()))
         result = _with_shell_chart(result, trial, owner._shell_count)
+        if getattr(owner, "_finite_bl5", False):
+            result = replace(result, beam_shell_line_work=self._line_trial_recovery[1])
         if native_material:
             fibre_records, fibre_energies = _fibre_recovery(
                 owner, trial, beam_origins, beam_accepted)

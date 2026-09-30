@@ -24,6 +24,10 @@ LAW_ID = "BL5_PHYSICAL_DIRECTOR_WEAK_LINE_DEV_V1"
 _CHART_MARGIN = 1e-8
 
 
+class BL5TrialDomainError(ValueError):
+    """A finite candidate left the declared director/trace chart."""
+
+
 @dataclass(frozen=True)
 class BL5LocalOperator:
     """Objective position/director work at one material trace station."""
@@ -82,6 +86,22 @@ class BL5LocalOperator:
 
     def evaluate(self, total, state, multiplier):
         """Return the gap and exact local first/second multiplier-work jets."""
+        return self._evaluate(total, state, multiplier)
+
+    def evaluate_spatial(self, total, frames, state, multiplier):
+        """Work derivatives for left physical rotations at the current poses.
+
+        Translation values remain reference displacements. Rotation entries in
+        total are not interpreted as physical poses: frames own those poses.
+        Returned rotational rows/columns are zero-chart spatial variations.
+        """
+        frames = _owned(frames, (2, 3, 3))
+        if (np.max(np.abs(frames.transpose(0, 2, 1)@frames-np.eye(3))) > 1e-9 or
+                np.any(np.linalg.det(frames) <= 0.)):
+            raise ValueError("physical BL5 shell frames required")
+        return self._evaluate(total, state, multiplier, frames=frames)
+
+    def _evaluate(self, total, state, multiplier, *, frames=None):
         total = _owned(total, (2, 6))
         multiplier = _owned(multiplier, (5,))
         parts = self.port.parts(state)
@@ -89,22 +109,30 @@ class BL5LocalOperator:
         high, low, beam_frame0 = self.port._pose_from_parts(parts)
         size = 21
         constant = lambda value: ad.Jet2.constant(float(value), size)
-        nodal = [[ad.Jet2.variable(total[i, j], 6*i+j, size)
+        nodal = [[ad.Jet2.variable(0. if frames is not None and j >= 3
+                                 else total[i, j], 6*i+j, size)
                   for j in range(6)] for i in range(2)]
         ez = [constant(0.), constant(0.), constant(1.)]
-        directors = [ad.matvec(ad.so3_exp(row[3:]), ez) for row in nodal]
+        directors = [ad.matvec(ad.so3_exp(row[3:]), ez) for row in nodal] if frames is None else [
+            ad.matvec(ad.so3_exp(row[3:]), [constant(v) for v in frames[i, :, 2]])
+            for i, row in enumerate(nodal)]
         top_delta = [[nodal[i][j]+.5*self.thickness*directors[i][j]
                       for j in range(3)] for i in range(2)]
         shell_delta = [(1.-self.station)*top_delta[0][j]+
                        self.station*top_delta[1][j] for j in range(3)]
         mean = [(1.-self.station)*directors[0][j]+self.station*directors[1][j]
                 for j in range(3)]
+        if frames is not None and ad.dot(mean, mean).value <= 1e-20:
+            raise BL5TrialDomainError("degenerate BL5 physical shell director")
         director = _jet_unit(mean, "BL5 physical shell director")
         raw = [constant(self.reference[1, j]-self.reference[0, j])+
                top_delta[1][j]-top_delta[0][j] for j in range(3)]
         normal_value = np.array([item.value for item in director])
         raw_value = np.array([item.value for item in raw])
-        _unit(raw_value-normal_value*np.dot(normal_value, raw_value),
+        projected = raw_value-normal_value*np.dot(normal_value, raw_value)
+        if frames is not None and np.linalg.norm(projected) <= 1e-10:
+            raise BL5TrialDomainError("degenerate BL5 projected material-line tangent")
+        _unit(projected,
               "BL5 projected material-line tangent")
 
         spin = [ad.Jet2.variable(0., 18+j, size) for j in range(3)]
@@ -129,7 +157,7 @@ class BL5LocalOperator:
         alignment = ad.dot(director_beam,
                            [constant(v) for v in self.reference_director])
         if not np.isfinite(alignment.value) or alignment.value <= _CHART_MARGIN:
-            raise ValueError("BL5 director chart crossed antipodal boundary")
+            raise BL5TrialDomainError("BL5 director chart crossed antipodal boundary")
         director_change = [director_beam[j]-constant(self.reference_director[j])
                            for j in range(3)]
         director_gap = [ad.dot([constant(v) for v in basis], director_change)
