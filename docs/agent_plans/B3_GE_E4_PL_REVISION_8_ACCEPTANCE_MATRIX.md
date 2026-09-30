@@ -27,6 +27,17 @@ checks do not constitute physical-case acceptance. Strong-yield and S3 failures,
 J2/fibre combinations and integrated energy/dissipation remain open. No gate
 or milestone closes. [Results and retained failures](../../.qualification/b3-ge-e4-pl/r8-ge-fibre-finite-dev-20260930-v1/results.md).
 
+Native energy/coupled-history integration,30 September: product `565685c1`
+adds paired beam stored energy/last-increment dissipation and native V8 shell-J2
+plus fibre predecessor/accepted snapshots. Source10/10; fresh installed124/124
+plus two public examples; installed ANYfem7/7 selected pass. Independent code
+and artifact review found no remaining consequential finding in this slice.
+Positive cases: Q4 fibre yielding with elastic shell-J2-defined response, and
+mixed all-S3 shell yielding with elastic fibres. The initial Q4 active-shell
+coverage failure is retained; simultaneous active yielding, strong yield and
+pure-fibre S3 remain open. Native energy is not total-system energy. No aggregate
+gate closes. [Results, raw evidence and review](../../.qualification/b3-ge-e4-pl/r8-ge-native-energy-coupled-dev-20260930-v1/results.md).
+
 Statuses describe acceptance, not prototype progress. `IN_PROGRESS`
 includes incomplete or failed required cases; it never means a numerical
 pass.
