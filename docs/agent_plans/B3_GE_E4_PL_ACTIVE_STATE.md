@@ -10,16 +10,16 @@ Prior living-note bytes remain in integration history, including5bee12f6.
 ## Identity, ownership and execution
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-codex/b3-ge-e4-pl-integration; committedHEAD5bee12f6, product9057067d.
+codex/b3-ge-e4-pl-integration; chart-evidence sourcebase9f1f5a10, product9057067d.
 Installed wheel0c45666609355e654cb726a0e4e0780d386bccfaafef1209ffd994bdd3b9d09c,
 TEMP/r8-staged-load-installed-v1/site;388 source/wheel/site modules match.
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-codex/experimental-ge-panel-consumer,6226230; prior wheel0b6c51af.... Main untouched.
+codex/experimental-ge-panel-consumer,0f0981de; wheel92daa637.... Main untouched.
 Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py SHA
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481;
 do not edit/stage/run/interrupt. Root owns integration/evidence/current notes.
-Workers: b2_point_acceptance_gap owns read-only matched comparison review;
-bl5_consumer owns ANYfem staged input persistence source/tests/docs only.
+Workers: b2_point_acceptance_gap complete independent matched/consumer reviews;
+bl5_consumer owns only new external P0 enforcement discriminator source preparation.
 At most3workers/one heavy job; ceilings100krows/600s/8GiB/8 numerical threads.
 All owned numerical jobs terminal. Native1effectiveBLAS/Numba/JIT off verified;
 externalFy/Mz requested1thread, effective numerical threads still unverified.
@@ -36,7 +36,10 @@ Scoped F05/F08/F09 and F10/F11 point/static passed; aggregate/general portions o
 absolute translation endpoints, continuous affine paths and atomic progress/checkpoint.
 Installed119/119 checks, exact prior-wheel legacy checkpoint/seven-array parity,
 independent complete review clear. Staged yielding, follower/moment/line programmes,
-consumer persistence and zero-force numerical completion are not claimed.
+zero-force numerical completion are not claimed. [Installed staged consumer](development/r8-anyfem-staged-20261001/results.md)
+preserves the public programme in native Project inputs without save-time assembly;
+50 unchanged installed checks plus1 S3 route pass, independent review clear. V2's
+S3 small-load backtrack failure remains; V3 reuses the exact passed F06 path.
 
 [F06 result](development/r8-f06-staged-transport-20261001/results.md): installed Q4/S3
 control/reset/direct-restored direction-changing paths pass the same eight accepted
@@ -68,14 +71,18 @@ TEMP/r8-bl5-matched-mz-native-v1; archived development/r8-bl5-matched-comparison
 Native applied work is2.23298% higher Fy and12.74762% higher Mz. Common nodalL2
 fields differ about3.4% Fy; Mz beam6.63%/shell4.07%. Full-root balance agrees.
 External endpoint atoms and native distributed windows remain distinct.
+Independent source/raw review finds no consequential recovery/collector defect.
 No converged1% accuracy or unique law/space/beam/shell allocation follows. External
 threads are unverified; OpenSees supplement does not replace mandatory CalculiX.
 
-Next: independently review the complete comparison, then choose the smallest
-same-action/operator discriminator allocating the torque response difference.
-No automatic fourth native grid or norm campaign. In parallel finish staged
-consumer round-trip via existing facade; avoid assembly just for metadata save,
-check actual model binding at public execution/preflight boundaries.
+Next bounded discriminator: hold the external K/material/geometry/frame/roots/
+Mz10Nm fixed; replace only160strong rows with40 exact work-conjugate P0 integrated
+rows over8 supports. This isolates external enforcement sensitivity; a large
+change supports that contribution, a small change prioritizes beam/shell same-action
+allocation, invalid work maps require repair. Neither outcome selects a space or
+qualifies native accuracy. Only source preparation underway; no numerical launch.
+Verify existing resource/execution admission before running; formalF03 unaffected.
+No automatic fourth native grid or norm campaign.
 All footprint/topology, material breadth, loads, spectra, imperfections/capacity,
 scale, CalculiX, installed-platform and release obligations remain mandatory.
 B2 reference full-pose6.8574% discrepancy remains open. No aggregate acceptance.

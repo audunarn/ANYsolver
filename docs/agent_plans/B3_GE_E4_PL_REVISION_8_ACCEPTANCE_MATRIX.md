@@ -20,6 +20,29 @@ Aggregate F06/V18 is IN_PROGRESS: plastic/cyclic, partial-support, curved/line/
 topology breadth, branch ownership and native-energy obligations remain open.
 [Exact evidence and disposition](development/r8-f06-staged-transport-20261001/results.md).
 
+BL5 matched physical comparison,1 October: external strong160-row and native
+weak40-row16x4/32-station five-channel models satisfy their own reference/work/
+equilibrium/recovery checks. Native applied work differs+2.232981% Fy/+12.747623%
+Mz; common nodal fields differ3–7%. Independent review finds no consequential
+collector/recovery defect; cause is not uniquely allocated among enforcement,
+shell and beam operators. All poses, cell variables, cuts and smooth/atomic
+transfer measures remain. External numerical threads are unverified, and this
+OpenSees supplement does not replace CalculiX or converged1% accuracy. One
+fixed-operator external enforcement discriminator is the next bounded action,
+without automatic mesh refinement or formalF03 consumption.
+[Exact results and limitations](development/r8-bl5-matched-comparison-20261001/results.md).
+
+Staged ANYfem consumer,1 October: commit0f0981de adds an explicit staged-v4
+envelope and finite Project dispatch without assembly for save/reopen. Current
+installed solver/consumer bytes bind388+98 modules. Fifty unchanged V2 passes
+plus one affected V3 S3 workflow pass verify metadata, existing Project/legacy/
+B2 routes and real Q4/S3 staged save/reopen/solve/restart/continuation. V2's
+original S3 small-load backtrack failure remains unresolved; V3 uses the exact
+previously passed F06 staged history, not a convergence repair or tolerance change.
+Independent complete review has no consequential consumer finding. Experimental
+tested behavior only; broader load/material/consumer gates remain open.
+[Full provenance, failures and reviews](development/r8-anyfem-staged-20261001/results.md).
+
 Staged translation dead loads,1 October: the existing finite point-owner facade
 accepts an immutable model-bound absolute endpoint programme, continuous affine
 force paths, forward positions and mandatory stage boundaries. Accepted progress,

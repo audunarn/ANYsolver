@@ -1,0 +1,15 @@
+{
+  "arrays_sha256": "e4affd35c44b2c74c99d41886ba44113b1f7351da29e3c4130001a2ca61637ea",
+  "counts": {
+    "beam_nodes": 33,
+    "full_q": 1092,
+    "multipliers": 40,
+    "retained_cell_rotations": 96,
+    "retained_members": 16,
+    "retained_resultants": 288,
+    "shell_nodes": 85
+  },
+  "generation": 1,
+  "role": "First708 physical nodal coordinates;16 retained24 blocks=two3D cell rotations+18 resultants. Full mixedK is not SPD.",
+  "status": "completed"
+}

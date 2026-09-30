@@ -1,0 +1,30 @@
+{
+  "actual_left_exp_derivative_relative": [
+    2.8058904406285428e-11,
+    1.3042291791656539e-10,
+    4.059034854263034e-10
+  ],
+  "actual_left_exp_derivative_steps": [
+    0.0001,
+    3e-05,
+    1e-05
+  ],
+  "common_finite_pose_gap": 1.1015494072452725e-16,
+  "derivative_denominator": 0.035875000000000004,
+  "edge_interpolation_partition_of_unity": true,
+  "edge_interpolation_reference_xy_error_m": 0.0,
+  "historical_16x1_common_station_rows_geometry_equal": true,
+  "historical_grounded_shell_root_rows_equivalent_to_beam_first5_ground": true,
+  "limits": "Virgin five-channel derivative and common-station equality only. Added transverse cells/odd stations/direct root grounds are declared inputs; whole operators differ.",
+  "normal_spin_columns_exactly_zero": true,
+  "reference_gap": 0.0,
+  "released_spin_gap": 0.0,
+  "rigid_errors": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    8.673617379884035e-19,
+    8.673617379884035e-19
+  ]
+}

@@ -1,0 +1,10315 @@
+{
+  "beam_descriptors": [
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 1,
+      "element_identity": "0cb53153cf0b8db2b99869c6442ad391851bd7a3865db5ae5cb08973bc181d25",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        101,
+        102,
+        103
+      ],
+      "operator_identity": "6c4350d1e625d5ff578f79d953ac08bca253a472b49cc226213dded875d53ac1",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.0,
+            0.0,
+            0.0675
+          ],
+          [
+            0.03125,
+            0.0,
+            0.0675
+          ],
+          [
+            0.0625,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 2,
+      "element_identity": "dba967e6781f475540d8bb25005e9037d88257282b898eefc4f404203c2376af",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        103,
+        104,
+        105
+      ],
+      "operator_identity": "0ab4c41bc913e1ce0a5abeb27307e36208e33aa5d13922a5444524d8b1fa67fa",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.0625,
+            0.0,
+            0.0675
+          ],
+          [
+            0.09375,
+            0.0,
+            0.0675
+          ],
+          [
+            0.125,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 3,
+      "element_identity": "91bc5004c0408e557b0782d67eb5f715bbf0ae289b7f90304dbdc12ffe9ac406",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        105,
+        106,
+        107
+      ],
+      "operator_identity": "1b1c985be5f6cc37c8422c5bd2eb5ff9aae3af57e365a019c2701635eb5eb95f",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.125,
+            0.0,
+            0.0675
+          ],
+          [
+            0.15625,
+            0.0,
+            0.0675
+          ],
+          [
+            0.1875,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 4,
+      "element_identity": "468011b81cc178158a89fd731d6682d5fbde597cbe4cc3eb9ecdf70537347ef4",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        107,
+        108,
+        109
+      ],
+      "operator_identity": "8c31bdae020891c49fc178c46b5475c074d65e9f0c58f7cd93cc78a112c4a9fd",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.1875,
+            0.0,
+            0.0675
+          ],
+          [
+            0.21875,
+            0.0,
+            0.0675
+          ],
+          [
+            0.25,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 5,
+      "element_identity": "9594edca1dd11db8b1a8dbc595b6a68b673f22d4d2554840f301ba68b5dabfb5",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        109,
+        110,
+        111
+      ],
+      "operator_identity": "c9eb07b4146fbd00a35056396dfa37a5ed485c57985ee828fb1278a977c8ea99",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.25,
+            0.0,
+            0.0675
+          ],
+          [
+            0.28125,
+            0.0,
+            0.0675
+          ],
+          [
+            0.3125,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 6,
+      "element_identity": "3237d786c8f6499c9ed769fe27301ff7aab433b1b5262f79e09edb6c083bbb81",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        111,
+        112,
+        113
+      ],
+      "operator_identity": "7cb95b6c6e65c986db3a6e2e202dfa0376569bd3bc1e0735dce62fe3bf03522e",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.3125,
+            0.0,
+            0.0675
+          ],
+          [
+            0.34375,
+            0.0,
+            0.0675
+          ],
+          [
+            0.375,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 7,
+      "element_identity": "2e88fd39a6aeb96a89ef901b07f475f5e280653df2d8f95cad783c342b09cf10",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        113,
+        114,
+        115
+      ],
+      "operator_identity": "c9270342a13e741683fe2f753cb87e7816922d333b6b5646a9b78b095b4558c0",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.375,
+            0.0,
+            0.0675
+          ],
+          [
+            0.40625,
+            0.0,
+            0.0675
+          ],
+          [
+            0.4375,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 8,
+      "element_identity": "77aa28182a2265ee4db54c0333c6ffbf15160eca2bc221bbbed0ab974a160ad4",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        115,
+        116,
+        117
+      ],
+      "operator_identity": "20003fceb1cc4d956c3ffd748cad283cb5d48d07c87e84f9673f01fa30c9fe3c",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.4375,
+            0.0,
+            0.0675
+          ],
+          [
+            0.46875,
+            0.0,
+            0.0675
+          ],
+          [
+            0.5,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 9,
+      "element_identity": "fe90f35d4a6bbcfa0fbdcf233049f73a7e897692f76d35fea9b05a3391e06fd8",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        117,
+        118,
+        119
+      ],
+      "operator_identity": "97757420f9e681b37d16c0e3472220f295cf509ad5df35e33d7cd3f98cfbe2da",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.5,
+            0.0,
+            0.0675
+          ],
+          [
+            0.53125,
+            0.0,
+            0.0675
+          ],
+          [
+            0.5625,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 10,
+      "element_identity": "72727fbaf67bef101b605cce78da5bc5d0dfcb60c337919eafa07c447cb4b544",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        119,
+        120,
+        121
+      ],
+      "operator_identity": "f784b77d3a2205d102b9b8f0ea9e5e48982057b43e954865ba82f5c504858d15",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.5625,
+            0.0,
+            0.0675
+          ],
+          [
+            0.59375,
+            0.0,
+            0.0675
+          ],
+          [
+            0.625,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 11,
+      "element_identity": "07082b911ea6c873cee5ddcad1b12a043b6375dc129030bf34f05c361bbcaa78",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        121,
+        122,
+        123
+      ],
+      "operator_identity": "73fc221ccbaffb876258eb0468eacf01dfd93c7f6aca9097b3ab6b7c04c2541f",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.625,
+            0.0,
+            0.0675
+          ],
+          [
+            0.65625,
+            0.0,
+            0.0675
+          ],
+          [
+            0.6875,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 12,
+      "element_identity": "b63e16b6623ccbff8bb11f32223355895e077478801360194cce9db1c5f3db2f",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        123,
+        124,
+        125
+      ],
+      "operator_identity": "aa1fd42ea53eedbd3116a58204d2406430fa6d9ee4739ff5f379f1c079f3da47",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.6875,
+            0.0,
+            0.0675
+          ],
+          [
+            0.71875,
+            0.0,
+            0.0675
+          ],
+          [
+            0.75,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 13,
+      "element_identity": "64cb9aa13ab4b4d7c6fe14f54f84c8a79283995027b3b5a89a3b04602598a7a8",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        125,
+        126,
+        127
+      ],
+      "operator_identity": "0a410837ee476ff786c5f4786f16d6976fb69cf0c1fc68c7b5284812b7ff9abe",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.75,
+            0.0,
+            0.0675
+          ],
+          [
+            0.78125,
+            0.0,
+            0.0675
+          ],
+          [
+            0.8125,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 14,
+      "element_identity": "94a7361efffe583c4dbb36332a9c224989e3807b72b679ae1fc2be436cbaef88",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        127,
+        128,
+        129
+      ],
+      "operator_identity": "30234ec99770c81d5c34d3fd39a51e114b1459910be211af1603b895185d0603",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.8125,
+            0.0,
+            0.0675
+          ],
+          [
+            0.84375,
+            0.0,
+            0.0675
+          ],
+          [
+            0.875,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 15,
+      "element_identity": "0f3458db78c478c674baff9926eeaa1d05c95672b1ee3d656a4418e328d1292b",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        129,
+        130,
+        131
+      ],
+      "operator_identity": "c80d9128287e0d93dc1b8a99426152c46e15905c472280746856e5aa22a2ce00",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.875,
+            0.0,
+            0.0675
+          ],
+          [
+            0.90625,
+            0.0,
+            0.0675
+          ],
+          [
+            0.9375,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    },
+    {
+      "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+      "element_id": 16,
+      "element_identity": "4248bd4938c02ee2514eb174a73e67a0017dc219095dc63f3a371990713ac660",
+      "family": "RESULTANT_ELLIPSOID",
+      "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+      "node_ids": [
+        131,
+        132,
+        133
+      ],
+      "operator_identity": "327d63a5b452be70874f8b5c3e0bf975834493d3823b042e2abf5cc9f7a46ba1",
+      "production_qualified": false,
+      "quadrature": 4,
+      "reference": {
+        "coordinates": [
+          [
+            0.9375,
+            0.0,
+            0.0675
+          ],
+          [
+            0.96875,
+            0.0,
+            0.0675
+          ],
+          [
+            1.0,
+            0.0,
+            0.0675
+          ]
+        ],
+        "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+        "frame_tolerance": 1e-12,
+        "nodal_triads": [
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "regularity_relative_tolerance": 1.4210854715202004e-14,
+        "rotation_tolerance": 1e-11
+      },
+      "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+      "section": {
+        "elastic": [
+          [
+            2100000000.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            646153846.1538463,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1346153.8461538462,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1750000.0
+          ]
+        ],
+        "hardening": 1000000000.0,
+        "metric": [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+        "yield_force": 1e+20
+      },
+      "section_identity": "1421dfde950054466387f7b6c59c2e13138316dc9276b3614d75ba553a7c7004",
+      "section_inertia": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+    }
+  ],
+  "case": "mz",
+  "external_binding": {
+    "controls": "7b015ec9c43611fd9ea7b35e356bbc30c5d26b6cda2d7f66946df0a5a587df0a",
+    "inputs": "067f9cb853daeb08cefffb537be322341716d756f35415faf0ac03902e4e12ac",
+    "raw-inventory": "f276b531bf2ae29ba0407f17188d9586d599f28272cf3d010e5c63ed722bea7b",
+    "recovered-actions": "e4505e1d3b5c65f20cb21a6049842336cad8024a0eab2647fe1616c1316f0ff8",
+    "summary": "7ef9322812b8b92bae7f70abb0bde2c4b160c77c19ef9aebd6aa666ff42d0062"
+  },
+  "external_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010,
+    1011,
+    1012,
+    1013,
+    1014,
+    1015,
+    1016,
+    1017,
+    1018,
+    1019,
+    1020,
+    1021,
+    1022,
+    1023,
+    1024,
+    1025,
+    1026,
+    1027,
+    1028,
+    1029,
+    1030,
+    1031,
+    1032,
+    1033
+  ],
+  "fixed": [
+    [
+      "shell",
+      1,
+      0
+    ],
+    [
+      "shell",
+      1,
+      1
+    ],
+    [
+      "shell",
+      1,
+      2
+    ],
+    [
+      "shell",
+      1,
+      3
+    ],
+    [
+      "shell",
+      1,
+      4
+    ],
+    [
+      "shell",
+      1,
+      5
+    ],
+    [
+      "shell",
+      18,
+      0
+    ],
+    [
+      "shell",
+      18,
+      1
+    ],
+    [
+      "shell",
+      18,
+      2
+    ],
+    [
+      "shell",
+      18,
+      3
+    ],
+    [
+      "shell",
+      18,
+      4
+    ],
+    [
+      "shell",
+      18,
+      5
+    ],
+    [
+      "shell",
+      35,
+      0
+    ],
+    [
+      "shell",
+      35,
+      1
+    ],
+    [
+      "shell",
+      35,
+      2
+    ],
+    [
+      "shell",
+      35,
+      3
+    ],
+    [
+      "shell",
+      35,
+      4
+    ],
+    [
+      "shell",
+      35,
+      5
+    ],
+    [
+      "shell",
+      52,
+      0
+    ],
+    [
+      "shell",
+      52,
+      1
+    ],
+    [
+      "shell",
+      52,
+      2
+    ],
+    [
+      "shell",
+      52,
+      3
+    ],
+    [
+      "shell",
+      52,
+      4
+    ],
+    [
+      "shell",
+      52,
+      5
+    ],
+    [
+      "shell",
+      69,
+      0
+    ],
+    [
+      "shell",
+      69,
+      1
+    ],
+    [
+      "shell",
+      69,
+      2
+    ],
+    [
+      "shell",
+      69,
+      3
+    ],
+    [
+      "shell",
+      69,
+      4
+    ],
+    [
+      "shell",
+      69,
+      5
+    ],
+    [
+      "beam",
+      101,
+      0
+    ],
+    [
+      "beam",
+      101,
+      1
+    ],
+    [
+      "beam",
+      101,
+      2
+    ],
+    [
+      "beam",
+      101,
+      3
+    ],
+    [
+      "beam",
+      101,
+      4
+    ]
+  ],
+  "line": {
+    "beam_halfcells": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        4,
+        0
+      ],
+      [
+        4,
+        1
+      ],
+      [
+        5,
+        0
+      ],
+      [
+        5,
+        1
+      ],
+      [
+        6,
+        0
+      ],
+      [
+        6,
+        1
+      ],
+      [
+        7,
+        0
+      ],
+      [
+        7,
+        1
+      ],
+      [
+        8,
+        0
+      ],
+      [
+        8,
+        1
+      ],
+      [
+        9,
+        0
+      ],
+      [
+        9,
+        1
+      ],
+      [
+        10,
+        0
+      ],
+      [
+        10,
+        1
+      ],
+      [
+        11,
+        0
+      ],
+      [
+        11,
+        1
+      ],
+      [
+        12,
+        0
+      ],
+      [
+        12,
+        1
+      ],
+      [
+        13,
+        0
+      ],
+      [
+        13,
+        1
+      ],
+      [
+        14,
+        0
+      ],
+      [
+        14,
+        1
+      ],
+      [
+        15,
+        0
+      ],
+      [
+        15,
+        1
+      ]
+    ],
+    "expected_beam_arm": [
+      0.0,
+      0.0,
+      -0.05
+    ],
+    "law": "BL5_PHYSICAL_DIRECTOR_WEAK_LINE_DEV_V1",
+    "multiplier_span": 4,
+    "shell_nodes": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ]
+  },
+  "line_frame_slots": [
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.21132486540518708,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259354,
+      "shell_reference": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        510,
+        511,
+        512,
+        516,
+        517,
+        518,
+        708,
+        709,
+        710
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948129,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740643,
+      "shell_reference": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        510,
+        511,
+        512,
+        516,
+        517,
+        518,
+        708,
+        709,
+        710
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.21132486540518713,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025936,
+      "shell_reference": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        516,
+        517,
+        518,
+        522,
+        523,
+        524,
+        711,
+        712,
+        713
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948129,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974064,
+      "shell_reference": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        516,
+        517,
+        518,
+        522,
+        523,
+        524,
+        711,
+        712,
+        713
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259346,
+      "shell_reference": [
+        [
+          0.0625,
+          0.0,
+          0.0
+        ],
+        [
+          0.125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        522,
+        523,
+        524,
+        528,
+        529,
+        530,
+        732,
+        733,
+        734
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740654,
+      "shell_reference": [
+        [
+          0.0625,
+          0.0,
+          0.0
+        ],
+        [
+          0.125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        522,
+        523,
+        524,
+        528,
+        529,
+        530,
+        732,
+        733,
+        734
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025935,
+      "shell_reference": [
+        [
+          0.0625,
+          0.0,
+          0.0
+        ],
+        [
+          0.125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        528,
+        529,
+        530,
+        534,
+        535,
+        536,
+        735,
+        736,
+        737
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974065,
+      "shell_reference": [
+        [
+          0.0625,
+          0.0,
+          0.0
+        ],
+        [
+          0.125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        528,
+        529,
+        530,
+        534,
+        535,
+        536,
+        735,
+        736,
+        737
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259346,
+      "shell_reference": [
+        [
+          0.125,
+          0.0,
+          0.0
+        ],
+        [
+          0.1875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        534,
+        535,
+        536,
+        540,
+        541,
+        542,
+        756,
+        757,
+        758
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740654,
+      "shell_reference": [
+        [
+          0.125,
+          0.0,
+          0.0
+        ],
+        [
+          0.1875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        534,
+        535,
+        536,
+        540,
+        541,
+        542,
+        756,
+        757,
+        758
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025935,
+      "shell_reference": [
+        [
+          0.125,
+          0.0,
+          0.0
+        ],
+        [
+          0.1875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        540,
+        541,
+        542,
+        546,
+        547,
+        548,
+        759,
+        760,
+        761
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974065,
+      "shell_reference": [
+        [
+          0.125,
+          0.0,
+          0.0
+        ],
+        [
+          0.1875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        540,
+        541,
+        542,
+        546,
+        547,
+        548,
+        759,
+        760,
+        761
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259346,
+      "shell_reference": [
+        [
+          0.1875,
+          0.0,
+          0.0
+        ],
+        [
+          0.25,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        546,
+        547,
+        548,
+        552,
+        553,
+        554,
+        780,
+        781,
+        782
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740654,
+      "shell_reference": [
+        [
+          0.1875,
+          0.0,
+          0.0
+        ],
+        [
+          0.25,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        546,
+        547,
+        548,
+        552,
+        553,
+        554,
+        780,
+        781,
+        782
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025935,
+      "shell_reference": [
+        [
+          0.1875,
+          0.0,
+          0.0
+        ],
+        [
+          0.25,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        552,
+        553,
+        554,
+        558,
+        559,
+        560,
+        783,
+        784,
+        785
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974065,
+      "shell_reference": [
+        [
+          0.1875,
+          0.0,
+          0.0
+        ],
+        [
+          0.25,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        552,
+        553,
+        554,
+        558,
+        559,
+        560,
+        783,
+        784,
+        785
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259346,
+      "shell_reference": [
+        [
+          0.25,
+          0.0,
+          0.0
+        ],
+        [
+          0.3125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        558,
+        559,
+        560,
+        564,
+        565,
+        566,
+        804,
+        805,
+        806
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740654,
+      "shell_reference": [
+        [
+          0.25,
+          0.0,
+          0.0
+        ],
+        [
+          0.3125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        558,
+        559,
+        560,
+        564,
+        565,
+        566,
+        804,
+        805,
+        806
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025935,
+      "shell_reference": [
+        [
+          0.25,
+          0.0,
+          0.0
+        ],
+        [
+          0.3125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        564,
+        565,
+        566,
+        570,
+        571,
+        572,
+        807,
+        808,
+        809
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974065,
+      "shell_reference": [
+        [
+          0.25,
+          0.0,
+          0.0
+        ],
+        [
+          0.3125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        564,
+        565,
+        566,
+        570,
+        571,
+        572,
+        807,
+        808,
+        809
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259346,
+      "shell_reference": [
+        [
+          0.3125,
+          0.0,
+          0.0
+        ],
+        [
+          0.375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        570,
+        571,
+        572,
+        576,
+        577,
+        578,
+        828,
+        829,
+        830
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740654,
+      "shell_reference": [
+        [
+          0.3125,
+          0.0,
+          0.0
+        ],
+        [
+          0.375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        570,
+        571,
+        572,
+        576,
+        577,
+        578,
+        828,
+        829,
+        830
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025935,
+      "shell_reference": [
+        [
+          0.3125,
+          0.0,
+          0.0
+        ],
+        [
+          0.375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        576,
+        577,
+        578,
+        582,
+        583,
+        584,
+        831,
+        832,
+        833
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974065,
+      "shell_reference": [
+        [
+          0.3125,
+          0.0,
+          0.0
+        ],
+        [
+          0.375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        576,
+        577,
+        578,
+        582,
+        583,
+        584,
+        831,
+        832,
+        833
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259346,
+      "shell_reference": [
+        [
+          0.375,
+          0.0,
+          0.0
+        ],
+        [
+          0.4375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        582,
+        583,
+        584,
+        588,
+        589,
+        590,
+        852,
+        853,
+        854
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740654,
+      "shell_reference": [
+        [
+          0.375,
+          0.0,
+          0.0
+        ],
+        [
+          0.4375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        582,
+        583,
+        584,
+        588,
+        589,
+        590,
+        852,
+        853,
+        854
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025935,
+      "shell_reference": [
+        [
+          0.375,
+          0.0,
+          0.0
+        ],
+        [
+          0.4375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        588,
+        589,
+        590,
+        594,
+        595,
+        596,
+        855,
+        856,
+        857
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974065,
+      "shell_reference": [
+        [
+          0.375,
+          0.0,
+          0.0
+        ],
+        [
+          0.4375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        588,
+        589,
+        590,
+        594,
+        595,
+        596,
+        855,
+        856,
+        857
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259346,
+      "shell_reference": [
+        [
+          0.4375,
+          0.0,
+          0.0
+        ],
+        [
+          0.5,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        594,
+        595,
+        596,
+        600,
+        601,
+        602,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740654,
+      "shell_reference": [
+        [
+          0.4375,
+          0.0,
+          0.0
+        ],
+        [
+          0.5,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        594,
+        595,
+        596,
+        600,
+        601,
+        602,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051869,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025935,
+      "shell_reference": [
+        [
+          0.4375,
+          0.0,
+          0.0
+        ],
+        [
+          0.5,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        600,
+        601,
+        602,
+        606,
+        607,
+        608,
+        879,
+        880,
+        881
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948131,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974065,
+      "shell_reference": [
+        [
+          0.4375,
+          0.0,
+          0.0
+        ],
+        [
+          0.5,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        600,
+        601,
+        602,
+        606,
+        607,
+        608,
+        879,
+        880,
+        881
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259434,
+      "shell_reference": [
+        [
+          0.5,
+          0.0,
+          0.0
+        ],
+        [
+          0.5625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        606,
+        607,
+        608,
+        612,
+        613,
+        614,
+        900,
+        901,
+        902
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740566,
+      "shell_reference": [
+        [
+          0.5,
+          0.0,
+          0.0
+        ],
+        [
+          0.5625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        606,
+        607,
+        608,
+        612,
+        613,
+        614,
+        900,
+        901,
+        902
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025943,
+      "shell_reference": [
+        [
+          0.5,
+          0.0,
+          0.0
+        ],
+        [
+          0.5625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        612,
+        613,
+        614,
+        618,
+        619,
+        620,
+        903,
+        904,
+        905
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974057,
+      "shell_reference": [
+        [
+          0.5,
+          0.0,
+          0.0
+        ],
+        [
+          0.5625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        612,
+        613,
+        614,
+        618,
+        619,
+        620,
+        903,
+        904,
+        905
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259434,
+      "shell_reference": [
+        [
+          0.5625,
+          0.0,
+          0.0
+        ],
+        [
+          0.625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        618,
+        619,
+        620,
+        624,
+        625,
+        626,
+        924,
+        925,
+        926
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740566,
+      "shell_reference": [
+        [
+          0.5625,
+          0.0,
+          0.0
+        ],
+        [
+          0.625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        618,
+        619,
+        620,
+        624,
+        625,
+        626,
+        924,
+        925,
+        926
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025943,
+      "shell_reference": [
+        [
+          0.5625,
+          0.0,
+          0.0
+        ],
+        [
+          0.625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        624,
+        625,
+        626,
+        630,
+        631,
+        632,
+        927,
+        928,
+        929
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974057,
+      "shell_reference": [
+        [
+          0.5625,
+          0.0,
+          0.0
+        ],
+        [
+          0.625,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        624,
+        625,
+        626,
+        630,
+        631,
+        632,
+        927,
+        928,
+        929
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259434,
+      "shell_reference": [
+        [
+          0.625,
+          0.0,
+          0.0
+        ],
+        [
+          0.6875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        630,
+        631,
+        632,
+        636,
+        637,
+        638,
+        948,
+        949,
+        950
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740566,
+      "shell_reference": [
+        [
+          0.625,
+          0.0,
+          0.0
+        ],
+        [
+          0.6875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        630,
+        631,
+        632,
+        636,
+        637,
+        638,
+        948,
+        949,
+        950
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025943,
+      "shell_reference": [
+        [
+          0.625,
+          0.0,
+          0.0
+        ],
+        [
+          0.6875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        636,
+        637,
+        638,
+        642,
+        643,
+        644,
+        951,
+        952,
+        953
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974057,
+      "shell_reference": [
+        [
+          0.625,
+          0.0,
+          0.0
+        ],
+        [
+          0.6875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        636,
+        637,
+        638,
+        642,
+        643,
+        644,
+        951,
+        952,
+        953
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259434,
+      "shell_reference": [
+        [
+          0.6875,
+          0.0,
+          0.0
+        ],
+        [
+          0.75,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        642,
+        643,
+        644,
+        648,
+        649,
+        650,
+        972,
+        973,
+        974
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740566,
+      "shell_reference": [
+        [
+          0.6875,
+          0.0,
+          0.0
+        ],
+        [
+          0.75,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        642,
+        643,
+        644,
+        648,
+        649,
+        650,
+        972,
+        973,
+        974
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025943,
+      "shell_reference": [
+        [
+          0.6875,
+          0.0,
+          0.0
+        ],
+        [
+          0.75,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        648,
+        649,
+        650,
+        654,
+        655,
+        656,
+        975,
+        976,
+        977
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974057,
+      "shell_reference": [
+        [
+          0.6875,
+          0.0,
+          0.0
+        ],
+        [
+          0.75,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        648,
+        649,
+        650,
+        654,
+        655,
+        656,
+        975,
+        976,
+        977
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259434,
+      "shell_reference": [
+        [
+          0.75,
+          0.0,
+          0.0
+        ],
+        [
+          0.8125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        654,
+        655,
+        656,
+        660,
+        661,
+        662,
+        996,
+        997,
+        998
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740566,
+      "shell_reference": [
+        [
+          0.75,
+          0.0,
+          0.0
+        ],
+        [
+          0.8125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        654,
+        655,
+        656,
+        660,
+        661,
+        662,
+        996,
+        997,
+        998
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025943,
+      "shell_reference": [
+        [
+          0.75,
+          0.0,
+          0.0
+        ],
+        [
+          0.8125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        660,
+        661,
+        662,
+        666,
+        667,
+        668,
+        999,
+        1000,
+        1001
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974057,
+      "shell_reference": [
+        [
+          0.75,
+          0.0,
+          0.0
+        ],
+        [
+          0.8125,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        660,
+        661,
+        662,
+        666,
+        667,
+        668,
+        999,
+        1000,
+        1001
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259434,
+      "shell_reference": [
+        [
+          0.8125,
+          0.0,
+          0.0
+        ],
+        [
+          0.875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        666,
+        667,
+        668,
+        672,
+        673,
+        674,
+        1020,
+        1021,
+        1022
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740566,
+      "shell_reference": [
+        [
+          0.8125,
+          0.0,
+          0.0
+        ],
+        [
+          0.875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        666,
+        667,
+        668,
+        672,
+        673,
+        674,
+        1020,
+        1021,
+        1022
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025943,
+      "shell_reference": [
+        [
+          0.8125,
+          0.0,
+          0.0
+        ],
+        [
+          0.875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        672,
+        673,
+        674,
+        678,
+        679,
+        680,
+        1023,
+        1024,
+        1025
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974057,
+      "shell_reference": [
+        [
+          0.8125,
+          0.0,
+          0.0
+        ],
+        [
+          0.875,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        672,
+        673,
+        674,
+        678,
+        679,
+        680,
+        1023,
+        1024,
+        1025
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259434,
+      "shell_reference": [
+        [
+          0.875,
+          0.0,
+          0.0
+        ],
+        [
+          0.9375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        678,
+        679,
+        680,
+        684,
+        685,
+        686,
+        1044,
+        1045,
+        1046
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740566,
+      "shell_reference": [
+        [
+          0.875,
+          0.0,
+          0.0
+        ],
+        [
+          0.9375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        678,
+        679,
+        680,
+        684,
+        685,
+        686,
+        1044,
+        1045,
+        1046
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025943,
+      "shell_reference": [
+        [
+          0.875,
+          0.0,
+          0.0
+        ],
+        [
+          0.9375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        684,
+        685,
+        686,
+        690,
+        691,
+        692,
+        1047,
+        1048,
+        1049
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974057,
+      "shell_reference": [
+        [
+          0.875,
+          0.0,
+          0.0
+        ],
+        [
+          0.9375,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        684,
+        685,
+        686,
+        690,
+        691,
+        692,
+        1047,
+        1048,
+        1049
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.10566243270259434,
+      "shell_reference": [
+        [
+          0.9375,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        690,
+        691,
+        692,
+        696,
+        697,
+        698,
+        1068,
+        1069,
+        1070
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.39433756729740566,
+      "shell_reference": [
+        [
+          0.9375,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        690,
+        691,
+        692,
+        696,
+        697,
+        698,
+        1068,
+        1069,
+        1070
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.2113248654051887,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.6056624327025943,
+      "shell_reference": [
+        [
+          0.9375,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        696,
+        697,
+        698,
+        702,
+        703,
+        704,
+        1071,
+        1072,
+        1073
+      ]
+    },
+    {
+      "arm": [
+        0.0,
+        0.0,
+        -0.05
+      ],
+      "beam_weight": 0.7886751345948113,
+      "director": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "director_basis": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ],
+      "frame": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "measure_m": 0.015625,
+      "shell_alpha": 0.8943375672974057,
+      "shell_reference": [
+        [
+          0.9375,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "slots": [
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        696,
+        697,
+        698,
+        702,
+        703,
+        704,
+        1071,
+        1072,
+        1073
+      ]
+    }
+  ],
+  "load": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    10.0
+  ],
+  "native_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    125,
+    126,
+    127,
+    128,
+    129,
+    130,
+    131,
+    132,
+    133
+  ],
+  "policy": {
+    "beam_halfcells": 32,
+    "beam_spacing_m": 0.03125,
+    "c_lambda": 2,
+    "shape_aspect": 1.25,
+    "shell_spacing_m": 0.0625,
+    "shell_trace_segments": 16,
+    "span_halfcells": 4,
+    "support_endpoints_m": [
+      0.0,
+      0.125,
+      0.25,
+      0.375,
+      0.5,
+      0.625,
+      0.75,
+      0.875,
+      1.0
+    ],
+    "support_membership": [
+      [
+        0,
+        1,
+        2,
+        3
+      ],
+      [
+        4,
+        5,
+        6,
+        7
+      ],
+      [
+        8,
+        9,
+        10,
+        11
+      ],
+      [
+        12,
+        13,
+        14,
+        15
+      ],
+      [
+        16,
+        17,
+        18,
+        19
+      ],
+      [
+        20,
+        21,
+        22,
+        23
+      ],
+      [
+        24,
+        25,
+        26,
+        27
+      ],
+      [
+        28,
+        29,
+        30,
+        31
+      ]
+    ]
+  },
+  "preflight": {
+    "constraint_norm": "reference_row_scaled_max",
+    "constraints": 40,
+    "equilibrium_norm": "frozen_work_weighted_l2_plus_active_load_rows",
+    "experimental_line_samples": 64,
+    "identity": "0cc41eca6b9a9677946cd41f5f5b290ea49a363c42fa1f0c9fe63ee76c4fd769",
+    "matrix_nnz": 49629,
+    "physical_dofs": 708,
+    "production_qualified": false,
+    "reference_length_m": 0.31436840544860356,
+    "reference_linear_factorizations": 0,
+    "reference_linear_refinements": 0,
+    "retained_dofs": 384,
+    "stress_free_scaled_max": 0.0,
+    "unsupported_modes": []
+  },
+  "xyz_m": [
+    [
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0625,
+      0.0,
+      0.0
+    ],
+    [
+      0.125,
+      0.0,
+      0.0
+    ],
+    [
+      0.1875,
+      0.0,
+      0.0
+    ],
+    [
+      0.25,
+      0.0,
+      0.0
+    ],
+    [
+      0.3125,
+      0.0,
+      0.0
+    ],
+    [
+      0.375,
+      0.0,
+      0.0
+    ],
+    [
+      0.4375,
+      0.0,
+      0.0
+    ],
+    [
+      0.5,
+      0.0,
+      0.0
+    ],
+    [
+      0.5625,
+      0.0,
+      0.0
+    ],
+    [
+      0.625,
+      0.0,
+      0.0
+    ],
+    [
+      0.6875,
+      0.0,
+      0.0
+    ],
+    [
+      0.75,
+      0.0,
+      0.0
+    ],
+    [
+      0.8125,
+      0.0,
+      0.0
+    ],
+    [
+      0.875,
+      0.0,
+      0.0
+    ],
+    [
+      0.9375,
+      0.0,
+      0.0
+    ],
+    [
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.05,
+      0.0
+    ],
+    [
+      0.0625,
+      0.05,
+      0.0
+    ],
+    [
+      0.125,
+      0.05,
+      0.0
+    ],
+    [
+      0.1875,
+      0.05,
+      0.0
+    ],
+    [
+      0.25,
+      0.05,
+      0.0
+    ],
+    [
+      0.3125,
+      0.05,
+      0.0
+    ],
+    [
+      0.375,
+      0.05,
+      0.0
+    ],
+    [
+      0.4375,
+      0.05,
+      0.0
+    ],
+    [
+      0.5,
+      0.05,
+      0.0
+    ],
+    [
+      0.5625,
+      0.05,
+      0.0
+    ],
+    [
+      0.625,
+      0.05,
+      0.0
+    ],
+    [
+      0.6875,
+      0.05,
+      0.0
+    ],
+    [
+      0.75,
+      0.05,
+      0.0
+    ],
+    [
+      0.8125,
+      0.05,
+      0.0
+    ],
+    [
+      0.875,
+      0.05,
+      0.0
+    ],
+    [
+      0.9375,
+      0.05,
+      0.0
+    ],
+    [
+      1.0,
+      0.05,
+      0.0
+    ],
+    [
+      0.0,
+      0.1,
+      0.0
+    ],
+    [
+      0.0625,
+      0.1,
+      0.0
+    ],
+    [
+      0.125,
+      0.1,
+      0.0
+    ],
+    [
+      0.1875,
+      0.1,
+      0.0
+    ],
+    [
+      0.25,
+      0.1,
+      0.0
+    ],
+    [
+      0.3125,
+      0.1,
+      0.0
+    ],
+    [
+      0.375,
+      0.1,
+      0.0
+    ],
+    [
+      0.4375,
+      0.1,
+      0.0
+    ],
+    [
+      0.5,
+      0.1,
+      0.0
+    ],
+    [
+      0.5625,
+      0.1,
+      0.0
+    ],
+    [
+      0.625,
+      0.1,
+      0.0
+    ],
+    [
+      0.6875,
+      0.1,
+      0.0
+    ],
+    [
+      0.75,
+      0.1,
+      0.0
+    ],
+    [
+      0.8125,
+      0.1,
+      0.0
+    ],
+    [
+      0.875,
+      0.1,
+      0.0
+    ],
+    [
+      0.9375,
+      0.1,
+      0.0
+    ],
+    [
+      1.0,
+      0.1,
+      0.0
+    ],
+    [
+      0.0,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.0625,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.125,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.1875,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.25,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.3125,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.375,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.4375,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.5,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.5625,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.625,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.6875,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.75,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.8125,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.875,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.9375,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      1.0,
+      0.15000000000000002,
+      0.0
+    ],
+    [
+      0.0,
+      0.2,
+      0.0
+    ],
+    [
+      0.0625,
+      0.2,
+      0.0
+    ],
+    [
+      0.125,
+      0.2,
+      0.0
+    ],
+    [
+      0.1875,
+      0.2,
+      0.0
+    ],
+    [
+      0.25,
+      0.2,
+      0.0
+    ],
+    [
+      0.3125,
+      0.2,
+      0.0
+    ],
+    [
+      0.375,
+      0.2,
+      0.0
+    ],
+    [
+      0.4375,
+      0.2,
+      0.0
+    ],
+    [
+      0.5,
+      0.2,
+      0.0
+    ],
+    [
+      0.5625,
+      0.2,
+      0.0
+    ],
+    [
+      0.625,
+      0.2,
+      0.0
+    ],
+    [
+      0.6875,
+      0.2,
+      0.0
+    ],
+    [
+      0.75,
+      0.2,
+      0.0
+    ],
+    [
+      0.8125,
+      0.2,
+      0.0
+    ],
+    [
+      0.875,
+      0.2,
+      0.0
+    ],
+    [
+      0.9375,
+      0.2,
+      0.0
+    ],
+    [
+      1.0,
+      0.2,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0675
+    ],
+    [
+      0.03125,
+      0.0,
+      0.0675
+    ],
+    [
+      0.0625,
+      0.0,
+      0.0675
+    ],
+    [
+      0.09375,
+      0.0,
+      0.0675
+    ],
+    [
+      0.125,
+      0.0,
+      0.0675
+    ],
+    [
+      0.15625,
+      0.0,
+      0.0675
+    ],
+    [
+      0.1875,
+      0.0,
+      0.0675
+    ],
+    [
+      0.21875,
+      0.0,
+      0.0675
+    ],
+    [
+      0.25,
+      0.0,
+      0.0675
+    ],
+    [
+      0.28125,
+      0.0,
+      0.0675
+    ],
+    [
+      0.3125,
+      0.0,
+      0.0675
+    ],
+    [
+      0.34375,
+      0.0,
+      0.0675
+    ],
+    [
+      0.375,
+      0.0,
+      0.0675
+    ],
+    [
+      0.40625,
+      0.0,
+      0.0675
+    ],
+    [
+      0.4375,
+      0.0,
+      0.0675
+    ],
+    [
+      0.46875,
+      0.0,
+      0.0675
+    ],
+    [
+      0.5,
+      0.0,
+      0.0675
+    ],
+    [
+      0.53125,
+      0.0,
+      0.0675
+    ],
+    [
+      0.5625,
+      0.0,
+      0.0675
+    ],
+    [
+      0.59375,
+      0.0,
+      0.0675
+    ],
+    [
+      0.625,
+      0.0,
+      0.0675
+    ],
+    [
+      0.65625,
+      0.0,
+      0.0675
+    ],
+    [
+      0.6875,
+      0.0,
+      0.0675
+    ],
+    [
+      0.71875,
+      0.0,
+      0.0675
+    ],
+    [
+      0.75,
+      0.0,
+      0.0675
+    ],
+    [
+      0.78125,
+      0.0,
+      0.0675
+    ],
+    [
+      0.8125,
+      0.0,
+      0.0675
+    ],
+    [
+      0.84375,
+      0.0,
+      0.0675
+    ],
+    [
+      0.875,
+      0.0,
+      0.0675
+    ],
+    [
+      0.90625,
+      0.0,
+      0.0675
+    ],
+    [
+      0.9375,
+      0.0,
+      0.0675
+    ],
+    [
+      0.96875,
+      0.0,
+      0.0675
+    ],
+    [
+      1.0,
+      0.0,
+      0.0675
+    ]
+  ]
+}
