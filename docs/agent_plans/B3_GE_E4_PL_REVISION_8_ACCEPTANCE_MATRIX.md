@@ -55,6 +55,15 @@ independent review. This is bounded support/kernel/work evidence, not whole-doma
 mechanical, locking, converged physical accuracy or F03/M2 acceptance.
 [Mechanical supplement](development/r8-bl5-native-stability-20260930/mechanical-results.md).
 
+Finite-family local supplement,30 September:44 complete local mode inventories,
+22translated pairs and24definition/connectivity inventories resolve the stated
+local energy/rigid-kernel premises. Actual supports/C detect the remaining beam
+yaw; independent actual review is clear. V1 serialization failure is preserved;
+V2 numerical modes are byte-identical. Together with the separately bound native
+row-independence evidence, this supports only a conditional nominal finite-family
+argument. No exact PSD/global coercivity, locking/accuracy or F03/M2 acceptance.
+[Results](development/r8-bl5-native-stability-20260930/local-kernel-results.md).
+
 F06 loaded development,30 September: original installed Q4/S3 V1 has two retained
 failures. Q4 misses0.05rad/1e-5 noncommuting coverage; S3 whole-origin fingerprint
 differs only after separately recomputed successors. Same-state reset/restore

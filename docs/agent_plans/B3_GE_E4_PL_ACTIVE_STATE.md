@@ -10,7 +10,7 @@ Previous living-note/history bytes remain in integration commits, including48404
 ## Identity and ownership
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration; mechanical supplement commitd31936c2.
+branch codex/b3-ge-e4-pl-integration; product000d2fa3, mechanical commitd31936c2.
 Product observer slice is reviewed on source base484043fa; new wheel
 243b2d8a2f1b03a6f08c49624f449e6e282749203b77b37b4be7817cd8758317.
 Installed sites TEMP/r8-accepted-observer-installed-v1/V2/V3/site;55 current
@@ -21,8 +21,9 @@ Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py SHA
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481;
 do not edit/stage/run/interrupt. Root owns integration; workers own assigned paths.
 At most3workers and one owned heavy job. Ceiling100krows/600s/8GiB/8threads;
-normally1effective BLAS thread/JIT off. F06V3 and observerV1/V2/V3 are terminal;
-no owned numerical job active. Preserve earlier results and fixture/runner failures.
+normally1effective BLAS thread/JIT off. F06V3 and observerV1/V2/V3 are terminal.
+Local-kernelV1/V2 are terminal; no owned numerical job active. V1 reporting
+failure and all earlier failures remain; V2 passes21.31s/196288512bytes.
 
 ## Delivered behavior and established evidence
 
@@ -95,8 +96,22 @@ fixture failures. Only the ownership fixture uses10N inV3; its two checks pass.
 [Combined lifecycle results](development/r8-f06-loaded-transport-20260930/results.md).
 Next F06 development should use the mandatory model-bound staged-load capability
 if genuine independent rotations are needed; no new pattern experiment launched.
-In parallel, worker owns scripts/b3_e4_bl5_local_kernel_dev.py only, preparing the
-finite-family local-energy/rigid-kernel argument; no numerical run authorized yet.
+Native local source1edb7628 resolves44 local premises/24finite-family definitions,
+22translation pairs and actual support/common-rigid/yaw detection; independent
+actual review clear. V1 reporting failure remains; V2 modes are byte-identical.
+[Local supplement](development/r8-bl5-native-stability-20260930/local-kernel-results.md)
+supports a conditional nominal finite-family energy/nullspace argument, not exact
+PSD, quantitative global coercivity, locking, physical accuracy or F03 acceptance.
+No more dense-family kernels are needed absent a contrary observation.
+
+Next decision: which existing physical reference actually matches BL5's law,
+section/frame/offset, supports and load measures, and is converged enough to
+discriminate locking/accuracy? Review the preserved transfer and external records
+together before another run. Reuse matched evidence; if an observable/reference
+is missing, identify it explicitly and prepare only the discriminator it supports.
+Keep normal-spin force-arm transfer and direct ground reactions distinct from
+six-channel weld and historical finite-pad comparisons. F06's independent loading
+coverage remains a separate capability task, not a reason to alter the BL5 law.
 
 All remaining topology/footprints, materials/cyclic simultaneous yielding, loads,
 spectra, imperfections/capacity, scale, external references, installed platforms
