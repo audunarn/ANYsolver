@@ -73,3 +73,29 @@ system. Reuse these checks within their exact flat/zero-lift/support scope.
 Other charts, support/frame mappings, curved members and complete physical
 accuracy remain open. No automatic mechanical refinement, native beta,
 uniform-stability, F03 execution or M2/G0B acceptance follows.
+
+## Criterion argument and owner decision
+
+The [independent argument](independent-criterion-argument.md) supplies a bounded
+mean-preserving scalar projection for aligned supports containing at least two
+primal intervals, and an exact one-interval deteriorating control. Its full
+product-domain analytical floor still needs a supported shell bulk-H1 line-work
+projection/lifting bound. A beam-only dual-dominance shortcut is invalid at
+increasing frequency. The note's explicit sine example is an interior-centerline
+reference; our boundary-line fixture instead has ratio W alpha coth(W alpha).
+Both exhibit that frequency obstruction; they are distinct physical traces.
+
+Root checked the scalar identities/constants and coupled norm-equivalence
+argument. They do not establish a new full-domain acceptance criterion.
+The note's requirement for an analytical full-product inequality is sufficient
+for its proof route, not an additional programme gate: R8 §4.5 explicitly
+permits numerical evidence over the registered domain without a universal
+h-uniform proof or certified infinite refinement tail. Preserve that boundary.
+
+Decision: pursue that permitted finite-domain route, not an unbounded lifting
+proof. Next implement the independently derived shell modal line-source dual
+with an explicit series-tail bound for piecewise constant actions. Use it to
+check reference accuracy and independent admissible/deficient macroelement
+controls, then justify/freeze criteria before native spectra. The reference
+bound distinguishes inadequate auxiliary resolution from actual work-space
+loss. No numerical floor is supplied by the current evidence.

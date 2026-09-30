@@ -104,13 +104,18 @@ final dual increment0.21055% leaves reference error unproven. Installed wheel
 unchanged,387modules/207imports bound;V1 import failure retained, V2/V3 pass.
 Independent review clear for this bounded map/quotient, not native stability.
 
-Next: finish independent approximation/control argument and reference-error
-criteria before native spectra. One bounded worker derivation is pending at
-TEMP/r8-bl5-stability-criterion-argument.md; inspect actual completion, no
-numerical run is involved. Identify the exact unjustified inequality if no
-criterion follows; use scalar good/bad controls without calibrating to native
-trends. Then full seven-ratio/actual-KKT assessment. No automatic fourth loaded
-mesh, global dense inverse, mechanical gauge removal or F03 consumption.
+Independent approximation argument completed: scalar two-interval projection
+and one-interval deteriorating control are derived; beam-only dual dominance
+fails at high frequency. A universal product-space proof needs a shell lifting
+bound, but R8 does not require that proof. Do not add it as a new gate.
+Next: use the permitted finite-domain numerical route. Implement independent
+shell modal line-source dual and explicit tail bound for P0 actions; check
+reference accuracy and admissible/deficient macroelement controls, then freeze
+justified criteria before native spectra. No candidate-based floor calibration.
+All workers finished; no live source writer/numerical job remains. Then full
+seven-ratio/actual-KKT assessment. No automatic fourth loaded mesh, global dense
+inverse, mechanical gauge removal or F03 consumption. See results for the
+boundary versus interior trace distinction in the argument's counterexample.
 
 Materials/simultaneous yielding, footprints/topology, loads, spectra,
 imperfections/capacity, scale, external references, platforms and release remain
