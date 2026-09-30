@@ -1,12 +1,20 @@
 # General contact — goal
 
-**Revision:** 2026-09-30.1. **Status:** D1-interior independently accepted30September2026 on installed0b2ac9be; D2 development next. Original programme clock resumed29September2026 at08:04:33UTC. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md). **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-09-30.2. **Status:** D1-interior independently accepted30September2026 on installed0b2ac9be; D2 projected finite-penalty development active. Original programme clock resumed29September2026 at08:04:33UTC. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md). **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's instruction; this status does not establish numerical acceptance.
 
 On resumption, this goal prevails over conflicting future instructions in the 28 September Review-adjusted Delivery Plan, the [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md), the [D1 gap map](docs/GENERAL_CONTACT_D1_ACCEPTANCE_GAP_MAP.md) and the [living note](GENERAL_CONTACT_RESTART.md). Preserve their unaffected requirements and historical dispositions. Frozen or consumed case registrations and execution authorities are not renewed.
 
 ## Current milestone and next delivery
+
+The immediate D2 slice is a bounded planar Q4/S3 partial-overlap workflow using
+the explicitly selected projected finite-penalty law: active prescribed-source
+pressure, moving overlap, opening/recontact, physical reactions/work, gap checks
+and restart. Controlled press/open/recontact is locally tested; moving fronts and
+restart continuation remain open. The refined point-load gap/operator nonpasses
+remain unchanged. This subset does not complete D2 or qualify arbitrary cuts;
+all remaining D2 geometry/search and D3–D8 programme outcomes remain required.
 
 D1-interior is independently accepted in its bounded documented profile, through
 current installed0b2ac9be evidence and explicit impact reuse of scoped87c science.

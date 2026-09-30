@@ -1,6 +1,6 @@
 # General contact — plan
 
-**Revision:** 2026-09-30.26. **Status:** D1-interior independently accepted; D2 projected-penalty slice active. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.1. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
+**Revision:** 2026-09-30.27. **Status:** D1-interior independently accepted; D2 projected-penalty slice active. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.2. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
 
 The goal owns outcome, acceptance, authority, budget and stop rules. This plan is the current best route, not a mandatory sequence of investigations. The lead should change it when evidence supports faster delivery within the goal, briefly recording the decision. Development has resumed on the user's instruction.
 
@@ -272,6 +272,24 @@ The lead may combine B–D, work on independent D1 rows in parallel, or change i
 Optimize only a measured obstacle to delivery. A short comparison can justify a change before a resource cap is hit; conversely, an isolated kernel gain does not justify an open-ended speed programme. Compare complete affected routes at matching accuracy when making a route-speed claim. If no change is needed to meet the outcome, proceed to acceptance. Update this plan briefly when the chosen route materially changes; no separate planning approval is needed for delegated decisions.
 
 ## 4. D2 first slice — partial overlap and boundaries
+
+**Current selected route, 30 September:** projected finite-penalty weak-gap work,
+explicitly separate from the accepted D1 law and existing potential-based penalty.
+The new small-rotation Q4/S3 profile retains fine Q1 hats, all positive supports,
+complete moving-work derivatives, zero algorithmic multipliers, physical gap
+admission and a separate restart identity. Controlled active-source modes now
+pass press/open/recontact locally. Next integrate a moving target-boundary front
+and restart on this bounded workflow, then assess the missing method-appropriate
+response/conditioning evidence before promotion. Application summary persistence
+can proceed against the accepted public contract with admission remaining false.
+
+The independent fixed-geometry spatial prediction and imposed-pose production
+comparison are retained NONPASS for their original gap/comparison claims.
+Moving geometry is omitted by that scalar oracle; its imposed q is not coupled
+equilibrium. No additional stiffness/grid sweep is planned. Do not turn this
+diagnostic fixture into a universal rejection or acceptance of the method.
+Physical edge-only collision, uncovered tips, finite rotation, warped geometry,
+other pairings, automatic/self-contact and all later programme rows stay open.
 
 After D1 acceptance, or earlier following an explicit user decision, select one primary method from the authorized options. Compare their mechanics and integration cost on paper and with a bounded discriminator if necessary, obtain consequential design scrutiny, then implement an integrated case. Do not fully develop all options before selecting one.
 

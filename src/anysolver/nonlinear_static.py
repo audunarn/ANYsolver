@@ -7815,6 +7815,10 @@ def solve_static_nonlinear(
                     "von Karman force control with one dead nodal load case"
                 )
         if (any(item.normal_law == "projected_penalty" for item in contact.interactions)
+                and (str(kinematics).lower() != "von_karman"
+                     or corotational_tangent != "auto")):
+            raise ValueError("projected penalty contact currently requires von_karman small-rotation kinematics")
+        if (any(item.normal_law == "projected_penalty" for item in contact.interactions)
                 and str(control).lower() not in {"force", "displacement"}):
             raise ValueError("projected penalty contact requires force or displacement control")
         augmented_contact_requested = any(

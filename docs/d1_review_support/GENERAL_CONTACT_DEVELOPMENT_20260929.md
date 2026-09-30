@@ -156,3 +156,80 @@ run); persistent local gap must be addressed by spatial/contact resolution, not
 an indefinite stiffness increase. Physical rim/edge-only/collision, active
 prescribed-edge equilibrium, finite-rotation/search/self-contact and future
 programme rows remain open.
+
+**30 September fixed-geometry reference decision:** independent exact rectangle
+Q1 integrals with declared structural K input reproduce saved 1e6/1e7 normal
+displacements (relative <=1.607e-8), target reactions (<=2.875e-8) and physical
+gaps (<=4.27e-13m), in1.403s/137.08MB. Reviewer found no blocker for this
+fixed-geometry discrete comparison; moving horizontal work/tangent and continuum
+accuracy are outside its scope. The full saved-state reference residual reaches
+9.88e-7 relative, so tiny displacement differences alone do not qualify mechanics.
+Exact v1 source snapshot retained with SHA19289672813fe374a05a737e2590fbddab5a8886aca0545adb0843a27afd0db9.
+
+Weighted-gap release does not enforce a clipped edge gap. If the active right-hat
+branch persists and the left gap remains positive, its zero average condition
+permits negative clipped-edge gap. Two finite-stiffness results do not establish
+that limit. Skip another coupled stiffness run. One independent 4x2 prediction
+at unchanged k=1e7, geometry/material/load/supports, followed only if useful by
+one coupled 4x2 comparator, distinguishes spatial representation error from
+production contact error. Routine180s/1GB applies; no mesh sweep or new criteria.
+Worker owns reference helper/output; lead owns coupled comparator. New-law-only
+ordinary small-rotation guard independently reviewed, focused negative check
+passed3.289s/211.41MB. Legacy branches remain unchanged.
+
+**Spatial prediction outcome and narrowed action:** the4x2 independent reference
+completed1.444s/138.38MB, residual4.75e-16N, all15supports retained. It predicts
+62.7135µm penetration at(1,.1), versus26.7827µm coarse, and targetreaction
+.3499983N versus.3466726N. Structural and contact discretizations both changed;
+point loads and prescribed rotations prevent a monotone continuum interpretation.
+This is a useful gap-budget nonpass, not proof of universal formulation failure.
+Withhold the coupled solve predicted to fail the unchanged50µm limit. One
+candidate-only evaluation of production contact at independent q instead checks
+normal operator parity, complete physical work/wrench and actual gap rejection.
+No equilibrium solve, physical commit or displacement-verification claim.
+Command under180s/1GB: d1_bounded_single.py invokes
+d2_projected_penalty_spatial_coupled_dev.py --candidate-only --reference
+d2_fixed_geometry_penalty_spatial_v1_20260930.json, unique
+d2_spatial_reference_pose_operator_v1_20260930 raw output/log/resource paths.
+If operators agree and both gap checks reject, stop the stiffness/grid diagnostic
+and select the next bounded boundary/contact-representation delivery slice;
+otherwise correct the specifically identified production discrepancy.
+
+**Spatial operator decision:** candidate-only check completed6.384s/266.44MB.
+Pressure/reaction errors3.326e-6/2.991e-6 exceed1e-6; source equilibrium/wrench
+at imposed linear q also exceed their gates. Preserve NONPASS. Both independent
+and production gaps reject; actual physical work mapping, conversion and all15
+supports pass. Reviewer identifies omitted moving projection/support/physical
+normals as the plausible discrepancy: weighted-gap change exceeds measured
+integration error by610x. This is not a moving-operator qualification, actual
+equilibrium, or demonstrated production defect. No tolerance changes or rerun.
+End this stiffness/grid branch rather than force a favourable comparison.
+
+**Next integrated boundary slice:** original2Q4/S3 cut geometry,1e7, unchanged
+50µm gap gate; prescribe source normals1/4 through two real path controls from
+0 to−130µm, open and recontact, two steps persegment, no nodal forces. Remove
+their former zero-normal BC; fix node2's former zero in-plane controls. All6
+pressure rows and physical reaction rows remain. Node4's supported pressure
+hat is represented, although its node lies outside y=1; no uncovered-tip
+collision claim. Independently check actual positive controlled pressures,
+joint-free equilibrium, both-body wrench/work, control.T multipliers and named
+supports, exact represented gap and production gap at each pose. This closes
+a distinct active-prescribed-pressure delivery requirement; it does not repair
+the retained point-load spatial nonpass or claim continuum accuracy.
+One180s/1GB execution: d2_active_prescribed_edge_dev.py --output
+d2_active_prescribed_edge_v1_20260930.json, bounded wrapper with matching
+unique log/resource paths. If pass, proceed to front motion/state admission;
+if nonpass, classify its single principal discrepancy before another experiment.
+
+**Active prescribed-source result:** completed13.908s/275.46MB, all6poses pass
+the retained local checks; source modes1/4 active2.760174/5.053446Pa during
+press/recontact. Gap minimum−30µm, all production certificates pass. Actual
+control reactions[−.432175107,−.421057883]N oppose+.853232990N source contact;
+remaining named supports reconcile exactly. Maximum both-body wrench1.768e-9,
+control reconciliation8.856e-10, work1.110e-16. Independent read-only scrutiny
+closed row/sign/admission/reaction findings. This is locally tested development,
+not D2 acceptance; emitted active checkpoint does not establish continuation.
+Handle96728closed. Next moving boundary-front/restart slice uses this method,
+not another refinement screen. ANYfem summary-result persistence progresses in
+its existing separate contact-intent worktree;16focused tests pass, independent
+review pending, no solve/admission broadening. Full programme remains active.

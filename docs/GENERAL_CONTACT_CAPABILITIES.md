@@ -25,7 +25,7 @@ median improvement28.37% is not a complete-solve speedclaim.
 **D2 projected finite penalty — development only:** additive opt-in
 `projected_penalty` uses refined Q4/S3 fine-Q1 Jet2 overlap-local geometry with
 zero contact multipliers and a generally nonsymmetric projected-work tangent.
-Storage is labeled separately from work. Nine focused checks pass in incremental
+Storage is labeled separately from work. Ten focused checks pass in incremental
 runs; independent implementation review closed the derivative-reduction and
 ordinary-API boundary findings. The1e7 partial-overlap press/open/recontact passes all3pose checks; a first1e6
 roundoff-guard nonpass remains retained, with only its saved final pose assessed.
@@ -35,6 +35,20 @@ factorization and matching final pose; custom nested path still needstwo control
 Active prescribed-source pressures, physical rims/edge-only collisions, arbitrary
 cut accuracy and installed admission are not qualified. **Independently accepted:
 no; released: no.** D1's accepted installed artifact remains0b2ac9be.
+
+The independent fixed-geometry Q1 normal reference matches saved coarse cases;
+its unchanged1e7 4x2 prediction gives62.7135µm penetration, outside50µm.
+All15positive supports remain. This is retained development evidence against
+assuming finer structural/contact meshes improve the gap; it is not a moving-work
+or continuum qualification. A knowingly gap-inadmissible coupled solve is withheld.
+No scientific tolerance, accepted D1 identity or pressure-field failure is changed.
+
+Controlled partial-overlap press/open/recontact now also passes locally with
+active prescribed source pressure modes1/4 (sixposes,13.908s/275.46MB), retained
+full reaction rows, reconciled control/support reactions and gap minimum−30µm.
+Independent development scrutiny found no mapping/sign blocker. Moving fronts,
+restart continuation and method-appropriate spatial accuracy remain open; no
+uncovered-tip collision, D2 acceptance or release follows from this fixture.
 
 **30 September source87c53913 update:** D1-interior stages target-boundary cuts,
 prescribed source edges and source rim contact to D2 under the controlling goal.

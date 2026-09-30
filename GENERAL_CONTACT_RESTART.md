@@ -2,13 +2,14 @@
 
 **30 September 2026: active. D1-interior independently accepted; D2 development.**
 Worktree `C:/ANYworkspaceWork/ANYsolver-general-contact`, branch
-`codex/general-contact-core`. Previous checkpoint `b38cb6ce`; current D2 slice
-is ready for local commit. Accepted installed package remains `0b2ac9be`.
+`codex/general-contact-core`. D2 checkpoint `afe5c157`; current dirty additions
+are the small-rotation guard/test, fixed-geometry reference/operator nonpass,
+active prescribed-source lifecycle and current notes. Accepted installed package remains `0b2ac9be`.
 Main checkout untouched; prior dirty helpers/evidence preserved. No publication,
 merge, release or full-programme completion.
 
-[Goal](GENERAL_CONTACT_GOAL.md) revision 2026-09-30.1;
-[plan](GENERAL_CONTACT_PLAN.md) revision 2026-09-30.26;
+[Goal](GENERAL_CONTACT_GOAL.md) revision 2026-09-30.2;
+[plan](GENERAL_CONTACT_PLAN.md) revision 2026-09-30.27;
 [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md);
 [accepted handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md);
 [final review](docs/d1_review_support/D1_CHECKPOINT_SUCCESSOR_REVIEW_20260930.md);
@@ -51,21 +52,29 @@ Handle 91959 closed. Custom nested path still requires two controls.
 Raw evidence and helpers: `docs/d1_review_support/d2_*`; living development
 record: `docs/d1_review_support/GENERAL_CONTACT_DEVELOPMENT_20260929.md`.
 
-Next uncertainty is partial-cut response/gap accuracy. Worker
-`saved_radial_boundary` owns ONE NEW independent fixed-geometry Q1 penalty
-reference helper and outputs; no production or prior-helper edits. Outline
-approved: exact rectangle integrals, accepted structural K as declared input,
-no production contact calls; one bounded reference run, no coupled solve.
-Check worker/process state before dispatch. Reviewer `checkpoint_review` is
-quiescent and available for independent reference scrutiny. A single 1/k
-sensitivity check needs predictions first; no indefinite stiffness/mesh tuning.
-Active prescribed-edge equilibrium, rims/edge-only collision, other D2 geometry
-and all D3–D8 remain required. D1 is not full C0–C9 completion.
+Independent fixed-geometry reference agrees with saved normal responses and
+explains why weak-gap convergence permits clipped-edge penetration. Its v1
+source snapshot and raw data are retained. No further stiffness run planned.
+4x2 prediction gives−62.7135µm gap; candidate-only production check also rejects,
+but pressure/reaction comparisons exceed1e-6. Preserve strict NONPASS: moving
+geometry is omitted by the scalar oracle and imposed q is not equilibrium.
+No coupled solve, new stiffness/grid run or tolerance change. Both handles closed.
+
+Active prescribed-source lifecycle subsequently passes all6poses in13.908s/275MB,
+press/recontact pressures1/4 active, physical gap−30µm, actual control/support
+reactions reconciled. Reviewer closed row/sign findings, localdevelopment only;
+emitted active checkpoint is not continuation proof. Handle96728closed.
+Next lead slice: moving target-boundary front and restart on this bounded method.
+Rims/edge-only collisions, method accuracy, other D2 geometry and allD3–D8 remain.
+ANYfem worker added summary-result persistence in existing separate
+`C:/ANYworkspaceWork/ANYfem-contact-intent`;16focused tests pass, review pending.
+Reviewer owns read-only assessment; no app execution admission. Reference worker
+completed, no owned numeric process running. D1 is not full C0–C9 completion.
 
 ## Budget and ownership
 
 Original 120 active-hour clock unchanged, resumed 29 September 08:04:33 UTC.
-Latest goal tool: 94,775 s = 26.33 h used, about 93.67 h remaining. Check current
+Latest goal tool: 98,152 s = 27.26 h used, about 92.74 h remaining. Check current
 usage; never reset it. Routine 180 s / 1 GB; named integrated/qualification
 900 s / 4 GB. No lead numeric process running. Up to two workers authorized.
 Preserve every failure, frozen authority and concurrent dirty owner. After two

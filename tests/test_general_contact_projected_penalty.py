@@ -148,3 +148,11 @@ def test_ordinary_scope_rejects_unsupported_control_before_mutation():
     manager = GeneralS3PatchManager(model, definition, settings)
     assert not manager.normal_multipliers.flags.writeable
     np.testing.assert_array_equal(manager.normal_multipliers, 0)
+
+
+def test_ordinary_rejects_unadmitted_finite_rotation_work_map():
+    from anysolver import solve_static_nonlinear
+    model, definition, settings = _candidate()
+    with pytest.raises(ValueError, match="small-rotation kinematics"):
+        solve_static_nonlinear(model, contact=definition, contact_settings=settings,
+                              kinematics="corotational")

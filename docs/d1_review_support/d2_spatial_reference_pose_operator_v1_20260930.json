@@ -1,0 +1,737 @@
+{
+  "accepted": false,
+  "released": false,
+  "kind": "production_operator_at_independent_spatial_reference",
+  "adapter": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_spatial_coupled_dev.py",
+    "sha256": "2c68783617a7d5198827f4800604c6324ed002673a5b79f4fe359f29736f4de6"
+  },
+  "reference": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_fixed_geometry_penalty_spatial_v1_20260930.json",
+    "sha256": "c88b8fdba8a31299166abd6bb98d79a76cd5f6eb54537407eae4fb43ecbe8472"
+  },
+  "matrix_classes": [],
+  "scope": "guided elastic small motion; fixed-target discrete normal comparison; not continuum qualification",
+  "inputs": {
+    "normal_regularization_pa_per_m": 10000000.0,
+    "physical_gap_budget_m": 5e-05,
+    "load_n": 0.5,
+    "normal_relative_comparison_target": 1e-06,
+    "force_balance_target": 1e-06,
+    "virtual_work_target": 1e-10,
+    "normal_force_scale_n": 0.5,
+    "moment_scale_nm": 0.5,
+    "max_iterations": 18,
+    "time_cap_s": 180,
+    "process_memory_cap_bytes": 1000000000
+  },
+  "source": {
+    "nonlinear_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py",
+      "sha256": "a603c9d4868c96d8cf55b892c05ab61d7dda9914cbbbf5c2758d0556d84f5386"
+    },
+    "general_contact/core.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\core.py",
+      "sha256": "7f9c9cb65b9ed4b13b737455c48d015a1511cb7fd9ca491e5a3eef552037fdd4"
+    },
+    "general_contact/s3_patch_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "42219f685713a5c6d67ec6d4de75a36a0a4200b85dde56a7fbdbf97a8827b2eb"
+    }
+  },
+  "world_node_map": {
+    "1": [
+      0.1,
+      0.1
+    ],
+    "2": [
+      0.35,
+      0.1
+    ],
+    "3": [
+      0.6,
+      0.1
+    ],
+    "4": [
+      0.85,
+      0.1
+    ],
+    "5": [
+      1.1,
+      0.1
+    ],
+    "6": [
+      0.1,
+      0.6
+    ],
+    "7": [
+      0.35,
+      0.6
+    ],
+    "8": [
+      0.6,
+      0.6
+    ],
+    "9": [
+      0.85,
+      0.6
+    ],
+    "10": [
+      1.1,
+      0.6
+    ],
+    "11": [
+      0.1,
+      1.1
+    ],
+    "12": [
+      0.35,
+      1.1
+    ],
+    "13": [
+      0.6,
+      1.1
+    ],
+    "14": [
+      0.85,
+      1.1
+    ],
+    "15": [
+      1.1,
+      1.1
+    ]
+  },
+  "status": "reference_candidate_evaluation_no_solve_no_commit",
+  "displacements": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -2.206814001790768e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -4.373106015838208e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -6.86558180605126e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -0.00022541858640713074,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -2.3257036862882146e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -4.5654705340201556e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -6.117742673301903e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -1.3992876188599225e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -2.5018845964898437e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -5.216164857835564e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -8.97925075991606e-05,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -0.00025203926422481034,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "prescribed_reference_normal_displacements": true,
+  "new_coupled_solves": 0,
+  "diagnostics": {
+    "certificate": {
+      "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+      "minimum_gap": -7.125802614525599e-05,
+      "sampled_overlap_gap": -6.271346486811303e-05,
+      "penalty_energy": 0.0,
+      "current_overlap_area": 0.809999996544723,
+      "reference_overlap_area": 0.8100000002708581,
+      "overlapping_pairs": 13,
+      "integration_force": [
+        7.240665491871524e-05,
+        2.420734399609147e-05,
+        0.3499972549743436
+      ],
+      "target_force": [
+        -7.240665491871549e-05,
+        -2.4207343996091517e-05,
+        -0.34999725497434364
+      ],
+      "integration_moment": [
+        0.19025846069854227,
+        -0.3324963037327641,
+        -9.344261238902873e-06
+      ],
+      "target_moment": [
+        -0.19025846069854227,
+        0.33249630373276406,
+        9.3442612389029e-06
+      ],
+      "gap_tolerance_met": false,
+      "active_pressure_dofs": 2,
+      "source_pressure_node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "normalized_weighted_gap_m": [
+        9.251185403813062e-05,
+        7.762832845006964e-05,
+        5.56472401027833e-05,
+        2.736254176381597e-05,
+        -1.6751431444032617e-06,
+        9.222556382133128e-05,
+        7.673127902444126e-05,
+        5.409844669489731e-05,
+        3.462340332042095e-05,
+        2.5424862911060287e-05,
+        9.193444426900114e-05,
+        7.568137554230763e-05,
+        5.04773714800637e-05,
+        2.0936170773547536e-05,
+        -2.2436624311706593e-06
+      ],
+      "numerical_pressure_pa": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        16.751431444032615,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        22.436624311706595
+      ],
+      "reference_support_m2": [
+        0.031249999999993647,
+        0.0625000000000085,
+        0.06249999999999785,
+        0.05749999878156359,
+        0.011249998172345996,
+        0.06124999999999354,
+        0.12250000000587138,
+        0.12250000001748579,
+        0.11270000113957512,
+        0.022050001706670503,
+        0.020000000000000025,
+        0.04000000002346672,
+        0.040000000069936564,
+        0.03680000014588814,
+        0.007200000208060574
+      ],
+      "energy_evaluations": 19,
+      "weighted_gap_integration_error_m3": 1.765088904032353e-16,
+      "integration_triangles": 104,
+      "area_integration_error_m2": 3.125776547319159e-14,
+      "augmented_merit_j": 0.0,
+      "normal_multiplier_estimate_pa": [],
+      "pair_geometry_evaluations": 35,
+      "pressure_gram_rank": 15,
+      "pressure_gram_condition_estimate": 117.91632078560416,
+      "pressure_gram_supported_modes": 15,
+      "pressure_gram_scaled_rank": 15,
+      "pressure_gram_scaled_condition_estimate": 13.833737606594342,
+      "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+      "regularization_storage_j": 3.390681205517144e-07
+    },
+    "source_normal_displacements_m": [
+      0.0,
+      -2.206814001790768e-05,
+      -4.373106015838208e-05,
+      -6.86558180605126e-05,
+      -0.00022541858640713074,
+      0.0,
+      -2.3257036862882146e-05,
+      -4.5654705340201556e-05,
+      -6.117742673301903e-05,
+      -1.3992876188599225e-05,
+      0.0,
+      -2.5018845964898437e-05,
+      -5.216164857835564e-05,
+      -8.97925075991606e-05,
+      -0.00025203926422481034
+    ],
+    "source_node_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "physical_gap": {
+      "method": "independent exact bilinear skin extrema on clipped XY rectangles",
+      "rows": [
+        {
+          "element_id": 1,
+          "corners_gap_m": [
+            0.0001,
+            7.793185998209232e-05,
+            7.674296313711786e-05,
+            0.0001
+          ],
+          "minimum_gap_m": 7.674296313711786e-05
+        },
+        {
+          "element_id": 2,
+          "corners_gap_m": [
+            7.793185998209232e-05,
+            5.6268939841617926e-05,
+            5.434529465979845e-05,
+            7.674296313711786e-05
+          ],
+          "minimum_gap_m": 5.434529465979845e-05
+        },
+        {
+          "element_id": 3,
+          "corners_gap_m": [
+            5.6268939841617926e-05,
+            3.1344181939487405e-05,
+            3.882257326698098e-05,
+            5.434529465979845e-05
+          ],
+          "minimum_gap_m": 3.1344181939487405e-05
+        },
+        {
+          "element_id": 4,
+          "corners_gap_m": [
+            3.1344181939487405e-05,
+            -6.271347906848346e-05,
+            6.713330359363285e-05,
+            3.882257326698098e-05
+          ],
+          "minimum_gap_m": -6.271347906848346e-05
+        },
+        {
+          "element_id": 5,
+          "corners_gap_m": [
+            0.0001,
+            7.674296313711786e-05,
+            7.533351585550483e-05,
+            0.0001
+          ],
+          "minimum_gap_m": 7.533351585550483e-05
+        },
+        {
+          "element_id": 6,
+          "corners_gap_m": [
+            7.674296313711786e-05,
+            5.434529465979845e-05,
+            4.913974006927518e-05,
+            7.533351585550483e-05
+          ],
+          "minimum_gap_m": 4.913974006927518e-05
+        },
+        {
+          "element_id": 7,
+          "corners_gap_m": [
+            5.434529465979845e-05,
+            3.882257326698098e-05,
+            1.5930508574067725e-05,
+            4.913974006927518e-05
+          ],
+          "minimum_gap_m": 1.5930508574067725e-05
+        },
+        {
+          "element_id": 8,
+          "corners_gap_m": [
+            3.882257326698098e-05,
+            6.713330359363285e-05,
+            -5.6285788540913725e-05,
+            1.5930508574067725e-05
+          ],
+          "minimum_gap_m": -5.6285788540913725e-05
+        }
+      ],
+      "minimum_gap_m": -6.271347906848346e-05,
+      "roundoff_allowance_m": 2.842170943040401e-14,
+      "uncovered_tips_excluded": true
+    },
+    "wrench": {
+      "scope": "zero-rotation guided Cartesian nodal work; all constraint/path actions",
+      "maximum_nodal_rotation_norm": 0.0,
+      "origin_m": [
+        0.6,
+        0.6,
+        0.0
+      ],
+      "force_scale_n": 0.5,
+      "moment_scale_nm": 0.5,
+      "total_reaction_wrench": [
+        2.35346272565266e-19,
+        6.331571280725895e-20,
+        0.4999989554880036,
+        3.8538974527282943e-07,
+        -0.24999967211993668,
+        7.014491594449675e-20
+      ],
+      "external_wrench": [
+        0.0,
+        0.0,
+        -0.5,
+        -2.7755575615628914e-17,
+        0.25000000000000006,
+        0.0
+      ],
+      "physical_contact_wrench": [
+        -2.439454888092385e-19,
+        -4.743384504624082e-20,
+        -5.551115123125783e-17,
+        1.3877787807814457e-17,
+        -4.163336342344337e-17,
+        -9.147955830346444e-20
+      ],
+      "structural_internal_wrench": [
+        0.0,
+        1.3552527156068805e-20,
+        -1.942890293094024e-16,
+        0.0,
+        5.551115123125783e-17,
+        3.3881317890172014e-21
+      ],
+      "mapped_to_physical_contact_defect": [
+        8.599216243972486e-21,
+        1.0587911840678754e-21,
+        5.204170427930421e-17,
+        1.0408340855860843e-17,
+        2.0816681711721685e-17,
+        1.0058516248644817e-21
+      ],
+      "total_balance_defect": [
+        -8.599216243972486e-21,
+        1.588186776101813e-20,
+        -1.0445119964508365e-06,
+        3.8538974525895164e-07,
+        3.2788006333606123e-07,
+        -2.133464235896769e-20
+      ],
+      "free_equilibrium_residual_n": 6.171752304781712e-07,
+      "constraint_reconstruction_relative_force": 1.2343504609563424e-06,
+      "balance_relative_force": 2.089023992901673e-06,
+      "balance_relative_moment": 1.0119893115720525e-06,
+      "contact_conversion_max_scaled": 1.0408340855860843e-16,
+      "structural_internal_max_scaled": 3.885780586188048e-16,
+      "bodies": {
+        "source": {
+          "node_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "total_reaction_wrench": [
+            -7.240665491871524e-05,
+            -2.4207343996091453e-05,
+            0.15000170051366,
+            0.01974027767580916,
+            -0.1275017213717787,
+            -1.957532531467141e-05
+          ],
+          "external_wrench": [
+            0.0,
+            0.0,
+            -0.5,
+            -2.7755575615628914e-17,
+            0.25000000000000006,
+            0.0
+          ],
+          "physical_contact_wrench": [
+            7.240665491871524e-05,
+            2.420734399609147e-05,
+            0.3499972549743436,
+            -0.019739892286063872,
+            -0.12249795074815799,
+            1.957532531467139e-05
+          ],
+          "structural_internal_wrench": [
+            0.0,
+            1.3552527156068805e-20,
+            -1.942890293094024e-16,
+            0.0,
+            5.551115123125783e-17,
+            3.3881317890172014e-21
+          ],
+          "mapped_to_physical_contact_defect": [
+            0.0,
+            0.0,
+            0.0,
+            3.469446951953614e-18,
+            1.3877787807814457e-17,
+            0.0
+          ],
+          "total_balance_defect": [
+            0.0,
+            1.6940658945086007e-20,
+            -1.0445119963953253e-06,
+            3.8538974525895164e-07,
+            3.278800633638168e-07,
+            -2.0328790734103208e-20
+          ],
+          "balance_relative_force": 2.0890239927906507e-06,
+          "balance_relative_moment": 1.0119893116080232e-06,
+          "contact_conversion_max_scaled": 2.7755575615628914e-17,
+          "structural_internal_max_scaled": 3.885780586188048e-16
+        },
+        "target": {
+          "node_ids": [
+            16,
+            17,
+            18,
+            19
+          ],
+          "total_reaction_wrench": [
+            7.240665491871549e-05,
+            2.4207343996091517e-05,
+            0.34999725497434364,
+            -0.019739892286063886,
+            -0.12249795074815795,
+            1.957532531467148e-05
+          ],
+          "external_wrench": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "physical_contact_wrench": [
+            -7.240665491871549e-05,
+            -2.4207343996091517e-05,
+            -0.34999725497434364,
+            0.019739892286063886,
+            0.12249795074815795,
+            -1.957532531467148e-05
+          ],
+          "structural_internal_wrench": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "mapped_to_physical_contact_defect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "total_balance_defect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "balance_relative_force": 0.0,
+          "balance_relative_moment": 0.0,
+          "contact_conversion_max_scaled": 0.0,
+          "structural_internal_max_scaled": 0.0
+        }
+      }
+    },
+    "bodies": {
+      "source": {
+        "node_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "physical_contact_force": [
+          7.240665491871524e-05,
+          2.420734399609147e-05,
+          0.3499972549743436
+        ],
+        "physical_contact_moment": [
+          -0.019739892286063872,
+          -0.12249795074815799,
+          1.957532531467139e-05
+        ]
+      },
+      "target": {
+        "node_ids": [
+          16,
+          17,
+          18,
+          19
+        ],
+        "physical_contact_force": [
+          -7.240665491871549e-05,
+          -2.4207343996091517e-05,
+          -0.34999725497434364
+        ],
+        "physical_contact_moment": [
+          0.019739892286063886,
+          0.12249795074815795,
+          -1.957532531467148e-05
+        ]
+      }
+    },
+    "virtual_work_relative": 0.0,
+    "zero_multipliers": true
+  },
+  "comparison": {
+    "normal_displacement_relative": 0.0,
+    "normal_pressure_relative": 3.3257631378468165e-06,
+    "target_normal_force_relative": 2.9907994922600803e-06,
+    "physical_gap_absolute_difference_m": 0.0
+  },
+  "checks": {
+    "discrete_normal_reference": false,
+    "wrench_balance": false,
+    "full_virtual_work": true,
+    "all_positive_supports_retained": true,
+    "nonnegative_pressure": true,
+    "zero_multipliers": true,
+    "expected_gap_rejection": true
+  },
+  "gap_admission": {
+    "independent_gap_budget_met": false,
+    "production_gap_budget_met": false,
+    "production_lower_gap_m": -7.125802614525599e-05
+  },
+  "scope_limit": "reference q imposed; displacement agreement is identity, not solution verification",
+  "development_checks_met": false,
+  "error": {
+    "type": "RuntimeError",
+    "message": "coupled spatial discriminator check failed",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_spatial_coupled_dev.py\", line 224, in main\n    if not record[\"development_checks_met\"]: raise RuntimeError(\"coupled spatial discriminator check failed\")\n                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nRuntimeError: coupled spatial discriminator check failed\n"
+  },
+  "elapsed_seconds": 4.625070500012953
+}
