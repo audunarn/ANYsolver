@@ -129,10 +129,80 @@ foundations remain open; the earlier bounded F04 distinction does not close F04:
 | F07 | IN_PROGRESS |
 | F08 | PASSED — native generalized/physical-fibre local extraction |
 | F09 | PASSED — physical B2 section/local operator and station trace |
-| F10 | IN_PROGRESS |
-| F11 | IN_PROGRESS |
+| F10 | IN_PROGRESS — finite-support Q4/S3 point/static portion PASSED; other attachments open |
+| F11 | IN_PROGRESS — finite-support Q4/S3 point affine/KKT portion PASSED; broader scope open |
 | F12 | IN_PROGRESS |
 | F13 | IN_PROGRESS |
+
+### F10/F11 finite-support point/static binding — prospective v1
+
+This assessment is limited to `B2_FINITE_Q4_POINT_REFERENCE_LINEAR_V1_DEV`
+and `B2_FINITE_S3_POINT_REFERENCE_LINEAR_V1_DEV`: physical vertex translations
+define a least-squares rigid shell pose; shell nodal rotations contribute no
+port action. The beam uses its physical station trace. This is distinct from
+the GE nodal point law, BL5 line law and qualified rigid/distributing footprints.
+Local S3 evidence does not imply an implemented public S3 B2 owner.
+
+Unchanged product source `a5a698b5eb149ac8b62b358b0a1edcd921a77d32`;
+installed wheel SHA-256
+`942460a11d45ffe3dea3f32cae457f75d7c5ca283a60bce6a8f01041b817fb96`.
+The new assessment test SHA-256 is
+`1f9c1d2a644e1d7f53dcdcab6099adb48f52d5ede3f789e5f43ecad582e2e58a`.
+Independent pre-execution scientific review `/root/bl5_consumer` cleared the
+exact test and six rigid-field addition. No outcome is implied by registration.
+
+Execution directory: `TEMP/r8-f10-f11-point-installed-v1`.
+Frozen `contract.json` SHA-256
+`6fef88bf07d4e23779c9b78f3cabe31859f40691a199c3594ceca30dd2969fd0`
+binds all386 kernel modules, four test fixtures, wheel, runner/supervisor,
+dependency versions, inventory and scientific limits. Runner SHA-256
+`0618b1ea1d19fd52ee8bd77ba23228dc7b2b888e0eb307558b3920d4ec092081`;
+unchanged existing supervisor SHA-256
+`2c5320eb23747d687bdccfb98bb0d2751bfd1fd24e723238316bafd70dd464bf`.
+Command: `python -u run_bounded.py` in that exclusive directory, once.
+Python3.14.2, one effective numerical thread, JIT disabled;600s/8GiB process-tree
+limits,100,000-row ceiling, one owned heavy job. No source-root fallback.
+
+Required inventory:40 positive cases (Q4/S3 × both eccentricity signs ×
+scalar/coupled SPD section × base/shift/rotation/equivalent-unit/support-winding)
+and25 negative cases,65 JSON reports and65 executed pytest cases without
+skip/error/failure. Geometry uses the existing2m member, station.4, eccentric
+height±.2m and section offsets±(0,.08,-.03)m. Independent shell covariance/couple
+algebra, B2 force-method boundary-value fields and bounded constrained-nullspace
+solution supply the oracles. Actual left-rotation update steps are
+`1e-4,3e-5,1e-5`; every entry must be finite individually (pre-execution runner
+review correction; earlier unexecuted runner/contract retained). Pure common
+translation/spin fields exercise all six axes.
+Shell free bending is required, with normal drilling uncontributed by the port.
+
+Frozen normalization:2m length,1N force,2Nm moment,1e-12 normalized absolute
+floor; transform every physical channel back to these scales. Constraints,
+ports, actions, displacement, multipliers and reactions require relative1e-10;
+force/moment/virtual/support work and equilibrium1e-8; reference/rigid/accepted
+gap1e-9; every actual-update plateau error1e-6. Constraint rank6 and solved free
+bending norm>1e-8 are coverage predicates, not a stability certificate.
+Nonfinite/malformed/degenerate geometry, station/offset/representation failures
+and invalid affine plans must produce explicit expected rejection reports.
+
+Reuse prior134/134 only as unchanged-source/artifact regression evidence,
+never retrospective scientific acceptance. Any identity drift, incomplete
+report, predicate failure or resource failure prevents acceptance and is retained;
+no automatic retry. Independent source/artifact/scientific result review is
+mandatory. A pass closes only this point/static portion; generalF10/F11,
+F13 andG0B stay open. The callback-close owner lifetime gap keeps F13 open.
+
+**Scoped acceptance,30 September:** the single frozen installed assessment
+passed65/65 (40 positive,25 negative) with65 complete scientific reports.
+Every386 source/wheel/site module matches;205 observed solver imports are onsite.
+Maximum solve/dual/reaction error4.86e-14, virtual work4.61e-13, actual-update
+plateau2.36e-9, six rigid fields1.13e-17; all frozen limits pass. Independent
+mechanics/code/artifact review accepts only the declared point/static portion.
+Route4.651896s, peak204963840B, effective1thread/JIT off; no resource failure.
+[Results and independent review](../../.qualification/b3-ge-e4-pl/r8-f10-f11-point-foundation-20260930-v1/results.md)
+bind unchanged sourcea5a698b5/wheel942460a1. Seal SHA-256
+`15d8709371fd266167914358ffe974be174b3277b6216cee31737af3ebff7cb5`
+covers94 files plus the seal. GeneralF10/F11, G0B, F13 andM3 stay open; local S3
+proof does not imply public S3 B2 execution or finite B2 qualification.
 
 F09 development, 30 September: the fixed-wrench physical aspect family passes the public session (4/4 installed including its private control); independent cut-work, tip and station predicates pass. Solver `227d5ea8` enforces the reviewed exact basic-energy plus separate bounded rigid/cross certificate on emitted tangents, replacing the arbitrary pivot veto while preserving exact SPD and strict representation checks. Installed 200/200 and six-row exact-input threshold checks pass with independent review, retaining historical below-floor mismatch and parity only where laws agree. Prospective candidate binding and current-wheel preservation now support the scoped foundation acceptance recorded below. Historical nonphysical shear-soft local passes and graph failures remain retained. Evidence: `.qualification/b3-ge-e4-pl/r8-f09-admission-dev-20260930-v1/`, `.qualification/b3-ge-e4-pl/r8-b2-output-guard-dev-20260930-v1/`, `.qualification/b3-ge-e4-pl/r8-f09-foundation-20260930-v1/`.
 
