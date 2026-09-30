@@ -12,9 +12,9 @@ No main merge/publication authority; this task has not changed main.
 ## Source, ownership and delivered behavior
 
 Solver: C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration; latest product `6b0b1131a9dcf055811901d55daabac049a4e2a0`.
+branch codex/b3-ge-e4-pl-integration; latest product `7adee4f511fb173a5fbaef8e30938e7dbd0ba076`.
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-tests-only commit `69184db3bc7e6ccdde0c7e1642fc6bb78afd7cf8`;
+tests-only commit `268001efc9102b46ffeb6ea776472a26205b4152`;
 runtime remains `a615c4b`.
 
 **Separately owned dirty scripts/b3_e4_f03_c1_fy_supported_reference.py:
@@ -30,7 +30,13 @@ axial/biaxial-fibre beams and mixed generalized/fibre members with Q4/S3.
 Native42-coordinate operators/equations remain unchanged. Public headless
 example options physical_fibre/mixed solve/recover/checkpoint/restore/continue.
 ANYfem's existing experimental input v1 preserves their raw definitions.
-Finite fibre histories/stresses and line+fibre are explicitly unsupported.
+The shared finite owner now retains physical-fibre/mixed histories and native
+strain/stress/plastic-increment recovery. V7 stores last predecessor and resulting
+history separately; restore repeats the native update before atomic publication.
+Verified positive histories: Q4 pure/mixed partial yield and elastic mixed S3.
+Pure-fibre S3 and strong full-section yield still fail bounded cases. Do not
+count their failure-contract tests as physical acceptance. J2/fibre combinations,
+integrated energy/dissipation and line+fibre remain unfinished/excluded.
 
 ## Accepted evidence and remaining uncertainty
 
@@ -44,6 +50,11 @@ Finite fibre histories/stresses and line+fibre are explicitly unsupported.
   distinct ANYfem2/2, independent code/mechanics/artifact review clear.
   Source fixture failures retained. Wheel56deb65e...; unchanged consumerff143e5f....
   This is verified experimental behavior, not an aggregate gate or speedup.
+- [Finite-history integration](../../.qualification/b3-ge-e4-pl/r8-ge-fibre-finite-dev-20260930-v1/results.md):
+  source41/41; new wheel909f26ce..., installed62/62 plus two public Q4 history
+  examples; unchanged consumerff143e5f..., installed4/4 save/reopen/history checks.
+  Independent review clear within the experimental scope. All convergence and
+  cache-build failures retained; no aggregate acceptance or measured speedup.
 - [F09 foundation](../../.qualification/b3-ge-e4-pl/r8-f09-foundation-20260930-v1/results.md):
   physical B2 section/local operator/station trace accepted; guard200, exact
   threshold6 and candidate legacy14 retained with unchanged-input reuse.
@@ -60,22 +71,22 @@ Ordinary native persistence, complete spectra/capacity and practical scale remai
 
 ## Next action and restart
 
-**Decision sought:** extend the existing finite owner to physical-fibre material
-histories without independent component commits or loss of old checkpoint meaning.
-The reference-linear seam is now verified. Read FinitePointDriver's history,
-recovery and checkpoint contracts and the existing native fibre history/force
-driver. Choose a family-aware immutable accepted-state layout using those
-operators; preserve generalized-only schemas and use a distinct identity for
-new mixed/fibre histories. Begin with one bounded point-panel load/unload,
-rejection and fresh-restore slice; verify actual accepted material recovery and
-predecessor ownership before broader histories. If the existing adapter cannot
-supply a faithful candidate/history, resolve that seam rather than inventing
-another beam law. Do not restart F03/F06 diagnostics by implication.
+**Decision sought:** finish actual native fibre stored-energy/dissipation recovery
+from accepted return-map quantities, without changing beam equations or confusing
+material potential with physical energy. The history/predecessor seam is delivered;
+do not rebuild it. Then wire coupled shell J2/fibre histories with independently
+checked snapshot ownership and predecessor semantics. Required strong-yield and
+pure-S3 convergence remain open; before another numerical batch, distinguish a
+specific global-step/representation/roundoff explanation and its resulting action.
+Do not automatically refine increments, change flow laws, relax residual criteria,
+or rerun F03/F06. Reuse unchanged native local-operator/F08 evidence only within
+its scoped identity; any changed native response must receive its affected checks.
 
-No owned numerical job remains: source94277, installed94839 and consumer adjunct
-completed. Installed54 guard202.673s/239112192B; adjunct4.121s/206434304B.
-Observed Python3.14.2, one numerical thread/JIT off;384solver+97consumer modules
-match artifacts,268/267 imports onsite. Reviewer finished without jobs/edits.
+No owned numerical job remains: source36248, installed76798 and consumer82461
+completed. Installed62 guard280.442s/242937856B; consumer4 guard29.808s/216891392B.
+Observed Python3.14.2, one numerical thread/JIT off;385solver+97consumer modules
+match artifacts,269/270 imports onsite. Consumer worker finished; only its
+tests changed and were independently inspected, verified and committed.
 Keep100000rows/600s/8GiB/eight-thread ceilings, one heavy programme job and
 at most three workers. No completed campaign needs repeating without changed inputs.
 

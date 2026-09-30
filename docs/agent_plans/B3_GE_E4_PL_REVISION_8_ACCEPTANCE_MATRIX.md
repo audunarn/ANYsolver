@@ -17,6 +17,16 @@ ANYfem input save/reopen2/2 pass independent review. This is verified experiment
 behavior only; finite fibre histories/stresses and ordinary persistence remain
 open. [Exact results, retained failures and review](../../.qualification/b3-ge-e4-pl/r8-ge-fibre-linear-dev-20260930-v1/results.md).
 
+Native finite-history integration,30 September: product `7adee4f5` retains
+physical-fibre predecessors/results atomically in the existing point owner,
+with native accepted strain/stress/plastic-increment recovery and distinct V7
+restart. Source41/41, fresh installed62/62 plus two Q4 history examples and
+installed ANYfem4/4 pass. Positive physical histories are partial-yield Q4
+pure/mixed and elastic Q4/S3 mixed; pending pure-fibre S3 failure-contract
+checks do not constitute physical-case acceptance. Strong-yield and S3 failures,
+J2/fibre combinations and integrated energy/dissipation remain open. No gate
+or milestone closes. [Results and retained failures](../../.qualification/b3-ge-e4-pl/r8-ge-fibre-finite-dev-20260930-v1/results.md).
+
 Statuses describe acceptance, not prototype progress. `IN_PROGRESS`
 includes incomplete or failed required cases; it never means a numerical
 pass.
