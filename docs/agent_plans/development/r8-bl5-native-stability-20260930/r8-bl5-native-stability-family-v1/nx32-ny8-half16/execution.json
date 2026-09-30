@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "status": "passed",
+  "elapsed_seconds": 12.537021600001026,
+  "process_tree_peak_rss_bytes": 197152768,
+  "timeout_seconds": 600,
+  "memory_limit_bytes": 8589934592
+}

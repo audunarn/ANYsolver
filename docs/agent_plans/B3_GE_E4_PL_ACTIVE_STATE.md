@@ -11,17 +11,30 @@ No main merge/publication authority. Formal F03 unconsumed; spent authorities st
 ## Identity and ownership
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration. Product commit855610d9; reference-work
-commit7cb1b16c plus current root-owned reference-bound development (use git HEAD).
+branch codex/b3-ge-e4-pl-integration. Product commit855610d9; reference-bound
+commit53c3ae6b plus current root-owned native-family development (use git HEAD).
 Product wheel5079b270....
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 branch codex/experimental-ge-panel-consumer, commit6226230; wheel0b6c51af....
 Full hashes/source-wheel-site maps are in the latest record below.
 Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py:
 SHA c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
-Do not edit/stage/run/interrupt. Main untouched. No owned numerical job active.
-Root owns source integration; independent workers write assigned TEMP notes only.
-No concurrent source writer or owned numerical job remains.
+Do not edit/stage/run/interrupt. Main untouched. All prior owned jobs terminal;
+whole8-v2 session48879 failed auxiliary accuracy before64-case beta.
+Root owns source/evidence integration; workers review assigned TEMP notes only.
+
+Whole-element8:1 supplement:16x4/256 passed; repaired32x8/512 beta0.874043.
+64x16/1024 compensation still fails inverse guard2.4917e-10 before beta.
+V3 uses independently cleared auxiliary1/2/4/8/16/32 schedule for only64 endpoint.
+First preparation passes unchanged budgets: reference error0.000926481,
+inverse7.25611e-12, native beta0.867138. All24 finite-family cases pass; numerical
+obstruction resolved, no norm/physical mesh/criterion change. V1/V2 remain.
+Current question: actual supported mechanical kernel and locking/transfer,
+which auxiliary trace stability alone cannot decide. Next bounded discriminator:
+one16x4/32-halfcell/c2 owner, locally eliminate only18 stationary resultants,
+preserve cell rotations, check constrained physical inertia and reconstructed
+three-load work/solution parity. Outcome: valid kernel advances transfer checks;
+unresolved mode requires physical work interpretation, no automatic refinement.
 
 ## Delivered behavior and current decision
 
@@ -86,14 +99,9 @@ routes with growing rows40/80/160 versus20/40/80. Mz work differences shrink
 17.457%→6.244%→1.845%; transfer components are not uniformly monotone.
 Retain both policies, no fourth mesh or basis selection from response/gaps.
 
-Implemented bounded independently derived
-[positive reference Riesz controls](B3_GE_E4_PL_M2_TRACE_NORM_CONTRACT_DEV.md),
-continuous beam-axis translations/cellwise directors and five-field shell norm.
-[Raw outputs and independent review](development/r8-bl5-riesz-controls-20260930/results.md):
-three-level analytic dual errors≤5.93e−5 beam/1.15e−4 shell, expected convergence,
-metres/millimetres and coordinate-basis invariance pass. Scalar unresolved P2
-action is invisible to coarse P1 but has positive independent reference dual.
-This is a reference-control result, not native gauge/beta or acceptance.
+[Reference norm](B3_GE_E4_PL_M2_TRACE_NORM_CONTRACT_DEV.md) and
+[analytical/unit controls](development/r8-bl5-riesz-controls-20260930/results.md)
+remain valid for their scoped inputs, not mechanical gauge/acceptance claims.
 
 [Native reference work](development/r8-bl5-native-reference-work-20260930/results.md):
 one8x2/16/span2 fixture, all40 basis columns including supported rows match
@@ -117,18 +125,24 @@ gives sufficient product floor0.4302334. Halfcell:shell ratios through1:8/8:1,
 16x4/32x8/64x16 keep even>=2 halfcells. Saved8x2/16 fixture is c1/span2,
 outside c2 family; corrected floor0.0768685, not0.4302334. V2 mislabeled anchor
 preserved; V3 corrects it without repeating unchanged21 family cases.
-One-interval controls deteriorate, not a mechanical failure claim. V1 tail-budget
-failure retained; V2 increased modal terms within unchanged numerical budget.
-Current decision: reviews clear; finite-family prospective criteria in the
-existing norm contract freeze0.43 floor with reference/arithmetic allowance.
-Deterioration ceiling is finite noncollapse only, not a convergence claim.
-Next: verify actual c2 fixture work/support/norm applicability and numerical
-budgets, then native full-ratio/actual-KKT assessment. Failed budgets stop route.
+One-interval controls deteriorate, not a mechanical failure; tail-budget failure
+and unchanged-budget repair remain preserved.
+Current decision: finite-family criteria froze0.43 before native values.
+[Native family](development/r8-bl5-native-stability-20260930/results.md) now
+passes21c2 cases, seven halfcell:shell ratios/three levels, beta0.793239–0.917197.
+Raw signed deterioration p−0.084070–0.020326; reference error<=0.000961137,
+all eigenvalues retained and complete physical work checked in every fixture.
+Max15852 rows,51.52s/491548672B per job; one serial batch395.59s, pilot reused.
+Pilot V1 serialization failure retained; V2 bool conversion only. Full-family
+independent review clear. Numerical trace resolution no longer the current
+obstruction; no mechanical kernel/locking/physical accuracy or F03 acceptance.
+Next: review complete family, then actual constrained mechanical/transfer checks
+using existing valid loads where possible, not another isolated axial refinement.
 No fourth loaded mesh, global dense inverse, gauge removal or F03 consumption.
-No owned numerical job active; reviewers own TEMP notes only. No universal
+All owned jobs terminal; reviewers own assigned TEMP notes/tests only. No universal
 refinement proof added. Boundary and interior trace formulas remain distinct.
 
 Materials/simultaneous yielding, footprints/topology, loads, spectra,
 imperfections/capacity, scale, external references, platforms and release remain
-mandatory. One owned heavy job; ceiling100k rows/600s/8GiB/8threads, normally
+mandatory. At most one owned heavy job; ceiling100k rows/600s/8GiB/8threads, normally
 1thread/JIT off. Preserve all scientific criteria, history and authorities.

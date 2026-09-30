@@ -141,3 +141,25 @@ deterioration, response convergence or h-uniform stability. Do not hide raw
 deterioration behind beta/floor normalization. No stricter slope follows from
 the present inequalities. Required mechanical kernel, locking and physical
 convergence criteria are unchanged and remain separate acceptance conditions.
+
+Prospective ratio clarification before supplemental native values: the above
+half-cell ratios represent whole B3-element:shell ratios1:16..4:1. To cover the
+programme's whole-element8:1 boundary too, add only halfcell16:1 at the same
+16x4/32x8/64x16 grids (256/512/1024half cells). Doubling beam halfcells and span
+from tested halfcell8:1 leaves scalar shell supports/endpoints/H/T/CS identical;
+reuse the corresponding original scalar rows with their byte-bound table SHA.
+Total beam reference and native map/norm change and must be recomputed. The
+checked product constant is independent of that retained-director partition.
+Existing21-case evidence, criteria and0.43 floor stay unchanged. No fourth
+shell mesh or claimed broader material/geometry domain follows.
+
+Prospective reference-preparation correction, only failed64x16/1024 endpoint:
+the eight-interval auxiliary U approximation failed the unchanged inverse
+accuracy budget before any beta. Try auxiliary subdivisions1/2/4/8/16/32 in
+that order, stopping at the first complete all-column reference error<=1e-3
+and inverse residual<=1e-10. The analytic equilibrated-flux majorant is valid
+for any auxiliary P1 trial; native cell directors, C, geometry, supports,
+continuous norm and floors remain unchanged. Preserve all attempted outcomes;
+only typed inverse-accuracy failures permit trying the next preparation. Other
+errors propagate. Six failures leave the endpoint unresolved. Independent
+review approved this transition before its native value; passed cases are reused.

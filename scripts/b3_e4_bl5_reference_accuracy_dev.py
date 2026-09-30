@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 import time
@@ -20,6 +21,38 @@ from threadpoolctl import threadpool_info
 
 from scripts.b3_e4_bl5_modal_reference_dev import p0_shell_bracket
 from scripts.b3_e4_bl5_riesz_controls_dev import beam_norm, skew
+
+
+class AuxiliaryInverseAccuracyError(ArithmeticError):
+    """Only the declared auxiliary inverse residual budget was unresolved."""
+
+    def __init__(self, history):
+        self.history = history
+        super().__init__(f'auxiliary inverse action failed: {history}')
+
+
+def compensated_residual(h, z, b):
+    """Accurately evaluate B-HZ on the SAME binary64 sparse entries.
+
+    Each rounded product plus its FMA error is summed with fsum. This avoids
+    cancellation in fine H1 grids; it neither rescales nor changes the norm.
+    Private development fallback requires the recorded Python3.14 runtime.
+    """
+    if not hasattr(math, 'fma'):
+        raise ArithmeticError('compensated reference residual requires math.fma')
+    csr = h.tocsr()
+    result = np.empty_like(b)
+    for row in range(csr.shape[0]):
+        indices = csr.indices[csr.indptr[row]:csr.indptr[row+1]]
+        data = csr.data[csr.indptr[row]:csr.indptr[row+1]]
+        for column in range(b.shape[1]):
+            terms = [float(b[row, column])]
+            for index, value in zip(indices, data):
+                x, y = float(value), float(z[index, column])
+                product = x*y
+                terms.extend((-product, -math.fma(x, y, -product)))
+            result[row, column] = math.fsum(terms)
+    return result
 
 
 def beam_bracket(force, moments, *, length, ell, arm, width, subdivisions):
@@ -36,11 +69,35 @@ def beam_bracket(force, moments, *, length, ell, arm, width, subdivisions):
         u_action[e:e+2] += dx*f/2
     full_action = np.concatenate((u_action.reshape(-1, columns), moments.reshape(-1, columns)))
     b = full_action[active]
-    z = splu(h).solve(b)
+    factor = splu(h)
+    z = factor.solve(b)
     residual = np.linalg.norm(h@z-b, axis=0)/np.maximum(np.linalg.norm(b, axis=0), 1e-30)
+    residual_history = [dict(evaluation='sparse_matmul', iteration=0,
+                             max_relative_residual=float(np.max(residual)))]
+    evaluation = 'sparse_matmul'
     if np.max(residual) > 1e-10:
-        raise ArithmeticError('auxiliary inverse action failed')
-    lower = b.T@z+z.T@b-z.T@(h@z)
+        for iteration in range(4):
+            correction_rhs = compensated_residual(h, z, b)
+            residual = np.linalg.norm(correction_rhs, axis=0)/np.maximum(np.linalg.norm(b, axis=0), 1e-30)
+            residual_history.append(dict(evaluation='fma_fsum', iteration=iteration,
+                max_relative_residual=float(np.max(residual)),
+                sparse_matmul_relative_residual=float(np.max(
+                    np.linalg.norm(h@z-b, axis=0)/np.maximum(np.linalg.norm(b, axis=0), 1e-30)))))
+            evaluation = 'fma_fsum'
+            if np.max(residual) <= 1e-10:
+                break
+            if iteration < 3:
+                z += factor.solve(correction_rhs)
+    if np.max(residual) > 1e-10:
+        raise AuxiliaryInverseAccuracyError(residual_history)
+    if evaluation == 'fma_fsum':
+        # Same variational functional: HZ=B-R. Preserve the recovered residual
+        # precision in both its quadratic term and the local moment majorant.
+        lower = b.T@z+z.T@correction_rhs
+        final_residual = correction_rhs
+    else:
+        lower = b.T@z+z.T@b-z.T@(h@z)
+        final_residual = b-h@z
     u = np.zeros((len(knots), 3, columns)); u[1:] = z[:3*(len(knots)-1)].reshape(-1, 3, columns)
     theta = z[3*(len(knots)-1):].reshape(cells, 3, columns)
     a = skew(arm)
@@ -57,11 +114,13 @@ def beam_bracket(force, moments, *, length, ell, arm, width, subdivisions):
             mismatch = constant+t*r0+t**2*r1/2
             error += length/ell**2*w*(mismatch.T@mismatch)
         flux = left_flux
-    local_residual = (b-h@z)[3*(len(knots)-1):].reshape(cells, 3, columns)
+    local_residual = final_residual[3*(len(knots)-1):].reshape(cells, 3, columns)
     for r in local_residual:
         error += length/(ell**2*(length/cells))*(r.T@r)
     return lower, lower+error, dict(rows=h.shape[0], subdivisions=subdivisions,
                                     inverse_residual_max=float(np.max(residual)),
+                                    inverse_residual_evaluation=evaluation,
+                                    inverse_residual_history=residual_history,
                                     relative_loewner_error_bound=float(linalg.eigvalsh(error, lower)[-1]))
 
 

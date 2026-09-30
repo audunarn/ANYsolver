@@ -1,0 +1,174 @@
+{
+  "status": "COMPLETED_DEVELOPMENT_ONLY",
+  "predicates": {
+    "reference_error": true,
+    "inverse_residual": true,
+    "eigen_residual": true,
+    "gram_symmetry": true,
+    "conditioning": true,
+    "all_eigenvalues_positive": true,
+    "case_floor": true,
+    "absolute_floor": true,
+    "variational_ceiling": true
+  },
+  "source_sha256": "9c3f361876bf90ca43cc00a839a759eafc38c424779a4540733770f11233ddc9",
+  "nx": 16,
+  "ny": 4,
+  "beam_halfcells": 8,
+  "policy": {
+    "c_lambda": 2,
+    "span_halfcells": 1,
+    "shape_aspect": 1.25,
+    "shell_trace_segments": 16,
+    "beam_halfcells": 8,
+    "support_membership": [
+      [
+        0
+      ],
+      [
+        1
+      ],
+      [
+        2
+      ],
+      [
+        3
+      ],
+      [
+        4
+      ],
+      [
+        5
+      ],
+      [
+        6
+      ],
+      [
+        7
+      ]
+    ],
+    "support_endpoints_m": [
+      0.0,
+      0.125,
+      0.25,
+      0.375,
+      0.5,
+      0.625,
+      0.75,
+      0.875,
+      1.0
+    ],
+    "shell_spacing_m": 0.0625,
+    "beam_spacing_m": 0.125
+  },
+  "rows": 660,
+  "constraint_rows": 40,
+  "norm_rows": 448,
+  "native_physical_pairing_max_abs": 0.0,
+  "omitted_C_max_abs": 0.0,
+  "omitted_slots": 184,
+  "native_inverse_residual": 2.242467032815554e-15,
+  "gram_relative_skew": 4.3359981486983664e-16,
+  "eigen_relative_residual": 1.1755475399537684e-14,
+  "conditions": {
+    "native": 55.74348735448837,
+    "reference": 35.10539580101929
+  },
+  "reference_refinements": [
+    {
+      "beam": {
+        "rows": 216,
+        "subdivisions": 8,
+        "inverse_residual_max": 5.817382378099515e-14,
+        "relative_loewner_error_bound": 0.015321570835643745
+      },
+      "total_relative_loewner_error": 0.002468520168803405
+    },
+    {
+      "beam": {
+        "rows": 408,
+        "subdivisions": 16,
+        "inverse_residual_max": 2.294211581888395e-13,
+        "relative_loewner_error_bound": 0.003786179430720711
+      },
+      "total_relative_loewner_error": 0.0006242892068896044
+    }
+  ],
+  "shell_reference": {
+    "modes": 4096,
+    "supports": 8,
+    "relative_loewner_tail_bound": 1.369673255741123e-05,
+    "lower_min_eigenvalue": 0.0053425410839050835
+  },
+  "all_generalized_eigenvalues": [
+    0.6292282996703593,
+    0.6319284570113484,
+    0.6319284710337383,
+    0.6811646903470103,
+    0.6834526916119119,
+    0.6834527063080436,
+    0.7603394724423573,
+    0.762030211866121,
+    0.7620302730825418,
+    0.8397967253634292,
+    0.8409128908480665,
+    0.8409130054277337,
+    0.9048960992626781,
+    0.9055390084135742,
+    0.9055391768799566,
+    0.9523853104056249,
+    0.9526656879265971,
+    0.9526659003202368,
+    0.9838634817548108,
+    0.9839106873616811,
+    0.9839108866041012,
+    0.9896464797853719,
+    0.9896973948767384,
+    0.990260387994851,
+    0.9903080934443474,
+    0.9914078478853323,
+    0.9914495768947948,
+    0.9929277368124582,
+    0.9929615917010726,
+    0.9945910005605823,
+    0.9946162748073364,
+    0.9961704497049626,
+    0.9961875475422798,
+    0.9976456513759248,
+    0.9976550575854981,
+    0.9985424052977206,
+    0.9985424113006423,
+    0.9985515570805921,
+    0.9991558295454052,
+    0.9991582415772507
+  ],
+  "beta": 0.7932391188477528,
+  "safe_case_floor": 0.4315772657074615,
+  "frozen_scalar_sha256": "0c83f708ad726e2237f7b02b5d559124740f53357fa91caed035455cbe50cb98",
+  "imported_anysolver": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-aggregation-installed-v1\\site\\anysolver\\__init__.py",
+  "elapsed_seconds": 2.367876400006935,
+  "limitation": "finite reference inf-sup development only; actual indefinite KKT, locking, physical accuracy and F03/M2 acceptance remain open",
+  "threads": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    }
+  ],
+  "jit_disabled": true
+}

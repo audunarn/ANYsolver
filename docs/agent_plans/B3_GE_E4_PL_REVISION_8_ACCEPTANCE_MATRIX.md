@@ -34,6 +34,18 @@ its corrected floor0.0768685 cannot inherit0.43. Binary64 bounds are not certifi
 actual KKT/locking/transfer remain open. No F03/M2/G0B acceptance follows.
 [Results and retained failure](development/r8-bl5-reference-error-bounds-20260930/results.md).
 
+Native finite-family development,30 September: all21 explicit HALF-CELL:shell
+c2 cases pass complete physical work and frozen reference-relative predicates,
+beta0.793239–0.917197; complete-family independent review clear. Whole-B3-element
+8:1 endpoint supplement is separate and now passes at all three levels:
+beta0.886553/0.874043/0.867138. Original32/64 reference-precision failures remain
+preserved. Independently reviewed same-equation residual compensation and
+first-eligible auxiliary preparation repair the reference without changing
+native meshes, norms or criteria. The largest case meets total error0.000926481
+and inverse7.25611e-12. Actual mechanical kernel, locking and physical response
+convergence remain open. No F03/V08/M2 acceptance follows from these24 cases.
+[Raw results](development/r8-bl5-native-stability-20260930/results.md).
+
 Development update, 29 September 2026: the objective S3 J2 algorithmic owner slice passes 49/49 source and 49/49 exact installed-wheel checks with independent review. Failures and exact inputs are preserved at `.qualification/b3-ge-e4-pl/r8-s3-j2-algorithmic-dev-20260929-v1/`. This does not close F05, V03/V17/V18/V28 or an aggregate gate.
 
 Native fibre-linear integration,30 September: product `6b0b1131` admits existing
@@ -186,6 +198,13 @@ foundations remain open; the earlier bounded F04 distinction does not close F04:
 | F11 | IN_PROGRESS — finite-support Q4/S3 point affine/KKT portion PASSED; broader scope open |
 | F12 | IN_PROGRESS |
 | F13 | IN_PROGRESS |
+
+F06 current closure review remains open: historical coverage failure and absent
+S3 accepted noncommuting branch cannot be replaced by favorable partial invariants.
+Some chart/pullback modules remain byte-identical, but complete finite owner paths
+changed; current closure needs a fully passed loaded noncommuting transport path.
+No historical authority is renewed or replayed.
+[Independent applicability review](B3_GE_E4_PL_F06_CURRENT_REVIEW_20260930.md).
 
 ### F10/F11 finite-support point/static binding — prospective v1
 
