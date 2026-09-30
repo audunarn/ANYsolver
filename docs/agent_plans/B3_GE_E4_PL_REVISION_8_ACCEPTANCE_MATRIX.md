@@ -46,6 +46,36 @@ and inverse7.25611e-12. Actual mechanical kernel, locking and physical response
 convergence remain open. No F03/V08/M2 acceptance follows from these24 cases.
 [Raw results](development/r8-bl5-native-stability-20260930/results.md).
 
+Actual mechanical kernel development,30 September: one16x4/32-halfcell/c2
+fixture retains769 supported physical/cell coordinates and locally checks288
+negative stationary resultants. All729 kernel/809 saddle modes retained; kernel
+minimum1.738e-5 exceeds composed uncertainty3.106e-11. Implied native inertia
+769positive/328negative/0zero modes and three-load role parity<=3.17e-12 pass
+independent review. This is bounded support/kernel/work evidence, not whole-domain
+mechanical, locking, converged physical accuracy or F03/M2 acceptance.
+[Mechanical supplement](development/r8-bl5-native-stability-20260930/mechanical-results.md).
+
+F06 loaded development,30 September: original installed Q4/S3 V1 has two retained
+failures. Q4 misses0.05rad/1e-5 noncommuting coverage; S3 whole-origin fingerprint
+differs only after separately recomputed successors. Same-state reset/restore
+hashes pass. A complete S3 recorder finds only derived coordinate/strain/stress
+roundoff plus corresponding integrity digests; irreversible histories stay exact.
+Physical differences are~1e-15 and stress difference<=0.000257Pa. This explains
+the hash diagnostic but does not confer F06 acceptance or repair missing coverage.
+
+The same stronger V2 pattern accepts prefix/reset/restore but exhausts the direct
+final Newton budget in Q4/S3. With the new postcommit accepted-state observer,
+V3 adaptive continuation completes both, preserves identical accepted factor
+paths, and passes every physical/material successor comparison. S3 meets the
+rotation/noncommutation floors; Q4 commutator9.913424e-6 misses1e-5. This remains
+failed Q4 coverage, not a relaxed pass. The V3 runner's8.3-directory import guard
+also fails; separate no-solve canonical route validation passes209imports and
+387source/site modules, with the narrower validation scope retained. Observer
+source and installed results are independently reviewed;55current checks pass
+across retained runs with explicit unchanged-input reuse. Earlier stale/overloaded
+fixture failures remain. [Results](development/r8-f06-loaded-transport-20260930/results.md).
+No new F06 or aggregate acceptance follows.
+
 Development update, 29 September 2026: the objective S3 J2 algorithmic owner slice passes 49/49 source and 49/49 exact installed-wheel checks with independent review. Failures and exact inputs are preserved at `.qualification/b3-ge-e4-pl/r8-s3-j2-algorithmic-dev-20260929-v1/`. This does not close F05, V03/V17/V18/V28 or an aggregate gate.
 
 Native fibre-linear integration,30 September: product `6b0b1131` admits existing

@@ -7,7 +7,7 @@ increment. Q4 shell J2 and generalized B3 yielding are experimental.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from copy import copy
+from copy import copy, deepcopy
 from decimal import localcontext
 import json
 from math import fsum
@@ -609,13 +609,15 @@ class FinitePointDriver:
         return _State(q, frames, cells, resultants, multipliers, state.shell_anchors)
 
     def solve(self, actions, targets, *, cancellation_token=None,
-              max_iterations=12, max_backtracks=8, increment_control=None):
+              max_iterations=12, max_backtracks=8, increment_control=None,
+              on_accepted=None):
         pending = self._adaptive_state is not None and not self._adaptive_state.completed
         if increment_control is None:
             if pending:
                 raise ValueError("pending adaptive sequence requires matching targets and controls")
             return self._solve_fixed(actions, targets, cancellation_token=cancellation_token,
-                                     max_iterations=max_iterations, max_backtracks=max_backtracks)
+                                     max_iterations=max_iterations, max_backtracks=max_backtracks,
+                                     on_accepted=on_accepted)
         if type(increment_control) is not AdaptiveIncrementControl:
             raise ValueError("typed adaptive increment control required")
         if (type(targets) is not tuple or not targets or
@@ -666,11 +668,15 @@ class FinitePointDriver:
                 control = control.rejected(attempt)
             else:
                 control = self._adaptive_state
+                # Outside the candidate-failure handler: even a typed numerical
+                # exception raised by an observer must not trigger cutback.
+                if on_accepted is not None:
+                    on_accepted(deepcopy(self._accepted))
         return self._accepted
 
     def _solve_fixed(self, actions, targets, *, cancellation_token=None,
               _prepared_pattern=None, _accepted_hook=None,
-              max_iterations=12, max_backtracks=8):
+              max_iterations=12, max_backtracks=8, on_accepted=None):
         owner = self.owner
         if (type(targets) is not tuple or not targets or
                 any(not isinstance(v, (int, float, np.integer, np.floating))
@@ -790,6 +796,8 @@ class FinitePointDriver:
                         self._adaptive_checkpoint = next_checkpoint
                         if owner._finite_driver is None:
                             owner._finite_driver = self
+                    if on_accepted is not None:
+                        on_accepted(deepcopy(next_result))
                     break
                 if iteration == max_iterations:
                     raise FiniteIncrementFailure(attempt("rejected", iteration,

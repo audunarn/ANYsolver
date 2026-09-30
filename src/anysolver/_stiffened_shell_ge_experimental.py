@@ -72,7 +72,13 @@ def _state_writer(method):
     @wraps(method)
     def call(self, *args, **kwargs):
         with self._operation_lock:
-            return method(self, *args, **kwargs)
+            if self._writing:
+                raise RuntimeError("reentrant mixed state mutation is not permitted")
+            self._writing = True
+            try:
+                return method(self, *args, **kwargs)
+            finally:
+                self._writing = False
     return call
 
 
@@ -662,6 +668,7 @@ class ExperimentalGEAnalysis:
         if self._A.shape[0] < 1 or self._A.nnz == 0:
             raise ValueError("nonempty constrained mixed operator required")
         self._operation_lock = RLock()
+        self._writing = False
         self._commit_lock = RLock()
         self._accepted = None
         self._finite_driver = None
@@ -836,9 +843,17 @@ class ExperimentalGEAnalysis:
     def solve(self, actions: tuple[NodalAction, ...],
               targets: tuple[float, ...] = (1.,), *, cancellation_token=None,
               max_iterations: int = 12, max_backtracks: int = 8,
-              increment_control=None):
-        """Advance supported finite trials from one accepted predecessor."""
+              increment_control=None, on_accepted=None):
+        """Advance finite trials; optionally observe each committed increment.
+
+        ``on_accepted(result)`` receives a detached result after state and
+        controller publication. Recovery/checkpoint reads are allowed; reentrant
+        mutation is rejected. Observer errors propagate with the accepted prefix
+        intact. The observer is ephemeral and is not stored in checkpoints.
+        """
         self._require_open()
+        if on_accepted is not None and not callable(on_accepted):
+            raise TypeError("on_accepted must be callable or None")
         if self._unsupported_modes:
             raise ValueError(self._unsupported_modes[0])
         if self._line_samples and not self._finite_bl5:
@@ -854,7 +869,7 @@ class ExperimentalGEAnalysis:
             return driver.solve(
                 actions, targets, cancellation_token=cancellation_token,
                 max_iterations=max_iterations, max_backtracks=max_backtracks,
-                increment_control=increment_control)
+                increment_control=increment_control, on_accepted=on_accepted)
         finally:
             if self._finite_driver is None and driver._accepted is not None:
                 self._finite_driver = driver

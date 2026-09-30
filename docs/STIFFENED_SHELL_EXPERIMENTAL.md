@@ -283,6 +283,19 @@ sequence recovers `status="accepted_prefix"`; reaching all requested targets
 returns `status="completed"`. `AdaptiveIncrementExhausted` reports the incomplete
 sequence and its failed work. An accepted prefix is not requested completion.
 
+Finite GE `solve` also accepts optional `on_accepted(result)`. It runs
+synchronously after each complete increment commit, including adaptive substeps.
+The result and its nested arrays are detached from solver state; retaining it is
+the caller's choice. `recover()` and `checkpoint()` inside the callback observe
+that committed generation and controller cursor. Reentrant mutation is rejected.
+The callback must not wait for another thread to mutate the same owner while the
+enclosing solve holds its writer lock. Callback errors propagate unchanged and
+never trigger numerical cutback; the committed prefix remains available.
+Cancellation requested there takes effect at the next solver safe point and
+does not undo a completed increment. Callbacks are not serialized in checkpoints;
+pass the callback again when continuing a restored analysis. With no callback,
+the solver retains no additional accepted-state history.
+
 Distinct V10 checkpoints wrap the physical snapshot and durable controller state.
 Resume with the same original targets, controls, Newton limits and load pattern.
 An exhausted attempt budget is terminal for that pending sequence. Checkpoints
