@@ -23,6 +23,17 @@ and stability criteria remain open (mixed final increment0.21055%). Independent
 review is clear for this bounded map/quotient, not mechanical gauge removal,
 F03 or M2 acceptance. [Results](development/r8-bl5-native-reference-work-20260930/results.md).
 
+Reference-bound development,30 September: independently reviewed shell modal
+tail and beam flux majorants bound all40 action combinations with relative
+Loewner error0.000624289. Independent scalar Q1/P0 lifting across seven ratios
+and three levels gives prospective finite-family product floor0.4302334;
+one-interval controls deteriorate. Independent scalar review is clear; prospective
+finite-family criteria include reference/arithmetic allowances and absolute0.43
+floor before native spectra. Saved c1/span2 anchor is outside this c2 family;
+its corrected floor0.0768685 cannot inherit0.43. Binary64 bounds are not certificates;
+actual KKT/locking/transfer remain open. No F03/M2/G0B acceptance follows.
+[Results and retained failure](development/r8-bl5-reference-error-bounds-20260930/results.md).
+
 Development update, 29 September 2026: the objective S3 J2 algorithmic owner slice passes 49/49 source and 49/49 exact installed-wheel checks with independent review. Failures and exact inputs are preserved at `.qualification/b3-ge-e4-pl/r8-s3-j2-algorithmic-dev-20260929-v1/`. This does not close F05, V03/V17/V18/V28 or an aggregate gate.
 
 Native fibre-linear integration,30 September: product `6b0b1131` admits existing

@@ -11,8 +11,8 @@ No main merge/publication authority. Formal F03 unconsumed; spent authorities st
 ## Identity and ownership
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration. Product commit855610d9 plus the current
-auxiliary-controls7987074b and current work-map commit (use actual git HEAD).
+branch codex/b3-ge-e4-pl-integration. Product commit855610d9; reference-work
+commit7cb1b16c plus current root-owned reference-bound development (use git HEAD).
 Product wheel5079b270....
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 branch codex/experimental-ge-panel-consumer, commit6226230; wheel0b6c51af....
@@ -108,14 +108,25 @@ Independent approximation argument completed: scalar two-interval projection
 and one-interval deteriorating control are derived; beam-only dual dominance
 fails at high frequency. A universal product-space proof needs a shell lifting
 bound, but R8 does not require that proof. Do not add it as a new gate.
-Next: use the permitted finite-domain numerical route. Implement independent
-shell modal line-source dual and explicit tail bound for P0 actions; check
-reference accuracy and admissible/deficient macroelement controls, then freeze
-justified criteria before native spectra. No candidate-based floor calibration.
-All workers finished; no live source writer/numerical job remains. Then full
-seven-ratio/actual-KKT assessment. No automatic fourth loaded mesh, global dense
-inverse, mechanical gauge removal or F03 consumption. See results for the
-boundary versus interior trace distinction in the argument's counterexample.
+[Reference bounds](development/r8-bl5-reference-error-bounds-20260930/results.md)
+now cover all40 combinations: relative Loewner error0.000624289; independent
+review clear, ordinary binary64 rather than interval proof. Product Fortin map
+preserves all five work channels using shell lifting and unchanged cell directors.
+Independent scalar Q1/P0 modal-upper/variational-lower calculation over21cases
+gives sufficient product floor0.4302334. Halfcell:shell ratios through1:8/8:1,
+16x4/32x8/64x16 keep even>=2 halfcells. Saved8x2/16 fixture is c1/span2,
+outside c2 family; corrected floor0.0768685, not0.4302334. V2 mislabeled anchor
+preserved; V3 corrects it without repeating unchanged21 family cases.
+One-interval controls deteriorate, not a mechanical failure claim. V1 tail-budget
+failure retained; V2 increased modal terms within unchanged numerical budget.
+Current decision: reviews clear; finite-family prospective criteria in the
+existing norm contract freeze0.43 floor with reference/arithmetic allowance.
+Deterioration ceiling is finite noncollapse only, not a convergence claim.
+Next: verify actual c2 fixture work/support/norm applicability and numerical
+budgets, then native full-ratio/actual-KKT assessment. Failed budgets stop route.
+No fourth loaded mesh, global dense inverse, gauge removal or F03 consumption.
+No owned numerical job active; reviewers own TEMP notes only. No universal
+refinement proof added. Boundary and interior trace formulas remain distinct.
 
 Materials/simultaneous yielding, footprints/topology, loads, spectra,
 imperfections/capacity, scale, external references, platforms and release remain

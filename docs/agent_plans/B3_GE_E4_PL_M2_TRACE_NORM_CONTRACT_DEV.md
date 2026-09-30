@@ -87,3 +87,57 @@ Use independently enriched shell and continuous beam translation spaces with ana
 Before a beta claim, verify physical work/units/frames, positive reference norms and M on the declared multiplier quotient, inverse-action accuracy, and enrichment error. Any gauge or annihilator must be identified physically and checked through \(BZ=0\); small eigenvalues must not be discarded to improve beta. With the bulk shell norm, off-line physical shell fields remain in H; they are not trace-null gauges. Native nodal rotations and algebraic retained forces that are absent from this kinematic norm still remain in the actual mechanical KKT. Freeze independent good/bad controls, reference length/weights, numerical residual tolerances, absolute admissibility floors, and permitted deterioration before inspecting candidate trends. Controls must exercise force, director, eccentric coupling, cancellation, and supported boundaries.
 
 Actual indefinite KKT residuals, physical kernel stability, locking, transfer/work convergence, and coherent growing P0 aggregation remain separate obligations. This derivation resolves the specified boundary/function-space obstruction; it supplies no numerical uniform-acceptance or qualification conclusion.
+
+## Prospective finite-family development assessment — 30 September
+
+This appendix fixes development inputs before GE spectra. It does not consume
+formal F03 authority or amend historical evidence. The independently reviewed
+[reference/lifting slice](development/r8-bl5-reference-error-bounds-20260930/results.md)
+supplies the complete scalar constants, product transfer and counterexamples.
+
+Scope is a flat Q4 rectangle, length1m/width0.2m, boundary line y=0, ell0.4m,
+beam arm−0.05ez and shell-top arm0.0175ez, constant frames, zero native lift,
+shared clamped translation root and free retained cell directors. Norm width
+0.1m is a beam surface-average norm convention, not a finite-width bonded tie.
+Native work, supports, frames and reference correspondence must match exactly.
+This appendix supplies no S3/curved/current-chart extension.
+
+Family: shell16x4/32x8/64x16; seven native HALF-CELL:shell-segment ratios
+1:8,1:4,1:2,1:1,2:1,4:1,8:1. Use all five channels with complete uniform P0
+supports `span=max(1,ceil(2*n_halfcells/n_shell_segments))`. Supports grow with
+mesh refinement, align, and cover at least two shell intervals. Actual fixture
+admission and supported all-column work parity must precede a beta comparison.
+The old8x2/16-halfcell 40-action fixture uses c_lambda1/span2 and is outside this
+family; its corrected scalar floor is0.0768685, not0.4302334.
+
+Let Mupper bound the independent exact physical dual M on all multiplier
+combinations, with `Mupper <= (1+1e-3) M`. Use modal shell and equilibrated beam
+error majorants, not sampled increments. For any computed scalar inverse Z,
+`Gminus=T Z+Z.T T.T−Z.T H Z` is analytically below exact discrete G. The product
+Fortin formula from `CS²=maxeig(Mupper_scalar,Gminus_scalar)` gives the raw
+case floors in saved scalarV2. Their family minimum is0.430233437384.
+
+Development comparisons reserve an absolute beta arithmetic margin1e-6 and
+correct each raw case floor by `f_safe=f_raw/sqrt(1.001)−1e-6`. Their envelope
+exceeds0.430016; freeze **0.43** as the family absolute development floor.
+This conservative rounding is made before native values, not a fitted cutoff.
+Analytic bounds are evaluated in binary64, not outward-rounded certificates.
+Required numerical predicates: relative inverse and generalized eigen residuals
+<=1e-10, positive full Grams, relative symmetry discrepancy<=1e-10, and Gram
+condition numbers<=1e4. Preserve every eigenvalue; numerical-budget failure is
+unresolved, not permission to discard rows. Scalar eligible condition maximum
+101.56 and residuals<=3.97e-14/1.77e-15 leave substantial margin. The1e-6 budget
+also exceeds first-order accumulation/conditioning estimates for this bounded
+matrix family. Check effective settings, complete cross-products and norm
+restriction; if these budgets cannot be resolved, stop rather than enlarge them.
+
+Report raw beta against Mupper, case floor, absolute0.43 floor and variational
+upper bound1+1e-6. Report signed adjacent-level
+`p=log(beta_coarse/beta_fine)/log2`. The independently implied noncollapse
+ceiling is `p <= log((1+1e-6)/f_safe_fine)/log2`, with the same numerical margin.
+This is redundant with the floors/upper bound and deliberately permits a
+substantial decline. It is a finite-family noncollapse check, **not** mild
+deterioration, response convergence or h-uniform stability. Do not hide raw
+deterioration behind beta/floor normalization. No stricter slope follows from
+the present inequalities. Required mechanical kernel, locking and physical
+convergence criteria are unchanged and remain separate acceptance conditions.
