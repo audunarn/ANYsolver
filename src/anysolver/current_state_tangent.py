@@ -67,7 +67,9 @@ from .e4_pl_s3_v2d_element import (
     FORMULATION_ID as _S3_V2D_DECLARED_FORMULATION_ID,
     IMPLEMENTATION_ID as S3_V2D_IMPLEMENTATION_ID,
     QUADRATURE_AUTHORITY_ID as S3_V2D_QUADRATURE_AUTHORITY_ID,
+    V2D_DERIVED_CACHE_NAMES as _S3_V2D_DERIVED_CACHE_NAMES,
     NativeParityE4PLS3V2DShellElement,
+    _s3_v2d_runtime_epoch_manager as _S3_V2D_RUNTIME_EPOCH_MANAGER,
 )
 from .e4_pl_s3_v2d_state import (
     canonical_json_bytes as _v2d_canonical_json_bytes,
@@ -1212,6 +1214,145 @@ require_exact_qualified_component_lifecycle_api = (
 _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD = (
     require_exact_qualified_component_lifecycle_api
 )
+
+
+class _QualifiedLifecycleProbeMesh:
+    __slots__ = ("elements",)
+
+    def __init__(self, elements: Mapping[int, Any]) -> None:
+        self.elements = elements
+
+
+class _QualifiedLifecycleProbeModel:
+    """A private element subset observed by the exact lifecycle guard."""
+
+    __slots__ = ("mesh",)
+
+    def __init__(self, elements: Mapping[int, Any]) -> None:
+        self.mesh = _QualifiedLifecycleProbeMesh(elements)
+
+
+_V2D_TRUSTED_BOOKKEEPING_NAMES = frozenset(
+    {"_qualified_direct_state_token", "_qualified_direct_state_tokens"}
+)
+_V2D_TRUSTED_SCALAR_TYPES = frozenset({type(None), bool, int, float, str})
+
+
+def _v2d_trusted_immutable_value(value: Any, *, depth: int = 0) -> bool:
+    kind = type(value)
+    if kind in _V2D_TRUSTED_SCALAR_TYPES:
+        return True
+    if kind is tuple:
+        return depth < 2 and all(
+            _v2d_trusted_immutable_value(item, depth=depth + 1)
+            for item in value
+        )
+    if kind is np.ndarray:
+        current: Any = value
+        while type(current) is np.ndarray:
+            if current.flags.writeable:
+                return False
+            current = current.base
+        return type(current) is bytes
+    return False
+
+
+def _v2d_trusted_instance_eligible(element: Any) -> bool:
+    """Whether only ordinary (epoch-advancing) writes can change the instance.
+
+    Every value the exact guard can observe must be immutable, so an in-place
+    mutation cannot alter a validated fact without an attribute write.  The
+    generic derived caches are data the exact guard never reads; their
+    data-only resets deliberately do not advance the mesh epoch.
+    """
+
+    try:
+        namespace = object.__getattribute__(element, "__dict__")
+    except AttributeError:
+        return False
+    if type(namespace) is not dict:
+        return False
+    for name, value in tuple(dict.items(namespace)):
+        if type(name) is not str:
+            return False
+        if name in _V2D_TRUSTED_BOOKKEEPING_NAMES:
+            continue
+        if name in _S3_V2D_DERIVED_CACHE_NAMES:
+            if value is None or type(value) is np.ndarray:
+                continue
+            return False
+        if not _v2d_trusted_immutable_value(value):
+            return False
+    return True
+
+
+def _capture_qualified_v2d_trusted_authority(
+    element_items: Any,
+    *,
+    context: str,
+    _exact_guard: Any = _require_exact_qualified_component_lifecycle_api_implementation,
+    _v2d_type: type[Any] = NativeParityE4PLS3V2DShellElement,
+    _v2d_manager: Any = _S3_V2D_RUNTIME_EPOCH_MANAGER,
+) -> Any:
+    """Capture a constant-time lifecycle check for owned S3 V2D elements.
+
+    The exact guard validates each admitted formulation in two parts: module,
+    data, dependency and class authority once per formulation, then each
+    element instance.  This capture runs the complete guard over every V2D
+    element once.  The returned check re-runs the complete guard over one
+    representative element, which re-validates the whole formulation-level
+    authority with the unchanged exact code, and requires the V2D class epoch
+    to be unchanged.  The remaining per-instance facts are protected by the
+    owning mesh epoch: bound V2D instances advance it on every ordinary write
+    or deletion, and eligibility requires every observed value to be
+    immutable.  Callers must separately require that mesh epoch (the
+    qualified assembly lease's trusted state check does).
+
+    Returns ``None`` when no V2D element is present, any V2D instance is not
+    eligible or the capture scan fails; callers then keep the complete
+    lifecycle scan.
+    """
+
+    if type(element_items) is not tuple:
+        return None
+    v2d_items = tuple(
+        (element_id, element)
+        for element_id, element in element_items
+        if type(element) is _v2d_type
+    )
+    if not v2d_items or not all(
+        type(element_id) is int and _v2d_trusted_instance_eligible(element)
+        for element_id, element in v2d_items
+    ):
+        return None
+    generation = _v2d_manager.capture_generation()
+    try:
+        _exact_guard(
+            _QualifiedLifecycleProbeModel(dict(v2d_items)),
+            context=f"{context} S3 V2D trusted capture",
+        )
+    except (AttributeError, ElementCapabilityError, TypeError, ValueError):
+        # Declining keeps the complete scan, which then reports the failure
+        # at the caller's own preflight boundary with its usual context.
+        return None
+    representative = _QualifiedLifecycleProbeModel(dict(v2d_items[:1]))
+
+    def require_generation(context: str) -> None:
+        try:
+            _v2d_manager.require_generation(generation)
+        except ValueError as exc:
+            raise ElementCapabilityError(
+                f"{context} requires exact qualified component/lifecycle APIs; "
+                "S3 V2D class authority changed during the trusted lease"
+            ) from exc
+
+    def require(*, context: str) -> None:
+        require_generation(context)
+        _exact_guard(representative, context=context)
+        require_generation(context)
+
+    require_generation(f"{context} S3 V2D trusted capture")
+    return require
 
 
 def _qualified_route(

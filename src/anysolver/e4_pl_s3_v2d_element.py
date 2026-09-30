@@ -17,6 +17,10 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
+from ._qualified_authority_epoch import (
+    AuthorityEpochMeta,
+    make_authority_epoch_manager,
+)
 from .element_capabilities import ElementCapabilityError
 from .elements import ShellElement
 from .e4_pl_element import QualifiedE4PLShellElement
@@ -91,6 +95,56 @@ _DRILL_INVERSE_METRIC_SQRT = np.diag((1.0 / math.sqrt(2.0), math.sqrt(2.0)))
 
 class NativeParityCapabilityError(ElementCapabilityError):
     """An operation is outside the currently accepted V2D gate."""
+
+
+# Generic derived caches that shared solver utilities reset with ``setattr``.
+# Data-only writes to them cannot change any instance fact the exact lifecycle
+# guard validates, so they do not advance the owning mesh epochs.
+V2D_DERIVED_CACHE_NAMES = frozenset(
+    {
+        "_hourglass_stiffness_matrix",
+        "_internal_forces",
+        "_mass_matrix",
+        "_nl_cache",
+        "_stiffness_matrix",
+    }
+)
+
+
+def _advance_bound_state_tokens(
+    element: Any,
+    name: str,
+    value: Any,
+    *,
+    deleting: bool = False,
+    _cache_names: frozenset[str] = V2D_DERIVED_CACHE_NAMES,
+    _ndarray: type = np.ndarray,
+    _namespace_of: Any = object.__getattribute__,
+) -> None:
+    """Advance every owning mesh epoch before an ordinary instance mutation.
+
+    Once an element is bound into a qualified mesh, any other attribute write
+    or deletion (including ``__class__`` reassignment) may change facts the
+    exact lifecycle guard validates.  Advancing the shared epochs lets
+    constant-time trusted checks reject that mutation between complete
+    scans.  Direct ``__dict__`` writes and ``object.__setattr__`` remain
+    interpreter-level bypasses outside the supported mutation surface.
+    """
+
+    if (
+        not deleting
+        and type(name) is str
+        and name in _cache_names
+        and (value is None or type(value) is _ndarray)
+    ):
+        return
+    namespace = _namespace_of(element, "__dict__")
+    tokens = namespace.get("_qualified_direct_state_tokens")
+    if tokens is None:
+        token = namespace.get("_qualified_direct_state_token")
+        tokens = () if token is None else (token,)
+    for token in tokens:
+        token[0] = int(token[0]) + 1
 
 
 SUPPORTED_OPERATIONS = frozenset(
@@ -244,7 +298,10 @@ def _invariant_drill_scale(membrane: np.ndarray) -> float:
     return value
 
 
-class NativeParityE4PLS3V2DShellElement(ShellElement):
+class NativeParityE4PLS3V2DShellElement(
+    ShellElement,
+    metaclass=AuthorityEpochMeta,
+):
     """Explicit V2D candidate; no public alias or default selects it."""
 
     formulation_id = FORMULATION_ID
@@ -281,6 +338,26 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         StrictFlatLinearE4PLS3V2CShellElement._pl_constraint
     )
     _operators = StrictFlatLinearE4PLS3V2CShellElement._operators
+
+    # The epoch helper is bound at class creation so a temporarily replaced
+    # module global cannot suppress the advance; both hooks are protected
+    # class entries (see ``_s3_v2d_runtime_epoch_manager``).
+    def __setattr__(
+        self,
+        name: str,
+        value: Any,
+        _advance: Any = _advance_bound_state_tokens,
+    ) -> None:
+        _advance(self, name, value)
+        super().__setattr__(name, value)
+
+    def __delattr__(
+        self,
+        name: str,
+        _advance: Any = _advance_bound_state_tokens,
+    ) -> None:
+        _advance(self, name, None, deleting=True)
+        super().__delattr__(name)
 
     def __init__(
         self,
@@ -2305,6 +2382,19 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     def __reduce_ex__(self, protocol: int) -> Any:
         del protocol
         self._unsupported("python_pickle_restart")
+
+
+# Replacing a mutation hook installs a raising stub, so a swap-and-restore of
+# either hook cannot silently suppress the mesh-epoch advance; any ordinary
+# class mutation also advances this generation.
+_s3_v2d_runtime_epoch_manager = make_authority_epoch_manager(
+    "qualified S3 V2D runtime"
+)
+_s3_v2d_runtime_epoch_manager.protect_type_entries(
+    NativeParityE4PLS3V2DShellElement,
+    ("__setattr__", "__delattr__"),
+)
+_s3_v2d_runtime_epoch_manager.watch_type(NativeParityE4PLS3V2DShellElement, None)
 
 
 __all__ = [

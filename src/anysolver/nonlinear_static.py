@@ -46,12 +46,16 @@ from .control import (
     emit_progress,
 )
 from .current_state_tangent import (
+    _capture_qualified_v2d_trusted_authority as _CAPTURE_QUALIFIED_V2D_TRUSTED_AUTHORITY,
     _guarded_owned_input_snapshot as _guarded_owned_nonlinear_snapshot,
     require_exact_qualified_component_lifecycle_api as _EXACT_QUALIFIED_LIFECYCLE_GUARD,
 )
 from .e4_pl_element import QualifiedE4PLShellElement as _QualifiedE4PLShellElement
 from .e4_pl_s3_element import (
     QualifiedE4PLS3ShellElement as _QualifiedE4PLS3ShellElement,
+)
+from .e4_pl_s3_v2d_element import (
+    NativeParityE4PLS3V2DShellElement as _NativeParityE4PLS3V2DShellElement,
 )
 from .element_capabilities import (
     require_model_element_capabilities,
@@ -110,6 +114,81 @@ if TYPE_CHECKING:
 
 
 _DOF_INDEX = {"ux": 0, "uy": 1, "uz": 2, "rx": 3, "ry": 4, "rz": 5}
+
+# Import-time identities for the solver's own cancellation checkpoint.  A
+# replaced checkpoint, a foreign/sub-classed token or a token whose class,
+# event or instance data changed remains a hostile observation boundary.
+_EXACT_CANCELLATION_SAFE_POINT = cancellation_safe_point
+_EXACT_CANCELLATION_TOKEN_TYPE = CancellationToken
+_EXACT_CANCELLATION_TOKEN_NAMESPACE = tuple(
+    type.__getattribute__(CancellationToken, "__dict__").items()
+)
+_EXACT_CANCELLATION_EVENT_TYPE = threading.Event
+_EXACT_CANCELLATION_EVENT_NAMESPACE = tuple(
+    type.__getattribute__(threading.Event, "__dict__").items()
+)
+_EXACT_CANCELLATION_LOCK_TYPE = type(threading.Lock())
+_EXACT_CANCELLATION_CONDITION_TYPE = threading.Condition
+
+
+def _exact_namespace_unchanged(owner: type, expected: tuple) -> bool:
+    actual = type.__getattribute__(owner, "__dict__")
+    return len(actual) == len(expected) and all(
+        name in actual and actual[name] is value for name, value in expected
+    )
+
+
+def _is_known_cancellation_checkpoint(token: Any) -> bool:
+    """Whether a checkpoint can only have run the solver's own token code."""
+
+    if cancellation_safe_point is not _EXACT_CANCELLATION_SAFE_POINT:
+        return False
+    if token is None:
+        return True
+    if type(token) is not _EXACT_CANCELLATION_TOKEN_TYPE:
+        return False
+    try:
+        namespace = object.__getattribute__(token, "__dict__")
+    except AttributeError:
+        return False
+    if type(namespace) is not dict or set(namespace) != {
+        "_event",
+        "_lock",
+        "_reason",
+    }:
+        return False
+    event = dict.__getitem__(namespace, "_event")
+    if (
+        type(event) is not _EXACT_CANCELLATION_EVENT_TYPE
+        or type(dict.__getitem__(namespace, "_lock"))
+        is not _EXACT_CANCELLATION_LOCK_TYPE
+        or type(dict.__getitem__(namespace, "_reason")) is not str
+    ):
+        return False
+    try:
+        event_namespace = object.__getattribute__(event, "__dict__")
+    except AttributeError:
+        return False
+    if type(event_namespace) is not dict or set(event_namespace) != {
+        "_cond",
+        "_flag",
+    }:
+        return False
+    # ``Event.is_set`` returns ``_flag`` and the checkpoint truth-tests it, so
+    # a non-bool flag would run its own ``__bool__`` code at every checkpoint.
+    if (
+        type(dict.__getitem__(event_namespace, "_flag")) is not bool
+        or type(dict.__getitem__(event_namespace, "_cond"))
+        is not _EXACT_CANCELLATION_CONDITION_TYPE
+    ):
+        return False
+    return _exact_namespace_unchanged(
+        _EXACT_CANCELLATION_TOKEN_TYPE, _EXACT_CANCELLATION_TOKEN_NAMESPACE
+    ) and _exact_namespace_unchanged(
+        _EXACT_CANCELLATION_EVENT_TYPE, _EXACT_CANCELLATION_EVENT_NAMESPACE
+    )
+
+
 _FAST_NL_BOOTSTRAPPED = False
 _FAST_NL_BOOTSTRAP_ERROR: Optional[str] = None
 _FAST_NL_BOOTSTRAP_LOCK = threading.RLock()
@@ -4697,6 +4776,37 @@ def _solve_static_nonlinear_under_lease(
         )
         and all(type(element_id) is int for element_id, _element in owned_items)
     )
+    # Models that also own exact S3 V2D elements pair the lease's trusted
+    # state check with a V2D formulation/instance capture.  Any other element
+    # family, or an ineligible V2D instance, keeps the complete scan.
+    trusted_state_guard = (
+        dict.get(lease_namespace, "_qualified_trusted_state_require")
+        if type(lease_namespace) is dict
+        else None
+    )
+    v2d_trusted_guard = (
+        _CAPTURE_QUALIFIED_V2D_TRUSTED_AUTHORITY(
+            owned_items,
+            context="nonlinear static solve",
+        )
+        if (
+            not exact_qualified_internal_fast_path
+            and type(owned_items) is tuple
+            and owned_items
+            and callable(trusted_state_guard)
+            and all(type(element_id) is int for element_id, _element in owned_items)
+            and all(
+                type(element)
+                in {
+                    _QualifiedE4PLShellElement,
+                    _QualifiedE4PLS3ShellElement,
+                    _NativeParityE4PLS3V2DShellElement,
+                }
+                for _element_id, element in owned_items
+            )
+        )
+        else None
+    )
 
     def internal_guard(
         observed_model: "FEModel",
@@ -4705,24 +4815,37 @@ def _solve_static_nonlinear_under_lease(
     ) -> Dict[str, Any]:
         """Use the captured lease only across exact built-in solver work.
 
-        Caller-controlled observations retain ``exact_guard``.  Mixed,
-        generic, and imperfection-owned models also fail closed to that full
-        lifecycle scan.  The lease is non-renewable and still rejects every
-        Q4, S3, assembly, numerical, and model-input generation change.
+        Caller-controlled observations retain ``exact_guard``.  Generic and
+        imperfection-owned models also fail closed to that full lifecycle
+        scan.  The lease is non-renewable and still rejects every Q4, S3,
+        assembly, numerical, and model-input generation change; owned S3 V2D
+        elements additionally re-validate their formulation authority and
+        class epoch.
         """
 
-        if (
-            not exact_qualified_internal_fast_path
-            or observed_model is not lease_model
-        ):
-            return exact_guard(observed_model, context=context)
-        trusted_runtime_guard(lease_model, context=context)
-        return {}
+        if observed_model is lease_model:
+            if exact_qualified_internal_fast_path:
+                trusted_runtime_guard(lease_model, context=context)
+                return {}
+            if v2d_trusted_guard is not None:
+                trusted_state_guard(lease_model, context=context)
+                v2d_trusted_guard(context=context)
+                return {}
+        return exact_guard(observed_model, context=context)
 
     def cancellation_guard(*, context: str) -> Dict[str, Any]:
-        """Treat an absent token as internal; arbitrary tokens remain hostile."""
+        """Treat the solver's own checkpoint and token as internal.
 
-        guard = internal_guard if cancellation_token is None else exact_guard
+        An absent token or an exact, unmodified ``CancellationToken`` can only
+        have run the solver's checkpoint code.  A replaced checkpoint and any
+        other token remain hostile observation boundaries.
+        """
+
+        guard = (
+            internal_guard
+            if _is_known_cancellation_checkpoint(cancellation_token)
+            else exact_guard
+        )
         return guard(model, context=context)
 
     exact_guard(model, context="nonlinear static solve preflight")
