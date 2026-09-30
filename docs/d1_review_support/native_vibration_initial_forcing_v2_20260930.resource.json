@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 6.110545000003185,
+  "peak_process_tree_memory_mb": 208.781312,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_initial_forcing_v2_20260930.entry.source.py"
+  ],
+  "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_initial_forcing_v2_20260930.log"
+}

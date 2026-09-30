@@ -1,0 +1,664 @@
+"""Private single-element elastic native midpoint development owner.
+
+No public finite-speed admission, static codec mutation or physical condensation.
+Algebraic nodal-frame velocity slots are inertial placeholders only: stage and
+endpoint nodal frames are independent solved coordinates and generally move.
+"""
+from dataclasses import dataclass
+from contextlib import contextmanager
+import json
+from threading import Lock
+import numpy as np
+
+from ._ge_beam3_native_analysis import NativeBeamAnalysis
+from ._ge_beam3_native_generalized_element import NativeGeneralizedStaticElement
+from ._ge_beam3_generalized_ellipsoid_section import EllipsoidalGeneralizedSection
+from ._ge_beam3_retained_generalized_state import Context, Program, Mechanical
+from ._ge_beam3_dynamic_elastic_state import DynamicElasticContext
+from ._ge_beam3_native_generalized_loading import DistributedPattern
+from ._ge_beam3_native_line_loading import LinePattern
+from ._ge_beam3_centered_finite_inertia import (
+    evaluate_centered_finite_inertia, PHYSICAL_DOFS, ALGEBRAIC_DOFS)
+from ._ge_beam3_p5.algebra import rotation
+from ._ge_beam3_p5.chart import exp_chart_terms
+from ._ge_beam3_p5.compensated_coordinates import split_sum, validate_pair
+from ._ge_beam3_p5_seeded.core import canonical, sha
+from ._native_reference_modal import _owned
+from .control import cancellation_safe_point
+
+IMPLEMENTATION_ID = 'DEVELOPMENT_C7_SINGLE_CENTERED_NATIVE_MIDPOINT_V1'
+
+
+@dataclass(frozen=True)
+class MidpointState:
+    mechanical: Mechanical
+    origins: tuple
+    histories: tuple
+    physical_velocity24: np.ndarray
+    physical_acceleration24: np.ndarray
+    time: float
+    epoch: int
+    predecessor_sha256: str
+    context_sha256: str
+
+
+@dataclass(frozen=True)
+class StageEvaluation:
+    mechanical: Mechanical
+    residual: np.ndarray
+    jacobian: np.ndarray
+    configuration_map: np.ndarray
+    physical_velocity24: np.ndarray
+    physical_acceleration24: np.ndarray
+    structural_residual: np.ndarray
+    structural_jacobian: np.ndarray
+    inertia: object
+    material_sha256: str
+
+
+@dataclass(frozen=True)
+class MidpointCandidate:
+    endpoint: MidpointState
+    stage: StageEvaluation
+    unknown42: np.ndarray
+    dt: float
+    predecessor_sha256: str
+    iterations: int
+    backtracks: int
+    stage_residual_norm: float
+    endpoint_algebraic_norm: float
+    endpoint_reaction42: np.ndarray
+
+
+@dataclass(frozen=True)
+class EndpointAccounting:
+    state_sha256: str
+    time: float
+    epoch: int
+    linear_momentum: np.ndarray
+    linear_momentum_low: np.ndarray
+    angular_momentum: np.ndarray
+    angular_momentum_low: np.ndarray
+    kinetic_energy: float
+    elastic_energy: float
+    total_energy: float
+    elastic_consistency_witness: float
+    resultant_compatibility18: np.ndarray
+    rank_mass_checks: bytes
+
+
+@dataclass(frozen=True)
+class PhysicalLoadAccounting:
+    context_sha256: str
+    load_sha256: str
+    external_load42: np.ndarray
+    external_spatial_jacobian42: np.ndarray
+    line_force_work: float
+    applied_couple42: np.ndarray
+    force: np.ndarray
+    moment_about_origin: np.ndarray
+    momentum_origin_high: np.ndarray
+    momentum_origin_low: np.ndarray
+    has_nonpotential_couple: bool
+
+
+class MidpointContext:
+    """Immutable issued states, ephemeral trials, and atomic accepted replacement.
+
+    Every external operation runs under the exact analysis operation lock. One
+    homogeneous six-component clamp remains the default legacy route. The
+    explicit dynamic elastic route also admits zero supports, with the same
+    spatial stage equations and a disposable shared structural work session.
+    Each selected structural owner retains its 120-second context deadline.
+    """
+    def __init__(self, analysis, *, inertia_order=24, max_iterations=12,
+                 max_backtracks=8, structural_owner='legacy_clamp',
+                 momentum_origin_high=(0., 0., 0.), momentum_origin_low=(0., 0., 0.),
+                 load_pattern=None):
+        if type(analysis) is not NativeBeamAnalysis:
+            raise ValueError('exact standalone native analysis required')
+        if (type(inertia_order) is not int or inertia_order not in (4, 8, 24)
+                or type(max_iterations) is not int or not 1 <= max_iterations <= 12
+                or type(max_backtracks) is not int or not 0 <= max_backtracks <= 8):
+            raise ValueError('bounded exact midpoint settings')
+        if type(structural_owner) is not str or structural_owner not in ('legacy_clamp', 'dynamic_elastic'):
+            raise ValueError('explicit private midpoint structural owner required')
+        self.structural_owner = structural_owner
+        self._selected_owner = structural_owner
+        self.momentum_origin_high = _owned(momentum_origin_high)
+        self.momentum_origin_low = _owned(momentum_origin_low)
+        if self.momentum_origin_high.shape != (3,) or self.momentum_origin_low.shape != (3,):
+            raise ValueError('complete momentum origin pairs required')
+        for high, low in zip(self.momentum_origin_high, self.momentum_origin_low):
+            validate_pair(float(high), float(low))
+        if structural_owner == 'legacy_clamp' and (np.any(self.momentum_origin_high) or np.any(self.momentum_origin_low)):
+            raise ValueError('legacy midpoint retains its zero momentum origin')
+        self._dynamic = (DynamicElasticContext(analysis, max_iterations=max_iterations,
+            max_backtracks=max_backtracks) if structural_owner == 'dynamic_elastic' else None)
+        self._work_session = None
+        with analysis._operation():
+            elements = analysis._elements
+            if (len(elements) != 1 or type(elements[0]) is not NativeGeneralizedStaticElement
+                    or type(elements[0].section) is not EllipsoidalGeneralizedSection
+                    or len(analysis.model.mesh.nodes) != 3
+                    or analysis.model.mesh.dof_manager.total_dofs != 18):
+                raise ValueError('one centered generalized element/full 42 order required')
+            if structural_owner == 'legacy_clamp' and analysis._admit_boundaries() != tuple(range(6)):
+                raise ValueError('explicit homogeneous full clamp on first ordered node required')
+            self.analysis = analysis
+            self.element = elements[0]
+            if load_pattern is not None and (structural_owner != 'dynamic_elastic'
+                    or type(load_pattern) is not DistributedPattern):
+                raise ValueError('exact constant distributed loading requires dynamic elastic owner')
+            # Cloning regenerates signatures; it must never heal a stale or
+            # forged supplied exact pattern into newly authorized loading.
+            if load_pattern is not None:
+                load_pattern.require(analysis.model.mesh)
+            self.load_pattern = (None if load_pattern is None else
+                DistributedPattern(LinePattern(load_pattern.line.rows), load_pattern.couples))
+            if self.load_pattern is not None:
+                load_pattern.require(analysis.model.mesh)
+                if canonical(load_pattern) != canonical(self.load_pattern):
+                    raise ValueError('supplied constant physical load changed during ownership')
+                self.load_pattern.require(analysis.model.mesh)
+            self._captured_load = canonical(self.load_pattern)
+            self.inertia_order = inertia_order
+            self.max_iterations = max_iterations
+            self.max_backtracks = max_backtracks
+            self._static = None
+            if structural_owner == 'legacy_clamp':
+                self._static = Context(analysis.model, Program((0.,),
+                    DistributedPattern(LinePattern(()), ())))
+                if (self._static.count != 42 or self._static.slots != [list(range(42))]
+                        or self._static.nodal_count != 18):
+                    raise ValueError('exact one-element canonical mixed ordering required')
+                free = self._static.free
+                self.fixed = self._static.fixed
+                self._reference_mechanical = self._static.initial.mechanical
+                self._reference_origins = self._static.initial.histories
+                self.scale = self._static.scale
+                self.length = self._static.length
+            else:
+                free = self._dynamic.free
+                self.fixed = self._dynamic.fixed
+                self._reference_mechanical = self._dynamic._reference.mechanical
+                self._reference_origins = self._dynamic.origins
+                self.scale, self.length = self._gate_inputs()
+            self.free = np.frombuffer(np.asarray(free, dtype=int).tobytes(), dtype=int)
+            self.physical_free = tuple(i for i in PHYSICAL_DOFS if i in self.free)
+            self.algebraic_free = tuple(i for i in ALGEBRAIC_DOFS if i in self.free)
+            expected = (15, 27) if not self.fixed else (12, 24)
+            if (len(self.physical_free), len(self.algebraic_free)) != expected:
+                raise ValueError('explicit physical/algebraic supported partition required')
+            self._identity = sha(self._identity_data())
+            self._current = None
+            self._visible_current = None
+            self._current_bytes = None
+            self._issued = {}
+            self._candidates = {}
+            self._initial_checks = None
+            self._transaction_lock = Lock()
+
+    @property
+    def initial_checks(self):
+        return None if self._initial_checks is None else json.loads(self._initial_checks)
+
+    @property
+    def current(self):
+        return self._visible_current
+
+    def _identity_data(self):
+        # The default route's payload is unchanged from its frozen V3 owner.
+        data = dict(implementation=IMPLEMENTATION_ID,
+            analysis=self.analysis.identity, inertia_order=self.inertia_order,
+            iterations=self.max_iterations, backtracks=self.max_backtracks,
+            physical=self.physical_free, algebraic=self.algebraic_free, free=self.free)
+        if self.structural_owner == 'legacy_clamp':
+            data['static_context'] = self._static.identity
+        else:
+            data.update(structural_owner='dynamic_elastic', dynamic_context=self._dynamic._identity,
+                momentum_origin_high=self.momentum_origin_high, momentum_origin_low=self.momentum_origin_low)
+            if self.load_pattern is not None:
+                data['constant_load_pattern'] = self.load_pattern
+        return data
+
+    def _gate_inputs(self):
+        """Read actual gate factors from the guarded selected structural owner.
+
+        The public aliases are informational and explicitly checked by _guard;
+        they cannot replace these numerical acceptance inputs. The legacy
+        identity payload and its owner's existing scaling remain unchanged.
+        """
+        if self.structural_owner == 'legacy_clamp':
+            return self._static.scale, self._static.length
+        positions = self._dynamic.reference_positions
+        length = float(np.linalg.norm(positions[-1]-positions[0]))
+        scales = np.ones(42)
+        for node in range(3):
+            scales[6*node+3:6*node+6] = length
+        scales[18:30] = length
+        return _owned(scales), length
+
+    @contextmanager
+    def _work_operation(self):
+        if self.structural_owner == 'legacy_clamp':
+            with self.analysis._operation():
+                yield
+        else:
+            with self._dynamic.session() as session:
+                self._work_session = session
+                try:
+                    yield
+                finally:
+                    self._work_session = None
+
+    @contextmanager
+    def _atomic_operation(self):
+        # The analysis exit guard runs after the operation body. Keep tentative
+        # publication private until that guard succeeds; restore all issuance
+        # bookkeeping if it fails. A separate nonblocking lock prevents another
+        # midpoint operation entering between analysis-lock release and rollback.
+        if not self._transaction_lock.acquire(blocking=False):
+            raise ValueError('midpoint context is already in use')
+        snapshot = None
+        try:
+            try:
+                with self._work_operation():
+                    snapshot = (self._current, self._visible_current, self._current_bytes,
+                        self._issued.copy(), self._candidates.copy(), self._initial_checks)
+                    yield
+                self._visible_current = self._current
+            except BaseException:
+                if snapshot is not None:
+                    (self._current, self._visible_current, self._current_bytes,
+                     self._issued, self._candidates, self._initial_checks) = snapshot
+                raise
+        finally:
+            self._transaction_lock.release()
+
+    def _guard(self, token=None, stage='midpoint.guard'):
+        cancellation_safe_point(token, stage)
+        self.analysis._guard()
+        if self.structural_owner != self._selected_owner:
+            raise ValueError('midpoint structural route changed')
+        if self.structural_owner == 'legacy_clamp':
+            self._static.guard()
+        else:
+            self._dynamic._guard()
+        if self.load_pattern is not None:
+            if self.structural_owner != 'dynamic_elastic' or type(self.load_pattern) is not DistributedPattern:
+                raise ValueError('midpoint constant physical load changed')
+            self.load_pattern.require(self.analysis.model.mesh)
+        if canonical(self.load_pattern) != self._captured_load:
+            raise ValueError('midpoint constant physical load changed')
+        scale, length = self._gate_inputs()
+        if canonical(dict(scale=self.scale, length=self.length)) != canonical(dict(scale=scale, length=length)):
+            raise ValueError('midpoint acceptance scale/length changed')
+        expected = sha(self._identity_data())
+        if self._identity != expected or self.analysis._elements != (self.element,):
+            raise ValueError('midpoint context definition/settings changed')
+
+    def _require_current(self, state):
+        record = self._issued.get(id(state))
+        if (type(state) is not MidpointState or state is not self.current
+                or record is None or record[0] is not state
+                or canonical(state) != record[1] or record[1] != self._current_bytes
+                or state.context_sha256 != self._identity):
+            raise ValueError('current issued immutable midpoint predecessor required')
+        return sha(state)
+
+    def _structural(self, mechanical, origins):
+        if self.structural_owner == 'dynamic_elastic':
+            work = self._loaded_work(mechanical, origins)
+            return work.residual, work.spatial_jacobian, work.material_sha256
+        r, j, _, responses, _ = self._static.assemble(mechanical, 0., origins)
+        for response, origin in zip(responses, origins):
+            material = json.loads(response.material)
+            if canonical(response.history) != canonical(origin):
+                raise ValueError('midpoint first slice requires unchanged elastic history')
+            if any(row['branch'] != 'ELASTIC'
+                   or any(value != 0. for pair in row['dissipation'] for value in pair)
+                   for row in material['stations']):
+                raise ValueError('midpoint first slice requires strictly elastic stations')
+        return r, j, sha([response.material.decode() for response in responses])
+
+    def _loaded_work(self, mechanical, origins):
+        work = self._work_session.work(mechanical, origins=origins,
+            pattern=self.load_pattern, parameter=0. if self.load_pattern is None else 1.)
+        a = list(ALGEBRAIC_DOFS)
+        if (np.any(work.external_load42[a]) or np.any(work.external_spatial_jacobian42[a, :])
+                or np.any(work.external_spatial_jacobian42[:, a])):
+            raise ValueError('physical loading must have exactly zero algebraic work/tangent')
+        return work
+
+    def _inertia(self, mechanical, velocity, acceleration):
+        kwargs = {}
+        if self.structural_owner == 'dynamic_elastic':
+            kwargs = dict(momentum_origin_high=self.momentum_origin_high,
+                momentum_origin_low=self.momentum_origin_low)
+        result = evaluate_centered_finite_inertia(self.element.operator.reference,
+            self.analysis._inertias[self.element.element_id],
+            mechanical.positions, mechanical.position_low,
+            mechanical.cell_rotations[0], velocity, acceleration,
+            order=self.inertia_order, **kwargs)
+        a = list(ALGEBRAIC_DOFS)
+        for matrix in (result.mixed_mass, result.mixed_velocity_derivative,
+                       result.mixed_configuration_derivative):
+            if np.any(matrix[a, :]) or np.any(matrix[:, a]):
+                raise ValueError('algebraic inertia derivative must be exactly zero')
+        if np.any(result.mixed_inertia[a]) or np.any(result.mixed_generalized_momentum[a]):
+            raise ValueError('algebraic inertia must be exactly zero')
+        return result
+
+    def _block_checks(self, j, inertia):
+        z = list(self.algebraic_free)
+        p = list(self.physical_free)
+        cz = j[np.ix_(z, z)]
+        singular = np.linalg.svd(cz, compute_uv=False)
+        tolerance = 64*np.finfo(float).eps*len(z)*singular[0]
+        if not np.isfinite(singular).all() or singular[-1] <= tolerance:
+            raise ValueError('endpoint algebraic C_z singular: no time step admitted')
+        mass = inertia.mixed_mass[np.ix_(p, p)]
+        if np.linalg.norm(mass-mass.T) > 64*np.finfo(float).eps*np.linalg.norm(mass):
+            raise ValueError('physical mass symmetry contract failed')
+        np.linalg.cholesky((mass+mass.T)/2)
+        eigenvalues = np.linalg.eigvalsh((mass+mass.T)/2)
+        return dict(algebraic_rank=len(z), algebraic_sigma_min=float(singular[-1]),
+            algebraic_sigma_max=float(singular[0]),
+            algebraic_condition=float(singular[0]/singular[-1]),
+            physical_mass_min_eigenvalue=float(eigenvalues[0]),
+            physical_mass_max_eigenvalue=float(eigenvalues[-1]),
+            physical_mass_condition=float(eigenvalues[-1]/eigenvalues[0]))
+
+    def _norm(self, residual, indices):
+        scale, _ = self._gate_inputs()
+        return float(np.linalg.norm((residual/scale)[list(indices)]))
+
+    def _correction(self, mechanical, step):
+        _, length = self._gate_inputs()
+        nodal = step[:18].reshape(3, 6)
+        return max(float(np.linalg.norm(nodal[:, :3]))/length,
+            float(np.linalg.norm(nodal[:, 3:])), float(np.linalg.norm(step[18:24])),
+            float(np.linalg.norm(step[24:]))/max(1., float(np.linalg.norm(mechanical.resultants))))
+
+    def _solve_algebraic(self, mechanical, origins, token):
+        if self.structural_owner == 'dynamic_elastic':
+            state = self._work_session.trial_state(mechanical, origins=origins)
+            result = self._work_session.consistent(state, pattern=self.load_pattern,
+                parameter=0. if self.load_pattern is None else 1., cancellation_token=token)
+            return (result.state.mechanical, result.work.residual,
+                result.work.spatial_jacobian, result.residual_norm, result.work.material_sha256)
+        z = list(self.algebraic_free)
+        for iteration in range(self.max_iterations+1):
+            self._guard(token, 'midpoint.algebraic')
+            r, j, material = self._structural(mechanical, origins)
+            inertia = self._inertia(mechanical, np.zeros(24), np.zeros(24))
+            self._block_checks(j, inertia)
+            step = np.zeros(42)
+            step[z] = np.linalg.solve(j[np.ix_(z, z)], -r[z])
+            norm = self._norm(r, z)
+            if norm <= 1e-11 and self._correction(mechanical, step) <= 1e-11:
+                return mechanical, r, j, norm, material
+            if iteration == self.max_iterations:
+                raise ValueError('endpoint algebraic iteration limit')
+            for cut in range(self.max_backtracks+1):
+                self._guard(token, 'midpoint.algebraic.trial')
+                proposed = self._static.advance(mechanical, step*(2.**(-cut)))
+                rt, _, _ = self._structural(proposed, origins)
+                if self._norm(rt, z) < norm:
+                    mechanical = proposed
+                    break
+            else:
+                raise ValueError('endpoint algebraic residual backtracking failed')
+        raise AssertionError('bounded algebraic loop')
+
+    def _endpoint_acceleration(self, mechanical, origins, velocity):
+        r, j, _ = self._structural(mechanical, origins)
+        inertia = self._inertia(mechanical, velocity, np.zeros(24))
+        checks = self._block_checks(j, inertia)
+        p = list(self.physical_free)
+        acceleration = np.zeros(24)
+        acceleration[p] = np.linalg.solve(inertia.mixed_mass[np.ix_(p, p)],
+            -(r+inertia.mixed_inertia)[p])
+        dynamic = self._inertia(mechanical, velocity, acceleration)
+        reaction = r+dynamic.mixed_inertia
+        if self._norm(reaction, p) > 1e-11:
+            raise ValueError('endpoint physical acceleration residual failed')
+        return _owned(acceleration), _owned(reaction), checks
+
+    def initialize(self, mechanical=None, physical_velocity24=None, *, time=0.,
+                   cancellation_token=None):
+        with self._atomic_operation():
+            self._guard(cancellation_token, 'midpoint.initialize')
+            if self.current is not None or type(time) is not float or not np.isfinite(time):
+                raise ValueError('one finite typed midpoint initialization required')
+            mechanical = self._reference_mechanical if mechanical is None else mechanical
+            if type(mechanical) is not Mechanical:
+                raise ValueError('exact retained mechanical input required')
+            mechanical = self._make(mechanical.descriptor())
+            velocity = np.zeros(24) if physical_velocity24 is None else np.asarray(physical_velocity24)
+            if velocity.shape != (24,) or velocity.dtype != np.float64 or not np.isfinite(velocity).all():
+                raise ValueError('finite binary64 physical velocity24 required')
+            inactive = tuple(i for i in range(24) if i not in self.physical_free)
+            if np.any(velocity[list(inactive)]):
+                raise ValueError('fixed velocity/algebraic inertial placeholders must be zero')
+            velocity = _owned(velocity)
+            origins = self._reference_origins
+            mechanical, _, _, _, _ = self._solve_algebraic(mechanical, origins, cancellation_token)
+            acceleration, _, checks = self._endpoint_acceleration(mechanical, origins, velocity)
+            state = MidpointState(mechanical, origins, origins, velocity, acceleration,
+                time, 0, self._identity, self._identity)
+            self._guard(cancellation_token, 'midpoint.initialize.commit')
+            self._initial_checks = canonical(checks)
+            self._issued[id(state)] = (state, canonical(state))
+            self._current = state
+            self._current_bytes = canonical(state)
+            return state
+
+    def _stage(self, accepted, u, h, token=None):
+        self._guard(token, 'midpoint.stage')
+        self._require_current(accepted)
+        u = np.asarray(u)
+        if u.shape != (42,) or u.dtype != np.float64 or not np.isfinite(u).all() or np.any(u[list(self.fixed)]):
+            raise ValueError('supported finite binary64 midpoint unknown42 required')
+        s = {k: v.copy() for k, v in accepted.mechanical.descriptor().items()}
+        a = np.eye(42)
+        for node in range(3):
+            first = 6*node
+            for axis in range(3):
+                s['positions'][node, axis], s['position_low'][node, axis] = split_sum((
+                    float(s['positions'][node, axis]), float(s['position_low'][node, axis]),
+                    .5*float(u[first+axis])))
+            a[first:first+3, first:first+3] *= .5
+            eta = u[first+3:first+6]
+            s['nodal_frames'][node] = rotation(eta)@accepted.mechanical.nodal_frames[node]
+            a[first+3:first+6, first+3:first+6] = exp_chart_terms(eta)[0]
+        for cell in (0, 1):
+            first = 18+3*cell
+            half = .5*u[first:first+3]
+            s['cell_rotations'][0, cell] = rotation(half)@accepted.mechanical.cell_rotations[0, cell]
+            a[first:first+3, first:first+3] = .5*exp_chart_terms(half)[0]
+        s['resultants'][0] += u[24:]
+        mechanical = self._make(s)
+        velocity = np.zeros(24)
+        p = list(self.physical_free)
+        velocity[p] = u[p]/h
+        acceleration = np.zeros(24)
+        acceleration[p] = 2*(velocity[p]-accepted.physical_velocity24[p])/h
+        r, j, material = self._structural(mechanical, accepted.histories)
+        inertia = self._inertia(mechanical, velocity, acceleration)
+        vmap = np.zeros((42, 42))
+        bmap = np.zeros((42, 42))
+        vmap[p, p] = 1/h
+        bmap[p, p] = 2/h**2
+        jacobian = (j+inertia.mixed_configuration_derivative)@a
+        jacobian += inertia.mixed_velocity_derivative@vmap+inertia.mixed_mass@bmap
+        residual = r+inertia.mixed_inertia
+        if not np.isfinite(jacobian).all() or not np.isfinite(residual).all():
+            raise ValueError('nonfinite midpoint stage')
+        return StageEvaluation(mechanical, _owned(residual), _owned(jacobian), _owned(a),
+            _owned(velocity), _owned(acceleration), _owned(r), _owned(j), inertia, material)
+
+    def evaluate_stage(self, accepted, unknown42, *, dt, cancellation_token=None):
+        with self._atomic_operation():
+            self._time_step(dt)
+            return self._stage(accepted, unknown42, dt, cancellation_token)
+
+    @staticmethod
+    def _time_step(h):
+        if (type(h) is not float or not np.isfinite(h) or h <= 0.
+                or h*h == 0. or not np.isfinite(2/(h*h))):
+            raise ValueError('positive finite typed midpoint dt required')
+
+    def trial(self, accepted, *, dt, cancellation_token=None):
+        with self._atomic_operation():
+            self._time_step(dt)
+            self._guard(cancellation_token, 'midpoint.trial')
+            predecessor = self._require_current(accepted)
+            free = list(map(int, self.free))
+            p = list(self.physical_free)
+            u = np.zeros(42)
+            u[p] = dt*accepted.physical_velocity24[p]
+            backtracks = 0
+            for iteration in range(self.max_iterations+1):
+                stage = self._stage(accepted, u, dt, cancellation_token)
+                step = np.zeros(42)
+                step[free] = np.linalg.solve(stage.jacobian[np.ix_(free, free)], -stage.residual[free])
+                norm = self._norm(stage.residual, free)
+                if norm <= 1e-11 and self._correction(stage.mechanical, step) <= 1e-11:
+                    break
+                if iteration == self.max_iterations:
+                    raise ValueError('midpoint stage iteration limit')
+                for cut in range(self.max_backtracks+1):
+                    self._guard(cancellation_token, 'midpoint.stage.trial')
+                    proposed = u+2.**(-cut)*step
+                    next_stage = self._stage(accepted, proposed, dt, cancellation_token)
+                    backtracks += int(cut > 0)
+                    if self._norm(next_stage.residual, free) < norm:
+                        u = proposed
+                        break
+                else:
+                    raise ValueError('midpoint stage residual backtracking failed')
+            endpoint_step = np.zeros(42)
+            endpoint_step[p] = u[p]
+            if self.structural_owner == 'legacy_clamp':
+                endpoint_mechanical = self._static.advance(accepted.mechanical, endpoint_step)
+            else:
+                high = np.array(accepted.mechanical.positions, copy=True)
+                low = np.array(accepted.mechanical.position_low, copy=True)
+                for node in range(3):
+                    for axis in range(3):
+                        high[node, axis], low[node, axis] = split_sum((float(high[node, axis]),
+                            float(low[node, axis]), float(u[6*node+axis])))
+                cells = np.array([rotation(u[18+3*c:21+3*c])@accepted.mechanical.cell_rotations[0, c]
+                    for c in (0, 1)]).reshape(1, 2, 3, 3)
+                endpoint_mechanical = self._make(dict(positions=high, position_low=low,
+                    nodal_frames=accepted.mechanical.nodal_frames, cell_rotations=cells,
+                    resultants=accepted.mechanical.resultants))
+            # Stage algebraics are a starting guess, not accepted endpoint data.
+            endpoint_mechanical = self._make(dict(
+                positions=endpoint_mechanical.positions, position_low=endpoint_mechanical.position_low,
+                nodal_frames=stage.mechanical.nodal_frames,
+                cell_rotations=endpoint_mechanical.cell_rotations,
+                resultants=stage.mechanical.resultants))
+            endpoint_mechanical, _, _, alg_norm, _ = self._solve_algebraic(
+                endpoint_mechanical, accepted.histories, cancellation_token)
+            velocity = np.zeros(24)
+            velocity[p] = 2*stage.physical_velocity24[p]-accepted.physical_velocity24[p]
+            acceleration, reaction, _ = self._endpoint_acceleration(
+                endpoint_mechanical, accepted.histories, velocity)
+            if not np.isfinite(accepted.time+dt) or accepted.time+dt <= accepted.time:
+                raise ValueError('midpoint time increment is not representable')
+            endpoint = MidpointState(endpoint_mechanical, accepted.histories, accepted.histories,
+                _owned(velocity), acceleration, accepted.time+dt, accepted.epoch+1,
+                predecessor, self._identity)
+            candidate = MidpointCandidate(endpoint, stage, _owned(u), dt, predecessor,
+                iteration, backtracks, norm, alg_norm, reaction)
+            self._guard(cancellation_token, 'midpoint.trial.ready')
+            self._require_current(accepted)
+            self._candidates[id(candidate)] = (candidate, canonical(candidate))
+            return candidate
+
+    def commit(self, candidate, *, cancellation_token=None):
+        with self._atomic_operation():
+            self._guard(cancellation_token, 'midpoint.before_commit')
+            record = self._candidates.get(id(candidate))
+            if (type(candidate) is not MidpointCandidate or record is None
+                    or record[0] is not candidate or canonical(candidate) != record[1]
+                    or candidate.predecessor_sha256 != self._require_current(self.current)
+                    or candidate.endpoint.epoch != self.current.epoch+1):
+                raise ValueError('issued current-predecessor immutable midpoint candidate required')
+            state = candidate.endpoint
+            self._issued[id(state)] = (state, canonical(state))
+            self._current = state
+            self._current_bytes = canonical(state)
+            self._candidates.clear()
+            return state
+
+    def discard(self, candidate):
+        with self._atomic_operation():
+            self._guard()
+            record = self._candidates.get(id(candidate))
+            if record is None or record[0] is not candidate or canonical(candidate) != record[1]:
+                raise ValueError('issued immutable midpoint candidate required')
+            del self._candidates[id(candidate)]
+
+    def _make(self, data):
+        if self.structural_owner == 'legacy_clamp':
+            return self._static.make(data)
+        return self._work_session.make(data)
+
+    def endpoint_accounting(self, state):
+        """Actual endpoint invariants, not instantaneous derivative surrogates."""
+        with self._atomic_operation():
+            self._guard()
+            self._require_current(state)
+            if self.structural_owner != 'dynamic_elastic':
+                raise ValueError('endpoint accounting requires explicit dynamic elastic owner')
+            work = self._loaded_work(state.mechanical, state.histories)
+            inertia = self._inertia(state.mechanical, state.physical_velocity24,
+                state.physical_acceleration24)
+            compatibility = work.residual[24:42]
+            witness = abs(float(state.mechanical.resultants[0]@compatibility))
+            total = float(inertia.kinetic_energy+work.mixed_potential)
+            checks = self._block_checks(work.spatial_jacobian, inertia)
+            return EndpointAccounting(sha(state), state.time, state.epoch,
+                inertia.linear_momentum, inertia.linear_momentum_low,
+                inertia.angular_momentum, inertia.angular_momentum_low,
+                inertia.kinetic_energy, work.mixed_potential, total, witness,
+                _owned(compatibility), canonical(checks))
+
+    def physical_load_accounting(self, mechanical):
+        """Pure current physical load view; not endpoint/time state acceptance.
+
+        Nodal translations and physical cell spins carry the load; independent
+        algebraic nodal frames/resultants do not. Fixed-origin moment recovery
+        retains full compensated position pairs. Couples are nonpotential.
+        """
+        from fractions import Fraction
+        with self._atomic_operation():
+            self._guard()
+            if self.structural_owner != 'dynamic_elastic' or type(mechanical) is not Mechanical:
+                raise ValueError('explicit dynamic elastic physical mechanical load view required')
+            work = self._loaded_work(mechanical, self._reference_origins)
+            mechanical = work.state.mechanical
+            loads = work.external_load42
+            force = sum((loads[6*n:6*n+3] for n in range(3)), np.zeros(3))
+            moment = [Fraction(0)]*3
+            origin = [Fraction(float(h))+Fraction(float(l)) for h, l in zip(
+                self.momentum_origin_high, self.momentum_origin_low)]
+            for node in range(3):
+                lever = [Fraction(float(h))+Fraction(float(l))-o for h, l, o in zip(
+                    mechanical.positions[node], mechanical.position_low[node], origin)]
+                f = [Fraction(float(v)) for v in loads[6*node:6*node+3]]
+                cross = (lever[1]*f[2]-lever[2]*f[1], lever[2]*f[0]-lever[0]*f[2],
+                    lever[0]*f[1]-lever[1]*f[0])
+                for axis in range(3):
+                    moment[axis] += cross[axis]
+            for cell in (0, 1):
+                for axis in range(3):
+                    moment[axis] += Fraction(float(loads[18+3*cell+axis]))
+            return PhysicalLoadAccounting(self._identity, work.load_sha256,
+                loads, work.external_spatial_jacobian42, work.line_work, work.applied_couple42,
+                _owned(force), _owned([float(v) for v in moment]), self.momentum_origin_high,
+                self.momentum_origin_low, not work.conservative_potential)

@@ -1,0 +1,39 @@
+{
+  "disposition": "NONPASS; first declared mechanics gate stopped after2 coarse endpoints",
+  "new_tests_passed": 0,
+  "new_tests_failed": 1,
+  "accepted_steps": 2,
+  "requested_maximum_steps": 20,
+  "unissued": "fine8 andhalf-amplitude fine8; coarse steps3/4 also unissued",
+  "test_sha256": "62519303cff18d14e1aef6aac76ec4f2bf16141216ef4c8dea4ab391b889a556",
+  "input_sha256": "07b3f12777cd21ed5932fe14f51ec3254ba1796f6627d3ce8373be4c2996926d",
+  "raw_sha256": "705b627848aef2df9ce17cdce2dda937ea1ae29d1031a855f48ff567181248f7",
+  "elapsed_seconds": 11.713919200003147,
+  "peak_process_tree_memory_mb": 208.633856,
+  "reference": {
+    "Kzz_rank": 27,
+    "Ke_relative_antisymmetry": 1.869788645427699E-16,
+    "eigenvalue_resolution": 1.0510039436422402E-07,
+    "selected_eigenvalue": 6.8738311754975285,
+    "omega_rad_per_s": 2.6217992248640107,
+    "eigenpair_backward_residual": 1.225349785211149E-16,
+    "M15_condition": 17.433616647030806
+  },
+  "initial_energy_j": 2.7316580422224402E-08,
+  "failed_step2_energy_defect_j": 2.995819615098056E-14,
+  "failed_step2_normalized_energy": 1.0967037487095922E-06,
+  "energy_gate": 1E-06,
+  "step2_cumulative_energy": 9.718544398520454E-07,
+  "step2_errors": {
+    "configuration_continuum": 0.006950890814278124,
+    "velocity_continuum": 0.007185427084669525,
+    "configuration_discrete_midpoint": 3.398069829814835E-05,
+    "velocity_discrete_midpoint": 0.0014813764062973085,
+    "predicted_configuration_dispersion": 0.00694175836699992,
+    "predicted_velocity_dispersion": 0.007010585538088192
+  },
+  "V1": "Retained zero-timestep diagnostics NONPASS; isolated canonical-history JSON repair only",
+  "production_changed": false,
+  "full_C7_claim": false,
+  "next_decision": "Independent saved-reference/endpoint accounting review; no new numericalwork or gate retuning"
+}

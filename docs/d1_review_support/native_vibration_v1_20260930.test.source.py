@@ -1,0 +1,296 @@
+"""One free native vibration control, with shared spatial matrices as inputs.
+
+No old temporal tests are executed. This scalar modal reference eliminates only
+the algebraic coordinates and compares continuum and discrete midpoint time
+separately. It does not independently qualify the spatial beam operator.
+"""
+from fractions import Fraction
+from hashlib import sha256
+import inspect
+import json
+import os
+from pathlib import Path
+from time import perf_counter
+
+import numpy as np
+
+from anysolver.ge_beam3_native import create_analysis, SELECTOR, PROFILE_BYTES
+from anysolver._ge_beam3_native_midpoint import MidpointContext
+from anysolver._ge_beam3_centered_finite_inertia import PHYSICAL_DOFS, ALGEBRAIC_DOFS
+from anysolver._ge_beam3_retained_generalized_state import Mechanical
+from anysolver._ge_beam3_p5.algebra import rotation, log_rotation
+from anysolver._ge_beam3_p5.compensated_coordinates import split_sum
+from anysolver._ge_beam3_p5_seeded.core import canonical
+from anysolver._native_reference_modal import _owned
+from test_ge_beam3_native_midpoint import make_analysis
+
+
+def test_free_small_amplitude_vibration_against_modal_time_reference(record_property):
+    started = perf_counter()
+    output = Path(os.environ['NATIVE_VIBRATION_RAW_OUTPUT'])
+    assert not output.exists()
+    p, z = list(PHYSICAL_DOFS), list(ALGEBRAIC_DOFS)
+    inputs = json.loads(Path(os.environ['NATIVE_VIBRATION_INPUTS']).read_text(encoding='utf-8-sig'))
+    criteria = inputs['criteria']
+    evidence = dict(status='RUNNING', accepted_steps_total=0, criteria=criteria,
+                    scope='One-mode small-motion temporal development; shared spatial input',
+                    source_sha256=inputs['source_sha256'], resolutions={})
+
+    def save(stage):
+        evidence.update(last_stage=stage, elapsed_seconds=perf_counter()-started)
+        output.write_text(json.dumps(evidence, indent=2)+'\n', encoding='utf-8')
+        print(json.dumps(dict(stage=stage, elapsed_seconds=evidence['elapsed_seconds'])), flush=True)
+        assert evidence['elapsed_seconds'] < criteria['internal_time_limit_seconds']
+
+    def pairs(high, low):
+        return [Fraction(float(h))+Fraction(float(l)) for h, l in zip(high, low)]
+
+    def difference(now, before, name):
+        return np.array([float(a-b) for a, b in zip(
+            pairs(getattr(now, name+'_momentum'), getattr(now, name+'_momentum_low')),
+            pairs(getattr(before, name+'_momentum'), getattr(before, name+'_momentum_low')))])
+
+    def coordinates(mechanical, reference):
+        q = np.zeros(42)
+        for node in range(3):
+            q[6*node:6*node+3] = [float(a-b) for a, b in zip(
+                pairs(mechanical.positions[node], mechanical.position_low[node]),
+                pairs(reference.positions[node], reference.position_low[node]))]
+        for cell in (0, 1):
+            q[18+3*cell:21+3*cell] = log_rotation(
+                mechanical.cell_rotations[0, cell]@reference.cell_rotations[0, cell].T)
+        return q[p]
+
+    def mechanical_data(mechanical):
+        return {name: value.tolist() for name, value in mechanical.descriptor().items()}
+
+    def accounting(data):
+        return dict(time_seconds=data.time, epoch=data.epoch, state_sha256=data.state_sha256,
+            linear_momentum=data.linear_momentum.tolist(), linear_momentum_low=data.linear_momentum_low.tolist(),
+            angular_momentum=data.angular_momentum.tolist(), angular_momentum_low=data.angular_momentum_low.tolist(),
+            kinetic_energy_j=data.kinetic_energy, elastic_energy_j=data.elastic_energy,
+            total_energy_j=data.total_energy, elastic_witness_j=data.elastic_consistency_witness,
+            compatibility18=data.resultant_compatibility18.tolist(), rank_mass=json.loads(data.rank_mass_checks))
+
+    def compare(coarse, fine, floor, ratio):
+        if coarse <= floor:
+            return dict(coarse=coarse, fine=fine, floor=floor, ratio=None,
+                        disposition='resolution_limited' if fine <= floor else 'unresolved_NONPASS',
+                        passes=bool(fine <= floor))
+        return dict(coarse=coarse, fine=fine, floor=floor, ratio=fine/coarse,
+                    disposition='bounded_comparison', passes=bool(fine <= ratio*coarse))
+
+    with output.open('x', encoding='utf-8') as stream:
+        stream.write('{}\n')
+    save('entry')
+    try:
+        profile_before = bytes(PROFILE_BYTES)
+        _, definition = make_analysis()  # Frozen accepted curved/cross-inertia fixture only.
+        contexts = []
+        for _ in range(3):
+            analysis = create_analysis(SELECTOR, (definition,), ())
+            context = MidpointContext(analysis, structural_owner='dynamic_elastic', inertia_order=24)
+            assert not context.fixed and context.load_pattern is None and context._static is None
+            assert not analysis.model.boundary_conditions and not analysis.model.constraint_equations
+            assert not analysis.model.mesh.point_masses and analysis.model.mesh.element_activity is None
+            assert context.physical_free == tuple(p) and context.algebraic_free == tuple(z)
+            contexts.append(context)
+        context = contexts[0]
+        reference = context._reference_mechanical
+        work = context._dynamic.evaluate(context._dynamic.reference_state())
+        inertia = context._inertia(reference, np.zeros(24), np.zeros(24))
+        K = np.asarray(work.spatial_jacobian)
+        M = inertia.mixed_mass[np.ix_(p, p)]
+        Kzz = K[np.ix_(z, z)]
+        singular = np.linalg.svd(Kzz, compute_uv=False)
+        rank_tolerance = 64*np.finfo(float).eps*27*singular[0]
+        rank = int(np.count_nonzero(singular > rank_tolerance))
+        evidence['reference'] = dict(K42=K.tolist(), M42=inertia.mixed_mass.tolist(), physical_indices=p,
+            algebraic_indices=z, Kzz_singular_values=singular.tolist(), Kzz_rank=rank,
+            Kzz_rank_tolerance=rank_tolerance, reference_mechanical=mechanical_data(reference),
+            virgin_histories=context._reference_origins,
+            section_inertia=context.analysis._inertias[context.element.element_id].tolist())
+        save('reference_matrices_before_rank')
+        assert rank == 27
+        mass_asym = np.linalg.norm(M-M.T)/np.linalg.norm(M)
+        assert mass_asym <= 1e-10
+        M = (M+M.T)/2
+        L = np.linalg.cholesky(M)
+        Z = -np.linalg.solve(Kzz, K[np.ix_(z, p)])
+        Ke = K[np.ix_(p, p)]+K[np.ix_(p, z)]@Z
+        asymmetry = float(np.linalg.norm(Ke-Ke.T)/np.linalg.norm(Ke))
+        evidence['reference'].update(M15=M.tolist(), Ke15_before_symmetry=Ke.tolist(),
+            algebraic_map_Z=Z.tolist(), relative_stiffness_antisymmetry=asymmetry,
+            relative_mass_antisymmetry=float(mass_asym))
+        save('reference_before_symmetry')
+        assert asymmetry <= criteria['stiffness_antisymmetry_limit']
+        Ke = (Ke+Ke.T)/2
+        C = np.linalg.solve(L, np.linalg.solve(L, Ke).T).T
+        values, vectors = np.linalg.eigh((C+C.T)/2)
+        resolution = 256*np.finfo(float).eps*15*float(np.max(abs(values)))
+        evidence['reference'].update(Ke15=Ke.tolist(), transformed_C=C.tolist(), eigenvalues=values.tolist(),
+            transformed_eigenvectors=vectors.tolist(), eigenvalue_resolution=resolution,
+            physical_mass_eigenvalues=np.linalg.eigvalsh(M).tolist())
+        save('reference_spectrum_before_selection')
+        assert np.all(abs(values[:6]) <= resolution) and np.all(values[6:] > resolution)
+        mode = np.linalg.solve(L.T, vectors[:, 6])
+        mode *= 1. if mode[np.argmax(abs(mode))] >= 0 else -1.
+        full = np.zeros(42)
+        full[p] = mode
+        length = 2.
+        normalization = max(*(np.linalg.norm(full[6*n:6*n+3])/length for n in range(3)),
+                            *(np.linalg.norm(full[18+3*c:21+3*c]) for c in (0, 1)))
+        mode /= normalization
+        full[p] = mode
+        full[z] = Z@mode
+        eigen_residual = float(np.linalg.norm(Ke@mode-values[6]*(M@mode))/
+                               (np.linalg.norm(Ke)*np.linalg.norm(mode)))
+        omega = float(np.sqrt(values[6]))
+        duration = float(np.pi/(2*omega))
+        modal_mass = float(mode@M@mode)
+        translation_map = np.zeros((42, 3))
+        for node in range(3):
+            translation_map[6*node:6*node+3] = np.eye(3)
+        mass = float(np.trace(translation_map.T@inertia.mixed_mass@translation_map)/3)
+        evidence['reference'].update(selected_mode15=mode.tolist(), full_linear_mode42=full.tolist(),
+            selected_eigenvalue=float(values[6]), omega_rad_per_s=omega, duration_seconds=duration,
+            eigenpair_relative_residual=eigen_residual, mode_normalization=normalization,
+            modal_mass=modal_mass, physical_total_mass_kg=mass,
+            Kzz_condition=float(singular[0]/singular[-1]), mass_condition=float(np.linalg.cond(M)))
+        save('reference_mode_frozen')
+        assert eigen_residual <= criteria['eigenpair_residual_limit'] and modal_mass > 0 and mass > 0
+        assert np.count_nonzero(inertia.mixed_mass[z, :]) == 0
+        runs = (('coarse', criteria['amplitude'], 4), ('fine', criteria['amplitude'], 8),
+                ('half_fine', criteria['amplitude']/2, 8))
+        for context, (label, amplitude, count) in zip(contexts, runs):
+            assert canonical(context._reference_mechanical) == canonical(reference)
+            seeded = {name: value.copy() for name, value in reference.descriptor().items()}
+            initial_seed = amplitude*full
+            for node in range(3):
+                for axis in range(3):
+                    seeded['positions'][node, axis], seeded['position_low'][node, axis] = split_sum((
+                        float(seeded['positions'][node, axis]), float(seeded['position_low'][node, axis]),
+                        float(initial_seed[6*node+axis])))
+                seeded['nodal_frames'][node] = rotation(initial_seed[6*node+3:6*node+6])@reference.nodal_frames[node]
+            for cell in (0, 1):
+                seeded['cell_rotations'][0, cell] = rotation(initial_seed[18+3*cell:21+3*cell])@reference.cell_rotations[0, cell]
+            seeded['resultants'][0] += initial_seed[24:]
+            mechanical = Mechanical(*(_owned(seeded[name]) for name in
+                ('positions', 'position_low', 'nodal_frames', 'cell_rotations', 'resultants')))
+            state = context.initialize(mechanical, np.zeros(24))
+            initial = context.endpoint_accounting(state)
+            h = float(duration/count)
+            theta = float(2*np.arctan(omega*h/2))
+            energy = initial.total_energy
+            assert energy > 0 and np.isfinite(energy)
+            speed = float(np.sqrt(2*energy/mass))
+            scales = dict(energy_j=energy, momentum=mass*speed, angular_momentum=mass*length*speed,
+                          configuration=amplitude*np.sqrt(modal_mass), velocity=amplitude*omega*np.sqrt(modal_mass))
+            correction = dict(resultants=(state.mechanical.resultants-mechanical.resultants).tolist(),
+                nodal_frame_angles=[log_rotation(state.mechanical.nodal_frames[n]@mechanical.nodal_frames[n].T).tolist() for n in range(3)])
+            run = evidence['resolutions'][label] = dict(amplitude=amplitude, steps_requested=count,
+                dt_seconds=h, duration_seconds=duration, discrete_phase_per_step=theta,
+                initial=accounting(initial), initial_mechanical=mechanical_data(state.mechanical),
+                algebraic_initial_adjustment=correction, scales=scales, initial_checks=context.initial_checks,
+                context_sha256=context._identity, endpoints=[])
+            save(label+'_initialized')
+            assert np.array_equal(state.mechanical.positions, mechanical.positions)
+            assert np.array_equal(state.mechanical.position_low, mechanical.position_low)
+            assert np.array_equal(state.mechanical.cell_rotations, mechanical.cell_rotations)
+            assert canonical(state.histories) == canonical(context._reference_origins)
+            assert initial.elastic_consistency_witness/energy <= criteria['elastic_witness_limit']
+            previous_account = initial
+            represented_cell_path = np.zeros(2)
+            for index in range(count):
+                candidate = context.trial(state, dt=h)
+                represented_cell_path += [np.linalg.norm(candidate.unknown42[18+3*c:21+3*c]) for c in (0, 1)]
+                run['pending_trial'] = dict(unknown42=candidate.unknown42.tolist(),
+                    endpoint=mechanical_data(candidate.endpoint.mechanical),
+                    stage_residual_norm=candidate.stage_residual_norm,
+                    endpoint_algebraic_norm=candidate.endpoint_algebraic_norm,
+                    iterations=candidate.iterations, backtracks=candidate.backtracks,
+                    represented_cell_path_rad=represented_cell_path.tolist())
+                save(label+'_trial_'+str(index+1))
+                assert np.max(represented_cell_path) < 1e-3
+                state = context.commit(candidate)
+                now = context.endpoint_accounting(state)
+                q = coordinates(state.mechanical, reference)
+                v = state.physical_velocity24[p]
+                continuous_phase = omega*state.time
+                discrete_phase = (index+1)*theta
+                qcont, vcont = amplitude*mode*np.cos(continuous_phase), -amplitude*omega*mode*np.sin(continuous_phase)
+                qmid, vmid = amplitude*mode*np.cos(discrete_phase), -amplitude*omega*mode*np.sin(discrete_phase)
+                def norm(value, scale):
+                    square = float(value@M@value)
+                    assert square >= 0
+                    return float(np.sqrt(square)/scale)
+                errors = dict(configuration_continuum=norm(q-qcont, scales['configuration']),
+                    velocity_continuum=norm(v-vcont, scales['velocity']),
+                    configuration_discrete_midpoint=norm(q-qmid, scales['configuration']),
+                    velocity_discrete_midpoint=norm(v-vmid, scales['velocity']),
+                    predicted_configuration_dispersion=norm(qmid-qcont, scales['configuration']),
+                    predicted_velocity_dispersion=norm(vmid-vcont, scales['velocity']))
+                dp, dh = difference(now, previous_account, 'linear'), difference(now, previous_account, 'angular')
+                cp, ch = difference(now, initial, 'linear'), difference(now, initial, 'angular')
+                step = dict(linear=float(np.linalg.norm(dp)/scales['momentum']),
+                    angular=float(np.linalg.norm(dh)/scales['angular_momentum']),
+                    energy=abs(now.total_energy-previous_account.total_energy)/energy)
+                cumulative = dict(linear=float(np.linalg.norm(cp)/scales['momentum']),
+                    angular=float(np.linalg.norm(ch)/scales['angular_momentum']),
+                    energy=abs(now.total_energy-initial.total_energy)/energy)
+                endpoint = dict(accounting=accounting(now), mechanical=mechanical_data(state.mechanical),
+                    physical_velocity24=state.physical_velocity24.tolist(),
+                    physical_acceleration24=state.physical_acceleration24.tolist(), q15=q.tolist(),
+                    continuous_q15=qcont.tolist(), continuous_v15=vcont.tolist(),
+                    discrete_midpoint_q15=qmid.tolist(), discrete_midpoint_v15=vmid.tolist(), errors=errors,
+                    step_linear_impulse_n_s=dp.tolist(), step_angular_impulse_nm_s=dh.tolist(),
+                    step_energy_defect_j=now.total_energy-previous_account.total_energy,
+                    normalized_step_defects=step, normalized_cumulative_defects=cumulative,
+                    stage_residual_norm=candidate.stage_residual_norm, endpoint_algebraic_norm=candidate.endpoint_algebraic_norm,
+                    stage_iterations=candidate.iterations, stage_backtracks=candidate.backtracks,
+                    history_sha256=sha256(canonical(state.histories)).hexdigest())
+                run['endpoints'].append(endpoint)
+                run.pop('pending_trial')
+                evidence['accepted_steps_total'] += 1
+                save(label+'_endpoint_'+str(index+1))
+                assert max(step.values()) <= criteria['normalized_defect_limit']
+                assert max(cumulative.values()) <= criteria['normalized_defect_limit']
+                assert now.elastic_consistency_witness/energy <= criteria['elastic_witness_limit']
+                assert candidate.stage_residual_norm <= 1e-11 and candidate.endpoint_algebraic_norm <= 1e-11
+                assert max(errors[k] for k in ('configuration_discrete_midpoint', 'velocity_discrete_midpoint')) <= criteria['nonlinear_to_discrete_limit']
+                assert np.count_nonzero(candidate.stage.inertia.mixed_inertia[z]) == 0
+                assert np.count_nonzero(candidate.stage.inertia.mixed_mass[z]) == 0
+                assert canonical(state.histories) == canonical(context._reference_origins)
+                previous_account = now
+            assert state.epoch == count and abs(state.time-duration) <= 8*np.finfo(float).eps*duration
+            assert context._dynamic._active_session is None and context._work_session is None
+            assert len(context._dynamic._issued) == 1
+        coarse = evidence['resolutions']['coarse']['endpoints']
+        fine_common = evidence['resolutions']['fine']['endpoints'][1::2]
+        fine = evidence['resolutions']['fine']['endpoints']
+        half = evidence['resolutions']['half_fine']['endpoints']
+        def maximum(rows, keys):
+            return max(row['errors'][key] for row in rows for key in keys)
+        continuum_keys = ('configuration_continuum', 'velocity_continuum')
+        discrete_keys = ('configuration_discrete_midpoint', 'velocity_discrete_midpoint')
+        comparisons = dict(continuum_time=compare(maximum(coarse, continuum_keys), maximum(fine_common, continuum_keys),
+                criteria['trajectory_floor'], criteria['time_refinement_ratio']),
+            amplitude=compare(maximum(fine, discrete_keys), maximum(half, discrete_keys),
+                criteria['trajectory_floor'], criteria['amplitude_refinement_ratio']))
+        for key in ('linear', 'angular', 'energy'):
+            comparisons[key] = compare(max(row['normalized_cumulative_defects'][key] for row in coarse),
+                max(row['normalized_cumulative_defects'][key] for row in fine_common),
+                criteria['invariant_floor'], criteria['time_refinement_ratio'])
+        evidence['comparisons'] = comparisons
+        save('comparisons_before_gates')
+        assert all(row['passes'] for row in comparisons.values()), comparisons
+        assert evidence['accepted_steps_total'] == 20 and PROFILE_BYTES == profile_before
+        evidence['status'] = 'PASS'
+        save('complete')
+        record_property('accepted_steps', 20)
+        record_property('selected_omega_rad_per_s', omega)
+        record_property('comparisons', json.dumps(comparisons))
+    except BaseException as error:
+        evidence.update(status='NONPASS', failure_type=type(error).__name__, failure=str(error))
+        save('failure')
+        raise

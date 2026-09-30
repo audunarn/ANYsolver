@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-09-30.39. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.41. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -20,7 +20,8 @@ No publication, merge, release or historical-default change is authorized.
 | D2 radial spatial response | κ=10⁷ misses one target-response gate; fixed-geometry independent solution explains the penalty bias | κ=10⁸ timed out; retain discrepancy and switch to missing partial-boundary row |
 | D2 named partial-support/cycle handoff | Independently accepted for the exact foundation and installed cycle parameter sets | Remaining shell combinations, geometry and explicit multi-pair ownership |
 | D2 S3-source/Q4-target | Shared P1 pressure, complete both-body tangent, four-corner swept rejection, public lifecycle/open restart and mixed-load/pure-press deforming-target KKT comparisons locally pass | Spatial/geometry qualification, broader pair composition and installed admission remain open |
-| D6 physical inertia/time integration | Inertia, free elastic owner, 24 free translation/spin steps and 12 physically loaded finite-motion steps pass scoped development review | Vibration, broader temporal qualification and durable native integration; no complete C7 admission |
+| D3 classical beam static | Independent cantilever/foundation comparison resolves reaction errors below 0.1% at 32/64 B2 cells; multiple fixed-rigid interactions pass local work, coupled response and split restart checks | Scientific and installed qualification; broader beam pairings, geometry and native coupling remain open |
+| D6 physical inertia/time integration | Free/loaded development slices pass; vibration coarse-energy/fine-velocity comparisons fail; zero-step check resolves quadratic fast-mode initial forcing | One separately frozen smaller-amplitude control with unchanged gates; broader temporal/native qualification remains open |
 | D3–D8 | Required programme remains open | Bounded integrated deliveries |
 
 The [D1 handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md)
@@ -179,6 +180,40 @@ Next lead slice moves to a missing pairing/geometry or beam requirement rather
 than repeating these controls.
 Guided open-prefix restart is exact. These development results do not expand
 the accepted installed handoff or establish general warped/CCD admission.
+
+**Beam static development:** the independent small-motion Timoshenko cantilever
+on a finite unilateral foundation gives reaction errors 0.35145%, 0.08824% and
+0.02244% for 16/32/64 B2 cells at the same declared line stiffness. Increasing
+the line stiffness tenfold at 64 cells reduces penetration from 5.87 to 1.86 μm;
+each case meets its matching finite-penalty reference within the stated gate.
+Separate 80-digit transfer calculations resolve the reference values for these
+inputs. This measures nodal-load and curve discretization together; it is not a
+general reference enclosure or hard-contact qualification. The existing static
+driver now composes multiple explicit beam/fixed-rigid pairs, retaining each
+law, gap gate, feature identity and restart contract. Twelve distinct checks pass,
+including one old shell-routing control, independent work, simultaneous force/
+displacement contact, split restart and a runnable source example. A dimensional
+test-assertion failure is preserved; its corrected normalization passes without
+changing production or the scientific force criterion. Close scoped review,
+then take the next missing beam pairing or geometry requirement. Scientific and
+installed admission remain separate.
+
+**Native vibration discrepancy:** the coarse attempt stops after two endpoints
+on its original energy gate. The one finer corrective attempt passes energy but
+stops after two endpoints on the unchanged discrete-linear velocity gate
+(0.002721 > 0.002). Remaining fine and half-amplitude steps were not issued.
+Saved modal decomposition identifies dominant fast-mode content; spatial/log
+velocity conversion is too small to explain it. A saved-data forcing model
+predicts the sign and approximate scale of the coarse/fine discrepancy. This
+supports a finite-amplitude initialization hypothesis without establishing its
+cause. The zero-step actual-initialization discriminator now resolves negative
+mode-9 forcing at both amplitudes: half amplitude gives quarter acceleration
+remainder within 8.63×10⁻⁶; all-mode scaling error is 7.48×10⁻⁵. Physical and
+algebraic balance pass. This supports finite-amplitude excitation already at
+initialization, not temporal correctness or exclusion of every stage defect.
+Next one separately frozen smaller-amplitude vibration fixture keeps the same
+mode, history and numerical gates, reporting its actual initial forcing too.
+Preserve both failed runs, exact gates and unmeasured breadth. No C7 admission.
 
 ## 4. Accelerating delivery without weakening it
 

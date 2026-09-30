@@ -146,3 +146,8 @@ docs/d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md -text whitespa
 docs/d1_review_support/d2_s3_q4*20260930*.source.py -text -whitespace
 docs/d1_review_support/d6_native_loaded_temporal*20260930* -text -whitespace
 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART23.md -text -whitespace
+docs/d1_review_support/native_vibration*20260930* -text -whitespace
+docs/d1_review_support/d3_beam*20260930* -text -whitespace
+docs/d1_review_support/d3_multiple_beam*20260930* -text -whitespace
+docs/d1_review_support/D3_BEAM_FOUNDATION_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART24.md -text -whitespace
