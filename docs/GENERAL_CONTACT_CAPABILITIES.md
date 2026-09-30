@@ -483,6 +483,13 @@ algebraic-zero scope. [Independent development review](d1_review_support/D6_CENT
 
 ## Partial-overlap swept enclosure successor
 
+**Named bounded handoff independently accepted:** the exact guided-foundation
+nx79/159 κ=10^6 benchmark and the installed two-Q4/two-S3 κ=10^7 cycle, as
+specified in [final assessment](d1_review_support/D2_PARTIAL_SHELL_HANDOFF_REVIEW_20260930.md).
+No interpolation of parameter sets, arbitrary cut/rim admission or full D2
+acceptance follows. Installed wheel8af00b06 binds433source files; no release or
+automatic application admission. Historical raw development flags stay unchanged.
+
 The affine physical skin-node path now carries rounded-child endpoint enclosures
 and interval polarity checks outside D1 interior too.36distinct focused checks
 pass across retained v1/v2 runs; v1's missing required test metadata remains a

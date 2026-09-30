@@ -1,10 +1,13 @@
-# Partial shell contact — installed development handoff
+# Partial shell contact — bounded installed handoff
 
 The public [example](../examples/general_contact_partial_shell_cycle.py) presses
 two guided Q4 faces against a nonmatching two-S3 target, translates the target,
 opens and recontacts. Source boundary normal controls remain in contact work.
 Active/open checkpoints persist and resume on fresh models. This handoff is
-tested development work; independent capability disposition is separate.
+independently accepted only for the exact named inputs in the
+[handoff assessment](d1_review_support/D2_PARTIAL_SHELL_HANDOFF_REVIEW_20260930.md).
+Validation alone does not admit another model or parameter range. Release and
+application admission remain separate.
 
 ## Run
 

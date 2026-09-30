@@ -1,8 +1,8 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-09-30.34. **Status:** D1-interior independently accepted; D2 development active.
+**Revision:** 2026-09-30.35. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 The goal owns outcome, acceptance boundaries, budget and delegated decisions.
 This plan is the adaptable route to the complete C0–C9 programme. The lead may
@@ -18,7 +18,7 @@ No publication, merge, release or historical-default change is authorized.
 | D2 finite-law Q4/S3 | Moving partial overlap, active prescribed-source controls, opening/recontact and authentic active/open restart locally tested and reviewed | Method-appropriate spatial accuracy, boundary response and supported artifact |
 | D2 finite-law S3/S3 | Both-body manufactured force/path work and genuine normal-control lifecycle/restart locally tested and reviewed | Geometry/response admission beyond manufacture |
 | D2 radial spatial response | κ=10⁷ misses one target-response gate; fixed-geometry independent solution explains the penalty bias | κ=10⁸ timed out; retain discrepancy and switch to missing partial-boundary row |
-| D2 partial-support benchmark | nx79/159 and saved-field error enclosures locally pass, scoped independently reviewed | State/swept requirements and installed bounded handoff |
+| D2 named partial-support/cycle handoff | Independently accepted for the exact foundation and installed cycle parameter sets | Remaining shell combinations, geometry and explicit multi-pair ownership |
 | D6 physical inertia | Separate centered finite owner and14distinct focused checks pass scoped independent development review | Complete common-stage midpoint/state contract and integrated contact-free dynamics |
 | D3–D8 | Required programme remains open | Bounded integrated deliveries |
 
@@ -120,9 +120,21 @@ one test-metadata failure is retained. The affected ten-pose lifecycle and authe
 active/open prefix restart pass together34.547s/316MB; an unchanged older partial
 checkpoint rejects explicitly. The installed public example passes19.486s/276MB,
 with433exact source matches and exact mechanical/material-state parity. The
-scoped handoff assessment follows, not another geometry algorithm or mesh sweep.
+scoped [handoff assessment](docs/d1_review_support/D2_PARTIAL_SHELL_HANDOFF_REVIEW_20260930.md)
+now accepts only the named foundation and installed cycle parameter sets. It
+does not interpolate between their stiffnesses or accept arbitrary cuts.
 The D6 common-stage contract has prospective independent scrutiny; implementation
 must establish algebraic-block invertibility before assuming an index-one system.
+
+Next lead slice: compose multiple explicitly declared projected-penalty pairs
+through the existing contributor/evaluation boundary, preserving each pair's
+work, dimensional gap gate, feature identity and restart contract. This is
+needed before automatic-domain/self-contact ownership; do not introduce another
+single-pair driver. Begin with a bounded planar independent-work/reaction case,
+reject duplicate feature pairs and enforce aggregate resource caps. Native
+midpoint implementation progresses separately under the reviewed contract;
+its first eight-step prototype passes locally, pending transaction closure and
+independent assessment. Neither slice broadens current accepted artifacts.
 
 ## 4. Accelerating delivery without weakening it
 

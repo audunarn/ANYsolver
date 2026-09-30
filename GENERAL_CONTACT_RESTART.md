@@ -2,13 +2,14 @@
 
 **30 September2026: active; full C0–C9 continues.**
 Worktree C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
-Previous checkpoint97a277d8 preserves analytical evidence. Current owned changes
-strengthen partial swept enclosures/restart identity, add a public example and
-installed verification. Historical dirty work,
+Checkpointf42bc271 preserves swept enclosures/restart identity, public example
+and installed verification;97a277d8 preserves analytical evidence. Current
+documentation promotes only the independently assessed named D2 handoff.
+Historical dirty work,
 C6 prototype and main checkout preserved. No publication/merge/release.
 
-[Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3;
-[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.34;
+[Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4;
+[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.35;
 [programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md);
 [prior restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART20.md).
 
@@ -19,7 +20,9 @@ D1-interior accepted on installed0b2ac9be, exact scope in
 No automatic arbitrary-model/application/D2 admission. All old consumed
 execution authorities and historical failures remain; no replay/rebinding.
 
-D2 finite projected penalty is still development. Q4/S3 moving prescribed-edge
+D2 finite projected penalty is accepted only for the exact named guided-foundation
+and installed cycle settings in D2_PARTIAL_SHELL_HANDOFF_REVIEW_20260930.md.
+Broader Q4/S3 moving prescribed-edge
 lifecycle/restart and S3/S3 manufactured both-body force/path plus true normal
 lifecycle/restart locally pass. Checkpoint23e845e1 binds latest S3 work.
 Point-load physical-gap/operator failures remain NONPASS.
@@ -53,9 +56,12 @@ Installed public example PASS19.486s/276MB,433exact source matches, exact q/
 forces/gaps/control/material-state parity. Artifact target:
 C:/ANYworkspaceWork/general-contact-partial-swept-dev/target.
 Example examples/general_contact_partial_shell_cycle.py; guide
-docs/GENERAL_CONTACT_PARTIAL_SHELL_HANDOFF_20260930.md. Not D2 acceptance yet.
-Reviewer closes the bounded handoff disposition; then choose the next actual
-remaining D2 capability. No new pressure-mode/mesh campaign.
+docs/GENERAL_CONTACT_PARTIAL_SHELL_HANDOFF_20260930.md. Named handoff accepted,
+not entire D2 or arbitrary models. Next lead slice composes multiple explicit
+projected-penalty pairs behind contributor/evaluation interfaces, with independent
+reaction/work case, duplicate-feature rejection, per-pair gap gates and aggregate
+caps. No new pressure-mode/mesh campaign. Current artifact433source files remain
+frozen; future implementation is a separate candidate.
 
 Separate managed D6 worktree:
 C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver,
@@ -70,11 +76,15 @@ Worker /root/saved_radial_boundary authors only new _ge_beam3_native_midpoint.py
 its focused test and D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md. One bounded
 nonzero-spin/descriptor/rollback slice allowed180s/1GB; static commit guards
 unchanged. Reviewer /root/checkpoint_review owns the D2 handoff review only now.
-Midpoint tests and D6 acceptance remain open; inspect owned process before acting.
+First eight-step midpoint/derivative/descriptor/momentum process passes27.105s/
+200MB; transaction publication exit-guard rollback receives a separate targeted
+repair/check. Raw d6_native_midpoint_v{1,2,3}_20260930, owned session86696;
+inspect actual process and worker disposition before acting. Independent midpoint
+assessment and C7 free-motion/vibration/torque/load/refinement gates remain open.
 Mainpackage433files untouched by D6. Managedartifact mustremainrecoverable until
 integration; no archive. ANYfemsummarybridge c138d41 remainsreviewed, admissionfalse.
 
 Original120active-hour clock unchanged, resumed29September08:04:33UTC.
-Latestusage115004s=31.95h,about88.05h remaining; checkactual, neverreset.
+Latestusage118426s=32.90h,about87.10h remaining; checkactual, neverreset.
 Routine180s/1GB; named integrated900s/4GB or stricteroldcaps. Up to2workers.
 No goalcompletion, release or full-programme forecast asserted.
