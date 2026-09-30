@@ -163,6 +163,86 @@ The individual V01–V28 and B01–B18 obligations below are all
 and criteria remain in the programme. Split a group when a row reaches
 candidate adjudication; a failed required case cannot disappear within it.
 
+### F08 candidate binding — frozen prospective v1, not a pass
+
+Independent pre-execution review by `/root/anyfem_consumer` accepts the
+scientific scope and corrected hash assertion: 28/28 fixture/config matches,
+27/27 source test/helper matches, unchanged 17-case inventory. The initial
+binding finding and its repaired preparation remain retained. No product
+equation changed and no remaining pre-run correctness finding was identified.
+
+**Foundation claim:** faithful local extraction of both existing native B3
+generalized and physical axial/biaxial-fibre operators, preserving their
+18 physical plus 24 retained coordinates and accepted material predecessors.
+It does not independently qualify the inherited element/material equations,
+the nonunique tangent at a yield switch, a scalable mixed owner, line law,
+or G1/G3. The source suite explicitly retains the yield-switch central-FD
+mismatch and checks its one-sided responses and nearby smooth active branch;
+that mismatch is not relabeled a smooth tangent pass.
+
+**Candidate/input identity:** unchanged native product in solver `7ae52d80`,
+wheel `19e3235a35b69e14f322867bf224b164789163c6cc7e2e808c0bba584c3c441e`.
+The two exact test suites are `test_b3_e4_g0_f08_local_operator_seam.py` and
+`test_b3_e4_g0_f08_adapter_contract.py`: 17 parametrized cases after the added
+current generalized accepted-predecessor and direct block assertions. They
+and their 27-file fixture closure are prepared at
+`C:/Users/AudunArnesenNyhus/AppData/Local/Temp/r8-f08-adapter-installed-v1`.
+Frozen 28-file fixture/config list SHA-256
+`b61dda5d5a9a8016ea55b916e643d93dadcbd369b3850f853f233d0068a94d5e`;
+installed runner SHA-256
+`96f75bad6164fc4df31fb4e5f151508700040c34f55e04c41981d1d920eed15b`,
+supervisor SHA-256
+`527535441e819612a59c78326a0fc5c54f091265ee126df741693d54164bba56`.
+Pre-review caught recorded rather than asserted fixture hashes; the corrected
+runner asserts the frozen manifest and every fixture/config before pytest.
+The original unexecuted preparation is retained as `inputs-before-review.json`.
+The runner also binds the full 384-module source/wheel/site
+catalog, dependencies/settings and import origins. No fixture depends on the
+separately owned dirty F03 script. Imported helpers are definitions only;
+no diagnostic CLI or consumed F08-D/F03 authority is invoked.
+
+**Required inventory and oracles:** both families at virgin and perturbed
+physical/retained configurations; generalized line force/couple work; actual
+native multiplicative update derivatives; yielded fixed-predecessor fibre
+parity, side-specific yield transition and smooth plastic branch; owned
+response arrays/candidate histories; unchanged accepted origins/state/checkpoint;
+invalid family/parameter/model/reference/state rejection. Current generalized
+actual first accepted .5 target is restored and perturbed using the frozen
+2e-4*sin(free_index+.3) step with its accepted histories. Current generalized
+and yielded fibre trials must assert correct 18+24 cross/internal blocks,
+both elements' six shared physical contributions and no coupling between
+disjoint retained coordinates. Nonzero physical/cell rotations, retained
+resultants and scaled compatibility are required for the generalized trial.
+This removes dependence on transitive older validation evidence.
+
+The bounded native dense owner and separately indexed old local gather are
+assembly/representation oracles sharing the inherited native constitutive law.
+For fibre, convert the independent dense left-Exp Hessian to its spatial
+residual Jacobian using internal moments before nodal-load subtraction.
+Generalized work corrections and cell couples follow the existing native
+operators. Do not symmetrize either Jacobian or infer positive definiteness.
+Preserve parity <=1e-12 for existing fixtures, and registered deformed-block
+limits <=1e-9 max absolute / <=1e-11 normalized, nonzero blocks >1e-12.
+Elastic actual-update FD requires at least two plateau steps <=1e-6; smooth
+active fibre at least two <=1e-5. All histories/checkpoint comparisons are exact.
+Use the existing frozen native scales; no unit-invariance claim from a mixed
+raw norm. Two focused changed source checks pass 2/2; they are development
+checks, not the installed assessment.
+
+**Execution/terminal:** after independent contract/input review, snapshot this
+matrix byte-for-byte and run `python -u run_bounded.py` once in that exclusive
+installed directory. Verify actual one numerical thread, JIT off, source/wheel
+and isolated imports. Enforce 600 s / 8 GiB process-tree memory and retain
+native cooperative limits. Require 17 complete JUnit cases, no skip/error,
+successful observed exit, scientific assertions and both small accepted-block
+JSON reports. Missing inventory, mismatch, failed admission/solver, resource
+breach or unresolved correctness findings leave F08 open. Preserve failures;
+do not retry a consumed authority. Independent scientific/code/artifact
+adjudication must accept every scoped requirement before marking F08 PASSED.
+Protected historical F08-S/F08-D-v1/v2 records remain distinct, not replayed
+or relabeled. No acceptance of independent material law, semismooth switch,
+unbounded production size, attachment or aggregate gate follows.
+
 - V inventory: V01, V02, V03, V04, V05, V06, V07, V08, V09, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23, V24, V25, V26, V27, V28.
 - B inventory: B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11, B12, B13, B14, B15, B16, B17, B18.
 

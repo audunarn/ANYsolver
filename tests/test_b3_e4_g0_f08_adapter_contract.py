@@ -2,12 +2,14 @@
 
 from hashlib import sha256
 from dataclasses import replace
+import json
 
 import numpy as np
 import pytest
 
 from anysolver._ge_beam3_p5_seeded.core import canonical
 from anysolver._ge_beam3_retained_fibre_program import solve_force_program
+from anysolver._ge_beam3_retained_generalized_program import solve as solve_generalized
 from anysolver._ge_beam3_retained_fibre_state import Context as FibreContext
 from anysolver._ge_beam3_retained_generalized_state import (
     Context as GeneralizedContext, Program as GeneralizedProgram,
@@ -47,6 +49,78 @@ def _spatial_fibre_dense(layout, residual, chart_hessian, parameter):
                          (-moment[1], moment[0], 0.)))
         result[start:start+3, start:start+3] -= .5*skew
     return result
+
+
+def _block_inventory(context, state, origin, parameter, family, assembled):
+    """Direct current-adapter 18 physical + 24 retained incidence checks."""
+    layout = context.layout if family == "physical_fibre" else context
+    assert len(layout.elements) == 2
+    shared = set(layout.slots[0]) & set(layout.slots[1])
+    retained = [set(slots[18:]) for slots in layout.slots]
+    assert len(shared) == 6 and all(len(slots) == 24 for slots in retained)
+    assert not (retained[0] & retained[1])
+    assert not (shared & (retained[0] | retained[1]))
+    norms = []
+    for index in range(2):
+        local = evaluate_local_trial(context, state, origin, parameter,
+                                     family=family, element_index=index)
+        positions = [row for row, slot in enumerate(local.slots[:18]) if slot in shared]
+        assert len(positions) == 6
+        measured = [float(np.linalg.norm(block)) for block in (
+            local.tangent[:18, 18:], local.tangent[18:, :18],
+            local.tangent[18:, 18:], local.residual[positions],
+            local.tangent[np.ix_(positions, positions)])]
+        assert min(measured) > 1e-12, measured
+        norms.append(measured)
+    a, b = (np.array(sorted(slots), dtype=int) for slots in retained)
+    assert assembled.tangent[a, :][:, b].nnz == 0
+    assert assembled.tangent[b, :][:, a].nnz == 0
+    return norms
+
+
+def test_current_adapter_uses_accepted_generalized_predecessor_and_retained_blocks(tmp_path):
+    fixture = build(4, z_offset=.0675, torsion_constant=square_torsion_constant())
+    pattern = DistributedPattern(
+        LinePattern(tuple((eid, .09, -.03, .02) for eid in fixture.model.mesh.elements)),
+        tuple((eid, .07, -.04, .05) for eid in fixture.model.mesh.elements))
+    program = GeneralizedProgram((.5, 1.), pattern)
+    accepted = solve_generalized(fixture.model, program, stop_after=1)
+    assert accepted.status == "paused", accepted.failure
+    assert accepted.completed_targets == 1
+    context = GeneralizedContext(fixture.model, program)
+    checkpoint_hash = sha256(accepted.checkpoint).hexdigest()
+    restored, _ = context.restore(accepted.checkpoint, expected_sha256=checkpoint_hash)
+    before = canonical((restored.mechanical.descriptor(), restored.histories))
+    direction = np.zeros(context.count)
+    direction[context.free] = 2e-4*np.sin(np.asarray(context.free)+.3)
+    trial = context.advance(restored.mechanical, direction)
+    assert np.linalg.norm(trial.nodal_frames-context.reference_frames) > 1e-7
+    assert np.linalg.norm(trial.cell_rotations-np.eye(3)) > 1e-7
+    assert np.linalg.norm(trial.resultants) > 1e-7
+    dense = context.assemble(trial, .5, restored.histories)
+    assert dense[2][1] > 1e-7
+    result = evaluate_sparse_trial(context, trial, restored.histories, .5,
+                                  family="generalized")
+    residual_error = float(np.max(np.abs(result.residual-dense[0])))
+    tangent_error = float(np.max(np.abs(result.tangent.toarray()-dense[1])))
+    normalized_residual = float(_relative(result.residual, dense[0]))
+    normalized_tangent = float(_relative(result.tangent.toarray(), dense[1]))
+    assert max(residual_error, tangent_error) <= 1e-9
+    assert max(normalized_residual, normalized_tangent) <= 1e-11
+    assert tuple(canonical(h) for h in result.candidate_histories) == tuple(
+        canonical(response.history) for response in dense[3])
+    norms = _block_inventory(context, trial, restored.histories, .5,
+                             "generalized", result)
+    assert canonical((restored.mechanical.descriptor(), restored.histories)) == before
+    assert sha256(accepted.checkpoint).hexdigest() == checkpoint_hash
+    (tmp_path/"accepted-generalized-blocks.json").write_text(json.dumps({
+        "residual_absolute_error": residual_error, "tangent_absolute_error": tangent_error,
+        "residual_normalized_error": normalized_residual,
+        "tangent_normalized_error": normalized_tangent,
+        "compatibility": float(dense[2][1]), "local_block_norms": norms,
+        "count": context.count, "nnz": result.tangent.nnz,
+        "accepted_checkpoint_sha256": checkpoint_hash,
+    }, indent=2))
 
 
 @pytest.mark.parametrize("family", ("generalized", "physical_fibre"))
@@ -110,7 +184,7 @@ def test_typed_adapter_matches_old_local_seam_and_dense_owner(
     assert canonical(origin) == before
 
 
-def test_typed_adapter_retains_yielded_accepted_predecessor():
+def test_typed_adapter_retains_yielded_accepted_predecessor(tmp_path):
     program = ForceProgram((.25, .5, 1., .5, 0., -.5, 0.),
                            ((5, .4, -.005, 0.),), max_iterations=24)
     accepted = solve_force_program(make_model(contrast=1.), program,
@@ -147,6 +221,14 @@ def test_typed_adapter_retains_yielded_accepted_predecessor():
         assert canonical(origin) == before
         assert canonical(restored.mechanical.descriptor()) == state_before
         assert sha256(accepted.checkpoint).hexdigest() == checkpoint_hash
+        if trial:
+            norms = _block_inventory(context, state, origin, 1.,
+                                     "physical_fibre", result)
+            (tmp_path/"accepted-fibre-blocks.json").write_text(json.dumps({
+                "local_block_norms": norms, "count": context.layout.count,
+                "nnz": result.tangent.nnz,
+                "accepted_checkpoint_sha256": checkpoint_hash,
+            }, indent=2))
     direction = np.zeros(context.layout.count)
     first = context.layout.nodal_count-6
     direction[first:first+6] = (.4, -.3, .2, .15, -.1, .12)
