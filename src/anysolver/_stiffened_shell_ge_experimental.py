@@ -22,6 +22,7 @@ from scipy.sparse import linalg as spla
 from scipy.sparse.csgraph import maximum_bipartite_matching
 
 from ._ge_beam3_native_definition import NativeBeamDefinition
+from ._ge_beam3_fibre_section import PhysicalFibreSection
 from ._ge_beam3_pose_joint import RigidPoseJoint
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._stiffened_shell_s3_algorithmic_pullback import POLICY as S3_J2_PULLBACK_POLICY
@@ -250,8 +251,9 @@ def _beam_reference(definitions: tuple[NativeBeamDefinition, ...]):
     nodes = {}
     for definition in definitions:
         element, _inertia = definition.instantiate()
-        if type(element.section).__name__ != "EllipsoidalGeneralizedSection":
-            raise ValueError("experimental GE point slice admits generalized B3")
+        if (type(element.section).__name__ != "EllipsoidalGeneralizedSection" and
+                type(element.section) is not PhysicalFibreSection):
+            raise ValueError("explicit native generalized or physical-fibre section required")
         ref = element.operator.reference
         for node, position, frame in zip(element.node_ids, ref.coordinates,
                                          ref.nodal_triads):
@@ -330,6 +332,14 @@ def _assemble_beam(pieces, nodes, index, count, coordinate_scale):
                                         shape=(count, count)).tocsr(), local_error)
 
 
+def _reference_section_tangent(section):
+    """Virgin elastic derivative for compilation scales, never a trial cache."""
+    if type(section) is PhysicalFibreSection:
+        response = section.response(np.zeros(6), section.virgin())
+        return response.tangent + response.tangent_low
+    return section.elastic
+
+
 def _reference_scales(shell_xyz, beam_nodes, beam_parts, shell_count,
                       beam_count):
     """Freeze coordinate scales with their physical units at compilation."""
@@ -347,7 +357,7 @@ def _reference_scales(shell_xyz, beam_nodes, beam_parts, shell_count,
     for i, (element, _slots, _origin) in enumerate(beam_parts):
         base = nodal_count+24*i
         beam_scale[base:base+6] = 1.
-        resultant_scale = np.abs(element.section.elastic)@strain_scale
+        resultant_scale = np.abs(_reference_section_tangent(element.section))@strain_scale
         beam_scale[base+6:base+24] = np.tile(resultant_scale, 3)
     if not np.isfinite(shell_scale).all() or not np.isfinite(beam_scale).all():
         raise ValueError("finite reference coordinate scales required")
@@ -479,6 +489,13 @@ class ExperimentalGEAnalysis:
             definition.lines, definition.q4_pullback_policy)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count = _beam_reference(
             definition.beams)
+        self._has_physical_fibre = any(type(element.section) is PhysicalFibreSection
+                                      for element, _, _ in beam_parts)
+        self._beam_families = tuple(dict.fromkeys(
+            "PHYSICAL_AXIAL_BIAXIAL_FIBRE" if type(element.section) is PhysicalFibreSection
+            else "RESULTANT_ELLIPSOID" for element, _, _ in beam_parts))
+        if self._has_physical_fibre and definition.lines:
+            raise ValueError("physical-fibre mixed owner currently admits point attachments only")
         shell_count = 6*len(shell_ids)
         reference_length, shell_scale, beam_scale = _reference_scales(
             shell_xyz, beam_nodes, beam_parts, shell_count, beam_count)
@@ -670,20 +687,27 @@ class ExperimentalGEAnalysis:
         if (self._definition.shell.s3_elements and shell_plastic and
                 not self._line_samples):
             excluded += ("qualified S3 J2 finite-rotation response",)
+        if self._has_physical_fibre:
+            excluded += ("finite analysis of mixed native section families",
+                         "physical-fibre stress recovery")
         return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
                 "shell": (("experimental isotropic Q4/S3-V2D J2"
                            if self._definition.shell.s3_elements else
                            "experimental isotropic Q4 J2") if shell_plastic else
                           "elastic flat Q4/S3"),
-                "beam": ("generalized B3 retained" if self._line_samples else
+                "beam": ("native B3 retained, reference-linear physical fibres"
+                         if self._has_physical_fibre else
+                         "generalized B3 retained" if self._line_samples else
                          "generalized B3 retained, including experimental yielding"),
+                "beam_section_families": self._beam_families,
                 "attachment": attachment,
                 "experimental_line_spaces": tuple(
                     line.multiplier_space for line in self._definition.lines),
                 "q4_force_map": self._definition.q4_pullback_policy,
-                "rotation_chart": ("unchanged reference-linear chart" if self._line_samples else
+                "rotation_chart": ("unchanged reference-linear chart"
+                                   if self._line_samples or self._has_physical_fibre else
                                    "experimental owned shell anchors; full fixed/free rotational triples only"),
-                "analysis": (("reference_linear",) if self._line_samples else
+                "analysis": (("reference_linear",) if self._line_samples or self._has_physical_fibre else
                              ("reference_linear", "experimental_elastic_finite_point",
                               "experimental_generalized_plastic_finite_point") +
                              (("experimental_q4_s3_j2_finite_point",)
@@ -778,6 +802,8 @@ class ExperimentalGEAnalysis:
         self._require_open()
         if self._line_samples:
             raise ValueError("experimental weak line admits reference-linear analysis only")
+        if self._has_physical_fibre:
+            raise ValueError("physical-fibre mixed owner admits reference-linear analysis only")
         if self._accepted is not None:
             raise RuntimeError("finite and reference-linear states cannot be mixed")
         if self._finite_driver is None:
@@ -848,6 +874,9 @@ class ExperimentalGEAnalysis:
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
         chart = None
+        if self._has_physical_fibre and raw.startswith(
+                (CHART_CHECKPOINT_MAGIC, S3_BINARY_CHECKPOINT_MAGIC)):
+            raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
         if raw.startswith(CHART_CHECKPOINT_MAGIC):
             if self._line_samples:
                 raise ValueError("owned shell charts require a finite point model")
@@ -859,6 +888,8 @@ class ExperimentalGEAnalysis:
                 if ("_chart" in kind) != (chart is not None):
                     raise ValueError("numeric shell chart snapshot requires matching outer policy")
                 kind = kind.replace("_chart", "")
+                if kind != "linear" and self._has_physical_fibre:
+                    raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
                 if kind in ("finite", "finite_material", "finite_shell_material") and self._line_samples:
                     raise ValueError(
                         "experimental L1 line admits reference-linear checkpoints only")
@@ -940,6 +971,8 @@ class ExperimentalGEAnalysis:
                 (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT)):
+            if self._has_physical_fibre:
+                raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
             if self._line_samples:
                 raise ValueError(
                     "experimental weak line admits reference-linear checkpoints only")
