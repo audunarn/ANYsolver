@@ -825,8 +825,10 @@ class ExperimentalB2Q4PanelAnalysis:
         """Solve ordered cases with one factorization and bounded case storage.
 
         Each result is complete before it joins the returned prefix. Numerical
-        failure or cooperative cancellation stops further cases; callbacks and
-        programming errors propagate. This development route uses one RHS at a
+        failure, cooperative cancellation or owner closure stops further cases.
+        Closing from a completion callback preserves the complete prefix; a
+        final-case closure still returns completed. Callback and programming
+        errors propagate. This development route uses one RHS at a
         time, avoiding full displacement/reaction batches for large panels.
         """
         if self._closed:
@@ -864,6 +866,10 @@ class ExperimentalB2Q4PanelAnalysis:
         recovery = _checked_recovery(
             {} if recover_members is None else recover_members,
             {member_id for member_id, _ in self._members})
+        # Counts outlive a callback closing the owner, without retaining its
+        # factor in this operation or a propagated callback-error traceback.
+        factorization_count = self._handle.factorization_count
+        solve_count = self._handle.solve_count
         fingerprints = []
         for _case_id, load in submitted:
             if cancellation_token is not None and cancellation_token.is_cancelled:
@@ -873,16 +879,19 @@ class ExperimentalB2Q4PanelAnalysis:
             del snapshot
         completed = []
         for index, (case_id, load) in enumerate(submitted):
-            if cancellation_token is not None and cancellation_token.is_cancelled:
+            if self._closed or (cancellation_token is not None and
+                                cancellation_token.is_cancelled):
                 break
             snapshot, fingerprint = _load_value_snapshot(load, self._u0.shape)
             if fingerprint != fingerprints[index]:
                 raise ValueError("B2 panel load case changed after submission")
             result = self.solve_linear(snapshot, recover_members=recovery)
+            factorization_count = result.factorization_count
+            solve_count = result.solve_count
             if result.status != "completed":
                 return ExperimentalB2Q4PanelBatchResult(
                     "failed", chosen, chosen_points, tuple(completed),
-                    self._handle.factorization_count, self._handle.solve_count,
+                    factorization_count, solve_count,
                     failure_reason=f"{case_id}: {result.failure_reason}")
             point_multipliers = dict(result.point_multipliers)
             point_gaps = dict(result.point_gaps)
@@ -901,8 +910,11 @@ class ExperimentalB2Q4PanelAnalysis:
         return ExperimentalB2Q4PanelBatchResult(
             "cancelled" if len(completed) != len(submitted) else "completed",
             chosen, chosen_points, tuple(completed),
-            self._handle.factorization_count,
-            self._handle.solve_count)
+            factorization_count, solve_count,
+            failure_reason=("experimental panel closed" +
+                            (" after " + completed[-1].case_id if completed else "")
+                            if self._closed and len(completed) != len(submitted)
+                            else None))
 
     def close(self) -> None:
         self._closed = True

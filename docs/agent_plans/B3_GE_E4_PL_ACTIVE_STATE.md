@@ -11,14 +11,17 @@ Formal F03 authority unconsumed; spent authorities remain spent.
 ## Identity and ownership
 
 Solver worktree C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration; product a5a698b5eb149ac8b62b358b0a1edcd921a77d32.
-Current owned slice: test_b2_point_foundation.py, note/matrix and sealed assessment.
+branch codex/b3-ge-e4-pl-integration; accepted point/static foundation commit
+11819ab863077cc95a2ffb6880a449f8732f2fc1 (unchanged a5a698b5 kernel).
+Latest lifecycle candidate: panel module SHA3dd59ac8..., wheel0a7532a6...;
+exact source catalog and inputs are in the sealed record below.
+Owned slice: panel batch method/tests/docs, note/matrix and sealed lifecycle record.
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 source7cf1fd7ecec14ab16dab3ffb26bf4182c807af0c; no current edits.
 Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py, SHA
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481:
 do not edit/stage/run/interrupt. Main untouched; no foreign process interrupted.
-No owned numerical job remains active.
+No owned numerical job remains active. Completed source/artifact reviews are clear.
 
 ## Delivered behavior and accepted evidence
 
@@ -43,18 +46,30 @@ wheel942460a1,205 onsite imports;4.65s/204963840B/1thread/JIT off.
 No public S3 B2, finite B2, line/footprint or full M3 acceptance follows.
 Previous active notes are preserved byte-for-byte in sealed records.
 
+[B2 callback-close repair](../../.qualification/b3-ge-e4-pl/r8-b2-callback-close-dev-20260930-v1/results.md):
+67/67 fresh installed checks (48 B2/19 ANYfem); eight new cases preserve exact
+completed selections and scalar counts, stop before another solve, release the
+factor inside callbacks and retained error tracebacks, and propagate original
+RuntimeError/MemoryError. Final closure returns completed; earlier closure
+returns cancelled with an explicit reason. All386/97 modules match source/wheel/
+site,267 onsite imports,1thread/JIT off;12.44s/224030720B. Independent review clear.
+Only solve_linear_many changed;385 other kernels and all mechanics primitives
+unchanged. Reuse scoped mechanics and75 unaffected GE regressions by impact.
+Original AttributeError and superseded held-handle V1 remain retained. No speed
+claim or aggregate F13/M3 acceptance follows.
+
 ## Current decision and next action
 
-Decision sought: close the B2 batch lifetime defect without losing completed
-cases, explicit failure status, counts or bounded storage. A completion callback
-can currently close the owner and clear its factor handle before final counts,
-causing AttributeError. General F13 remains open.
-Next integrated fix: capture the active handle for count recovery; owner closure
-stops before another case, preserving the complete prefix. If all submitted cases
-already completed, return completed. Callback programming errors still propagate.
-Check close on intermediate/final cases, combined cancellation, exact selected
-outputs, no further solves and explicit closed-owner rejection; verify installed
-artifact and consumer impact, then obtain independent review. No new framework.
+Resolved decision: scalar counts preserve completed cases after callback closure
+without retaining the factor. The identified lifetime defect is repaired and
+independently reviewed; do not repeat its completed checks absent changed inputs.
+General F13 remains open. Next action: reconcile the remaining existing F13
+point/static-owner obligations against the scoped admission, batch/invalidation,
+cancellation and consumer evidence; execute only missing consequential checks
+under a prospective combined acceptance contract. Keep unresolved topology,
+mass/prestress and attachments assigned to their required later milestones.
+Advance M3's required matched numerical/external acceptance alongside that
+closure; do not retroactively relabel ordinary regressions as qualification.
 
 M2 remains unresolved beyond the bounded retained-port/support decision:
 [mechanics evidence](../../.qualification/b3-ge-e4-pl/r8-bl5-port-boundary-decision-dev-20260930-v1/results.md).

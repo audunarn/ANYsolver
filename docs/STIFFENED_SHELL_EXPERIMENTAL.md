@@ -317,3 +317,14 @@ unrepresentable projected work fails explicitly. Submitted panel batch case IDs
 and load references are fixed before completion callbacks; changing an original
 load array is still detected by its bounded value fingerprint. These integrity
 checks do not establish F10/F11/F13 or full M3 acceptance.
+
+Closing the B2 point-panel owner from its `on_case` completion callback stops
+the batch before another case begins and returns the complete selected prefix
+with `status="cancelled"` and an explicit closure reason. If every submitted
+case has already completed, the batch returns `status="completed"`. Counts
+are copied before the callback, so neither the operation nor a propagated
+callback-error traceback retains the closed factor. The closed owner rejects
+further solves.
+Combining closure with token cancellation preserves the same complete prefix.
+Callback programming and memory errors still propagate unchanged. This is a
+callback-boundary contract, not concurrent thread-safe owner closure.

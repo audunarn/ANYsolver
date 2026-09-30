@@ -204,6 +204,24 @@ bind unchanged sourcea5a698b5/wheel942460a1. Seal SHA-256
 covers94 files plus the seal. GeneralF10/F11, G0B, F13 andM3 stay open; local S3
 proof does not imply public S3 B2 execution or finite B2 qualification.
 
+**F13 lifecycle development,30 September:** completion-callback closure now
+returns the complete selected prefix and scalar numerical counts. Incomplete
+closure is cancelled with an explicit reason; final-case closure is completed.
+No factor is retained by the operation or an original error traceback. Eight
+new closure/cancellation/weak-reference/error tests and59 affected B2/consumer
+regressions pass67/67 through fresh wheel
+`0a7532a62f4b03ccc718a391f7a21d571dd917a2f01deac7cb745fee5ba87e8b`.
+All386 solver/97 unchanged consumer modules match source/wheel/site;267 onsite
+imports,1thread/JIT off,12.440432s/224030720B. Only the batch method changed;
+385 other modules and mechanics primitives are unchanged. Independent source,
+artifact and lifecycle review is clear; scoped point/static scientific evidence
+and75 unaffected GE controls remain applicable by recorded impact analysis.
+[Original failure, superseded V1, final V2 and review](../../.qualification/b3-ge-e4-pl/r8-b2-callback-close-dev-20260930-v1/results.md)
+are sealed (81 files plus seal SHA-256
+`f456f52102499d3bec85b565ec696371b15c89dee0088594e20779dd8f1b14f0`).
+Aggregate F13/M3 remain open. General concurrent closure, new laws, physical
+accuracy, scale or speedup are not claimed.
+
 F09 development, 30 September: the fixed-wrench physical aspect family passes the public session (4/4 installed including its private control); independent cut-work, tip and station predicates pass. Solver `227d5ea8` enforces the reviewed exact basic-energy plus separate bounded rigid/cross certificate on emitted tangents, replacing the arbitrary pivot veto while preserving exact SPD and strict representation checks. Installed 200/200 and six-row exact-input threshold checks pass with independent review, retaining historical below-floor mismatch and parity only where laws agree. Prospective candidate binding and current-wheel preservation now support the scoped foundation acceptance recorded below. Historical nonphysical shear-soft local passes and graph failures remain retained. Evidence: `.qualification/b3-ge-e4-pl/r8-f09-admission-dev-20260930-v1/`, `.qualification/b3-ge-e4-pl/r8-b2-output-guard-dev-20260930-v1/`, `.qualification/b3-ge-e4-pl/r8-f09-foundation-20260930-v1/`.
 
 ### F09 candidate binding — frozen prospective v1, not a pass

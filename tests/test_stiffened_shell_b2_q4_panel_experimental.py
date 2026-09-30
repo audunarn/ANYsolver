@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import weakref
 from dataclasses import replace
 from types import SimpleNamespace
 from scipy import sparse
@@ -403,6 +404,99 @@ def test_point_panel_batch_cancellation_keeps_complete_prefix():
             recover_members={"missing": (.5,)})
     assert analysis._handle.solve_count == 3
     analysis.close()
+
+
+@pytest.mark.parametrize("close_after", (1, 3, 5))
+@pytest.mark.parametrize("cancel_too", (False, True))
+def test_point_panel_batch_callback_close_preserves_complete_prefix(close_after, cancel_too):
+    nodes, shells, members, points, free = _panel()
+    definition = stiffened_shell.B2Q4PanelDefinition(
+        stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+        nodes, shells, members, points,
+        sparse.eye(54, format="csr")[:, free], np.zeros(54))
+    analysis = stiffened_shell.create_analysis(definition=definition)
+    control = stiffened_shell.create_analysis(definition=definition)
+    load = np.zeros(54)
+    load[6*8+1] = .08
+    selected = (6*8+1, 6*5+2)
+    recovery = {"beam-right": (.25, .75)}
+    token = CancellationToken()
+    names = []
+    factor = weakref.ref(analysis._handle)
+
+    def after_case(case_id):
+        names.append(case_id)
+        if len(names) == close_after:
+            analysis.close()
+            analysis.close()  # Closing remains idempotent at a callback boundary.
+            assert factor() is None
+            if cancel_too:
+                token.cancel("closed complete prefix")
+
+    try:
+        expected = control.solve_linear(load, recover_members=recovery)
+        assert expected.status == "completed", expected.failure_reason
+        result = analysis.solve_linear_many(
+            tuple((f"case-{index}", load) for index in range(5)),
+            selected_dofs=selected, selected_points=("joint-right",),
+            recover_members=recovery, cancellation_token=token, on_case=after_case)
+        assert result.status == ("completed" if close_after == 5 else "cancelled")
+        assert tuple(item.case_id for item in result.cases) == tuple(names)
+        assert len(result.cases) == close_after
+        assert result.factorization_count == 1 and result.solve_count == close_after
+        assert result.maximum_rhs_chunk == 1 and not result.production_qualified
+        if close_after < 5:
+            assert result.failure_reason == "experimental panel closed after " + names[-1]
+        else:
+            assert result.failure_reason is None
+        for case in result.cases:
+            assert case.selected_displacements == tuple(expected.displacements[i] for i in selected)
+            assert case.selected_affine_reactions == tuple(expected.affine_reactions[i] for i in selected)
+            assert case.point_multipliers == (expected.point_multipliers[1],)
+            assert case.point_gaps == (expected.point_gaps[1],)
+            assert case.beam_resultants_local == expected.beam_resultants_local
+            assert case.internal_strain_energy == expected.internal_strain_energy
+        assert analysis._handle is None
+        with pytest.raises(ExperimentalB2Q4PanelError, match="panel is closed"):
+            analysis.solve_linear(load)
+        with pytest.raises(ExperimentalB2Q4PanelError, match="panel is closed"):
+            analysis.solve_linear_many((("later", load),), selected_dofs=selected)
+    finally:
+        analysis.close()
+        control.close()
+
+
+@pytest.mark.parametrize("failure_type", (RuntimeError, MemoryError))
+def test_point_panel_batch_close_does_not_swallow_callback_error(failure_type):
+    nodes, shells, members, points, free = _panel()
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            sparse.eye(54, format="csr")[:, free], np.zeros(54)))
+    load = np.zeros(54)
+    load[6*8+1] = .08
+    failure = failure_type("original callback failure")
+    factor = weakref.ref(analysis._handle)
+
+    def after_case(_case_id):
+        assert analysis._handle.factorization_count == 1
+        assert analysis._handle.solve_count == 1
+        analysis.close()
+        assert factor() is None
+        raise failure
+
+    try:
+        with pytest.raises(failure_type) as caught:
+            analysis.solve_linear_many(
+                (("first", load), ("later", load)), selected_dofs=(6*8+1,),
+                on_case=after_case)
+        assert caught.value is failure
+        # The preserved original traceback must not retain the closed factor.
+        assert factor() is None
+        assert analysis._handle is None
+    finally:
+        analysis.close()
 
 
 def test_point_panel_batch_rejects_mutated_load_and_preserves_failed_prefix():
