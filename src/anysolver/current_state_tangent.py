@@ -7,7 +7,7 @@ import inspect
 import math
 import sys
 from types import MappingProxyType, ModuleType
-from typing import TYPE_CHECKING, Any, Dict, NamedTuple
+from typing import TYPE_CHECKING, Any, Dict
 
 import numpy as np
 from scipy import linalg as scipy_linalg
@@ -690,61 +690,34 @@ def _static_mro_attribute(owner: type[Any], name: str) -> Any:
     return None
 
 
-_INSTANCE_DATA_NAMES = ("element_id", "node_ids", "material_name")
-
-
-class _ClassLevelFacts(NamedTuple):
-    """What the profile check reads from the class, not from the instance."""
-
-    formulation_mismatch: bool
-    data_class_shadows: tuple[bool, ...]
-    offset_class_shadow: bool
-    class_identity_mismatch: frozenset[str]
-    changed_critical: tuple[str, ...]
-    changed_base_critical: tuple[str, ...]
-
-
-def _class_level_facts(
+def _changed_critical_apis(
     owner: type[Any],
     profile: Mapping[str, Any],
     static_lookup: Any,
-) -> _ClassLevelFacts:
-    """Read the class-level facts for one element class and profile."""
+) -> tuple[str, ...]:
+    """Critical APIs whose class-level definition is not the frozen one."""
 
-    static_formulation_id = static_lookup(owner, "formulation_id")
-    class_identity_mismatch = []
-    for name, expected in profile["class_identity"].items():
-        actual = static_lookup(owner, str(name))
-        if type(actual) is not type(expected) or actual != expected:
-            class_identity_mismatch.append(name)
-    return _ClassLevelFacts(
-        formulation_mismatch=(
-            owner is not profile["element_type"]
-            or type(static_formulation_id) is not str
-            or static_formulation_id != str(profile["formulation_id"])
-        ),
-        data_class_shadows=tuple(
-            static_lookup(owner, name) is not None
-            for name in _INSTANCE_DATA_NAMES
-        ),
-        offset_class_shadow=(
-            static_lookup(owner, "reference_surface_offset") is not None
-        ),
-        class_identity_mismatch=frozenset(class_identity_mismatch),
-        changed_critical=tuple(
-            sorted(
-                str(name)
-                for name, expected in profile["critical_apis"].items()
-                if static_lookup(owner, str(name)) is not expected
-            )
-        ),
-        changed_base_critical=tuple(
-            sorted(
-                str(name)
-                for name, expected in profile["base_critical_apis"].items()
-                if static_lookup(ShellElement, str(name)) is not expected
-            )
-        ),
+    return tuple(
+        sorted(
+            str(name)
+            for name, expected in profile["critical_apis"].items()
+            if static_lookup(owner, str(name)) is not expected
+        )
+    )
+
+
+def _changed_base_critical_apis(
+    base_critical_apis: Mapping[str, Any],
+    static_lookup: Any,
+) -> tuple[str, ...]:
+    """Base-class critical APIs that are not the frozen ones."""
+
+    return tuple(
+        sorted(
+            str(name)
+            for name, expected in base_critical_apis.items()
+            if static_lookup(ShellElement, str(name)) is not expected
+        )
     )
 
 
@@ -755,7 +728,8 @@ def _capture_serialization_module_guards(
 
     The Q4 and S3 validators re-run one element-independent module guard for
     every element; the same guard object they bind by default is captured here
-    so one lifecycle validation call can run it once.
+    so one lifecycle validation call can run it once.  A validator without such
+    a keyword (S3 V2D) has no entry and keeps its own per-element behaviour.
     """
 
     guards: dict[Any, Any] = {}
@@ -795,45 +769,76 @@ class _ScanClassSnapshot:
     """Class- and module-level facts read once per lifecycle validation call.
 
     One instance lives for exactly one call of the exact lifecycle guard and is
-    never stored.  Instance-level checks (namespace, values, callables and the
-    element-specific validators) still run for every element.  The class-level
-    facts that all elements of one class share, and the serialization module
-    guard, are read at the first element that needs them; a class mutated
-    after that point in the same call is reported by the next call or, for the
-    Q4 and S3 families, already by the element-specific class authority of the
-    remaining elements of this one.  A custom profile-failure callback and S3
-    V2D elements never receive a snapshot and keep the per-element boundary.
+    never stored.  Every instance-level check and every read that is specific
+    to one element (its namespace, values, callables, the element-specific
+    validators) still runs for every element, and each class-level read stays
+    at its original position inside the element check.  What the snapshot
+    reuses within one call is what all elements of one class share: attribute
+    lookups on that class, the two critical-API comparisons, and the
+    serialization module guard.  A change to a *base* class made after the
+    first element of a class was checked is therefore reported by the next
+    call, not by the remaining elements of this one; a change to the Q4 or S3
+    class itself is still reported by the remaining elements through their own
+    final-class authority.  Only the qualified Q4 and S3 families take a
+    snapshot; S3 V2D elements and custom profile-failure callbacks keep the
+    per-element boundary.
+
+    The memos key on ``id()`` (a hostile metaclass ``__hash__`` must not run
+    here) and keep the keyed class alive, so an id cannot be reused within one
+    call.
     """
 
-    __slots__ = ("_lookup", "_lookup_cache", "_facts", "_guards")
+    __slots__ = (
+        "_lookup",
+        "_lookup_cache",
+        "_critical",
+        "_base_critical",
+        "_guards",
+    )
 
     def __init__(self, lookup: Any) -> None:
         self._lookup = lookup
-        self._lookup_cache: dict[tuple[int, str], Any] = {}
-        self._facts: dict[tuple[int, int], _ClassLevelFacts] = {}
+        self._lookup_cache: dict[tuple[int, str], tuple[Any, Any]] = {}
+        self._critical: dict[tuple[int, int], tuple[Any, Any, Any]] = {}
+        self._base_critical: dict[int, tuple[Any, Any]] = {}
         self._guards: dict[Any, Any] = {}
 
     def lookup(self, owner: type[Any], name: str) -> Any:
         key = (id(owner), name)
-        cache = self._lookup_cache
-        try:
-            return cache[key]
-        except KeyError:
-            value = cache[key] = self._lookup(owner, name)
-            return value
+        entry = self._lookup_cache.get(key)
+        if entry is None:
+            entry = self._lookup_cache[key] = (owner, self._lookup(owner, name))
+        return entry[1]
 
-    def class_facts(
+    def changed_critical(
         self,
         owner: type[Any],
         profile: Mapping[str, Any],
-    ) -> _ClassLevelFacts:
+    ) -> tuple[str, ...]:
         key = (id(owner), id(profile))
-        facts = self._facts.get(key)
-        if facts is None:
-            facts = self._facts[key] = _class_level_facts(
-                owner, profile, self.lookup
+        entry = self._critical.get(key)
+        if entry is None:
+            entry = self._critical[key] = (
+                owner,
+                profile,
+                _changed_critical_apis(owner, profile, self.lookup),
             )
-        return facts
+        return entry[2]
+
+    def changed_base_critical(
+        self,
+        profile: Mapping[str, Any],
+    ) -> tuple[str, ...]:
+        key = id(profile)
+        entry = self._base_critical.get(key)
+        if entry is None:
+            entry = self._base_critical[key] = (
+                profile,
+                _changed_base_critical_apis(
+                    profile["base_critical_apis"], self.lookup
+                ),
+            )
+        return entry[1]
 
     def serialization_module_guard(self, validator: Any) -> Any:
         """The once-per-call module guard for *validator*, or ``None``."""
@@ -860,12 +865,14 @@ def _qualified_profile_api_failure(
 
     expected_formulation_id = str(profile["formulation_id"])
     owner = type(element)
-    facts = (
-        _class_level_facts(owner, profile, _static_lookup)
-        if _snapshot is None
-        else _snapshot.class_facts(owner, profile)
+    static_formulation_id = _static_lookup(
+        owner, "formulation_id"
     )
-    if facts.formulation_mismatch:
+    if (
+        owner is not profile["element_type"]
+        or type(static_formulation_id) is not str
+        or static_formulation_id != expected_formulation_id
+    ):
         return f"{expected_formulation_id}:FORMULATION_ID_CLASS_MISMATCH"
     try:
         instance_namespace = object.__getattribute__(element, "__dict__")
@@ -892,12 +899,11 @@ def _qualified_profile_api_failure(
             + ",".join(class_data_shadows)
         )
     critical_apis = profile["critical_apis"]
-    for name, class_shadow in zip(
-        _INSTANCE_DATA_NAMES, facts.data_class_shadows
-    ):
+    base_critical_apis = profile["base_critical_apis"]
+    for name in ("element_id", "node_ids", "material_name"):
         if name not in instance_namespace:
             return f"{expected_formulation_id}:MISSING_INSTANCE_DATA={name}"
-        if class_shadow:
+        if _static_lookup(type(element), name) is not None:
             return f"{expected_formulation_id}:INSTANCE_DATA_CLASS_SHADOW={name}"
     raw_element_id = instance_namespace["element_id"]
     raw_node_ids = instance_namespace["node_ids"]
@@ -911,7 +917,7 @@ def _qualified_profile_api_failure(
         or type(raw_material_name) is not str
     ):
         return f"{expected_formulation_id}:INSTANCE_DATA_VALUE_MISMATCH"
-    if facts.offset_class_shadow:
+    if _static_lookup(type(element), "reference_surface_offset") is not None:
         return f"{expected_formulation_id}:OFFSET_SCOPE_MISMATCH"
     if profile["family"] in {"qualified_s3", "qualified_s3_v2d"}:
         if "reference_surface_offset" not in instance_namespace:
@@ -923,8 +929,13 @@ def _qualified_profile_api_failure(
         raw_offset = instance_namespace["reference_surface_offset"]
         if type(raw_offset) is not float or raw_offset != 0.0:
             return f"{expected_formulation_id}:OFFSET_SCOPE_MISMATCH"
-    for name in profile["class_identity"]:
-        if name in instance_namespace or name in facts.class_identity_mismatch:
+    for name, expected in profile["class_identity"].items():
+        actual = _static_lookup(type(element), str(name))
+        if (
+            name in instance_namespace
+            or type(actual) is not type(expected)
+            or actual != expected
+        ):
             if name == "implementation_id":
                 label = "IMPLEMENTATION_MISMATCH"
             elif name == "current_state_binding_schema_id":
@@ -959,15 +970,25 @@ def _qualified_profile_api_failure(
             f"{expected_formulation_id}:CALLABLE_INSTANCE_OVERRIDE="
             + ",".join(callable_instance_overrides)
         )
-    if facts.changed_critical:
+    changed_critical = (
+        _changed_critical_apis(type(element), profile, _static_lookup)
+        if _snapshot is None
+        else _snapshot.changed_critical(type(element), profile)
+    )
+    if changed_critical:
         return (
             f"{expected_formulation_id}:CRITICAL_API_MISMATCH="
-            + ",".join(facts.changed_critical)
+            + ",".join(changed_critical)
         )
-    if facts.changed_base_critical:
+    changed_base_critical = (
+        _changed_base_critical_apis(base_critical_apis, _static_lookup)
+        if _snapshot is None
+        else _snapshot.changed_base_critical(profile)
+    )
+    if changed_base_critical:
         return (
             f"{expected_formulation_id}:BASE_CRITICAL_API_MISMATCH="
-            + ",".join(facts.changed_base_critical)
+            + ",".join(changed_base_critical)
         )
     try:
         validator = profile["serialization_validator"]
@@ -1001,6 +1022,8 @@ def _call_local_static_lookup() -> Any:
     Mapping proxies are live views: additions, removals and replacements remain
     visible immediately. A changed MRO rebuilds the views. Nothing survives
     the enclosing lifecycle validation call, and descriptors are never invoked.
+    The exact lifecycle scan may put a per-call ``_ScanClassSnapshot`` in front
+    of this lookup for the qualified Q4 and S3 families (see its docstring).
     """
     views: dict[int, tuple[Any, tuple[Any, ...]]] = {}
 
@@ -1269,10 +1292,8 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
     if not failures:
         call_static_lookup = _lookup_factory()
         # Only the exact default profile check takes a snapshot, and only for
-        # the qualified Q4 and S3 families, whose element-specific validators
-        # also re-read their own class authority for every element.  Any other
-        # callback and every S3 V2D element keep the per-element boundary and
-        # their own signature.
+        # the qualified Q4 and S3 families.  Any other callback and every S3
+        # V2D element keep the per-element boundary and their own signature.
         snapshot = (
             _ScanClassSnapshot(call_static_lookup)
             if _profile_failure is _qualified_profile_api_failure

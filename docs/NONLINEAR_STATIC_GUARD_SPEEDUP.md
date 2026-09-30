@@ -203,6 +203,87 @@ independent review found it fail-open, and it stays parked.
 - **Decision (owner, 2026-09-30):** leave parked. The guard-cost work continues
   on the scan itself, which is sound for every element mix (recorded in this note when it lands).
 
+## Cheaper complete lifecycle scan (branch `solver_speed_scan`, 2026-09-30)
+
+Question: after the beam path was rejected, how much of the complete scan's cost
+can go without weakening what it detects? Owner decision (2026-09-30): read
+class-level facts once per validation call for the qualified Q4 and S3 families.
+
+**Where the time goes.** One complete scan costs about 2.7 ms plus about 70-75
+microseconds per Q4/S3 shell. Per shell, profiled: about 113 live class-attribute
+lookups (about 40 %), the pinned serialization validator re-running an
+element-independent module guard (about 15 %), the pinned final-class and
+quadrature checks (about 20 %), instance checks (the rest).
+
+**Design as merged** (all in `current_state_tangent.py`; the byte-pinned
+`e4_pl_element.py` and `e4_pl_s3_element.py` are untouched):
+
+1. `_ScanClassSnapshot` lives for exactly one call of the exact lifecycle guard.
+   It memoizes attribute lookups per class, the two critical-API comparisons
+   (`_changed_critical_apis`, `_changed_base_critical_apis`) and one
+   once-per-call run of each serialization validator's module guard. The guard
+   is the validator's own default `_module_guard`, captured at import from
+   `__kwdefaults__`; a validator without one (S3 V2D) gets no entry and keeps
+   its per-element behaviour, and a renamed keyword fails safe (no injection).
+2. **Every class-level read keeps its original position** in the element check;
+   the live path (no snapshot) is the parent's code with the two loops moved
+   into helpers. Only the first element of a class reads; later elements reuse.
+3. Snapshots go only to the default profile check for the Q4 and S3 families.
+   S3 V2D elements, `_qualified_route`, standalone calls and every custom
+   profile-failure callback keep the per-element boundary and their signature.
+4. Instance-level checks, the element-specific validators and the per-element
+   final-class authority still run for every element.
+
+**Semantics** (what a class change *after the first element of that class was
+checked in the same call* produces):
+
+| Change | Reported |
+|---|---|
+| The Q4 or S3 class itself | by the remaining elements of the same call (final-class authority), with a `CONFIGURATION_AUTHORITY=...class authority` reason |
+| A base class (`ShellElement`, `Element`) or an inherited critical API | by the next call (`BASE_CRITICAL_API_MISMATCH` / `CRITICAL_API_MISMATCH`) |
+| S3 V2D class | unchanged: by the next element |
+
+**Verification.**
+- 148-case cross-implementation battery (3 families x 16 mutations x first,
+  middle, last element, plus mixed models): identical guard results and
+  messages on parent and branch (scratch script `equiv_battery.py`).
+- Unit tests in `tests/test_spectral_validation_preparation.py`: snapshot vs
+  standalone across the mutation battery, per-call semantics, once-per-call
+  guard (also failing, and a fresh call), V2D and custom callbacks never get a
+  snapshot, memos keep their class alive, and a colliding-key test that pins
+  the read order.
+- Mutation testing of those tests: 20 mutants of the new code, all killed.
+- Independent review (high effort, same day) found that the first version read
+  every class fact at the top of the check. A str-subclass instance key whose
+  `__eq__` runs inside the guard's own set intersection could then change the
+  class after the read: on the parent the S3 V2D check rejected, on the first
+  version it passed. Fixed by restoring the original read positions; the
+  colliding-key test and the mutation run cover it.
+
+**Results** (warm, idle machine unless noted; scan cost per shell measured with
+`scanprof.py`):
+
+| Case | Parent | This change |
+|---|---|---|
+| One complete scan, Q4 shell | 68-74 us | 32-35 us |
+| Stiffened synthetic model (12 plates, 672 Q4 + 444 beams), warm nonlinear solve, three interleaved pairs | 7.4-7.8 s | 5.9-6.0 s (-20 %) |
+| Same model, share of the solve in complete scans | 38 % | 25 % |
+| Plate/cylinder case, GUI-style run (396 Q4 + 52 V2D), 94 scans | 15.0-15.3 s | 13.8-13.9 s |
+| Same case, exact-lifecycle-scan share | 13-14 % | 8.5-9.6 % |
+
+Displacements are unchanged (`max|u|` identical in the plate/cylinder run).
+Models made mostly of S3 V2D triangles gain little: those elements keep the
+per-element boundary, and their mechanics dominate.
+
+**Not covered.**
+- `_qualified_route` still runs the unsnapshotted per-element check once per
+  analysis start (about one extra scan); the approved semantics were for the
+  guard's scan only.
+- Most of the remaining ~33 microseconds per shell are the pinned validators
+  repeating class- and module-level checks for every element. Doing those once
+  per call belongs in `e4_pl_element.py` / `e4_pl_s3_element.py` and needs the
+  runtime-guard successor record with an independent reviewer.
+
 ## Governance
 
 - The runtime-guard performance successor record (as in
@@ -224,4 +305,5 @@ independent review found it fail-open, and it stays parked.
 - [x] C and D investigated (not adopted)
 - [x] Review findings fixed; full-suite comparison against the parent
 - [x] Exact built-in beams on the trusted state check: investigated, fail-open, not adopted
+- [x] Cheaper complete scan: class facts read once per call for Q4/S3 (`solver_speed_scan`)
 - [ ] Runtime-guard performance successor record with an independent reviewer

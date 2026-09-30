@@ -411,6 +411,16 @@ def _mutation_class_substitution(element, profile, monkeypatch):
     object.__setattr__(element, "__class__", substitute)
 
 
+def _mutation_class_data_shadow(element, profile, monkeypatch):
+    monkeypatch.setattr(type(element), "element_id", 0, raising=False)
+
+
+def _mutation_class_offset_shadow(element, profile, monkeypatch):
+    monkeypatch.setattr(
+        type(element), "reference_surface_offset", 0.0, raising=False
+    )
+
+
 _SNAPSHOT_MUTATIONS = {
     "clean": None,
     "missing-data": _mutation_missing_data,
@@ -423,6 +433,8 @@ _SNAPSHOT_MUTATIONS = {
     "class-identity": _mutation_class_identity,
     "base-critical": _mutation_base_critical,
     "class-substitution": _mutation_class_substitution,
+    "class-data-shadow": _mutation_class_data_shadow,
+    "class-offset-shadow": _mutation_class_offset_shadow,
 }
 
 
@@ -444,13 +456,12 @@ def test_snapshot_failure_matches_the_standalone_predicate(
     assert (standalone is None) == (name == "clean")
 
 
-def test_snapshot_class_facts_are_read_once_per_validation_call(
+def test_snapshot_critical_api_comparison_is_read_once_per_call(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     profile = _profile_of(_shell("q4"))
     snapshot = _fresh_snapshot()
-    before = snapshot.class_facts(QualifiedE4PLShellElement, profile)
-    assert before.changed_critical == ()
+    assert snapshot.changed_critical(QualifiedE4PLShellElement, profile) == ()
 
     monkeypatch.setattr(
         QualifiedE4PLShellElement,
@@ -459,13 +470,55 @@ def test_snapshot_class_facts_are_read_once_per_validation_call(
     )
 
     # The snapshot keeps what it read; a new call reads the class again.
-    assert snapshot.class_facts(QualifiedE4PLShellElement, profile) is before
-    fresh = _fresh_snapshot().class_facts(QualifiedE4PLShellElement, profile)
-    assert fresh.changed_critical == (_critical_name(profile),)
+    assert snapshot.changed_critical(QualifiedE4PLShellElement, profile) == ()
+    fresh = _fresh_snapshot().changed_critical(
+        QualifiedE4PLShellElement, profile
+    )
+    assert fresh == (_critical_name(profile),)
+
+
+def test_snapshot_facts_are_kept_per_class() -> None:
+    profile = _profile_of(_shell("q4"))
+    name = _critical_name(profile)
+    snapshot = _fresh_snapshot()
+    assert snapshot.changed_critical(QualifiedE4PLShellElement, profile) == ()
+
+    tampered = type(
+        "Tampered",
+        (QualifiedE4PLShellElement,),
+        {name: lambda *args, **kwargs: None},
+    )
+
+    assert snapshot.changed_critical(tampered, profile) == (name,)
+    assert snapshot.lookup(tampered, name) is not snapshot.lookup(
+        QualifiedE4PLShellElement, name
+    )
+
+
+@pytest.mark.parametrize("memo", ("lookup", "changed_critical"))
+def test_snapshot_memos_keep_the_keyed_class_alive(memo: str) -> None:
+    """An ``id()`` key is safe only while the keyed class cannot be collected."""
+
+    import gc
+    import weakref
+
+    # A stub lookup and a profile without critical APIs (no lookups at all)
+    # pin nothing, so only the memo entry itself can hold the class.
+    snapshot = tangent._ScanClassSnapshot(lambda owner, name: None)
+    owner = type("Transient", (QualifiedE4PLShellElement,), {})
+    if memo == "lookup":
+        snapshot.lookup(owner, "formulation_id")
+    else:
+        snapshot.changed_critical(owner, {"critical_apis": {}})
+
+    reference = weakref.ref(owner)
+    del owner
+    gc.collect()
+    assert reference() is not None
 
 
 @pytest.mark.parametrize("kind", ("q4", "s3"))
-def test_class_change_is_still_reported_by_the_remaining_elements(
+def test_change_to_the_class_itself_is_still_reported_by_the_remaining_elements(
     kind: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The Q4 and S3 validators re-read their own class authority per element."""
@@ -483,17 +536,80 @@ def test_class_change_is_still_reported_by_the_remaining_elements(
     assert failure is not None and "class authority" in failure
 
 
+@pytest.mark.parametrize("kind", ("q4", "s3"))
+def test_base_class_change_is_reported_by_the_next_call(
+    kind: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Documented relaxation: base-class facts are read once per call."""
+
+    profile = _profile_of(_shell(kind))
+    name = next(iter(profile["base_critical_apis"]))
+    first, second = _shell(kind, 1), _shell(kind, 2)
+    snapshot = _fresh_snapshot()
+    assert _guard_style_failure(first, profile, snapshot) is None
+
+    monkeypatch.setattr(ShellElement, name, lambda *args, **kwargs: None)
+
+    assert _guard_style_failure(second, profile, snapshot) is None
+    failure = _guard_style_failure(second, profile, _fresh_snapshot())
+    assert failure is not None and "BASE_CRITICAL_API_MISMATCH" in failure
+
+
+def test_class_change_made_while_a_v2d_element_is_checked_is_reported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Class facts of S3 V2D elements are read after the instance-level work.
+
+    A key that collides with a class attribute name makes the guard call its
+    ``__eq__`` while it intersects the instance namespace with the class
+    names.  The class change made there must still be seen by the same
+    element's check, not only by a later element or the next call.
+    """
+
+    elements = [_shell("v2d", element_id) for element_id in (1, 2, 3)]
+    owner = type(elements[0])
+    name = _critical_name(_profile_of(elements[0]))
+    armed: list[bool] = []
+    planted: list[int] = []
+
+    class CollidingKey(str):
+        def __hash__(self) -> int:
+            return hash("formulation_id")
+
+        def __eq__(self, other: object) -> bool:
+            # Armed only for the guard: instance dicts share a key table per
+            # class, so an unarmed comparison could run while inserting.
+            if armed and not planted:
+                planted.append(1)
+                monkeypatch.setattr(owner, name, lambda *args, **kwargs: None)
+            return False
+
+        def __ne__(self, other: object) -> bool:
+            return True
+
+    elements[-1].__dict__[CollidingKey("marker")] = 1
+    armed.append(True)
+
+    with pytest.raises(ElementCapabilityError, match=r"3 \(.*CRITICAL_API_MISMATCH"):
+        tangent.require_exact_qualified_component_lifecycle_api(
+            _model(*elements), context="colliding key"
+        )
+    assert planted == [1]
+
+
 def test_v2d_elements_never_take_a_snapshot(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     families: list[str] = []
-    real = tangent._ScanClassSnapshot.class_facts
+    real = tangent._ScanClassSnapshot.changed_critical
 
     def recording(self: Any, owner: type, profile: Any) -> Any:
         families.append(str(profile["family"]))
         return real(self, owner, profile)
 
-    monkeypatch.setattr(tangent._ScanClassSnapshot, "class_facts", recording)
+    monkeypatch.setattr(
+        tangent._ScanClassSnapshot, "changed_critical", recording
+    )
     model = _model(_q4(1), _shell("v2d", 2), _shell("v2d", 3), _shell("s3", 4))
     tangent.require_exact_qualified_component_lifecycle_api(
         model, context="mixed families"

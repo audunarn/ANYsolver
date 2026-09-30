@@ -20,6 +20,16 @@
   `qualified_guard_trusted`, `qualified_guard_complete_scan`,
   `qualified_guard_untrusted_token` and `qualified_v2d_trusted_unavailable`
   events in `info["nonlinear_performance"]["solver"]["event_counts"]`.
+- Speed up the exact qualified lifecycle guard for Q4 and S3 shells: class-level
+  facts and one element-independent serialization module guard are read once per
+  validation call instead of once per element. One complete scan drops from about
+  70 to about 33 microseconds per shell; a warm nonlinear solve of a stiffened
+  synthetic model is about 20 % faster and the GUI-style plate/cylinder run about
+  8 %. Instance-level checks, the element-specific validators and S3 V2D elements
+  are unchanged. Semantics: a change to a base class made after the first element
+  of a class was checked is reported by the next call rather than by the remaining
+  elements of the same call (a change to the Q4 or S3 class itself is still
+  reported by them).
 - Keep qualified element equations, physical tolerances and defaults
   unchanged.
 
