@@ -9,7 +9,7 @@ dynamic, stability, nonlinear or qualification claim.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import hypot, isfinite
+from math import isfinite
 
 import numpy as np
 from scipy import sparse
@@ -21,6 +21,9 @@ from ._b2_physical_linear_definition import (
 from .e4_pl_element import QualifiedE4PLShellElement
 from .fe_core import FEModel
 from .linalg import MatrixClass, factorize_cached
+from ._stiffened_shell_b2_q4_panel_experimental import (
+    _checked_affine_projection, _NumericalFailure as _AffineProjectionFailure,
+)
 
 
 class ExperimentalB2Q4PointError(RuntimeError):
@@ -130,6 +133,11 @@ class ExperimentalB2Q4PointAnalysis:
         self._K = K
         self._C = C
         self._T = T
+        self._Tt = T.T.tocsr()
+        self._projection_multi = np.flatnonzero(np.diff(self._Tt.indptr) > 1)
+        self._projection_single = np.flatnonzero(np.diff(self._Tt.indptr) == 1)
+        self._abs_K, self._abs_C = abs(K), abs(C)
+        self._abs_Ct, self._abs_Tt = abs(C.T), abs(T.T)
         self._u0 = u0
         self._ku0 = np.asarray(K @ u0).reshape(-1)
         self._cu0 = np.asarray(C @ u0).reshape(-1)
@@ -149,11 +157,10 @@ class ExperimentalB2Q4PointAnalysis:
             raise ValueError("finite 36-coordinate Q4/B2 load required") from exc
         if applied.shape != (36,) or not np.isfinite(applied).all():
             raise ValueError("finite 36-coordinate Q4/B2 load required")
-        rhs = np.r_[np.asarray(self._T.T @ (applied-self._ku0)).reshape(-1),
-                    -self._cu0]
         try:
+            rhs = np.r_[self._project(applied-self._ku0), -self._cu0]
             answer = np.asarray(self._handle.solve(rhs), dtype=float)
-        except RuntimeError as exc:
+        except (_NumericalFailure, RuntimeError) as exc:
             return ExperimentalB2Q4PointResult(
                 "failed", factorization_count=self._handle.factorization_count,
                 solve_count=self._handle.solve_count, failure_reason=str(exc))
@@ -170,14 +177,36 @@ class ExperimentalB2Q4PointAnalysis:
                 raise _NumericalFailure("finite Q4/B2 point recovery required")
             # Preserve numerical non-success; a finite solve alone is not an
             # equilibrium or constraint pass.
-            internal_force = np.asarray(self._K @ displacement).reshape(-1)
-            reduced_reaction = np.asarray(self._T.T @ reaction).reshape(-1)
-            force_scale = max(1., hypot(*applied), hypot(*internal_force))
-            motion_scale = max(1., hypot(*displacement))
-            if (not isfinite(force_scale) or not isfinite(motion_scale) or
+            reduced_reaction = self._project(reaction)
+            # Same physical row-wise contract as the multi-Q4 panel owner:
+            # no fixed N/Nm/m/rad floor can conceal a failed tiny-load solve.
+            gap_scale = np.asarray(self._abs_C @ np.abs(displacement)).reshape(-1)
+            physical_force_scale = np.asarray(
+                self._abs_K @ np.abs(displacement)+
+                self._abs_Ct @ np.abs(lam)+np.abs(applied)).reshape(-1)
+            equilibrium_scale = np.asarray(
+                self._abs_Tt @ physical_force_scale).reshape(-1)
+            by_node = physical_force_scale.reshape(-1, 6)
+            force_roundoff = float(np.max(by_node[:, :3]))
+            moment_roundoff = float(np.max(by_node[:, 3:]))
+            physical_roundoff = np.tile(
+                (force_roundoff,)*3+(moment_roundoff,)*3,len(by_node))
+            projected_roundoff = np.asarray(
+                self._abs_Tt @ physical_roundoff).reshape(-1)
+            roundoff_fraction = len(rhs)*np.finfo(float).eps
+            explicit_rhs = np.abs(self._project(applied))
+            resolution_floor = roundoff_fraction*projected_roundoff
+            active = explicit_rhs > 0.
+            if (roundoff_fraction >= 1e-9 or
+                    np.any(resolution_floor[active] > 1e-9*explicit_rhs[active])):
+                raise _NumericalFailure("Q4/B2 point mixed-load resolution insufficient")
+            equilibrium_tolerance = (1e-9*equilibrium_scale+
+                                     roundoff_fraction*projected_roundoff)
+            if (not np.isfinite(gap_scale).all() or
+                    not np.isfinite(equilibrium_tolerance).all() or
                     not np.isfinite(reduced_reaction).all() or
-                    hypot(*gap) > 1e-9*motion_scale or
-                    hypot(*reduced_reaction) > 1e-9*force_scale):
+                    np.any(np.abs(gap) > 1e-9*gap_scale) or
+                    np.any(np.abs(reduced_reaction) > equilibrium_tolerance)):
                 raise _NumericalFailure("Q4/B2 point equilibrium or gap failed")
         except _NumericalFailure as exc:
             return ExperimentalB2Q4PointResult(
@@ -204,6 +233,13 @@ class ExperimentalB2Q4PointAnalysis:
             tuple(map(float, reaction)), tuple(map(float, gap)),
             tuple(tuple(map(float, row)) for row in recovered.resultants),
             energy, self._handle.factorization_count, self._handle.solve_count)
+
+    def _project(self, values: np.ndarray) -> np.ndarray:
+        try:
+            return _checked_affine_projection(
+                self._Tt, self._projection_multi, self._projection_single, values)
+        except _AffineProjectionFailure as exc:
+            raise _NumericalFailure("Q4/B2 point affine projection failed: "+str(exc)) from exc
 
     def close(self) -> None:
         self._closed = True

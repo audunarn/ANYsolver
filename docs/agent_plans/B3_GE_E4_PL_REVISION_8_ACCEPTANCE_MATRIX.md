@@ -50,6 +50,20 @@ Statuses describe acceptance, not prototype progress. `IN_PROGRESS`
 includes incomplete or failed required cases; it never means a numerical
 pass.
 
+B2 integrity and matched-support development,30 September: the single-Q4 owner
+shares guarded affine-work projection and row-scaled physical acceptance; batch
+case identities are owned before callbacks. The public supported BL5 strip
+completes2 reference-linear loads with1 factor and exact snapshots. One own-factor
+compensated correction resolves the retained/multiplier roundoff discrepancy
+against the independently saved root-tie counterfactual under unchanged1e-10
+role parity. Fresh installed134/134 pass (59B2,25GE,38L1,10fibre,2finite controls);
+all386 solver/97 consumer modules match wheel/source/site. Independent review
+is clear for scoped development. V1-v6 setup, example and parity failures remain
+failed evidence. Wheel942460a1...,consumer unchangede3f755fe.... Added backsolve
+cost is unmeasured at scale. Ground supports and endpoint transfer have distinct
+reaction provenance. No physical-law, multiplier-space, M2/M3/F10/F11/F13 or
+aggregate acceptance follows. [Results and raw versions](../../.qualification/b3-ge-e4-pl/r8-b2-integrity-ge-support-dev-20260930-v1/results.md).
+
 Native elastic S3 precision development,30 September: product `86d3759a`
 uses the existing stable translation map only in eligible native-fibre elastic
 S3 finite owners, with a distinct V9 checkpoint policy. Unchanged monotonic

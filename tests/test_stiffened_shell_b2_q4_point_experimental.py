@@ -1,11 +1,14 @@
 """Physical Q4/B2 reference-point solve through the experimental owner."""
 
 import numpy as np
+import pytest
 from scipy import sparse
 from scipy.linalg import null_space
+from types import SimpleNamespace
 
 from anysolver._stiffened_shell_b2_q4_point_experimental import (
     create_experimental_b2_q4_point_analysis,
+    _NumericalFailure,
 )
 from anysolver import stiffened_shell
 from test_b2_f10_f11_point_attachment import VERTICES, specimen
@@ -82,6 +85,122 @@ def test_q4_b2_point_solver_failure_is_not_success(monkeypatch):
     assert result.status == "failed" and result.displacements == ()
     assert "NaN/Inf" in result.failure_reason
     analysis.close()
+
+
+@pytest.mark.parametrize("tip_component", (1, 3))
+def test_q4_b2_point_small_force_or_moment_retains_relative_equilibrium(
+        tip_component):
+    member, _, _, _ = specimen()
+    fixed = set(range(6)) | set(range(18, 24)) | set(range(24, 30))
+    fixed.update(6*i+j for i in (1, 2) for j in (3, 4, 5))
+    free = np.array([i for i in range(36) if i not in fixed])
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PointDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            member, VERTICES, 1000., .3, .15, .4,
+            sparse.eye(36, format="csr")[:, free], np.zeros(36),
+            offset_local_m=(0., .08, -.03)))
+    try:
+        # Component 1 is physical Fy [N]; component 3 is physical Mx [Nm].
+        # The same linear equations must preserve either applied work scale.
+        load = np.zeros(36)
+        load[30+tip_component] = 1.
+        reference = analysis.solve_linear(load)
+        small = analysis.solve_linear(load*1e-12)
+        assert reference.status == small.status == "completed"
+        for name in ("displacements", "multiplier", "affine_reactions"):
+            np.testing.assert_allclose(
+                getattr(small, name), np.asarray(getattr(reference, name))*1e-12,
+                rtol=1e-8, atol=1e-24)
+
+        # A finite zero answer cannot stand in for this nonzero force/moment.
+        handle = analysis._handle
+        analysis._handle = SimpleNamespace(
+            solve=lambda rhs: np.zeros_like(rhs),
+            factorization_count=handle.factorization_count,
+            solve_count=handle.solve_count)
+        failed = analysis.solve_linear(load*1e-12)
+        assert failed.status == "failed"
+        assert failed.displacements == ()
+        assert "equilibrium" in failed.failure_reason
+    finally:
+        analysis.close()
+
+
+def test_q4_b2_point_affine_projection_retains_cancelled_applied_work():
+    member, _, _, _ = specimen()
+    fixed = set(range(6)) | set(range(18, 24)) | set(range(24, 30))
+    fixed.update(6*i+j for i in (1, 2) for j in (3, 4, 5))
+    free = np.array([i for i in range(36) if i not in fixed])
+    transformation = sparse.eye(36, format="lil")[:, free]
+    transformation[free[1], 0] = 1.
+    transformation[free[2], 0] = 1.
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PointDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            member, VERTICES, 1000., .3, .15, .4,
+            transformation.tocsr(), np.zeros(36),
+            offset_local_m=(0., .08, -.03)))
+    try:
+        # Three physical force contributions retain exactly 1 N conjugate
+        # to the first stored affine translation, hence its nonzero work.
+        load = np.zeros(36)
+        load[free[0]] = 1e16
+        load[free[1]] = 1.
+        load[free[2]] = -1e16
+        projected = analysis._project(load)
+        assert projected[0] == 1.
+        assert np.count_nonzero(projected[1:]) == 2
+        handle = analysis._handle
+        analysis._handle = SimpleNamespace(
+            solve=lambda rhs: np.zeros_like(rhs),
+            factorization_count=handle.factorization_count,
+            solve_count=handle.solve_count)
+        failed = analysis.solve_linear(load)
+        assert failed.status == "failed" and failed.displacements == ()
+        assert "resolution" in failed.failure_reason or "equilibrium" in failed.failure_reason
+    finally:
+        analysis.close()
+
+
+@pytest.mark.parametrize("coefficient", (1., .3))
+def test_q4_b2_point_subnormal_affine_work_fails_without_hiding_programming_error(
+        coefficient, monkeypatch):
+    member, _, _, _ = specimen()
+    fixed = set(range(6)) | set(range(18, 24)) | set(range(24, 30))
+    fixed.update(6*i+j for i in (1, 2) for j in (3, 4, 5))
+    free = np.array([i for i in range(36) if i not in fixed])
+    transformation = sparse.eye(36, format="lil")[:, free]
+    transformation[free[0], 0] = coefficient
+    transformation[free[1], 0] = coefficient
+    transformation[free[2], 0] = 1.
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PointDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            member, VERTICES, 1000., .3, .15, .4,
+            transformation.tocsr(), np.zeros(36),
+            offset_local_m=(0., .08, -.03)))
+    try:
+        # Unity emits a subnormal; .3 would erase a nonzero stored product.
+        # Neither can satisfy the declared relative applied-work resolution.
+        load = np.zeros(36)
+        load[free[0]] = np.nextafter(0., 1.)
+        with pytest.raises(_NumericalFailure, match="affine projection.*not representable"):
+            analysis._project(load)
+        failed = analysis.solve_linear(load)
+        assert failed.status == "failed" and failed.displacements == ()
+        assert "affine projection" in failed.failure_reason
+        assert "not representable" in failed.failure_reason
+        assert failed.solve_count == 0
+
+        def programming_error(_values):
+            raise ValueError("injected affine projection programming error")
+
+        monkeypatch.setattr(analysis, "_project", programming_error)
+        with pytest.raises(ValueError, match="programming error"):
+            analysis.solve_linear(np.zeros(36))
+    finally:
+        analysis.close()
 
 
 def test_q4_b2_point_extreme_finite_load_cannot_report_success():

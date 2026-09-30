@@ -15,6 +15,9 @@ Solver: C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
 branch codex/b3-ge-e4-pl-integration. Product2d9ab38dd4037eda5ad808ffe6e4eb000b326970;
 preceding committed evidence7f18d6c8c65997626cab24583ce3f746239c2d78.
 Current new mechanics script, note/matrix and decision evidence are owned here.
+Mechanics decision committed e60d220e10c171e83141d0df0433a1149ae02f7d.
+Current slice: public supported BL5 strip example, B2 point/panel integrity,
+GE reference-linear precision, their three test files, docs and raw evidence.
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 product7cf1fd7ecec14ab16dab3ffb26bf4182c807af0c; no current edits.
 **Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py:
@@ -61,6 +64,22 @@ space selection, external beam-trace bridge or formalF03 acceptance follows.
 No additional diagnostic batch follows this bounded decision. Future checks must
 resolve remaining action/trace, torque/shear or growing-space stability uncertainty,
 with matched geometry/law/supports and an outcome-driven action; no default refinement.
+
+[Installed B2 integrity/public-support slice](../../.qualification/b3-ge-e4-pl/r8-b2-integrity-ge-support-dev-20260930-v1/results.md)
+passes134/134, two GE loads/one factor, balanced ground reactions and exact
+snapshots. One own-factor compensated correction resolves v6's retained2.40e-10/
+multiplier7.76e-9 failure: all four roles now pass unchanged1e-10. B2 tiny-load
+acceptance and case-ID ownership are repaired. Independent source/artifact
+review is clear. Wheel942460a1...,consumer unchangede3f755fe...;386/97modules
+match source/wheel/site. V1-v6 failures and ignored pytest cleanup warning stay
+raw evidence. One extra backsolve costs work; no scale or speedup claim.
+
+**Next action:** use the matched public support definition for later physical
+comparisons; stop this resolved precision investigation. Advance the smallest
+remaining F10/F11/F13 foundation obligation from the existing B2 contract,
+reusing unchanged evidence and withholding incomplete aggregate acceptance.
+No new law, basis selection, physical tolerance or authority follows. Future
+M2 comparisons still need matched work/trace and growing-space evidence.
 
 Materials, footprints, topology, loads, spectra, imperfections, capacity, scale,
 installed platforms, consumers, external references and release remain mandatory.

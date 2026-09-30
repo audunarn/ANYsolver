@@ -272,7 +272,71 @@ def test_reference_linear_load_cases_reuse_one_factorization():
     np.testing.assert_allclose(second.beam_coordinates,
                                2*first.beam_coordinates, rtol=1e-10, atol=1e-12)
     assert analysis.preflight()["reference_linear_factorizations"] == 1
+    assert analysis.preflight()["reference_linear_refinements"] == 2
     assert second.generation == first.generation+1
+
+
+def test_linear_refinement_recovers_a_roundoff_sized_response_error(monkeypatch):
+    analysis = ExperimentalGEAnalysis(_panel())
+    factor = ge_experimental.spla.splu(analysis._A)
+    calls = []
+
+    class RoundedFactor:
+        def solve(self, rhs):
+            answer = factor.solve(rhs)
+            calls.append(np.array(rhs, copy=True))
+            # This relative defect fits inside the physical equilibrium gate,
+            # but is too large for equivalent-response precision.
+            return answer*(1.+3.e-9) if len(calls) == 1 else answer
+
+    monkeypatch.setattr(ge_experimental.spla, "splu",
+                        lambda _matrix: RoundedFactor())
+    observed = analysis.solve_linear((NodalAction(
+        "beam", 105, (0., 0., 100., 0., 0., 0.)),))
+    dense = np.linalg.solve(analysis._A.toarray(), calls[0])
+    actual = np.r_[np.r_[observed.shell_displacement,
+                        observed.beam_coordinates][analysis._free],
+                   observed.multipliers]
+    assert np.linalg.norm(actual-dense)/np.linalg.norm(dense) <= 1.e-10
+    assert len(calls) == 2
+    assert analysis.preflight()["reference_linear_refinements"] == 1
+
+
+@pytest.mark.parametrize("failure", ["cancel", "numerical", "programming"])
+def test_linear_refinement_failure_preserves_accepted_snapshot(monkeypatch, failure):
+    from anysolver import _b2_physical_linear_batch_dev as residual_service
+    analysis = ExperimentalGEAnalysis(_panel())
+    action = (NodalAction("beam", 105, (0., 0., 100., 0., 0., 0.)),)
+    accepted = analysis.solve_linear(action)
+    raw = analysis.checkpoint()
+    token = CancellationToken()
+    if failure == "cancel":
+        safe_point = ge_experimental.cancellation_safe_point
+
+        def cancel_refinement(current_token, phase):
+            if phase == "stiffened-shell.linear.refined":
+                current_token.cancel("after accurate refinement")
+            return safe_point(current_token, phase)
+
+        monkeypatch.setattr(ge_experimental, "cancellation_safe_point", cancel_refinement)
+        expected, message = SolveCancelled, "after accurate refinement"
+    else:
+        error = (residual_service.B2NumericalSolveFailure("unrepresentable")
+                 if failure == "numerical" else ValueError("fixture programming error"))
+
+        def failed_residual(*args):
+            raise error
+
+        monkeypatch.setattr(residual_service, "_accurate_sparse_residual", failed_residual)
+        expected = RuntimeError if failure == "numerical" else ValueError
+        message = "residual is not representable" if failure == "numerical" else "fixture programming"
+    with pytest.raises(expected, match=message) as caught:
+        analysis.solve_linear(action, cancellation_token=token)
+    if failure == "numerical":
+        assert isinstance(caught.value.__cause__, residual_service.B2NumericalSolveFailure)
+    assert analysis.checkpoint() == raw
+    assert analysis._generation == accepted.generation
+    assert analysis.preflight()["reference_linear_factorizations"] == 1
 
 
 def test_binary_checkpoint_restores_linear_state_and_rejects_corruption(monkeypatch):

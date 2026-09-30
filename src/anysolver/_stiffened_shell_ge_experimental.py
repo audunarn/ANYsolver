@@ -772,6 +772,29 @@ class ExperimentalGEAnalysis:
             self._linear_factorizations += 1
         solution = self._linear_factor.solve(rhs)
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.solved")
+        from ._b2_physical_linear_batch_dev import (
+            B2NumericalSolveFailure, _accurate_sparse_residual,
+        )
+
+        def refine(value):
+            if not np.isfinite(value).all():
+                raise RuntimeError("finite mixed linear solution required")
+            try:
+                defect = _accurate_sparse_residual(
+                    self._A, value[:, None], rhs[:, None])[:, 0]
+            except B2NumericalSolveFailure as exc:
+                raise RuntimeError(
+                    "mixed reference linear residual is not representable") from exc
+            correction = self._linear_factor.solve(-defect)
+            self._linear_refinements += 1
+            cancellation_safe_point(cancellation_token,
+                                    "stiffened-shell.linear.refined")
+            return value+correction
+
+        # A rounded sparse residual can pass the physical gates while losing
+        # retained forces or multipliers. One accurate correction uses this
+        # owner's unchanged matrix and cached factor, not a comparison oracle.
+        solution = refine(solution)
         for attempt in range(2):
             if not np.isfinite(solution).all():
                 raise RuntimeError("finite mixed linear solution required")
@@ -787,13 +810,7 @@ class ExperimentalGEAnalysis:
             if np.isfinite(relative) and relative <= 1e-8 and constraint <= 1e-9:
                 break
             if attempt == 0:
-                # Correct factorization roundoff in retained equations using
-                # the same operator; the physical acceptance limits stay fixed.
-                correction = self._linear_factor.solve(rhs-self._A@solution)
-                self._linear_refinements += 1
-                cancellation_safe_point(cancellation_token,
-                                        "stiffened-shell.linear.refined")
-                solution = solution+correction
+                solution = refine(solution)
         if not np.isfinite(relative) or relative > 1e-8 or constraint > 1e-9:
             raise RuntimeError("mixed reference linear equilibrium failed")
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.commit")

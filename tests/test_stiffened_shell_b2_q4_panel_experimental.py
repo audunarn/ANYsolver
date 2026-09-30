@@ -165,8 +165,11 @@ def test_kkt_scaling_retains_constraint_anchored_zero_energy_coordinate():
         _scaled_point_kkt(stiffness, sparse.csr_matrix((1, 2)))
 
 
-def test_multi_q4_multi_b2_panel_matches_bounded_dense_oracle():
+@pytest.mark.parametrize("offset_sign", (1., -1.))
+def test_multi_q4_multi_b2_panel_matches_bounded_dense_oracle(offset_sign):
     nodes, shells, members, points, free = _panel()
+    points = tuple(replace(point, offset_local_m=tuple(
+        offset_sign*value for value in point.offset_local_m)) for point in points)
     T = sparse.eye(54, format="csr")[:, free]
     u0 = np.zeros(54)
     analysis = stiffened_shell.create_analysis(definition=
@@ -206,6 +209,115 @@ def test_multi_q4_multi_b2_panel_matches_bounded_dense_oracle():
         assert len(result.beam_resultants_local) == 2
         assert len(result.point_gaps) == 2
     analysis.close()
+
+
+@pytest.mark.parametrize("changed_dependency", (
+    "section", "geometry", "point", "support",
+))
+def test_panel_owns_shell_coordinates_and_rebuilds_changed_dependencies(
+        changed_dependency):
+    nodes, shells, members, points, free = _panel()
+    caller_nodes = {node_id: np.asarray(point, dtype=float).copy()
+                    for node_id, point in nodes.items()}
+    original_nodes = {node_id: point.copy()
+                      for node_id, point in caller_nodes.items()}
+    transformation = sparse.eye(54, format="csr")[:, free]
+    owner = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            caller_nodes, shells, members, points, transformation, np.zeros(54)))
+    rebuilt = None
+    try:
+        load = np.zeros(54)
+        load[6*8+1] = .08
+        load[6*5+2] = -.16
+        first = owner.solve_linear(load)
+        assert first.status == "completed"
+        original_k = owner._K.copy()
+        original_c = owner._C.copy()
+        original_t = owner._T.copy()
+        # Caller arrays remain mutable; the compiled shell geometry must not.
+        for point in caller_nodes.values():
+            point[0] += 100.
+        unchanged = owner.solve_linear(load)
+        for field in ("displacements", "point_multipliers", "affine_reactions"):
+            assert getattr(unchanged, field) == getattr(first, field)
+
+        if changed_dependency == "section":
+            section = LinearSection.isotropic(
+                E=2500., nu=.25, area=.04, Iy=.00015, Iz=.0003,
+                J=.0004, ky=.8, kz=.7)
+            members = tuple(replace(member, section=section) for member in members)
+        elif changed_dependency == "geometry":
+            # Widen only the right planar Q4; beam topology and frames stay fixed.
+            original_nodes[3][0] += .15
+            original_nodes[6][0] += .15
+        elif changed_dependency == "point":
+            points = (points[0], replace(points[1], station=.7))
+        else:
+            # A physical MPC replaces the free beam-tip Fy coordinate by
+            # one quarter of shell-node 5 Fy; this changes the admissible space.
+            retained = np.array([dof for dof in free if dof != 6*8+1])
+            transformation = sparse.eye(54, format="lil")[:, retained]
+            transformation[6*8+1, int(np.flatnonzero(retained == 6*4+1)[0])] = .25
+            transformation = transformation.tocsr()
+        rebuilt = stiffened_shell.create_analysis(definition=
+            stiffened_shell.B2Q4PanelDefinition(
+                stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+                original_nodes, shells, members, points,
+                transformation, np.zeros(54)))
+        changed = rebuilt.solve_linear(load)
+        assert changed.status == "completed", changed.failure_reason
+        assert changed.factorization_count == 1
+        assert rebuilt._handle is not owner._handle
+        stiffness, constraint = _independent_dense(
+            original_nodes, shells, members, points)
+        basis = transformation.toarray()
+        compatible = basis@null_space(constraint@basis)
+        expected = compatible@np.linalg.solve(
+            compatible.T@stiffness@compatible, compatible.T@load)
+        np.testing.assert_allclose(changed.displacements, expected,
+                                   rtol=2e-9, atol=2e-10)
+        before = np.asarray(first.displacements)
+        assert np.linalg.norm(np.asarray(changed.displacements)-before) > (
+            1e-8*np.linalg.norm(before))
+        # Rebuilding never rewrites the previous owner's compiled dependency set.
+        assert (owner._K != original_k).nnz == 0
+        assert (owner._C != original_c).nnz == 0
+        assert (owner._T != original_t).nnz == 0
+        prior = owner.solve_linear(load)
+        assert prior.displacements == first.displacements
+    finally:
+        if rebuilt is not None:
+            rebuilt.close()
+        owner.close()
+
+
+def test_panel_batch_owns_submitted_case_identifier_inventory():
+    nodes, shells, members, points, free = _panel()
+    owner = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            sparse.eye(54, format="csr")[:, free], np.zeros(54)))
+    load = np.zeros(54)
+    load[6*8+1] = .08
+    cases = [["first", load], ["second", load.copy()]]
+
+    def mutate_caller_inventory(case_id):
+        if case_id == "first":
+            cases[1][0] = "changed-after-submission"
+            cases.append(["new-after-submission", load.copy()])
+
+    try:
+        result = owner.solve_linear_many(
+            cases, selected_dofs=(6*8+1,), on_case=mutate_caller_inventory)
+        assert result.status == "completed"
+        assert tuple(case.case_id for case in result.cases) == ("first", "second")
+        assert result.factorization_count == 1
+        assert result.solve_count == 2
+    finally:
+        owner.close()
 
 
 @pytest.mark.parametrize("count", (1, 10, 100))
@@ -443,7 +555,26 @@ def test_slender_physical_b2_panel_matches_independent_high_precision_system(
                             for value in row])
     np.testing.assert_allclose(multipliers, oracle[basis.shape[1]:],
                                rtol=1e-8, atol=1e-9)
-    assert np.max(np.abs(constraint@np.asarray(result.displacements))) < 1e-12
+    displacement = np.asarray(result.displacements)
+    assert np.max(np.abs(constraint@displacement)) < 1e-12
+    # Recover ground/affine reactions from the independently assembled system.
+    # The nonorthogonal affine basis and nonzero u0 are part of this same case.
+    expected_reaction = (stiffness@expected+
+                         constraint.T@oracle[basis.shape[1]:]-load)
+    reaction = np.asarray(result.affine_reactions)
+    np.testing.assert_allclose(reaction, expected_reaction,
+                               rtol=1e-8, atol=1e-9)
+    np.testing.assert_allclose(basis.T@reaction, 0., rtol=0., atol=1e-9)
+    # K u + C^T lambda = f + r, C u = 0 and T^T r = 0 imply
+    # 2 U = u.f + u0.r. Omitting prescribed-support work is incorrect.
+    applied_work = float(displacement@load)
+    prescribed_work = float(u0@reaction)
+    work_scale = abs(applied_work)+abs(prescribed_work)
+    assert work_scale > 0.
+    assert abs(2*result.internal_strain_energy-
+               applied_work-prescribed_work) <= 1e-8*work_scale
+    if prescribed:
+        assert abs(float(u0@expected_reaction)) > 0.
     analysis.close()
 
 

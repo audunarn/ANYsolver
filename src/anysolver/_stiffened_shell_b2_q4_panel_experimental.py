@@ -43,6 +43,56 @@ _MAX_DENSE_AUDIT_ROWS = 48
 _MAX_DENSE_AUDIT_VALUES = 16_384
 
 
+def _checked_affine_projection(rows, multi, singles, values: np.ndarray) -> np.ndarray:
+    """Affine-transpose work with exact stored-input dots on cancellation.
+
+    Ordinary selection columns retain the sparse fast path. Only rows
+    whose rounded dot cannot meet the panel's 1e-9 work resolution use
+    exact products of the stored binary64 operands.
+    """
+    if not np.isfinite(values).all():
+        raise _NumericalFailure("finite panel affine projection required")
+    result = np.asarray(rows @ values).reshape(-1)
+    eps = np.finfo(float).eps
+    for row in multi:
+        start, stop = rows.indptr[row:row+2]
+        terms = [(float(a), float(values[j])) for a, j in zip(
+            rows.data[start:stop], rows.indices[start:stop])]
+        magnitude = sum(abs(a*v) for a, v in terms)
+        uncertainty = (2*len(terms)+2)*eps*magnitude
+        if (not isfinite(float(result[row])) or
+                not isfinite(magnitude) or
+                (result[row] == 0. and
+                 any(a != 0. and v != 0. for a, v in terms)) or
+                uncertainty > 1e-9*abs(float(result[row]))):
+            exact = sum((Fraction(a)*Fraction(v) for a, v in terms),
+                        Fraction(0))
+            try:
+                result[row] = float(exact)
+            except OverflowError as exc:
+                raise _NumericalFailure(
+                    "panel affine projection is not representable") from exc
+            if exact != 0 and result[row] == 0.:
+                raise _NumericalFailure(
+                    "panel affine projection is not representable")
+    # Single-product underflow must not erase a nonzero applied work row.
+    for row in singles[result[singles] == 0.]:
+        slot = rows.indptr[row]
+        a = float(rows.data[slot])
+        v = float(values[rows.indices[slot]])
+        if a != 0. and v != 0.:
+            raise _NumericalFailure(
+                "panel affine projection is not representable")
+    # Subnormal output cannot meet a 1e-9 relative work resolution.
+    if np.any((result != 0.) &
+              (np.abs(result) < np.finfo(float).tiny)):
+        raise _NumericalFailure(
+            "panel affine projection is not representable")
+    if not np.isfinite(result).all():
+        raise _NumericalFailure("finite panel affine projection required")
+    return result
+
+
 def _scaled_point_kkt(reduced_k: sparse.spmatrix,
                       reduced_c: sparse.spmatrix) -> tuple[sparse.csc_matrix, np.ndarray]:
     """Representable congruence for the elastic point-constrained KKT.
@@ -488,55 +538,8 @@ class ExperimentalB2Q4PanelAnalysis:
         self._closed = False
 
     def _project(self, values: np.ndarray) -> np.ndarray:
-        """Affine-transpose work with exact stored-input dots on cancellation.
-
-        Ordinary selection columns retain the sparse fast path. Only rows
-        whose rounded dot cannot meet the panel's 1e-9 work resolution use
-        exact products of the stored binary64 operands.
-        """
-        rows = self._Tt
-        if not np.isfinite(values).all():
-            raise _NumericalFailure("finite panel affine projection required")
-        result = np.asarray(rows @ values).reshape(-1)
-        eps = np.finfo(float).eps
-        for row in self._projection_multi:
-            start, stop = rows.indptr[row:row+2]
-            terms = [(float(a), float(values[j])) for a, j in zip(
-                rows.data[start:stop], rows.indices[start:stop])]
-            magnitude = sum(abs(a*v) for a, v in terms)
-            uncertainty = (2*len(terms)+2)*eps*magnitude
-            if (not isfinite(float(result[row])) or
-                    not isfinite(magnitude) or
-                    (result[row] == 0. and
-                     any(a != 0. and v != 0. for a, v in terms)) or
-                    uncertainty > 1e-9*abs(float(result[row]))):
-                exact = sum((Fraction(a)*Fraction(v) for a, v in terms),
-                            Fraction(0))
-                try:
-                    result[row] = float(exact)
-                except OverflowError as exc:
-                    raise _NumericalFailure(
-                        "panel affine projection is not representable") from exc
-                if exact != 0 and result[row] == 0.:
-                    raise _NumericalFailure(
-                        "panel affine projection is not representable")
-        # Single-product underflow must not erase a nonzero applied work row.
-        singles = self._projection_single
-        for row in singles[result[singles] == 0.]:
-            slot = rows.indptr[row]
-            a = float(rows.data[slot])
-            v = float(values[rows.indices[slot]])
-            if a != 0. and v != 0.:
-                raise _NumericalFailure(
-                    "panel affine projection is not representable")
-        # Subnormal output cannot meet a 1e-9 relative work resolution.
-        if np.any((result != 0.) &
-                  (np.abs(result) < np.finfo(float).tiny)):
-            raise _NumericalFailure(
-                "panel affine projection is not representable")
-        if not np.isfinite(result).all():
-            raise _NumericalFailure("finite panel affine projection required")
-        return result
+        return _checked_affine_projection(
+            self._Tt, self._projection_multi, self._projection_single, values)
 
     @property
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
@@ -849,6 +852,10 @@ class ExperimentalB2Q4PanelAnalysis:
                     for item in submitted) or
                 len({item[0] for item in submitted}) != len(submitted)):
             raise ValueError("unique nonempty ordered B2 panel case IDs required")
+        # Caller-owned list pairs may be changed by a completion callback.
+        # Snapshot their inventory/references now; later load-value mutation
+        # remains checked by the existing bounded fingerprints below.
+        submitted = tuple((case_id, load) for case_id, load in submitted)
         if cancellation_token is not None and not isinstance(
                 cancellation_token, CancellationToken):
             raise TypeError("B2 panel cancellation token required")

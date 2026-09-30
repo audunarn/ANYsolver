@@ -291,3 +291,29 @@ Run `scripts/experimental_stiffened_ge_bl5_history.py` with an installed
 development wheel for a3-Q4/2-B3, nonmatching3:4 elastic history and byte-exact
 restart/continue. Physical torque/shear reference, interface stability, ratios,
 scale and G2/F03 acceptance remain open.
+
+For a reference-linear strip with explicitly restrained beam termination, run
+`scripts/experimental_stiffened_ge_bl5_reference_panel.py` through an installed
+development wheel. It fixes the shell root and the beam nodal root translations
+and x/y rotations, leaving normal spin free. Two Fy/Mx cases share one eligible
+factorization and restore byte-exact snapshots. The reported shell and beam
+reactions are separate **ground** reactions, summed about the reference origin;
+they are not a concentrated beam-to-shell endpoint attachment. Removing those
+beam supports defines a different physical support problem. The example does
+not qualify retained-section endpoint enforcement or select a line basis.
+
+Reference-linear GE solves perform one compensated-residual correction using
+their own cached sparse factorization before the unchanged equilibrium and
+constraint checks. The existing optional second correction remains bounded.
+`reference_linear_refinements` counts this work, including rejected or cancelled
+work. Nonlinear solves and restored snapshot arrays retain their existing
+contracts. The extra backsolve and residual evaluation have a cost; this change
+does not establish large-model performance or uniform multiplier stability.
+
+The experimental single-Q4 B2 point owner uses the same scale-aware physical
+equilibrium and bounded affine-work projection as the multi-Q4 panel owner.
+Tiny nonzero force/moment loads cannot be accepted through a fixed unit floor;
+unrepresentable projected work fails explicitly. Submitted panel batch case IDs
+and load references are fixed before completion callbacks; changing an original
+load array is still detected by its bounded value fingerprint. These integrity
+checks do not establish F10/F11/F13 or full M3 acceptance.
