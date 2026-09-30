@@ -146,6 +146,63 @@ and about 20 one-off setup and final checks.
   `e4_pl_element.py`) and V2D `_state_identity` recomputing element geometry
   (8-13 %). Both need their own correctness review.
 
+## Exact beams beside qualified shells: investigated, not adopted
+
+Branch `solver_speed_beams` (commit `809fa521`, never merged, 2026-09-30) let
+exact `BeamElement` stiffeners use the lease's trusted state check
+(`_qualified_trusted_state_require`) inside the Newton loop, on the reasoning
+that the complete lifecycle scan does not observe generic elements. The
+independent review found it fail-open, and it stays parked.
+
+- **The premise was wrong.** The Q4/S3 dependency authority freezes every
+  callable and every class namespace of the whole `anysolver.elements` module,
+  `BeamElement` included, and the scan re-checks them on each call. Patching a
+  `BeamElement` method before a solve makes the preflight raise
+  `DEPENDENCY_AUTHORITY_MISMATCH=anysolver.elements.BeamElement...`.
+- **The trusted state check documents its own limit.** It validates owned
+  inputs, the mesh token and the Q4/S3/assembly epochs, "says nothing about any
+  other element family, which the caller must cover with its own authority"
+  (`trusted_require` in `matrix_assembly.py`). Beam code, the `BeamElement`
+  class and the code reachable from beam evaluation have no such authority. The
+  V2D path is admitted only because everything that runs in its window is
+  authority-guarded.
+- **Demonstrated on the parent and on the branch** (2 Q4 shells, 3 exact beams,
+  one beam with an instance-level method override that runs inside the Newton
+  loop):
+
+  | Hostile action inside the loop | Parent | Branch |
+  |---|---|---|
+  | `object.__setattr__` overrides planted on a Q4, left in place | rejected at the next guard | rejected only at the later support-reactions scan, two assemblies later |
+  | same, removed one beam call later | rejected at the next guard | solve completes, no error |
+  | `BeamElement` class attribute added, left in place | rejected at the next guard | rejected only at the support-reactions scan |
+  | same, deleted one beam call later | rejected at the next guard | solve completes, no error |
+
+  No result changed in these runs; they show missed detection, not a wrong
+  answer. Scripts: `beam_hostile2.py` (scratch, not kept).
+- **Sound variants measured** (12-plate stiffened synthetic model, warm
+  nonlinear solve, idle machine; parent 8.3-8.9 s):
+
+  | Variant | Time | Change |
+  |---|---|---|
+  | Unsafe branch as written | 5.45-6.4 s | -34 % |
+  | Complete scan after every element-executing call (assembly, external load, commit, reaction sites), trusted elsewhere | 7.9 s | -7 % |
+
+  The second variant needs no element-type allowlist and is sound by
+  construction, but the gain is small: the external-load assembly can also run
+  generic code, so only the cancellation checkpoints stay trusted.
+- **A per-family beam authority** (re-verify the `elements` class namespaces per
+  call, decline on beam instance shadows, strict data-type eligibility) closes
+  the demonstrated attacks but cannot be argued closed: the code reachable from
+  beam evaluation is not a bounded set the way the Q4/S3 dependency list is.
+- **Reach.** ANYfem's default stiffener mode (`offset_mode="automatic"`) adds
+  `CoupledBeamShellElement` (and `InterpolatedBeamShellMPCElement` for
+  interpolated attachments). Those are not admitted, so the default offset
+  stiffened models would have kept the complete scan (events:
+  `qualified_guard_complete_scan: 36`, against `qualified_guard_trusted: 30`
+  for `centerline`).
+- **Decision (owner, 2026-09-30):** leave parked. The guard-cost work continues
+  on the scan itself, which is sound for every element mix (recorded in this note when it lands).
+
 ## Governance
 
 - The runtime-guard performance successor record (as in
@@ -166,4 +223,5 @@ and about 20 one-off setup and final checks.
 - [x] Guard-path reporting
 - [x] C and D investigated (not adopted)
 - [x] Review findings fixed; full-suite comparison against the parent
+- [x] Exact built-in beams on the trusted state check: investigated, fail-open, not adopted
 - [ ] Runtime-guard performance successor record with an independent reviewer
