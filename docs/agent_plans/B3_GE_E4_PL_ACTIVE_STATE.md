@@ -13,9 +13,9 @@ Formal F03 authority unconsumed; spent authorities remain spent.
 Solver worktree C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
 branch codex/b3-ge-e4-pl-integration; accepted point/static foundation commit
 11819ab863077cc95a2ffb6880a449f8732f2fc1 (unchanged a5a698b5 kernel).
-Latest lifecycle candidate: panel module SHA3dd59ac8..., wheel0a7532a6...;
-exact source catalog and inputs are in the sealed record below.
-Owned slice: panel batch method/tests/docs, note/matrix and sealed lifecycle record.
+Latest development candidate: installed wheel6a44aa11...; exact source catalog,
+fixtures, imports and hashes are in the sealed work/envelope record below.
+Owned slice: B2 affine work, selected envelopes, tests/docs and sealed evidence.
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 source7cf1fd7ecec14ab16dab3ffb26bf4182c807af0c; no current edits.
 Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py, SHA
@@ -60,16 +60,19 @@ claim or aggregate F13/M3 acceptance follows.
 
 ## Current decision and next action
 
-Resolved decision: scalar counts preserve completed cases after callback closure
-without retaining the factor. The identified lifetime defect is repaired and
-independently reviewed; do not repeat its completed checks absent changed inputs.
-General F13 remains open. Next action: reconcile the remaining existing F13
-point/static-owner obligations against the scoped admission, batch/invalidation,
-cancellation and consumer evidence; execute only missing consequential checks
-under a prospective combined acceptance contract. Keep unresolved topology,
-mass/prestress and attachments assigned to their required later milestones.
-Advance M3's required matched numerical/external acceptance alongside that
-closure; do not retroactively relabel ordinary regressions as qualification.
+Resolved decision: graph projection erased nonzero applied work (both signs of
+the independent ±1e-16 fixture). Shared guarded projection repairs it; exact-zero
+work stays valid, unrepresentable/scaling-erased work fails before solving.
+B07 immutable signed selected displacement/reaction envelopes now report
+governing IDs and complete prefixes. Fresh installed127/127,386/97 source-wheel-
+site identities,267 onsite imports,1thread/JIT off;28.19s/227471360B.
+[Evidence/review](../../.qualification/b3-ge-e4-pl/r8-b2-work-envelope-dev-20260930-v1/results.md),
+48 files including seal da8a8d07... . General F13/M3 remain open.
+Next action: review the new independent finite-vertex B2/OpenSees reference's
+work map and beam controls before its bounded fixed-case execution. It is not a
+convergence or final mandatory CalculiX acceptance. Advance the remaining public
+consumer/native persistence and foundation obligations without repeating passed
+campaigns or reopening default axial refinement. No new mechanics law/tolerance.
 
 M2 remains unresolved beyond the bounded retained-port/support decision:
 [mechanics evidence](../../.qualification/b3-ge-e4-pl/r8-bl5-port-boundary-decision-dev-20260930-v1/results.md).

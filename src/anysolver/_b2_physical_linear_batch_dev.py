@@ -21,6 +21,51 @@ class B2NumericalSolveFailure(RuntimeError):
     """A compiled B2 factorization or solve failed numerically."""
 
 
+def _checked_affine_projection(rows, multi, singles, values: np.ndarray, *,
+                               failure_type=B2NumericalSolveFailure,
+                               label="physical B2") -> np.ndarray:
+    """Preserve affine work, using exact stored-input dots on cancellation.
+
+    Selection columns retain sparse multiplication. Only uncertain rows use
+    exact binary64 products; a nonrepresentable result fails explicitly.
+    """
+    if not np.isfinite(values).all():
+        raise failure_type(f"finite {label} affine projection required")
+    result = np.asarray(rows @ values).reshape(-1)
+    eps = np.finfo(float).eps
+    for row in multi:
+        start, stop = rows.indptr[row:row+2]
+        terms = [(float(a), float(values[j])) for a, j in zip(
+            rows.data[start:stop], rows.indices[start:stop])]
+        magnitude = sum(abs(a*v) for a, v in terms)
+        uncertainty = (2*len(terms)+2)*eps*magnitude
+        if (not math.isfinite(float(result[row])) or
+                not math.isfinite(magnitude) or
+                (result[row] == 0. and
+                 any(a != 0. and v != 0. for a, v in terms)) or
+                uncertainty > 1e-9*abs(float(result[row]))):
+            exact = sum((Fraction(a)*Fraction(v) for a, v in terms),
+                        Fraction(0))
+            try:
+                result[row] = float(exact)
+            except OverflowError as exc:
+                raise failure_type(
+                    f"{label} affine projection is not representable") from exc
+            if exact != 0 and result[row] == 0.:
+                raise failure_type(f"{label} affine projection is not representable")
+    for row in singles[result[singles] == 0.]:
+        slot = rows.indptr[row]
+        a = float(rows.data[slot])
+        v = float(values[rows.indices[slot]])
+        if a != 0. and v != 0.:
+            raise failure_type(f"{label} affine projection is not representable")
+    if np.any((result != 0.) & (np.abs(result) < np.finfo(float).tiny)):
+        raise failure_type(f"{label} affine projection is not representable")
+    if not np.isfinite(result).all():
+        raise failure_type(f"finite {label} affine projection required")
+    return result
+
+
 @dataclass(frozen=True)
 class SelectedMemberRecovery:
     member_id: str
@@ -215,6 +260,12 @@ class CompiledB2AffineBatch:
         row_nnz.setflags(write=False)
         self._row_nnz = row_nnz
         self._T = T
+        # Compile the work map once; graph execution never imports a shell owner.
+        self._work_rows = T.T.tocsr(copy=True)
+        self._work_rows.eliminate_zeros()
+        work_nnz = np.diff(self._work_rows.indptr)
+        self._work_multi = np.flatnonzero(work_nnz > 1)
+        self._work_singles = np.flatnonzero(work_nnz == 1)
         self._u0 = u0
         self._ku0 = np.asarray(K@u0).reshape(-1)
         self._length_scale = max(member.definition.length_m for member in compiled)
@@ -318,7 +369,11 @@ class CompiledB2AffineBatch:
                 loads.append(load)
             largest = max(largest, len(loads))
             driving = np.column_stack(loads)-self._ku0[:, None]
-            rhs = self._T.T@driving
+            rhs = np.column_stack([
+                _checked_affine_projection(
+                    self._work_rows, self._work_multi, self._work_singles,
+                    driving[:, column])
+                for column in range(len(loads))])
             # A small backward error can still conceal an unacceptable
             # physical imbalance when a weak section creates huge motions.
             # Scale force and moment rows from the applied generalized loads,
@@ -339,7 +394,8 @@ class CompiledB2AffineBatch:
                 raise B2NumericalSolveFailure("physical B2 equilibrium scale is not representable")
             with np.errstate(over="ignore", invalid="ignore"):
                 scaled_rhs = self._scaling[:, None]*rhs
-            if not np.isfinite(scaled_rhs).all():
+            if (not np.isfinite(scaled_rhs).all() or
+                    np.any((rhs != 0.) & (scaled_rhs == 0.))):
                 raise B2NumericalSolveFailure("physical B2 scaled load is not representable")
             try:
                 solved = np.asarray(self._handle.solve_many(scaled_rhs), dtype=float)

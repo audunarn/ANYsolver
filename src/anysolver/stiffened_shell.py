@@ -27,6 +27,7 @@ from ._stiffened_shell_b2_q4_point_experimental import (
 )
 from ._stiffened_shell_b2_q4_panel_experimental import (
     ExperimentalB2Q4PanelAnalysis, Q4PanelShell, Q4B2Point,
+    ExperimentalB2Q4PanelResponseEnvelope,
     B2ReferenceModesRequest, B2ReferenceModesResult,
 )
 

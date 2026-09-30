@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 import weakref
-from dataclasses import replace
+from dataclasses import FrozenInstanceError, replace
 from types import SimpleNamespace
 from scipy import sparse
 from scipy.linalg import null_space
@@ -367,6 +367,145 @@ def test_point_panel_batch_reuses_factorization_and_selects_recovery(count):
     assert result.cases[-1].internal_strain_energy == single.internal_strain_energy
     assert analysis._handle.factorization_count == 1
     analysis.close()
+
+
+def test_point_panel_selected_envelopes_report_signed_extrema_and_first_case_ties():
+    nodes, shells, members, points, free = _panel()
+    definition = stiffened_shell.B2Q4PanelDefinition(
+        stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+        nodes, shells, members, points,
+        sparse.eye(54, format="csr")[:, free], np.zeros(54))
+    owner = stiffened_shell.create_analysis(definition=definition)
+    control = stiffened_shell.create_analysis(definition=definition)
+    selected = (6*8+1, 1, 6*5+2)
+    load = np.zeros(54)
+    load[6*8+1] = .08
+    load[6*5+2] = -.16
+    cases = (("z-first", load), ("a-reversed", -2*load),
+             ("y-tied", load.copy()), ("zero", np.zeros(54)))
+    try:
+        expected = tuple(control.solve_linear(value) for _, value in cases)
+        assert all(case.status == "completed" for case in expected)
+        result = owner.solve_linear_many(cases, selected_dofs=selected)
+        assert result.status == "completed"
+        assert tuple(case.case_id for case in result.cases) == tuple(
+            case_id for case_id, _ in cases)
+        assert result.factorization_count == 1 and result.solve_count == 4
+        for envelopes, field in ((result.displacement_envelopes, "displacements"),
+                                 (result.affine_reaction_envelopes, "affine_reactions")):
+            assert tuple(item.selected_dof for item in envelopes) == selected
+            for envelope, dof in zip(envelopes, selected):
+                values = tuple(getattr(case, field)[dof] for case in expected)
+                minimum_index = min(range(len(values)), key=values.__getitem__)
+                maximum_index = max(range(len(values)), key=values.__getitem__)
+                assert envelope.minimum == values[minimum_index]
+                assert envelope.maximum == values[maximum_index]
+                assert envelope.minimum_case_id == cases[minimum_index][0]
+                assert envelope.maximum_case_id == cases[maximum_index][0]
+        # The supported uy response ties at zero: preserve submission order,
+        # rather than sorting IDs or choosing the last equally governing case.
+        ground = result.displacement_envelopes[1]
+        assert ground.minimum == ground.maximum == 0.
+        assert ground.minimum_case_id == ground.maximum_case_id == "z-first"
+        assert abs(expected[0].affine_reactions[1]) > 0.
+        with pytest.raises(FrozenInstanceError):
+            ground.minimum = 1.
+    finally:
+        owner.close()
+        control.close()
+
+
+@pytest.mark.parametrize("termination", ("cancel", "close", "failure"))
+def test_point_panel_selected_envelopes_use_only_complete_prefix(termination, monkeypatch):
+    nodes, shells, members, points, free = _panel()
+    definition = stiffened_shell.B2Q4PanelDefinition(
+        stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+        nodes, shells, members, points,
+        sparse.eye(54, format="csr")[:, free], np.zeros(54))
+    owner = stiffened_shell.create_analysis(definition=definition)
+    control = stiffened_shell.create_analysis(definition=definition)
+    selected = (6*8+1, 1, 6*5+2)
+    load = np.zeros(54)
+    load[6*8+1] = .08
+    load[6*5+2] = -.16
+    cases = (("first", load), ("second", -2*load),
+             ("unpublished-large", 100*load))
+    token = CancellationToken()
+    seen = []
+
+    def after_case(case_id):
+        seen.append(case_id)
+        if len(seen) == 2:
+            if termination == "cancel":
+                token.cancel("complete envelope prefix")
+            elif termination == "close":
+                owner.close()
+
+    try:
+        expected = tuple(control.solve_linear(value) for _, value in cases[:2])
+        assert all(case.status == "completed" for case in expected)
+        if termination == "failure":
+            original = owner._handle.solve
+
+            def fail_third(rhs):
+                if len(seen) == 2:
+                    raise RuntimeError("injected envelope backend failure")
+                return original(rhs)
+
+            monkeypatch.setattr(owner._handle, "solve", fail_third)
+        result = owner.solve_linear_many(
+            cases, selected_dofs=selected, cancellation_token=token, on_case=after_case)
+        assert result.status == ("failed" if termination == "failure" else "cancelled")
+        assert tuple(case.case_id for case in result.cases) == ("first", "second")
+        assert result.factorization_count == 1 and result.solve_count == 2
+        for envelopes, field in ((result.displacement_envelopes, "displacements"),
+                                 (result.affine_reaction_envelopes, "affine_reactions")):
+            for envelope, dof in zip(envelopes, selected):
+                values = tuple(getattr(case, field)[dof] for case in expected)
+                minimum_index = min(range(2), key=values.__getitem__)
+                maximum_index = max(range(2), key=values.__getitem__)
+                assert envelope.minimum == values[minimum_index]
+                assert envelope.maximum == values[maximum_index]
+                assert envelope.minimum_case_id == cases[minimum_index][0]
+                assert envelope.maximum_case_id == cases[maximum_index][0]
+        if termination == "failure":
+            assert result.failure_reason == "unpublished-large: injected envelope backend failure"
+        elif termination == "close":
+            assert owner._handle is None
+            assert result.failure_reason == "experimental panel closed after second"
+    finally:
+        owner.close()
+        control.close()
+
+
+@pytest.mark.parametrize("termination", ("cancel", "failure"))
+def test_point_panel_selected_envelopes_are_empty_for_zero_complete_cases(
+        termination, monkeypatch):
+    nodes, shells, members, points, free = _panel()
+    owner = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2Q4PanelDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1,
+            nodes, shells, members, points,
+            sparse.eye(54, format="csr")[:, free], np.zeros(54)))
+    load = np.zeros(54)
+    load[6*8+1] = .08
+    token = CancellationToken()
+    if termination == "cancel":
+        token.cancel("no envelope cases")
+    else:
+        def failed_backend(_rhs):
+            raise RuntimeError("injected first envelope case failure")
+
+        monkeypatch.setattr(owner._handle, "solve", failed_backend)
+    try:
+        result = owner.solve_linear_many(
+            (("first", load),), selected_dofs=(6*8+1,), cancellation_token=token)
+        assert result.status == ("cancelled" if termination == "cancel" else "failed")
+        assert result.cases == ()
+        assert result.displacement_envelopes == result.affine_reaction_envelopes == ()
+        assert result.solve_count == 0
+    finally:
+        owner.close()
 
 
 def test_point_panel_batch_cancellation_keeps_complete_prefix():

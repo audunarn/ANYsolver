@@ -89,7 +89,7 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 |---|---|---|
 | M1 matching-station GE | IMPLEMENTED_NOT_QUALIFIED | Current installed GE/ANYfem checks pass; matched E01, complete V01–V06/V17/V18/V28 evidence and independent acceptance open. |
 | M2 bonded line | IN_PROGRESS | BL5 physical law, multiplier resolution, F03 and ratios/refinement/transfer open. |
-| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/B2 point-panel 1/10/100 and distinct ANYfem experimental input save/reopen pass installed checks; F09–F11/F13 acceptance, native-project persistence and E01 B2 comparison remain open. |
+| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/B2 point-panel 1/10/100, selected envelopes and distinct ANYfem experimental input save/reopen pass installed checks. Scoped F09 and F10/F11 point/static accepted; general F10/F11/F13, native-project persistence and E01 B2 comparison remain open. |
 | M4 remaining mechanics | IN_PROGRESS | Materials, footprints, topology, loads, spectra, imperfections and capacity remain mandatory. |
 | M5 scale/release | NOT_STARTED | Practical scale, platforms, external programme and authorized release remain mandatory. |
 
@@ -203,6 +203,19 @@ bind unchanged sourcea5a698b5/wheel942460a1. Seal SHA-256
 `15d8709371fd266167914358ffe974be174b3277b6216cee31737af3ebff7cb5`
 covers94 files plus the seal. GeneralF10/F11, G0B, F13 andM3 stay open; local S3
 proof does not imply public S3 B2 execution or finite B2 qualification.
+
+**B07/F13 development,30 September:** signed selected displacement/reaction
+envelopes preserve governing case IDs, first ties and complete prefixes. The
+graph's accepted-zero cancellation defect is repaired with shared guarded
+affine-work projection; unrepresentable and scaling-erased work fails explicitly.
+Fresh installed127/127 pass, all386/97 modules match source/wheel/site,267 onsite
+imports,1thread/JIT off;28.190429s/227471360B. Wheel6a44aa11...,383 other modules
+unchanged; independent root-fix review and separate envelope review clear.
+[Original failure, exact scope, logs and review](../../.qualification/b3-ge-e4-pl/r8-b2-work-envelope-dev-20260930-v1/results.md)
+sealed48 files including seal SHA-256
+`da8a8d07da0c18b54e958840999d70b9f0d70cbe2815dbb3d9276fb04ccf890a`.
+General F13/M3 remain open; no member-resultant envelope, scaling/material
+qualification, speedup or larger-domain acceptance follows.
 
 **F13 lifecycle development,30 September:** completion-callback closure now
 returns the complete selected prefix and scalar numerical counts. Incomplete

@@ -9,7 +9,6 @@ inferred from the point-joint assembly.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from fractions import Fraction
 from math import isfinite
 from typing import Callable, Mapping, Sequence
 
@@ -23,7 +22,9 @@ from ._b2_physical_linear_definition import (
     PROFILE_ID, CompiledPhysicalB2Member, PhysicalB2Member,
     PhysicalB2OperatorCache,
 )
-from ._b2_physical_linear_batch_dev import _load_value_snapshot
+from ._b2_physical_linear_batch_dev import (
+    _load_value_snapshot, _checked_affine_projection as _project_affine_work,
+)
 from .control import CancellationToken, SolveCancelled
 from ._stiffened_shell_physical_q4_mass import physical_mass
 from .e4_pl_element import QualifiedE4PLShellElement
@@ -44,53 +45,9 @@ _MAX_DENSE_AUDIT_VALUES = 16_384
 
 
 def _checked_affine_projection(rows, multi, singles, values: np.ndarray) -> np.ndarray:
-    """Affine-transpose work with exact stored-input dots on cancellation.
-
-    Ordinary selection columns retain the sparse fast path. Only rows
-    whose rounded dot cannot meet the panel's 1e-9 work resolution use
-    exact products of the stored binary64 operands.
-    """
-    if not np.isfinite(values).all():
-        raise _NumericalFailure("finite panel affine projection required")
-    result = np.asarray(rows @ values).reshape(-1)
-    eps = np.finfo(float).eps
-    for row in multi:
-        start, stop = rows.indptr[row:row+2]
-        terms = [(float(a), float(values[j])) for a, j in zip(
-            rows.data[start:stop], rows.indices[start:stop])]
-        magnitude = sum(abs(a*v) for a, v in terms)
-        uncertainty = (2*len(terms)+2)*eps*magnitude
-        if (not isfinite(float(result[row])) or
-                not isfinite(magnitude) or
-                (result[row] == 0. and
-                 any(a != 0. and v != 0. for a, v in terms)) or
-                uncertainty > 1e-9*abs(float(result[row]))):
-            exact = sum((Fraction(a)*Fraction(v) for a, v in terms),
-                        Fraction(0))
-            try:
-                result[row] = float(exact)
-            except OverflowError as exc:
-                raise _NumericalFailure(
-                    "panel affine projection is not representable") from exc
-            if exact != 0 and result[row] == 0.:
-                raise _NumericalFailure(
-                    "panel affine projection is not representable")
-    # Single-product underflow must not erase a nonzero applied work row.
-    for row in singles[result[singles] == 0.]:
-        slot = rows.indptr[row]
-        a = float(rows.data[slot])
-        v = float(values[rows.indices[slot]])
-        if a != 0. and v != 0.:
-            raise _NumericalFailure(
-                "panel affine projection is not representable")
-    # Subnormal output cannot meet a 1e-9 relative work resolution.
-    if np.any((result != 0.) &
-              (np.abs(result) < np.finfo(float).tiny)):
-        raise _NumericalFailure(
-            "panel affine projection is not representable")
-    if not np.isfinite(result).all():
-        raise _NumericalFailure("finite panel affine projection required")
-    return result
+    """Keep the panel's failure identity while sharing checked affine work."""
+    return _project_affine_work(rows, multi, singles, values,
+                                failure_type=_NumericalFailure, label="panel")
 
 
 def _scaled_point_kkt(reduced_k: sparse.spmatrix,
@@ -261,6 +218,21 @@ class ExperimentalB2Q4PanelSelectedCase:
 
 
 @dataclass(frozen=True)
+class ExperimentalB2Q4PanelResponseEnvelope:
+    """One selected physical coordinate's signed complete-case extrema.
+
+    Displacements retain m/rad and affine reactions N/Nm according to the
+    selected DOF. Equal extrema are governed by the first submitted case.
+    """
+
+    selected_dof: int
+    minimum: float
+    minimum_case_id: str
+    maximum: float
+    maximum_case_id: str
+
+
+@dataclass(frozen=True)
 class ExperimentalB2Q4PanelBatchResult:
     status: str
     selected_dofs: tuple[int, ...]
@@ -271,6 +243,8 @@ class ExperimentalB2Q4PanelBatchResult:
     maximum_rhs_chunk: int = 1
     failure_reason: str | None = None
     production_qualified: bool = False
+    displacement_envelopes: tuple[ExperimentalB2Q4PanelResponseEnvelope, ...] = ()
+    affine_reaction_envelopes: tuple[ExperimentalB2Q4PanelResponseEnvelope, ...] = ()
 
 
 def _unique_ids(items, name):
@@ -830,6 +804,8 @@ class ExperimentalB2Q4PanelAnalysis:
         final-case closure still returns completed. Callback and programming
         errors propagate. This development route uses one RHS at a
         time, avoiding full displacement/reaction batches for large panels.
+        Selected displacement/reaction envelopes describe only complete cases
+        in the returned prefix, with the first submitted case governing ties.
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
@@ -878,6 +854,29 @@ class ExperimentalB2Q4PanelAnalysis:
             fingerprints.append(fingerprint)
             del snapshot
         completed = []
+
+        def envelopes(attribute):
+            if not completed:
+                return ()
+            extrema = []
+            for index, dof in enumerate(chosen):
+                # min/max preserve the first case on exact ties. No rounding,
+                # absolute envelope or physical-unit conversion is introduced.
+                minimum = min(completed, key=lambda case: getattr(case, attribute)[index])
+                maximum = max(completed, key=lambda case: getattr(case, attribute)[index])
+                extrema.append(ExperimentalB2Q4PanelResponseEnvelope(
+                    dof, getattr(minimum, attribute)[index], minimum.case_id,
+                    getattr(maximum, attribute)[index], maximum.case_id))
+            return tuple(extrema)
+
+        def finish(status, failure_reason=None):
+            return ExperimentalB2Q4PanelBatchResult(
+                status, chosen, chosen_points, tuple(completed),
+                factorization_count, solve_count,
+                failure_reason=failure_reason,
+                displacement_envelopes=envelopes("selected_displacements"),
+                affine_reaction_envelopes=envelopes("selected_affine_reactions"))
+
         for index, (case_id, load) in enumerate(submitted):
             if self._closed or (cancellation_token is not None and
                                 cancellation_token.is_cancelled):
@@ -889,10 +888,7 @@ class ExperimentalB2Q4PanelAnalysis:
             factorization_count = result.factorization_count
             solve_count = result.solve_count
             if result.status != "completed":
-                return ExperimentalB2Q4PanelBatchResult(
-                    "failed", chosen, chosen_points, tuple(completed),
-                    factorization_count, solve_count,
-                    failure_reason=f"{case_id}: {result.failure_reason}")
+                return finish("failed", f"{case_id}: {result.failure_reason}")
             point_multipliers = dict(result.point_multipliers)
             point_gaps = dict(result.point_gaps)
             completed.append(ExperimentalB2Q4PanelSelectedCase(
@@ -907,10 +903,8 @@ class ExperimentalB2Q4PanelAnalysis:
                 result.internal_strain_energy))
             if on_case is not None:
                 on_case(case_id)
-        return ExperimentalB2Q4PanelBatchResult(
+        return finish(
             "cancelled" if len(completed) != len(submitted) else "completed",
-            chosen, chosen_points, tuple(completed),
-            factorization_count, solve_count,
             failure_reason=("experimental panel closed" +
                             (" after " + completed[-1].case_id if completed else "")
                             if self._closed and len(completed) != len(submitted)

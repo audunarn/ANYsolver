@@ -328,3 +328,16 @@ further solves.
 Combining closure with token cancellation preserves the same complete prefix.
 Callback programming and memory errors still propagate unchanged. This is a
 callback-boundary contract, not concurrent thread-safe owner closure.
+
+The physical B2 graph also checks affine applied work before solving, using the
+same cancellation-aware projection as the panel. A nonzero work component that
+cannot be represented, including one erased by congruence scaling, returns a
+numerical failure rather than a plausible zero response.
+
+Panel batch results include `displacement_envelopes` and
+`affine_reaction_envelopes` for each selected DOF. Each immutable record gives
+signed `minimum`/`maximum` values and their governing case IDs; exact ties retain
+the first submitted case. Units follow the selected translation or rotation
+coordinate. Cancelled or failed results describe only fully completed cases;
+an empty prefix has empty envelopes. These summaries do not add member-resultant
+envelopes or an envelope-only storage mode. ANYfem returns the same solver result.

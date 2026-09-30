@@ -13,6 +13,96 @@ from anysolver.control import CancellationToken
 from test_b2_physical_linear_oriented_graph import _members, _solve
 
 
+@pytest.mark.parametrize("sign", (1., -1.))
+def test_affine_applied_work_keeps_small_cancelling_load(sign):
+    """A well-conditioned one-coordinate graph must retain binary64 work."""
+    from fractions import Fraction
+
+    members, _ = _members()
+    member = members[0]
+    transform = sparse.csr_matrix(
+        ([1., 1e-16, 1.], ([6, 7, 8], [0, 0, 0])), shape=(12, 1))
+    load = np.zeros(12)
+    load[6:9] = sign*np.array([1., 1., -1.])
+    expected_work = float(sum((Fraction(float(a))*Fraction(float(f))
+                              for a, f in zip((1., 1e-16, 1.), load[6:9])),
+                             Fraction(0)))
+    assert expected_work != 0.
+    analysis = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2LinearDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1, (member,), transform,
+            np.zeros(12), np.array([6])))
+    try:
+        stiffness = member.local_dof_map().T @ (
+            member.local_operator().evaluate(np.zeros(12)).tangent
+        ) @ member.local_dof_map()
+        direction = transform.toarray().reshape(-1)
+        expected = expected_work/float(direction @ stiffness @ direction)
+        result = analysis.solve_linear_many((("cancelling-work", load),))
+        assert result.status == "completed", result.failure_reason
+        observed = result.cases[0].values[0]
+        assert observed != 0.
+        assert abs(observed-expected) <= 1e-10*abs(expected)
+    finally:
+        analysis.close()
+
+
+def test_graph_rejects_nonrepresentable_applied_work_without_a_case():
+    members, _ = _members()
+    transform = sparse.csr_matrix(([1.], ([6], [0])), shape=(12, 1))
+    owner = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2LinearDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1, members[:1], transform,
+            np.zeros(12), np.array([6])))
+    try:
+        load = np.zeros(12)
+        load[6] = np.nextafter(0., 1.)
+        result = owner.solve_linear_many((("subnormal-work", load),))
+        assert result.status == "failed" and result.cases == ()
+        assert "affine projection is not representable" in result.failure_reason
+    finally:
+        owner.close()
+
+
+def test_graph_accepts_exactly_zero_cancelling_work():
+    members, _ = _members()
+    transform = sparse.csr_matrix(
+        ([1., 1.], ([6, 8], [0, 0])), shape=(12, 1))
+    owner = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2LinearDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1, members[:1], transform,
+            np.zeros(12), np.array([6])))
+    try:
+        load = np.zeros(12)
+        load[6], load[8] = 1., -1.
+        result = owner.solve_linear_many((("zero-work", load),))
+        assert result.status == "completed", result.failure_reason
+        assert result.cases[0].values == (0.,)
+    finally:
+        owner.close()
+
+
+def test_graph_rejects_work_erased_by_congruence_scaling(monkeypatch):
+    members, _ = _members()
+    transform = sparse.csr_matrix(([1.], ([6], [0])), shape=(12, 1))
+    owner = stiffened_shell.create_analysis(definition=
+        stiffened_shell.B2LinearDefinition(
+            stiffened_shell.B2_E4_PL_FAST_LINEAR_V1, members[:1], transform,
+            np.zeros(12), np.array([6])))
+    # Exercise the emitted-product boundary directly, without changing section
+    # admission or claiming this injected scale is a physical material oracle.
+    monkeypatch.setattr(owner._batch, "_scaling", np.array([1e-200]))
+    try:
+        load = np.zeros(12)
+        load[6] = 1e-200
+        result = owner.solve_linear_many((("scaled-underflow", load),))
+        assert result.status == "failed" and result.cases == ()
+        assert "scaled load is not representable" in result.failure_reason
+        assert owner._batch._handle.solve_count == 0
+    finally:
+        owner.close()
+
+
 def _analysis():
     members, _ = _members()
     transform = sparse.eye(18, format="csr")[:, 6:]
