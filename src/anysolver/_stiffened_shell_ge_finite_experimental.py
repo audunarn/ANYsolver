@@ -75,7 +75,8 @@ def native_shell_checkpoint_shapes(owner, generation):
     q4_count = len(owner._definition.shell.q4_elements)
     return (("q", (count,)), ("frames", (len(owner._beam_ids), 3, 3)),
             ("cells", (members, 2, 3, 3)), ("resultants", (members, 18)),
-            ("multipliers", (owner._C.shape[0],)), ("pattern", (count,)),
+            ("multipliers", (owner._C.shape[0],)),
+            ("applied_dead_load" if getattr(owner, "_staged_context", None) is not None else "pattern", (count,)),
             ("accepted_factors", (generation,))) + (
         native_history_shapes(owner._beam_parts, "origin") +
         native_history_shapes(owner._beam_parts, "accepted")) + (
@@ -323,6 +324,12 @@ class FinitePointResult:
     increment_attempts: tuple[IncrementAttempt, ...] = ()
     beam_shell_line_work: tuple = ()
     point_wrenches: tuple[PointTransferWrench, ...] = ()
+    load_programme_identity: str | None = None
+    load_position: float | None = None
+    load_stage_cursor: int | None = None
+    load_stage_fraction: float | None = None
+    load_programme_complete: bool | None = None
+    applied_dead_load: np.ndarray | None = None
 
 
 @dataclass(frozen=True)
@@ -404,6 +411,8 @@ class FinitePointDriver:
         self._beam_origins = tuple(part[2] for part in owner._beam_parts)
         self._beam_predecessors = self._beam_origins
         self._pattern = None
+        self._programme = getattr(owner, "_staged_context", None)
+        self._applied_load = None
         self._load_factor = 0.
         self._accepted = None
         self._accepted_factors = ()
@@ -428,11 +437,49 @@ class FinitePointDriver:
             load[offset+6*index[action.node]:offset+6*index[action.node]+6] += wrench
         return _owned(load)
 
-    def _assemble(self, state, factor, shell_origins, beam_origins, *, pattern=None):
+    def _checkpoint_identity(self):
+        return (self.owner._identity if self._programme is None else
+                self._programme.augmented_model_identity)
+
+    def _prepare_load(self, actions, targets):
+        from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
+        if type(actions) is StagedDeadLoadProgramme:
+            if self.owner._line_samples:
+                raise ValueError("staged translation dead loads require the experimental point owner")
+            if self._accepted is not None and (self._programme is None or
+                    actions.identity != self._programme.identity):
+                raise ValueError("finite load programme changed after first increment")
+            programme = (self._programme if self._programme is not None else
+                         actions.compile(self.owner, self._load))
+            programme.validate_targets(self._load_factor, targets)
+            return None, programme
+        if self._programme is not None:
+            raise ValueError("finite programme and legacy pattern modes cannot be mixed")
+        pattern = self._load(actions)
+        if self._pattern is not None and not np.array_equal(self._pattern, pattern):
+            raise ValueError("finite load pattern changed after first increment")
+        return pattern, None
+
+    @staticmethod
+    def _programme_result(result, programme, position, applied):
+        if programme is None:
+            return result
+        cursor, fraction = programme.progress_at(position)
+        return replace(result, load_programme_identity=programme.identity,
+            load_position=float(position), load_stage_cursor=cursor,
+            load_stage_fraction=fraction,
+            load_programme_complete=cursor == len(programme.programme.endpoints),
+            applied_dead_load=_owned(applied))
+
+    def _assemble(self, state, factor, shell_origins, beam_origins, *, pattern=None,
+                  applied_load=None):
         owner = self.owner
         load_pattern = self._pattern if pattern is None else pattern
-        if load_pattern is None:
+        if applied_load is None and self._programme is not None:
+            applied_load = self._programme.load_at(factor)
+        if applied_load is None and load_pattern is None:
             raise RuntimeError("finite load pattern has not been supplied")
+        applied_load = factor*load_pattern if applied_load is None else applied_load
         count = owner._K.shape[0]
         size = count+len(state.multipliers)
         force_terms = [[] for _ in range(size)]
@@ -559,7 +606,7 @@ class FinitePointDriver:
                     _owned_slots(slots,(21,)), _owned_slots(rows_at,(len(rows_at),)), float(weight), _owned(local.gap),
                     _owned(density), _owned(weight*local.gradient)))
 
-        for row, value in enumerate(factor*load_pattern):
+        for row, value in enumerate(applied_load):
             force_terms[row].append(-float(value))
         residual = np.fromiter((fsum(terms) for terms in force_terms),
                                dtype=float, count=size)
@@ -568,7 +615,7 @@ class FinitePointDriver:
         if not np.isfinite(residual).all() or not np.isfinite(matrix.data).all():
             raise RuntimeError("finite global mixed trial required")
         relative = _linear_equilibrium(
-            residual[owner._free], (factor*load_pattern)[owner._free],
+            residual[owner._free], applied_load[owner._free],
             owner._coordinate_scale[owner._free])
         constraint = _scaled_constraint_gap(
             residual[count:], owner._constraint_scale)
@@ -640,9 +687,7 @@ class FinitePointDriver:
                                      max_backtracks, 0, float(self._load_factor))
             # Bound metadata before numerical work; no model-size-dependent search.
             encode_control(self.owner._identity, control, b"resource-check")
-        pattern = self._load(actions)
-        if self._pattern is not None and not np.array_equal(self._pattern, pattern):
-            raise ValueError("finite load pattern changed after first increment")
+        pattern, programme = self._prepare_load(actions, targets[control.cursor:])
         while not control.completed:
             if len(control.attempts) >= control.control.max_attempts:
                 raise AdaptiveIncrementExhausted("adaptive increment attempt limit", control, self._accepted_factors)
@@ -658,7 +703,8 @@ class FinitePointDriver:
             try:
                 self._solve_fixed(actions, (factor,), cancellation_token=cancellation_token,
                     max_iterations=max_iterations, max_backtracks=max_backtracks,
-                    _prepared_pattern=pattern, _accepted_hook=accepted)
+                    _prepared_pattern=pattern, _prepared_programme=programme,
+                    _accepted_hook=accepted)
             except FiniteIncrementFailure as error:
                 attempt = replace(error.attempt, target=control.targets[control.cursor])
                 rejected = replace(control, attempts=control.attempts+(attempt,))
@@ -675,7 +721,7 @@ class FinitePointDriver:
         return self._accepted
 
     def _solve_fixed(self, actions, targets, *, cancellation_token=None,
-              _prepared_pattern=None, _accepted_hook=None,
+              _prepared_pattern=None, _prepared_programme=None, _accepted_hook=None,
               max_iterations=12, max_backtracks=8, on_accepted=None):
         owner = self.owner
         if (type(targets) is not tuple or not targets or
@@ -689,13 +735,15 @@ class FinitePointDriver:
         if (type(max_iterations) is not int or not 1 <= max_iterations <= 24 or
                 type(max_backtracks) is not int or not 0 <= max_backtracks <= 12):
             raise ValueError("bounded finite Newton controls required")
-        pattern = self._load(actions) if _prepared_pattern is None else _prepared_pattern
-        if self._pattern is not None and not np.array_equal(self._pattern, pattern):
-            raise ValueError("finite load pattern changed after first increment")
+        if _prepared_programme is None and _prepared_pattern is None:
+            pattern, programme = self._prepare_load(actions, targets)
+        else:
+            pattern, programme = _prepared_pattern, _prepared_programme
         free = np.r_[owner._free,
                      np.arange(owner._K.shape[0],
                                owner._K.shape[0]+len(self._state.multipliers))]
         for factor in targets:
+            applied_load = None if programme is None else programme.load_at(factor)
             cancellation_safe_point(cancellation_token, "stiffened-shell.finite.increment")
             trial = self._state
             counts = {"evaluations": 0, "linear_solves": 0, "rejected_trials": 0}
@@ -703,7 +751,9 @@ class FinitePointDriver:
             def evaluated(state):
                 counts["evaluations"] += 1
                 return self._assemble(state, factor, self._shell_origins,
-                                      self._beam_origins, pattern=pattern)
+                                      self._beam_origins, pattern=pattern,
+                                      **({} if programme is None else
+                                         {"applied_load": applied_load}))
             def attempt(status, iteration, relative, gap, failure=None):
                 return IncrementAttempt(float(factor), accepted_from, float(factor),
                     status, iteration, **counts, equilibrium_ratio=float(relative),
@@ -746,6 +796,7 @@ class FinitePointDriver:
                                             "stiffened-shell.finite.publish")
                     next_result = _with_shell_chart(next_result, trial, owner._shell_count)
                     next_result = replace(next_result, point_wrenches=self._point_records(trial))
+                    next_result = self._programme_result(next_result, programme, factor, applied_load)
                     if getattr(owner, "_finite_bl5", False):
                         if self._line_trial_recovery[0] is not trial:
                             raise ValueError("stale finite BL5 station recovery")
@@ -767,7 +818,7 @@ class FinitePointDriver:
                         next_result = replace(next_result,
                             status="completed" if next_control.completed else "accepted_prefix",
                             increment_attempts=next_control.attempts)
-                    next_checkpoint = (None if next_control is None else
+                    next_checkpoint = (None if next_control is None and programme is None else
                         self._prospective_checkpoint(next_result, _state=trial,
                             _shell_predecessors=self._shell_origins,
                             _shell_predecessor_q=previous_shell_q,
@@ -775,8 +826,9 @@ class FinitePointDriver:
                             _shell_origins=next_shell_origins,
                             _beam_predecessors=self._beam_origins, _beam_origins=beam_next,
                             _load_factor=float(factor), _accepted_factors=next_factors,
-                            _pattern=pattern, _adaptive_state=next_control))
-                    if next_control is not None:
+                            _pattern=pattern, _programme=programme,
+                            _applied_load=applied_load, _adaptive_state=next_control))
+                    if next_control is not None or programme is not None:
                         cancellation_safe_point(cancellation_token,
                                                 "stiffened-shell.finite.controller-publish")
                     with owner._commit_lock:
@@ -790,6 +842,8 @@ class FinitePointDriver:
                         self._load_factor = float(factor)
                         self._accepted_factors = next_factors
                         self._pattern = pattern
+                        self._programme = programme
+                        self._applied_load = applied_load
                         owner._generation += 1
                         self._accepted = next_result
                         self._adaptive_state = next_control
@@ -895,7 +949,7 @@ class FinitePointDriver:
             support_reactions=_owned(support), free_equilibrium_ratio=relative,
             constraint_max=gap, generation=expected_generation+1,
             point_wrenches=self._point_records(trial)), trial, owner._shell_count)
-        next_checkpoint = (None if self._adaptive_state is None else
+        next_checkpoint = (None if self._adaptive_state is None and self._programme is None else
                            self._prospective_checkpoint(result, _state=trial))
         cancellation_safe_point(cancellation_token, "stiffened-shell.rebase.commit")
         with owner._commit_lock:
@@ -907,32 +961,40 @@ class FinitePointDriver:
             owner._generation += 1
         return result
 
-    def checkpoint(self, *, _encode_anchors=True, _encode_control=True):
+    def checkpoint(self, *, _encode_anchors=True, _encode_control=True,
+                   _encode_programme=True):
         if self._accepted is None:
             raise RuntimeError("no accepted finite mixed increment")
-        if self._adaptive_checkpoint is not None and _encode_anchors and _encode_control:
+        if (self._adaptive_checkpoint is not None and _encode_anchors and
+                _encode_control and _encode_programme):
             return self._adaptive_checkpoint
+        if self._programme is not None and _encode_programme:
+            from ._stiffened_shell_staged_load_experimental import encode_checkpoint
+            return encode_checkpoint(self._programme, self._load_factor,
+                self.checkpoint(_encode_anchors=_encode_anchors,
+                    _encode_control=_encode_control, _encode_programme=False))
         if self._adaptive_state is not None and _encode_control:
-            return encode_control(self.owner._identity, self._adaptive_state,
-                                  self.checkpoint(_encode_control=False))
+            return encode_control(self._checkpoint_identity(), self._adaptive_state,
+                                  self.checkpoint(_encode_control=False, _encode_programme=False))
         state = self._state
         anchored = state.shell_anchors is not None
         if anchored and _encode_anchors:
             return _encode_chart_checkpoint(
-                self.owner._identity, self.owner._generation, state.shell_anchors,
+                self._checkpoint_identity(), self.owner._generation, state.shell_anchors,
                 self._accepted.shell_frames, self.checkpoint(
-                    _encode_anchors=False, _encode_control=False))
+                    _encode_anchors=False, _encode_control=False, _encode_programme=False))
         generation = len(self._accepted_factors) if anchored else self.owner._generation
         def kind(name):
             return name.replace("finite", "finite_chart", 1) if anchored else name
         arrays = (("q", state.q), ("frames", state.frames),
                   ("cells", state.cells), ("resultants", state.resultants),
                   ("multipliers", state.multipliers),
-                  ("pattern", self._pattern),
+                  ("pattern" if self._programme is None else "applied_dead_load",
+                   self._pattern if self._programme is None else self._applied_load),
                   ("accepted_factors", np.asarray(self._accepted_factors)))
         if getattr(self.owner, "_finite_bl5", False):
             return _encode_binary_checkpoint(kind("finite_bl5"),
-                self.owner._identity, generation, arrays)
+                self._checkpoint_identity(), generation, arrays)
         if self.owner._has_physical_fibre:
             if self.owner._definition.shell.j2_curve is not None:
                 owner = self.owner
@@ -946,7 +1008,7 @@ class FinitePointDriver:
                     for origins in (self._shell_origins, self._shell_predecessors)
                     for (_eid, element, _slots, _), origin in zip(
                         owner._shell_parts[q4_count:], origins[q4_count:]))
-                return _encode_s3_checkpoint(owner._identity, generation,
+                return _encode_s3_checkpoint(self._checkpoint_identity(), generation,
                     arrays + native_history_arrays(owner._beam_parts, self._beam_predecessors, "origin") +
                     native_history_arrays(owner._beam_parts, self._beam_origins, "accepted") + (
                         ("shell_plastic", plastic), ("shell_alpha", alpha),
@@ -957,7 +1019,7 @@ class FinitePointDriver:
                     states, anchored=anchored, native_material=True)
             return _encode_binary_checkpoint(kind("finite_native_material_stable"
                 if self._stable_s3 else "finite_native_material"),
-                self.owner._identity, generation, arrays +
+                self._checkpoint_identity(), generation, arrays +
                 native_history_arrays(self.owner._beam_parts,
                                       self._beam_predecessors, "origin") +
                 native_history_arrays(self.owner._beam_parts,
@@ -977,7 +1039,7 @@ class FinitePointDriver:
                     self.owner._shell_parts[q4_count:],
                     self._shell_origins[q4_count:]))
             return _encode_s3_checkpoint(
-                self.owner._identity, generation,
+                self._checkpoint_identity(), generation,
                 arrays + (("beam_plastic", beam_plastic),
                           ("beam_accumulated", beam_accumulated),
                           ("shell_plastic", shell_plastic),
@@ -986,7 +1048,7 @@ class FinitePointDriver:
             beam_plastic, beam_accumulated = _material_arrays(self._beam_origins)
             shell_plastic, shell_alpha = _shell_material_arrays(self._shell_origins)
             return _encode_binary_checkpoint(
-                kind("finite_shell_material"), self.owner._identity,
+                kind("finite_shell_material"), self._checkpoint_identity(),
                 generation,
                 arrays + (("beam_plastic", beam_plastic),
                           ("beam_accumulated", beam_accumulated),
@@ -997,16 +1059,16 @@ class FinitePointDriver:
                for station in history.stations)):
             plastic, accumulated = _material_arrays(self._beam_origins)
             return _encode_binary_checkpoint(
-                kind("finite_material"), self.owner._identity,
+                kind("finite_material"), self._checkpoint_identity(),
                 generation,
                 arrays + (("beam_plastic", plastic),
                           ("beam_accumulated", accumulated)))
         if anchored or sum(value.size for _name, value in arrays) > MAX_JSON_CHECKPOINT_VALUES:
             return _encode_binary_checkpoint(
-                kind("finite"), self.owner._identity, generation, arrays)
+                kind("finite"), self._checkpoint_identity(), generation, arrays)
         payload = {
             "schema": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1",
-            "model": self.owner._identity,
+            "model": self._checkpoint_identity(),
             "generation": self.owner._generation,
             "accepted_factors": self._accepted_factors,
             "q": state.q.tolist(),
@@ -1014,13 +1076,14 @@ class FinitePointDriver:
             "cells": state.cells.tolist(),
             "resultants": state.resultants.tolist(),
             "multipliers": state.multipliers.tolist(),
-            "pattern": self._pattern.tolist(),
+            ("pattern" if self._programme is None else "applied_dead_load"):
+                (self._pattern if self._programme is None else self._applied_load).tolist(),
         }
         raw = json.dumps(payload, sort_keys=True, separators=(",", ":"),
                          allow_nan=False).encode("ascii")
         if len(raw) > MAX_JSON_CHECKPOINT_BYTES:
             return _encode_binary_checkpoint(
-                "finite", self.owner._identity, self.owner._generation, arrays)
+                "finite", self._checkpoint_identity(), self.owner._generation, arrays)
         return raw
 
     def restore(self, value, *, rotation_anchors=None, pose_witness=None,
@@ -1033,9 +1096,10 @@ class FinitePointDriver:
         an independent replay of the accepted history.
         """
         owner = self.owner
+        load_key = "pattern" if self._programme is None else "applied_dead_load"
         base_keys = {"schema", "model", "generation", "accepted_factors",
                      "q", "frames", "cells", "resultants", "multipliers",
-                     "pattern"}
+                     load_key}
         if type(value) is not dict:
             raise ValueError("incompatible experimental finite checkpoint")
         if (value.get("schema") == _BINARY_SCHEMAS["finite_bl5"]) != bool(
@@ -1110,7 +1174,11 @@ class FinitePointDriver:
         cells = _owned(value["cells"], self._state.cells.shape)
         resultants = _owned(value["resultants"], self._state.resultants.shape)
         multipliers = _owned(value["multipliers"], self._state.multipliers.shape)
-        pattern = _owned(value["pattern"], (owner._K.shape[0],))
+        pattern = _owned(value[load_key], (owner._K.shape[0],))
+        if self._programme is not None:
+            self._programme.validate_targets(0., tuple(factors))
+            if not np.array_equal(pattern, self._programme.load_at(factors[-1])):
+                raise ValueError("staged checkpoint applied force disagrees with programme")
         if native_material:
             if not owner._has_physical_fibre:
                 raise ValueError("native material checkpoint requires fibre model")
@@ -1201,7 +1269,8 @@ class FinitePointDriver:
         trial = _State(q, frames, cells, resultants, multipliers, rotation_anchors)
         residual, _, relative, gap, shell_next, beam_next = self._assemble(
             trial, factors[-1], shell_origins, beam_origins,
-            pattern=pattern)
+            pattern=pattern if self._programme is None else None,
+            applied_load=None if self._programme is None else pattern)
         if (not np.isfinite(relative) or relative > 1e-8 or gap > 1e-9 or
                 (not material and not native_material and any(station.accumulated != (0., 0.)
                     for history in beam_next for station in history.stations))):
@@ -1285,9 +1354,11 @@ class FinitePointDriver:
             result = replace(result,
                 status="completed" if adaptive_state.completed else "accepted_prefix",
                 increment_attempts=adaptive_state.attempts)
+        result = self._programme_result(result, self._programme, factors[-1], pattern)
         self._adaptive_state = adaptive_state
         self._state = trial
-        self._pattern = pattern
+        self._pattern = pattern if self._programme is None else None
+        self._applied_load = None if self._programme is None else pattern
         self._shell_predecessors = shell_origins
         if native_shell:
             self._shell_predecessor_q = origin_q

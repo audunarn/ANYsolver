@@ -8,6 +8,20 @@ amendment to frozen registrations or historical results. The
 requirements; the [active note](B3_GE_E4_PL_ACTIVE_STATE.md) identifies
 current evidence and failures. No aggregate gate or milestone is accepted.
 
+Staged translation dead loads,1 October: the existing finite point-owner facade
+accepts an immutable model-bound absolute endpoint programme, continuous affine
+force paths, forward positions and mandatory stage boundaries. Accepted progress,
+force, constitutive/configuration state and controller publish atomically. A new
+programme envelope/augmented inner identity binds future stages and rejects stripped
+or changed checkpoints. Installed wheel0c456666... passes119/119 affected checks
+(56 descriptor,8 staged owner,16 observer,23 finite,13 controller,3 S3 binary).
+Prior-wheel legacy checkpoint bytes and seven physical array fields agree exactly
+on the bounded control. Complete independent code/evidence review has no finding.
+This is experimental tested behavior on the small elastic staged fixture, not
+F06 loaded-history coverage, staged yielding or broad G4A acceptance. Moments,
+follower/line programmes, consumer programme persistence and zero-force numerical
+completion remain outside this slice. [Results](development/r8-staged-load-20261001/results.md).
+
 Positive reference-norm controls,30 September: independently reviewed sparse
 beam/shell analytical inverse actions, unit/coordinate-basis congruence and
 scalar resolved/unresolved/duplicate-action controls pass the preset predicates.

@@ -10,6 +10,7 @@ The BL5 finite route admits elastic response only and remains unqualified.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from copy import copy
 from hashlib import sha256
 from functools import wraps
 from threading import RLock
@@ -720,6 +721,8 @@ class ExperimentalGEAnalysis:
                 "beam_section_families": self._beam_families,
                 "attachment": attachment,
                 "point_recovery": "accepted global spatial connection actions; reference-linear or current ports",
+                "staged_dead_loads": (() if self._line_samples else
+                    ("experimental immutable piecewise-affine translation forces; forward programme position",)),
                 "experimental_line_spaces": tuple(
                     line.multiplier_space for line in self._definition.lines),
                 "q4_force_map": self._definition.q4_pullback_policy,
@@ -930,6 +933,40 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
+        from ._stiffened_shell_staged_load_experimental import (
+            MAGIC as STAGED_MAGIC, decode_checkpoint,
+        )
+        if raw.startswith(STAGED_MAGIC):
+            if self._line_samples or getattr(self, "_staged_context", None) is not None:
+                raise ValueError("staged checkpoint requires a fresh point owner")
+            from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
+            programme, position, inner = decode_checkpoint(raw)
+            compiled = programme.compile(self, FinitePointDriver(self)._load)
+            # Validate in a private view; neither model identity nor accepted
+            # state on the live owner changes before every check passes.
+            prepared = copy(self)
+            prepared._identity = compiled.augmented_model_identity
+            prepared._staged_context = compiled
+            prepared._commit_lock = RLock()
+            prepared._writing = False
+            result = prepared.restore(inner)
+            driver = prepared._finite_driver
+            if driver is None or result.load_position != position:
+                raise ValueError("staged checkpoint progress disagrees with accepted state")
+            if driver._adaptive_state is not None and not driver._adaptive_state.completed:
+                controller = driver._adaptive_state
+                compiled.validate_targets(driver._load_factor,
+                                          controller.targets[controller.cursor:])
+            # Prepare the durable representation before the single publish.
+            checkpoint = driver.checkpoint()
+            driver.owner = self
+            with self._commit_lock:
+                self._finite_driver = driver
+                self._generation = result.generation
+                driver._adaptive_checkpoint = checkpoint
+            return result
+        load_key = ("applied_dead_load" if getattr(self, "_staged_context", None)
+                    is not None else "pattern")
         adaptive = None
         if raw.startswith(INCREMENT_CONTROL_MAGIC):
             adaptive, raw = decode_control(raw, self._identity)
@@ -970,7 +1007,7 @@ class ExperimentalGEAnalysis:
                         ("cells", (members, 2, 3, 3)),
                         ("resultants", (members, 18)),
                         ("multipliers", (constraints,)),
-                        ("pattern", (count,)),
+                        (load_key, (count,)),
                         ("accepted_factors", (generation,)))
                 if kind == "finite_native_material":
                     if not self._has_physical_fibre or self._definition.shell.j2_curve is not None:
@@ -1033,7 +1070,7 @@ class ExperimentalGEAnalysis:
                         ("cells", (members, 2, 3, 3)),
                         ("resultants", (members, 18)),
                         ("multipliers", (self._C.shape[0],)),
-                        ("pattern", (count,)),
+                        (load_key, (count,)),
                         ("accepted_factors", (generation,)),
                         ("beam_plastic", (stations, 6, 2)),
                         ("beam_accumulated", (stations, 2)),

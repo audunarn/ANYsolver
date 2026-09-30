@@ -390,3 +390,34 @@ the first submitted case. Units follow the selected translation or rotation
 coordinate. Cancelled or failed results describe only fully completed cases;
 an empty prefix has empty envelopes. These summaries do not add member-resultant
 envelopes or an envelope-only storage mode. ANYfem returns the same solver result.
+
+The finite GE point owner also accepts an experimental
+`stiffened_shell.StagedDeadLoadProgramme(model_identity, endpoints)` in the
+existing `solve(actions, targets, ...)` call. Use the identity from `preflight()`.
+Each endpoint is a tuple of absolute spatial translation-force `NodalAction`s;
+the initial force is zero and successive endpoints are joined continuously.
+Programme positions run from zero to the number of endpoints. Requested targets
+must move forward and include every crossed integer stage boundary. For example,
+targets `(0.5, 1.0, 1.5, 2.0)` first ramp to endpoint1 and then change direction
+toward endpoint2. Endpoint forces are cumulative loads, not stage increments.
+Moments, follower loads and line owners are excluded from this initial policy.
+
+Results expose `load_position`, `load_stage_cursor`, `load_stage_fraction`,
+`load_programme_identity`, `load_programme_complete` and the owned
+`applied_dead_load` vector. Existing `load_factor`, accepted factors and controller
+attempt factors carry programme positions in this mode; they are not force
+amplitudes. Completion of requested targets is separate from completion of the
+whole programme. Equilibrium uses the current absolute force, while total path
+work cannot be inferred from final force times final displacement.
+
+The whole immutable programme, including future endpoints, is restart-bound.
+A new outer envelope and augmented inner identity prevent admission of a stripped
+programme checkpoint as a legacy proportional-load checkpoint. Progress, force,
+physical state, material histories and controller commit together; callbacks read
+that accepted prefix. Chart rebasing preserves programme position and force.
+Legacy proportional patterns and checkpoint identities remain unchanged. Changing
+mode or a future endpoint after acceptance fails. A zero-force endpoint is
+representable, but the existing strict zero-load equilibrium check may prevent
+finite numerical completion after unloading; no residual floor is introduced.
+This capability remains experimental and does not itself close F06 or qualify
+the broader load programme.

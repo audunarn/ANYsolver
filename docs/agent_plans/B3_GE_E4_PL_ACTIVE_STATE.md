@@ -1,4 +1,4 @@
-# B3-GE / E4-PL / B2 active state — 30 September2026
+# B3-GE / E4-PL / B2 active state — 1 October2026
 
 [Revision8 goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md),
 [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) and complete programme govern.
@@ -104,14 +104,29 @@ supports a conditional nominal finite-family energy/nullspace argument, not exac
 PSD, quantitative global coercivity, locking, physical accuracy or F03 acceptance.
 No more dense-family kernels are needed absent a contrary observation.
 
-Next decision: which existing physical reference actually matches BL5's law,
-section/frame/offset, supports and load measures, and is converged enough to
-discriminate locking/accuracy? Review the preserved transfer and external records
-together before another run. Reuse matched evidence; if an observable/reference
-is missing, identify it explicitly and prepare only the discriminator it supports.
-Keep normal-spin force-arm transfer and direct ground reactions distinct from
-six-channel weld and historical finite-pad comparisons. F06's independent loading
-coverage remains a separate capability task, not a reason to alter the BL5 law.
+Delivered current slice: immutable staged translation dead loads through the
+existing point-owner solve/atomic checkpoint boundary. Installed wheel0c456666...
+passes119/119 affected checks;388modules/211onsite imports bound exactly. Prior
+wheel control gives identical checkpoint bytes and seven physical array fields.
+Complete independent review clear. [Results](development/r8-staged-load-20261001/results.md)
+retains wheel, source/fixture hashes, commands, raw checks and reviews. This is
+experimental behavior on small elastic staged cases, not staged yielding/F06
+or broad load acceptance. No coverage floor or equilibrium norm changed.
+Next F06 step: freeze one independent force-direction path using this capability,
+then compare control/reset/restored actual Q4/S3 accepted paths. Keep0.05rad/
+1e-5commutator floors and earlier Q4 coverage failure visible; no amplitude tuning.
+Staged installed and legacy-parity jobs are terminal; no owned job running.
+
+BL5 accuracy decision: saved direct OpenSees Fy/Mx shares physical idealization
+and five-channel law, but strong nodal and native weak rows differ and no matched
+two-direction external refinement sequence or Mz result exists. Older six-row
+solid/Q6 references are not that comparator. Prepare one16x4/32-halfcell matched
+external Mz10Nm discriminator plus Fy100N route control, retaining common work,
+full poses and fixed-distance transfer. It distinguishes normal torque/physical
+transfer mismatch from missing reference evidence; it cannot establish converged
+1% accuracy alone. No fourth native grid or new norm campaign follows by default.
+Keep root connection versus direct-ground bookkeeping distinct. Worker owns only
+the new reference runner/applicability note; no new numerical reference run yet.
 
 All remaining topology/footprints, materials/cyclic simultaneous yielding, loads,
 spectra, imperfections/capacity, scale, external references, installed platforms
