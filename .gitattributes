@@ -43,3 +43,7 @@ docs/reference_cases/qualified_shell_runtime_guard_performance_successor.json te
 docs/STATIC_RUNTIME_PERFORMANCE.md text eol=lf
 reports/general_contact_d1_supported_schur_*.txt text eol=lf -whitespace
 reports/general_contact_d1_q4_s3_jet2_focused_20260926.txt text eol=lf -whitespace
+# Preserve exact predicate archives used by byte-bound development comparisons.
+docs/d1_review_support/d1_touch_bounds_prepatch_20260930.py.txt -text
+docs/d1_review_support/d1_touch_bounds_probe_candidate_4ae_20260930.py.source -text
+docs/d1_review_support/d1_saved_report_touch_probe_V2_executed_20260930.py.source -text

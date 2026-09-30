@@ -68,6 +68,25 @@ def _touching_projected_boundaries(first: PlanarFace, second: PlanarFace,
                      for face in (first, second))
     scale = max(float(np.max(np.linalg.norm(p-p[0], axis=1))) for p in polygons)
     tolerance = relative_tolerance*scale
+    # A touching point must lie within tolerance of both projected boxes.
+    # Work in the same computed frame as the segment predicate; retain that
+    # predicate whenever its arithmetic is ambiguous or degenerate.
+    if ("raise" not in np.geterr().values()
+            and np.isfinite(tolerance) and tolerance >= 0.0
+            and all(np.all(np.isfinite(p)) for p in polygons)):
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            edges = tuple(np.roll(p, -1, axis=0)-p for p in polygons)
+            lengths_squared = tuple(np.einsum("ij,ij->i", e, e) for e in edges)
+            coordinate_scale = max(1.0, *(float(np.max(np.abs(p))) for p in polygons))
+            padding = tolerance + 256.0*np.finfo(float).eps*coordinate_scale
+            lower = tuple(np.nextafter(np.min(p, axis=0)-padding, -np.inf) for p in polygons)
+            upper = tuple(np.nextafter(np.max(p, axis=0)+padding, np.inf) for p in polygons)
+        if (all(np.all(np.isfinite(length)) and np.all(length >= np.finfo(float).tiny)
+                for length in lengths_squared)
+                and coordinate_scale <= np.sqrt(np.finfo(float).max)/8.0
+                and all(np.all(np.isfinite(bound)) for bound in (*lower, *upper))
+                and (np.any(upper[0] < lower[1]) or np.any(upper[1] < lower[0]))):
+            return False
     for vertices, edges in ((polygons[0], polygons[1]),
                             (polygons[1], polygons[0])):
         for point in vertices:

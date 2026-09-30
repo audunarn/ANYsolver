@@ -1,0 +1,11 @@
+{
+  "status": "development_started",
+  "saved": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_radial_nonmatching_swept_search_coupled_v8_20260930.json",
+  "saved_sha256": "96f0bcec3b5a3fcc6bd913d3cff192e8b66a7ba9d34e2d3d0dedeaea7c0fc001",
+  "installed_module": "C:\\ANYworkspaceWork\\general-contact-final-87c53913\\target\\anysolver\\__init__.py",
+  "installed_augmented_sha256": "a5ef23226e40fe6c5661acd149aee88b34e8c5e36506308f511015e6ad674fce",
+  "patched_source_sha256": "4ae79c5e7117a6496dd42b659d912751f6607810bd818304b426df94b062adbb",
+  "helper_sha256": "09951cad43c869a1ec1c9280c6c4f478436807553730eef17f553cb9ac3aa3d2",
+  "scope": "same saved-pose reporting; only named predicate patched in memory",
+  "evaluations": []
+}
