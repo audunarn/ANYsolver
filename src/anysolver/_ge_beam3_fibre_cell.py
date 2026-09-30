@@ -26,17 +26,24 @@ class CellHistory:
     stations: tuple
 
 
-def _section_response(section, strain, origins, check):
+def _section_response(section, strain, origins, check, *, include_energy=False):
     """Decimal first/second variations and recovery of the declared potential."""
     stress = mv(section._background, strain)
     tangent = [list(row) for row in section._background]
     potential = dot(strain, stress)/2
+    stored = potential; previous_hardening = D(0); dissipation = D(0)
     proposed = []; recovered = []
     for fibre, (z0, p0) in zip(section.fibres, origins):
         check(); b = section._map(fibre); area = D.from_float(fibre.area); young = D.from_float(fibre.young)
         ef = dot(b, strain); delta, et, branch = fibre.curve._return(young, ef, z0, p0)
         z = z0+delta; p = p0+abs(delta); elastic = ef-z; sigma = young*elastic
         potential += area*(young*elastic*elastic/2+fibre.curve._integral(p0, p))
+        if include_energy:
+            y0 = D.from_float(fibre.curve.flow_stress[0])
+            stored += area*(young*elastic*elastic/2+
+                           fibre.curve._integral(D(0), p)-y0*p)
+            previous_hardening += area*(fibre.curve._integral(D(0), p0)-y0*p0)
+            dissipation += area*y0*abs(delta)
         for i in range(6):
             stress[i] += area*b[i]*sigma
             for j in range(6): tangent[i][j] += area*et*b[i]*b[j]
@@ -44,7 +51,8 @@ def _section_response(section, strain, origins, check):
         proposed.append((zh, zl, ph, pl))
         recovered.append(FibreRecovery(fibre.fibre_id, _scalar_pair(ef), _scalar_pair(elastic),
             _scalar_pair(sigma), _scalar_pair(et), _scalar_pair(delta), branch))
-    return potential, stress, tangent, tuple(proposed), tuple(recovered)
+    fields = potential, stress, tangent, tuple(proposed), tuple(recovered)
+    return fields + (stored, previous_hardening, dissipation) if include_energy else fields
 
 
 class FibreCellConjugate:
@@ -163,7 +171,9 @@ class FibreCellConjugate:
             slope += curvature*(right-left)
         return D(1), evaluations
 
-    def response(self, resultants, origin=None, *, check=None):
+    def response(self, resultants, origin=None, *, check=None, include_energy=False):
+        if type(include_energy) is not bool:
+            raise ValueError('explicit native energy recovery policy required')
         started = monotonic()
         def guard():
             if check is not None: check()
@@ -221,5 +231,25 @@ class FibreCellConjugate:
                 residual=str(max(abs(v) for v in residual)),
                 derivative_kind='SEMISMOOTH_BRANCH_SELECTION' if boundary else 'CLASSICAL_SMOOTH_BRANCH',
                 production_qualified=False)
+            if include_energy:
+                stored = D(0); previous_hardening = D(0); dissipation = D(0)
+                for (_, weight, _, _), predecessor, fields_row, station in zip(
+                        self.stations, origins, fields, station_rows):
+                    strain, stress, proposed, recovery = fields_row
+                    repeated = _section_response(self.section, strain, predecessor,
+                                                 guard, include_energy=True)
+                    if (repeated[1] != stress or repeated[3] != proposed or
+                            repeated[4] != recovery):
+                        raise ValueError('native energy recovery changed accepted station response')
+                    stored += weight*repeated[5]
+                    previous_hardening += weight*repeated[6]
+                    dissipation += weight*repeated[7]
+                    station['stored_energy_per_length'] = _scalar_pair(repeated[5])
+                    station['previous_hardening_per_length'] = _scalar_pair(repeated[6])
+                    station['incremental_dissipation_per_length'] = _scalar_pair(repeated[7])
+                response['stored_energy'] = _scalar_pair(stored)
+                response['previous_hardening_energy'] = _scalar_pair(previous_hardening)
+                response['incremental_dissipation'] = _scalar_pair(dissipation)
+                response['energy_recovery_station_updates'] = len(fields)
         guard()
         return response

@@ -24,7 +24,7 @@ This route supports linear solve, physical support reactions, owned coordinates,
 checkpoint/restore and subsequent compatible loads with factorization reuse.
 Capabilities report `EXPERIMENTAL_NOT_QUALIFIED`. The same point owner also
 admits experimental finite physical-fibre and mixed-family histories with
-elastic Q4/S3 shells. Native cell coordinates are retained; each trial uses
+elastic or isotropic DNVC-C208 J2 Q4/S3 shells. Native cell coordinates are retained; each trial uses
 the same accepted material predecessor and acceptance is atomic. Accepted
 station recovery supplies paired fibre strains, stresses and plastic increments
 from the actual native material response. `beam_station_accumulated` reports
@@ -38,8 +38,23 @@ before publishing state. This validates the endpoint and its last material
 update, not the provenance of an entire loading path. Generalized-only formats
 keep their existing contracts.
 
-Simultaneous shell J2/fibre histories, line attachments and integrated fibre
-energy/dissipation remain unfinished and explicitly excluded. Strong full-section
+Accepted `beam_fibre_energy` records contain paired stored material energy in
+joules, previous hardening energy, last-increment dissipation, and the native
+incremental material potential. The stored-energy/dissipation split uses the
+unchanged fibre law at its actual converged station strains and saved predecessor.
+It does not report cumulative dissipation, external work or total coupled-system
+energy. Energy capture is opt-in at the private local operator; its default
+response and legacy station-recovery payloads remain unchanged.
+
+The distinct V8 native/shell-J2 checkpoint retains both shell and beam material
+predecessors and resulting histories. S3 records are model-bound native blobs;
+predecessor coordinates and anchors bind their constitutive chart. Restore
+repeats the update and checks saved material/recovery consistency before one
+publication. V7 and generalized-only formats keep their existing contracts.
+
+Simultaneous active shell/fibre yielding still needs direct evidence; a shell-J2
+definition with zero shell plastic accumulation does not establish it. Line
+attachments and total-system energy remain unfinished. Strong full-section
 yielding and small-load/pure-fibre S3 convergence failures remain development
 findings; tolerances have not been relaxed. The passing partial-yield histories
 do not qualify those cases or G3. A linear result does not predict yielding.

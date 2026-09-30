@@ -22,6 +22,9 @@ S3_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_S3_J2_V5"
 CHART_MAGIC = b"ANYSGECP6\0"
 CHART_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_OWNED_CHART_V6"
 CHART_S3_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_ANCHORED_S3_J2_V6"
+NATIVE_SHELL_MAGIC = b"ANYSGECP8\0"
+NATIVE_SHELL_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_SHELL_J2_V8"
+CHART_NATIVE_SHELL_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_ANCHORED_NATIVE_SHELL_J2_V8"
 MAX_HEADER_BYTES = 8192
 MAX_CHECKPOINT_BYTES = 128 * 1024 * 1024
 MAX_S3_STATE_BYTES = 128 * 1024
@@ -136,7 +139,8 @@ def decode(raw: bytes, model: str, expected_shapes) -> tuple[str, int, dict]:
 
 def encode_s3(model: str, generation: int,
               arrays: tuple[tuple[str, np.ndarray], ...],
-              states: tuple[bytes, ...], *, anchored: bool = False) -> bytes:
+              states: tuple[bytes, ...], *, anchored: bool = False,
+              native_material: bool = False) -> bytes:
     """Pack fixed numeric state and bounded native S3 model-bound blobs.
 
     V1–V4 framing and decoding are unaffected. Native S3 deserialization and
@@ -144,7 +148,8 @@ def encode_s3(model: str, generation: int,
     """
     if (type(model) is not str or type(generation) is not int or
             generation < 1 or type(arrays) is not tuple or
-            type(states) is not tuple or not states):
+            type(states) is not tuple or (not states and not native_material) or
+            type(native_material) is not bool):
         raise ValueError("valid S3 mixed checkpoint fields required")
     names = [name for name, _ in arrays]
     if any(type(name) is not str for name in names) or len(names) != len(set(names)):
@@ -171,14 +176,17 @@ def encode_s3(model: str, generation: int,
             raise ValueError("S3 checkpoint exceeds resource envelope")
     if type(anchored) is not bool:
         raise ValueError("explicit S3 checkpoint chart policy required")
-    metadata = {"schema": CHART_S3_SCHEMA if anchored else S3_SCHEMA, "model": model,
+    schema = ((CHART_NATIVE_SHELL_SCHEMA if anchored else NATIVE_SHELL_SCHEMA)
+              if native_material else (CHART_S3_SCHEMA if anchored else S3_SCHEMA))
+    magic = NATIVE_SHELL_MAGIC if native_material else S3_MAGIC
+    metadata = {"schema": schema, "model": model,
                 "generation": generation, "arrays": shapes,
                 "s3_states": len(states)}
     header = json.dumps(metadata, sort_keys=True, separators=(",", ":"),
                         allow_nan=False).encode("ascii")
     if len(header) > MAX_HEADER_BYTES:
         raise ValueError("S3 checkpoint metadata exceeds bound")
-    content = (S3_MAGIC + len(header).to_bytes(4, "little") + header +
+    content = (magic + len(header).to_bytes(4, "little") + header +
                b"".join(packed) +
                b"".join(len(state).to_bytes(4, "little") + state
                         for state in states))
@@ -188,15 +196,21 @@ def encode_s3(model: str, generation: int,
 
 
 def decode_s3(raw: bytes, model: str, expected_shapes,
-              expected_s3_states: int, *, anchored: bool = False) -> tuple[int, dict, tuple[bytes, ...]]:
+              expected_s3_states: int, *, anchored: bool = False,
+              native_material: bool = False) -> tuple[int, dict, tuple[bytes, ...]]:
     """Decode V5 only after digest, compiled shapes, and blob counts agree."""
-    if (type(raw) is not bytes or not raw.startswith(S3_MAGIC) or
+    magic = NATIVE_SHELL_MAGIC if native_material else S3_MAGIC
+    schema = ((CHART_NATIVE_SHELL_SCHEMA if anchored else NATIVE_SHELL_SCHEMA)
+              if native_material else (CHART_S3_SCHEMA if anchored else S3_SCHEMA))
+    if (type(native_material) is not bool or type(anchored) is not bool or
+            type(raw) is not bytes or not raw.startswith(magic) or
             len(raw) > MAX_CHECKPOINT_BYTES or
-            len(raw) < len(S3_MAGIC) + 4 + sha256().digest_size or
-            type(expected_s3_states) is not int or expected_s3_states < 1):
+            len(raw) < len(magic) + 4 + sha256().digest_size or
+            type(expected_s3_states) is not int or
+            expected_s3_states < (0 if native_material else 1)):
         raise ValueError("bounded S3 mixed checkpoint required")
-    start = len(S3_MAGIC) + 4
-    header_size = int.from_bytes(raw[len(S3_MAGIC):start], "little")
+    start = len(magic) + 4
+    header_size = int.from_bytes(raw[len(magic):start], "little")
     if (header_size < 1 or header_size > MAX_HEADER_BYTES or
             start + header_size + sha256().digest_size > len(raw)):
         raise ValueError("invalid S3 checkpoint header")
@@ -215,7 +229,7 @@ def decode_s3(raw: bytes, model: str, expected_shapes,
         raise ValueError("noncanonical S3 checkpoint metadata")
     if (type(header) is not dict or set(header) !=
             {"schema", "model", "generation", "arrays", "s3_states"} or
-            header["schema"] != (CHART_S3_SCHEMA if anchored else S3_SCHEMA) or header["model"] != model or
+            header["schema"] != schema or header["model"] != model or
             type(header["generation"]) is not int or
             not 1 <= header["generation"] <= MAX_CHECKPOINT_BYTES // 8 or
             type(header["arrays"]) is not list or
@@ -267,7 +281,7 @@ def encode_chart(model, generation, anchors, physical_witness, inner):
     anchors = owned_anchors(anchors, len(anchors))
     witness = owned_anchors(physical_witness, len(anchors))
     if (type(model) is not str or type(generation) is not int or generation < 2 or
-            type(inner) is not bytes or not inner.startswith((MAGIC, S3_MAGIC))):
+            type(inner) is not bytes or not inner.startswith((MAGIC, S3_MAGIC, NATIVE_SHELL_MAGIC))):
         raise ValueError("accepted chart event and bounded numeric snapshot required")
     metadata = {"schema": CHART_SCHEMA, "model": model,
                 "generation": generation, "inner_bytes": len(inner)}
@@ -318,6 +332,6 @@ def decode_chart(raw, model, nodes):
     witness = owned_anchors(np.frombuffer(raw, dtype="<f8", count=nodes*9,
                                           offset=offset+length).reshape(nodes, 3, 3), nodes)
     inner = raw[offset+2*length:end]
-    if not inner.startswith((MAGIC, S3_MAGIC)):
+    if not inner.startswith((MAGIC, S3_MAGIC, NATIVE_SHELL_MAGIC)):
         raise ValueError("distinct numeric chart snapshot required")
     return metadata["generation"], anchors, witness, inner
