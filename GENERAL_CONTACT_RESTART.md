@@ -2,7 +2,7 @@
 
 **30 September2026: active. D1-interior accepted; D2 development.**
 Worktree C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
-Prior checkpoint5660c3dc; owned S3 integration/evidence/doc changes await checkpoint.
+Source checkpoint6bd7f023; owned S3 integration/evidence/doc changes committed.
 Main checkout and historical dirty work untouched. No publication/merge/release.
 
 [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3;
@@ -48,8 +48,8 @@ reviewed summary-result persistence,16baseline+6affected checks; appadmissionfal
 
 ## Next action and budget
 
-Finish local owned checkpoint, then next bounded delivery
-row. Stop point-load refinement/tuning; qualify the working Q4/S3 boundary method
+Proceed to the next bounded delivery row. Stop point-load refinement/tuning;
+qualify the working Q4/S3 boundary method
 under its actual scope, continue D2 geometry/search and D3–D8. Full programme active.
 Original120active-hour clock unchanged (29September08:04:33UTC). Latest tool
 102715s=28.53h used,about91.47h remaining; check usage, never reset.
