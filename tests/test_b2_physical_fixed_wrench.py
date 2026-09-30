@@ -148,8 +148,7 @@ def test_generalized_very_weak_shear_preserves_independent_cut_work():
     operator = member.local_operator()
     original_flexibility = _flexibility(
         Fraction(float(member.length_m)), _inverse(stiffness))
-    with pytest.raises(ConditioningAdmissionError, match="ill-conditioned"):
-        _inverse_spd(original_flexibility)
+    assert _inverse_spd(original_flexibility) == _inverse(original_flexibility)
     assert operator._basic_inverse == tuple(
         tuple(row) for row in _inverse(original_flexibility))
     stations = (.25, .5, .75)

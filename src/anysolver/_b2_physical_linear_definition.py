@@ -17,6 +17,10 @@ from ._b2_physical_flexibility_linear import (
     LinearOperator, LinearSection, RepresentabilityError,
 )
 
+# Keep type admission independent of the construction factory (which can be
+# instrumented without changing the canonical numerical operator).
+_CANONICAL_LINEAR_OPERATOR = LinearOperator
+
 
 PROFILE_ID = "B2_E4_PL_FAST_LINEAR_V1"
 SCHEMA_ID = "B2_PHYSICAL_LINEAR_DEFINITION_V1"
@@ -293,6 +297,7 @@ class CompiledPhysicalB2Member:
 
     def __post_init__(self):
         if (not isinstance(self.definition, PhysicalB2Member)
+                or type(self.operator) is not _CANONICAL_LINEAR_OPERATOR
                 or self.operator.section is not self.definition.section
                 or self.operator.length != Fraction(self.definition.length_m)
                 or type(self._frame_bytes) is not bytes

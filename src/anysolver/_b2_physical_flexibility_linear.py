@@ -1,7 +1,7 @@
 """Experimental straight-reference B2 elastic force-flexibility operator.
 
-This local operator has no public dispatch, assembly, mass, geometric stiffness,
-or qualification claim.  Coordinates are local [u,v,w,rx,ry,rz] at each node;
+This local operator makes no qualification claim. Its reference-linear consumers
+admit operations separately. Coordinates are local [u,v,w,rx,ry,rz] at each node;
 section resultants/strains are [N,Vy,Vz,T,My,Mz].  Exact rational arithmetic
 retains weak shear modes until the requested binary64 output is rounded.
 """
@@ -14,6 +14,9 @@ import numpy as np
 
 
 OPERATOR_ID = "B2_PHYSICAL_FLEXIBILITY_LINEAR_V1"
+OUTPUT_REPRESENTATION_ID = "B2_BOUNDED_OUTPUT_REPRESENTATION_V1"
+_ENERGY_LIMIT = Fraction(1, 10**8)
+_RIGID_LIMIT = Fraction(1, 10**9)
 
 
 class RepresentabilityError(ValueError):
@@ -21,7 +24,42 @@ class RepresentabilityError(ValueError):
 
 
 class ConditioningAdmissionError(ValueError):
-    """A private local conditioning screen rejected otherwise valid data."""
+    """Local numerical output cannot meet its declared representation limits."""
+
+
+@dataclass(frozen=True)
+class OutputRepresentationCertificate:
+    """Basic energies and separate bounded rigid/cross work, not graph stability.
+
+    Errors are exact rational ratios. This certifies rounding of the implemented
+    law, whose physical correctness still needs independent mechanics oracles.
+    """
+
+    basic_energy_preserved: bool
+    rigid_work_preserved: bool
+    cross_work_preserved: bool
+    rigid_wrench_error: Fraction
+    rigid_work_error: Fraction
+    cross_work_error: Fraction
+    identity: str = OUTPUT_REPRESENTATION_ID
+
+    @property
+    def passed(self):
+        return (self.basic_energy_preserved and self.rigid_work_preserved and
+                self.cross_work_preserved)
+
+
+class OutputRepresentationError(ConditioningAdmissionError):
+    """The emitted binary64 tangent failed its bounded local work certificate."""
+
+    def __init__(self, certificate):
+        self.certificate = certificate
+        failed = [name for name, passed in (
+            ("basic energy", certificate.basic_energy_preserved),
+            ("rigid work", certificate.rigid_work_preserved),
+            ("cross work", certificate.cross_work_preserved)) if not passed]
+        super().__init__("physical B2 tangent output representation failed: " +
+                         ", ".join(failed))
 
 
 def _positive(value):
@@ -56,7 +94,11 @@ def _array(value):
 
 
 def _inverse_spd(matrix):
-    """Exact LDL and inverse; provisional normalized conditioning admission."""
+    """Exact LDL and inverse of the supplied law; no floating pivot heuristic.
+
+    SPD is an input-law check. Emitted numerical tangents receive a separate
+    output certificate, and assembled solves retain their equilibrium checks.
+    """
     n = len(matrix)
     diagonal = [matrix[i][i] for i in range(n)]
     if any(d <= 0 for d in diagonal):
@@ -67,9 +109,6 @@ def _inverse_spd(matrix):
         pivot = matrix[j][j] - sum(lower[j][k]**2 * pivots[k] for k in range(j))
         if pivot <= 0:
             raise ValueError("positive-definite physical section/flexibility required")
-        # This private oracle does not establish a production conditioning range.
-        if pivot / diagonal[j] < Fraction(1, 10**12):
-            raise ConditioningAdmissionError("ill-conditioned normalized physical section/flexibility")
         pivots.append(pivot)
         for i in range(j + 1, n):
             lower[i][j] = (matrix[i][j] - sum(
@@ -112,6 +151,103 @@ def _interpolation(length, station):
 
 def _multiply(matrix, vector):
     return [sum(a * b for a, b in zip(row, vector)) for row in matrix]
+
+
+def _transpose(matrix):
+    return list(map(list, zip(*matrix)))
+
+
+def _matmul(a, b):
+    return [[sum((x*y for x, y in zip(row, column)), Fraction(0))
+             for column in zip(*b)] for row in a]
+
+
+def _positive_semidefinite(matrix):
+    """Exact symmetric Schur test; zero pivots require a zero residual column."""
+    work = [list(row) for row in matrix]
+    if work != _transpose(work):
+        raise ValueError("symmetric physical work certificate required")
+    for j in range(len(work)):
+        pivot = work[j][j]
+        if pivot < 0:
+            return False
+        if not pivot:
+            if any(work[i][j] for i in range(j+1, len(work))):
+                return False
+            continue
+        for i in range(j+1, len(work)):
+            for k in range(j+1, len(work)):
+                work[i][k] -= work[i][j]*work[j][k]/pivot
+    return True
+
+
+def _nodal_tangent(operator):
+    # One exact action per nodal column; all returned coefficients retain the
+    # previous exact formulas before binary64 rounding.
+    columns = [operator._basic_action([row[column] for row in operator._B])
+               for column in range(12)]
+    return tuple(tuple(_float(sum(operator._B[j][i]*columns[column][j]
+                                  for j in range(6)))
+                       for column in range(12)) for i in range(12))
+
+
+def _certify_output_tangent(operator, tangent):
+    """Certify the emitted tangent with the reviewed bounded physical norms.
+
+    The basic-energy inequalities hold for all basic directions. Separate rigid
+    and cross limits apply to normalized amplitude cubes, not an all-amplitude
+    relative energy bound or one combined total-energy estimate. No matrix is
+    symmetrized. Assembled graph/affine solve checks remain mandatory.
+    """
+    emitted = np.asarray(tangent, dtype=float)
+    if (emitted.shape != (12, 12) or not np.isfinite(emitted).all() or
+            not np.array_equal(emitted, emitted.T)):
+        raise RepresentabilityError("finite symmetric physical B2 tangent required")
+    length = operator.length
+    B = operator._B
+    A = _transpose([operator._basic_action(
+        [Fraction(i == j) for i in range(6)]) for j in range(6)])
+    # Canonical right inverse: first node fixed, B[:, 6:] inverted exactly.
+    R = [[Fraction(0)]*6 for _ in range(12)]
+    R[6][0] = R[9][1] = 1
+    R[8][2], R[10][2], R[10][3] = length, -1, 1
+    R[7][4], R[11][4], R[11][5] = -length, -1, 1
+    if _matmul(B, R) != [[Fraction(i == j) for j in range(6)] for i in range(6)]:
+        raise RuntimeError("physical B2 basic/right-inverse contract mismatch")
+    Z = [[Fraction(0)]*6 for _ in range(12)]
+    for end, x in ((0, -length/2), (6, length/2)):
+        for axis in range(3):
+            Z[end+axis][axis] = length
+            Z[end+3+axis][3+axis] = 1
+        Z[end+2][4], Z[end+1][5] = -x, x
+    if any(v for row in _matmul(B, Z) for v in row):
+        raise RuntimeError("physical B2 basic/rigid-kernel contract mismatch")
+    K = [[Fraction(float(v)) for v in row] for row in emitted]
+    pulled = _matmul(_matmul(_transpose(R), K), R)
+    delta = [[pulled[i][j]-A[i][j] for j in range(6)] for i in range(6)]
+    energy_ok = all(_positive_semidefinite([
+        [_ENERGY_LIMIT*A[i][j]+sign*delta[i][j] for j in range(6)]
+        for i in range(6)]) for sign in (-1, 1))
+    S = operator._stiffness
+    force = max([S[i][i] for i in range(3)] +
+                [S[i][i]/length**2 for i in range(3, 6)])
+    energy = force*length
+    wrench_scales = [force]*3+[force*length]*3
+    KZ = _matmul(K, Z)
+    rigid_wrench = max(sum(abs(v) for v in row)/wrench_scales[i % 6]
+                       for i, row in enumerate(KZ))
+    rigid_work = sum(abs(v) for row in _matmul(_transpose(Z), KZ)
+                     for v in row)/energy
+    R_scaled = [[v*(length if j == 0 else 1) for j, v in enumerate(row)]
+                for row in R]
+    cross_work = sum(abs(v) for row in _matmul(
+        _matmul(_transpose(Z), K), R_scaled) for v in row)/energy
+    certificate = OutputRepresentationCertificate(
+        energy_ok, rigid_wrench <= _RIGID_LIMIT and rigid_work <= _ENERGY_LIMIT,
+        cross_work <= _ENERGY_LIMIT, rigid_wrench, rigid_work, cross_work)
+    if not certificate.passed:
+        raise OutputRepresentationError(certificate)
+    return certificate
 
 
 def _flexibility(length, compliance):
@@ -269,7 +405,8 @@ class LinearOperator:
     """Physical local tangent and station response; independent of public B2."""
 
     __slots__ = ("length", "section", "_stiffness", "_compliance", "_B",
-                 "_modal", "_basic_inverse", "_trace_polynomials", "_sealed")
+                 "_modal", "_basic_inverse", "_trace_polynomials", "_sealed",
+                 "_tangent", "_output_certificate")
 
     def __setattr__(self, name, value):
         if getattr(self, "_sealed", False):
@@ -316,7 +453,14 @@ class LinearOperator:
                 coefficients[row][column] = pose[row]
         self._trace_polynomials = tuple(tuple(tuple(poly) for poly in row)
                                         for row in coefficients)
+        self._tangent = _nodal_tangent(self)
+        self._output_certificate = _certify_output_tangent(self, self._tangent)
         self._sealed = True
+
+    @property
+    def output_certificate(self):
+        """Immutable bounded local certificate; not production qualification."""
+        return self._output_certificate
 
     @property
     def basic_matrix(self):
@@ -444,12 +588,9 @@ class LinearOperator:
         basic = _multiply(self._B, [Fraction(float(v)) for v in u])
         q = self._basic_action(basic)
         force = [sum(self._B[j][i]*q[j] for j in range(6)) for i in range(12)]
-        # Apply to each unit coordinate before rounding; no rounded dense
-        # subtraction is used to recover the weak symmetric bending mode.
-        tangent = [[sum(self._B[j][i]*self._basic_action([self._B[k][column] for k in range(6)])[j]
-                        for j in range(6)) for column in range(12)] for i in range(12)]
         resultants, strains = self._section_response(q, x)
         return LocalResponse(
-            _float(sum(b*v for b, v in zip(basic, q))/2), _array(force), _array(tangent),
+            _float(sum(b*v for b, v in zip(basic, q))/2), _array(force),
+            np.array(self._tangent, dtype=float, copy=True),
             _array(q), resultants, strains, np.array(x, dtype=float, copy=True),
         )

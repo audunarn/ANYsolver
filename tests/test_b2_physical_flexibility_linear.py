@@ -149,10 +149,13 @@ def test_explicit_input_and_representability_negatives():
         LinearSection.isotropic(E=1, nu=.5, area=1, Iy=1, Iz=1, J=1, ky=1, kz=1)
     with pytest.raises(ValueError, match="positive-definite"):
         LinearSection.generalized(np.diag([1., 1., 1., 1., 1., -1.]))
-    with pytest.raises(ConditioningAdmissionError, match="ill-conditioned"):
-        S = np.eye(6)
-        S[0, 1] = S[1, 0] = 1 - 1e-14
-        LinearSection.generalized(S)
+    S = np.eye(6)
+    S[0, 1] = S[1, 0] = 1 - 1e-14
+    # The exactly SPD input law is valid; its emitted tangent must still satisfy
+    # the output certificate. An exact inverse needs no floating pivot veto.
+    section = LinearSection.generalized(S)
+    with pytest.raises(ConditioningAdmissionError, match="output representation"):
+        LinearOperator(2., section)
     with pytest.raises(RepresentabilityError, match="underflow"):
         scalar(2.**-1074).evaluate([0., 0., 0., 0., 0., 0., 0., 0., 1e-100, 0., 0., 0.])
     with pytest.raises(RepresentabilityError, match="overflow"):

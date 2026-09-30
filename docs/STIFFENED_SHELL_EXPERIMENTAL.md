@@ -5,6 +5,33 @@ the explicitly selected GE or physical B2 profile. Both remain experimental;
 implemented behavior is distinct from programme qualification. Legacy selectors,
 element mass kernels and package versions are unchanged.
 
+## Physical B2 numerical output admission
+
+The physical section law is checked for exact positive definiteness of its
+binary64 inputs. The former provisional normalized-pivot cutoff is replaced by
+`B2_BOUNDED_OUTPUT_REPRESENTATION_V1` on the actual emitted tangent. It certifies
+all six basic deformation energies to the existing 1e-8 work accuracy, and
+separately bounds physical rigid wrench leakage (1e-9) and bounded rigid/cross
+work (1e-8). Exact rational tests do not average the matrix with its transpose.
+The operator's immutable `output_certificate` identifies this check;
+`stiffened_shell.OutputRepresentationError` carries a failed certificate.
+Overflow, underflow and insufficient subnormal precision still fail explicitly.
+
+The reference right inverse fixes node one. Rigid fields use a centroid basis,
+translations scaled by element length L and unit rotations. The force scale is
+the maximum of the section translation diagonals and rotational diagonals/L²;
+moment and energy scales are F*L. Rigid and cross bounds each apply to their
+normalized finite-amplitude cube. They are not one total-energy bound or an
+all-amplitude relative guarantee near a rigid kernel. Basic energies are checked
+against the implemented law; independent physical work/force/station oracles
+remain required. Local admission is not continuous-range qualification or
+assembled graph stability; sparse solve/equilibrium checks remain separate.
+
+The certified constant tangent is prepared once per immutable local operator.
+Each evaluation returns an owned copy. No material law, historical B2 equation,
+default selector or package version changes. Programme F09 acceptance remains
+separate from this implemented numerical guard.
+
 ## Supported B2/Q4 reference-modal development route
 
 The existing multi-Q4/multi-B2 point-panel owner now accepts a positive explicit

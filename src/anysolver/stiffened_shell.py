@@ -12,7 +12,11 @@ from ._b2_physical_linear_definition import (
     PROFILE_ID as B2_E4_PL_FAST_LINEAR_V1,
     PhysicalB2Member, CompiledPhysicalB2Member, MassMetadata,
 )
-from ._b2_physical_flexibility_linear import LinearSection
+from ._b2_physical_flexibility_linear import (
+    LinearSection, RepresentabilityError, OutputRepresentationError,
+    OutputRepresentationCertificate,
+    OUTPUT_REPRESENTATION_ID as B2_BOUNDED_OUTPUT_REPRESENTATION_V1,
+)
 from ._stiffened_shell_b2_experimental import ExperimentalB2Analysis
 from ._stiffened_shell_b2_q4_point_experimental import (
     ExperimentalB2Q4PointAnalysis,
@@ -121,5 +125,7 @@ __all__ = [
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
+    "B2_BOUNDED_OUTPUT_REPRESENTATION_V1", "OutputRepresentationCertificate",
+    "OutputRepresentationError", "RepresentabilityError",
     "create_analysis",
 ]
