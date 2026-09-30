@@ -89,7 +89,7 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 |---|---|---|
 | M1 matching-station GE | IMPLEMENTED_NOT_QUALIFIED | Current installed GE/ANYfem checks pass; matched E01, complete V01–V06/V17/V18/V28 evidence and independent acceptance open. |
 | M2 bonded line | IN_PROGRESS | BL5 physical law, multiplier resolution, F03 and ratios/refinement/transfer open. |
-| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/B2 point-panel 1/10/100, selected envelopes and distinct ANYfem experimental input save/reopen pass installed checks. Scoped F09 and F10/F11 point/static accepted; general F10/F11/F13, native-project persistence and E01 B2 comparison remain open. |
+| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/B2 point-panel 1/10/100, selected envelopes and experimental ANYfem round-trip tested. Scoped F09 and F10/F11 point/static accepted; fixed E01 B2 reference executed with retained discrepancies. General F10/F11/F13, native-project persistence and converged E01 accuracy remain open. |
 | M4 remaining mechanics | IN_PROGRESS | Materials, footprints, topology, loads, spectra, imperfections and capacity remain mandatory. |
 | M5 scale/release | NOT_STARTED | Practical scale, platforms, external programme and authorized release remain mandatory. |
 
@@ -203,6 +203,21 @@ bind unchanged sourcea5a698b5/wheel942460a1. Seal SHA-256
 `15d8709371fd266167914358ffe974be174b3277b6216cee31737af3ebff7cb5`
 covers94 files plus the seal. GeneralF10/F11, G0B, F13 andM3 stay open; local S3
 proof does not imply public S3 B2 execution or finite B2 qualification.
+
+**E01 B2 fixed development comparison,30 September:** both eccentricity signs,
+six load channels; native12/12, six analytic external beam controls and12 isolated
+external panels pass. Independent C rows agree4.4409e-16; sampled same-state24
+beam covectors agree≤5.69e-16/load, with remaining assembled-force differences
+allocated to shell contributions (not unique drilling blame or all-state proof).
+Worst full-pose6.8574%, tip2.0534%, energy2.8973%, physical multipliers10.2708%,
+ground8.6424% discrepancies remain. No converged1% accuracy/M3 acceptance.
+OpenSees3.8/Python3.12.14; same product wheel6a44... . Source/input reuse,
+restraint-input failure, sequential factorization failure, fresh-process diagnosis
+and complete comparison are [preserved and independently reviewed](../../.qualification/b3-ge-e4-pl/r8-b2-e01-finite-point-dev-20260930-v1/results.md).
+122 files including seal SHA-256
+`533a9e309a117b0a90c7c0cf4ce667dc48a8210f0a956a2c176a5406491fe662`.
+Mandatory CalculiX, convergence, other reference families and full gates stay open.
+Do not tune the connection or launch default refinement to erase differences.
 
 **B07/F13 development,30 September:** signed selected displacement/reaction
 envelopes preserve governing case IDs, first ties and complete prefixes. The

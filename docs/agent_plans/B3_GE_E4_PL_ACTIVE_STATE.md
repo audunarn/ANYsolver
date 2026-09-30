@@ -13,9 +13,9 @@ Formal F03 authority unconsumed; spent authorities remain spent.
 Solver worktree C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
 branch codex/b3-ge-e4-pl-integration; accepted point/static foundation commit
 11819ab863077cc95a2ffb6880a449f8732f2fc1 (unchanged a5a698b5 kernel).
-Latest development candidate: installed wheel6a44aa11...; exact source catalog,
+Latest product checkpoint3f299901 (work/envelopes); installed wheel6a44aa11...;
 fixtures, imports and hashes are in the sealed work/envelope record below.
-Owned slice: B2 affine work, selected envelopes, tests/docs and sealed evidence.
+Owned slice: independent B2 reference/counterpart scripts, note/matrix and sealed evidence.
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 source7cf1fd7ecec14ab16dab3ffb26bf4182c807af0c; no current edits.
 Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py, SHA
@@ -68,11 +68,23 @@ governing IDs and complete prefixes. Fresh installed127/127,386/97 source-wheel-
 site identities,267 onsite imports,1thread/JIT off;28.19s/227471360B.
 [Evidence/review](../../.qualification/b3-ge-e4-pl/r8-b2-work-envelope-dev-20260930-v1/results.md),
 48 files including seal da8a8d07... . General F13/M3 remain open.
-Next action: review the new independent finite-vertex B2/OpenSees reference's
-work map and beam controls before its bounded fixed-case execution. It is not a
-convergence or final mandatory CalculiX acceptance. Advance the remaining public
-consumer/native persistence and foundation obligations without repeating passed
-campaigns or reopening default axial refinement. No new mechanics law/tolerance.
+Matched B2 reference decision completed: native12/12 and independent C maps
+agree4.44e-16; six analytic beam controls and12 isolated external panels pass,
+worst reference physical check2.16e-13. At the same external states, all24 native
+beam covectors agree≤5.69e-16/load; sampled assembled-force differences are in
+shell contributions. This does not uniquely blame drilling or establish physical
+truth. Retain the point map; do not tune it to compensate for shell differences.
+Worst full-pose difference6.8574%(Mx), tip2.0534%(Fy), energy2.8973%(Fy),
+physical multipliers10.2708%(Mz), ground8.6424%(Fy). Accuracy acceptance stays open.
+[Reference, failures and independent review](../../.qualification/b3-ge-e4-pl/r8-b2-e01-finite-point-dev-20260930-v1/results.md),
+122 files, seal533a9e30... . Omitted SP flag and sequential Fy factorization
+failure are preserved. Same Fy succeeds fresh; isolate cases, with runtime-history
+root cause unallocated. No final CalculiX/convergence/torque-drilling acceptance.
+Next action: complete remaining M3 consumer/native-project persistence and scoped
+F13 obligations, while returning native GE connection work to its actual open
+mechanics obligations. Any next reference experiment must preserve physical
+footprint extent and distinguish shell response, not repeat axial refinement.
+Product wheel6a44 remains unchanged; no new mechanics law/tolerance.
 
 M2 remains unresolved beyond the bounded retained-port/support decision:
 [mechanics evidence](../../.qualification/b3-ge-e4-pl/r8-bl5-port-boundary-decision-dev-20260930-v1/results.md).
