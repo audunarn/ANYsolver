@@ -18,6 +18,7 @@ from ._b2_physical_flexibility_linear import (
     OUTPUT_REPRESENTATION_ID as B2_BOUNDED_OUTPUT_REPRESENTATION_V1,
 )
 from ._stiffened_shell_b2_experimental import ExperimentalB2Analysis
+from ._stiffened_shell_point_recovery import PointTransferWrench
 from ._stiffened_shell_increment_control import (
     AdaptiveIncrementControl, IncrementAttempt, FiniteIncrementFailure,
     AdaptiveIncrementExhausted,
@@ -127,7 +128,7 @@ __all__ = [
     "AdaptiveIncrementExhausted",
     "Q4_ALGORITHMIC_PULLBACK_V1",
     "B3_GE_E4_PL_STIFFENED_SHELL_V1", "B2_E4_PL_FAST_LINEAR_V1",
-    "ShellPanel", "PointConnection",
+    "ShellPanel", "PointConnection", "PointTransferWrench",
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",

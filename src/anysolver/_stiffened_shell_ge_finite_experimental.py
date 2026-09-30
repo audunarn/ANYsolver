@@ -21,6 +21,7 @@ from scipy.spatial.transform import Rotation
 
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._ge_beam3_pose_joint import _exp_terms
+from ._stiffened_shell_point_recovery import PointTransferWrench, point_record
 from ._ge_beam3_p5.algebra import skew
 from ._ge_beam3_retained_generalized_state import Mechanical
 from ._stiffened_shell_bl5_local_experimental import BL5TrialDomainError
@@ -321,6 +322,7 @@ class FinitePointResult:
     beam_fibre_energy: tuple[BeamFibreEnergyRecovery, ...] = ()
     increment_attempts: tuple[IncrementAttempt, ...] = ()
     beam_shell_line_work: tuple = ()
+    point_wrenches: tuple[PointTransferWrench, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -408,6 +410,7 @@ class FinitePointDriver:
         self._adaptive_state = None
         self._adaptive_checkpoint = None
         self._line_trial_recovery = None
+        self._point_trial_recovery = None
 
     def _load(self, actions):
         owner = self.owner
@@ -496,6 +499,7 @@ class FinitePointDriver:
                 raise ValueError("experimental finite BL5 admits elastic beam response only")
             beam_candidates.append(response.history)
 
+        point_records = []
         for i, (joint, slots) in enumerate(zip(owner._connections,
                                                owner._joint_slots)):
             shell_node = slots[0]//6
@@ -513,6 +517,9 @@ class FinitePointDriver:
                 positions, anchors, state.multipliers[6*i:6*i+6],
                 rotation_coordinates=coordinates,
                 charted_ports=(True, False), position_low=position_low)
+            point_records.append(point_record(
+                owner, i, positions, position_low, trial.pose.residual[:12],
+                trial.pose.constraints, "current"))
             extended = np.r_[slots, np.arange(count+6*i, count+6*i+6)]
             # Element and load rows are spatial wrenches. Pull only the
             # increment columns through the shell's additive rotation chart;
@@ -566,7 +573,13 @@ class FinitePointDriver:
         constraint = _scaled_constraint_gap(
             residual[count:], owner._constraint_scale)
         self._line_trial_recovery = (state, tuple(line_records))
+        self._point_trial_recovery = (state, tuple(point_records))
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)
+
+    def _point_records(self, state):
+        if self._point_trial_recovery is None or self._point_trial_recovery[0] is not state:
+            raise ValueError("stale finite point recovery")
+        return self._point_trial_recovery[1]
 
     def _advance(self, state, increment, amount):
         owner = self.owner
@@ -726,6 +739,7 @@ class FinitePointDriver:
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.publish")
                     next_result = _with_shell_chart(next_result, trial, owner._shell_count)
+                    next_result = replace(next_result, point_wrenches=self._point_records(trial))
                     if getattr(owner, "_finite_bl5", False):
                         if self._line_trial_recovery[0] is not trial:
                             raise ValueError("stale finite BL5 station recovery")
@@ -871,7 +885,8 @@ class FinitePointDriver:
         support = np.zeros(owner._K.shape[0]); support[owner._fixed] = residual[owner._fixed]
         result = _with_shell_chart(replace(self._accepted,
             support_reactions=_owned(support), free_equilibrium_ratio=relative,
-            constraint_max=gap, generation=expected_generation+1), trial, owner._shell_count)
+            constraint_max=gap, generation=expected_generation+1,
+            point_wrenches=self._point_records(trial)), trial, owner._shell_count)
         next_checkpoint = (None if self._adaptive_state is None else
                            self._prospective_checkpoint(result, _state=trial))
         cancellation_safe_point(cancellation_token, "stiffened-shell.rebase.commit")
@@ -1250,6 +1265,7 @@ class FinitePointDriver:
                                 shell_next[q4_count:])
              if s3_material else ()))
         result = _with_shell_chart(result, trial, owner._shell_count)
+        result = replace(result, point_wrenches=self._point_records(trial))
         if getattr(owner, "_finite_bl5", False):
             result = replace(result, beam_shell_line_work=self._line_trial_recovery[1])
         if native_material:

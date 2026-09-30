@@ -5,6 +5,42 @@ the explicitly selected GE or physical B2 profile. Both remain experimental;
 implemented behavior is distinct from programme qualification. Legacy selectors,
 element mass kernels and package versions are unchanged.
 
+## Accepted point actions and native consumer inputs
+
+GE `solve_linear`, `solve`, `recover` and `restore` results now include immutable
+`point_wrenches`, in definition order. Each `PointTransferWrench` identifies its
+shell/beam node IDs, port positions (including their low parts), six-component
+gap and global spatial `shell_action`/`beam_action`. These are the loads exerted
+by the connection on each domain: minus the assembled connection resisting
+residual (forces in N, moments in N m). Each moment is about its own port; include the lever arm when checking
+balance about a common origin. Raw material-basis multipliers are not spatial
+moments. Gap translations use the shell material frame; rotational gaps use the
+joint's reference-relative logarithm convention (translations in m, rotations in rad).
+
+Reference-linear records use the frozen reference constraint map and reference
+positions, not a finite reinterpretation of the linear displacement. Finite
+records use the same spatial pose evaluation as assembly. Their enclosing result
+binds the accepted generation; recovery performs no new mechanical evaluations.
+Rejection/cancellation preserve the accepted payload. Derived records are rebuilt
+on restore and chart reset without changing checkpoint schemas. This verifies
+recovery, not physical torque/drilling fidelity or the complete M1 milestone.
+
+ANYfem can now store exact `ExperimentalGEPointPanel` or
+`ExperimentalB2PointPanel` inputs in an ordinary `.anyfem` Project using
+`AnalysisDefinition.experimental_point_panel(name, panel)` and the normal
+`save_project`/`load_project` functions. The resulting analysis record's
+`create_point_panel_analysis()` creates a fresh public solver owner.
+`anyfem.solve.stiffened_shell_project.solve_point_panel(record)` executes the
+stored reference-linear GE action set or ordered B2 cases/selected recovery.
+GE has no batch callback; B2 preserves complete-case cancellation semantics.
+
+These explicitly experimental records own a mesh-native definition. Project
+geometry/load targets do not regenerate it; unrelated Project settings,
+resource policies and output requests are rejected. Native input save/reopen
+does not save an accepted solver checkpoint. Standalone experimental files,
+legacy/default routes, ordinary native format version and qualification status
+retain their meanings. BL5 and general consumer completion remain unfinished.
+
 ## Native physical-fibre reference-linear point panels
 
 The existing GE owner admits native physical axial/biaxial-fibre sections at

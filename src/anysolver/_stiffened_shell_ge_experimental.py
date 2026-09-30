@@ -25,6 +25,7 @@ from scipy.sparse.csgraph import maximum_bipartite_matching
 from ._ge_beam3_native_definition import NativeBeamDefinition
 from ._ge_beam3_fibre_section import PhysicalFibreSection
 from ._ge_beam3_pose_joint import RigidPoseJoint
+from ._stiffened_shell_point_recovery import PointTransferWrench, reference_point_records
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._stiffened_shell_s3_algorithmic_pullback import POLICY as S3_J2_PULLBACK_POLICY
 from ._stiffened_shell_q4_algorithmic_pullback import (
@@ -174,6 +175,7 @@ class LinearResult:
     constraint_max: float
     generation: int
     production_qualified: bool = False
+    point_wrenches: tuple[PointTransferWrench, ...] = ()
 
 
 def _owned(values, shape=None):
@@ -709,6 +711,7 @@ class ExperimentalGEAnalysis:
                          "generalized B3 retained, including experimental yielding"),
                 "beam_section_families": self._beam_families,
                 "attachment": attachment,
+                "point_recovery": "accepted global spatial connection actions; reference-linear or current ports",
                 "experimental_line_spaces": tuple(
                     line.multiplier_space for line in self._definition.lines),
                 "q4_force_map": self._definition.q4_pullback_policy,
@@ -816,12 +819,15 @@ class ExperimentalGEAnalysis:
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.commit")
         support = np.zeros_like(equilibrium)
         support[self._fixed] = equilibrium[self._fixed]
+        point_wrenches = reference_point_records(self, q, multipliers)
+        cancellation_safe_point(cancellation_token, "stiffened-shell.linear.publish")
         with self._commit_lock:
             self._generation += 1
             result = LinearResult("completed", _owned(q[:self._shell_count]),
                                   _owned(q[self._shell_count:]),
                                   _owned(multipliers), _owned(support),
-                                  relative, constraint, self._generation)
+                                  relative, constraint, self._generation,
+                                  point_wrenches=point_wrenches)
             self._accepted = (result, _owned(load))
         return result
 
@@ -1084,7 +1090,8 @@ class ExperimentalGEAnalysis:
         result = LinearResult("completed", _owned(q[:self._shell_count]),
                               _owned(q[self._shell_count:]), lam,
                               _owned(support), relative, constraint,
-                              value["generation"])
+                              value["generation"],
+                              point_wrenches=reference_point_records(self, q, lam))
         self._accepted = (result, load)
         self._generation = value["generation"]
         return result
