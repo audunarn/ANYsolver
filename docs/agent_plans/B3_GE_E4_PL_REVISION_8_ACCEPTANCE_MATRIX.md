@@ -43,7 +43,7 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 | G5 | IN_PROGRESS | Development scale screens do not meet practical-scale qualification. |
 | G6A–G6D | IN_PROGRESS | Focused installed/consumer checks exist; final graph, external, reviews and release open. |
 
-F05 is accepted only for its scoped fixed-predecessor foundation. Other
+F05 and F09 are accepted only for their scoped foundations. Other
 foundations remain open; the earlier bounded F04 distinction does not close F04:
 
 | Foundation | Status |
@@ -56,13 +56,107 @@ foundations remain open; the earlier bounded F04 distinction does not close F04:
 | F06 | IN_PROGRESS |
 | F07 | IN_PROGRESS |
 | F08 | IN_PROGRESS |
-| F09 | IN_PROGRESS |
+| F09 | PASSED — physical B2 section/local operator and station trace |
 | F10 | IN_PROGRESS |
 | F11 | IN_PROGRESS |
 | F12 | IN_PROGRESS |
 | F13 | IN_PROGRESS |
 
-F09 development, 30 September: the fixed-wrench physical aspect family passes the public session (4/4 installed including its private control); independent cut-work, tip and station predicates pass. Solver `227d5ea8` now enforces the reviewed exact basic-energy plus separate bounded rigid/cross certificate on emitted tangents, replacing the arbitrary pivot veto while preserving exact SPD and strict representation checks. Consolidated installed 200/200 and independent implementation/artifact review pass. A six-row exact-input public shear-threshold supplement passes 6/6 installed, retaining historical below-floor mismatch and parity only where laws agree; independent review accepts that dispatch distinction. Historical nonphysical shear-soft local passes and graph failures remain retained. F09 remains open pending prospective admitted-domain/candidate binding and frozen-scope independent acceptance, not another automatic physical sweep. Evidence: `.qualification/b3-ge-e4-pl/r8-f09-admission-dev-20260930-v1/`, `.qualification/b3-ge-e4-pl/r8-b2-output-guard-dev-20260930-v1/`.
+F09 development, 30 September: the fixed-wrench physical aspect family passes the public session (4/4 installed including its private control); independent cut-work, tip and station predicates pass. Solver `227d5ea8` enforces the reviewed exact basic-energy plus separate bounded rigid/cross certificate on emitted tangents, replacing the arbitrary pivot veto while preserving exact SPD and strict representation checks. Installed 200/200 and six-row exact-input threshold checks pass with independent review, retaining historical below-floor mismatch and parity only where laws agree. Prospective candidate binding and current-wheel preservation now support the scoped foundation acceptance recorded below. Historical nonphysical shear-soft local passes and graph failures remain retained. Evidence: `.qualification/b3-ge-e4-pl/r8-f09-admission-dev-20260930-v1/`, `.qualification/b3-ge-e4-pl/r8-b2-output-guard-dev-20260930-v1/`, `.qualification/b3-ge-e4-pl/r8-f09-foundation-20260930-v1/`.
+
+### F09 candidate binding — frozen prospective v1, not a pass
+
+Independently reviewed before candidate execution by `/root/anyfem_consumer`:
+no missing input identity or consequential overclaim within this foundation.
+The current-wheel preservation check uses the same ten historical selectors
+(14 instances), prepared at TEMP/r8-b2-f09-legacy-candidate-v1; frozen input
+list SHA-256 `d25dde9920ceac5eee80828f7603d39e226a429320a4f8222b6aff4de4183ccb`.
+Run `python -u run_bounded.py` there; the retained runner verifies exact wheel,
+source/site catalogs, test identities, effective settings and imported paths.
+No F09 outcome is implied by freezing this contract.
+
+**Claim:** the distinct physical elastic B2 section/local operator and physical
+station trace foundation. This is not acceptance of attachments, arbitrary
+assembled graphs, mass/prestress, global forward-error bounds or production
+qualification. The full F09 inventory remains required; downstream F10–F13,
+M3 and G0B are not inferred. Historical failed and nonphysical stress evidence
+remains visible. Independent review must resolve whether this exact foundation
+scope satisfies F09 before any PASSED disposition.
+
+**Candidate:** solver product `227d5ea833231eddf306080cf787ec77fd2fb1bb`,
+test/evidence checkpoint `09a0e029832af0bc2f204bddc54a23799fcdaf53`, operator
+`B2_PHYSICAL_FLEXIBILITY_LINEAR_V1`, profile `B2_E4_PL_FAST_LINEAR_V1`,
+output certificate `B2_BOUNDED_OUTPUT_REPRESENTATION_V1`. Solver wheel
+`19e3235a35b69e14f322867bf224b164789163c6cc7e2e808c0bba584c3c441e`;
+consumer `a615c4b2` and wheel `ff143e5fece9dd4cec261aa69edbec03acc801d3d0bbfcb90cea7519d814f0c0`.
+Both source/site module catalogs, test inputs and dependency/environment
+identities are fixed in the guard and threshold identity.json records. A
+changed relevant input invalidates its reuse; a rebuild receives a new identity.
+
+**Mechanical and numerical admission:** straight finite positive-length SI
+members with explicit owned proper frames and source IDs; public definitions
+validate frame orthogonality at the existing 1e-10 limit. Scalar laws have
+finite positive E/A/Iy/Iz/J/ky/kz and -1<nu<.5, with G=E/[2(1+nu)].
+Generalized laws are finite exactly symmetric 6x6 SPD in declared
+N,Vy,Vz,T,My,Mz ordering. Exact LDL proves SPD; a small positive pivot is not
+an input defect. There is no artificial stiffness floor or empirical geometry
+cutoff. Derived quantities and emitted responses must meet the existing
+binary64 representability checks; nonfinite/overflow/nonzero-underflow and
+inaccurate subnormal output fail explicitly. No stiffness metadata supplies
+missing mass/shape information.
+
+Every constructed local tangent must satisfy the exact implemented-law
+basic-energy Loewner bounds at 1e-8 and separate rigid wrench/work and cross
+work bounds at 1e-9/1e-8. Use the documented canonical right inverse R,
+centroid rigid basis Z, L-scaled translation and unit rotation, and
+F=max(section translational diagonals, rotational diagonals/L²), M=FL,
+E=FL. These bound normalized amplitudes <=1 separately; they are neither
+one combined-energy bound nor all-amplitude relative error near rigid modes.
+They establish output representation, not independent constitutive correctness
+or graph stability. Wrong-law input, local representation and global numerical
+failure remain distinct non-success categories; programming errors propagate.
+
+**Evidence reuse, explicitly prospective:** the independently reviewed Level-A
+installed 200-case campaign and six-row threshold supplement may support this
+candidate only for their unchanged source/input/environment identities and
+their actual recorded predicates. They remain development runs, not relabeled
+formal executions. Relevant F09 cases cover unfloored scalar weak/extreme
+energies, both bending planes, unequal inertias/shear factors, coupled SPD,
+six basic rank/rigid modes, reversal/orientation, station work/derivatives,
+private equivalent units and public SI, typed negatives, bounded physical
+elbow/aspect families and exact-input historical threshold dispatch. Exact
+Gauss-Jordan/cut-wrench/Castigliano and trace boundary-value oracles remain
+independent of the implemented law. Existing tighter per-case tolerances take
+precedence: scalar tiny energy/threshold 1e-12, elastic FD 1e-6, physical
+graph work/station 1e-8 and registered component absolute floors. No unseen
+case or continuous graph envelope is inferred from these finite checks.
+
+The release-wheel historical installed 14/14 at G0A-B2 remains baseline
+evidence. Its preservation on this candidate requires exact dependency-impact
+justification or the same ten selectors on the current wheel, never another
+baseline registration. The extreme 2^-80 mixed-elbow failure remains adverse
+graph evidence; its local mode pass is not an assembled accuracy claim.
+
+**Terminal rules:** F09 remains IN_PROGRESS while required input
+binding, any scientific predicate or independent correctness finding is open.
+No retroactive qualification, scope reduction or tolerance relaxation. Formal
+candidate checks use isolated installed imports and exclusive outputs with
+full logs, observed exits, Python/dependency/thread identities and 600 s /
+8 GiB process-tree supervision, one numerical thread/JIT off unless separately
+qualified. No consumed historical or F03 authority is renewed. Independent
+mechanics/interface and artifact adjudication is required for any foundation
+PASSED disposition; resource breach, missing inventory, identity drift,
+unexpected success/failure or unresolved correctness findings leave it open.
+
+**Disposition:** scoped F09 PASSED after independent scientific/code/artifact
+adjudication. The frozen candidate preservation run passed all 14 historical
+instances, exit zero, no skip/error, 3.609 s and 204,144,640 bytes RSS. The
+existing installed 200+6 development cases are explicitly reused by unchanged
+relevant identities, not relabeled as formal runs. The historical release-wheel
+baseline and adverse graph failure remain distinct. No arbitrary graph,
+attachment, mass/prestress, F10–F13, M3 or aggregate qualification follows.
+See [exact evidence and independent verdict](../../.qualification/b3-ge-e4-pl/r8-f09-foundation-20260930-v1/results.md).
+The pre-execution matrix is preserved as contract.snapshot.md, unchanged.
 
 The individual V01–V28 and B01–B18 obligations below are all
 **IN_PROGRESS for acceptance**; none is marked PASSED. Their exact cases
