@@ -7,7 +7,9 @@ import pytest
 
 import anysolver.current_state_tangent as tangent
 from anysolver import QualifiedE4PLShellElement
+from anysolver.e4_pl_s3_element import QualifiedE4PLS3ShellElement
 from anysolver.element_capabilities import ElementCapabilityError
+from anysolver.elements import ShellElement, create_shell_element
 
 
 def _q4(element_id: int) -> QualifiedE4PLShellElement:
@@ -285,3 +287,324 @@ def test_custom_profile_failure_callback_keeps_per_element_boundary(
         )
 
     assert calls == [1, 2]
+
+
+# ---------------------------------------------------------------------------
+# per-call class snapshot (class-level facts read once per validation call)
+# ---------------------------------------------------------------------------
+def _shell(kind: str, element_id: int = 1) -> Any:
+    if kind == "s3":
+        return QualifiedE4PLS3ShellElement(
+            element_id,
+            (1, 2, 3),
+            "steel",
+            thickness=0.02,
+            reference_normal=(0.0, 0.0, 1.0),
+        )
+    formulation, nodes = {
+        "q4": ("e4-pl", (1, 2, 3, 4)),
+        "v2d": ("e4-pl-s3-v2d", (1, 2, 3)),
+    }[kind]
+    return create_shell_element(
+        element_id,
+        nodes,
+        "steel",
+        formulation=formulation,
+        thickness=0.02,
+        reference_normal=(0.0, 0.0, 1.0),
+    )
+
+
+def _profile_of(element: Any) -> Any:
+    return next(
+        profile
+        for profile in tangent._QUALIFIED_PROFILES.values()
+        if profile["element_type"] is type(element)
+    )
+
+
+def _fresh_snapshot() -> Any:
+    return tangent._ScanClassSnapshot(tangent._call_local_static_lookup())
+
+
+def _guard_style_failure(element: Any, profile: Any, snapshot: Any) -> Any:
+    """The profile check exactly as the lifecycle guard calls it by default."""
+
+    return tangent._qualified_profile_api_failure(
+        element,
+        profile,
+        _captured_class_names=(
+            tangent._QUALIFIED_PROFILE_CAPTURED_CLASS_NAMES[
+                str(profile["formulation_id"])
+            ]
+        ),
+        _static_lookup=snapshot.lookup,
+        _serialization_static_lookup=(
+            snapshot.lookup
+            if profile["family"] in {"qualified_q4", "qualified_s3"}
+            else None
+        ),
+        _snapshot=snapshot,
+    )
+
+
+def _critical_name(profile: Any) -> str:
+    names = profile["critical_apis"]
+    return (
+        "compute_stiffness_matrix"
+        if "compute_stiffness_matrix" in names
+        else next(iter(names))
+    )
+
+
+def _mutation_missing_data(element, profile, monkeypatch):
+    object.__delattr__(element, "material_name")
+
+
+def _mutation_bad_connectivity(element, profile, monkeypatch):
+    object.__setattr__(element, "node_ids", list(element.node_ids))
+
+
+def _mutation_identity_shadow(element, profile, monkeypatch):
+    object.__setattr__(element, "formulation_id", profile["formulation_id"])
+
+
+def _mutation_callable_shadow(element, profile, monkeypatch):
+    object.__setattr__(element, "attacker_callback", lambda: None)
+
+
+def _mutation_critical_shadow(element, profile, monkeypatch):
+    object.__setattr__(
+        element, _critical_name(profile), lambda *args, **kwargs: None
+    )
+
+
+def _mutation_offset_instance(element, profile, monkeypatch):
+    bad = 0.5 if profile["family"] == "qualified_q4" else float("nan")
+    object.__setattr__(element, "reference_surface_offset", bad)
+
+
+def _mutation_class_critical(element, profile, monkeypatch):
+    monkeypatch.setattr(
+        type(element),
+        _critical_name(profile),
+        lambda *args, **kwargs: None,
+    )
+
+
+def _mutation_class_identity(element, profile, monkeypatch):
+    name = next(iter(profile["class_identity"]))
+    monkeypatch.setattr(type(element), name, "tampered")
+
+
+def _mutation_base_critical(element, profile, monkeypatch):
+    names = profile["base_critical_apis"]
+    if not names:
+        pytest.skip("this profile has no base critical APIs")
+    monkeypatch.setattr(
+        ShellElement, next(iter(names)), lambda *args, **kwargs: None
+    )
+
+
+def _mutation_class_substitution(element, profile, monkeypatch):
+    substitute = type("Substitute", (type(element),), {})
+    object.__setattr__(element, "__class__", substitute)
+
+
+_SNAPSHOT_MUTATIONS = {
+    "clean": None,
+    "missing-data": _mutation_missing_data,
+    "bad-connectivity": _mutation_bad_connectivity,
+    "identity-shadow": _mutation_identity_shadow,
+    "callable-shadow": _mutation_callable_shadow,
+    "critical-shadow": _mutation_critical_shadow,
+    "offset-instance": _mutation_offset_instance,
+    "class-critical": _mutation_class_critical,
+    "class-identity": _mutation_class_identity,
+    "base-critical": _mutation_base_critical,
+    "class-substitution": _mutation_class_substitution,
+}
+
+
+@pytest.mark.parametrize("name", tuple(_SNAPSHOT_MUTATIONS))
+@pytest.mark.parametrize("kind", ("q4", "s3", "v2d"))
+def test_snapshot_failure_matches_the_standalone_predicate(
+    kind: str, name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    element = _shell(kind)
+    profile = _profile_of(element)
+    mutate = _SNAPSHOT_MUTATIONS[name]
+    if mutate is not None:
+        mutate(element, profile, monkeypatch)
+
+    standalone = tangent._qualified_profile_api_failure(element, profile)
+    snapshotted = _guard_style_failure(element, profile, _fresh_snapshot())
+
+    assert snapshotted == standalone
+    assert (standalone is None) == (name == "clean")
+
+
+def test_snapshot_class_facts_are_read_once_per_validation_call(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile = _profile_of(_shell("q4"))
+    snapshot = _fresh_snapshot()
+    before = snapshot.class_facts(QualifiedE4PLShellElement, profile)
+    assert before.changed_critical == ()
+
+    monkeypatch.setattr(
+        QualifiedE4PLShellElement,
+        _critical_name(profile),
+        lambda *args, **kwargs: None,
+    )
+
+    # The snapshot keeps what it read; a new call reads the class again.
+    assert snapshot.class_facts(QualifiedE4PLShellElement, profile) is before
+    fresh = _fresh_snapshot().class_facts(QualifiedE4PLShellElement, profile)
+    assert fresh.changed_critical == (_critical_name(profile),)
+
+
+@pytest.mark.parametrize("kind", ("q4", "s3"))
+def test_class_change_is_still_reported_by_the_remaining_elements(
+    kind: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The Q4 and S3 validators re-read their own class authority per element."""
+
+    profile = _profile_of(_shell(kind))
+    first, second = _shell(kind, 1), _shell(kind, 2)
+    snapshot = _fresh_snapshot()
+    assert _guard_style_failure(first, profile, snapshot) is None
+
+    monkeypatch.setattr(
+        type(first), _critical_name(profile), lambda *args, **kwargs: None
+    )
+
+    failure = _guard_style_failure(second, profile, snapshot)
+    assert failure is not None and "class authority" in failure
+
+
+def test_v2d_elements_never_take_a_snapshot(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    families: list[str] = []
+    real = tangent._ScanClassSnapshot.class_facts
+
+    def recording(self: Any, owner: type, profile: Any) -> Any:
+        families.append(str(profile["family"]))
+        return real(self, owner, profile)
+
+    monkeypatch.setattr(tangent._ScanClassSnapshot, "class_facts", recording)
+    model = _model(_q4(1), _shell("v2d", 2), _shell("v2d", 3), _shell("s3", 4))
+    tangent.require_exact_qualified_component_lifecycle_api(
+        model, context="mixed families"
+    )
+
+    assert set(families) == {"qualified_q4", "qualified_s3"}
+
+
+@pytest.mark.parametrize("kind", ("q4", "s3", "v2d"))
+def test_snapshot_keeps_the_instance_checks_per_element(kind: str) -> None:
+    profile = _profile_of(_shell(kind))
+    first, second = _shell(kind, 1), _shell(kind, 2)
+    snapshot = _fresh_snapshot()
+    assert _guard_style_failure(first, profile, snapshot) is None
+
+    object.__setattr__(second, "attacker_callback", lambda: None)
+
+    failure = _guard_style_failure(second, profile, snapshot)
+    assert failure is not None and "CALLABLE_INSTANCE_OVERRIDE" in failure
+
+
+def test_class_level_lookups_do_not_grow_with_the_element_count() -> None:
+    def underlying_lookups(count: int) -> int:
+        calls: list[tuple[int, str]] = []
+
+        def factory() -> Any:
+            real = tangent._call_local_static_lookup()
+
+            def counting(owner: type, name: str) -> Any:
+                calls.append((id(owner), name))
+                return real(owner, name)
+
+            return counting
+
+        model = _model(*(_q4(index) for index in range(1, count + 1)))
+        tangent._require_exact_qualified_component_lifecycle_api_implementation(
+            model, context="counted", _lookup_factory=factory
+        )
+        return len(calls)
+
+    assert underlying_lookups(3) == underlying_lookups(30)
+
+
+def test_serialization_module_guard_runs_once_per_validation_call(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile = tangent._QUALIFIED_PROFILES[tangent.QUALIFIED_Q4_FORMULATION_ID]
+    validator = profile["serialization_validator"]
+    real = tangent._SERIALIZATION_MODULE_GUARDS[validator]
+    calls: list[int] = []
+
+    def counting(*args: Any, **kwargs: Any) -> None:
+        calls.append(1)
+        real(*args, **kwargs)
+
+    monkeypatch.setattr(
+        tangent, "_SERIALIZATION_MODULE_GUARDS", {validator: counting}
+    )
+    model = _model(_q4(1), _q4(2), _q4(3))
+    tangent.require_exact_qualified_component_lifecycle_api(
+        model, context="first call"
+    )
+    assert len(calls) == 1
+    tangent.require_exact_qualified_component_lifecycle_api(
+        model, context="second call"
+    )
+    assert len(calls) == 2
+
+
+def test_failing_serialization_module_guard_is_reported_for_every_element(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile = tangent._QUALIFIED_PROFILES[tangent.QUALIFIED_Q4_FORMULATION_ID]
+    validator = profile["serialization_validator"]
+    attempts: list[int] = []
+
+    def failing(*args: Any, **kwargs: Any) -> None:
+        attempts.append(1)
+        raise ValueError("module authority is incompatible")
+
+    monkeypatch.setattr(
+        tangent, "_SERIALIZATION_MODULE_GUARDS", {validator: failing}
+    )
+    model = _model(_q4(1), _q4(2), _q4(3))
+
+    with pytest.raises(ElementCapabilityError) as caught:
+        tangent.require_exact_qualified_component_lifecycle_api(
+            model, context="failing module guard"
+        )
+
+    message = str(caught.value)
+    for element_id in (1, 2, 3):
+        assert f"{element_id} (" in message
+    assert "CONFIGURATION_AUTHORITY=module authority is incompatible" in message
+    assert len(attempts) == 3  # a failed guard is never marked done
+
+
+def test_custom_profile_failure_callbacks_never_receive_a_snapshot() -> None:
+    model = _model(_q4(1), _q4(2))
+    received: list[list[str]] = []
+
+    def custom(element: Any, profile: Any, **kwargs: Any) -> str | None:
+        received.append(sorted(kwargs))
+        return None
+
+    tangent._require_exact_qualified_component_lifecycle_api_implementation(
+        model,
+        context="custom callback",
+        _profile_failure=custom,
+        _preparable_profile_failure=custom,
+    )
+
+    assert len(received) == 2
+    assert all("_snapshot" not in keywords for keywords in received)
