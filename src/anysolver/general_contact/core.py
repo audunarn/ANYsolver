@@ -359,7 +359,7 @@ class ContactSolverSettings:
         ):
             raise ValueError("general_s3_difference_step must be finite and positive")
         if self.general_s3_differentiation not in {
-            "existing", "jet2_s3_dev", "jet2_q4_s3_dev",
+            "existing", "jet2_s3_dev", "jet2_q4_s3_dev", "jet2_s3_q4_dev",
         }:
             raise ValueError("general_s3_differentiation is not an admitted development mode")
         tie_values = (self.q4_s3_shared_edge_tie_step_m,
@@ -597,8 +597,11 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         q4_route = (settings is not None and _refined_q4_s3_patch(model, definition)
                     and settings.general_s3_differentiation == "jet2_q4_s3_dev"
                     and settings.q4_source_gap_certificate == "overlap_local_dev")
+        s3_q4_route = (settings is not None
+                       and settings.general_s3_differentiation == "jet2_s3_q4_dev"
+                       and settings.q4_source_gap_certificate == "whole_face")
         if (settings is None or settings.pair_motion != "general"
-                or not (s3_route or q4_route)
+                or not (s3_route or q4_route or s3_q4_route)
                 or len(definition.interactions) != 1
                 or settings.q4_source_pressure_basis != "fine_nodal_q1"
                 or settings.augmentation_support_resolution != "exact"

@@ -1,0 +1,20 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 8.519357100012712,
+  "peak_process_tree_memory_mb": 334.442496,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_s3_q4_static_dev.py",
+    "-q",
+    "-k",
+    "structurally_deforming",
+    "--basetemp=docs/d1_review_support/pytest_tmp_s3_q4_deforming_v2",
+    "--junitxml=docs/d1_review_support/d2_s3_q4_deforming_target_v2_20260930.xml"
+  ],
+  "log": "docs\\d1_review_support\\d2_s3_q4_deforming_target_v2_20260930.log"
+}

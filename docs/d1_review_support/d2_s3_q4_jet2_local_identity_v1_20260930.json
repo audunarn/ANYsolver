@@ -1,0 +1,22 @@
+{
+  "head": "e27d44d0",
+  "files": [
+    {
+      "path": "src\\anysolver\\general_contact\\q4_s3_overlap_derivatives.py",
+      "sha256": "5327364afa12236bff97fb16131e8feb9b5563eaf72ea2084c21c510e18e51eb"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_q4_overlap_derivatives.py",
+      "sha256": "1a7456f0f5552b5633bf975ccbf89c29331ab0d39c1d1ce38dcaa05e6cffb9a6"
+    },
+    {
+      "path": "tests/test_general_contact_s3_q4_overlap_derivatives.py",
+      "sha256": "53229fa9a822e307fe681a1cf20b4def2595e9c5b7635f8918f5ca09a61f2ff8"
+    }
+  ],
+  "legacy_helper_changed_functions": [
+    "_clip"
+  ],
+  "default_three_edge_body_ast_identical": true,
+  "local_checks": "6distinct acrossV1-V3, zero-derivative testdefect retained; approximate derivative integration controls, no solver admission"
+}

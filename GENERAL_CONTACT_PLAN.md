@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-09-30.36. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-09-30.37. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -19,7 +19,8 @@ No publication, merge, release or historical-default change is authorized.
 | D2 finite-law S3/S3 | Both-body manufactured force/path work and genuine normal-control lifecycle/restart locally tested and reviewed | Geometry/response admission beyond manufacture |
 | D2 radial spatial response | κ=10⁷ misses one target-response gate; fixed-geometry independent solution explains the penalty bias | κ=10⁸ timed out; retain discrepancy and switch to missing partial-boundary row |
 | D2 named partial-support/cycle handoff | Independently accepted for the exact foundation and installed cycle parameter sets | Remaining shell combinations, geometry and explicit multi-pair ownership |
-| D6 physical inertia | Separate centered finite owner and14distinct focused checks pass scoped independent development review | Complete common-stage midpoint/state contract and integrated contact-free dynamics |
+| D2 S3-source/Q4-target | Shared P1 pressure, complete both-body tangent, four-corner swept rejection, public lifecycle/open restart and independently checked structurally deforming target locally pass | Spatial/geometry qualification and installed admission; zero contact-free reaction predictor remains a pure-press route limit |
+| D6 physical inertia/time integration | Inertia, free elastic owner and 24 accepted free translation/spin steps pass scoped development review; scale-binding fix passes two controls without temporal replay | Loaded finite-motion work/impulse, vibration and broader temporal qualification; no complete C7 admission |
 | D3–D8 | Required programme remains open | Bounded integrated deliveries |
 
 The [D1 handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md)
@@ -145,6 +146,22 @@ compose it through one authenticated shared operation session with the existing
 midpoint equations. Verify actual free translation/rotation and discrete impulse/
 energy accounting; instantaneous momentum checks do not substitute. Keep public
 native guards unchanged. Neither native slice establishes complete C7 acceptance.
+
+**Latest integrated disposition:** the authenticated free temporal slice passes
+24 accepted steps in42.281s/203.620MB. Translation is analytic; spin energy
+defect5.839e-9 to1.460e-9 has ratio.250104, while momentum defects remain
+resolution-limited. A reviewer-found mutable scale binding was repaired and
+checked without replaying the time steps. Next: one reviewed bounded physically
+loaded finite-motion slice, reporting exact-path work/impulses separately from
+midpoint approximations. Private native source remains in its managed worktree.
+
+The opposite S3/Q4 shell role uses the existing contributor/static driver,
+explicit `jet2_s3_q4_dev`, original bilinear Q4 target and shared P1 support.
+Local/coupled checks pass, including a mixed-load structurally deforming target
+against an independent fixed-geometry KKT oracle. Preserve the pure-press
+zero-predictor rejection rather than injecting stiffness or hidden forces.
+Guided open-prefix restart is exact. These development results do not expand
+the accepted installed handoff or establish general warped/CCD admission.
 
 ## 4. Accelerating delivery without weakening it
 

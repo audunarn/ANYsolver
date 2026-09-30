@@ -409,14 +409,14 @@ def _area_resolution(poly, errors):
     )
 
 
-def _clip(subject, target, coordinate_error):
+def _clip(subject, target, coordinate_error, *, edge_count=3):
     polygon = [(point, coordinate_error) for point in subject]
     signature = []
-    for edge_index in range(3):
+    for edge_index in range(edge_count):
         if not polygon:
             raise UnsupportedQ4S3Branch("zero projected overlap")
         start = target[edge_index]
-        edge = _sub(target[(edge_index+1) % 3], start)
+        edge = _sub(target[(edge_index+1) % edge_count], start)
         old, old_coordinate_error = polygon[-1]
         old_relative = _sub(old, start)
         old_distance = _cross2(edge, old_relative)

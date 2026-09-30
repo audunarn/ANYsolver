@@ -82,7 +82,7 @@ class MovingS3PatchPrimalMortarPenalty:
                  pair_broadphase: bool = True):
         self.source_faces = tuple(source_faces)
         self.target_faces = tuple(target_faces)
-        if differentiation not in {"global", "pair_local", "jet2_s3", "jet2_q4_s3"}:
+        if differentiation not in {"global", "pair_local", "jet2_s3", "jet2_q4_s3", "jet2_s3_q4"}:
             raise ValueError("S3 patch differentiation mode is invalid")
         self.differentiation = differentiation
         if type(pair_broadphase) is not bool:
@@ -106,22 +106,32 @@ class MovingS3PatchPrimalMortarPenalty:
                       and len(self.source_faces) >= 2
                       and all(len(face.node_ids) == 4 for face in self.source_faces)
                       and all(len(face.node_ids) == 3 for face in self.target_faces))
-        refined = refined_s3 or refined_q4
+        refined_s3_q4 = (differentiation == "jet2_s3_q4"
+                          and len(self.source_faces) == 2 and len(self.target_faces) == 1
+                          and all(len(face.node_ids) == 3 for face in self.source_faces)
+                          and len(self.target_faces[0].node_ids) == 4)
+        refined = refined_s3 or refined_q4 or refined_s3_q4
         if not (bounded or refined):
             raise ValueError("development shell patch needs three faces or one Q4/Q4 pair")
-        if differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3"} and not refined:
+        if differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3", "jet2_s3_q4"} and not refined:
             raise ValueError("local differentiation needs S3 faces or Q4 source/S3 target faces")
         if differentiation == "jet2_s3" and not refined_s3:
             raise ValueError("Jet2 overlap derivatives need at least three S3 faces")
         if differentiation == "jet2_q4_s3" and not refined_q4:
             raise ValueError("Jet2 Q4/S3 overlap derivatives need a refined Q4/S3 patch")
-        if differentiation == "jet2_q4_s3" and (
+        if differentiation in {"jet2_q4_s3", "jet2_s3_q4"} and (
             q4_source_derivative_tolerances is None
             or len(q4_source_derivative_tolerances) != 4
             or any(value is None or not np.isfinite(value) or value <= 0.0
                    for value in q4_source_derivative_tolerances)
         ):
             raise ValueError("Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances")
+        if differentiation == "jet2_s3_q4" and not refined_s3_q4:
+            raise ValueError("S3/Q4 Jet2 needs two source S3 and one original target Q4")
+        if differentiation == "jet2_s3_q4" and any(value is None or value <= 0.
+                for value in (q4_source_area_tolerance, q4_source_weighted_gap_tolerance,
+                              maximum_q4_source_integration_triangles)):
+            raise ValueError("S3/Q4 Jet2 needs explicit integration controls")
         source_q4 = all(len(face.node_ids) == 4 for face in self.source_faces)
         if not source_q4 and any(len(face.node_ids) != 3 for face in self.source_faces):
             raise ValueError("development patch pressure side needs S3 triangles or Q4 faces")
@@ -158,7 +168,7 @@ class MovingS3PatchPrimalMortarPenalty:
             1+2*self.n_coordinates**2 if differentiation == "global" else
             3*self._candidate_evaluation_count(self._candidate_pair_indices(
                 self.reference_source, self.reference_target))
-            if differentiation in {"jet2_s3", "jet2_q4_s3"} else
+            if differentiation in {"jet2_s3", "jet2_q4_s3", "jet2_s3_q4"} else
             sum(2+2*(3*(len(source.node_ids)+len(target.node_ids)))**2
                 for source in self.source_faces for target in self.target_faces)
         )
@@ -196,7 +206,7 @@ class MovingS3PatchPrimalMortarPenalty:
             raise MemoryError("S3 patch differentiation budget exhausted")
 
     def _preflight_jet2_candidates(self, candidate_indices: set[int] | None) -> None:
-        if self.differentiation in {"jet2_s3", "jet2_q4_s3"}:
+        if self.differentiation in {"jet2_s3", "jet2_q4_s3", "jet2_s3_q4"}:
             # Reserve a base float pass, a fallback float pass and one AD
             # pass for every conservative candidate. Tiny-wedge verification
             # consumes the remaining budget under its own runtime guard.
@@ -332,7 +342,7 @@ class MovingS3PatchPrimalMortarPenalty:
             source_face = index // len(self.target_faces)
             target_face = index % len(self.target_faces)
             evaluations += 1
-            if self.differentiation in {"jet2_s3", "jet2_q4_s3"}:
+            if self.differentiation in {"jet2_s3", "jet2_q4_s3", "jet2_s3_q4"}:
                 self._check_energy_evaluation_budget(evaluations)
             state = law.evaluate(source[self.source_face_indices[source_face]],
                                  target[self.target_face_indices[target_face]])

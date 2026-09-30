@@ -66,6 +66,7 @@ REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MOR
 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_FIXED_PROJECTION_GRAPH_AUGMENTED_STATIC_DEV_V0"
 
 REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE = "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0"
+S3_Q4_PROJECTED_PENALTY_PROFILE = "S3_Q4_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0"
 S3_PROJECTED_PENALTY_PROFILE = "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0"
 
 
@@ -174,6 +175,11 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
                and 1 <= len(target.element_ids) <= 2
                and (len(source.element_ids)+len(target.element_ids) >= 3
                     or q4_pair))
+    projected_s3_q4 = (projected_penalty and not source_q4
+                       and len(source.element_ids) == 2
+                       and len(target.element_ids) == len(target_q4) == 1)
+    if settings.general_s3_differentiation == "jet2_s3_q4_dev" and not projected_s3_q4:
+        issues.append("S3/Q4 Jet2 requires two source S3 and one target Q4 with projected penalty")
     projected_s3 = projected_penalty and not source_q4 and not target_q4
     refined_s3 = ((augmented or projected_s3) and not source_q4 and not target_q4
                   and len(source.element_ids) >= 2
@@ -218,7 +224,7 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
                 )
             except ValueError as exc:
                 issues.append(f"selected Q1 pressure topology: {exc}")
-    if settings.general_s3_differentiation == "jet2_q4_s3_dev" and any(
+    if settings.general_s3_differentiation in {"jet2_q4_s3_dev", "jet2_s3_q4_dev"} and any(
         getattr(settings, name) is None for name in (
             "q4_source_support_gradient_tolerance",
             "q4_source_support_hessian_tolerance",
@@ -251,9 +257,24 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
                SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
     if projected_penalty:
-        profile = (S3_PROJECTED_PENALTY_PROFILE if projected_s3 else
+        profile = (S3_Q4_PROJECTED_PENALTY_PROFILE if projected_s3_q4 else
+                   S3_PROJECTED_PENALTY_PROFILE if projected_s3 else
                    REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE)
-        if projected_s3:
+        if projected_s3_q4:
+            if (settings.general_s3_differentiation != "jet2_s3_q4_dev"
+                    or settings.q4_source_gap_certificate != "whole_face"
+                    or settings.q4_source_pressure_basis != "fine_nodal_q1"
+                    or settings.augmentation_support_resolution != "exact"
+                    or settings.augmentation_acceleration != "none"
+                    or settings.enforcement_solver != "nested_augmented"
+                    or settings.q4_s3_shared_edge_tie_step_m is not None
+                    or settings.d1_interior_profile
+                    or any(value is None for value in (
+                        settings.q4_source_area_tolerance,
+                        settings.q4_source_weighted_gap_tolerance,
+                        settings.maximum_q4_source_integration_triangles))):
+                issues.append("projected S3/Q4 needs explicit Jet2 integration controls, whole-face nodal geometry and no augmentation/tie/D1 admission")
+        elif projected_s3:
             if (settings.general_s3_differentiation != "jet2_s3_dev"
                     or settings.q4_source_gap_certificate != "whole_face"
                     or settings.q4_source_pressure_basis != "fine_nodal_q1"
@@ -351,6 +372,8 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
                              if settings.general_s3_differentiation == "jet2_s3_dev"
                              else "jet2_q4_s3"
                              if settings.general_s3_differentiation == "jet2_q4_s3_dev"
+                             else "jet2_s3_q4"
+                             if settings.general_s3_differentiation == "jet2_s3_q4_dev"
                              else "pair_local" if refined else "global"),
             maximum_candidate_pairs=settings.maximum_candidate_pairs,
         )
@@ -582,6 +605,13 @@ class GeneralS3PatchManager:
 
     def _gap_lower(self, positions):
         source, target = positions
+        if self.profile == S3_Q4_PROJECTED_PENALTY_PROFILE:
+            from .s3_q4_swept import s3_q4_affine_lower
+            bounds = [s3_q4_affine_lower(source[si], source[si], target[ti], target[ti])
+                      for si in self.law.source_face_indices for ti in self.law.target_face_indices]
+            if not all(np.isfinite(value) for value in bounds):
+                raise ValueError("invalid or unresolved S3/Q4 projected corner Jacobian")
+            return min(bounds)
         if self.settings.q4_source_gap_certificate == "overlap_local_dev":
             geometry = self.law.geometry if self.projected_work else self.law
             # Validate every feature before pruning: a remote invalid face
@@ -641,7 +671,7 @@ class GeneralS3PatchManager:
         state = prepared.state if self.projected_work else self.law.evaluate(source, target)
         local_derivatives = (self.projected_work
                              and self.law.geometry.differentiation
-                             in {"pair_local", "jet2_s3", "jet2_q4_s3"})
+                             in {"pair_local", "jet2_s3", "jet2_q4_s3", "jet2_s3_q4"})
         pair_evaluations = len(self.law.geometry.pair_laws) if local_derivatives else 0
         if state.active_pressure_dofs == 0:
             local_force = np.zeros(self.law.n_coordinates)
@@ -678,7 +708,7 @@ class GeneralS3PatchManager:
                             REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE,
-                            S3_PROJECTED_PENALTY_PROFILE}:
+                            S3_PROJECTED_PENALTY_PROFILE, S3_Q4_PROJECTED_PENALTY_PROFILE}:
             eigenvalues = np.linalg.eigvalsh(state.pressure_gram)
             greatest = max(0.0, float(eigenvalues[-1]))
             threshold = (len(eigenvalues)*np.finfo(float).eps*greatest)
@@ -771,7 +801,7 @@ class GeneralS3PatchManager:
                                 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE,
-                                S3_PROJECTED_PENALTY_PROFILE}:
+                                S3_PROJECTED_PENALTY_PROFILE, S3_Q4_PROJECTED_PENALTY_PROFILE}:
             return
         variations = (self.map @ transform).tocsr()
         variations.eliminate_zeros()
@@ -878,7 +908,15 @@ class GeneralS3PatchManager:
                             positive = min(float(item@reference) for item in controls) > 0.0
                         if not positive:
                             orientation_ok = False
-            if self.settings.q4_source_gap_certificate == "fixed_projection_graph":
+            if self.profile == S3_Q4_PROJECTED_PENALTY_PROFILE:
+                from .s3_q4_swept import s3_q4_affine_lower
+                gap_ok = all(s3_q4_affine_lower(
+                    left[0][si], right[0][si], left[1][ti], right[1][ti],
+                    endpoint_errors=(left_error[0][si], right_error[0][si],
+                                     left_error[1][ti], right_error[1][ti])
+                    if left_error is not None else None) >= -self.gap_tolerance
+                    for si in self.law.source_face_indices for ti in self.law.target_face_indices)
+            elif self.settings.q4_source_gap_certificate == "fixed_projection_graph":
                 gap_ok = all(
                     fixed_projection_graph_swept_certificate(
                         left[0][si], right[0][si],
@@ -950,8 +988,13 @@ class GeneralS3PatchManager:
                 return False
             middle, middle_error = _affine_midpoint_with_error(
                 left, right, left_error, right_error)
-            if self._gap_lower(middle) < -self.gap_tolerance:
-                return False
+            try:
+                if self._gap_lower(middle) < -self.gap_tolerance:
+                    return False
+            except ValueError:
+                if self.profile == S3_Q4_PROJECTED_PENALTY_PROFILE:
+                    return False
+                raise
             return (certify(left, middle, depth+1, left_error, middle_error)
                     and certify(middle, right, depth+1, middle_error, right_error))
 
@@ -960,7 +1003,8 @@ class GeneralS3PatchManager:
         # profiles, which do not require the D1 interior coverage guard.
         errors = (tuple(np.zeros_like(item) for item in first)
                   if (self.settings.d1_interior_profile
-                      or self.settings.q4_source_gap_certificate == "overlap_local_dev")
+                      or self.settings.q4_source_gap_certificate == "overlap_local_dev"
+                      or self.profile == S3_Q4_PROJECTED_PENALTY_PROFILE)
                   else None)
         return certify(first, last, 0, errors, errors)
 
@@ -1005,6 +1049,9 @@ class GeneralS3PatchManager:
             }} if self.projected_work and not self.augmented else {}),
             "settings": {"pair_motion": self.settings.pair_motion,
                          "normal_discretization": self.settings.normal_discretization,
+                         **({"s3_q4_swept_certificate_revision":
+                             "affine_all_projected_corners_outward_v1"}
+                            if self.profile == S3_Q4_PROJECTED_PENALTY_PROFILE else {}),
                          **({"partial_overlap_swept_certificate_revision":
                              "affine_outward_endpoint_enclosures_v1"}
                             if (not self.settings.d1_interior_profile

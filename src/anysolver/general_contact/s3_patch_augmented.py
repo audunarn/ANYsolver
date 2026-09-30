@@ -1053,7 +1053,7 @@ class MovingS3PatchProjectedNormal:
             return MovingS3PatchMortarWork(
                 base, np.zeros(count), np.zeros((count, count)) if tangent else None,
                 len(self.geometry.pair_laws)
-                if self.geometry.differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3"} else 1,
+                if self.geometry.differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3", "jet2_s3_q4"} else 1,
             )
         for source_index in self.source_face_indices:
             source_positions = np.asarray(current_source)[source_index]
@@ -1073,9 +1073,9 @@ class MovingS3PatchProjectedNormal:
                         and _has_shared_edge_transition(first, second, overlap)):
                     raise ValueError("S3 patch shared-edge derivative is nonunique")
                 if (overlap is None
-                        and self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3"}
+                        and self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3", "jet2_s3_q4"}
                         and _touching_projected_boundaries(first, second)):
-                    if self.geometry.differentiation == "jet2_s3":
+                    if self.geometry.differentiation in {"jet2_s3", "jet2_s3_q4"}:
                         raise UnsupportedOverlapBranch(
                             "S3 patch zero-area touching overlap has no smooth derivative"
                         )
@@ -1116,7 +1116,7 @@ class MovingS3PatchProjectedNormal:
         if self.geometry.differentiation == "pair_local":
             return self._pair_local_work(current_source, current_target,
                                          base, tangent=tangent)
-        if self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3"}:
+        if self.geometry.differentiation in {"jet2_s3", "jet2_q4_s3", "jet2_s3_q4"}:
             return self._jet2_s3_work(current_source, current_target,
                                       base, tangent=tangent,
                                       tiny_wedge_pair=tiny_wedge_pair)
@@ -1347,6 +1347,20 @@ class MovingS3PatchProjectedNormal:
                         f"reference_overlap_area_m2={local.reference_overlap_area:.12g}, "
                         f"integration_triangles={local.integration_triangles}: {exc}"
                     ) from exc
+            elif len(target_nodes) == 4:
+                from .s3_q4_overlap_derivatives import s3_q4_overlap_derivatives
+                controls = self.geometry.q4_source_derivative_tolerances
+                derivative = s3_q4_overlap_derivatives(
+                    self.geometry.source_faces[source_face].reference_positions,
+                    local_source, local_target,
+                    support_tolerance=self.geometry.q4_source_area_tolerance,
+                    weighted_gap_tolerance=self.geometry.q4_source_weighted_gap_tolerance,
+                    support_gradient_tolerance=controls[0],
+                    support_hessian_tolerance=controls[1],
+                    weighted_gap_gradient_tolerance=controls[2],
+                    weighted_gap_hessian_tolerance=controls[3],
+                    maximum_triangles=self.geometry.maximum_q4_source_integration_triangles,
+                )
             else:
                 derivative = s3_overlap_derivatives(
                     self.geometry.source_faces[source_face].reference_positions,

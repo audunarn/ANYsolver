@@ -1,0 +1,139 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+__ test_structurally_deforming_target_against_independent_fixed_geometry_kkt __
+
+    def test_structurally_deforming_target_against_independent_fixed_geometry_kkt():
+        from itertools import product
+        from math import factorial
+        from anysolver.matrix_assembly import assemble_stiffness_matrix
+        model,definition,settings=build(target_rigid_normal=False)
+        # Reduce the registered clearance to1um and press1.3um. This limits the
+        # von Karman vs linear reference discrepancy; no stiffness/gap relaxation.
+        for node in range(1,5):
+            model.mesh.get_node(node).z-=99e-6
+        xy=np.array(((.1,.1),(.9,.1),(.9,.9),(.1,.9)))
+        support=np.zeros(4);coupling=np.zeros((4,4))
+        for nodes in ((0,1,3),(1,2,3)):
+            points=xy[list(nodes)]
+            area=abs(np.linalg.det(np.stack((points[1]-points[0],points[2]-points[0]))))*.5
+            def moment(indices):
+                powers=[indices.count(j) for j in range(3)]
+                return 2*area*np.prod([factorial(p) for p in powers])/factorial(len(indices)+2)
+            for i,node in enumerate(nodes):
+                one=moment((i,))
+                x=sum(points[j,0]*moment((i,j)) for j in range(3))
+                y=sum(points[j,1]*moment((i,j)) for j in range(3))
+                x_y=sum(points[j,0]*points[k,1]*moment((i,j,k)) for j in range(3) for k in range(3))
+                support[node]+=one
+                coupling[node]+=np.array((one-x-y+x_y,x-x_y,x_y,y-x_y))
+        # Independent P1-Q1 polynomial moments + the existing structural linear
+        # operator, never the production contact overlap, work or pressure kernel.
+        h=coupling[:,2:]/support[:,None]
+        stiffness=assemble_stiffness_matrix(model)[0]
+        free=[model.mesh.dof_manager.get_node_dofs(node)[2] for node in (7,8)]
+        structural=stiffness[np.ix_(free,free)].toarray()
+        clearance=1e-6;press=-1.3e-6;kappa=1e7
+        candidates=[]
+        for flags in product((False,True),repeat=4):
+            active=np.array(flags)
+            weights=kappa*support*active
+            displacement=np.linalg.solve(structural+h.T@(weights[:,None]*h),
+                h.T@(weights*np.full(4,clearance+press)))
+            gap=clearance+press-h@displacement
+            if np.array_equal(active,gap<0.):
+                candidates.append((displacement,kappa*np.maximum(0.,-gap)))
+        assert len(candidates)==1
+        reference,pressure=candidates[0]
+        program=ContactPathProgram(controls=(ContactPathControl.node(1,'uz'),ContactPathControl.node(1,'ux')),
+            waypoints=((0.,0.),(press,0.)),steps_per_segment=1)
+>       result=solve_static_nonlinear(model,contact=definition,contact_settings=settings,
+            contact_path_program=program,tolerance=1e-10)
+
+tests\test_general_contact_s3_q4_static_dev.py:191: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\nonlinear_static.py:7714: in solve_static_nonlinear
+    return solve_static_contact_path(
+src\anysolver\general_contact\static_path.py:1714: in solve_static_contact_path
+    return _run_with_qualified_assembly_runtime_lease(
+src\anysolver\matrix_assembly.py:3651: in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+src\anysolver\matrix_assembly.py:3626: in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+             ^^^^^^^^^^^^^^^^
+src\anysolver\general_contact\static_path.py:1712: in operation
+    return _run_with_nonlinear_state_cleanup(run)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\nonlinear_state.py:271: in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\general_contact\static_path.py:581: in run
+    _elastic_displacement_force_predictor(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+stiffness = <Compressed Sparse Row sparse matrix of dtype 'float64'
+	with 1080 stored elements and shape (48, 48)>
+transform = <Compressed Sparse Row sparse matrix of dtype 'float64'
+	with 10 stored elements and shape (48, 4)>
+row = array([[0., 1., 0., 0.],
+       [1., 0., 0., 0.]])
+target = ((-1.3e-06, 0.0),)
+
+    def _elastic_displacement_force_predictor(stiffness, transform, row,
+                                              target) -> float:
+        """Bound a declared force scale by the contact-free control reactions.
+    
+        For several controls, use the maximum absolute reaction sum over path
+        waypoints. This retains the one-control value and one physical force unit.
+        """
+        reduced = sparse.csr_matrix(transform.T @ stiffness @ transform)
+        rows = np.asarray(row, dtype=float)
+        if rows.ndim == 1:
+            rows = rows[None, :]
+        targets = np.asarray(target, dtype=float)
+        if targets.ndim == 0:
+            targets = targets.reshape(1, 1)
+        elif targets.ndim == 1:
+            targets = targets[None, :]
+        controls, coordinates = rows.shape
+        if (reduced.shape != (coordinates, coordinates)
+                or not 1 <= controls <= 3
+                or targets.ndim != 2 or targets.shape[1] != controls
+                or not np.all(np.isfinite(targets))
+                or not np.any(targets != 0.0)):
+            raise ValueError("displacement force predictor has incompatible dimensions")
+        saddle = sparse.bmat((
+            (reduced, sparse.csr_matrix(-rows.T)),
+            (sparse.csr_matrix(rows), sparse.csr_matrix((controls, controls))),
+        ), format="csr")
+        try:
+            solve = factorize(
+                saddle, MatrixClass.GENERAL,
+                signature="contact_path:elastic_displacement_force_predictor",
+            ).solve
+        except Exception as exc:
+            raise ValueError("contact-free displacement force predictor is unavailable") from exc
+        maximum_reaction = 0.0
+        for waypoint in targets:
+            rhs = np.zeros(coordinates+controls)
+            rhs[-controls:] = waypoint
+            try:
+                response = np.asarray(solve(rhs)).reshape(-1)
+            except Exception as exc:
+                raise ValueError("contact-free displacement force predictor is unavailable") from exc
+            residual = np.asarray(saddle @ response - rhs).reshape(-1)
+            scale = abs(saddle) @ abs(response) + abs(rhs)
+            reactions = response[-controls:]
+            if (not np.all(np.isfinite(response))
+                    or np.any(abs(residual) > 1e-12 + 1e-9*scale)
+                    or not np.all(np.isfinite(reactions))):
+                raise ValueError("contact-free displacement force predictor is unresolved")
+            maximum_reaction = max(maximum_reaction,
+                                   float(np.sum(np.abs(reactions))))
+        if maximum_reaction <= 0.0:
+>           raise ValueError("contact-free displacement force predictor is unresolved")
+E           ValueError: contact-free displacement force predictor is unresolved
+
+src\anysolver\general_contact\static_path.py:344: ValueError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_s3_q4_static_dev.py::test_structurally_deforming_target_against_independent_fixed_geometry_kkt
+1 failed, 4 deselected in 1.98s

@@ -1,74 +1,81 @@
-# General contact — restart
+# General contact restart — 2026-09-30
 
-**30 September2026: active; full C0–C9 continues.**
-Worktree C:/ANYworkspaceWork/ANYsolver-general-contact,
-branch codex/general-contact-core. Latest committed checkpoint75a2820f;
-new multiple-pair source/evidence checkpoint is being prepared. Historical
-unrelated dirty work, C6 prototype and main checkout are preserved.
-No publication, merge, release or historical-default change.
+## Objective and source
 
-[Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4;
-[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.36;
-[programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md);
-[prior detailed restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART21.md).
+Continue the full C0–C9 programme under the120active-hour goal. Worktree:
+C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
+Last committed checkpoint e27d44d0; new owned S3/Q4 and native temporal evidence
+checkpoint being prepared. Preserve all concurrent/historical dirty work.
+No publication/merge/release/default change. Goal remains active.
 
-## Accepted boundary
+[Goal](GENERAL_CONTACT_GOAL.md); [plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.37;
+[full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md);
+[prior detailed state](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART22.md).
 
-D1-interior remains independently accepted on installed0b2ac9be.
-D2 acceptance remains ONLY the exact guided-foundation and installed partial
-cycle parameter sets in [handoff](docs/GENERAL_CONTACT_PARTIAL_SHELL_HANDOFF_20260930.md).
-The installed wheel8af00b06 and433-source identity are unchanged. No arbitrary
-model/application admission, full D2/C7 acceptance or reliable2x solve speedclaim.
-Historical failures and consumed execution authorities remain unchanged;
-radialκ1e8 TIMEOUT900.0605s remains NONPASS, branch stopped without replay.
+## Accepted boundaries remain
 
-## Current lead slice
+D1-interior accepted on installed0b2ac9be. D2 acceptance ONLY exact named guided
+foundation/installed partial-cycle inputs in GENERAL_CONTACT_PARTIAL_SHELL_HANDOFF_20260930.md.
+Installed wheel8af00b06/433source bindings unchanged. New development source is
+not that artifact. ANYfem c138d41 bridge remains reviewed/admissionfalse.
+Radial1e8 TIMEOUT900.0605s retained; stopped without replay/cap increase.
+No fullD2/C7 acceptance or reliable2x complete-solve claim.
 
-Multiple explicit projected-penalty shell contributors compose through existing
-static/path drivers. Owned code: newgeneral_contact/multiple_projected_pairs.py,
-core.py dispatch, static_path.py profile and nonlinear_static.py per-pair summary;
-newtest_general_contact_multiple_projected_pairs.py. Fine pressure law and
-child work/gap/swept/restart contracts remain unchanged. Duplicate ownership,
-unsupported combinations and aggregate resource caps reject explicitly.
+## Current lead increment
 
-Local checks: complete both-body work/tangent/order, individual swept gates,
-ordinary distinct-settings displacement, press/open/recontact and authentic
-restart pass. Final active force case PASS13.171s/337.506MB; bothpairs active2,
-gap−10.5345um within50um; wrench checks pass. Scoped independent development
-review closed in D2_MULTIPLE_PROJECTED_PAIRS_REVIEW_20260930.md. No scientific
-multiple-pair acceptance/installed promotion follows.
+S3-source/Q4-target finite projected penalty uses explicit jet2_s3_q4_dev and
+separate static/path profiles through existing managers/drivers. Two sourceS3,
+one original bilinear Q4 target, elastic small rotations/physical skins only.
+Existing Jet2/implicit projection and shared P1 support aggregate before pressure;
+complete both-body maps/tangent and scalar-value agreement remain. Six local
+primitive checks reused. Adaptive controls are measured differences, not true
+quadrature/CCD guarantees; near-cancelled shape4 scalar disagreement still rejects.
+All four projected Q4 corner Jacobians and original affine paths have outward
+bounds including rounded endpoints. Reviewer corrected rounded reference norm.
 
-Rawstems d2_multiple_projected_pairs_v{1..9}_20260930 retain all failures:
-V1/V3fixture metadata/reference-load, V5timeout180.044s, V6weak-open (independent
-Q1 integral explains activation threshold), V7NumPy bool extraction. V8physical
-force checks and V9pureJSON export pass; no mechanical replay for exportfix.
-V5 has one completed shared-source marker but no finalXML/two-casePASS.
-Final identities/dispositions: d2_multiple_projected_pairs_summary_v1_20260930.json.
-Next checkpoint only owned source/tests/raw/reviews; no broadstage/reset/clean.
-Then extend missing shell geometry/role mapping before automatic domain rules.
+Five integrated checks locally pass: reactions/sharedpressure/bothbody tangent,
+invalid-fourth-corner and through-path collapse rejection, Decimal80 tilted
+negative-gap bound, public press/slide/open/recontact with target motion and
+canonical open-prefix fresh-model exact q/material/history restart, and a
+structurally deforming target against independent P1-Q1 moment/KKT reference.
+Mixed target-load case PASS8.519s/334MB, q/p/sourceforce1e-6 comparisons.
+Pure rigid-source pressing with zero contact-free reaction predictor is rejected;
+retain this open route-admission limit. The passing mixed fixture has explicit
+.01N upward per free targetnode in both public programme and oracle.
+V1/V2 path accessor/API keyword failures and zero-predictor failure remain.
+S3/Q4 development summaryc58a80b6, review2bcd4c36 (original review prefix preserved).
+No spatial/warped/distorted/generalCCD scientific admission or installed promotion.
 
-## Native parallel work
+Next lead: preserve scoped source/evidence checkpoint, then choose next required
+shell geometry/pairing or static beam slice; no renewed radial/mode tuning campaign.
 
-Managed worktree C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver,
-base23e845e1. Do not archive; private prototype source is not in main package.
-Inertia14checks, clamped midpoint eight-step/atomicity and new free/clamped
-elastic evaluator have scoped independent development reviews. Evaluator
-f57b8424/test55c720b2: freealgebraic rank27, physicalmass15SPD, six expected
-staticrigid modes, work/tangent/objectivity and fixed-physical consistency pass
-5.373s/200.536MB. Rawstems d6_dynamic_elastic_state_v{1,2}_20260930 retain
-negative-message fixture failure. D6_DYNAMIC_ELASTIC_STATE_REVIEW_20260930.md
-SHA0ddbf4be66a59a7b482cf34bc0afacfc2363ae4496a378e26e72c4199a35991b.
+## Native parallel increment and ownership
 
-Worker /root/saved_radial_boundary owns native modules/tests and append-only
-D6developmentnote; currently preparing shared-session temporal contract, no
-new numerical process. Reviewer /root/checkpoint_review owns independent native
-review, no source/numerics. Nextslice: explicit dynamic_elastic adapter under
-one authenticated operation, preserve legacyclamp default/staticguards;
-free translation and anisotropic flexible rotation at4coarse+8fine steps each
-(sameT=.004), actual discrete impulse/energy and atomic endpoint state. Contract
-scrutiny precedes edits. All temporal gates and fullC7 admission remain open.
+Managed private worktree:
+C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver.
+Do not archive before integration. Private native modules are not main publicpackage.
+Worker /root/saved_radial_boundary owns those modules/tests and D6 livingnote;
+/root/checkpoint_review owns independent read-only mechanics scrutiny.
 
-Original120active-hour budget unchanged; latest121261s=33.68h used,~86.32h
-remaining. Routine180s/1GiB; namedintegrated900s/4GB or stricter oldcaps.
-Two authorized workers. Lead numerical processes are closed. ANYfem bridge
-c138d41 remains reviewed, application admissionfalse. Goal remainsactive.
+Free temporal24steps PASS42.281s/203.620MB: translation analytic; spinE5.839e-9
+→1.460e-9 ratio.250104; cumulativeP/H below floor (no order claim).
+Scale/length alias gate finding fixed: two mutation controls PASS4.098s/204MB,
+zero time steps/no temporal replay. Final reviewed midpoint211665de/dynamic8c3cd98e/
+test191409ab; temporal reviewddc65ace. Raw and frozen source remain retained.
+Legacy clamp default, public/static guards and permanent issued states unchanged.
+
+Next loadedfinite-motion proposal is independently scrutinized: explicit owned
+constant physical distributedforce/couple on dynamic_elastic; exact endpoint
+forcework/couplework and pathintegratedangularimpulse separate from midpoint
+approximations.12steps(4coarse+8fine),T=.004,180s/1GiB. Worker authors/freezes
+new candidate; numerical execution held pending exact source/binding scrutiny.
+Review source/status messages before any run; do not replay old temporal authority.
+Loaded work, vibration, broader temporal/state/restart qualification and fullC7 open.
+
+## Resources and processes
+
+Original120active-hour budget unchanged: latest126757s=35.21hused/~84.79hleft.
+Routine180s/1GiB; namedintegrated900s/4GB or stricter frozen caps. Two authorized
+workers. Lead numerical processes closed. Git metadata requires escalation for
+owned exact-path stage/commit; use manifest, never broad stage/reset/clean.
+Historical dirty scripts/tests/C6 prototype and main checkout remain preserved.

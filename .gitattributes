@@ -129,3 +129,17 @@ docs/d1_review_support/d6_dynamic_elastic_state*20260930*.xml -text -whitespace
 docs/d1_review_support/d6_dynamic_elastic_state*20260930*.source.py -text -whitespace
 docs/d1_review_support/D2_MULTIPLE_PROJECTED_PAIRS_REVIEW_20260930.md -text whitespace=cr-at-eol
 docs/d1_review_support/D6_DYNAMIC_ELASTIC_STATE_REVIEW_20260930.md -text whitespace=cr-at-eol
+# Exact S3-source/Q4-target derivative development evidence.
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.json -text -whitespace
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.log -text -whitespace
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.source.py -text -whitespace
+docs/d1_review_support/D2_S3_Q4_JET2_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d2_s3_q4*20260930*.json -text -whitespace
+docs/d1_review_support/d2_s3_q4*20260930*.log -text -whitespace
+docs/d1_review_support/d2_s3_q4*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_s3_q4*20260930*.snapshot -text -whitespace
+docs/d1_review_support/D2_S3_Q4_STATIC_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d6_native_free_temporal*20260930* -text -whitespace
+docs/d1_review_support/d6_native_midpoint_gate_binding*20260930* -text -whitespace
+docs/d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md -text whitespace=cr-at-eol

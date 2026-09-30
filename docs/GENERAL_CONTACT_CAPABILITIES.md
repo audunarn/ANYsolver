@@ -15,9 +15,21 @@ arbitrary geometry admission do not follow from explicit composition.
 
 Native finite inertia, the clamped midpoint and the free/clamped dynamic elastic
 evaluator have scoped independent development reviews. Free algebraic rank27
-and physical mass15 SPD remove the static genesis obstruction. No free time step
-or full C7 acceptance follows. Actual discrete impulse/energy and free temporal
-verification remain open. [Evaluator assessment](d1_review_support/D6_DYNAMIC_ELASTIC_STATE_REVIEW_20260930.md).
+and physical mass15 SPD remove the static genesis obstruction. Twenty-four free
+translation/spin steps pass scoped independent development review in42.281s/
+203.620MB. A residual-scale identity finding was fixed with two controls and no
+temporal replay. Loaded finite motion, vibration, broader temporal qualification
+and full C7 acceptance remain open. [Temporal assessment](d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md).
+
+The explicit S3-source/Q4-target projected-penalty development profile now shares
+the existing static contributor/driver, P1 supports and original bilinear target.
+Local both-body tangents, affine four-corner geometry rejection, guided public
+press/slide/open/recontact and authentic open restart pass. A mixed physical-load
+fixture with a structurally deforming Q4 target agrees with an independent
+fixed-geometry KKT oracle within1e-6. Pure rigid-source pressing with an exactly
+zero contact-free reaction predictor is rejected by the existing path contract.
+**Implemented and locally tested; not scientifically accepted or released.**
+The accepted installed artifact and application admission are unchanged.
 
 This ledger reports the new opt-in subsystem only. The historical rigid-sphere
 impact API has a separate contract. Status terms are deliberately distinct:
