@@ -12,9 +12,9 @@ No main merge/publication authority; this task has not changed main.
 ## Source, ownership and delivered behavior
 
 Solver: C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration; latest product `86d3759a2441ab22735c3e195e5bb44ed62beee8`.
+branch codex/b3-ge-e4-pl-integration; latest product `d6397cad2701566350620ccc6e274c4f51f5c808`.
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-tests-only commit `2a5352c0adc5fcbce25bbb1484553108c906157f`;
+tests-only commit `527a48daaebcbefb1f5494efbfe7375f23be870d`;
 runtime remains `a615c4b`.
 
 **Separately owned dirty scripts/b3_e4_f03_c1_fy_supported_reference.py:
@@ -81,34 +81,46 @@ Ordinary native persistence, complete spectra/capacity and practical scale remai
 
 ## Next action and restart
 
-**Established:** the bounded native diagnosis isolated a shell-coordinate
-roundoff floor for monotonic S3 partial-fibre yielding. The existing stable
-map repairs that case at unchanged tolerances. Sparse equilibration/refinement
-does not repair Q4 full-section yield or yielded S3 unloading. Their rejected
-trials switch fibre branches and retain large residuals; small same-branch
-actual-update derivatives are consistent in the inspected unload direction.
-Do not treat this as a complete Jacobian qualification or formulation failure.
+**Established:** optional adaptive cutbacks complete unchanged partial-fibre S3
+load/unload(.5,1,.75,.5). Physical checkpoint and fibre energies match fixed
+identical accepted increments byte-for-byte. V10 atomically binds pending plan,
+controls and accepted work to the snapshot. Defaults and physical checks unchanged.
+Strong full-section Q4 still fails after an elastic(.0625,) prefix; no active
+yield was accepted. Preserve this named M4 obstruction without automatic budget
+growth or fixture/tolerance tuning. Simultaneous yielding/full G3 stay open.
 
-[Current results and raw failures](../../.qualification/b3-ge-e4-pl/r8-stable-native-s3-dev-20260930-v1/results.md):
-source11/11 plus3 codec checks; installed113/113 and ANYfem1/1 focused S3
-save/reopen/restore/continue. Wheel953f20d9...; unchanged consumerff143e5f....
-385solver+97consumer modules match source/wheel/site;288/269 imports onsite.
-Old-wheel V7 restores byte-identically, including its original failure status.
-Independent review is clear within this slice. No aggregate gate closes.
+[Current results and raw failures](../../.qualification/b3-ge-e4-pl/r8-adaptive-native-increments-dev-20260930-v1/results.md):
+installed88/88; installed S3 complete history and focused ANYfem1/1
+save/reopen/cancel/restore/complete. Wheel654ff57c...; consumerff143e5f...
+unchanged.386solver+97consumer modules match source/wheel/site;280/270 onsite
+imports. Old V7 retains exact bytes and prior failed unloading. No gate closes.
 
-**Decision sought next:** determine an admissible global stepping route through
-the retained branch-switching failures. Prepare the already-required adaptive
-increment controller against this persistent owner, with atomic cutback and
-unchanged physical acceptance; preserve the fixed-increment failures as controls.
-Before its numerical batch, specify the branch/step hypothesis and physical
-history comparison. Do not tune constitutive laws, fixtures or tolerances, reuse
-the closed Armijo experiment, or rebuild delivered energy/checkpoint seams.
-Simultaneous yielding, actual-history coverage and full G3 remain mandatory.
+**Decision sought next:** resolve E01 shell/point rotational transfer and M2
+physical law/interface policy. Existing two-direction E01 and direct torque
+evidence locate a coupled-action discrepancy; no further refinement by default.
+Obtain focused independent mechanics interpretation and choose one discriminator
+that separates a work-map defect from distinct shell/connection idealizations.
+Before numerical execution, record competing explanations, bounded check and
+retain/revise/reference action. Do not drop a point row, tune drilling or select
+multipliers from one quotient. Existing BL5 semantics remain distinct.
 
-No owned numerical job remains: source73148/13098 and installed28642 completed;
-consumer bounded run completed directly. Installed guard413.402s/246206464B;
-consumer6.199s/214282240B. Actual Python3.14.2, one numerical thread/JIT off.
-Consumer worker finished read-only review. Foreign F03 work remains untouched.
+[Saved-work decision](../../.qualification/b3-ge-e4-pl/r8-e01-cross-work-dev-20260930-v1/results.md):
+no new solve; reciprocal closure4.1554e-13. Membrane/normal-spin contributes
+102.2491% signed, plate-2.2491%. Independent review confirms geometry/map/signs;
+48-port beam parity is already established. Normal-spin/membrane impedance,
+not beam interpolation or sparse roundoff, principally explains this coupled
+gap; neither shell is thereby physically qualified. Retain six-row points.
+Next define a matched material-spin/director/footprint work reference explicitly;
+a recovered-frame variant cannot silently replace nodal-pose E01 semantics.
+Advance BL5 independently from existing tests/evidence, preserving its distinct
+top-surface/director bond, free spin and retained half-cell work. Do not repeat
+completed common-field/retained-work/saved-mode checks or launch formal F03.
+
+No owned numerical job remains: installed73264, S3 screen9387 and consumer85487
+are terminal passed. Guards387.533s/250912768B,69.693s/161853440B and
+56.224s/215064576B. Actual Python3.14.2,one numerical thread/JIT off.
+Independent adaptive and E01 mechanics reviews completed read-only, no jobs or
+source edits; findings/dispositions are archived. Foreign F03 untouched.
 Keep100000rows/600s/8GiB/eight-thread ceilings, one heavy programme job and
 at most three workers. No completed campaign needs repeating without changed inputs.
 

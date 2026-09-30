@@ -38,6 +38,14 @@ coverage failure is retained; simultaneous active yielding, strong yield and
 pure-fibre S3 remain open. Native energy is not total-system energy. No aggregate
 gate closes. [Results, raw evidence and review](../../.qualification/b3-ge-e4-pl/r8-ge-native-energy-coupled-dev-20260930-v1/results.md).
 
+Adaptive native stepping development,30 September: optional typed cutbacks and
+durable V10 complete unchanged partial-fibre S3 loading/unloading(.5,1,.75,.5),
+with exact physical/fibre-energy parity to fixed identical accepted increments.
+Final installed88/88 and focused ANYfem1/1 pass. Strong Q4 still exhausts after
+an elastic(.0625,) prefix; simultaneous yielding and full G3 remain open.
+Default stepping, physical tolerances and old V7 behavior are preserved.
+No aggregate gate or speedup claim. [Exact evidence and review](../../.qualification/b3-ge-e4-pl/r8-adaptive-native-increments-dev-20260930-v1/results.md).
+
 Statuses describe acceptance, not prototype progress. `IN_PROGRESS`
 includes incomplete or failed required cases; it never means a numerical
 pass.
@@ -306,6 +314,13 @@ independent mechanics review and complete V06 adjudication remain open. See
 | E02 torque/footprint | NOT_STARTED | No executed matched comparison. |
 | E03 curved stiffener | NOT_STARTED | No executed matched comparison. |
 | E04 nonlinear GE/capacity | NOT_STARTED | No executed matched comparison. |
+
+E01 follow-up,30 September: saved native/external torque cross-work closes
+4.1554e-13; membrane/normal-spin gives102.2491% signed and plate-2.2491%.
+Independent mechanics review accepts this allocation, not either engineering
+idealization. Retain six-row points; require explicitly matched material-spin
+work before further reference scoring. No new solve/refinement or threshold
+change. [Grouped decision and raw hashes](../../.qualification/b3-ge-e4-pl/r8-e01-cross-work-dev-20260930-v1/results.md).
 
 Known adverse evidence remains visible: F03's off-ratio mode and historical
 timeouts do not select a multiplier; F05's 45 N and 42.5 N cases failed
