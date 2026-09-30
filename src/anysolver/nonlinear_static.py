@@ -4807,6 +4807,18 @@ def _solve_static_nonlinear_under_lease(
         )
         else None
     )
+    if (
+        v2d_trusted_guard is None
+        and not exact_qualified_internal_fast_path
+        and type(owned_items) is tuple
+        and any(
+            type(element) is _NativeParityE4PLS3V2DShellElement
+            for _element_id, element in owned_items
+        )
+    ):
+        # Not an error: the complete lifecycle scan is used instead.  Report it
+        # so a solve that cannot use the constant-time path is visible.
+        record_nonlinear_solver_event("qualified_v2d_trusted_unavailable")
 
     def internal_guard(
         observed_model: "FEModel",
@@ -4826,27 +4838,34 @@ def _solve_static_nonlinear_under_lease(
         if observed_model is lease_model:
             if exact_qualified_internal_fast_path:
                 trusted_runtime_guard(lease_model, context=context)
+                record_nonlinear_solver_event("qualified_guard_trusted")
                 return {}
             if v2d_trusted_guard is not None:
                 trusted_state_guard(lease_model, context=context)
                 v2d_trusted_guard(context=context)
+                record_nonlinear_solver_event("qualified_guard_trusted")
                 return {}
+        record_nonlinear_solver_event("qualified_guard_complete_scan")
         return exact_guard(observed_model, context=context)
 
-    def cancellation_guard(*, context: str) -> Dict[str, Any]:
-        """Treat the solver's own checkpoint and token as internal.
+    def cancellation_checkpoint(stage: str, *, context: str) -> Dict[str, Any]:
+        """Run one cancellation checkpoint, then the matching lifecycle guard.
 
         An absent token or an exact, unmodified ``CancellationToken`` can only
-        have run the solver's checkpoint code.  A replaced checkpoint and any
-        other token remain hostile observation boundaries.
+        run the solver's own checkpoint code.  The token is verified *before*
+        that code runs and again afterwards: checking only afterwards would let
+        a token repair itself inside the checkpoint and still be trusted.  A
+        replaced checkpoint and any other token remain hostile observation
+        boundaries and keep the complete lifecycle scan.
         """
 
-        guard = (
-            internal_guard
-            if _is_known_cancellation_checkpoint(cancellation_token)
-            else exact_guard
-        )
-        return guard(model, context=context)
+        known_before = _is_known_cancellation_checkpoint(cancellation_token)
+        cancellation_safe_point(cancellation_token, stage)
+        if known_before and _is_known_cancellation_checkpoint(cancellation_token):
+            return internal_guard(model, context=context)
+        if cancellation_token is not None:
+            record_nonlinear_solver_event("qualified_guard_untrusted_token")
+        return exact_guard(model, context=context)
 
     exact_guard(model, context="nonlinear static solve preflight")
     cancellation_safe_point(cancellation_token, "nonlinear_static.start")
@@ -6268,11 +6287,8 @@ def _solve_static_nonlinear_under_lease(
     def newton_increment(q_start, path_factor, reference, line_search_mode):
         """Solve one load increment with plain, decrease, or Armijo Newton."""
         nonlocal total_iterations
-        cancellation_safe_point(
-            cancellation_token,
+        cancellation_checkpoint(
             f"nonlinear_static.force.step:{step_index}.start",
-        )
-        cancellation_guard(
             context="nonlinear static force increment cancellation",
         )
         q_trial = q_start.copy()
@@ -6303,11 +6319,8 @@ def _solve_static_nonlinear_under_lease(
         residual_norm = float(np.linalg.norm(residual))
 
         for iteration in range(1, max_iterations + 1):
-            cancellation_safe_point(
-                cancellation_token,
+            cancellation_checkpoint(
                 f"nonlinear_static.force.step:{step_index}.iteration:{iteration}",
-            )
-            cancellation_guard(
                 context="nonlinear static force iteration cancellation",
             )
             if status_callback is not None:
@@ -6490,11 +6503,8 @@ def _solve_static_nonlinear_under_lease(
             accepted = False
             scale = 1.0
             for trial in range(settings.max_line_search_cuts):
-                cancellation_safe_point(
-                    cancellation_token,
+                cancellation_checkpoint(
                     f"nonlinear_static.force.step:{step_index}.line_search:{trial + 1}",
-                )
-                cancellation_guard(
                     context="nonlinear static line-search cancellation",
                 )
                 q_candidate = q_trial + scale * dq
@@ -6689,11 +6699,8 @@ def _solve_static_nonlinear_under_lease(
     assembly_threads = None if resource_config is None else resource_config.assembly_threads
     with numba_thread_scope(assembly_threads):
         while lam < target_load_factor - 1.0e-12:
-            cancellation_safe_point(
-                cancellation_token,
+            cancellation_checkpoint(
                 f"nonlinear_static.force.step:{step_index + 1}",
-            )
-            cancellation_guard(
                 context="nonlinear static force step cancellation",
             )
             step_size = min(step_size, max(target_load_factor - lam, min_step))

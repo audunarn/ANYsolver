@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+- Speed up nonlinear static solves of models that combine qualified Q4 shells
+  with exact S3 V2D triangles. The solver's own cancellation token and the V2D
+  elements now use the constant-time trusted lifecycle guard inside the Newton
+  loop, and every Numba kernel is cached on disk by default (`cache=True` is
+  applied by `anysolver.jit_compiler`; pass `cache=False` to opt out).
+  Displacements, load factors and step histories are bit-identical to 0.4.7.
+  On the representative plate/cylinder case a warm solve drops from 22.5 s to
+  11.7 s and the first solve in a fresh process from 38.5 s to 12.0 s.
+- A nonlinear static solve now stops with an authority error when an S3 V2D
+  element it owns is modified (any ordinary attribute write or deletion) while
+  it runs. Writes before or after a solve behave as before.
+- A cancellation token is trusted only if it is an unmodified
+  `CancellationToken` both before and after its checkpoint code runs; every
+  other token keeps the complete lifecycle scan.
+- Report which guard path a nonlinear static solve used through the
+  `qualified_guard_trusted`, `qualified_guard_complete_scan`,
+  `qualified_guard_untrusted_token` and `qualified_v2d_trusted_unavailable`
+  events in `info["nonlinear_performance"]["solver"]["event_counts"]`.
+- Keep qualified element equations, physical tolerances and defaults
+  unchanged.
+
 ## 0.4.7 - 2026-09-21
 
 - Speed up representative static analysis and retained-load solves through

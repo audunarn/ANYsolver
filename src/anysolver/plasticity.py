@@ -47,7 +47,7 @@ _P_MATRIX = np.array(
 ) / 3.0
 
 
-@njit(cache=True)
+@njit
 def plane_stress_elastic_matrix(E: float, nu: float) -> np.ndarray:
     return E / (1.0 - nu**2) * np.array(
         [[1.0, nu, 0.0], [nu, 1.0, 0.0], [0.0, 0.0, (1.0 - nu) / 2.0]],
@@ -148,7 +148,7 @@ def plane_stress_tangent_method(tangent_method: str) -> Iterator[None]:
         _TANGENT_METHOD_OVERRIDE.reset(token)
 
 
-@njit(cache=True)
+@njit
 def _jit_flow_stress(
     eps_p: np.ndarray,
     sigma_prop: float,
@@ -178,7 +178,7 @@ def _jit_flow_stress(
     return res
 
 
-@njit(cache=True)
+@njit
 def _jit_flow_stress_scalar(
     eps_p: float,
     sigma_prop: float,
@@ -201,7 +201,7 @@ def _jit_flow_stress_scalar(
     return K * np.power(max(value + power_offset, 1.0e-12), n)
 
 
-@njit(cache=True)
+@njit
 def _jit_consistency_residual_scalar(
     plastic_multiplier: float,
     b1: float,
@@ -238,7 +238,7 @@ def _jit_consistency_residual_scalar(
     return phi2 - flow**2 / 3.0, flow
 
 
-@njit(cache=True)
+@njit
 def _jit_hardening_modulus(
     eps_p: np.ndarray,
     sigma_prop: float,
@@ -267,7 +267,7 @@ def _jit_hardening_modulus(
     return res
 
 
-@njit(cache=True)
+@njit
 def _jit_plane_stress_return_map(
     strain: np.ndarray,
     plastic_strain: np.ndarray,

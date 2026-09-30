@@ -69,7 +69,10 @@ from .e4_pl_s3_v2d_element import (
     QUADRATURE_AUTHORITY_ID as S3_V2D_QUADRATURE_AUTHORITY_ID,
     V2D_DERIVED_CACHE_NAMES as _S3_V2D_DERIVED_CACHE_NAMES,
     NativeParityE4PLS3V2DShellElement,
+    _V2D_LEASE_EPOCHS_KEY,
     _s3_v2d_runtime_epoch_manager as _S3_V2D_RUNTIME_EPOCH_MANAGER,
+    _subscribe_v2d_lease_epoch,
+    _V2DLeaseEpoch,
 )
 from .e4_pl_s3_v2d_state import (
     canonical_json_bytes as _v2d_canonical_json_bytes,
@@ -1233,7 +1236,11 @@ class _QualifiedLifecycleProbeModel:
 
 
 _V2D_TRUSTED_BOOKKEEPING_NAMES = frozenset(
-    {"_qualified_direct_state_token", "_qualified_direct_state_tokens"}
+    {
+        "_qualified_direct_state_token",
+        "_qualified_direct_state_tokens",
+        _V2D_LEASE_EPOCHS_KEY,
+    }
 )
 _V2D_TRUSTED_SCALAR_TYPES = frozenset({type(None), bool, int, float, str})
 
@@ -1258,12 +1265,12 @@ def _v2d_trusted_immutable_value(value: Any, *, depth: int = 0) -> bool:
 
 
 def _v2d_trusted_instance_eligible(element: Any) -> bool:
-    """Whether only ordinary (epoch-advancing) writes can change the instance.
+    """Whether only ordinary (counted) writes can change the instance.
 
     Every value the exact guard can observe must be immutable, so an in-place
     mutation cannot alter a validated fact without an attribute write.  The
     generic derived caches are data the exact guard never reads; their
-    data-only resets deliberately do not advance the mesh epoch.
+    data-only resets deliberately are not counted as modifications.
     """
 
     try:
@@ -1302,11 +1309,12 @@ def _capture_qualified_v2d_trusted_authority(
     element once.  The returned check re-runs the complete guard over one
     representative element, which re-validates the whole formulation-level
     authority with the unchanged exact code, and requires the V2D class epoch
-    to be unchanged.  The remaining per-instance facts are protected by the
-    owning mesh epoch: bound V2D instances advance it on every ordinary write
-    or deletion, and eligibility requires every observed value to be
-    immutable.  Callers must separately require that mesh epoch (the
-    qualified assembly lease's trusted state check does).
+    to be unchanged.  The remaining per-instance facts are protected by a write
+    counter private to this capture: every V2D element is subscribed to it, any
+    ordinary write or deletion on a subscribed element advances it, and
+    eligibility requires every observed value to be immutable.  Callers must
+    separately require the owning mesh epoch (the qualified assembly lease's
+    trusted state check does) for the element mapping and the nodes.
 
     Returns ``None`` when no V2D element is present, any V2D instance is not
     eligible or the capture scan fails; callers then keep the complete
@@ -1325,6 +1333,10 @@ def _capture_qualified_v2d_trusted_authority(
         for element_id, element in v2d_items
     ):
         return None
+    # Subscribe and capture first, then validate: a write that lands between
+    # subscription and the end of the scan is counted and rejected below.
+    epoch = _V2DLeaseEpoch()
+    _subscribe_v2d_lease_epoch((element for _id, element in v2d_items), epoch)
     generation = _v2d_manager.capture_generation()
     try:
         _exact_guard(
@@ -1337,7 +1349,7 @@ def _capture_qualified_v2d_trusted_authority(
         return None
     representative = _QualifiedLifecycleProbeModel(dict(v2d_items[:1]))
 
-    def require_generation(context: str) -> None:
+    def require_unchanged(context: str) -> None:
         try:
             _v2d_manager.require_generation(generation)
         except ValueError as exc:
@@ -1345,13 +1357,18 @@ def _capture_qualified_v2d_trusted_authority(
                 f"{context} requires exact qualified component/lifecycle APIs; "
                 "S3 V2D class authority changed during the trusted lease"
             ) from exc
+        if epoch.value != 0:
+            raise ElementCapabilityError(
+                f"{context} requires exact qualified component/lifecycle APIs; "
+                "an S3 V2D element was modified during the trusted lease"
+            )
 
     def require(*, context: str) -> None:
-        require_generation(context)
+        require_unchanged(context)
         _exact_guard(representative, context=context)
-        require_generation(context)
+        require_unchanged(context)
 
-    require_generation(f"{context} S3 V2D trusted capture")
+    require_unchanged(f"{context} S3 V2D trusted capture")
     return require
 
 

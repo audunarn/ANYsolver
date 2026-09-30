@@ -12,8 +12,10 @@ No legacy TRI3 or qualified-Q4 mechanics are dispatched from this module.
 from __future__ import annotations
 
 import math
+import threading
+import weakref
 from types import MappingProxyType
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -99,7 +101,7 @@ class NativeParityCapabilityError(ElementCapabilityError):
 
 # Generic derived caches that shared solver utilities reset with ``setattr``.
 # Data-only writes to them cannot change any instance fact the exact lifecycle
-# guard validates, so they do not advance the owning mesh epochs.
+# guard validates, so they never count as a modification (see below).
 V2D_DERIVED_CACHE_NAMES = frozenset(
     {
         "_hourglass_stiffness_matrix",
@@ -110,8 +112,54 @@ V2D_DERIVED_CACHE_NAMES = frozenset(
     }
 )
 
+# Modification counters for live trusted leases.  A nonlinear solve that owns
+# V2D elements captures one counter per capture and subscribes it to every V2D
+# element.  Any ordinary write or deletion on a subscribed element then advances
+# the counter, so the constant-time trusted check can tell that the element
+# changed between two complete scans.  Nothing is subscribed outside a live
+# capture: writes to V2D elements behave exactly as before, and the shared mesh
+# epoch is never touched.  Direct ``__dict__`` writes and ``object.__setattr__``
+# remain interpreter-level bypasses outside the supported mutation surface.
+_V2D_LEASE_EPOCHS_KEY = "_qualified_v2d_lease_epochs"
+_V2D_LEASE_LOCK = threading.Lock()
 
-def _advance_bound_state_tokens(
+
+class _V2DLeaseEpoch:
+    """Count of ordinary writes to the V2D elements of one trusted capture.
+
+    Elements hold only weak references, so the subscription ends by itself when
+    the capture that owns the counter is released and nothing needs to be
+    unsubscribed.
+    """
+
+    __slots__ = ("value", "__weakref__")
+
+    def __init__(self) -> None:
+        self.value = 0
+
+
+def _subscribe_v2d_lease_epoch(
+    elements: Iterable[Any],
+    epoch: _V2DLeaseEpoch,
+    *,
+    _key: str = _V2D_LEASE_EPOCHS_KEY,
+    _lock: Any = _V2D_LEASE_LOCK,
+) -> None:
+    """Subscribe *epoch* to every element and drop released subscriptions."""
+
+    reference = weakref.ref(epoch)
+    with _lock:
+        for element in elements:
+            namespace = object.__getattribute__(element, "__dict__")
+            references = dict.get(namespace, _key)
+            if type(references) is not list:
+                references = []
+                dict.__setitem__(namespace, _key, references)
+            references[:] = [item for item in references if item() is not None]
+            references.append(reference)
+
+
+def _advance_v2d_lease_epochs(
     element: Any,
     name: str,
     value: Any,
@@ -120,15 +168,14 @@ def _advance_bound_state_tokens(
     _cache_names: frozenset[str] = V2D_DERIVED_CACHE_NAMES,
     _ndarray: type = np.ndarray,
     _namespace_of: Any = object.__getattribute__,
+    _key: str = _V2D_LEASE_EPOCHS_KEY,
+    _lock: Any = _V2D_LEASE_LOCK,
 ) -> None:
-    """Advance every owning mesh epoch before an ordinary instance mutation.
+    """Count an ordinary write for every live capture that covers *element*.
 
-    Once an element is bound into a qualified mesh, any other attribute write
-    or deletion (including ``__class__`` reassignment) may change facts the
-    exact lifecycle guard validates.  Advancing the shared epochs lets
-    constant-time trusted checks reject that mutation between complete
-    scans.  Direct ``__dict__`` writes and ``object.__setattr__`` remain
-    interpreter-level bypasses outside the supported mutation surface.
+    Increments run under one lock, so concurrent writers cannot lose or reject
+    one another's advance.  Solver-owned derived-cache resets are not writes to
+    an authority fact and are not counted.
     """
 
     if (
@@ -138,13 +185,14 @@ def _advance_bound_state_tokens(
         and (value is None or type(value) is _ndarray)
     ):
         return
-    namespace = _namespace_of(element, "__dict__")
-    tokens = namespace.get("_qualified_direct_state_tokens")
-    if tokens is None:
-        token = namespace.get("_qualified_direct_state_token")
-        tokens = () if token is None else (token,)
-    for token in tokens:
-        token[0] = int(token[0]) + 1
+    references = _namespace_of(element, "__dict__").get(_key)
+    if not references:
+        return
+    for reference in tuple(references):
+        epoch = reference()
+        if epoch is not None:
+            with _lock:
+                epoch.value += 1
 
 
 SUPPORTED_OPERATIONS = frozenset(
@@ -339,14 +387,14 @@ class NativeParityE4PLS3V2DShellElement(
     )
     _operators = StrictFlatLinearE4PLS3V2CShellElement._operators
 
-    # The epoch helper is bound at class creation so a temporarily replaced
-    # module global cannot suppress the advance; both hooks are protected
-    # class entries (see ``_s3_v2d_runtime_epoch_manager``).
+    # The counting helper is bound at class creation so a temporarily replaced
+    # module global cannot suppress the count; both hooks are protected class
+    # entries (see ``_s3_v2d_runtime_epoch_manager``).
     def __setattr__(
         self,
         name: str,
         value: Any,
-        _advance: Any = _advance_bound_state_tokens,
+        _advance: Any = _advance_v2d_lease_epochs,
     ) -> None:
         _advance(self, name, value)
         super().__setattr__(name, value)
@@ -354,7 +402,7 @@ class NativeParityE4PLS3V2DShellElement(
     def __delattr__(
         self,
         name: str,
-        _advance: Any = _advance_bound_state_tokens,
+        _advance: Any = _advance_v2d_lease_epochs,
     ) -> None:
         _advance(self, name, None, deleting=True)
         super().__delattr__(name)
@@ -2385,8 +2433,8 @@ class NativeParityE4PLS3V2DShellElement(
 
 
 # Replacing a mutation hook installs a raising stub, so a swap-and-restore of
-# either hook cannot silently suppress the mesh-epoch advance; any ordinary
-# class mutation also advances this generation.
+# either hook cannot silently suppress the write count; any ordinary class
+# mutation also advances this generation.
 _s3_v2d_runtime_epoch_manager = make_authority_epoch_manager(
     "qualified S3 V2D runtime"
 )

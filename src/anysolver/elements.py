@@ -385,7 +385,7 @@ def _beam_fiber_field(
     )
 
 
-@njit(cache=True)
+@njit
 def _cross3(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """Cross product of two 3-vectors without np.cross dispatch overhead."""
     return np.array(
@@ -397,7 +397,7 @@ def _cross3(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     )
 
 
-@njit(cache=True)
+@njit
 def _inv2(matrix: np.ndarray) -> Tuple[np.ndarray, float]:
     """Inverse and determinant of a 2x2 matrix without LAPACK overhead."""
     det = matrix[0, 0] * matrix[1, 1] - matrix[0, 1] * matrix[1, 0]
@@ -1266,7 +1266,7 @@ _install_strict_flat_s3_v2_element_base_guards()
 del _install_strict_flat_s3_v2_element_base_guards
 
 
-@njit(cache=True)
+@njit
 def _jit_compute_4node_shape_functions(xi: float, eta: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     N = np.array(
         [
@@ -1295,7 +1295,7 @@ def _jit_compute_4node_shape_functions(xi: float, eta: float) -> Tuple[np.ndarra
     return N, dN_dxi, dN_deta
 
 
-@njit(cache=True)
+@njit
 def _jit_compute_8node_shape_functions(xi: float, eta: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     N = np.zeros(8, dtype=float)
     N[0] = -0.25 * (1.0 - xi) * (1.0 - eta) * (1.0 + xi + eta)
@@ -1329,7 +1329,7 @@ def _jit_compute_8node_shape_functions(xi: float, eta: float) -> Tuple[np.ndarra
     return N, dN_dxi, dN_deta
 
 
-@njit(cache=True)
+@njit
 def _jit_compute_3node_shape_functions(r: float, s: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     N = np.array([1.0 - r - s, r, s])
     dN_dr = np.array([-1.0, 1.0, 0.0])
@@ -1337,7 +1337,7 @@ def _jit_compute_3node_shape_functions(r: float, s: float) -> Tuple[np.ndarray, 
     return N, dN_dr, dN_ds
 
 
-@njit(cache=True)
+@njit
 def _jit_compute_6node_shape_functions(r: float, s: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     l1 = 1.0 - r - s
     l2 = r
@@ -1369,7 +1369,7 @@ def _jit_compute_6node_shape_functions(r: float, s: float) -> Tuple[np.ndarray, 
     return N, dN_dr, dN_ds
 
 
-@njit(cache=True)
+@njit
 def _jit_integrate_nonlinear_response(
     u_loc: np.ndarray,
     N_res: np.ndarray,

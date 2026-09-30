@@ -6,7 +6,7 @@ from .plasticity import plane_stress_return_map
 from .elements import lobatto_layers, plane_stress_elastic_matrix
 
 
-@njit(cache=True)
+@njit
 def _jit_batch_integrate_nonlinear_response(
     u_loc_batch: np.ndarray,
     N_res_batch: np.ndarray,
@@ -299,7 +299,7 @@ def shell_nonlinear_batch_eligible(element: Any) -> bool:
     )
 
 
-@njit(cache=True)
+@njit
 def _jit_integrate_layers(
     sigma: np.ndarray,
     C_tan: np.ndarray,
