@@ -50,6 +50,14 @@ Independent development scrutiny found no mapping/sign blocker. Moving fronts,
 restart continuation and method-appropriate spatial accuracy remain open; no
 uncovered-tip collision, D2 acceptance or release follows from this fixture.
 
+The same controlled fixture now slides the prescribed target boundary through
+changing overlap (10poses,18.224s/275.54MB; supportchange18.57%) and resumes from
+actual active/open prefix checkpoints on fresh models (25.426s/278.40MB).
+Continuation mechanics and complete final checkpoint match exactly; changed
+stiffness rejects incompatible continuation. Both slices have scoped development
+review PASS. Continuous swept collision, arbitrary cuts and spatial accuracy
+remain unqualified. These are development rows, not D2 acceptance or release.
+
 **30 September source87c53913 update:** D1-interior stages target-boundary cuts,
 prescribed source edges and source rim contact to D2 under the controlling goal.
 The cut-front counterexample below remains valid for its original unrestricted

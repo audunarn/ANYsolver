@@ -89,10 +89,11 @@ def fixture(stiffness):
     return model, definition, settings, program
 
 
-def represented_gap(model, u):
+def represented_gap(model, u, *, target_shift_x_m=0.):
     """Exact bilinear skin/flat-target bound on the actual XY overlap only.
 
-    All in-plane motions and rotations are exactly zero in this fixture. Source
+    Source in-plane motion and all rotations are fixed in this fixture; the
+    optional target x shift is a separately verified prescribed translation. Source
     skins use the original vertical director, thickness/2; target top is .015 m.
     Bilinear extrema on each clipped rectangular source face occur at corners.
     This neither samples nor gates the uncovered source tips at x/y=1.1.
@@ -104,13 +105,15 @@ def represented_gap(model, u):
         q = np.array([u[model.mesh.dof_manager.get_node_dofs(n)[2]]
                       for n in element.node_ids])
         x0, x1, y0, y1 = nodes[0].x, nodes[1].x, nodes[0].y, nodes[3].y
-        right, top = min(x1, 1.), min(y1, 1.)
+        left, right, top = max(x0, target_shift_x_m), min(x1, target_shift_x_m+1.), min(y1, 1.)
+        if right <= left or top <= y0:
+            continue
         gaps = []
-        for x, y in ((x0, y0), (right, y0), (right, top), (x0, top)):
+        for x, y in ((left, y0), (right, y0), (right, top), (left, top)):
             a, b = (x-x0)/(x1-x0), (y-y0)/(y1-y0)
             weights = np.array([(1-a)*(1-b), a*(1-b), a*b, (1-a)*b])
             gaps.append(float(.0401-.025-.015+weights@q))
-        rows.append(dict(element_id=eid, represented_area_m2=(right-x0)*(top-y0),
+        rows.append(dict(element_id=eid, represented_area_m2=(right-left)*(top-y0),
             physical_target_normal_corner_gap_m=gaps, minimum_gap_m=min(gaps)))
     return dict(method="independent exact bilinear physical skin over clipped XY rectangles",
         target_skin_z_m=.015, source_reference_bottom_z_m=.0151,
@@ -121,13 +124,19 @@ def represented_gap(model, u):
         uncovered_source_tip_excluded=True)
 
 
-def pose_diagnostics(model, definition, manager, snapshot, program, history):
+def pose_diagnostics(model, definition, manager, snapshot, program, history, *, rigid_target_slide=False):
     u = np.asarray(snapshot.displacements)
+    shift = float(u[model.mesh.dof_manager.get_node_dofs(7)[0]]) if rigid_target_slide else 0.
     for node in model.mesh.nodes:
         dofs = np.asarray(model.mesh.dof_manager.get_node_dofs(node))
         point = model.mesh.nodes[node]
         xy = np.array([point.x, point.y])
-        if np.any(u[dofs[3:]] != 0.) or not np.array_equal(xy+u[dofs[:2]], xy):
+        moving_target = rigid_target_slide and node in (7, 8, 9, 10)
+        expected_translation = np.array([shift, 0.]) if moving_target else np.zeros(2)
+        translation_invalid = (np.max(abs(u[dofs[:2]]-expected_translation)) > 128*np.finfo(float).eps
+                               if moving_target else not np.array_equal(xy+u[dofs[:2]], xy))
+        if (np.any(u[dofs[3:]] != 0.)
+                or translation_invalid):
             raise ValueError("independent guided skin oracle requires zero rotations and unchanged represented XY coordinates")
     contact, _, certificate = manager.evaluate(u, tangent=False)
     source, target = manager._positions(u)
@@ -168,7 +177,9 @@ def pose_diagnostics(model, definition, manager, snapshot, program, history):
     physical_work = float(local.ravel() @ np.asarray(local_direction).ravel())
     mapped_work = float(-contact @ direction)
     virtual_error = abs(physical_work-mapped_work)/max(abs(physical_work), .5)
-    gap = represented_gap(model, u)
+    gap = represented_gap(model, u, target_shift_x_m=shift)
+    if rigid_target_slide:
+        gap["target_prescribed_rigid_translation_x_m"] = shift
     pressure = np.asarray(certificate.numerical_pressure_pa)
     support = np.asarray(certificate.reference_support_m2)
     all_ids = certificate.source_pressure_node_ids

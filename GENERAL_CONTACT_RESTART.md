@@ -2,9 +2,9 @@
 
 **30 September 2026: active. D1-interior independently accepted; D2 development.**
 Worktree `C:/ANYworkspaceWork/ANYsolver-general-contact`, branch
-`codex/general-contact-core`. D2 checkpoint `afe5c157`; current dirty additions
-are the small-rotation guard/test, fixed-geometry reference/operator nonpass,
-active prescribed-source lifecycle and current notes. Accepted installed package remains `0b2ac9be`.
+`codex/general-contact-core`. D2 checkpoint `e032e6e7`; current dirty additions
+are moving-front helper/evidence, active/open continuation and current notes.
+Accepted installed package remains `0b2ac9be`.
 Main checkout untouched; prior dirty helpers/evidence preserved. No publication,
 merge, release or full-programme completion.
 
@@ -64,12 +64,18 @@ Active prescribed-source lifecycle subsequently passes all6poses in13.908s/275MB
 press/recontact pressures1/4 active, physical gap−30µm, actual control/support
 reactions reconciled. Reviewer closed row/sign findings, localdevelopment only;
 emitted active checkpoint is not continuation proof. Handle96728closed.
-Next lead slice: moving target-boundary front and restart on this bounded method.
+Moving target-boundary front subsequently passes10poses in18.224s/276MB;
+actualactive6/open8 prefix restart passes25.426s/278MB with exact complete final
+checkpoint/mechanics parity. Changedstiffness rejects; reviewer closed state and
+reaction findings. Handles11331/80486closed. No continuouscollision qualification.
+Next lead slice: integrate S3-V2D/S3-V2D version of this same finitepenalty law.
 Rims/edge-only collisions, method accuracy, other D2 geometry and allD3–D8 remain.
 ANYfem worker added summary-result persistence in existing separate
-`C:/ANYworkspaceWork/ANYfem-contact-intent`;16focused tests pass, review pending.
-Reviewer owns read-only assessment; no app execution admission. Reference worker
-completed, no owned numeric process running. D1 is not full C0–C9 completion.
+`C:/ANYworkspaceWork/ANYfem-contact-intent`, checkpointc138d41;16baseline and6
+affectedrepair tests pass, scopedreview closed, appadmissionfalse. Worker
+saved_radial_boundary now owns core.py/s3_patch_static.py/newS3tests only;
+lead owns static_path.py/driver/coupled slice. No owned numericprocess running.
+Reviewer available for next independent scrutiny. D1 is not full C0–C9 completion.
 
 ## Budget and ownership
 

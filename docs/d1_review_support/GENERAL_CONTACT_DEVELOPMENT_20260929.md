@@ -233,3 +233,60 @@ Handle96728closed. Next moving boundary-front/restart slice uses this method,
 not another refinement screen. ANYfem summary-result persistence progresses in
 its existing separate contact-intent worktree;16focused tests pass, independent
 review pending, no solve/admission broadening. Full programme remains active.
+
+**Next moving-front implementation:** extend the same parameterized controlled
+edge runner with --slide. Keep the two source normal controls; add one target
+x translation control with exact shared-translation MPCs, removing only target
+ux zero BCs. Remaining target coordinates/directors stay fixed. Press, translate
+through .08/.16m while pressed, open, recontact, two steps persegment. This
+crosses the source/target x=.1 boundary within a swept segment without placing
+an endpoint at the tie; unresolved candidate geometry still rejects. All source
+pressure modes remain; no friction or uncovered-tip collision inference.
+Independent gap uses the verified actual translated planar target rectangle;
+per-body wrench recovery includes MPC/control actions, target x generalized
+reaction is the sum of target nodal x residuals. Compare actual named supports,
+normal controls, moving support, physical gap/work at every pose. One new
+180s/1GB run d2_active_prescribed_edge_dev.py --slide with unique
+d2_moving_prescribed_edge_v1_20260930 output/log/resource. Failed geometry means
+targeted ownership diagnosis, not an automatic fixture/stiffness/budget sweep.
+
+**Moving-front result:**10poses pass18.224s/275.54MB, sixpositive supports,
+18.5734%support change, sourcecontrolled modes active throughslide, open/recontact
+correct. Both-body wrench1.247e-9, generalized-control reconciliation6.237e-10,
+work2.220e-16, independentgap minimum−30µm; productiongapallpass. Reviewer found
+no row/MPC/reaction blocker. The existing swept limiter is exercised, but raw
+endpoint checks do not independently qualify continuous crossing or uncovered
+tips. No restart claim from final emission alone. Handle11331closed.
+
+**Restart slice:** ordinary static entry already forwards max_load_factor to
+the registered path prefix fraction. Reuse that contract to produce real active
+(.6) and open(.8) checkpoints, canonical-byte persist/parse, then continue1.0
+on fresh models. No manual root creation, fingerprint override or payload edit.
+Compare actual tenpose mechanics/complete finalmaterial states against retained
+fullpath, and reject changed stiffness with the authentic open checkpoint.
+One180s/1GB execution d2_moving_edge_restart_dev.py --reference
+d2_moving_prescribed_edge_v1_20260930.json --output
+d2_moving_edge_restart_v1_20260930.json; unique bounded log/resource and
+_active/_open.checkpoint.json side outputs. The prefix rerun is required to
+exercise changed continuation input and genuine serialization; no D1 replay.
+If pass, use this working boundary workflow for method-appropriate acceptance
+preparation; if fail, correct the explicit state/identity discrepancy only.
+
+**Restart outcome:**25.426s/278.40MB, genuine active6/open8 roots persist and
+resume on fresh models; allten pose differences exactlyzero. Complete final
+checkpoint (including material state) equals uninterrupted fullpath. Authentic
+open root with changedstiffness2e7 rejects analysis-contract incompatibility.
+Independent scrutiny closed state/identity findings. Development PASS only;
+no methodaccuracy, continuouscollision or D2acceptance/release claim. Handle80486
+closed. ANYfem summary bridge checkpointc138d41 is locallytested/reviewed, with
+owner failure/identity/SI/capability semantics retained and appadmissionfalse.
+
+**Next pairing slice:** reuse the existing projected-normal class and Jet2 S3
+geometry for qualified S3-V2D/S3-V2D finite-penalty static contact. No newbasis,
+ADengine or mechanicalenforcement. Worker owns core.py, s3_patch_static.py and
+newS3focusedtests only; lead owns static_path.py/ordinarydriver/coupledexamples.
+Fix profile names/admission boundaries first, verify fullbothbody work/tangent,
+scalarpressure/support and newnegativeadmission under180s/1GB, then one ordinary
+coupled case. OldQ4/S3 law/report/restart selections remain. This advances D2
+pairing breadth while method-appropriate spatial/conditioning acceptance remains
+open; no broadaccepted/releasedflag or recreatedD1 evidence.
