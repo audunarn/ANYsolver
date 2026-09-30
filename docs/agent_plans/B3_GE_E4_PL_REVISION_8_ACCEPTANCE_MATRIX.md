@@ -79,6 +79,17 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 | M4 remaining mechanics | IN_PROGRESS | Materials, footprints, topology, loads, spectra, imperfections and capacity remain mandatory. |
 | M5 scale/release | NOT_STARTED | Practical scale, platforms, external programme and authorized release remain mandatory. |
 
+M2 bounded decision,30 September: independent local stationary elimination and
+one nodal-root counterfactual identify termination enforcement as the leading
+cause of the saved fixed native torque response difference. Root augmentation
+matches strong-comparator compliance within0.00334%; nonroot action differences
+remain. It constrains the nodal triad, not the retained endpoint director.
+Match declared support/termination and preserve reaction provenance before
+further physical comparisons; no port rewrite, space selection, external bridge,
+law/gate acceptance or formalF03 consumption follows. Metadata, arithmetic and
+rank-solver failures are retained with corrected results and independent review:
+[decision evidence](../../.qualification/b3-ge-e4-pl/r8-bl5-port-boundary-decision-dev-20260930-v1/results.md).
+
 | Gate | Status | Boundary |
 |---|---|---|
 | G0A | IN_PROGRESS | Reconcile prior registration before a pass claim. |
