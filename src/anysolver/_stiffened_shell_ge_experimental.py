@@ -40,7 +40,7 @@ from ._stiffened_shell_ge_checkpoint_binary import (
     S3_SCHEMA as FINITE_S3_MATERIAL_CHECKPOINT,
     decode_s3 as _decode_s3_binary_checkpoint,
     CHART_MAGIC as CHART_CHECKPOINT_MAGIC, decode_chart as _decode_chart_checkpoint,
-    NATIVE_SHELL_MAGIC, NATIVE_SHELL_SCHEMA,
+    NATIVE_SHELL_MAGIC, NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA,
 )
 from ._stiffened_shell_l1_assembly_experimental import (
     ExperimentalL1Line, ExperimentalBL5Line,
@@ -884,6 +884,10 @@ class ExperimentalGEAnalysis:
                 if ("_chart" in kind) != (chart is not None):
                     raise ValueError("numeric shell chart snapshot requires matching outer policy")
                 kind = kind.replace("_chart", "")
+                if kind == "finite_native_material_stable":
+                    if not self._definition.shell.s3_elements:
+                        raise ValueError("stable S3 native checkpoint requires S3 elements")
+                    kind = "finite_native_material"
                 if kind not in ("linear", "finite_native_material") and self._has_physical_fibre:
                     raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
                 if kind in ("finite", "finite_material", "finite_shell_material") and self._line_samples:
@@ -924,6 +928,7 @@ class ExperimentalGEAnalysis:
                 raw, self._identity, expected_shapes)
             kind = kind.replace("_chart", "")
             schema = (CHECKPOINT if kind == "linear" else
+                      STABLE_NATIVE_SCHEMA if kind == "finite_native_material_stable" else
                       "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"
                       if kind == "finite_native_material" else
                       FINITE_MATERIAL_CHECKPOINT if kind == "finite_material" else
@@ -931,7 +936,7 @@ class ExperimentalGEAnalysis:
                       else FINITE_CHECKPOINT)
             value = {"schema": schema, "model": self._identity,
                      "generation": generation, **arrays}
-            if kind in ("finite", "finite_material", "finite_shell_material", "finite_native_material"):
+            if kind in ("finite", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable"):
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
         elif raw.startswith(NATIVE_SHELL_MAGIC):
             if (self._line_samples or not self._has_physical_fibre or
@@ -983,16 +988,17 @@ class ExperimentalGEAnalysis:
             except (UnicodeError, json.JSONDecodeError, RecursionError) as exc:
                 raise ValueError("invalid mixed linear checkpoint") from exc
             if (type(value) is dict and value.get("schema") in (
-                    "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7", NATIVE_SHELL_SCHEMA)):
+                    "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7", NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA)):
                 raise ValueError("native material checkpoint requires binary framing")
         if (type(value) is dict and value.get("schema") in
                 (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT,
-                 NATIVE_SHELL_SCHEMA,
+                  NATIVE_SHELL_SCHEMA,
+                  STABLE_NATIVE_SCHEMA,
                  "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7")):
             if self._has_physical_fibre and value["schema"] not in (
-                    NATIVE_SHELL_SCHEMA, "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"):
+                    NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA, "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"):
                 raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
             if self._line_samples:
                 raise ValueError(

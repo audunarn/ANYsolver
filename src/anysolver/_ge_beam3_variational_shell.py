@@ -124,15 +124,19 @@ def deformation(reference, displacement, *, stable_translation=False, rotation_a
             np.array([v.hessian for v in values]))
 
 
-def response(model, element, displacement, origin, layers, *, split=False, rotation_anchors=None):
+def response(model, element, displacement, origin, layers, *, split=False,
+             rotation_anchors=None, stable_translation=False):
     """Spatial wrench rows, additive columns, and unchanged local trial state.
 
 g=D.T f; H=D.T K D + sum(f_i Hess(d_i)). Spatial rows then follow
 P.T r=g and P.T J=H-dP.T r. No post-hoc symmetrization is performed.
 """
+    if type(stable_translation) is not bool:
+        raise ValueError('explicit shell translation arithmetic policy required')
     ref = np.array([model.mesh.nodes[i].coords() for i in element.node_ids])
     u = np.asarray(displacement, dtype=float)
-    local, differential, second = deformation(ref, u, rotation_anchors=rotation_anchors)
+    local, differential, second = deformation(ref, u, rotation_anchors=rotation_anchors,
+                                               stable_translation=stable_translation)
     material = model.get_material(element.material_name)
     # This successor currently owns virgin elastic shells only. Do not imply
     # a conservative potential for active plastic/unsupported section states.

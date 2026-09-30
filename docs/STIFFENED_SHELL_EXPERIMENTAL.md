@@ -201,3 +201,23 @@ ANYfem persists this selection in the separate experimental v3 panel schema;
 existing v1/v2 records retain their original selection and layout. These
 experimental records are distinct from ordinary native-project persistence.
 The policy does not qualify F05/F06 or broaden the shell strain/chart domain.
+
+## Elastic S3 arithmetic with native fibre histories
+
+Fresh finite point owners containing physical-fibre beams and elastic S3 shells
+use the existing compensated shell-translation map. This retains small
+displacements independently of the reference-coordinate spacing and evaluates
+the complete first and second variations of the same physical map. Q4, S3 J2,
+generalized-only owners and the variational adapter's legacy default retain
+their existing policies.
+
+These histories have a distinct stable-S3 native-material V9 binary schema,
+including its anchored variant. V9 uses the existing bounded binary framing;
+it does not change constitutive history layout. Restoring V7 retains the
+original translation arithmetic, validation criteria and checkpoint bytes.
+Schema and model admission precede mechanical validation and publication.
+
+The tested pure-fibre S3 elastic and partial-yield cases complete monotonic
+loading and restart at unchanged tolerances. Partial-yield unloading still
+exhausts backtracking in the retained diagnostic. Atomic rejection preserves
+the accepted prefix; it does not qualify that unloading history or full G3.

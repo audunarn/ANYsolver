@@ -9,7 +9,7 @@ import pytest
 from anysolver import b3_ge
 from anysolver.control import CancellationToken, SolveCancelled
 from anysolver._stiffened_shell_ge_experimental import NodalAction
-from anysolver._stiffened_shell_ge_checkpoint_binary import decode, encode
+from anysolver._stiffened_shell_ge_checkpoint_binary import decode, encode, SCHEMAS
 from anysolver._stiffened_shell_beam_history import arrays, histories, shapes
 from test_stiffened_shell_ge_physical_fibre_linear import _definition
 
@@ -56,7 +56,7 @@ def test_finite_native_response_restart_and_predecessor(mixed, triangles):
         np.testing.assert_array_equal(a.strain,b.strain)
         np.testing.assert_array_equal(a.resultants,b.resultants)
     def expected(kind, generation):
-        assert kind == 'finite_native_material'
+        assert kind == ('finite_native_material_stable' if triangles else 'finite_native_material')
         count = owner._K.shape[0]
         return (("q",(count,)),("frames",(len(owner._beam_ids),3,3)),
             ("cells",(len(owner._beam_parts),2,3,3)),
@@ -64,7 +64,7 @@ def test_finite_native_response_restart_and_predecessor(mixed, triangles):
             ("multipliers",(owner._C.shape[0],)),("pattern",(count,)),
             ("accepted_factors",(generation,))) + shapes(owner._beam_parts,'origin') + shapes(owner._beam_parts,'accepted')
     kind,generation,values = decode(saved,owner._identity,expected)
-    json_payload = json.dumps({'schema': 'B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7',
+    json_payload = json.dumps({'schema': SCHEMAS[kind],
         'model': owner._identity, 'generation': generation,
         **{name:value.tolist() for name,value in values.items()}}).encode()
     json_owner = anysolver.stiffened_shell.create_analysis(definition=definition)
@@ -80,6 +80,16 @@ def test_finite_native_response_restart_and_predecessor(mixed, triangles):
         untouched.restore(corrupt)
     assert untouched._generation == 0 and untouched._finite_driver is None
     untouched.close()
+    if not triangles:
+        forged = encode('finite_native_material_stable',owner._identity,
+                        generation,tuple(values.items()))
+        ineligible = anysolver.stiffened_shell.create_analysis(definition=definition)
+        try:
+            with pytest.raises(ValueError,match='requires S3 elements'):
+                ineligible.restore(forged)
+            assert ineligible._generation == 0 and ineligible._finite_driver is None
+        finally:
+            ineligible.close()
     continued = resumed.solve(actions,targets=(.5,))
     oracle = owner.solve(actions,targets=(.5,))
     np.testing.assert_array_equal(continued.cell_resultants,oracle.cell_resultants)
@@ -91,6 +101,18 @@ def test_finite_native_response_restart_and_predecessor(mixed, triangles):
     assert rebuilt == driver._beam_origins
     with pytest.raises(ValueError,match='finite model-bound'):
         histories(owner._beam_parts,packed,'accepted')
+    if triangles:
+        rebased = owner.rebase_rotations(expected_generation=oracle.generation)
+        charted = owner.checkpoint()
+        chart_owner = anysolver.stiffened_shell.create_analysis(definition=definition)
+        try:
+            chart_result = chart_owner.restore(charted)
+            assert chart_owner._finite_driver._stable_s3
+            assert chart_owner.checkpoint() == charted
+            np.testing.assert_array_equal(chart_result.shell_frames,rebased.shell_frames)
+            np.testing.assert_array_equal(chart_result.cell_resultants,rebased.cell_resultants)
+        finally:
+            chart_owner.close()
     owner.close(); resumed.close()
 
 
@@ -148,31 +170,53 @@ def test_native_cancel_after_material_recovery_preserves_accepted_state(monkeypa
 
 
 @pytest.mark.parametrize('yielding', (False,True))
-def test_pure_fibre_s3_completion_or_truthful_accepted_prefix(yielding):
-    """Pending response case: numerical failure must never become equilibrium.
+def test_pure_fibre_s3_monotonic_completion_and_restart(yielding):
+    """The stable shell map must actually converge the unchanged fixture.
 
-    This checks result/failure ownership, not physical acceptance of the route.
-    Its observed convergence failure remains recorded in development evidence.
+    Earlier failures stay in immutable evidence; full G3 remains unqualified.
     """
     definition = (_yielding_definition(False,True) if yielding else _definition(False,True))
     owner = anysolver.stiffened_shell.create_analysis(definition=definition)
     actions = (NodalAction('beam',105,(0.,0.,1000.,0.,0.,0.)),)
     try:
         result = owner.solve(actions,targets=(.5,1.))
-    except RuntimeError as error:
-        assert str(error) in ('finite mixed backtrack budget exhausted',
-                             'finite mixed Newton iteration limit')
-        if owner._finite_driver is None:
-            assert owner._generation == 0
-            with pytest.raises(RuntimeError,match='no accepted'):
-                owner.recover()
-        else:
-            prefix = owner.recover()
-            assert prefix.accepted_factors == (.5,)
-            assert prefix.free_equilibrium_ratio <= 1e-8
-            assert prefix.constraint_max <= 1e-9
-    else:
         assert result.accepted_factors == (.5,1.)
         assert result.free_equilibrium_ratio <= 1e-8
         assert result.constraint_max <= 1e-9
-    owner.close()
+        if yielding:
+            assert any(sum(row.incremental_dissipation_j)>0.
+                       for row in result.beam_fibre_energy)
+        support = result.support_reactions[:owner._shell_count].reshape(-1,6)
+        force = support[:,:3].sum(axis=0)
+        moment = support[:,3:].sum(axis=0)+np.cross(
+            np.asarray(definition.shell.coordinates_m),support[:,:3]).sum(axis=0)
+        applied=np.array((0.,0.,1000.))
+        assert np.linalg.norm(force+applied)/np.linalg.norm(applied)<1e-8
+        assert np.linalg.norm(moment+np.cross(result.beam_positions[-1],applied))/(
+            np.linalg.norm(applied)*owner._reference_length)<1e-8
+        saved = owner.checkpoint()
+        resumed = anysolver.stiffened_shell.create_analysis(definition=definition)
+        try:
+            restored = resumed.restore(saved)
+            assert resumed.checkpoint() == saved
+            assert restored.beam_fibre_energy == result.beam_fibre_energy
+            assert owner._finite_driver._stable_s3
+            assert resumed._finite_driver._stable_s3
+            if yielding:
+                # This unchanged unloading path still switches yield branches
+                # and exhausts backtracking. Test rollback, not physical
+                # acceptance of unloading; the retained diagnostic is open.
+                with pytest.raises(RuntimeError,match='finite mixed backtrack budget exhausted'):
+                    owner.solve(actions,targets=(.5,))
+                assert owner.recover() is result
+                assert owner.checkpoint() == saved
+                assert owner._generation == result.generation
+                return
+            direct = owner.solve(actions,targets=(.5,))
+            continued = resumed.solve(actions,targets=(.5,))
+            assert owner.checkpoint() == resumed.checkpoint()
+            assert direct.beam_fibre_energy == continued.beam_fibre_energy
+        finally:
+            resumed.close()
+    finally:
+        owner.close()

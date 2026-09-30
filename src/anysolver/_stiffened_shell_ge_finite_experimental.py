@@ -44,6 +44,7 @@ from ._stiffened_shell_ge_checkpoint_binary import SCHEMAS as _BINARY_SCHEMAS
 from ._stiffened_shell_ge_checkpoint_binary import encode_s3 as _encode_s3_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import encode_chart as _encode_chart_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import NATIVE_SHELL_SCHEMA
+from ._stiffened_shell_ge_checkpoint_binary import STABLE_NATIVE_SCHEMA
 from ._stiffened_shell_rotation_charts import owned_anchors, physical_frames, total_coordinates
 from ._stiffened_shell_q4_algorithmic_pullback import (
     POLICY as Q4_ALGORITHMIC_PULLBACK_POLICY, response as q4_algorithmic_response,
@@ -341,6 +342,11 @@ class FinitePointDriver:
 
     def __init__(self, owner):
         self.owner = owner
+        # Numerical policy is checkpoint-bound. Legacy restored histories keep
+        # their original arithmetic rather than changing endpoint validation.
+        self._stable_s3 = bool(owner._has_physical_fibre and
+            owner._definition.shell.s3_elements and
+            owner._definition.shell.j2_curve is None)
         beam_ids = owner._beam_ids
         self._beam_nodal = 6*len(beam_ids)
         self._reference_frames = np.array(
@@ -423,7 +429,7 @@ class FinitePointDriver:
             if len(slots) == 18 and owner._definition.shell.j2_curve is None:
                 force, tangent, candidate = variational_shell_response(
                     owner._shell_model, element, state.q[slots], origin, 3,
-                    rotation_anchors=anchors)
+                    rotation_anchors=anchors, stable_translation=self._stable_s3)
             elif len(slots) == 18:
                 force, tangent, candidate = s3_algorithmic_response(
                     owner._shell_model, element, state.q[slots], origin, 3,
@@ -730,7 +736,8 @@ class FinitePointDriver:
                         ("shell_origin_q", self._shell_predecessor_q),
                         ("shell_origin_anchors", self._shell_predecessor_anchors)),
                     states, anchored=anchored, native_material=True)
-            return _encode_binary_checkpoint(kind("finite_native_material"),
+            return _encode_binary_checkpoint(kind("finite_native_material_stable"
+                if self._stable_s3 else "finite_native_material"),
                 self.owner._identity, generation, arrays +
                 native_history_arrays(self.owner._beam_parts,
                                       self._beam_predecessors, "origin") +
@@ -813,7 +820,12 @@ class FinitePointDriver:
         if type(value) is not dict:
             raise ValueError("incompatible experimental finite checkpoint")
         native_shell = value.get("schema") == NATIVE_SHELL_SCHEMA
-        native_material = value.get("schema") == NATIVE_MATERIAL_CHECKPOINT or native_shell
+        stable_s3 = value.get("schema") == STABLE_NATIVE_SCHEMA
+        if stable_s3 and not self._stable_s3:
+            raise ValueError("stable S3 native checkpoint requires elastic S3 fibre model")
+        # This driver is still private to restore until all validation passes.
+        self._stable_s3 = stable_s3
+        native_material = value.get("schema") in (NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA) or native_shell
         s3_material = (value.get("schema") == FINITE_S3_MATERIAL_CHECKPOINT or
                        (native_shell and bool(owner._definition.shell.s3_elements)))
         shell_material = value.get("schema") in (
@@ -835,7 +847,7 @@ class FinitePointDriver:
                               "shell_origin_q", "shell_origin_anchors", "s3_states"}
         if (set(value) != expected_keys or
                 value["schema"] not in
-                (FINITE_CHECKPOINT, NATIVE_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
+                (FINITE_CHECKPOINT, NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
