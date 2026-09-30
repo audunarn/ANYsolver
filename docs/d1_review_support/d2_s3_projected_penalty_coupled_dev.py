@@ -127,7 +127,7 @@ def reference(model, support, mass, prescribed_force=None):
 
 
 def assess(model, definition, settings, result, support, oracle, cells, force, force_scale,
-           deformable_target=False):
+           deformable_target=False, fixed_scales=None, normal_controls=False):
     u = result.displacements
     manager = GeneralS3PatchManager(model, definition, settings)
     contact, _, cert = manager.evaluate(u, tangent=False)
@@ -150,7 +150,7 @@ def assess(model, definition, settings, result, support, oracle, cells, force, f
     for n, value in zip(force_nodes, force, strict=True):
         external[model.mesh.dof_manager.get_node_dofs(n)[2]] = value
     free_nodes = (2, 3, 5, 6, 8, 9) if deformable_target else (2, 3, 5, 6)
-    free = np.eye(len(u))[:, [model.mesh.dof_manager.get_node_dofs(n)[2] for n in free_nodes]]
+    free = np.zeros((len(u), 0)) if normal_controls else np.eye(len(u))[:, [model.mesh.dof_manager.get_node_dofs(n)[2] for n in free_nodes]]
     wrench = guided_wrench_diagnostics(model, u, internal, contact, external, free,
         physical_contact_force=sum((b["physical_contact_force"] for b in bodies.values()), np.zeros(3)),
         physical_contact_moment=sum((b["physical_contact_moment"] for b in bodies.values()), np.zeros(3)),
@@ -173,14 +173,16 @@ def assess(model, definition, settings, result, support, oracle, cells, force, f
     qref = np.asarray(oracle["normal_displacements_m"][:6] if deformable_target
         else oracle["source_normal_displacements_m"])
     pref = np.asarray(oracle["pressure_pa"])
-    compared = {"normal_displacement_relative": float(np.linalg.norm(q-qref)/np.linalg.norm(qref)),
-        "normal_pressure_relative": float(np.linalg.norm(pressure-pref)/np.linalg.norm(pref)),
+    scales = fixed_scales or {"source_q_m": np.linalg.norm(qref), "pressure_pa": np.linalg.norm(pref),
+        "target_q_m": np.linalg.norm(np.asarray(oracle.get("normal_displacements_m", np.ones(10)))[6:])}
+    compared = {"normal_displacement_relative": float(np.linalg.norm(q-qref)/scales["source_q_m"]),
+        "normal_pressure_relative": float(np.linalg.norm(pressure-pref)/scales["pressure_pa"]),
         "contact_force_relative": abs(float(bodies["source"]["physical_contact_force"][2])-oracle["contact_force_n"])/force_scale}
     normal_work = None
     if deformable_target:
         compared["target_normal_displacement_relative"] = float(
             np.linalg.norm(target_q-np.asarray(oracle["normal_displacements_m"])[6:])
-            /np.linalg.norm(np.asarray(oracle["normal_displacements_m"])[6:]))
+            /scales["target_q_m"])
         normal_dofs = [model.mesh.dof_manager.get_node_dofs(n)[2] for n in range(1, 11)]
         full_normal_contact = contact[normal_dofs]
         independent_normal_contact = -np.asarray(oracle["G"]).T@pressure
@@ -208,6 +210,182 @@ def assess(model, definition, settings, result, support, oracle, cells, force, f
         "limits": "fixed-XY/vertical-normal oracle; tangential geometry and general continuum accuracy outside this comparison"}
 
 
+def normal_control_fixture():
+    """Reuse the reviewed fixture; two controls prescribe six tied normals."""
+    from docs.d1_review_support import d2_s3_deformable_mms_reference_dev as independent
+    model, definition, settings, _ = build(1.4, True)
+    model.apply_boundary_conditions()
+    support, mass, cross_mass, cells = independent.independent_p1_integrals(
+        XY, CELLS, np.array(((0., 0.), (1.4, 0.), (1.4, 1.4), (0., 1.4))),
+        ((7, 8, 10), (8, 9, 10)))
+    nodes = (2, 3, 5, 6, 8, 9)
+    indices = np.array(nodes)-1
+    dofs = [model.mesh.dof_manager.get_node_dofs(n)[2] for n in nodes]
+    k, _ = assemble_stiffness_matrix(model)
+    known = np.array((0., -1e-6, -1e-6, 0., -1e-6, -1e-6, 0., .3e-6, .3e-6, 0.))
+    oracle = independent.normal_reference(k.toarray()[np.ix_(dofs, dofs)], indices,
+        support, mass, cross_mass, known)
+    for master, slaves in ((2, (3, 5, 6)), (8, (9,))):
+        master_dof = int(model.mesh.dof_manager.get_node_dofs(master)[2])
+        for slave in slaves:
+            slave_dof = int(model.mesh.dof_manager.get_node_dofs(slave)[2])
+            model.add_constraint_equation(terms=((slave_dof, 1.), (master_dof, -1.)),
+                source_id=f"normal_lifecycle_{master}_{slave}")
+    controls = (ContactPathControl.node(2, "uz"), ContactPathControl.node(8, "uz"))
+    press = (-1e-6, .3e-6)
+    program = ContactPathProgram(controls=controls,
+        waypoints=((0., 0.), press, (0., 0.), press), steps_per_segment=2)
+    scales = {"source_q_m": float(np.linalg.norm(known[:6])),
+        "target_q_m": float(np.linalg.norm(known[6:])),
+        "pressure_pa": float(np.linalg.norm(oracle["pressure_pa"]))}
+    force_scale = float(np.sum(abs(np.asarray(oracle["free_normal_forces_n"]))))
+    return model, definition, settings, program, support, oracle, cells, scales, force_scale
+
+
+def assess_normal_control_pose(model, definition, settings, program, support,
+                             base_oracle, cells, scales, force_scale, snapshot, history, step):
+    indices = np.asarray(base_oracle["free_indices"])
+    prescribed = np.asarray(history["target"])
+    normal_values = np.array([prescribed[0]]*4+[prescribed[1]]*2)
+    known = np.zeros(10); known[indices] = normal_values
+    G = np.asarray(base_oracle["G"])
+    gap = 1e-8+G@known/support
+    pressure = 1e7*np.maximum(-gap, 0.)
+    independent_rows = np.asarray(base_oracle["kff"])@normal_values-G[:, indices].T@pressure
+    expected = np.array((independent_rows[:4].sum(), independent_rows[4:].sum()))
+    actual = np.asarray(history["reaction_generalized"])
+    pose_oracle = dict(base_oracle, normal_displacements_m=known.tolist(),
+        pressure_pa=pressure.tolist(), contact_force_n=float(support@pressure))
+    external = np.zeros(10); external[[1, 7]] = actual
+    pose = assess(model, definition, settings, snapshot, support, pose_oracle,
+        cells, external, force_scale, True, scales, normal_controls=True)
+    internal, _, trials = _assemble_nonlinear_system(model, snapshot.displacements,
+        snapshot.element_states, 5, tangent=False, kinematics="von_karman",
+        require_full_coordinates=True)
+    _discard_nonlinear_state_candidate(trials)
+    _discard_nonlinear_state_candidate(snapshot.element_states)
+    contact = GeneralS3PatchManager(model, definition, settings).evaluate(
+        snapshot.displacements, tangent=False)[0]
+    remaining = internal+contact
+    for n, value in zip((2, 8), actual, strict=True):
+        remaining[model.mesh.dof_manager.get_node_dofs(int(n))[2]] -= value
+    support_errors = []
+    for bc in model.boundary_conditions:
+        reaction = np.zeros(6)
+        for node in bc.node_ids:
+            dofs = model.mesh.dof_manager.get_node_dofs(node)
+            for name in bc.dof_constraints:
+                axis = ("ux", "uy", "uz", "rx", "ry", "rz").index(name)
+                reaction[axis] += remaining[dofs[axis]]
+        support_errors.append(float(np.max(abs(np.asarray(step.support_reactions[bc.name])-reaction))/force_scale))
+    pose.update(step_index=int(snapshot.step_index), displacements=snapshot.displacements.tolist(),
+        history=history, independent_control_reactions_n=expected.tolist(),
+        control_reaction_relative=float(np.linalg.norm(actual-expected)/force_scale),
+        named_support_reaction_max_relative=max(support_errors))
+    pose["checks"].update(independent_control_reactions=pose["control_reaction_relative"] <= 1e-6,
+        named_support_reactions=pose["named_support_reaction_max_relative"] <= 1e-6)
+    return pose
+
+
+def normal_control_main(args):
+    """Two normal controls and explicit ties, with per-pose independent checks."""
+    snapshot_path = args.output.with_suffix(".runner.source.py")
+    if snapshot_path.exists(): raise FileExistsError(snapshot_path)
+    snapshot_path.write_bytes(Path(__file__).read_bytes())
+    started = time.perf_counter()
+    record = {"accepted": False, "released": False, "kind": "s3_two_body_normal_control_lifecycle_development",
+        "adapter": file_identity(__file__), "reference_source": file_identity(
+            Path(__file__).with_name("d2_s3_deformable_mms_reference_dev.py")),
+        "production": {name: file_identity(Path("src/anysolver")/name) for name in (
+            "nonlinear_static.py", "nonlinear_restart.py", "general_contact/core.py",
+            "general_contact/s3_patch_static.py", "general_contact/s3_patch_augmented.py",
+            "general_contact/static_path.py")}, "poses": []}
+    try:
+        model, definition, settings, program, support, oracle, cells, scales, force_scale = normal_control_fixture()
+        record.update(program=program.contract(), oracle=oracle, fixed_scales=scales,
+            force_scale_n=force_scale, moment_scale_nm=force_scale, comparison_limit=1e-6,
+            gap_budget_m=5e-5, applied_nodal_forces_n=[0.]*10)
+        reference = None
+        if args.normal_restart_reference:
+            from anysolver.nonlinear_restart import canonical_checkpoint_json_bytes, load_nonlinear_checkpoint
+            reference = json.loads(args.normal_restart_reference.read_text(encoding="utf-8"))
+            if not reference.get("development_checks_met") or reference["program"] != program.contract():
+                raise ValueError("restart reference is not the passing identical path")
+            if reference["production"] != record["production"]:
+                raise ValueError("restart reference production identities changed")
+            record["reference_record"] = file_identity(args.normal_restart_reference)
+        fractions = (1/3, 2/3, 1.) if reference else (1.,)
+        checkpoint = None
+        record["segments"] = []
+        for index, fraction in enumerate(fractions):
+            if index:
+                model, definition, settings, program, support, oracle, cells, scales, force_scale = normal_control_fixture()
+            result = solve_static_nonlinear(model, contact=definition, contact_settings=settings,
+                contact_path_program=program, max_load_factor=fraction, max_iterations=18, tolerance=1e-8,
+                restart_checkpoint=checkpoint, emit_restart_checkpoint=True, record_increment_snapshots=True)
+            row = {"fraction": fraction, "status": result.status, "failure": result.failure_reason,
+                "info": result.info, "steps": [s.to_dict() for s in result.steps],
+                "checkpoint": result.restart_checkpoint, "poses": []}
+            record["segments"].append(row)
+            record.update(status=result.status, failure=result.failure_reason, info=result.info,
+                steps=row["steps"], checkpoint=result.restart_checkpoint)
+            if result.status != "completed": raise RuntimeError("normal-control lifecycle did not complete")
+            histories = {h["step_index"]: h for h in result.info["force_displacement_history"]}
+            steps = {s.step_index: s for s in result.steps}
+            for snapshot in result.snapshots:
+                pose = assess_normal_control_pose(model, definition, settings, program, support,
+                    oracle, cells, scales, force_scale, snapshot, histories[snapshot.step_index], steps[snapshot.step_index])
+                record["poses"].append(pose)
+                row["poses"].append(pose)
+            if reference and index < 2:
+                checkpoint_path = args.output.with_name(args.output.stem+f".root{index+1}.json")
+                with checkpoint_path.open("xb") as stream:
+                    stream.write(canonical_checkpoint_json_bytes(result.restart_checkpoint))
+                checkpoint = load_nonlinear_checkpoint(checkpoint_path.read_bytes())
+                if checkpoint != result.restart_checkpoint: raise RuntimeError("persisted checkpoint changed payload")
+                row["persisted_checkpoint"] = file_identity(checkpoint_path)
+        active = [p["certificate"]["active_pressure_dofs"] for p in record["poses"]]
+        record["checks"] = {"all_six_actual_poses": len(record["poses"]) == 6,
+            "press_open_recontact": active == [6, 6, 6, 0, 6, 6],
+            "every_pose_mechanics": all(all(p["checks"].values()) for p in record["poses"]),
+            "emitted_checkpoint": result.restart_checkpoint is not None}
+        if reference:
+            expected = {p["step_index"]: p for p in reference["poses"]}
+            comparisons = []
+            for pose in record["poses"]:
+                old = expected[pose["step_index"]]
+                comparisons.append({"step_index": pose["step_index"],
+                    "displacement_max_difference_m": float(np.max(abs(np.asarray(pose["displacements"])-old["displacements"]))),
+                    "pressure_relative": float(np.linalg.norm(np.asarray(pose["certificate"]["numerical_pressure_pa"])-old["certificate"]["numerical_pressure_pa"])/scales["pressure_pa"]),
+                    "control_reaction_relative": float(np.linalg.norm(np.asarray(pose["history"]["reaction_generalized"])-old["history"]["reaction_generalized"])/force_scale)})
+            record["restart_comparisons"] = comparisons
+            bad_definition = replace(definition, interactions=(replace(definition.interactions[0], normal_stiffness=2e7),))
+            rejection = None
+            try:
+                solve_static_nonlinear(model, contact=bad_definition, contact_settings=settings,
+                    contact_path_program=program, restart_checkpoint=checkpoint, max_iterations=18, tolerance=1e-8)
+            except Exception as exc:
+                rejection = {"type": type(exc).__name__, "message": str(exc)}
+            record["incompatible_definition_rejection"] = rejection
+            record["checks"].update(active_open_prefixes=[s["poses"][-1]["certificate"]["active_pressure_dofs"]
+                for s in record["segments"][:2]] == [6, 0],
+                same_continuation=all(c["displacement_max_difference_m"] <= 1e-12 and max(c["pressure_relative"], c["control_reaction_relative"]) <= 1e-6 for c in comparisons),
+                complete_final_checkpoint_parity=result.restart_checkpoint == reference["checkpoint"],
+                incompatible_definition_rejected=rejection is not None and rejection["type"] == "NonlinearCheckpointError"
+                    and "analysis" in rejection["message"].lower())
+        record["development_checks_met"] = all(record["checks"].values())
+        if not record["development_checks_met"]: raise RuntimeError("normal-control lifecycle check failed")
+    except Exception as exc:
+        record["development_checks_met"] = False
+        record["error"] = {"type": type(exc).__name__, "message": str(exc), "traceback": traceback.format_exc()}
+    finally:
+        record["elapsed_seconds"] = time.perf_counter()-started
+        args.output.write_text(json.dumps(record, indent=2, default=json_default)+"\n", encoding="utf-8")
+        print(json.dumps({"development_checks_met": record["development_checks_met"],
+            "elapsed_seconds": record["elapsed_seconds"], "error": record.get("error", {}).get("message")}), flush=True)
+    raise SystemExit(0 if record["development_checks_met"] else 1)
+
+
 def main():
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--output", type=Path, required=True)
@@ -219,6 +397,10 @@ def main():
         help="independent manufactured normal field on covered source, not point-load accuracy")
     parser.add_argument("--deformable-target", action="store_true",
         help="manufactured two-body code fixture with target8/9 normal motion")
+    parser.add_argument("--normal-controls", action="store_true",
+        help="two normal controls with explicit ties, independent lifecycle reactions")
+    parser.add_argument("--normal-restart-reference", type=Path,
+        help="resume authentic active/open normal-control prefixes against a saved full path")
     args = parser.parse_args()
     if args.output.exists(): raise FileExistsError(args.output)
     if args.target_extent not in (1., 1.4):
@@ -227,6 +409,12 @@ def main():
         parser.error("manufactured code check uses the covered-source fixture")
     if args.deformable_target and not args.manufactured:
         parser.error("deformable target requires the independent manufactured code fixture")
+    if args.normal_controls:
+        if not args.deformable_target or args.force_path:
+            parser.error("normal controls require deformable manufactured fixture and exclude force path")
+        normal_control_main(args)
+    if args.normal_restart_reference:
+        parser.error("normal restart reference requires --normal-controls")
     runner_snapshot = args.output.with_suffix(".runner.source.py")
     if runner_snapshot.exists(): raise FileExistsError(runner_snapshot)
     runner_snapshot.write_bytes(Path(__file__).read_bytes())

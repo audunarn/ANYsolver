@@ -1,6 +1,6 @@
 # General contact — plan
 
-**Revision:** 2026-09-30.29. **Status:** D1-interior independently accepted; D2 projected-penalty slice active. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
+**Revision:** 2026-09-30.30. **Status:** D1-interior independently accepted; D2 projected-penalty slice active. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
 
 The goal owns outcome, acceptance, authority, budget and stop rules. This plan is the current best route, not a mandatory sequence of investigations. The lead should change it when evidence supports faster delivery within the goal, briefly recording the decision. Development has resumed on the user's instruction.
 
@@ -343,3 +343,5 @@ not coupled-solve speed. SpatialV7 now completed under its unchanged900s/4GB cap
 checkpoint187.212s. Stop checkpoint optimization. Old radialv8 is genuinely
 analysis-incompatible; no fingerprint override. Current accepted handoff/ledger
 and retained raw failures are the restart basis; proceed to D2.
+
+**Latest integrated closure:** genuine S3 normal-control lifecycle and active/open restart independently reviewed locally. Two controls with explicit ties preserve existing API limits; all normal reactions/work and complete restart parity pass. Next reuse the accepted radial continuum reference in one finite-law spatial case,900s/4GB, with new source/settings/output identity; retain point-load NONPASS and all D2 acceptance limits.

@@ -442,3 +442,6 @@ identifies unchanged scientific/no-contact reuse separately from fresh serializa
 SpatialV6 is NONPASS900.077s/570.73MB during checkpoint creation; no result
 or spatial postchecks. Saved diagnostic profile completes with exact parity but
 does not close spatial qualification. No whole-D1 or application admission.
+
+## S3 finite-penalty normal lifecycle — local development only
+Two controls plus explicit normal ties prescribe both-body press/open/recontact. Six actual poses pass independent P1 pressure/control-reaction, complete work/wrench and50um gap checks. Authentic active/open restart on fresh models has exact complete checkpoint and mechanical parity; incompatible stiffness rejects untouched checkpoint. Review: d1_review_support/D2_S3_NORMAL_CONTROL_REVIEW_20260930.md. Not spatial acceptance, moving-front qualification, installed broadening or release.

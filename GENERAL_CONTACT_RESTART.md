@@ -2,12 +2,12 @@
 
 **30 September2026: active. D1-interior accepted; D2 development.**
 Worktree C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
-Source checkpoint6bd7f023; byte-preserving evidence checkpoint8677917f.
-Reviewed deformable-target fixture/evidence/doc changes are owned and ready to checkpoint.
+Production source checkpoint6bd7f023; deformable-target checkpoint29e99c92.
+Reviewed normal-control lifecycle/restart changes are owned and ready to checkpoint.
 Main checkout and historical dirty work untouched. No publication/merge/release.
 
 [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3;
-[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.29;
+[plan](GENERAL_CONTACT_PLAN.md) rev2026-09-30.30;
 [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md);
 [living development record](docs/d1_review_support/GENERAL_CONTACT_DEVELOPMENT_20260929.md);
 [retained prior restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART18.md).
@@ -57,8 +57,17 @@ These use a force ramp and zero in-plane controls, not normal-displacement
 lifecycle or restart. Exact runner snapshots and independent P1 cross-mass
 oracle retained; production source unchanged.
 
-Next: genuine six-normal-control press/open/recontact using this same fixture,
-independently reconciled control reactions, then authentic active/open restart.
+Normal-control lifecycle/restart now reviewed local PASS: two controls with
+explicit source/target normal ties, six poses, active6/6/6/0/6/6. Grouped reaction
+error<=1.87e-12, named supports exact, normal work<=5.35e-13. 4.058s/211MB.
+Authentic active/open roots at steps2/4 resume on fresh models; all pose mechanics
+and complete final checkpoint exactly equal full path. Changed stiffness rejects
+untouched root. 4.569s/212MB. Six-control setup rejection remains NONPASS.
+[Lifecycle review](docs/d1_review_support/D2_S3_NORMAL_CONTROL_REVIEW_20260930.md).
+Next: reuse accepted radial continuum reference in a new explicitly finite-law
+development case, identical spatial mechanics,900s/4GB, to resolve integrated
+spatial accuracy without another point-load mesh campaign. New settings and
+outputs; no reuse of consumed D1 execution authorities.
 Stop point-load refinement/tuning. Continue D2 and D3–D8 after this bounded slice.
 Full programme active; no method acceptance or installed broadening claimed.
 Original120active-hour clock unchanged (29September08:04:33UTC). Latest tool

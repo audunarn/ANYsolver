@@ -1,0 +1,47 @@
+{
+  "accepted": false,
+  "released": false,
+  "kind": "s3_two_body_normal_control_lifecycle_development",
+  "adapter": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_s3_projected_penalty_coupled_dev.py",
+    "sha256": "a4f73e369e122e9dd022eee42b111cac1a2cb9e271c27197dd2dbf7fae2adbab"
+  },
+  "reference_source": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_s3_deformable_mms_reference_dev.py",
+    "sha256": "4d8323b475aa0f274ee19b5141a6dc38034b99d76fac49283b5b3c70d6d8e837"
+  },
+  "production": {
+    "nonlinear_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py",
+      "sha256": "a603c9d4868c96d8cf55b892c05ab61d7dda9914cbbbf5c2758d0556d84f5386"
+    },
+    "nonlinear_restart.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_restart.py",
+      "sha256": "de0ede4ecf715da8eb6bd2f0996dc82027de4082f347654d9424312872d1bbbe"
+    },
+    "general_contact/core.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\core.py",
+      "sha256": "d78885e37ce0d99571e95d781459ac30fcfb7c590b7974db332f438e7a2e5e85"
+    },
+    "general_contact/s3_patch_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "8cc9776eb5d382e7e3090c51f8bba0b8c4937cadb0af8877648ad63b0ae9b99b"
+    },
+    "general_contact/s3_patch_augmented.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py",
+      "sha256": "0b2f64f0192e72edf374e2d7d9bd5a112936f42e8861a4d884fdfaf3bae20375"
+    },
+    "general_contact/static_path.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\static_path.py",
+      "sha256": "1d3771814c82e3dd45a6d8fb43c7a8ff6d8511e4b2736c2fb1eace0c96814f3c"
+    }
+  },
+  "poses": [],
+  "development_checks_met": false,
+  "error": {
+    "type": "ValueError",
+    "message": "contact path requires at most three distinct controls",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_s3_projected_penalty_coupled_dev.py\", line 296, in normal_control_main\n    model, definition, settings, program, support, oracle, cells, scales, force_scale = normal_control_fixture()\n                                                                                        ~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_s3_projected_penalty_coupled_dev.py\", line 230, in normal_control_fixture\n    program = ContactPathProgram(controls=controls,\n        waypoints=((0.,)*6, press, (0.,)*6, press), steps_per_segment=2)\n  File \"<string>\", line 7, in __init__\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\static_path.py\", line 155, in __post_init__\n    raise ValueError(\"contact path requires at most three distinct controls\")\nValueError: contact path requires at most three distinct controls\n"
+  },
+  "elapsed_seconds": 0.034865900001022965
+}

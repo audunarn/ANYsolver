@@ -1,0 +1,20 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 1.5261256000085268,
+  "peak_process_tree_memory_mb": 160.44032,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d2_s3_projected_penalty_coupled_dev.py",
+    "--manufactured",
+    "--deformable-target",
+    "--target-extent",
+    "1.4",
+    "--normal-controls",
+    "--output",
+    "docs/d1_review_support/d2_s3_normal_control_lifecycle_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d2_s3_normal_control_lifecycle_v1_20260930.log"
+}
