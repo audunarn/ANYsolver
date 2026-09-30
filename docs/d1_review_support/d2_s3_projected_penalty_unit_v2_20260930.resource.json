@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 4.1015345999912824,
+  "peak_process_tree_memory_mb": 214.482944,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_s3_projected_penalty.py",
+    "-q",
+    "-s",
+    "--maxfail=1",
+    "--junitxml=docs/d1_review_support/d2_s3_projected_penalty_unit_v2_20260930.xml"
+  ],
+  "log": "docs\\d1_review_support\\d2_s3_projected_penalty_unit_v2_20260930.log"
+}

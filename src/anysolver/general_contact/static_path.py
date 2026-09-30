@@ -85,6 +85,7 @@ GENERAL_S3_Q4_PATCH_PROFILE = "S3_Q4_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_P
 GENERAL_Q4_S3_PATCH_PROFILE = "Q4_S3_PATCH_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 GENERAL_Q4_Q4_PROFILE = "Q4_Q4_GENERAL_NODAL_MULTI_CONTROL_PENALTY_PATH_DEV_V0"
 GENERAL_Q4_S3_PATCH_REFINED_PROJECTED_PENALTY_PROFILE = "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_PATH_DEV_V0"
+GENERAL_S3_PATCH_PROJECTED_PENALTY_PROFILE = "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_PATH_DEV_V0"
 _DOF = {"ux": 0, "uy": 1, "uz": 2}
 
 
@@ -383,6 +384,7 @@ def solve_static_contact_path(
     from .s3_patch_static import REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE as refined_q4_s3_roundoff_profile
     from .s3_patch_static import REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE as refined_q4_s3_graph_profile
     from .s3_patch_static import REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE as refined_q4_s3_projected_penalty_profile
+    from .s3_patch_static import S3_PROJECTED_PENALTY_PROFILE as s3_projected_penalty_profile
     from .s3_patch_static import SupportResetForceBudgetExceeded
     from .q4_s3_overlap_derivatives import UnsupportedQ4S3Branch
 
@@ -391,6 +393,7 @@ def solve_static_contact_path(
         q4_pair_profile, general_augmented_profile, mixed_augmented_profile,
         refined_augmented_profile, refined_q4_s3_augmented_profile,
         refined_q4_s3_projected_profile, refined_q4_s3_projected_penalty_profile,
+        s3_projected_penalty_profile,
         refined_q4_s3_overlap_local_profile,
         refined_q4_s3_roundoff_profile, refined_q4_s3_graph_profile,
         source_q4_augmented_profile,
@@ -458,7 +461,9 @@ def solve_static_contact_path(
                 refined_q4_s3_overlap_local_profile,
             }):
         raise ValueError("supported Schur route requires the refined Q4/S3 augmented patch profile")
-    profile = (GENERAL_Q4_S3_PATCH_REFINED_PROJECTED_PENALTY_PROFILE
+    profile = (GENERAL_S3_PATCH_PROJECTED_PENALTY_PROFILE
+               if report.profile == s3_projected_penalty_profile else
+               GENERAL_Q4_S3_PATCH_REFINED_PROJECTED_PENALTY_PROFILE
                if report.profile == refined_q4_s3_projected_penalty_profile else
                GENERAL_Q4_Q4_PROFILE
                if report.profile == q4_pair_profile else

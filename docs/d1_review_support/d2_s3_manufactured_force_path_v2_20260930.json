@@ -1,0 +1,4247 @@
+{
+  "accepted": false,
+  "released": false,
+  "kind": "s3_s3_projected_penalty_force_code_verification_development",
+  "adapter": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_s3_projected_penalty_coupled_dev.py",
+    "sha256": "bd2cec97134bd36edf85019b1274e3f2b0d58f379843739b9e745557bf36d3f8"
+  },
+  "production": {
+    "nonlinear_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py",
+      "sha256": "a603c9d4868c96d8cf55b892c05ab61d7dda9914cbbbf5c2758d0556d84f5386"
+    },
+    "general_contact/core.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\core.py",
+      "sha256": "d78885e37ce0d99571e95d781459ac30fcfb7c590b7974db332f438e7a2e5e85"
+    },
+    "general_contact/s3_patch_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "8cc9776eb5d382e7e3090c51f8bba0b8c4937cadb0af8877648ad63b0ae9b99b"
+    },
+    "general_contact/s3_patch_augmented.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py",
+      "sha256": "0b2f64f0192e72edf374e2d7d9bd5a112936f42e8861a4d884fdfaf3bae20375"
+    },
+    "general_contact/s3_overlap_derivatives.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_overlap_derivatives.py",
+      "sha256": "ff013fb6cf6f6a9dfdac095e12fc5c6d569788a99f709036ce8e380e3f1546e6"
+    },
+    "general_contact/triangle_mortar_energy.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\triangle_mortar_energy.py",
+      "sha256": "f69bdd49016d40da6c9bd215d38c2bab62fa209673e20bf4f3117817c6f0aa8c"
+    },
+    "general_contact/static_path.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\static_path.py",
+      "sha256": "1d3771814c82e3dd45a6d8fb43c7a8ff6d8511e4b2736c2fb1eace0c96814f3c"
+    }
+  },
+  "inputs": {
+    "initial_clearance_m": 1e-08,
+    "normal_regularization_pa_per_m": 10000000.0,
+    "force_n": 6.218453999122283,
+    "gap_budget_m": 5e-05,
+    "code_comparison_relative": 1e-06,
+    "force_and_moment_scales": [
+      6.218453999122283,
+      6.218453999122283
+    ],
+    "time_cap_s": 180,
+    "memory_cap_bytes": 1000000000,
+    "target_extent_m": 1.4,
+    "free_normal_nodal_forces_n": [
+      -1.7111367217833635,
+      -1.5631944444444454,
+      -2.1364839440055854,
+      -0.8076388888888886
+    ]
+  },
+  "manufactured": {
+    "known_normal_displacements_m": [
+      0.0,
+      -1e-06,
+      -1e-06,
+      0.0,
+      -1e-06,
+      -1e-06
+    ],
+    "independently_computed_pressure_pa": [
+      2.4,
+      7.4,
+      9.9,
+      3.6500000000000004,
+      9.066666666666666,
+      9.899999999999999
+    ],
+    "scope": "code verification; no point-load or continuum accuracy claim"
+  },
+  "program": {
+    "controls": [
+      {
+        "terms": [
+          [
+            2,
+            "ux",
+            1.0
+          ]
+        ]
+      },
+      {
+        "terms": [
+          [
+            2,
+            "uy",
+            1.0
+          ]
+        ]
+      }
+    ],
+    "waypoints": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ]
+    ],
+    "steps_per_segment": 2,
+    "nodal_forces": [
+      {
+        "node_id": 2,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -1.7111367217833635
+        ]
+      },
+      {
+        "node_id": 3,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -1.5631944444444454
+        ]
+      },
+      {
+        "node_id": 5,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -2.1364839440055854
+        ]
+      },
+      {
+        "node_id": 6,
+        "dof": "uz",
+        "values_n": [
+          0.0,
+          -0.8076388888888886
+        ]
+      }
+    ]
+  },
+  "oracle": {
+    "source_normal_displacements_m": [
+      0.0,
+      -9.999999999999995e-07,
+      -1.0000000000000006e-06,
+      0.0,
+      -9.999999999999993e-07,
+      -1.0000000000000002e-06
+    ],
+    "pressure_pa": [
+      2.3999999999999986,
+      7.3999999999999995,
+      9.900000000000002,
+      3.6499999999999986,
+      9.066666666666665,
+      9.9
+    ],
+    "active_nodes": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "free_residual_n": [
+      2.220446049250313e-16,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "contact_force_n": 7.400000000000001,
+    "kff": [
+      [
+        64.02668062922577,
+        -25.610672251690296,
+        -12.805336125845155,
+        0.0
+      ],
+      [
+        -25.610672251690296,
+        32.01334031461287,
+        0.0,
+        -6.402668062922575
+      ],
+      [
+        -12.805336125845155,
+        0.0,
+        64.02668062922574,
+        -25.610672251690282
+      ],
+      [
+        0.0,
+        -6.402668062922575,
+        -25.610672251690282,
+        32.01334031461286
+      ]
+    ],
+    "condition_number": 16.673066570953228
+  },
+  "independent_integrals": {
+    "support_m2": [
+      0.08333333333333336,
+      0.25000000000000006,
+      0.16666666666666674,
+      0.16666666666666666,
+      0.25000000000000006,
+      0.08333333333333331
+    ],
+    "mass_m2": [
+      [
+        0.04166666666666668,
+        0.02083333333333334,
+        0.0,
+        0.02083333333333334,
+        0.0,
+        0.0
+      ],
+      [
+        0.02083333333333334,
+        0.12500000000000003,
+        0.020833333333333356,
+        0.04166666666666667,
+        0.0416666666666667,
+        0.0
+      ],
+      [
+        0.0,
+        0.020833333333333356,
+        0.08333333333333338,
+        0.0,
+        0.041666666666666685,
+        0.02083333333333333
+      ],
+      [
+        0.02083333333333334,
+        0.04166666666666667,
+        0.0,
+        0.08333333333333331,
+        0.02083333333333334,
+        0.0
+      ],
+      [
+        0.0,
+        0.0416666666666667,
+        0.041666666666666685,
+        0.02083333333333334,
+        0.12500000000000003,
+        0.02083333333333332
+      ],
+      [
+        0.0,
+        0.0,
+        0.02083333333333333,
+        0.0,
+        0.02083333333333332,
+        0.04166666666666666
+      ]
+    ],
+    "cells": [
+      {
+        "ids": [
+          1,
+          2,
+          4
+        ],
+        "clipped_vertices_xy_m": [
+          [
+            0.1,
+            0.1
+          ],
+          [
+            0.6,
+            0.1
+          ],
+          [
+            0.1,
+            1.1
+          ]
+        ],
+        "basis_coefficients": [
+          [
+            -2.0,
+            2.0,
+            1.387778780781446e-17
+          ],
+          [
+            -0.9999999999999998,
+            -2.5620531337503608e-17,
+            0.9999999999999998
+          ],
+          [
+            1.3,
+            -0.2,
+            -0.09999999999999999
+          ]
+        ]
+      },
+      {
+        "ids": [
+          2,
+          5,
+          4
+        ],
+        "clipped_vertices_xy_m": [
+          [
+            0.6,
+            0.1
+          ],
+          [
+            0.6,
+            1.1
+          ],
+          [
+            0.1,
+            1.1
+          ]
+        ],
+        "basis_coefficients": [
+          [
+            -5.088522196198635e-16,
+            2.000000000000001,
+            -2.0000000000000004
+          ],
+          [
+            -1.0,
+            1.0000000000000002,
+            0.0
+          ],
+          [
+            1.1000000000000003,
+            -1.3000000000000005,
+            1.2000000000000002
+          ]
+        ]
+      },
+      {
+        "ids": [
+          2,
+          3,
+          5
+        ],
+        "clipped_vertices_xy_m": [
+          [
+            0.6,
+            0.1
+          ],
+          [
+            1.1,
+            0.1
+          ],
+          [
+            0.6,
+            1.1
+          ]
+        ],
+        "basis_coefficients": [
+          [
+            -1.9999999999999998,
+            2.0,
+            7.569702440626068e-18
+          ],
+          [
+            -0.9999999999999998,
+            1.061952458337106e-16,
+            0.9999999999999998
+          ],
+          [
+            2.3,
+            -1.2,
+            -0.09999999999999999
+          ]
+        ]
+      },
+      {
+        "ids": [
+          3,
+          6,
+          5
+        ],
+        "clipped_vertices_xy_m": [
+          [
+            1.1,
+            0.1
+          ],
+          [
+            1.1,
+            1.1
+          ],
+          [
+            0.6,
+            1.1
+          ]
+        ],
+        "basis_coefficients": [
+          [
+            -2.7755575615628914e-16,
+            2.0,
+            -1.9999999999999998
+          ],
+          [
+            -1.0,
+            1.0,
+            0.0
+          ],
+          [
+            1.1000000000000003,
+            -2.3000000000000003,
+            2.1999999999999997
+          ]
+        ]
+      }
+    ]
+  },
+  "independent_reference_gap_preflight_m": -9.90000000000001e-07,
+  "status": "completed",
+  "failure": null,
+  "info": {
+    "control": "contact_path",
+    "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_PATH_DEV_V0",
+    "general_contact_profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+    "qualified_q4_committed_state_lifecycle": {
+      "schema": "ANYSOLVER_Q4_COMMITTED_STATE_LIFECYCLE_V1",
+      "ordinary_restart": false,
+      "preflight_count": 1,
+      "validated_bound_element_ids": [],
+      "migrated_historical_unbound_element_ids": [],
+      "stripped_internal_binding_element_ids": [],
+      "fresh_unbound_element_ids": [],
+      "explicit_initial_material_state_element_ids": [],
+      "restored_deleted_frozen_element_ids": [],
+      "input_states_deep_copied": true,
+      "final_state_policy": "DETERMINISTIC_RESEAL_AFTER_MATERIALIZATION",
+      "sealed_final_element_ids": [],
+      "sealed_deleted_frozen_element_ids": [],
+      "origin_materialized_from_unevaluated_parent_element_ids": [],
+      "sealed_final_state_digests": []
+    },
+    "qualified_s3_committed_state_lifecycle": {
+      "schema": "ANYSOLVER_S3_COMMITTED_STATE_LIFECYCLE_V1",
+      "ordinary_restart": false,
+      "preflight_count": 1,
+      "validated_active_element_ids": [],
+      "restored_deleted_frozen_element_ids": [],
+      "input_states_deep_copied": true,
+      "final_state_policy": "ACTIVE_ONLY_OR_EXPLICIT_NONCURRENT_DISPOSITION",
+      "sealed_active_element_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "sealed_deleted_frozen_element_ids": [],
+      "sealed_final_state_digests": [
+        {
+          "element_id": 1,
+          "state_integrity_sha256": "E54435D1EA6B18DE94BB50EBE3657DD2F1248AD970861B97E1414347275F2B20"
+        },
+        {
+          "element_id": 2,
+          "state_integrity_sha256": "6D9717C20922B16117084E5E54B2AB4832757D3D562E1C8FCEA23715E8B12D21"
+        },
+        {
+          "element_id": 3,
+          "state_integrity_sha256": "4CF8C0C4CE59B6214403522D366DEF6CA903CCD1E68A61F960A72074062E5998"
+        },
+        {
+          "element_id": 4,
+          "state_integrity_sha256": "8D85B3600538E4AA24242BB94635D882E8FCC5140B345BF88F2DE1D3AE08ECD5"
+        },
+        {
+          "element_id": 5,
+          "state_integrity_sha256": "605370ED81C8A5B1CAAC88BFC6E914331756D8C3C10638FA9793A1717BDD0896"
+        },
+        {
+          "element_id": 6,
+          "state_integrity_sha256": "C61036EC195A3532EFA9EF540648CB76038206A288D54C8C536EA733FF574AB2"
+        }
+      ]
+    },
+    "nonlinear_state_storage": {
+      "activated": false,
+      "eligible_batch_count": 0,
+      "fallback_reason": "no_plastic_shell_batch",
+      "batch_eligibility": []
+    },
+    "failure_reason": null,
+    "status_category": "completed",
+    "stop_reason": null,
+    "total_newton_iterations": 6,
+    "force_displacement_history": [
+      {
+        "step_index": 1,
+        "target": [
+          0.0,
+          0.0
+        ],
+        "reaction_generalized": [
+          2.0230336548716849e-19,
+          3.8547710236560673e-19
+        ],
+        "residual_norm": 7.049313687938824e-13,
+        "constraint_error": 3.6855555379927596e-34,
+        "augmentation_iterations": 1,
+        "normal_multiplier_change": 0.0,
+        "contact": {
+          "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+          "minimum_gap": -1.3163417932251457e-06,
+          "sampled_overlap_gap": -5.001314436293114e-07,
+          "penalty_energy": 0.0,
+          "current_overlap_area": 1.0000000000002578,
+          "reference_overlap_area": 1.0000000000000002,
+          "overlapping_pairs": 7,
+          "integration_force": [
+            -2.8700199940625814e-18,
+            -2.081765199766712e-18,
+            3.697177675804499
+          ],
+          "target_force": [
+            2.6420563871243926e-18,
+            2.3884111686704712e-18,
+            -3.6971776758044994
+          ],
+          "integration_moment": [
+            2.2658343510153296,
+            -2.5170266751943884,
+            2.3895380190567916e-18
+          ],
+          "target_moment": [
+            -2.265834351015329,
+            2.517026675194389,
+            -2.49857407238342e-18
+          ],
+          "gap_tolerance_met": true,
+          "active_pressure_dofs": 6,
+          "source_pressure_node_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "normalized_weighted_gap_m": [
+            -1.1753286090823586e-07,
+            -3.7108031982338755e-07,
+            -4.94675202470491e-07,
+            -1.8061533731123186e-07,
+            -4.533717667518603e-07,
+            -4.951430107671129e-07
+          ],
+          "numerical_pressure_pa": [
+            1.1753286090823587,
+            3.7108031982338754,
+            4.946752024704909,
+            1.8061533731123187,
+            4.533717667518603,
+            4.951430107671129
+          ],
+          "reference_support_m2": [
+            0.08333333333333334,
+            0.25,
+            0.1666666666666668,
+            0.16666666666666669,
+            0.2500000000000002,
+            0.08333333333333336
+          ],
+          "energy_evaluations": 15,
+          "weighted_gap_integration_error_m3": 0.0,
+          "integration_triangles": 0,
+          "area_integration_error_m2": 0.0,
+          "augmented_merit_j": 0.0,
+          "normal_multiplier_estimate_pa": [],
+          "pair_geometry_evaluations": 23,
+          "pressure_gram_rank": 6,
+          "pressure_gram_condition_estimate": 6.840646139816794,
+          "pressure_gram_supported_modes": 6,
+          "pressure_gram_scaled_rank": 6,
+          "pressure_gram_scaled_condition_estimate": 4.000000000000002,
+          "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+          "regularization_storage_j": 7.68071322696305e-07
+        },
+        "nodal_forces_n": [
+          -0.8555683608916818,
+          -0.7815972222222227,
+          -1.0682419720027927,
+          -0.4038194444444443
+        ],
+        "external_nodal_work_trapezoid_j": 7.865638057003366e-07
+      },
+      {
+        "step_index": 2,
+        "target": [
+          0.0,
+          0.0
+        ],
+        "reaction_generalized": [
+          -2.393105362772646e-19,
+          7.707508944178446e-19
+        ],
+        "residual_norm": 6.175964499983461e-12,
+        "constraint_error": 3.068488402459195e-38,
+        "augmentation_iterations": 1,
+        "normal_multiplier_change": 0.0,
+        "contact": {
+          "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+          "minimum_gap": -2.5900000397788523e-06,
+          "sampled_overlap_gap": -9.900000000079984e-07,
+          "penalty_energy": 0.0,
+          "current_overlap_area": 1.0000000000010003,
+          "reference_overlap_area": 1.0000000000000002,
+          "overlapping_pairs": 7,
+          "integration_force": [
+            -3.0732190108432906e-18,
+            -1.3409082494679343e-18,
+            7.400000000006244
+          ],
+          "target_force": [
+            1.0905152234302945e-18,
+            1.221637414636762e-18,
+            -7.400000000006245
+          ],
+          "integration_moment": [
+            4.535486111113982,
+            -5.0346180555621745,
+            7.646582089358691e-19
+          ],
+          "target_moment": [
+            -4.535486111113982,
+            5.034618055562175,
+            6.913491778270913e-19
+          ],
+          "gap_tolerance_met": true,
+          "active_pressure_dofs": 6,
+          "source_pressure_node_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "normalized_weighted_gap_m": [
+            -2.400000000003558e-07,
+            -7.400000000001066e-07,
+            -9.900000000020014e-07,
+            -3.650000000000897e-07,
+            -9.066666666648969e-07,
+            -9.900000000012297e-07
+          ],
+          "numerical_pressure_pa": [
+            2.400000000003558,
+            7.400000000001066,
+            9.900000000020015,
+            3.650000000000897,
+            9.066666666648969,
+            9.900000000012298
+          ],
+          "reference_support_m2": [
+            0.08333333333333334,
+            0.25000000000000006,
+            0.16666666666666674,
+            0.1666666666666667,
+            0.25000000000000017,
+            0.08333333333333336
+          ],
+          "energy_evaluations": 15,
+          "weighted_gap_integration_error_m3": 0.0,
+          "integration_triangles": 0,
+          "area_integration_error_m2": 0.0,
+          "augmented_merit_j": 0.0,
+          "normal_multiplier_estimate_pa": [],
+          "pair_geometry_evaluations": 23,
+          "pressure_gram_rank": 6,
+          "pressure_gram_condition_estimate": 6.840646139816796,
+          "pressure_gram_supported_modes": 6,
+          "pressure_gram_scaled_rank": 6,
+          "pressure_gram_scaled_condition_estimate": 4.0000000000000036,
+          "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+          "regularization_storage_j": 3.0722013888895184e-06
+        },
+        "nodal_forces_n": [
+          -1.7111367217833635,
+          -1.5631944444444454,
+          -2.1364839440055854,
+          -0.8076388888888886
+        ],
+        "external_nodal_work_trapezoid_j": 2.3041490822355824e-06
+      }
+    ],
+    "contact_path": {
+      "accepted_step": 2,
+      "total_steps": 2,
+      "targets": [
+        0.0,
+        0.0
+      ],
+      "reaction_generalized": [
+        -2.393105362772646e-19,
+        7.707508944178446e-19
+      ],
+      "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_PATH_DEV_V0",
+      "nodal_forces_n": [
+        -1.7111367217833635,
+        -1.5631944444444454,
+        -2.1364839440055854,
+        -0.8076388888888886
+      ]
+    },
+    "general_contact": {
+      "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+      "minimum_gap": -2.5900000397788523e-06,
+      "sampled_overlap_gap": -9.900000000079984e-07,
+      "penalty_energy": 0.0,
+      "current_overlap_area": 1.0000000000010003,
+      "reference_overlap_area": 1.0000000000000002,
+      "overlapping_pairs": 7,
+      "integration_force": [
+        -3.0732190108432906e-18,
+        -1.3409082494679343e-18,
+        7.400000000006244
+      ],
+      "target_force": [
+        1.0905152234302945e-18,
+        1.221637414636762e-18,
+        -7.400000000006245
+      ],
+      "integration_moment": [
+        4.535486111113982,
+        -5.0346180555621745,
+        7.646582089358691e-19
+      ],
+      "target_moment": [
+        -4.535486111113982,
+        5.034618055562175,
+        6.913491778270913e-19
+      ],
+      "gap_tolerance_met": true,
+      "active_pressure_dofs": 6,
+      "source_pressure_node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "normalized_weighted_gap_m": [
+        -2.400000000003558e-07,
+        -7.400000000001066e-07,
+        -9.900000000020014e-07,
+        -3.650000000000897e-07,
+        -9.066666666648969e-07,
+        -9.900000000012297e-07
+      ],
+      "numerical_pressure_pa": [
+        2.400000000003558,
+        7.400000000001066,
+        9.900000000020015,
+        3.650000000000897,
+        9.066666666648969,
+        9.900000000012298
+      ],
+      "reference_support_m2": [
+        0.08333333333333334,
+        0.25000000000000006,
+        0.16666666666666674,
+        0.1666666666666667,
+        0.25000000000000017,
+        0.08333333333333336
+      ],
+      "energy_evaluations": 15,
+      "weighted_gap_integration_error_m3": 0.0,
+      "integration_triangles": 0,
+      "area_integration_error_m2": 0.0,
+      "augmented_merit_j": 0.0,
+      "normal_multiplier_estimate_pa": [],
+      "pair_geometry_evaluations": 23,
+      "pressure_gram_rank": 6,
+      "pressure_gram_condition_estimate": 6.840646139816796,
+      "pressure_gram_supported_modes": 6,
+      "pressure_gram_scaled_rank": 6,
+      "pressure_gram_scaled_condition_estimate": 4.0000000000000036,
+      "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+      "regularization_storage_j": 3.0722013888895184e-06
+    }
+  },
+  "displacements": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -3.068488402459195e-38,
+    -6.533393012007335e-41,
+    -9.999999999979768e-07,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -1.0000000000061105e-06,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -9.999999999930325e-07,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -1.000000000002439e-06,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "steps": [
+    {
+      "step_index": 1,
+      "load_factor": 0.5,
+      "iterations": 4,
+      "residual_norm": 7.049313687938824e-13,
+      "displacement_norm": 1.0121019123533868e-06,
+      "max_equivalent_plastic_strain": 0.0,
+      "control_value": null,
+      "active_stage": "segment_1",
+      "deleted_element_count": 0,
+      "max_fracture_utilization": 0.0,
+      "support_reactions": {
+        "left": [
+          2.1403284162330037e-18,
+          1.0403517887571008e-18,
+          -0.5879506762430378,
+          1.751652300448647e-08,
+          -6.4973715580145234e-06,
+          -9.109365387619585e-32
+        ],
+        "target": [
+          -2.6420563871243926e-18,
+          -2.3884111686704712e-18,
+          3.6971776758044994,
+          3.582616753005707e-20,
+          -3.9630845806865896e-20,
+          0.0
+        ],
+        "guided": [
+          5.277200890458769e-19,
+          6.559779716063709e-19,
+          0.0,
+          2.1736521564046663e-06,
+          -2.115926486839365e-06,
+          -2.7033126187674654e-32
+        ],
+        "controlled_node_rotations": [
+          0.0,
+          0.0,
+          0.0,
+          -2.2377191453014765e-06,
+          -4.312201981726372e-06,
+          -5.906339003193525e-32
+        ]
+      }
+    },
+    {
+      "step_index": 2,
+      "load_factor": 1.0,
+      "iterations": 2,
+      "residual_norm": 6.175964499983461e-12,
+      "displacement_norm": 1.9999999999997793e-06,
+      "max_equivalent_plastic_strain": 0.0,
+      "control_value": null,
+      "active_stage": "segment_1",
+      "deleted_element_count": 0,
+      "max_fracture_utilization": 0.0,
+      "support_reactions": {
+        "left": [
+          1.3312814577086084e-17,
+          1.4811718524870412e-20,
+          -1.1815460008737455,
+          1.5829351718288365e-17,
+          -1.2805336125787924e-05,
+          2.47966504367566e-36
+        ],
+        "target": [
+          -1.0905152234302945e-18,
+          -1.221637414636762e-18,
+          7.400000000006245,
+          1.8324561219551432e-20,
+          -1.635772835145442e-20,
+          0.0
+        ],
+        "guided": [
+          -7.029015648479163e-18,
+          1.329828162275458e-18,
+          0.0,
+          4.268445375162129e-06,
+          -4.26844537544169e-06,
+          7.355233682155094e-36
+        ],
+        "controlled_node_rotations": [
+          0.0,
+          0.0,
+          0.0,
+          -4.268445375264746e-06,
+          -8.536890750570252e-06,
+          4.917449362915377e-36
+        ]
+      }
+    }
+  ],
+  "checkpoint": {
+    "schema": "ANYSOLVER_NONLINEAR_CHECKPOINT_V2",
+    "version": 2,
+    "integrity_id": "SHA256_CANONICAL_JSON_EXCLUDING_SELF_V1",
+    "analysis_kind": "static",
+    "model_fingerprint": "180DE7209ACAE61A0B9D179D6B2BF36842A464C33577319284EF2E1F7B8A67A5",
+    "analysis_fingerprint": "62907AF35745552B2F4DB9E4CDC1607D74B9646013C599AC35D3229F824E8527",
+    "total_dofs": 60,
+    "displacements": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -3.068488402459195e-38,
+      -6.533393012007335e-41,
+      -9.999999999979768e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.0000000000061105e-06,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -9.999999999930325e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.000000000002439e-06,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "element_states": [
+      {
+        "element_id": 1,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 1,
+          "node_ids": [
+            1,
+            2,
+            4
+          ],
+          "element_identity_sha256": "90637202022C91801D398C11720AFE849FB25CCC4D584F5C64EC64F31B83DF8D",
+          "num_layers": 5,
+          "committed_total_u": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -3.068488402459195e-38,
+            -6.533393012007335e-41,
+            -9.999999999979768e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -3.068488402459195e-38,
+            -6.533393012007335e-41,
+            -9.999999999979768e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40
+            ]
+          ],
+          "layer_stress": [
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ],
+            [
+              -6.743930554855373e-33,
+              -2.023179166456612e-33,
+              -5.025686932313335e-36
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40,
+              0.0,
+              0.0,
+              0.0,
+              -1.9999999999959536e-06,
+              0.0
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40,
+              0.0,
+              0.0,
+              0.0,
+              -1.9999999999959536e-06,
+              0.0
+            ],
+            [
+              -6.13697680491839e-38,
+              0.0,
+              -1.306678602401467e-40,
+              0.0,
+              0.0,
+              0.0,
+              -1.9999999999959536e-06,
+              0.0
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              -3.3719652774276857e-34,
+              -1.011589583228306e-34,
+              -2.5128434661566675e-37,
+              -1.6704779438076223e-52,
+              2.088097429759528e-53,
+              0.0,
+              -5.1221344503276996e-05,
+              0.0
+            ],
+            [
+              -3.3719652774276857e-34,
+              -1.011589583228306e-34,
+              -2.5128434661566675e-37,
+              -1.6704779438076223e-52,
+              2.088097429759528e-53,
+              0.0,
+              -5.1221344503276996e-05,
+              0.0
+            ],
+            [
+              -3.3719652774276857e-34,
+              -1.011589583228306e-34,
+              -2.5128434661566675e-37,
+              -1.6704779438076223e-52,
+              2.088097429759528e-53,
+              0.0,
+              -5.1221344503276996e-05,
+              0.0
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "E54435D1EA6B18DE94BB50EBE3657DD2F1248AD970861B97E1414347275F2B20"
+        }
+      },
+      {
+        "element_id": 2,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 2,
+          "node_ids": [
+            2,
+            5,
+            4
+          ],
+          "element_identity_sha256": "1EC96BAF7CFF7C00083A6855B2F97E888F8A4B9276A3F546F0C60CCA19FAE3A7",
+          "num_layers": 5,
+          "committed_total_u": [
+            -3.068488402459195e-38,
+            -6.533393012007335e-41,
+            -9.999999999979768e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999999930325e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            -3.068488402459195e-38,
+            -6.533393012007335e-41,
+            -9.999999999979768e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999999930325e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38
+            ]
+          ],
+          "layer_stress": [
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ],
+            [
+              7.179552760447622e-36,
+              2.1538658281342865e-36,
+              -1.1801878470996903e-33
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38,
+              0.0,
+              0.0,
+              0.0,
+              4.944343071360165e-18,
+              1.999999999986065e-06
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38,
+              0.0,
+              0.0,
+              0.0,
+              4.944343071360165e-18,
+              1.999999999986065e-06
+            ],
+            [
+              6.533393012007335e-41,
+              0.0,
+              -3.068488402459195e-38,
+              0.0,
+              0.0,
+              0.0,
+              4.944343071360165e-18,
+              1.999999999986065e-06
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              3.5897763802238104e-37,
+              1.076932914067143e-37,
+              -5.900939235498451e-35,
+              -8.156630584998156e-56,
+              -2.039157646249539e-56,
+              1.044048714879764e-53,
+              1.26627949900521e-16,
+              5.122134450302373e-05
+            ],
+            [
+              3.5897763802238104e-37,
+              1.076932914067143e-37,
+              -5.900939235498451e-35,
+              -8.156630584998156e-56,
+              -2.039157646249539e-56,
+              1.044048714879764e-53,
+              1.26627949900521e-16,
+              5.122134450302373e-05
+            ],
+            [
+              3.5897763802238104e-37,
+              1.076932914067143e-37,
+              -5.900939235498451e-35,
+              -8.156630584998156e-56,
+              -2.039157646249539e-56,
+              1.044048714879764e-53,
+              1.26627949900521e-16,
+              5.122134450302373e-05
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "6D9717C20922B16117084E5E54B2AB4832757D3D562E1C8FCEA23715E8B12D21"
+        }
+      },
+      {
+        "element_id": 3,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 3,
+          "node_ids": [
+            2,
+            3,
+            5
+          ],
+          "element_identity_sha256": "C7CDFC450D89576FF5E5535867DEBD4B0CEC4B31C66FC8191D53C13F79B1FBD4",
+          "num_layers": 5,
+          "committed_total_u": [
+            -3.068488402459195e-38,
+            -6.533393012007335e-41,
+            -9.999999999979768e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -1.0000000000061105e-06,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999999930325e-07,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            -3.068488402459195e-38,
+            -6.533393012007335e-41,
+            -9.999999999979768e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -1.0000000000061105e-06,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999999930325e-07,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38
+            ]
+          ],
+          "layer_stress": [
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ],
+            [
+              6.746084420683508e-33,
+              2.0303587192170595e-33,
+              1.1852135340320037e-33
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38,
+              0.0,
+              0.0,
+              0.0,
+              -1.6267267752018838e-17,
+              4.944343071360165e-18
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38,
+              0.0,
+              0.0,
+              0.0,
+              -1.6267267752018838e-17,
+              4.944343071360165e-18
+            ],
+            [
+              6.136976804918389e-38,
+              6.533393012007335e-41,
+              3.0815551884832096e-38,
+              0.0,
+              0.0,
+              0.0,
+              -1.6267267752018838e-17,
+              4.944343071360165e-18
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              3.373042210341754e-34,
+              1.01517935960853e-34,
+              5.926067670160018e-35,
+              -1.6704779438076223e-52,
+              -2.088097429759528e-53,
+              1.044048714879764e-53,
+              -4.1661566282744536e-16,
+              1.26627949900521e-16
+            ],
+            [
+              3.373042210341754e-34,
+              1.01517935960853e-34,
+              5.926067670160018e-35,
+              -1.6704779438076223e-52,
+              -2.088097429759528e-53,
+              1.044048714879764e-53,
+              -4.1661566282744536e-16,
+              1.26627949900521e-16
+            ],
+            [
+              3.373042210341754e-34,
+              1.01517935960853e-34,
+              5.926067670160018e-35,
+              -1.6704779438076223e-52,
+              -2.088097429759528e-53,
+              1.044048714879764e-53,
+              -4.1661566282744536e-16,
+              1.26627949900521e-16
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "4CF8C0C4CE59B6214403522D366DEF6CA903CCD1E68A61F960A72074062E5998"
+        }
+      },
+      {
+        "element_id": 4,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 4,
+          "node_ids": [
+            3,
+            6,
+            5
+          ],
+          "element_identity_sha256": "0B683F0456F9B7BB18D15AECB653E9F79C7B1763323C19746DC473963C72751C",
+          "num_layers": 5,
+          "committed_total_u": [
+            0.0,
+            0.0,
+            -1.0000000000061105e-06,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -1.000000000002439e-06,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999999930325e-07,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            0.0,
+            0.0,
+            -1.0000000000061105e-06,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -1.000000000002439e-06,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999999930325e-07,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "layer_stress": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.671464309873765e-18,
+              1.8813025274991638e-17
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.671464309873765e-18,
+              1.8813025274991638e-17
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.671464309873765e-18,
+              1.8813025274991638e-17
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              9.402866912395526e-17,
+              4.818142243805764e-16
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              9.402866912395526e-17,
+              4.818142243805764e-16
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              9.402866912395526e-17,
+              4.818142243805764e-16
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "8D85B3600538E4AA24242BB94635D882E8FCC5140B345BF88F2DE1D3AE08ECD5"
+        }
+      },
+      {
+        "element_id": 5,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 5,
+          "node_ids": [
+            7,
+            8,
+            10
+          ],
+          "element_identity_sha256": "93A961E2845B0F780E933B6E50919227C4039A02C0A5C6F36F3324F437352DFC",
+          "num_layers": 5,
+          "committed_total_u": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "layer_stress": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "605370ED81C8A5B1CAAC88BFC6E914331756D8C3C10638FA9793A1717BDD0896"
+        }
+      },
+      {
+        "element_id": 6,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 6,
+          "node_ids": [
+            8,
+            9,
+            10
+          ],
+          "element_identity_sha256": "457BF8B8B14781C920ADFB1F45DBFC9E2350CDD0B55D73AA30A25BE4F537593C",
+          "num_layers": 5,
+          "committed_total_u": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "layer_stress": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "C61036EC195A3532EFA9EF540648CB76038206A288D54C8C536EA733FF574AB2"
+        }
+      }
+    ],
+    "deleted_element_ids": [],
+    "activity_state": null,
+    "path_state": {
+      "mode": "contact_path",
+      "accepted_step": 2,
+      "multipliers": [
+        -2.393105362772646e-19,
+        7.707508944178446e-19
+      ],
+      "reduced_coordinates": [
+        -3.068488402459195e-38,
+        -6.533393012007335e-41,
+        -9.999999999979768e-07,
+        -1.0000000000061105e-06,
+        -9.999999999930325e-07,
+        -1.000000000002439e-06
+      ],
+      "steps": [
+        {
+          "step_index": 1,
+          "load_factor": 0.5,
+          "iterations": 4,
+          "residual_norm": 7.049313687938824e-13,
+          "displacement_norm": 1.0121019123533868e-06,
+          "max_equivalent_plastic_strain": 0.0,
+          "control_value": null,
+          "active_stage": "segment_1",
+          "deleted_element_count": 0,
+          "max_fracture_utilization": 0.0,
+          "support_reactions": {
+            "left": [
+              2.1403284162330037e-18,
+              1.0403517887571008e-18,
+              -0.5879506762430378,
+              1.751652300448647e-08,
+              -6.4973715580145234e-06,
+              -9.109365387619585e-32
+            ],
+            "target": [
+              -2.6420563871243926e-18,
+              -2.3884111686704712e-18,
+              3.6971776758044994,
+              3.582616753005707e-20,
+              -3.9630845806865896e-20,
+              0.0
+            ],
+            "guided": [
+              5.277200890458769e-19,
+              6.559779716063709e-19,
+              0.0,
+              2.1736521564046663e-06,
+              -2.115926486839365e-06,
+              -2.7033126187674654e-32
+            ],
+            "controlled_node_rotations": [
+              0.0,
+              0.0,
+              0.0,
+              -2.2377191453014765e-06,
+              -4.312201981726372e-06,
+              -5.906339003193525e-32
+            ]
+          }
+        },
+        {
+          "step_index": 2,
+          "load_factor": 1.0,
+          "iterations": 2,
+          "residual_norm": 6.175964499983461e-12,
+          "displacement_norm": 1.9999999999997793e-06,
+          "max_equivalent_plastic_strain": 0.0,
+          "control_value": null,
+          "active_stage": "segment_1",
+          "deleted_element_count": 0,
+          "max_fracture_utilization": 0.0,
+          "support_reactions": {
+            "left": [
+              1.3312814577086084e-17,
+              1.4811718524870412e-20,
+              -1.1815460008737455,
+              1.5829351718288365e-17,
+              -1.2805336125787924e-05,
+              2.47966504367566e-36
+            ],
+            "target": [
+              -1.0905152234302945e-18,
+              -1.221637414636762e-18,
+              7.400000000006245,
+              1.8324561219551432e-20,
+              -1.635772835145442e-20,
+              0.0
+            ],
+            "guided": [
+              -7.029015648479163e-18,
+              1.329828162275458e-18,
+              0.0,
+              4.268445375162129e-06,
+              -4.26844537544169e-06,
+              7.355233682155094e-36
+            ],
+            "controlled_node_rotations": [
+              0.0,
+              0.0,
+              0.0,
+              -4.268445375264746e-06,
+              -8.536890750570252e-06,
+              4.917449362915377e-36
+            ]
+          }
+        }
+      ],
+      "history": [
+        {
+          "step_index": 1,
+          "target": [
+            0.0,
+            0.0
+          ],
+          "reaction_generalized": [
+            2.0230336548716849e-19,
+            3.8547710236560673e-19
+          ],
+          "residual_norm": 7.049313687938824e-13,
+          "constraint_error": 3.6855555379927596e-34,
+          "augmentation_iterations": 1,
+          "normal_multiplier_change": 0.0,
+          "contact": {
+            "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+            "minimum_gap": -1.3163417932251457e-06,
+            "sampled_overlap_gap": -5.001314436293114e-07,
+            "penalty_energy": 0.0,
+            "current_overlap_area": 1.0000000000002578,
+            "reference_overlap_area": 1.0000000000000002,
+            "overlapping_pairs": 7,
+            "integration_force": [
+              -2.8700199940625814e-18,
+              -2.081765199766712e-18,
+              3.697177675804499
+            ],
+            "target_force": [
+              2.6420563871243926e-18,
+              2.3884111686704712e-18,
+              -3.6971776758044994
+            ],
+            "integration_moment": [
+              2.2658343510153296,
+              -2.5170266751943884,
+              2.3895380190567916e-18
+            ],
+            "target_moment": [
+              -2.265834351015329,
+              2.517026675194389,
+              -2.49857407238342e-18
+            ],
+            "gap_tolerance_met": true,
+            "active_pressure_dofs": 6,
+            "source_pressure_node_ids": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "normalized_weighted_gap_m": [
+              -1.1753286090823586e-07,
+              -3.7108031982338755e-07,
+              -4.94675202470491e-07,
+              -1.8061533731123186e-07,
+              -4.533717667518603e-07,
+              -4.951430107671129e-07
+            ],
+            "numerical_pressure_pa": [
+              1.1753286090823587,
+              3.7108031982338754,
+              4.946752024704909,
+              1.8061533731123187,
+              4.533717667518603,
+              4.951430107671129
+            ],
+            "reference_support_m2": [
+              0.08333333333333334,
+              0.25,
+              0.1666666666666668,
+              0.16666666666666669,
+              0.2500000000000002,
+              0.08333333333333336
+            ],
+            "energy_evaluations": 15,
+            "weighted_gap_integration_error_m3": 0.0,
+            "integration_triangles": 0,
+            "area_integration_error_m2": 0.0,
+            "augmented_merit_j": 0.0,
+            "normal_multiplier_estimate_pa": [],
+            "pair_geometry_evaluations": 23,
+            "pressure_gram_rank": 6,
+            "pressure_gram_condition_estimate": 6.840646139816794,
+            "pressure_gram_supported_modes": 6,
+            "pressure_gram_scaled_rank": 6,
+            "pressure_gram_scaled_condition_estimate": 4.000000000000002,
+            "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+            "regularization_storage_j": 7.68071322696305e-07
+          },
+          "nodal_forces_n": [
+            -0.8555683608916818,
+            -0.7815972222222227,
+            -1.0682419720027927,
+            -0.4038194444444443
+          ],
+          "external_nodal_work_trapezoid_j": 7.865638057003366e-07
+        },
+        {
+          "step_index": 2,
+          "target": [
+            0.0,
+            0.0
+          ],
+          "reaction_generalized": [
+            -2.393105362772646e-19,
+            7.707508944178446e-19
+          ],
+          "residual_norm": 6.175964499983461e-12,
+          "constraint_error": 3.068488402459195e-38,
+          "augmentation_iterations": 1,
+          "normal_multiplier_change": 0.0,
+          "contact": {
+            "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+            "minimum_gap": -2.5900000397788523e-06,
+            "sampled_overlap_gap": -9.900000000079984e-07,
+            "penalty_energy": 0.0,
+            "current_overlap_area": 1.0000000000010003,
+            "reference_overlap_area": 1.0000000000000002,
+            "overlapping_pairs": 7,
+            "integration_force": [
+              -3.0732190108432906e-18,
+              -1.3409082494679343e-18,
+              7.400000000006244
+            ],
+            "target_force": [
+              1.0905152234302945e-18,
+              1.221637414636762e-18,
+              -7.400000000006245
+            ],
+            "integration_moment": [
+              4.535486111113982,
+              -5.0346180555621745,
+              7.646582089358691e-19
+            ],
+            "target_moment": [
+              -4.535486111113982,
+              5.034618055562175,
+              6.913491778270913e-19
+            ],
+            "gap_tolerance_met": true,
+            "active_pressure_dofs": 6,
+            "source_pressure_node_ids": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "normalized_weighted_gap_m": [
+              -2.400000000003558e-07,
+              -7.400000000001066e-07,
+              -9.900000000020014e-07,
+              -3.650000000000897e-07,
+              -9.066666666648969e-07,
+              -9.900000000012297e-07
+            ],
+            "numerical_pressure_pa": [
+              2.400000000003558,
+              7.400000000001066,
+              9.900000000020015,
+              3.650000000000897,
+              9.066666666648969,
+              9.900000000012298
+            ],
+            "reference_support_m2": [
+              0.08333333333333334,
+              0.25000000000000006,
+              0.16666666666666674,
+              0.1666666666666667,
+              0.25000000000000017,
+              0.08333333333333336
+            ],
+            "energy_evaluations": 15,
+            "weighted_gap_integration_error_m3": 0.0,
+            "integration_triangles": 0,
+            "area_integration_error_m2": 0.0,
+            "augmented_merit_j": 0.0,
+            "normal_multiplier_estimate_pa": [],
+            "pair_geometry_evaluations": 23,
+            "pressure_gram_rank": 6,
+            "pressure_gram_condition_estimate": 6.840646139816796,
+            "pressure_gram_supported_modes": 6,
+            "pressure_gram_scaled_rank": 6,
+            "pressure_gram_scaled_condition_estimate": 4.0000000000000036,
+            "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+            "regularization_storage_j": 3.0722013888895184e-06
+          },
+          "nodal_forces_n": [
+            -1.7111367217833635,
+            -1.5631944444444454,
+            -2.1364839440055854,
+            -0.8076388888888886
+          ],
+          "external_nodal_work_trapezoid_j": 2.3041490822355824e-06
+        }
+      ],
+      "total_iterations": 6,
+      "terminal_status": "completed"
+    },
+    "contact_state": {},
+    "checkpoint_sha256": "662BC0B64DA454016DABA775ED24CD808F597AA5F6D92896B50D134E46229C28"
+  },
+  "assessment": {
+    "certificate": {
+      "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+      "minimum_gap": -2.5900000397788523e-06,
+      "sampled_overlap_gap": -9.900000000079984e-07,
+      "penalty_energy": 0.0,
+      "current_overlap_area": 1.0000000000010003,
+      "reference_overlap_area": 1.0000000000000002,
+      "overlapping_pairs": 7,
+      "integration_force": [
+        -3.0732190108432906e-18,
+        -1.3409082494679343e-18,
+        7.400000000006244
+      ],
+      "target_force": [
+        1.0905152234302945e-18,
+        1.221637414636762e-18,
+        -7.400000000006245
+      ],
+      "integration_moment": [
+        4.535486111113982,
+        -5.0346180555621745,
+        7.646582089358691e-19
+      ],
+      "target_moment": [
+        -4.535486111113982,
+        5.034618055562175,
+        6.913491778270913e-19
+      ],
+      "gap_tolerance_met": true,
+      "active_pressure_dofs": 6,
+      "source_pressure_node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "normalized_weighted_gap_m": [
+        -2.400000000003558e-07,
+        -7.400000000001066e-07,
+        -9.900000000020014e-07,
+        -3.650000000000897e-07,
+        -9.066666666648969e-07,
+        -9.900000000012297e-07
+      ],
+      "numerical_pressure_pa": [
+        2.400000000003558,
+        7.400000000001066,
+        9.900000000020015,
+        3.650000000000897,
+        9.066666666648969,
+        9.900000000012298
+      ],
+      "reference_support_m2": [
+        0.08333333333333334,
+        0.25000000000000006,
+        0.16666666666666674,
+        0.1666666666666667,
+        0.25000000000000017,
+        0.08333333333333336
+      ],
+      "energy_evaluations": 15,
+      "weighted_gap_integration_error_m3": 0.0,
+      "integration_triangles": 0,
+      "area_integration_error_m2": 0.0,
+      "augmented_merit_j": 0.0,
+      "normal_multiplier_estimate_pa": [],
+      "pair_geometry_evaluations": 23,
+      "pressure_gram_rank": 6,
+      "pressure_gram_condition_estimate": 6.840646139816796,
+      "pressure_gram_supported_modes": 6,
+      "pressure_gram_scaled_rank": 6,
+      "pressure_gram_scaled_condition_estimate": 4.0000000000000036,
+      "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+      "regularization_storage_j": 3.0722013888895184e-06
+    },
+    "wrench": {
+      "scope": "zero-rotation guided Cartesian nodal work; all constraint/path actions",
+      "maximum_nodal_rotation_norm": 0.0,
+      "origin_m": [
+        0.6,
+        0.6,
+        0.0
+      ],
+      "force_scale_n": 6.218453999122283,
+      "moment_scale_nm": 6.218453999122283,
+      "total_reaction_wrench": [
+        1.982703787412996e-18,
+        1.1927083483117192e-19,
+        6.2184539991325,
+        -0.1651041666663997,
+        -1.185416666667552,
+        -3.379476152138673e-19
+      ],
+      "external_wrench": [
+        0.0,
+        0.0,
+        -6.218453999122283,
+        0.16510416666666716,
+        1.1854166666666672,
+        0.0
+      ],
+      "physical_contact_wrench": [
+        -1.982703787412996e-18,
+        -1.1927083483117226e-19,
+        -8.881784197001252e-16,
+        8.881784197001252e-16,
+        -4.440892098500626e-16,
+        3.379476152138674e-19
+      ],
+      "structural_internal_wrench": [
+        -6.949188246239709e-50,
+        5.345529420184391e-51,
+        -7.244930588722747e-21,
+        -5.8545967831958655e-21,
+        -1.8459319389624823e-21,
+        -2.405488239082976e-50
+      ],
+      "mapped_to_physical_contact_defect": [
+        0.0,
+        -4.81482486096809e-35,
+        0.0,
+        -4.440892098500626e-16,
+        2.220446049250313e-16,
+        -9.62964972193618e-35
+      ],
+      "total_balance_defect": [
+        0.0,
+        -3.3703774026776627e-34,
+        1.021582818339084e-11,
+        2.6834090505190034e-13,
+        -8.852918398360998e-13,
+        9.62964972193618e-35
+      ],
+      "free_equilibrium_residual_n": 6.175964499982699e-12,
+      "constraint_reconstruction_relative_force": 9.931671924974307e-13,
+      "balance_relative_force": 1.6428244359181197e-12,
+      "balance_relative_moment": 1.4876153225423643e-13,
+      "contact_conversion_max_scaled": 7.141472943479915e-17,
+      "structural_internal_max_scaled": 1.1650694191426596e-21,
+      "bodies": {
+        "source": {
+          "node_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "total_reaction_wrench": [
+            3.0732190108432906e-18,
+            1.3409082494679339e-18,
+            -1.1815460008737455,
+            -0.26059027777663435,
+            -0.5907986111091246,
+            2.747282478893433e-19
+          ],
+          "external_wrench": [
+            0.0,
+            0.0,
+            -6.218453999122283,
+            0.16510416666666716,
+            1.1854166666666672,
+            0.0
+          ],
+          "physical_contact_wrench": [
+            -3.0732190108432906e-18,
+            -1.3409082494679343e-18,
+            7.400000000006244,
+            0.09548611111023542,
+            -0.594618055558428,
+            -2.747282478893433e-19
+          ],
+          "structural_internal_wrench": [
+            -6.949188246239709e-50,
+            5.345529420184391e-51,
+            -7.244930588722747e-21,
+            -5.8545967831958655e-21,
+            -1.8459319389624823e-21,
+            -2.405488239082976e-50
+          ],
+          "mapped_to_physical_contact_defect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "total_balance_defect": [
+            0.0,
+            -3.851859888774472e-34,
+            1.021582818339084e-11,
+            2.682298827494378e-13,
+            -8.852918398360998e-13,
+            0.0
+          ],
+          "balance_relative_force": 1.6428244359181197e-12,
+          "balance_relative_moment": 1.4875635428670947e-13,
+          "contact_conversion_max_scaled": 0.0,
+          "structural_internal_max_scaled": 1.1650694191426596e-21
+        },
+        "target": {
+          "node_ids": [
+            7,
+            8,
+            9,
+            10
+          ],
+          "total_reaction_wrench": [
+            -1.0905152234302945e-18,
+            -1.221637414636762e-18,
+            7.400000000006245,
+            0.09548611111023453,
+            -0.5946180555584275,
+            -6.126758631032107e-19
+          ],
+          "external_wrench": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "physical_contact_wrench": [
+            1.0905152234302945e-18,
+            1.221637414636762e-18,
+            -7.400000000006245,
+            -0.09548611111023453,
+            0.5946180555584275,
+            6.126758631032107e-19
+          ],
+          "structural_internal_wrench": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "mapped_to_physical_contact_defect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "total_balance_defect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "balance_relative_force": 0.0,
+          "balance_relative_moment": 0.0,
+          "contact_conversion_max_scaled": 0.0,
+          "structural_internal_max_scaled": 0.0
+        }
+      }
+    },
+    "comparison": {
+      "normal_displacement_relative": 4.896594557199571e-12,
+      "normal_pressure_relative": 1.5805360315604809e-12,
+      "contact_force_relative": 1.0039482663944065e-12
+    },
+    "independent_target_normal_gap_m": -9.900000000061108e-07,
+    "checks": {
+      "fixed_geometry_normal_reference": true,
+      "both_body_wrench": true,
+      "physical_gap": true,
+      "production_gap": true,
+      "all_six_supports_retained": true,
+      "nonnegative_pressure": true,
+      "zero_multipliers": true
+    },
+    "limits": "fixed-XY/vertical-normal oracle; tangential geometry and general continuum accuracy outside this comparison"
+  },
+  "development_checks_met": true,
+  "elapsed_seconds": 1.3586185000021942
+}

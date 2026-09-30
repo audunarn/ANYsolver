@@ -66,6 +66,7 @@ REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MOR
 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE = "Q4_S3_PATCH_REFINED_FIXED_PROJECTION_GRAPH_AUGMENTED_STATIC_DEV_V0"
 
 REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE = "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0"
+S3_PROJECTED_PENALTY_PROFILE = "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0"
 
 
 class SupportResetForceBudgetExceeded(ValueError):
@@ -173,7 +174,8 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
                and 1 <= len(target.element_ids) <= 2
                and (len(source.element_ids)+len(target.element_ids) >= 3
                     or q4_pair))
-    refined_s3 = (augmented and not source_q4 and not target_q4
+    projected_s3 = projected_penalty and not source_q4 and not target_q4
+    refined_s3 = ((augmented or projected_s3) and not source_q4 and not target_q4
                   and len(source.element_ids) >= 2
                   and len(target.element_ids) >= 1
                   and (len(source.element_ids) > 2 or len(target.element_ids) > 2))
@@ -182,7 +184,7 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
                   and not target_q4 and len(target.element_ids) >= 1)
     refined = refined_s3 or refined_q4
     if (settings.general_s3_differentiation == "jet2_s3_dev"
-            and not (augmented and not source_q4 and not target_q4
+            and not ((augmented or projected_s3) and not source_q4 and not target_q4
                      and len(source.element_ids)+len(target.element_ids) >= 3)):
         issues.append("Jet2 S3 development derivative needs an augmented S3/S3 patch of at least three faces")
     if (settings.general_s3_differentiation == "jet2_q4_s3_dev"
@@ -249,8 +251,19 @@ def _validate_general_s3_patch(model, definition, settings, *, prepared=None):
                SOURCE_Q4_PROFILE if source_q4 else
                MIXED_PROFILE if target_q4 else PROFILE)
     if projected_penalty:
-        profile = REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE
-        if (not refined_q4
+        profile = (S3_PROJECTED_PENALTY_PROFILE if projected_s3 else
+                   REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE)
+        if projected_s3:
+            if (settings.general_s3_differentiation != "jet2_s3_dev"
+                    or settings.q4_source_gap_certificate != "whole_face"
+                    or settings.q4_source_pressure_basis != "fine_nodal_q1"
+                    or settings.augmentation_support_resolution != "exact"
+                    or settings.augmentation_acceleration != "none"
+                    or settings.enforcement_solver != "nested_augmented"
+                    or settings.q4_s3_shared_edge_tie_step_m is not None
+                    or settings.d1_interior_profile):
+                issues.append("projected S3 penalty needs S3 Jet2 whole-face nodal geometry with exact support and no augmentation, tie or D1 admission")
+        elif (not refined_q4
                 or settings.general_s3_differentiation != "jet2_q4_s3_dev"
                 or settings.q4_source_gap_certificate != "overlap_local_dev"
                 or settings.q4_source_pressure_basis != "fine_nodal_q1"
@@ -664,7 +677,8 @@ class GeneralS3PatchManager:
                             REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                             REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
-                            REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE}:
+                            REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE,
+                            S3_PROJECTED_PENALTY_PROFILE}:
             eigenvalues = np.linalg.eigvalsh(state.pressure_gram)
             greatest = max(0.0, float(eigenvalues[-1]))
             threshold = (len(eigenvalues)*np.finfo(float).eps*greatest)
@@ -746,7 +760,7 @@ class GeneralS3PatchManager:
         )
 
     def restrict_tangent_to_reduced_variations(self, transform):
-        """Keep Q4-source Hessian work on axes reached by free coordinates."""
+        """Keep selected Jet2 Hessian columns on reachable free variations."""
         if self.profile not in {SOURCE_Q4_AUGMENTED_PROFILE,
                                 SOURCE_Q4_PROJECTED_AUGMENTED_PROFILE,
                                 Q4_PAIR_AUGMENTED_PROFILE,
@@ -756,7 +770,8 @@ class GeneralS3PatchManager:
                                 REFINED_Q4_S3_OVERLAP_LOCAL_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_ROUNDOFF_AUGMENTED_PROFILE,
                                 REFINED_Q4_S3_GRAPH_AUGMENTED_PROFILE,
-                                REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE}:
+                                REFINED_Q4_S3_PROJECTED_PENALTY_PROFILE,
+                                S3_PROJECTED_PENALTY_PROFILE}:
             return
         variations = (self.map @ transform).tocsr()
         variations.eliminate_zeros()

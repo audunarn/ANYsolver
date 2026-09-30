@@ -36,6 +36,28 @@ Active prescribed-source pressures, physical rims/edge-only collisions, arbitrar
 cut accuracy and installed admission are not qualified. **Independently accepted:
 no; released: no.** D1's accepted installed artifact remains0b2ac9be.
 
+The subsequent prescribed-source workflow retains active constrained pressure
+rows and passes press/slide/open/recontact at ten poses. Genuine active/open
+prefix checkpoints resume on fresh models with exact complete final-state and
+mechanics parity; changed stiffness rejects. These are locally tested,
+independently reviewed development checks at5660c3dc, not D2 acceptance.
+Endpoint physical-gap checks do not qualify continuous swept collision.
+
+An additive S3-V2D/S3-V2D projected-penalty pairing reuses existing Jet2/P1
+work with exact positive support, zero multipliers and the unchanged whole-face
+conservative gap profile. Twenty-one new focused mechanics/admission checks
+pass; nine additional conditioned-operand roundoff/negative controls pass.
+Manufactured coupled force and two-zero-control path code checks pass with
+q/pressure/force relative discrepancies below5e-12, six active pressures and
+full both-body work/reactions. Physical gap-.990um and conservative bound
+-2.590um meet50um. The S3-only operand allowance retains branch, derivative
+and physical-gap gates; it is not an arbitrary-geometry certificate.
+Initial v1/v2 failures remain, partial-cut point-load v3 stops at the physical
+gap limit, and the covered point-load reference fails preflight (no solve).
+These limits remain open; manufactured code checks do not confer continuum
+accuracy or rehabilitate either point-load failure. No accepted or installed
+capability broadening follows.
+
 The independent fixed-geometry Q1 normal reference matches saved coarse cases;
 its unchanged1e7 4x2 prediction gives62.7135µm penetration, outside50µm.
 All15positive supports remain. This is retained development evidence against

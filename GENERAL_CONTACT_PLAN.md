@@ -1,6 +1,6 @@
 # General contact — plan
 
-**Revision:** 2026-09-30.27. **Status:** D1-interior independently accepted; D2 projected-penalty slice active. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.2. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
+**Revision:** 2026-09-30.28. **Status:** D1-interior independently accepted; D2 projected-penalty slice active. **Controlling goal:** [GENERAL_CONTACT_GOAL.md](GENERAL_CONTACT_GOAL.md) rev2026-09-30.3. **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core. Accepted installed candidate0b2ac9be; physics/equations87c53913. Historical identities and failures remain retained.
 
 The goal owns outcome, acceptance, authority, budget and stop rules. This plan is the current best route, not a mandatory sequence of investigations. The lead should change it when evidence supports faster delivery within the goal, briefly recording the decision. Development has resumed on the user's instruction.
 
@@ -310,6 +310,23 @@ D3 classical/native beam static contact, D4 friction/materials/continuation, D5 
 This revision removes unsupported general stability and thickness-band assertions, corrects the descriptions of agglomeration/dual/penalty methods, and replaces a rigid serial route with early integrated development plus prospective acceptance. It retains the supplied D1-interior scope, programme numerical targets and historical failures. Further review should identify a concrete correctness risk or missing requirement and distinguish it from an optional improvement; it should not add a new framework or an unbounded research obligation by default.
 
 ## Completed checkpoint closure and acceleration evidence
+
+**D2 current delivery:** the Q4/S3 active prescribed-source moving-front
+workflow and authentic active/open checkpoint continuation are locally tested
+and independently reviewed at5660c3dc, with exact final checkpoint/mechanics
+parity. Extend the same projected finite-penalty law to S3/S3 using existing
+Jet2/P1 geometry; keep its whole-face conservative gap admission separate from
+Q4 overlap-local admission. Manufactured coupled force and actual path
+integration now pass against the independent P1 reference and full both-body
+reactions. This does not repair partial-cut or covered point-load physical-gap
+failures; stop that diagnostic branch. The S3 near-zero operand correction
+has nine focused controls and scoped independent scrutiny. Assemble
+method-appropriate acceptance evidence for the working Q4/S3 boundary profile,
+then progress remaining geometry/search rather than tune pressure modes or
+point-load meshes. Rims/edge-only collisions, continuous
+swept qualification, finite rotation, warped geometry and remaining D2–D8
+rows remain open. Current installed accepted package remains0b2ac9be.
+
 0b2 immutable-signature/proven-inert observation changes preserve contact equations
 and guard decisions. Four balanced complete saved-root runs show median32.037
 ->22.947s(-28.37%), producer15.043->8.173s. This is saved-route development cost,

@@ -290,3 +290,92 @@ scalarpressure/support and newnegativeadmission under180s/1GB, then one ordinary
 coupled case. OldQ4/S3 law/report/restart selections remain. This advances D2
 pairing breadth while method-appropriate spatial/conditioning acceptance remains
 open; no broadaccepted/releasedflag or recreatedD1 evidence.
+
+**S3 coupled discriminator:** worker completed 21 new focused checks without
+changing production mechanics during fixture/oracle repairs; retained clipping
+ties still reject. Lead adds only the agreed static-path profile routing. One
+new ordinary force solve uses four source S3 and two fixed target S3, exact P1
+rectangle integrals, fine nodal pressure and kappa1e7. Its 10nm clearance is a
+new small-motion code-verification fixture, not a regrade of the Q4 cut-front
+failure. Question: does the shared projected work produce the independently
+enumerated fixed-geometry normal solution while preserving full both-body
+reaction work and dimensional gap? Competing explanations for discrepancy are
+admission/work-map defects or omitted moving geometry in the scalar oracle.
+Run d2_s3_projected_penalty_coupled_dev.py once with unique
+d2_s3_projected_penalty_coupled_v1_20260930 output/log/resource,180s/1GB;
+comparison and wrench targets1e-6, gap50um unchanged. Passing advances the
+locally tested pairing row only; failing requires one classified correction,
+not a stiffness/mesh sweep. No D1 replay or continuum/acceptance claim.
+
+**S3 integration discrepancy:** coupled v1/v2 are NONPASS before an accepted
+step (3.30/3.08s,211MB). A missing Q4-only diagnostic attribute first masked
+the actual S3 value-agreement failure. Diagnostic-only correction exposes
+weighted-gap discrepancy6.84e-20m3 near10nm cancellation; positive support
+agreement5.55e-17m2. Independent scrutiny supports an S3-only operand allowance,
+including source and projected-target frame conditioning, rather than scaling
+roundoff with the cancelled weighted gap. Lead implements gamma64 Cartesian
+operand budget times (1+kappaSource)(1+kappaProjectedTarget), positive per-row
+support and rejection above1e-9 smallest source edge. Only failed S3 value
+comparison uses it; Q4 logic unchanged, admitted row budget propagates into
+assembled comparison. No relative/derivative/integration/physical-gap criterion
+change. New nearzero/error-injection/unresolved-frame checks and one v3 rerun
+with identical fixture and180s/1GB cap may run independently after the bounded
+implementation review; both must pass before checkpoint promotion. This
+overlaps independent verification work without changing ownership or gates.
+Both original failures retained.
+
+The same S3 runner now has --force-path: replace only node2 in-plane zero BCs
+with two explicit zero path controls and use the identical two-step normal
+loading. If v3 mechanics passes, one separate path run verifies the new
+static_path profile dispatch and ordinary public solver routing. No new law,
+load magnitude, geometry or comparison threshold; it is an affected integration
+check, not a second stiffness/grid diagnostic. Outputs use the unique
+d2_s3_projected_penalty_force_path_v1_20260930 stem under180s/1GB.
+
+**S3 cut-front disposition and next pairing fixture:** nine new arithmetic
+controls pass4.951s/212MB, including injected1um error rejection and unresolved
+frame/origin rejection. Coupled v3 is NONPASS35.024s/210MB: physical-gap limit
+stops continuation near load fraction.0167 after139Newton iterations. Independent
+full-load P1 solution predicts millimetre-scale oscillating displacements; tiny
+initial clearance did not ensure small response. Preserve this failure and
+leave partial-cut method/physical-gap admission open. No stiffness/grid/load
+sweep. Close S3/S3 pairing integration separately with --target-extent1.4,
+which wholly covers the same source faces. Loads, material, law, numerical
+gates unchanged; this is a new geometry scope, not repair/regrade of the cut.
+Add independent clipped-P1 reference-gap preflight; withhold solves whose
+reference already fails50um. One covered ordinary force run uses unique
+d2_s3_projected_penalty_covered_v1_20260930 outputs under180s/1GB, followed by
+the already planned affected path dispatch check only if mechanics passes.
+
+**Covered preflight and bounded alternative:** covered v1 withheld the solve
+in1.791s/158MB: its independent point-load reference still predicts1.0476mm
+penetration. This leaves the weak-gap spatial/point-load question open even
+without cuts. Stop that campaign. One explicit manufactured CODE fixture now
+uses independently prescribed source normal field[0,-1,-1,0,-1,-1]um and
+independent P1 integrals to manufacture free loads K0*q-GT*p. All other
+geometry/material/law settings unchanged. Its frozen positive force/moment
+scale is sum of absolute manufactured free normal loads (1m moment length).
+The public nonlinear route is compared with the separate64-mask oracle and
+full both-body wrench at1e-6, same50um gap. This tests integration, not
+point-load response, continuum accuracy or repair of either failure. One
+--manufactured --target-extent1.4 run uses d2_s3_manufactured_force_v1_20260930
+raw outputs,180s/1GB. If it passes, the corresponding two-zero-control path
+check follows; if it fails, checkpoint the S3 integration limitation and move
+to another authorized delivery slice rather than continue tuning this branch.
+
+**S3 integrated result:** manufactured ordinary force passes3.354s/210MB;
+two-zero-control path passes3.227s/210MB, actual path profile
+S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_PATH_DEV_V0. Both have q/pressure/
+force discrepancies4.897e-12/1.581e-12/1.004e-12 against independent P1 oracle,
+all six active positive-supported pressure modes, zero multipliers, physical
+gap-.990um and conservative whole-face bound-2.590um. Full both-body wrench
+max1.643e-12. Path v1 only misused forbidden num_steps together with the program;
+helper repaired and affected v2 passes, original rejection retained. Ordinary
+MMS v1 retains a stale nominal force_n=.5 field; its explicit nodal forces and
+actually used force/moment scales6.218453999N are correct. Future path metadata
+corrected; no mechanical rerun. Exact executed ordinary helper snapshot SHA
+cc365440a999e0ff8c9cacec8a625f9250a690687b2eb44324e1cae87842454a
+is preserved byte-for-byte. These checks close local code integration only;
+partial-cut v3 NONPASS and covered point-load preflight NONPASS remain separate.
+No arbitrary point-load/continuum accuracy, method acceptance, installed
+capability broadening or full D2 completion follows.

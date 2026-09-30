@@ -247,6 +247,53 @@ def _q4_s3_gap_operand_roundoff(source, target, support_scale: float) -> float:
     return allowance
 
 
+def _s3_gap_operand_roundoff(source, target, support) -> np.ndarray:
+    """Per-row cancellation allowance for the two analytic S3 value paths.
+
+    Both paths subtract interpolated Cartesian positions before projecting a
+    small gap. Their absolute operand error is amplified by the source frame
+    and the target barycentric frame in the source plane. A gamma(64) budget
+    covers their short arithmetic chains; conditioning is explicit rather
+    than inferred from the already cancelled weighted gap. Poorly resolved
+    frames/origins reject, including when this allowance exceeds 1e-9 of the
+    smallest source edge. This is a value-roundoff allowance, not an
+    integration, derivative or physical-gap tolerance.
+    """
+    source, target = np.asarray(source, float), np.asarray(target, float)
+    support = np.asarray(support, float)
+    if (source.shape != (3, 3) or target.shape != (3, 3)
+            or support.shape != (3,) or np.any(support <= 0)
+            or not all(np.all(np.isfinite(a)) for a in (source, target, support))):
+        raise UnsupportedOverlapBranch("S3 gap operands or supports are invalid")
+    source_edges = (source[1:]-source[0]).T
+    lengths = np.linalg.norm(np.roll(source, -1, axis=0)-source, axis=1)
+    singular = np.linalg.svd(source_edges, compute_uv=False)
+    raw_normal = np.cross(source_edges[:, 0], source_edges[:, 1])
+    normal_length = np.linalg.norm(raw_normal)
+    if (np.any(lengths <= 0) or singular[-1] <= 0 or normal_length <= 0
+            or not np.all(np.isfinite(singular))):
+        raise UnsupportedOverlapBranch("S3 gap operand source frame is degenerate")
+    normal = raw_normal/normal_length
+    tangent = source_edges[:, 0]/lengths[0]
+    frame = np.stack((tangent, np.cross(normal, tangent)))
+    projected_target = frame @ (target[1:]-target[0]).T
+    target_singular = np.linalg.svd(projected_target, compute_uv=False)
+    if target_singular[-1] <= 0 or not np.all(np.isfinite(target_singular)):
+        raise UnsupportedOverlapBranch("S3 gap operand target projection is degenerate")
+    source_condition = singular[0]/singular[-1]
+    target_condition = target_singular[0]/target_singular[-1]
+    operand_scale = float(np.max(np.sum(np.abs(np.concatenate((source, target))), axis=1)))
+    gamma = 64*np.finfo(float).eps/(1-64*np.finfo(float).eps)
+    distance_roundoff = gamma*operand_scale*(1+source_condition)*(1+target_condition)
+    if (not np.isfinite(distance_roundoff)
+            or distance_roundoff > 1e-9*float(np.min(lengths))):
+        raise UnsupportedOverlapBranch("S3 gap coordinate/frame cancellation exceeds local resolution")
+    allowance = support*distance_roundoff
+    if not np.all(np.isfinite(allowance)):
+        raise UnsupportedOverlapBranch("S3 gap operand allowance is not finite")
+    return allowance
+
+
 class MovingS3PatchProjectedNormal:
     def __init__(self, geometry: MovingS3PatchPrimalMortarPenalty, *,
                  support_resolution: str = "exact",
@@ -1318,6 +1365,7 @@ class MovingS3PatchProjectedNormal:
                                * max(1, local.integration_triangles))
             support_roundoff = roundoff_factor*support_scale
             weighted_gap_roundoff = roundoff_factor*weighted_gap_scale
+            s3_operand_allowance = np.zeros(len(source_nodes))
             value_rtol = 1.0e-9
             if len(source_nodes) == 4:
                 # The float and Jet2 clippers use different arithmetic paths.
@@ -1385,6 +1433,16 @@ class MovingS3PatchProjectedNormal:
                     local.reference_weighted_gap,
                     rtol=value_rtol, atol=weighted_gap_roundoff,
                 )
+                if not gap_agrees:
+                    s3_operand_allowance = _s3_gap_operand_roundoff(
+                        local_source, local_target,
+                        np.maximum(local.reference_support, derivative.reference_support),
+                    )
+                    gap_agrees = np.allclose(
+                        derivative.reference_weighted_gap, local.reference_weighted_gap,
+                        rtol=value_rtol,
+                        atol=weighted_gap_roundoff+s3_operand_allowance,
+                    )
             if not support_agrees or not gap_agrees:
                 if (pair_index == tiny_wedge_pair
                         and len(source_nodes) == 4
@@ -1468,7 +1526,11 @@ class MovingS3PatchProjectedNormal:
                         f"integration_triangles={local.integration_triangles}, "
                         f"overlap_area_local_m2={local.overlap_area:.12g}, "
                         f"overlap_area_m2={derivative.overlap_area:.12g}, "
-                        f"overlap_area_resolution_m2={derivative.overlap_area_resolution:.12g}, "
+                        +
+                        (f"overlap_area_resolution_m2={derivative.overlap_area_resolution:.12g}, "
+                         if len(source_nodes) == 4 else
+                         "overlap_area_resolution_m2=not_supplied_by_analytic_S3, ")
+                        +
                         f"support_local_m2={local.reference_support.tolist()}, "
                         f"support_derivative_m2={derivative.reference_support.tolist()}, "
                         f"weighted_gap_local_m3={local.reference_weighted_gap.tolist()}, "
@@ -1479,7 +1541,7 @@ class MovingS3PatchProjectedNormal:
             support_magnitude[source_nodes] += np.abs(derivative.reference_support)
             gap_magnitude[source_nodes] += np.abs(derivative.reference_weighted_gap)
             support_roundoff_budget[source_nodes] += support_roundoff
-            gap_roundoff_budget[source_nodes] += weighted_gap_roundoff
+            gap_roundoff_budget[source_nodes] += weighted_gap_roundoff+s3_operand_allowance
             if len(source_nodes) == 4:
                 # The pairwise Q4 weighted-gap certificate is normwise.
                 # Each node in the assembled sum inherits at most this

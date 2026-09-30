@@ -48,3 +48,20 @@ docs/d1_review_support/d1_touch_bounds_prepatch_20260930.py.txt -text
 docs/d1_review_support/d1_touch_bounds_probe_candidate_4ae_20260930.py.source -text
 docs/d1_review_support/d1_saved_report_touch_probe_V2_executed_20260930.py.source -text
 docs/d1_review_support/d1_checkpoint_pre_plain_dict_590d7a42.py.source -text
+# Canonical-byte D2 checkpoint and executed reference snapshots retain their
+# recorded hashes after checkout on platforms with automatic newline conversion.
+docs/d1_review_support/d2_moving_edge_restart_v1_20260930_*.checkpoint.json -text
+docs/d1_review_support/d2_fixed_geometry_penalty_reference_v1_20260930.source.py -text
+docs/d1_review_support/d2_s3_manufactured_force_v1_20260930.runner.source.py -text
+# Retain exact bytes of the new S3 raw evidence and hashed Python sources.
+docs/d1_review_support/d2_s3_projected_penalty*20260930*.json -text
+docs/d1_review_support/d2_s3_projected_penalty*20260930*.log -text
+docs/d1_review_support/d2_s3_projected_penalty*20260930*.xml -text
+docs/d1_review_support/d2_s3_manufactured*20260930*.json -text
+docs/d1_review_support/d2_s3_manufactured*20260930*.log -text
+src/anysolver/general_contact/core.py text eol=lf
+src/anysolver/general_contact/s3_patch_static.py text eol=lf
+src/anysolver/general_contact/s3_patch_augmented.py text eol=lf
+src/anysolver/general_contact/static_path.py text eol=lf
+tests/test_general_contact_s3_projected_penalty.py text eol=lf
+docs/d1_review_support/d2_s3_projected_penalty_coupled_dev.py text eol=lf

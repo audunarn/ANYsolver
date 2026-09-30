@@ -1,0 +1,65 @@
+F
+================================== FAILURES ===================================
+______ test_scalar_p1_plane_full_both_body_work_and_prescribed_reaction _______
+
+    def test_scalar_p1_plane_full_both_body_work_and_prescribed_reaction():
+        model, definition, settings = _candidate()
+        model.add_boundary_condition(BoundaryCondition("prescribed_source", (1,), {"uz": -.02}))
+        model.apply_boundary_conditions()
+        report = validate_general_contact(model, definition, settings)
+        assert report.valid, report.issues
+        assert report.profile == S3_PROJECTED_PENALTY_PROFILE
+        manager = GeneralS3PatchManager(model, definition, settings)
+        assert manager.law.geometry.differentiation == "jet2_s3"
+        u = _normal_pose(model, manager)
+        # Exclude prescribed source-normal variation, retaining its residual row.
+        excluded = model.mesh.dof_manager.get_node_dofs(1)[2]
+        free = np.delete(np.arange(manager.n_dof), excluded)
+        manager.restrict_tangent_to_reduced_variations(sparse.eye(manager.n_dof, format="csr")[:, free])
+        assert manager.law.tangent_active_coordinates.size < manager.law.n_coordinates
+>       force, tangent, result = manager.evaluate(u)
+                                 ^^^^^^^^^^^^^^^^^^^
+
+tests\test_general_contact_s3_projected_penalty.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\general_contact\s3_patch_static.py:653: in evaluate
+    work = (self.law.work(source, target, self.normal_multipliers,
+src\anysolver\general_contact\s3_patch_augmented.py:628: in work
+    return self._work_unresolved(current_source, current_target,
+src\anysolver\general_contact\s3_patch_augmented.py:1073: in _work_unresolved
+    return self._jet2_s3_work(current_source, current_target,
+src\anysolver\general_contact\s3_patch_augmented.py:1304: in _jet2_s3_work
+    derivative = s3_overlap_derivatives(
+src\anysolver\general_contact\s3_overlap_derivatives.py:170: in s3_overlap_derivatives
+    polygon, signature = _clip(source_xy, target_xy, threshold)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+source = [[<anysolver._ge_beam3_mixed_ad.Jet2 object at 0x0000025FC18661C0>, <anysolver._ge_beam3_mixed_ad.Jet2 object at 0x000...e_beam3_mixed_ad.Jet2 object at 0x0000025FC1866040>, <anysolver._ge_beam3_mixed_ad.Jet2 object at 0x0000025FC1866000>]]
+target = [[<anysolver._ge_beam3_mixed_ad.Jet2 object at 0x0000025FC1865FC0>, <anysolver._ge_beam3_mixed_ad.Jet2 object at 0x000...e_beam3_mixed_ad.Jet2 object at 0x0000025FC1865EC0>, <anysolver._ge_beam3_mixed_ad.Jet2 object at 0x0000025FC1865E80>]]
+threshold = np.float64(1.6199999999999998e-10)
+
+    def _clip(source: list[list[Jet2]], target: list[list[Jet2]],
+              threshold: float) -> tuple[list[list[Jet2]], tuple[int, ...]]:
+        polygon = source
+        signature: list[int] = []
+        for edge_index in range(3):
+            start = target[edge_index]
+            edge = _xy_sub(target[(edge_index+1) % 3], start)
+            if not polygon:
+                raise UnsupportedOverlapBranch("projected S3 faces have no positive overlap")
+            old = polygon[-1]
+            old_distance = _cross2(edge, _xy_sub(old, start))
+            output: list[list[Jet2]] = []
+            signature.append(len(polygon))
+            for current in polygon:
+                distance = _cross2(edge, _xy_sub(current, start))
+                if min(abs(old_distance.value), abs(distance.value)) <= threshold:
+>                   raise UnsupportedOverlapBranch("projected vertex lies on a clipping boundary")
+E                   anysolver.general_contact.s3_overlap_derivatives.UnsupportedOverlapBranch: projected vertex lies on a clipping boundary
+
+src\anysolver\general_contact\s3_overlap_derivatives.py:87: UnsupportedOverlapBranch
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_s3_projected_penalty.py::test_scalar_p1_plane_full_both_body_work_and_prescribed_reaction
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 1.98s

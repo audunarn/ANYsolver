@@ -1,0 +1,6 @@
+{"check": "s3_roundoff_direct_positive", "perrow_allowance_m3": [2.071942600423456e-15, 8.287770401693824e-15, 1.4503598202964193e-14], "distance_budget_m": 6.906475334744854e-14, "physical_gap_m": -1e-08}
+.{"check": "s3_roundoff_10nm_full_work", "source_contact_force_n": 7.920910001731928e-06, "physical_gap_m": -1.0000000003410059e-08, "generalized_work_j": -3.960455000865964e-06, "kernel": {"path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py", "sha256": "0b2f64f0192e72edf374e2d7d9bd5a112936f42e8861a4d884fdfaf3bae20375"}}
+.{"check": "s3_roundoff_shared_assembly_admitted", "pair_count": 3, "synthetic_pair_value_offsets_m3": [[2.5626399994371605e-15, 1.388096666361795e-15, 1.388096666361795e-15], [1.0466909286208042e-15, 4.220067516757515e-15, 4.248613632992629e-15], [1.1604015292158395e-14, 8.220828272373794e-15, 1.1793726713828559e-14]], "perrow_retry_allowances_m3": [[1.0250559997748642e-14, 5.552386665447182e-15, 5.552386665447182e-15], [4.186763714483217e-15, 1.6880270067030062e-14, 1.6994454531970514e-14], [4.641606116863358e-14, 3.288331308949518e-14, 4.7174906855314235e-14]]}
+.{"check": "s3_roundoff_material_error_rejected", "injected_normalized_gap_error_m": 1e-06, "retry_distance_budgets_m": [7.02016217246647e-14]}
+......
+9 passed, 21 deselected in 2.00s

@@ -1,0 +1,135 @@
+{
+  "status": "locally_tested_s3_value_roundoff_controls",
+  "accepted": false,
+  "released": false,
+  "production_edits_by_worker": 0,
+  "coupled_shell_solves": 0,
+  "new_checks_passed": 9,
+  "previous_checks_deselected": 21,
+  "checks": [
+    "test_s3_roundoff_positive_perrow_budget_is_coordinate_scaled_not_gap_scaled",
+    "test_s3_roundoff_10nm_translated_full_projected_work",
+    "test_s3_roundoff_admitted_perrow_value_budget_propagates_to_shared_assembly",
+    "test_s3_roundoff_material_weighted_gap_error_still_rejects",
+    "test_s3_roundoff_unresolved_origin_or_frame_rejects_directly[far_origin]",
+    "test_s3_roundoff_unresolved_origin_or_frame_rejects_directly[ill_source]",
+    "test_s3_roundoff_unresolved_origin_or_frame_rejects_directly[ill_target]",
+    "test_s3_roundoff_unresolved_origin_or_frame_rejects_directly[degenerate_source]",
+    "test_s3_roundoff_unresolved_origin_or_frame_rejects_directly[degenerate_target]"
+  ],
+  "metrics": [
+    {
+      "check": "s3_roundoff_direct_positive",
+      "perrow_allowance_m3": [
+        2.071942600423456e-15,
+        8.287770401693824e-15,
+        1.4503598202964193e-14
+      ],
+      "distance_budget_m": 6.906475334744854e-14,
+      "physical_gap_m": -1e-08
+    },
+    {
+      "check": "s3_roundoff_10nm_full_work",
+      "source_contact_force_n": 7.920910001731928e-06,
+      "physical_gap_m": -1.0000000003410059e-08,
+      "generalized_work_j": -3.960455000865964e-06,
+      "kernel": {
+        "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py",
+        "sha256": "0b2f64f0192e72edf374e2d7d9bd5a112936f42e8861a4d884fdfaf3bae20375"
+      }
+    },
+    {
+      "check": "s3_roundoff_shared_assembly_admitted",
+      "pair_count": 3,
+      "synthetic_pair_value_offsets_m3": [
+        [
+          2.5626399994371605e-15,
+          1.388096666361795e-15,
+          1.388096666361795e-15
+        ],
+        [
+          1.0466909286208042e-15,
+          4.220067516757515e-15,
+          4.248613632992629e-15
+        ],
+        [
+          1.1604015292158395e-14,
+          8.220828272373794e-15,
+          1.1793726713828559e-14
+        ]
+      ],
+      "perrow_retry_allowances_m3": [
+        [
+          1.0250559997748642e-14,
+          5.552386665447182e-15,
+          5.552386665447182e-15
+        ],
+        [
+          4.186763714483217e-15,
+          1.6880270067030062e-14,
+          1.6994454531970514e-14
+        ],
+        [
+          4.641606116863358e-14,
+          3.288331308949518e-14,
+          4.7174906855314235e-14
+        ]
+      ]
+    },
+    {
+      "check": "s3_roundoff_material_error_rejected",
+      "injected_normalized_gap_error_m": 1e-06,
+      "retry_distance_budgets_m": [
+        7.02016217246647e-14
+      ]
+    }
+  ],
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 4.951333000004524,
+    "peak_process_tree_memory_mb": 212.1728,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "-m",
+      "pytest",
+      "tests/test_general_contact_s3_projected_penalty.py",
+      "-q",
+      "-s",
+      "--maxfail=1",
+      "-k",
+      "s3_roundoff",
+      "--junitxml=docs/d1_review_support/d2_s3_projected_penalty_unit_v6_20260930.xml"
+    ],
+    "log": "docs\\d1_review_support\\d2_s3_projected_penalty_unit_v6_20260930.log"
+  },
+  "sources": [
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\tests\\test_general_contact_s3_projected_penalty.py",
+      "sha256": "e6e2f46e22811e8d1ef5a2c459d88170660d7c7424ea6415753c47f6f8a44f72"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py",
+      "sha256": "0b2f64f0192e72edf374e2d7d9bd5a112936f42e8861a4d884fdfaf3bae20375"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_overlap_derivatives.py",
+      "sha256": "ff013fb6cf6f6a9dfdac095e12fc5c6d569788a99f709036ce8e380e3f1546e6"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "8cc9776eb5d382e7e3090c51f8bba0b8c4937cadb0af8877648ad63b0ae9b99b"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\core.py",
+      "sha256": "d78885e37ce0d99571e95d781459ac30fcfb7c590b7974db332f438e7a2e5e85"
+    }
+  ],
+  "limits": [
+    "Controls verify local guard behavior and full projected work on one well-shaped translated planar10nm fixture; they do not establish shell/contact qualification or arbitrary sliver resolution.",
+    "Within-budget injection changes derivative weighted-gap value fields only; it verifies pair-value retry and shared assembly budget propagation, not a new physical correction.",
+    "Cartesian operand allowance is a floating-point value comparison allowance, distinct from integration, derivative and physical-gap tolerances."
+  ]
+}

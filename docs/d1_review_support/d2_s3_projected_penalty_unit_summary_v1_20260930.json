@@ -1,0 +1,220 @@
+{
+  "status": "locally_tested_development_s3_projected_penalty",
+  "accepted": false,
+  "released": false,
+  "coupled_shell_solves": 0,
+  "unique_focused_checks_passed": 21,
+  "sources": [
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\core.py",
+      "sha256": "d78885e37ce0d99571e95d781459ac30fcfb7c590b7974db332f438e7a2e5e85"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "8cc9776eb5d382e7e3090c51f8bba0b8c4937cadb0af8877648ad63b0ae9b99b"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py",
+      "sha256": "a1d960c3dfe7f5920a13aff4365ed7223d19fcf1c7a83e031ed477ed8c231660"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_overlap_derivatives.py",
+      "sha256": "ff013fb6cf6f6a9dfdac095e12fc5c6d569788a99f709036ce8e380e3f1546e6"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_skin_work.py",
+      "sha256": "1c4ed39726f1da800a44bc6cc22bb00a5a2804077cd713c7f3d57dc41d76195d"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\tests\\test_general_contact_s3_projected_penalty.py",
+      "sha256": "4175e5796f41581458832393e86458c579d0f968c933849fa3557605042f11a2"
+    }
+  ],
+  "runs": [
+    {
+      "version": 1,
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_seconds": 4.361420699977316,
+        "peak_process_tree_memory_mb": 223.281152,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_projected_penalty.py",
+          "-q",
+          "-s",
+          "--maxfail=1",
+          "--junitxml=docs/d1_review_support/d2_s3_projected_penalty_unit_v1_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_projected_penalty_unit_v1_20260930.log"
+      },
+      "passed": [],
+      "failed": [
+        {
+          "check": "tests.test_general_contact_s3_projected_penalty::test_scalar_p1_plane_full_both_body_work_and_prescribed_reaction",
+          "message": "anysolver.general_contact.s3_overlap_derivatives.UnsupportedOverlapBranch: projected vertex lies on a clipping boundary"
+        }
+      ]
+    },
+    {
+      "version": 2,
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_seconds": 4.1015345999912824,
+        "peak_process_tree_memory_mb": 214.482944,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_projected_penalty.py",
+          "-q",
+          "-s",
+          "--maxfail=1",
+          "--junitxml=docs/d1_review_support/d2_s3_projected_penalty_unit_v2_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_projected_penalty_unit_v2_20260930.log"
+      },
+      "passed": [
+        "tests.test_general_contact_s3_projected_penalty::test_scalar_p1_plane_full_both_body_work_and_prescribed_reaction"
+      ],
+      "failed": [
+        {
+          "check": "tests.test_general_contact_s3_projected_penalty::test_affine_gap_pressure_and_source_normal_work_use_exact_p1_mass",
+          "message": "AssertionError: \nNot equal to tolerance rtol=1e-07, atol=1e-14\n\nMismatched elements: 2 / 4 (50%)\nMismatch at indices:\n [0]: -0.005375679625092009 (ACTUAL), -0.005375676352705411 (DESIRED)\n [3]: -0.005091703520510515 (ACTUAL), -0.0050917014925373144 (DESIRED)\nMax absolute difference among violations: 3.2723866e-09\nMax relative difference among violations: 6.08739512e-07\n ACTUAL: array([-0.005376, -0.004994, -0.0047  , -0.005092])\n DESIRED: array([-0.005376, -0.004994, -0.0047  , -0.005092])"
+        }
+      ]
+    },
+    {
+      "version": 3,
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_seconds": 4.665950200025691,
+        "peak_process_tree_memory_mb": 220.635136,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_projected_penalty.py",
+          "-q",
+          "-s",
+          "--maxfail=1",
+          "-k",
+          "not test_scalar_p1_plane_full_both_body_work_and_prescribed_reaction",
+          "--junitxml=docs/d1_review_support/d2_s3_projected_penalty_unit_v3_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_projected_penalty_unit_v3_20260930.log"
+      },
+      "passed": [
+        "tests.test_general_contact_s3_projected_penalty::test_affine_gap_pressure_uses_exact_p1_mass_on_flat_source_projection",
+        "tests.test_general_contact_s3_projected_penalty::test_moving_cut_has_zero_constant_gap_work_but_storage_flux_and_nonsymmetric_tangent",
+        "tests.test_general_contact_s3_projected_penalty::test_both_body_small_rotation_skin_map_smooth_directional_tangent_interval",
+        "tests.test_general_contact_s3_projected_penalty::test_positive_support_cutoff_limit_retains_tiny_p1_hat[0.02]",
+        "tests.test_general_contact_s3_projected_penalty::test_positive_support_cutoff_limit_retains_tiny_p1_hat[0.002]",
+        "tests.test_general_contact_s3_projected_penalty::test_positive_support_cutoff_limit_retains_tiny_p1_hat[0.0002]",
+        "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change0]",
+        "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change1]",
+        "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change2]"
+      ],
+      "failed": [
+        {
+          "check": "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change3]",
+          "message": "ValueError: restricted sliding requires an explicit sliding_difference_step"
+        }
+      ]
+    },
+    {
+      "version": 4,
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_seconds": 3.4416388999961782,
+        "peak_process_tree_memory_mb": 219.602944,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_projected_penalty.py",
+          "-q",
+          "-s",
+          "--maxfail=1",
+          "-k",
+          "not (test_scalar or test_affine or test_moving_cut or test_both_body or test_positive_support or change0 or change1 or change2)",
+          "--junitxml=docs/d1_review_support/d2_s3_projected_penalty_unit_v4_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_projected_penalty_unit_v4_20260930.log"
+      },
+      "passed": [
+        "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change3]",
+        "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change4]",
+        "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change5]",
+        "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change6]",
+        "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change7]",
+        "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change8]"
+      ],
+      "failed": [
+        {
+          "check": "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change9]",
+          "message": "ValueError: Q4/S3 shared-edge tie needs Jet2 Q4/S3 development differentiation"
+        }
+      ]
+    },
+    {
+      "version": 5,
+      "resource": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_seconds": 3.2123456000117585,
+        "peak_process_tree_memory_mb": 210.989056,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "-m",
+          "pytest",
+          "tests/test_general_contact_s3_projected_penalty.py",
+          "-q",
+          "-s",
+          "--maxfail=1",
+          "-k",
+          "change9 or test_admission or test_refined or test_inherited or test_new_profile",
+          "--junitxml=docs/d1_review_support/d2_s3_projected_penalty_unit_v5_20260930.xml"
+        ],
+        "log": "docs\\d1_review_support\\d2_s3_projected_penalty_unit_v5_20260930.log"
+      },
+      "passed": [
+        "tests.test_general_contact_s3_projected_penalty::test_unsupported_enforcement_and_geometry_fail_closed[change9]",
+        "tests.test_general_contact_s3_projected_penalty::test_admission_rejects_single_pair_wrong_formulation_and_control",
+        "tests.test_general_contact_s3_projected_penalty::test_refined_four_s3_source_two_s3_target_uses_same_profile_and_resource_cap",
+        "tests.test_general_contact_s3_projected_penalty::test_inherited_exact_clipping_vertex_branch_fails_closed",
+        "tests.test_general_contact_s3_projected_penalty::test_new_profile_restart_identity_and_old_law_payload_remain_distinct"
+      ],
+      "failed": []
+    }
+  ],
+  "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+  "law": "R=-sum_i p_i(dG_i-g_i*dS_i), g_i=G_i/S_i, p_i=k*max(-g_i,0), algorithmic_mu=0",
+  "repairs": [
+    "v1 retained inherited exact projected-vertex clipping failure; new fixture changed target diagonal and later explicit negative test retained that fail-closed branch.",
+    "v2 retained incorrect fixed-vertical scalar oracle applied to tilted source; source-normal projection respected by flat-source/tilted-target affine-gap oracle.",
+    "v3 restricted-sliding negative setup required explicit difference step before validation.",
+    "v4 S3 shared-edge tie negative asserted existing settings constructor rejection before validation."
+  ],
+  "limits": [
+    "Kernel/admission checks only; no coupled solve, scientific acceptance, installed qualification or release.",
+    "Existing S3 whole-face vertex/swept conservative gap certificates unchanged; they may reject partially cut tilted cases more conservatively than Q4 overlap-local certificates.",
+    "Inherited Jet2 exact vertex-edge clipping and zero/degenerate overlap branches continue to fail closed.",
+    "No Q4/Q4, finite rotation, warped or friction expansion; no D1 admission/default/restart contract change."
+  ]
+}

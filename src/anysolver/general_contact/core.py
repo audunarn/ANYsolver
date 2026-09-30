@@ -577,18 +577,34 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
     if any(item.normal_law == "projected_penalty" for item in definition.interactions):
+        from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
+
+        s3_geometry = (not definition.rigid_bodies and len(definition.surfaces) == 2
+                       and all(surface.element_ids for surface in definition.surfaces)
+                       and sum(len(surface.element_ids) for surface in definition.surfaces) >= 3
+                       and all(type(model.mesh.elements.get(element_id))
+                               is NativeParityE4PLS3V2DShellElement
+                               for surface in definition.surfaces
+                               for element_id in surface.element_ids))
+        s3_route = (s3_geometry and settings is not None
+                    and settings.general_s3_differentiation == "jet2_s3_dev"
+                    and settings.q4_source_gap_certificate == "whole_face"
+                    and settings.q4_s3_shared_edge_tie_step_m is None)
+        q4_route = (settings is not None and _refined_q4_s3_patch(model, definition)
+                    and settings.general_s3_differentiation == "jet2_q4_s3_dev"
+                    and settings.q4_source_gap_certificate == "overlap_local_dev")
         if (settings is None or settings.pair_motion != "general"
-                or not _refined_q4_s3_patch(model, definition)
+                or not (s3_route or q4_route)
                 or len(definition.interactions) != 1
-                or settings.general_s3_differentiation != "jet2_q4_s3_dev"
-                or settings.q4_source_gap_certificate != "overlap_local_dev"
                 or settings.q4_source_pressure_basis != "fine_nodal_q1"
                 or settings.augmentation_support_resolution != "exact"
                 or settings.augmentation_acceleration != "none"
                 or settings.enforcement_solver != "nested_augmented"
                 or settings.d1_interior_profile):
             return ContactValidationReport("invalid", (
-                "projected_penalty requires the separate refined Q4/S3 fine-Q1 Jet2 overlap-local profile without augmentation or D1 admission",
+                ("projected_penalty S3/S3 requires the separate S3 Jet2 whole-face profile with exact nodal support and no augmentation, tie or D1 admission"
+                 if s3_geometry else
+                 "projected_penalty requires the separate refined Q4/S3 fine-Q1 Jet2 overlap-local profile without augmentation or D1 admission"),
             ))
     if settings is not None and settings.d1_interior_profile:
         if (not _refined_q4_s3_patch(model, definition)
@@ -616,7 +632,7 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                     and not definition.rigid_bodies
                     and len(definition.surfaces) == 2
                     and len(definition.interactions) == 1
-                    and definition.interactions[0].normal_law == "augmented"
+                    and definition.interactions[0].normal_law in {"augmented", "projected_penalty"}
                     and sum(len(surface.element_ids) for surface in definition.surfaces) >= 3
                     and all(type(model.mesh.elements.get(element_id))
                             is NativeParityE4PLS3V2DShellElement

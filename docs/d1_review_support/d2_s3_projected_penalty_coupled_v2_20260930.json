@@ -1,0 +1,325 @@
+{
+  "accepted": false,
+  "released": false,
+  "kind": "s3_s3_projected_penalty_force_code_verification_development",
+  "adapter": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_s3_projected_penalty_coupled_dev.py",
+    "sha256": "592ad991247ffbeb7861aad27e3573fbb91ac59e608dbbd9b5356db0ab30efa9"
+  },
+  "production": {
+    "nonlinear_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py",
+      "sha256": "a603c9d4868c96d8cf55b892c05ab61d7dda9914cbbbf5c2758d0556d84f5386"
+    },
+    "general_contact/core.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\core.py",
+      "sha256": "d78885e37ce0d99571e95d781459ac30fcfb7c590b7974db332f438e7a2e5e85"
+    },
+    "general_contact/s3_patch_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "8cc9776eb5d382e7e3090c51f8bba0b8c4937cadb0af8877648ad63b0ae9b99b"
+    }
+  },
+  "inputs": {
+    "initial_clearance_m": 1e-08,
+    "normal_regularization_pa_per_m": 10000000.0,
+    "force_n": 0.5,
+    "gap_budget_m": 5e-05,
+    "code_comparison_relative": 1e-06,
+    "force_and_moment_scales": [
+      0.5,
+      0.5
+    ],
+    "time_cap_s": 180,
+    "memory_cap_bytes": 1000000000
+  },
+  "oracle": {
+    "source_normal_displacements_m": [
+      0.0,
+      0.0003511561551972251,
+      -0.0018204118367987738,
+      0.0,
+      0.0026849530963213245,
+      -0.0014502387526269555
+    ],
+    "pressure_pa": [
+      0.0,
+      0.0,
+      1.713512015691386,
+      0.0,
+      0.0,
+      13.29407418600756
+    ],
+    "active_nodes": [
+      3,
+      6
+    ],
+    "free_residual_n": [
+      -1.887379141862766e-14,
+      -8.548717289613705e-14,
+      -5.828670879282072e-15,
+      -1.9595436384634013e-14
+    ],
+    "contact_force_n": 0.5777567989610962,
+    "kff": [
+      [
+        64.02668062922577,
+        -25.610672251690296,
+        -12.805336125845155,
+        0.0
+      ],
+      [
+        -25.610672251690296,
+        32.01334031461287,
+        0.0,
+        -6.402668062922575
+      ],
+      [
+        -12.805336125845155,
+        0.0,
+        64.02668062922574,
+        -25.610672251690282
+      ],
+      [
+        0.0,
+        -6.402668062922575,
+        -25.610672251690282,
+        32.01334031461286
+      ]
+    ],
+    "condition_number": 7116.938327261542
+  },
+  "independent_integrals": {
+    "support_m2": [
+      0.08325000000000003,
+      0.2468333333333334,
+      0.11541666666666668,
+      0.14174999999999996,
+      0.19416666666666663,
+      0.028583333333333284
+    ],
+    "mass_m2": [
+      [
+        0.04166250000000002,
+        0.02083125000000001,
+        0.0,
+        0.02075625000000001,
+        0.0,
+        0.0
+      ],
+      [
+        0.02083125000000001,
+        0.12477083333333339,
+        0.020264583333333353,
+        0.0405,
+        0.0404666666666667,
+        0.0
+      ],
+      [
+        0.0,
+        0.020264583333333353,
+        0.05107500000000001,
+        0.0,
+        0.03621666666666666,
+        0.007860416666666653
+      ],
+      [
+        0.02075625000000001,
+        0.0405,
+        0.0,
+        0.06682499999999998,
+        0.01366875,
+        0.0
+      ],
+      [
+        0.0,
+        0.0404666666666667,
+        0.03621666666666666,
+        0.01366875,
+        0.09309583333333331,
+        0.010718749999999977
+      ],
+      [
+        0.0,
+        0.0,
+        0.007860416666666653,
+        0.0,
+        0.010718749999999977,
+        0.010004166666666646
+      ]
+    ],
+    "cells": [
+      {
+        "ids": [
+          1,
+          2,
+          4
+        ],
+        "clipped_vertices_xy_m": [
+          [
+            0.1,
+            1.0
+          ],
+          [
+            0.1,
+            0.1
+          ],
+          [
+            0.6,
+            0.1
+          ],
+          [
+            0.14999999999999997,
+            1.0
+          ]
+        ],
+        "basis_coefficients": [
+          [
+            -2.0,
+            2.0,
+            1.387778780781446e-17
+          ],
+          [
+            -0.9999999999999998,
+            -2.5620531337503608e-17,
+            0.9999999999999998
+          ],
+          [
+            1.3,
+            -0.2,
+            -0.09999999999999999
+          ]
+        ]
+      },
+      {
+        "ids": [
+          2,
+          5,
+          4
+        ],
+        "clipped_vertices_xy_m": [
+          [
+            0.15000000000000005,
+            1.0
+          ],
+          [
+            0.6,
+            0.1
+          ],
+          [
+            0.6,
+            1.0
+          ]
+        ],
+        "basis_coefficients": [
+          [
+            -5.088522196198635e-16,
+            2.000000000000001,
+            -2.0000000000000004
+          ],
+          [
+            -1.0,
+            1.0000000000000002,
+            0.0
+          ],
+          [
+            1.1000000000000003,
+            -1.3000000000000005,
+            1.2000000000000002
+          ]
+        ]
+      },
+      {
+        "ids": [
+          2,
+          3,
+          5
+        ],
+        "clipped_vertices_xy_m": [
+          [
+            0.6,
+            1.0
+          ],
+          [
+            0.6,
+            0.1
+          ],
+          [
+            1.0,
+            0.1
+          ],
+          [
+            1.0,
+            0.30000000000000016
+          ],
+          [
+            0.65,
+            1.0
+          ]
+        ],
+        "basis_coefficients": [
+          [
+            -1.9999999999999998,
+            2.0,
+            7.569702440626068e-18
+          ],
+          [
+            -0.9999999999999998,
+            1.061952458337106e-16,
+            0.9999999999999998
+          ],
+          [
+            2.3,
+            -1.2,
+            -0.09999999999999999
+          ]
+        ]
+      },
+      {
+        "ids": [
+          3,
+          6,
+          5
+        ],
+        "clipped_vertices_xy_m": [
+          [
+            0.65,
+            1.0
+          ],
+          [
+            1.0,
+            0.30000000000000027
+          ],
+          [
+            1.0,
+            1.0
+          ]
+        ],
+        "basis_coefficients": [
+          [
+            -2.7755575615628914e-16,
+            2.0,
+            -1.9999999999999998
+          ],
+          [
+            -1.0,
+            1.0,
+            0.0
+          ],
+          [
+            1.1000000000000003,
+            -2.3000000000000003,
+            2.1999999999999997
+          ]
+        ]
+      }
+    ]
+  },
+  "development_checks_met": false,
+  "error": {
+    "type": "ValueError",
+    "message": "differentiated S3 overlap disagrees with mortar geometry (pair=0, support_error_m2=5.55111512313e-17, weighted_gap_error_m3=6.8405665309e-20, support_scale_m2=0.082, weighted_gap_scale_m3=7.25030868065e-10, support_roundoff_m2=9.32232069317e-15, weighted_gap_roundoff_m3=8.24264666409e-23, geometry_value_rtol=1e-09, integration_triangles=0, overlap_area_local_m2=0.23, overlap_area_m2=0.23, overlap_area_resolution_m2=not_supplied_by_analytic_S3, support_local_m2=[0.08200000000000002, 0.08066666666666675, 0.06733333333333343], support_derivative_m2=[0.08200000000000003, 0.08066666666666669, 0.06733333333333338], weighted_gap_local_m3=[4.9186248733968834e-11, -7.250308679965605e-10, -2.7970643272020736e-11], weighted_gap_derivative_m3=[4.918624867631794e-11, -7.250308680649661e-10, -2.7970643275490316e-11])",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_s3_projected_penalty_coupled_dev.py\", line 189, in main\n    result = solve_static_nonlinear(model, load_case=load, contact=definition, contact_settings=settings,\n        num_steps=2, max_iterations=18, tolerance=1e-8, emit_restart_checkpoint=True, record_increment_snapshots=True)\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py\", line 8019, in solve_static_nonlinear\n    return run_under_lease(\n        model,\n        context=\"solve_static_nonlinear\",\n        operation=operation,\n    )\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\matrix_assembly.py\", line 3651, in _run_with_qualified_assembly_runtime_lease\n    raise scoped_operation_error\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\matrix_assembly.py\", line 3626, in _run_with_qualified_assembly_runtime_lease\n    result = operation(lease)\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py\", line 7963, in operation\n    result = run_solver()\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py\", line 7897, in run_solver\n    return _run_with_nonlinear_state_cleanup(\n        solve_under_lease,\n    ...<28 lines>...\n        _qualified_runtime_guard=lease,\n    )\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_state.py\", line 271, in _run_with_nonlinear_state_cleanup\n    return operation(*args, **kwargs)\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\threading_policy.py\", line 412, in wrapped\n    return func(*args, **kwargs)\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_analysis_diagnostics.py\", line 443, in wrapped\n    result = func(*args, **kwargs)\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py\", line 6978, in _solve_static_nonlinear_under_lease\n    ) = newton_increment(\n        ~~~~~~~~~~~~~~~~^\n        augmentation_start_q,\n        ^^^^^^^^^^^^^^^^^^^^^\n    ...<4 lines>...\n        augmentation=augmentation,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py\", line 6694, in newton_increment\n    F_c, K_c, states_c = assemble_force_system(\n                         ~~~~~~~~~~~~~~~~~~~~~^\n        path_factor,\n        ^^^^^^^^^^^^\n    ...<12 lines>...\n        ),\n        ^^\n    )\n    ^\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py\", line 6379, in assemble_force_system\n    return _assemble_nonlinear_system(*args, **kwargs)\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_performance_batch_c.py\", line 523, in _batch_c_assemble_nonlinear_system\n    return _BASE_ASSEMBLER(\n        model,\n    ...<8 lines>...\n        **extra,\n    )\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_performance.py\", line 1361, in _optimized_assemble_nonlinear_system\n    return assembler(\n        model,\n    ...<8 lines>...\n        **extra,\n    )\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py\", line 1556, in _assemble_nonlinear_system\n    contact_force, contact_tangent, _ = contact_manager.evaluate(\n                                        ~~~~~~~~~~~~~~~~~~~~~~~~^\n        displacements, tangent=tangent\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py\", line 653, in evaluate\n    work = (self.law.work(source, target, self.normal_multipliers,\n            ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                          tangent=tangent, _prepared_state=prepared)\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py\", line 628, in work\n    return self._work_unresolved(current_source, current_target,\n           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                                 multipliers, tangent=tangent,\n                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                                 prepared_state=_prepared_state)\n                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py\", line 1073, in _work_unresolved\n    return self._jet2_s3_work(current_source, current_target,\n           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                              base, tangent=tangent,\n                              ^^^^^^^^^^^^^^^^^^^^^^\n                              tiny_wedge_pair=tiny_wedge_pair)\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py\", line 1459, in _jet2_s3_work\n    raise ValueError(\n    ...<20 lines>...\n    )\nValueError: differentiated S3 overlap disagrees with mortar geometry (pair=0, support_error_m2=5.55111512313e-17, weighted_gap_error_m3=6.8405665309e-20, support_scale_m2=0.082, weighted_gap_scale_m3=7.25030868065e-10, support_roundoff_m2=9.32232069317e-15, weighted_gap_roundoff_m3=8.24264666409e-23, geometry_value_rtol=1e-09, integration_triangles=0, overlap_area_local_m2=0.23, overlap_area_m2=0.23, overlap_area_resolution_m2=not_supplied_by_analytic_S3, support_local_m2=[0.08200000000000002, 0.08066666666666675, 0.06733333333333343], support_derivative_m2=[0.08200000000000003, 0.08066666666666669, 0.06733333333333338], weighted_gap_local_m3=[4.9186248733968834e-11, -7.250308679965605e-10, -2.7970643272020736e-11], weighted_gap_derivative_m3=[4.918624867631794e-11, -7.250308680649661e-10, -2.7970643275490316e-11])\n"
+  },
+  "elapsed_seconds": 1.4662075999949593
+}
