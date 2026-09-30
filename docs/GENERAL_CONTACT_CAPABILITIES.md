@@ -1,5 +1,22 @@
 # General-contact capability ledger
 
+## Moving-normal beam/S3 and resolved small native vibration
+
+**Implemented/locally tested; not scientifically accepted, installed or released.**
+The explicit `jet2_deformable_s3_dev` profile supplies complete local work/tangent
+for one round B2/B3 and a genuinely deforming S3 target whose rotational
+coordinates stay zero. Seven local controls, ordinary coupled force/restart,
+independent scalar contact forces and source example pass. The strong explicit
+line law meets10um (actual3.97025um); retained weaker-law/reference/metadata
+failures are not regraded. [Guide](GENERAL_CONTACT_C2_DEFORMABLE_BEAM_S3.md).
+
+Private native small vibration with explicit identity-bound1e-15 stage solve
+passes20steps and unchanged trajectory, amplitude, energy and momentum-floor
+gates. Signed stage audits reconcile; P/H below frozen floors do not establish
+order. The original default-solve momentum NONPASS, large-amplitude velocity/
+energy failures and other limits remain. This is a scoped local control, not
+fullC7 or public finite-speed admission. [Review](d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md).
+
 ## Current multiple-pair and native development increments
 
 The explicit multiple projected-penalty shell-pair profile composes existing

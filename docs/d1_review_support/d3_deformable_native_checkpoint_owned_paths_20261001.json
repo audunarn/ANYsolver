@@ -1,0 +1,405 @@
+{
+  "base": "5c3cdead34c7a32f40ed76dd1b7cbf06dc0651d5",
+  "paths": [
+    {
+      "path": ".gitattributes",
+      "sha256": "4c0bbfea3c55b761c3348cd819d21984917c84274ec83d3643606a75ddeabf4d"
+    },
+    {
+      "path": "GENERAL_CONTACT_PLAN.md",
+      "sha256": "e08aaf157ee4f4625a68e041e054eb46e9b985d7f338f91f4d1d9056035bed9a"
+    },
+    {
+      "path": "GENERAL_CONTACT_RESTART.md",
+      "sha256": "a88f123955970d221bc1a09b515b6e3f140bf4699ececa491048f34b87eddfe9"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_C2_DEFORMABLE_BEAM_S3.md",
+      "sha256": "e058c0b7491685d835bde74f7e3b8b75c1a6dadb0de8841dc4d7bb9dfe7547c0"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_CAPABILITIES.md",
+      "sha256": "201e5c9ab58837c867f80657d64d678ba5eea4c667cedea5c679d5da23bc4237"
+    },
+    {
+      "path": "docs/d1_review_support/D3_DEFORMABLE_BEAM_S3_REVIEW_20261001.md",
+      "sha256": "464a3f2df3d94fc9ac8c4735096f755ad4149fb7665ad56c13112828e510c55f"
+    },
+    {
+      "path": "docs/d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md",
+      "sha256": "a9db4733db1a9510e15bdcd9c38e198b06b21d75ec87b202301466f960b4ae8d"
+    },
+    {
+      "path": "docs/d1_review_support/D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md",
+      "sha256": "c219bf41e2892ede5f72b09aa8e2ac27ee653d74765cd981cde398eb517c3a2e"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_DEVELOPMENT_20260929.md",
+      "sha256": "82d8a10a57eef9caa5a73797d1664d7f79579ae17e044ce2ebfd7aad6423d0b1"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART25.md",
+      "sha256": "c1c67fc3d2f68bf6916c74f9c6368d37fd01e0f1c31c39dde42e231dbba9dec6"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v1_20261001.inputs.json",
+      "sha256": "e1ed64a244f0724d3bfddcfe344d007318d881931471fb8aa0f94cc77c1e2f2f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v1_20261001.log",
+      "sha256": "078008753354f66d80e6d239f2f24282c5c90341d2ead731e713eb0ed4b9c8e8"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v1_20261001.manager.source.py",
+      "sha256": "f967dcf3df132dbc088b3fdcd73bf04bef425f79f8cba10630d0248409f58834"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v1_20261001.resources.json",
+      "sha256": "943b145cc8f0dd7e1969503db59b961f60f23cdfcfc63ff5bf665c457852170f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v1_20261001.xml",
+      "sha256": "43a4534a6cea688ed6d0cd23c9422e8af9a3ab5cb4c757b91d079521846019b8"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v2_20261001.inputs.json",
+      "sha256": "16e3b57540c621d850f807b12e5694735e06e2ad25c03d01d066534c2e1c303c"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v2_20261001.log",
+      "sha256": "ce7a1c2bd08a83763fc48ef15cd1664c029bd1931148d2903d55ae85ae8a3367"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v2_20261001.resources.json",
+      "sha256": "8b084bc40ae6f006f8ac3ca3077fa5c69486ad7605dc131515c643019e45ed2d"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_example_v2_20261001.xml",
+      "sha256": "15251437b71ceecad2d1778c0aa0f851672db7a9e1a706dd1c2c1e78dad0275e"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_local_v1_20261001.inputs.json",
+      "sha256": "8ce76b6c53a898d311f2d2dd216f06fc35f723e85d62706002ce9371abf02216"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_local_v1_20261001.log",
+      "sha256": "e7a7f10737ce216f5334cfdf136069580dba4dbd74b1d3f70550815714cdd563"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_local_v1_20261001.resources.json",
+      "sha256": "c22493e8833349f60da4570bf19c8cfb7b9bec6228b4c464df90789d810e11e2"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_local_v1_20261001.xml",
+      "sha256": "03f4e8496256b8c58075bbf68da62c81b57fea4e0b58f5cdb70f2374a994585d"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v1_20261001.inputs.json",
+      "sha256": "f516048b79a14fb7a4e5d3e031299b8c200e389e770acef4280026306f667c2f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v1_20261001.log",
+      "sha256": "1ba2954f6d56cfd867fbea33954c7a8ff448fe404e0119f40975b39f431796b1"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v1_20261001.resources.json",
+      "sha256": "c6dad4ec7500db4e5301893823717052e09c795283ec65f56885a36a225c533f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v1_20261001.test.source.py",
+      "sha256": "91d2987eadd789f27d90eaec1ee35a6b4f356c3c800cde4433f1b32454ac2b12"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v1_20261001.xml",
+      "sha256": "aac5f485006084b50ff96f3803c07f3d3be554c687d112ccf4eba67444eae136"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v2_20261001.log",
+      "sha256": "5431b7e59fd0ddeb1dfd43d8ef632e0c6d431a874526b2988f9d72efc92fbde8"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v2_20261001.resources.json",
+      "sha256": "f0cab3728aa5ecad82dbfc90f63be1b08c5f4bb9be49d84945006f38d6db3678"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v3_20261001.inputs.json",
+      "sha256": "ce1ce1882b093bae4179d07fdcd4b9d1afb2a7b2fb56164d0e9b56fdebde902f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v3_20261001.log",
+      "sha256": "81eac0eaa4f74e2136db1338a6404f1c95e1b00979cba08aebd9b3df4ea00089"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v3_20261001.resources.json",
+      "sha256": "a5ca57c6d2bd3c8d5460b298dbbc2e0f214e0a79d9914415e40d19b6664cc805"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v3_20261001.test.source.py",
+      "sha256": "e56dd79e9277ef0055e934d1e4b4e5e3e46daf6020e31c1fe7ddd46bc9cdc91c"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v3_20261001.xml",
+      "sha256": "00bac514693964d3fad4667279f69415306cae82771af11298b0d0ced8e34c4f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v4_20261001.inputs.json",
+      "sha256": "65870ceec5c414f964398d6414ed42fc0a59e24b38205d5b7c8577bc1c5dc190"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v4_20261001.log",
+      "sha256": "d243ba55dea9b211bb1f2d1eb1659e56fb0575877102d0c450ab2b26ba8184f6"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v4_20261001.manager.source.py",
+      "sha256": "b1778300fd59b2f64828331591c50fde6afab642653980fe1ab12c8acc8bf6fe"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v4_20261001.resources.json",
+      "sha256": "5b987f8774a74e56cbec4f902a0261085a23e1badc8e7a5122faa291539b7224"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_static_v4_20261001.xml",
+      "sha256": "bc6f0426e651dcb0ae0aac830c353988d948bd403d64682b1ffe71e5f97a7582"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_summary_v1_20261001.json",
+      "sha256": "6899e02632f2c0c55d2a9085067b10f570ead6372c141d72f8f2a64838ea0ad3"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v1_20261001.inputs.json",
+      "sha256": "3cf5e333d4b97acc10f8cf62edcc730fae69466a42a326e9374402c21f6ed158"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v1_20261001.log",
+      "sha256": "ef433e02ffa8c3a4f1b94e6b85e48a9cbfa856ea12c32c6336383450790854e4"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v1_20261001.resources.json",
+      "sha256": "3759676874da7125415ba1d027ed9f3a3484455b93e4726b5d5be6e2eb69e31b"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v1_20261001.test.source.py",
+      "sha256": "bd7b9c5c4f223c22998d19c3343e1387686273c4ab59ab2a8d6f82058d10311e"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v1_20261001.xml",
+      "sha256": "6a1a159bea64066e83ced2a386595fc317da8157976e52f2667bbe5bc3ce72e1"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v2_20261001.inputs.json",
+      "sha256": "9550c47542f79c46a5dca4f9ace35dd32f5b061915b473a1bb7f0828646cd8b2"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v2_20261001.log",
+      "sha256": "b48d71fdc96b85d703fec67e8268fad489280ec05c9b916d239dad12f1aaf026"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v2_20261001.resources.json",
+      "sha256": "19c27e4f7b2ab75c053abfb7322ed72568c6e9261d114464fe445e6a887c2cfe"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v2_20261001.test.source.py",
+      "sha256": "0b0342c90e88148f3548c3578f49e4160d3125ab7a318ecc4388df16f817360d"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_beam_s3_swept_diagnostic_v2_20261001.xml",
+      "sha256": "e25f8f71915ecab046b94ed092794a752f11bebb43a23fa0d769e9f71db1e515"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.dynamic.source.py",
+      "sha256": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.entry.source.py",
+      "sha256": "f86e45748c6484cb156220c7f6fd91cfeb32e5ec266ba5417dbaeb0af7836777"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.execution.json",
+      "sha256": "8d3d503ac68f9890650c2053abd6ca52019314ab2ae9c117d22f1380bc6c157c"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.fixture.source.py",
+      "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.freeze.source.py",
+      "sha256": "41274f0c413fa9e884b01e94b2c968ce0bc611b0111d254dced57ef19ec9fa95"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.inertia.source.py",
+      "sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.inputs.json",
+      "sha256": "9bb06c066c1521004a4b7f0c70f3a72be87c5374baf04b8fd32f03e005fa68ed"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.log",
+      "sha256": "25230c3e3af7f38bb3698e7b1bca83d2dde548958e44594c5d5739c6ad39639f"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.midpoint.source.py",
+      "sha256": "5931f8d1d5c123e85acaf22bb58ec94a80f4dd86f8e2beeba76f7149a143526c"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.raw.json",
+      "sha256": "6546ec7c5d7acbf2956a4aa9756a7a04504009e6f246c4c42b2dc6457d875c5d"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.resource.json",
+      "sha256": "29e5d2ab8d783b3f222b96bd5744cbfabb9f74de935c4aa18f3d195e24d47f99"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.summary.json",
+      "sha256": "4cfc00fccf8f666869dfca9b6f2da374dd47243a62e7e78008e9825a3204dc04"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.test.source.py",
+      "sha256": "07a7688302a3481729d7842ba943d4062c4db9d31898e55501b52c64d7b0c1e5"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_small_control_v1_20261001.xml",
+      "sha256": "adc4153eaaf11c8e27ddd60cebbd54afa3bd9f0b85e497127a41511b44557f4b"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.dynamic.source.py",
+      "sha256": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.entry.source.py",
+      "sha256": "45ce69fcccc5ef438bbf5216bbfc842f63f557f44467a9cac3463d536a800d15"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.execution.json",
+      "sha256": "5d95b71740aaed7d4cc3ef2648cfc2b1657eae05651091733a931399fafb794b"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.fixture.source.py",
+      "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.freeze.source.py",
+      "sha256": "70ae4d1e446595d0c12df199bbfb5a65d0102b338de96a5ac96d0f0174577787"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.inertia.source.py",
+      "sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.inputs.json",
+      "sha256": "fe47b910b01db4276ffc3f4eebfaeead9f383882147fd7263f6dc5b0375c2255"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.log",
+      "sha256": "670e1cd3bf22616fea990ca4acdb05c2ba9a187cc6ffafaa3351cf538e375d44"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.midpoint.prechange.source.py",
+      "sha256": "5931f8d1d5c123e85acaf22bb58ec94a80f4dd86f8e2beeba76f7149a143526c"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.midpoint.source.py",
+      "sha256": "36da82603885f6f110adf40404331a5d519c7dccbe284dc67bb93ec44f75d1ac"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.raw.json",
+      "sha256": "e996922eb4919548f57a32f51999e103549554f4bcfaa516a15683020b6f1dc1"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.resource.json",
+      "sha256": "f18493284a7f18e0066570d75d9c2028e688cdc1e1706968d3ea08ce7c1c0801"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.summary.json",
+      "sha256": "fcc828b948b171c6bb0a6c663020b1fe00c5da04244aaff35f7340031cb2804a"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.test.source.py",
+      "sha256": "8561378f9e3d7cad1296fb702571709d5cbc60d4909e519998294c9cba9ac569"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_control_v1_20261001.xml",
+      "sha256": "94e82e6a55faf323a2e9b236e1784c9ba7fbf21e537a51300978de83ee9fcbce"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.dynamic.source.py",
+      "sha256": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.entry.source.py",
+      "sha256": "a54574723a31304e3fb3765fe82314fbdaf2680c82fa1edaab2a7faccd0ae65b"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.execution.json",
+      "sha256": "89a0814990bd7479f2816f5345481d8f9f224a630ed2485097b8b8c0b504b3b5"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.fixture.source.py",
+      "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.inertia.source.py",
+      "sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.inputs.json",
+      "sha256": "89beb3c2f302ced5e5405e25beb2140d7cabc167a7d661b9713fa98f5cfa2e11"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.log",
+      "sha256": "a314e2ae86431a41e540e04d15404b4748dbaf57ec9cddddec2b36cda714d318"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.midpoint.source.py",
+      "sha256": "36da82603885f6f110adf40404331a5d519c7dccbe284dc67bb93ec44f75d1ac"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.raw.json",
+      "sha256": "6f261962125f810b71ced0a8ab11f34a5c17368640c52930f8e7c6e6366262ef"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.resource.json",
+      "sha256": "02b058adf348f3cf5d9ee037503cc2372b427d08732409d838f366c09a3e1589"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.summary.json",
+      "sha256": "ed8f7f71eb870509e9064d2067df8b7ba8f66c9f3f47abd00c64562654049f4e"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.test.source.py",
+      "sha256": "8561378f9e3d7cad1296fb702571709d5cbc60d4909e519998294c9cba9ac569"
+    },
+    {
+      "path": "docs/d1_review_support/native_vibration_solve_identity_v1_20261001.xml",
+      "sha256": "3e2ebe784dc1b7e1f9cb4ac3797385f99a6d2912b7c438f827449ccee0b52f55"
+    },
+    {
+      "path": "examples/general_contact_deformable_round_beam_s3.py",
+      "sha256": "ef6c4f5ac68799d67e8df4444750055b7cbcabe1235cb821c37d7093fe099acc"
+    },
+    {
+      "path": "src/anysolver/general_contact/beam_shell.py",
+      "sha256": "f726ebc5e6a9e098843c39484439a03250aaf0cf56f76c9e6c0df3d2e83b6369"
+    },
+    {
+      "path": "src/anysolver/general_contact/core.py",
+      "sha256": "01ecbd77ed6d5ce50ee3dcf6e20886c05b944b015a1fcb486c0a21f5c66b5d94"
+    },
+    {
+      "path": "src/anysolver/general_contact/deformable_beam_s3_line.py",
+      "sha256": "2f4d3036877639de3c8deef6b5c12dd16af12acc8a7d77d80ca5a7c1310ed48e"
+    },
+    {
+      "path": "src/anysolver/general_contact/deformable_beam_s3_static.py",
+      "sha256": "d40608c6759ef0a709c63ebe665b93cf80b52af34097fed2338c8dd38c34780f"
+    },
+    {
+      "path": "tests/test_general_contact_deformable_beam_s3.py",
+      "sha256": "1d842141fdedd21cbe0b4b635b312b7290179f1131036e73759abc031061fa42"
+    },
+    {
+      "path": "tests/test_general_contact_deformable_beam_s3_static.py",
+      "sha256": "eadee2c437ff40b84ed0d76ccb1b720798029753e04316b43204de2f406c6b45"
+    }
+  ]
+}

@@ -229,8 +229,14 @@ class ContactSolverSettings:
     d1_interior_profile: bool = False
     d1_interior_coverage_tolerance_m2: float | None = None
     d1_interior_boundary_force_tolerance_n: float | None = None
+    beam_shell_geometry: str = "translated_planar"
+    beam_shell_maximum_swept_intervals: int | None = None
 
     def __post_init__(self) -> None:
+        if self.beam_shell_geometry not in {"translated_planar", "jet2_deformable_s3_dev"}:
+            raise ValueError("unsupported beam_shell_geometry")
+        if self.beam_shell_maximum_swept_intervals is not None and (type(self.beam_shell_maximum_swept_intervals) is not int or self.beam_shell_maximum_swept_intervals <= 0):
+            raise ValueError("beam_shell_maximum_swept_intervals must be a positive integer")
         if type(self.d1_interior_profile) is not bool:
             raise TypeError("d1_interior_profile must be bool")
         interior_controls = (self.d1_interior_coverage_tolerance_m2,
@@ -576,6 +582,11 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if settings is not None and settings.beam_shell_geometry == "jet2_deformable_s3_dev":
+        if (definition.rigid_bodies or len(definition.surfaces) != 2
+                or sum(surface.beam_radius is not None for surface in definition.surfaces) != 1
+                or len(definition.interactions) != 1):
+            return ContactValidationReport("invalid", ("deformable beam-S3 selection requires one explicit beam/shell pair",))
     if len(definition.interactions) > 1:
         if definition.rigid_bodies and all(surface.beam_radius is not None
                                           for surface in definition.surfaces):
@@ -1224,7 +1235,10 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
         surface.beam_radius is not None for surface in definition.surfaces
     ):
         if any(surface.beam_radius is None for surface in definition.surfaces):
-            if any(surface.beam_radius is None and len(surface.element_ids) > 1
+            if settings.beam_shell_geometry == "jet2_deformable_s3_dev":
+                from .deformable_beam_s3_static import DeformableBeamS3Manager
+                manager = DeformableBeamS3Manager(model, definition, settings, initial_displacement)
+            elif any(surface.beam_radius is None and len(surface.element_ids) > 1
                    for surface in definition.surfaces):
                 from .beam_shell_patch import _BeamShellPatchManager
 

@@ -1,71 +1,75 @@
-# General contact restart — 2026-09-30
+# General contact restart — 2026-10-01
 
-## Objective and identity
+## Objective and current identity
 
-Continue full C0–C9 under the original 120 active-hour goal. Isolated worktree
-C:/ANYworkspaceWork/ANYsolver-general-contact, codex/general-contact-core.
-Last committed checkpoint: 60b9de0f; the following beam/native evidence increment
-is being checkpointed with exact owned paths. Verify HEAD before continuing.
-Goal active: 134899s (37.47h) used, about82.53h remain; budget unchanged.
-[Goal](GENERAL_CONTACT_GOAL.md), [plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.41,
-[full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md),
-[prior restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART24.md).
-No publication, merge, release or historical-default changes.
+Continue fullC0–C9 in C:/ANYworkspaceWork/ANYsolver-general-contact,
+codex/general-contact-core. HEAD5c3cdead34c7a32f40ed76dd1b7cbf06dc0651d5;
+new bounded beam/S3 + native tighter-solve work awaits exact-owned checkpoint.
+Original120active-hour goal stays active: last138232s (38.40h) used, about81.60h
+remain. [Goal](GENERAL_CONTACT_GOAL.md), [plan](GENERAL_CONTACT_PLAN.md) rev.42,
+[programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md),
+[previous restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART25.md).
+No publication/merge/release/default changes.
 
-## Accepted boundaries
+## Accepted boundaries and retained stopped work
 
-D1-interior accepted on installed0b2ac9be. D2 acceptance remains ONLY the exact
-named foundation/partial-cycle inputs in GENERAL_CONTACT_PARTIAL_SHELL_HANDOFF_20260930.md.
-Installed wheel8af00b06/433 bindings unchanged. New development source is not that
-artifact. ANYfem c138d41 bridge remains reviewed/admissionfalse. Radial1e8 timeout
-900.0605s is retained/stopped; no replay or cap increase. No completeD2/C7 claim.
+D1-interior installed0b2ac9be remains accepted; D2 only the exact named foundation
+and partial-cycle rows in GENERAL_CONTACT_PARTIAL_SHELL_HANDOFF_20260930.md.
+Installed wheel8af00b06/433bindings and ANYfem c138d41/admissionfalse unchanged.
+New source is development, not accepted installedartifact. Radial1e8 timeout
+900.0605s retained/stopped, no replay/capraise. Prior D3 multiple-tools/foundation
+and S3/Q4 developments remain checkpointed at5c3c/60b9, not general qualification.
 
-## Latest beam/static slice
+## New main beam/S3 slice
 
-Independent Timoshenko finite unilateral foundation, explicit radius.01m,
-small motion/concentric elastic B2/no caps: 16/32/64-cell reaction errors
-.35145/.08824/.02244%, tip errors smaller; stronger line stiffness reduces gap
-5.87 to1.86um. Two 80-digit independent transfer checks resolve these input
-values, without claiming a general outward certificate or hard-contact result.
-Review D3_BEAM_FOUNDATION_REVIEW_20260930.md preserves these limits.
+Lead owns deformable_beam_s3_line.py / deformable_beam_s3_static.py, explicit
+beam_shell_geometry selector and dispatch in core.py/beam_shell.py, two newtests,
+sourceexample and boundedguide. One B2/B3 reference-straight tube against one
+S3 interior, elastic vonKarman, target rotationszero but translationsdeform.
+Complete moving-normal Jet2gradient/Hessian, sparse physical offset pullback,
+finite-budget affine gap/rim bounds and ordinary static/restart integrate.
+Sevenlocal checks pass3.299s/214.98MB. V4 coupled/reference/splitrestart passes
+5.490s/269.58MB; explicit1e5N/m2 yields gap3.97025um within10um. Targetuz
+-.00291452m, tip-.00102547m; independent contact parity and linearized structural
+comparison about4.4e-6. Whole affine reference needs512 intervals, four increment
+route succeeds128/path; no automatic increase. Public exampleV2 passes4.845s/
+269.41MB and correctly labels line units. Guide GENERAL_CONTACT_C2_DEFORMABLE_BEAM_S3.md.
+Summary6899e026 binds all runs/sources. No scientific/installed admission.
 
-New multiple_beam_rigid.py composes existing B2/B3 plane/sphere/infinite-cylinder
-potentials through the ordinary static driver. Each explicit pair retains its
-law/gap, named feature ownership and restart contract; aggregate caps fail closed.
-Twelve distinct checks include an old shell-routing control, independent work/
-tangent, simultaneous force/displacement activation, JSON split restart,
-ordering and source example. V2 test NONPASS is retained: a dimensional residual
-was compared with dimensionless tolerance; corrected fixed-force normalization
-passes V3 without production/criterion changes. Summary30cc1bb0; example
-examples/general_contact_multiple_round_beam_tools.py; guide
-GENERAL_CONTACT_C2_MULTIPLE_FIXED_TOOLS.md. No installed/scientific promotion.
-Earlier S3/Q4 pure-press closure remains in checkpoint60b9 and prior restart.
+Retained NONPASS: large-motion linearized mismatch3.98%, smaller1e4 law truly
+exceeds10um (independentgap12.55576um), scalarroot initialfailure, UTF8 preflight
+NOT_EXECUTED and firstexample metadataAttributeError. Finalend_caps metadata
+uses existing driver correctly; no shared-driver edit. Scoped reviewer records
+D3_DEFORMABLE_BEAM_S3_REVIEW_20261001.md; verify finalstable identity beforestage.
 
-## Native ownership and principal discrepancy
+## Native ownership, evidence and next slice
 
-Managed private worktree C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver.
-Worker /root/saved_radial_boundary owns native tests and D6livingnote; reviewer
-/root/checkpoint_review independently scrutinizes. Do not archive this worktree.
-Private midpoint5931f8d1/dynamic9586af43/inertia3334699c remain unchanged.
-Free24 and loaded12 development steps passed; vibration V1 serialization,
-V2 coarse-energy and V3 fine-velocity NONPASS are retained. V3 two fine endpoints
-fail normalized velocity .002721>.002 while energy/momentum gates pass; remaining
-fine/half steps unissued. Saved modal error is dominated by fast mode9; forcing
-fit supports finite-amplitude fast-mode excitation. Initial-only A/halfA check
-passes6.111s/208.781MB with zero time steps: actual negative mode9 acceleration
-remainder quarters within8.63e-6; all-mode scaling error7.48e-5. Summary494a9eda,
-reviewfb4c56b5 preserve old failures and exclude temporal correctness claims.
-Worker next authors one separately frozen smaller-amplitude vibration fixture
-with unchanged gates and original history/source guards; reviewer before run.
-No automatic time campaign or gate relaxation. Native source still private; fullC7, durable
-restart, multi-element/yielding/contact and installed admission remain open.
+Managed C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver.
+Worker/root/saved_radial_boundary; reviewer/root/checkpoint_review. Do notarchive.
+Private inertia3334699c/dynamic9586af43 unchanged; midpoint successor36da8260
+has explicit stage residualtolerance(default1e-11 unchanged) plus authenticated
+immutable before-commit audit. Nondefault tolerance binds owner/state identity.
+Free24/loaded12 passed earlier; full-amplitude energy/velocity failures retained.
+Smaller defaultsolve20steps failedmomentum despitetrajectory/energyPASS.
+One newexplicit1e-15 fixture passes20steps45.739s/210.56MB with all originalgates,
+signedaudits independentlyreconcile. P/H belowfrozenfloor1e-10: noorderclaim,
+no exact oldsignedcause claim. Summaryfcc828b9/raw e996922e; reviewa9db4733.
+Focusedidentity0stepPASS4.200s/207.71MB. FullC7/public admission remainsopen.
 
-## Resources and next action
+Nextnative interface: NEW ge_beam3_native_dynamics.py factory + thin composition
+owner, focusedtest/example in managedtree only. Reuse tested dynamic/midpoint
+owners; map publicphysical15 into24 preserving algebraiczeros; preserve issued
+immutable states and atomicforwarding. Explicitlyrejectrestart until actual
+complete-state codec/reissuance exists. Old ge_beam3_native guards unchanged.
+Worker read-only proposalcomplete; interface scrutiny mustclose beforeauthoring.
+No new temporal campaign, broader sections/materials or mainnative copies yet.
 
-Routine180s/1GiB; named integrated900s/4GB or stricter frozen caps survive.
-No lead numerical process active; worker owns the new vibration process if launched.
-Finish the scoped native vibration attempt, checkpoint only stable owned records,
-then choose the next concrete programme gap. Reuse unaffected passed evidence.
-Preserve historical dirty scripts/tests/C6 and concurrent repository work.
-Git metadata requires escalation for exact owned stage/commit; never broad stage,
-reset or clean. Main installed artifact and public native guards remain unchanged.
+## Resources / processes / checkpoint ownership
+
+Routine180s/1GiB, integrated900s/4GB or stricterfrozenlimits survive. No lead numeric
+process; native authorizedruncompleted, no pending timesteps. Main newsource,
+docs/raw listed above ownedlead; D6note/native raw ownedworker and reviewnotes
+ownedreviewer become checkpointable only whenstable. Preserve historical dirty
+C6/scripts/tests and concurrent repository work. Exact-owned stage/commit needs
+Gitmetadata escalation; no broadstage/reset/clean. Next: checkpoint resolvedslice,
+then compose the reviewed native developmentowner and continue programme gaps.

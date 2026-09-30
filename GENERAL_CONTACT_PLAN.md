@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.41. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.42. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -9,6 +9,32 @@ This plan is the adaptable route to the complete C0–C9 programme. The lead may
 change implementation and sequencing within that authority. Historical plans
 and failures remain evidence; consumed execution authorities are never renewed.
 No publication, merge, release or historical-default change is authorized.
+
+
+## Latest integrated decisions — 2026-10-01
+
+D3: the additive `jet2_deformable_s3_dev` profile now admits one round B2/B3
+against one elastic S3 interior with differing target translations and zero
+target rotations. Complete local Jet2 derivatives, sparse physical work maps,
+bounded affine swept checks and ordinary static/restart integration pass local
+checks. [Source example](examples/general_contact_deformable_round_beam_s3.py)
+and [bounded guide](docs/GENERAL_CONTACT_C2_DEFORMABLE_BEAM_S3.md) are usable.
+The explicit1e5N/m2 fixture meets10um, independent contact-force parity and the
+unchanged0.1% linearized structural comparison; earlier reference/gap and
+metadata/preflight failures remain retained. This does not close allD3 or confer
+installed/scientific admission. Reuse unchanged checks by impact analysis.
+
+D6: the smaller-amplitude default-solve fixture passed trajectory/energy but
+failed momentum refinement. One new identity-bound1e-15 stage tolerance passes
+all20steps45.739s/210.56MB with unchanged inputs/gates; signed precommit audits
+reconcile. Momentum defects lie below the unchanged floor, so no order claim.
+Default1e-11 and old failures remain. The next useful slice composes a dedicated
+opt-in native dynamic analysis owner around the tested private equations, rather
+than repeating timesteps. Its initial scope is one centered elastic generalized
+ellipsoid, free or fully first-node-clamped; no implicit admission of other
+sections/boundaries/materials. Durable finite-velocity restart requires an actual
+state codec/reissuance contract; the static codec cannot substitute. Independent
+interface review precedes edits, and public historical guards remain unchanged.
 
 ## 1. Current position
 
@@ -20,8 +46,8 @@ No publication, merge, release or historical-default change is authorized.
 | D2 radial spatial response | κ=10⁷ misses one target-response gate; fixed-geometry independent solution explains the penalty bias | κ=10⁸ timed out; retain discrepancy and switch to missing partial-boundary row |
 | D2 named partial-support/cycle handoff | Independently accepted for the exact foundation and installed cycle parameter sets | Remaining shell combinations, geometry and explicit multi-pair ownership |
 | D2 S3-source/Q4-target | Shared P1 pressure, complete both-body tangent, four-corner swept rejection, public lifecycle/open restart and mixed-load/pure-press deforming-target KKT comparisons locally pass | Spatial/geometry qualification, broader pair composition and installed admission remain open |
-| D3 classical beam static | Independent cantilever/foundation comparison resolves reaction errors below 0.1% at 32/64 B2 cells; multiple fixed-rigid interactions pass local work, coupled response and split restart checks | Scientific and installed qualification; broader beam pairings, geometry and native coupling remain open |
-| D6 physical inertia/time integration | Free/loaded development slices pass; vibration coarse-energy/fine-velocity comparisons fail; zero-step check resolves quadratic fast-mode initial forcing | One separately frozen smaller-amplitude control with unchanged gates; broader temporal/native qualification remains open |
+| D3 classical beam static | Foundation and multiple-tool rows pass locally; new moving-normal, fixed-director deformable S3 work/tangent, coupled response and split restart pass | Scientific/installed qualification, free directors, broader pairings and geometry remain open |
+| D6 physical inertia/time integration | Free/loaded and tighter-solve small-vibration controls pass locally; all prior energy/velocity/default-solve failures remain | Integrate a usable dedicated opt-in analysis owner; broader temporal/state/native qualification remains open |
 | D3–D8 | Required programme remains open | Bounded integrated deliveries |
 
 The [D1 handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md)

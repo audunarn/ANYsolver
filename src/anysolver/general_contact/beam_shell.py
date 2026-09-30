@@ -246,6 +246,7 @@ class InteriorBeamShellLine:
 def validate_beam_shell_contact(model, definition: ContactDefinition,
                                 settings: ContactSolverSettings | None = None,
                                 ) -> ContactValidationReport:
+    from anysolver.e4_pl_s3_v2d_element import FORMULATION_ID as s3_id
     issues: list[str] = []
     controls = ContactSolverSettings() if settings is None else settings
     if (len(definition.surfaces) != 2 or definition.rigid_bodies
@@ -263,7 +264,7 @@ def validate_beam_shell_contact(model, definition: ContactDefinition,
         ), PROFILE)
     beam, shell = beams[0], shells[0]
     interaction = definition.interactions[0]
-    if len(shell.element_ids) > 1:
+    if len(shell.element_ids) > 1 and controls.beam_shell_geometry == "translated_planar":
         from .beam_shell_patch import validate_beam_shell_patch_contact
 
         return validate_beam_shell_patch_contact(model, definition, controls)
@@ -274,7 +275,7 @@ def validate_beam_shell_contact(model, definition: ContactDefinition,
     if (controls.beam_shell_rim_clearance is None
             or controls.beam_shell_rim_clearance < beam.beam_radius):
         issues.append("beam-shell requires explicit rim clearance at least its radius")
-    if controls.beam_shell_difference_step is None:
+    if controls.beam_shell_difference_step is None and controls.beam_shell_geometry == "translated_planar":
         issues.append("beam-shell requires an explicit dimensional difference step")
     if controls.line_integration_relative_tolerance is None:
         issues.append("beam-shell requires explicit line integration tolerance")
@@ -329,6 +330,13 @@ def validate_beam_shell_contact(model, definition: ContactDefinition,
             set(beam_element.node_ids) & set(shell_element.node_ids)
         ):
             issues.append("beam-shell participants must not share material nodes")
+    if controls.beam_shell_geometry == "jet2_deformable_s3_dev":
+        from .deformable_beam_s3_static import PROFILE as deformable_profile
+        profile = deformable_profile
+        if len(shell.element_ids) != 1 or getattr(model.mesh.elements.get(shell.element_ids[0]), "formulation_id", None) != s3_id:
+            issues.append("differentiated deformable target requires exactly one S3 V2D")
+        if controls.beam_shell_maximum_swept_intervals is None:
+            issues.append("deformable target requires an explicit swept interval budget")
     return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 

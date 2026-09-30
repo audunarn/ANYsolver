@@ -1,0 +1,23 @@
+# D3 deformable beam/S3 — independent bounded review
+
+## Disposition
+
+**Scoped local development PASS; no consequential source blocker in the explicit profile.** This review read source and saved evidence only; it performed no numerical run and edited no production code. Profile `JET2_ROUND_BEAM_DEFORMABLE_FIXED_DIRECTOR_S3_STATIC_DEV_V0` covers one reference-straight classical B2/B3 round cell and one elastic S3 physical interior, with target rotational coordinates exactly zero and von Karman structural scope. It is not scientific acceptance, installed qualification or release.
+
+## Work, admission and path boundary
+
+[Line kernel](../../src/anysolver/general_contact/deformable_beam_s3_line.py)96–127 differentiates the complete reference-line potential, one-half line stiffness times the integral of negative gap squared. The current S3 unit normal is differentiated through Jet2. Active-endpoint terms vanish through second variation because gap is zero at moving activation boundaries. Three-point Gauss covers the degree-four fixed-branch integrands. Reported zero integration relative error denotes this polynomial branch property; it does not certify zero floating error or general quadrature accuracy.
+
+[Manager](../../src/anysolver/general_contact/deformable_beam_s3_static.py)39–42/67–79 applies W-transpose gradient and W-transpose Hessian W, retaining physical skin-offset reaction moment channels. Physical forces are negative gradients and both-body wrench signs agree. Runtime63 rejects target rotational coordinates. Core585–589/1238–1241 and beam_shell333–339 select this route explicitly; the translated-planar route remains separate.
+
+Kernel130–211 bounds affine physical-node paths through cross-product Bernstein controls, positive area/reference orientation, normalized normal/edge rates, gap and rim bounds. Interval exhaustion fails closed. This supports the represented fixed-director path only, without generic director CCD, rim/cap collision or multiple-face coverage. Manager restart114–125 binds profile, law, line stiffness, gap, geometry, rim and resource settings.
+
+## Evidence and metadata impact
+
+[Final summary](d3_deformable_beam_s3_summary_v1_20261001.json) SHA256 `6899e02632f2c0c55d2a9085067b10f570ead6372c141d72f8f2a64838ea0ad3` binds all current sources and retained runs; independently checked recorded binding hashes have zero mismatches. Seven local checks pass. [V4 log](d3_deformable_beam_s3_static_v4_20261001.log) and [resource](d3_deformable_beam_s3_static_v4_20261001.resources.json):2 checks pass,5.490117s/269.582336MB. Explicit line stiffness1e5 N/m² retains the10µm gap and0.1% response gates. Beam-tip/target displacement are −.001025473/−.002914522m; minimum gap −3.970251µm. The independent moving-plane scalar contact gradient agrees; its structural comparison deliberately uses the existing assembled linear stiffness, with approximately4.4e-6 relative response difference. It is not an independent qualification of beam/shell structural mechanics. Standard JSON prefix restart reproduces final displacement within the frozen comparison and rejects changed interval budget; complete checkpoint/material-history parity was not established by that test.
+
+A direct full path fails cap128 and passes512; the four-increment coupled route succeeds with128. No swept algorithm, law or cap was relaxed. Historical large-response comparison NONPASS,1e4 gap failure, both swept diagnostics, V2 NOT_EXECUTED and exampleV1 AttributeError remain retained.
+
+The final manager only renames its line-stiffness alias and exposes the actual declared `end_caps` value. The existing driver uses this attribute to skip pressure-stiffness metadata. Kernel equations and restart values are unchanged. Historical V4's erroneous `normal_stiffness` label remains in raw evidence. [ExampleV2](d3_deformable_beam_s3_example_v2_20261001.log) passes4.844795s/269.406208MB, explicitly checks no `normal_stiffness` key and correct `line_stiffness_N_per_m2`. Its443 frozen source bindings match current files; runtime source import and both BLAS thread counts1 are recorded. This is a public-import source-checkout example, not an installed-wheel claim.
+
+Final identities: kernel `2f4d3036877639de3c8deef6b5c12dd16af12acc8a7d77d80ca5a7c1310ed48e`; manager `d40608c6759ef0a709c63ebe665b93cf80b52af34097fed2338c8dd38c34780f`; core `01ecbd77ed6d5ce50ee3dcf6e20886c05b944b015a1fcb486c0a21f5c66b5d94`; beam_shell `f726ebc5e6a9e098843c39484439a03250aaf0cf56f76c9e6c0df3d2e83b6369`. V4 manager `b1778300` is historical; final alias/end-caps changes are metadata only. Full programme, broader beam/shell scientific response, nonmatching/crossing/native rows and continuum qualification remain open.

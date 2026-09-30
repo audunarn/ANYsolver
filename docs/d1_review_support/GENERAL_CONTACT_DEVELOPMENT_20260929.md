@@ -522,3 +522,44 @@ production driver or hidden structural stiffness is proposed.
 **Multiple fixed-tool V2 retained test NONPASS:** named ordering and runnable source example pass; displacement mechanics completes with both pair gates and control value correct, but test compared dimensional residual6.28043e-8N with dimensionless1e-8. Driver correctly scales equilibrium by a positive load norm. V3 changes only this test to an explicit frozen15.620499N scale, stricter than final driver scale; normalized gate1e-8 unchanged. OldV2 remains failed; one corrected displacement check only, prior passed controls excluded.
 
 **Beam slice closed locally:** independent foundation refinement plus original-kernel multiple fixed-tool composition now have runnable source example, force/displacement controls, named-order determinism and split JSON restart. Twelve distinct multiple-tool checks include one old shell-routing control. Retain V2 assertion failure; V3 relative-force correction passes3.709s/259.756MB with old checks excluded. Summary30cc1bb0 records all runs/identities; scientific and installed promotion remain open. Native work proceeds through one zero-step initial-forcing discriminator, not another temporal campaign. Full programme/accepted boundaries unchanged.
+
+**2026-10-01 next beam-shell slice:** existing classical line-shell owner permits only common shell translation. Implement complete Jet2 derivatives of the reference-length round B2/B3 line potential against one deformable physical S3 interior, through the existing solver. First profile keeps physical directors fixed (shell rotational motion zero) while translations deform the target; finite rotations, rims/corners and patch composition remain separate. Derive normal, projection and all both-body work, preserving skins/offsets. A linear-authoritative-coordinate swept path changes the target normal: certify its gap, orientation and rim bounds using finite-budget conservative interval controls, never reuse the old fixed-normal endpoint shortcut. Local independent work/tangent and swept controls precede one coupled deforming-target discriminator; no broadened public admission before these checks.
+
+### 2026-10-01 — deformable beam/S3 integrated discriminator
+Seven local derivative/swept checks passed (3.299s/214.98MB). First integrated
+run: three checks pass; coupled equilibrium and independent contact forces agree,
+but the structural linearization comparison fails 3.98%. Its original .005m
+clearance/.1N fixture drove the soft S3 free coordinate to -.279m, outside the
+intended small-motion comparison. Retained as NONPASS, not regraded.
+Question: is the discrepancy the explicitly bounded structural nonlinear model
+difference? One new fixture scales clearance and load by .01, retains the 0.1%
+comparison gate, and tightens the declared physical gap to10um. No kernel change.
+V2 was NOT_EXECUTED: UTF8 note-read failure prevented input creation; retained
+entry failure, no mechanical evaluations. V3 is the actual new fixture.
+If this discriminator fails, diagnose before another loading sweep.
+
+The small-motion coupled V3 rejected its10um gap, not a mechanics/reference pass.
+A bounded independent scalar equilibrium (own plane force/Hessian) resolves
+gap=-12.55575749um at the same1e4N/m2 law: neither128 nor512 subdivisions can
+certify a genuinely inadmissible endpoint. The first scalar-root initialization
+failed; the analytic Hessian version converged and retains that failure.
+Next: explicitly1e5N/m2 in a NEW fixture, same10um/0.1% gates, no production law
+change/cap increase. This addresses enforcement compliance, not CCD weakening.
+
+### 2026-10-01 — scoped beam/native closure and next integrating action
+Beam/S3 V4 passes two checks5.490s/269.58MB: selected explicit1e5 line law
+meets10um; independent contact force and linearized structural comparison agree;
+full/JSON split restart matches. Whole affine reference path needs512 intervals;
+the four-increment ordinary route succeeds with unchanged128 per path. No CCD
+relaxation. ExampleV1 retained an AttributeError after unit-label correction;
+exposing actual declared end_caps metadata fixes it, V2 passes4.845s/269.41MB.
+Existing driver and mechanics unchanged. Summary and bounded guide link all
+failed/passed runs. Independent source scrutiny finds no blocker in this scope.
+
+Native: explicit1e-15 stage solve20steps localPASS45.739s/210.56MB, signed
+audits independently reconcile; momentum below frozen floors, no order claim.
+Previous failures remain. Next concrete native slice is dedicated opt-in analysis
+composition/public physical coordinate mapping; read-only design identifies no
+mechanics blocker in the exact tested centered elastic single-element scope.
+Do not borrow static restart for finite velocities. Worker reconnaissance is
+complete; interface review fixes ownership before authoring.

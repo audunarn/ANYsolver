@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "time_steps": 0,
+  "checks": {
+    "default_payload_and_nondefault_identity": true,
+    "seven_invalid_settings_rejected": true,
+    "actual_setting_mutations_rejected": true,
+    "scope_exit_setting_mutation_rejected": true,
+    "unissued_audit_and_session_closure": true
+  },
+  "elapsed_seconds": 0.0917028000112623,
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 4.200229700014461,
+    "peak_process_tree_memory_mb": 207.712256,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_solve_identity_v1_20261001.entry.source.py"
+    ],
+    "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_solve_identity_v1_20261001.log"
+  },
+  "hashes": {
+    "raw.json": "6f261962125f810b71ced0a8ab11f34a5c17368640c52930f8e7c6e6366262ef",
+    "execution.json": "89a0814990bd7479f2816f5345481d8f9f224a630ed2485097b8b8c0b504b3b5",
+    "resource.json": "02b058adf348f3cf5d9ee037503cc2372b427d08732409d838f366c09a3e1589",
+    "log": "a314e2ae86431a41e540e04d15404b4748dbaf57ec9cddddec2b36cda714d318",
+    "xml": "3e2ebe784dc1b7e1f9cb4ac3797385f99a6d2912b7c438f827449ccee0b52f55",
+    "inputs.json": "89beb3c2f302ced5e5405e25beb2140d7cabc167a7d661b9713fa98f5cfa2e11",
+    "entry.source.py": "a54574723a31304e3fb3765fe82314fbdaf2680c82fa1edaab2a7faccd0ae65b",
+    "test.source.py": "8561378f9e3d7cad1296fb702571709d5cbc60d4909e519998294c9cba9ac569",
+    "midpoint.source.py": "36da82603885f6f110adf40404331a5d519c7dccbe284dc67bb93ec44f75d1ac"
+  }
+}
