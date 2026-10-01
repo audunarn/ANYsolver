@@ -599,6 +599,13 @@ semidiscrete development row; finite-angle, spatial and C7 acceptance remain ope
 
 ## Development package and actual quadratic beam coupling
 
+Native contact-free dynamics now has an opt-in acceleration Newton chart,
+default increment unchanged. One free high-spin step is locally tested and
+independently assessed: stage2.301e-13, two directional errors<=5.034e-12,
+original E/P/H gates pass,12.030s/222.818MB. This is a named development control,
+not finite-angle trajectory, installed, scientificC7 or release admission.
+Evidence `native_finite_spin_acceleration_chart_v2_20261001.summary.json`/`.review.md`.
+
 Wheel8df161b0 from exact source-bound4c3ac836 runs the B2/S3 and contact-free
 native examples with445 installed Python source matches (17.027s/194.33MB).
 The old accepted installedartifact is untouched; this is tested routing only.

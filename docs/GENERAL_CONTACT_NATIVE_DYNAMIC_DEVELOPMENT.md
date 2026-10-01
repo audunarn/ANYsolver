@@ -160,3 +160,21 @@ Evidence: `d1_review_support/native_clamped_response_v1_20261001.summary.json` a
 remains1e-12, physical gates/defaults unchanged. This is temporal development
 against shared spatial matrices; it does not establish continuum accuracy,
 finite-angle torque-free motion, loaded restart or fullC7.
+
+### Optional acceleration coordinates — local development
+
+`create_analysis(..., stage_coordinates='acceleration')` selects midpoint
+acceleration in the15physical Newton slots. Algebraic frame/resultant increments
+are unchanged. The default is `increment`. Audits label the selected coordinates
+and supply `increment42` for physical displacement/spin interpretation; translations
+retain their compensated high/low poses. Restart identity binds the choice.
+
+The named free high-spin step(35,-25,20)rad/s,h=.0005s passes12.030s/222.818MB,
+two iterations/no backtracks, with independent saved assessment. Stage residual
+2.301e-13 and two directional errors1.376e-12/5.033e-12 meet original gates.
+Normalized E/P/H defects2.186e-7/6.169e-8/4.932e-9 pass1e-6. Evidence:
+`d1_review_support/native_finite_spin_acceleration_chart_v2_20261001.summary.json`
+and its `.review.md`. This tests the chart plus initialized-acceleration Newton
+seed; it does not isolate the cause of the old increment stall or qualify a
+finite-angle trajectory. The increment NONPASS and preinitializer input-alias
+NONPASS remain. No installed chart or fullC7 claim follows.

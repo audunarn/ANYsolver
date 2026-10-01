@@ -131,6 +131,8 @@ def contract(context):
             native=context.analysis.identity, midpoint=context._identity)),
         settings=dict(inertia_order=context.inertia_order, max_iterations=context.max_iterations,
             max_backtracks=context.max_backtracks, stage_residual_tolerance=context.stage_residual_tolerance,
+            **({} if context.stage_coordinates == 'increment' else
+               dict(stage_coordinates=context.stage_coordinates)),
             correction_tolerance=1e-11, endpoint_algebraic_residual_tolerance=1e-11,
             endpoint_algebraic_correction_tolerance=1e-11, endpoint_physical_tolerance=1e-11,
             lifetime_seconds=120.),

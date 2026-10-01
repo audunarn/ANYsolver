@@ -86,6 +86,8 @@ class CandidateStageAudit:
     stage_residual_norm: float
     stage_residual_tolerance: float
     session_provenance: bytes
+    stage_coordinates: str
+    increment42: np.ndarray
 
 
 @dataclass(frozen=True)
@@ -132,7 +134,8 @@ class MidpointContext:
     def __init__(self, analysis, *, inertia_order=24, max_iterations=12,
                  max_backtracks=8, structural_owner='legacy_clamp',
                  momentum_origin_high=(0., 0., 0.), momentum_origin_low=(0., 0., 0.),
-                 load_pattern=None, stage_residual_tolerance=1e-11):
+                 load_pattern=None, stage_residual_tolerance=1e-11,
+                 stage_coordinates='increment'):
         if type(analysis) is not NativeBeamAnalysis:
             raise ValueError('exact standalone native analysis required')
         if (type(inertia_order) is not int or inertia_order not in (4, 8, 24)
@@ -150,6 +153,12 @@ class MidpointContext:
         if not np.isfinite(self.stage_residual_tolerance) or self.stage_residual_tolerance <= 0.:
             raise ValueError('positive finite midpoint stage residual tolerance required')
         self._captured_stage_residual_tolerance = self.stage_residual_tolerance
+        if type(stage_coordinates) is not str or stage_coordinates not in ('increment', 'acceleration'):
+            raise ValueError('explicit midpoint increment or acceleration coordinates required')
+        if stage_coordinates == 'acceleration' and structural_owner != 'dynamic_elastic':
+            raise ValueError('acceleration coordinates require the dynamic elastic owner')
+        self.stage_coordinates = stage_coordinates
+        self._captured_stage_coordinates = stage_coordinates
         self.structural_owner = structural_owner
         self._selected_owner = structural_owner
         self.momentum_origin_high = _owned(momentum_origin_high)
@@ -261,6 +270,8 @@ class MidpointContext:
         # numerical acceptance setting binds states, candidates and operations.
         if self.stage_residual_tolerance != 1e-11:
             data['stage_residual_tolerance'] = self.stage_residual_tolerance
+        if self.stage_coordinates != 'increment':
+            data['stage_coordinates'] = self.stage_coordinates
         return data
 
     def _gate_inputs(self):
@@ -308,6 +319,7 @@ class MidpointContext:
                     snapshot = (self._current, self._visible_current, self._current_bytes,
                         self._issued.copy(), self._candidates.copy(), self._initial_checks,
                         self._restore_checks)
+                    self._guard_stage_coordinates()
                     if self._selected_owner == 'dynamic_elastic':
                         from ._ge_beam3_native_dynamic_restart import require_contract
                         require_contract(self)
@@ -315,6 +327,7 @@ class MidpointContext:
                 # A setting mutation during native/session exit cannot publish
                 # a state under the former numerical acceptance contract.
                 self._guard_stage_residual_tolerance()
+                self._guard_stage_coordinates()
                 if self._selected_owner == 'dynamic_elastic':
                     from ._ge_beam3_native_dynamic_restart import require_contract
                     require_contract(self)
@@ -334,10 +347,16 @@ class MidpointContext:
                 or self.stage_residual_tolerance != self._captured_stage_residual_tolerance):
             raise ValueError('midpoint stage residual tolerance changed')
 
+    def _guard_stage_coordinates(self):
+        if (type(self.stage_coordinates) is not str
+                or self.stage_coordinates != self._captured_stage_coordinates):
+            raise ValueError('midpoint stage coordinates changed')
+
     def _guard(self, token=None, stage='midpoint.guard'):
         cancellation_safe_point(token, stage)
         self.analysis._guard()
         self._guard_stage_residual_tolerance()
+        self._guard_stage_coordinates()
         if self.structural_owner != self._selected_owner:
             raise ValueError('midpoint structural route changed')
         if self.structural_owner == 'legacy_clamp':
@@ -520,36 +539,52 @@ class MidpointContext:
         u = np.asarray(u)
         if u.shape != (42,) or u.dtype != np.float64 or not np.isfinite(u).all() or np.any(u[list(self.fixed)]):
             raise ValueError('supported finite binary64 midpoint unknown42 required')
+        p = list(self.physical_free)
+        # The opt-in chart uses midpoint acceleration in physical slots only.
+        # Algebraic frame/resultant slots retain their original increments.
+        acceleration_chart = self.stage_coordinates == 'acceleration'
+        physical_increment = np.array(u[:24], copy=True)
+        if acceleration_chart:
+            physical_increment[p] = h*accepted.physical_velocity24[p]+(.5*h*h)*u[p]
         s = {k: v.copy() for k, v in accepted.mechanical.descriptor().items()}
         a = np.eye(42)
         for node in range(3):
             first = 6*node
             for axis in range(3):
-                s['positions'][node, axis], s['position_low'][node, axis] = split_sum((
-                    float(s['positions'][node, axis]), float(s['position_low'][node, axis]),
-                    .5*float(u[first+axis])))
+                terms = (float(s['positions'][node, axis]), float(s['position_low'][node, axis]))
+                if acceleration_chart:
+                    terms += (.5*h*float(accepted.physical_velocity24[first+axis]),
+                              .25*h*h*float(u[first+axis]))
+                else:
+                    terms += (.5*float(u[first+axis]),)
+                s['positions'][node, axis], s['position_low'][node, axis] = split_sum(terms)
             a[first:first+3, first:first+3] *= .5
             eta = u[first+3:first+6]
             s['nodal_frames'][node] = rotation(eta)@accepted.mechanical.nodal_frames[node]
             a[first+3:first+6, first+3:first+6] = exp_chart_terms(eta)[0]
         for cell in (0, 1):
             first = 18+3*cell
-            half = .5*u[first:first+3]
+            half = .5*physical_increment[first:first+3]
             s['cell_rotations'][0, cell] = rotation(half)@accepted.mechanical.cell_rotations[0, cell]
             a[first:first+3, first:first+3] = .5*exp_chart_terms(half)[0]
+        if acceleration_chart:
+            a[:, p] *= .5*h*h
         s['resultants'][0] += u[24:]
         mechanical = self._make(s)
         velocity = np.zeros(24)
-        p = list(self.physical_free)
-        velocity[p] = u[p]/h
         acceleration = np.zeros(24)
-        acceleration[p] = 2*(velocity[p]-accepted.physical_velocity24[p])/h
+        if acceleration_chart:
+            velocity[p] = accepted.physical_velocity24[p]+(.5*h)*u[p]
+            acceleration[p] = u[p]
+        else:
+            velocity[p] = u[p]/h
+            acceleration[p] = 2*(velocity[p]-accepted.physical_velocity24[p])/h
         r, j, material = self._structural(mechanical, accepted.histories)
         inertia = self._inertia(mechanical, velocity, acceleration)
         vmap = np.zeros((42, 42))
         bmap = np.zeros((42, 42))
-        vmap[p, p] = 1/h
-        bmap[p, p] = 2/h**2
+        vmap[p, p] = .5*h if acceleration_chart else 1/h
+        bmap[p, p] = 1. if acceleration_chart else 2/h**2
         jacobian = (j+inertia.mixed_configuration_derivative)@a
         jacobian += inertia.mixed_velocity_derivative@vmap+inertia.mixed_mass@bmap
         residual = r+inertia.mixed_inertia
@@ -559,6 +594,11 @@ class MidpointContext:
             _owned(velocity), _owned(acceleration), _owned(r), _owned(j), inertia, material)
 
     def evaluate_stage(self, accepted, unknown42, *, dt, cancellation_token=None):
+        """Evaluate the selected chart; physical slots are a_m or increments.
+
+        Algebraic slots remain frame/resultant increments in both charts.
+        The returned Jacobian differentiates the actual selected unknown42.
+        """
         with self._atomic_operation():
             self._time_step(dt)
             return self._stage(accepted, unknown42, dt, cancellation_token)
@@ -577,14 +617,19 @@ class MidpointContext:
             free = list(map(int, self.free))
             p = list(self.physical_free)
             u = np.zeros(42)
-            u[p] = dt*accepted.physical_velocity24[p]
+            acceleration_chart = self.stage_coordinates == 'acceleration'
+            u[p] = (accepted.physical_acceleration24[p] if acceleration_chart
+                    else dt*accepted.physical_velocity24[p])
             backtracks = 0
             for iteration in range(self.max_iterations+1):
                 stage = self._stage(accepted, u, dt, cancellation_token)
                 step = np.zeros(42)
                 step[free] = np.linalg.solve(stage.jacobian[np.ix_(free, free)], -stage.residual[free])
                 norm = self._norm(stage.residual, free)
-                if norm <= self.stage_residual_tolerance and self._correction(stage.mechanical, step) <= 1e-11:
+                correction_step = np.array(step, copy=True)
+                if acceleration_chart:
+                    correction_step[p] *= .5*dt*dt
+                if norm <= self.stage_residual_tolerance and self._correction(stage.mechanical, correction_step) <= 1e-11:
                     break
                 if iteration == self.max_iterations:
                     raise ValueError('midpoint stage iteration limit')
@@ -599,7 +644,8 @@ class MidpointContext:
                 else:
                     raise ValueError('midpoint stage residual backtracking failed')
             endpoint_step = np.zeros(42)
-            endpoint_step[p] = u[p]
+            endpoint_step[p] = (dt*accepted.physical_velocity24[p]+(.5*dt*dt)*u[p]
+                                if acceleration_chart else u[p])
             if self.structural_owner == 'legacy_clamp':
                 endpoint_mechanical = self._static.advance(accepted.mechanical, endpoint_step)
             else:
@@ -607,9 +653,14 @@ class MidpointContext:
                 low = np.array(accepted.mechanical.position_low, copy=True)
                 for node in range(3):
                     for axis in range(3):
-                        high[node, axis], low[node, axis] = split_sum((float(high[node, axis]),
-                            float(low[node, axis]), float(u[6*node+axis])))
-                cells = np.array([rotation(u[18+3*c:21+3*c])@accepted.mechanical.cell_rotations[0, c]
+                        terms = (float(high[node, axis]), float(low[node, axis]))
+                        if acceleration_chart:
+                            terms += (dt*float(accepted.physical_velocity24[6*node+axis]),
+                                      .5*dt*dt*float(u[6*node+axis]))
+                        else:
+                            terms += (float(u[6*node+axis]),)
+                        high[node, axis], low[node, axis] = split_sum(terms)
+                cells = np.array([rotation(endpoint_step[18+3*c:21+3*c])@accepted.mechanical.cell_rotations[0, c]
                     for c in (0, 1)]).reshape(1, 2, 3, 3)
                 endpoint_mechanical = self._make(dict(positions=high, position_low=low,
                     nodal_frames=accepted.mechanical.nodal_frames, cell_rotations=cells,
@@ -623,7 +674,8 @@ class MidpointContext:
             endpoint_mechanical, _, _, alg_norm, _ = self._solve_algebraic(
                 endpoint_mechanical, accepted.histories, cancellation_token)
             velocity = np.zeros(24)
-            velocity[p] = 2*stage.physical_velocity24[p]-accepted.physical_velocity24[p]
+            velocity[p] = (accepted.physical_velocity24[p]+dt*u[p] if acceleration_chart
+                           else 2*stage.physical_velocity24[p]-accepted.physical_velocity24[p])
             acceleration, reaction, _ = self._endpoint_acceleration(
                 endpoint_mechanical, accepted.histories, velocity)
             if not np.isfinite(accepted.time+dt) or accepted.time+dt <= accepted.time:
@@ -665,13 +717,20 @@ class MidpointContext:
                 audit_authentication_session=dict(thread=get_ident(),
                     session_object_id=(None if self._work_session is None else id(self._work_session)),
                     active_scope_authenticated=True, purpose='authenticate already issued candidate; not its original trial session'),
-                evidence_only=True, predecessor_sha256=candidate.predecessor_sha256,
+                evidence_only=True, stage_coordinates=self.stage_coordinates,
+                predecessor_sha256=candidate.predecessor_sha256,
                 predecessor_epoch=self.current.epoch, candidate_sha256=signature))
             scale, _ = self._gate_inputs()
+            increment = np.array(candidate.unknown42, copy=True)
+            if self.stage_coordinates == 'acceleration':
+                p = list(self.physical_free)
+                increment[p] = (candidate.dt*self.current.physical_velocity24[p]
+                                +(.5*candidate.dt*candidate.dt)*candidate.unknown42[p])
             return CandidateStageAudit(self._identity, signature, sha(candidate.stage),
                 candidate.predecessor_sha256, self.current.epoch, candidate.endpoint.epoch,
                 candidate.dt, candidate.stage, _owned(candidate.unknown42), _owned(scale),
-                candidate.stage_residual_norm, self.stage_residual_tolerance, provenance)
+                candidate.stage_residual_norm, self.stage_residual_tolerance, provenance,
+                self.stage_coordinates, _owned(increment))
 
     def commit(self, candidate, *, cancellation_token=None):
         with self._atomic_operation():

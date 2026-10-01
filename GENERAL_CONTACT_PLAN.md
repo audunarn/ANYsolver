@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.48. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.49. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -64,8 +64,8 @@ saved assessment confirms the scoped development result. The first execution tim
 creation before testing; one startup-only trace identified that boundary, and a
 fresh task-owned cache corrected it without source, mechanics, tolerance or cap
 changes. Retain both stopped records. A source-only assessment rejects a generic
-Euler rotor as an exact free elastic-beam trajectory. Next close the clamped
-driven temporal/support-impulse row with a fresh constrained descriptor; finite-angle
+Euler rotor as an exact free elastic-beam trajectory. The subsequent clamped
+driven temporal/support-impulse row uses a fresh constrained descriptor; finite-angle
 nonprincipal torque-free accuracy remains open. The clamped driven control now
 passes20steps (97.500s/222.941MB), independently reviewed: all six clamp reactions,
 including the algebraic-frame couple and fixed-origin lever moment, are accounted
@@ -73,10 +73,26 @@ for; support work is exactly zero. Trajectory refinement ratios.2515–.2524 and
 support-force impulse ratio.2503 match the fresh constrained descriptor. Other
 subfloor comparisons establish no order. No production code changed.
 
-Next run one source-reviewed high-spin step to discriminate kinematic rounding
-from a mechanics/tangent failure before a costly finite-angle campaign. Keep the
-declared spin(35,-25,20)rad/s, step.0005s, all gates and routine caps fixed; first
-failure stops and retains actual signed stages. The112-step temporal-refinement
+The one high-spin step stopped after12.061s with no accepted endpoint: residual
+backtracking at6.342e-12 against the explicit1e-12 solve setting. Signed saved
+arithmetic shows an acceleration correction alone worsens the same-unknown
+residual; finite representability of the increment remains a concrete concern.
+The single corrective candidate explicitly selects acceleration coordinates:
+physical a_m, v_m=v0+h*a_m/2, delta q=h*v0+h²*a_m/2, with full chain derivatives,
+original-unit correction gates, chart-aware audits and restart identity. Default
+increment coordinates remain. No tolerance, physical equations or caps change;
+independent source/saved assessment and directional derivatives now pass for one
+step (12.030s/222.818MB), two iterations/no backtracks, stage2.301e-13 and directional
+errors1.376e-12/5.033e-12. E/P/H defects2.186e-7/6.169e-8/4.932e-9 pass the unchanged
+1e-6 gates. A preinitializer input-alias NONPASS remains. This tests the chart plus
+its initialized-acceleration Newton seed; no sole-cause or trajectory claim follows.
+
+Next use one direct16-step free trajectory over.008s, same spin and acceleration
+chart, one120s owner/180s supervisor/1GiB. Reuse the unchanged kernel's derivative
+evidence; retain actual signed audits/endpoints and stop at the first physical
+gate failure. This bounded trajectory screen is not a temporal accuracy claim.
+Prepare separate refinement controls only after interpreting its result and cost.
+The112-step temporal-refinement
 proposal is not execution authority. Fresh checkpoint restore alone does not
 authorize renewed120s deadlines within one case; aggregate/segment boundaries
 need an explicit prospective decision. Same-spatial refinement is temporal

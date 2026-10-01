@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.638" timestamp="2026-10-01T05:30:38.970567+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_ge_beam3_native_finite_spin_acceleration_chart" name="test_one_acceleration_chart_finite_spin_step" time="0.042"><failure message="AssertionError: assert '2c8e243e74f0...89e10b2f265df' == 'f2c494a93315...704638f03f71a'&#10;  &#10;  - f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a&#10;  + 2c8e243e74f0b6eafff485b536f08242a51154d31dd8500afe689e10b2f265df">record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x00000203AC754A90&gt;
+
+    def test_one_acceleration_chart_finite_spin_step(record_property):
+        started = perf_counter()
+        inputs = json.loads(Path(os.environ['NATIVE_FINITE_SPIN_ACCELERATION_INPUTS']).read_text(encoding='utf-8-sig'))
+        output = Path(os.environ['NATIVE_FINITE_SPIN_ACCELERATION_RAW_OUTPUT'])
+        assert not output.exists() and inputs['criteria'] == CRITERIA
+        evidence = dict(status='RUNNING', accepted_steps=0, criteria=CRITERIA, unissued_stages=[],
+            scope='One finite-spin convergence/resolution screen; no finite-angle trajectory/reference claim')
+        def save(stage):
+            evidence.update(last_stage=stage, elapsed_seconds=perf_counter()-started)
+            output.write_text(json.dumps(evidence, indent=2, allow_nan=False)+'\n')
+            print(json.dumps(dict(stage=stage, elapsed_seconds=evidence['elapsed_seconds'])), flush=True)
+            assert evidence['elapsed_seconds'] &lt; CRITERIA['internal_time_limit_seconds']
+        def authentic(label, expected):
+            item = inputs['historical'][label]
+            data = Path(item['path']).read_bytes()
+            assert item['sha256'] == expected == sha256(data).hexdigest()
+            return data
+        try:
+            saved = json.loads(authentic('raw', RAW_SHA))['reference']
+            old_inputs = json.loads(authentic('inputs', OLD_INPUT_SHA))
+            authentic('fixture', FIXTURE_SHA)
+            failed = json.loads(authentic('failed_increment_raw', FAILED_RAW_SHA))
+            assert failed['status'] == 'NONPASS' and failed['accepted_steps'] == 0
+            changed = inputs['historical_source_overrides']
+            assert changed == {'_ge_beam3_native_midpoint.py':
+                '2c8e243e74f0b6eafff485b536f08242a51154d31dd8500afe689e10b2f265df',
+                'ge_beam3_native_dynamics.py': 'aeba9bb1dbc7aa2daa0eb9df0f6a1ac49e43f476bafefeb76dbbc4239654326b',
+                '_ge_beam3_native_dynamic_restart.py': '5bbbb4f7c99ef04483183f112c2c96dce19bc55f9f58cb9f3eecefe2065cf320'}
+            for path, expected in old_inputs['source_sha256'].items():
+                expected = changed.get(Path(path).name, expected)
+&gt;               assert sha256(Path(path).read_bytes()).hexdigest() == expected == inputs['source_sha256'][path]
+E               AssertionError: assert '2c8e243e74f0...89e10b2f265df' == 'f2c494a93315...704638f03f71a'
+E                 
+E                 - f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a
+E                 + 2c8e243e74f0b6eafff485b536f08242a51154d31dd8500afe689e10b2f265df
+
+tests\test_ge_beam3_native_finite_spin_acceleration_chart.py:313: AssertionError</failure></testcase></testsuite></testsuites>

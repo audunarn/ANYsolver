@@ -1,0 +1,42 @@
+{
+  "status": "DEVELOPMENT_PASS_INDEPENDENT_ASSESSMENT_PENDING",
+  "accepted_steps": 1,
+  "returned_stage_observations": 9,
+  "complete_route_seconds": 12.029950099997222,
+  "peak_process_tree_memory_mb": 222.818304,
+  "stage_coordinates": "acceleration",
+  "stage_residual": 2.301402845856432e-13,
+  "endpoint_algebraic_norm": 6.781834723852089e-17,
+  "endpoint_physical_norm": 1.4790436782206603e-13,
+  "iterations": 2,
+  "backtracks": 0,
+  "normalized_defects": {
+    "P": 6.169257898070544e-08,
+    "H": 4.932180569410859e-09,
+    "E": 2.186002174158605e-07
+  },
+  "elastic_witness": 3.9453110575013367e-23,
+  "directional_checks": [
+    {
+      "interval": 1e-05,
+      "relative_scaled_error": 1.3759279425280636e-12
+    },
+    {
+      "interval": 5e-06,
+      "relative_scaled_error": 5.0334607790522515e-12
+    }
+  ],
+  "initial_physics_matches_consumed_increment_case": true,
+  "claim": "One explicit acceleration-coordinate plus initialized-acceleration Newton-seed development step. No finite-angle trajectory, continuum spatial, C7, installed, or release claim.",
+  "retained_failures": [
+    "increment V2 backtracking NONPASS",
+    "acceleration V1 input alias NONPASS before initialization"
+  ],
+  "bindings": {
+    "inputs": "d2355dd4ad01a9845b37fb8d933f6e56eb4eaf26b3e5eeecec3850fc6b4a54de",
+    "raw": "63643016d676f459fa4c2bc39e5a9c880a26069cfd742732aeaece30f48b913c",
+    "resources": "736530c7e5b04b959d019d20d54380623367c4aafe09d4c1559927f688928782",
+    "log": "539e31e7c04364d23f13364ac3ebfbc27f41ec69b869b0e331e43ad8a4e59fbf",
+    "xml": "1fa4528e6d819e49819af805c7891203d3b6725232445b7eb7af11bef1925b8e"
+  }
+}

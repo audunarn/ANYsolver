@@ -1,0 +1,103 @@
+{
+  "status": "SOURCE_AUTHORED_NOT_EXECUTED",
+  "workspace": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver",
+  "owned_new_path": "tests/test_ge_beam3_native_finite_spin_step.py",
+  "selected_test": "tests/test_ge_beam3_native_finite_spin_step.py::test_one_finite_spin_step_resolution_and_actual_balance",
+  "criteria": {
+    "spatial_spin_rad_per_s": [
+      35.0,
+      -25.0,
+      20.0
+    ],
+    "dt_seconds": 0.0005,
+    "maximum_accepted_steps": 1,
+    "internal_time_limit_seconds": 120.0,
+    "explicit_stage_solve_tolerance": 1E-12,
+    "scientific_stage_gate": 1E-11,
+    "endpoint_balance_gate": 1E-11,
+    "normalized_defect_limit": 1E-06,
+    "elastic_witness_limit": 1E-10,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "length_scale_m": 2.0,
+    "maximum_returned_stage_observations": 128
+  },
+  "resource_bounds": {
+    "threads": 1,
+    "internal_seconds": 120.0,
+    "memory_limit_bytes": 1073741824,
+    "maximum_accepted_steps": 1,
+    "supervisor_seconds": 180.0,
+    "no_checkpoint_segments": true
+  },
+  "source_sha256": {
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_finite_spin_step.py": "fd6236f0a26f0cada2ecd335d67d1343cdba97e90af4015b9b2f3bae5480d6f0",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\native_forced_response_reference.py": "4d9a62656122a4e2a2e54e27775d39fc6473538e8f1b8e965a6f8e8b3bb0cf01",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_analysis.py": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py": "3f26dc51cd9e87998c2b89610b92dce297ff4d1ed0194a5fd464e7954b7fa4af",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\ge_beam3_native_dynamics.py": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+  },
+  "historical": {
+    "raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.raw.json",
+      "sha256": "705b627848aef2df9ce17cdce2dda937ea1ae29d1031a855f48ff567181248f7"
+    },
+    "inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.inputs.json",
+      "sha256": "07b3f12777cd21ed5932fe14f51ec3254ba1796f6627d3ce8373be4c2996926d"
+    },
+    "fixture": {
+      "path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py",
+      "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+    }
+  },
+  "historical_source_overrides": {
+    "_ge_beam3_native_midpoint.py": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a"
+  },
+  "future_environment": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "NUMBA_CACHE_DIR": "LEAD_FROZEN_EFFECTIVE_WRITABLE_CACHE",
+    "PYTHONPATH": "src;tests;.;examples",
+    "NATIVE_FINITE_SPIN_STEP_RAW_OUTPUT": "NEW_EXCLUSIVE_RAW_OUTPUT",
+    "OPENBLAS_NUM_THREADS": "1",
+    "NATIVE_FINITE_SPIN_STEP_INPUTS": "LEAD_FROZEN_INPUT_PATH"
+  },
+  "physical_fixture": "Authentic free curved elastic ellipsoid, nonzero physical section centroid/cross inertia; virgin physical q and v_node=Omega cross x, both physical cell spinsOmega; proper algebraic frame placeholders followed by actual consistency/acceleration initialization; zero load/supports",
+  "scales": "Independent authenticated fullM42: m=trace(T^T M T)/3, E0=.5 v24^T M24 v24, v*=sqrt(2E0/m), P*=m*v*, H*=m*2*v*; allpositive and actual initial M/kineticwork agree<=1e-12",
+  "saved_initial": "Full issued state/history/velocity/acceleration and actualR/I/J/M/Iv/Iq/balance, guardedscales, initializationrankmasschecks and provenance savedbeforegates",
+  "returned_stage_capture": "Transparent observer calls original_stage exactlyonce, persists actual signed unknown42/R/I/e/J/M/vm/am/pose before diagnostic arithmetic, returns sameobject; everyoriginalreturnedstage retainedonfailure, max128",
+  "resolution_diagnostics": "Fraction arithmetic of represented u/h and2*(u/h-v0)/h; actualvsrationalvm/am; compensatedposehalfdelta; unknownulp42, |J|ulp localindicator; mass-affine accelerationrounding effect separatefrom firstordervelocityeffect; Newtoncorrection/condition and rigidR/I/e workblocks. No full nonlinear-error bound or causal attribution",
+  "issued_candidate": "Officialauditbeforecommit, authenticstage/epoch/predecessor/context and audit-authentication session distinctfrom original trialscope; no auditcredentialreissuance",
+  "endpoint": "If issued/committed, actual complete endpoint R/I/J/M/balance/accounting and compensatedP/H/E defects savedbefore original1e-6 gates; failure never retunes/replays",
+  "decision": "One targeted cancellation-versus-work/Newton-map screen; a comparison to localulp indicators does not prove roundoff or derivative correctness. Further derivative or formulation action requires saved evidence/new explicit task",
+  "claim_boundary": "One step only, not finite-anglecoverage/trajectory/spatialaccuracy, rigidrotor, C7acceptance or release",
+  "authoring": "Compile-only syntax and bounded source/hash reads; no authored/production imports, reference numerical preparation, eigensolve, initializer, stage, test or timestep execution.112stepmacro unexecuted; no production or livingD6note edits.",
+  "isolated_v2_correction": "Public initial_checks is already a dict; remove redundant json.loads at initial evidence only. All mathematics/gates/settings/caps unchanged. V1 frozen snapshot/proposal preserved SOURCE_AUTHORED_NOT_EXECUTED; no numerical runs.",
+  "stable_stage_parameterization_addendum": {
+    "status": "SAVED_ARRAY_SOURCE_ONLY_PROSPECTIVE_DECISION; V2 NONPASS unchanged",
+    "preserved_original_proposal_sha256": "e91555fe4848a124501788fa9f10b601082599accd416131107c68c68c8b132d",
+    "raw_sha256": "63338a2594bd43c8bb996211ff12187e1e896bc88cf41d49ddecc4b102762d6f",
+    "observation": "22 actual returned stages, 0 accepted; backtracking NONPASS. Last scaled norm 6.341949461040904e-12 exceeds explicit 1e-12; algebraic norm 3.671284058879858e-18; correction 9.265434734922402e-17. Saved acceleration-rounding mass effect 8.8880873346229e-12 and Jacobian-times-ULP indicator 4.24674294668636e-11 are local indicators, not total-error certificates. Lead signed saved e+M*delta_a worsens norm to about 9.54e-12: compensation at unchanged quantized increment is insufficient evidence for recovery.",
+    "decision": "Lead-selected optional stage_coordinates='acceleration', default 'increment' unchanged. No changed physical equation, loads, material, scientific gates, correction gate or lifetime. Lead owns production authoring; worker diagnostic adaptation waits for stable sources.",
+    "coordinates": "p = physical translations9 + spatial cell rotations6; z = algebraic nodal angles9 + resultants18. New unknown w_p=a_mid (including angular alpha), w_z=z. Derived u_p=h*v0+(h^2/2)*w_p, u_z=w_z. Evaluate v_mid=v0+(h/2)*w_p and a_mid=w_p directly, never subtract u/h-v0. Zero acceleration predictor corresponds to the old velocity predictor. Homogeneous fixed rows retain zero increments/velocities/accelerations.",
+    "configuration": "x_mid=x0+(h/2)*v0+(h^2/4)*a; x1=x0+h*v0+(h^2/2)*a. Keep high/low coordinate sums and separate predictor/correction contributions. Cell phi=h*omega0+(h^2/2)*alpha; U_mid=Exp(phi/2)*U0, U1=Exp(phi)*U0. Original algebraic frame and resultant maps remain. Binary64 SO(3)/configuration resolution remains a separate limit.",
+    "tangent": "D=diag(h^2/2 on p,1 on z), A_w=A_u*D, V_w=diag(h/2 on p,0 on z), B_w=diag(1 on p,0 on z). J_w=(J_struct+I_q)*A_w+I_v*V_w+M*B_w. In exact arithmetic J_w=J_u*D. This is a right-column change of Newton coordinates; residual/work rows remain R+I, with no D.T pullback or symmetric-potential substitution. Cell configuration block is (h^2/4)*Jleft(phi/2). Feed D*delta_w into the existing physical increment correction norm.",
+    "endpoint": "v1=v0+h*a_mid directly, including spatial cell omega. Existing actual endpoint algebraic consistency and endpoint equilibrium acceleration solve remain mandatory: stored a1 is not copied a_mid. Time, epoch, material history, support reaction and atomic publication rules remain.",
+    "audit": "Authenticate chart tag, actual w42, derived represented u42/phi, actual vm/am and configuration map under original candidate/predecessor/epoch. Do not silently reinterpret acceleration slots as displacement/phi. Exact force/couple work and path angular impulse consume represented u/phi, never w_p. Audit authentication session is distinct from original trial session; immutable evidence remains noncredential. Chart-aware rational diagnostics must use the directly evaluated expressions and keep local ULP indicators distinct from causal proof.",
+    "restart": "Committed q/v/a/history/time/epoch remain complete; no Newton unknown is required because pending candidates are rejected. Bind optional chart in owner/settings/header identity and live guards, while preserving default increment payload identity where promised. Exact package manifest changes reject old-artifact restore; no hash override, implicit cross-chart reissuance, deadline renewal or coordinate repair.",
+    "next_action": "Source scrutiny of the lead acceleration branch and chart-aware companion test before one separately authorized affected verification. No execution here. Default and historical evidence reused only by stated impact; V2 stays NONPASS. Remaining configuration/structural/inertial derivative errors cannot be dismissed by the kinematic hypothesis."
+  }
+}
