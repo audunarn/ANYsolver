@@ -1,57 +1,59 @@
 # General contact restart — 1 October 2026
 
-## Goal, worktree and ownership
-FullC0–C9 remains active under [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4
-and [plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.59. Worktree
-C:/ANYworkspaceWork/ANYsolver-general-contact, codex/general-contact-core.
-Current parent a63fc01145fda4041d12030cf31f99c1522b5199; resolve HEAD after this
-checkpoint. Original120active-hour clock continues: last175689s/48.80h used.
-No publication, merge, release or historical-default change. Preserve six
-unrelated dirty tracked files and old untracked evidence. [Previous note](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART37.md).
+## Scope and ownership
+User-authorised first step: preserve unfinished owned work, reconcile current
+main on a separate branch, and perform bounded affected-dependency checks.
+Wider feature development remains paused. No merge to main, publication, release,
+history rewrite, changed science gates or renewed consumed run authority.
+Full C0–C9 remains incomplete under [goal](GENERAL_CONTACT_GOAL.md)
+rev2026-09-30.4 and [plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.59.
+Original120-active-hour clock was paused at177092s/49.19h; do not reset it.
 
-## Current integrated outcome
-Centered finite inertia delegates reviewed NumPy batch kernel9ee021df; historical
-P5scalar untouched. Main/managed native owners remain synchronized. Balanced
-scalar/batch short-route PASS gives27.46% complete-phase reduction with bit-identical
-physical state/work/accounting; local6.86x is not a full-route claim. Principal-axis
-literal analytic.4rad control and installed batch wheel0a51e63e development routing
-pass. These are committed in parenta63; earlier failures remain retained.
+Original worktree C:/ANYworkspaceWork/ANYsolver-general-contact,
+codex/general-contact-core; previous checkpoint ef3fe13cb4c483a73147781beac197a1902aa5af.
+[Previous complete note](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART38.md)
+retains accepted subsets, failures, exact temporal evidence and earlier history.
+Six foreign tracked modifications stay untouched and outside staging. Their byte
+hashes are saved outside the repository at
+C:/ANYworkspaceWork/contact-main-reconciliation-20261001/protected-dirty-before.json.
 
-Finite-spin temporal programme native_finite_spin_temporal_refinement_v1_20261001:
-- N162session7480 andN216session98744 terminal0/consumed, one840s owner each;
-  469.504s/453.947MB and601.339s/543.941MB.162/216commits/gates,486/648stages,
-  325/433endpoint records;459bindings and physical/history/state journals match.
-- Exact executed runner792600dc; input0a84315f/d0c6af89. Rawbdb38c54/1e25cd27;
-  frozen earlier inputs/source remain NOT_EXECUTED. No source/physics/gate/cap change.
-- Saved N192prefix108 reused atT=.0045, common2j/3j/4j states, no interpolation.
-  Comparison2dff58e5 PASS: velocity/cellrotation ratios2.857135/2.857119 match20/7.
-  Position unresolved, no order/estimate. Conditional fine estimates assume leading
-  h² only; no certified continuum/spatial/C7 claim. Total1070.843s<1800programme cap.
-- Author /root/saved_radial_boundary owns summary/evidence; independent reviewer
-  /root/checkpoint_review confirms saved comparison math and selected actual fields.
-  Final exact summary/review disposition is in adjacent files. No numerical process
-  remains, and no trajectory authority may be replayed or renewed.
+## Preserved pending work
+Native loaded/clamped restart session98994 is terminal0/consumed. Raw PASS:
+6commits/gates, direct/restored continuation parity,3negative headers,
+454source postmatches,29.8188s/217.219MB. Inputs11f89ba5a5953cd259853c07054d0a24cad98a0bdce447c67739f795d871cca6;
+raw d76df97e366b07767503ae6e1cfdcecf7eaefdebc3e050012a6ca0fd27641def;
+resources fee13bc1026742f54602ad77c14308995c7bfc0f1e2c0abd938ea2c5f590086e.
+All original entry/test/input/environment/raw/stage/log/resource/XML files are
+preserved under docs/d1_review_support/native_loaded_clamped_restart_v1_20261001.*.
+Independent saved-result assessment remains pending; no new C7 claim and no rerun.
 
-ANYfem C:/ANYworkspaceWork/ANYfem-contact-intent now atb98cf7c, clean. Optional
-caller-supplied public ContactSolverSettings are retained in result artifacts;
-25checks pass against accepted installed0b2ac9be, review99920fff closed. No defaults
-are invented when omitted. Job routing/admission remain false. ANYstructure
-isolated checkpoint3659c9c remains intent/mapping/early rejection only.
+ANYfem C:/ANYworkspaceWork/ANYfem-contact-intent checkpoint
+630884ae9b591adf27ce380ec93c0b812cdbeee5 preserves explicit settings persistence,
+mapper/tests and all failed/successful contact-intent-settings-* evidence.
+Saved21checks pass against installed0b2ac9be (4.26s; supervisor6.3845s/246.510MB).
+Independent app assessment remains pending; job routing/admission remain false.
+ABC.__annotate_func__/ABC.__annotations_cache__ combined-preimport guard failure
+remains unresolved. Normal pytest setup is a test-entry workaround, not a fix.
+Contact owns precise reproducer/triage; main guard maintainer owns any agreed fix.
+Historical installed artifacts and their acceptance identities remain unchanged.
 
-## Next authorised work
-Close exact checkpoint of this programme, then exercise actual public
-loaded/clamped acceleration-chart split restart through existing state/work codec.
-Reuse unaffected free/unloaded evidence, original physical/support gates and routine
-180s/1GB; any named larger run needs the existing bounded entry. No new temporal
-sweep, tolerance/cap increase, restart segmentation or optional840s validation scope.
-Author can propose this bounded fixture source-only; reviewer is available via
-followup_task for consequential scrutiny, not duplicate runs. Lead owns public
-interfaces, transactions, coupled integration and capability disposition.
+## Main reconciliation
+Both owners verified pinned main ef85882858533eb82086810c04eec58d18fe625a;
+ANYsolver worker also confirmed live remote through git ls-remote.
+Create C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on
+codex/contact-main-reconcile-20261001 from this preservation checkpoint, then
+history-preserving merge of the pin. Do not include foreign dirt, combine the
+experimental programmes or transfer old acceptance to the new artifact.
+Source overlap with main: nonlinear_static.py; dependencies include S3 assembly,
+current-state tangent, guard/token/cache lifecycle and plane-stress stopping.
+Preserve contact tangent capture and main cancellation checkpoints together.
 
-D1-interior and named bounded D2 partial-shell handoff remain independently accepted;
-old accepted wheel8af00b06/433bindings untouched. Remaining D2–D8 requirements,
-native spatial/geometry/section breadth and fullC7/impact/application admission remain
-open. Managed native tree C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver
-is required; exact writes and Git metadata may need scoped escalation. Keep frozen
-histories, failures and science targets. At72active hours reassess the measured route;
-never restart the original clock or mark full programme complete from these controls.
+[Shared coordination](C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_plans/ANYsolver_STIFFENED_CONTACT_COORDINATION_20261001.md):
+ANYsolver worker coordinates shared exports/dispatch/persistence; contact owns
+contact/native dynamics and contact_intent/contact_results. No combined admission.
+One heavy numerical job across the two programmes, with explicit reservation.
+Other owner reserved the slot for its checks; contact has no active/reserved job.
+Prepare only until release. Use focused installed dependency/contact/restart
+checks; never replay consumed trajectories/formal qualifications. Preserve raw
+failures and effective runtime/import settings. Record outcome here, then pause
+again at the end of this authorised first step unless the user extends it.
