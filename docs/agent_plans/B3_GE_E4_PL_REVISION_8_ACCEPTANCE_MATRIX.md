@@ -981,3 +981,16 @@ persistence, public controls and restored continuation. Installed21/21 (seven
 new/fourteen historical) pass with exact artifacts and independent review clear.
 This verifies experimental input roundtrip, not native-project persistence or
 physical/aggregate qualification; no speedup or release claim follows.
+
+**2 October independent development deltas:** public experimental B2 mixed
+Q4/native-S3 static point panels now pass28changed-source/180installed checks,
+both1/10/100 examples and historical Q4 consumer roundtrip. GeneralM3 and
+S3consumer/mass/spectral/footprint obligations remainopen.
+[Exact artifacts, failures and review](development/r8-b2-mixed-panel-20261002/results.md).
+
+One CalculiX U1/US3 five-row nodal-P1 canary executes with sixU,14equations,
+free/nonzero beamrootyaw, positiveMxwork and DAT-rounding-compatible rows.
+This resolves all-user reference-route feasibility only; no native-half-cell,
+consistent U1 trace, RFwrench, physical torque accuracy or F03acceptance follows.
+Memorysamples unavailable; no numerical rerun after reporting-guard fixes.
+[Exact outputs, source identities and Read review](development/r8-bl5-u1-us3-canary-20261002/results.md).

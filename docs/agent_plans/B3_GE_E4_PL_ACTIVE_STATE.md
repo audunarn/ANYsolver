@@ -9,8 +9,8 @@ F03 authority is UNCONSUMED. No aggregate gate, main merge, default/version chan
 or publication is accepted/authorized. Preserve all historical failed evidence.
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Integration parent f2ac2115;
-B2 mixed-panel source/evidence delivered with this note; inspect actual Git HEAD.
+branch codex/stiffened-main-reconcile-20261001. Current product46026dca;
+U1/US3 canary evidence delivered with this note; inspect actual Git HEAD.
 shared-main testing baseline1a0ae901. Main and contact files remain untouched.
 Original foreign F03 script hashc908b1f3...9481 was reverified; never run/edit it.
 
@@ -63,12 +63,20 @@ Independent source review identifies three reference seams: historical square
 J equals polar I rather than Saint-Venant torsion; the old solid port uses a
 position-gradient rotation rather than a thickness director; detached beam yaw
 requires a null-mode compatibility equation. No old deck is launched. Official
-CalculiX2.23 source/manual support an all-user U1/US3 route with independent
-shell rotational coordinates; historical U1 runs exist. Coupled U1/US3 usability
-is unexecuted. Next bounded canary distinguishes usable five-row director coupling
-from preprocessing/output incompatibility; it cannot establish root-wrench balance
-from seven-digit DAT. Declare section/offset semantics and observable work first;
-do not rerun the old U1+CPS failure or retrofit a physical square-torsion claim.
+CalculiX2.23 all-user U1/US3 canary now executes: one triangle/2members, exact
+nodal-P1 five-row port, shellroot clamp/beamroot1..5only, Mx1Nm. USER SECTION
+suppliesUS3thickness. Fourteen solved equations, sixU/all6nodes, positive work
+2.315852e-7J and rounding-compatible gaps; beamroot yaw staysfree/nonzero.
+No warnings/errors; effective CPUreports1, .047s. Memory/threadsampling missed
+the tinyjob: zeros meanunobserved, notmeasuredpeak. Originalrunner and tightened
+warning/resource guards retained; saved-data replay passes with no numerical rerun.
+Independent Read review clear. [Evidence/limits](development/r8-bl5-u1-us3-canary-20261002/results.md).
+
+Resulting action: build a physically declared common-work reference through this
+usable director route. First resolve section/attachmentidealization and output
+work maps; do not assume nodal-P1 equals consistent U1 or retainedB3 traces.
+No RFwrench, physical torque accuracy or F03acceptance inferred. Do not repeat
+the canary, old U1+CPS failure or retrofit a square-torsion claim.
 
 Delivered product slice: explicit B2MixedPanelDefinition with Q4/native S3-V2D
 static shells, existing sparse/factor/batch/point services. Historical Q4 entry
