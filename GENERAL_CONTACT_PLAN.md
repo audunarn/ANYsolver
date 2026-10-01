@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.64. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-01.65. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -83,6 +83,28 @@ the driver option. Keep the same physical force/mass/work and transaction contra
 do not substitute timestamps for integration at the event. Routine180s/953MiB/
 thread1 applies, without cap increases or cross-chat coordination. General curved
 or rotating geometry will require its own conservative path bounds.
+
+The event-subdivision development candidate is now present but not promoted.
+Fixed-branch Newmark endpoint families use algebraic-only condensation, full modal
+gap polynomials and bounded Bernstein root isolation before actual-force refinement.
+Independent review's multiple-duration-root counterexample is retained and tested.
+Uniform activation/release, scalar Newmark/energy, history work, restart and
+failure/cancellation checks pass at the recorded source stage. Two later review
+defects (point-root loss and gap-only boundary promotion) have focused passing
+regressions. The tilted multi-support case remains NONPASS: after a localized
+event it detects a transition below minimum_dt and exhausts bounded cutback.
+Current source-v11 gives12passes/4failures; repeated numerical start events also
+affect uniform release/restart/history. Installed verification and final review
+remain pending.
+See [development checkpoint](docs/d1_review_support/contact_c6_event_subdivision_20261001/results.md).
+
+The retained v11 start/probe gaps and outgoing rates identify repeated localization
+of a resolved boundary: uniform gaps are at machine precision; the tilted first
+support is about1.1e-11s from the coalesced boundary, within the event time budget.
+Derive a boundary trace/continuation contract and bind necessary state into restart;
+coalescing requires both declared time and gap budgets. Do not suppress contacts, reduce minimum_dt
+or enlarge tolerances merely to pass. Reuse unaffected evidence after the correction,
+then finish the coherent source/installed/profile review once.
 
 After that row closes, select the next missing integrated D5/D6 capability from
 source inspection: advance physical composition/geometry or shared impact-driver

@@ -28,9 +28,13 @@ def main() -> None:
                         help="opt into right directional massless rates at touch (development)")
     parser.add_argument("--algebraic-path", action="store_true",
                         help="lift the physical quadratic interval through algebraic equilibrium (development)")
+    parser.add_argument("--event-subdivision", action="store_true",
+                        help="integrate at localized represented contact events (development)")
     args = parser.parse_args()
     if args.algebraic_path and not args.one_sided_rates:
         parser.error("--algebraic-path requires --one-sided-rates")
+    if args.event_subdivision and not args.algebraic_path:
+        parser.error("--event-subdivision requires --algebraic-path")
     if (not np.isfinite(args.constant_downward_load_n)
             or args.constant_downward_load_n < 0.0):
         parser.error("constant downward load must be finite and nonnegative")
@@ -86,6 +90,7 @@ def main() -> None:
         solver_controls=ContactTransientSolverControls(
             allow_s3_descriptor_dev=True, s3_one_sided_rates_dev=args.one_sided_rates,
             s3_algebraic_path_dev=args.algebraic_path,
+            s3_event_subdivision_dev=args.event_subdivision,
         ),
     )
     ry = [model.mesh.dof_manager.get_node_dofs(node)[4] for node in (1, 2, 3)]
@@ -101,6 +106,9 @@ def main() -> None:
     }
     if args.algebraic_path:
         summary["represented_path_transition_times_s"] = result.represented_path_transition_times
+    if args.event_subdivision:
+        summary["localized_contact_event_times_s"] = result.localized_contact_event_times
+        summary["event_endpoint_evaluations"] = result.event_endpoint_evaluations
     print(summary)
 
 

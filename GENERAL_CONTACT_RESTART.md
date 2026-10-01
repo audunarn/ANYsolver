@@ -1,63 +1,65 @@
 # General contact restart — 1 October 2026
 
-## Authority and location
+## Authority and worktree
 
-Goal active; user authorizes development under tiered/new testing workflow and
-prohibits communication with the other task. No cross-chat inspection/messages.
-Worktree `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch
-`codex/contact-main-reconcile-20261001`. Read `git log -1` for the checkpoint
-containing this note; slice parent `f31ccee577e73522e092af11573f84384f51b57c`.
-[Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4 and [plan](GENERAL_CONTACT_PLAN.md)
-rev2026-10-01.64 preserve required C0–C9 outcomes, scientific/frozen/consumed
-restrictions and120active-hour budget. No publication, merge to main or release.
-Original contact checkout/six foreign dirty files remain untouched.
+Goal active; fullC0–C9 remains required. User authorizes tiered/new testing workflow
+and prohibits communication with the other task. None occurred. Worktree
+`C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch
+`codex/contact-main-reconcile-20261001`; slice parent `f2bab7ee`. Read latest Git
+identity/status for the checkpoint. [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4,
+[plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.65. No publication, main merge,
+release or changed defaults. Original contact checkout/six foreign files untouched.
 
-## Completed bounded slice
+## Current candidate and evidence
 
-[Algebraic-path results/raw](docs/d1_review_support/contact_c6_algebraic_path_20261001/results.md)
-and [independent review](docs/d1_review_support/contact_c6_algebraic_path_20261001/review.md):
-explicit guided elastic single-S3/fixed-plane development profile. Physical
-Newmark quadratic lifted through exact affine massless equilibrium; eight masks
-under three-support cap, polynomial root partition/extrema, full coverage and
-finite/continuity checks. Separate physical corner minima and explicit endpoint
-position/rotation budgets. No added rotational inertia or softened mechanics.
-New constant/history profiles and version3 preserve terminal support masks;
-old profiles/checkpoints unchanged. Transition reporting and affine load work
-commit only with accepted physical state. History retains exact-zero represented
-algebraic base-force eligibility. Unsupported/non-SPD/unresolved paths fail.
+Prior affine S3 path slicef2bab7ee is installed-tested/reviewed development, not
+C6 acceptance. Current event-subdivision candidate is not promoted. New
+event_subdivision.py uses algebraic-only condensation and generalized physical
+modes (at most3), complete rational gap numerators, bounded Bernstein isolation
+and actual Newmark endpoint refinement. Ordinary solver reequilibrates proposed
+event durations from committed origin before physical commit. Explicit time/gap
+and root/localization budgets, new constant/history identities; old defaults and
+schemas preserved. Current event profile uses fingerprint-bound version3 schema.
+An event root pose seeds the coupled solve; no force/mass/eigenvalue is softened.
 
-Final installed24checks pass13.0469614s/176775168B,449source/wheel/site matches,
-198onsite imports, thread1/JIT-off. Independent scalar force/work, public tilted
-force/minimum, endpoint/restart/cleanup and historical compatibility checks.
-Independent OpenAI source/evidence review closes this development slice; Mistral
-Read attempt is incomplete at10turns. No scientific C6 acceptance or speed claim.
-Review-found overflow/coverage/boundary risks and corrections retained in evidence.
-No numerical NONPASS in this selection; historical failures unchanged.
+[Results/raw](docs/d1_review_support/contact_c6_event_subdivision_20261001/results.md)
+and [review findings](docs/d1_review_support/contact_c6_event_subdivision_20261001/review.md):
+sourcev7 13passes at that source stage (uniform activation/release, scalar Newmark/
+energy, history work, restart, finite limits and failure/cancellation). Finalv10
+two focused point-root/boundary-time regressions pass. Currentv11 is12passed/
+4failed; installed verification pending. Retain v2 bad selector/no execution,
+v3/v4/v5 numerical nonpasses and v8/v9 tilted failure; none is regraded.
+Mistral startup Access denied; independent OpenAI review identified missing
+point-root handling and gap-only checkpoint promotion; corrected withv10 tests.
+No final candidate review, scientific acceptance, release or speed claim.
 
-## Next authorized decision
+## Principal open question and next action
 
-Add physical event subdivision at activation/release. First use an independent
-scalar open-flight/activation fixture to discriminate a branch-specific event
-solve from repeated first-root cutback that can stall. Fix stage consistency,
-finite localization budgets, work and transaction semantics before a driver
-option. Current path checks represented interval minima and reports transitions;
-it does not integrate at events or certify general/continuum collision timing.
-No broad temporal/refinement campaign or replay of consumed native authorities.
-Full D2–D8/native/application/impact breadth remains required.
+Tilted guided S3(.002tilt,.1span) remains NONPASS. Sourcev9 reaches
+t=.0101500192s then exhausts9cutbacks: event below minimum resolved duration.
+Earlier seed/root-precision correction moved the failure but did not close it.
+The currentv11 module confirms repeated numerical start localization: uniform
+release starts at gaps1e-18m with outgoing rates1m/s but incoming active mask;
+tilted first support has gap1.1e-11m/rate−.999m/s, within the event time budget.
+Next derive resolved-boundary supports, right continuation and restart-bound state;
+coalesce only within both explicit time/gap budgets. Full force/path checks remain.
+Do not suppress contacts or shrink minimum_dt/increase budgets. Fresh coherent
+module still has4NONPASS; the known issue is not fixed or installed-qualified.
 
-## Ownership, testing and budget
+After correction, reuse unaffected evidence, run coherent source selection and
+one installed artifact/example, then close independent review. Do not start a
+temporal sweep or replay consumed native authorities. D2–D8 breadth remains open.
 
-No owned job running at checkpoint; internal reviewer idle, no worker edits.
-Focused source runner is `scripts/run_portable_ci.py --development <exact targets>
---jit off --timeout-seconds 180 --memory-limit-mib 953`,
-new RUNNER_TEMP, thread1. One installed artifact per coherent slice; stricter
-frozen caps prevail. Use wrapper queue rules and compact bounded coordination.
-ANYfem checkpointebce855 remains unchanged; application admission false.
-Historical full-preimport ABC annotation-cache guard NONPASS stays open;
-do not patch shared guard/export/dispatch here.
+## Processes and budget
 
-At19:53:01UTC goal clock186645s plus retained3120s manual offset equals189765s,
-52.71h used/67.29h remaining. Subsequent active time is additional; no reset.
-[Prior checkpoint/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART40.md)
-retains earlier source/installed failures, testing-pin reconciliation and links
-to consumed evidence. Goal remains active; this checkpoint is not programme completion.
+No owned process running; independent internal reviewer idle, no worker edits.
+Only lead owns dirty/new candidate files. Routine source runner:
+`scripts/run_portable_ci.py --development <exact targets> --jit off
+--timeout-seconds 180 --memory-limit-mib 953`, new RUNNER_TEMP/thread1.
+Stricter frozen caps prevail. ANYfemebce855 unchanged/admissionfalse. Historical
+full-preimport ABC annotation-cache guard NONPASS open; do not edit shared guard.
+
+At20:35:19UTC goal189086s+retained3120s offset=192206s,53.39h used/66.61h
+remaining from original120activehours. Subsequent active time additional; no reset.
+[Prior history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART41.md)
+links accepted slices, prior source/installed failures and consumed authorities.

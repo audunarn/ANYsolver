@@ -820,3 +820,18 @@ See [results](d1_review_support/contact_c6_algebraic_path_20261001/results.md).
 These represented transition timestamps do not implement event-driven subdivision
 or establish continuum collision timing. General geometry/material/dynamic breadth,
 production JIT, engineering impact acceptance and fullC6 remain open. No release.
+
+## Guided S3 event subdivision — candidate, not admitted
+
+Explicit `s3_event_subdivision_dev` requires the algebraic-path/rate options.
+Branch-endpoint duration roots are isolated using complete modal gap polynomials
+and Bernstein sign variations, then proposals are reequilibrated with the ordinary
+coupled driver before commit. Separate time/gap controls and finite budgets bind
+the new constant/history profile identity. Existing defaults stay unchanged.
+Uniform source-stage activation/release, history work, restart and failure cleanup
+checks pass; reviewed point-root and boundary-time defects have focused corrections.
+Current coherent source module has12passes/4NONPASS, including uniform/history
+release, restart and tilted multi-support continuation below minimum_dt after a
+localized boundary. No passing full-candidate or installed event verification, independent
+acceptance or release claim follows. See [checkpoint](d1_review_support/contact_c6_event_subdivision_20261001/results.md).
+Continuation traces at the numerically localized boundary are the next uncertainty.

@@ -219,3 +219,19 @@ remain open. No general collision certificate follows.
 Run `python examples/general_contact_s3_plane_impact.py --one-sided-rates
 --algebraic-path --ramp-downward-load-n 0.0002`.
 See [results](d1_review_support/contact_c6_algebraic_path_20261001/results.md).
+
+## Event subdivision candidate — not promoted
+
+`s3_event_subdivision_dev`/`--event-subdivision` selects new development profiles
+and requires the algebraic-path/rate opt-ins. It localizes actual branch-Newmark
+endpoint roots using full modal gap polynomials and bounded Bernstein isolation,
+then reequilibrates the shortened step before commit. Separate time/gap numerical
+budgets and finite root/localization caps bind restart identity. Old profiles,
+force law, physical mass and defaults stay unchanged.
+
+Current coherent source module has12passes/4failures. Uniform/history release,
+restart and tilted multi-support continuation repeat a numerically resolved
+boundary instead of advancing on its outgoing branch. Boundary-support continuation
+and restart state require correction before promotion or installed verification.
+No general event/C6 admission follows. See the
+[retained checkpoint](d1_review_support/contact_c6_event_subdivision_20261001/results.md).
