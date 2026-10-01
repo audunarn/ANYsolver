@@ -36,6 +36,8 @@ from ._stiffened_shell_b2_q4_point_experimental import (
 )
 from ._stiffened_shell_b2_q4_panel_experimental import (
     ExperimentalB2Q4PanelAnalysis, Q4PanelShell, Q4B2Point,
+    ExperimentalB2MixedPanelAnalysis, S3V2DPanelShell,
+    ExperimentalB2MixedPanelCapabilities,
     ExperimentalB2Q4PanelResponseEnvelope,
     B2ReferenceModesRequest, B2ReferenceModesResult,
     B2FootprintReferenceModesResult, B2ModalConstraintRow,
@@ -112,6 +114,24 @@ class B2Q4PanelDefinition:
     footprints: tuple[B2NodalRigidFootprint, ...] = ()
 
 
+@dataclass(frozen=True)
+class B2MixedPanelDefinition:
+    """Opt-in elastic Q4/native S3 V2D/B2 finite-vertex point panel.
+
+    Any S3 facet restricts this definition to static solves. S3 inertia,
+    spectral analysis and nodal footprints remain deferred.
+    """
+
+    profile: str
+    shell_nodes_m: object
+    shells: tuple[Q4PanelShell | S3V2DPanelShell, ...]
+    members: tuple[PhysicalB2Member | CompiledPhysicalB2Member, ...]
+    points: tuple[Q4B2Point, ...]
+    transformation: object
+    prescribed_offset: object
+    footprints: tuple[B2NodalRigidFootprint, ...] = ()
+
+
 def create_analysis(*, definition, resources=None):
     """Create the explicitly selected experimental owner for an admitted profile."""
     if type(definition) is LinearDefinition:
@@ -144,6 +164,15 @@ def create_analysis(*, definition, resources=None):
             transformation=definition.transformation,
             prescribed_offset=definition.prescribed_offset,
             footprints=definition.footprints)
+    if type(definition) is B2MixedPanelDefinition:
+        if definition.profile != B2_E4_PL_FAST_LINEAR_V1 or resources is not None:
+            raise ValueError("explicit experimental B2 mixed-panel definition required")
+        return ExperimentalB2MixedPanelAnalysis(
+            definition.shell_nodes_m, definition.shells,
+            definition.members, definition.points,
+            transformation=definition.transformation,
+            prescribed_offset=definition.prescribed_offset,
+            footprints=definition.footprints)
     raise ValueError("unsupported stiffened-shell definition/profile")
 
 
@@ -160,6 +189,7 @@ __all__ = [
     "GEFreeReferenceModesResult", "GE_FREE_FREE_MODAL_ONLY_V1",
     "GE_NODAL_FOOTPRINT_INCREMENT_ORIGIN_CHART_V2",
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
+    "B2MixedPanelDefinition", "S3V2DPanelShell", "ExperimentalB2MixedPanelCapabilities",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
     "B2FootprintReferenceModesResult", "B2ModalConstraintRow",

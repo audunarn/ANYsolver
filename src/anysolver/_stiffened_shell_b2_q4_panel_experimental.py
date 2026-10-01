@@ -35,6 +35,7 @@ from ._b2_physical_linear_batch_dev import (
 from .control import CancellationToken, SolveCancelled
 from ._stiffened_shell_physical_q4_mass import physical_mass
 from .e4_pl_element import QualifiedE4PLShellElement
+from .elements import create_shell_element
 from .fe_core import FEModel
 from .linalg import MatrixClass, factorize_cached
 
@@ -175,6 +176,19 @@ class Q4B2Point:
 
 
 @dataclass(frozen=True)
+class S3V2DPanelShell:
+    """Explicit native S3 V2D elastic facet; physical inertia is deferred."""
+
+    shell_id: str
+    node_ids: tuple[int, int, int]
+    E: float
+    nu: float
+    thickness_m: float
+    reference_normal: tuple[float, float, float]
+    density_kg_m3: float | None = None
+
+
+@dataclass(frozen=True)
 class ExperimentalB2Q4PanelCapabilities:
     profile_id: str = PROFILE_ID
     point_law_id: str = LAW_ID
@@ -190,6 +204,16 @@ class ExperimentalB2Q4PanelCapabilities:
 @dataclass(frozen=True)
 class ExperimentalB2Q4FootprintCapabilities(ExperimentalB2Q4PanelCapabilities):
     footprint_law_id: str = FOOTPRINT_LAW_ID
+    footprints: tuple[B2NodalRigidFootprint, ...] = ()
+
+
+@dataclass(frozen=True)
+class ExperimentalB2MixedPanelCapabilities(ExperimentalB2Q4PanelCapabilities):
+    shell_domain: str = "explicit flat elastic Q4/native S3 V2D panel"
+    point_law_id: tuple[str, ...] = ()
+    shell_formulations: tuple[tuple[str, str], ...] = ()
+    point_laws: tuple[tuple[str, str], ...] = ()
+    footprint_law_id: str | None = None
     footprints: tuple[B2NodalRigidFootprint, ...] = ()
 
 
@@ -388,10 +412,12 @@ def _require_connected_panel(shells, members, points, footprints=()):
         owners = {}
         for entity in entities:
             key = (kind, entity.shell_id if kind == 0 else entity.member_id)
+            shell_count = 3 if type(entity) is S3V2DPanelShell else 4
             if (kind == 0 and (type(entity.node_ids) is not tuple or
-                    len(entity.node_ids) != 4 or
+                    len(entity.node_ids) != shell_count or
                     any(type(node_id) is not int for node_id in entity.node_ids))):
-                raise ValueError("four integer Q4 nodes required")
+                raise ValueError("three integer S3 V2D nodes required" if shell_count == 3
+                                 else "four integer Q4 nodes required")
             for node_id in entity.node_ids:
                 previous = owners.setdefault(node_id, key)
                 join(key, previous)
@@ -476,6 +502,8 @@ class ExperimentalB2Q4PanelAnalysis:
     only when the affine plan fixes coordinates without other MPCs.
     """
 
+    _mixed_shells = False
+
     def __init__(self, shell_nodes_m: Mapping[int, Sequence[float]],
                  shells: Sequence[Q4PanelShell],
                  members: Sequence[PhysicalB2Member | CompiledPhysicalB2Member],
@@ -486,15 +514,23 @@ class ExperimentalB2Q4PanelAnalysis:
         supplied_members = tuple(members)
         points = tuple(points)
         footprints = tuple(footprints)
+        has_s3 = any(type(shell) is S3V2DPanelShell for shell in shells)
+        if has_s3 and footprints:
+            raise ValueError("S3 mixed-panel nodal footprints are unsupported")
+        admitted_shells = ((Q4PanelShell, S3V2DPanelShell) if self._mixed_shells
+                           else (Q4PanelShell,))
         if any(type(g) is not B2NodalRigidFootprint for g in footprints):
             raise ValueError("typed experimental B2 nodal footprints required")
         if (len(shells) < 2 or len(supplied_members) < 2 or not (points or footprints) or
-                any(not isinstance(shell, Q4PanelShell) for shell in shells) or
+                any((type(shell) not in admitted_shells if self._mixed_shells else
+                     not isinstance(shell, Q4PanelShell)) for shell in shells) or
                 any(not isinstance(member, (PhysicalB2Member,
                                             CompiledPhysicalB2Member))
                     for member in supplied_members) or
                 any(not isinstance(point, Q4B2Point) for point in points)):
-            raise ValueError("multi-Q4/multi-B2 physical point panel required")
+            raise ValueError("multi-Q4/S3/multi-B2 physical point panel required" if
+                             self._mixed_shells else
+                             "multi-Q4/multi-B2 physical point panel required")
         _unique_ids(shells, "shell_id")
         _unique_ids(points, "point_id")
         definitions = tuple(member.definition if isinstance(
@@ -518,7 +554,8 @@ class ExperimentalB2Q4PanelAnalysis:
             positions[node_id] = vector
         used_shell_nodes = {node_id for shell in shells for node_id in shell.node_ids}
         if used_shell_nodes != set(shell_ids):
-            raise ValueError("every declared shell node must belong to a Q4")
+            raise ValueError("every declared shell node must belong to a Q4/S3" if self._mixed_shells
+                             else "every declared shell node must belong to a Q4")
         shell_index = {node_id: i for i, node_id in enumerate(shell_ids)}
         beam_positions = {}
         for member in definitions:
@@ -538,32 +575,46 @@ class ExperimentalB2Q4PanelAnalysis:
             model.add_node(node_id, *positions[node_id])
         rows, columns, values = [], [], []
         mass_rows, mass_columns, mass_values = [], [], []
-        complete_mass = all(shell.density_kg_m3 is not None for shell in shells)
+        complete_mass = not has_s3 and all(shell.density_kg_m3 is not None for shell in shells)
         complete_mass = complete_mass and all(member.definition.mass is not None
                                              for member in compiled)
         shell_lookup = {}
+        pieces = []
         for index, shell in enumerate(shells, 1):
-            if (len(shell.node_ids) != 4 or len(set(shell.node_ids)) != 4 or
+            count = 3 if type(shell) is S3V2DPanelShell else 4
+            if (len(shell.node_ids) != count or len(set(shell.node_ids)) != count or
                     any(node_id not in shell_index for node_id in shell.node_ids)):
-                raise ValueError("four declared Q4 nodes required")
+                raise ValueError("distinct declared Q4/S3 nodes required" if self._mixed_shells
+                                 else "four declared Q4 nodes required")
             vertices = np.array([positions[node_id] for node_id in shell.node_ids])
-            _flat_vertices(vertices)
+            if count == 4:
+                _flat_vertices(vertices)
             material_id = f"panel-material-{index}"
             model.add_material(material_id, shell.E, shell.nu)
-            element = QualifiedE4PLShellElement(
-                index, shell.node_ids, material_id,
-                thickness=shell.thickness_m,
-                reference_normal=np.asarray(shell.reference_normal, dtype=float))
+            if self._mixed_shells:
+                element = create_shell_element(
+                    index, list(shell.node_ids), material_id,
+                    formulation="e4-pl-s3-v2d" if count == 3 else "e4-pl",
+                    thickness=shell.thickness_m,
+                    reference_normal=np.asarray(shell.reference_normal, dtype=float))
+            else:
+                element = QualifiedE4PLShellElement(
+                    index, shell.node_ids, material_id, thickness=shell.thickness_m,
+                    reference_normal=np.asarray(shell.reference_normal, dtype=float))
             model.add_element(index, element)
+            pieces.append((shell, vertices, element, material_id, count))
+        # Native S3 scope validation must see the complete shell registry.
+        for shell, vertices, element, material_id, count in pieces:
             local = element.compute_stiffness_matrix(
                 model.mesh, model.get_material(material_id))
-            if local.shape != (24, 24) or not np.isfinite(local).all():
-                raise ExperimentalB2Q4PanelError("finite Q4 stiffness required")
+            if local.shape != (6*count, 6*count) or not np.isfinite(local).all():
+                raise ExperimentalB2Q4PanelError("finite Q4/S3 stiffness required" if self._mixed_shells
+                                                else "finite Q4 stiffness required")
             slots = np.array([6*shell_index[node_id]+component
                               for node_id in shell.node_ids
                               for component in range(6)])
             _scatter(rows, columns, values, slots, local)
-            if shell.density_kg_m3 is not None:
+            if count == 4 and shell.density_kg_m3 is not None:
                 local_mass = physical_mass(
                     vertices, density_kg_m3=shell.density_kg_m3,
                     thickness_m=shell.thickness_m,
@@ -591,6 +642,7 @@ class ExperimentalB2Q4PanelAnalysis:
                               shape=(total, total)).tocsr()
         constraint_rows, constraint_cols, constraint_values = [], [], []
         point_reference_frames = []
+        point_laws = []
         for point_index, point in enumerate(points):
             if (point.shell_id not in shell_lookup or
                     point.member_id not in member_lookup):
@@ -600,6 +652,7 @@ class ExperimentalB2Q4PanelAnalysis:
             law = compile_reference_point(
                 member.definition, vertices, station=point.station,
                 offset_local_m=point.offset_local_m)
+            point_laws.append((point.point_id, law.law_id))
             if footprints:
                 point_reference_frames.append(tuple(
                     tuple(tuple(map(float, row)) for row in frame)
@@ -646,6 +699,10 @@ class ExperimentalB2Q4PanelAnalysis:
         self.shell_node_ids = shell_ids
         self.beam_node_ids = beam_ids
         self.point_ids = tuple(point.point_id for point in points)
+        self._has_s3 = has_s3
+        self._shell_formulations = tuple((shell.shell_id, element.formulation_id)
+                                        for shell, _, element, _, _ in pieces)
+        self._point_laws = tuple(point_laws)
         self._point_reference_frames = tuple(point_reference_frames)
         self.footprints = footprints
         self.footprint_ids = tuple(g.footprint_id for g in footprints)
@@ -822,6 +879,8 @@ class ExperimentalB2Q4PanelAnalysis:
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        if self._has_s3:
+            raise ValueError("native S3 V2D physical mass and reference modes are deferred")
         if type(request) is not B2ReferenceModesRequest:
             raise ValueError("typed reference-mode request required")
         if self._M is None:
@@ -1268,6 +1327,26 @@ def _modal_scaled_residual(residual, bound, row_scale):
     if denominator == 0.:
         return 0. if numerator == 0. else float("inf")
     return float(numerator/denominator)
+
+
+class ExperimentalB2MixedPanelAnalysis(ExperimentalB2Q4PanelAnalysis):
+    """Explicit mixed-shell admission using the existing static sparse owner."""
+
+    _mixed_shells = True
+
+    @property
+    def capabilities(self) -> ExperimentalB2MixedPanelCapabilities:
+        existing = super().capabilities
+        return ExperimentalB2MixedPanelCapabilities(
+            point_law_id=tuple(dict.fromkeys(law for _, law in self._point_laws)),
+            attachment=existing.attachment,
+            operations=existing.operations,
+            spectral_domain=("native S3 V2D physical mass and modes deferred" if self._has_s3
+                             else existing.spectral_domain),
+            shell_formulations=self._shell_formulations,
+            point_laws=self._point_laws,
+            footprint_law_id=FOOTPRINT_LAW_ID if self.footprints else None,
+            footprints=self.footprints)
 
 
 def create_experimental_b2_q4_panel_analysis(*args, **kwargs):

@@ -9,7 +9,8 @@ F03 authority is UNCONSUMED. No aggregate gate, main merge, default/version chan
 or publication is accepted/authorized. Preserve all historical failed evidence.
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Current product commit d96471c6;
+branch codex/stiffened-main-reconcile-20261001. Integration parent f2ac2115;
+B2 mixed-panel source/evidence delivered with this note; inspect actual Git HEAD.
 shared-main testing baseline1a0ae901. Main and contact files remain untouched.
 Original foreign F03 script hashc908b1f3...9481 was reverified; never run/edit it.
 
@@ -51,12 +52,42 @@ allocation or a finite-removal prediction. No coefficient tuning/repeated
 completion derivative follows. Finest endpoint root Fy differs only-.002517N
 from saved1:1, while Fz differs-.028353N; keep all components visible.
 
-Stop this bounded batch. Next useful M2 action is the physically matched
+Stop the completed endpoint batch. Next useful M2 action is the physically matched
 BL5 torque/shear reference and remaining actual response envelope. Define the
 missing observable/physical connection correspondence before another expensive
 reference; do not reuse rigid-tip E02, add a fourth mesh, rerun auxiliary metrics
 or select from rank/gaps/a quotient. Independent ready M3/M4 work may proceed.
 F03/G0B/M2 and mandatory external/scale/release obligations remain OPEN.
+
+Independent source review identifies three reference seams: historical square
+J equals polar I rather than Saint-Venant torsion; the old solid port uses a
+position-gradient rotation rather than a thickness director; detached beam yaw
+requires a null-mode compatibility equation. No old deck is launched. Official
+CalculiX2.23 source/manual support an all-user U1/US3 route with independent
+shell rotational coordinates; historical U1 runs exist. Coupled U1/US3 usability
+is unexecuted. Next bounded canary distinguishes usable five-row director coupling
+from preprocessing/output incompatibility; it cannot establish root-wrench balance
+from seven-digit DAT. Declare section/offset semantics and observable work first;
+do not rerun the old U1+CPS failure or retrofit a physical square-torsion claim.
+
+Delivered product slice: explicit B2MixedPanelDefinition with Q4/native S3-V2D
+static shells, existing sparse/factor/batch/point services. Historical Q4 entry
+is unchanged; no triangular mass, spectral or footprint claim. Question: does
+the admitted native S3 operator and variable-width F10 port preserve dense-KKT
+work/reactions, ownership and complete-case batch semantics? Focused changed
+checks then one coherent installed wheel answer it. Failure is preserved; no
+fallback to a legacy triangle or relaxed tolerance. Scientific acceptance and
+ANYfem new-schema integration remain separate.
+
+Final changed source28/28 and fresh installed180/180 pass; reversed facets,
+normal scaling and nonzero prescribed motion included. Mixed/all-S3 public
+1/10/100 examples pass with one eligible factorization; legacy B2 and unchanged
+ANYfem native Project save/reopen pass. Independent Read review has no remaining
+finding. Wheel fb12ac66...75fd matches all391source/site modules; unchanged
+consumer11728ab8...fa56e matches98. Initial connectivity failures and incorrect
+normal-test expectation retained, no tolerance relaxed. Effective1thread/JIT-off;
+180s/1GiB supervision; all owned jobs terminal. No speedup, S3 consumer/mass/modes
+or aggregate acceptance inferred. [Evidence and boundaries](development/r8-b2-mixed-panel-20261002/results.md).
 
 ## Verification and restart
 

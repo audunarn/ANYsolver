@@ -430,7 +430,7 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 |---|---|---|
 | M1 matching-station GE | IMPLEMENTED_NOT_QUALIFIED | Accepted spatial point-action recovery and ordinary native ANYfem input roundtrip now verified. Latest consolidated installed slice covers171 distinct predicates (V1 170pass/1 fixturefail; V2 corrected1/1). Matched E01, physical torque/drilling, complete V01–V06/V17/V18/V28 evidence and independent acceptance open. |
 | M2 bonded line | IN_PROGRESS | BL5 physical law, multiplier resolution, F03 and ratios/refinement/transfer open. |
-| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/B2 point-panel 1/10/100, selected envelopes and ordinary native ANYfem input save/reopen tested. Scoped F09 and F10/F11 point/static accepted; fixed E01 B2 reference executed with retained discrepancies. General F10/F11/F13, complete consumer workflow and converged E01 accuracy remain open. |
+| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/native-S3/B2 point-panel 1/10/100 and selected recovery tested; historical Q4 consumer save/reopen retained. Scoped F09 and F10/F11 point/static accepted; fixed E01 B2 reference executed with retained discrepancies. S3 consumer/mass/spectral/footprint routes, general F10/F11/F13, complete consumer workflow and converged E01 accuracy remain open. |
 | M4 remaining mechanics | IN_PROGRESS | Selected-node rigid footprints have installed unrebased solver/consumer evidence; footprint chart transport and broader material/attachment/topology/load/spectral/imperfection/capacity requirements remain mandatory. |
 | M5 scale/release | NOT_STARTED | Practical scale, platforms, external programme and authorized release remain mandatory. |
 
