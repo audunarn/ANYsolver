@@ -174,6 +174,7 @@ class LinearDefinition:
     lines: tuple[ExperimentalL1Line | ExperimentalBL5Line, ...] = ()
     q4_pullback_policy: str = Q4_HISTORICAL_POLICY
     footprints: tuple[NodalRigidFootprint, ...] = ()
+    modal_boundary_policy: str = "supported"
 
 
 @dataclass(frozen=True)
@@ -500,6 +501,13 @@ class ExperimentalGEAnalysis:
         if (type(definition) is not LinearDefinition or
                 definition.profile != PROFILE or resources is not None):
             raise ValueError("explicit experimental GE definition required")
+        from ._stiffened_shell_ge_reference_modal import GE_FREE_FREE_MODAL_ONLY_V1
+        if (type(definition.modal_boundary_policy) is not str or
+                definition.modal_boundary_policy not in ("supported", GE_FREE_FREE_MODAL_ONLY_V1)):
+            raise ValueError("explicit admitted GE modal boundary policy required")
+        self._modal_only = definition.modal_boundary_policy == GE_FREE_FREE_MODAL_ONLY_V1
+        if self._modal_only and (definition.fixed or definition.lines or definition.footprints):
+            raise ValueError("free-free modal-only policy requires empty supports and six-pose points only")
         panel = definition.shell
         if type(panel) is not ShellPanel:
             raise ValueError("owned Q4 panel required")
@@ -523,7 +531,8 @@ class ExperimentalGEAnalysis:
         definition = LinearDefinition(
             definition.profile, panel, tuple(definition.beams),
             tuple(definition.points), tuple(definition.fixed),
-            definition.lines, definition.q4_pullback_policy, definition.footprints)
+            definition.lines, definition.q4_pullback_policy, definition.footprints,
+            definition.modal_boundary_policy)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count, beam_inertias = _beam_reference(
             definition.beams)
         self._reference_modal_inertias = beam_inertias
@@ -619,6 +628,8 @@ class ExperimentalGEAnalysis:
             identity_payload["footprint_chart_admission_policy"] = chart_admission_policy_descriptor()
         if self._footprint_stable_s3:
             identity_payload["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
+        if self._modal_only:
+            identity_payload["modal_boundary_policy"] = definition.modal_boundary_policy
         self._identity = sha256(json.dumps(
             identity_payload, sort_keys=True,
             separators=(",", ":")).encode()).hexdigest()
@@ -707,7 +718,7 @@ class ExperimentalGEAnalysis:
             fixed.add(start+6*index[support.node]+support.component)
         self._fixed = np.array(sorted(fixed), dtype=int)
         self._free = np.setdiff1d(np.arange(count), self._fixed)
-        if not len(self._fixed) or not len(self._free):
+        if (not len(self._fixed) and not self._modal_only) or not len(self._free):
             raise ValueError("physical supports and free coordinates required")
         # This exact five-row layout cannot restrain all six rigid motions
         # of an otherwise free native beam. Other lines or beam supports may
@@ -740,13 +751,24 @@ class ExperimentalGEAnalysis:
         self._linear_factor = None
         self._linear_factorizations = 0
         self._linear_refinements = 0
+        if self._modal_only:
+            from ._stiffened_shell_ge_reference_modal import _admit
+            _admit(self)
 
     def _require_open(self):
         if self._closed:
             raise RuntimeError("experimental GE analysis is closed")
 
+    def _require_stateful_scope(self):
+        if self._modal_only:
+            raise ValueError("free-free modal-only policy does not admit static, finite, restore or chart state writes")
+
     @property
     def capabilities(self):
+        if self._modal_only:
+            return dict(self.reference_modal_capabilities, profile=PROFILE,
+                        modal_boundary_policy=self._definition.modal_boundary_policy,
+                        accepted_state_writes=False)
         attachment = (("reference point pose",) if self._connections else ())
         if self._line_samples:
             attachment += tuple(dict.fromkeys(
@@ -847,6 +869,8 @@ class ExperimentalGEAnalysis:
             details["footprint_chart_admission_policy"] = chart_admission_policy_descriptor()
         if self._footprint_stable_s3:
             details["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
+        if self._modal_only:
+            details["modal_boundary_policy"] = self._definition.modal_boundary_policy
         return details
 
     @property
@@ -866,6 +890,7 @@ class ExperimentalGEAnalysis:
     def solve_linear(self, actions: tuple[NodalAction, ...], *,
                      cancellation_token=None) -> LinearResult:
         self._require_open()
+        self._require_stateful_scope()
         if self._finite_driver is not None:
             raise RuntimeError("finite and reference-linear states cannot be mixed")
         if self._unsupported_modes:
@@ -956,6 +981,7 @@ class ExperimentalGEAnalysis:
         intact. The observer is ephemeral and is not stored in checkpoints.
         """
         self._require_open()
+        self._require_stateful_scope()
         if on_accepted is not None and not callable(on_accepted):
             raise TypeError("on_accepted must be callable or None")
         if self._unsupported_modes:
@@ -993,6 +1019,7 @@ class ExperimentalGEAnalysis:
     def rebase_rotations(self, expected_generation: int, *, cancellation_token=None):
         """Issue an experimental physical shell-anchor reset at the same load."""
         self._require_open()
+        self._require_stateful_scope()
         if self._definition.footprints:
             raise ValueError("experimental nodal footprint chart rebase is unsupported: continuation parity not established")
         if self._finite_driver is None:
@@ -1030,6 +1057,7 @@ class ExperimentalGEAnalysis:
     @_accepted_snapshot
     def restore(self, raw: bytes) -> LinearResult:
         self._require_open()
+        self._require_stateful_scope()
         if self._unsupported_modes:
             raise ValueError(self._unsupported_modes[0])
         if self._finite_driver is not None:

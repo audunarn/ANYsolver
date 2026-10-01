@@ -21,6 +21,7 @@ from ._stiffened_shell_b2_q4_panel_experimental import _modal_scaled_residual
 
 POLICY = "GE_Q4_POINT_SUPPORTED_VIRGIN_FULL_DESCRIPTOR_REFERENCE_MODES_V1_EXPERIMENTAL"
 MASS_POLICY = "Q4_DIRECTOR_AND_CENTERED_NATIVE_FULL_CELL_INERTIA_24_POINT_V1"
+GE_FREE_FREE_MODAL_ONLY_V1 = "GE_CONNECTED_Q4_POINT_FREE_FREE_MODAL_ONLY_V1_EXPERIMENTAL"
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,27 @@ class GEReferenceModesResult:
     production_qualified: bool = False
 
 
+@dataclass(frozen=True)
+class GEFreeReferenceModesResult:
+    """Separate zero-mode space and flexible requested pairs; no legacy schema change."""
+    status: str
+    model_identity: str
+    flexible: GEReferenceModesResult
+    rigid_origin_m: tuple[float, float, float] = ()
+    canonical_rigid_coordinates: tuple[np.ndarray, ...] = ()
+    rigid_coordinates: tuple[np.ndarray, ...] = ()
+    rigid_multipliers: tuple[np.ndarray, ...] = ()
+    rigid_kinetic_gram: np.ndarray | None = None
+    rigid_equation_residuals: tuple[float, ...] = ()
+    rigid_constraint_residuals: tuple[float, ...] = ()
+    rigid_flexible_mass_overlap: float = 0.
+    spectral_shift_rad2_s2: float = 0.
+    failure_reason: str | None = None
+    policy: str = GE_FREE_FREE_MODAL_ONLY_V1
+    selection: str = "six verified canonical rigid fields and flexible pairs nearest negative shift; completeness unqualified"
+    production_qualified: bool = False
+
+
 class _ModalFailure(RuntimeError):
     pass
 
@@ -76,8 +98,8 @@ def _admit(owner):
         raise ValueError("GE reference modes require a fresh virgin owner without accepted histories")
     if (definition.lines or definition.footprints or definition.shell.s3_elements or
             definition.shell.j2_curve is not None or owner._has_physical_fibre or
-            not definition.points or not definition.fixed):
-        raise ValueError("supported virgin elastic Q4/generalized-GE six-pose points required; lines, footprints, S3, materials and free-free modes unsupported")
+            not definition.points or (not definition.fixed and not owner._modal_only)):
+        raise ValueError("virgin elastic Q4/generalized-GE six-pose points required; lines, footprints, S3 and materials unsupported")
     if owner._unsupported_modes:
         raise ValueError(owner._unsupported_modes[0])
     # The shell's compile seam already requires one connected cell graph.
@@ -109,13 +131,14 @@ def _admit(owner):
             for j in range(3):
                 rigid[row:row+3, 3+j] = np.cross(np.eye(3)[j], position)
             rigid[row+3:row+6, 3:] = np.eye(3)
-    supported = rigid[owner._fixed]
-    scales = np.linalg.norm(supported, axis=0)
-    if np.any(scales == 0.):
-        raise ValueError("all six physical rigid fields require supported detectability")
-    singular = np.linalg.svd(supported/scales, compute_uv=False)
-    if len(singular) < 6 or singular[-1] <= 64*np.finfo(float).eps*max(supported.shape)*singular[0]:
-        raise ValueError("all six physical rigid fields require supported detectability")
+    if not owner._modal_only:
+        supported = rigid[owner._fixed]
+        scales = np.linalg.norm(supported, axis=0)
+        if np.any(scales == 0.):
+            raise ValueError("all six physical rigid fields require supported detectability")
+        singular = np.linalg.svd(supported/scales, compute_uv=False)
+        if len(singular) < 6 or singular[-1] <= 64*np.finfo(float).eps*max(supported.shape)*singular[0]:
+            raise ValueError("all six physical rigid fields require supported detectability")
     for inertia in owner._reference_modal_inertias:
         _physical_spatial_inertia(inertia)
 
@@ -175,15 +198,16 @@ def capabilities(owner):
         _admit(owner)
     except (ValueError, RuntimeError) as exc:
         reason = str(exc)
-    return dict(policy=POLICY, mass_policy=MASS_POLICY,
-        status="EXPERIMENTAL_NOT_QUALIFIED", operation="modes", scope="connected supported virgin Q4/GE point panel reference only",
+    free = owner._modal_only
+    return dict(policy=GE_FREE_FREE_MODAL_ONLY_V1 if free else POLICY, mass_policy=MASS_POLICY,
+        status="EXPERIMENTAL_NOT_QUALIFIED", operation="modes", scope=("connected free-free virgin Q4/GE point panel modal-only" if free else "connected supported virgin Q4/GE point panel reference only"),
         eligible=reason is None, ineligibility_reason=reason,
         mass_source="explicit native definition inertia; explicit shell density and thickness",
         mass_admission="binary64 physical 3D spatial inertia; planar section realizability unqualified",
         inertia="nodal translations and six native half-cell rotations; tangential shell directors",
         algebraic="native nodal rotation traces, eighteen resultants/member, Q4 normal spin and multipliers",
-        selection="requested finite pairs nearest shift; completeness unqualified",
-        excluded=("free-free", "prestress", "buckling", "finite dynamics", "accepted material histories", "S3", "line", "footprint"),
+        selection=("six canonical rigid fields and requested flexible pairs nearest negative shift; completeness unqualified" if free else "requested finite pairs nearest shift; completeness unqualified"),
+        excluded=(("static solve", "finite solve", "restore", "chart state writes") if free else ("free-free",))+("prestress", "buckling", "finite dynamics", "accepted material histories", "S3", "line", "footprint"),
         production_qualified=False)
 
 
@@ -269,6 +293,52 @@ def _congruence(owner, A, B):
     return As, Bs, scale
 
 
+def _free_rigid_space(owner, mass, scale, Bs, check):
+    """Six physical common-body velocities; only a bounded 6x6 Gram solve."""
+    origin = owner._shell_xyz.mean(axis=0)
+    R = np.zeros((owner._K.shape[0], 6))
+    for offset, xyz in ((0, owner._shell_xyz),
+                        (owner._shell_count, np.array([owner._beam_nodes[i][0]
+                                                     for i in owner._beam_ids]))):
+        for i, position in enumerate(xyz):
+            row = offset+6*i
+            R[row:row+3, :3] = np.eye(3)
+            for j in range(3):
+                R[row:row+3, 3+j] = np.cross(np.eye(3)[j], position-origin)
+            R[row+3:row+6, 3:] = np.eye(3)
+    for _, slots, _ in owner._beam_parts:
+        R[owner._shell_count+slots[18:21], 3:] = np.eye(3)
+        R[owner._shell_count+slots[21:24], 3:] = np.eye(3)
+    n = len(owner._free)
+    equations = []; gaps = []
+    for column in R.T:
+        check("rigid_field")
+        equation = _modal_scaled_residual(owner._K@column,
+            abs(owner._K)@abs(column), scale[:n])
+        gap = _modal_scaled_residual(owner._C@column,
+            abs(owner._C)@abs(column), scale[n:])
+        if equation > 1e-8 or gap > 1e-9:
+            raise _ModalFailure("canonical free-free rigid field violates physical K or point C")
+        equations.append(equation); gaps.append(gap)
+    gram = R.T@mass@R
+    if (not np.isfinite(gram).all() or
+            np.max(abs(gram-gram.T)) > 1e-10*np.max(abs(gram))):
+        raise _ModalFailure("canonical rigid kinetic Gram symmetry unresolved")
+    try:
+        lower = np.linalg.cholesky(gram)
+        W = R@np.linalg.solve(lower.T, np.eye(6))
+    except np.linalg.LinAlgError as exc:
+        raise _ModalFailure("six physical rigid fields require positive kinetic Gram") from exc
+    if (not np.isfinite(W).all() or
+            np.max(abs(W.T@mass@W-np.eye(6))) > 1e-7):
+        raise _ModalFailure("rigid kinetic normalization unresolved")
+    Ws = np.vstack((W, np.zeros((owner._C.shape[0], 6))))/scale[:, None]
+    if not np.isfinite(Ws).all() or np.max(abs(Ws.T@Bs@Ws-np.eye(6))) > 1e-7:
+        raise _ModalFailure("rigid congruence reconstruction unresolved")
+    return dict(origin=tuple(map(float, origin)), canonical=R, normalized=W,
+                scaled=Ws, gram=gram, equations=tuple(equations), gaps=tuple(gaps))
+
+
 def solve(owner, request, *, cancellation_token=None):
     _admit(owner)
     if type(request) is not GEReferenceModesRequest:
@@ -281,15 +351,34 @@ def solve(owner, request, *, cancellation_token=None):
     sigma = float((2*np.pi*request.shift_hz)**2)
     if not np.isfinite(sigma) or sigma <= 0.:
         raise ValueError("positive representable squared reference frequency required")
+    free = owner._modal_only
+    if free: sigma = -sigma
     handle = None; raw = (); mass_id = ""; zero = ()
+    rigid = None; overlap = 0.
     def check(stage):
         cancellation_safe_point(cancellation_token, "ge_reference_modes."+stage)
     def finish(status, **kwargs):
-        return GEReferenceModesResult(status, owner._identity, mass_id,
+        if free:
+            kwargs.update(policy=GE_FREE_FREE_MODAL_ONLY_V1,
+                          selection="flexible finite pairs nearest negative shift; completeness unqualified")
+        flexible = GEReferenceModesResult(status, owner._identity, mass_id,
             zero_inertia_dofs=zero, inverse_eigenvalues=raw,
             factorization_count=handle.factorization_count if handle else 0,
             solve_count=handle.solve_count if handle else 0,
             shift_hz=float(request.shift_hz), **kwargs)
+        if not free: return flexible
+        data = {}
+        if status == "completed":
+            data = dict(rigid_origin_m=rigid["origin"],
+                canonical_rigid_coordinates=tuple(_owned(x) for x in rigid["canonical"].T),
+                rigid_coordinates=tuple(_owned(x) for x in rigid["normalized"].T),
+                rigid_multipliers=tuple(_owned(np.zeros(r)) for _ in range(6)),
+                rigid_kinetic_gram=_owned(rigid["gram"]),
+                rigid_equation_residuals=rigid["equations"],
+                rigid_constraint_residuals=rigid["gaps"],
+                rigid_flexible_mass_overlap=overlap)
+        return GEFreeReferenceModesResult(status, owner._identity, flexible,
+            spectral_shift_rad2_s2=sigma, failure_reason=flexible.failure_reason, **data)
     try:
         check("start")
         mass, zero, mass_id = _assemble_mass(owner, check)
@@ -297,6 +386,11 @@ def solve(owner, request, *, cancellation_token=None):
                               sparse.csc_matrix((r, r))), format="csc")
         A = owner._A.copy()
         As, Bs, scale = _congruence(owner, A, B)
+        if free:
+            rigid = _free_rigid_space(owner, mass, scale, Bs, check)
+        def project(vector):
+            if not free: return vector
+            return vector-rigid["scaled"]@(rigid["scaled"].T@(Bs@vector))
         check("before_factorization")
         handle = factorize_cached((As-sigma*Bs).tocsc(), MatrixClass.GENERAL)
         if handle.status != "ok":
@@ -304,7 +398,7 @@ def solve(owner, request, *, cancellation_token=None):
         def action(vector):
             check("iteration")
             try:
-                answer = np.asarray(handle.solve(Bs@vector), dtype=float)
+                answer = np.asarray(handle.solve(Bs@project(vector)), dtype=float)
             except RuntimeError as exc:
                 if (str(exc) == "Sparse solve produced NaN/Inf values" or
                         str(exc).startswith("Cannot solve with failed factorization:")):
@@ -313,7 +407,7 @@ def solve(owner, request, *, cancellation_token=None):
             if not np.isfinite(answer).all():
                 raise _ModalFailure("finite reference modal inverse action required")
             check("iteration_complete")
-            return answer
+            return project(answer)
         values, vectors = eigs(LinearOperator(A.shape, matvec=action, dtype=float),
             k=request.count, which="LM", tol=1e-10, maxiter=request.max_iterations,
             v0=np.linspace(1., 2., A.shape[0]))
@@ -327,6 +421,12 @@ def solve(owner, request, *, cancellation_token=None):
                     np.max(abs(vector.imag)) > 1e-8*np.max(abs(vector.real))):
                 raise _ModalFailure("nonphysical or unresolved finite reference pair")
             eigenvalue = sigma+1./float(mu.real)
+            if free:
+                # Cancellation/roundoff resolution screen only: not a certified
+                # Arnoldi/LU eigenvalue error bound or exactly-six nullity proof.
+                roundoff_screen = 64*np.finfo(float).eps*A.shape[0]*(abs(sigma)+abs(1./float(mu.real)))
+                if not np.isfinite(roundoff_screen) or eigenvalue <= roundoff_screen:
+                    raise _ModalFailure("extra mechanism or unresolved near-zero flexible pair")
             x = scale*np.asarray(vector.real)
             q = np.zeros(owner._K.shape[0]); q[owner._free] = x[:n]
             norm = float(q@mass@q)
@@ -358,6 +458,10 @@ def solve(owner, request, *, cancellation_token=None):
         gram = modes.T@mass@modes
         if not np.isfinite(gram).all() or np.max(abs(gram-np.eye(request.count))) > 1e-7:
             raise _ModalFailure("physical reference modal mass orthogonality failed")
+        if free:
+            overlap = float(np.max(abs(rigid["normalized"].T@mass@modes)))
+            if not np.isfinite(overlap) or overlap > 1e-7:
+                raise _ModalFailure("rigid and flexible physical mode spaces not mass orthogonal")
         check("publish")
         return finish("completed", frequencies_hz=tuple(np.sqrt(p[0])/(2*np.pi) for p in pairs),
             eigenvalues_rad2_s2=tuple(p[0] for p in pairs),

@@ -1,5 +1,18 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+M4/F07 free-free GE development,1 October: explicit modal-only boundary policy
+on the existing owner returns six physically verified rigid fields and requested
+flexible pairs for connected virgin Q4/generalized six-pose points. Full native
+descriptor and only6D physical-mass projection; no artificial mass/condensation.
+Installed46 modal+116 affected legacy checks pass,391 bound modules,15 exact
+default static bindings and public free-free example. Independent physical
+volume/particle work and bounded descriptor controls corroborate these fields.
+A resolved extra-mechanism control rejects without partial publication; absence
+of all unexcited mechanisms/exactly-six nullity and spectrum completeness are
+NOT certified. F07/G4B/repeated-space/physical reference/consumer/external/scale
+and aggregate acceptance remain OPEN. No scientific limit or authority changed.
+[Delivery and evidence](development/r8-ge-free-reference-modes-20261001/results.md).
+
 M4/F07 supported GE modes, 1 October: canonical public modes(request) now
 returns bounded finite pairs for connected supported virgin elastic Q4/native
 generalized six-pose point panels. The full sparse descriptor preserves inertial

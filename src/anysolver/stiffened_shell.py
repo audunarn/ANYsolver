@@ -9,7 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
 from ._stiffened_shell_ge_reference_modal import (
-    GEReferenceModesRequest, GEReferenceModesResult,
+    GEReferenceModesRequest, GEReferenceModesResult, GEFreeReferenceModesResult,
+    GE_FREE_FREE_MODAL_ONLY_V1,
 )
 
 from ._b2_physical_linear_definition import (
@@ -150,6 +151,7 @@ __all__ = [
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",
     "StagedDeadLoadProgramme",
     "GEReferenceModesRequest", "GEReferenceModesResult",
+    "GEFreeReferenceModesResult", "GE_FREE_FREE_MODAL_ONLY_V1",
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
