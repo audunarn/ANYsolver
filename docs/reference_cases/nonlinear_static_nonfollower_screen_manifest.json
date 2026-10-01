@@ -1,0 +1,161 @@
+{
+  "schema": "anysolver.nonlinear_static.representative_manifest",
+  "version": 2,
+  "experiment": "nonfollower_shared_validation_scope_screen",
+  "baseline_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+  "candidate_revision": "019838840d0f6c4d0d7c718df45ee3f68a609623",
+  "source_trees": {
+    "baseline": "c8515ee19b6924be7c17ca9490452f1d81f5f31b",
+    "candidate": "986e8cb83e92c96a80fbe0f1c588aaac9a8febe6"
+  },
+  "execution": {
+    "performance_pairs": 3,
+    "convergence_repeats": 0,
+    "serial": true,
+    "alternating_order": true,
+    "warmups_per_sample": 1,
+    "terminal_resource_failure_policy": "warm and measured solves each receive the per-solve bound; one warm timeout, measured timeout, memory-limit, or campaign-budget result is conclusive for that revision and case and stops remaining pairs",
+    "numerical_threads": 1,
+    "timing_scope": "complete model construction and solve after one same-process warm solve; cases may preregister multiple independent measured routes whose median is the worker sample",
+    "short_case_timing_aggregation": "prescribed_mpc_beam_holdout uses the median of 25 independent complete routes per worker; every route must have identical physical and work hashes"
+  },
+  "resource_limits": {
+    "per_solve_timeout_seconds": 900,
+    "worker_startup_timeout_seconds": 120,
+    "process_tree_memory_bytes": 8589934592,
+    "campaign_wall_budget_seconds": 14400
+  },
+  "physics_policy": {
+    "element_equations_unchanged": true,
+    "physical_tolerances_unchanged": true,
+    "defaults_unchanged": true,
+    "material_commit_boundary": "globally converged increment only",
+    "follower_force_and_tangent": "recomputed at every required current state"
+  },
+  "physical_equivalence": {
+    "status": "completed",
+    "step_count": "exact",
+    "increment_load_factor_absolute_tolerance": 1e-12,
+    "displacement_tolerance": "1e-12 + 1e-10 * scale",
+    "reaction_tolerance": "1e-8 + 1e-10 * scale",
+    "plastic_history_absolute_tolerance": 1e-12,
+    "state_observable_tolerance": "1e-12 + 1e-10 * scale",
+    "required_family_predicates": true
+  },
+  "performance_cases": [
+    {
+      "id": "easy_elastic_shell_control",
+      "family": "easy elastic shell",
+      "role": "easy_control",
+      "builder": "clamped_shell",
+      "divisions": 4,
+      "thickness": 0.01,
+      "pressure_pa": 100.0,
+      "follower_pressure": false,
+      "num_steps": 10,
+      "max_iterations": 20,
+      "tolerance": 1e-09,
+      "physical_target": "completed at load factor 1.0"
+    },
+    {
+      "id": "large_deflection_shell_holdout",
+      "family": "large-deflection shell",
+      "role": "holdout",
+      "builder": "rollup_shell",
+      "elements": 12,
+      "width": 0.1,
+      "thickness": 0.005,
+      "elastic_modulus_pa": 210000000000.0,
+      "target_rotation_rad": 1.5707963267948966,
+      "num_steps": 20,
+      "max_iterations": 35,
+      "tolerance": 1e-06,
+      "force_consistent_tangent": true,
+      "physical_target": "completed 90-degree roll-up"
+    },
+    {
+      "id": "plastic_s3_reversal_holdout",
+      "family": "plastic shell loading and reversal",
+      "role": "holdout",
+      "builder": "plastic_s3_reversal",
+      "thickness": 0.01,
+      "yield_stress_pa": 250000000.0,
+      "hardening_modulus_pa": 2000000000.0,
+      "forward_force_n": 2000000.0,
+      "reverse_force_n": -3000000.0,
+      "num_layers": 5,
+      "num_steps": 20,
+      "max_iterations": 35,
+      "tolerance": 1e-08,
+      "physical_target": "completed two-stage path with nonzero committed plastic strain"
+    },
+    {
+      "id": "prescribed_mpc_beam_holdout",
+      "family": "prescribed motion and weighted MPC",
+      "role": "holdout",
+      "builder": "prescribed_mpc_beam",
+      "elements": 12,
+      "length": 3.0,
+      "area": 0.001,
+      "inertia": 1e-06,
+      "torsion": 1e-06,
+      "prescribed_tip_x_m": 0.004,
+      "lateral_force_n": 100.0,
+      "num_steps": 12,
+      "max_iterations": 30,
+      "tolerance": 1e-07,
+      "timing_repetitions": 25,
+      "physical_target": "completed affine prescribed-motion path with weighted axial constraints"
+    }
+  ],
+  "development_cases_not_reused_as_holdouts": [
+    "2x2 clamped shell",
+    "8-element shell roll-up",
+    "3-layer single S3 monotonic plastic pull",
+    "single-beam prescribed displacement",
+    "2x2 follower-pressure shell"
+  ],
+  "convergence_case_ids": [],
+  "failed_work_metric": "diagnostic failed-work units: Newton iterations attributed to failed increments plus rejected trial evaluations plus recoverable trial failures",
+  "required_regressions": [
+    "tests/test_fe_solver_nonlinear_limit_point.py::test_nonlinear_load_stepping_stops_near_eigenvalue_limit_point",
+    "tests/test_nonlinear_performance_batch_c.py::test_direct_reduced_scatter_matches_full_projection_with_mpc_coefficients",
+    "tests/test_nonlinear_restart_checkpoint.py::test_force_static_checkpoint_round_trip_and_exact_split_continuation",
+    "tests/test_follower_pressure.py::test_follower_validation_reuse_matches_forced_full_oracle",
+    "tests/test_follower_pressure.py::test_follower_validation_reuse_rejects_generation_change",
+    "tests/test_nonlinear_performance.py::test_scoped_element_validation_matches_forced_full_oracle",
+    "tests/test_nonlinear_performance.py::test_scoped_element_validation_preserves_primary_failure",
+    "tests/test_nonlinear_analysis_diagnostics.py::test_element_validation_scope_diagnostics_are_reported"
+  ],
+  "acceptance": {
+    "performance_median_reduction_fraction": 0.05,
+    "maximum_easy_regression_fraction": 0.05,
+    "easy_control_case": "easy_elastic_shell_control",
+    "target_case": "nonsymmetric_follower_shell_holdout",
+    "target_case_reduction_fraction": 0.1,
+    "maximum_non_target_regression_fraction": 0.05,
+    "armijo_new_difficult_solves": 2,
+    "armijo_failed_work_reduction_fraction": 0.25,
+    "armijo_runtime_not_worse_for_either_promotion_route": true,
+    "physical_equivalence_required": true,
+    "correctness_findings_allowed": 0
+  },
+  "screen_contract": {
+    "parent_gate": "docs/reference_cases/nonlinear_static_nonfollower_profile_gate.json",
+    "parent_gate_sha256": "5c3b9b1826045610e5a8f4b41ac69d884742faa5ee090922861735aaa9cd7191",
+    "runner": "scripts/qualify_nonlinear_representative.py",
+    "runner_sha256": "5764f1104f23272ca3103df50f1655c0aa6ca6701f930ee324313bd10e752d13",
+    "adjudicator": "scripts/adjudicate_nonlinear_nonfollower_screen.py",
+    "adjudicator_sha256": "54426021c11af70edcc7d6528ba2fabd93f92050e914c9842901429d5c1be735",
+    "excluded_case_id": "nonsymmetric_follower_shell_holdout",
+    "aggregate_definition": "sum of per-case median complete-route seconds"
+  },
+  "screen_acceptance": {
+    "case_reduction_fraction": 0.05,
+    "minimum_improved_case_count": 2,
+    "aggregate_reduction_fraction": 0.05,
+    "maximum_case_regression_fraction": 0.05,
+    "physical_equivalence_required": true,
+    "work_equivalence_required": true
+  }
+}

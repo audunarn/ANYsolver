@@ -1,0 +1,154 @@
+{
+  "schema": "anysolver.nonlinear_static.representative_manifest",
+  "version": 2,
+  "experiment": "follower_component_lifecycle_validation_reuse",
+  "baseline_revision": "26d35bcad1b5ac6ae693c09d283cc3a918aa650c",
+  "candidate_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+  "source_trees": {
+    "baseline": "26b2e4002d16b22b0e8d90a879e68c94b68ddccf",
+    "candidate": "c8515ee19b6924be7c17ca9490452f1d81f5f31b"
+  },
+  "execution": {
+    "performance_pairs": 7,
+    "convergence_repeats": 0,
+    "serial": true,
+    "alternating_order": true,
+    "warmups_per_sample": 1,
+    "terminal_resource_failure_policy": "warm and measured solves each receive the per-solve bound; one warm timeout, measured timeout, memory-limit, or campaign-budget result is conclusive for that revision and case and stops remaining pairs",
+    "numerical_threads": 1,
+    "timing_scope": "complete model construction and solve after one same-process warm solve; cases may preregister multiple independent measured routes whose median is the worker sample",
+    "short_case_timing_aggregation": "prescribed_mpc_beam_holdout uses the median of 25 independent complete routes per worker; every route must have identical physical and work hashes"
+  },
+  "resource_limits": {
+    "per_solve_timeout_seconds": 900,
+    "worker_startup_timeout_seconds": 120,
+    "process_tree_memory_bytes": 8589934592,
+    "campaign_wall_budget_seconds": 14400
+  },
+  "physics_policy": {
+    "element_equations_unchanged": true,
+    "physical_tolerances_unchanged": true,
+    "defaults_unchanged": true,
+    "material_commit_boundary": "globally converged increment only",
+    "follower_force_and_tangent": "recomputed at every required current state"
+  },
+  "physical_equivalence": {
+    "status": "completed",
+    "step_count": "exact",
+    "increment_load_factor_absolute_tolerance": 1e-12,
+    "displacement_tolerance": "1e-12 + 1e-10 * scale",
+    "reaction_tolerance": "1e-8 + 1e-10 * scale",
+    "plastic_history_absolute_tolerance": 1e-12,
+    "state_observable_tolerance": "1e-12 + 1e-10 * scale",
+    "required_family_predicates": true
+  },
+  "performance_cases": [
+    {
+      "id": "easy_elastic_shell_control",
+      "family": "easy elastic shell",
+      "role": "easy_control",
+      "builder": "clamped_shell",
+      "divisions": 4,
+      "thickness": 0.01,
+      "pressure_pa": 100.0,
+      "follower_pressure": false,
+      "num_steps": 10,
+      "max_iterations": 20,
+      "tolerance": 1e-09,
+      "physical_target": "completed at load factor 1.0"
+    },
+    {
+      "id": "large_deflection_shell_holdout",
+      "family": "large-deflection shell",
+      "role": "holdout",
+      "builder": "rollup_shell",
+      "elements": 12,
+      "width": 0.1,
+      "thickness": 0.005,
+      "elastic_modulus_pa": 210000000000.0,
+      "target_rotation_rad": 1.5707963267948966,
+      "num_steps": 20,
+      "max_iterations": 35,
+      "tolerance": 1e-06,
+      "force_consistent_tangent": true,
+      "physical_target": "completed 90-degree roll-up"
+    },
+    {
+      "id": "plastic_s3_reversal_holdout",
+      "family": "plastic shell loading and reversal",
+      "role": "holdout",
+      "builder": "plastic_s3_reversal",
+      "thickness": 0.01,
+      "yield_stress_pa": 250000000.0,
+      "hardening_modulus_pa": 2000000000.0,
+      "forward_force_n": 2000000.0,
+      "reverse_force_n": -3000000.0,
+      "num_layers": 5,
+      "num_steps": 20,
+      "max_iterations": 35,
+      "tolerance": 1e-08,
+      "physical_target": "completed two-stage path with nonzero committed plastic strain"
+    },
+    {
+      "id": "prescribed_mpc_beam_holdout",
+      "family": "prescribed motion and weighted MPC",
+      "role": "holdout",
+      "builder": "prescribed_mpc_beam",
+      "elements": 12,
+      "length": 3.0,
+      "area": 0.001,
+      "inertia": 1e-06,
+      "torsion": 1e-06,
+      "prescribed_tip_x_m": 0.004,
+      "lateral_force_n": 100.0,
+      "num_steps": 12,
+      "max_iterations": 30,
+      "tolerance": 1e-07,
+      "timing_repetitions": 25,
+      "physical_target": "completed affine prescribed-motion path with weighted axial constraints"
+    },
+    {
+      "id": "nonsymmetric_follower_shell_holdout",
+      "family": "nonsymmetric follower loading",
+      "role": "target_holdout",
+      "builder": "clamped_shell",
+      "divisions": 4,
+      "thickness": 0.01,
+      "pressure_pa": 20000.0,
+      "follower_pressure": true,
+      "num_steps": 6,
+      "max_iterations": 30,
+      "tolerance": 1e-07,
+      "physical_target": "completed at load factor 1.0 with current follower-load evaluation"
+    }
+  ],
+  "development_cases_not_reused_as_holdouts": [
+    "2x2 clamped shell",
+    "8-element shell roll-up",
+    "3-layer single S3 monotonic plastic pull",
+    "single-beam prescribed displacement",
+    "2x2 follower-pressure shell"
+  ],
+  "convergence_case_ids": [],
+  "failed_work_metric": "diagnostic failed-work units: Newton iterations attributed to failed increments plus rejected trial evaluations plus recoverable trial failures",
+  "required_regressions": [
+    "tests/test_fe_solver_nonlinear_limit_point.py::test_nonlinear_load_stepping_stops_near_eigenvalue_limit_point",
+    "tests/test_nonlinear_performance_batch_c.py::test_direct_reduced_scatter_matches_full_projection_with_mpc_coefficients",
+    "tests/test_nonlinear_restart_checkpoint.py::test_force_static_checkpoint_round_trip_and_exact_split_continuation",
+    "tests/test_follower_pressure.py::test_follower_validation_reuse_matches_forced_full_oracle",
+    "tests/test_follower_pressure.py::test_follower_validation_reuse_rejects_generation_change"
+  ],
+  "acceptance": {
+    "performance_median_reduction_fraction": 0.10,
+    "maximum_easy_regression_fraction": 0.05,
+    "easy_control_case": "easy_elastic_shell_control",
+    "target_case": "nonsymmetric_follower_shell_holdout",
+    "target_case_reduction_fraction": 0.10,
+    "maximum_non_target_regression_fraction": 0.05,
+    "armijo_new_difficult_solves": 2,
+    "armijo_failed_work_reduction_fraction": 0.25,
+    "armijo_runtime_not_worse_for_either_promotion_route": true,
+    "physical_equivalence_required": true,
+    "correctness_findings_allowed": 0
+  }
+}

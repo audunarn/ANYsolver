@@ -164,12 +164,27 @@ class _AnalysisPerformanceRecorder:
                 "recoverable_trial_failures": int(
                     counts.get("recoverable_trial_failure", 0)
                 ),
+                "follower_validation_invalidations": int(
+                    counts.get("follower_validation_invalidation", 0)
+                ),
             },
             "reaction_force_reuse_count": int(
                 counts.get("reaction_force_reuse", 0)
             ),
             "reaction_force_reassembly_count": int(
                 counts.get("reaction_force_reassembly", 0)
+            ),
+            "follower_validation_reuse_count": int(
+                counts.get("follower_validation_reuse", 0)
+            ),
+            "follower_validation_full_count": int(
+                counts.get("follower_validation_full", 0)
+            ),
+            "follower_validation_fallback_count": int(
+                counts.get("follower_validation_fallback", 0)
+            ),
+            "follower_validation_invalidation_count": int(
+                counts.get("follower_validation_invalidation", 0)
             ),
         }
 

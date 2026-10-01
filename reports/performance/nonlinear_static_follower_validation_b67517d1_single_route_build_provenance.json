@@ -1,0 +1,14 @@
+{
+  "schema": "anysolver.nonlinear_static.representative_build_provenance",
+  "version": 1,
+  "baseline_revision": "26d35bcad1b5ac6ae693c09d283cc3a918aa650c",
+  "candidate_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+  "baseline_tree": "26b2e4002d16b22b0e8d90a879e68c94b68ddccf",
+  "candidate_tree": "c8515ee19b6924be7c17ca9490452f1d81f5f31b",
+  "baseline_wheel": ".tmp_follower_validation_gate/baseline_wheel/anysolver-0.4.6-py3-none-any.whl",
+  "candidate_wheel": ".tmp_follower_validation_gate/candidate_b67517d_wheel/anysolver-0.4.6-py3-none-any.whl",
+  "baseline_wheel_sha256": "9a91e6b72702b14302fc440f9539213bbaa0204d1812304cd53f64fc9b1e4e36",
+  "candidate_wheel_sha256": "4512f1172f446922272fdb6e34f77175755351f7c91fc9ca2bddacc30623792c",
+  "build_command": "python -m build --wheel --outdir <exclusive output directory> from exact clean git worktrees",
+  "build_python": "3.14.2"
+}

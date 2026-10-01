@@ -1,0 +1,10 @@
+.........                                                                [100%]
+============================== warnings summary ===============================
+..\..\..\..\..\..\Python\Python314\Lib\site-packages\_pytest\cacheprovider.py:475
+  C:\Python\Python314\Lib\site-packages\_pytest\cacheprovider.py:475: PytestCacheWarning: could not create cache path \\.\NUL\.pytest_cache\v\cache\nodeids: [WinError 1] Incorrect function: '\\\\.\\NUL\\pytest-cache-files-_np9le6n'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+9 passed, 1 warning in 33.20s
+
+--- stderr ---

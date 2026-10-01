@@ -6474,6 +6474,7 @@ def _qualified_s3_pressure_surface_records(
     load_case: Optional["LoadCase"],
     *,
     qualified_runtime_guard: Any,
+    reuse_component_lifecycle_validation: bool = False,
 ) -> list[Dict[str, Any]]:
     """Identify the exact surface carrying qualified-S3 pressure work.
 
@@ -6493,7 +6494,8 @@ def _qualified_s3_pressure_surface_records(
     lifecycle_guard = require_exact_qualified_component_lifecycle_api
 
     def exact_qualified_guard(*, context: str) -> None:
-        lifecycle_guard(model, context=context)
+        if not reuse_component_lifecycle_validation:
+            lifecycle_guard(model, context=context)
         qualified_runtime_guard(model, context=context)
 
     runtime_namespace = object.__getattribute__(
@@ -6568,6 +6570,7 @@ def _assemble_load_vector_under_lease(
     displacements: Optional[np.ndarray] = None,
     *,
     qualified_runtime_guard: Any,
+    reuse_component_lifecycle_validation: bool = False,
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Assemble the global external load vector ``F_external``.
 
@@ -6586,7 +6589,8 @@ def _assemble_load_vector_under_lease(
         *,
         context: str,
     ) -> None:
-        lifecycle_guard(expected_model, context=context)
+        if not reuse_component_lifecycle_validation:
+            lifecycle_guard(expected_model, context=context)
         qualified_runtime_guard(expected_model, context=context)
 
     exact_qualified_guard(model, context="load-vector assembly preflight")
@@ -6624,13 +6628,31 @@ def _assemble_load_vector_under_lease(
     if load_case is None:
         load_vector = np.zeros(total_dofs, dtype=float)
     else:
-        load_vector = load_case.get_load_vector(
-            model.mesh,
-            model.mesh.dof_manager,
-            model.get_material,
-            displacements=displacements,
-            element_activity=_element_activity(model),
-        )
+        if reuse_component_lifecycle_validation:
+            from .boundary import (
+                _assemble_builtin_load_vector_under_existing_lease,
+            )
+
+            load_vector = _assemble_builtin_load_vector_under_existing_lease(
+                load_case,
+                model.mesh,
+                model.mesh.dof_manager,
+                model.get_material,
+                displacements=displacements,
+                element_activity=_element_activity(model),
+                qualified_runtime_guard=lambda *, stage: exact_qualified_guard(
+                    model,
+                    context=stage,
+                ),
+            )
+        else:
+            load_vector = load_case.get_load_vector(
+                model.mesh,
+                model.mesh.dof_manager,
+                model.get_material,
+                displacements=displacements,
+                element_activity=_element_activity(model),
+            )
         exact_qualified_guard(
             model,
             context="load-vector LoadCase observation",
@@ -6673,6 +6695,9 @@ def _assemble_load_vector_under_lease(
         model,
         load_case,
         qualified_runtime_guard=qualified_runtime_guard,
+        reuse_component_lifecycle_validation=(
+            reuse_component_lifecycle_validation
+        ),
     )
     if pressure_surfaces:
         info["qualified_s3_pressure_surfaces"] = pressure_surfaces
@@ -6705,6 +6730,7 @@ def _assemble_external_load_tangent_under_lease(
     displacements: Optional[np.ndarray] = None,
     *,
     qualified_runtime_guard: Any,
+    reuse_component_lifecycle_validation: bool = False,
 ) -> Tuple[sparse.csr_matrix, Dict[str, Any]]:
     """Assemble ``dF_external / du`` for current-area follower pressure.
 
@@ -6723,7 +6749,8 @@ def _assemble_external_load_tangent_under_lease(
         *,
         context: str,
     ) -> None:
-        lifecycle_guard(expected_model, context=context)
+        if not reuse_component_lifecycle_validation:
+            lifecycle_guard(expected_model, context=context)
         qualified_runtime_guard(expected_model, context=context)
 
     exact_qualified_guard(
@@ -6865,6 +6892,9 @@ def _assemble_external_load_tangent_under_lease(
         model,
         load_case,
         qualified_runtime_guard=qualified_runtime_guard,
+        reuse_component_lifecycle_validation=(
+            reuse_component_lifecycle_validation
+        ),
     )
     if pressure_surfaces:
         info["qualified_s3_pressure_surfaces"] = pressure_surfaces
@@ -6901,6 +6931,7 @@ def _assemble_external_load_system_under_lease(
     *,
     tangent: bool = True,
     qualified_runtime_guard: Any,
+    reuse_component_lifecycle_validation: bool = False,
 ) -> Tuple[np.ndarray, Optional[sparse.csr_matrix], Dict[str, Any]]:
     """Assemble external force and, optionally, its configuration tangent."""
     vector, vector_info = _assemble_load_vector_under_lease(
@@ -6908,6 +6939,9 @@ def _assemble_external_load_system_under_lease(
         load_case,
         displacements,
         qualified_runtime_guard=qualified_runtime_guard,
+        reuse_component_lifecycle_validation=(
+            reuse_component_lifecycle_validation
+        ),
     )
     if tangent:
         load_tangent, tangent_info = _assemble_external_load_tangent_under_lease(
@@ -6915,6 +6949,9 @@ def _assemble_external_load_system_under_lease(
             load_case,
             displacements,
             qualified_runtime_guard=qualified_runtime_guard,
+            reuse_component_lifecycle_validation=(
+                reuse_component_lifecycle_validation
+            ),
         )
     else:
         load_tangent = None

@@ -579,9 +579,22 @@ Each nonlinear result also reports analysis-local work in
 `result.info["nonlinear_performance"]`.  The `solver` section counts Newton
 factorizations/solves, rejected full steps, backtracks, residual-to-tangent
 promotions, recoverable trial failures, dead-load projection reuse, and
-accepted-force reaction reuse or fallback reassembly.  These counts include
-failed work and are safe to interpret without subtracting process-wide
-counters.
+accepted-force reaction reuse or fallback reassembly.  Force-controlled
+follower-pressure solves also report full lifecycle validations, validation
+reuse, fallback, and invalidation.  The companion
+`result.info["follower_load_validation"]` record states whether reuse was
+eligible and why a solve retained the full-validation path.  These counts
+include failed work and are safe to interpret without subtracting
+process-wide counters.
+
+Exact built-in follower-load routes validate the complete qualified component
+lifecycle immediately before and after every external-load evaluation.  The
+force and generally nonsymmetric load tangent are still recomputed at every
+required current state; only repeated component validation inside that bounded
+evaluation uses the analysis-local ownership lease.  Custom load cases,
+mixed/generic models, solver-owned model copies, and fracture solves retain
+the full validation route.  Qualification can force that oracle route by
+setting `FE_SOLVER_DISABLE_FOLLOWER_VALIDATION_REUSE=1` before the solve.
 
 ## Optional Armijo globalization
 

@@ -1,0 +1,71 @@
+{
+  "schema": "anysolver.nonlinear_static.nonfollower_profile_gate_evidence",
+  "version": 1,
+  "protocol_commit": "ce2ea9f3",
+  "gate_manifest_sha256": "5c3b9b1826045610e5a8f4b41ac69d884742faa5ee090922861735aaa9cd7191",
+  "candidate_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+  "candidate_wheel_sha256": "4512f1172f446922272fdb6e34f77175755351f7c91fc9ca2bddacc30623792c",
+  "status": "completed",
+  "profiles": [
+    {
+      "case": "easy_elastic_shell_control",
+      "status": "completed",
+      "profiled_solve_wall_seconds": 0.998953900008928,
+      "profile_total_calls": 2227951,
+      "json_sha256": "91ec459212da7bf99dfcfd56ffa00e0925b62f785c9a3703bd6c50a25f4e0032",
+      "prof_sha256": "679ddc2e545ff5fec544b282e56ca0aabaceea9205ff8ecab0e325bc9582ffb9"
+    },
+    {
+      "case": "large_deflection_shell_holdout",
+      "status": "completed",
+      "profiled_solve_wall_seconds": 10.9916402999952,
+      "profile_total_calls": 20700591,
+      "json_sha256": "3264728463a8e5851bfb8676df09b04a4a78764bb265c094b2bcc77d9019c087",
+      "prof_sha256": "af342552289e8937121ac01fa72d668b07432fd10b3cdbf3202b474f08c618da"
+    },
+    {
+      "case": "plastic_s3_reversal_holdout",
+      "status": "completed",
+      "profiled_solve_wall_seconds": 15.7810427999939,
+      "profile_total_calls": 30228543,
+      "json_sha256": "dd5e4ed64d395b1681c128dfab3e9b9c555ec72db35b3fd733ebb317a986e951",
+      "prof_sha256": "c8526677158ff4607915f86e163bb57723892f1e7f035b6c80a217e9c397977a"
+    },
+    {
+      "case": "prescribed_mpc_beam_holdout",
+      "status": "completed",
+      "profiled_solve_wall_seconds": 0.062204500020016,
+      "profile_total_calls": 120252,
+      "json_sha256": "b2a5e192ff6c9ca0c6388cbee9dfc5d7f282e8e91ca9d378bad870a0379b2567",
+      "prof_sha256": "cf25815957367af0b8472dee54d48ce709c00627048dcec1c4caabc155efd163"
+    }
+  ],
+  "shared_hotspot": {
+    "id": "qualified_shell_guarded_operation_boundary",
+    "eligible": true,
+    "case_reach": 3,
+    "observations": [
+      {
+        "case": "easy_elastic_shell_control",
+        "path": "qualified Q4 boundary_guard",
+        "cumulative_wall_fraction": 0.2483,
+        "calls": 1624
+      },
+      {
+        "case": "large_deflection_shell_holdout",
+        "path": "qualified Q4 boundary_guard",
+        "cumulative_wall_fraction": 0.1526,
+        "calls": 10752
+      },
+      {
+        "case": "plastic_s3_reversal_holdout",
+        "path": "qualified S3 model-bound state validation",
+        "cumulative_wall_fraction": 0.0997,
+        "calls": 140
+      }
+    ],
+    "selected_change": "Bracket each accelerated or reference nonlinear local-response assembly with the existing exact Q4/S3 trusted-operation scopes. Preserve complete per-element validation at entry and exit, generation checks during the operation, cache invalidation, and original-exception precedence. Provide a forced-full-validation oracle switch.",
+    "mechanics_change": false
+  },
+  "terminal": "SELECT_ELIGIBLE_HOTSPOT"
+}

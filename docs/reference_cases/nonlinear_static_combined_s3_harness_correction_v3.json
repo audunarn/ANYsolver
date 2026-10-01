@@ -1,0 +1,42 @@
+{
+  "schema": "anysolver.nonlinear_static.qualification_harness_correction",
+  "version": 3,
+  "registered_at_utc": "2026-09-20T23:10:00Z",
+  "parent_gate": "docs/reference_cases/nonlinear_static_combined_s3_jet_gate.json",
+  "supersedes": "docs/reference_cases/nonlinear_static_combined_s3_harness_correction_v2.json",
+  "prior_attempts": {
+    "v1": {
+      "raw_path": "C:/Github/ANYsolver/.qualification/combined-s3/component-v1/raw.json",
+      "raw_sha256": "c828829d0218d0ee4f5ae88ff13d3003028aef71c52c9acf8b6ca49be71f1e57",
+      "terminal_phase": "installed_regressions",
+      "performance_samples_recorded": 0,
+      "preservation": "immutable failed setup attempt"
+    },
+    "v2": {
+      "canonical_campaign_executed": false,
+      "reason": "independent review found that pyproject.toml adds worktree src to Python import paths and invalidates installed-wheel isolation"
+    }
+  },
+  "correction": {
+    "runner": "scripts/qualify_nonlinear_representative.py",
+    "old_runner_execution_sha256": "5764f1104f23272ca3103df50f1655c0aa6ca6701f930ee324313bd10e752d13",
+    "old_runner_lf_sha256": "865f5a26c1010d649a6e070426dac5a2953d48a7214e3d7aba4d94f6df599164",
+    "new_runner_execution_sha256": "3703ccd8fda2f6a6f0859a0a2f1831d6f946903c4f1c2e9a1009a67b620526ba",
+    "new_runner_lf_sha256": "173352694aa829e7c3a30489ae11e04f47b4fc7e2a78fe319e787c840aff9b24",
+    "changes": [
+      "use a committed empty pytest configuration so the candidate installed site remains first on the import path",
+      "give each installed wheel site an isolated Numba cache to prevent unrelated source-tree compilation locks",
+      "support the gate's exact one-case component inventory without applying the formal easy-control aggregation"
+    ]
+  },
+  "unchanged_authority": {
+    "candidate_and_baseline_wheels": true,
+    "physical_case_inputs": true,
+    "pair_counts_and_alternation": true,
+    "warmup_and_timing_scope": true,
+    "resource_limits": true,
+    "acceptance_thresholds": true,
+    "terminal_rules": true
+  },
+  "retry_authority": "run the complete one-case component campaign into a new v3 output directory; do not reuse or overwrite v1 artifacts"
+}

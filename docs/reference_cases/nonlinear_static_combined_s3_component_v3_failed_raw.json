@@ -1,0 +1,100 @@
+{
+  "completed_utc": "2026-09-20T23:25:01Z",
+  "convergence": {},
+  "decision": {
+    "armijo": "NOT-RUN",
+    "completeness": "FAIL",
+    "performance": "NOT-RUN"
+  },
+  "failures": [
+    {
+      "detail": {
+        "exit_code": null,
+        "installed_site": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\component-v3\\installed\\candidate",
+        "log": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\component-v3\\logs\\installed-regressions.log",
+        "ok": false,
+        "terminal_reason": "timeout",
+        "tests": [
+          "tests/test_fe_solver_nonlinear_limit_point.py::test_nonlinear_load_stepping_stops_near_eigenvalue_limit_point",
+          "tests/test_nonlinear_performance_batch_c.py::test_direct_reduced_scatter_matches_full_projection_with_mpc_coefficients",
+          "tests/test_nonlinear_restart_checkpoint.py::test_force_static_checkpoint_round_trip_and_exact_split_continuation",
+          "tests/test_follower_pressure.py::test_follower_validation_reuse_matches_forced_full_oracle",
+          "tests/test_follower_pressure.py::test_follower_validation_reuse_rejects_generation_change",
+          "tests/test_e4_pl_s3_jet_scalar_fastpath.py",
+          "tests/test_e4_pl_s3_native_tl_kernel.py::test_values_jacobian_and_hessian_match_directional_finite_differences",
+          "tests/test_e4_pl_s3_native_tl_kernel.py::test_directional_value_and_derivative_identities_include_assumed_shear",
+          "tests/test_e4_pl_s3_restart_history.py::test_canonical_s3_restart_matches_the_ordered_two_stage_path",
+          "tests/test_e4_pl_s3_restart_history.py::test_canonical_solver_checkpoint_preserves_shared_so3_and_plastic_history"
+        ],
+        "wall_seconds": 900.0485109000001
+      },
+      "phase": "installed_regressions"
+    }
+  ],
+  "identity": {
+    "baseline_revision": "b67517d16a589ebb397d1ef55441467ee0e62275",
+    "baseline_tree": "c8515ee19b6924be7c17ca9490452f1d81f5f31b",
+    "baseline_wheel": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\follower-wheel\\anysolver-0.4.6-py3-none-any.whl",
+    "baseline_wheel_sha256": "ce891bf14073a02313d5508047df22f13ddfcebd70ff4e77f65e33709b132884",
+    "build_provenance": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\component-v3\\build-provenance.json",
+    "build_provenance_sha256": "51d325661688568b2b8130447b52c70bec5f8c938d6f2c8ad6f165379ce09f14",
+    "candidate_revision": "89bd4623a8ae0cb9c95317bdf31ac5fbd91a2e0f",
+    "candidate_tree": "e0d84314d0f84a7974d8b94934678a0cb66a9d76",
+    "candidate_wheel": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\candidate-89bd462-wheel\\anysolver-0.4.6-py3-none-any.whl",
+    "candidate_wheel_sha256": "301b91bf52cb224e0ea0c2e897e616f250b11cfa9ca5d9d6c9d4739de2f17c66",
+    "installed_sites": {
+      "baseline": {
+        "pip_log": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\component-v3\\installed\\baseline.pip-install.log",
+        "site": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\component-v3\\installed\\baseline",
+        "wheel": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\follower-wheel\\anysolver-0.4.6-py3-none-any.whl",
+        "wheel_sha256": "ce891bf14073a02313d5508047df22f13ddfcebd70ff4e77f65e33709b132884"
+      },
+      "candidate": {
+        "pip_log": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\component-v3\\installed\\candidate.pip-install.log",
+        "site": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\component-v3\\installed\\candidate",
+        "wheel": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\candidate-89bd462-wheel\\anysolver-0.4.6-py3-none-any.whl",
+        "wheel_sha256": "301b91bf52cb224e0ea0c2e897e616f250b11cfa9ca5d9d6c9d4739de2f17c66"
+      }
+    },
+    "manifest": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\docs\\reference_cases\\nonlinear_static_combined_s3_component_manifest_v2.json",
+    "manifest_sha256": "13ed8b1407eab1488b56e271de053ba2385c00e2cbc7d81d880b827fba1ba078",
+    "runner": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\follower-validation\\ANYsolver\\scripts\\qualify_nonlinear_representative.py",
+    "runner_sha256": "3703ccd8fda2f6a6f0859a0a2f1831d6f946903c4f1c2e9a1009a67b620526ba",
+    "thread_environment": {
+      "MKL_NUM_THREADS": "1",
+      "NUMBA_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "installed_regressions": {
+    "exit_code": null,
+    "installed_site": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\component-v3\\installed\\candidate",
+    "log": "C:\\Github\\ANYsolver\\.qualification\\combined-s3\\component-v3\\logs\\installed-regressions.log",
+    "ok": false,
+    "terminal_reason": "timeout",
+    "tests": [
+      "tests/test_fe_solver_nonlinear_limit_point.py::test_nonlinear_load_stepping_stops_near_eigenvalue_limit_point",
+      "tests/test_nonlinear_performance_batch_c.py::test_direct_reduced_scatter_matches_full_projection_with_mpc_coefficients",
+      "tests/test_nonlinear_restart_checkpoint.py::test_force_static_checkpoint_round_trip_and_exact_split_continuation",
+      "tests/test_follower_pressure.py::test_follower_validation_reuse_matches_forced_full_oracle",
+      "tests/test_follower_pressure.py::test_follower_validation_reuse_rejects_generation_change",
+      "tests/test_e4_pl_s3_jet_scalar_fastpath.py",
+      "tests/test_e4_pl_s3_native_tl_kernel.py::test_values_jacobian_and_hessian_match_directional_finite_differences",
+      "tests/test_e4_pl_s3_native_tl_kernel.py::test_directional_value_and_derivative_identities_include_assumed_shear",
+      "tests/test_e4_pl_s3_restart_history.py::test_canonical_s3_restart_matches_the_ordered_two_stage_path",
+      "tests/test_e4_pl_s3_restart_history.py::test_canonical_solver_checkpoint_preserves_shared_so3_and_plastic_history"
+    ],
+    "wall_seconds": 900.0485109000001
+  },
+  "performance": {},
+  "resource_limits": {
+    "campaign_wall_budget_seconds": 14400,
+    "per_solve_timeout_seconds": 900,
+    "process_tree_memory_bytes": 8589934592,
+    "worker_startup_timeout_seconds": 120
+  },
+  "schema": "anysolver.nonlinear_static.representative_evidence",
+  "started_utc": "2026-09-20T23:10:01Z",
+  "version": 1
+}
