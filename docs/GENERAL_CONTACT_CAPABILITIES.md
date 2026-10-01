@@ -1,5 +1,32 @@
 # General-contact capability ledger
 
+## Native finite-angle trajectory and application intent — 1 October
+
+**Native development control independently assessed; C7 acceptance remains open.**
+The acceleration-chart free finite-spin N192/T=.008 case passes192 original
+gates with576 signed stages and385 complete endpoint events. Final cell geodesics
+.377595/.378736rad exceed the declared.2rad coverage. Maximum cumulative E/P/H
+defects3.1974e-7/8.1311e-9/1.0288e-9 satisfy the original1e-6 gates. Measured
+684.256s/393.941MB within one840s owner and900s/4GB process cap. Independent
+assessment verifies journals, state/work links and447 source bindings. This
+does not measure temporal/spatial accuracy or confer installed/native-impact
+admission. Original N16 and other failures remain retained.
+[Evidence](d1_review_support/native_finite_spin_resolution_v1_20261001.summary.json)
+and [review](d1_review_support/native_finite_spin_resolution_v1_20261001.review.md).
+
+**ANYstructure development adapter: implemented, focused checks pass by impact,
+and independent development review closed.** Separate worktree
+C:/ANYworkspaceWork/ANYstructure-general-contact preserves explicit paired-shell
+intent, maps named/ID selections through public solver definitions, and rejects
+contact before geometry/meshing because the production runtime has no contact
+handoff. Empty historical defaults/sphere persistence remain unchanged.
+Review-found harness and optional-owner assumptions are fixed. Portable checks:
+9pass/1explicit installed-identity skip; simulated missing API:5pass/5declared
+owner/harness skips. Empty historical defaults and typed rejection remain intact;
+GUI retention has source scrutiny only. Application admission remains false;
+no contact solve or end-to-end application workflow follows from storage alone.
+ANYfem c138d41 remains unchanged. [Adapter review](C:/ANYworkspaceWork/ANYstructure-general-contact/docs/d8_general_contact_intent_20261001.review.md).
+
 ## Moving-normal beam/S3 and resolved small native vibration
 
 **Implemented/locally tested; not scientifically accepted, installed or released.**

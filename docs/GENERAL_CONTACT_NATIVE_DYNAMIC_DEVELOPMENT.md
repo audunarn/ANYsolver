@@ -185,7 +185,7 @@ passed. A new short four-step half-control at shared0.001s passed all gates;
 energy defect ratio.250028 supports timestep dependence, without an order or
 full-trajectory accuracy claim. See native_finite_spin_trajectory_v1_20261001 and
 native_finite_spin_temporal_half_v1_20261001 summaries/reviews in d1_review_support.
-Finite-angle coverage and C7 admission remain open.
+That short control alone did not establish finite-angle coverage or C7 admission.
 
 The native Newton loop now reuses the exact accepted line-search stage, retaining
 the same equations and guards. The focused four-step check preserves all physical
@@ -194,3 +194,12 @@ accepted-line cancellation controls pass. This is an evaluation-count result;
 the instrumented route is not a paired runtime benchmark. See
 native_stage_reuse_v2_20261001.summary.json/.review.md. V1 verification failure
 from an incorrect context-identity assertion is retained.
+
+The new full-duration N192/T=.008 finite-spin development trajectory now passes
+192 original gates with independently verified complete journals. Final cell
+geodesics.377595/.378736rad meet the declared.2rad coverage; cumulative normalized
+E/P/H maxima3.1974e-7/8.1311e-9/1.0288e-9 meet1e-6. Elapsed684.256s,
+peak393.941MB, one explicit840s owner without checkpoint segments. See
+`d1_review_support/native_finite_spin_resolution_v1_20261001.summary.json` and
+`.review.md`. This is finite-angle development evidence, not temporal/spatial
+accuracy, installed admission, native impact or C7 acceptance.

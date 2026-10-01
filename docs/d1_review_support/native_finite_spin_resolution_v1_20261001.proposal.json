@@ -1,0 +1,92 @@
+{
+  "status": "SOURCE_AUTHORED_NOT_EXECUTED",
+  "selected_test": "tests/test_ge_beam3_native_finite_spin_acceleration_chart.py::test_free_finite_spin_trajectory",
+  "source_path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_resolution_v1_20261001.test.source.py",
+  "source_sha256": "6ed644db18deea782ad344bf9fe2ffc1ee42c59c8533bd4f2fc14b50e8a72acc",
+  "managed_test_unchanged_sha256": "1de92ec5367150225d99cbd5d391703927a0a15d6f545e4360021e77e3a1096e",
+  "resolution_mode": "finite_spin_resolution_v1",
+  "criteria": {
+    "spatial_spin_rad_per_s": [
+      35.0,
+      -25.0,
+      20.0
+    ],
+    "dt_seconds": 4.1666666666666665e-05,
+    "maximum_accepted_steps": 192,
+    "internal_time_limit_seconds": 840.0,
+    "explicit_stage_solve_tolerance": 1e-12,
+    "scientific_stage_gate": 1e-11,
+    "endpoint_balance_gate": 1e-11,
+    "normalized_defect_limit": 1e-06,
+    "elastic_witness_limit": 1e-10,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "length_scale_m": 2.0,
+    "maximum_returned_stage_observations": 128,
+    "stage_coordinates": "acceleration",
+    "arithmetic_gamma_operations": 64,
+    "total_time_seconds": 0.008,
+    "minimum_final_cell_attitude_rad": 0.2,
+    "owner_count": 1,
+    "checkpoint_segments": 0,
+    "runtime_limit_seconds": 840.0
+  },
+  "historical_source_overrides": {
+    "_ge_beam3_dynamic_elastic_state.py": "5467683fdd7d708c32e268dd3474cf9c164da8e9977b3e4f1a7db46bcff7ce2a",
+    "_ge_beam3_native_midpoint.py": "027fe102aaedcef19af658a8ffb4394100760e2a150bc7dc16c057459ac868e9",
+    "ge_beam3_native_dynamics.py": "32462df5b94cfcd6b4ccb344e97d48385928a48bd2f658598ddee8f5000df1ab",
+    "_ge_beam3_native_dynamic_restart.py": "ceb2790dc9385f6db57ec8cb0e8ec034aa03a1c22b41489d37fdb42869c01658"
+  },
+  "prior_source": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_acceleration_restart_v2_20261001.test.source.py",
+    "sha256": "1de92ec5367150225d99cbd5d391703927a0a15d6f545e4360021e77e3a1096e"
+  },
+  "fixture": "Same authentic free curved ellipsoid, physical centroid/cross-inertia and complete mixed42 coordinate distinction, Omega=(35,-25,20), virgin rest and exact consistent v/a, initial positive mass/E/P/H scales, zero loads/supports. N192/T.008 selected once; no rigid-rotor reduction or new spatial oracle.",
+  "mechanics": "Existing same trial/audit/commit/endpoint loop and unchanged force/work/tangent/inertia/scientific gates. Explicit resource duration840 forwarded only under new exact string mode, one persistent owner with no restoration/segments/deadline renewal. No FD replay.",
+  "recording": {
+    "stage_journal": "LEAD_FROZEN_NEW_native_finite_spin_resolution_v1_20261001.stages.jsonl",
+    "progress_summary": "LEAD_FROZEN_NEW_native_finite_spin_resolution_v1_20261001.progress.json",
+    "raw": "LEAD_FROZEN_NEW_RAW",
+    "stage_record": "canonical complete ORIGINAL returned stage row plus LF: unknown42, complete StageEvaluation including all signed R/I/J/M/pose/vm/am and derivatives/maps, actual context/predecessor/epoch. Original evaluation called once and unchanged returned object forwarded.",
+    "references": "Raw unissued_stages holds step,record_index,zero-based offset_bytes,length_bytes,sha256; length/SHA include LF. Seek/read/hash/JSON parse each record independently; no dropped observation or max/global scalar replacement. Journal hash covers concatenation of complete records.",
+    "write_policy": "Append/flush each original stage exactly once. Separate append-only complete initial/endpoint event journal: initial at actual_initial_signed_balance, each actual endpoint before development gates and again only after passing gates, with distinct event/step/status, full original row/state/work/accounting/candidate, criteria/scales and available initial model/M/provenance. Existing save labels dispatch these events; no physical-loop change. Overwrite bounded scalar progress only. Full raw once with exclusive xb in finally completion/firstfailure.",
+    "final_fields": "Journal path,format,offset convention,max pertrial/total,record count/bytes/concatenated SHA; full initial and every actual committed endpoint with original counts distinguishing committed and gate-passing controls.",
+    "prospective_failure": "First solve, scientific, resource or evidence-I/O failure stops before next trial; original failures remain NONPASS. A solver commit failing later gate is retained and is not engineering admission.",
+    "endpoint_journal": "LEAD_FROZEN_NEW_native_finite_spin_resolution_v1_20261001.endpoints.jsonl",
+    "endpoint_references": "Each event uses canonical JSON plus LF. Raw endpoint_journal.records references event/step/offset/length/SHA including LF; final bytecount,recordcount,concatenated complete-records SHA. Initial plus at most2*192 endpoints, maximum385events. BEFORE-gate record remains unassessed on failure; after-gate record exists only for actual passing gates.",
+    "recovery": "Hard external kill may prevent final raw and can leave a partial final record in either journal. Recover only complete valid JSONL records. Progress is best-effort: truncation/write can leave empty/partial JSON. No guaranteed readable progress or power-loss durability claim. Journals preserve complete original records once flushed; incomplete tail is never an admitted state."
+  },
+  "resource_bounds": {
+    "owner_count": 1,
+    "owner_runtime_seconds": 840,
+    "fixture_seconds": 840,
+    "supervisor_seconds": 900,
+    "memory_limit_bytes": 4294967296,
+    "threads": 1,
+    "physical_steps": 192,
+    "maximum_original_stage_records_per_trial": 128,
+    "maximum_original_stage_records_total": 24576,
+    "segments": 0,
+    "maximum_initial_endpoint_events_total": 385
+  },
+  "future_input_fields": {
+    "resolution_mode": "finite_spin_resolution_v1",
+    "verification_mode": null,
+    "stage_journal_path": "fresh distinct exclusive path",
+    "progress_summary_path": "fresh distinct exclusive path",
+    "criteria": "exact declared dictionary",
+    "historical_source_overrides": "exact four SHA values",
+    "source_sha256": "lead authentic complete source/test bindings",
+    "endpoint_journal_path": "fresh fourth distinct exclusive path"
+  },
+  "scope": "N192-only finite-angle gate control; final each cell attitude>=.2rad is coverage, not temporal/spatial accuracy or C7/public qualification. Future N32/64 or macro/refinement/resource authority is not inferred.",
+  "source_only": "Main docs source/proposal only; managed files remain untouched. No imports/init/operator/stage/trial/eigh/test/run/input freeze. Compile-only/AST/source metadata checks."
+}

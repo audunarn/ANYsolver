@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 684.2562633999914,
+  "peak_process_tree_memory_mb": 393.940992,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4294967296,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_forced_response_cache_entry_20261001.py",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_finite_spin_resolution_v1_20261001.inputs.json"
+  ],
+  "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_resolution_v1_20261001.log"
+}

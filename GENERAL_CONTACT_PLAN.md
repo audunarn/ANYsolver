@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.52. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.53. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -153,20 +153,35 @@ They use ordinary full-model callbacks. A narrow final deadline guard follows
 artifact validation and precedes visible publication; rejected operations retain
 atomic rollback. No equation, numerical gate or scientific admission changed.
 
-Then prepare one new full-duration resolution candidate N192/T=.008, same spin,
-physical model and original stage/endpoint/energy/momentum/angle gates. Proposed
-single-owner duration840s, whole-process900s/4GB; no restart segmentation. This
-is a concrete preparation decision, not a run or acceptance claim. Freeze its
-actual source/inputs and cost admission after the resource extension is verified.
-Before scaling the runner, replace its repeated serialization of the entire
-growing stage history with append-only full observations and bounded progress
-summaries. The four-step raw file is7.88MB; its current save-on-every-stage route
-would repeatedly rewrite a much larger N192 history. Preserve every original
-observation, byte offsets/hashes and the final assessment data. This is evidence
-I/O preparation, with focused integrity checks, not a mechanics or speed claim.
-The saved quarter-error result motivates resolution; it does not predict a pass
-or establish full-duration accuracy. A failure changes the next action rather
-than automatically increasing resolution or caps. Required C0–C9 remains intact.
+The new N192/T=.008 finite-spin trajectory passes all192 original development
+gates with one840s owner and no restart segments. Whole-process elapsed684.256s,
+peak393.941MB; final cell angles.377595/.378736rad. Maximum cumulative normalized
+E/P/H defects3.1974e-7/8.1311e-9/1.0288e-9 satisfy the unchanged1e-6 gates.
+Independent saved assessment reconciles576 original signed stages,385 endpoint
+events, all hashes/state links/scales and447 source bindings. Append-only
+observations preserve complete data without rewriting the growing history.
+[Result](docs/d1_review_support/native_finite_spin_resolution_v1_20261001.summary.json)
+and [review](docs/d1_review_support/native_finite_spin_resolution_v1_20261001.review.md).
+This closes a finite-angle development control, not temporal/spatial accuracy,
+installed admission or C7. N16 failure remains unchanged.
+
+The new balanced default120s full/scoped comparison passes16 steps with exact
+physical parity, original gates, cancellation and boundary/finally validation.
+Four-step mean13.8799s to13.2130s is only4.80% saving despite full callbacks3888
+to96. Total64.518s/190.960MB;452 bindings postmatch. This does not admit a larger
+accuracy run or an extended840s scope. Retain the existing scope without a new
+production extension. [Measurement](docs/d1_review_support/native_validation_cost_v1_20261001.summary.json).
+One bounded two-step cProfile probe will discriminate finite inertia/derivatives,
+structural evaluation and repeated endpoint accounting. Select one targeted
+change or bounded accuracy case from that result; avoid an unmeasured oversized
+full-duration refinement or another open-ended optimization campaign.
+Required C0–C9 remains intact.
+
+The separate ANYstructure intent-storage/public-mapping/typed-rejection slice
+passes focused checks by impact and independent development review. Review-found
+test portability and missing-owner typed errors are fixed. GUI retention has
+source scrutiny only. The actual runtime handoff, model/remesh lineage and
+application admission remain open; no contact execution is exposed by this slice.
 The112-step temporal-refinement
 proposal is not execution authority. Fresh checkpoint restore alone does not
 authorize renewed120s deadlines within one case; aggregate/segment boundaries
