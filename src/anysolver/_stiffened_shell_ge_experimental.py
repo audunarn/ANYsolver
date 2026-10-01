@@ -269,9 +269,11 @@ def _beam_reference(definitions: tuple[NativeBeamDefinition, ...]):
                                    for v in definitions):
         raise ValueError("explicit native B3 definition required")
     elements = []
+    inertias = []
     nodes = {}
     for definition in definitions:
         element, _inertia = definition.instantiate()
+        inertias.append(_inertia)
         if (type(element.section).__name__ != "EllipsoidalGeneralizedSection" and
                 type(element.section) is not PhysicalFibreSection):
             raise ValueError("explicit native generalized or physical-fibre section required")
@@ -293,7 +295,7 @@ def _beam_reference(definitions: tuple[NativeBeamDefinition, ...]):
                           for axis in range(6)] + list(range(nodal+24*i,
                                                              nodal+24*(i+1))))
         pieces.append((element, slots, element.operator.cell.virgin()))
-    return ids, index, nodes, pieces, nodal+24*len(pieces)
+    return ids, index, nodes, pieces, nodal+24*len(pieces), tuple(inertias)
 
 
 def _assemble_shell(model, pieces, count, coordinate_scale,
@@ -522,8 +524,10 @@ class ExperimentalGEAnalysis:
             definition.profile, panel, tuple(definition.beams),
             tuple(definition.points), tuple(definition.fixed),
             definition.lines, definition.q4_pullback_policy, definition.footprints)
-        beam_ids, beam_index, beam_nodes, beam_parts, beam_count = _beam_reference(
+        beam_ids, beam_index, beam_nodes, beam_parts, beam_count, beam_inertias = _beam_reference(
             definition.beams)
+        self._reference_modal_inertias = beam_inertias
+        self._reference_modal_mass = None
         self._has_physical_fibre = any(type(element.section) is PhysicalFibreSection
                                       for element, _, _ in beam_parts)
         if definition.footprints:
@@ -844,6 +848,19 @@ class ExperimentalGEAnalysis:
         if self._footprint_stable_s3:
             details["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         return details
+
+    @property
+    def reference_modal_capabilities(self):
+        """Explicit experimental descriptor route; legacy capability schema stays fixed."""
+        from ._stiffened_shell_ge_reference_modal import capabilities
+        with self._operation_lock:
+            return capabilities(self)
+
+    @_state_writer
+    def modes(self, request, *, cancellation_token=None):
+        """Supported virgin Q4/native-GE point modes with explicit physical mass."""
+        from ._stiffened_shell_ge_reference_modal import solve
+        return solve(self, request, cancellation_token=cancellation_token)
 
     @_state_writer
     def solve_linear(self, actions: tuple[NodalAction, ...], *,

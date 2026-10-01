@@ -1,5 +1,18 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+M4/F07 supported GE modes, 1 October: canonical public modes(request) now
+returns bounded finite pairs for connected supported virgin elastic Q4/native
+generalized six-pose point panels. The full sparse descriptor preserves inertial
+cell6/member and massless resultants/traces/spin/multipliers; explicit physical
+spatial admission, immutable cached mass and full equations/gaps are checked.
+Installed29new+116legacy checks pass,391 source/wheel/site modules match,15
+default static/JSON/checkpoint bindings are byte-identical, public example runs.
+Independent review closed overflow/disconnected-component admission findings.
+Complete descriptor/raw QZ corroboration is not all-root or physical-frequency
+qualification. Full F07/G4B, free-free/repeated spaces/prestress/consumer/external/
+scale and aggregate gates remain OPEN. No authority or scientific limit changed.
+[Sources, artifacts, failures, provenance limits and review](development/r8-ge-reference-modes-20261001/results.md).
+
 B2 nodal rigid footprint, 1 October: separate reference-linear six-pose node law
 and requested physical wrenches reuse the existing sparse affine/factor/batch
 owner. Installed35 unchanged+1 repaired predicate and38 legacy predicates pass,

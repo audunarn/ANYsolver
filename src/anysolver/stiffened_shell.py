@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
+from ._stiffened_shell_ge_reference_modal import (
+    GEReferenceModesRequest, GEReferenceModesResult,
+)
 
 from ._b2_physical_linear_definition import (
     PROFILE_ID as B2_E4_PL_FAST_LINEAR_V1,
@@ -146,6 +149,7 @@ __all__ = [
     "NodalRigidFootprint", "NodalRigidFootprintSelection", "NodalRigidFootprintWrench",
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",
     "StagedDeadLoadProgramme",
+    "GEReferenceModesRequest", "GEReferenceModesResult",
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
