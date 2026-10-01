@@ -361,7 +361,7 @@ def test_static_capability_and_strict_selected_types(request):
     assert owner.capabilities.footprint_law_id == LAW_ID
     assert owner.capabilities.production_qualified is False
     assert "modes" not in owner.capabilities.operations
-    with pytest.raises(ValueError, match="modes and prestress unsupported"):
+    with pytest.raises(ValueError, match="explicit shell density and beam physical mass"):
         owner.modes(api.B2ReferenceModesRequest())
     with pytest.raises(ValueError):
         owner.solve_linear(_load(_definition()), selected_footprints=api.NodalRigidFootprintSelection(("right-patch",)))

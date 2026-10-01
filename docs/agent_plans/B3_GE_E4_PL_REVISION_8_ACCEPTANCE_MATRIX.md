@@ -1,5 +1,18 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+B2/F07/F12/G4B development,1 October: existing physical B2/Q4 descriptor now
+supports virgin selected-node rigid footprints with explicit physical mass,
+coordinate supports detecting all six common rigid fields and zero offset.
+Typed full multiplier/source-frame provenance preserves true point-prefix fields;
+normal spin locked, mechanical qualification incomplete. Bounded QR/SVD support
+audit corrects factor-success admission; no global dense operator/invented inertia.
+One final installed wheel27660d...f47ec binds391 modules,76 affected checks and
+public example pass; independent Read review clear. All previous empty-footprint
+modal/static behavior retained. Free-free/prestress, drilling/torque physics,
+external/scale/consumer and aggregate F07/F12/G4B/G6 remain OPEN. Initial collection
+failure preserved. No tolerance/default/version/authority change.
+[Implementation/evidence/boundaries](development/r8-b2-footprint-reference-modes-20261001/results.md).
+
 BL5 bounded completion derivative, 1 October: two failing constraint rows in the
 retained V2 solve are repaired by one unchanged sparse factor and one additional
 compensated correction. Backward error is 1.34897e-13; all original physical

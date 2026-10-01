@@ -2,8 +2,9 @@
 
 This is an experimental reference-linear owner. Shell and beam node identities
 are explicit and separate. Reference modes require explicit physical mass.
-Explicit nodal footprints have a distinct reference-linear law and static-only
-scope. No line, geometric stiffness, nonlinear state or qualification is inferred.
+Explicit nodal footprints have a distinct reference-linear law; virgin supported
+modes retain its normal-spin locking and incomplete mechanical qualification.
+No line, geometric stiffness, nonlinear state or qualification is inferred.
 """
 
 from __future__ import annotations
@@ -203,6 +204,43 @@ class B2ReferenceModesResult:
 
 
 @dataclass(frozen=True)
+class B2ModalConstraintRow:
+    """Immutable provenance for one actual physical constraint/multiplier row.
+
+    Rows follow C. Footprint gaps are global; point translation gaps use the
+    master shell reference frame and point rotational gaps use the beam
+    reference frame. Multipliers are work-conjugate covectors, not display-ready
+    global wrenches. Frame columns give the actual basis in global coordinates.
+    """
+
+    row_index: int
+    component: str
+    point_id: str | None = None
+    footprint_id: str | None = None
+    shell_node_id: int | None = None
+    beam_node_id: int | None = None
+    coordinate_frame: str = "global"
+    reference_frame_columns: tuple[tuple[float, ...], ...] = (
+        (1., 0., 0.), (0., 1., 0.), (0., 0., 1.))
+
+
+@dataclass(frozen=True)
+class B2FootprintReferenceModesResult(B2ReferenceModesResult):
+    """Virgin descriptor modes of the reference-linear, normal-spin locked law.
+
+    All multipliers follow constraint_rows. Inherited point_multiplier_modes
+    contain only the true point prefix, never footprint multipliers.
+    """
+
+    footprint_law_id: str = FOOTPRINT_LAW_ID
+    footprint_ids: tuple[str, ...] = ()
+    constraint_multiplier_modes: tuple[tuple[float, ...], ...] = ()
+    constraint_rows: tuple[B2ModalConstraintRow, ...] = ()
+    normal_spin: str = "locked"
+    mechanical_qualification: str = "incomplete"
+
+
+@dataclass(frozen=True)
 class ExperimentalB2Q4PanelResult:
     status: str
     displacements: tuple[float, ...] = ()
@@ -361,6 +399,53 @@ def _require_connected_panel(shells, members, points, footprints=()):
         raise ValueError("connected shell/beam point panel required")
 
 
+def _supports_all_panel_rigid_fields(transformation, shell_positions, beam_positions):
+    """Detect all six physical rigid fields using only fixed coordinate rows.
+
+    The constructor requires one connected physical incidence graph, so this
+    is its one component's necessary support check, not a stiffness/kernel or
+    mechanical qualification claim. u=a+w cross (X-origin), theta=w. Translate
+    and scale its origin/length to keep rank independent of coordinate units.
+    Stream at most six support rows through a 6x6 QR; no global dense rigid,
+    stiffness, constraint or nullspace matrix is assembled.
+    """
+    selector = transformation.copy()
+    selector.eliminate_zeros()
+    fixed = np.flatnonzero(np.diff(selector.indptr) == 0)
+    if len(fixed) < 6:
+        return False
+    xyz = tuple(shell_positions[n] for n in sorted(shell_positions))+tuple(
+        beam_positions[n] for n in sorted(beam_positions))
+    supported_nodes = np.unique(fixed//6)
+    origin = np.asarray(xyz[int(supported_nodes[0])], dtype=float)
+    length = 0.
+    with np.errstate(over="ignore", invalid="ignore"):
+        for node in supported_nodes:
+            arm = np.asarray(xyz[int(node)], dtype=float)-origin
+            if not np.isfinite(arm).all():
+                return False
+            length = max(length, float(np.max(abs(arm))))
+    length = length or 1.
+    reduced = np.zeros((6, 6))
+    start = 0
+    for node in supported_nodes:
+        stop = start
+        while stop < len(fixed) and fixed[stop]//6 == node:
+            stop += 1
+        arm = (np.asarray(xyz[int(node)], dtype=float)-origin)/length
+        x, y, z = arm
+        cross = np.array(((0., -z, y), (z, 0., -x), (-y, x, 0.)))
+        rigid = np.block([[np.eye(3), -cross], [np.zeros((3, 3)), np.eye(3)]])
+        reduced = np.linalg.qr(np.vstack((reduced, rigid[fixed[start:stop] % 6])),
+                               mode="r")
+        start = stop
+    scales = np.linalg.norm(reduced, axis=0)
+    if not np.isfinite(reduced).all() or np.any(scales == 0.):
+        return False
+    singular = np.linalg.svd(reduced/scales, compute_uv=False)
+    return bool(singular[-1] > 64*np.finfo(float).eps*max(6, len(fixed))*singular[0])
+
+
 class ExperimentalB2Q4PanelAnalysis:
     """Own one connected reference-linear panel and its sparse factorization.
 
@@ -484,6 +569,7 @@ class ExperimentalB2Q4PanelAnalysis:
         K = sparse.coo_matrix((values, (rows, columns)),
                               shape=(total, total)).tocsr()
         constraint_rows, constraint_cols, constraint_values = [], [], []
+        point_reference_frames = []
         for point_index, point in enumerate(points):
             if (point.shell_id not in shell_lookup or
                     point.member_id not in member_lookup):
@@ -493,6 +579,10 @@ class ExperimentalB2Q4PanelAnalysis:
             law = compile_reference_point(
                 member.definition, vertices, station=point.station,
                 offset_local_m=point.offset_local_m)
+            if footprints:
+                point_reference_frames.append(tuple(
+                    tuple(tuple(map(float, row)) for row in frame)
+                    for frame in law.reference_frames))
             slots = np.r_[shell_slots, beam_slots]
             for local_row in range(6):
                 for local_col, slot in enumerate(slots):
@@ -535,6 +625,7 @@ class ExperimentalB2Q4PanelAnalysis:
         self.shell_node_ids = shell_ids
         self.beam_node_ids = beam_ids
         self.point_ids = tuple(point.point_id for point in points)
+        self._point_reference_frames = tuple(point_reference_frames)
         self.footprints = footprints
         self.footprint_ids = tuple(g.footprint_id for g in footprints)
         self._footprint_incidence = footprint_incidence
@@ -561,6 +652,9 @@ class ExperimentalB2Q4PanelAnalysis:
         self._abs_Ct = abs(C.T.tocsr())
         self._abs_Tt = abs(T.T.tocsr())
         self._u0 = u0
+        self._footprint_rigid_supported = (not footprints or
+            (self._coordinate_modal_supports() and
+             _supports_all_panel_rigid_fields(T, positions, beam_positions)))
         self._ku0 = np.asarray(K @ u0).reshape(-1)
         self._cu0 = np.asarray(C @ u0).reshape(-1)
         self._factor_scale = factor_scale
@@ -574,15 +668,58 @@ class ExperimentalB2Q4PanelAnalysis:
     @property
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
         if self.footprints:
+            admitted = (self._M is not None and self._coordinate_modal_supports()
+                        and not np.any(self._u0 != 0.) and self._footprint_rigid_supported)
             return ExperimentalB2Q4FootprintCapabilities(
                 attachment="explicit reference-linear selected-node rigid footprints and finite-vertex points",
-                spectral_domain="nodal-footprint modes and prestress unsupported",
+                operations=(("solve_linear", "solve_linear_many", "modes", "close")
+                            if admitted else ("solve_linear", "solve_linear_many", "close")),
+                spectral_domain=("experimental virgin supported reference modes; normal-spin locked; "
+                                 "mechanical qualification incomplete; prestress unsupported"
+                                 if admitted else
+                                 "reference modes require complete physical mass, coordinate supports detecting all six rigid fields and zero offset; "
+                                 "normal-spin locked; mechanical qualification incomplete; prestress unsupported"),
                 footprints=self.footprints)
         if self._M is None:
             return ExperimentalB2Q4PanelCapabilities()
         return ExperimentalB2Q4PanelCapabilities(
             operations=("solve_linear", "solve_linear_many", "modes", "close"),
             spectral_domain="experimental reference B2/Q4 finite pairs with coordinate supports; completeness unqualified")
+
+    def _coordinate_modal_supports(self) -> bool:
+        selector = self._T.copy()
+        selector.eliminate_zeros()
+        return not (np.any(np.diff(selector.tocsc().indptr) != 1) or
+                    np.any(np.diff(selector.indptr) > 1))
+
+    def _reference_modes_result(self, status, frequencies=(), physical=(),
+                                multipliers=(), equations=(), constraints=(),
+                                factorization_count=0, solve_count=0,
+                                failure_reason=None):
+        args = (status, frequencies, physical, multipliers, equations, constraints,
+                factorization_count, solve_count, failure_reason)
+        if not self.footprints:
+            return B2ReferenceModesResult(*args)
+        components = ("ux", "uy", "uz", "rx", "ry", "rz")
+        provenance = [B2ModalConstraintRow(
+                          6*i+j, component, point_id=point_id,
+                          coordinate_frame=("point_master_shell_reference" if j < 3
+                                            else "point_beam_reference"),
+                          reference_frame_columns=self._point_reference_frames[i][0 if j < 3 else 1])
+                      for i, point_id in enumerate(self.point_ids)
+                      for j, component in enumerate(components)]
+        for item in self._footprint_incidence:
+            provenance.extend(B2ModalConstraintRow(
+                item.row_start+j, component, footprint_id=item.footprint_id,
+                shell_node_id=item.shell_node, beam_node_id=item.beam_node)
+                for j, component in enumerate(components))
+        point_modes = (tuple(mode[:6*len(self.point_ids)] for mode in multipliers)
+                       if self.point_ids else ())
+        return B2FootprintReferenceModesResult(
+            status, frequencies, physical, point_modes, equations, constraints,
+            factorization_count, solve_count, failure_reason,
+            footprint_ids=self.footprint_ids,
+            constraint_multiplier_modes=multipliers, constraint_rows=tuple(provenance))
 
     def modes(self, request: B2ReferenceModesRequest, *,
               cancellation: CancellationToken | None = None) -> B2ReferenceModesResult:
@@ -595,17 +732,16 @@ class ExperimentalB2Q4PanelAnalysis:
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
-        if self.footprints:
-            raise ValueError("B2 nodal-footprint modes and prestress unsupported")
         if type(request) is not B2ReferenceModesRequest:
             raise ValueError("typed reference-mode request required")
         if self._M is None:
             raise ValueError("explicit shell density and beam physical mass required")
-        selector = self._T.copy()
-        selector.eliminate_zeros()
-        if (np.any(np.diff(selector.tocsc().indptr) != 1) or
-                np.any(np.diff(selector.indptr) > 1)):
+        if not self._coordinate_modal_supports():
             raise ValueError("reference modes currently require coordinate supports without MPCs")
+        if self.footprints and np.any(self._u0 != 0.):
+            raise ValueError("virgin nodal-footprint reference modes require zero prescribed offset")
+        if self.footprints and not self._footprint_rigid_supported:
+            raise ValueError("nodal-footprint reference modes require coordinate supports detecting all six physical rigid fields; free-free and under-supported modes unsupported")
         if cancellation is not None and not isinstance(cancellation, CancellationToken):
             raise ValueError("CancellationToken required")
         n = self._T.shape[1]
@@ -707,17 +843,17 @@ class ExperimentalB2Q4PanelAnalysis:
                     np.max(abs(modal_gram-np.eye(request.count))) > 1e-7):
                 raise _NumericalFailure("modal physical-mass orthogonality failed")
             safe_point("reference modes before publication")
-            return B2ReferenceModesResult(
+            return self._reference_modes_result(
                 "ok", tuple(mode[0] for mode in recovered),
                 tuple(mode[1] for mode in recovered), tuple(mode[2] for mode in recovered),
                 tuple(mode[3] for mode in recovered), tuple(mode[4] for mode in recovered),
                 handle.factorization_count, handle.solve_count)
         except SolveCancelled as exc:
-            return B2ReferenceModesResult(
+            return self._reference_modes_result(
                 "cancelled", factorization_count=handle.factorization_count if handle else 0,
                 solve_count=handle.solve_count if handle else 0, failure_reason=str(exc))
         except (ArpackError, _NumericalFailure) as exc:
-            return B2ReferenceModesResult(
+            return self._reference_modes_result(
                 "failed", factorization_count=handle.factorization_count if handle else 0,
                 solve_count=handle.solve_count if handle else 0, failure_reason=str(exc))
 

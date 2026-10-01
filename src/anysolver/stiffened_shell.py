@@ -38,6 +38,7 @@ from ._stiffened_shell_b2_q4_panel_experimental import (
     ExperimentalB2Q4PanelAnalysis, Q4PanelShell, Q4B2Point,
     ExperimentalB2Q4PanelResponseEnvelope,
     B2ReferenceModesRequest, B2ReferenceModesResult,
+    B2FootprintReferenceModesResult, B2ModalConstraintRow,
     ExperimentalB2Q4FootprintResult, ExperimentalB2Q4FootprintSelectedCase,
     ExperimentalB2Q4FootprintBatchResult, ExperimentalB2Q4FootprintCapabilities,
 )
@@ -96,7 +97,9 @@ class B2Q4PanelDefinition:
     """Experimental reference-linear Q4/B2 points or explicit nodal footprints.
 
     Empty footprints preserve the historical finite-vertex point route.
-    Nonempty footprints are elastic/static only and lock normal spin.
+    Nonempty footprints admit virgin supported reference modes with complete
+    physical mass and coordinate supports. They lock normal spin and retain
+    incomplete mechanical qualification.
     """
 
     profile: str
@@ -159,6 +162,7 @@ __all__ = [
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
+    "B2FootprintReferenceModesResult", "B2ModalConstraintRow",
     "B2NodalRigidFootprint", "B2NodalRigidFootprintSelection",
     "B2NodalRigidFootprintWrench", "B2NodalFootprintNodeAction",
     "ExperimentalB2Q4FootprintResult", "ExperimentalB2Q4FootprintSelectedCase",
