@@ -28,7 +28,7 @@ class PointTransferWrench:
 
 def point_record(owner, index, positions, position_low, resisting, gap, configuration):
     """Capture already evaluated values without element or joint evaluation."""
-    point = owner._definition.points[index]
+    point = owner._point_incidence[index]
     return PointTransferWrench(
         index, point.shell_node, point.beam_node, configuration,
         tuple(float(v) for v in positions[0]), tuple(float(v) for v in positions[1]),

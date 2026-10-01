@@ -9,7 +9,7 @@ The BL5 finite route admits elastic response only and remains unqualified.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from copy import copy
 from hashlib import sha256
 from functools import wraps
@@ -27,6 +27,11 @@ from ._ge_beam3_native_definition import NativeBeamDefinition
 from ._ge_beam3_fibre_section import PhysicalFibreSection
 from ._ge_beam3_pose_joint import RigidPoseJoint
 from ._stiffened_shell_point_recovery import PointTransferWrench, reference_point_records
+from ._stiffened_shell_nodal_footprint import (
+    NodalRigidFootprint, NodalRigidFootprintSelection, NodalRigidFootprintWrench,
+    validate_footprints, selected_wrenches, stable_s3_policy_descriptor,
+    retained_scale_policy_descriptor, chart_admission_policy_descriptor,
+)
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._stiffened_shell_s3_algorithmic_pullback import POLICY as S3_J2_PULLBACK_POLICY
 from ._stiffened_shell_q4_algorithmic_pullback import (
@@ -168,6 +173,7 @@ class LinearDefinition:
     fixed: tuple[FixedCoordinate, ...]
     lines: tuple[ExperimentalL1Line | ExperimentalBL5Line, ...] = ()
     q4_pullback_policy: str = Q4_HISTORICAL_POLICY
+    footprints: tuple[NodalRigidFootprint, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -356,8 +362,12 @@ def _reference_section_tangent(section):
 
 
 def _reference_scales(shell_xyz, beam_nodes, beam_parts, shell_count,
-                      beam_count):
-    """Freeze coordinate scales with their physical units at compilation."""
+                      beam_count, *, footprint_retained_roles=False):
+    """Freeze compilation scales; new footprints use native retained roles.
+
+    Empty-footprint owners retain the historical arrangement exactly. Only the
+    explicit footprint policy corrects its retained force/moment work pairing.
+    """
     positions = np.vstack((shell_xyz, [value[0] for value in beam_nodes.values()]))
     centered = positions-np.mean(positions, axis=0)
     length = float(np.sqrt(np.mean(np.sum(centered*centered, axis=1))))
@@ -373,7 +383,14 @@ def _reference_scales(shell_xyz, beam_nodes, beam_parts, shell_count,
         base = nodal_count+24*i
         beam_scale[base:base+6] = 1.
         resultant_scale = np.abs(_reference_section_tangent(element.section))@strain_scale
-        beam_scale[base+6:base+24] = np.tile(resultant_scale, 3)
+        # Native p consists of six independent force coordinates followed by
+        # twelve moment coordinates, not three recovered station wrenches.
+        # Preserve the historical arrangement for every empty-footprint owner.
+        if footprint_retained_roles:
+            beam_scale[base+6:base+24] = np.r_[np.tile(resultant_scale[:3], 2),
+                                             np.tile(resultant_scale[3:], 4)]
+        else:
+            beam_scale[base+6:base+24] = np.tile(resultant_scale, 3)
     if not np.isfinite(shell_scale).all() or not np.isfinite(beam_scale).all():
         raise ValueError("finite reference coordinate scales required")
     return length, shell_scale, beam_scale
@@ -397,7 +414,8 @@ def _relative_equilibrium(residual, applied, coordinate_scale, floor_work):
 
     Each covector row is paired with its frozen characteristic coordinate.
     This keeps forces, moments and native retained-variable equations in
-    work units and is invariant under a work-conjugate coordinate-unit change.
+    work units when supplied scales match the actual coordinate roles; unit
+    invariance assumes that same correctly packed work-conjugate pairing.
     ``floor_work`` is one newton times the frozen reference length in SI.
     """
     residual = np.asarray(residual, dtype=float)
@@ -486,6 +504,8 @@ class ExperimentalGEAnalysis:
         if (type(definition.q4_pullback_policy) is not str or
                 definition.q4_pullback_policy not in (Q4_HISTORICAL_POLICY, Q4_ALGORITHMIC_PULLBACK_V1)):
             raise ValueError("explicit admitted Q4 pullback policy required")
+        if definition.footprints and definition.lines:
+            raise ValueError("experimental nodal rigid footprints require point-owner-only attachment scope")
         if definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and (
                 not panel.q4_elements or definition.lines):
             raise ValueError("algorithmic Q4 pullback requires a Q4-containing point model")
@@ -501,11 +521,29 @@ class ExperimentalGEAnalysis:
         definition = LinearDefinition(
             definition.profile, panel, tuple(definition.beams),
             tuple(definition.points), tuple(definition.fixed),
-            definition.lines, definition.q4_pullback_policy)
+            definition.lines, definition.q4_pullback_policy, definition.footprints)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count = _beam_reference(
             definition.beams)
         self._has_physical_fibre = any(type(element.section) is PhysicalFibreSection
                                       for element, _, _ in beam_parts)
+        if definition.footprints:
+            if (panel.q4_elements and
+                    definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1):
+                raise ValueError("nodal rigid footprints require explicitly selected full-map Q4")
+            if panel.j2_curve is not None or self._has_physical_fibre:
+                raise ValueError("experimental nodal rigid footprints admit elastic shell and generalized beam response only")
+            if (any(type(v) is not PointConnection for v in definition.points) or
+                    type(definition.lines) is not tuple or
+                    any(type(v) not in (ExperimentalL1Line, ExperimentalBL5Line)
+                        for v in definition.lines)):
+                raise ValueError("typed explicit point/line attachment declarations required")
+        definition = replace(definition, footprints=validate_footprints(
+            definition.footprints, shell_index, shell_xyz,
+            panel.q4_elements+panel.s3_elements, beam_index,
+            definition.points, definition.lines))
+        self._finite_elastic_footprint = bool(definition.footprints)
+        self._footprint_stable_s3 = bool(definition.footprints and panel.s3_elements
+                                        and not definition.lines)
         self._beam_families = tuple(dict.fromkeys(
             "PHYSICAL_AXIAL_BIAXIAL_FIBRE" if type(element.section) is PhysicalFibreSection
             else "RESULTANT_ELLIPSOID" for element, _, _ in beam_parts))
@@ -513,7 +551,8 @@ class ExperimentalGEAnalysis:
             raise ValueError("physical-fibre mixed owner currently admits point attachments only")
         shell_count = 6*len(shell_ids)
         reference_length, shell_scale, beam_scale = _reference_scales(
-            shell_xyz, beam_nodes, beam_parts, shell_count, beam_count)
+            shell_xyz, beam_nodes, beam_parts, shell_count, beam_count,
+            footprint_retained_roles=self._finite_elastic_footprint)
         shell_r, shell_k, shell_local_error = _assemble_shell(
             shell_model, shell_parts, shell_count, shell_scale,
             definition.q4_pullback_policy)
@@ -569,17 +608,35 @@ class ExperimentalGEAnalysis:
         if definition.lines:
             identity_payload["lines"] = [line.descriptor() for line in
                                          definition.lines]
+        if definition.footprints:
+            identity_payload["nodal_rigid_footprints"] = [
+                group.descriptor() for group in definition.footprints]
+            identity_payload["footprint_retained_scale_policy"] = retained_scale_policy_descriptor()
+            identity_payload["footprint_chart_admission_policy"] = chart_admission_policy_descriptor()
+        if self._footprint_stable_s3:
+            identity_payload["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         self._identity = sha256(json.dumps(
             identity_payload, sort_keys=True,
             separators=(",", ":")).encode()).hexdigest()
         self._connections = []
         self._joint_slots = []
+        incidence = list(definition.points)
+        bindings = []
+        footprint_sources = {}
+        for group in definition.footprints:
+            indices = tuple(range(len(incidence), len(incidence)+len(group.shell_nodes)))
+            bindings.append((group, indices))
+            for index, node in zip(indices, group.shell_nodes):
+                incidence.append(PointConnection(node, group.beam_node))
+                footprint_sources[index] = f"footprint={group.footprint_id} "
+        self._point_incidence = tuple(incidence)
+        self._footprint_bindings = tuple(bindings)
         constraint_rows = []
         row_sources = []
-        if not definition.points and not definition.lines:
+        if not self._point_incidence and not definition.lines:
             raise ValueError("explicit native connection required")
         seen_points = set()
-        for tie in definition.points:
+        for point_index, tie in enumerate(self._point_incidence):
             if (type(tie) is not PointConnection or
                     tie.shell_node not in shell_index or tie.beam_node not in beam_index):
                 raise ValueError("known point connection nodes required")
@@ -600,6 +657,7 @@ class ExperimentalGEAnalysis:
                           np.arange(beam_slot, beam_slot+6)]
             constraint_rows.append((slots, evaluation.constraint_jacobian))
             row_sources.extend(
+                footprint_sources.get(point_index, "")+
                 f"point shell={tie.shell_node} beam={tie.beam_node} row={row}"
                 for row in range(6))
             self._connections.append(joint)
@@ -657,7 +715,7 @@ class ExperimentalGEAnalysis:
                 definition.lines[0].basis == "p0" and
                 len(definition.lines[0].beam_halfcells) ==
                 definition.lines[0].multiplier_span and
-                not definition.points and
+                not self._connections and
                 not any(support.domain == "beam" for support in definition.fixed))
             else ())
         _require_independent_supported_rows(
@@ -709,7 +767,7 @@ class ExperimentalGEAnalysis:
         if (self._definition.shell.s3_elements and shell_plastic and
                 not self._line_samples):
             excluded += ("qualified S3 J2 finite-rotation response",)
-        return {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
+        capabilities = {"profile": PROFILE, "status": "EXPERIMENTAL_NOT_QUALIFIED",
                 "shell": (("experimental isotropic Q4/S3-V2D J2"
                            if self._definition.shell.s3_elements else
                            "experimental isotropic Q4 J2") if shell_plastic else
@@ -744,10 +802,27 @@ class ExperimentalGEAnalysis:
                               if shell_plastic
                               else ())),
                 "excluded": excluded}
+        if self._definition.footprints:
+            capabilities["attachment"] = (
+                (("reference point pose",) if self._definition.points else ())+
+                ("experimental selected-node rigid footprint (six-channel pose)",)+
+                tuple(v for v in attachment if "line" in v))
+            capabilities["excluded"] = tuple(v for v in excluded if v != "footprint")+(
+                "plastic footprint", "physical-fibre footprint", "distributing footprint",
+                "continuous-area footprint", "qualified footprint", "off-node beam footprint station")
+            capabilities["analysis"] = (
+                ("reference_linear", "experimental_elastic_finite_nodal_footprint")
+                if not self._line_samples or self._finite_bl5 else ("reference_linear",))
+            capabilities["footprint_retained_scale_policy"] = retained_scale_policy_descriptor()
+            capabilities["footprint_chart_admission_policy"] = chart_admission_policy_descriptor()
+            capabilities["excluded"] += ("nodal-footprint chart rebase and rebased checkpoint restore",)
+        if self._footprint_stable_s3:
+            capabilities["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
+        return capabilities
 
     def preflight(self):
         self._require_open()
-        return {"identity": self._identity, "physical_dofs": self._shell_count+
+        details = {"identity": self._identity, "physical_dofs": self._shell_count+
                 6*len(self._beam_ids), "retained_dofs": self._beam_count-
                 6*len(self._beam_ids), "constraints": self._C.shape[0],
                 "matrix_nnz": self._A.nnz,
@@ -760,6 +835,15 @@ class ExperimentalGEAnalysis:
                 "constraint_norm": "reference_row_scaled_max",
                 "unsupported_modes": self._unsupported_modes,
                 "production_qualified": False}
+        if self._definition.footprints:
+            details["nodal_rigid_footprints"] = tuple(
+                dict(group.descriptor(), point_indices=indices)
+                for group, indices in self._footprint_bindings)
+            details["footprint_retained_scale_policy"] = retained_scale_policy_descriptor()
+            details["footprint_chart_admission_policy"] = chart_admission_policy_descriptor()
+        if self._footprint_stable_s3:
+            details["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
+        return details
 
     @_state_writer
     def solve_linear(self, actions: tuple[NodalAction, ...], *,
@@ -878,18 +962,22 @@ class ExperimentalGEAnalysis:
                 self._finite_driver = driver
 
     @_accepted_snapshot
-    def recover(self) -> LinearResult:
+    def recover(self, *, selection=None):
         self._require_open()
         if self._finite_driver is not None:
-            return self._finite_driver.recover()
-        if self._accepted is None:
-            raise RuntimeError("no accepted mixed linear result")
-        return self._accepted[0]
+            result = self._finite_driver.recover()
+        else:
+            if self._accepted is None:
+                raise RuntimeError("no accepted mixed linear result")
+            result = self._accepted[0]
+        return result if selection is None else selected_wrenches(self, result, selection)
 
     @_state_writer
     def rebase_rotations(self, expected_generation: int, *, cancellation_token=None):
         """Issue an experimental physical shell-anchor reset at the same load."""
         self._require_open()
+        if self._definition.footprints:
+            raise ValueError("experimental nodal footprint chart rebase is unsupported: continuation parity not established")
         if self._finite_driver is None:
             raise RuntimeError("shell rebase requires an accepted finite point state")
         return self._finite_driver.rebase_rotations(
@@ -974,6 +1062,8 @@ class ExperimentalGEAnalysis:
         if self._has_physical_fibre and raw.startswith(S3_BINARY_CHECKPOINT_MAGIC):
             raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
         if raw.startswith(CHART_CHECKPOINT_MAGIC):
+            if self._definition.footprints:
+                raise ValueError("experimental nodal footprint chart checkpoint restore is unsupported: continuation parity not established")
             if self._line_samples and not self._finite_bl5:
                 raise ValueError("owned shell charts require a supported finite model")
             event_generation, anchors, witness, raw = _decode_chart_checkpoint(
@@ -984,6 +1074,9 @@ class ExperimentalGEAnalysis:
                 if ("_chart" in kind) != (chart is not None):
                     raise ValueError("numeric shell chart snapshot requires matching outer policy")
                 kind = kind.replace("_chart", "")
+                stable_kind = kind == "finite_native_material_stable"
+                if self._footprint_stable_s3 and kind not in ("linear", "finite_native_material_stable"):
+                    raise ValueError("nodal footprint S3 checkpoint requires its stable numerical policy")
                 if kind == "finite_bl5" and not self._finite_bl5:
                     raise ValueError("finite BL5 checkpoint requires elastic BL5 line model")
                 if self._line_samples and kind not in ("linear", "finite_bl5"):
@@ -1010,7 +1103,9 @@ class ExperimentalGEAnalysis:
                         (load_key, (count,)),
                         ("accepted_factors", (generation,)))
                 if kind == "finite_native_material":
-                    if not self._has_physical_fibre or self._definition.shell.j2_curve is not None:
+                    if ((not self._has_physical_fibre and not
+                         (self._footprint_stable_s3 and stable_kind)) or
+                            self._definition.shell.j2_curve is not None):
                         raise ValueError("native material checkpoint requires elastic-shell fibre model")
                     from ._stiffened_shell_beam_history import shapes
                     return base + shapes(self._beam_parts, "origin") + shapes(self._beam_parts, "accepted")

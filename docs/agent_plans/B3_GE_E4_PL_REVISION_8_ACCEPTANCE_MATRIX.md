@@ -1,5 +1,21 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+Nodal rigid footprint, 1 October: experimental selected-node six-pose locking
+and complete selected-cell patches supply sparse reference-linear/nonrebased
+finite solves, physical group wrenches and ordinary restart. Final installed
+solver 49+4 and paired ANYfem 23+89 predicates pass with complete independent
+reviews; 26 preceding-wheel legacy predicates are reused by explicit impact
+analysis, not relabeled as current-wheel execution. Public Q4 consumer example
+completes save/reopen, solve, recovery, checkpoint and continued stepping.
+New policies bind S3 stable arithmetic and native retained F6/M12 work scales
+only for nonempty footprints. Legacy default Q4 observables/checkpoints match
+the prior wheel exactly on the fixed control. Strict rebase successor parity
+failed for Q4/mixed/S3 and remains preserved; new public rebase/chart restore
+are explicitly unsupported pending repair. M4/F04/F06 footprint chart transport,
+distributing/area behavior, torque/drilling/shear, plasticity, external and full
+programme obligations remain OPEN. No aggregate acceptance or release follows.
+[Exact artifacts, failed evidence and reviews](development/r8-nodal-rigid-footprint-20261001/results.md).
+
 Staged material history, 1 October: installed point-owner load/unload/reversal/
 reload, atomic rejection/cancellation, plastic-state chart reset and checkpoint
 continuation pass for selected-Q4 yielding physical fibres, S3 shell J2 with
@@ -284,7 +300,7 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 | M1 matching-station GE | IMPLEMENTED_NOT_QUALIFIED | Accepted spatial point-action recovery and ordinary native ANYfem input roundtrip now verified. Latest consolidated installed slice covers171 distinct predicates (V1 170pass/1 fixturefail; V2 corrected1/1). Matched E01, physical torque/drilling, complete V01–V06/V17/V18/V28 evidence and independent acceptance open. |
 | M2 bonded line | IN_PROGRESS | BL5 physical law, multiplier resolution, F03 and ratios/refinement/transfer open. |
 | M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/B2 point-panel 1/10/100, selected envelopes and ordinary native ANYfem input save/reopen tested. Scoped F09 and F10/F11 point/static accepted; fixed E01 B2 reference executed with retained discrepancies. General F10/F11/F13, complete consumer workflow and converged E01 accuracy remain open. |
-| M4 remaining mechanics | IN_PROGRESS | Materials, footprints, topology, loads, spectra, imperfections and capacity remain mandatory. |
+| M4 remaining mechanics | IN_PROGRESS | Selected-node rigid footprints have installed unrebased solver/consumer evidence; footprint chart transport and broader material/attachment/topology/load/spectral/imperfection/capacity requirements remain mandatory. |
 | M5 scale/release | NOT_STARTED | Practical scale, platforms, external programme and authorized release remain mandatory. |
 
 M2 bounded decision,30 September: independent local stationary elimination and

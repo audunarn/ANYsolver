@@ -32,8 +32,8 @@ def test_rotated_point_actions_are_spatial_and_work_conjugate(sign):
     lam = np.array((10., -13., 21., 2., 5., -7.))
     trial = joint.evaluate_ports(positions, np.array((np.eye(3), frame)), lam,
         rotation_coordinates=np.array((theta, np.zeros(3))), charted_ports=(True, False))
-    owner = SimpleNamespace(_definition=SimpleNamespace(points=(
-        stiffened_shell.PointConnection(1, 101),)))
+    owner = SimpleNamespace(_point_incidence=(
+        stiffened_shell.PointConnection(1, 101),))
     record = point_record(owner, 0, positions, np.zeros((2, 3)),
         trial.pose.residual[:12], trial.pose.constraints, "current")
     force_b = -frame@lam[:3]
@@ -167,8 +167,8 @@ def test_low_position_parts_remain_owned_and_carry_lever_arm():
     low = np.array(((0., 0., 0.), (2.**-54, 0., 0.)))
     trial = joint.evaluate(positions, np.tile(np.eye(3), (2, 1, 1)),
                            np.array((0., 1e16, 0., 0., 0., 0.)), position_low=low)
-    owner = SimpleNamespace(_definition=SimpleNamespace(points=(
-        stiffened_shell.PointConnection(1, 101),)))
+    owner = SimpleNamespace(_point_incidence=(
+        stiffened_shell.PointConnection(1, 101),))
     record = point_record(owner, 0, positions, low, trial.residual[:12],
                           trial.constraints, "current")
     assert record.beam_position_m == record.shell_position_m

@@ -39,6 +39,7 @@ from ._stiffened_shell_ge_experimental import (
     FixedCoordinate,
     LinearDefinition, LinearResult,
     NodalAction, PointConnection, ShellPanel,
+    NodalRigidFootprint, NodalRigidFootprintSelection, NodalRigidFootprintWrench,
     Q4_ALGORITHMIC_PULLBACK_V1,
 )
 
@@ -130,6 +131,7 @@ __all__ = [
     "Q4_ALGORITHMIC_PULLBACK_V1",
     "B3_GE_E4_PL_STIFFENED_SHELL_V1", "B2_E4_PL_FAST_LINEAR_V1",
     "ShellPanel", "PointConnection", "PointTransferWrench",
+    "NodalRigidFootprint", "NodalRigidFootprintSelection", "NodalRigidFootprintWrench",
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",
     "StagedDeadLoadProgramme",
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",

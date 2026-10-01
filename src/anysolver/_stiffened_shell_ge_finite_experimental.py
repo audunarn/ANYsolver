@@ -68,6 +68,14 @@ MAX_JSON_CHECKPOINT_VALUES = 50_000
 NATIVE_MATERIAL_CHECKPOINT = _BINARY_SCHEMAS["finite_native_material"]
 
 
+def _require_elastic_footprint_histories(histories, context):
+    for history in histories:
+        for station in history.stations:
+            if (station.accumulated != (0., 0.) or
+                    any(value != 0. for pair in station.plastic for value in pair)):
+                raise ValueError("experimental nodal rigid footprints admit elastic beam response only: "+context)
+
+
 def native_shell_checkpoint_shapes(owner, generation):
     """Layout from the compiled model; no dimensions are trusted from a file."""
     count = owner._K.shape[0]
@@ -382,7 +390,7 @@ class FinitePointDriver:
         self.owner = owner
         # Numerical policy is checkpoint-bound. Legacy restored histories keep
         # their original arithmetic rather than changing endpoint validation.
-        self._stable_s3 = bool(owner._has_physical_fibre and
+        self._stable_s3 = bool((owner._has_physical_fibre or owner._footprint_stable_s3) and
             owner._definition.shell.s3_elements and
             owner._definition.shell.j2_curve is None)
         beam_ids = owner._beam_ids
@@ -544,6 +552,8 @@ class FinitePointDriver:
             if getattr(owner, "_finite_bl5", False) and any(
                     station.accumulated != (0., 0.) for station in response.history.stations):
                 raise ValueError("experimental finite BL5 admits elastic beam response only")
+            if getattr(owner, "_finite_elastic_footprint", False):
+                _require_elastic_footprint_histories((response.history,), "candidate")
             beam_candidates.append(response.history)
 
         point_records = []
@@ -995,7 +1005,7 @@ class FinitePointDriver:
         if getattr(self.owner, "_finite_bl5", False):
             return _encode_binary_checkpoint(kind("finite_bl5"),
                 self._checkpoint_identity(), generation, arrays)
-        if self.owner._has_physical_fibre:
+        if self.owner._has_physical_fibre or self.owner._footprint_stable_s3:
             if self.owner._definition.shell.j2_curve is not None:
                 owner = self.owner
                 q4_count = len(owner._definition.shell.q4_elements)
@@ -1107,6 +1117,8 @@ class FinitePointDriver:
             raise ValueError("finite BL5 checkpoint requires its matching line policy")
         native_shell = value.get("schema") == NATIVE_SHELL_SCHEMA
         stable_s3 = value.get("schema") == STABLE_NATIVE_SCHEMA
+        if owner._footprint_stable_s3 and not stable_s3:
+            raise ValueError("nodal footprint S3 checkpoint requires its stable numerical policy")
         if stable_s3 and not self._stable_s3:
             raise ValueError("stable S3 native checkpoint requires elastic S3 fibre model")
         # This driver is still private to restore until all validation passes.
@@ -1180,7 +1192,7 @@ class FinitePointDriver:
             if not np.array_equal(pattern, self._programme.load_at(factors[-1])):
                 raise ValueError("staged checkpoint applied force disagrees with programme")
         if native_material:
-            if not owner._has_physical_fibre:
+            if not owner._has_physical_fibre and not owner._footprint_stable_s3:
                 raise ValueError("native material checkpoint requires fibre model")
             beam_origins = native_histories(owner._beam_parts, value, "origin")
             beam_accepted = native_histories(owner._beam_parts, value, "accepted")
@@ -1195,6 +1207,10 @@ class FinitePointDriver:
                 raise ValueError("material checkpoint requires yielded or reversed history")
         else:
             beam_origins = self._beam_origins
+        if owner._finite_elastic_footprint:
+            _require_elastic_footprint_histories(beam_origins, "checkpoint origin")
+            if native_material:
+                _require_elastic_footprint_histories(beam_accepted, "checkpoint accepted")
         if shell_material:
             q4_count = len(owner._definition.shell.q4_elements)
             shell_count = q4_count if s3_material else len(owner._shell_parts)
