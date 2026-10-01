@@ -612,3 +612,55 @@ defect, not failed equilibrium or a new science threshold. Retain original test
 bytes/output. V2 replaces only that extra discriminator with prospective1e-4
 relative departure; forces/response/gap/restart gates and mechanical inputs are
 unchanged. No enforcement, mesh, load or resource change.
+
+### Simultaneous sphere/plane and complete restart gap — 2026-10-01
+
+The existing multiple-tools route admits spheres, but prior integrated evidence
+uses two planes/cylindrical controls and compares split displacement only. One
+new B3 sphere+plane case will check genuine radial/plane coupling, an independent
+quartic-interval line-force integral, force/wrench equilibrium and cancellation
+followed by fresh-model restart at the same nominal path. Complete canonical
+checkpoint parity is the principal state discriminator. Use existing law/gap/
+solver/integration/resource controls; no new kernel, cap or acceptance claim.
+A failure is classified once, without automatic integration/path-budget growth.
+
+Sphere/planeV1 fails genuine contact_gap_exceeded in4.963s/261.36MB. Reference
+line x is unchanged and radial active length<=2*(.015)=.03m; at1mm penetration,
+k1e5 permits an upper normal integral3N before shape/normal reductions, versus
+10N lateral load and small structural response in the confined admissible pose.
+This supports inadequate explicit regularization, not a resource-budget cause.
+One V2 prospective law uses radialk1e7 only (plane2e5 unchanged), retaining
+1mm/.8mm gap gates and all loads/solver/integration/state/resource limits.
+Independent quartic-interval force oracle uses the same new dimensioned law.
+No kernel or hidden default changes. Further failure stops this slice pending
+specific classification; no automatic stiffness/cap campaign.
+
+Sphere/planeV2 passes full coupled equilibrium, independent radial/plane-force,
+wrench and gap checks, then NONPASS4.773s/294.00MB because the harness expected
+a cancelled result: the existing API correctly raises SolveCancelled. No kernel
+or cancellation regression established. V3 changes only that expectation and
+obtains a normal .5-prefix checkpoint on the cancelled/reusable model with2steps,
+matching uninterrupted4-step .25 partition. Restore contract intentionally excludes
+target/number of increments and retains actual adaptive path state. Physics,
+regularization, gates and caps unchanged; V2 exact harness/output retained.
+
+Sphere/planeV3 completes4.295s/260.50MB. Its independent forces are
+(-9.9891862,-11.9907058)N; radial active length5.7756mm, plane281.847mm.
+Same-.25 partition continuation is bit-identical in displacements AND complete
+canonical checkpoint bytes. E68C... labels the checkpoint's integrity field,
+not a separately measured raw-byte digest. Independent saved/source review
+1b210a6a passes this local slice. No new production code was required; final
+schema/API behavior was tested rather than adapted to the mistaken harness.
+Illustrative1mm/.8mm gap budgets confer no10um qualification claim.
+
+### Resume: exact-artifact native restart blocker — 2026-10-01
+
+HEAD2dd335e9 and all earlier installed/B3 checks remain committed and unchanged.
+V1 restart source is authored but not executed. Independent review passes stored
+state validation/atomic reissuance but finds eight source owners insufficient to
+bind transitive retained-generalized arithmetic. The next bounded fix is one
+full-package source-manifest digest with finite admission and operation-level
+checks, including atomic exit; no Newton-loop hashing or mechanics alteration.
+V1 snapshots remain NOT_EXECUTED. V2 source review then one four-step split check
+will discriminate exact continuation from state/identity defects. No cap increase
+or new dynamics campaign. Original clock144460s/40.13h used of120h.

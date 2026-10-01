@@ -3,11 +3,12 @@
 ## Objective and identity
 
 Full C0–C9 continues in `C:/ANYworkspaceWork/ANYsolver-general-contact`, branch
-`codex/general-contact-core`; last checkpoint HEAD `4c3ac836574b085716a02d507e6b619ec18cd0ea`.
-The API/source integration is committed; subsequent packaging/B3 checks are dirty and lead-owned. [Goal](GENERAL_CONTACT_GOAL.md)
-rev2026-09-30.4, [plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.44 and
+`codex/general-contact-core`; last checkpoint HEAD `2dd335e9ece8a28ee1f67f3440535f627e9cf198`.
+The native API, installed development routing and actual B3/S3 checks are committed.
+The simultaneous sphere/plane lifecycle evidence and current notes are lead-owned dirty work. [Goal](GENERAL_CONTACT_GOAL.md)
+rev2026-09-30.4, [plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.45 and
 [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md) govern.
-Original120-active-hour clock: last141126s (39.20h) used; no reset. No merge,
+Original120-active-hour clock: last144460s (40.13h) used; no reset. No merge,
 publication, release or historical-default changes. Previous detailed ownership
 and failures: [Part26](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART26.md).
 
@@ -48,17 +49,24 @@ No C7/temporal or scientific admission. Exact import manifest
 
 ## Active next action and ownership
 
-Worker `/root/saved_radial_boundary` completed the dynamic checkpoint payload
-and fresh-owner reissuance proposal in the existing D6 note, SHA30b73a64.
-Reviewer found one necessary original algebraic-correction witness, now explicitly
-required before implementation. Author implements in the managed tree only;
-source/test scrutiny precedes any new numeric run. Reviewer owns the separate
-saved B3/package assessment meanwhile. Native API review347fae47 is closed.
+Worker `/root/saved_radial_boundary` authored the complete native dynamic restart
+V1 codec in the managed tree; no imports or numerical execution occurred. The
+independent reviewer passed state validation/atomic reissuance but blocked execution:
+the eight-source header omits transitive structural implementation bytes. V1 remains
+SOURCE_AUTHORED_NOT_EXECUTED. Next V2 adds one bounded full-package Python-source
+manifest digest at official operation/export/restore and atomic exit decision points.
+No physics change or hashing inside Newton/stage loops. Source scrutiny precedes
+one new four-step maximum split-restart check; consumed checks are not repeated.
+Reviewer addendum e422f19b records the blocker.
 Managed native tree: `C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver`.
-Do not archive. Reviewer `/root/checkpoint_review` owns the D6 review addendum and
-saved main-example impact assessment. Restart remains explicitly unsupported until
-complete state validation/atomic restore is implemented; static codec insufficient.
-No lead numerical process or pending native timestep. Do not replay consumed runs.
+Do not archive. Author owns its five codec/facade/test paths and existing D6 note;
+reviewer `/root/checkpoint_review` owns the D6 review addendum. Main native sources
+remain V1 with restart unsupported until the reviewed candidate is integrated.
+Lead sphere/plane controlV3 passes4.295s/260.50MB including same-path full
+checkpoint byte parity; summary d3_multiple_beam_sphere_lifecycle_summary_v1_20261001.json.
+V1 gap and V2 harness failures retained, illustrative1mm/.8mm not scientific10um.
+Saved/source independent review1b210a6a passes this local development slice. No lead
+numerical process or pending native timestep. Do not replay consumed runs.
 
 Main lead owns five new native sources, example/test, beam result metadata/test,
 guides, plan/ledger/living note, imported manifests and named raw integration

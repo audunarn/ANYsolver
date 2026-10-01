@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.44. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.45. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -26,7 +26,11 @@ bindings (17.027s/194.33MB). Packaging/routing is not scientific admission.
 The explicit1e5N/m2 fixture meets10um, independent contact-force parity and the
 unchanged0.1% linearized structural comparison; earlier reference/gap and
 metadata/preflight failures remain retained. This does not close allD3 or confer
-installed/scientific admission. Reuse unchanged checks by impact analysis.
+scientific admission. A simultaneous B3 sphere/plane control additionally passes
+independent line forces, wrenches, cancellation/model reuse and same-path fresh
+continuation with byte-identical complete checkpoints (4.295s/260.50MB). Its
+explicit1mm/.8mm illustrative gap budgets are not qualification10um; the earlier
+physical gap failure and harness failure remain unchanged. Reuse unchanged checks by impact analysis.
 
 D6: the dedicated `ge_beam3_native_dynamics` opt-in composition owner is now
 integrated into the main worktree. Its reviewed default-tolerance API fixture

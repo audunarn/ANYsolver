@@ -581,3 +581,13 @@ bounded linearized response3.931e-6 and split restart pass5.129s/270.28MB.
 Source-only B3 evidence retainsV1 curvature-discriminator NONPASS and its exact
 oldtest, then explicit test-scale correction; no mechanics/gap/response change.
 Scientific, installed B3 and broader D3/C7 admission remain open.
+
+## Simultaneous sphere/plane complete static restart — development tested/reviewed
+
+Existing multiple-round-beam fixed-tool kernels pass actual B3 sphere+plane
+coupling, independent line forces/opposite wrenches/equilibrium, raised cancellation
+and reusable model, and fresh continuation with bit-identical complete canonical
+checkpoint bytes at the same load partition (4.295s/260.50MB). Independent review
+1b210a6a binds14 historical artifacts/448 sources; no kernel change. V1 gap and
+V2 harness NONPASS preserved. Explicit1mm/.8mm illustrative gap budgets do not
+establish the qualification10um or scientific/installed admission.

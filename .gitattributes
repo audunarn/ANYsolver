@@ -170,3 +170,6 @@ docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART26.md -text 
 docs/d1_review_support/native_beam_installed_development* -text -whitespace
 docs/d1_review_support/d3_deformable_b3_s3_static*_20261001.* -text -whitespace
 tests/test_general_contact_deformable_b3_s3_static.py -text whitespace=cr-at-eol
+
+docs/d1_review_support/d3_multiple_beam_sphere_lifecycle*_20261001.* -text -whitespace
+tests/test_general_contact_multiple_beam_sphere_lifecycle.py -text whitespace=cr-at-eol
