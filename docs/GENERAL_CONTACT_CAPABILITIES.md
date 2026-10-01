@@ -645,4 +645,19 @@ stale/cancellation controls preserve current/issuance.21.857s/269.222MB includes
 two extra rejection checks; no balanced runtime speedup claim. V1 erroneous
 context-inequality assertion NONPASS preserved; V2 deletes only that assertion.
 Evidence native_stage_reuse_v2_20261001.summary.json/.review.md. No C7/installed
-new-chart admission. Next explicit acceleration-chart restart check remains open.
+new-chart admission.
+
+Acceleration-chart official restart V2 is independently assessed developmentPASS:
+6physical commits/gates,32.744s/265.994MB, complete direct/restored state/work/
+accounting parity and byte-identical re-export. Incompatible increment chart
+rejects before semantic work with empty current/registries. V1 retains NONPASS
+for stale-initial-state accounting misuse, with later checks unissued. Evidence
+native_acceleration_restart_v2_20261001.summary.json/.review.md. This closes a
+development restart row; full finite-angle/accuracy/C7/installed admission remains
+open. The prospective optional native-dynamic resource setting is implemented
+and source-reviewed. Focused resource/codec controls pass10.843s/211.157MB:
+20checks,3successful constructors,0time steps, actual matching840s checkpoint
+restore/re-export and default120s incompatibility before work/publication.
+Independent saved assessment closes this scoped development row. Evidence
+native_dynamic_runtime_v1_20261001.summary.json/.review.md. No long-duration, finite-angle,
+C7 or installed-profile admission follows.

@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "physical_steps": 0,
+  "successful_constructors": 3,
+  "invalid_constructor_attempts": 10,
+  "controls": [
+    "bool_true",
+    "bool_false",
+    "float_subclass",
+    "int_subclass",
+    "nan",
+    "inf",
+    "negative_inf",
+    "zero",
+    "negative",
+    "above_cap",
+    "legacy_nondefault_rejected",
+    "extended_optional_validation_scope_rejected",
+    "midpoint_duration_alias",
+    "midpoint_duration_subclass",
+    "dynamic_duration_alias",
+    "dynamic_start_alias",
+    "expiry_before_structural_work",
+    "expiry_after_final_artifact_validation_rollback",
+    "incompatible_duration_restore_before_work_publication",
+    "matching_duration_complete_restore_parity"
+  ],
+  "elapsed_seconds": 10.843037300015567,
+  "peak_process_tree_memory_mb": 211.156992,
+  "checkpoint_reexport_sha256": "83d6573fae973092513fba6b9839cae4d15201b94cbad6f1cc05108c05d4017a",
+  "scope": "Resource identity/guard/atomic codec control only; no dynamics qualification",
+  "bindings": {
+    "raw.json": "95e0b221f281d34fa26ebca321c28a41817605fc0ac7b4323021661bc2dbed27",
+    "resources.json": "c734fa12897eecc5e4d16dd551b3ef332d76694eca0e3dc96881e31ac99cd116",
+    "inputs.json": "4219d02dbb6695830abaaccc3a77799d409fc3ba9626b3d28d91d19e7b5a4322",
+    "test.source.py": "27d57d14aacca34649a0c08c48080798541f2c56faace67ffd934645f8c4252f"
+  }
+}

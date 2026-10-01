@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.50. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.52. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -113,14 +113,60 @@ four physical steps passed and rejection checks were unissued. V2 deletes only
 that assertion. Mechanical/settings context can stay equal while exact source
 artifact binding changes separately. No equation or physical gate was relaxed.
 
-Next verify the acceleration chart's official checkpoint/continuation: actual
-step4 checkpoint, direct step5 versus matching fresh restore/step5, and rejection
-of an incompatible increment-chart owner. Same physical gates, three explicitly
-bounded owners120s each/180s supervisor/1GiB, six total steps. This is a restart
-control, not permission to segment or renew a full trajectory's deadline. Select
-the full-angle route after that result; no replayN16, automatic full-cost increase
-or refinement sweep. Short controls do not replace required finite-angle,
-temporal or continuum evidence.
+The first acceleration-chart restart fixture stopped after four passing prefix
+steps (21.743s/263.979MB), before creating a checkpoint: the test queried the live
+owner using stale genesis. Independent review confirms correct current-state
+rejection. Retain V1 NONPASS; correct only bookkeeping to use initial accounting
+captured while genesis was current, with fresh V2 inputs and outputs.
+[Failure](docs/d1_review_support/native_acceleration_restart_v1_20261001.summary.json).
+
+Acceleration-chart restart V2 now independently passes: actual step4 checkpoint,
+direct step5 versus matching fresh restore/step5, and incompatible increment-chart
+rejection before work/publication. Six physical gates pass, complete continuation
+state/work/accounting matches exactly, canonical re-export matches checkpoint
+bytes. Three owners120s each/180s supervisor/1GiB;32.744s/265.994MB measured.
+[Evidence](docs/d1_review_support/native_acceleration_restart_v2_20261001.summary.json)
+and [review](docs/d1_review_support/native_acceleration_restart_v2_20261001.review.md).
+This is a restart control, not permission to segment or renew a full trajectory's
+deadline. No replayN16, automatic cost increase or refinement sweep. Short controls
+do not replace required finite-angle, temporal or continuum evidence.
+
+Resource transition: after the restart control closed, implemented
+an explicit optional `runtime_limit_seconds` to the dedicated dynamic-elastic
+owner. Default120s and historical/native-static guards remain unchanged. A new
+duration must be positive, finite, at most900s, captured at construction and
+bound into identity/restart. Never reset a live owner's clock or raise its
+captured duration. Check invalid inputs, mutation/expiry rollback and mismatched
+restart settings. This separately tested development extension is permitted by
+the goal's named900s/4GB ceiling; it renews no frozen or consumed case authority.
+Independent source-only assessment recommends this route over restart-based
+budget extension, which would add state joins.
+Focused resource controls now pass10.843s/211.157MB:20checks, three successful
+constructors and zero time steps. They cover admission, aliases, expiry before
+work, rollback after final artifact validation and official duration-bound
+restart. [Evidence](docs/d1_review_support/native_dynamic_runtime_v1_20261001.summary.json).
+Independent saved assessment closes the scoped resource row:
+[review](docs/d1_review_support/native_dynamic_runtime_v1_20261001.review.md).
+This is no long-duration or C7 qualification. Extended owners explicitly reject the
+optional local-operator validation scope, whose separate120s contract is unchanged.
+They use ordinary full-model callbacks. A narrow final deadline guard follows
+artifact validation and precedes visible publication; rejected operations retain
+atomic rollback. No equation, numerical gate or scientific admission changed.
+
+Then prepare one new full-duration resolution candidate N192/T=.008, same spin,
+physical model and original stage/endpoint/energy/momentum/angle gates. Proposed
+single-owner duration840s, whole-process900s/4GB; no restart segmentation. This
+is a concrete preparation decision, not a run or acceptance claim. Freeze its
+actual source/inputs and cost admission after the resource extension is verified.
+Before scaling the runner, replace its repeated serialization of the entire
+growing stage history with append-only full observations and bounded progress
+summaries. The four-step raw file is7.88MB; its current save-on-every-stage route
+would repeatedly rewrite a much larger N192 history. Preserve every original
+observation, byte offsets/hashes and the final assessment data. This is evidence
+I/O preparation, with focused integrity checks, not a mechanics or speed claim.
+The saved quarter-error result motivates resolution; it does not predict a pass
+or establish full-duration accuracy. A failure changes the next action rather
+than automatically increasing resolution or caps. Required C0–C9 remains intact.
 The112-step temporal-refinement
 proposal is not execution authority. Fresh checkpoint restore alone does not
 authorize renewed120s deadlines within one case; aggregate/segment boundaries

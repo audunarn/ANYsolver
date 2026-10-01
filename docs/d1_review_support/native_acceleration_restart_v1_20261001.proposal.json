@@ -1,0 +1,175 @@
+{
+  "status": "SOURCE_AUTHORED_NOT_EXECUTED",
+  "workspace": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver",
+  "owned_path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_finite_spin_acceleration_chart.py",
+  "selected_test": "tests/test_ge_beam3_native_finite_spin_acceleration_chart.py::test_acceleration_checkpoint_continuation",
+  "criteria": {
+    "spatial_spin_rad_per_s": [
+      35.0,
+      -25.0,
+      20.0
+    ],
+    "dt_seconds": 0.00025,
+    "maximum_accepted_steps": 4,
+    "internal_time_limit_seconds": 120.0,
+    "explicit_stage_solve_tolerance": 1e-12,
+    "scientific_stage_gate": 1e-11,
+    "endpoint_balance_gate": 1e-11,
+    "normalized_defect_limit": 1e-06,
+    "elastic_witness_limit": 1e-10,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "length_scale_m": 2.0,
+    "maximum_returned_stage_observations": 128,
+    "stage_coordinates": "acceleration",
+    "arithmetic_gamma_operations": 64,
+    "total_time_seconds": 0.001,
+    "minimum_final_cell_attitude_rad": 0.0,
+    "owner_count": 1,
+    "checkpoint_segments": 0,
+    "common_time_energy_ratio_limit": 0.4,
+    "common_time_energy_resolution_floor": 1e-10
+  },
+  "resource_bounds": {
+    "supervisor_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "internal_seconds": 120.0,
+    "threads": 1,
+    "owner_count": 3,
+    "checkpoint_segments": 0,
+    "maximum_steps": 6,
+    "maximum_original_returned_stage_observations_per_trial": 128,
+    "maximum_original_returned_stage_observations_total": 768,
+    "observation_limit_scope": "128/trial across6physical trials,total768; incompatible restore has0stages.3explicitdynamic owners retain original120s lifetimes; supervisor180s/1GiB unchanged; no segments.",
+    "maximum_additional_rejected_attempts": 1,
+    "maximum_additional_returned_stage_observations": 0,
+    "maximum_physical_prefix_steps": 4,
+    "maximum_direct_steps": 1,
+    "maximum_restored_steps": 1
+  },
+  "source_sha256": {
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py": "2c623affb3ef2e3fef7170afab51502c3edd96d645a73e61a68dc94955698921",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\ge_beam3_native_dynamics.py": "aeba9bb1dbc7aa2daa0eb9df0f6a1ac49e43f476bafefeb76dbbc4239654326b",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py": "5bbbb4f7c99ef04483183f112c2c96dce19bc55f9f58cb9f3eecefe2065cf320",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_finite_spin_acceleration_chart.py": "190fb4e330a8dc8e3ebb360a145d0e3264b63a7dec6752f0988153fbaf5c1e2c"
+  },
+  "historical": {
+    "raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.raw.json",
+      "sha256": "705b627848aef2df9ce17cdce2dda937ea1ae29d1031a855f48ff567181248f7"
+    },
+    "inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.inputs.json",
+      "sha256": "07b3f12777cd21ed5932fe14f51ec3254ba1796f6627d3ce8373be4c2996926d"
+    },
+    "fixture": {
+      "path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py",
+      "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+    },
+    "passed_acceleration_raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_acceleration_chart_v2_20261001.raw.json",
+      "sha256": "63643016d676f459fa4c2bc39e5a9c880a26069cfd742732aeaece30f48b913c"
+    },
+    "passed_acceleration_inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_acceleration_chart_v2_20261001.inputs.json",
+      "sha256": "d2355dd4ad01a9845b37fb8d933f6e56eb4eaf26b3e5eeecec3850fc6b4a54de"
+    },
+    "passed_acceleration_test_source": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_acceleration_chart_v1_20261001.test.source.py",
+      "sha256": "589a69e110fc18595827062887ee996f8a97a1c8cf6556383885a9c586c01378"
+    },
+    "failed_increment_raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_step_v2_20261001.raw.json",
+      "sha256": "63338a2594bd43c8bb996211ff12187e1e896bc88cf41d49ddecc4b102762d6f"
+    },
+    "failed_coarse_trajectory_raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_trajectory_v1_20261001.raw.json",
+      "sha256": "21971d5cda63617f1b9fbb55f42fab0495b82683d1ab819bd88f9a41269ea7a7"
+    },
+    "failed_coarse_trajectory_inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_trajectory_v1_20261001.inputs.json",
+      "sha256": "ef6df767b2ab800a102b2b37ae7defb0159e21188c1213ca0352efbb35702a0d"
+    },
+    "failed_coarse_trajectory_source": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_trajectory_v1_20261001.test.source.py",
+      "sha256": "f387b825cac5d6bd8493e6176ff397a1177641a56ef9480f7da51992fa85af0e"
+    },
+    "passed_half_raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_half_v1_20261001.raw.json",
+      "sha256": "2e232aa32e5f535bc6b50f28f2f3ef13d4aa18fc1e3667fc26c160b69f893846"
+    },
+    "passed_half_inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_half_v1_20261001.inputs.json",
+      "sha256": "8a2b189fdc33b054ed761d0a4082a7bc93450bf25db15403b1ee1aafe464bc6a"
+    },
+    "passed_half_source": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_half_v1_20261001.test.source.py",
+      "sha256": "cb8c820750f16c85eb9682750b5266bcd9fcd7160da5da225e909a341d5873be"
+    },
+    "failed_stage_reuse_v1_raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_stage_reuse_v1_20261001.raw.json",
+      "sha256": "7d5c1f27e81353e4d883b27b57a39f7f08bb4e7e86aa3e26d2f4c8ac67f30880"
+    },
+    "passed_stage_reuse_raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_stage_reuse_v2_20261001.raw.json",
+      "sha256": "f42520630d4dc5bfcb69ed42cbb2be09d71f78daa9f918050e17413e026cc154"
+    },
+    "passed_stage_reuse_inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_stage_reuse_v2_20261001.inputs.json",
+      "sha256": "0fe134265e11cdc57d8e72b69ffc36525f2787b6c8e287358cfbcd4ec692387c"
+    },
+    "passed_stage_reuse_source": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_stage_reuse_v2_20261001.test.source.py",
+      "sha256": "45bfd1000be27f7b570163d612bea5f7d9453f03e0ab8e323b2044751932c524"
+    }
+  },
+  "historical_source_overrides": {
+    "_ge_beam3_native_midpoint.py": "2c623affb3ef2e3fef7170afab51502c3edd96d645a73e61a68dc94955698921",
+    "ge_beam3_native_dynamics.py": "aeba9bb1dbc7aa2daa0eb9df0f6a1ac49e43f476bafefeb76dbbc4239654326b",
+    "_ge_beam3_native_dynamic_restart.py": "5bbbb4f7c99ef04483183f112c2c96dce19bc55f9f58cb9f3eecefe2065cf320"
+  },
+  "future_environment": {
+    "PYTHONPATH": "src;tests;.;examples",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_CACHE_DIR": "LEAD_FROZEN_EFFECTIVE_WRITABLE_CACHE",
+    "NATIVE_FINITE_SPIN_TRAJECTORY_INPUTS": "LEAD_FROZEN_NEW_ACCELERATION_RESTART_INPUT",
+    "NATIVE_FINITE_SPIN_TRAJECTORY_RAW_OUTPUT": "NEW_EXCLUSIVE_ACCELERATION_RESTART_OUTPUT"
+  },
+  "decision": "ONE acceleration-chart checkpoint/continuation development fixture,6physical steps total4+1+1 across3explicit dynamic owners. Not a new fulltrajectory, segmentation/deadline-renewal authority or consumed cache/temporal case replay. No production edit/physics/default change.",
+  "fixture": "Same authentic free curved elastic ellipsoid, section centroid/cross inertia, order4 retained work/order24 inertia, Omega=(35,-25,20), world origin0, virgin physical rest and actual consistent v/a initialization. No load/support/rigid-rotor substitution.",
+  "initialization": "Issued full42 mechanical/material state, physical velocity/acceleration and signed R/I/J/M/balance captured before gates. Bit equality to passed one-step actual initial q/v/a/history/R/I/M/E0/scales. All27 algebraic inertia rows exactly zero;9 nodal-frame algebraic velocity/acceleration placeholders exactly zero; no hidden constraints.",
+  "positive_scales": "Same authenticated fullM42 mass, initial positiveE0, v*=sqrt(2E0/m), P*=m*v*, H*=2m*v*. Step and cumulative E/P/H use these INITIAL frozen positive scales throughout; no zero endpoint normalization or tolerance/floor change.",
+  "trajectory": "Call ONLYexisting4/.001 fixture via reviewedstage_reuse_v1 mode; do NOTcall stale/cancel stage-reuse wrapper. Capture official actual step4 checkpoint, directfifth h.00025, matching fresh-owner restore plusfifth h.00025; third defaultincrement owner rejects same checkpoint before publication. All prior functions AST-identical.",
+  "recording": "Reuse existing4step signed recorder and append only2one-step branch records, official checkpoint/restore diagnostics and rejected defaultchart attempt. No new FD/reference/eigensolve/condition/ULP or temporalcampaign; all actual signed unissued stages retained if branch fails.",
+  "pending_and_endpoint": "Actual signed candidate audit/unknown42/increment42/predecessor/epoch/context/session/endpoint saved before candidate gates and commit. Actual committed state persisted immediately before endpoint accounting. Complete signed endpointR/I/J/M/balance/accounting and compensated step+cumulativeP/H saved before development gates. First failure stops before next trial.",
+  "counts": "Prefix counters remain explicit4-step development counts; total_solver_committed_steps/total_gate_passing_steps track6branches separately. actual_dynamic_owner_count increments on construction and must equal declared3 only at successful closure. Committed states failing later gates remain retained and NONPASS, not engineering admission.",
+  "unchanged_gates": "Original positive initial scales, explicitsolve1e-12/stageendpointalgebraic1e-11/correction1e-11/E-P-HstepANDcumulative1e-6/elasticwitness1e-10/zeroalgebraic inertia and v/a/virginhistory all unchanged. Cumulative branchdefects always relative to actual original genesisaccounting, never reset at checkpoint.3owners each original120s lifetime plus180s/1GiB supervisor, additional wholefixture120s test limit; no clockreset or capraise.",
+  "geodesic_definition": "Existing short4step common-time/attitude diagnostics remain unchanged; new fixture adds no full-angle coverage or refinement comparison. Direct and restored states are compared exactly at actual fifth endpointt.00125.",
+  "reuse_by_impact": "Core2c623aff/_stage/codec/publicowner unchanged. Existing cache/math/gate/restart semantic proofs reused; new slice covers accelerationchart+nonzero velocity/acceleration checkpoint route/continuation and wrongchart rejection only.",
+  "claim_boundary": "Source readiness/development restart control, not fulltrajectory strategy approval, cumulative journal/segmentation authority, finiteangle/time/spatialaccuracy,C7/installed/release qualification. Original N16 and all historical failures retained.",
+  "authoring": "Only source/savedmetadata/hash reads, appended test/new snapshot/proposal text and compile/AST validation. No production/testimports, numerical preparation, initializer/stage/trial/eigensolve/tests/runs.",
+  "comparison": "Exact checkpoint/reissuance/continuation equivalence only. Existing half-control common-time gate reused by4step function; no oldcoarse replay or new accuracy claim.",
+  "state_comparison": "Complete actual stored/reissued state (includingcontext whenmatching), checkpointbytes, endpointwork/accounting and actualfifthcandidate stage equality; no payload stripping or reconstructingphysicalstate from saved raw.",
+  "verification_mode": "stage_reuse_v1",
+  "expected_counts": "6physical branchsteps: original4 prefix +direct1 +matchingrestored1;0steps for incompatible owner.3explicit dynamic owners. Firstfailure stop before subsequent branch/control; retain committed versus gate-passing totals.",
+  "parity": "First4 issued endpoints/initial compare canonical physical payload to authentic savedcacheV2PASS. Complete restoredstate/fullaccounting and official checkpoint byte equality, then complete fifth-step direct/restored branch equality; only session provenance excluded. Arrays including signedzero,virginhistory,all compensatedlowcoordinates and actual endpointacceleration remain compared without tolerances.",
+  "guard_controls": "This fixture tests default-increment checkpoint rejection before publication only. Reviewed stale/cancellation wrapper is not rerun. Restore remains fresh-only/officialatomic reissuance, no credential copy, manualcurrent/issued mutation or coordinate/history repair.",
+  "initial_binding": "Same authentic highspin(35,-25,20), free curved ellipsoid reference and actual consistent initialv/a/virginhistories/scales. Newmatching/default factories use identical actual declared definition; original owner remains alive. Explicit3dynamic owners counted separately from fixture-definition builder objects.",
+  "revision": "V2 deletes solely the incorrect source-only context-inequality assertion; production2c623 and all physical/parity/count/guard gates/caps unchanged. V1 remainsNONPASS; its physical checks passed and guard checks were unissued.",
+  "restart_verification_mode": "acceleration_restart_v1",
+  "checkpoint": "Official owner.create_checkpoint bytes at actual committed step4, no pendingcandidate. Write exclusive checkpoint_output_path, retain complete decoded payload/rawbytes digest. Stored q/high-low pose/velocity/endpointacceleration/material/origins/time/epoch/lineage are actual issued data, not reconstructed from historical raw. External trusted SHA is the actual official producer bytes digest.",
+  "restore": "Actual matching fresh owner with same declared model/density/section/source/solver/chart/origin settings. Use public restore_checkpoint(expected_sha256), no ordinary initializer or private issuance mutation. Require complete storedstate canonical equality, fullaccounting equality, byte-identical official re-export; retain semantic rank/M/residual/algebraicNewton correction/witness checks.",
+  "continuation": "Direct/restored branch actual signed stages and officialaudits captured before commit; actual committed state before accounting; full endpoint R/I/J/M/balance/accounting and stepANDcumulativeE/P/H before unchanged gates. Compare complete branch state/work/accounting/candidate stage exactly, exclude only branchlabel/observationrows and audit-authentication-session provenance. Context equality permitted; exactartifact/header binds source separately. No context-inequality assumption.",
+  "incompatible": "Third freshowner observes default stage_coordinates=increment (keyword omitted), with same explicit1e-12algorithm tolerance. Same official checkpoint/digest must reject at header/body authority mismatch before loadedwork, publication, state/issued/candidate/diagnostics initialization. Record rejected attempt and empty freshness fields.",
+  "checkpoint_output_path": "LEAD_FROZEN_NEW_EXCLUSIVE_CHECKPOINT_PATH"
+}

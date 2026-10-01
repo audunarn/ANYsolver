@@ -135,7 +135,7 @@ def contract(context):
                dict(stage_coordinates=context.stage_coordinates)),
             correction_tolerance=1e-11, endpoint_algebraic_residual_tolerance=1e-11,
             endpoint_algebraic_correction_tolerance=1e-11, endpoint_physical_tolerance=1e-11,
-            lifetime_seconds=120.),
+            lifetime_seconds=context.runtime_limit_seconds),
         node_ids=tuple(sorted(context.analysis.model.mesh.nodes)),
         element_ids=tuple(e.element_id for e in context.analysis._elements),
         physical_order=PHYSICAL_DOFS, algebraic_order=ALGEBRAIC_DOFS,

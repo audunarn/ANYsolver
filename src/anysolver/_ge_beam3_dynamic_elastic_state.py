@@ -22,6 +22,7 @@ from ._ge_beam3_native_line_loading import LinePattern
 from ._ge_beam3_fibre_line_work import evaluate as line_work
 from ._ge_beam3_generalized_static_boundary import cell_couple_load, spatial_jacobian
 from ._ge_beam3_operator_validation_scope import operator_call
+from . import _ge_beam3_operator_validation_scope as _operator_validation
 from ._ge_beam3_p5.arrays import _array, _frames
 from ._ge_beam3_p5.algebra import rotation
 from ._ge_beam3_p5.compensated_coordinates import validate_pair
@@ -32,6 +33,18 @@ from .control import cancellation_safe_point
 IMPLEMENTATION_ID = 'DEVELOPMENT_C7_SINGLE_CENTERED_DYNAMIC_ELASTIC_STATE_V1'
 PHYSICAL_DOFS = (0, 1, 2, 6, 7, 8, 12, 13, 14, 18, 19, 20, 21, 22, 23)
 ALGEBRAIC_DOFS = (3, 4, 5, 9, 10, 11, 15, 16, 17, *range(24, 42))
+
+
+def _admit_runtime_limit(value):
+    if type(value) not in (int, float):
+        raise ValueError('positive finite native dynamic runtime limit at most900 seconds required')
+    try:
+        duration = float(value)
+    except (OverflowError, ValueError):
+        raise ValueError('positive finite native dynamic runtime limit at most900 seconds required') from None
+    if not np.isfinite(duration) or not 0. < duration <= 900.:
+        raise ValueError('positive finite native dynamic runtime limit at most900 seconds required')
+    return duration
 
 
 @dataclass(frozen=True)
@@ -129,12 +142,14 @@ class DynamicElasticContext:
     State issuance is not time/history acceptance. The material origin is the
     captured virgin elastic state; all evaluations must preserve it exactly.
     """
-    def __init__(self, analysis, *, max_iterations=12, max_backtracks=8):
+    def __init__(self, analysis, *, max_iterations=12, max_backtracks=8,
+                 runtime_limit_seconds=120.):
         if type(analysis) is not NativeBeamAnalysis:
             raise ValueError('exact standalone native analysis required')
         if (type(max_iterations) is not int or not 1 <= max_iterations <= 12
                 or type(max_backtracks) is not int or not 0 <= max_backtracks <= 8):
             raise ValueError('bounded exact elastic consistency settings')
+        duration = _admit_runtime_limit(runtime_limit_seconds)
         with analysis._operation():
             elements = analysis._elements
             nodes = tuple(sorted(analysis.model.mesh.nodes))
@@ -160,6 +175,9 @@ class DynamicElasticContext:
             self.origins = (self.element.operator.cell.virgin(),)
             self.max_iterations, self.max_backtracks = max_iterations, max_backtracks
             self.started = monotonic()
+            self._captured_started = self.started
+            self.runtime_limit_seconds = duration
+            self._captured_runtime_limit = duration
             self._identity = sha(self._definition())
             self._issued = {}
             self._lock = Lock()
@@ -172,17 +190,32 @@ class DynamicElasticContext:
             self._issued[id(state)] = (state, canonical(state))
 
     def _definition(self):
-        return dict(implementation=IMPLEMENTATION_ID, analysis=self.analysis.identity,
+        data = dict(implementation=IMPLEMENTATION_ID, analysis=self.analysis.identity,
             element=self.element.identity, operator=self.element.operator.identity,
             fixed=self.fixed, free=self.free, physical=self.physical_free,
             algebraic=self.algebraic_free, reference_positions=self.reference_positions,
             reference_frames=self.reference_frames, origins=self.origins,
             iterations=self.max_iterations, backtracks=self.max_backtracks)
+        if self.runtime_limit_seconds != 120.:
+            data['runtime_limit_seconds'] = self.runtime_limit_seconds
+        return data
+
+    def _guard_runtime_limit(self):
+        if (type(self.runtime_limit_seconds) is not float
+                or self.runtime_limit_seconds != self._captured_runtime_limit
+                or type(self.started) is not float or self.started != self._captured_started):
+            raise ValueError('dynamic elastic captured runtime/clock changed')
+        if self.runtime_limit_seconds != 120. and _operator_validation._ACTIVE.get() is not None:
+            raise ValueError('extended dynamic runtime excludes optional operator validation scope')
+
+    def _guard_deadline(self):
+        self._guard_runtime_limit()
+        if monotonic()-self._captured_started > self._captured_runtime_limit:
+            raise RuntimeError('dynamic elastic context deadline')
 
     def _guard(self, token=None, stage='dynamic-elastic.guard'):
         cancellation_safe_point(token, stage)
-        if monotonic()-self.started > 120.:
-            raise RuntimeError('dynamic elastic context deadline')
+        self._guard_deadline()
         self.analysis._guard()
         if (sha(self._definition()) != self._identity
                 or self.analysis._elements != (self.element,)
@@ -318,9 +351,15 @@ class DynamicElasticContext:
         m = self._make(state.mechanical)
         origins = self._origins(state.origins)
         op = self.element.operator
-        response = operator_call(op, 'evaluate', self._guard, self.started,
-            m.positions, m.position_low, m.nodal_frames, m.cell_rotations[0], m.resultants[0],
-            origin=origins[0])
+        arguments = (m.positions, m.position_low, m.nodal_frames, m.cell_rotations[0], m.resultants[0])
+        if self.runtime_limit_seconds == 120.:
+            response = operator_call(op, 'evaluate', self._guard, self.started,
+                *arguments, origin=origins[0])
+        else:
+            # The optional local-validation scope owns a separate historical120s
+            # contract. Extended owners reject that combination in the guard and
+            # retain the ordinary full-model callback at every operator check.
+            response = op.evaluate(*arguments, check=self._guard, origin=origins[0])
         material = json.loads(response.material)
         if (canonical(response.history) != canonical(origins[0])
                 or any(row['branch'] != 'ELASTIC'

@@ -463,3 +463,27 @@ Continuum configuration errors.0027750417925002987 to.0007003416139766348 refine
 All six actual signed clamp rows include fixed-node external load and the algebraic-frame reaction couple. Maximum nonlinear-to-discrete support force/couple errors4.119961273455965e-9/1.2442992867422434e-12; cumulative support impulse errors1.1209622053028619e-9/3.253632263849568e-13. Fixed high/low position, nodal frame, unknown, velocities and accelerations remain exact; support work is exactly zero. Maximum stage norm3.98890945137826e-16/endpoint algebraic norm6.71430037348105e-17;40Newton iterations, zero backtracks. Largest normalized step/cumulative E defect1.958825901120422e-11/1.9439088120623315e-11, P1.8799755386500827e-16/5.571512558869063e-16, H2.7818415421448406e-17/4.346666346761082e-17; all below unchanged1e-6 gates and1e-10 invariant floor. Exact path load plus midpoint support impulse is kept distinct from analytic linear-reference clamp impulse.
 
 SHA256: input785573bc4b57b7496ab2d50f64348ff0acc386ccd8f885043f25b11d904ed9c4; rawb68642d1cbe0be85d3ce493e8426056e634c8f7323269b7e2e9920e9c69f48a5; resources2e0bad13856eea8a284f4665e21a77583f20da6aea26e6f0961669438a398e5f; log3e044f14bdcf9472728d22175b047425c5e4d306490cd0bd8ba8ee55389df100; XML527d6cab2210de1f4cfea5755a66ee2af4aa03507c589a5102d2e7efb874f45d. Source reference286d8bb3/test80be413e are unchanged. Worker read saved scalar metrics only: no source/test changes, production evaluation or numerical run. Independent disposition is separate. This closes one constrained semidiscrete small-motion temporal/reaction development row; continuum spatial, finite-angle torque-free and fullC7 acceptance remain open. Previous NONPASS results remain unchanged.
+
+### Prospective explicit resource duration — 2026-10-01
+
+After acceleration-chart official restart V2 closed, the dedicated development
+factory gained runtime_limit_seconds (exact int/float, positive finite, at most
+900; default120). It captures construction time and duration once. Both aliases
+are guarded; duration is bound through the dynamic/midpoint/facade identity and
+restart lifetime. Default identity fields/routing and static/legacy120s guards
+remain unchanged. Exact source artifacts still bind restart separately, so this
+is not cross-artifact compatibility. Nondefault owners explicitly reject the
+optional local-operator validation scope and use ordinary full-model callbacks.
+A narrow final deadline check runs after artifact validation and before visible
+publication, under the original atomic rollback.
+
+Focused control native_dynamic_runtime_v1_20261001 passes10.843s/211.157MB,
+20checks, three successful constructors and zero time steps. It tests invalid
+settings, aliases, prework expiry, final-artifact expiry rollback, default120s
+prework restore rejection and matching840s complete official restore/re-export.
+[Summary](native_dynamic_runtime_v1_20261001.summary.json). Independent saved
+assessment is separate. This changes no equations, convergence criteria or
+scientific admission; it demonstrates neither a900s trajectory nor fullC7.
+Existing frozen/consumed120s or stricter authorities remain unchanged. A future
+named trajectory requires its own actual source/input and external process cap;
+new owners or restores cannot silently renew an earlier budget.

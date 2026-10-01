@@ -14,7 +14,7 @@ from ._ge_beam3_native_analysis import NativeBeamAnalysis
 from ._ge_beam3_native_generalized_element import NativeGeneralizedStaticElement
 from ._ge_beam3_generalized_ellipsoid_section import EllipsoidalGeneralizedSection
 from ._ge_beam3_retained_generalized_state import Context, Program, Mechanical
-from ._ge_beam3_dynamic_elastic_state import DynamicElasticContext
+from ._ge_beam3_dynamic_elastic_state import DynamicElasticContext, _admit_runtime_limit
 from ._ge_beam3_native_generalized_loading import DistributedPattern
 from ._ge_beam3_native_line_loading import LinePattern
 from ._ge_beam3_centered_finite_inertia import (
@@ -129,13 +129,14 @@ class MidpointContext:
     homogeneous six-component clamp remains the default legacy route. The
     explicit dynamic elastic route also admits zero supports, with the same
     spatial stage equations and a disposable shared structural work session.
-    Each selected structural owner retains its 120-second context deadline.
+    Legacy/default owners retain120s; explicit dynamic owners capture one bounded
+    duration at construction. No operation resets that clock.
     """
     def __init__(self, analysis, *, inertia_order=24, max_iterations=12,
                  max_backtracks=8, structural_owner='legacy_clamp',
                  momentum_origin_high=(0., 0., 0.), momentum_origin_low=(0., 0., 0.),
                  load_pattern=None, stage_residual_tolerance=1e-11,
-                 stage_coordinates='increment'):
+                 stage_coordinates='increment', runtime_limit_seconds=120.):
         if type(analysis) is not NativeBeamAnalysis:
             raise ValueError('exact standalone native analysis required')
         if (type(inertia_order) is not int or inertia_order not in (4, 8, 24)
@@ -159,6 +160,10 @@ class MidpointContext:
             raise ValueError('acceleration coordinates require the dynamic elastic owner')
         self.stage_coordinates = stage_coordinates
         self._captured_stage_coordinates = stage_coordinates
+        self.runtime_limit_seconds = _admit_runtime_limit(runtime_limit_seconds)
+        self._captured_runtime_limit = self.runtime_limit_seconds
+        if structural_owner != 'dynamic_elastic' and self.runtime_limit_seconds != 120.:
+            raise ValueError('extended runtime requires the dynamic elastic owner')
         self.structural_owner = structural_owner
         self._selected_owner = structural_owner
         self.momentum_origin_high = _owned(momentum_origin_high)
@@ -170,7 +175,8 @@ class MidpointContext:
         if structural_owner == 'legacy_clamp' and (np.any(self.momentum_origin_high) or np.any(self.momentum_origin_low)):
             raise ValueError('legacy midpoint retains its zero momentum origin')
         self._dynamic = (DynamicElasticContext(analysis, max_iterations=max_iterations,
-            max_backtracks=max_backtracks) if structural_owner == 'dynamic_elastic' else None)
+            max_backtracks=max_backtracks, runtime_limit_seconds=self.runtime_limit_seconds)
+            if structural_owner == 'dynamic_elastic' else None)
         self._work_session = None
         with analysis._operation():
             elements = analysis._elements
@@ -320,6 +326,7 @@ class MidpointContext:
                         self._issued.copy(), self._candidates.copy(), self._initial_checks,
                         self._restore_checks)
                     self._guard_stage_coordinates()
+                    self._guard_runtime_limit()
                     if self._selected_owner == 'dynamic_elastic':
                         from ._ge_beam3_native_dynamic_restart import require_contract
                         require_contract(self)
@@ -328,9 +335,15 @@ class MidpointContext:
                 # a state under the former numerical acceptance contract.
                 self._guard_stage_residual_tolerance()
                 self._guard_stage_coordinates()
+                self._guard_runtime_limit()
                 if self._selected_owner == 'dynamic_elastic':
                     from ._ge_beam3_native_dynamic_restart import require_contract
                     require_contract(self)
+                if self.runtime_limit_seconds != 120.:
+                    # Exit and artifact validation may consume the final budget.
+                    # Check the deadline after that work, before visible publication.
+                    self._guard_runtime_limit()
+                    self._dynamic._guard_deadline()
                 self._visible_current = self._current
             except BaseException:
                 if snapshot is not None:
@@ -352,11 +365,21 @@ class MidpointContext:
                 or self.stage_coordinates != self._captured_stage_coordinates):
             raise ValueError('midpoint stage coordinates changed')
 
+    def _guard_runtime_limit(self):
+        if (type(self.runtime_limit_seconds) is not float
+                or self.runtime_limit_seconds != self._captured_runtime_limit):
+            raise ValueError('midpoint captured runtime changed')
+        if self._selected_owner == 'dynamic_elastic':
+            self._dynamic._guard_runtime_limit()
+            if self._dynamic.runtime_limit_seconds != self.runtime_limit_seconds:
+                raise ValueError('midpoint structural runtime mismatch')
+
     def _guard(self, token=None, stage='midpoint.guard'):
         cancellation_safe_point(token, stage)
         self.analysis._guard()
         self._guard_stage_residual_tolerance()
         self._guard_stage_coordinates()
+        self._guard_runtime_limit()
         if self.structural_owner != self._selected_owner:
             raise ValueError('midpoint structural route changed')
         if self.structural_owner == 'legacy_clamp':

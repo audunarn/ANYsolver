@@ -1,0 +1,29 @@
+{
+  "status": "SOURCE_AUTHORED_NOT_EXECUTED",
+  "selected_test": "tests/test_ge_beam3_native_finite_spin_acceleration_chart.py::test_acceleration_checkpoint_continuation",
+  "owned_path": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/tests/test_ge_beam3_native_finite_spin_acceleration_chart.py",
+  "test_sha256": "1de92ec5367150225d99cbd5d391703927a0a15d6f545e4360021e77e3a1096e",
+  "prior_proposal": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_acceleration_restart_v1_20261001.proposal.json",
+    "sha256": "a3a17d07d8bc7eeb1037d44c2e2a5efe47290d6539fe2a82691cd6dd77ecae24"
+  },
+  "preserved_v1": {
+    "status": "NONPASS",
+    "raw_sha256": "656f691586bcdbd50eee3c55d9c90ba200a5e6dd1e6494b5d749907fcc99c431",
+    "solver_committed_steps": 4,
+    "gate_passing_steps": 4,
+    "failure": "current issued immutable midpoint predecessor required"
+  },
+  "correction": "Use authentic evidence.initial.accounting as inert saved numerical bookkeeping. Direct Fraction high/low subtraction from those dictionary fields computes cumulative P/H; saved total_energy computes cumulative E. No stale genesis owner operation, accounting/state object fabrication, coordinate/history reconstruction or guard change.",
+  "unchanged": "All fifteen inherited functions AST-identical; complete checkpoint/restore/re-export/branch-parity/state checks, original cumulative scales and all physical/solver gates unchanged. Three production sources unchanged.",
+  "resources": {
+    "physical_steps": 6,
+    "dynamic_owners": 3,
+    "supervisor_seconds": 180,
+    "memory_limit_bytes": 1073741824,
+    "each_owner_seconds": 120,
+    "whole_fixture_seconds": 120,
+    "segments": 0
+  },
+  "scope": "Source-only harness correction; no import, initializer, stage, trial, numerical test or run. V1 NONPASS is retained unchanged; no restart, physical, finite-angle or C7 acceptance claim."
+}

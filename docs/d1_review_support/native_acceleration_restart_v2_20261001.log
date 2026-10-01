@@ -1,0 +1,68 @@
+{"effective_numba_cache": "C:\\ANYworkspaceWork\\native_acceleration_restart_v2_20261001-cache", "numba_version": "0.65.1", "entry_sha256": "5e78500955231e4ac42aa05e09e9464ec054b9f62d26ced3d3a3efbb84a4ed1f"}
+{"anysolver_file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "input_sha256": "aca655047b2ac19c2f6e98179393df62eafd44b867684c281e0b8528618b569e", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+{"stage": "authenticated_fixture_scales_before_initialization", "elapsed_seconds": 0.6112775000219699}
+{"stage": "actual_initial_signed_balance", "elapsed_seconds": 2.5349354000063613}
+{"stage": "original_returned_stage_1", "elapsed_seconds": 2.9229066999978386}
+{"stage": "original_returned_stage_2", "elapsed_seconds": 3.1535746000008658}
+{"stage": "original_returned_stage_3", "elapsed_seconds": 3.383225500001572}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 4.212292900017928}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 4.562263400002848}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 4.908251600019867}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 6.032213900005445}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 6.050265199999558}
+{"stage": "original_returned_stage_4", "elapsed_seconds": 6.465197100013029}
+{"stage": "original_returned_stage_5", "elapsed_seconds": 6.7059847000055015}
+{"stage": "original_returned_stage_6", "elapsed_seconds": 6.9499212999944575}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 7.803668000007747}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 8.169396000012057}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 8.534499200002756}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 9.657420500006992}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 9.687865400017472}
+{"stage": "original_returned_stage_7", "elapsed_seconds": 10.105401700013317}
+{"stage": "original_returned_stage_8", "elapsed_seconds": 10.356541600020137}
+{"stage": "original_returned_stage_9", "elapsed_seconds": 10.623525200004224}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 11.481504499999573}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 11.85615120001603}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 12.229181400005473}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 13.386224500020035}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 13.428937300021062}
+{"stage": "original_returned_stage_10", "elapsed_seconds": 13.854841199994553}
+{"stage": "original_returned_stage_11", "elapsed_seconds": 14.119403699995019}
+{"stage": "original_returned_stage_12", "elapsed_seconds": 14.387910200020997}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 15.27015230001416}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 15.652395600016462}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 16.036126399994828}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 17.195822700014105}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 17.252974700008053}
+{"stage": "common_time_comparison_before_prospective_gate", "elapsed_seconds": 17.33580770000117}
+{"stage": "complete", "elapsed_seconds": 17.38970880000852}
+{"stage": "official_step4_checkpoint_before_gates", "elapsed_seconds": 18.589555999991717}
+{"stage": "official_restore_before_gates", "elapsed_seconds": 20.582220899988897}
+{"stage": "original_direct_fifth_stage", "elapsed_seconds": 21.021891699987464}
+{"stage": "original_direct_fifth_stage", "elapsed_seconds": 21.297111699997913}
+{"stage": "original_direct_fifth_stage", "elapsed_seconds": 21.577378899994073}
+{"stage": "direct_trial_return_or_failure", "elapsed_seconds": 22.45787489999202}
+{"stage": "direct_authenticated_candidate_before_commit", "elapsed_seconds": 22.86186179998913}
+{"stage": "direct_committed_state_before_accounting", "elapsed_seconds": 23.26867679998395}
+{"stage": "direct_actual_endpoint_before_development_gates", "elapsed_seconds": 24.45661480000126}
+{"stage": "direct_fifth_step_development_gates_pass", "elapsed_seconds": 24.522486800007755}
+{"stage": "original_restored_fifth_stage", "elapsed_seconds": 24.979136599984486}
+{"stage": "original_restored_fifth_stage", "elapsed_seconds": 25.267813399987062}
+{"stage": "original_restored_fifth_stage", "elapsed_seconds": 25.561681299994234}
+{"stage": "restored_trial_return_or_failure", "elapsed_seconds": 26.4580377000093}
+{"stage": "restored_authenticated_candidate_before_commit", "elapsed_seconds": 26.87829480000073}
+{"stage": "restored_committed_state_before_accounting", "elapsed_seconds": 27.293881499994313}
+{"stage": "restored_actual_endpoint_before_development_gates", "elapsed_seconds": 28.472782800003188}
+{"stage": "restored_fifth_step_development_gates_pass", "elapsed_seconds": 28.552155199984554}
+{"stage": "fifth_step_complete_bit_parity_before_gate", "elapsed_seconds": 28.641033699997934}
+{"stage": "incompatible_restore_return_or_failure", "elapsed_seconds": 29.24152429998503}
+{"stage": "acceleration_restart_complete", "elapsed_seconds": 29.32290609998745}
+.
+============================== warnings summary ===============================
+tests/test_ge_beam3_native_finite_spin_acceleration_chart.py::test_acceleration_checkpoint_continuation
+  tests\test_ge_beam3_native_finite_spin_acceleration_chart.py:870: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_acceleration_checkpoint_continuation(record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 29.85s
+{"pytest_exit_code": 0, "verified_source_count": 446}

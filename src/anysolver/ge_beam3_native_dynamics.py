@@ -25,7 +25,7 @@ def create_analysis(formulation, definitions, boundaries, *, inertia_order=24,
                     max_iterations=12, max_backtracks=8,
                     momentum_origin_high=(0.,0.,0.), momentum_origin_low=(0.,0.,0.),
                     load_pattern=None, stage_residual_tolerance=1e-11,
-                    stage_coordinates='increment'):
+                    stage_coordinates='increment', runtime_limit_seconds=120.):
     """Create one explicit development owner; default solve tolerance unchanged.
 
     Boundary tuples may be empty or a homogeneous full clamp at the first node.
@@ -33,6 +33,9 @@ def create_analysis(formulation, definitions, boundaries, *, inertia_order=24,
     contract. Time/state/history/restart authority remains in one midpoint owner.
     Optional acceleration coordinates change the Newton chart only; the default
     increment route, physical equations and convergence gates remain unchanged.
+    A positive finite runtime limit up to900s is captured at construction; default
+    120s is preserved. Extended owners exclude optional local validation scopes.
+    This resource setting does not authorize or renew an evidence run.
     """
     if type(formulation) is not str or formulation != SELECTOR:
         raise ValueError('explicit native contact-free dynamics development selector required')
@@ -40,7 +43,7 @@ def create_analysis(formulation, definitions, boundaries, *, inertia_order=24,
         inertia_order=inertia_order, max_iterations=max_iterations, max_backtracks=max_backtracks,
         momentum_origin_high=momentum_origin_high, momentum_origin_low=momentum_origin_low,
         load_pattern=load_pattern, stage_residual_tolerance=stage_residual_tolerance,
-        stage_coordinates=stage_coordinates)
+        stage_coordinates=stage_coordinates, runtime_limit_seconds=runtime_limit_seconds)
 
 
 def workflow_provenance(analysis):

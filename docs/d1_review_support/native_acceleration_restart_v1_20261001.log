@@ -1,0 +1,111 @@
+{"effective_numba_cache": "C:\\ANYworkspaceWork\\native_acceleration_restart_v1_20261001-cache", "numba_version": "0.65.1", "entry_sha256": "5e78500955231e4ac42aa05e09e9464ec054b9f62d26ced3d3a3efbb84a4ed1f"}
+{"anysolver_file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "input_sha256": "1549441b8692a34cacf1c1682ed3c9965066fffc8bf551aaf9124498fea53aa5", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+{"stage": "authenticated_fixture_scales_before_initialization", "elapsed_seconds": 0.5898057000013068}
+{"stage": "actual_initial_signed_balance", "elapsed_seconds": 2.501944799994817}
+{"stage": "original_returned_stage_1", "elapsed_seconds": 2.8983689000015147}
+{"stage": "original_returned_stage_2", "elapsed_seconds": 3.1296580999915022}
+{"stage": "original_returned_stage_3", "elapsed_seconds": 3.3588304999866523}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 4.204646199999843}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 4.556000399985351}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 4.905892300012056}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 6.028470399993239}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 6.046640599990496}
+{"stage": "original_returned_stage_4", "elapsed_seconds": 6.453939099999843}
+{"stage": "original_returned_stage_5", "elapsed_seconds": 6.6945530000084545}
+{"stage": "original_returned_stage_6", "elapsed_seconds": 6.944236799987266}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 7.797462599992286}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 8.169645599991782}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 8.584304199990584}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 9.714323199994396}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 9.744601899990812}
+{"stage": "original_returned_stage_7", "elapsed_seconds": 10.160076800006209}
+{"stage": "original_returned_stage_8", "elapsed_seconds": 10.412923500000034}
+{"stage": "original_returned_stage_9", "elapsed_seconds": 10.669467100000475}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 11.543909500003792}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 11.916180000000168}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 12.29286799998954}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 13.430066500004614}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 13.473277799988864}
+{"stage": "original_returned_stage_10", "elapsed_seconds": 13.935850799985928}
+{"stage": "original_returned_stage_11", "elapsed_seconds": 14.206180300010601}
+{"stage": "original_returned_stage_12", "elapsed_seconds": 14.47831189999124}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 15.379592399985995}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 15.7653641999932}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 16.146395199990366}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 17.28646239999216}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 17.341706999985036}
+{"stage": "common_time_comparison_before_prospective_gate", "elapsed_seconds": 17.432469099992886}
+{"stage": "complete", "elapsed_seconds": 17.485292199999094}
+F
+================================== FAILURES ===================================
+__________________ test_acceleration_checkpoint_continuation __________________
+
+record_property = <function record_property.<locals>.append_property at 0x000001C61D7417A0>
+
+    def test_acceleration_checkpoint_continuation(record_property):
+        """Official committed checkpoint; direct/restored fifth step, three owners."""
+        started = perf_counter()
+        inputs = json.loads(Path(os.environ['NATIVE_FINITE_SPIN_TRAJECTORY_INPUTS']).read_text(encoding='utf-8-sig'))
+        output = Path(os.environ['NATIVE_FINITE_SPIN_TRAJECTORY_RAW_OUTPUT'])
+        assert inputs.get('verification_mode') == 'stage_reuse_v1'
+        assert inputs.get('restart_verification_mode') == 'acceleration_restart_v1'
+        assert inputs['criteria'] == finite_spin_trajectory_criteria(4, .001)
+        historical = inputs['historical']['passed_stage_reuse_raw']
+        history_bytes = Path(historical['path']).read_bytes()
+        assert historical['sha256'] == sha256(history_bytes).hexdigest() == 'f42520630d4dc5bfcb69ed42cbb2be09d71f78daa9f918050e17413e026cc154'
+        saved = json.loads(history_bytes)
+        assert saved['status'] == 'PASS' and saved['solver_committed_steps'] == saved['gate_passing_steps'] == 4
+        evidence = None
+        def save(label):
+            evidence.update(last_stage=label,elapsed_seconds=perf_counter()-started)
+            output.write_text(json.dumps(evidence,indent=2,allow_nan=False)+'\n')
+            print(json.dumps(dict(stage=label,elapsed_seconds=evidence['elapsed_seconds'])),flush=True)
+            assert evidence['elapsed_seconds'] < 120.
+        try:
+            owner, genesis, current4 = test_free_finite_spin_trajectory(record_property)
+            evidence = json.loads(output.read_text())
+            evidence.update(prefix_fixture_status=evidence['status'],status='RUNNING_ACCELERATION_RESTART',
+                restart_verification_mode='acceleration_restart_v1',declared_dynamic_owner_count=3,actual_dynamic_owner_count=1,
+                total_solver_committed_steps=4,total_gate_passing_steps=4,continuation_branches=[],
+                scope='Acceleration-chart restart/branch control only; no segmentation, finite-angle/C7/accuracy claim')
+            criteria, scales = evidence['criteria'],evidence['scales']
+            for actual,expected in zip(evidence['endpoints'],saved['endpoints']):
+                assert canonical(stage_reuse_physical_payload(actual,'endpoint')) == canonical(stage_reuse_physical_payload(expected,'endpoint'))
+            assert canonical(stage_reuse_physical_payload(evidence['initial'],'initial')) == canonical(stage_reuse_physical_payload(saved['initial'],'initial'))
+>           initial_accounting = owner.endpoint_accounting(genesis)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ge_beam3_native_finite_spin_acceleration_chart.py:900: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+src\anysolver\_ge_beam3_native_dynamic_analysis.py:107: in endpoint_accounting
+    return self._owner().endpoint_accounting(state)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_native_midpoint.py:829: in endpoint_accounting
+    self._require_current(state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <anysolver._ge_beam3_native_midpoint.MidpointContext object at 0x000001C61CA1B230>
+state = MidpointState(mechanical=Mechanical(positions=array([[-1. ,  0. ,  0. ],
+       [ 0. ,  0.2,  0. ],
+       [ 1. ,  0. ...398edb0dcd70e31ffd746839f5b9b82f61', context_sha256='b96cbba573bf7401d963ac96584196398edb0dcd70e31ffd746839f5b9b82f61')
+
+    def _require_current(self, state):
+        record = self._issued.get(id(state))
+        if (type(state) is not MidpointState or state is not self.current
+                or record is None or record[0] is not state
+                or canonical(state) != record[1] or record[1] != self._current_bytes
+                or state.context_sha256 != self._identity):
+>           raise ValueError('current issued immutable midpoint predecessor required')
+E           ValueError: current issued immutable midpoint predecessor required
+
+src\anysolver\_ge_beam3_native_midpoint.py:385: ValueError
+============================== warnings summary ===============================
+tests/test_ge_beam3_native_finite_spin_acceleration_chart.py::test_acceleration_checkpoint_continuation
+  tests\test_ge_beam3_native_finite_spin_acceleration_chart.py:870: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_acceleration_checkpoint_continuation(record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_ge_beam3_native_finite_spin_acceleration_chart.py::test_acceleration_checkpoint_continuation
+1 failed, 1 warning in 18.55s
+{"pytest_exit_code": 1, "verified_source_count": 446}

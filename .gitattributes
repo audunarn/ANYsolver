@@ -195,3 +195,6 @@ docs/d1_review_support/native_finite_spin_trajectory* -text -whitespace
 docs/d1_review_support/native_finite_spin_temporal_half* -text -whitespace
 docs/d1_review_support/native_stage_reuse* -text -whitespace
 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART32.md -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART33.md -text -whitespace
+docs/d1_review_support/native_acceleration_restart* -text -whitespace
+docs/d1_review_support/native_dynamic_runtime* -text -whitespace
