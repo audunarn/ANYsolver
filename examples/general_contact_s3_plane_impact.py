@@ -26,7 +26,11 @@ def main() -> None:
                         help="dead nodal force ramped from zero to this value at .012s")
     parser.add_argument("--one-sided-rates", action="store_true",
                         help="opt into right directional massless rates at touch (development)")
+    parser.add_argument("--algebraic-path", action="store_true",
+                        help="lift the physical quadratic interval through algebraic equilibrium (development)")
     args = parser.parse_args()
+    if args.algebraic_path and not args.one_sided_rates:
+        parser.error("--algebraic-path requires --one-sided-rates")
     if (not np.isfinite(args.constant_downward_load_n)
             or args.constant_downward_load_n < 0.0):
         parser.error("constant downward load must be finite and nonnegative")
@@ -81,10 +85,11 @@ def main() -> None:
                             if args.ramp_downward_load_n else None),
         solver_controls=ContactTransientSolverControls(
             allow_s3_descriptor_dev=True, s3_one_sided_rates_dev=args.one_sided_rates,
+            s3_algebraic_path_dev=args.algebraic_path,
         ),
     )
     ry = [model.mesh.dof_manager.get_node_dofs(node)[4] for node in (1, 2, 3)]
-    print({
+    summary = {
         "profile": result.profile,
         "accepted_steps": len(result.newton_iterations),
         "cutbacks": result.cutbacks,
@@ -93,7 +98,10 @@ def main() -> None:
         "maximum_final_ry_rad": float(np.max(np.abs(result.displacements[-1, ry]))),
         "maximum_residual_n": float(np.max(result.equilibrium_residuals)),
         "external_nodal_work_j": float(result.external_nodal_work_j[-1]),
-    })
+    }
+    if args.algebraic_path:
+        summary["represented_path_transition_times_s"] = result.represented_path_transition_times
+    print(summary)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.63. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-01.64. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -65,14 +65,24 @@ force oracles and manufactured integration check branch selection/curvature; pub
 split restart and failure cleanup exercise the driver. Old profiles, criteria and
 failures remain unchanged. See the linked capability ledger/result for exact scope.
 
-**Next bounded decision:** define incoming/outgoing interval traces at activation
-and release before broadening this route. A recovered right endpoint rate alone
-does not certify an interpolated interval or event timing. Compare the declared
-Hermite reconstruction with the physical/algebraic integration-stage path through
-one independently solvable transition fixture. Choose event splitting or a path
-adapter from that discriminator; avoid another unmotivated refinement campaign.
-Routine180s/953MiB/thread1 applies; no automatic cap increase or cross-chat
-coordination. Cubic reconstruction is not conservative general event control.
+The transition discriminator now supports an explicit affine algebraic path
+adapter for the guided elastic S3 owner. Physical Newmark quadratics are lifted
+through massless equilibrium in piecewise quadratic branches, with exact branch
+roots/extrema, complete coverage, physical corner minima and endpoint matching.
+Version3 preserves terminal support masks across restart. The final installed
+24-check selection passes in13.047s/176775168B, with449module matches and independent
+tilted force/minimum checks. See [results](docs/d1_review_support/contact_c6_algebraic_path_20261001/results.md).
+This closes the represented-path development question, not general event control
+or C6 acceptance. No speed improvement or continuum collision guarantee is claimed.
+
+**Next bounded decision:** integrate physical event subdivision at activation and
+release. Use one independent scalar open-flight/activation fixture to discriminate
+a branch-specific event solve from repeated first-root cutbacks that can stall.
+Derive stage consistency and finite localization/iteration budgets before adding
+the driver option. Keep the same physical force/mass/work and transaction contract;
+do not substitute timestamps for integration at the event. Routine180s/953MiB/
+thread1 applies, without cap increases or cross-chat coordination. General curved
+or rotating geometry will require its own conservative path bounds.
 
 After that row closes, select the next missing integrated D5/D6 capability from
 source inspection: advance physical composition/geometry or shared impact-driver

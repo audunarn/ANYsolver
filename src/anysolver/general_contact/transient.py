@@ -51,6 +51,7 @@ from .core import (
     validate_general_contact,
 )
 from .descriptor_rates import directional_descriptor_rate
+from .algebraic_path import affine_descriptor_path
 
 
 _PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V1"
@@ -58,8 +59,11 @@ _S3_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0"
 _S3_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_HISTORY_DEV_V1"
 _S3_DIRECTIONAL_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_RATES_DEV_V1"
 _S3_DIRECTIONAL_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_HISTORY_DEV_V1"
+_S3_ALGEBRAIC_PATH_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_ALGEBRAIC_PATH_DEV_V1"
+_S3_ALGEBRAIC_PATH_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_ALGEBRAIC_PATH_HISTORY_DEV_V1"
 _RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
 _HISTORY_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V2"
+_ALGEBRAIC_PATH_RESTART_SCHEMA = "ANYSOLVER_S3_ALGEBRAIC_PATH_TRANSIENT_CONTACT_DEV_CHECKPOINT_V3"
 
 
 @dataclass(frozen=True)
@@ -126,6 +130,9 @@ class ContactTransientSolverControls:
     allow_s3_descriptor_dev: bool = False
     s3_descriptor_difference_step_s: float = 1.0e-5
     s3_one_sided_rates_dev: bool = False
+    s3_algebraic_path_dev: bool = False
+    s3_path_position_tolerance_m: float = 1.0e-10
+    s3_path_rotation_tolerance_rad: float = 1.0e-9
 
     def __post_init__(self) -> None:
         if type(self.maximum_newton_iterations) is not int or self.maximum_newton_iterations < 1:
@@ -142,6 +149,14 @@ class ContactTransientSolverControls:
             raise ValueError("s3_one_sided_rates_dev must be boolean")
         if self.s3_one_sided_rates_dev and not self.allow_s3_descriptor_dev:
             raise ValueError("one-sided rates require the S3 descriptor opt-in")
+        if type(self.s3_algebraic_path_dev) is not bool:
+            raise ValueError("s3_algebraic_path_dev must be boolean")
+        if self.s3_algebraic_path_dev and not self.s3_one_sided_rates_dev:
+            raise ValueError("algebraic path requires the S3 one-sided-rate opt-in")
+        for name in ("s3_path_position_tolerance_m", "s3_path_rotation_tolerance_rad"):
+            value = getattr(self, name)
+            if isinstance(value, (bool, np.bool_)) or not np.isfinite(value) or value <= 0.:
+                raise ValueError(f"{name} must be finite and positive")
         if (not np.isfinite(self.s3_descriptor_difference_step_s)
                 or self.s3_descriptor_difference_step_s <= 0.0):
             raise ValueError("s3_descriptor_difference_step_s must be finite and positive")
@@ -225,6 +240,7 @@ class TransientContactResults:
     newton_iterations: tuple[int, ...]
     external_nodal_work_j: np.ndarray
     restart_checkpoint: dict | None = None
+    represented_path_transition_times: tuple[float, ...] = ()
 
 
 def _restart_analysis_contract(transient, controls, manager, profile,
@@ -264,12 +280,16 @@ def _restart_analysis_contract(transient, controls, manager, profile,
     if controls.s3_one_sided_rates_dev:
         # Absent for historical profiles, preserving their checkpoint contract.
         contract["controls"]["s3_one_sided_rates_dev"] = True
+    if controls.s3_algebraic_path_dev:
+        contract["controls"]["s3_algebraic_path_dev"] = True
+        contract["controls"]["s3_path_position_tolerance_m"] = controls.s3_path_position_tolerance_m
+        contract["controls"]["s3_path_rotation_tolerance_rad"] = controls.s3_path_rotation_tolerance_rad
     return contract
 
 
 def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             current_time, q, velocity, acceleration,
-                            accepted_steps, external_work_j=None) -> dict:
+                            accepted_steps, external_work_j=None, path_terminal_active=None) -> dict:
     payload = {
         "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
                    else _RESTART_SCHEMA),
@@ -286,12 +306,16 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
     }
     if external_work_j is not None:
         payload["state"]["external_work_j"] = float(external_work_j)
+    if path_terminal_active is not None:
+        payload["schema"] = _ALGEBRAIC_PATH_RESTART_SCHEMA
+        payload["version"] = 3
+        payload["state"]["path_terminal_active"] = list(path_terminal_active)
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
 
 def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
-                             reduced_size, t_end, *, load_history):
+                             reduced_size, t_end, *, load_history, path_pressure_dofs=0):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -305,6 +329,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
     expected_version = 2 if load_history is not None else 1
     expected_schema = (_HISTORY_RESTART_SCHEMA if load_history is not None
                        else _RESTART_SCHEMA)
+    if path_pressure_dofs:
+        expected_version, expected_schema = 3, _ALGEBRAIC_PATH_RESTART_SCHEMA
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -317,6 +343,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
     }
     if load_history is not None:
         expected_state_keys.add("external_work_j")
+    if path_pressure_dofs:
+        expected_state_keys.add("path_terminal_active")
     if not isinstance(state, Mapping) or set(state) != expected_state_keys:
         raise ValueError("transient contact checkpoint state is malformed")
     time = float(state["time"])
@@ -333,7 +361,14 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
     work = float(state["external_work_j"]) if load_history is not None else None
     if work is not None and not np.isfinite(work):
         raise ValueError("transient contact checkpoint external work is invalid")
-    return time, steps, *arrays, work
+    terminal = None
+    if path_pressure_dofs:
+        terminal = state["path_terminal_active"]
+        if (type(terminal) is not list or len(terminal) != path_pressure_dofs
+                or any(type(flag) is not bool for flag in terminal)):
+            raise ValueError("transient contact checkpoint path activity is invalid")
+        terminal = tuple(terminal)
+    return time, steps, *arrays, work, terminal
 
 
 def _consistent_s3_descriptor_rates(
@@ -425,6 +460,77 @@ def _consistent_s3_descriptor_rates(
             > 1.0e-8*max(1.0, np.linalg.norm(Mred @ reduced_acceleration))):
         raise ValueError("S3 descriptor rate recovery changed physical inertia")
     return velocity, acceleration
+
+
+@dataclass(frozen=True)
+class _S3AffinePathAdapter:
+    structural: np.ndarray
+    null_basis: np.ndarray
+    gradient: np.ndarray
+    reference_gap: np.ndarray
+    weights: np.ndarray
+    force_offset: np.ndarray
+    corner_reference: np.ndarray
+    corner_gradient: np.ndarray
+
+    @classmethod
+    def prepare(cls, model, T, basis, manager, committed_states):
+        # The admitted exact elastic S3 local operator is reference-linear.
+        # This would be a tangent approximation for a generic nonlinear owner;
+        # _admit deliberately does not permit that substitution.
+        with suspend_contact():
+            force, stiffness, _ = _assemble_nonlinear_system(
+                model, np.zeros(T.shape[0]), committed_states, 3,
+                tangent=True, kinematics="von_karman",
+            )
+            discard_active_state_candidate(committed_states)
+        structural = (T.T @ stiffness @ T).toarray()
+        Z = basis.reduced_basis.toarray()
+        try:
+            np.linalg.cholesky(Z.T @ structural @ Z)
+        except np.linalg.LinAlgError as exc:
+            raise ValueError("S3 affine path requires positive definite algebraic work") from exc
+        B = (sparse.diags(1./manager.support) @ manager.gap_gradient @ T).toarray()
+        shift = -float((manager.point-manager.reference_point) @ manager.normal)
+        g = manager.reference_weighted_gap/manager.support+shift
+        corners, gradients = [], []
+        for reference, dofs, _shape, skin_offset, gradient in manager.patches:
+            corners.extend((reference+skin_offset-manager.point) @ manager.normal)
+            for corner_dofs in dofs:
+                full_gradient = np.zeros(T.shape[0])
+                full_gradient[corner_dofs] = gradient
+                gradients.append(np.asarray(full_gradient @ T).reshape(-1))
+        return cls(structural, Z, B, g, manager.stiffness*manager.support,
+                   np.asarray(T.T @ force).reshape(-1), np.asarray(corners), np.asarray(gradients))
+
+    def evaluate(self, start, end, velocity, dt, load):
+        coefficients = np.stack((start, dt*velocity, end-start-dt*velocity))
+        path = affine_descriptor_path(
+            self.structural, self.null_basis, coefficients, self.gradient,
+            self.reference_gap, self.weights, force=load-self.force_offset,
+        )
+        return path, path.minimum_gap(self.corner_reference, self.corner_gradient)
+
+    def check_endpoints(self, path, start, end, transform, controls):
+        for lifted, actual in ((path.segments[0].position(0.), start),
+                               (path.segments[-1].position(1.), end)):
+            error = np.asarray(transform @ (lifted-actual)).reshape(-1, 6)
+            if (np.max(np.abs(error[:, :3])) > controls.s3_path_position_tolerance_m
+                    or np.max(np.abs(error[:, 3:])) > controls.s3_path_rotation_tolerance_rad):
+                raise ValueError("S3 lifted path endpoint mismatch exceeds its numerical budget")
+
+    def endpoint_force(self, position, load):
+        gap = self.reference_gap+self.gradient @ position
+        return (self.structural @ position+self.force_offset-load
+                +self.gradient.T @ (self.weights*np.minimum(gap, 0.)))
+
+
+def _accepted_path_transition_times(previous_active, path, start_time, step):
+    times = []
+    if previous_active is not None and previous_active != path.segments[0].active:
+        times.append(float(start_time))
+    times.extend(float(start_time+step*s) for s in path.transition_fractions)
+    return tuple(times)
 
 
 def _minimum_hermite_gap(
@@ -530,6 +636,10 @@ def solve_transient_contact(
     The S3 descriptor profiles admit a piecewise-linear nodal load history
     only when the complete base load has zero algebraic projection; the
     distinct history profile is bound into restart contracts.
+    The separate S3 algebraic-path opt-in instead lifts the physical Newmark
+    quadratic through reference-linear elastic/penalty algebraic equilibrium.
+    Full endpoint agreement and corner minima are checked; reported transitions
+    describe this discrete path, not exact continuum event times.
     Cancellation admits only the solver's exact unmodified token. It raises
     SolveCancelled at a safe boundary, discards solve-owned pending trials and
     returns no partial result or checkpoint. Completed increments remain committed.
@@ -571,6 +681,9 @@ def solve_transient_contact(
     if controls.s3_one_sided_rates_dev:
         profile = (_S3_DIRECTIONAL_HISTORY_PROFILE if nodal_load_history is not None
                    else _S3_DIRECTIONAL_PROFILE)
+    if controls.s3_algebraic_path_dev:
+        profile = (_S3_ALGEBRAIC_PATH_HISTORY_PROFILE if nodal_load_history is not None
+                   else _S3_ALGEBRAIC_PATH_PROFILE)
     if base_load_case is not None:
         if (type(base_load_case) is not LoadCase
                 or not base_load_case.nodal_loads
@@ -690,6 +803,9 @@ def solve_transient_contact(
                        initial_displacement=full_initial) as manager:
         if type(manager) is not _PlanarQ4PlaneManager:
             raise ValueError("transient development profile selected an unsupported contact owner")
+        path_adapter = (_S3AffinePathAdapter.prepare(
+            model, T, descriptor_basis, manager, committed_states,
+        ) if controls.s3_algebraic_path_dev else None)
 
         if restart_checkpoint is not None or emit_restart_checkpoint:
             model_fingerprint = model_configuration_fingerprint(model)
@@ -704,12 +820,14 @@ def solve_transient_contact(
             accepted_steps = 0
             resumed_acceleration = None
             resumed_work = None
+            last_path_active = None
         else:
-            current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work = (
+            current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = (
                 _read_restart_checkpoint(
                     restart_checkpoint, model_fingerprint,
                     analysis_fingerprint, Mred.shape[0], transient.t_end,
                     load_history=nodal_load_history,
+                    path_pressure_dofs=(manager.support.size if path_adapter is not None else 0),
                 )
             )
 
@@ -801,6 +919,7 @@ def solve_transient_contact(
         swept_gaps = [contact0.minimum_gap]
         residuals = [float(np.linalg.norm(Mred @ acceleration + force0))]
         iterations = []
+        path_transitions = []
         cutbacks = 0
         previous_full = full0.copy()
         previous_velocity = np.asarray(T @ vred).reshape(-1)
@@ -862,10 +981,19 @@ def solve_transient_contact(
                                 )
                             )
                         full_velocity = np.asarray(T @ candidate_velocity).reshape(-1)
-                        swept_gap = _minimum_hermite_gap(
-                            manager, previous_full, full,
-                            previous_velocity, full_velocity, step,
-                        )
+                        if path_adapter is None:
+                            swept_gap = _minimum_hermite_gap(
+                                manager, previous_full, full,
+                                previous_velocity, full_velocity, step,
+                            )
+                        else:
+                            if (np.linalg.norm(path_adapter.endpoint_force(candidate, load_at(current_time+step))-internal)
+                                    > controls.equilibrium_tolerance*scale):
+                                raise ValueError("S3 reference-linear path disagrees with endpoint work")
+                            candidate_path, swept_gap = path_adapter.evaluate(
+                                q, candidate, vred, step, load_at(current_time),
+                            )
+                            path_adapter.check_endpoints(candidate_path, q, candidate, T, controls)
                         if (contact_result.gap_tolerance_met
                                 and swept_gap >= -manager.gap_tolerance):
                             converged = True
@@ -883,12 +1011,23 @@ def solve_transient_contact(
                                        * external_load)
                         end_force = (nodal_load_history.factor(current_time+step)
                                      * external_load)
-                        step_work = _hermite_linear_load_work(
-                            previous_full, full, previous_velocity,
-                            full_velocity, start_force, end_force, step,
-                        )
+                        if path_adapter is None:
+                            step_work = _hermite_linear_load_work(
+                                previous_full, full, previous_velocity,
+                                full_velocity, start_force, end_force, step,
+                            )
+                        else:
+                            step_work = candidate_path.linear_load_work(
+                                load_at(current_time), load_at(current_time+step),
+                            )
                     check_cancel("transient contact step acceptance")
                     committed_states = commit_state_candidate(committed_states, trial)
+                    if path_adapter is not None:
+                        for event_time in _accepted_path_transition_times(
+                                last_path_active, candidate_path, current_time, step):
+                            if not path_transitions or event_time != path_transitions[-1]:
+                                path_transitions.append(event_time)
+                        last_path_active = candidate_path.segments[-1].active
                     accumulated_work += step_work
                     q = candidate
                     vred = candidate_velocity
@@ -940,11 +1079,12 @@ def solve_transient_contact(
             model_fingerprint, analysis_fingerprint, current_time,
             q, vred, acceleration, accepted_steps,
             accumulated_work if nodal_load_history is not None else None,
+            last_path_active if path_adapter is not None else None,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(
         profile, np.asarray(times), np.asarray(positions),
         np.asarray(velocities), np.asarray(accelerations), tuple(contacts),
         np.asarray(swept_gaps), np.asarray(residuals), cutbacks, tuple(iterations),
-        np.asarray(external_work), checkpoint,
+        np.asarray(external_work), checkpoint, tuple(path_transitions),
     )

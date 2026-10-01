@@ -1,69 +1,63 @@
 # General contact restart — 1 October 2026
 
-## Active authority and location
+## Authority and location
 
-User resumed development under the new testing regime and prohibits communication
-with the other task. No cross-chat messages, inspection or slot coordination.
-Goal remains active; no owned job is running at this checkpoint.
-Worktree: `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`;
-branch `codex/contact-main-reconcile-20261001`. Latest checkpoint is the commit
-containing this note; read `git log -1`. Slice started at `18ce7f6f`.
-[Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4 and
-[plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.63 control the remaining C0–C9
-programme. No publication, merge to main, release or historical-default changes.
+Goal active; user authorizes development under tiered/new testing workflow and
+prohibits communication with the other task. No cross-chat inspection/messages.
+Worktree `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch
+`codex/contact-main-reconcile-20261001`. Read `git log -1` for the checkpoint
+containing this note; slice parent `f31ccee577e73522e092af11573f84384f51b57c`.
+[Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4 and [plan](GENERAL_CONTACT_PLAN.md)
+rev2026-10-01.64 preserve required C0–C9 outcomes, scientific/frozen/consumed
+restrictions and120active-hour budget. No publication, merge to main or release.
 Original contact checkout/six foreign dirty files remain untouched.
 
 ## Completed bounded slice
 
-[S3 directional-rate results/raw](docs/d1_review_support/contact_c6_directional_rates_20261001/results.md):
-explicit opt-in right directional algebraic velocity/acceleration at affine penalty
-touch, distinct constant/history profiles, restart identity and CLI flag.
-Physical mass projection/Newmark motion remain; no inertia on massless rotations.
-Closing/opening/stationary acceleration branches include structural curvature.
-64ε arithmetic ties are separate from gap tolerance. Finite active-set exhaustion
-or singularity returns explicit non-success. Defaults/fingerprints stay unchanged;
-history requires exactly zero represented algebraic base force.
+[Algebraic-path results/raw](docs/d1_review_support/contact_c6_algebraic_path_20261001/results.md)
+and [independent review](docs/d1_review_support/contact_c6_algebraic_path_20261001/review.md):
+explicit guided elastic single-S3/fixed-plane development profile. Physical
+Newmark quadratic lifted through exact affine massless equilibrium; eight masks
+under three-support cap, polynomial root partition/extrema, full coverage and
+finite/continuity checks. Separate physical corner minima and explicit endpoint
+position/rotation budgets. No added rotational inertia or softened mechanics.
+New constant/history profiles and version3 preserve terminal support masks;
+old profiles/checkpoints unchanged. Transition reporting and affine load work
+commit only with accepted physical state. History retains exact-zero represented
+algebraic base-force eligibility. Unsupported/non-SPD/unresolved paths fail.
 
-Independent force/branch oracles and integrated manufactured force checks pass;
-public tilted impact/split restart and injected-failure cleanup pass. Installed
-17 checks including example pass, 4.196s/157007872B, 448 source/wheel/site matches,
-197 onsite imports, JIT-off/thread1. Mistral kernel and independent OpenAI source/
-saved-evidence reviews find no definite defect. Integration Mistral attempt remains
-incomplete at8 turns. Development tested/reviewed, not C6 acceptance.
-First source9pass/1 split-partition failure remains: separately rounded end time
-changed the final step; same-partition correction kept1e-11 tolerance. Bad installed
-selectors/no tests ran are retained. No historical failure is regraded.
-
-Shared testing pin `1a0ae901` reconciled at `b9ee9394` from contact `39b9cb12`;
-three focused source checks passed. [Testing records](docs/d1_review_support/contact_testing_reconciliation_20261001/results.md).
-Earlier installed history/cancellation slice and saved native loaded/clamped review
-remain linked in [history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART39.md);
-do not replay them or consumed native temporal authorities.
-ANYfem checkpoint `ebce855` is unchanged; application admission remains false.
-Historical full-preimport ABC annotation-cache guard NONPASS remains open;
-do not patch the shared guard/export/dispatch or repeat its campaign here.
+Final installed24checks pass13.0469614s/176775168B,449source/wheel/site matches,
+198onsite imports, thread1/JIT-off. Independent scalar force/work, public tilted
+force/minimum, endpoint/restart/cleanup and historical compatibility checks.
+Independent OpenAI source/evidence review closes this development slice; Mistral
+Read attempt is incomplete at10turns. No scientific C6 acceptance or speed claim.
+Review-found overflow/coverage/boundary risks and corrections retained in evidence.
+No numerical NONPASS in this selection; historical failures unchanged.
 
 ## Next authorized decision
 
-Define incoming/outgoing interval traces at activation/release. Right endpoint
-rates alone do not certify a Hermite interval or event location. Use one independently
-solvable transition fixture to compare physical/algebraic integration-stage path
-and declared reconstruction, then choose event splitting or a path adapter.
-No broad refinement or unmotivated diagnostic campaign; existing scientific gates,
-failed evidence and frozen/consumed authorities remain unchanged.
-General C6 impact and the broader D2–D8/native/application capabilities remain open.
+Add physical event subdivision at activation/release. First use an independent
+scalar open-flight/activation fixture to discriminate a branch-specific event
+solve from repeated first-root cutback that can stall. Fix stage consistency,
+finite localization budgets, work and transaction semantics before a driver
+option. Current path checks represented interval minima and reports transitions;
+it does not integrate at events or certify general/continuum collision timing.
+No broad temporal/refinement campaign or replay of consumed native authorities.
+Full D2–D8/native/application/impact breadth remains required.
 
-## Testing, workers and budget
+## Ownership, testing and budget
 
-Focused source runner: `C:/Python/Python314/python.exe -X utf8
-scripts/run_portable_ci.py --development <exact targets> --jit off
---timeout-seconds 180 --memory-limit-mib 953`, with new `RUNNER_TEMP` evidence root.
-One numerical/Numba thread, isolated plugins; source first, one installed artifact
-per coherent integration. Stricter frozen caps prevail. No heavy campaign started.
-Tiered workflow and updated compact coordination AGENTS apply; fixed Read/Edit
-ownership, no nested workers. Reviewer is idle; no worker edits outstanding.
+No owned job running at checkpoint; internal reviewer idle, no worker edits.
+Focused source runner is `scripts/run_portable_ci.py --development <exact targets>
+--jit off --timeout-seconds 180 --memory-limit-mib 953`,
+new RUNNER_TEMP, thread1. One installed artifact per coherent slice; stricter
+frozen caps prevail. Use wrapper queue rules and compact bounded coordination.
+ANYfem checkpointebce855 remains unchanged; application admission false.
+Historical full-preimport ABC annotation-cache guard NONPASS stays open;
+do not patch shared guard/export/dispatch here.
 
-Original120 active hours not reset. Observed goal183009s plus preserved3120s
-manual offset gives186129s /51.70h used,68.30h remaining at18:52UTC; subsequent
-active work is additional. Paused/user idle time is excluded. No consumed authority
-is renewed. Preserve the offset when reading the goal clock.
+At19:53:01UTC goal clock186645s plus retained3120s manual offset equals189765s,
+52.71h used/67.29h remaining. Subsequent active time is additional; no reset.
+[Prior checkpoint/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART40.md)
+retains earlier source/installed failures, testing-pin reconciliation and links
+to consumed evidence. Goal remains active; this checkpoint is not programme completion.

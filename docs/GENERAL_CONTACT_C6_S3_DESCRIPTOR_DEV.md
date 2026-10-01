@@ -179,3 +179,43 @@ This extension is implemented/tested/reviewed development, not C6 acceptance.
 Run `python examples/general_contact_s3_plane_impact.py --one-sided-rates`;
 combine with `--ramp-downward-load-n 0.0002` for the history extension.
 See [results](d1_review_support/contact_c6_directional_rates_20261001/results.md).
+
+## Algebraic interval path development extension — 1 October 2026
+
+Set `s3_algebraic_path_dev=True` together with the two S3 rate opt-ins to select
+`PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_ALGEBRAIC_PATH_DEV_V1`, or
+`PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_ALGEBRAIC_PATH_HISTORY_DEV_V1` with a history.
+Original and directional-only profiles retain their declared Hermite path.
+
+The admitted elastic S3 local force is reference-linear. This profile joins
+physical Newmark coordinates with their quadratic interval and lifts its massless
+coordinates through instantaneous affine penalty equilibrium. A bounded eight-mask
+enumeration retains all three pressure supports. Gap-polynomial roots partition
+the interval; sign extrema, continuity and finite-data checks reject unresolved
+paths. Independent physical skin-corner extrema determine the represented-path
+minimum. This avoids smoothing an algebraic rate jump through a single full-state
+Hermite polynomial. History work integrates the same lifted path.
+
+Full endpoints must match accepted coordinates under explicit numerical controls
+`s3_path_position_tolerance_m=1e-10` and
+`s3_path_rotation_tolerance_rad=1e-9`. They are numerical path-matching budgets,
+separate from engineering gap/response tolerances. Mismatch fails before commit.
+The method requires positive definite algebraic structural work; it rejects
+singular/indefinite or nonfinite cases rather than assigning inertia or springs.
+
+`represented_path_transition_times` reports interior and step-boundary support
+changes on this declared discrete path. Version3 checkpoints bind the profile,
+matching budgets and terminal support mask; historical checkpoints remain v1/v2.
+Direct and split continuation preserve boundary transitions. Mask ownership and
+branch inequalities use explicit floating-point arithmetic budgets, not a claim
+of exact sign discrimination for all near-zero nonzero gaps.
+
+Independent scalar/reversal/grazing oracles, overflow and missing-root rejection,
+tilted S3 force-root/skin-minimum comparisons, active/history restart and injected
+failure cleanup support development use. Event-driven step subdivision, continuum
+event-time accuracy, general nonlinear/finite-rotation paths and C6 acceptance
+remain open. No general collision certificate follows.
+
+Run `python examples/general_contact_s3_plane_impact.py --one-sided-rates
+--algebraic-path --ramp-downward-load-n 0.0002`.
+See [results](d1_review_support/contact_c6_algebraic_path_20261001/results.md).

@@ -799,3 +799,24 @@ reviews found no definite defect; neither supplies scientific C6 acceptance.
 Exact-zero represented algebraic base-force eligibility remains for histories.
 Event timing, interval trace/path certification, general loading and C6 remain open.
 Evidence: [results](d1_review_support/contact_c6_directional_rates_20261001/results.md).
+
+## Guided S3 algebraic interval path — development only
+
+Explicit `s3_algebraic_path_dev=True` requires the directional-rate opt-in and
+selects new constant/history profiles. A physical Newmark quadratic is lifted
+through exact affine structural/penalty algebraic equilibrium, under an explicit
+three-pressure-support cap. Complete branch-root partition, sign extrema, finite
+arithmetic, coverage, continuity and separately dimensioned endpoint matching
+checks precede acceptance. Independent physical corner maps supply interval gap
+minima. Version3 terminal-mask history preserves grid-aligned transition reporting.
+Defaults and historical profiles/checkpoints remain unchanged.
+
+Installed24selected checks pass13.0469614s/176775168B,449source/wheel/site matches,
+198onsite solver imports, thread1/JIT-off. Independent scalar work/force oracles,
+public tilted algebraic force/minimum checks, history work/restart and injected
+failure cleanup support bounded development testing/source review. Mistral review
+remains incomplete; independent OpenAI source/evidence review is separately retained.
+See [results](d1_review_support/contact_c6_algebraic_path_20261001/results.md).
+These represented transition timestamps do not implement event-driven subdivision
+or establish continuum collision timing. General geometry/material/dynamic breadth,
+production JIT, engineering impact acceptance and fullC6 remain open. No release.
