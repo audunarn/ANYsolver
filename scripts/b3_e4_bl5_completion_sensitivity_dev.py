@@ -22,7 +22,19 @@ def require(condition, message):
         raise ValueError(message)
 
 
-def main(site, saved, output, reuse=None):
+def load_refined_solve(path, rhs, shape):
+    """Load an owned same-RHS candidate; acceptance still uses the actual KKT."""
+    import numpy as np
+    with np.load(path, allow_pickle=False) as data:
+        require(np.array_equal(data['rhs'], rhs), 'unchanged refined derivative RHS required')
+        candidate = data['solution'].copy()
+    require(candidate.shape == shape and candidate.dtype == np.float64 and
+            np.isfinite(candidate).all(), 'finite binary64 refined derivative layout required')
+    return candidate
+
+
+def main(site, saved, output, reuse=None, refined=None):
+    require(refined is None or reuse is not None, 'refined candidate requires bound retained solve')
     site, saved = site.resolve(strict=True), saved.resolve(strict=True)
     output.mkdir(parents=True, exist_ok=False)
     report = {'status': 'failed', 'classification': 'saved-system local derivative; no M2/F03 acceptance',
@@ -156,6 +168,12 @@ def main(site, saved, output, reuse=None):
             with np.load(reuse/'solve-raw.npz', allow_pickle=False) as v:
                 require(np.array_equal(rhs, v['rhs']), 'unchanged derivative RHS required')
                 derivative = v['derivative'].copy()
+        if refined is not None:
+            refined = refined.resolve(strict=True)
+            derivative = load_refined_solve(refined, rhs, derivative.shape)
+            report['refined_solve'] = {'path': str(refined), 'sha256': sha(refined),
+                'note': 'Retained repair candidate; no factorization in this assessment. '
+                        'Repair work and all earlier failures remain separate evidence.'}
         dq = np.zeros_like(q); dq[free] = derivative[:len(free)]
         dl = derivative[len(free):]
         np.savez(output/'solve-raw.npz', derivative=derivative, dq=dq, multipliers=dl, rhs=rhs)
@@ -164,6 +182,7 @@ def main(site, saved, output, reuse=None):
         residual = d_internal+d_constraint
         accurate = _accurate_sparse_residual(A, derivative[:, None], rhs[:, None])[:, 0]
         denominator = abs(A)@abs(derivative)+abs(rhs)
+        require(np.isfinite(denominator).all(), 'finite backward-error denominator required')
         require(np.all(accurate[denominator == 0.] == 0.), 'nonzero defect in a zero equation row')
         ratios = np.zeros_like(accurate)
         np.divide(abs(accurate), denominator, out=ratios, where=denominator != 0.)
@@ -243,5 +262,7 @@ if __name__ == '__main__':
     for flag in ('site', 'saved', 'output'):
         p.add_argument('--'+flag, type=Path, required=True)
     p.add_argument('--reuse-solve', type=Path)
+    p.add_argument('--refined-solve', type=Path,
+                   help='Assess an owned, same-RHS retained repair without another factorization')
     a = p.parse_args()
-    main(a.site, a.saved, a.output, a.reuse_solve)
+    main(a.site, a.saved, a.output, a.reuse_solve, a.refined_solve)

@@ -1,5 +1,17 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+BL5 bounded completion derivative, 1 October: two failing constraint rows in the
+retained V2 solve are repaired by one unchanged sparse factor and one additional
+compensated correction. Backward error is 1.34897e-13; all original physical
+controls and exact rational confirmation pass, with complete independent Read
+review. The local normalized applied-work slope is -3.83549e-4 at alpha=1.
+Six focused source admission/ownership checks pass; the historical-artifact
+assessment uses zero further factors. V1/V2 remain failed. No finite removal,
+drilling independence, external-cause allocation or M2/F03 acceptance follows.
+Stop completion tuning; advance independent ready capability. The 26-file
+verified repair archive supplements unchanged historical evidence.
+[Controls, raw bindings and limited decision](development/r8-bl5-completion-sensitivity-20261001/repair-results.md).
+
 M4/F06/G6 footprint V2 development,1 October: explicit increment-origin chart
 policy has independently reviewed Q4/mixed/all-S3 elastic solver assessment and
 ANYfem persistence/consumer delivery. Old/current default solver observables,

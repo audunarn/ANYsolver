@@ -11,7 +11,30 @@ Contact testing-only merge **b9ee9394** uses this same main pin; three affected
 source checks passed in 12.95 s under its 180 s/953 MiB cap. User's
 conditional authority permits separate development after reconciliation; no
 scientific run was launched by this testing slice and no numerical slot is held.
-The programme goal controller remains paused at this handoff.
+User resumed coupling development on 1 October under the new testing tiers.
+Do not communicate with the other task. No shared source changes are planned.
+Immediate bounded diagnostic: inspect the retained V2 backward-error rows,
+coordinate roles and cancellation scales, without assembly or factorization.
+Localized rounding defects justify one same-system refinement repair; a broad
+defect requires examining the operator/solve contract before further mechanics
+interpretation. Retain both failures and the unchanged 1e-8 criterion.
+Retained-row inspection reproduced the failure in 0.28 s: only two constraint
+rows fail, with absolute defects 4.28e-20/3.19e-20. Exact rational products verify
+the twelve largest relative defects. Next: one unchanged sparse factor, at most
+four compensated corrections from the saved iterate, all iterates recorded.
+Passing unchanged controls permits the local derivative interpretation; failure
+keeps that interpretation open and ends this repair batch. No model rebuild,
+coefficient change, formal F03 execution or communication with the other task.
+That bounded repair is complete: one correction gives backward error 1.35e-13;
+all original physical controls and exact rational confirmation pass, with complete
+independent Read review. The local work slope is -3.83549e-4 at alpha=1; no finite
+removal, drilling independence or causal attribution follows. V1/V2 stay failed.
+See [repair and decision](development/r8-bl5-completion-sensitivity-20261001/repair-results.md).
+Stop completion tuning. Next usable capability: extend the existing physical
+B2/Q4 reference descriptor modes to selected-node rigid footprints, preserving
+massless variables, actual constraints, legacy point behavior and explicit
+experimental scope. Establish independent dense/physical-work controls before
+installed integration; no general spectral or aggregate acceptance is implied.
 
 Use `scripts/run_portable_ci.py --development <exact test files/node IDs>` for
 changed behavior plus an affected source route. Verify one installed artifact
