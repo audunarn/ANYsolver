@@ -67,3 +67,8 @@ scan reject the mutation. A focused regression arms the flag exactly at Schur
 and requires rejection before any planted element response executes. The issue
 was source-inferred; numerical checks remain not executed. This is an integration
 correction, not a claim that all contact observation boundaries are now qualified.
+
+First-step installed results and retained failures are now in
+[results](contact_main_reconciliation_20261001/results.md). All owned jobs are
+terminal; shared numerical slot released. Wider development is paused. The full
+preimport ABC guard failure remains open despite passing normal-setup checks.
