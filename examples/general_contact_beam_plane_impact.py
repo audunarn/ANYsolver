@@ -10,7 +10,7 @@ from anysolver import (
 from anysolver.dynamics import TransientConfig
 from anysolver.elements import BeamElement,QuadraticBeamElement
 from anysolver.fe_core import FEModel
-from anysolver.general_contact.transient import ContactTransientSolverControls,solve_transient_contact
+from anysolver.general_contact.transient import ContactRigidTranslationHistory,ContactTransientSolverControls,solve_transient_contact
 
 
 def main():
@@ -18,6 +18,7 @@ def main():
     parser.add_argument('--quadratic',action='store_true',help='Use a straight-reference B3 beam')
     parser.add_argument('--deformable',action='store_true',help='Excite nonuniform bending and retain free ry inertia')
     parser.add_argument('--multiple-planes',action='store_true',help='Impact orthogonal fixed planes with separate line laws')
+    parser.add_argument('--tool-motion',action='store_true',help='Prescribe constant normal plane translation and report input work')
     args = parser.parse_args()
     if args.deformable and not args.quadratic:
         parser.error('--deformable example requires --quadratic')
@@ -54,25 +55,32 @@ def main():
             rigid_bodies=definition.rigid_bodies+(RigidContactBody('y_plane','plane',(0.,0.,0.),normal=(0.,1.,0.)),),
             interactions=(ContactInteraction('line_plane','round_line','plane',None,.002,line_stiffness=7e3),
                           ContactInteraction('y_pair','round_line','y_plane',None,.002,line_stiffness=3e3)))
+    end_time = .023 if args.deformable or args.multiple_planes else .013
+    motions = tuple(ContactRigidTranslationHistory(body.name,
+        ((0.,0.,0.,0.), (end_time,*(float(.1*end_time*x) for x in body.normal))))
+        for body in definition.rigid_bodies) if args.tool_motion else ()
     result = solve_transient_contact(model,definition,
-        TransientConfig(.0001,.023 if args.deformable or args.multiple_planes else .013,initial_velocity=initial),
+        TransientConfig(.0001,end_time,initial_velocity=initial),
         contact_settings=ContactSolverSettings(pair_motion='general'),
         solver_controls=ContactTransientSolverControls(allow_classical_beam_dev=True,
-            allow_multiple_beam_planes_dev=args.multiple_planes))
+            allow_multiple_beam_planes_dev=args.multiple_planes), rigid_translation_histories=motions)
+    tool_summary = (dict(prescribed_tool_work_j=result.prescribed_tool_work_j[-1],
+                        prescribed_tool_work_error_j=result.prescribed_tool_work_error_j[-1])
+                    if args.tool_motion else {})
     if args.multiple_planes:
         print(dict(profile=result.profile,accepted_steps=len(result.newton_iterations),
             cutbacks=result.cutbacks,minimum_swept_gap_m=float(np.min(result.swept_minimum_gaps)),
             maximum_residual_n=float(np.max(result.equilibrium_residuals)),
             maximum_pair_forces_n={name:float(max(np.linalg.norm(dict(c.pairs)[name].beam_force) for c in result.contact))
                                   for name,_ in result.contact[-1].pairs},
-            final_pair_active={name:c.active_line_cells for name,c in result.contact[-1].pairs}))
+            final_pair_active={name:c.active_line_cells for name,c in result.contact[-1].pairs}, **tool_summary))
         return
     print(dict(profile=result.profile,accepted_steps=len(result.newton_iterations),
         cutbacks=result.cutbacks,minimum_swept_gap_m=float(np.min(result.swept_minimum_gaps)),
         maximum_residual_n=float(np.max(result.equilibrium_residuals)),
         maximum_line_force_n=max(c.beam_force[2] for c in result.contact),
         partial_line_contact=any(0. < c.active_line_length < .99 for c in result.contact),
-        final_line_active=result.contact[-1].active_line_cells))
+        final_line_active=result.contact[-1].active_line_cells, **tool_summary))
 
 
 if __name__ == '__main__':

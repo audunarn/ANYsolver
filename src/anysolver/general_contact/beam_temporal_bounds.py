@@ -108,7 +108,7 @@ def _outward(value: Fraction, direction: float) -> float:
     return padded
 
 
-def _cell_controls(cell, states, dt: Fraction, point, normal, radius) -> _Controls:
+def _cell_controls(cell, states, dt: Fraction, point, normal, radius, end_point=None) -> _Controls:
     reference = np.asarray(cell.reference, dtype=float)
     dofs = np.asarray(cell.dofs)
     if (reference.ndim != 2 or reference.shape not in ((2, 3), (3, 3))
@@ -131,7 +131,9 @@ def _cell_controls(cell, states, dt: Fraction, point, normal, radius) -> _Contro
                     displacement += dt * _fraction(states[2][index]) / 3
                 elif temporal == 2:
                     displacement -= dt * _fraction(states[3][index]) / 3
-                gap += (_fraction(coordinates[axis]) + displacement - point[axis]) * normal[axis]
+                plane = (point[axis] if end_point is None
+                         else point[axis]+Fraction(temporal, 3)*(end_point[axis]-point[axis]))
+                gap += (_fraction(coordinates[axis]) + displacement - plane) * normal[axis]
             time_controls.append(gap)
         nodal.append(tuple(time_controls))
     if len(nodal) == 2:
@@ -147,6 +149,7 @@ def beam_hermite_gap_bounds(
     manager, start, end, start_velocity, end_velocity, dt,
     *, tolerance_m: float, maximum_subdivisions: int,
     check_cancel: Callable[[], object] | None = None,
+    plane_start_point=None, plane_end_point=None,
 ) -> BeamHermiteGapBounds:
     """Enclose the minimum round-centreline gap over every beam and all time.
 
@@ -156,6 +159,7 @@ def beam_hermite_gap_bounds(
     ``maximum_subdivisions`` counts binary patch splits across all cells.
     Insufficient budget or unrepresentable float bounds raise explicitly.
     A cancellation callback may raise its own exception or return truthy.
+    Optional paired plane endpoints define affine translation with fixed normal.
     """
     states = tuple(_finite_vector(value, name) for value, name in (
         (start, "start"), (end, "end"),
@@ -169,15 +173,20 @@ def beam_hermite_gap_bounds(
         raise ValueError("maximum_subdivisions must be a nonnegative integer")
     if check_cancel is not None and not callable(check_cancel):
         raise ValueError("check_cancel must be callable")
-    point_array = _finite_vector(manager.point, "plane point")
+    if (plane_start_point is None) != (plane_end_point is None):
+        raise ValueError("translated plane needs both start and end points")
+    point_array = _finite_vector(manager.point if plane_start_point is None else plane_start_point, "plane point")
+    end_array = None if plane_end_point is None else _finite_vector(plane_end_point, "plane end point")
     normal_array = _finite_vector(manager.normal, "plane normal")
-    if point_array.shape != (3,) or normal_array.shape != (3,) or not np.any(normal_array):
+    if (point_array.shape != (3,) or (end_array is not None and end_array.shape != (3,))
+            or normal_array.shape != (3,) or not np.any(normal_array)):
         raise ValueError("plane point and nonzero normal must have three components")
     radius_value = _finite_scalar(manager.radius, "beam radius")
     if radius_value < 0:
         raise ValueError("beam radius must be nonnegative")
     point, normal = tuple(map(_fraction, point_array)), tuple(map(_fraction, normal_array))
     radius = _fraction(radius_value)
+    end_point = None if end_array is None else tuple(map(_fraction, end_array))
 
     def cancelled():
         if check_cancel is not None and check_cancel():
@@ -188,7 +197,7 @@ def beam_hermite_gap_bounds(
     serial = 0
     for cell in manager.cells:
         cancelled()
-        controls = _cell_controls(cell, states, step, point, normal, radius)
+        controls = _cell_controls(cell, states, step, point, normal, radius, end_point)
         lower, candidate = _patch_bounds(controls)
         upper = candidate if upper is None else min(upper, candidate)
         heapq.heappush(heap, (lower, serial, controls))

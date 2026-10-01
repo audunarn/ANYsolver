@@ -74,3 +74,49 @@ python examples/general_contact_beam_plane_impact.py --quadratic --multiple-plan
 This extension remains development only. It does not admit radial obstacles,
 moving/free bodies, automatic pairs or beam-beam impact. See the
 [slice and checks](d1_review_support/C6_MULTIPLE_BEAM_PLANES_SLICE_20261002.md).
+
+## Prescribed plane translation
+
+Supply `rigid_translation_histories=(history, ...)` to the same transient solver:
+
+```python
+from anysolver.general_contact.transient import ContactRigidTranslationHistory
+history = ContactRigidTranslationHistory(
+    "plane", ((0., 0., 0., 0.), (.013, 0., 0., .0026)))
+```
+
+Entries are `(time_s, dx_m, dy_m, dz_m)` relative to the named immutable body's
+reference point. Offsets are affine between knots and start at zero. Every named
+body is declared once and histories cover the solve. Normals stay fixed. This is
+a physical-time input, separate from static `RigidContactBody.path_translation`.
+It currently requires the classical beam opt-in; shell descriptor/rotating/free
+tool admission is not inferred. Single and multiple pairs retain their own gates.
+
+The driver lands on each combined tool/load knot. If nominal steps would leave
+a sub-minimum remainder, it distributes feasible remaining steps; incompatible
+`dt`/`minimum_dt` knot partitions fail before solving. Relative tensor Bernstein
+bounds subtract affine plane motion across every represented curve/time path.
+
+`prescribed_tool_work_j[i]` maps body names to cumulative input work
+`-integral F_rigid dot dpoint`, separate from `external_nodal_work_j`.
+`prescribed_tool_work_error_j[i]` accumulates numerical work-integration estimates.
+Work partitions time using endpoint cubic and B3 interior-discriminant roots,
+then uses bounded embedded 3/5-point Gauss integration. A geometry bound checks
+zero-rule intervals against missed narrow support. Floating roots and embedded
+estimates do not establish certified continuum integration error. Controls are
+`tool_work_absolute_tolerance_j`, `tool_work_relative_tolerance` and
+`maximum_tool_work_subdivisions`; exhausted limits fail without physical commit.
+Temporary quadrature poses restore on exit. Only accepted increments add work.
+
+The new temporal profiles identify `PRESCRIBED_TRANSLATION`; schema5 binds the
+history, numerical settings, pair contracts and per-body work/error state. Old
+fixed-plane checkpoint formats remain unchanged. Example:
+
+```text
+python examples/general_contact_beam_plane_impact.py --quadratic --multiple-planes --tool-motion
+```
+
+Independent scalar trajectory/impulse/polynomial-work checks, pulse probes and
+restart tests support development. The scalar elastic energy screen improves
+under time refinement; this does not qualify arbitrary geometry, enforcement or
+C6 impact. [Slice](d1_review_support/C6_TRANSLATING_PLANES_SLICE_20261002.md).

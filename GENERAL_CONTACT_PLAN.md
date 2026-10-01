@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.2. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.3. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -22,7 +22,7 @@ Publication, merging, release and historical-default changes are separate action
 | D2 partial shells | Named finite-penalty foundation/press/open/recontact/restart handoff accepted | Remaining geometry, search, finite rotation and self-contact |
 | D3 classical/native static | Restricted round-beam, retained-native and deformable-S3 prototypes integrated and reviewed | Full required pairings, endpoints, mesh/enforcement and section-family acceptance |
 | D4 friction/continuation | Local components preserved | Transactional material-surface history, pressure coupling and arc length |
-| D5 impact | Q4/S3 and explicit scalar B2/B3 plane Newmark development share driver/state/restart | General geometry, finite rotation, caps/pairs, tools/free bodies, nonlinear materials and acceptance |
+| D5 impact | Q4/S3 and explicit B2/B3 single/multiple fixed or translating plane Newmark development share driver/state/restart | General geometry, finite rotation, caps/pairs, shell tools/free bodies, nonlinear materials and acceptance |
 | D6 native dynamics | Dedicated retained-inertia/SO(3) midpoint owner, state codec and installed development route | Broader geometry/sections, spatial accuracy and C7 acceptance |
 | Applications | ANYfem mapping/result summary plus supplied-settings persistence; ANYstructure intent/public mapping and early rejection | Source/model-bound capability admission, solve routing and full installed workflows |
 
@@ -109,12 +109,24 @@ reactions, restart, failure and disjoint-surface cases pass. Installed evidence 
 451module identities match. Independent source review supports the new contracts;
 C6 engineering acceptance remains open. [Results](docs/d1_review_support/contact_c6_multiple_beam_planes_20261002/results.md).
 
-**Next bounded decision:** prescribed-tool motion through the shared driver. Inspect
-serialized motion identity, physical tool work and complete relative-path bounds
-before choosing the shortest integrated discriminator. Preserve per-pair gates,
-beam reference/section guards and native scheme boundaries. Do not repeat event or
-native temporal screens for counts. Free-body inertia, broad native geometry/section
-acceptance and native/shell common-stage impact remain required.
+Prescribed fixed-normal plane translation now uses immutable physical-time motion,
+per-body tool input work/error, relative curve/time bounds and V5 transactional
+restart in the same driver. The final isolated artifact passes100focused checks
+and six CLI variants,452module matches,19.386s/313475072B sampled tree peak. Source
+scrutiny and retained counterexamples drove time-knot, terminal and acceleration
+corrections. This is development evidence; C6 acceptance stays open.
+[Results/review/failures](docs/d1_review_support/contact_c6_translating_planes_20261002/results.md).
+
+**Next bounded decision:** free rigid-body coupling through shared physical mass,
+work and state ownership. Inspect the existing rigid sphere/radial contact adapters
+and explicit mass/centre-of-mass/inertia contracts before choosing one coupled
+impact slice. It must advance physical mutual response and momentum accounting,
+not assign restitution or hidden mass, or independently advance lagged forces.
+Retain geometric path admission and restart/cancellation alongside coupled unknowns.
+Rotating prescribed tools and shell descriptor motion need their own path/work
+maps; plane translation does not admit them. Broad native geometry/section and
+native/shell common-stage impact remain required. Do not replay completed temporal
+screens or start unrelated diagnostic infrastructure for counts.
 
 The lead may progress application integration against stable contracts. ANYfem
 630884ae preserves supplied public numerical settings;21focused checks pass with

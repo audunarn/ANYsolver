@@ -5,54 +5,61 @@
 Full C0–C9 goal active; tiered/new testing workflow, no communication with or
 inspection of the other task. Active worktree:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Slice parent6cb9a304; read currentHEAD/status
-for checkpoint. Goal rev2026-09-30.4; plan rev2026-10-02.2. No publication, merge,
+codex/contact-main-reconcile-20261001. Slice parent9ef78d5b; inspect currentHEAD/status
+for checkpoint. Goal rev2026-09-30.4; plan rev2026-10-02.3. No publication, merge,
 release, changed defaults, original-worktree or shared ABC-guard edits authorized.
-This turn is progress: multiple explicit beam-plane impact installed-tested.
+Previous instruction-only turn was no progress; this turn implements, verifies and
+checkpoints prescribed-plane impact. Full programme remains incomplete.
 
 ## Current result
 
-Explicit allow_multiple_beam_planes_dev requires classical beam opt-in. Existing
-additive line-work owner handles named fixed-plane interactions and disjoint
-surfaces covering all B2/B3 elements. Each pair retains its endpoint/full-Hermite-
-path dimensional gap gate; one split cap is shared. Mass, transaction, history,
-cutback/cancellation and restart remain shared. Pair definitions/settings and new
-profile bind continuation. No caps, native insertion or finite-rotation expansion.
+Named immutable physical-time translations extend the shared elastic B2/B3
+single/multiple-plane Newmark driver. Fixed normals, actual mass/distributed work,
+per-pair dimensional gap gates and conservative relative Hermite/Bernstein bounds
+remain. Combined knots/terminal landing use explicit arithmetic resolution checks.
+Tool input work/errors are separate from nodal work. Support-root partitioning and
+bounded embedded quadrature retain zero-rule geometry checks; estimates are not
+certified continuum work bounds. Poses restore on exit; only accepted steps publish
+work. V5 restart binds motion/settings and per-body cumulative state. New profiles
+reuse accumulated Newmark acceleration corrections; old profiles remain unchanged.
 
-Twelve new mechanics/lifecycle checks cover summed/orthogonal mode Newmark,
-individual reactions/impulse, opening, active/history/order restart, changed law,
-unequal gap budgets, aggregate exhaustion, failure cleanup, coverage and rejection.
-Installed evidence covers80 distinct checks:77 initial passes and3 corrective
-passes for packaging/CLI failures; unaffected passes reused.451source/wheel/site
-modules match. Max sampled tree302673920B; runs9.965s and5.257s within180s/1GB.
-Independent Mistral source follow-up found no counterexample for path/resource/
-restart properties; source-only scrutiny is not scientific acceptance.
-[Results/raw](docs/d1_review_support/contact_c6_multiple_beam_planes_20261002/results.md),
+Final installed artifact:100passed,452source/wheel/site modules match,211onsite
+imports,19.386s/313475072B sampled tree peak within180s/1GB. Eighteen new checks
+cover forced Newmark/impulse/polynomial work, temporal energy improvement, deforming
+B3, multiple tools, opening/recontact, relative bounds, knots, active restart and
+failure cleanup; six CLI variants pass. JIT off/BLAS and Numba threads1 verified.
+[Results/review/raw](docs/d1_review_support/contact_c6_translating_planes_20261002/results.md),
 [guide](docs/GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md).
 
-## Failures, limits and next action
+## Failures and remaining boundary
 
-Retain v1 test-field/tuple defects, v2 earlier radial guard, v4 nonexistent surface
-field and installed missing-example/NumPy-print failures. All corrected; no science
-criteria relaxed. Raw63files/readbackPASS. Prior failures/consumed authorities remain
-in [history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART44.md).
+Retain v1 missed pulse-work error and independent polynomial fixture defect;
+v3 misplaced assertion; v6/v8 knot counterexamples; installedv2 96pass/3fail terminal
+steps and separate Unicode display failure; sourcev10 17pass/1fail acceleration
+restart discrepancy. v11 and final installed checks resolve affected paths without
+relaxed tolerances. Mistral initial review completed; follow-up limit reached.
+OpenAI Read review supplied knot counterexamples; lead checked corrections against
+source and executed the discriminators. No science acceptance is inferred.
+Raw131files/7549232B readbackPASS. Prior state/evidence in
+[Part45](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART45.md).
 
-Development only; toy .002m gap budget is not qualification/default. C6 acceptance,
-finite rotations, nonlinear materials, caps, radial/pair/shell impacts, friction,
-moving/free bodies and full D2–D8 remain open. Accepted static subsets unchanged;
-application admissionfalse. Historical ABC preimport NONPASS remains separately owned.
+Development only; toy gap budget is not qualification/default. C6 acceptance,
+free rigid inertia, rotating/shell tools, caps/radial/pair impact, friction and
+nonlinear materials remain open. Accepted static subsets unchanged; application
+admissionfalse. Historical ABC preimport NONPASS remains separately owned.
 
-Next inspect prescribed-tool motion: serialized time/path identity, physical tool
-work, reactions and conservative relative beam/tool path before fixing one bounded
-shared-driver slice. Preserve individual gap budgets and native integration-stage
-boundaries; do not replay event/native temporal screens merely for counts.
+Next inspect existing rigid sphere/radial adapters and explicit mass/centre/inertia
+contracts for a shared coupled free-body impact slice with physical mutual response,
+momentum, path/work and restart. Preserve native common-stage boundaries; no hidden
+mass, restitution or lagged separate integration. Full D2–D8 remains required.
 
-## Processes and resources
+## Processes, package and clock
 
-No owned job live; both Mistral runs terminal. First review limit reached without
-conclusion; focused follow-up completed unresolved properties. Package:
-C:/ANYworkspaceWork/contact-multiple-beam-impact-package-20261002.
+No owned process live. Source/installed jobs terminal; review worker idle.
+Final package C:/ANYworkspaceWork/contact-translating-plane-package-20261002-v3.
+v1 build superseded/unexecuted; v2 failed artifact retained. Wheel SHA256
+036bf3061074a9636ffd19561dbaaa3429927868286b6b9c8be3389018165897.
 Routine checks: portable --development exact selectors, JIToff, threads1,
 180s/953MiB, uniqueRUNNER_TEMP; stricter frozen caps prevail.
-At22:30:01UTC goal196066s+retained3120s=199186s:55.329h used/64.671h remaining
-of original120activehours; subsequent active time counts, no reset.
+At23:23:47UTC goal199291s+retained3120s=202411s:56.225h used/63.775h remaining
+of original120activehours. Subsequent active time counts; no reset.

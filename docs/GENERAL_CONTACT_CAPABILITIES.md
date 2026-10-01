@@ -868,3 +868,24 @@ installed-tested;80 distinct checks covered by77 initial and3 corrective passes.
 Independent source review found no counterexample within its stated limits.
 This is development, not C6 engineering acceptance/release; app admission isfalse.
 See [results and failures](d1_review_support/contact_c6_multiple_beam_planes_20261002/results.md).
+
+## Prescribed classical beam-plane translation — installed-tested development
+
+Immutable named physical-time translations extend the shared single/multiple-plane
+elastic B2/B3 Newmark route. Fixed normals, uncapped round tubes, physical mass,
+per-pair endpoint/full-relative-path bounds and aggregate resource limits remain.
+Combined tool/load knots and exact endpoint landing use explicit arithmetic checks.
+Per-body tool input work and integration estimates remain separate from nodal work;
+V5 binds motion/settings and carries accepted cumulative state. Temporary work
+poses restore on failure/cancellation and work publishes only after physical commit.
+
+Eighteen new mechanics/lifecycle checks and two moving-tool CLI variants join the
+old paths in one final installed100-pass selection:452module matches,19.386s,
+313475072B sampled peak, JIT off/threads1,180s/999292928B caps. Retained source and
+installed failures are classified individually. Independent source scrutiny found
+actionable knot/integration risks; it does not supply C6 engineering acceptance.
+Floating support roots/embedded work estimates are not continuum certificates.
+Free rigid inertia, rotating/shell tools, radial/pair impact, friction, nonlinear
+material and broad impact acceptance remain open. Application admission staysfalse.
+[Guide](GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md),
+[results/review/raw](d1_review_support/contact_c6_translating_planes_20261002/results.md).

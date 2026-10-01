@@ -54,6 +54,7 @@ from .core import (
 )
 from .beam_plane import _BeamPlaneResults
 from .multiple_beam_rigid import MultipleBeamRigidResults
+from .rigid_translation import ContactRigidTranslationHistory, _PlaneTranslations
 from .descriptor_rates import directional_descriptor_rate
 from .algebraic_path import affine_descriptor_path
 from .event_subdivision import EventNeedsCutback, localize_branch_event
@@ -72,6 +73,9 @@ _BEAM_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_VON_KARMAN_FIXED_PLANE_NEWMARK_DEV_V
 _BEAM_HISTORY_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_VON_KARMAN_FIXED_PLANE_NEWMARK_HISTORY_DEV_V1"
 _MULTIPLE_BEAM_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_MULTIPLE_FIXED_PLANES_NEWMARK_DEV_V1"
 _MULTIPLE_BEAM_HISTORY_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_MULTIPLE_FIXED_PLANES_NEWMARK_HISTORY_DEV_V1"
+_BEAM_TOOL_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_PRESCRIBED_TRANSLATION_NEWMARK_DEV_V1"
+_BEAM_TOOL_HISTORY_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_PRESCRIBED_TRANSLATION_NEWMARK_HISTORY_DEV_V1"
+_TOOL_RESTART_SCHEMA = "ANYSOLVER_TRANSLATING_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V5"
 _RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
 _HISTORY_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V2"
 _ALGEBRAIC_PATH_RESTART_SCHEMA = "ANYSOLVER_S3_ALGEBRAIC_PATH_TRANSIENT_CONTACT_DEV_CHECKPOINT_V3"
@@ -154,8 +158,17 @@ class ContactTransientSolverControls:
     beam_swept_gap_tolerance_m: float = 1.0e-10
     maximum_beam_swept_subdivisions: int = 512
     allow_multiple_beam_planes_dev: bool = False
+    tool_work_absolute_tolerance_j: float = 1e-10
+    tool_work_relative_tolerance: float = 1e-8
+    maximum_tool_work_subdivisions: int = 64
 
     def __post_init__(self) -> None:
+        for name in ("tool_work_absolute_tolerance_j", "tool_work_relative_tolerance"):
+            value = getattr(self, name)
+            if isinstance(value, (bool, np.bool_)) or not np.isfinite(value) or value <= 0.:
+                raise ValueError(f"{name} must be finite and positive")
+        if type(self.maximum_tool_work_subdivisions) is not int or self.maximum_tool_work_subdivisions < 0:
+            raise ValueError("maximum_tool_work_subdivisions must be a nonnegative integer")
         if type(self.allow_multiple_beam_planes_dev) is not bool:
             raise ValueError("allow_multiple_beam_planes_dev must be boolean")
         if self.allow_multiple_beam_planes_dev and not self.allow_classical_beam_dev:
@@ -290,11 +303,13 @@ class TransientContactResults:
     represented_path_transition_times: tuple[float, ...] = ()
     localized_contact_event_times: tuple[float, ...] = ()
     event_endpoint_evaluations: int = 0
+    prescribed_tool_work_j: tuple[dict[str, float], ...] = ()
+    prescribed_tool_work_error_j: tuple[dict[str, float], ...] = ()
 
 
 def _restart_analysis_contract(transient, controls, manager, profile,
                                base_load_case, external_load,
-                               load_history) -> dict:
+                               load_history, tool_histories=()) -> dict:
     # The requested end time is a continuation target, not a definition of
     # the already accepted state. All other integration inputs are bound.
     contract = {
@@ -337,6 +352,12 @@ def _restart_analysis_contract(transient, controls, manager, profile,
         )
     if controls.allow_multiple_beam_planes_dev:
         contract["controls"]["allow_multiple_beam_planes_dev"] = True
+    if tool_histories:
+        contract["rigid_translation_histories"] = [
+            {"body": h.body_name, "points": [list(point) for point in h.points]}
+            for h in tool_histories]
+        for name in ("tool_work_absolute_tolerance_j", "tool_work_relative_tolerance", "maximum_tool_work_subdivisions"):
+            contract["controls"][name] = getattr(controls, name)
     if controls.s3_algebraic_path_dev:
         contract["controls"]["s3_algebraic_path_dev"] = True
         contract["controls"]["s3_path_position_tolerance_m"] = controls.s3_path_position_tolerance_m
@@ -352,7 +373,7 @@ def _restart_analysis_contract(transient, controls, manager, profile,
 def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             current_time, q, velocity, acceleration,
                             accepted_steps, external_work_j=None, path_terminal_active=None,
-                            event_boundary_support=None) -> dict:
+                            event_boundary_support=None, tool_work_j=None, tool_work_error_j=None) -> dict:
     payload = {
         "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
                    else _RESTART_SCHEMA),
@@ -377,13 +398,17 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
         payload["schema"] = _EVENT_RESTART_SCHEMA
         payload["version"] = 4
         payload["state"]["event_boundary_support"] = list(event_boundary_support)
+    if tool_work_j is not None:
+        payload["schema"], payload["version"] = _TOOL_RESTART_SCHEMA, 5
+        payload["state"]["tool_work_j"] = dict(tool_work_j)
+        payload["state"]["tool_work_error_j"] = dict(tool_work_error_j)
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
 
 def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                              reduced_size, t_end, *, load_history, path_pressure_dofs=0,
-                             event_subdivision=False):
+                             event_subdivision=False, tool_body_names=()):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -401,6 +426,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         expected_version, expected_schema = 3, _ALGEBRAIC_PATH_RESTART_SCHEMA
     if event_subdivision:
         expected_version, expected_schema = 4, _EVENT_RESTART_SCHEMA
+    if tool_body_names:
+        expected_version, expected_schema = 5, _TOOL_RESTART_SCHEMA
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -417,6 +444,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         expected_state_keys.add("path_terminal_active")
     if event_subdivision:
         expected_state_keys.add("event_boundary_support")
+    if tool_body_names:
+        expected_state_keys.update(("tool_work_j", "tool_work_error_j"))
     if not isinstance(state, Mapping) or set(state) != expected_state_keys:
         raise ValueError("transient contact checkpoint state is malformed")
     time = float(state["time"])
@@ -448,6 +477,16 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                 or boundary != sorted(set(boundary))):
             raise ValueError("transient contact checkpoint event boundary is invalid")
         values += (tuple(boundary),)
+    if tool_body_names:
+        for key in ("tool_work_j", "tool_work_error_j"):
+            data = state[key]
+            if (not isinstance(data, Mapping) or set(data) != set(tool_body_names)
+                    or any(isinstance(v, (bool, np.bool_))
+                           or not isinstance(v, (int, float, np.integer, np.floating))
+                           or not np.isfinite(v) or (key == "tool_work_error_j" and v < 0.)
+                           for v in data.values())):
+                raise ValueError("transient contact checkpoint tool work is invalid")
+            values += (dict(data),)
     return values
 
 
@@ -727,7 +766,7 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
 
 
 def _beam_complete_path_gaps(manager, start, end, start_velocity, end_velocity,
-                             step, controls, check_cancel):
+                             step, controls, check_cancel, translations=None, time_s=0.):
     """Every explicit pair retains its own gap gate and shares one split cap."""
     from .beam_temporal_bounds import beam_hermite_gap_bounds
     from .multiple_beam_rigid import MultipleBeamRigidManager
@@ -737,10 +776,14 @@ def _beam_complete_path_gaps(manager, start, end, start_velocity, end_velocity,
     minimum = float("inf")
     admissible = True
     for _, child in pairs:
+        motion = ({} if translations is None else dict(
+            plane_start_point=translations.point(child, time_s),
+            plane_end_point=translations.point(child, time_s+step)))
         bounds = beam_hermite_gap_bounds(
             child, start, end, start_velocity, end_velocity, step,
             tolerance_m=controls.beam_swept_gap_tolerance_m,
             maximum_subdivisions=remaining, check_cancel=check_cancel,
+            **motion,
         )
         remaining -= bounds.subdivisions
         minimum = min(minimum, bounds.lower_gap)
@@ -764,6 +807,7 @@ def solve_transient_contact(
     contact_settings: ContactSolverSettings | None = None,
     base_load_case: LoadCase | None = None,
     nodal_load_history: ContactNodalLoadHistory | None = None,
+    rigid_translation_histories: tuple[ContactRigidTranslationHistory, ...] = (),
     solver_controls: ContactTransientSolverControls | None = None,
     restart_checkpoint: Mapping | None = None,
     emit_restart_checkpoint: bool = False,
@@ -806,6 +850,21 @@ def solve_transient_contact(
         raise ValueError("transient contact checkpoint needs one accepted time step")
     settings = ContactSolverSettings() if contact_settings is None else contact_settings
     profile = _admit(model, definition, settings, controls)
+    tool_histories = tuple(rigid_translation_histories)
+    if any(type(h) is not ContactRigidTranslationHistory for h in tool_histories):
+        raise TypeError("rigid_translation_histories requires ContactRigidTranslationHistory entries")
+    tool_histories = tuple(sorted(tool_histories, key=lambda h: h.body_name))
+    if tool_histories:
+        if not controls.allow_classical_beam_dev:
+            raise ValueError("prescribed translation currently requires the classical beam profile")
+        if (len({h.body_name for h in tool_histories}) != len(tool_histories)
+                or any(h.body_name not in {body.name for body in definition.rigid_bodies} for h in tool_histories)):
+            raise ValueError("rigid translation body identities must be unique and declared")
+        if any(h.points[-1][0] < transient.t_end for h in tool_histories):
+            raise ValueError("rigid translation histories must cover t_end")
+        if any(b[0]-a[0] < max(controls.minimum_dt, 16*np.finfo(float).eps*max(1., abs(b[0])))
+               for h in tool_histories for a, b in zip(h.points, h.points[1:])):
+            raise ValueError("rigid translation knots are closer than admitted time resolution")
     if nodal_load_history is not None:
         if type(nodal_load_history) is not ContactNodalLoadHistory:
             raise TypeError("nodal_load_history must be ContactNodalLoadHistory")
@@ -828,6 +887,19 @@ def solve_transient_contact(
             profile = _BEAM_HISTORY_PROFILE
         elif profile == _MULTIPLE_BEAM_PROFILE:
             profile = _MULTIPLE_BEAM_HISTORY_PROFILE
+    if tool_histories:
+        profile = _BEAM_TOOL_HISTORY_PROFILE if nodal_load_history is not None else _BEAM_TOOL_PROFILE
+        all_knots = sorted({p[0] for h in tool_histories for p in h.points}
+                           | ({p[0] for p in nodal_load_history.points} if nodal_load_history is not None else set()))
+        if any(b-a < max(controls.minimum_dt, 16*np.finfo(float).eps*max(1., abs(b)))
+               for a, b in zip(all_knots, all_knots[1:])):
+            raise ValueError("combined tool/load history knots are closer than admitted time resolution")
+        reached_knots = [t for t in all_knots if t <= transient.t_end]
+        for a, b in zip(reached_knots, reached_knots[1:]):
+            roundoff = 128*np.finfo(float).eps*max(abs(a), abs(b), transient.dt, controls.minimum_dt)
+            count = max(1, int(np.ceil(max(0., b-a-roundoff)/transient.dt)))
+            if (b-a)/count < controls.minimum_dt-roundoff:
+                raise ValueError("tool/load knot intervals cannot fit dt and minimum_dt")
     s3_descriptor = profile in (_S3_PROFILE, _S3_HISTORY_PROFILE)
     if controls.s3_one_sided_rates_dev:
         profile = (_S3_DIRECTIONAL_HISTORY_PROFILE if nodal_load_history is not None
@@ -891,7 +963,7 @@ def solve_transient_contact(
         raise ValueError("transient development profile admits at most 512 free coordinates")
     descriptor_basis = None
     if profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE,
-                   _MULTIPLE_BEAM_PROFILE,_MULTIPLE_BEAM_HISTORY_PROFILE):
+                   _MULTIPLE_BEAM_PROFILE,_MULTIPLE_BEAM_HISTORY_PROFILE,_BEAM_TOOL_PROFILE,_BEAM_TOOL_HISTORY_PROFILE):
         try:
             np.linalg.cholesky(Mred.toarray())
         except np.linalg.LinAlgError as exc:
@@ -965,6 +1037,7 @@ def solve_transient_contact(
             expected_manager = _PlanarQ4PlaneManager
         if type(manager) is not expected_manager:
             raise ValueError("transient development profile selected an unsupported contact owner")
+        translations = _PlaneTranslations(manager, tool_histories) if tool_histories else None
         path_adapter = (_S3AffinePathAdapter.prepare(
             model, T, descriptor_basis, manager, committed_states,
         ) if controls.s3_algebraic_path_dev else None)
@@ -974,7 +1047,7 @@ def solve_transient_contact(
             analysis_fingerprint = analysis_configuration_fingerprint(
                 _restart_analysis_contract(
                     transient, controls, manager, profile,
-                    base_load_case, external_load, nodal_load_history,
+                    base_load_case, external_load, nodal_load_history, tool_histories,
                 )
             )
         if restart_checkpoint is None:
@@ -984,6 +1057,8 @@ def solve_transient_contact(
             resumed_work = None
             last_path_active = None
             event_boundary_support = ()
+            tool_work = {h.body_name: 0. for h in tool_histories}
+            tool_error = tool_work.copy()
         else:
             resumed = _read_restart_checkpoint(
                     restart_checkpoint, model_fingerprint,
@@ -991,9 +1066,14 @@ def solve_transient_contact(
                     load_history=nodal_load_history,
                     path_pressure_dofs=(manager.support.size if path_adapter is not None else 0),
                     event_subdivision=controls.s3_event_subdivision_dev,
+                    tool_body_names=tuple(h.body_name for h in tool_histories),
                 )
             current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = resumed[:7]
             event_boundary_support = resumed[7] if controls.s3_event_subdivision_dev else ()
+            if tool_histories:
+                tool_work, tool_error = resumed[-2:]
+            else:
+                tool_work, tool_error = {}, {}
             if event_boundary_support:
                 boundary_gaps = path_adapter.reference_gap+path_adapter.gradient @ q
                 if np.any(np.abs(boundary_gaps[list(event_boundary_support)])
@@ -1006,6 +1086,8 @@ def solve_transient_contact(
             return nodal_load_history.factor(time_s)*external_reduced
 
         def evaluate(position: np.ndarray, time_s: float, *, tangent: bool):
+            if translations is not None:
+                translations.set_pose(time_s)
             full = np.asarray(T @ position).reshape(-1)
             force, stiffness, trial = _assemble_nonlinear_system(
                 model, full, committed_states, 3, tangent=tangent,
@@ -1085,6 +1167,7 @@ def solve_transient_contact(
             if nodal_load_history is None else 0.0
         )
         external_work = [accumulated_work]
+        tool_works, tool_errors = [tool_work.copy()], [tool_error.copy()]
         swept_gaps = [contact0.minimum_gap]
         residuals = [float(np.linalg.norm(Mred @ acceleration + force0))]
         iterations = []
@@ -1098,10 +1181,11 @@ def solve_transient_contact(
         pending_residual = 0.0
         last_step_was_end_truncated = False
         _alpha, beta, gamma = transient.integration_parameters()
-        while current_time < transient.t_end - 1.0e-14 * max(1.0, transient.t_end):
+        while (current_time < transient.t_end if tool_histories else
+               current_time < transient.t_end - 1.0e-14 * max(1.0, transient.t_end)):
             remaining = transient.t_end - current_time
             step = min(transient.dt, remaining)
-            if nodal_load_history is not None:
+            if nodal_load_history is not None and not tool_histories:
                 knot_index = bisect_right(
                     nodal_load_history.points, (current_time, float("inf")),
                 )
@@ -1124,9 +1208,35 @@ def solve_transient_contact(
                 step = (knot_step if next_knot <= transient.t_end
                         and abs(step-knot_step) <= knot_roundoff
                         else min(step,knot_step))
+            if tool_histories:
+                index = bisect_right(all_knots, current_time)
+                if index < len(all_knots) and all_knots[index] <= transient.t_end:
+                    next_knot = all_knots[index]
+                    distance = next_knot-current_time
+                    roundoff = 128*np.finfo(float).eps*max(abs(current_time), abs(next_knot), abs(step), controls.minimum_dt)
+                    if distance < controls.minimum_dt-roundoff:
+                        raise ValueError("rigid translation knot is too close to current time")
+                    # Snap only to the nearest combined knot; processing later
+                    # histories must never enlarge a step across an earlier one.
+                    step = distance if abs(step-distance) <= roundoff else min(step, distance)
+                    if step < distance and distance-step < controls.minimum_dt:
+                        count = max(1, int(np.ceil(max(0., distance-roundoff)/transient.dt)))
+                        step = distance/count
+                        if step < controls.minimum_dt-roundoff:
+                            raise ValueError("tool/load knot remainder cannot fit dt and minimum_dt")
+                else:
+                    # End time need not be a registered history knot. Land on
+                    # it with the same arithmetic allowance, rather than send
+                    # an accumulation-roundoff-sized final step to Newton.
+                    roundoff = 128*np.finfo(float).eps*max(abs(current_time), abs(transient.t_end), abs(step), controls.minimum_dt)
+                    if abs(step-remaining) <= roundoff:
+                        step = remaining
+                if current_time+step <= current_time:
+                    raise ValueError("prescribed-tool step cannot advance representable physical time")
             end_truncated = (
                 remaining < transient.dt
                 - 128.0*np.finfo(float).eps*max(1.0, abs(transient.t_end))
+                and not any(transient.t_end == point[0] for h in tool_histories for point in h.points)
                 and (nodal_load_history is None or not any(
                     transient.t_end == point[0]
                     for point in nodal_load_history.points
@@ -1140,7 +1250,7 @@ def solve_transient_contact(
             while True:
                 predictor = q + step * vred + step * step * (0.5 - beta) * acceleration
                 velocity_predictor = vred + step * (1.0 - gamma) * acceleration
-                # In the event profile iterate on acceleration as well as its
+                # In event/tool profiles iterate on acceleration as well as its
                 # Newmark position. Subtracting two positions after each solve
                 # amplifies endpoint roundoff by 1/h² at short event steps.
                 # Always start from the same predictor, including at a requested
@@ -1156,7 +1266,7 @@ def solve_transient_contact(
                     full, internal, tangent, trial = evaluate(
                         candidate, current_time+step, tangent=True,
                     )
-                    candidate_acceleration = (event_acceleration.copy() if controls.s3_event_subdivision_dev
+                    candidate_acceleration = (event_acceleration.copy() if controls.s3_event_subdivision_dev or tool_histories
                                               else (candidate - predictor) / (beta * step * step))
                     residual = Mred @ candidate_acceleration + internal
                     scale = max(1.0, float(np.linalg.norm(Mred @ candidate_acceleration)),
@@ -1184,6 +1294,7 @@ def solve_transient_contact(
                                 swept_gap, beam_path_admissible = _beam_complete_path_gaps(
                                     manager,previous_full,full,previous_velocity,full_velocity,step,
                                     controls, lambda: check_cancel("transient beam complete-path bounds"),
+                                    translations, current_time,
                                 )
                             else:
                                 swept_gap = _minimum_hermite_gap(
@@ -1292,7 +1403,7 @@ def solve_transient_contact(
                     if not np.all(np.isfinite(correction)):
                         break
                     candidate += correction
-                    if controls.s3_event_subdivision_dev:
+                    if controls.s3_event_subdivision_dev or tool_histories:
                         event_acceleration += correction / (beta * step * step)
                     discard_active_state_candidate(committed_states)
                 if requested_event_step is not None:
@@ -1326,7 +1437,18 @@ def solve_transient_contact(
                                 load_at(current_time), load_at(current_time+step),
                             )
                     check_cancel("transient contact step acceptance")
+                    if translations is not None:
+                        added_work, added_error = translations.work(
+                            previous_full, full, previous_velocity, full_velocity,
+                            current_time, step, controls, lambda: check_cancel("prescribed tool work"))
+                        check_cancel("transient contact tool-work acceptance")
+                        next_tool_work = {name: tool_work[name]+added_work[name] for name in tool_work}
+                        next_tool_error = {name: tool_error[name]+added_error[name] for name in tool_error}
+                        if not all(np.isfinite(value) for value in (*next_tool_work.values(), *next_tool_error.values())):
+                            raise RuntimeError("nonfinite accumulated prescribed tool work")
                     committed_states = commit_state_candidate(committed_states, trial)
+                    if translations is not None:
+                        tool_work, tool_error = next_tool_work, next_tool_error
                     if controls.s3_event_subdivision_dev:
                         event_boundary_support = event_targets
                     if controls.s3_event_subdivision_dev and event_targets:
@@ -1364,6 +1486,8 @@ def solve_transient_contact(
                                 external_load @ (full - full_initial)
                             )
                         external_work.append(accumulated_work)
+                        tool_works.append(tool_work.copy())
+                        tool_errors.append(tool_error.copy())
                         swept_gaps.append(pending_swept_gap)
                         residuals.append(pending_residual)
                         pending_swept_gap = float("inf")
@@ -1394,6 +1518,8 @@ def solve_transient_contact(
             accumulated_work if nodal_load_history is not None else None,
             last_path_active if path_adapter is not None else None,
             event_boundary_support if controls.s3_event_subdivision_dev else None,
+            tool_work if translations is not None else None,
+            tool_error if translations is not None else None,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(
@@ -1402,4 +1528,6 @@ def solve_transient_contact(
         np.asarray(swept_gaps), np.asarray(residuals), cutbacks, tuple(iterations),
         np.asarray(external_work), checkpoint, tuple(path_transitions),
         tuple(localized_events), event_evaluations,
+        tuple(tool_works) if translations is not None else (),
+        tuple(tool_errors) if translations is not None else (),
     )
