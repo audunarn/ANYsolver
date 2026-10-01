@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.61. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-01.62. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -119,6 +119,16 @@ checks and saved evidence before another solve. Up to two authorized workers hav
 fixed ownership; a kernel author cannot be its sole independent assessor. Reuse
 unaffected evidence by impact analysis. After two slices without a gate advance,
 integrated improvement or decision-changing result, choose a permitted alternative.
+
+Shared testing main1a0ae901 is reconciled without contact-kernel changes.
+[Three focused source compatibility checks](docs/d1_review_support/contact_testing_reconciliation_20261001/results.md)
+pass. Future ordinary development uses scripts/run_portable_ci.py --development
+with explicit selectors, one affected integrated route and explicit task timeout,
+memory and JIT controls. Its600s default never enlarges a stricter task cap.
+Build/check one installed artifact per coherent integration; reuse unaffected
+evidence through impact analysis. Scientific/compiled/release gates remain.
+The programme goal stays paused pending resumption; testing reconciliation alone
+does not launch the next contact slice.
 
 Optimize measured production bottlenecks only. The NumPy inertia batch gives6.86x
 local prepared-kernel improvement and27.46% complete short-route reduction; neither

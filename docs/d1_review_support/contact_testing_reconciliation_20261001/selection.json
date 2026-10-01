@@ -1,0 +1,33 @@
+{
+  "scope": "focused source development, not qualification",
+  "targets": [
+    "tests/test_general_contact_ordinary_supported_schur.py::test_schur_checkpoint_rejects_self_healing_token_before_element_work",
+    "tests/test_general_contact_ordinary_supported_schur.py::test_ordinary_force_control_verifies_schur_before_committing",
+    "tests/test_general_contact_transient_s3_history.py::test_s3_history_nonuniform_load_retains_later_algebraic_rates"
+  ],
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-p",
+    "scripts.development_test_runtime",
+    "--durations=10",
+    "--basetemp=C:\\ANYworkspaceWork\\contact-testing-reconciliation-20261001\\anysolver-portable-ci-i5bj8ayb\\P01\\basetemp",
+    "tests/test_general_contact_ordinary_supported_schur.py::test_schur_checkpoint_rejects_self_healing_token_before_element_work",
+    "tests/test_general_contact_ordinary_supported_schur.py::test_ordinary_force_control_verifies_schur_before_committing",
+    "tests/test_general_contact_transient_s3_history.py::test_s3_history_nonuniform_load_retains_later_algebraic_rates"
+  ],
+  "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+  "timeout_seconds": 180,
+  "selected_file_sha256": {
+    "tests/test_general_contact_ordinary_supported_schur.py": "dae0c3e7a26f3d4b238ae7e9907ed84d6734f0419ed0575400047d6d36014571",
+    "tests/test_general_contact_transient_s3_history.py": "15060003e5a055c0a9f31aaf8bab0910e30e727a457652e3be9b8dda491891ef"
+  },
+  "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+  "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+  "memory_limit_mib": 953,
+  "jit": "off"
+}
