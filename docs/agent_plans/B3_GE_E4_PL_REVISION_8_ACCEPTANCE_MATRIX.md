@@ -1,5 +1,14 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+BL5 actual8:1 endpoint, completed2 October: nine retained mixed solves at the
+three registered grids pass unchanged controls, onefactor/threeRHS each.
+Finest Mz equilibrium9.516e-9 is close to its1e-8cap; last Mz work change-1.354%
+is not converged1% accuracy. Existing completion derivative materially aligns
+with the root partition discrepancy despite small tip-work sensitivity; no
+causal allocation, coefficient tuning, drilling independence or exact point
+tie follows. Candidate retained, bounded batch stopped; F03/M2/G0B unchanged.
+Formal F03 authority remains UNCONSUMED. [Raw results and limited review](development/r8-bl5-endpoint-response-20261001/results.md).
+
 B2 footprint numerical slice,1 October: original40-Q4 Fz/Mx/My obstruction
 repaired without changing geometry/section/load. Narrow active-row rational
 certificate and separately declared capped footprint gap admission; point-only

@@ -1,115 +1,77 @@
-# B3-GE / E4-PL / B2 — active state, 1 October 2026
+# B3-GE / E4-PL / B2 — active state, 2 October 2026
 
-## Current decision and authority
+## Decision, authority and owner
 
-User resumed development under the new testing regime; do not communicate with
-the other task. Revision 8 plan/goal remain active. Global/repository AGENTS.md
-were re-read on request: compact tiered coordination, explicit file ownership,
-proportionate verification and no repeated passed campaigns without cause.
-Scientific criteria, protected history, resource limits and final G0–G6/B2
-scope remain binding. Formal F03 authority is UNCONSUMED; aggregate gates and
-release are not accepted. No publication/default/version change is authorized.
+Revision 8 goal/plan remain active. Continue under the adopted risk-proportionate
+policy2026-09-24.2 and source-first impact testing. AGENTS.md re-read. Use bounded
+tiered workers with separate ownership; do not contact the other task. Formal
+F03 authority is UNCONSUMED. No aggregate gate, main merge, default/version change
+or publication is accepted/authorized. Preserve all historical failed evidence.
 
-Worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001
-Branch: codex/stiffened-main-reconcile-20261001. Baseline shared main:
-1a0ae90122995b8419f1ed87cf770590b4bd8c05, merged testing-only PR61, all25CI passed.
-Coupling base before this product slice: a7ff866c. Main and the contact task's
-files are untouched. Original foreign F03 script SHA remains c908b1f3...9481.
+Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001. Current product commit d96471c6;
+shared-main testing baseline1a0ae901. Main and contact files remain untouched.
+Original foreign F03 script hashc908b1f3...9481 was reverified; never run/edit it.
 
-## Delivered behavior and established facts
+## Delivered behavior and current evidence
 
-- Experimental multi-element Q4/S3 GE point/footprint static workflows, atomic
-  stepping, selective recovery, snapshots/restart and virgin descriptor modes
-  exist. Explicit V2 footprint increment charts and ANYfem persistence were
-  previously installed-tested; their detailed evidence is linked in history.
-- Separate physical B2 batch/static point and nodal-footprint workflows exist.
-  New supported virgin footprint modes reuse physical K/M and actual C/T;
-  normal spin remains locked and mechanical qualification incomplete. Typed
-  results retain full multiplier rows and actual reference frames. Explicit
-  bounded rigid-motion support admission rejects free/under-supported requests.
-  One frozen installed wheel passed76 affected checks and the headless example;
- 391 module bytes match source/wheel/site. Separate one modal/static factors,
-  residuals<6e-16. Independent Read review has no remaining blocker for this
-  scope; no different-family review or external formulation oracle is claimed.
-  [Product, example, evidence and boundaries](development/r8-b2-footprint-reference-modes-20261001/results.md).
-- BL5 retained derivative's two failing constraint rows are numerically repaired
-  by one unchanged sparse factor/one compensated correction. Backward1.35e-13;
-  all original controls and exact rational confirmation pass. Local relative
-  applied-work slope at alpha=1 is -3.83549e-4. Stop coefficient tuning; this is
-  not finite removal, drilling independence or cause allocation. V1/V2 failures
-  remain retained. [Repair](development/r8-bl5-completion-sensitivity-20261001/repair-results.md).
+Experimental multi-element Q4/S3 GE point/footprint static owners, finite stepping,
+atomic lifecycle, recovery, checkpoints and virgin descriptor modes exist.
+Separate B2 static/batch and selected footprint-mode routes exist. Supported
+ANYfem Project experimental save/reopen is at consumer350c980. Implementation,
+testing, scientific acceptance and release remain separate.
 
-## Remaining uncertainty and next action
+Latest B2 repair binds solver wheeld99c59ac...981ea and unchanged consumer
+wheel11728ab8...fa56e:136 source/176 installed checks and both public workflows
+pass;391/98 module bytes match. Nine B2 cases agree with GE within6.8211e-11.
+E02 torque still changes1.36%, and thickness/external precision remain open.
+[E02/B2 results and boundaries](development/r8-b2-panel-resolution-20261001/results.md).
+E02 locks a rigid patch; it is not BL5 five-channel torque evidence.
 
-Principal scientific blocker remains the engineering connection/multiplier
-decision: continuous law, physical torque/shear transfer, growing interface
-spaces, matched references and mixed-system assessment. BL5 differs from full
-six-pose points/footprints: normal spin is released. Existing fine matched work
-agreement does not resolve Mz transfer/convergence or allocate beam/shell/law
-causes. F03/G0B/M2 and mandatory external references remain OPEN. Do not resume
-isolated axial/mesh/chart/completion sweeps without a discriminating hypothesis.
+Current M2 slice: all nine actual whole-element8:1 endpoint solves pass unchanged
+equilibrium/work/balance1e-8 and weak-gap1e-9 checks, one factor/three loads at
+shell16x4/32x8/64x16,128/256/512B3members and40/80/160P0rows. All retained native
+coordinates survive. Longest110.14s, sampled peak559.6MiB; effective1numerical
+thread,JIT-off; no new product wheel. Finest Mz equilibrium9.516e-9 is close to
+its unchanged cap. Pointwise g5 samples are diagnostics, not exact weak ties.
+[Source, raw outputs, review and interpretation](development/r8-bl5-endpoint-response-20261001/results.md).
 
-ANYfem consumer350c980 now carries supported B2 footprint modes through a distinct
-experimental schema and existing Project dispatch. Installed134 checks and both
-save/reopen examples pass; ordinary V1/static payloads retain their meanings.
-Consumer wheel11728ab8...fa56e pairs with unchanged solver27660d...f47ec;
-391+98 modules match source/wheel/site. Independent Read review has no blocker.
-The local review timed out without an opinion; no different-family acceptance
-is claimed. [Consumer, raw evidence and limits](development/r8-anyfem-b2-reference-modal-20261001/results.md).
+## Remaining uncertainty and resulting action
 
-E02 reference feasibility: can explicit external reference/rotation control
-nodes recover the complete force/moment support wrench and work coordinates?
-Older shell-root RF omitted couples; refining those outputs cannot repair that.
-The executed rigid-face solid control recovers the expected force/moment and
-rigid displacement map; outside-body REF/ROT controls are usable. Seven-digit
-DAT output cannot certify the tighter1e-8 scientific balance criterion. V1's
-warning is retained; V2 is warning-free. This is recovery feasibility, not E02,
-BL5 or F03 acceptance. [Precision and geometry limits](development/r8-anyfem-b2-reference-modal-20261001/reference-wrench-feasibility.md).
-E02 bounded batch delivered: matched1m x.2m x.02m panel with full-width rigid
-tip x>=.8, three in-plane refinement levels and separate Fz/Mx/My loads. GE
-finest work differs from CalculiX by+.148%/-.620%/+.120%; actual drilling
-decoupling and negligible free-stub work hold. Native torque still changes1.36%
-on the last mesh; thickness convergence and tight external balance remain open.
-Offset parity is kinematic only. Independent review supports retaining this
-restricted out-of-plane candidate, not normal-spin/full connection acceptance.
-Stop this batch; no automatic fourth mesh or formal F03 execution.
-[Complete matched inputs, failures and decision](development/r8-e02-rigid-tip-reference-20261001/results.md).
+Decision sought: a defensible physical BL5 connection and production multiplier
+policy. Established trace/local-kernel premises and the new actual endpoint do
+not show a gross endpoint solve/work collapse. Finest endpoint work differs
+from saved1:1 by Fy+.00179%,Mx-.00000405%,Mz+.01449%. Mz still changes-1.354%
+at the last refinement; physical torque accuracy and locking remain open.
 
-B2 numerical repair is delivered: original40-Q4 fixture completes Fz/Mx/My,
-with one reused factorization and exactly three solves. Historical point-only
-admission is unchanged. A footprint-only exact active-row stored-KKT certificate
-avoids the conservative global force bound; zero offsets/unit selectors only.
-The41 quiet gaps exposed a distinct overstrict component-relative predicate.
-One unsuccessful correction was removed. New footprint compatibility admission
-maps separate translation/rotation amplitudes through actual C, bounded by1e-9
-reference length/radian caps. Length is2maxradius about node centroid. This is
-a development rule, not historical F10/F11 acceptance or a forward-error theorem.
+The already completed PL+hourglass derivative is material for root transfer:
+beam-root Fy sensitivity.189386N versus native/reference discrepancy.198297N,
+although tip-work slope is only-.038355%. This is local alignment, not causal
+allocation or a finite-removal prediction. No coefficient tuning/repeated
+completion derivative follows. Finest endpoint root Fy differs only-.002517N
+from saved1:1, while Fz differs-.028353N; keep all components visible.
 
-Final136 source/176 installed checks, solver example and unchanged ANYfem Project
-save/reopen pass;391/98 module bytes bound. Independent Read review has no
-remaining development blocker. Preserved failures include initial numerical
-attempts, omitted installed fixture helpers and consumer-harness wrong suffix.
-Three existing E02 grids/nine B2 cases complete, same geometry/load/stiffness.
-B2/GE work agrees within6.8211e-11; finest external differences+.148%/-.620%/+.120%.
-Torque still changes1.36% on lastmesh. No new external run/fourthgrid or gate pass.
-[Repair, raw evidence and review](development/r8-b2-panel-resolution-20261001/results.md).
-
-Next principal decision: return to the M2/BL5 physical torque/normal-spin and
-mixed-system obligations. Full-pose footprint parity cannot qualify BL5's
-released-normal-spin law. Reconcile existing matched actions and required
-observables before any substantial new batch; do not continue isolated E02
-refinement automatically. Independent material/lifecycle obligations remain
-available under Revision8; all aggregate programme gates remain binding.
+Stop this bounded batch. Next useful M2 action is the physically matched
+BL5 torque/shear reference and remaining actual response envelope. Define the
+missing observable/physical connection correspondence before another expensive
+reference; do not reuse rigid-tip E02, add a fourth mesh, rerun auxiliary metrics
+or select from rank/gaps/a quotient. Independent ready M3/M4 work may proceed.
+F03/G0B/M2 and mandatory external/scale/release obligations remain OPEN.
 
 ## Verification and restart
 
-Focused source: scripts/run_portable_ci.py --development <exact affected nodes>.
-One installed artifact per coherent product slice; reuse unchanged evidence by
-impact. Current solver wheel SHAd99c59ac0464613b15461dcd23c0b8fe158a67fe3b27192a886b6daf6aa981ea;
-raw site/runner: Temp/r8-b2-panel-resolution-installed-v1. Effective pools/Numba1,
-JIT-off, supervised180s/1GiB. All owned jobs are terminal, no numerical slot held.
-No broad acceptance/scale/platform campaign was repeated or overall saving claimed.
-Preserved history: [previous note](history/ACTIVE_STATE_20261001_B2_MODAL_PREDELIVERY.md).
-One acceptance matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md. Product slice
-source/tests/example and these evidence/note files are owned; no other repo edits.
-Do not rely on obsolete pending-run instructions in historical notes.
+One acceptance matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md. Focused source
+checks use scripts/run_portable_ci.py --development <exact affected nodes>;
+installed checks occur at coherent product boundaries. No repeated broad suite,
+measured speedup, different-family acceptance or external BL5 acceptance claimed.
+
+Endpoint raw process records/runner: Temp/r8-bl5-endpoint-response-v1; all three
+owned numerical jobs exited0, no numerical slot remains held. Limits600s/8GiB,
+8numericalthreadceiling(request1),one heavy job. Evidence archived in the linked
+result folder. Source helper hashes, product imports and exact sparse/state roles
+are bound. Harness defects are retained separately; no numerical run was repeated.
+
+[Previous working note](history/ACTIVE_STATE_20261002_PRE_ENDPOINT_DELIVERY.md), with
+[exact original bytes](history/ACTIVE_STATE_20261002_PRE_ENDPOINT_DELIVERY.zip),
+links prior product/consumer/history details. Read current source/status first;
+do not follow obsolete historical pending-run instructions.
