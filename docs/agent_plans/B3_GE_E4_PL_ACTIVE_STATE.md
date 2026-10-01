@@ -2,11 +2,22 @@
 
 ## Completed first reconciliation step
 
-**PAUSED by user,1 October:** feature development stops for a coordinated
-development-testing regime improvement on accepted main. Root owns that separate
-change and authorised review/merge/push; contact is asked to pause and supply its
-testing-cost assessment. No owned numerical job/reservation remains. Coupling
-goal is paused. Resume feature work only after the shared change is reconciled.
+**Shared testing coordination completed, 1 October:** PR 61 merged into main at
+**1a0ae90122995b8419f1ed87cf770590b4bd8c05** after all 25 CI checks passed on
+reviewed head 7c60635e. Coupling merge **ab5593bc** preserves the completed V2 slice
+and failed BL5 diagnostic. Only four shared testing/guide files changed; the
+reconciled entry point passed 10 focused checks in 1.55 s, with no runtime errors.
+Contact owns its separate reconciliation against this same main pin. User's
+conditional authority permits separate development after reconciliation; no
+scientific run was launched by this testing slice and no numerical slot is held.
+The programme goal controller remains paused at this handoff.
+
+Use `scripts/run_portable_ci.py --development <exact test files/node IDs>` for
+changed behavior plus an affected source route. Verify one installed artifact
+per coherent slice; reuse unchanged evidence by impact. Existing full CI,
+scientific/installed/external/release gates, resources, historical failures and
+consumed authorities remain binding. No overall speedup is claimed. Foreign
+changes in the original main checkout and original F03 script remain untouched.
 
 Continue from **C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001**,
 branch **codex/stiffened-main-reconcile-20261001**, source merge **d31e09dc**.
