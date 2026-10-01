@@ -1,5 +1,26 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+Controlled external P0 discriminator,1 October: exact non-equation inventory
+parity and independent complete review support external enforcement sensitivity.
+Strong→40-row P0 Mz work increases13.054405%; native/P0 differs-0.271358%,
+with common beam/shell nodal L2 differences.497691%/.907274%. All14 recovery
+checks pass. Retain law/P0 candidate for required matched growing-space three-level
+convergence; no multiplier selection, converged1% or F03/M2 acceptance. Sampled
+single-CPU execution does not verify effective library settings/lifetime threads.
+Original stopped execution and historical evidence unchanged.
+[Complete supplemental evidence](development/r8-bl5-matched-comparison-20261001/p0-v2-results.md).
+
+Matched growing-space family,1 October: three installed native owners/nine RHS
+and nine external cases (eight new/one exact reuse) complete with reviewed full
+states/actions. One eligible native factor per geometry; all eight old16/Mz array
+roles bit-identical. Finest cross work gaps≤.060712%, beam/shell nodal L2≤.484905%,
+shrinking across levels. Shared final Mz work changes exceed1.3%; some regional
+moments and root partitions remain unresolved (Fy degree-zero gap2.787207 N).
+Read-only fixed-distance integration localizes most of that gap near the clamp,
+without excluding it. Retain law/P0 candidate; bounded saved-state end-port/
+support-work review is next. No space/converged1%/F03/M2/G0B acceptance follows.
+[Complete results, raw records and independent review](development/r8-bl5-matched-comparison-20261001/refinement-v1-results.md).
+
 **Updated:** 1 October 2026. **Candidate:** current integration branch;
 exact development-screen source identities are recorded with their raw evidence.
 This is the forward status index, not an
@@ -28,15 +49,16 @@ collector/recovery defect; cause is not uniquely allocated among enforcement,
 shell and beam operators. All poses, cell variables, cuts and smooth/atomic
 transfer measures remain. External numerical threads are unverified, and this
 OpenSees supplement does not replace CalculiX or converged1% accuracy. One
-fixed-operator external enforcement discriminator is the next bounded action,
-without automatic mesh refinement or formalF03 consumption.
+fixed-operator external enforcement discriminator was the bounded next action
+at this record; its completed supplemental disposition appears above.
 [Exact results and limitations](development/r8-bl5-matched-comparison-20261001/results.md).
 
-The new fixed-operator external P0 comparison is prepared, not completed. Its
+Initial P0 execution record (superseded prospectively by the supplement above):
+the fixed-operator external P0 comparison was prepared, not completed. Its
 first supervisor stopped on root's stricter total-OS-thread guard (9observed),
 not a demonstrated numerical-thread breach or mechanics failure. Import-only
 thread/API observations are retained; numerical resource admission remains to
-be justified before a fresh run. No limit or criterion changes, and no formalF03
+be justified before a fresh run at that point. No limit or criterion changes, and no formalF03
 consumption. [Execution obstruction](development/r8-bl5-matched-comparison-20261001/runtime-obstruction.md).
 
 Staged ANYfem consumer,1 October: commit0f0981de adds an explicit staged-v4

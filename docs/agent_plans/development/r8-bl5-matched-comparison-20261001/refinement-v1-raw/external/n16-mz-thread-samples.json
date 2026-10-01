@@ -1,0 +1,55 @@
+[
+  {
+    "seconds": 0.10492769998381846,
+    "threads": [
+      {
+        "pid": 70280,
+        "id": 73468,
+        "win32_start_address": 140695758508704,
+        "start_module": "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-runtime-install-JZnfFI\\payload\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "query_status": 0,
+        "user_seconds": 0.03125,
+        "system_seconds": 0.046875,
+        "OS_support_start": false,
+        "numeric_or_unresolved": true
+      },
+      {
+        "pid": 70280,
+        "id": 73040,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 70280,
+        "id": 68364,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 70280,
+        "id": 39644,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      }
+    ]
+  },
+  {
+    "seconds": 0.19452620000811294,
+    "threads": []
+  }
+]
