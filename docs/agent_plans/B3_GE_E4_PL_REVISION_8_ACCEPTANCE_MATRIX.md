@@ -1,5 +1,15 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+ANYfem supported B2 footprint-mode consumer,1 October: consumer350c980 and
+wheel11728ab8...fa56e use the unchanged solver27660d...f47ec. Distinct strict
+experimental modal schema and existing Project dispatch preserve old static
+payloads. Installed134 focused checks and both save/reopen examples pass;
+391+98 modules match source/wheel/site. Separate Read review has no blocker;
+local review timeout supplies no opinion. Modal factors exclude fresh-owner
+static construction. This is experimental consumer delivery, not spectral
+physics, checkpoint or aggregate G4B/G6 acceptance.
+[Evidence and boundaries](development/r8-anyfem-b2-reference-modal-20261001/results.md).
+
 B2/F07/F12/G4B development,1 October: existing physical B2/Q4 descriptor now
 supports virgin selected-node rigid footprints with explicit physical mass,
 coordinate supports detecting all six common rigid fields and zero offset.
@@ -785,7 +795,7 @@ independent mechanics review and complete V06 adjudication remain open. See
 | External comparison | Status | Current boundary |
 |---|---|---|
 | E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees signed point screens, including 2×1/4×2/8×4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. At 8×4 the external axial-load shell action replays its coupled field to 1.93e-17; the changed coupled action explains 93.6% of the roll gap at fixed native shell stiffness. Direct +100 N m torque gives a 19.0% native/external torsional-compliance difference, stable under sparse-solve correction. Four same-action torque replays show the changed coupled action explains 109.1% of that gap while the isolated external shell is slightly stiffer; physical Mx distribution dominates and Mz contributes zero on this fixture. Beam-only section compliance agrees to roundoff. Shell/point torsional-transfer cause and matched idealization remain unresolved; stop diagnostic refinement pending focused mechanics review. Formal observables/floors, accepted physical reference and independent review remain open. |
-| E02 torque/footprint | NOT_STARTED | No executed matched comparison. |
+| E02 torque/footprint | IN_PROGRESS | Executed CalculiX outside-body REF/ROT control establishes complete support-wrench and work-coordinate recovery feasibility. No executed matched native/continuum footprint comparison. Seven-digit printed data do not certify1e-8 balance; physical extent, normal-spin equivalence and output precision remain open. See development/r8-anyfem-b2-reference-modal-20261001/reference-wrench-feasibility.md. |
 | E03 curved stiffener | NOT_STARTED | No executed matched comparison. |
 | E04 nonlinear GE/capacity | NOT_STARTED | No executed matched comparison. |
 

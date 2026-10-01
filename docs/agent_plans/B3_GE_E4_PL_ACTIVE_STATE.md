@@ -49,13 +49,27 @@ agreement does not resolve Mz transfer/convergence or allocate beam/shell/law
 causes. F03/G0B/M2 and mandatory external references remain OPEN. Do not resume
 isolated axial/mesh/chart/completion sweeps without a discriminating hypothesis.
 
-Next bounded consumer slice: carry the explicit supported B2 footprint-mode
-request through the existing ANYfem experimental schema/Project dispatch, using
-the existing solver API/result. Preserve ordinary V1/static payloads. No new
-consumer framework or ordinary-native-project claim. In parallel where useful,
-assess the remaining matched engineering reference obstruction from saved
-BL5/common-action evidence; record competing explanations and the necessary
-observable before any new reference execution. Preserve authority and limits.
+ANYfem consumer350c980 now carries supported B2 footprint modes through a distinct
+experimental schema and existing Project dispatch. Installed134 checks and both
+save/reopen examples pass; ordinary V1/static payloads retain their meanings.
+Consumer wheel11728ab8...fa56e pairs with unchanged solver27660d...f47ec;
+391+98 modules match source/wheel/site. Independent Read review has no blocker.
+The local review timed out without an opinion; no different-family acceptance
+is claimed. [Consumer, raw evidence and limits](development/r8-anyfem-b2-reference-modal-20261001/results.md).
+
+E02 reference feasibility: can explicit external reference/rotation control
+nodes recover the complete force/moment support wrench and work coordinates?
+Older shell-root RF omitted couples; refining those outputs cannot repair that.
+The executed rigid-face solid control recovers the expected force/moment and
+rigid displacement map; outside-body REF/ROT controls are usable. Seven-digit
+DAT output cannot certify the tighter1e-8 scientific balance criterion. V1's
+warning is retained; V2 is warning-free. This is recovery feasibility, not E02,
+BL5 or F03 acceptance. [Precision and geometry limits](development/r8-anyfem-b2-reference-modal-20261001/reference-wrench-feasibility.md).
+Next discriminator: determine a physically matched footprint comparison,
+including extent, origin and normal-spin work. A continuum rigid face constrains
+physical translations; it cannot be presumed equivalent to all six shell DOFs.
+Resolve that equivalence before scoring stiffness. If only a subset matches,
+use it as scoped physical transfer evidence and keep the other channels open.
 
 ## Verification and restart
 
