@@ -13,6 +13,7 @@ process tree when the shared wall-clock limit expires.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -388,18 +389,50 @@ def _terminate_tree(worker: subprocess.Popen[bytes], grace_seconds: float = 10.0
         worker.wait()
 
 
+def _development_targets(targets: Sequence[str]) -> tuple[str, ...]:
+    if not targets:
+        raise ValueError("explicit nonempty development selection required")
+    normalized = []
+    for target in targets:
+        if not isinstance(target, str) or not target or target.startswith("-"):
+            raise ValueError("test file or node ID required")
+        filename, separator, node = target.partition("::")
+        path = (ROOT / filename).resolve(strict=True)
+        if not path.is_relative_to(ROOT / "tests") or path.suffix != ".py" or not path.is_file():
+            raise ValueError("development targets must be test files inside this repository")
+        if separator and not node:
+            raise ValueError("empty node ID")
+        normalized.append(path.relative_to(ROOT).as_posix()+(separator+node if separator else ""))
+    if len(set(normalized)) != len(normalized):
+        raise ValueError("duplicate development selectors")
+    return tuple(normalized)
+
+
 def run(
     *,
     workers: int,
     timeout_seconds: int,
     matrix_shard_index: int | None = None,
     matrix_shard_count: int | None = None,
+    development_targets: Sequence[str] | None = None,
+    jit: str | None = None,
+    memory_limit_mib: int | None = None,
 ) -> int:
     if isinstance(timeout_seconds, bool) or timeout_seconds < 1:
         raise ValueError("timeout_seconds must be a positive integer")
-    modules = matrix_modules(
-        merge_test_modules(), matrix_shard_index, matrix_shard_count
-    )
+    development = development_targets is not None
+    if development:
+        if matrix_shard_index is not None or matrix_shard_count is not None:
+            raise ValueError("focused development cannot select a CI matrix shard")
+        modules = _development_targets(development_targets)
+        if memory_limit_mib is not None and (isinstance(memory_limit_mib, bool) or memory_limit_mib < 1):
+            raise ValueError("memory_limit_mib must be positive")
+    else:
+        if jit is not None or memory_limit_mib is not None:
+            raise ValueError("JIT/memory options belong to explicit focused development")
+        modules = matrix_modules(
+            merge_test_modules(), matrix_shard_index, matrix_shard_count
+        )
     if matrix_shard_index is not None:
         print(
             "[portable-ci] matrix shard "
@@ -407,11 +440,16 @@ def run(
             f"selected {len(modules)} modules",
             flush=True,
         )
-    partitions = execution_partitions(modules, workers)
+    partitions = (tuple(modules),) if development else execution_partitions(modules, workers)
     temp_parent = Path(os.environ.get("RUNNER_TEMP", tempfile.gettempdir())).resolve()
     temp_parent.mkdir(parents=True, exist_ok=True)
     run_root = Path(tempfile.mkdtemp(prefix="anysolver-portable-ci-", dir=temp_parent))
     launched: list[subprocess.Popen[bytes]] = []
+    monitor = None
+    peak_bytes = 0
+    if memory_limit_mib is not None:
+        import psutil
+        monitor = psutil
     started = time.monotonic()
     options: dict[str, object]
     if os.name == "nt":
@@ -423,7 +461,28 @@ def run(
         for index, modules_for_worker in enumerate(partitions, start=1):
             worker_root = run_root / f"P{index:02d}"
             worker_root.mkdir()
+            environment = _worker_environment(worker_root)
             command = _worker_command(modules_for_worker, worker_root)
+            if development:
+                # Explicit targets are never silently filtered by CI/history rules.
+                command = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
+                           "-p", "scripts.development_test_runtime", "--durations=10",
+                           f"--basetemp={worker_root / 'basetemp'}", *modules_for_worker]
+                environment.update(NUMBA_DISABLE_JIT="0" if jit == "on" else "1",
+                    ANYSOLVER_DEVELOPMENT_RECORD=str(worker_root / "runtime.json"),
+                    ANYSOLVER_DEVELOPMENT_SOURCE=str(ROOT / "src" / "anysolver"))
+                (worker_root / "selection.json").write_text(json.dumps({
+                    "scope": "focused source development, not qualification",
+                    "targets": list(modules_for_worker), "command": command,
+                    "source_root": str(ROOT), "timeout_seconds": timeout_seconds,
+                    "selected_file_sha256": {target.partition("::")[0]: hashlib.sha256(
+                        (ROOT / target.partition("::")[0]).read_bytes()).hexdigest()
+                        for target in modules_for_worker},
+                    "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                    "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+                    "memory_limit_mib": memory_limit_mib,
+                    "jit": jit or "off"}, indent=2)+"\n", encoding="utf-8")
+                print(f"[development] exact targets={len(modules_for_worker)}; record={worker_root}", flush=True)
             print(
                 f"[portable-ci] starting P{index:02d}/{len(partitions):02d} "
                 f"with {len(modules_for_worker)} modules",
@@ -433,13 +492,30 @@ def run(
                 subprocess.Popen(
                     command,
                     cwd=ROOT,
-                    env=_worker_environment(worker_root),
+                    env=environment,
                     **options,
                 )
             )
 
         deadline = started + timeout_seconds
         while any(worker.poll() is None for worker in launched):
+            if monitor is not None:
+                try:
+                    parent = monitor.Process(launched[0].pid)
+                    peak_bytes = max(peak_bytes, sum(p.memory_info().rss for p in
+                        [parent, *parent.children(recursive=True)] if p.is_running()))
+                except monitor.NoSuchProcess:
+                    pass
+                except monitor.AccessDenied as exc:
+                    raise RuntimeError("cannot monitor the requested process-tree memory limit") from exc
+                if peak_bytes > memory_limit_mib * 1024**2:
+                    print("[development] process-tree memory limit reached", file=sys.stderr, flush=True)
+                    for worker in launched:
+                        _terminate_tree(worker)
+                    (worker_root / "resource.json").write_text(json.dumps({
+                        "peak_sampled_bytes": peak_bytes, "limit_mib": memory_limit_mib,
+                        "status": "memory_limit"})+"\n", encoding="utf-8")
+                    return TIMEOUT_EXIT_CODE
             if time.monotonic() >= deadline:
                 print(
                     f"[portable-ci] shared {timeout_seconds}-second limit reached",
@@ -448,6 +524,12 @@ def run(
                 )
                 for worker in launched:
                     _terminate_tree(worker)
+                if development:
+                    (worker_root / "resource.json").write_text(json.dumps({
+                        "peak_sampled_bytes": peak_bytes if monitor is not None else None,
+                        "limit_mib": memory_limit_mib, "elapsed_seconds": time.monotonic()-started,
+                        "status": "timeout", "child_exit_codes": [w.returncode for w in launched]})+"\n",
+                        encoding="utf-8")
                 return TIMEOUT_EXIT_CODE
             time.sleep(0.1)
     except BaseException:
@@ -456,6 +538,14 @@ def run(
         raise
 
     returncodes = [int(worker.returncode) for worker in launched]
+    if development:
+        (worker_root / "resource.json").write_text(json.dumps({
+            "peak_sampled_bytes": peak_bytes if monitor is not None else None,
+            "limit_mib": memory_limit_mib, "elapsed_seconds": time.monotonic()-started,
+            "status": "terminal", "child_exit_codes": returncodes})+"\n", encoding="utf-8")
+        if returncodes == [0] and not (worker_root / "runtime.json").is_file():
+            print("[development] missing runtime/coverage record", file=sys.stderr)
+            return 1
     for index, returncode in enumerate(returncodes, start=1):
         print(f"[portable-ci] P{index:02d} exit={returncode}", flush=True)
     return 0 if all(returncode == 0 for returncode in returncodes) else 1
@@ -465,10 +555,16 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
     parser.add_argument(
-        "--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS
+        "--timeout-seconds", type=int,
     )
     parser.add_argument("--matrix-shard-index", type=int)
     parser.add_argument("--matrix-shard-count", type=int)
+    parser.add_argument("--development", nargs="+", metavar="TEST",
+                        help="Run exactly these test files/node IDs in one source process; no qualification")
+    parser.add_argument("--jit", choices=("off", "on"),
+                        help="Focused development JIT mode (default off); use on for affected compiled paths")
+    parser.add_argument("--memory-limit-mib", type=int,
+                        help="Focused child process-tree RSS ceiling; requires psutil when selected")
     return parser
 
 
@@ -476,9 +572,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     return run(
         workers=args.workers,
-        timeout_seconds=args.timeout_seconds,
+        timeout_seconds=args.timeout_seconds if args.timeout_seconds is not None else (
+            600 if args.development is not None else DEFAULT_TIMEOUT_SECONDS),
         matrix_shard_index=args.matrix_shard_index,
         matrix_shard_count=args.matrix_shard_count,
+        development_targets=args.development,
+        jit=args.jit,
+        memory_limit_mib=args.memory_limit_mib,
     )
 
 
