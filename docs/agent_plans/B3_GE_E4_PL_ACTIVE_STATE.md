@@ -7,7 +7,8 @@
 reviewed head 7c60635e. Coupling merge **ab5593bc** preserves the completed V2 slice
 and failed BL5 diagnostic. Only four shared testing/guide files changed; the
 reconciled entry point passed 10 focused checks in 1.55 s, with no runtime errors.
-Contact owns its separate reconciliation against this same main pin. User's
+Contact testing-only merge **b9ee9394** uses this same main pin; three affected
+source checks passed in 12.95 s under its 180 s/953 MiB cap. User's
 conditional authority permits separate development after reconciliation; no
 scientific run was launched by this testing slice and no numerical slot is held.
 The programme goal controller remains paused at this handoff.
