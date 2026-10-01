@@ -588,6 +588,15 @@ V2 verifies an effective task-owned cache without changing production mechanics.
 Evidence: native_forced_response_v2_20261001.summary.json. This does not admit
 general finite-rotation trajectories, native impact or fullC7.
 
+The supported driven control passes20steps (97.500s/222.941MB) with a fresh12physical/
+24algebraic descriptor and independent saved assessment. All six clamp reaction
+rows, fixed-origin lever moment and zero support work reconcile. Resolved q/v
+refinement ratios.2515–.2524 and support-force impulse.2503 match the reference;
+subfloor amplitude/couple/invariant comparisons give no order claim. Evidence:
+native_clamped_response_v1_20261001.summary.json and
+native_clamped_response_review_20261001.md. This adds a named small-motion
+semidiscrete development row; finite-angle, spatial and C7 acceptance remain open.
+
 ## Development package and actual quadratic beam coupling
 
 Wheel8df161b0 from exact source-bound4c3ac836 runs the B2/S3 and contact-free

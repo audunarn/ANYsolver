@@ -143,3 +143,20 @@ assessment confirms the scoped result. The preceding180s import timeout and40s s
 are retained; a fresh task-owned Numba cache resolved the cache-creation stall,
 verified in the actual target process. No production source changed. This is a
 small-motion temporal development result, not native impact or fullC7 acceptance.
+
+### Supported driven response — 2026-10-01
+
+The same curved beam with a homogeneous full first-node clamp passes20steps,
+97.500s/222.941MB. A fresh constrained12physical/24algebraic reference checks
+trajectories and support impulses. All six clamp rows are retained, including
+the algebraic-frame couple and the force moment about the stated origin; fixed
+support work is exactly zero. Independent saved assessment reconciles initial
+consistency, signed stages, energy/momentum journals, sources and physical gates.
+Trajectory refinement ratios.2515–.2524 and support-force impulse ratio.2503 match
+the continuous/discrete references. Below-floor results give no order claim.
+
+Evidence: `d1_review_support/native_clamped_response_v1_20261001.summary.json` and
+`native_clamped_response_review_20261001.md`. Actual explicit solve tolerance
+remains1e-12, physical gates/defaults unchanged. This is temporal development
+against shared spatial matrices; it does not establish continuum accuracy,
+finite-angle torque-free motion, loaded restart or fullC7.

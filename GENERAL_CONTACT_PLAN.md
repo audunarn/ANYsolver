@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.47. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.48. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -66,7 +66,21 @@ fresh task-owned cache corrected it without source, mechanics, tolerance or cap
 changes. Retain both stopped records. A source-only assessment rejects a generic
 Euler rotor as an exact free elastic-beam trajectory. Next close the clamped
 driven temporal/support-impulse row with a fresh constrained descriptor; finite-angle
-nonprincipal torque-free accuracy remains open. Do not repeat passed controls.
+nonprincipal torque-free accuracy remains open. The clamped driven control now
+passes20steps (97.500s/222.941MB), independently reviewed: all six clamp reactions,
+including the algebraic-frame couple and fixed-origin lever moment, are accounted
+for; support work is exactly zero. Trajectory refinement ratios.2515–.2524 and
+support-force impulse ratio.2503 match the fresh constrained descriptor. Other
+subfloor comparisons establish no order. No production code changed.
+
+Next run one source-reviewed high-spin step to discriminate kinematic rounding
+from a mechanics/tangent failure before a costly finite-angle campaign. Keep the
+declared spin(35,-25,20)rad/s, step.0005s, all gates and routine caps fixed; first
+failure stops and retains actual signed stages. The112-step temporal-refinement
+proposal is not execution authority. Fresh checkpoint restore alone does not
+authorize renewed120s deadlines within one case; aggregate/segment boundaries
+need an explicit prospective decision. Same-spatial refinement is temporal
+evidence, not an independent continuum certificate. Do not repeat passed controls.
 No fullC7 or scientific admission follows from these development slices.
 
 ## 1. Current position

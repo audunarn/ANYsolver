@@ -1,0 +1,76 @@
+{"effective_numba_cache": "C:\\ANYworkspaceWork\\native_clamped_response_v1_20261001-cache", "numba_version": "0.65.1", "entry_sha256": "5e78500955231e4ac42aa05e09e9464ec054b9f62d26ced3d3a3efbb84a4ed1f"}
+{"anysolver_file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "input_sha256": "785573bc4b57b7496ab2d50f64348ff0acc386ccd8f885043f25b11d904ed9c4", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+{"stage": "constrained_reference_rank_mass_before_steps", "elapsed_seconds": 0.07237360000726767}
+{"stage": "authenticated_spatial_and_force_reference", "elapsed_seconds": 1.1618389000068419}
+{"stage": "reference_preflight_before_initialization", "elapsed_seconds": 1.1641479000099935}
+{"stage": "coarse_trial_return_1", "elapsed_seconds": 5.874091500008944}
+{"stage": "coarse_candidate_1", "elapsed_seconds": 6.727899999998044}
+{"stage": "coarse_endpoint_1", "elapsed_seconds": 8.497311700019054}
+{"stage": "coarse_trial_return_2", "elapsed_seconds": 11.66068910001195}
+{"stage": "coarse_candidate_2", "elapsed_seconds": 12.572065400017891}
+{"stage": "coarse_endpoint_2", "elapsed_seconds": 14.317431000003126}
+{"stage": "coarse_trial_return_3", "elapsed_seconds": 17.196307300007902}
+{"stage": "coarse_candidate_3", "elapsed_seconds": 18.024374200002057}
+{"stage": "coarse_endpoint_3", "elapsed_seconds": 19.485728300001938}
+{"stage": "coarse_trial_return_4", "elapsed_seconds": 21.956665500008967}
+{"stage": "coarse_candidate_4", "elapsed_seconds": 22.67697160001262}
+{"stage": "coarse_endpoint_4", "elapsed_seconds": 23.937754300015513}
+{"stage": "fine_trial_return_1", "elapsed_seconds": 28.52321420001681}
+{"stage": "fine_candidate_1", "elapsed_seconds": 29.24659850000171}
+{"stage": "fine_endpoint_1", "elapsed_seconds": 30.489846800017403}
+{"stage": "fine_trial_return_2", "elapsed_seconds": 32.52609030000167}
+{"stage": "fine_candidate_2", "elapsed_seconds": 33.26155950000975}
+{"stage": "fine_endpoint_2", "elapsed_seconds": 34.535548500018194}
+{"stage": "fine_trial_return_3", "elapsed_seconds": 36.56630470001255}
+{"stage": "fine_candidate_3", "elapsed_seconds": 37.28664740000386}
+{"stage": "fine_endpoint_3", "elapsed_seconds": 38.564973700005794}
+{"stage": "fine_trial_return_4", "elapsed_seconds": 40.60595789999934}
+{"stage": "fine_candidate_4", "elapsed_seconds": 41.31739270000253}
+{"stage": "fine_endpoint_4", "elapsed_seconds": 42.58956960000796}
+{"stage": "fine_trial_return_5", "elapsed_seconds": 44.60970600001747}
+{"stage": "fine_candidate_5", "elapsed_seconds": 45.39792010001838}
+{"stage": "fine_endpoint_5", "elapsed_seconds": 46.65656860001036}
+{"stage": "fine_trial_return_6", "elapsed_seconds": 48.6536599000101}
+{"stage": "fine_candidate_6", "elapsed_seconds": 49.38309479999589}
+{"stage": "fine_endpoint_6", "elapsed_seconds": 50.63673210001434}
+{"stage": "fine_trial_return_7", "elapsed_seconds": 52.65204210000229}
+{"stage": "fine_candidate_7", "elapsed_seconds": 53.400073800003156}
+{"stage": "fine_endpoint_7", "elapsed_seconds": 54.7045793000143}
+{"stage": "fine_trial_return_8", "elapsed_seconds": 56.72984020001604}
+{"stage": "fine_candidate_8", "elapsed_seconds": 57.45954740000889}
+{"stage": "fine_endpoint_8", "elapsed_seconds": 58.75768460001564}
+{"stage": "half_fine_trial_return_1", "elapsed_seconds": 63.28657920000842}
+{"stage": "half_fine_candidate_1", "elapsed_seconds": 64.03916949999984}
+{"stage": "half_fine_endpoint_1", "elapsed_seconds": 65.32516500001657}
+{"stage": "half_fine_trial_return_2", "elapsed_seconds": 67.33314590001828}
+{"stage": "half_fine_candidate_2", "elapsed_seconds": 68.06727910001064}
+{"stage": "half_fine_endpoint_2", "elapsed_seconds": 69.3800902000221}
+{"stage": "half_fine_trial_return_3", "elapsed_seconds": 71.40948580001714}
+{"stage": "half_fine_candidate_3", "elapsed_seconds": 72.15169530001003}
+{"stage": "half_fine_endpoint_3", "elapsed_seconds": 73.44556610001018}
+{"stage": "half_fine_trial_return_4", "elapsed_seconds": 75.47297530001379}
+{"stage": "half_fine_candidate_4", "elapsed_seconds": 76.21852270001546}
+{"stage": "half_fine_endpoint_4", "elapsed_seconds": 77.51506800000789}
+{"stage": "half_fine_trial_return_5", "elapsed_seconds": 79.52288240002235}
+{"stage": "half_fine_candidate_5", "elapsed_seconds": 80.2768227000197}
+{"stage": "half_fine_endpoint_5", "elapsed_seconds": 81.57429340001545}
+{"stage": "half_fine_trial_return_6", "elapsed_seconds": 83.62284240001463}
+{"stage": "half_fine_candidate_6", "elapsed_seconds": 84.3987040000211}
+{"stage": "half_fine_endpoint_6", "elapsed_seconds": 85.7612678000005}
+{"stage": "half_fine_trial_return_7", "elapsed_seconds": 87.82442660001107}
+{"stage": "half_fine_candidate_7", "elapsed_seconds": 88.56845920000342}
+{"stage": "half_fine_endpoint_7", "elapsed_seconds": 89.85729080002056}
+{"stage": "half_fine_trial_return_8", "elapsed_seconds": 91.86798860001727}
+{"stage": "half_fine_candidate_8", "elapsed_seconds": 92.62013830000069}
+{"stage": "half_fine_endpoint_8", "elapsed_seconds": 93.92243710000184}
+{"stage": "completed_comparisons", "elapsed_seconds": 93.96765730000334}
+{"stage": "complete", "elapsed_seconds": 94.01359129999764}
+.
+============================== warnings summary ===============================
+tests/test_ge_beam3_native_clamped_response.py::test_clamped_virgin_rest_line_force_descriptor_and_support_impulses
+  tests\test_ge_beam3_native_clamped_response.py:51: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_clamped_virgin_rest_line_force_descriptor_and_support_impulses(record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 94.44s (0:01:34)
+{"pytest_exit_code": 0, "verified_source_count": 447}

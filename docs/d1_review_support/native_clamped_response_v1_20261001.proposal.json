@@ -1,0 +1,162 @@
+{
+  "status": "SOURCE_AUTHORED_NOT_EXECUTED",
+  "workspace": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver",
+  "owned_new_paths": [
+    "tests/native_clamped_response_reference.py",
+    "tests/test_ge_beam3_native_clamped_response.py"
+  ],
+  "selected_test": "tests/test_ge_beam3_native_clamped_response.py::test_clamped_virgin_rest_line_force_descriptor_and_support_impulses",
+  "criteria": {
+    "duration_seconds": 0.004,
+    "coarse_steps": 4,
+    "fine_steps": 8,
+    "half_load_fine_steps": 8,
+    "maximum_accepted_steps": 20,
+    "internal_time_limit_seconds": 120.0,
+    "force_density_n_per_m": [
+      0.2,
+      -0.15,
+      0.1
+    ],
+    "couple_density_nm_per_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "explicit_stage_solve_tolerance": 1E-12,
+    "scientific_stage_gate": 1E-11,
+    "endpoint_balance_gate": 1E-11,
+    "normalized_defect_limit": 1E-06,
+    "elastic_witness_limit": 1E-10,
+    "nonlinear_to_discrete_limit": 0.002,
+    "trajectory_floor": 1E-06,
+    "invariant_floor": 1E-10,
+    "time_refinement_ratio": 0.4,
+    "amplitude_refinement_ratio": 0.75,
+    "resolved_coarse_phase_limit": 0.4,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "bounds": {
+    "memory_limit_bytes": 1073741824,
+    "supervisor_seconds": 180.0,
+    "internal_seconds": 120.0,
+    "accepted_steps_maximum": 20,
+    "threads": 1
+  },
+  "physical_scope": "Actual one-element curved ellipsoid elastic beam; homogeneous first-node clamp; source-only fresh constrained reference",
+  "coordinates": {
+    "algebraic_free": [
+      9,
+      10,
+      11,
+      15,
+      16,
+      17,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41
+    ],
+    "fixed": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "physical_free": [
+      6,
+      7,
+      8,
+      12,
+      13,
+      14,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ]
+  },
+  "reference": "At separately authorized runtime: fresh24x24 algebraic Schur from authenticated fullK42/M42;12physical full mass; Cholesky/eigh; no free-mode transplantation",
+  "support_contract": "Actual beam-side e[0:3] force/e[3:6] algebraic-frame couple; fixed world-origin lever; exact zero fixed motion/velocity/work; actual endpoint P/H with exact path line load plus midpoint support impulse",
+  "reference_impulses": "Continuous analytic modal reaction integrals and independent discrete midpoint reaction sums retained separately from actual physical accounting",
+  "gates": "Unchanged inherited trajectory/invariant/scientific gates; support reaction/impulse nonlinear-to-discrete uses same.002; prospective rank/SPD/phase preflight stops before initialization/steps, no automatic retuning",
+  "source_sha256": {
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\native_clamped_response_reference.py": "286d8bb381ea133a065b002c7e0d1577493dc20a8c41e7f91d53c3c05ac3b7e1",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_clamped_response.py": "80be413e9215974a2c619bd0182dbe4e29a7032278c82b5238f73a99d761a9e5",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\native_forced_response_reference.py": "4d9a62656122a4e2a2e54e27775d39fc6473538e8f1b8e965a6f8e8b3bb0cf01",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_analysis.py": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py": "3f26dc51cd9e87998c2b89610b92dce297ff4d1ed0194a5fd464e7954b7fa4af",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\ge_beam3_native_dynamics.py": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+  },
+  "historical": {
+    "raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.raw.json",
+      "sha256": "705b627848aef2df9ce17cdce2dda937ea1ae29d1031a855f48ff567181248f7"
+    },
+    "inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.inputs.json",
+      "sha256": "07b3f12777cd21ed5932fe14f51ec3254ba1796f6627d3ce8373be4c2996926d"
+    },
+    "projection": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_v1_20261001.saved_projection.json",
+      "sha256": "171105027214b8dafe5e144b5cab43e6c13914011c6a60c684938bd05dcee1c0"
+    },
+    "forced_pass_raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_v2_20261001.raw.json",
+      "sha256": "b87f5207e7c23ed49741d73ee99971da49243ab4b019df9ead477f3340d2b9c1"
+    },
+    "forced_pass_inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_v2_20261001.inputs.json",
+      "sha256": "83cee9ac5da6621bb2c61f5033ba3491cca6b9c17a097df5b3a60c8907731c96"
+    },
+    "fixture": {
+      "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d",
+      "path": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/tests/test_ge_beam3_native_midpoint.py"
+    }
+  },
+  "claim_boundary": "Shared spatial matrices/quadrature are explicit inputs; only constrained semidiscrete small-motion temporal/reaction development. Nonprincipal finite-angle torque-free elastic reference remains open; noC7/release claim",
+  "execution": "NO numeric/reference preparation, imports of authored/production modules, initializer, eigenproblem, stage or timestep during authoring. Compile-only source syntax inspection; lead freezes actual future entry/inputs separately.",
+  "historical_source_overrides": {
+    "_ge_beam3_native_midpoint.py": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a"
+  },
+  "future_test_environment": {
+    "NUMBA_CACHE_DIR": "LEAD_FROZEN_EFFECTIVE_WRITABLE_CACHE",
+    "NATIVE_CLAMPED_RESPONSE_INPUTS": "LEAD_FROZEN_INPUT_PATH",
+    "NATIVE_CLAMPED_RESPONSE_RAW_OUTPUT": "NEW_EXCLUSIVE_RAW_PATH",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONPATH": "src;tests;.;examples"
+  }
+}
