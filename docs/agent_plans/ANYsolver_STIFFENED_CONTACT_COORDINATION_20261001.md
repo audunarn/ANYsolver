@@ -82,4 +82,15 @@ isolated main reconciliation on resumption. Do not repeat that trajectory or res
 the acceptance clock. Direct contact/main source overlap includes nonlinear_static.py;
 cross-programme overlap remains the shared export file noted above.
 
-No integration or numerical job was launched for this coordination exchange.
+No integration or numerical job was launched for the initial coordination exchange.
+
+## Authorized first step completed on the stiffened branch
+
+The user subsequently authorized the first step. Stiffened work was checkpointed
+at 0726662b and reconciled cleanly with verified remote ef858828 at d31e09dc in
+codex/stiffened-main-reconcile-20261001. [Installed impact results](development/r8-main-reconciliation-20261001/results.md)
+preserve the new artifacts and failed fixture/build preparations. No product
+repair was required. The original foreign dirty script remains unchanged.
+Numerical checks are terminal and the slot was released to the contact owner.
+Contact is completing its separate reviewed reconciliation and checks. Neither
+programme is merged to main or qualified by this coordination record.

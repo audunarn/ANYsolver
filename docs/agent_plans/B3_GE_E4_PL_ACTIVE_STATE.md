@@ -1,5 +1,26 @@
 # B3-GE / E4-PL / B2 active state - 1 October 2026
 
+## Completed first reconciliation step
+
+Continue from **C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001**,
+branch **codex/stiffened-main-reconcile-20261001**, source merge **d31e09dc**.
+Owned pending work is preserved at **0726662b** in the original branch; its
+foreign F03 script remains untouched. Verified main **ef858828** merged cleanly.
+[Results and durable evidence](development/r8-main-reconciliation-20261001/results.md)
+record 684 passing installed test executions, including both JIT settings, and
+one explicit N/A skip. GE histories/restart/modes, B2 batches, the corrected public
+V2 example and the existing ANYfem consumer passed. No product repair was needed.
+Main remains unchanged; no aggregate gate, release or combined-contact acceptance.
+All owned numerical jobs are terminal and the slot is released to contact.
+Broader feature work remains paused after this authorized first step.
+
+Next when resumed: finalize independent V2 footprint artifact assessment using
+these merged-artifact results, update its scoped delivery/matrix, then implement
+the explicit ANYfem V2 policy record. Do not repeat passed compatibility campaigns
+without a changed input or unresolved finding. The older restart details below
+retain historical evidence and candidate semantics; the paths and next actions
+in this section supersede their pre-reconciliation instructions.
+
 Revision8 [goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md)
 and [matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) govern under policy
 2026-09-24.2. User authorized the first reconciliation step on 1 October:
