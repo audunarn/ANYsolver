@@ -80,8 +80,16 @@ Mz10Nm fixed; replace only160strong rows with40 exact work-conjugate P0 integrat
 rows over8 supports. This isolates external enforcement sensitivity; a large
 change supports that contribution, a small change prioritizes beam/shell same-action
 allocation, invalid work maps require repair. Neither outcome selects a space or
-qualifies native accuracy. Only source preparation underway; no numerical launch.
-Verify existing resource/execution admission before running; formalF03 unaffected.
+qualifies native accuracy. Prepared source180e2c33... is AST-checked/root-reviewed.
+V1 stopped at.188s/28.8MB: root's stricter8-total-OS-thread guard observed9,
+although CPU affinity[0] was verified. No sensitivity result or mechanics failure.
+Import-only probeV2 samples7OSthreads (Python/ntdll/COM starts), API returnsNone;
+its earlier address-parser failure remains. [Execution supplement](development/r8-bl5-matched-comparison-20261001/runtime-obstruction.md)
+retains every file. All owned jobs/workers terminal. Next make one evidence-based
+runtime-admission decision distinguishing OS support from numerical threads,
+without raising the8-numerical-thread/600s/8GiB limits or claiming library settings.
+If unjustified, keep this reference pending and advance other ready programme work.
+This ordinary Revision8 diagnostic does not consume formalF03 or repeat spent runs.
 No automatic fourth native grid or norm campaign.
 All footprint/topology, material breadth, loads, spectra, imperfections/capacity,
 scale, CalculiX, installed-platform and release obligations remain mandatory.

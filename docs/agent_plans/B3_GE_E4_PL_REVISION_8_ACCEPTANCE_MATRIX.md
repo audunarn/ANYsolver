@@ -32,6 +32,13 @@ fixed-operator external enforcement discriminator is the next bounded action,
 without automatic mesh refinement or formalF03 consumption.
 [Exact results and limitations](development/r8-bl5-matched-comparison-20261001/results.md).
 
+The new fixed-operator external P0 comparison is prepared, not completed. Its
+first supervisor stopped on root's stricter total-OS-thread guard (9observed),
+not a demonstrated numerical-thread breach or mechanics failure. Import-only
+thread/API observations are retained; numerical resource admission remains to
+be justified before a fresh run. No limit or criterion changes, and no formalF03
+consumption. [Execution obstruction](development/r8-bl5-matched-comparison-20261001/runtime-obstruction.md).
+
 Staged ANYfem consumer,1 October: commit0f0981de adds an explicit staged-v4
 envelope and finite Project dispatch without assembly for save/reopen. Current
 installed solver/consumer bytes bind388+98 modules. Fifty unchanged V2 passes
@@ -287,11 +294,11 @@ foundations remain open; the earlier bounded F04 distinction does not close F04:
 | F12 | IN_PROGRESS |
 | F13 | IN_PROGRESS |
 
-F06 current closure review remains open: historical coverage failure and absent
-S3 accepted noncommuting branch cannot be replaced by favorable partial invariants.
-Some chart/pullback modules remain byte-identical, but complete finite owner paths
-changed; current closure needs a fully passed loaded noncommuting transport path.
-No historical authority is renewed or replayed.
+The preserved30 September F06 closure review found loaded noncommuting coverage
+missing at its original identities. The separate1 October staged Q4/S3 path now
+passes that named elastic point-owner portion with complete independent review;
+see the current scoped disposition above. AggregateF06 remains IN_PROGRESS for
+the remaining breadth. Historical failures and authorities stay unchanged.
 [Independent applicability review](B3_GE_E4_PL_F06_CURRENT_REVIEW_20260930.md).
 
 ### F10/F11 finite-support point/static binding — prospective v1
