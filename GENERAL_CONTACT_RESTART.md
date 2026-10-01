@@ -1,66 +1,65 @@
-# General contact restart — 1 October 2026
+# General contact restart — 2 October 2026
 
 ## Authority and identity
 
-Goal active; fullC0–C9 still required. User authorizes tiered/new testing workflow
-and prohibits communication with the other task. None occurred. Active worktree:
-`C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch
-`codex/contact-main-reconcile-20261001`; slice parent `faeb7f86`. Read current
-Git HEAD/status for the checkpoint. [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4,
-[plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.66. No publication, main merge,
-release or default changes. Original contact checkout/foreign work untouched.
-The preceding instruction-reread turn made no goal progress; this slice changes
-source/state and supplies source/installed evidence, so it is progress.
+FullC0–C9 goal active. Tiered/new testing workflow applies; no communication with
+or inspection of the other task. Worktree:
+C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
+codex/contact-main-reconcile-20261001. Slice parentb8960736; read currentHEAD/status
+for checkpoint. [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4,
+[plan](GENERAL_CONTACT_PLAN.md) rev2026-10-02.1. No publication, main merge,
+release, changed defaults or original-worktree edits. Prior turn was progress:
+resolved S3 event continuation checkpointb8960736. This slice adds physical beam
+impact using the shared driver and verified complete curve/time bounds.
 
-## Current result
+## Current result and evidence
 
-Guided S3 resolved-event continuation is installed-tested/reviewed development,
-not C6 engineering acceptance. Version4 binds committed boundary support indices
-into event-profile restart. Coalescing requires membership plus explicit time/gap
-budgets and changes only which initial transition needs localization. Original
-complete-path force/work/minimum checks and every support remain. Verified
-boundary touches determine right algebraic rates. Rejection preserves committed
-boundary state; non-event acceptance clears it. Old profiles/schemas stay valid;
-earlier version3 event-prototype checkpoints are intentionally incompatible.
+Explicit classical B2/B3 scalar elastic von Karman round-tube/plane Newmark now
+shares transactions, loads, cutback, cancellation and restart. Actual mass and
+rotary inertia retained; reduced mass must be positive definite. Straight-reference
+B3 guard retained; a deformed curved field develops partial contact and rotary
+motion. Tensor Bernstein enclosures use exact Fraction input arithmetic, bounded
+refinement and outward conversion; the full-path lower bound governs gap checks.
 
-Canonical Newmark predictor initialization and accumulated acceleration corrections
-remove short-event subtraction/seed roundoff. Actual residual/Jacobian are unchanged.
-Source-v7 passes31 checks, installed passes55/0skips, including release, tilted,
-history restart, malformed/geometric checkpoint rejection and CLI. Installed
-14.206s/182104064B, all450module bytes matched;199imports resolve to isolated site.
-[Results/raw](docs/d1_review_support/contact_c6_event_continuation_20261001/results.md)
-and [review](docs/d1_review_support/contact_c6_event_continuation_20261001/review.md).
-Mistral completed bounded Read review; lead checked conditional findings against
-admission/cutback/writer guards. Rehashed checkpoints do not authenticate past
-history. An advisory event-position store is vestigial; numerical initialization
-is explicitly canonical. No general collision, C6 acceptance or speed claim.
+Final isolated artifact107passes/0skips, including geometry, uniform independent
+Newmark/impulse, deformable B3 normal momentum/gap, active/history restart, failure/
+cancellation, zero mass and shell/event compatibility, plus two beam CLI examples.
+451matched modules/201isolated imports;16.296s/186486784B within routine caps.
+[Results/raw](docs/d1_review_support/contact_c6_classical_beam_20261001/results.md),
+[guide](docs/GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md),
+[review/adjudication](docs/d1_review_support/contact_c6_classical_beam_20261001/review.md).
+Geometry worker owned only kernel/tests; lead inspected/integrated. Mistral Read
+completed6source reads and reviewed kernel/selected driver contracts. Unexecuted
+numerical figures in its report are excluded. Later knot/end fix is separately
+tested, outside that review's ranges. All installed files bind the final bytes.
 
-## Retained failures and next action
+## Failures, limits and next action
 
-Historical eventv11 remains12passed/4failed. New sourcev1/v2 restart discrepancy,
-v3 worsened force-acceleration trial, v4 observation-helper error are preserved.
-Force trial removed; sourcev5 shows exactly zero structural curvature and identifies
-seed/subtraction arithmetic. No criterion, minimum_dt or iteration cap was relaxed.
-[Prior history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART42.md)
-links previous failures, accepted static slices and consumed native authorities.
+Retain sourcev2 phantom load-knot step, v4 rejected curved-reference fixture,
+v6 zero-mass fixture missing velocity, v8 one-ULP end overstep, and stage1's106
+passes at its earlier source. Fixes integrate to an arithmetically adjacent knot
+only at/before t_end; never advance time without solving. No criteria relaxed.
+Raw archive98files/readbackPASS; previous S3/native failures/consumed authorities
+remain in linked history. [Prior note](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART43.md).
 
-Next choose a missing physical composition/geometry or shared D5/D6 driver outcome
-from authoritative source, define a bounded discriminator and review coordinate/state
-ownership before implementation. Avoid more event screens or native temporal sweeps
-just to enlarge evidence. Full beam/friction/free-body/native coupling, general
-geometry/search and application acceptance remain required. D1-interior/named D2
-static subsets remain accepted; this event profile is a bounded elastic prototype.
+This is installed-tested development, not C6 engineering acceptance. Toy .002m
+penetration budget is not qualification or an application default. Full finite-
+rotation, caps, beam pairs/shells, nonlinear materials, friction, moving/free rigid
+bodies and native/shell common-stage impact remain open, alongside broader D2–D8.
+Accepted D1-interior/named D2 static subsets remain intact; app admission staysfalse.
 
-## Processes and resources
+Next inspect current owners for one interacting-body outcome: multiple explicit
+contributors or prescribed/free rigid motion through shared coordinates/work/state.
+Fix ownership/interfaces and the bounded independent physics discriminator before
+implementation. Avoid repeating event/native temporal screens merely for counts.
+No shared ABC guard/export/dispatch edits; historical preimport NONPASS remains.
 
-No owned process running; Mistral and installed jobs terminal. Active source tree
-owned by lead. Routine source runner: scripts/run_portable_ci.py --development
-<exact targets> --jit off --timeout-seconds180 --memory-limit-mib953, unique
-RUNNER_TEMP/thread1. Stricter frozen caps prevail. Installed package/evidence is
-C:/ANYworkspaceWork/contact-event-continuation-package-20261001. Diagnostic helper
-moved outside tests and retained in raw.zip. ANYfem admission remains false;
-historical ABC annotation-cache preimport NONPASS belongs to shared guard owner.
-No shared guard/export/dispatch changes or other-chat inspection authorized.
+## Processes and budget
 
-At21:20:46UTC goal191910s+retained3120s offset=195030s,54.175h used/65.825h
-remaining from original120activehours. Subsequent active time counts; no reset.
+No owned process running; geometry worker and Mistral terminal. Routine source:
+run_portable_ci.py --development <exact targets> --jit off --timeout-seconds180
+--memory-limit-mib953, unique RUNNER_TEMP, thread1; stricter frozen caps prevail.
+Final packageC:/ANYworkspaceWork/contact-beam-impact-package-20261001-v2.
+
+At22:01:37UTC goal194361s+retained3120s offset=197481s:54.856h used/65.144h
+remaining of original120activehours. Subsequent active time counts; no reset.

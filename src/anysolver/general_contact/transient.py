@@ -1,4 +1,4 @@
-"""Narrowly admitted nonlinear Newmark shell-contact development profiles.
+"""Narrowly admitted nonlinear Newmark shell/beam contact development profiles.
 
 The coupled residual is evaluated by the ordinary nonlinear structural
 assembler inside one contact scope. The Q4 profile uses positive-definite
@@ -8,6 +8,8 @@ A distinct S3 history profile scales the same dead nodal load by a
 piecewise-linear factor in time; its complete base load must lie in the
 physical mass range so the scalar history never forces the algebraic
 manifold. No profile here qualifies the broader C6 impact capability.
+An explicit classical B2/B3 opt-in reuses line-contact work and actual physical
+mass with a complete tensor-Bernstein curve/time gap enclosure.
 """
 
 from __future__ import annotations
@@ -50,6 +52,7 @@ from .core import (
     suspend_contact,
     validate_general_contact,
 )
+from .beam_plane import _BeamPlaneResults
 from .descriptor_rates import directional_descriptor_rate
 from .algebraic_path import affine_descriptor_path
 from .event_subdivision import EventNeedsCutback, localize_branch_event
@@ -64,6 +67,8 @@ _S3_ALGEBRAIC_PATH_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_ALGEBRAIC_PATH_D
 _S3_ALGEBRAIC_PATH_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_ALGEBRAIC_PATH_HISTORY_DEV_V1"
 _S3_EVENT_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_EVENT_SUBDIVISION_DEV_V1"
 _S3_EVENT_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_EVENT_SUBDIVISION_HISTORY_DEV_V1"
+_BEAM_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_VON_KARMAN_FIXED_PLANE_NEWMARK_DEV_V1"
+_BEAM_HISTORY_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_VON_KARMAN_FIXED_PLANE_NEWMARK_HISTORY_DEV_V1"
 _RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
 _HISTORY_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V2"
 _ALGEBRAIC_PATH_RESTART_SCHEMA = "ANYSOLVER_S3_ALGEBRAIC_PATH_TRANSIENT_CONTACT_DEV_CHECKPOINT_V3"
@@ -142,8 +147,22 @@ class ContactTransientSolverControls:
     s3_event_gap_tolerance_m: float = 1.0e-10
     maximum_event_localizations: int = 12
     maximum_event_root_iterations: int = 64
+    allow_classical_beam_dev: bool = False
+    beam_swept_gap_tolerance_m: float = 1.0e-10
+    maximum_beam_swept_subdivisions: int = 512
 
     def __post_init__(self) -> None:
+        if type(self.allow_classical_beam_dev) is not bool:
+            raise ValueError("allow_classical_beam_dev must be boolean")
+        if self.allow_classical_beam_dev and self.allow_s3_descriptor_dev:
+            raise ValueError("classical beam and S3 descriptor opt-ins are separate profiles")
+        if (isinstance(self.beam_swept_gap_tolerance_m,(bool,np.bool_))
+                or not np.isfinite(self.beam_swept_gap_tolerance_m)
+                or self.beam_swept_gap_tolerance_m <= 0.):
+            raise ValueError("beam_swept_gap_tolerance_m must be finite and positive")
+        if (type(self.maximum_beam_swept_subdivisions) is not int
+                or self.maximum_beam_swept_subdivisions < 1):
+            raise ValueError("maximum_beam_swept_subdivisions must be a positive integer")
         if type(self.maximum_newton_iterations) is not int or self.maximum_newton_iterations < 1:
             raise ValueError("maximum_newton_iterations must be a positive integer")
         if type(self.maximum_cutbacks) is not int or self.maximum_cutbacks < 0:
@@ -253,7 +272,7 @@ class TransientContactResults:
     displacements: np.ndarray
     velocities: np.ndarray
     accelerations: np.ndarray
-    contact: tuple[ContactResults, ...]
+    contact: tuple[ContactResults | _BeamPlaneResults, ...]
     swept_minimum_gaps: np.ndarray
     equilibrium_residuals: np.ndarray
     cutbacks: int
@@ -302,6 +321,12 @@ def _restart_analysis_contract(transient, controls, manager, profile,
     if controls.s3_one_sided_rates_dev:
         # Absent for historical profiles, preserving their checkpoint contract.
         contract["controls"]["s3_one_sided_rates_dev"] = True
+    if controls.allow_classical_beam_dev:
+        contract["controls"].update(
+            allow_classical_beam_dev=True,
+            beam_swept_gap_tolerance_m=controls.beam_swept_gap_tolerance_m,
+            maximum_beam_swept_subdivisions=controls.maximum_beam_swept_subdivisions,
+        )
     if controls.s3_algebraic_path_dev:
         contract["controls"]["s3_algebraic_path_dev"] = True
         contract["controls"]["s3_path_position_tolerance_m"] = controls.s3_path_position_tolerance_m
@@ -646,7 +671,8 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
         raise ValueError("unsupported transient contact: " + "; ".join(report.issues))
-    if (settings.pair_motion != "guided" or settings.warped_q4_plane
+    required_motion = "general" if controls.allow_classical_beam_dev else "guided"
+    if (settings.pair_motion != required_motion or settings.warped_q4_plane
             or len(definition.surfaces) != 1 or len(definition.rigid_bodies) != 1
             or len(definition.interactions) != 1
             or definition.rigid_bodies[0].kind != "plane"
@@ -657,7 +683,14 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
     if set(surface.element_ids) != set(model.mesh.elements):
         raise ValueError("transient development profile requires every shell element on the surface")
     elements = tuple(model.mesh.elements.values())
-    if all(type(element) is QualifiedE4PLShellElement for element in elements):
+    if controls.allow_classical_beam_dev:
+        from anysolver.elements import BeamElement, QuadraticBeamElement
+        if (not elements or any(type(element) not in (BeamElement,QuadraticBeamElement)
+                                for element in elements)
+                or surface.beam_radius is None or surface.beam_end_caps != "none"):
+            raise ValueError("classical beam impact requires exact elastic B2/B3 round tubes without end caps")
+        profile = _BEAM_PROFILE
+    elif all(type(element) is QualifiedE4PLShellElement for element in elements):
         if controls.allow_s3_descriptor_dev:
             raise ValueError("S3 descriptor opt-in requires one qualified S3 V2D element")
         profile = _PROFILE
@@ -697,7 +730,7 @@ def solve_transient_contact(
     emit_restart_checkpoint: bool = False,
     cancellation_token: CancellationToken | None = None,
 ) -> TransientContactResults:
-    """Solve bounded elastic Q4 or S3 V2D fixed-plane impact.
+    """Solve bounded elastic Q4, S3 V2D or classical round-beam plane impact.
 
     Every Newton evaluation starts from the last committed material state.
     A rejected step leaves both the displacement and material state at the
@@ -710,6 +743,9 @@ def solve_transient_contact(
     distinct history profile is bound into restart contracts.
     The separate S3 algebraic-path opt-in instead lifts the physical Newmark
     quadratic through reference-linear elastic/penalty algebraic equilibrium.
+    Classical B2/B3 require a separate explicit opt-in, scalar elastic von Karman
+    sections, positive physical mass and round centreline geometry without caps.
+    Their full Hermite curve/time path is bounded before physical commit.
     Full endpoint agreement and corner minima are checked; reported transitions
     describe this discrete path, not exact continuum event times.
     Cancellation admits only the solver's exact unmodified token. It raises
@@ -734,7 +770,7 @@ def solve_transient_contact(
     if nodal_load_history is not None:
         if type(nodal_load_history) is not ContactNodalLoadHistory:
             raise TypeError("nodal_load_history must be ContactNodalLoadHistory")
-        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE):
+        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE, _BEAM_PROFILE):
             raise ValueError("nodal load history requires one Q4 plane nodal LoadCase or opted-in S3 plane nodal LoadCase")
         if nodal_load_history.points[-1][0] < transient.t_end:
             raise ValueError("nodal load history must cover t_end")
@@ -749,6 +785,8 @@ def solve_transient_contact(
             raise ValueError("nodal load history knots are closer than the admitted minimum_dt or time resolution")
         if profile == _S3_PROFILE:
             profile = _S3_HISTORY_PROFILE
+        elif profile == _BEAM_PROFILE:
+            profile = _BEAM_HISTORY_PROFILE
     s3_descriptor = profile in (_S3_PROFILE, _S3_HISTORY_PROFILE)
     if controls.s3_one_sided_rates_dev:
         profile = (_S3_DIRECTIONAL_HISTORY_PROFILE if nodal_load_history is not None
@@ -811,7 +849,7 @@ def solve_transient_contact(
     if Mred.shape[0] > 512:
         raise ValueError("transient development profile admits at most 512 free coordinates")
     descriptor_basis = None
-    if profile == _PROFILE:
+    if profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE):
         try:
             np.linalg.cholesky(Mred.toarray())
         except np.linalg.LinAlgError as exc:
@@ -876,7 +914,12 @@ def solve_transient_contact(
     # The resumed pose is validated separately against its accepted gap budget.
     with contact_scope(model, definition, settings,
                        initial_displacement=full_initial) as manager:
-        if type(manager) is not _PlanarQ4PlaneManager:
+        if controls.allow_classical_beam_dev:
+            from .beam_plane import _BeamPlaneManager
+            expected_manager = _BeamPlaneManager
+        else:
+            expected_manager = _PlanarQ4PlaneManager
+        if type(manager) is not expected_manager:
             raise ValueError("transient development profile selected an unsupported contact owner")
         path_adapter = (_S3AffinePathAdapter.prepare(
             model, T, descriptor_basis, manager, committed_states,
@@ -1026,7 +1069,17 @@ def solve_transient_contact(
                     raise ValueError(
                         "nodal load history knot is too close to the current time"
                     )
-                step = min(step, next_knot-current_time)
+                knot_step = next_knot-current_time
+                # Integrate to the actual knot when the nominal step misses
+                # it only through arithmetic rounding. Without this, repeated
+                # dt addition can leave a sub-minimum phantom step before a
+                # perfectly resolved knot. Do not advance time without solving.
+                knot_roundoff = 128*np.finfo(float).eps*max(
+                    abs(current_time),abs(next_knot),abs(step),np.finfo(float).tiny,
+                )
+                step = (knot_step if next_knot <= transient.t_end
+                        and abs(step-knot_step) <= knot_roundoff
+                        else min(step,knot_step))
             end_truncated = (
                 remaining < transient.dt
                 - 128.0*np.finfo(float).eps*max(1.0, abs(transient.t_end))
@@ -1083,10 +1136,19 @@ def solve_transient_contact(
                             )
                         full_velocity = np.asarray(T @ candidate_velocity).reshape(-1)
                         if path_adapter is None:
-                            swept_gap = _minimum_hermite_gap(
-                                manager, previous_full, full,
-                                previous_velocity, full_velocity, step,
-                            )
+                            if controls.allow_classical_beam_dev:
+                                from .beam_temporal_bounds import beam_hermite_gap_bounds
+                                swept_gap = beam_hermite_gap_bounds(
+                                    manager,previous_full,full,previous_velocity,full_velocity,step,
+                                    tolerance_m=controls.beam_swept_gap_tolerance_m,
+                                    maximum_subdivisions=controls.maximum_beam_swept_subdivisions,
+                                    check_cancel=lambda: check_cancel("transient beam complete-path bounds"),
+                                ).lower_gap
+                            else:
+                                swept_gap = _minimum_hermite_gap(
+                                    manager, previous_full, full,
+                                    previous_velocity, full_velocity, step,
+                                )
                         else:
                             if (np.linalg.norm(path_adapter.endpoint_force(candidate, load_at(current_time+step))-internal)
                                     > controls.equilibrium_tolerance*scale):

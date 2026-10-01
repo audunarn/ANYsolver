@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.66. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.1. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -22,7 +22,7 @@ Publication, merging, release and historical-default changes are separate action
 | D2 partial shells | Named finite-penalty foundation/press/open/recontact/restart handoff accepted | Remaining geometry, search, finite rotation and self-contact |
 | D3 classical/native static | Restricted round-beam, retained-native and deformable-S3 prototypes integrated and reviewed | Full required pairings, endpoints, mesh/enforcement and section-family acceptance |
 | D4 friction/continuation | Local components preserved | Transactional material-surface history, pressure coupling and arc length |
-| D5 impact | Q4/plane Newmark and guided S3 descriptor development routes exist | Shared full driver, classical beams, tools/free rigid bodies, events/materials/restart |
+| D5 impact | Q4/S3 and explicit scalar B2/B3 plane Newmark development share driver/state/restart | General geometry, finite rotation, caps/pairs, tools/free bodies, nonlinear materials and acceptance |
 | D6 native dynamics | Dedicated retained-inertia/SO(3) midpoint owner, state codec and installed development route | Broader geometry/sections, spatial accuracy and C7 acceptance |
 | Applications | ANYfem mapping/result summary plus supplied-settings persistence; ANYstructure intent/public mapping and early rejection | Source/model-bound capability admission, solve routing and full installed workflows |
 
@@ -90,12 +90,24 @@ See [results and retained failures](docs/d1_review_support/contact_c6_event_cont
 Historical eventv11 remains12passed/4failed; the worsened force-acceleration trial
 and failed diagnostic helper remain preserved. No consumed authority is replayed.
 
-**Next bounded decision:** select the next missing integrated D5/D6 capability from
-source inspection: advance physical composition/geometry or shared impact-driver
-coverage. Fix the authoritative coordinate/state interface and independent scrutiny
-before implementation. Do not repeat native temporal screens merely to enlarge
-existing evidence. Broader native section/geometry acceptance and coupled impact
-remain required; the current one-element centered-ellipsoid owner does not admit them.
+The next physical slice now shares that driver with scalar elastic classical B2/B3
+round-tube plane impact. Actual rotary/translation mass and distributed line work
+are retained; tensor Bernstein bounds cover the complete curve/Hermite time path.
+Uniform independent Newmark/impulse, deformed B3 partial contact, active/history
+restart and cancellation/exception cases pass. The final isolated wheel has107
+passing checks and both beam CLI examples,451matched modules,16.296s/186486784B.
+The geometry kernel and selected mass/admission/path contracts received independent
+Mistral Read scrutiny; later time-knot/end-edge fixes have separate retained failures
+and passing checks. No C6 engineering acceptance or general finite-rotation admission
+follows. See [development results](docs/d1_review_support/contact_c6_classical_beam_20261001/results.md).
+
+**Next bounded decision:** add a missing interacting-body capability through shared
+coordinate/work/state interfaces: explicit multiple contact contributors or prescribed/
+free rigid motion. Inspect current owners and freeze the selected interface before
+editing; choose the shortest discriminating integrated physics case. Preserve static
+beam reference/section guards, physical native inertia and scheme boundaries. Do not
+repeat event or native temporal screens just to enlarge evidence. Broad native
+section/geometry acceptance and native/shell common-stage impact remain required.
 
 The lead may progress application integration against stable contracts. ANYfem
 630884ae preserves supplied public numerical settings;21focused checks pass with

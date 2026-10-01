@@ -839,3 +839,18 @@ the canonical predictor only for this opt-in profile. Completed Mistral review a
 source adjudication support development use; scientific C6 acceptance and release
 remain open. Historical12passes/4NONPASS and corrective-trial failures are preserved.
 See [current result](d1_review_support/contact_c6_event_continuation_20261001/results.md).
+
+## Classical round-beam plane Newmark — installed-tested development
+
+Explicit allow_classical_beam_dev selects exact elastic scalar von Karman B2/B3,
+one fixed plane, declared radius/dimensioned line penalty and no caps. Straight
+reference B3 and actual deformed quadratic displacement fields remain separate.
+The shared Newmark driver preserves structural mass/rotary inertia, transactions,
+loads, cutback, cancellation and restart; positive reduced mass and512free-coordinate
+cap remain. Complete tensor Bernstein curve/time lower bounds govern gap admission;
+unresolved refinement fails explicitly. Kernel/selected driver contracts received
+independent source review; final isolated artifact passes107checks/two examples.
+Large finite rotation, moving/free bodies, beam pairs/shells, caps, friction,
+nonlinear material and C6 engineering acceptance are not established. Applications
+must keep admission false. [Guide](GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md),
+[results/review/failures](d1_review_support/contact_c6_classical_beam_20261001/results.md).
