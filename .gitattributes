@@ -209,3 +209,7 @@ docs/d1_review_support/native_principal_spin* -text -whitespace
 src/anysolver/_ge_beam3_centered_batched_finite_inertia.py text eol=lf
 src/anysolver/_ge_beam3_centered_finite_inertia.py text eol=lf
 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART36.md -text -whitespace
+
+docs/d1_review_support/native_finite_spin_temporal_refinement* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261001_REV58.md -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART37.md -text -whitespace

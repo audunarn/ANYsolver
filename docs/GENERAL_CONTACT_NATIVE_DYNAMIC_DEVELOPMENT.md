@@ -227,3 +227,20 @@ positive and at most900s; the captured lifetime and setting bind restart identit
 A restart does not renew a trajectory's execution authority. Extended owners
 reject the optional local operator-validation scope. These resource controls do
 not admit general contact, additional elements or C7 qualification.
+
+
+### Finite-angle temporal self-convergence — 1 October
+
+The frozenT=.0045s programme reuses N192prefix108 and completes freshN162/N216
+with one840s owner each. Required endpoint gates pass; final two cell angles are
+about.21325/.21336rad. Measured process costs469.504s/453.947MB and601.339s/543.941MB,
+with459source bindings unchanged. No segmentation or owner-clock renewal occurred.
+
+The saved comparison selects common2j/3j/4j states without interpolation. Resolved
+velocity/cell-rotation ratios2.857135/2.857119 match expected20/7. Position differences
+are below the registered resolution requirement, so no position order or extrapolation
+is reported. This establishes empirical second-order-compatible temporal
+self-convergence for this named finite-spin fixture, not continuum/spatial accuracy,
+a certified error bound, general nonprincipal-motion admission or fullC7 acceptance.
+See `d1_review_support/native_finite_spin_temporal_refinement_v1_20261001.comparison.json`
+and adjacent `.review.md`. All older failures retain their original meaning.

@@ -1,0 +1,111 @@
+{
+  "status": "PHYSICAL_SOURCE_STATE_GATES_PASS",
+  "temporal_comparison": "PENDING; N216 undispatched; no order/accuracy claim",
+  "N": 162,
+  "T_seconds": 0.0045,
+  "solver_committed_steps": 162,
+  "gate_passing_steps": 162,
+  "actual_final_time": 0.0044999999999999875,
+  "final_cell_attitude_rad": [
+    0.2132521331976958,
+    0.21335742561356252
+  ],
+  "resources": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 469.504391399998,
+    "peak_process_tree_memory_mb": 453.947392,
+    "time_limit_seconds": 900.0,
+    "memory_limit_bytes": 4294967296,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/native_finite_spin_temporal_refinement_v1_20261001.entry.py",
+      "docs/d1_review_support/native_finite_spin_temporal_refinement_v1_20261001.n162.inputs.v2.json",
+      "0a84315fb326192927930b0316393e053ef88afe95c49416d0636d682640f9b8"
+    ],
+    "log": "docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.log"
+  },
+  "fixture_elapsed_seconds": 467.23585810000077,
+  "source_binding_count": 459,
+  "source_postmatch": true,
+  "metrics": {
+    "stage_norm": 4.2861649109152183e-13,
+    "endpoint_balance": 9.266586470507814e-12,
+    "endpoint_algebraic": 9.266032755321897e-12,
+    "witness": 1.4503333481931236e-18,
+    "step": {
+      "E": 6.13128343517341e-10,
+      "P": 1.2886612255853706e-11,
+      "H": 1.6348905849740546e-12
+    },
+    "cumulative": {
+      "E": 5.467501587656365e-08,
+      "P": 1.81900281530504e-09,
+      "H": 1.738448674197732e-10
+    }
+  },
+  "initial_checks": {
+    "algebraic_condition": 46900.21092266667,
+    "algebraic_rank": 27,
+    "algebraic_sigma_max": 1.617335709717673,
+    "algebraic_sigma_min": 3.448461484287316e-05,
+    "physical_mass_condition": 17.433616647030846,
+    "physical_mass_max_eigenvalue": 2.1685761019501215,
+    "physical_mass_min_eigenvalue": 0.12439048912547104
+  },
+  "captured_runtime": {
+    "seconds": 840.0,
+    "started": 256573.1694164
+  },
+  "actual_threadpools": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "stage_records": 486,
+  "stages_per_step": [
+    3
+  ],
+  "endpoint_events": 325,
+  "journals": {
+    "journal": {
+      "bytes": 42135773,
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.stages.jsonl",
+      "sha256": "a884f8557d6135cd4f8236c80af11333bf65c15f3217d298f9b1606ee4d09bf1"
+    },
+    "state_journal": {
+      "bytes": 70410435,
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.endpoints.jsonl",
+      "sha256": "43797114af8560e64ad4ce16af084534b22abea6258c75d6b36acb52f7db83d0"
+    }
+  },
+  "artifact_sha256": {
+    "inputs.v2.json": "0a84315fb326192927930b0316393e053ef88afe95c49416d0636d682640f9b8",
+    "raw.json": "bdb38c5478678c197a273793fa3f2c305ea99da41563db0cf5ca3ea583c15518",
+    "resources.json": "27fb38195c4ad67afdcd43b38d16d5fad1d17334d5b41f3db6aeb8c8217819c8",
+    "log": "b20b6fa0b0d55073caa098c0d0bfad2389b0e4736591938068c136b86b55aa11",
+    "stages.jsonl": "a884f8557d6135cd4f8236c80af11333bf65c15f3217d298f9b1606ee4d09bf1",
+    "endpoints.jsonl": "43797114af8560e64ad4ce16af084534b22abea6258c75d6b36acb52f7db83d0",
+    "progress.json": "3c8d84f8aefee6f40c3f6a24e14b17edd62e77b249efc9fda12ee9c26d7ea014"
+  },
+  "forecast_if_lead_authorizes_N216_seconds": 626.0058551999973,
+  "forecast_is_not_guarantee": true,
+  "scope": "One finite-angle shared spatial fixture; conservation/equilibrium/authentication controls only; no independent-code/spatial/fullC7 acceptance"
+}

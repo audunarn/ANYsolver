@@ -1,5 +1,33 @@
 # General-contact capability ledger
 
+## Native finite-angle temporal self-convergence — 1 October
+
+Both fresh trajectories complete original physical/source/state gates with one
+owner each: N162469.504s/453.947MB andN216601.339s/543.941MB,459unchanged bindings,
+486/648signed stages and325/433endpoint records. Total1070.843s stays within the
+frozen1800s programme cap. SavedN192prefix108 is reused atT=.0045 without rerun.
+
+At54matching nonzero times, required resolved velocity/cell-rotation difference
+ratios2.857135/2.857119 pass the frozen20/7±20% criterion. Position is unresolved
+(middle/fine RMS7.737e-10 below1e-9) and receives no order/error estimate. Conditional
+fine estimates require the declared common leadingh² expansion; no certified bound,
+independent continuum/code verification, spatial accuracy, native impact or fullC7
+admission follows. Independent saved assessment agrees with the scoped result;
+[comparison](d1_review_support/native_finite_spin_temporal_refinement_v1_20261001.comparison.json)
+and [review](d1_review_support/native_finite_spin_temporal_refinement_v1_20261001.review.md).
+Historical numerical failures and unexecuted source/input drafts remain unchanged.
+
+## Application numerical-settings retention — 1 October
+
+ANYfem isolated checkpoint b98cf7cb92237c5a1079597b610a384973c7a3e6
+adds optional exact public `ContactSolverSettings` snapshots to result artifacts.
+25focused bridge checks pass with effective application source/installed accepted
+0b2ac9be imports,5.065s/204.628MB. Independent review finds no blocker for this
+additive caller-supplied metadata contract. Omitted settings are not invented;
+foreign objects reject before persistence. No solver run or application admission
+is established. Producing-result/settings correspondence remains caller-supplied.
+[Application review](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/contact_result_bridge_evidence/contact-settings-review.md).
+
 ## Native measured-cost disposition — 1 October
 
 Independent development review confirms exact physical parity for the new
