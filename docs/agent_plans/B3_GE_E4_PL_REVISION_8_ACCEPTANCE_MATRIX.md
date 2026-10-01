@@ -1,5 +1,16 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+M4/G6 GE modal consumer development,1 October: strict distinct modal input record
+owns explicit supported/free-free policy, native inertia and optional verified
+identity; input save/reopen does not assemble/factor. Existing Project selectors
+dispatch to public modes and reject incompatible controls. Paired installed37new
+and149legacy checks pass,391+98 modules match, seven old GE schema payloads byte-
+identical and public Project example runs both policies. Independent consumer
+review clear. Input persistence/verified requested fields are not full spectrum,
+physical-frequency, accepted-state checkpoint or aggregate qualification; full
+F07/G4B/G6/external/scale obligations OPEN. No authority/default/version change.
+[Delivery/evidence](development/r8-anyfem-ge-reference-modal-20261001/results.md).
+
 M4/F07 free-free GE development,1 October: explicit modal-only boundary policy
 on the existing owner returns six physically verified rigid fields and requested
 flexible pairs for connected virgin Q4/generalized six-pose points. Full native

@@ -10,13 +10,13 @@ No main merge/publication authority. Full programme/scientific criteria remain.
 Solver worktree C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
 branch codex/b3-ge-e4-pl-integration; latest product commit a9d22b54 (free-free).
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer; HEAD cc9a490.
+branch codex/experimental-ge-panel-consumer; HEAD f4bb5ed (modal input consumer).
 Main untouched. Root owns integration, independent oracles, evidence and note.
 Free-free solver source is frozen; root owns its oracle/example and integration.
-bl5_consumer now owns only ANYfem solve/stiffened_shell.py and
-stiffened_shell_project.py plus a new modal-consumer test/example; no solver/docs/
-Git edits. b2_point_acceptance_gap is readonly independent reviewer. Verify dirty
-ownership on resume; previous supported delivery source/evidence is committed.
+Both workers have completed their current slices; no outstanding edit ownership.
+Root owns the live note/matrix/report integration; foreign source remains protected.
+b2_point_acceptance_gap supplied independent source/artifact/example reviews.
+Verify actual dirty ownership on resume; delivered source/evidence is committed.
 
 Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py SHA
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481:
@@ -81,17 +81,24 @@ or static condensation. Six analytic rigid fields are verified; exactly-six
 nullity/absence of all unexcited mechanisms is NOT certified. Roundoff screen is
 not an Arnoldi/LU error bound. Independent review clear; source/evidence committed.
 
-Next: explicit ANYfem modal input record and Project dispatch using existing
-services. Own public supported/free-free policy and native inertia exactly;
+[ANYfem modal delivery](development/r8-anyfem-ge-reference-modal-20261001/results.md)
+at f4bb5ed owns exact inertia/policy and optional validated model identity;
 definition-only save/reopen does not assemble/factor or fabricate identity.
-Optional supplied model identity is validated at public owner creation. Strict
-old schemas must not silently drop policy. Consumer source37 passed at
-TEMP/r8-ge-modal-consumer-source-v2; V1 collection-only test-name failure retained.
-Paired TEMP/r8-ge-modal-consumer-installed-v1: solver4ddde579/consumer57ee44ef,
-391+98 exact modules, installed37new passed. Root legacy session74587 running149
-checks, no other numerical job. Do not duplicate/interrupt; verify actual status
-on resume. Then public consumer example, old-payload compatibility and independent
-complete-slice review. Author owns optional example only; product files frozen.
+Existing Project dispatches canonical modes; strict legacy schemas retain meaning.
+Paired solver4ddde579/consumer57ee44ef,391+98 exact modules,37new+149legacy
+installed passes, seven byte-exact legacy GE schema payloads. Supported/free-free
+public Project examples both complete; independent consumer/example review clear.
+Raw178-file archive9bc32f1f preserves source collection and runner-count failures.
+All jobs TERMINAL, including session74587; no numerical job or active worker.
+
+Next concrete mandatory seam: inspect the preserved nodal-footprint postrebase
+parity failure before designing a bounded repair. Determine whether earliest
+divergence is physical pose/gap, chart pullback or transported shell state using
+the existing same-load evidence. Keep the unrebased guard until parity is proved;
+no chart/mesh sweep, law/criterion change or F03 run by implication. New code must
+preserve objective point/footprint laws, native histories and accepted generations.
+If no clear repair follows, record the exact obstruction and review it. Continue
+other required M4/F07 load/mass/prestress obligations only at actual prerequisites.
 Full F07/G4B/consumer/external/scale and aggregate acceptance remain OPEN.
 
 [Protected historical note](history/ACTIVE_STATE_20261001_NODAL_S3_TRANSITION.md)
