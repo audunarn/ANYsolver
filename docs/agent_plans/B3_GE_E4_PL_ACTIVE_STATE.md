@@ -2,6 +2,12 @@
 
 ## Completed first reconciliation step
 
+**PAUSED by user,1 October:** feature development stops for a coordinated
+development-testing regime improvement on accepted main. Root owns that separate
+change and authorised review/merge/push; contact is asked to pause and supply its
+testing-cost assessment. No owned numerical job/reservation remains. Coupling
+goal is paused. Resume feature work only after the shared change is reconciled.
+
 Continue from **C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001**,
 branch **codex/stiffened-main-reconcile-20261001**, source merge **d31e09dc**.
 Owned pending work is preserved at **0726662b** in the original branch; its
@@ -33,6 +39,35 @@ completion as a live cause; negligible sensitivity directs matched external
 reference work rather than another native refinement. No coefficient tuning or
 F03 consumption. Reserve the numerical slot before execution. Older details below
 retain historical evidence; this section supersedes their next actions.
+
+Bounded discriminator prepared: `scripts/b3_e4_bl5_completion_sensitivity_dev.py`
+uses the saved coupled n64 Mz fixture (8940q,160rows), historical wheel0c456666,
+and virgin unsymmetrized component pullbacks. Define K(alpha)=K+(alpha-1)Kn,
+Kn=PL+hourglass, with C/supports/load unchanged. One unchanged KKT factor yields
+the derivative at1; check baseline and mapped component parity, derivative
+equilibrium/gaps, physical transpose actions, retained rigid work and support
+wrenches. Report f^Tqprime directly, without SPD/symmetry assumptions or inferring
+finite removal. Independent contract review finds no obstructing equation for
+this local interpretation. A small chosen-output derivative may reflect filtering
+or cancellation; it cannot establish drilling independence.
+V1 execution is terminal FAILED: mapped component reconstruction passed, but the
+manufactured RHS failed external-load per-active-row division on cancellation-
+size entries (ordinary.2341/compensated.0659). Raw derivative arrays are retained
+at Temp/r8-bl5-completion-sensitivity-20261001-v1; no physical result accepted.
+Independent review identifies this as an inapplicable diagnostic residual, not a
+product solve defect. Next reuse the exact retained solve without another factor:
+measure compensated componentwise backward error and frozen upper-block physical
+work-norm ratio at1e-8, keep original physical-load reference control, baseline,
+gap/fixed checks unchanged. This prospective diagnostic interpretation changes no
+solver scientific criterion and never relabels v1 as passed. Slot released;
+reserve before the bounded algebraic assessment.
+V2 algebraic assessment is also terminal FAILED: compensated componentwise
+backward error2.4487812e-8 exceeds unchanged1e-8; upper work norm6.42798e-15 and
+original-load reference1.61332e-16 pass. Zero new factors. Do not declare the
+derivative accepted or change its criterion. Both exact runners and raw failures
+are preserved in development/r8-bl5-completion-sensitivity-20261001; current
+diagnostic source is pending development, not product qualification. No further
+scientific investigation launched after pause.
 
 Tiered workflow applies prospectively. Local configured read worker completed
 seven tools but timed out before conclusion; Mistral launcher failed before
