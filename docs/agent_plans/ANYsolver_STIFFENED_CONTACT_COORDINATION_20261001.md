@@ -92,5 +92,21 @@ codex/stiffened-main-reconcile-20261001. [Installed impact results](development/
 preserve the new artifacts and failed fixture/build preparations. No product
 repair was required. The original foreign dirty script remains unchanged.
 Numerical checks are terminal and the slot was released to the contact owner.
-Contact is completing its separate reviewed reconciliation and checks. Neither
+Contact reported its numerical checks terminal and released the slot. Neither
 programme is merged to main or qualified by this coordination record.
+
+Contact's reported installed source is 9f8f2501, wheel SHA256
+45d0ba2932a098e374f5508e28582501f055398daf3d5a9d41734c521f6823a3.
+Its groups returned: Schur correction/control 2 passed; main dependencies 260
+passed/6 explicit skips; contact restart/cancellation/mixed-shell 11 passed;
+normal-setup ANYfem intent/settings 21 passed. These are contact-owner results,
+not independently rerun here.
+
+The historical full import sequence (anyfem, anysolver, pytest, then pytest.main
+with normal plugin autoload) still returned 20 passed/1 ordinary-job failure:
+ABC.__annotate_func__/ABC.__annotations_cache__ metadata mismatch. The minimal
+one-job control passed and does not distinguish the cause. Shared application
+compatibility remains open. Contact retains the reproducer/triage evidence;
+the main guard maintainer owns any product correction. No guard workaround or
+new numerical run is authorized by this status update. Both programmes pause
+wider development after saving their reconciliation records.
