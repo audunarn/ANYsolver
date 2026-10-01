@@ -37,6 +37,8 @@ def main():
             assert result.status == "completed" and result.accepted_factors == (.25, .5, 1.)
             assert result.free_equilibrium_ratio <= 1e-8 and result.constraint_max <= 1e-9
             np.testing.assert_allclose(result.beam_positions/2., reference.beam_positions/2., rtol=0., atol=1e-9)
+            np.testing.assert_allclose(result.shell_displacement.reshape(-1, 6)[:, :3]/2.,
+                reference.shell_displacement.reshape(-1, 6)[:, :3]/2., rtol=0., atol=1e-9)
             for name in ("shell_frames", "beam_frames", "cell_frames"):
                 np.testing.assert_allclose(getattr(result, name), getattr(reference, name), rtol=0., atol=1e-9)
             difference = (result.cell_resultants-reference.cell_resultants)/np.array((10.,)*6+(20.,)*12)

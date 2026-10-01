@@ -1,5 +1,16 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+M4/F06/G6 footprint V2 development,1 October: explicit increment-origin chart
+policy has independently reviewed Q4/mixed/all-S3 elastic solver assessment and
+ANYfem persistence/consumer delivery. Old/current default solver observables,
+checkpoints and V1 consumer payloads match exactly. Four installed successor
+position predicates,87 consumer checks and13 final-artifact checks pass; earlier
+impact evidence is reused with its original identities. Historical V1 strict
+postrebase failure remains preserved; V2 is a separate policy. Full plastic,
+drilling/shear/torque, continuous/distributing/weld, external/scale and aggregate
+F06/M4/G6 obligations remain OPEN. No default/version/authority change.
+[Delivery and independent reviews](development/r8-footprint-v2-delivery-20261001/results.md).
+
 M4/G6 GE modal consumer development,1 October: strict distinct modal input record
 owns explicit supported/free-free policy, native inertia and optional verified
 identity; input save/reopen does not assemble/factor. Existing Project selectors

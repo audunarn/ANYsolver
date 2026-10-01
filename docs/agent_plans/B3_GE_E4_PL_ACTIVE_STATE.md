@@ -12,20 +12,40 @@ one explicit N/A skip. GE histories/restart/modes, B2 batches, the corrected pub
 V2 example and the existing ANYfem consumer passed. No product repair was needed.
 Main remains unchanged; no aggregate gate, release or combined-contact acceptance.
 All owned numerical jobs are terminal and the slot is released to contact.
-Broader feature work remains paused after this authorized first step.
+User resumed the full coupling development on 1 October after reconciliation.
+Completed slice: explicit ANYfem V2 footprint input/persistence/dispatch and
+independent solver/consumer assessment, no blocking findings. Exact default V1
+solver results/checkpoints and consumer payloads match; four successor-position,
+87 candidate-consumer and13 final-artifact installed checks pass. See
+[delivery/evidence/reviews](development/r8-footprint-v2-delivery-20261001/results.md).
+Root owns final source/evidence integration; all workers are terminal. Existing
+main-impact campaigns are reused. No numerical job is active/reserved; slot
+released to contact on1 October. No aggregate gate was accepted.
+Shared ABC guard remains the main maintainer's issue and blocks shared acceptance.
 
-Next when resumed: finalize independent V2 footprint artifact assessment using
-these merged-artifact results, update its scoped delivery/matrix, then implement
-the explicit ANYfem V2 policy record. Do not repeat passed compatibility campaigns
-without a changed input or unresolved finding. The older restart details below
-retain historical evidence and candidate semantics; the paths and next actions
-in this section supersede their pre-reconciliation instructions.
+Next decision: does numerical shell completion materially affect saved BL5 Mz
+work/transfer despite direct normal-spin release? Inspect the actual stiffness
+component contract and saved finest unchanged KKT fixture first. A bounded
+directional sensitivity distinguishes completion-mediated compliance from
+physical shell/trace feedback only after mapped component parity is established.
+Failed parity means repair the diagnostic map; significant sensitivity retains
+completion as a live cause; negligible sensitivity directs matched external
+reference work rather than another native refinement. No coefficient tuning or
+F03 consumption. Reserve the numerical slot before execution. Older details below
+retain historical evidence; this section supersedes their next actions.
+
+Tiered workflow applies prospectively. Local configured read worker completed
+seven tools but timed out before conclusion; Mistral launcher failed before
+inference. Both are retained incomplete attempts. Independent OpenAI review
+completed this slice. Future local work must be smaller and self-contained;
+optional worker availability does not block delivery or imply independent-family
+acceptance. Root handles consequential mechanics and final integration.
 
 Revision8 [goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md)
 and [matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) govern under policy
-2026-09-24.2. User authorized the first reconciliation step on 1 October:
-preserve pending work, integrate shared main in isolation, and verify impacted
-routes. Broader feature development remains paused. No aggregate gate accepted;
+2026-09-24.2. User authorized reconciliation and resumed full development on1 October:
+preserve pending work, integrate shared main in isolation, and progress the
+authorised programme. Historical pause statements below are superseded. No aggregate gate accepted;
 formalF03 UNCONSUMED.
 No main merge/publication authority. Full programme/scientific criteria remain.
 
