@@ -47,3 +47,30 @@ refinement and inherited1e-3-radius qualification starting budgets remain requir
 Large finite rotations/corotational dynamics, beam pairs/shells, caps, friction,
 nonlinear materials, free/moving rigid bodies and broad C6 acceptance remain open.
 See [results](d1_review_support/contact_c6_classical_beam_20261001/results.md).
+
+## Multiple explicit fixed planes
+
+Add `allow_multiple_beam_planes_dev=True` to the classical beam controls to use
+two or more explicitly named line interactions. Every body must be a fixed plane;
+every selected surface declares a radius and no caps. The union of surfaces covers
+all structural elements. Interactions may share a beam against distinct bodies;
+duplicate element/body ownership is rejected. This composes distributed line
+potentials, with each body's reaction retained under the named pair. Coincident
+distinct bodies intentionally add their declared penalties; they are not deduplicated.
+
+Each endpoint and complete represented path must meet its pair's dimensional gap
+budget. The minimum over pairs is a summary, not a replacement for those gates.
+The subdivision cap is shared across pairs and cells within each path evaluation;
+unresolved enclosures fail explicitly. Existing aggregate candidate caps remain.
+Profiles are `CLASSICAL_B2_B3_ROUND_TUBE_MULTIPLE_FIXED_PLANES_NEWMARK_DEV_V1`
+and `...NEWMARK_HISTORY_DEV_V1`. Restart binds these controls and all pair contracts.
+Results expose `contact[i].pairs` as `(interaction_name, pair_result)` tuples;
+`to_dict()` also reports summed forces/moments and individual pair fields.
+
+```text
+python examples/general_contact_beam_plane_impact.py --quadratic --multiple-planes
+```
+
+This extension remains development only. It does not admit radial obstacles,
+moving/free bodies, automatic pairs or beam-beam impact. See the
+[slice and checks](d1_review_support/C6_MULTIPLE_BEAM_PLANES_SLICE_20261002.md).

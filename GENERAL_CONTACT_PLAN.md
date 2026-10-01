@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.1. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.2. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -101,13 +101,20 @@ Mistral Read scrutiny; later time-knot/end-edge fixes have separate retained fai
 and passing checks. No C6 engineering acceptance or general finite-rotation admission
 follows. See [development results](docs/d1_review_support/contact_c6_classical_beam_20261001/results.md).
 
-**Next bounded decision:** add a missing interacting-body capability through shared
-coordinate/work/state interfaces: explicit multiple contact contributors or prescribed/
-free rigid motion. Inspect current owners and freeze the selected interface before
-editing; choose the shortest discriminating integrated physics case. Preserve static
-beam reference/section guards, physical native inertia and scheme boundaries. Do not
-repeat event or native temporal screens just to enlarge evidence. Broad native
-section/geometry acceptance and native/shell common-stage impact remain required.
+Multiple explicit beam-plane impact now shares that owner, with an explicit opt-in,
+surface-union coverage, named feature ownership, per-pair dimensional gap gates and
+one aggregate complete-path split budget. Independent summed/orthogonal mode impulse,
+reactions, restart, failure and disjoint-surface cases pass. Installed evidence covers
+80 distinct checks (77 initial passes plus3 corrective passes for CLI/packaging);
+451module identities match. Independent source review supports the new contracts;
+C6 engineering acceptance remains open. [Results](docs/d1_review_support/contact_c6_multiple_beam_planes_20261002/results.md).
+
+**Next bounded decision:** prescribed-tool motion through the shared driver. Inspect
+serialized motion identity, physical tool work and complete relative-path bounds
+before choosing the shortest integrated discriminator. Preserve per-pair gates,
+beam reference/section guards and native scheme boundaries. Do not repeat event or
+native temporal screens for counts. Free-body inertia, broad native geometry/section
+acceptance and native/shell common-stage impact remain required.
 
 The lead may progress application integration against stable contracts. ANYfem
 630884ae preserves supplied public numerical settings;21focused checks pass with
@@ -162,8 +169,8 @@ with explicit selectors, one affected integrated route and explicit task timeout
 memory and JIT controls. Its600s default never enlarges a stricter task cap.
 Build/check one installed artifact per coherent integration; reuse unaffected
 evidence through impact analysis. Scientific/compiled/release gates remain.
-The programme goal stays paused pending resumption; testing reconciliation alone
-does not launch the next contact slice.
+The programme goal is active under the user's resumed development authority;
+testing reconciliation did not independently renew any frozen execution authority.
 
 Optimize measured production bottlenecks only. The NumPy inertia batch gives6.86x
 local prepared-kernel improvement and27.46% complete short-route reduction; neither

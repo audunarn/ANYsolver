@@ -53,6 +53,7 @@ from .core import (
     validate_general_contact,
 )
 from .beam_plane import _BeamPlaneResults
+from .multiple_beam_rigid import MultipleBeamRigidResults
 from .descriptor_rates import directional_descriptor_rate
 from .algebraic_path import affine_descriptor_path
 from .event_subdivision import EventNeedsCutback, localize_branch_event
@@ -69,6 +70,8 @@ _S3_EVENT_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_EVENT_SUBDIVISION_DEV_V1"
 _S3_EVENT_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_EVENT_SUBDIVISION_HISTORY_DEV_V1"
 _BEAM_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_VON_KARMAN_FIXED_PLANE_NEWMARK_DEV_V1"
 _BEAM_HISTORY_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_VON_KARMAN_FIXED_PLANE_NEWMARK_HISTORY_DEV_V1"
+_MULTIPLE_BEAM_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_MULTIPLE_FIXED_PLANES_NEWMARK_DEV_V1"
+_MULTIPLE_BEAM_HISTORY_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_MULTIPLE_FIXED_PLANES_NEWMARK_HISTORY_DEV_V1"
 _RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
 _HISTORY_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V2"
 _ALGEBRAIC_PATH_RESTART_SCHEMA = "ANYSOLVER_S3_ALGEBRAIC_PATH_TRANSIENT_CONTACT_DEV_CHECKPOINT_V3"
@@ -150,8 +153,13 @@ class ContactTransientSolverControls:
     allow_classical_beam_dev: bool = False
     beam_swept_gap_tolerance_m: float = 1.0e-10
     maximum_beam_swept_subdivisions: int = 512
+    allow_multiple_beam_planes_dev: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.allow_multiple_beam_planes_dev) is not bool:
+            raise ValueError("allow_multiple_beam_planes_dev must be boolean")
+        if self.allow_multiple_beam_planes_dev and not self.allow_classical_beam_dev:
+            raise ValueError("multiple beam planes require the classical beam opt-in")
         if type(self.allow_classical_beam_dev) is not bool:
             raise ValueError("allow_classical_beam_dev must be boolean")
         if self.allow_classical_beam_dev and self.allow_s3_descriptor_dev:
@@ -272,7 +280,7 @@ class TransientContactResults:
     displacements: np.ndarray
     velocities: np.ndarray
     accelerations: np.ndarray
-    contact: tuple[ContactResults | _BeamPlaneResults, ...]
+    contact: tuple[ContactResults | _BeamPlaneResults | MultipleBeamRigidResults, ...]
     swept_minimum_gaps: np.ndarray
     equilibrium_residuals: np.ndarray
     cutbacks: int
@@ -327,6 +335,8 @@ def _restart_analysis_contract(transient, controls, manager, profile,
             beam_swept_gap_tolerance_m=controls.beam_swept_gap_tolerance_m,
             maximum_beam_swept_subdivisions=controls.maximum_beam_swept_subdivisions,
         )
+    if controls.allow_multiple_beam_planes_dev:
+        contract["controls"]["allow_multiple_beam_planes_dev"] = True
     if controls.s3_algebraic_path_dev:
         contract["controls"]["s3_algebraic_path_dev"] = True
         contract["controls"]["s3_path_position_tolerance_m"] = controls.s3_path_position_tolerance_m
@@ -671,25 +681,32 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
         raise ValueError("unsupported transient contact: " + "; ".join(report.issues))
+    multiple = controls.allow_multiple_beam_planes_dev
     required_motion = "general" if controls.allow_classical_beam_dev else "guided"
     if (settings.pair_motion != required_motion or settings.warped_q4_plane
-            or len(definition.surfaces) != 1 or len(definition.rigid_bodies) != 1
-            or len(definition.interactions) != 1
-            or definition.rigid_bodies[0].kind != "plane"
-            or definition.rigid_bodies[0].path_translation is not None
-            or definition.interactions[0].normal_law != "penalty"):
-        raise ValueError("transient development profile requires one shell surface and one fixed penalty plane")
-    surface = definition.surfaces[0]
-    if set(surface.element_ids) != set(model.mesh.elements):
-        raise ValueError("transient development profile requires every shell element on the surface")
+            or (not multiple and (len(definition.surfaces) != 1
+                or len(definition.rigid_bodies) != 1 or len(definition.interactions) != 1))
+            or (multiple and len(definition.interactions) < 2)
+            or any(body.kind != "plane" or body.path_translation is not None
+                   for body in definition.rigid_bodies)
+            or any(pair.normal_law != "penalty" for pair in definition.interactions)):
+        raise ValueError(
+            "multiple beam transient development requires at least two interactions against fixed penalty planes"
+            if multiple else "transient development profile requires one shell surface and one fixed penalty plane")
+    surfaces = definition.surfaces
+    if set(element_id for surface in surfaces for element_id in surface.element_ids) != set(model.mesh.elements):
+        raise ValueError(
+            "multiple beam transient development requires every structural element on declared surfaces"
+            if multiple else "transient development profile requires every shell element on the surface")
     elements = tuple(model.mesh.elements.values())
     if controls.allow_classical_beam_dev:
         from anysolver.elements import BeamElement, QuadraticBeamElement
         if (not elements or any(type(element) not in (BeamElement,QuadraticBeamElement)
                                 for element in elements)
-                or surface.beam_radius is None or surface.beam_end_caps != "none"):
+                or any(surface.beam_radius is None or surface.beam_end_caps != "none"
+                       for surface in surfaces)):
             raise ValueError("classical beam impact requires exact elastic B2/B3 round tubes without end caps")
-        profile = _BEAM_PROFILE
+        profile = _MULTIPLE_BEAM_PROFILE if multiple else _BEAM_PROFILE
     elif all(type(element) is QualifiedE4PLShellElement for element in elements):
         if controls.allow_s3_descriptor_dev:
             raise ValueError("S3 descriptor opt-in requires one qualified S3 V2D element")
@@ -707,6 +724,28 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
                 or material.hardening_curve is not None):
             raise ValueError("transient development profile admits only isotropic elastic material")
     return profile
+
+
+def _beam_complete_path_gaps(manager, start, end, start_velocity, end_velocity,
+                             step, controls, check_cancel):
+    """Every explicit pair retains its own gap gate and shares one split cap."""
+    from .beam_temporal_bounds import beam_hermite_gap_bounds
+    from .multiple_beam_rigid import MultipleBeamRigidManager
+
+    pairs = manager.pairs if type(manager) is MultipleBeamRigidManager else ((None, manager),)
+    remaining = controls.maximum_beam_swept_subdivisions
+    minimum = float("inf")
+    admissible = True
+    for _, child in pairs:
+        bounds = beam_hermite_gap_bounds(
+            child, start, end, start_velocity, end_velocity, step,
+            tolerance_m=controls.beam_swept_gap_tolerance_m,
+            maximum_subdivisions=remaining, check_cancel=check_cancel,
+        )
+        remaining -= bounds.subdivisions
+        minimum = min(minimum, bounds.lower_gap)
+        admissible = admissible and bounds.lower_gap >= -child.gap_tolerance
+    return minimum, admissible
 
 
 def _with_transient_state_cleanup(operation):
@@ -770,7 +809,7 @@ def solve_transient_contact(
     if nodal_load_history is not None:
         if type(nodal_load_history) is not ContactNodalLoadHistory:
             raise TypeError("nodal_load_history must be ContactNodalLoadHistory")
-        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE, _BEAM_PROFILE):
+        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE, _BEAM_PROFILE, _MULTIPLE_BEAM_PROFILE):
             raise ValueError("nodal load history requires one Q4 plane nodal LoadCase or opted-in S3 plane nodal LoadCase")
         if nodal_load_history.points[-1][0] < transient.t_end:
             raise ValueError("nodal load history must cover t_end")
@@ -787,6 +826,8 @@ def solve_transient_contact(
             profile = _S3_HISTORY_PROFILE
         elif profile == _BEAM_PROFILE:
             profile = _BEAM_HISTORY_PROFILE
+        elif profile == _MULTIPLE_BEAM_PROFILE:
+            profile = _MULTIPLE_BEAM_HISTORY_PROFILE
     s3_descriptor = profile in (_S3_PROFILE, _S3_HISTORY_PROFILE)
     if controls.s3_one_sided_rates_dev:
         profile = (_S3_DIRECTIONAL_HISTORY_PROFILE if nodal_load_history is not None
@@ -849,7 +890,8 @@ def solve_transient_contact(
     if Mred.shape[0] > 512:
         raise ValueError("transient development profile admits at most 512 free coordinates")
     descriptor_basis = None
-    if profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE):
+    if profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE,
+                   _MULTIPLE_BEAM_PROFILE,_MULTIPLE_BEAM_HISTORY_PROFILE):
         try:
             np.linalg.cholesky(Mred.toarray())
         except np.linalg.LinAlgError as exc:
@@ -916,7 +958,9 @@ def solve_transient_contact(
                        initial_displacement=full_initial) as manager:
         if controls.allow_classical_beam_dev:
             from .beam_plane import _BeamPlaneManager
-            expected_manager = _BeamPlaneManager
+            from .multiple_beam_rigid import MultipleBeamRigidManager
+            expected_manager = (MultipleBeamRigidManager if controls.allow_multiple_beam_planes_dev
+                                else _BeamPlaneManager)
         else:
             expected_manager = _PlanarQ4PlaneManager
         if type(manager) is not expected_manager:
@@ -1137,13 +1181,10 @@ def solve_transient_contact(
                         full_velocity = np.asarray(T @ candidate_velocity).reshape(-1)
                         if path_adapter is None:
                             if controls.allow_classical_beam_dev:
-                                from .beam_temporal_bounds import beam_hermite_gap_bounds
-                                swept_gap = beam_hermite_gap_bounds(
+                                swept_gap, beam_path_admissible = _beam_complete_path_gaps(
                                     manager,previous_full,full,previous_velocity,full_velocity,step,
-                                    tolerance_m=controls.beam_swept_gap_tolerance_m,
-                                    maximum_subdivisions=controls.maximum_beam_swept_subdivisions,
-                                    check_cancel=lambda: check_cancel("transient beam complete-path bounds"),
-                                ).lower_gap
+                                    controls, lambda: check_cancel("transient beam complete-path bounds"),
+                                )
                             else:
                                 swept_gap = _minimum_hermite_gap(
                                     manager, previous_full, full,
@@ -1242,7 +1283,8 @@ def solve_transient_contact(
                                                 event_seed = boundary.position
                                                 break
                         if (contact_result.gap_tolerance_met
-                                and swept_gap >= -manager.gap_tolerance):
+                                and (beam_path_admissible if controls.allow_classical_beam_dev
+                                     else swept_gap >= -manager.gap_tolerance)):
                             converged = True
                         break
                     jacobian = (Mred / (beta * step * step) + T.T @ tangent @ T).tocsr()

@@ -2,64 +2,57 @@
 
 ## Authority and identity
 
-FullC0–C9 goal active. Tiered/new testing workflow applies; no communication with
-or inspection of the other task. Worktree:
+Full C0–C9 goal active; tiered/new testing workflow, no communication with or
+inspection of the other task. Active worktree:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Slice parentb8960736; read currentHEAD/status
-for checkpoint. [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4,
-[plan](GENERAL_CONTACT_PLAN.md) rev2026-10-02.1. No publication, main merge,
-release, changed defaults or original-worktree edits. Prior turn was progress:
-resolved S3 event continuation checkpointb8960736. This slice adds physical beam
-impact using the shared driver and verified complete curve/time bounds.
+codex/contact-main-reconcile-20261001. Slice parent6cb9a304; read currentHEAD/status
+for checkpoint. Goal rev2026-09-30.4; plan rev2026-10-02.2. No publication, merge,
+release, changed defaults, original-worktree or shared ABC-guard edits authorized.
+This turn is progress: multiple explicit beam-plane impact installed-tested.
 
-## Current result and evidence
+## Current result
 
-Explicit classical B2/B3 scalar elastic von Karman round-tube/plane Newmark now
-shares transactions, loads, cutback, cancellation and restart. Actual mass and
-rotary inertia retained; reduced mass must be positive definite. Straight-reference
-B3 guard retained; a deformed curved field develops partial contact and rotary
-motion. Tensor Bernstein enclosures use exact Fraction input arithmetic, bounded
-refinement and outward conversion; the full-path lower bound governs gap checks.
+Explicit allow_multiple_beam_planes_dev requires classical beam opt-in. Existing
+additive line-work owner handles named fixed-plane interactions and disjoint
+surfaces covering all B2/B3 elements. Each pair retains its endpoint/full-Hermite-
+path dimensional gap gate; one split cap is shared. Mass, transaction, history,
+cutback/cancellation and restart remain shared. Pair definitions/settings and new
+profile bind continuation. No caps, native insertion or finite-rotation expansion.
 
-Final isolated artifact107passes/0skips, including geometry, uniform independent
-Newmark/impulse, deformable B3 normal momentum/gap, active/history restart, failure/
-cancellation, zero mass and shell/event compatibility, plus two beam CLI examples.
-451matched modules/201isolated imports;16.296s/186486784B within routine caps.
-[Results/raw](docs/d1_review_support/contact_c6_classical_beam_20261001/results.md),
-[guide](docs/GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md),
-[review/adjudication](docs/d1_review_support/contact_c6_classical_beam_20261001/review.md).
-Geometry worker owned only kernel/tests; lead inspected/integrated. Mistral Read
-completed6source reads and reviewed kernel/selected driver contracts. Unexecuted
-numerical figures in its report are excluded. Later knot/end fix is separately
-tested, outside that review's ranges. All installed files bind the final bytes.
+Twelve new mechanics/lifecycle checks cover summed/orthogonal mode Newmark,
+individual reactions/impulse, opening, active/history/order restart, changed law,
+unequal gap budgets, aggregate exhaustion, failure cleanup, coverage and rejection.
+Installed evidence covers80 distinct checks:77 initial passes and3 corrective
+passes for packaging/CLI failures; unaffected passes reused.451source/wheel/site
+modules match. Max sampled tree302673920B; runs9.965s and5.257s within180s/1GB.
+Independent Mistral source follow-up found no counterexample for path/resource/
+restart properties; source-only scrutiny is not scientific acceptance.
+[Results/raw](docs/d1_review_support/contact_c6_multiple_beam_planes_20261002/results.md),
+[guide](docs/GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md).
 
 ## Failures, limits and next action
 
-Retain sourcev2 phantom load-knot step, v4 rejected curved-reference fixture,
-v6 zero-mass fixture missing velocity, v8 one-ULP end overstep, and stage1's106
-passes at its earlier source. Fixes integrate to an arithmetically adjacent knot
-only at/before t_end; never advance time without solving. No criteria relaxed.
-Raw archive98files/readbackPASS; previous S3/native failures/consumed authorities
-remain in linked history. [Prior note](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART43.md).
+Retain v1 test-field/tuple defects, v2 earlier radial guard, v4 nonexistent surface
+field and installed missing-example/NumPy-print failures. All corrected; no science
+criteria relaxed. Raw63files/readbackPASS. Prior failures/consumed authorities remain
+in [history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART44.md).
 
-This is installed-tested development, not C6 engineering acceptance. Toy .002m
-penetration budget is not qualification or an application default. Full finite-
-rotation, caps, beam pairs/shells, nonlinear materials, friction, moving/free rigid
-bodies and native/shell common-stage impact remain open, alongside broader D2–D8.
-Accepted D1-interior/named D2 static subsets remain intact; app admission staysfalse.
+Development only; toy .002m gap budget is not qualification/default. C6 acceptance,
+finite rotations, nonlinear materials, caps, radial/pair/shell impacts, friction,
+moving/free bodies and full D2–D8 remain open. Accepted static subsets unchanged;
+application admissionfalse. Historical ABC preimport NONPASS remains separately owned.
 
-Next inspect current owners for one interacting-body outcome: multiple explicit
-contributors or prescribed/free rigid motion through shared coordinates/work/state.
-Fix ownership/interfaces and the bounded independent physics discriminator before
-implementation. Avoid repeating event/native temporal screens merely for counts.
-No shared ABC guard/export/dispatch edits; historical preimport NONPASS remains.
+Next inspect prescribed-tool motion: serialized time/path identity, physical tool
+work, reactions and conservative relative beam/tool path before fixing one bounded
+shared-driver slice. Preserve individual gap budgets and native integration-stage
+boundaries; do not replay event/native temporal screens merely for counts.
 
-## Processes and budget
+## Processes and resources
 
-No owned process running; geometry worker and Mistral terminal. Routine source:
-run_portable_ci.py --development <exact targets> --jit off --timeout-seconds180
---memory-limit-mib953, unique RUNNER_TEMP, thread1; stricter frozen caps prevail.
-Final packageC:/ANYworkspaceWork/contact-beam-impact-package-20261001-v2.
-
-At22:01:37UTC goal194361s+retained3120s offset=197481s:54.856h used/65.144h
-remaining of original120activehours. Subsequent active time counts; no reset.
+No owned job live; both Mistral runs terminal. First review limit reached without
+conclusion; focused follow-up completed unresolved properties. Package:
+C:/ANYworkspaceWork/contact-multiple-beam-impact-package-20261002.
+Routine checks: portable --development exact selectors, JIToff, threads1,
+180s/953MiB, uniqueRUNNER_TEMP; stricter frozen caps prevail.
+At22:30:01UTC goal196066s+retained3120s=199186s:55.329h used/64.671h remaining
+of original120activehours; subsequent active time counts, no reset.

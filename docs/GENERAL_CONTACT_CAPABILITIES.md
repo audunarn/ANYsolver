@@ -854,3 +854,17 @@ Large finite rotation, moving/free bodies, beam pairs/shells, caps, friction,
 nonlinear material and C6 engineering acceptance are not established. Applications
 must keep admission false. [Guide](GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md),
 [results/review/failures](d1_review_support/contact_c6_classical_beam_20261001/results.md).
+
+## Multiple classical beam-plane Newmark — installed-tested development
+
+Explicit `allow_multiple_beam_planes_dev` requires the classical beam opt-in and
+at least two fixed-plane penalty interactions. Surface union covers all B2/B3
+elements; exact scalar elasticity/no caps and positive physical mass remain.
+Named contributor work and individual reactions are preserved; duplicate element/
+body ownership is rejected. Each pair has its own endpoint and complete-path gap
+gate, and subdivisions share one cap. Active/history restart binds pair contracts.
+Twelve new physics/lifecycle/resource checks and B2/B3 multiple-plane examples are
+installed-tested;80 distinct checks covered by77 initial and3 corrective passes.
+Independent source review found no counterexample within its stated limits.
+This is development, not C6 engineering acceptance/release; app admission isfalse.
+See [results and failures](d1_review_support/contact_c6_multiple_beam_planes_20261002/results.md).
