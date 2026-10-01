@@ -67,7 +67,12 @@ from .e4_pl_s3_v2d_element import (
     FORMULATION_ID as _S3_V2D_DECLARED_FORMULATION_ID,
     IMPLEMENTATION_ID as S3_V2D_IMPLEMENTATION_ID,
     QUADRATURE_AUTHORITY_ID as S3_V2D_QUADRATURE_AUTHORITY_ID,
+    V2D_DERIVED_CACHE_NAMES as _S3_V2D_DERIVED_CACHE_NAMES,
     NativeParityE4PLS3V2DShellElement,
+    _V2D_LEASE_EPOCHS_KEY,
+    _s3_v2d_runtime_epoch_manager as _S3_V2D_RUNTIME_EPOCH_MANAGER,
+    _subscribe_v2d_lease_epoch,
+    _V2DLeaseEpoch,
 )
 from .e4_pl_s3_v2d_state import (
     canonical_json_bytes as _v2d_canonical_json_bytes,
@@ -685,6 +690,168 @@ def _static_mro_attribute(owner: type[Any], name: str) -> Any:
     return None
 
 
+def _changed_critical_apis(
+    owner: type[Any],
+    profile: Mapping[str, Any],
+    static_lookup: Any,
+) -> tuple[str, ...]:
+    """Critical APIs whose class-level definition is not the frozen one."""
+
+    return tuple(
+        sorted(
+            str(name)
+            for name, expected in profile["critical_apis"].items()
+            if static_lookup(owner, str(name)) is not expected
+        )
+    )
+
+
+def _changed_base_critical_apis(
+    base_critical_apis: Mapping[str, Any],
+    static_lookup: Any,
+) -> tuple[str, ...]:
+    """Base-class critical APIs that are not the frozen ones."""
+
+    return tuple(
+        sorted(
+            str(name)
+            for name, expected in base_critical_apis.items()
+            if static_lookup(ShellElement, str(name)) is not expected
+        )
+    )
+
+
+def _capture_serialization_module_guards(
+    profiles: Mapping[str, Mapping[str, Any]],
+) -> Mapping[Any, Any]:
+    """Freeze the module-level guard each serialization validator runs itself.
+
+    The Q4 and S3 validators re-run one element-independent module guard for
+    every element; the same guard object they bind by default is captured here
+    so one lifecycle validation call can run it once.  A validator without such
+    a keyword (S3 V2D) has no entry and keeps its own per-element behaviour.
+    """
+
+    guards: dict[Any, Any] = {}
+    for profile in profiles.values():
+        validator = profile["serialization_validator"]
+        defaults = getattr(validator, "__kwdefaults__", None)
+        guard = defaults.get("_module_guard") if type(defaults) is dict else None
+        if callable(guard):
+            guards[validator] = guard
+    return MappingProxyType(guards)
+
+
+_SERIALIZATION_MODULE_GUARDS = _capture_serialization_module_guards(
+    _QUALIFIED_PROFILES
+)
+
+
+def _run_guard_once_per_call(guard: Any) -> Any:
+    """Wrap an element-independent guard so one call runs it once.
+
+    A failing guard is not marked done: every later element runs it again and
+    fails the same way, as before.
+    """
+
+    done = False
+
+    def once(*args: Any, **kwargs: Any) -> None:
+        nonlocal done
+        if not done:
+            guard(*args, **kwargs)
+            done = True
+
+    return once
+
+
+class _ScanClassSnapshot:
+    """Class- and module-level facts read once per lifecycle validation call.
+
+    One instance lives for exactly one call of the exact lifecycle guard and is
+    never stored.  Every instance-level check and every read that is specific
+    to one element (its namespace, values, callables, the element-specific
+    validators) still runs for every element, and each class-level read stays
+    at its original position inside the element check.  What the snapshot
+    reuses within one call is what all elements of one class share: attribute
+    lookups on that class, the two critical-API comparisons, and the
+    serialization module guard.  A change to a *base* class made after the
+    first element of a class was checked is therefore reported by the next
+    call, not by the remaining elements of this one; a change to the Q4 or S3
+    class itself is still reported by the remaining elements through their own
+    final-class authority.  Only the qualified Q4 and S3 families take a
+    snapshot; S3 V2D elements and custom profile-failure callbacks keep the
+    per-element boundary.
+
+    The memos key on ``id()`` (a hostile metaclass ``__hash__`` must not run
+    here) and keep the keyed class alive, so an id cannot be reused within one
+    call.
+    """
+
+    __slots__ = (
+        "_lookup",
+        "_lookup_cache",
+        "_critical",
+        "_base_critical",
+        "_guards",
+    )
+
+    def __init__(self, lookup: Any) -> None:
+        self._lookup = lookup
+        self._lookup_cache: dict[tuple[int, str], tuple[Any, Any]] = {}
+        self._critical: dict[tuple[int, int], tuple[Any, Any, Any]] = {}
+        self._base_critical: dict[int, tuple[Any, Any]] = {}
+        self._guards: dict[Any, Any] = {}
+
+    def lookup(self, owner: type[Any], name: str) -> Any:
+        key = (id(owner), name)
+        entry = self._lookup_cache.get(key)
+        if entry is None:
+            entry = self._lookup_cache[key] = (owner, self._lookup(owner, name))
+        return entry[1]
+
+    def changed_critical(
+        self,
+        owner: type[Any],
+        profile: Mapping[str, Any],
+    ) -> tuple[str, ...]:
+        key = (id(owner), id(profile))
+        entry = self._critical.get(key)
+        if entry is None:
+            entry = self._critical[key] = (
+                owner,
+                profile,
+                _changed_critical_apis(owner, profile, self.lookup),
+            )
+        return entry[2]
+
+    def changed_base_critical(
+        self,
+        profile: Mapping[str, Any],
+    ) -> tuple[str, ...]:
+        key = id(profile)
+        entry = self._base_critical.get(key)
+        if entry is None:
+            entry = self._base_critical[key] = (
+                profile,
+                _changed_base_critical_apis(
+                    profile["base_critical_apis"], self.lookup
+                ),
+            )
+        return entry[1]
+
+    def serialization_module_guard(self, validator: Any) -> Any:
+        """The once-per-call module guard for *validator*, or ``None``."""
+
+        guard = self._guards.get(validator)
+        if guard is None:
+            real = _SERIALIZATION_MODULE_GUARDS.get(validator)
+            guard = self._guards[validator] = (
+                False if real is None else _run_guard_once_per_call(real)
+            )
+        return guard or None
+
+
 def _qualified_profile_api_failure(
     element: Any,
     profile: Mapping[str, Any],
@@ -692,6 +859,7 @@ def _qualified_profile_api_failure(
     _captured_class_names: frozenset[str] | None = None,
     _static_lookup: Any = _static_mro_attribute,
     _serialization_static_lookup: Any = None,
+    _snapshot: _ScanClassSnapshot | None = None,
 ) -> str | None:
     """Return one exact API-authority failure without evaluating mechanics."""
 
@@ -802,24 +970,20 @@ def _qualified_profile_api_failure(
             f"{expected_formulation_id}:CALLABLE_INSTANCE_OVERRIDE="
             + ",".join(callable_instance_overrides)
         )
-    changed_critical = tuple(
-        sorted(
-            str(name)
-            for name, expected in critical_apis.items()
-            if _static_lookup(type(element), str(name)) is not expected
-        )
+    changed_critical = (
+        _changed_critical_apis(type(element), profile, _static_lookup)
+        if _snapshot is None
+        else _snapshot.changed_critical(type(element), profile)
     )
     if changed_critical:
         return (
             f"{expected_formulation_id}:CRITICAL_API_MISMATCH="
             + ",".join(changed_critical)
         )
-    changed_base_critical = tuple(
-        sorted(
-            str(name)
-            for name, expected in base_critical_apis.items()
-            if _static_lookup(ShellElement, str(name)) is not expected
-        )
+    changed_base_critical = (
+        _changed_base_critical_apis(base_critical_apis, _static_lookup)
+        if _snapshot is None
+        else _snapshot.changed_base_critical(profile)
     )
     if changed_base_critical:
         return (
@@ -827,15 +991,19 @@ def _qualified_profile_api_failure(
             + ",".join(changed_base_critical)
         )
     try:
-        if _serialization_static_lookup is None:
-            profile["serialization_validator"](
-                element, expected_class=profile["element_type"],
-            )
-        else:
-            profile["serialization_validator"](
-                element, expected_class=profile["element_type"],
-                _static_lookup=_serialization_static_lookup,
-            )
+        validator = profile["serialization_validator"]
+        validator_options: dict[str, Any] = {}
+        if _serialization_static_lookup is not None:
+            validator_options["_static_lookup"] = _serialization_static_lookup
+        if _snapshot is not None:
+            module_guard = _snapshot.serialization_module_guard(validator)
+            if module_guard is not None:
+                validator_options["_module_guard"] = module_guard
+        validator(
+            element,
+            expected_class=profile["element_type"],
+            **validator_options,
+        )
     except (AttributeError, TypeError, ValueError) as exc:
         return (
             f"{expected_formulation_id}:CONFIGURATION_AUTHORITY={exc}"
@@ -854,6 +1022,8 @@ def _call_local_static_lookup() -> Any:
     Mapping proxies are live views: additions, removals and replacements remain
     visible immediately. A changed MRO rebuilds the views. Nothing survives
     the enclosing lifecycle validation call, and descriptors are never invoked.
+    The exact lifecycle scan may put a per-call ``_ScanClassSnapshot`` in front
+    of this lookup for the qualified Q4 and S3 families (see its docstring).
     """
     views: dict[int, tuple[Any, tuple[Any, ...]]] = {}
 
@@ -1121,24 +1291,48 @@ def _require_exact_qualified_component_lifecycle_api_implementation(
             )
     if not failures:
         call_static_lookup = _lookup_factory()
+        # Only the exact default profile check takes a snapshot, and only for
+        # the qualified Q4 and S3 families.  Any other callback and every S3
+        # V2D element keep the per-element boundary and their own signature.
+        snapshot = (
+            _ScanClassSnapshot(call_static_lookup)
+            if _profile_failure is _qualified_profile_api_failure
+            else None
+        )
         for element_id, element, profile in candidates:
             formulation_id = str(profile["formulation_id"])
             if (
                 _profile_failure is _preparable_profile_failure
                 and profile is _default_profiles.get(formulation_id)
             ):
+                element_snapshot = (
+                    snapshot
+                    if profile["family"] in {"qualified_q4", "qualified_s3"}
+                    else None
+                )
+                element_lookup = (
+                    call_static_lookup
+                    if element_snapshot is None
+                    else element_snapshot.lookup
+                )
+                snapshot_options = (
+                    {}
+                    if element_snapshot is None
+                    else {"_snapshot": element_snapshot}
+                )
                 failure = _profile_failure(
                     element,
                     profile,
                     _captured_class_names=(
                         _captured_class_names_by_formulation[formulation_id]
                     ),
-                    _static_lookup=call_static_lookup,
+                    _static_lookup=element_lookup,
                     _serialization_static_lookup=(
-                        call_static_lookup
+                        element_lookup
                         if profile["family"] in {"qualified_q4", "qualified_s3"}
                         else None
                     ),
+                    **snapshot_options,
                 )
             else:
                 failure = _profile_failure(element, profile)
@@ -1212,6 +1406,159 @@ require_exact_qualified_component_lifecycle_api = (
 _EXACT_QUALIFIED_COMPONENT_LIFECYCLE_GUARD = (
     require_exact_qualified_component_lifecycle_api
 )
+
+
+class _QualifiedLifecycleProbeMesh:
+    __slots__ = ("elements",)
+
+    def __init__(self, elements: Mapping[int, Any]) -> None:
+        self.elements = elements
+
+
+class _QualifiedLifecycleProbeModel:
+    """A private element subset observed by the exact lifecycle guard."""
+
+    __slots__ = ("mesh",)
+
+    def __init__(self, elements: Mapping[int, Any]) -> None:
+        self.mesh = _QualifiedLifecycleProbeMesh(elements)
+
+
+_V2D_TRUSTED_BOOKKEEPING_NAMES = frozenset(
+    {
+        "_qualified_direct_state_token",
+        "_qualified_direct_state_tokens",
+        _V2D_LEASE_EPOCHS_KEY,
+    }
+)
+_V2D_TRUSTED_SCALAR_TYPES = frozenset({type(None), bool, int, float, str})
+
+
+def _v2d_trusted_immutable_value(value: Any, *, depth: int = 0) -> bool:
+    kind = type(value)
+    if kind in _V2D_TRUSTED_SCALAR_TYPES:
+        return True
+    if kind is tuple:
+        return depth < 2 and all(
+            _v2d_trusted_immutable_value(item, depth=depth + 1)
+            for item in value
+        )
+    if kind is np.ndarray:
+        current: Any = value
+        while type(current) is np.ndarray:
+            if current.flags.writeable:
+                return False
+            current = current.base
+        return type(current) is bytes
+    return False
+
+
+def _v2d_trusted_instance_eligible(element: Any) -> bool:
+    """Whether only ordinary (counted) writes can change the instance.
+
+    Every value the exact guard can observe must be immutable, so an in-place
+    mutation cannot alter a validated fact without an attribute write.  The
+    generic derived caches are data the exact guard never reads; their
+    data-only resets deliberately are not counted as modifications.
+    """
+
+    try:
+        namespace = object.__getattribute__(element, "__dict__")
+    except AttributeError:
+        return False
+    if type(namespace) is not dict:
+        return False
+    for name, value in tuple(dict.items(namespace)):
+        if type(name) is not str:
+            return False
+        if name in _V2D_TRUSTED_BOOKKEEPING_NAMES:
+            continue
+        if name in _S3_V2D_DERIVED_CACHE_NAMES:
+            if value is None or type(value) is np.ndarray:
+                continue
+            return False
+        if not _v2d_trusted_immutable_value(value):
+            return False
+    return True
+
+
+def _capture_qualified_v2d_trusted_authority(
+    element_items: Any,
+    *,
+    context: str,
+    _exact_guard: Any = _require_exact_qualified_component_lifecycle_api_implementation,
+    _v2d_type: type[Any] = NativeParityE4PLS3V2DShellElement,
+    _v2d_manager: Any = _S3_V2D_RUNTIME_EPOCH_MANAGER,
+) -> Any:
+    """Capture a constant-time lifecycle check for owned S3 V2D elements.
+
+    The exact guard validates each admitted formulation in two parts: module,
+    data, dependency and class authority once per formulation, then each
+    element instance.  This capture runs the complete guard over every V2D
+    element once.  The returned check re-runs the complete guard over one
+    representative element, which re-validates the whole formulation-level
+    authority with the unchanged exact code, and requires the V2D class epoch
+    to be unchanged.  The remaining per-instance facts are protected by a write
+    counter private to this capture: every V2D element is subscribed to it, any
+    ordinary write or deletion on a subscribed element advances it, and
+    eligibility requires every observed value to be immutable.  Callers must
+    separately require the owning mesh epoch (the qualified assembly lease's
+    trusted state check does) for the element mapping and the nodes.
+
+    Returns ``None`` when no V2D element is present, any V2D instance is not
+    eligible or the capture scan fails; callers then keep the complete
+    lifecycle scan.
+    """
+
+    if type(element_items) is not tuple:
+        return None
+    v2d_items = tuple(
+        (element_id, element)
+        for element_id, element in element_items
+        if type(element) is _v2d_type
+    )
+    if not v2d_items or not all(
+        type(element_id) is int and _v2d_trusted_instance_eligible(element)
+        for element_id, element in v2d_items
+    ):
+        return None
+    # Subscribe and capture first, then validate: a write that lands between
+    # subscription and the end of the scan is counted and rejected below.
+    epoch = _V2DLeaseEpoch()
+    _subscribe_v2d_lease_epoch((element for _id, element in v2d_items), epoch)
+    generation = _v2d_manager.capture_generation()
+    try:
+        _exact_guard(
+            _QualifiedLifecycleProbeModel(dict(v2d_items)),
+            context=f"{context} S3 V2D trusted capture",
+        )
+    except (AttributeError, ElementCapabilityError, TypeError, ValueError):
+        # Declining keeps the complete scan, which then reports the failure
+        # at the caller's own preflight boundary with its usual context.
+        return None
+    representative = _QualifiedLifecycleProbeModel(dict(v2d_items[:1]))
+
+    def require_unchanged(context: str) -> None:
+        try:
+            _v2d_manager.require_generation(generation)
+        except ValueError as exc:
+            raise ElementCapabilityError(
+                f"{context} requires exact qualified component/lifecycle APIs; "
+                "S3 V2D class authority changed during the trusted lease"
+            ) from exc
+        if epoch.value != 0:
+            raise ElementCapabilityError(
+                f"{context} requires exact qualified component/lifecycle APIs; "
+                "an S3 V2D element was modified during the trusted lease"
+            )
+
+    def require(*, context: str) -> None:
+        require_unchanged(context)
+        _exact_guard(representative, context=context)
+        require_unchanged(context)
+
+    require_unchanged(f"{context} S3 V2D trusted capture")
+    return require
 
 
 def _qualified_route(

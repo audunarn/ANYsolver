@@ -205,7 +205,8 @@ def _jit_flow_stress_scalar(
 def _jit_consistency_residual_scalar(
     plastic_multiplier: float,
     b1: float,
-    b23: float,
+    b2: float,
+    b3: float,
     alpha_n: float,
     c_a: float,
     shear_modulus: float,
@@ -221,7 +222,15 @@ def _jit_consistency_residual_scalar(
     """Return the scalar consistency residual and current flow stress."""
     d_a = 1.0 + c_a * plastic_multiplier
     d_b = 1.0 + 2.0 * shear_modulus * plastic_multiplier
-    phi2 = b1**2 / (12.0 * d_a**2) + b23 / d_b**2
+    # Match the returned-stress arithmetic, rather than squaring trial modes
+    # before division. Equivalent expressions can round to opposite sides of
+    # the local tolerance, prematurely ending the consistency solve.
+    sig_a = b1 / d_a
+    sig_b = b2 / d_b
+    tau = b3 / d_b
+    sx = 0.5 * (sig_a + sig_b)
+    sy = 0.5 * (sig_a - sig_b)
+    phi2 = (sx**2 - sx * sy + sy**2) / 3.0 + tau**2
     g = 2.0 * np.sqrt(max(phi2 / 3.0, 1.0e-30))
     alpha_value = alpha_n + plastic_multiplier * g
     flow = _jit_flow_stress_scalar(
@@ -336,7 +345,12 @@ def _jit_plane_stress_return_map(
     for _ in range(max_iterations):
         dA = 1.0 + c_a * dl
         dB = 1.0 + 2.0 * G * dl
-        phi2 = b1**2 / (12.0 * dA**2) + b23 / dB**2
+        sig_a = b1 / dA
+        sig_b = b2 / dB
+        tau = b3 / dB
+        sx = 0.5 * (sig_a + sig_b)
+        sy = 0.5 * (sig_a - sig_b)
+        phi2 = (sx**2 - sx * sy + sy**2) / 3.0 + tau**2
         phi = np.sqrt(np.maximum(phi2, 1.0e-30))
         g = 2.0 * np.sqrt(np.maximum(phi2 / 3.0, 1.0e-30))
         alpha_new = alpha_y + dl * g
@@ -350,7 +364,7 @@ def _jit_plane_stress_return_map(
 
         all_scaled = True
         for i in range(n_yielding):
-            if np.abs(f[i]) > tolerance * max(sy[i]**2, 1.0):
+            if np.abs(f[i]) / max(sy[i]**2, 1.0) > tolerance:
                 all_scaled = False
                 break
         if all_scaled:
@@ -377,7 +391,8 @@ def _jit_plane_stress_return_map(
         residual_i, flow_i = _jit_consistency_residual_scalar(
             dl[i],
             b1[i],
-            b23[i],
+            b2[i],
+            b3[i],
             alpha_y[i],
             c_a,
             G,
@@ -392,7 +407,7 @@ def _jit_plane_stress_return_map(
         )
         if (
             np.isfinite(residual_i)
-            and np.abs(residual_i) <= tolerance * max(flow_i**2, 1.0)
+            and np.abs(residual_i) / max(flow_i**2, 1.0) <= tolerance
         ):
             continue
 
@@ -401,7 +416,8 @@ def _jit_plane_stress_return_map(
         upper_residual, upper_flow = _jit_consistency_residual_scalar(
             upper,
             b1[i],
-            b23[i],
+            b2[i],
+            b3[i],
             alpha_y[i],
             c_a,
             G,
@@ -421,7 +437,8 @@ def _jit_plane_stress_return_map(
             upper_residual, upper_flow = _jit_consistency_residual_scalar(
                 upper,
                 b1[i],
-                b23[i],
+                b2[i],
+                b3[i],
                 alpha_y[i],
                 c_a,
                 G,
@@ -445,7 +462,8 @@ def _jit_plane_stress_return_map(
             midpoint_residual, midpoint_flow = _jit_consistency_residual_scalar(
                 midpoint,
                 b1[i],
-                b23[i],
+                b2[i],
+                b3[i],
                 alpha_y[i],
                 c_a,
                 G,
@@ -461,7 +479,7 @@ def _jit_plane_stress_return_map(
             if (
                 np.isfinite(midpoint_residual)
                 and np.abs(midpoint_residual)
-                <= tolerance * max(midpoint_flow**2, 1.0)
+                / max(midpoint_flow**2, 1.0) <= tolerance
             ):
                 break
             if not np.isfinite(midpoint_residual) or midpoint_residual > 0.0:
@@ -484,7 +502,8 @@ def _jit_plane_stress_return_map(
     for idx, i in enumerate(yielding_indices):
         sigma[i] = sigma_y_pts[idx]
 
-    phi2 = sig_a**2 / 12.0 + sig_b**2 / 4.0 + tau**2
+    phi2 = (sigma_y_pts[:, 0]**2 - sigma_y_pts[:, 0] * sigma_y_pts[:, 1]
+            + sigma_y_pts[:, 1]**2) / 3.0 + tau**2
     new_alpha[yielding] = alpha_y + dl * 2.0 * np.sqrt(np.maximum(phi2 / 3.0, 1.0e-30))
     sy_final = _jit_flow_stress(
         new_alpha[yielding],

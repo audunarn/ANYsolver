@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+- Speed up nonlinear static solves of models that combine qualified Q4 shells
+  with exact S3 V2D triangles. The solver's own cancellation token and the V2D
+  elements now use the constant-time trusted lifecycle guard inside the Newton
+  loop, and every Numba kernel is cached on disk by default (`cache=True` is
+  applied by `anysolver.jit_compiler`; pass `cache=False` to opt out).
+  Displacements, load factors and step histories are bit-identical to 0.4.7.
+  On the representative plate/cylinder case a warm solve drops from 22.5 s to
+  11.7 s and the first solve in a fresh process from 38.5 s to 12.0 s.
+- A nonlinear static solve now stops with an authority error when an S3 V2D
+  element it owns is modified (any ordinary attribute write or deletion) while
+  it runs. Writes before or after a solve behave as before.
+- A cancellation token is trusted only if it is an unmodified
+  `CancellationToken` both before and after its checkpoint code runs; every
+  other token keeps the complete lifecycle scan.
+- Report which guard path a nonlinear static solve used through the
+  `qualified_guard_trusted`, `qualified_guard_complete_scan`,
+  `qualified_guard_untrusted_token` and `qualified_v2d_trusted_unavailable`
+  events in `info["nonlinear_performance"]["solver"]["event_counts"]`.
+- Speed up the exact qualified lifecycle guard for Q4 and S3 shells: class-level
+  facts and one element-independent serialization module guard are read once per
+  validation call instead of once per element. One complete scan drops from about
+  70 to about 33 microseconds per shell; a warm nonlinear solve of a stiffened
+  synthetic model is about 20 % faster and the GUI-style plate/cylinder run about
+  8 %. Instance-level checks, the element-specific validators and S3 V2D elements
+  are unchanged. Semantics: a change to a base class made after the first element
+  of a class was checked is reported by the next call rather than by the remaining
+  elements of the same call (a change to the Q4 or S3 class itself is still
+  reported by them).
+- Keep qualified element equations, physical tolerances and defaults
+  unchanged.
+
 ## 0.4.7 - 2026-09-21
 
 - Speed up representative static analysis and retained-load solves through

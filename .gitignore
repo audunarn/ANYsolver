@@ -12,6 +12,7 @@ reports/
 !reports/
 reports/*
 !reports/extract_mat_mesh_io_performance_review.md
+!reports/s3_angles/
 !reports/performance/
 reports/performance/*
 !reports/performance/sol_ultra_environment.json
