@@ -65,11 +65,24 @@ rigid displacement map; outside-body REF/ROT controls are usable. Seven-digit
 DAT output cannot certify the tighter1e-8 scientific balance criterion. V1's
 warning is retained; V2 is warning-free. This is recovery feasibility, not E02,
 BL5 or F03 acceptance. [Precision and geometry limits](development/r8-anyfem-b2-reference-modal-20261001/reference-wrench-feasibility.md).
-Next discriminator: determine a physically matched footprint comparison,
-including extent, origin and normal-spin work. A continuum rigid face constrains
-physical translations; it cannot be presumed equivalent to all six shell DOFs.
-Resolve that equivalence before scoring stiffness. If only a subset matches,
-use it as scoped physical transfer evidence and keep the other channels open.
+E02 bounded batch delivered: matched1m x.2m x.02m panel with full-width rigid
+tip x>=.8, three in-plane refinement levels and separate Fz/Mx/My loads. GE
+finest work differs from CalculiX by+.148%/-.620%/+.120%; actual drilling
+decoupling and negligible free-stub work hold. Native torque still changes1.36%
+on the last mesh; thickness convergence and tight external balance remain open.
+Offset parity is kinematic only. Independent review supports retaining this
+restricted out-of-plane candidate, not normal-spin/full connection acceptance.
+Stop this batch; no automatic fourth mesh or formal F03 execution.
+[Complete matched inputs, failures and decision](development/r8-e02-rigid-tip-reference-20261001/results.md).
+
+Next bounded numerical decision: B2's same40-cell Fz screen fails its existing
+mixed-load resolution guard: global contribution bound8.326e-9 of explicit load
+versus1e-9. No tolerance or geometry tuning. Independent Read input permits
+investigating a compensated unscaled stored-KKT certificate only for zero
+offsets and pure coordinate selectors. Next check actual residual at every
+explicit load row against the unchanged1e-9 component cap; include lost tiny
+load/cancellation counterexamples. Success proves stored equations, not element
+or forward accuracy. Only then implement the narrow fallback/correction seam.
 
 ## Verification and restart
 

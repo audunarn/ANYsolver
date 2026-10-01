@@ -1,5 +1,16 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+E02 physical rigid-tip development,1 October: matched installed GE/CalculiX
+out-of-plane Fz/Mx/My cases run at three fixed in-plane levels, plus coarse
+signed-port parity. Actual membrane/drilling decoupling and negligible free-stub
+work hold. Finest work differences+.148%/-.620%/+.120% are not converged1%
+acceptance: native torque's last refinement is1.36%, solid thickness resolution
+is fixed and seven-digit output cannot certify1e-8 balance. Independent Read
+review supports retaining the restricted candidate and stopping the batch.
+B2's40-cell public resolution guard fails and remains unchanged; its accuracy
+was not compared. No normal-spin, F03, F04 or aggregate pass follows.
+[Combined physical evidence and failures](development/r8-e02-rigid-tip-reference-20261001/results.md).
+
 ANYfem supported B2 footprint-mode consumer,1 October: consumer350c980 and
 wheel11728ab8...fa56e use the unchanged solver27660d...f47ec. Distinct strict
 experimental modal schema and existing Project dispatch preserve old static
@@ -795,7 +806,7 @@ independent mechanics review and complete V06 adjudication remain open. See
 | External comparison | Status | Current boundary |
 |---|---|---|
 | E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees signed point screens, including 2×1/4×2/8×4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. At 8×4 the external axial-load shell action replays its coupled field to 1.93e-17; the changed coupled action explains 93.6% of the roll gap at fixed native shell stiffness. Direct +100 N m torque gives a 19.0% native/external torsional-compliance difference, stable under sparse-solve correction. Four same-action torque replays show the changed coupled action explains 109.1% of that gap while the isolated external shell is slightly stiffer; physical Mx distribution dominates and Mz contributes zero on this fixture. Beam-only section compliance agrees to roundoff. Shell/point torsional-transfer cause and matched idealization remain unresolved; stop diagnostic refinement pending focused mechanics review. Formal observables/floors, accepted physical reference and independent review remain open. |
-| E02 torque/footprint | IN_PROGRESS | Executed CalculiX outside-body REF/ROT control establishes complete support-wrench and work-coordinate recovery feasibility. No executed matched native/continuum footprint comparison. Seven-digit printed data do not certify1e-8 balance; physical extent, normal-spin equivalence and output precision remain open. See development/r8-anyfem-b2-reference-modal-20261001/reference-wrench-feasibility.md. |
+| E02 torque/footprint | IN_PROGRESS | Executed matched rigid-tip GE/CalculiX out-of-plane comparison at three in-plane levels. Finest Fz/Mx/My work differences+.148%/-.620%/+.120%; native torque convergence, solid thickness resolution and tighter balance precision open. Normal-spin/full-law equivalence not claimed. B2 public resolution guard fails; B2 accuracy untested. See development/r8-e02-rigid-tip-reference-20261001/results.md. |
 | E03 curved stiffener | NOT_STARTED | No executed matched comparison. |
 | E04 nonlinear GE/capacity | NOT_STARTED | No executed matched comparison. |
 
