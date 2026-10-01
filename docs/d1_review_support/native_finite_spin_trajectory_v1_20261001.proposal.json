@@ -1,0 +1,114 @@
+{
+  "status": "SOURCE_AUTHORED_NOT_EXECUTED",
+  "workspace": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver",
+  "owned_path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_finite_spin_acceleration_chart.py",
+  "selected_test": "tests/test_ge_beam3_native_finite_spin_acceleration_chart.py::test_free_finite_spin_trajectory",
+  "criteria": {
+    "spatial_spin_rad_per_s": [
+      35.0,
+      -25.0,
+      20.0
+    ],
+    "dt_seconds": 0.0005,
+    "maximum_accepted_steps": 16,
+    "internal_time_limit_seconds": 120.0,
+    "explicit_stage_solve_tolerance": 1e-12,
+    "scientific_stage_gate": 1e-11,
+    "endpoint_balance_gate": 1e-11,
+    "normalized_defect_limit": 1e-06,
+    "elastic_witness_limit": 1e-10,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "length_scale_m": 2.0,
+    "maximum_returned_stage_observations": 128,
+    "stage_coordinates": "acceleration",
+    "arithmetic_gamma_operations": 64,
+    "total_time_seconds": 0.008,
+    "minimum_final_cell_attitude_rad": 0.2,
+    "owner_count": 1,
+    "checkpoint_segments": 0
+  },
+  "resource_bounds": {
+    "supervisor_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "internal_seconds": 120.0,
+    "threads": 1,
+    "owner_count": 1,
+    "checkpoint_segments": 0,
+    "maximum_steps": 16,
+    "maximum_original_returned_stage_observations_per_trial": 128,
+    "maximum_original_returned_stage_observations_total": 2048,
+    "observation_limit_scope": "128 per trial, at most16 trials; this is a recording bound, not a new solver iteration/backtracking gate"
+  },
+  "source_sha256": {
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py": "2c8e243e74f0b6eafff485b536f08242a51154d31dd8500afe689e10b2f265df",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\ge_beam3_native_dynamics.py": "aeba9bb1dbc7aa2daa0eb9df0f6a1ac49e43f476bafefeb76dbbc4239654326b",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py": "5bbbb4f7c99ef04483183f112c2c96dce19bc55f9f58cb9f3eecefe2065cf320",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_finite_spin_acceleration_chart.py": "f387b825cac5d6bd8493e6176ff397a1177641a56ef9480f7da51992fa85af0e"
+  },
+  "historical": {
+    "raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.raw.json",
+      "sha256": "705b627848aef2df9ce17cdce2dda937ea1ae29d1031a855f48ff567181248f7"
+    },
+    "inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.inputs.json",
+      "sha256": "07b3f12777cd21ed5932fe14f51ec3254ba1796f6627d3ce8373be4c2996926d"
+    },
+    "fixture": {
+      "path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py",
+      "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+    },
+    "passed_acceleration_raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_acceleration_chart_v2_20261001.raw.json",
+      "sha256": "63643016d676f459fa4c2bc39e5a9c880a26069cfd742732aeaece30f48b913c"
+    },
+    "passed_acceleration_inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_acceleration_chart_v2_20261001.inputs.json",
+      "sha256": "d2355dd4ad01a9845b37fb8d933f6e56eb4eaf26b3e5eeecec3850fc6b4a54de"
+    },
+    "passed_acceleration_test_source": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_acceleration_chart_v1_20261001.test.source.py",
+      "sha256": "589a69e110fc18595827062887ee996f8a97a1c8cf6556383885a9c586c01378"
+    },
+    "failed_increment_raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_step_v2_20261001.raw.json",
+      "sha256": "63338a2594bd43c8bb996211ff12187e1e896bc88cf41d49ddecc4b102762d6f"
+    }
+  },
+  "historical_source_overrides": {
+    "_ge_beam3_native_midpoint.py": "2c8e243e74f0b6eafff485b536f08242a51154d31dd8500afe689e10b2f265df",
+    "ge_beam3_native_dynamics.py": "aeba9bb1dbc7aa2daa0eb9df0f6a1ac49e43f476bafefeb76dbbc4239654326b",
+    "_ge_beam3_native_dynamic_restart.py": "5bbbb4f7c99ef04483183f112c2c96dce19bc55f9f58cb9f3eecefe2065cf320"
+  },
+  "future_environment": {
+    "PYTHONPATH": "src;tests;.;examples",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_CACHE_DIR": "LEAD_FROZEN_EFFECTIVE_WRITABLE_CACHE",
+    "NATIVE_FINITE_SPIN_TRAJECTORY_INPUTS": "LEAD_FROZEN_INPUT_PATH",
+    "NATIVE_FINITE_SPIN_TRAJECTORY_RAW_OUTPUT": "NEW_EXCLUSIVE_RAW_OUTPUT"
+  },
+  "decision": "One separately prospective16-step full-elastic trajectory with unchanged production and numerical settings. N32/N64, macro/900s, segmentation, checkpoint/deadline renewal and automatic retuning are not authorized. Inputs and execution belong to lead; source only here.",
+  "fixture": "Same authentic free curved elastic ellipsoid, section centroid/cross inertia, order4 retained work/order24 inertia, Omega=(35,-25,20), world origin0, virgin physical rest and actual consistent v/a initialization. No load/support/rigid-rotor substitution.",
+  "initialization": "Issued full42 mechanical/material state, physical velocity/acceleration and signed R/I/J/M/balance captured before gates. Bit equality to passed one-step actual initial q/v/a/history/R/I/M/E0/scales. All27 algebraic inertia rows exactly zero;9 nodal-frame algebraic velocity/acceleration placeholders exactly zero; no hidden constraints.",
+  "positive_scales": "Same authenticated fullM42 mass, initial positiveE0, v*=sqrt(2E0/m), P*=m*v*, H*=2m*v*. Step and cumulative E/P/H use these INITIAL frozen positive scales throughout; no zero endpoint normalization or tolerance/floor change.",
+  "trajectory": "Parameter constructor buildsN,T criteria; selected test admits onlyN16/T.008/h.0005. One persistent owner/context; no restore, clock reset or segment. Each trial authenticates candidate and stage in selected acceleration chart; actual endpoint algebraic consistency/acceleration remain owner physics.",
+  "recording": "Reuse inherited accounting and compensated momentum_delta; existing one-step functions/helpers remain AST-identical with original589a source snapshot retained. Trajectory recorder serializes each ORIGINAL returned StageEvaluation canonically before gates (unknown/R/I/e/J/M/pose/vm/am included) and official audits/endpoints. No repeated Fraction/condition-number/ULP diagnostics or FD on Newton stages; unchanged kernel evidence answers prior precision question. Only required physical gates at every endpoint; no secondary stage evaluation. maximum_returned_stage_observations=128 is enforced PER TRIAL by len(unissued_stages)-first_observation; the theoretical total across16 trials is at most2048. The180s supervisor,1GiB memory and single-owner120s lifetime caps are unchanged.",
+  "pending_and_endpoint": "Actual signed candidate audit/unknown42/increment42/predecessor/epoch/context/session/endpoint saved before candidate gates and commit. Actual committed state persisted immediately before endpoint accounting. Complete signed endpointR/I/J/M/balance/accounting and compensated step+cumulativeP/H saved before development gates. First failure stops before next trial.",
+  "counts": "solver_committed_steps versus gate_passing_steps distinct. accepted_steps is explicitly an alias for gate_passing DEVELOPMENT endpoints, never engineering qualification. A postcommit failure retains committed state with DEVELOPMENT_NONPASS and no next trial; fresh-owner rollback is not used to conceal it.",
+  "unchanged_gates": "Explicit stage solve1e-12, scientific stage and endpoint/algebraic1e-11, existing correction1e-11, E/P/H step AND cumulative1e-6, elastic witness1e-10, exact algebraic inertia/velocity/acceleration zeros, virgin history. All unchanged. Both final cell attitudes must be>=.2rad on completion.",
+  "geodesic_definition": "Principal SO3 distance theta=atan2(norm(vee(U Uref^T-(U Uref^T)^T))/2,(trace(U Uref^T)-1)/2), independently per cell relative to actual initial frames. Future refinement would require common-time compensated translations/spatial velocities and these geodesics, but no such reference is computed here.",
+  "reuse_by_impact": "Current3 source hashes unchanged; one-step directional derivative and local chart consistency evidence reused. No repeatedFD, Fraction/condition/ULP stage diagnostics, numerical reference preparation/eigensolve. Initialization gates bind the fresh actual fixture; passed one-step does not establish16-step accuracy or outcome.",
+  "claim_boundary": "Source readiness only;16-only development control, not temporal convergence/accuracy, independent rotor oracle, spatial accuracy, C7 acceptance, installed/release claim. Historical failures remain unchanged.",
+  "authoring": "Only source reads, saved-JSON metadata/hash reads, text edits and compile/AST validation. No imports of production/NumPy/test, numerical reference preparation, initializer, stage, eigensolve or numerical execution."
+}

@@ -621,8 +621,15 @@ class MidpointContext:
             u[p] = (accepted.physical_acceleration24[p] if acceleration_chart
                     else dt*accepted.physical_velocity24[p])
             backtracks = 0
+            stage = self._stage(accepted, u, dt, cancellation_token)
             for iteration in range(self.max_iterations+1):
-                stage = self._stage(accepted, u, dt, cancellation_token)
+                # A successful line-search evaluation already belongs to the
+                # exact next unknown and the same committed origin. Keep its
+                # immutable work instead of assembling it a second time.
+                # Validate ownership/cancellation at every Newton iteration,
+                # including iterations which reuse that disposable stage.
+                self._guard(cancellation_token, 'midpoint.stage')
+                self._require_current(accepted)
                 step = np.zeros(42)
                 step[free] = np.linalg.solve(stage.jacobian[np.ix_(free, free)], -stage.residual[free])
                 norm = self._norm(stage.residual, free)
@@ -640,6 +647,7 @@ class MidpointContext:
                     backtracks += int(cut > 0)
                     if self._norm(next_stage.residual, free) < norm:
                         u = proposed
+                        stage = next_stage
                         break
                 else:
                     raise ValueError('midpoint stage residual backtracking failed')

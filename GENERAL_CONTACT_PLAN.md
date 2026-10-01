@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.49. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.50. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -87,11 +87,40 @@ errors1.376e-12/5.033e-12. E/P/H defects2.186e-7/6.169e-8/4.932e-9 pass the unch
 1e-6 gates. A preinitializer input-alias NONPASS remains. This tests the chart plus
 its initialized-acceleration Newton seed; no sole-cause or trajectory claim follows.
 
-Next use one direct16-step free trajectory over.008s, same spin and acceleration
-chart, one120s owner/180s supervisor/1GiB. Reuse the unchanged kernel's derivative
-evidence; retain actual signed audits/endpoints and stop at the first physical
-gate failure. This bounded trajectory screen is not a temporal accuracy claim.
-Prepare separate refinement controls only after interpreting its result and cost.
+The direct16-step screen stopped at step3: three solver commits, two passing
+development endpoints,18.809s/240.349MB. Step/cumulative energy defects1.174e-6/
+2.094e-6 exceed the unchanged1e-6 gate; stage equilibrium and P/H pass. Saved
+independent work decomposition attributes the discrepancy to endpoint storage
+versus midpoint work, dominated by the elastic remainder; it establishes no
+cause or temporal order. See [retained result](docs/d1_review_support/native_finite_spin_trajectory_v1_20261001.summary.json).
+
+The four-step h=.00025 control passes23.103s/255.881MB. At shared t=.001 the
+normalized energy error falls from9.197e-7 to2.299e-7, ratio.250028 above both
+frozen resolution floors and below the prospective.4 discriminator. Independent
+saved assessment confirms the scoped result; no universal order/cause claim.
+[Evidence](docs/d1_review_support/native_finite_spin_temporal_half_v1_20261001.summary.json).
+
+Decision: preserve the temporal method and improve practical step cost first.
+The Newton loop now reuses the exact accepted line-search stage within the same
+trial, preserving guards, committed origin and complete residual/tangent. The
+reviewed four-step check matches all physical states/accounting/stage work
+bit-for-bit with the saved half-control. Actual physical stage evaluations fall
+20 to12; cancellation and stale-predecessor controls pass. Complete instrumented
+route21.857s/269.222MB includes two extra rejection checks, so no balanced runtime
+savings claim follows. [Evidence](docs/d1_review_support/native_stage_reuse_v2_20261001.summary.json).
+V1 remains verificationNONPASS from an incorrect context-identity assertion; its
+four physical steps passed and rejection checks were unissued. V2 deletes only
+that assertion. Mechanical/settings context can stay equal while exact source
+artifact binding changes separately. No equation or physical gate was relaxed.
+
+Next verify the acceleration chart's official checkpoint/continuation: actual
+step4 checkpoint, direct step5 versus matching fresh restore/step5, and rejection
+of an incompatible increment-chart owner. Same physical gates, three explicitly
+bounded owners120s each/180s supervisor/1GiB, six total steps. This is a restart
+control, not permission to segment or renew a full trajectory's deadline. Select
+the full-angle route after that result; no replayN16, automatic full-cost increase
+or refinement sweep. Short controls do not replace required finite-angle,
+temporal or continuum evidence.
 The112-step temporal-refinement
 proposal is not execution authority. Fresh checkpoint restore alone does not
 authorize renewed120s deadlines within one case; aggregate/segment boundaries

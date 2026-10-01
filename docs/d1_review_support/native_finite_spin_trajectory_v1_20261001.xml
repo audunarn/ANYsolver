@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="15.830" timestamp="2026-10-01T05:56:15.844835+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_ge_beam3_native_finite_spin_acceleration_chart" name="test_free_finite_spin_trajectory" time="15.202"><failure message="AssertionError: assert 1.1741240973762397e-06 &lt;= 1e-06&#10; +  where 1.1741240973762397e-06 = max(dict_values([6.255291872366939e-08, 5.187351969969478e-09, 1.1741240973762397e-06]))&#10; +    where dict_values([6.255291872366939e-08, 5.187351969969478e-09, 1.1741240973762397e-06]) = &lt;built-in method values of dict object at 0x0000021D26FD4D00&gt;()&#10; +      where &lt;built-in method values of dict object at 0x0000021D26FD4D00&gt; = {'E': 1.1741240973762397e-06, 'H': 5.187351969969478e-09, 'P': 6.255291872366939e-08}.values">record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x0000021D266483B0&gt;
+
+    def test_free_finite_spin_trajectory(record_property):
+        """One owner, selected16 steps, signed prefix retained on first failure."""
+        started = perf_counter()
+        inputs = json.loads(Path(os.environ['NATIVE_FINITE_SPIN_TRAJECTORY_INPUTS']).read_text(encoding='utf-8-sig'))
+        output = Path(os.environ['NATIVE_FINITE_SPIN_TRAJECTORY_RAW_OUTPUT'])
+        criteria = inputs['criteria']
+        assert criteria == finite_spin_trajectory_criteria(16, .008) and not output.exists()
+        evidence = dict(status='RUNNING', criteria=criteria, solver_committed_steps=0,
+            gate_passing_steps=0, accepted_steps=0, unissued_stages=[], endpoints=[], pending_attempt=None,
+            scope='16-only full-elastic finite-spin development control; no temporal/spatial accuracy or C7 admission')
+        def save(stage):
+            evidence.update(last_stage=stage, elapsed_seconds=perf_counter()-started)
+            output.write_text(json.dumps(evidence, indent=2, allow_nan=False)+'\n')
+            print(json.dumps(dict(stage=stage, elapsed_seconds=evidence['elapsed_seconds'])), flush=True)
+            assert evidence['elapsed_seconds'] &lt; criteria['internal_time_limit_seconds']
+        def authentic(label, expected):
+            row = inputs['historical'][label]
+            data = Path(row['path']).read_bytes()
+            assert row['sha256'] == expected == sha256(data).hexdigest()
+            return json.loads(data) if label != 'fixture' else data
+        try:
+            saved = authentic('raw', RAW_SHA)['reference']
+            old_inputs = authentic('inputs', OLD_INPUT_SHA)
+            authentic('fixture', FIXTURE_SHA)
+            chart_record = inputs['historical']['passed_acceleration_raw']
+            chart_bytes = Path(chart_record['path']).read_bytes()
+            assert sha256(chart_bytes).hexdigest() == chart_record['sha256']
+            chart_pass = json.loads(chart_bytes)
+            assert chart_pass['status'] == 'PASS' and chart_pass['accepted_steps'] == 1
+            assert chart_pass['criteria'] == CRITERIA
+            changed = inputs['historical_source_overrides']
+            assert changed == {'_ge_beam3_native_midpoint.py':
+                '2c8e243e74f0b6eafff485b536f08242a51154d31dd8500afe689e10b2f265df',
+                'ge_beam3_native_dynamics.py': 'aeba9bb1dbc7aa2daa0eb9df0f6a1ac49e43f476bafefeb76dbbc4239654326b',
+                '_ge_beam3_native_dynamic_restart.py': '5bbbb4f7c99ef04483183f112c2c96dce19bc55f9f58cb9f3eecefe2065cf320'}
+            for path, expected in old_inputs['source_sha256'].items():
+                expected = changed.get(Path(path).name, expected)
+                assert sha256(Path(path).read_bytes()).hexdigest() == expected == inputs['source_sha256'][path]
+            for path, expected in inputs['source_sha256'].items():
+                assert sha256(Path(path).read_bytes()).hexdigest() == expected
+            _, definition = make_analysis()  # Authentic builder, never old test bodies.
+            owner = create_analysis(SELECTOR, (definition,), (), inertia_order=24,
+                stage_residual_tolerance=criteria['explicit_stage_solve_tolerance'],
+                stage_coordinates=criteria['stage_coordinates'],
+                momentum_origin_high=tuple(criteria['origin_high_m']), momentum_origin_low=tuple(criteria['origin_low_m']))
+            c = owner._context
+            assert c.fixed == () and tuple(c.physical_free) == P and tuple(c.algebraic_free) == Z
+            assert c.load_pattern is None and c.stage_residual_tolerance == 1e-12 and c.stage_coordinates == 'acceleration'
+            assert c.element.operator.order == 4 and len(c.analysis._elements) == 1
+            assert canonical(c._reference_mechanical) == canonical(saved['reference_mechanical'])
+            assert canonical(c._reference_origins) == canonical(saved['virgin_histories'])
+            assert np.array_equal(c.analysis._inertias[c.element.element_id], saved['section_inertia'])
+            reference = c._reference_mechanical
+            omega = np.asarray(criteria['spatial_spin_rad_per_s'])
+            velocity = np.zeros(24)
+            for node, point in enumerate(positions(reference)):
+                velocity[6*node:6*node+3] = np.cross(omega, point)
+            velocity[18:21] = velocity[21:24] = omega
+            m0 = np.asarray(saved['M42'])
+            translation = np.zeros((42, 3))
+            for node in range(3):
+                translation[6*node:6*node+3] = np.eye(3)
+            mass = float(np.trace(translation.T@m0@translation)/3.)
+            energy = float(.5*velocity@m0[:24, :24]@velocity)
+            speed = float(np.sqrt(2.*energy/mass))
+            scales = dict(mass=mass, energy=energy, velocity=speed, momentum=mass*speed,
+                angular_momentum=mass*criteria['length_scale_m']*speed)
+            assert all(np.isfinite(value) and value &gt; 0. for value in scales.values())
+            evidence.update(scales=scales, independent_mass_input_M42=saved['M42'],
+                definition=json.loads(definition.raw), section_inertia=saved['section_inertia'],
+                initial_velocity24=velocity.tolist(), provenance=workflow_provenance(owner))
+            save('authenticated_fixture_scales_before_initialization')
+            state = owner.initialize(physical_velocity15=velocity[list(P)])
+            initial = owner.endpoint_accounting(state)
+            with c._atomic_operation():
+                c._guard(); work = c._loaded_work(state.mechanical, state.histories)
+                inertia = c._inertia(state.mechanical, state.physical_velocity24, state.physical_acceleration24)
+                scale, length = c._gate_inputs()
+            balance = work.residual+inertia.mixed_inertia
+            evidence['initial'] = dict(state=json.loads(canonical(state)), accounting=accounting(initial),
+                R42=work.residual.tolist(), I42=inertia.mixed_inertia.tolist(), balance42=balance.tolist(),
+                J42=work.spatial_jacobian.tolist(), M42=inertia.mixed_mass.tolist(),
+                I_v42=inertia.mixed_velocity_derivative.tolist(), I_q42=inertia.mixed_configuration_derivative.tolist(),
+                actual_residual_scales42=np.asarray(scale).tolist(), actual_length_scale_m=float(length),
+                scaled_free_balance=float(np.linalg.norm((balance/scale)[list(c.free)])),
+                initial_checks=owner.initial_checks, current_state_sha256=sha(state))
+            save('actual_initial_signed_balance')
+            historical_initial = chart_pass['initial']
+            for key in ('mechanical', 'physical_velocity24', 'physical_acceleration24', 'histories'):
+                assert canonical(evidence['initial']['state'][key]) == canonical(historical_initial['state'][key])
+            for key in ('R42', 'I42', 'M42', 'balance42'):
+                assert canonical(evidence['initial'][key]) == canonical(historical_initial[key])
+            assert scales == chart_pass['scales'] and initial.total_energy == historical_initial['accounting']['total_energy']
+            assert canonical(state.mechanical) == canonical(reference)
+            assert np.array_equal(state.physical_velocity24, velocity)
+            assert np.linalg.norm(inertia.mixed_mass-m0)/np.linalg.norm(m0) &lt;= 1e-12
+            assert abs(initial.kinetic_energy-energy)/energy &lt;= 1e-12
+            assert evidence['initial']['scaled_free_balance'] &lt;= criteria['endpoint_balance_gate']
+            assert np.count_nonzero(state.physical_velocity24[[i for i in range(24) if i not in P]]) == 0
+            assert np.count_nonzero(state.physical_acceleration24[[i for i in range(24) if i not in P]]) == 0
+            assert np.count_nonzero(inertia.mixed_inertia[list(Z)]) == 0
+            previous_accounting = initial
+            owner_context = c._identity
+            for index in range(criteria['maximum_accepted_steps']):
+                assert evidence['solver_committed_steps'] == evidence['gate_passing_steps'] == index
+                assert c._identity == owner_context  # One persistent owner; no restore/deadline renewal.
+                prior = state
+                evidence['pending_attempt'] = dict(step=index+1, predecessor_sha256=sha(prior), predecessor_epoch=prior.epoch)
+                original_stage = c._stage
+                first_observation = len(evidence['unissued_stages'])
+                def observe(predecessor, unknown, h, token=None):
+                    actual = original_stage(predecessor, unknown, h, token)
+                    # Canonical ORIGINAL StageEvaluation includes complete signed R/I/J/M.
+                    row = dict(step=index+1, unknown42=np.asarray(unknown).tolist(), stage=json.loads(canonical(actual)),
+                        context_sha256=c._identity, predecessor_sha256=sha(predecessor), predecessor_epoch=predecessor.epoch,
+                        original_returned_stage_preserved=True)
+                    evidence['unissued_stages'].append(row)
+                    save('original_returned_stage_'+str(len(evidence['unissued_stages'])))
+                    assert len(evidence['unissued_stages'])-first_observation &lt;= criteria['maximum_returned_stage_observations']
+                    return actual
+                c._stage = observe
+                try:
+                    candidate = owner.trial(prior, dt=criteria['dt_seconds'])
+                finally:
+                    c._stage = original_stage
+                    save('trial_return_or_failure')
+                audit = owner.candidate_stage_audit(candidate)
+                evidence['pending_attempt'].update(endpoint=json.loads(canonical(candidate.endpoint)),
+                    stage_coordinates=audit.stage_coordinates, unknown42=audit.unknown42.tolist(), increment42=audit.increment42.tolist(),
+                    stage=json.loads(canonical(audit.stage)), stage_sha256=audit.stage_sha256, candidate_sha256=audit.candidate_sha256,
+                    predecessor_sha256=audit.predecessor_sha256, predecessor_epoch=audit.predecessor_epoch,
+                    endpoint_epoch=audit.endpoint_epoch, audit_authentication_session=json.loads(audit.session_provenance),
+                    stage_residual_norm=candidate.stage_residual_norm, endpoint_algebraic_norm=candidate.endpoint_algebraic_norm,
+                    iterations=candidate.iterations, backtracks=candidate.backtracks)
+                save('authenticated_candidate_before_commit')
+                assert audit.stage_coordinates == 'acceleration'
+                assert audit.predecessor_epoch == index and audit.endpoint_epoch == index+1
+                assert np.array_equal(audit.stage.physical_acceleration24[list(P)], audit.unknown42[list(P)])
+                assert candidate.stage_residual_norm &lt;= criteria['explicit_stage_solve_tolerance']
+                assert candidate.stage_residual_norm &lt;= criteria['scientific_stage_gate']
+                assert candidate.endpoint_algebraic_norm &lt;= criteria['endpoint_balance_gate']
+                state = owner.commit(candidate)
+                evidence['solver_committed_steps'] = index+1
+                evidence['pending_attempt']['solver_committed_state'] = json.loads(canonical(state))
+                save('solver_commit_before_endpoint_accounting')
+                now = owner.endpoint_accounting(state)
+                with c._atomic_operation():
+                    c._guard(); work = c._loaded_work(state.mechanical, state.histories)
+                    inertia = c._inertia(state.mechanical, state.physical_velocity24, state.physical_acceleration24)
+                step_p, step_h = momentum_delta(now, previous_accounting, 'linear'), momentum_delta(now, previous_accounting, 'angular')
+                total_p, total_h = momentum_delta(now, initial, 'linear'), momentum_delta(now, initial, 'angular')
+                step_defects = dict(P=float(np.linalg.norm(step_p)/scales['momentum']), H=float(np.linalg.norm(step_h)/scales['angular_momentum']),
+                    E=abs(now.total_energy-previous_accounting.total_energy)/energy)
+                cumulative_defects = dict(P=float(np.linalg.norm(total_p)/scales['momentum']), H=float(np.linalg.norm(total_h)/scales['angular_momentum']),
+                    E=abs(now.total_energy-initial.total_energy)/energy)
+                row = dict(step=index+1, state=json.loads(canonical(state)), accounting=accounting(now),
+                    candidate=evidence['pending_attempt'], R42=work.residual.tolist(), I42=inertia.mixed_inertia.tolist(),
+                    balance42=(work.residual+inertia.mixed_inertia).tolist(), J42=work.spatial_jacobian.tolist(), M42=inertia.mixed_mass.tolist(),
+                    scaled_free_balance=c._norm(work.residual+inertia.mixed_inertia,c.free),
+                    step_delta_P_n_s=step_p.tolist(), step_delta_H_nm_s=step_h.tolist(),
+                    cumulative_delta_P_n_s=total_p.tolist(), cumulative_delta_H_nm_s=total_h.tolist(),
+                    normalized_step_defects=step_defects, normalized_cumulative_defects=cumulative_defects,
+                    elastic_witness_normalized=now.elastic_consistency_witness/energy,
+                    cell_attitude_from_initial_rad=cell_geodesic_angles(state.mechanical, reference), gate_status='NOT_YET_ASSESSED')
+                evidence['endpoints'].append(row)
+                save('actual_committed_endpoint_before_development_gates')
+&gt;               assert max(step_defects.values()) &lt;= criteria['normalized_defect_limit']
+E               AssertionError: assert 1.1741240973762397e-06 &lt;= 1e-06
+E                +  where 1.1741240973762397e-06 = max(dict_values([6.255291872366939e-08, 5.187351969969478e-09, 1.1741240973762397e-06]))
+E                +    where dict_values([6.255291872366939e-08, 5.187351969969478e-09, 1.1741240973762397e-06]) = &lt;built-in method values of dict object at 0x0000021D26FD4D00&gt;()
+E                +      where &lt;built-in method values of dict object at 0x0000021D26FD4D00&gt; = {'E': 1.1741240973762397e-06, 'H': 5.187351969969478e-09, 'P': 6.255291872366939e-08}.values
+
+tests\test_ge_beam3_native_finite_spin_acceleration_chart.py:660: AssertionError</failure></testcase></testsuite></testsuites>

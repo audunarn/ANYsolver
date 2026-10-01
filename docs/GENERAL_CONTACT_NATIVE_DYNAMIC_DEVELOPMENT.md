@@ -178,3 +178,19 @@ and its `.review.md`. This tests the chart plus initialized-acceleration Newton
 seed; it does not isolate the cause of the old increment stall or qualify a
 finite-angle trajectory. The increment NONPASS and preinitializer input-alias
 NONPASS remain. No installed chart or fullC7 claim follows.
+
+The later16-step spin screen stopped at step3 on the unchanged energy gate:
+three solver commits, two gate-passing endpoints. Stage equilibrium and momentum
+passed. A new short four-step half-control at shared0.001s passed all gates;
+energy defect ratio.250028 supports timestep dependence, without an order or
+full-trajectory accuracy claim. See native_finite_spin_trajectory_v1_20261001 and
+native_finite_spin_temporal_half_v1_20261001 summaries/reviews in d1_review_support.
+Finite-angle coverage and C7 admission remain open.
+
+The native Newton loop now reuses the exact accepted line-search stage, retaining
+the same equations and guards. The focused four-step check preserves all physical
+state/work/accounting bit-for-bit and reduces stage evaluations20to12. Stale and
+accepted-line cancellation controls pass. This is an evaluation-count result;
+the instrumented route is not a paired runtime benchmark. See
+native_stage_reuse_v2_20261001.summary.json/.review.md. V1 verification failure
+from an incorrect context-identity assertion is retained.

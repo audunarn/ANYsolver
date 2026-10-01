@@ -624,3 +624,25 @@ checkpoint bytes at the same load partition (4.295s/260.50MB). Independent revie
 1b210a6a binds14 historical artifacts/448 sources; no kernel change. V1 gap and
 V2 harness NONPASS preserved. Explicit1mm/.8mm illustrative gap budgets do not
 establish the qualification10um or scientific/installed admission.
+
+The prospective16-step native spin screen is DEVELOPMENT_NONPASS at step3:
+three solver commits/two gate-passing endpoints,18.809s/240.349MB. Step and
+cumulative E exceed1e-6; stage equilibrium/P/H pass. Independent saved-work
+review reconciles endpoint storage versus midpoint work without proving cause
+or order. Evidence native_finite_spin_trajectory_v1_20261001.summary.json and
+.review.md. No finite-angle/C7 admission; prior one-step status unchanged.
+
+The new four-step native half-control is independently assessed developmentPASS:
+23.103s/255.881MB, all endpoints pass. At common .001s cumulative energy falls
+from9.197e-7 to2.299e-7, ratio.250028 above both1e-10 floors; supports timestep
+dependence without general order/accuracy or full-angle/C7 claim. Evidence
+native_finite_spin_temporal_half_v1_20261001.summary.json/.review.md. N16 failure
+remains. Next change reuses exact accepted stage work, with guarded parity checks.
+
+Native stage-reuseV2 is independently assessed developmentPASS:4physical steps
+match saved state/accounting/work exactly,12stage evaluations versus20, and
+stale/cancellation controls preserve current/issuance.21.857s/269.222MB includes
+two extra rejection checks; no balanced runtime speedup claim. V1 erroneous
+context-inequality assertion NONPASS preserved; V2 deletes only that assertion.
+Evidence native_stage_reuse_v2_20261001.summary.json/.review.md. No C7/installed
+new-chart admission. Next explicit acceleration-chart restart check remains open.

@@ -1,0 +1,97 @@
+{"effective_numba_cache": "C:\\ANYworkspaceWork\\native_stage_reuse_v1_20261001-cache", "numba_version": "0.65.1", "entry_sha256": "5e78500955231e4ac42aa05e09e9464ec054b9f62d26ced3d3a3efbb84a4ed1f"}
+{"anysolver_file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "input_sha256": "3357f49e551cabe38015e5b0cae34d2560007e7748c5599d7d6a791391a07b06", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+{"stage": "authenticated_fixture_scales_before_initialization", "elapsed_seconds": 0.60976859999937}
+{"stage": "actual_initial_signed_balance", "elapsed_seconds": 2.493619899993064}
+{"stage": "original_returned_stage_1", "elapsed_seconds": 2.873980800010031}
+{"stage": "original_returned_stage_2", "elapsed_seconds": 3.094152900011977}
+{"stage": "original_returned_stage_3", "elapsed_seconds": 3.3224254999950062}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 4.1381286999967415}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 4.482721699983813}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 4.828229600010673}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 5.92434470000444}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 5.942428799986374}
+{"stage": "original_returned_stage_4", "elapsed_seconds": 6.353464799991343}
+{"stage": "original_returned_stage_5", "elapsed_seconds": 6.5895589999854565}
+{"stage": "original_returned_stage_6", "elapsed_seconds": 6.833623799990164}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 7.6701449000102}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 8.033417099999497}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 8.402572199993301}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 9.518402799993055}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 9.551785199990263}
+{"stage": "original_returned_stage_7", "elapsed_seconds": 9.959953799989307}
+{"stage": "original_returned_stage_8", "elapsed_seconds": 10.208368299994618}
+{"stage": "original_returned_stage_9", "elapsed_seconds": 10.467467999988003}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 11.3173475000076}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 11.694203199993353}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 12.060609899985138}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 13.180212300008861}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 13.222149000008358}
+{"stage": "original_returned_stage_10", "elapsed_seconds": 13.642593299999135}
+{"stage": "original_returned_stage_11", "elapsed_seconds": 13.90325770000345}
+{"stage": "original_returned_stage_12", "elapsed_seconds": 14.172363299992867}
+{"stage": "trial_return_or_failure", "elapsed_seconds": 15.068212499987567}
+{"stage": "authenticated_candidate_before_commit", "elapsed_seconds": 15.460708700004034}
+{"stage": "solver_commit_before_endpoint_accounting", "elapsed_seconds": 15.84406649999437}
+{"stage": "actual_committed_endpoint_before_development_gates", "elapsed_seconds": 16.997995499987155}
+{"stage": "step_development_gates_pass", "elapsed_seconds": 17.053639199992176}
+{"stage": "common_time_comparison_before_prospective_gate", "elapsed_seconds": 17.138015300006373}
+{"stage": "complete", "elapsed_seconds": 17.191904600011185}
+{"stage": "physical_bit_parity_before_gate", "elapsed_seconds": 17.33117069999571}
+{"stage": "physical_bit_parity_before_gate", "elapsed_seconds": 17.39290199999232}
+{"stage": "physical_bit_parity_before_gate", "elapsed_seconds": 17.453691999980947}
+{"stage": "physical_bit_parity_before_gate", "elapsed_seconds": 17.51376919998438}
+{"stage": "physical_bit_parity_before_gate", "elapsed_seconds": 17.573211399983848}
+F
+================================== FAILURES ===================================
+_____________________ test_stage_reuse_bitwise_half_step ______________________
+
+record_property = <function record_property.<locals>.append_property at 0x0000020078378720>
+
+    def test_stage_reuse_bitwise_half_step(record_property):
+        """NEW source-bound cache control: one existing4-step loop + rejected attempts."""
+        from anysolver.control import CancellationToken, SolveCancelled
+        started = perf_counter()
+        inputs = json.loads(Path(os.environ['NATIVE_FINITE_SPIN_TRAJECTORY_INPUTS']).read_text(encoding='utf-8-sig'))
+        output = Path(os.environ['NATIVE_FINITE_SPIN_TRAJECTORY_RAW_OUTPUT'])
+        assert inputs.get('verification_mode') == 'stage_reuse_v1' and type(inputs['verification_mode']) is str
+        assert inputs['criteria'] == finite_spin_trajectory_criteria(4, .001)
+        baseline_ref = inputs['historical']['passed_half_raw']
+        baseline_bytes = Path(baseline_ref['path']).read_bytes()
+        assert baseline_ref['sha256'] == sha256(baseline_bytes).hexdigest() == '2e232aa32e5f535bc6b50f28f2f3ef13d4aa18fc1e3667fc26c160b69f893846'
+        baseline = json.loads(baseline_bytes)
+        assert baseline['status'] == 'PASS' and baseline['solver_committed_steps'] == baseline['gate_passing_steps'] == 4
+        evidence = None
+        def save(label):
+            evidence.update(last_stage=label, elapsed_seconds=perf_counter()-started)
+            output.write_text(json.dumps(evidence, indent=2, allow_nan=False)+'\n')
+            print(json.dumps(dict(stage=label, elapsed_seconds=evidence['elapsed_seconds'])), flush=True)
+            assert evidence['elapsed_seconds'] < 120.
+        try:
+            owner, genesis, current = test_free_finite_spin_trajectory(record_property)
+            c = owner._context
+            evidence = json.loads(output.read_text())
+            evidence.update(physical_fixture_status=evidence['status'], status='RUNNING_STAGE_REUSE_CONTROLS',
+                verification_mode='stage_reuse_v1', bitwise_parity=[], rejected_attempts=[])
+            for kind, actual, expected in [('initial', evidence['initial'], baseline['initial']),
+                *[('endpoint', a, b) for a, b in zip(evidence['endpoints'], baseline['endpoints'])]]:
+                ap, bp = stage_reuse_physical_payload(actual, kind), stage_reuse_physical_payload(expected, kind)
+                equal = canonical(ap) == canonical(bp)
+                evidence['bitwise_parity'].append(dict(kind=kind, epoch=actual['state']['epoch'],
+                    actual_physical_sha256=sha(ap), saved_physical_sha256=sha(bp), bitwise_equal=equal))
+                save('physical_bit_parity_before_gate')
+                assert equal, 'initial/issued endpoint/accounting/audit physical payload differs from saved halfPASS'
+            assert len(evidence['endpoints']) == len(baseline['endpoints']) == 4
+>           assert evidence['initial']['state']['context_sha256'] != baseline['initial']['state']['context_sha256']
+E           AssertionError: assert 'b96cbba573bf7401d963ac96584196398edb0dcd70e31ffd746839f5b9b82f61' != 'b96cbba573bf7401d963ac96584196398edb0dcd70e31ffd746839f5b9b82f61'
+
+tests\test_ge_beam3_native_finite_spin_acceleration_chart.py:784: AssertionError
+============================== warnings summary ===============================
+tests/test_ge_beam3_native_finite_spin_acceleration_chart.py::test_stage_reuse_bitwise_half_step
+  tests\test_ge_beam3_native_finite_spin_acceleration_chart.py:750: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_stage_reuse_bitwise_half_step(record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_ge_beam3_native_finite_spin_acceleration_chart.py::test_stage_reuse_bitwise_half_step
+1 failed, 1 warning in 18.32s
+{"pytest_exit_code": 1, "verified_source_count": 446}
