@@ -7,10 +7,53 @@ import numpy as np
 import pytest
 
 from anysolver import solve_static_nonlinear
+from anysolver.control import CancellationToken
+from anysolver.element_capabilities import ElementCapabilityError
 from anysolver.general_contact import linearized_pivot
 from anysolver.general_contact.core import contact_scope
 from anysolver.general_contact.supported_schur import SupportedSchurProposal
 from scripts.general_contact_d1_finite_area_load import build_case
+
+
+def test_schur_checkpoint_rejects_self_healing_token_before_element_work(monkeypatch):
+    model, load, definition, settings = build_case(2, supported_schur=True)
+    element = model.mesh.elements[1]
+    token = CancellationToken()
+    checkpoints = []
+    response_hits = []
+
+    def hostile_response(*_args, **_kwargs):
+        response_hits.append(1)
+        raise AssertionError("a checkpoint mutation must not reach element work")
+
+    class SelfHealingFlag:
+        def __bool__(self):
+            checkpoints.append(1)
+            # This deliberately bypasses counted instance mutation. The flag
+            # is repaired before return, so trust must be checked beforehand.
+            object.__setattr__(element, "compute_nonlinear_response", hostile_response)
+            token._event._flag = False
+            return False
+
+    def arm_at_schur(*_args, check_cancel, **_kwargs):
+        token._event._flag = SelfHealingFlag()
+        check_cancel()
+        return None
+
+    monkeypatch.setattr(linearized_pivot, "refined_patch_supported_schur", arm_at_schur)
+    try:
+        with pytest.raises(ElementCapabilityError, match="augmentation Schur cancellation"):
+            solve_static_nonlinear(
+                model, load, contact=definition, contact_settings=settings,
+                control="force", kinematics="von_karman", num_steps=1,
+                max_load_factor=0.5, max_iterations=12,
+                min_step_fraction=0.5, cancellation_token=token,
+            )
+        assert checkpoints == [1]
+        assert response_hits == []
+    finally:
+        element.__dict__.pop("compute_nonlinear_response", None)
+        token._event._flag = False
 
 
 @pytest.mark.parametrize("divisions", (2, 8))

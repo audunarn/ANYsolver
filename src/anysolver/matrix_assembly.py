@@ -3437,109 +3437,120 @@ def _bind_qualified_assembly_runtime_lease(
                     trusted_input_require
                 )
 
+            def trusted_require(
+                expected_model: "FEModel",
+                *,
+                context: str,
+            ) -> None:
+                """Check a fully qualified trusted loop in constant time.
+
+                Also exported as ``_qualified_trusted_state_require`` for
+                mixed models.  There it validates only the owned inputs, the
+                mesh token and the Q4/S3/assembly epochs; it says nothing
+                about any other element family, which the caller must cover
+                with its own authority.
+
+                The exact capture and every caller-controlled boundary use
+                the complete lease.  Between those boundaries, monotonic
+                authority generations and the mesh mutation token reject
+                supported mutation, including mutate-then-restore ABA.
+                """
+
+                try:
+                    require_no_trusted_element_builtin_shadows()
+                    assembly_epoch_manager.require_generation(
+                        assembly_start_generation
+                    )
+                    if q4_generation is not None:
+                        q4_manager.require_generation(q4_generation)
+                    if s3_generation is not None:
+                        s3_manager.require_generation(s3_generation)
+                    if (
+                        expected_model is not model
+                        or exact_type(model) is not exact_model_type
+                        or exact_object_getattribute(model, "__dict__")
+                        is not trusted_plan["model_namespace"]
+                        or exact_dict_get(
+                            trusted_plan["model_namespace"], "mesh"
+                        )
+                        is not trusted_plan["mesh"]
+                        or exact_dict_get(
+                            trusted_plan["model_namespace"], "materials"
+                        )
+                        is not trusted_plan["materials"]
+                        or exact_dict_get(
+                            trusted_plan["model_namespace"],
+                            "current_material",
+                        )
+                        != trusted_plan["current_material"]
+                        or exact_type(trusted_plan["mesh"]) is not _FEMesh
+                        or exact_object_getattribute(
+                            trusted_plan["mesh"], "__dict__"
+                        )
+                        is not trusted_plan["mesh_namespace"]
+                        or exact_dict_get(
+                            trusted_plan["mesh_namespace"], "elements"
+                        )
+                        is not trusted_plan["mapping"]
+                        or exact_dict_get(
+                            trusted_plan["mesh_namespace"],
+                            "_qualified_direct_state_token",
+                        )
+                        is not trusted_token
+                        or exact_type(trusted_plan["mapping"])
+                        is not _QualifiedStateMapping
+                        or exact_object_getattribute(
+                            trusted_plan["mapping"], "__dict__"
+                        )
+                        is not trusted_plan["mapping_namespace"]
+                        or exact_dict_get(
+                            trusted_plan["mapping_namespace"],
+                            "_qualified_token",
+                        )
+                        is not trusted_token
+                        or exact_dict_get(
+                            trusted_plan["mapping_namespace"],
+                            "_qualified_kind",
+                        )
+                        != "element"
+                        or exact_type(trusted_token)
+                        is not _QualifiedMutationEpoch
+                        or exact_len(trusted_token) != 1
+                        or exact_int(exact_list_getitem(trusted_token, 0))
+                        != trusted_token_value
+                    ):
+                        raise exact_value_error(
+                            "qualified trusted-loop inputs changed"
+                        )
+                    if q4_generation is not None:
+                        q4_manager.require_generation(q4_generation)
+                    if s3_generation is not None:
+                        s3_manager.require_generation(s3_generation)
+                    assembly_epoch_manager.require_generation(
+                        assembly_start_generation
+                    )
+                except (
+                    exact_attribute_error,
+                    exact_runtime_error,
+                    exact_type_error,
+                    exact_value_error,
+                ) as exc:
+                    for element in q4_elements:
+                        invalidate_q4(element)
+                    for element in s3_elements:
+                        invalidate_s3(element)
+                    invalidate_s3_reference_plan()
+                    raise exact_assembly_error(
+                        f"{context} found incompatible qualified shell authority"
+                    ) from exc
+
             if len(q4_elements) + len(s3_elements) == len(elements):
-                def trusted_require(
-                    expected_model: "FEModel",
-                    *,
-                    context: str,
-                ) -> None:
-                    """Check a fully qualified trusted loop in constant time.
-
-                    The exact capture and every caller-controlled boundary use
-                    the complete lease.  Between those boundaries, monotonic
-                    authority generations and the mesh mutation token reject
-                    supported mutation, including mutate-then-restore ABA.
-                    """
-
-                    try:
-                        require_no_trusted_element_builtin_shadows()
-                        assembly_epoch_manager.require_generation(
-                            assembly_start_generation
-                        )
-                        if q4_generation is not None:
-                            q4_manager.require_generation(q4_generation)
-                        if s3_generation is not None:
-                            s3_manager.require_generation(s3_generation)
-                        if (
-                            expected_model is not model
-                            or exact_type(model) is not exact_model_type
-                            or exact_object_getattribute(model, "__dict__")
-                            is not trusted_plan["model_namespace"]
-                            or exact_dict_get(
-                                trusted_plan["model_namespace"], "mesh"
-                            )
-                            is not trusted_plan["mesh"]
-                            or exact_dict_get(
-                                trusted_plan["model_namespace"], "materials"
-                            )
-                            is not trusted_plan["materials"]
-                            or exact_dict_get(
-                                trusted_plan["model_namespace"],
-                                "current_material",
-                            )
-                            != trusted_plan["current_material"]
-                            or exact_type(trusted_plan["mesh"]) is not _FEMesh
-                            or exact_object_getattribute(
-                                trusted_plan["mesh"], "__dict__"
-                            )
-                            is not trusted_plan["mesh_namespace"]
-                            or exact_dict_get(
-                                trusted_plan["mesh_namespace"], "elements"
-                            )
-                            is not trusted_plan["mapping"]
-                            or exact_dict_get(
-                                trusted_plan["mesh_namespace"],
-                                "_qualified_direct_state_token",
-                            )
-                            is not trusted_token
-                            or exact_type(trusted_plan["mapping"])
-                            is not _QualifiedStateMapping
-                            or exact_object_getattribute(
-                                trusted_plan["mapping"], "__dict__"
-                            )
-                            is not trusted_plan["mapping_namespace"]
-                            or exact_dict_get(
-                                trusted_plan["mapping_namespace"],
-                                "_qualified_token",
-                            )
-                            is not trusted_token
-                            or exact_dict_get(
-                                trusted_plan["mapping_namespace"],
-                                "_qualified_kind",
-                            )
-                            != "element"
-                            or exact_type(trusted_token)
-                            is not _QualifiedMutationEpoch
-                            or exact_len(trusted_token) != 1
-                            or exact_int(exact_list_getitem(trusted_token, 0))
-                            != trusted_token_value
-                        ):
-                            raise exact_value_error(
-                                "qualified trusted-loop inputs changed"
-                            )
-                        if q4_generation is not None:
-                            q4_manager.require_generation(q4_generation)
-                        if s3_generation is not None:
-                            s3_manager.require_generation(s3_generation)
-                        assembly_epoch_manager.require_generation(
-                            assembly_start_generation
-                        )
-                    except (
-                        exact_attribute_error,
-                        exact_runtime_error,
-                        exact_type_error,
-                        exact_value_error,
-                    ) as exc:
-                        for element in q4_elements:
-                            invalidate_q4(element)
-                        for element in s3_elements:
-                            invalidate_s3(element)
-                        invalidate_s3_reference_plan()
-                        raise exact_assembly_error(
-                            f"{context} found incompatible qualified shell authority"
-                        ) from exc
-
                 require._qualified_trusted_require = trusted_require
+            # Owned-input, token and Q4/S3/assembly epoch state only.  It
+            # validates no other element family; a caller may use it only
+            # together with its own authority for every remaining element
+            # (nonlinear statics pairs it with the S3 V2D capture).
+            require._qualified_trusted_state_require = trusted_require
 
         return require
 

@@ -12,11 +12,17 @@ No legacy TRI3 or qualified-Q4 mechanics are dispatched from this module.
 from __future__ import annotations
 
 import math
+import threading
+import weakref
 from types import MappingProxyType
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
+from ._qualified_authority_epoch import (
+    AuthorityEpochMeta,
+    make_authority_epoch_manager,
+)
 from .element_capabilities import ElementCapabilityError
 from .elements import ShellElement
 from .e4_pl_element import QualifiedE4PLShellElement
@@ -91,6 +97,102 @@ _DRILL_INVERSE_METRIC_SQRT = np.diag((1.0 / math.sqrt(2.0), math.sqrt(2.0)))
 
 class NativeParityCapabilityError(ElementCapabilityError):
     """An operation is outside the currently accepted V2D gate."""
+
+
+# Generic derived caches that shared solver utilities reset with ``setattr``.
+# Data-only writes to them cannot change any instance fact the exact lifecycle
+# guard validates, so they never count as a modification (see below).
+V2D_DERIVED_CACHE_NAMES = frozenset(
+    {
+        "_hourglass_stiffness_matrix",
+        "_internal_forces",
+        "_mass_matrix",
+        "_nl_cache",
+        "_stiffness_matrix",
+    }
+)
+
+# Modification counters for live trusted leases.  A nonlinear solve that owns
+# V2D elements captures one counter per capture and subscribes it to every V2D
+# element.  Any ordinary write or deletion on a subscribed element then advances
+# the counter, so the constant-time trusted check can tell that the element
+# changed between two complete scans.  Nothing is subscribed outside a live
+# capture: writes to V2D elements behave exactly as before, and the shared mesh
+# epoch is never touched.  Direct ``__dict__`` writes and ``object.__setattr__``
+# remain interpreter-level bypasses outside the supported mutation surface.
+_V2D_LEASE_EPOCHS_KEY = "_qualified_v2d_lease_epochs"
+_V2D_LEASE_LOCK = threading.Lock()
+
+
+class _V2DLeaseEpoch:
+    """Count of ordinary writes to the V2D elements of one trusted capture.
+
+    Elements hold only weak references, so the subscription ends by itself when
+    the capture that owns the counter is released and nothing needs to be
+    unsubscribed.
+    """
+
+    __slots__ = ("value", "__weakref__")
+
+    def __init__(self) -> None:
+        self.value = 0
+
+
+def _subscribe_v2d_lease_epoch(
+    elements: Iterable[Any],
+    epoch: _V2DLeaseEpoch,
+    *,
+    _key: str = _V2D_LEASE_EPOCHS_KEY,
+    _lock: Any = _V2D_LEASE_LOCK,
+) -> None:
+    """Subscribe *epoch* to every element and drop released subscriptions."""
+
+    reference = weakref.ref(epoch)
+    with _lock:
+        for element in elements:
+            namespace = object.__getattribute__(element, "__dict__")
+            references = dict.get(namespace, _key)
+            if type(references) is not list:
+                references = []
+                dict.__setitem__(namespace, _key, references)
+            references[:] = [item for item in references if item() is not None]
+            references.append(reference)
+
+
+def _advance_v2d_lease_epochs(
+    element: Any,
+    name: str,
+    value: Any,
+    *,
+    deleting: bool = False,
+    _cache_names: frozenset[str] = V2D_DERIVED_CACHE_NAMES,
+    _ndarray: type = np.ndarray,
+    _namespace_of: Any = object.__getattribute__,
+    _key: str = _V2D_LEASE_EPOCHS_KEY,
+    _lock: Any = _V2D_LEASE_LOCK,
+) -> None:
+    """Count an ordinary write for every live capture that covers *element*.
+
+    Increments run under one lock, so concurrent writers cannot lose or reject
+    one another's advance.  Solver-owned derived-cache resets are not writes to
+    an authority fact and are not counted.
+    """
+
+    if (
+        not deleting
+        and type(name) is str
+        and name in _cache_names
+        and (value is None or type(value) is _ndarray)
+    ):
+        return
+    references = _namespace_of(element, "__dict__").get(_key)
+    if not references:
+        return
+    for reference in tuple(references):
+        epoch = reference()
+        if epoch is not None:
+            with _lock:
+                epoch.value += 1
 
 
 SUPPORTED_OPERATIONS = frozenset(
@@ -244,7 +346,10 @@ def _invariant_drill_scale(membrane: np.ndarray) -> float:
     return value
 
 
-class NativeParityE4PLS3V2DShellElement(ShellElement):
+class NativeParityE4PLS3V2DShellElement(
+    ShellElement,
+    metaclass=AuthorityEpochMeta,
+):
     """Explicit V2D candidate; no public alias or default selects it."""
 
     formulation_id = FORMULATION_ID
@@ -281,6 +386,26 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
         StrictFlatLinearE4PLS3V2CShellElement._pl_constraint
     )
     _operators = StrictFlatLinearE4PLS3V2CShellElement._operators
+
+    # The counting helper is bound at class creation so a temporarily replaced
+    # module global cannot suppress the count; both hooks are protected class
+    # entries (see ``_s3_v2d_runtime_epoch_manager``).
+    def __setattr__(
+        self,
+        name: str,
+        value: Any,
+        _advance: Any = _advance_v2d_lease_epochs,
+    ) -> None:
+        _advance(self, name, value)
+        super().__setattr__(name, value)
+
+    def __delattr__(
+        self,
+        name: str,
+        _advance: Any = _advance_v2d_lease_epochs,
+    ) -> None:
+        _advance(self, name, None, deleting=True)
+        super().__delattr__(name)
 
     def __init__(
         self,
@@ -2305,6 +2430,19 @@ class NativeParityE4PLS3V2DShellElement(ShellElement):
     def __reduce_ex__(self, protocol: int) -> Any:
         del protocol
         self._unsupported("python_pickle_restart")
+
+
+# Replacing a mutation hook installs a raising stub, so a swap-and-restore of
+# either hook cannot silently suppress the write count; any ordinary class
+# mutation also advances this generation.
+_s3_v2d_runtime_epoch_manager = make_authority_epoch_manager(
+    "qualified S3 V2D runtime"
+)
+_s3_v2d_runtime_epoch_manager.protect_type_entries(
+    NativeParityE4PLS3V2DShellElement,
+    ("__setattr__", "__delattr__"),
+)
+_s3_v2d_runtime_epoch_manager.watch_type(NativeParityE4PLS3V2DShellElement, None)
 
 
 __all__ = [

@@ -7,11 +7,18 @@ JIT.  Otherwise it falls back to a zero-overhead pass-through decorator.
 ``JIT_ENABLED`` and ``JIT_BACKEND`` are public diagnostics.  Performance tests
 must only enforce compiled-kernel timing expectations when ``JIT_ENABLED`` is
 true; correctness tests continue to run with the Python fallback.
+
+Both decorators enable Numba's on-disk cache by default (``cache=True``), so a
+kernel is compiled once per source revision rather than once per process.  A
+caller that must not cache a function passes ``cache=False`` explicitly.  The
+default lives here, not on each kernel, so byte-pinned kernel modules do not
+change.
 """
 
 from __future__ import annotations
 
 import contextlib
+import functools
 import os
 import sys
 from typing import Any, Callable, TypeVar
@@ -46,9 +53,21 @@ if not getattr(sys, "frozen", False):
     except ImportError as exc:
         _numba_import_error = str(exc)
 
+
+def _cached_by_default(decorator: Callable[..., Any]) -> Callable[..., Any]:
+    """Return *decorator* with Numba's disk cache on unless a caller opts out."""
+
+    @functools.wraps(decorator)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        kwargs.setdefault("cache", True)
+        return decorator(*args, **kwargs)
+
+    return wrapper
+
+
 if _use_numba:
-    njit = _njit
-    jit = _jit
+    njit = _cached_by_default(_njit)
+    jit = _cached_by_default(_jit)
     prange = _numba_prange
 else:
     njit = _passthrough_decorator
