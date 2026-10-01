@@ -2,8 +2,8 @@
 
 This is an experimental reference-linear owner. Shell and beam node identities
 are explicit and separate. Reference modes require explicit physical mass.
-No line, footprint, geometric stiffness, nonlinear state or qualification is
-inferred from the point-joint assembly.
+Explicit nodal footprints have a distinct reference-linear law and static-only
+scope. No line, geometric stiffness, nonlinear state or qualification is inferred.
 """
 
 from __future__ import annotations
@@ -18,6 +18,11 @@ from scipy.sparse.linalg import LinearOperator, eigs, ArpackError
 from scipy.sparse.csgraph import maximum_bipartite_matching
 
 from ._b2_f10_f11_point_attachment import LAW_ID, compile_reference_point
+from ._stiffened_shell_b2_nodal_footprint import (
+    LAW_ID as FOOTPRINT_LAW_ID, B2NodalRigidFootprint,
+    B2NodalRigidFootprintSelection, B2NodalRigidFootprintWrench,
+    compile_footprints, checked_selection, selected_wrenches,
+)
 from ._b2_physical_linear_definition import (
     PROFILE_ID, CompiledPhysicalB2Member, PhysicalB2Member,
     PhysicalB2OperatorCache,
@@ -161,6 +166,12 @@ class ExperimentalB2Q4PanelCapabilities:
 
 
 @dataclass(frozen=True)
+class ExperimentalB2Q4FootprintCapabilities(ExperimentalB2Q4PanelCapabilities):
+    footprint_law_id: str = FOOTPRINT_LAW_ID
+    footprints: tuple[B2NodalRigidFootprint, ...] = ()
+
+
+@dataclass(frozen=True)
 class B2ReferenceModesRequest:
     """Supported elastic reference modes; no prestress or rigid-mode request."""
 
@@ -247,6 +258,24 @@ class ExperimentalB2Q4PanelBatchResult:
     affine_reaction_envelopes: tuple[ExperimentalB2Q4PanelResponseEnvelope, ...] = ()
 
 
+@dataclass(frozen=True)
+class ExperimentalB2Q4FootprintResult(ExperimentalB2Q4PanelResult):
+    footprint_ids: tuple[str, ...] = ()
+    footprint_wrenches: tuple[B2NodalRigidFootprintWrench, ...] = ()
+    footprint_law_id: str = FOOTPRINT_LAW_ID
+
+
+@dataclass(frozen=True)
+class ExperimentalB2Q4FootprintSelectedCase(ExperimentalB2Q4PanelSelectedCase):
+    footprint_wrenches: tuple[B2NodalRigidFootprintWrench, ...] = ()
+
+
+@dataclass(frozen=True)
+class ExperimentalB2Q4FootprintBatchResult(ExperimentalB2Q4PanelBatchResult):
+    selected_footprints: tuple[str, ...] = ()
+    footprint_law_id: str = FOOTPRINT_LAW_ID
+
+
 def _unique_ids(items, name):
     ids = [getattr(item, name) for item in items]
     if any(not isinstance(value, str) or not value.strip() for value in ids):
@@ -287,7 +316,7 @@ def _flat_vertices(vertices):
         raise ValueError("nondegenerate flat Q4 shell required")
 
 
-def _require_connected_panel(shells, members, points):
+def _require_connected_panel(shells, members, points, footprints=()):
     """Check physical incidence without forming a numerical constraint matrix."""
     neighbours = {(0, shell.shell_id): set() for shell in shells}
     neighbours.update({(1, member.member_id): set() for member in members})
@@ -312,6 +341,15 @@ def _require_connected_panel(shells, members, points):
         if shell_key not in neighbours or member_key not in neighbours:
             raise ValueError("point host IDs must identify declared elements")
         join(shell_key, member_key)
+    for group in footprints:
+        shell_hosts = [s for s in shells if set(s.node_ids) & set(group.shell_nodes)]
+        beam_hosts = [m for m in members if group.beam_node in m.node_ids]
+        if (not beam_hosts or set(group.shell_nodes) -
+                {n for s in shell_hosts for n in s.node_ids}):
+            raise ValueError("known shell nodes and physical B2 endpoint required")
+        for shell in shell_hosts:
+            for member in beam_hosts:
+                join((0, shell.shell_id), (1, member.member_id))
     first = next(iter(neighbours))
     visited = {first}
     pending = [first]
@@ -324,7 +362,7 @@ def _require_connected_panel(shells, members, points):
 
 
 class ExperimentalB2Q4PanelAnalysis:
-    """Own one connected point-coupled reference-linear panel and factorization.
+    """Own one connected reference-linear panel and its sparse factorization.
 
     The coordinate order is sorted shell node IDs, then sorted beam node IDs,
     six global translations/rotations for each. Affine ``T/u0`` is supplied
@@ -336,11 +374,15 @@ class ExperimentalB2Q4PanelAnalysis:
                  shells: Sequence[Q4PanelShell],
                  members: Sequence[PhysicalB2Member | CompiledPhysicalB2Member],
                  points: Sequence[Q4B2Point], *,
-                 transformation: sparse.spmatrix, prescribed_offset):
+                 transformation: sparse.spmatrix, prescribed_offset,
+                 footprints: Sequence[B2NodalRigidFootprint] = ()):
         shells = tuple(shells)
         supplied_members = tuple(members)
         points = tuple(points)
-        if (len(shells) < 2 or len(supplied_members) < 2 or not points or
+        footprints = tuple(footprints)
+        if any(type(g) is not B2NodalRigidFootprint for g in footprints):
+            raise ValueError("typed experimental B2 nodal footprints required")
+        if (len(shells) < 2 or len(supplied_members) < 2 or not (points or footprints) or
                 any(not isinstance(shell, Q4PanelShell) for shell in shells) or
                 any(not isinstance(member, (PhysicalB2Member,
                                             CompiledPhysicalB2Member))
@@ -353,7 +395,7 @@ class ExperimentalB2Q4PanelAnalysis:
             member, CompiledPhysicalB2Member) else member
             for member in supplied_members)
         _unique_ids(definitions, "member_id")
-        _require_connected_panel(shells, definitions, points)
+        _require_connected_panel(shells, definitions, points, footprints)
         cache = PhysicalB2OperatorCache()
         compiled = tuple(
             member if isinstance(member, CompiledPhysicalB2Member)
@@ -381,6 +423,9 @@ class ExperimentalB2Q4PanelAnalysis:
         beam_ids = tuple(sorted(beam_positions))
         beam_index = {node_id: i+len(shell_ids)
                       for i, node_id in enumerate(beam_ids)}
+        footprints, footprint_incidence = compile_footprints(
+            footprints, positions, shells, beam_positions,
+            shell_index, beam_index, points)
         total = 6*(len(shell_ids)+len(beam_ids))
         model = FEModel("experimental-multi-Q4-B2-point")
         for node_id in shell_ids:
@@ -454,15 +499,23 @@ class ExperimentalB2Q4PanelAnalysis:
                     constraint_rows.append(6*point_index+local_row)
                     constraint_cols.append(int(slot))
                     constraint_values.append(law.constraint[local_row, local_col])
+        for item in footprint_incidence:
+            slots = item.shell_slots+item.beam_slots
+            local = np.column_stack((item.shell_matrix, np.eye(6)))
+            for local_row in range(6):
+                for local_col, slot in enumerate(slots):
+                    constraint_rows.append(item.row_start+local_row)
+                    constraint_cols.append(slot)
+                    constraint_values.append(local[local_row, local_col])
         C = sparse.coo_matrix(
             (constraint_values, (constraint_rows, constraint_cols)),
-            shape=(6*len(points), total)).tocsr()
+            shape=(6*(len(points)+len(footprint_incidence)), total)).tocsr()
         try:
             T = transformation.tocsr(copy=True)
             u0 = np.array(prescribed_offset, dtype=float, copy=True)
         except (AttributeError, TypeError, ValueError) as exc:
             raise ValueError("finite sparse panel affine plan required") from exc
-        if (T.shape[0] != total or T.shape[1] <= 6*len(points) or
+        if (T.shape[0] != total or T.shape[1] <= C.shape[0] or
                 u0.shape != (total,) or not np.isfinite(T.data).all() or
                 not np.isfinite(u0).all()):
             raise ValueError("finite sparse panel affine plan required")
@@ -482,6 +535,9 @@ class ExperimentalB2Q4PanelAnalysis:
         self.shell_node_ids = shell_ids
         self.beam_node_ids = beam_ids
         self.point_ids = tuple(point.point_id for point in points)
+        self.footprints = footprints
+        self.footprint_ids = tuple(g.footprint_id for g in footprints)
+        self._footprint_incidence = footprint_incidence
         self._members = tuple(member_lookup.items())
         self._K = K
         self._M = (sparse.coo_matrix((mass_values, (mass_rows, mass_columns)),
@@ -517,6 +573,11 @@ class ExperimentalB2Q4PanelAnalysis:
 
     @property
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
+        if self.footprints:
+            return ExperimentalB2Q4FootprintCapabilities(
+                attachment="explicit reference-linear selected-node rigid footprints and finite-vertex points",
+                spectral_domain="nodal-footprint modes and prestress unsupported",
+                footprints=self.footprints)
         if self._M is None:
             return ExperimentalB2Q4PanelCapabilities()
         return ExperimentalB2Q4PanelCapabilities(
@@ -534,6 +595,8 @@ class ExperimentalB2Q4PanelAnalysis:
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        if self.footprints:
+            raise ValueError("B2 nodal-footprint modes and prestress unsupported")
         if type(request) is not B2ReferenceModesRequest:
             raise ValueError("typed reference-mode request required")
         if self._M is None:
@@ -658,10 +721,18 @@ class ExperimentalB2Q4PanelAnalysis:
                 "failed", factorization_count=handle.factorization_count if handle else 0,
                 solve_count=handle.solve_count if handle else 0, failure_reason=str(exc))
 
-    def solve_linear(self, load, *, recover_members=None
+    def _panel_result(self, *args, **kwargs):
+        if self.footprints:
+            return ExperimentalB2Q4FootprintResult(
+                *args, footprint_ids=self.footprint_ids, **kwargs)
+        return ExperimentalB2Q4PanelResult(*args, **kwargs)
+
+    def solve_linear(self, load, *, recover_members=None,
+                     selected_footprints: B2NodalRigidFootprintSelection | None = None
                      ) -> ExperimentalB2Q4PanelResult:
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        chosen_footprints = checked_selection(selected_footprints, self.footprints)
         recovery = _checked_recovery(
             recover_members, {member_id for member_id, _ in self._members})
         try:
@@ -673,14 +744,14 @@ class ExperimentalB2Q4PanelAnalysis:
         try:
             rhs = np.r_[self._project(applied-self._ku0), -self._cu0]
         except _NumericalFailure as exc:
-            return ExperimentalB2Q4PanelResult(
+            return self._panel_result(
                 "failed", factorization_count=self._handle.factorization_count,
                 solve_count=self._handle.solve_count, failure_reason=str(exc))
         with np.errstate(over="ignore", under="ignore", invalid="ignore"):
             scaled_rhs = self._factor_scale*rhs
         if (not np.isfinite(scaled_rhs).all() or
                 np.any((rhs != 0.) & (scaled_rhs == 0.))):
-            return ExperimentalB2Q4PanelResult(
+            return self._panel_result(
                 "failed", factorization_count=self._handle.factorization_count,
                 solve_count=self._handle.solve_count,
                 failure_reason="panel right-hand side scaling is not representable")
@@ -688,7 +759,7 @@ class ExperimentalB2Q4PanelAnalysis:
             answer = self._factor_scale*np.asarray(
                 self._handle.solve(scaled_rhs), dtype=float)
         except RuntimeError as exc:
-            return ExperimentalB2Q4PanelResult(
+            return self._panel_result(
                 "failed", factorization_count=self._handle.factorization_count,
                 solve_count=self._handle.solve_count, failure_reason=str(exc))
         try:
@@ -748,7 +819,7 @@ class ExperimentalB2Q4PanelAnalysis:
                     np.any(np.abs(projected) > equilibrium_tolerance)):
                 raise _NumericalFailure("panel point gap or equilibrium failed")
         except _NumericalFailure as exc:
-            return ExperimentalB2Q4PanelResult(
+            return self._panel_result(
                 "failed", factorization_count=self._handle.factorization_count,
                 solve_count=self._handle.solve_count, failure_reason=str(exc))
         recovered = []
@@ -757,7 +828,7 @@ class ExperimentalB2Q4PanelAnalysis:
                 continue
             local = member.local_dof_map() @ u[slots]
             if not np.isfinite(local).all():
-                return ExperimentalB2Q4PanelResult(
+                return self._panel_result(
                     "failed", factorization_count=self._handle.factorization_count,
                     solve_count=self._handle.solve_count,
                     failure_reason="finite physical B2 recovery coordinates required")
@@ -766,7 +837,7 @@ class ExperimentalB2Q4PanelAnalysis:
                 else recovery[member_id])
             if (not np.isfinite(result.resultants).all() or
                     not np.isfinite(result.strains).all()):
-                return ExperimentalB2Q4PanelResult(
+                return self._panel_result(
                     "failed", factorization_count=self._handle.factorization_count,
                     solve_count=self._handle.solve_count,
                     failure_reason="finite physical B2 recovery required")
@@ -774,11 +845,20 @@ class ExperimentalB2Q4PanelAnalysis:
                 tuple(map(float, row)) for row in result.resultants)))
         energy = .5*float(u @ force)
         if not isfinite(energy):
-            return ExperimentalB2Q4PanelResult(
+            return self._panel_result(
                 "failed", factorization_count=self._handle.factorization_count,
                 solve_count=self._handle.solve_count,
                 failure_reason="finite panel strain energy required")
-        return ExperimentalB2Q4PanelResult(
+        extra = {}
+        if chosen_footprints:
+            try:
+                extra["footprint_wrenches"] = selected_wrenches(
+                    self._footprint_incidence, chosen_footprints, lam, gap)
+            except (ValueError, OverflowError) as exc:
+                return self._panel_result(
+                    "failed", factorization_count=self._handle.factorization_count,
+                    solve_count=self._handle.solve_count, failure_reason=str(exc))
+        return self._panel_result(
             "completed", tuple(map(float, u)),
             tuple((point_id, tuple(map(float, lam[6*i:6*i+6])))
                   for i, point_id in enumerate(self.point_ids)),
@@ -786,12 +866,13 @@ class ExperimentalB2Q4PanelAnalysis:
             tuple((point_id, tuple(map(float, gap[6*i:6*i+6])))
                   for i, point_id in enumerate(self.point_ids)),
             tuple(recovered), energy, self._handle.factorization_count,
-            self._handle.solve_count)
+            self._handle.solve_count, **extra)
 
     def solve_linear_many(
             self, cases: Sequence[tuple[str, object]], *,
             selected_dofs: Sequence[int],
             selected_points: Sequence[str] = (),
+            selected_footprints: B2NodalRigidFootprintSelection | None = None,
             recover_members: Mapping[str, Sequence[float]] | None = None,
             cancellation_token: CancellationToken | None = None,
             on_case: Callable[[str], None] | None = None,
@@ -809,6 +890,7 @@ class ExperimentalB2Q4PanelAnalysis:
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        chosen_footprints = checked_selection(selected_footprints, self.footprints)
         try:
             chosen = tuple(selected_dofs)
             chosen_points = tuple(selected_points)
@@ -870,12 +952,15 @@ class ExperimentalB2Q4PanelAnalysis:
             return tuple(extrema)
 
         def finish(status, failure_reason=None):
-            return ExperimentalB2Q4PanelBatchResult(
+            result_type = (ExperimentalB2Q4FootprintBatchResult if self.footprints
+                           else ExperimentalB2Q4PanelBatchResult)
+            extra = {"selected_footprints": chosen_footprints} if self.footprints else {}
+            return result_type(
                 status, chosen, chosen_points, tuple(completed),
                 factorization_count, solve_count,
                 failure_reason=failure_reason,
                 displacement_envelopes=envelopes("selected_displacements"),
-                affine_reaction_envelopes=envelopes("selected_affine_reactions"))
+                affine_reaction_envelopes=envelopes("selected_affine_reactions"), **extra)
 
         for index, (case_id, load) in enumerate(submitted):
             if self._closed or (cancellation_token is not None and
@@ -884,14 +969,18 @@ class ExperimentalB2Q4PanelAnalysis:
             snapshot, fingerprint = _load_value_snapshot(load, self._u0.shape)
             if fingerprint != fingerprints[index]:
                 raise ValueError("B2 panel load case changed after submission")
-            result = self.solve_linear(snapshot, recover_members=recovery)
+            result = self.solve_linear(snapshot, recover_members=recovery,
+                                       selected_footprints=selected_footprints)
             factorization_count = result.factorization_count
             solve_count = result.solve_count
             if result.status != "completed":
                 return finish("failed", f"{case_id}: {result.failure_reason}")
             point_multipliers = dict(result.point_multipliers)
             point_gaps = dict(result.point_gaps)
-            completed.append(ExperimentalB2Q4PanelSelectedCase(
+            case_type = (ExperimentalB2Q4FootprintSelectedCase if self.footprints
+                         else ExperimentalB2Q4PanelSelectedCase)
+            extra = {"footprint_wrenches": result.footprint_wrenches} if self.footprints else {}
+            completed.append(case_type(
                 case_id,
                 tuple(result.displacements[index] for index in chosen),
                 tuple(result.affine_reactions[index] for index in chosen),
@@ -900,7 +989,7 @@ class ExperimentalB2Q4PanelAnalysis:
                 tuple((point_id, point_gaps[point_id])
                       for point_id in chosen_points),
                 result.beam_resultants_local,
-                result.internal_strain_energy))
+                result.internal_strain_energy, **extra))
             if on_case is not None:
                 on_case(case_id)
         return finish(

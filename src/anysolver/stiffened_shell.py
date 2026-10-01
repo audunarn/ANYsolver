@@ -31,6 +31,12 @@ from ._stiffened_shell_b2_q4_panel_experimental import (
     ExperimentalB2Q4PanelAnalysis, Q4PanelShell, Q4B2Point,
     ExperimentalB2Q4PanelResponseEnvelope,
     B2ReferenceModesRequest, B2ReferenceModesResult,
+    ExperimentalB2Q4FootprintResult, ExperimentalB2Q4FootprintSelectedCase,
+    ExperimentalB2Q4FootprintBatchResult, ExperimentalB2Q4FootprintCapabilities,
+)
+from ._stiffened_shell_b2_nodal_footprint import (
+    B2NodalRigidFootprint, B2NodalRigidFootprintSelection,
+    B2NodalRigidFootprintWrench, B2NodalFootprintNodeAction,
 )
 
 from ._stiffened_shell_ge_experimental import (
@@ -80,7 +86,11 @@ class B2Q4PointDefinition:
 
 @dataclass(frozen=True)
 class B2Q4PanelDefinition:
-    """Experimental multi-Q4/multi-B2 point panel with an affine plan."""
+    """Experimental reference-linear Q4/B2 points or explicit nodal footprints.
+
+    Empty footprints preserve the historical finite-vertex point route.
+    Nonempty footprints are elastic/static only and lock normal spin.
+    """
 
     profile: str
     shell_nodes_m: object
@@ -89,6 +99,7 @@ class B2Q4PanelDefinition:
     points: tuple[Q4B2Point, ...]
     transformation: object
     prescribed_offset: object
+    footprints: tuple[B2NodalRigidFootprint, ...] = ()
 
 
 def create_analysis(*, definition, resources=None):
@@ -121,7 +132,8 @@ def create_analysis(*, definition, resources=None):
             definition.shell_nodes_m, definition.shells,
             definition.members, definition.points,
             transformation=definition.transformation,
-            prescribed_offset=definition.prescribed_offset)
+            prescribed_offset=definition.prescribed_offset,
+            footprints=definition.footprints)
     raise ValueError("unsupported stiffened-shell definition/profile")
 
 
@@ -137,6 +149,10 @@ __all__ = [
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
+    "B2NodalRigidFootprint", "B2NodalRigidFootprintSelection",
+    "B2NodalRigidFootprintWrench", "B2NodalFootprintNodeAction",
+    "ExperimentalB2Q4FootprintResult", "ExperimentalB2Q4FootprintSelectedCase",
+    "ExperimentalB2Q4FootprintBatchResult", "ExperimentalB2Q4FootprintCapabilities",
     "B2_BOUNDED_OUTPUT_REPRESENTATION_V1", "OutputRepresentationCertificate",
     "OutputRepresentationError", "RepresentabilityError",
     "create_analysis",

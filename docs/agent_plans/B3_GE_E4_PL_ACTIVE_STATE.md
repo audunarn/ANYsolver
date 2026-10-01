@@ -8,11 +8,14 @@ Formal F03 unconsumed. No main merge/publication authority. Full programme remai
 ## Source, ownership and execution
 
 Solver: C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-codex/b3-ge-e4-pl-integration, HEAD f2528206 before footprint commit.
+codex/b3-ge-e4-pl-integration, HEAD a1f16198 (reviewed footprint delivery).
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-codex/experimental-ge-panel-consumer, HEAD0f0981de before consumer commit.
-Root owns integration/evidence/note. Author and reviewer finished and hold readonly.
-Solver8/consumer4 files are frozen, bound in the report. All numerical jobs terminal.
+codex/experimental-ge-panel-consumer, HEAD f1626ea (paired consumer delivery).
+Root owns integration/evidence/note. Previous solver8/consumer4 source bindings
+are committed and recorded in their report; new B2 changes do not relabel those
+artifacts. B2 core source is frozen for root integration; bl5_consumer now edits
+only ANYfem B2 input/Project dispatch and new consumer test/example. Independent
+reviewer is readonly. All owned numerical jobs are terminal.
 At most3 workers/one heavy job/100k rows/600s/8GiB/8 numerical threads.
 Python C:/Python/Python314/python.exe; child settings BLAS/Numba1/JIT off.
 
@@ -65,8 +68,26 @@ No narrow repair justified. Public footprint rebase/chart restore reject atomica
 Required M4/F06 chart transport stays OPEN, not waived or removed. Full F04,
 distributing/area/plastic/off-node/line/seam/torque/external/scale obligations remain.
 
-Next: narrow commit of both reviewed slices, verify foreign bytes/main preserved,
-then select the next bounded M4 deliverable from reusable contracts. Do not reopen
+Both preceding footprint commits are verified. [B2 core delivery](development/r8-b2-nodal-rigid-footprint-20261001/results.md)
+adds distinct reference-linear nodal groups, sparse affine factor reuse and selected
+physical wrenches: g=(ub-us+[Xb-Xs]x theta_s,theta_b-theta_s), not the historical
+least-squares finite-vertex point port. Installed wheel ee6f70a2 binds390 modules/
+209 onsite imports/pools1/JIT off.35 original passes plus one corrected predicate,
+38 legacy passes, public example and exact13-array/defaultJSON old/current control
+have complete independent review. Initial collinear-fixture/build/preparation
+failures remain in the63-file raw archive. New spectra reject; no finite/drill-free/
+distributing/full foundation claim. Root commits this bounded source/evidence now.
+
+Next: ANYfem B2 input/save-reopen/selected batches. The old from_definition can
+drop new footprint fields; do not serialize them through the legacy type. Author
+adds an explicit guard and distinct strict schema, including footprint-only input,
+using current public owner and unchanged Project selector/format. No duplicate
+mechanics or global assembly during persistence. Root owns installed checks after
+freeze; review covers complete consumer change. Preserve old payload/defaults,
+ordered IDs/load cases, complete-case cancellation and factor1. Unsupported law/
+material/finite/mass/spectral requests fail explicitly. Full consumer/qualification
+obligations remain open. No numerical jobs launched for this pending consumer.
+Do not reopen
 parked BL5/chart sweeps by default. [Historical note](history/ACTIVE_STATE_20261001_NODAL_S3_TRANSITION.md)
 is preserved byte-for-byte; immutable reports preserve failed runs and authority.
 No overall speedup, production qualification or release claim.

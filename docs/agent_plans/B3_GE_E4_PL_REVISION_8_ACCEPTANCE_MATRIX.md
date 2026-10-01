@@ -1,5 +1,17 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+B2 nodal rigid footprint, 1 October: separate reference-linear six-pose node law
+and requested physical wrenches reuse the existing sparse affine/factor/batch
+owner. Installed35 unchanged+1 repaired predicate and38 legacy predicates pass,
+with complete independent review; initial collinear-success fixture failure stays
+preserved. Exact old/current13 operator arrays and default observable/ten-case
+JSON agree. Headless public example completes with factor1. Full F04/F10/F11/M4,
+normal-spin/drilling physics, finite/S3/spectral and consumer obligations remain
+open; new spectral requests reject. Legacy ANYfem from_definition can omit new
+footprint fields: its rejection guard and explicit new consumer are next, and
+this slice is not evidence for that pending consumer. No aggregate pass.
+[Artifacts, limitations and raw review](development/r8-b2-nodal-rigid-footprint-20261001/results.md).
+
 Nodal rigid footprint, 1 October: experimental selected-node six-pose locking
 and complete selected-cell patches supply sparse reference-linear/nonrebased
 finite solves, physical group wrenches and ordinary restart. Final installed
