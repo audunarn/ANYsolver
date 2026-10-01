@@ -12,11 +12,39 @@ and [review](d1_review_support/native_validation_cost_v1_20261001.review.md).
 The independently reviewed two-step profile also passes original gates. Finite
 inertia4.982s (nested derivatives3.548s), exact package validation3.613s and extra
 harness recovery1.599s are substantial within10.541s profile; times overlap.
-One new NumPy batched inertia candidate is under development. Until reviewed and
-wired, the original finite kernel remains authoritative. No measured integrated
-batching benefit, accuracy-refinement affordability or C7 admission is claimed.
+The independently reviewed NumPy batch candidate passes local virtual-work,
+directional and parity checks; the centered finite owner now delegates to it.
+The original frozen scalar remains the verification oracle. Local6.86x prepared
+kernel improvement excludes full owner/validation/evidence work. V1 zero-signal
+NONPASS is retained; V2 uses prospectively fixed dimensional scaling only for
+the explicitly analytic-zero translation. Integrated16-step route now passes: complete-phase medians16.0902s/11.6723s
+show27.46% reduction under identical mechanics/full guards/evidence overhead.
+Endpoint state/work/accounting are bit-identical; dimensional tangent parity
+8.97e-17 meets1e-13. Whole process57.224s/178.688MB with456 unchanged bindings.
+Independent saved assessment is closed. This short-route benefit does not
+establish longer-refinement affordability, temporal accuracy or C7 admission.
+[Route result](d1_review_support/native_inertia_batch_route_v1_20261001.summary.json).
+[Local result](d1_review_support/native_inertia_batch_v2_20261001.summary.json)
+and [review](d1_review_support/native_inertia_batch_v2_20261001.review.md).
 [Profile](d1_review_support/native_step_profile_v1_20261001.summary.json) and
 [review](d1_review_support/native_step_profile_v1_20261001.review.md).
+
+## Exact native principal spin and installed batch artifact — 1 October
+
+Independently assessed development PASS: straight, zero-centroid principal-axis
+spin reaches.4rad in8steps,26.525s/164.868MB,450source bindings unchanged.
+Actual algebraic rank27/positive physical mass;16original signed stages, complete
+work/state and endpoint gates pass. Literal analytic rotation agrees within
+4.97e-16(cell)/2.74e-15(nodal); position/velocity/acceleration/resultants/history
+are unchanged as required. Rounded E/P/H defects are zero; compensated H versus
+literal12Nms differs4.34e-17 relative. Exact rigid-invariant trajectory only.
+[Review](d1_review_support/native_principal_spin_v1_20261001.review.md).
+
+A fresh isolated wheel with the two batch production files passes the public
+native2-step example:447exact Python-source matches, default1e-11 verified,
+18.269s/142.455MB. [Installed review](d1_review_support/native_inertia_batch_installed_v1_20261001.review.md).
+Neither row admits nonprincipal/spatial/native-impact/C7 or release. Earlier
+unexecuted principal preflight and all old numerical failures remain intact.
 
 ## Native finite-angle trajectory and application intent — 1 October
 

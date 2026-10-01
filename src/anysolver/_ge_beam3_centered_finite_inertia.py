@@ -23,12 +23,18 @@ class _CenteredFiniteKernel(LiftedInertia):
     """Finite owner, initialized exclusively from the unchanged centered cache.
 
     This is not a rest-owner instance and never calls its evaluate method.
-    Inherited LiftedInertia.evaluate supplies all finite force derivatives.
+    The reviewed column batching supplies the original finite force product
+    rules. LiftedInertia.evaluate remains the unchanged scalar verification route.
     """
     def __init__(self, reference, section_inertia, order):
         centered = _CenteredRestInertia(reference, section_inertia, order=order)
         self.section_mass = centered.section_mass
         self._stations = centered._stations
+
+    def evaluate(self, positions, local_rotations, velocity, acceleration):
+        from ._ge_beam3_centered_batched_finite_inertia import evaluate_batched_finite_inertia
+        return evaluate_batched_finite_inertia(self.section_mass, self._stations,
+            positions, local_rotations, velocity, acceleration)
 
 
 @dataclass(frozen=True)

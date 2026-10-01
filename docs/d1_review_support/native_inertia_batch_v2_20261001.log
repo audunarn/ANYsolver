@@ -1,0 +1,18 @@
+{"stage": "authenticated_before_pytest", "input_sha256": "ee5d4873b1f8a2b9332d3cd9f7302ea3629e1f6fe4a17dce6590fc3039b6d633"}
+{"stage": "frozen_analytic_zero_scales_before_outputs", "elapsed_seconds": 0.004202199983410537}
+{"stage": "finite_attitude_translation_before_gates", "elapsed_seconds": 0.19581239999388345}
+{"stage": "analytic_zero_before_gate", "elapsed_seconds": 0.19864309998229146}
+{"stage": "finite_attitude_translation_pass", "elapsed_seconds": 0.20103179998113774}
+{"stage": "virtual_work_before_gate", "elapsed_seconds": 0.39561009997851215}
+{"stage": "directional_before_gate", "elapsed_seconds": 0.5199638999765739}
+{"stage": "directional_before_gate", "elapsed_seconds": 0.7289006999926642}
+{"stage": "complete", "elapsed_seconds": 1.4470340999832842}
+{"stage": "final_preserved", "elapsed_seconds": 1.4935674000007566}
+.
+============================== warnings summary ===============================
+docs/d1_review_support/native_inertia_batch_v2_20261001.test.source.py::test_complete_prepared_kernel_batch
+  docs\d1_review_support\native_inertia_batch_v2_20261001.test.source.py:53: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_complete_prepared_kernel_batch(record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 1 warning in 2.91s

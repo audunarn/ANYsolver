@@ -203,3 +203,27 @@ peak393.941MB, one explicit840s owner without checkpoint segments. See
 `d1_review_support/native_finite_spin_resolution_v1_20261001.summary.json` and
 `.review.md`. This is finite-angle development evidence, not temporal/spatial
 accuracy, installed admission, native impact or C7 acceptance.
+
+## Batched finite inertia and exact principal spin — development
+
+The centered finite owner now uses NumPy column batching of the same physical
+inertia product rules. The original scalar remains the verification oracle;
+there is no new differentiation engine, mandatory backend or changed mechanics.
+Balanced complete four-step phases show27.46% median reduction, with exact
+physical state/work/accounting and derivative discrepancy8.97e-17. This is a
+short-route measurement, not general trajectory affordability.
+
+A straight, zero-centroid beam spinning about its longitudinal principal axis
+has the independent exact solution r(t)=r(0), R(t)=Rx(Omega*t)R(0). Eight steps
+at Omega=50rad/s reproduce.4rad with frame error below3e-15 and the original
+balance/state gates. This exact invariant case does not replace verification
+of deforming nonprincipal spin. The new batch wheel/public example is verified
+with447source matches; all public profile restrictions remain.
+See [principal review](d1_review_support/native_principal_spin_v1_20261001.review.md)
+and [installed check](d1_review_support/native_inertia_batch_installed_v1_20261001.review.md).
+
+The runtime lifetime defaults to120s. Explicit `runtime_limit_seconds` must be
+positive and at most900s; the captured lifetime and setting bind restart identity.
+A restart does not renew a trajectory's execution authority. Extended owners
+reject the optional local operator-validation scope. These resource controls do
+not admit general contact, additional elements or C7 qualification.

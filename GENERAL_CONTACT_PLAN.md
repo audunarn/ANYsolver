@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.54. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.57. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -176,13 +176,56 @@ inertia is the largest measured component:4.982s of10.541s profile window;
 its8064 derivative calls consume3.548s. Exact package validation3.613s and extra
 harness recovery1.599s are also substantial; cumulative times overlap.
 [Profile](docs/d1_review_support/native_step_profile_v1_20261001.summary.json).
-Select one NumPy batching candidate for the existing inertia derivative column
-contractions/cross products. Keep the original frozen scalar kernel, physical
-mapping, quadrature, centroid, complete force derivatives and package/state
-guards. Review algebra and local parity/directional checks before wiring it.
-Then measure one integrated four-step route at identical mechanics/accuracy;
-use that measured cost to select the next bounded accuracy case. No source
-optimization or cProfile result itself establishes refinement affordability.
+The NumPy inertia batching candidate now passes scoped local verification and
+independent algebra review. The original frozen scalar kernel remains its oracle.
+Resolved cases agree within rounding error; V2 virtual work is2.22e-16 and the
+maximum directional error2.68e-8. V1 remains NONPASS: a pure-translation analytic
+zero was compared against cancellation residue. V2 prospectively checks that
+named zero with fixed positive dimensional scales and the unchanged1e-13 limit.
+Local prepared-kernel mean.310073s to.045173s is6.86x, not a whole-route claim.
+Lead wiring now delegates the existing centered owner to the reviewed kernel;
+physical maps, quadrature, compensated momentum,42-coordinate zeros, public
+settings and package/state guards remain unchanged. The balanced16-step route passes with full ordinary guards:57.224s/178.688MB,
+456 unchanged source bindings and48 original stages. Scalar/batch complete-phase
+medians16.0902s/11.6723s show27.46% reduction; operation medians13.9672s/10.1121s
+show27.60%. Physical endpoint/work/accounting fields are bit-identical and maximum
+dimensional derivative parity8.97e-17 meets1e-13. Independent saved assessment
+is closed. This short-route measurement is not a longer-trajectory certificate.
+A simple proportional estimate for full-duration N384 exceeds900s, so do not
+launch it without a discriminating affordability basis. The independently assessed
+straight zero-centroid principal-axis spin now passes8steps through.4rad:
+26.525s/164.868MB,16original stages,450unchanged bindings, actualrank27/positive
+physical mass. Literal sine/cosine attitude errors are4.97e-16(cell)/2.74e-15(nodal);
+position/velocity/acceleration/resultants/history match the exact rigid invariant.
+Signed endpoint balance2.11e-15 meets1e-11. Rounded invariant defects are zero;
+compensated H differs from literal12Nms by4.34e-17 relative. This closes only
+that exact development row, not nonprincipal/spatial/impact/C7 acceptance.
+[Exact control](docs/d1_review_support/native_principal_spin_v1_20261001.summary.json)
+and [review](docs/d1_review_support/native_principal_spin_v1_20261001.review.md).
+
+The newly built isolated batch wheel also passes its public2-step native example
+with all447Python sources matching main/wheel/target and effective default1e-11:
+18.269s/142.455MB. Installed development routing only, not release/C7.
+[Artifact check](docs/d1_review_support/native_inertia_batch_installed_v1_20261001.summary.json).
+
+Next prepare finite-angle temporal self-convergence at T=.0045: reuse the complete
+N192prefix108 coarse states and independently start virgin N162/N216 trajectories.
+Common grid j=0..54 selects2j/3j/4j states, without interpolation. Current coarse
+prefix already covers.213rad. Each new case has one840s owner and900s/4GB process
+cap; combined programme cap1800s, no restart segments or renewed deadlines.
+Measured cost forecasts roughly420s/560s, not guaranteed bounds. Preparation only
+until inputs/reference/scales/source and independent scrutiny close. Preserve all
+original physical gates. Fixed initial SPD M15 velocity norm, compensated position/L
+and literal cell geodesic/(positive Omega_ref*T) are primary observables. Only
+pair differences above1e-9 with a fixed1e-10 resolution floor may establish order;
+prospective second-order ratio20/7 within20%, at least resolved velocity and cell
+rotation evidence. Conditional fine-error estimate is9/7 of mid/fine difference.
+This is temporal adequacy/control, not an independent spatial certificate or fullC7.
+Failure of a physical/authentication gate stops before further trajectories.
+[Route measurement](docs/d1_review_support/native_inertia_batch_route_v1_20261001.summary.json).
+No local optimization or cProfile result establishes refinement affordability.
+[Local result](docs/d1_review_support/native_inertia_batch_v2_20261001.summary.json)
+and [review](docs/d1_review_support/native_inertia_batch_v2_20261001.review.md).
 Avoid an unmeasured oversized full-duration refinement or another open-ended
 optimization campaign. Compiled infrastructure is deferred in this first slice.
 Required C0–C9 remains intact.

@@ -204,3 +204,8 @@ docs/d1_review_support/native_step_profile* -text -whitespace
 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART34.md -text -whitespace
 docs/d1_review_support/anystructure_contact_slice_baseline_20261001.json -text -whitespace
 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART35.md -text -whitespace
+docs/d1_review_support/native_inertia_batch* -text -whitespace
+docs/d1_review_support/native_principal_spin* -text -whitespace
+src/anysolver/_ge_beam3_centered_batched_finite_inertia.py text eol=lf
+src/anysolver/_ge_beam3_centered_finite_inertia.py text eol=lf
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART36.md -text -whitespace
