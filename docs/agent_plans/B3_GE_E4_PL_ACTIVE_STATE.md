@@ -81,17 +81,28 @@ tolerance change, acceptance or consumption of formal F03 follows.
 
 ## Next usable slice
 
-Advance staged load/unload/reversal/reload with existing fibre/J2 definitions,
-material-aware restart, plastic-state chart reset and accepted-prefix rejection/
-cancellation. bl5_consumer owns TEMP/r8-staged-material-history-test.py and design;
-root will create only tests/test_stiffened_shell_staged_material_history.py after
-hash/ownership checks and execute installed checks serially. Existing Q4 1000N
-and S3 50N fixtures remain unchanged; require actual plasticity per exercised
-channel, without claiming both domains yield merely from material labels.
-b2_point_acceptance_gap owns independent common-action and subsequent complete
-review. Small plastic rotations do not satisfy the separate large-rotation F06
-floors. Full footprints/topology/material/load/spectral/capacity/scale/platform/
-consumer/external/release obligations remain; B2 full-pose discrepancy is open.
+[Staged material history](development/r8-staged-material-history-20261001/results.md)
+is complete: two retained V5 individual-material passes plus V7 simultaneous
+Q4 J2/generalized-beam yielding. Actual same-substep activity, full unload/reverse/
+reload, plastic-state chart reset, rollback and stage-2/3 restart pass, with
+independent complete review. Test source 00668c94; product/wheel unchanged.
+All earlier failed versions and prospective test-contract corrections are
+preserved in 667 raw/preparation/review files. Historical Q4 moment failure is
+not relabeled as passing. Fixed physical role scales remain; exact irreversible
+histories/checkpoints are distinct from recomputed Q4 stress. Correct retained18
+roles also pass prior elastic F06's original bound on all 26 saved pairs; original
+44 snapshots and historical records remain unchanged. Small plastic rotations
+do not meet large F06 floors. All owned numerical jobs are terminal.
+
+Next tangible M4 product slice: explicit experimental nodal rigid footprint
+reusing objective full-pose point work, compiled incidence and grouped physical
+recovery. Complete-patch rigidity requires every cell vertex; it is neither
+distributing coupling, BL5 nor qualified weld. bl5_consumer prepared the bounded
+seam at TEMP/r8-rigid-footprint-product-seam.md (a87963a6…), without source edits
+or jobs. Root owns integration; independent review must cover physical work,
+identity and legacy preservation before any acceptance. Full footprints/topology/
+material/load/spectral/capacity/scale/platform/consumer/external/release
+obligations remain; B2 full-pose discrepancy is open.
 
 External stopped-thread execution and all earlier failures remain protected.
 Prior external sampled single-CPU/OS observations do not prove effective library

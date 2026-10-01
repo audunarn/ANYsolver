@@ -75,3 +75,5 @@ docs/agent_plans/development/r8-staged-load-20261001/** -text
 docs/agent_plans/development/r8-f06-staged-transport-20261001/** -text
 docs/agent_plans/development/r8-bl5-matched-comparison-20261001/** -text
 docs/agent_plans/development/r8-anyfem-staged-20261001/** -text
+docs/agent_plans/development/r8-staged-material-history-20261001/** -text
+tests/test_stiffened_shell_staged_material_history.py -text

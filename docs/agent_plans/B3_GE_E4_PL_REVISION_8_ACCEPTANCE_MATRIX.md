@@ -1,5 +1,20 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+Staged material history, 1 October: installed point-owner load/unload/reversal/
+reload, atomic rejection/cancellation, plastic-state chart reset and checkpoint
+continuation pass for selected-Q4 yielding physical fibres, S3 shell J2 with
+elastic mixed beam families, and simultaneous selected-Q4/generalized-beam J2.
+Same-substep simultaneous advances are directly inventoried. Two retained V5
+passes plus the affected V7 pass have complete independent review; no all-green
+V5 claim. All failed versions and explicit status/policy/unit/recovery/safe-point
+test corrections remain preserved. Product/wheel unchanged, 388 byte-matched
+modules and 210 onsite imports. Small rotations do not meet large plastic F06
+floors. Existing elastic F06 retained-role normalization is corrected by read-only
+re-adjudication of 44 snapshot hashes/26 pairs; its original bound still passes.
+Aggregate G3/F06, simultaneous fibre/J2, wider material and attachment scope,
+total energy, external and full programme obligations remain open.
+[Complete scoped results and immutable raw/review inventory](development/r8-staged-material-history-20261001/results.md).
+
 Controlled external P0 discriminator,1 October: exact non-equation inventory
 parity and independent complete review support external enforcement sensitivity.
 Strong→40-row P0 Mz work increases13.054405%; native/P0 differs-0.271358%,
