@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.65. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-01.66. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -75,38 +75,22 @@ tilted force/minimum checks. See [results](docs/d1_review_support/contact_c6_alg
 This closes the represented-path development question, not general event control
 or C6 acceptance. No speed improvement or continuum collision guarantee is claimed.
 
-**Next bounded decision:** integrate physical event subdivision at activation and
-release. Use one independent scalar open-flight/activation fixture to discriminate
-a branch-specific event solve from repeated first-root cutbacks that can stall.
-Derive stage consistency and finite localization/iteration budgets before adding
-the driver option. Keep the same physical force/mass/work and transaction contract;
-do not substitute timestamps for integration at the event. Routine180s/953MiB/
-thread1 applies, without cap increases or cross-chat coordination. General curved
-or rotating geometry will require its own conservative path bounds.
+The guided S3 event-subdivision development row now has31 coherent source checks
+and55 isolated installed checks passing, with a completed bounded Mistral review
+and source adjudication. Branch endpoint roots use the retained full modal gap
+polynomials/Bernstein isolation and actual-force reequilibration. Version4 preserves
+resolved-boundary indices; only contiguous initial transitions satisfying membership
+and both time/gap budgets are coalesced. The original full path remains authoritative.
+Canonical predictor initialization and accumulated Newmark acceleration corrections
+close the restart discrepancy without altering equations or tolerances. Installed
+elapsed14.206s/182104064B is within routine caps, all450module bytes match, and the
+event-enabled CLI passes. This is development evidence, not C6 acceptance, a general
+collision certificate or a measured speed improvement.
+See [results and retained failures](docs/d1_review_support/contact_c6_event_continuation_20261001/results.md).
+Historical eventv11 remains12passed/4failed; the worsened force-acceleration trial
+and failed diagnostic helper remain preserved. No consumed authority is replayed.
 
-The event-subdivision development candidate is now present but not promoted.
-Fixed-branch Newmark endpoint families use algebraic-only condensation, full modal
-gap polynomials and bounded Bernstein root isolation before actual-force refinement.
-Independent review's multiple-duration-root counterexample is retained and tested.
-Uniform activation/release, scalar Newmark/energy, history work, restart and
-failure/cancellation checks pass at the recorded source stage. Two later review
-defects (point-root loss and gap-only boundary promotion) have focused passing
-regressions. The tilted multi-support case remains NONPASS: after a localized
-event it detects a transition below minimum_dt and exhausts bounded cutback.
-Current source-v11 gives12passes/4failures; repeated numerical start events also
-affect uniform release/restart/history. Installed verification and final review
-remain pending.
-See [development checkpoint](docs/d1_review_support/contact_c6_event_subdivision_20261001/results.md).
-
-The retained v11 start/probe gaps and outgoing rates identify repeated localization
-of a resolved boundary: uniform gaps are at machine precision; the tilted first
-support is about1.1e-11s from the coalesced boundary, within the event time budget.
-Derive a boundary trace/continuation contract and bind necessary state into restart;
-coalescing requires both declared time and gap budgets. Do not suppress contacts, reduce minimum_dt
-or enlarge tolerances merely to pass. Reuse unaffected evidence after the correction,
-then finish the coherent source/installed/profile review once.
-
-After that row closes, select the next missing integrated D5/D6 capability from
+**Next bounded decision:** select the next missing integrated D5/D6 capability from
 source inspection: advance physical composition/geometry or shared impact-driver
 coverage. Fix the authoritative coordinate/state interface and independent scrutiny
 before implementation. Do not repeat native temporal screens merely to enlarge

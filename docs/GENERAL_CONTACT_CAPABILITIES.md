@@ -821,7 +821,7 @@ These represented transition timestamps do not implement event-driven subdivisio
 or establish continuum collision timing. General geometry/material/dynamic breadth,
 production JIT, engineering impact acceptance and fullC6 remain open. No release.
 
-## Guided S3 event subdivision — candidate, not admitted
+## Guided S3 event subdivision — installed-tested development, not accepted
 
 Explicit `s3_event_subdivision_dev` requires the algebraic-path/rate options.
 Branch-endpoint duration roots are isolated using complete modal gap polynomials
@@ -830,8 +830,12 @@ coupled driver before commit. Separate time/gap controls and finite budgets bind
 the new constant/history profile identity. Existing defaults stay unchanged.
 Uniform source-stage activation/release, history work, restart and failure cleanup
 checks pass; reviewed point-root and boundary-time defects have focused corrections.
-Current coherent source module has12passes/4NONPASS, including uniform/history
-release, restart and tilted multi-support continuation below minimum_dt after a
-localized boundary. No passing full-candidate or installed event verification, independent
-acceptance or release claim follows. See [checkpoint](d1_review_support/contact_c6_event_subdivision_20261001/results.md).
-Continuation traces at the numerically localized boundary are the next uncertainty.
+Resolved-boundary continuation now passes31 source checks and55 isolated installed
+checks, including release/tilted/history restart, malformed/geometrically inconsistent
+boundary rejection and the event-enabled CLI. Version4 carries the boundary indices;
+coalescing requires membership and both explicit time/gap budgets. Original full-path
+work/force/minimum checks remain. Newmark acceleration corrections accumulate from
+the canonical predictor only for this opt-in profile. Completed Mistral review and
+source adjudication support development use; scientific C6 acceptance and release
+remain open. Historical12passes/4NONPASS and corrective-trial failures are preserved.
+See [current result](d1_review_support/contact_c6_event_continuation_20261001/results.md).

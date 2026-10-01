@@ -220,7 +220,7 @@ Run `python examples/general_contact_s3_plane_impact.py --one-sided-rates
 --algebraic-path --ramp-downward-load-n 0.0002`.
 See [results](d1_review_support/contact_c6_algebraic_path_20261001/results.md).
 
-## Event subdivision candidate — not promoted
+## Event subdivision — installed-tested development
 
 `s3_event_subdivision_dev`/`--event-subdivision` selects new development profiles
 and requires the algebraic-path/rate opt-ins. It localizes actual branch-Newmark
@@ -229,9 +229,19 @@ then reequilibrates the shortened step before commit. Separate time/gap numerica
 budgets and finite root/localization caps bind restart identity. Old profiles,
 force law, physical mass and defaults stay unchanged.
 
-Current coherent source module has12passes/4failures. Uniform/history release,
-restart and tilted multi-support continuation repeat a numerically resolved
-boundary instead of advancing on its outgoing branch. Boundary-support continuation
-and restart state require correction before promotion or installed verification.
-No general event/C6 admission follows. See the
-[retained checkpoint](d1_review_support/contact_c6_event_subdivision_20261001/results.md).
+Version4 stores committed resolved-boundary support indices. Only contiguous start
+transitions involving those supports and satisfying both explicit time/gap budgets
+may be coalesced. The full path remains responsible for all force/work/minimum and
+endpoint checks. Right algebraic rates use the verified boundary supports as numerical
+touches. The event profile accumulates Newmark acceleration corrections from a
+canonical predictor, avoiding amplified position-subtraction roundoff at event steps.
+Historical profiles keep their previous arithmetic and versions1–3; earlier event
+prototype checkpoints are explicitly incompatible. A checkpoint hash detects byte
+changes, not the authenticity of hand-crafted/rehashed event history.
+
+The coherent source module passes31 checks; the isolated installed wheel passes55
+checks, including historical restart fixtures and the event-enabled example.
+Completed bounded independent development review is retained. No general event/C6
+engineering acceptance or release follows. See [current results and failures](d1_review_support/contact_c6_event_continuation_20261001/results.md).
+Run `python examples/general_contact_s3_plane_impact.py --one-sided-rates
+--algebraic-path --event-subdivision --ramp-downward-load-n 0.0002`.

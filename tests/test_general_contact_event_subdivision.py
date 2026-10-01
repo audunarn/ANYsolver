@@ -1,6 +1,8 @@
 """Independent branch-time references and actual physical event commits."""
 import math
+from copy import deepcopy
 from dataclasses import replace
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -15,6 +17,38 @@ CONTROLS = ContactTransientSolverControls(
     allow_s3_descriptor_dev=True, s3_one_sided_rates_dev=True,
     s3_algebraic_path_dev=True, s3_event_subdivision_dev=True,
 )
+
+
+@pytest.mark.parametrize('boundary,gap,elapsed,expected', [
+    ((0,),1e-12,1e-12,1),
+    ((),1e-12,1e-12,0),
+    ((1,),1e-12,1e-12,0),
+    ((0,),2e-10,1e-12,0),
+    ((0,),1e-12,2e-10,0),
+])
+def test_resolved_boundary_requires_membership_and_both_dimensional_budgets(boundary,gap,elapsed,expected):
+    from anysolver.general_contact.transient import _event_continuation_segments
+    first = SimpleNamespace(end=elapsed,active=(False,False))
+    second = SimpleNamespace(end=1.,active=(True,False))
+    path = SimpleNamespace(segments=(first,second))
+    original = path.segments
+    remaining = _event_continuation_segments(path,1.,boundary,np.array([gap,0.]),1e-10,1e-10)
+    assert remaining == original[expected:]
+    assert path.segments is original  # force/work/minimum path is not replaced
+
+
+@pytest.mark.parametrize('boundary', [[True],[0,0],[1,0],[-1],[3],'0'])
+def test_restart_rejects_malformed_boundary_even_with_valid_integrity(boundary):
+    from anysolver.general_contact.transient import _new_restart_checkpoint, _read_restart_checkpoint
+    from anysolver.nonlinear_restart import analysis_configuration_fingerprint
+    checkpoint = _new_restart_checkpoint('model','analysis',.01,[0.],[0.],[0.],1,
+        path_terminal_active=(False,False,False),event_boundary_support=())
+    checkpoint['state']['event_boundary_support'] = boundary
+    checkpoint['checkpoint_sha256'] = analysis_configuration_fingerprint(
+        {k:v for k,v in checkpoint.items() if k != 'checkpoint_sha256'})
+    with pytest.raises(ValueError,match='event boundary is invalid'):
+        _read_restart_checkpoint(checkpoint,'model','analysis',1,.02,
+            load_history=None,path_pressure_dofs=3,event_subdivision=True)
 
 
 @pytest.mark.parametrize('force', [0., -2.])
@@ -123,10 +157,46 @@ def test_event_boundary_split_restart_and_incompatible_controls():
     _, resumed = _solve(.016, prefix.restart_checkpoint)
     for field in ('times','displacements','velocities','accelerations','external_nodal_work_j','swept_minimum_gaps'):
         np.testing.assert_allclose(np.concatenate((getattr(prefix,field),getattr(resumed,field)[1:])),
-                                   getattr(direct,field), rtol=0., atol=1e-10)
+                                   getattr(direct,field), rtol=0., atol=1e-10,err_msg=field)
     assert prefix.localized_contact_event_times+resumed.localized_contact_event_times == direct.localized_contact_event_times
     with pytest.raises(ValueError, match='checkpoint .* incompatible'):
         _solve(.016, prefix.restart_checkpoint, controls=replace(CONTROLS, s3_event_subdivision_dev=False))
+
+
+@pytest.mark.parametrize('case', ['release','tilted','history'])
+def test_resolved_boundary_restart_preserves_full_trajectory(case):
+    end = .012 if case == 'tilted' else .016
+    history = ContactNodalLoadHistory(((0.,0.),(.009,1.),(.02,1.))) if case == 'history' else None
+    def solve(stop,checkpoint=None,emit=False):
+        model,definition,initial = _guided_s3_descriptor_impact(
+            **(dict(tilt=.002,span=.1) if case == 'tilted' else {}))
+        return solve_transient_contact(model,definition,
+            TransientConfig(.0002 if case == 'tilted' else .0013,stop,initial_velocity=initial),
+            base_load_case=_uniform_s3_normal_load() if history is not None else None,
+            nodal_load_history=history,solver_controls=CONTROLS,
+            restart_checkpoint=checkpoint,emit_restart_checkpoint=emit)
+    direct = solve(end)
+    split = direct.localized_contact_event_times[1]
+    prefix = solve(split,emit=True)
+    assert prefix.restart_checkpoint['version'] == 4
+    assert prefix.restart_checkpoint['state']['event_boundary_support']
+    resumed = solve(end,prefix.restart_checkpoint)
+    for field in ('times','displacements','velocities','accelerations',
+                  'external_nodal_work_j','swept_minimum_gaps'):
+        np.testing.assert_allclose(np.concatenate((getattr(prefix,field),getattr(resumed,field)[1:])),
+                                   getattr(direct,field),rtol=0.,atol=1e-10,err_msg=case+' '+field)
+
+
+def test_restart_rejects_a_boundary_inconsistent_with_its_restored_geometry():
+    from anysolver.nonlinear_restart import analysis_configuration_fingerprint
+    _,direct = _solve(.016)
+    _,prefix = _solve(direct.localized_contact_event_times[0],emit=True)
+    checkpoint = deepcopy(prefix.restart_checkpoint)
+    checkpoint['state']['q'][0] += 1e-4
+    checkpoint['checkpoint_sha256'] = analysis_configuration_fingerprint(
+        {k:v for k,v in checkpoint.items() if k != 'checkpoint_sha256'})
+    with pytest.raises(ValueError,match='event boundary exceeds its gap budget'):
+        _solve(.016,checkpoint)
 
 
 def test_event_option_requires_path_and_dimensioned_budgets():

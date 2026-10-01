@@ -1,65 +1,66 @@
 # General contact restart — 1 October 2026
 
-## Authority and worktree
+## Authority and identity
 
-Goal active; fullC0–C9 remains required. User authorizes tiered/new testing workflow
-and prohibits communication with the other task. None occurred. Worktree
+Goal active; fullC0–C9 still required. User authorizes tiered/new testing workflow
+and prohibits communication with the other task. None occurred. Active worktree:
 `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch
-`codex/contact-main-reconcile-20261001`; slice parent `f2bab7ee`. Read latest Git
-identity/status for the checkpoint. [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4,
-[plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.65. No publication, main merge,
-release or changed defaults. Original contact checkout/six foreign files untouched.
+`codex/contact-main-reconcile-20261001`; slice parent `faeb7f86`. Read current
+Git HEAD/status for the checkpoint. [Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4,
+[plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.66. No publication, main merge,
+release or default changes. Original contact checkout/foreign work untouched.
+The preceding instruction-reread turn made no goal progress; this slice changes
+source/state and supplies source/installed evidence, so it is progress.
 
-## Current candidate and evidence
+## Current result
 
-Prior affine S3 path slicef2bab7ee is installed-tested/reviewed development, not
-C6 acceptance. Current event-subdivision candidate is not promoted. New
-event_subdivision.py uses algebraic-only condensation and generalized physical
-modes (at most3), complete rational gap numerators, bounded Bernstein isolation
-and actual Newmark endpoint refinement. Ordinary solver reequilibrates proposed
-event durations from committed origin before physical commit. Explicit time/gap
-and root/localization budgets, new constant/history identities; old defaults and
-schemas preserved. Current event profile uses fingerprint-bound version3 schema.
-An event root pose seeds the coupled solve; no force/mass/eigenvalue is softened.
+Guided S3 resolved-event continuation is installed-tested/reviewed development,
+not C6 engineering acceptance. Version4 binds committed boundary support indices
+into event-profile restart. Coalescing requires membership plus explicit time/gap
+budgets and changes only which initial transition needs localization. Original
+complete-path force/work/minimum checks and every support remain. Verified
+boundary touches determine right algebraic rates. Rejection preserves committed
+boundary state; non-event acceptance clears it. Old profiles/schemas stay valid;
+earlier version3 event-prototype checkpoints are intentionally incompatible.
 
-[Results/raw](docs/d1_review_support/contact_c6_event_subdivision_20261001/results.md)
-and [review findings](docs/d1_review_support/contact_c6_event_subdivision_20261001/review.md):
-sourcev7 13passes at that source stage (uniform activation/release, scalar Newmark/
-energy, history work, restart, finite limits and failure/cancellation). Finalv10
-two focused point-root/boundary-time regressions pass. Currentv11 is12passed/
-4failed; installed verification pending. Retain v2 bad selector/no execution,
-v3/v4/v5 numerical nonpasses and v8/v9 tilted failure; none is regraded.
-Mistral startup Access denied; independent OpenAI review identified missing
-point-root handling and gap-only checkpoint promotion; corrected withv10 tests.
-No final candidate review, scientific acceptance, release or speed claim.
+Canonical Newmark predictor initialization and accumulated acceleration corrections
+remove short-event subtraction/seed roundoff. Actual residual/Jacobian are unchanged.
+Source-v7 passes31 checks, installed passes55/0skips, including release, tilted,
+history restart, malformed/geometric checkpoint rejection and CLI. Installed
+14.206s/182104064B, all450module bytes matched;199imports resolve to isolated site.
+[Results/raw](docs/d1_review_support/contact_c6_event_continuation_20261001/results.md)
+and [review](docs/d1_review_support/contact_c6_event_continuation_20261001/review.md).
+Mistral completed bounded Read review; lead checked conditional findings against
+admission/cutback/writer guards. Rehashed checkpoints do not authenticate past
+history. An advisory event-position store is vestigial; numerical initialization
+is explicitly canonical. No general collision, C6 acceptance or speed claim.
 
-## Principal open question and next action
+## Retained failures and next action
 
-Tilted guided S3(.002tilt,.1span) remains NONPASS. Sourcev9 reaches
-t=.0101500192s then exhausts9cutbacks: event below minimum resolved duration.
-Earlier seed/root-precision correction moved the failure but did not close it.
-The currentv11 module confirms repeated numerical start localization: uniform
-release starts at gaps1e-18m with outgoing rates1m/s but incoming active mask;
-tilted first support has gap1.1e-11m/rate−.999m/s, within the event time budget.
-Next derive resolved-boundary supports, right continuation and restart-bound state;
-coalesce only within both explicit time/gap budgets. Full force/path checks remain.
-Do not suppress contacts or shrink minimum_dt/increase budgets. Fresh coherent
-module still has4NONPASS; the known issue is not fixed or installed-qualified.
+Historical eventv11 remains12passed/4failed. New sourcev1/v2 restart discrepancy,
+v3 worsened force-acceleration trial, v4 observation-helper error are preserved.
+Force trial removed; sourcev5 shows exactly zero structural curvature and identifies
+seed/subtraction arithmetic. No criterion, minimum_dt or iteration cap was relaxed.
+[Prior history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART42.md)
+links previous failures, accepted static slices and consumed native authorities.
 
-After correction, reuse unaffected evidence, run coherent source selection and
-one installed artifact/example, then close independent review. Do not start a
-temporal sweep or replay consumed native authorities. D2–D8 breadth remains open.
+Next choose a missing physical composition/geometry or shared D5/D6 driver outcome
+from authoritative source, define a bounded discriminator and review coordinate/state
+ownership before implementation. Avoid more event screens or native temporal sweeps
+just to enlarge evidence. Full beam/friction/free-body/native coupling, general
+geometry/search and application acceptance remain required. D1-interior/named D2
+static subsets remain accepted; this event profile is a bounded elastic prototype.
 
-## Processes and budget
+## Processes and resources
 
-No owned process running; independent internal reviewer idle, no worker edits.
-Only lead owns dirty/new candidate files. Routine source runner:
-`scripts/run_portable_ci.py --development <exact targets> --jit off
---timeout-seconds 180 --memory-limit-mib 953`, new RUNNER_TEMP/thread1.
-Stricter frozen caps prevail. ANYfemebce855 unchanged/admissionfalse. Historical
-full-preimport ABC annotation-cache guard NONPASS open; do not edit shared guard.
+No owned process running; Mistral and installed jobs terminal. Active source tree
+owned by lead. Routine source runner: scripts/run_portable_ci.py --development
+<exact targets> --jit off --timeout-seconds180 --memory-limit-mib953, unique
+RUNNER_TEMP/thread1. Stricter frozen caps prevail. Installed package/evidence is
+C:/ANYworkspaceWork/contact-event-continuation-package-20261001. Diagnostic helper
+moved outside tests and retained in raw.zip. ANYfem admission remains false;
+historical ABC annotation-cache preimport NONPASS belongs to shared guard owner.
+No shared guard/export/dispatch changes or other-chat inspection authorized.
 
-At20:35:19UTC goal189086s+retained3120s offset=192206s,53.39h used/66.61h
-remaining from original120activehours. Subsequent active time additional; no reset.
-[Prior history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART41.md)
-links accepted slices, prior source/installed failures and consumed authorities.
+At21:20:46UTC goal191910s+retained3120s offset=195030s,54.175h used/65.825h
+remaining from original120activehours. Subsequent active time counts; no reset.

@@ -60,3 +60,44 @@ failure/cancellation cleanup and history-knot interaction. First source checks,
 then one isolated installed artifact. Routine180s/953MiB/thread1, no consumed
 authority renewed. A failed localization gets one discriminating correction;
 no automatic iteration/resource budget increase or temporal sweep.
+
+## Prospective resolved-boundary continuation correction
+
+The current source-v11 trace identifies repeated localization at an already
+resolved event. Retain the support indices proven to lie within the localized
+time/gap budgets as algorithmic boundary state. Only the immediately following
+increment may coalesce its contiguous start transitions when every changed
+support belongs to that boundary, elapsed duration is within the explicit time
+budget and starting gap is within the explicit gap budget. Other supports and
+later transitions remain unresolved events. Full penalty residuals, all supports,
+path integration and independent interval minima remain unchanged.
+
+At the localized endpoint recover the right algebraic rate trace using those
+verified supports as numerical touch locations, bounded by the event gap budget.
+This adds no force smoothing or rotational inertia; old rate/path profiles keep
+their arithmetic-only touch rule. Physical mass projections remain invariant.
+Store boundary supports only after complete physical acceptance; clear them after
+the next accepted increment unless that increment ends at another localized event.
+Rejected trials keep the committed boundary state. Bind this state into a strict
+event-specific version4 restart schema; retain versions1–3 for old profiles and
+reject the earlier event prototype's incompatible checkpoints.
+
+Verify the coalescing predicate independently, including nonmember supports and
+one-budget-only failures. Rerun the coherent formerly failing module, then split
+restart at activation, release and tilted simultaneous supports, malformed boundary
+state rejection, failure/cancellation and historical profile compatibility. One
+installed artifact follows source/early review. Scientific tolerances, minimum_dt,
+resource limits and full programme scope are unchanged.
+
+The first boundary-state correction clears uniform/history/tilted repeat-event
+failures, but split restart exposes a4.9e-10rad/s² algebraic acceleration mismatch
+at release. A force-based acceleration trial worsened it to6.2e-10 and was removed.
+Source-v5 observes existing evaluations only: structural directional curvature is
+exactly zero, ruling out that hypothesis. The localized-pose seed and the ordinary
+checkpoint predictor follow different arithmetic paths; position subtraction also
+amplifies roundoff by1/h². The event profile now initializes both at the same
+predictor and accumulates acceleration corrections alongside position corrections.
+The residual remains M*a+F; each correction obeys dq=beta*h²*da. The event root
+still fixes duration, all complete-path and force/work checks remain, and historical
+profiles keep their arithmetic. Source-v6 passes all16 existing event checks at
+unchanged tolerances. Extra boundary-state/continuation checks and review follow.

@@ -67,6 +67,7 @@ _S3_EVENT_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_EVENT_SUBDIVISION
 _RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
 _HISTORY_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V2"
 _ALGEBRAIC_PATH_RESTART_SCHEMA = "ANYSOLVER_S3_ALGEBRAIC_PATH_TRANSIENT_CONTACT_DEV_CHECKPOINT_V3"
+_EVENT_RESTART_SCHEMA = "ANYSOLVER_S3_EVENT_SUBDIVISION_TRANSIENT_CONTACT_DEV_CHECKPOINT_V4"
 
 
 @dataclass(frozen=True)
@@ -315,7 +316,8 @@ def _restart_analysis_contract(transient, controls, manager, profile,
 
 def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             current_time, q, velocity, acceleration,
-                            accepted_steps, external_work_j=None, path_terminal_active=None) -> dict:
+                            accepted_steps, external_work_j=None, path_terminal_active=None,
+                            event_boundary_support=None) -> dict:
     payload = {
         "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
                    else _RESTART_SCHEMA),
@@ -336,12 +338,17 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
         payload["schema"] = _ALGEBRAIC_PATH_RESTART_SCHEMA
         payload["version"] = 3
         payload["state"]["path_terminal_active"] = list(path_terminal_active)
+    if event_boundary_support is not None:
+        payload["schema"] = _EVENT_RESTART_SCHEMA
+        payload["version"] = 4
+        payload["state"]["event_boundary_support"] = list(event_boundary_support)
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
 
 def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
-                             reduced_size, t_end, *, load_history, path_pressure_dofs=0):
+                             reduced_size, t_end, *, load_history, path_pressure_dofs=0,
+                             event_subdivision=False):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -357,6 +364,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                        else _RESTART_SCHEMA)
     if path_pressure_dofs:
         expected_version, expected_schema = 3, _ALGEBRAIC_PATH_RESTART_SCHEMA
+    if event_subdivision:
+        expected_version, expected_schema = 4, _EVENT_RESTART_SCHEMA
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -371,6 +380,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         expected_state_keys.add("external_work_j")
     if path_pressure_dofs:
         expected_state_keys.add("path_terminal_active")
+    if event_subdivision:
+        expected_state_keys.add("event_boundary_support")
     if not isinstance(state, Mapping) or set(state) != expected_state_keys:
         raise ValueError("transient contact checkpoint state is malformed")
     time = float(state["time"])
@@ -394,13 +405,22 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                 or any(type(flag) is not bool for flag in terminal)):
             raise ValueError("transient contact checkpoint path activity is invalid")
         terminal = tuple(terminal)
-    return time, steps, *arrays, work, terminal
+    values = (time, steps, *arrays, work, terminal)
+    if event_subdivision:
+        boundary = state["event_boundary_support"]
+        if (type(boundary) is not list or any(type(i) is not int
+                or not 0 <= i < path_pressure_dofs for i in boundary)
+                or boundary != sorted(set(boundary))):
+            raise ValueError("transient contact checkpoint event boundary is invalid")
+        values += (tuple(boundary),)
+    return values
 
 
 def _consistent_s3_descriptor_rates(
     model, T, Mred, basis, full_position, reduced_velocity,
     reduced_acceleration, full_tangent, committed_states, difference_step_s,
     *, one_sided_manager=None, maximum_iterations=20,
+    event_touch_indices=(), event_gap_tolerance=None,
 ):
     """Recover massless rates from the current nonlinear algebraic manifold.
 
@@ -427,6 +447,12 @@ def _consistent_s3_descriptor_rates(
         operand_scale = (np.abs(reference_gap)
                          +np.asarray(abs(manager.gap_gradient) @ np.abs(full_position)).reshape(-1)/manager.support)
         touch = np.abs(normalized_gap) <= 64*np.finfo(float).eps*operand_scale
+        if event_touch_indices:
+            indices = list(event_touch_indices)
+            if (event_gap_tolerance is None
+                    or np.any(np.abs(normalized_gap[indices]) > event_gap_tolerance)):
+                raise ValueError("resolved S3 event touch exceeds its gap budget")
+            touch[indices] = True
         closed = (normalized_gap < 0.) & ~touch
         weights = manager.stiffness*manager.support
 
@@ -557,6 +583,26 @@ def _accepted_path_transition_times(previous_active, path, start_time, step):
         times.append(float(start_time))
     times.extend(float(start_time+step*s) for s in path.transition_fractions)
     return tuple(times)
+
+
+def _event_continuation_segments(path, step, boundary_support, start_gaps,
+                                 time_tolerance, gap_tolerance):
+    """Coalesce only contiguous transitions of the committed numerical boundary.
+
+    The original path remains authoritative for force/work and interval minima.
+    This changes which transition still requires a new physical event step.
+    """
+    index = 0
+    resolved = frozenset(boundary_support)
+    while resolved and index+1 < len(path.segments):
+        left,right = path.segments[index:index+2]
+        changed = tuple(i for i,(a,b) in enumerate(zip(left.active,right.active)) if a != b)
+        if (left.end*step > time_tolerance or not changed
+                or any(i not in resolved for i in changed)
+                or np.any(np.abs(start_gaps[list(changed)]) > gap_tolerance)):
+            break
+        index += 1
+    return path.segments[index:]
 
 
 def _minimum_hermite_gap(
@@ -850,15 +896,22 @@ def solve_transient_contact(
             resumed_acceleration = None
             resumed_work = None
             last_path_active = None
+            event_boundary_support = ()
         else:
-            current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = (
-                _read_restart_checkpoint(
+            resumed = _read_restart_checkpoint(
                     restart_checkpoint, model_fingerprint,
                     analysis_fingerprint, Mred.shape[0], transient.t_end,
                     load_history=nodal_load_history,
                     path_pressure_dofs=(manager.support.size if path_adapter is not None else 0),
+                    event_subdivision=controls.s3_event_subdivision_dev,
                 )
-            )
+            current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = resumed[:7]
+            event_boundary_support = resumed[7] if controls.s3_event_subdivision_dev else ()
+            if event_boundary_support:
+                boundary_gaps = path_adapter.reference_gap+path_adapter.gradient @ q
+                if np.any(np.abs(boundary_gaps[list(event_boundary_support)])
+                          > controls.s3_event_gap_tolerance_m):
+                    raise ValueError("transient contact checkpoint event boundary exceeds its gap budget")
 
         def load_at(time_s: float) -> np.ndarray:
             if nodal_load_history is None:
@@ -990,7 +1043,14 @@ def solve_transient_contact(
             while True:
                 predictor = q + step * vred + step * step * (0.5 - beta) * acceleration
                 velocity_predictor = vred + step * (1.0 - gamma) * acceleration
-                candidate = predictor.copy() if event_seed is None else event_seed.copy()
+                # In the event profile iterate on acceleration as well as its
+                # Newmark position. Subtracting two positions after each solve
+                # amplifies endpoint roundoff by 1/h² at short event steps.
+                # Always start from the same predictor, including at a requested
+                # checkpoint boundary; the localized position is not a separate
+                # numerical initialization for the same physical endpoint.
+                candidate = predictor.copy() if controls.s3_event_subdivision_dev or event_seed is None else event_seed.copy()
+                event_acceleration = np.zeros_like(candidate)
                 event_seed = None
                 converged = False
                 requested_event_step = None
@@ -999,7 +1059,8 @@ def solve_transient_contact(
                     full, internal, tangent, trial = evaluate(
                         candidate, current_time+step, tangent=True,
                     )
-                    candidate_acceleration = (candidate - predictor) / (beta * step * step)
+                    candidate_acceleration = (event_acceleration.copy() if controls.s3_event_subdivision_dev
+                                              else (candidate - predictor) / (beta * step * step))
                     residual = Mred @ candidate_acceleration + internal
                     scale = max(1.0, float(np.linalg.norm(Mred @ candidate_acceleration)),
                                 float(np.linalg.norm(internal)))
@@ -1007,6 +1068,7 @@ def solve_transient_contact(
                         contact_result = manager.evaluate(full, tangent=False)[2]
                         candidate_velocity = velocity_predictor + gamma * step * candidate_acceleration
                         if s3_descriptor:
+                            rate_touch_targets = event_targets
                             candidate_velocity, candidate_acceleration = (
                                 _consistent_s3_descriptor_rates(
                                     model, T, Mred, descriptor_basis, full,
@@ -1015,6 +1077,8 @@ def solve_transient_contact(
                                     controls.s3_descriptor_difference_step_s,
                                     one_sided_manager=(manager if controls.s3_one_sided_rates_dev else None),
                                     maximum_iterations=controls.maximum_newton_iterations,
+                                    event_touch_indices=(event_targets if controls.s3_event_subdivision_dev else ()),
+                                    event_gap_tolerance=controls.s3_event_gap_tolerance_m,
                                 )
                             )
                         full_velocity = np.asarray(T @ candidate_velocity).reshape(-1)
@@ -1033,15 +1097,21 @@ def solve_transient_contact(
                             path_adapter.check_endpoints(candidate_path, q, candidate, T, controls)
                             if controls.s3_event_subdivision_dev:
                                 event_gaps = path_adapter.reference_gap+path_adapter.gradient @ candidate
-                                early = tuple(s for s in candidate_path.transition_fractions
+                                start_gaps = path_adapter.reference_gap+path_adapter.gradient @ q
+                                continuation = _event_continuation_segments(
+                                    candidate_path,step,event_boundary_support,start_gaps,
+                                    controls.s3_event_time_tolerance_s,controls.s3_event_gap_tolerance_m,
+                                )
+                                transitions = tuple(segment.end for segment in continuation[:-1])
+                                early = tuple(s for s in transitions
                                               if (1.-s)*step > controls.s3_event_time_tolerance_s)
                                 event_matches = (event_targets and np.all(
                                     np.abs(event_gaps[list(event_targets)]) <= controls.s3_event_gap_tolerance_m))
-                                if candidate_path.transition_fractions and (early or not event_matches):
+                                if transitions and (early or not event_matches):
                                     if event_localizations >= controls.maximum_event_localizations:
                                         raise RuntimeError("S3 event localization budget exhausted before commit")
                                     event_localizations += 1
-                                    first, second = candidate_path.segments[:2]
+                                    first, second = continuation[:2]
                                     changed = tuple(i for i,(left,right) in enumerate(zip(first.active, second.active))
                                                     if left != right)
                                     try:
@@ -1075,7 +1145,6 @@ def solve_transient_contact(
                                         np.abs(event_gaps[list(event_targets)]) <= controls.s3_event_gap_tolerance_m):
                                     raise RuntimeError("reequilibrated S3 event exceeds its dimensional gap budget")
                                 if not event_targets:
-                                    start_gaps = path_adapter.reference_gap+path_adapter.gradient @ q
                                     gap_rate = path_adapter.gradient @ candidate_velocity
                                     rate_budget = 64*np.finfo(float).eps*(np.abs(path_adapter.gradient) @ np.abs(candidate_velocity))
                                     touched = np.abs(event_gaps) <= controls.s3_event_gap_tolerance_m
@@ -1092,7 +1161,7 @@ def solve_transient_contact(
                                                 path_adapter.reference_gap,path_adapter.weights,
                                                 path_adapter.force_offset,q,vred,acceleration,
                                                 load_at(current_time),load_at(current_time+step),step,
-                                                candidate_path.segments[0].active,near_boundary,
+                                                continuation[0].active,near_boundary,
                                                 minimum_dt=controls.minimum_dt,
                                                 time_tolerance=controls.s3_event_time_tolerance_s,
                                                 gap_tolerance=controls.s3_event_gap_tolerance_m,
@@ -1119,6 +1188,8 @@ def solve_transient_contact(
                     if not np.all(np.isfinite(correction)):
                         break
                     candidate += correction
+                    if controls.s3_event_subdivision_dev:
+                        event_acceleration += correction / (beta * step * step)
                     discard_active_state_candidate(committed_states)
                 if requested_event_step is not None:
                     discard_active_state_candidate(committed_states)
@@ -1126,6 +1197,15 @@ def solve_transient_contact(
                     end_truncated = False
                     continue
                 if converged:
+                    if (controls.s3_event_subdivision_dev and event_targets
+                            and event_targets != rate_touch_targets):
+                        candidate_velocity,candidate_acceleration = _consistent_s3_descriptor_rates(
+                            model,T,Mred,descriptor_basis,full,candidate_velocity,candidate_acceleration,
+                            tangent,committed_states,controls.s3_descriptor_difference_step_s,
+                            one_sided_manager=manager,maximum_iterations=controls.maximum_newton_iterations,
+                            event_touch_indices=event_targets,
+                            event_gap_tolerance=controls.s3_event_gap_tolerance_m,
+                        )
                     step_work = 0.0
                     if nodal_load_history is not None:
                         start_force = (nodal_load_history.factor(current_time)
@@ -1143,6 +1223,8 @@ def solve_transient_contact(
                             )
                     check_cancel("transient contact step acceptance")
                     committed_states = commit_state_candidate(committed_states, trial)
+                    if controls.s3_event_subdivision_dev:
+                        event_boundary_support = event_targets
                     if controls.s3_event_subdivision_dev and event_targets:
                         localized_events.append(float(current_time+step))
                         end_truncated = False
@@ -1207,6 +1289,7 @@ def solve_transient_contact(
             q, vred, acceleration, accepted_steps,
             accumulated_work if nodal_load_history is not None else None,
             last_path_active if path_adapter is not None else None,
+            event_boundary_support if controls.s3_event_subdivision_dev else None,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(
