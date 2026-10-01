@@ -179,3 +179,6 @@ src/anysolver/_ge_beam3_native_dynamic_restart.py -text whitespace=cr-at-eol
 tests/test_ge_beam3_native_dynamic_restart.py -text whitespace=cr-at-eol
 
 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART28.md -text -whitespace
+
+docs/d1_review_support/native_forced_response* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART29.md -text -whitespace

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.46. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.47. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -54,9 +54,20 @@ Eight-source artifact binding was replaced by a bounded full-package Python-sour
 manifest; Python3.11 reparse compatibility and test-reporting defects were fixed
 before success, with prior unexecuted/failed candidates retained. Main sources are
 exact reviewed copies. Installed V2 example/fixture also passes48.838s/205.586MB with446 matching
-package files and its own artifact identity. Next select one remaining physical/
-temporal C7 discriminator using the retained failure/reference evidence. No fullC7 or
-scientific admission follows from this restart development slice.
+package files and its own artifact identity. A new full15-mode constant-line-force
+control now passes20steps (94.982s/222.003MB), with resolved temporal error ratios
+.2514–.2521 against an independently evaluated linear descriptor. Its spatial
+matrices are authenticated shared inputs, not a new continuum reference. Maximum
+nonlinear-to-discrete trajectory discrepancy is1.596e-7; smaller-load and invariant
+comparisons are below their frozen floors and establish no order. Independent
+saved assessment confirms the scoped development result. The first execution timed out during Numba cache
+creation before testing; one startup-only trace identified that boundary, and a
+fresh task-owned cache corrected it without source, mechanics, tolerance or cap
+changes. Retain both stopped records. A source-only assessment rejects a generic
+Euler rotor as an exact free elastic-beam trajectory. Next close the clamped
+driven temporal/support-impulse row with a fresh constrained descriptor; finite-angle
+nonprincipal torque-free accuracy remains open. Do not repeat passed controls.
+No fullC7 or scientific admission follows from these development slices.
 
 ## 1. Current position
 

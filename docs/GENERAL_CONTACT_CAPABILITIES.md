@@ -578,6 +578,16 @@ complete fixture state/accounting parity and independent assessment. Loaded/
 clamped restart and temporal/C7 scientific admission remain open. Existing
 historical native selector/guards unchanged.
 
+The full15-mode driven development control also passes20steps (94.982s/222.003MB),
+using continuous and discrete midpoint references with authenticated shared
+spatial matrices. Resolved trajectory refinement ratios are.2514–.2521; maximum
+nonlinear-to-discrete discrepancy1.596e-7. Load-halving and invariant comparisons
+remain below frozen floors, with no order claim. Independent saved assessment
+confirms this scoped development result. V1 pre-test cache timeout and the bounded startup trace remain retained;
+V2 verifies an effective task-owned cache without changing production mechanics.
+Evidence: native_forced_response_v2_20261001.summary.json. This does not admit
+general finite-rotation trajectories, native impact or fullC7.
+
 ## Development package and actual quadratic beam coupling
 
 Wheel8df161b0 from exact source-bound4c3ac836 runs the B2/S3 and contact-free

@@ -123,3 +123,23 @@ Evidence:`d1_review_support/native_dynamic_restart_installed_v1_20261001.summary
 Independent saved assessment in `D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md`
 closes this installed development routing/state check, not C7 scientific
 admission or release. Earlier accepted contact artifacts and failures remain.
+
+### Driven temporal development control — 2026-10-01
+
+One curved free beam with the actual section centroid(.035,-.025,.012)m and
+cross inertia passes20constant-line-force steps:4coarse,8fine and8half load over
+.004s. The force(.2,-.15,.1)N/m acts on the lifted reference line, not the mass
+centroid, and excites the elastic modes. Continuous and discrete midpoint
+references retain all15 modes; the spatial matrices are authenticated shared
+inputs. Resolved trajectory errors decrease by factors.2514–.2521 under timestep
+halving. Maximum nonlinear-to-discrete discrepancy is1.596e-7; energy/momentum
+gates pass. Load-halving differences and invariant errors are below their frozen
+floors, so no order follows from those comparisons.
+
+Evidence: `d1_review_support/native_forced_response_v2_20261001.summary.json`,
+with full source snapshots and bound input. Runtime94.982s/222.003MB; explicit
+solve tolerance1e-12, unchanged physical gates and default1e-11. Independent saved
+assessment confirms the scoped result. The preceding180s import timeout and40s startup-only trace
+are retained; a fresh task-owned Numba cache resolved the cache-creation stall,
+verified in the actual target process. No production source changed. This is a
+small-motion temporal development result, not native impact or fullC7 acceptance.
