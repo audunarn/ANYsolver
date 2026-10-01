@@ -21,6 +21,30 @@ without excluding it. Retain law/P0 candidate; bounded saved-state end-port/
 support-work review is next. No space/converged1%/F03/M2/G0B acceptance follows.
 [Complete results, raw records and independent review](development/r8-bl5-matched-comparison-20261001/refinement-v1-results.md).
 
+Saved end-port/support review, 1 October: all nine root decompositions, all 55
+input bindings, full retained rigid-work contractions and signed endpoint-work
+predictions independently verified. No support or endpoint-work defect found.
+Internal/attachment moment differences can cancel; algebraic shares do not
+identify a causal error. The same physical P0 action on both discrete domains is
+the next bounded discriminator, subject to verified channel/support ordering,
+work measures and isolated-beam rigid-spin compatibility. No new refinement,
+law repair, space selection or F03 acceptance follows.
+[Analysis and independent review](development/r8-bl5-matched-comparison-20261001/endport-support-independent-review.md).
+
+Finest-grid common-action control, 1 October: zero-LU work/compatibility screen
+and the three distinct saved loads complete with unchanged sparse operators.
+All 160 action-basis maps agree; native self-replay and full original-free/gauge
+stationarity pass. With the same physical P0 action, beam nodal rotations agree
+near roundoff and shell director rx/ry differences are about 0.0074–0.0107% in
+sampled-vector norm. Released normal spin dominates aggregate shell rotation
+differences and remains in raw outputs. No coupled yaw, integrated-L2 accuracy,
+drilling independence or root/reference convergence is inferred. Retain law/P0
+candidate; stop port/mesh tuning in this slice and advance staged material history.
+Remaining scientific, CalculiX and complete M2 obligations stay open. Complete
+independent review has no consequential admitted-control finding. The canonical
+[raw archive and decision](development/r8-bl5-matched-comparison-20261001/common-action-v1-results.md)
+preserve all component differences and limitations; no aggregate acceptance.
+
 **Updated:** 1 October 2026. **Candidate:** current integration branch;
 exact development-screen source identities are recorded with their raw evidence.
 This is the forward status index, not an
