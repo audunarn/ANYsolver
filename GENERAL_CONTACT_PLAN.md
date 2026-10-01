@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.53. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.54. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -171,10 +171,20 @@ Four-step mean13.8799s to13.2130s is only4.80% saving despite full callbacks3888
 to96. Total64.518s/190.960MB;452 bindings postmatch. This does not admit a larger
 accuracy run or an extended840s scope. Retain the existing scope without a new
 production extension. [Measurement](docs/d1_review_support/native_validation_cost_v1_20261001.summary.json).
-One bounded two-step cProfile probe will discriminate finite inertia/derivatives,
-structural evaluation and repeated endpoint accounting. Select one targeted
-change or bounded accuracy case from that result; avoid an unmeasured oversized
-full-duration refinement or another open-ended optimization campaign.
+The bounded two-step profile passes with452 unchanged source bindings. Finite
+inertia is the largest measured component:4.982s of10.541s profile window;
+its8064 derivative calls consume3.548s. Exact package validation3.613s and extra
+harness recovery1.599s are also substantial; cumulative times overlap.
+[Profile](docs/d1_review_support/native_step_profile_v1_20261001.summary.json).
+Select one NumPy batching candidate for the existing inertia derivative column
+contractions/cross products. Keep the original frozen scalar kernel, physical
+mapping, quadrature, centroid, complete force derivatives and package/state
+guards. Review algebra and local parity/directional checks before wiring it.
+Then measure one integrated four-step route at identical mechanics/accuracy;
+use that measured cost to select the next bounded accuracy case. No source
+optimization or cProfile result itself establishes refinement affordability.
+Avoid an unmeasured oversized full-duration refinement or another open-ended
+optimization campaign. Compiled infrastructure is deferred in this first slice.
 Required C0–C9 remains intact.
 
 The separate ANYstructure intent-storage/public-mapping/typed-rejection slice

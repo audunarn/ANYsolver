@@ -1,0 +1,2496 @@
+{
+  "total_profile_self_seconds": 10.54092389999999,
+  "total_calls": 20480389,
+  "primitive_calls": 19909325,
+  "top20_cumulative": [
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_analysis.py",
+      "line": 94,
+      "function": "trial",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 3.04e-05,
+      "cumulative_seconds": 5.8632311,
+      "callers": []
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 635,
+      "function": "trial",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 0.0009377000000000001,
+      "cumulative_seconds": 5.8631997,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_analysis.py",
+          "line": 94,
+          "function": "trial",
+          "profile_values": [
+            2,
+            2,
+            0.0009377000000000001,
+            5.8631997
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 435,
+      "function": "_inertia",
+      "primitive_calls": 14,
+      "total_calls": 14,
+      "self_seconds": 0.0007202,
+      "cumulative_seconds": 4.981803,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 47,
+          "function": "signed_endpoint",
+          "profile_values": [
+            2,
+            2,
+            0.00010070000000000001,
+            0.7188222000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 516,
+          "function": "_endpoint_acceleration",
+          "profile_values": [
+            4,
+            4,
+            0.00021480000000000002,
+            1.4214689
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 559,
+          "function": "_stage",
+          "profile_values": [
+            6,
+            6,
+            0.0003055,
+            2.1335016
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 848,
+          "function": "endpoint_accounting",
+          "profile_values": [
+            2,
+            2,
+            9.920000000000001e-05,
+            0.7080103000000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py",
+      "line": 136,
+      "function": "evaluate_centered_finite_inertia",
+      "primitive_calls": 14,
+      "total_calls": 14,
+      "self_seconds": 0.0008003000000000001,
+      "cumulative_seconds": 4.980655400000001,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 435,
+          "function": "_inertia",
+          "profile_values": [
+            14,
+            14,
+            0.0008003000000000001,
+            4.980655400000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+      "line": 48,
+      "function": "evaluate",
+      "primitive_calls": 14,
+      "total_calls": 14,
+      "self_seconds": 0.0821979,
+      "cumulative_seconds": 4.6691776,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py",
+          "line": 136,
+          "function": "evaluate_centered_finite_inertia",
+          "profile_values": [
+            14,
+            14,
+            0.0821979,
+            4.6691776
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "line": 1567,
+      "function": "cross",
+      "primitive_calls": 160608,
+      "total_calls": 160608,
+      "self_seconds": 1.3539083,
+      "cumulative_seconds": 3.9796885000000004,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+          "line": 48,
+          "function": "evaluate",
+          "profile_values": [
+            38976,
+            38976,
+            0.32970320000000003,
+            0.9684697000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+          "line": 93,
+          "function": "derivative",
+          "profile_values": [
+            120960,
+            120960,
+            1.0178594,
+            2.992162
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\ge_beam3_curved_reference.py",
+          "line": 337,
+          "function": "_shortest_tangent_transport",
+          "profile_values": [
+            672,
+            672,
+            0.0063457,
+            0.019056800000000002
+          ]
+        }
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.next>",
+      "primitive_calls": 5444,
+      "total_calls": 5528,
+      "self_seconds": 0.0005383,
+      "cumulative_seconds": 3.635073,
+      "callers": [
+        {
+          "file": "C:\\Python\\Python314\\Lib\\contextlib.py",
+          "line": 136,
+          "function": "__enter__",
+          "profile_values": [
+            40,
+            10,
+            3.65e-05,
+            1.8098693000000001
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\contextlib.py",
+          "line": 145,
+          "function": "__exit__",
+          "profile_values": [
+            40,
+            10,
+            6.560000000000001e-05,
+            1.8245459000000002
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\shape_base.py",
+          "line": 557,
+          "function": "_block_check_depths_match",
+          "profile_values": [
+            72,
+            48,
+            2.8400000000000003e-05,
+            0.00025
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_shape_base_impl.py",
+          "line": 515,
+          "function": "expand_dims",
+          "profile_values": [
+            5376,
+            5376,
+            0.00040780000000000005,
+            0.00040780000000000005
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 313,
+      "function": "_atomic_operation",
+      "primitive_calls": 20,
+      "total_calls": 20,
+      "self_seconds": 0.000194,
+      "cumulative_seconds": 3.6343688000000003,
+      "callers": [
+        {
+          "file": "~",
+          "line": 0,
+          "function": "<built-in method builtins.next>",
+          "profile_values": [
+            20,
+            20,
+            0.000194,
+            3.6343688000000003
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+      "line": 148,
+      "function": "require_contract",
+      "primitive_calls": 20,
+      "total_calls": 20,
+      "self_seconds": 8.67e-05,
+      "cumulative_seconds": 3.6159499000000004,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 313,
+          "function": "_atomic_operation",
+          "profile_values": [
+            20,
+            20,
+            8.67e-05,
+            3.6159499000000004
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+      "line": 109,
+      "function": "contract",
+      "primitive_calls": 20,
+      "total_calls": 20,
+      "self_seconds": 0.001247,
+      "cumulative_seconds": 3.6143647000000003,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+          "line": 148,
+          "function": "require_contract",
+          "profile_values": [
+            20,
+            20,
+            0.001247,
+            3.6143647000000003
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+      "line": 47,
+      "function": "_package_manifest",
+      "primitive_calls": 20,
+      "total_calls": 20,
+      "self_seconds": 0.1634692,
+      "cumulative_seconds": 3.6128001000000003,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+          "line": 109,
+          "function": "contract",
+          "profile_values": [
+            20,
+            20,
+            0.1634692,
+            3.6128001000000003
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+      "line": 93,
+      "function": "derivative",
+      "primitive_calls": 8064,
+      "total_calls": 8064,
+      "self_seconds": 0.22216750000000002,
+      "cumulative_seconds": 3.5483741,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+          "line": 48,
+          "function": "evaluate",
+          "profile_values": [
+            8064,
+            8064,
+            0.22216750000000002,
+            3.5483741
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+      "line": 116,
+      "function": "observe",
+      "primitive_calls": 6,
+      "total_calls": 6,
+      "self_seconds": 0.0001683,
+      "cumulative_seconds": 2.6519848,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 635,
+          "function": "trial",
+          "profile_values": [
+            6,
+            6,
+            0.0001683,
+            2.6519848
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 559,
+      "function": "_stage",
+      "primitive_calls": 6,
+      "total_calls": 6,
+      "self_seconds": 0.0008821,
+      "cumulative_seconds": 2.6141755,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 116,
+          "function": "observe",
+          "profile_values": [
+            6,
+            6,
+            0.0008821,
+            2.6141755
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "line": 1493,
+      "function": "moveaxis",
+      "primitive_calls": 481900,
+      "total_calls": 481900,
+      "self_seconds": 0.6260333,
+      "cumulative_seconds": 2.3692063,
+      "callers": [
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+          "line": 1567,
+          "function": "cross",
+          "profile_values": [
+            481824,
+            481824,
+            0.6258117000000001,
+            2.3685025
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\polynomial\\legendre.py",
+          "line": 612,
+          "function": "legder",
+          "profile_values": [
+            76,
+            76,
+            0.00022160000000000002,
+            0.0007038000000000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'read' of '_io.BufferedReader' objects>",
+      "primitive_calls": 8920,
+      "total_calls": 8920,
+      "self_seconds": 2.0649802,
+      "cumulative_seconds": 2.0649802,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+          "line": 47,
+          "function": "_package_manifest",
+          "profile_values": [
+            8920,
+            8920,
+            2.0649802,
+            2.0649802
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\contextlib.py",
+      "line": 145,
+      "function": "__exit__",
+      "primitive_calls": 10,
+      "total_calls": 40,
+      "self_seconds": 4.43e-05,
+      "cumulative_seconds": 1.8245684000000002,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 47,
+          "function": "signed_endpoint",
+          "profile_values": [
+            2,
+            2,
+            4.2000000000000004e-06,
+            0.3705005
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+          "line": 244,
+          "function": "session",
+          "profile_values": [
+            10,
+            10,
+            1.3100000000000002e-05,
+            0.0021463000000000003
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 300,
+          "function": "_work_operation",
+          "profile_values": [
+            10,
+            10,
+            4.5e-06,
+            0.010723100000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 313,
+          "function": "_atomic_operation",
+          "profile_values": [
+            10,
+            10,
+            4.2000000000000004e-06,
+            0.010749400000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 635,
+          "function": "trial",
+          "profile_values": [
+            2,
+            2,
+            4.3e-06,
+            0.3687767
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 733,
+          "function": "candidate_stage_audit",
+          "profile_values": [
+            2,
+            2,
+            4.9000000000000005e-06,
+            0.3644676
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 766,
+          "function": "commit",
+          "profile_values": [
+            2,
+            2,
+            4.1000000000000006e-06,
+            0.36308500000000005
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 848,
+          "function": "endpoint_accounting",
+          "profile_values": [
+            2,
+            2,
+            5e-06,
+            0.3577386
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\contextlib.py",
+      "line": 136,
+      "function": "__enter__",
+      "primitive_calls": 10,
+      "total_calls": 40,
+      "self_seconds": 2.61e-05,
+      "cumulative_seconds": 1.8098856,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 47,
+          "function": "signed_endpoint",
+          "profile_values": [
+            2,
+            2,
+            3.7e-06,
+            0.3554042
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+          "line": 244,
+          "function": "session",
+          "profile_values": [
+            10,
+            10,
+            3.4e-06,
+            0.0035218000000000003
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 300,
+          "function": "_work_operation",
+          "profile_values": [
+            10,
+            10,
+            3.2000000000000003e-06,
+            0.0073229
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 313,
+          "function": "_atomic_operation",
+          "profile_values": [
+            10,
+            10,
+            3.2000000000000003e-06,
+            0.0073639000000000005
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 635,
+          "function": "trial",
+          "profile_values": [
+            2,
+            2,
+            3.6000000000000003e-06,
+            0.36515980000000003
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 733,
+          "function": "candidate_stage_audit",
+          "profile_values": [
+            2,
+            2,
+            4.000000000000001e-06,
+            0.36072570000000004
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 766,
+          "function": "commit",
+          "profile_values": [
+            2,
+            2,
+            2.6e-06,
+            0.36825100000000005
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 848,
+          "function": "endpoint_accounting",
+          "profile_values": [
+            2,
+            2,
+            2.4000000000000003e-06,
+            0.3603449
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+      "line": 342,
+      "function": "_evaluate",
+      "primitive_calls": 24,
+      "total_calls": 24,
+      "self_seconds": 0.0015197000000000001,
+      "cumulative_seconds": 1.7070386000000002,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+          "line": 116,
+          "function": "trial_state",
+          "profile_values": [
+            2,
+            2,
+            0.0001194,
+            0.14188510000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+          "line": 127,
+          "function": "work",
+          "profile_values": [
+            12,
+            12,
+            0.0007618000000000001,
+            0.8492398000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+          "line": 419,
+          "function": "_consistent",
+          "profile_values": [
+            10,
+            10,
+            0.0006385000000000001,
+            0.7159137000000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+      "line": 47,
+      "function": "signed_endpoint",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 6.52e-05,
+      "cumulative_seconds": 1.5990974,
+      "callers": []
+    }
+  ],
+  "top20_self": [
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'read' of '_io.BufferedReader' objects>",
+      "primitive_calls": 8920,
+      "total_calls": 8920,
+      "self_seconds": 2.0649802,
+      "cumulative_seconds": 2.0649802,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+          "line": 47,
+          "function": "_package_manifest",
+          "profile_values": [
+            8920,
+            8920,
+            2.0649802,
+            2.0649802
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "line": 1567,
+      "function": "cross",
+      "primitive_calls": 160608,
+      "total_calls": 160608,
+      "self_seconds": 1.3539083,
+      "cumulative_seconds": 3.9796885000000004,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+          "line": 48,
+          "function": "evaluate",
+          "profile_values": [
+            38976,
+            38976,
+            0.32970320000000003,
+            0.9684697000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+          "line": 93,
+          "function": "derivative",
+          "profile_values": [
+            120960,
+            120960,
+            1.0178594,
+            2.992162
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\ge_beam3_curved_reference.py",
+          "line": 337,
+          "function": "_shortest_tangent_transport",
+          "profile_values": [
+            672,
+            672,
+            0.0063457,
+            0.019056800000000002
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "line": 1431,
+      "function": "normalize_axis_tuple",
+      "primitive_calls": 966488,
+      "total_calls": 966488,
+      "self_seconds": 0.9312471000000001,
+      "cumulative_seconds": 1.4709664,
+      "callers": [
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+          "line": 1493,
+          "function": "moveaxis",
+          "profile_values": [
+            963800,
+            963800,
+            0.9285856,
+            1.4668094
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_shape_base_impl.py",
+          "line": 515,
+          "function": "expand_dims",
+          "profile_values": [
+            2688,
+            2688,
+            0.0026615000000000002,
+            0.004157
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "line": 1493,
+      "function": "moveaxis",
+      "primitive_calls": 481900,
+      "total_calls": 481900,
+      "self_seconds": 0.6260333,
+      "cumulative_seconds": 2.3692063,
+      "callers": [
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+          "line": 1567,
+          "function": "cross",
+          "profile_values": [
+            481824,
+            481824,
+            0.6258117000000001,
+            2.3685025
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\polynomial\\legendre.py",
+          "line": 612,
+          "function": "legder",
+          "profile_values": [
+            76,
+            76,
+            0.00022160000000000002,
+            0.0007038000000000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method nt.lstat>",
+      "primitive_calls": 9280,
+      "total_calls": 9280,
+      "self_seconds": 0.4074652,
+      "cumulative_seconds": 0.5059366000000001,
+      "callers": [
+        {
+          "file": "C:\\Python\\Python314\\Lib\\pathlib\\__init__.py",
+          "line": 656,
+          "function": "lstat",
+          "profile_values": [
+            9280,
+            9280,
+            0.4074652,
+            0.5059366000000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\json\\encoder.py",
+      "line": 207,
+      "function": "iterencode",
+      "primitive_calls": 18098,
+      "total_calls": 18098,
+      "self_seconds": 0.3121099,
+      "cumulative_seconds": 0.6035818000000001,
+      "callers": [
+        {
+          "file": "C:\\Python\\Python314\\Lib\\json\\encoder.py",
+          "line": 185,
+          "function": "encode",
+          "profile_values": [
+            18098,
+            18098,
+            0.3121099,
+            0.6035818000000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method _io.open>",
+      "primitive_calls": 8920,
+      "total_calls": 8920,
+      "self_seconds": 0.3082922,
+      "cumulative_seconds": 0.3112334,
+      "callers": [
+        {
+          "file": "C:\\Python\\Python314\\Lib\\pathlib\\__init__.py",
+          "line": 763,
+          "function": "open",
+          "profile_values": [
+            8920,
+            8920,
+            0.3082922,
+            0.3112334
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+      "line": 93,
+      "function": "derivative",
+      "primitive_calls": 8064,
+      "total_calls": 8064,
+      "self_seconds": 0.22216750000000002,
+      "cumulative_seconds": 3.5483741,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+          "line": 48,
+          "function": "evaluate",
+          "profile_values": [
+            8064,
+            8064,
+            0.22216750000000002,
+            3.5483741
+          ]
+        }
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.len>",
+      "primitive_calls": 3232702,
+      "total_calls": 3256622,
+      "self_seconds": 0.2109491,
+      "cumulative_seconds": 0.2144232,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 116,
+          "function": "observe",
+          "profile_values": [
+            18,
+            18,
+            3.1000000000000004e-06,
+            3.1000000000000004e-06
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py",
+          "line": 136,
+          "function": "evaluate_centered_finite_inertia",
+          "profile_values": [
+            14,
+            14,
+            2.1000000000000002e-06,
+            2.1000000000000002e-06
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+          "line": 302,
+          "function": "_origins",
+          "profile_values": [
+            60,
+            60,
+            7.3e-06,
+            7.3e-06
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+          "line": 320,
+          "function": "_issue",
+          "profile_values": [
+            18,
+            18,
+            2.7e-06,
+            2.7e-06
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+          "line": 388,
+          "function": "_algebraic_rank",
+          "profile_values": [
+            18,
+            18,
+            1.7e-06,
+            1.7e-06
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_generalized_cell.py",
+          "line": 69,
+          "function": "_origins",
+          "profile_values": [
+            216,
+            216,
+            1.7100000000000002e-05,
+            1.7100000000000002e-05
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_generalized_cell.py",
+          "line": 100,
+          "function": "response",
+          "profile_values": [
+            24,
+            24,
+            2.7e-06,
+            2.7e-06
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_generalized_ellipsoid_section.py",
+          "line": 24,
+          "function": "_unpair",
+          "profile_values": [
+            6048,
+            6048,
+            0.0003815,
+            0.0003815
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_generalized_ellipsoid_section.py",
+          "line": 103,
+          "function": "_origin",
+          "profile_values": [
+            864,
+            864,
+            5.81e-05,
+            5.81e-05
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 115,
+          "function": "transpose",
+          "profile_values": [
+            576,
+            576,
+            3.94e-05,
+            3.94e-05
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 119,
+          "function": "matmul",
+          "profile_values": [
+            8370,
+            8370,
+            0.0006698,
+            0.0006698
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_analysis.py",
+          "line": 110,
+          "function": "_admit_boundaries",
+          "profile_values": [
+            6378,
+            6378,
+            0.0005156000000000001,
+            0.0005156000000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+          "line": 47,
+          "function": "_package_manifest",
+          "profile_values": [
+            36420,
+            36420,
+            0.0035119,
+            0.0035119
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_fibre_restart.py",
+          "line": 69,
+          "function": "visit",
+          "profile_values": [
+            3840,
+            3840,
+            0.0002355,
+            0.0002355
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_generalized_element.py",
+          "line": 48,
+          "function": "_check",
+          "profile_values": [
+            4348,
+            4348,
+            0.0005308,
+            0.0005308
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_generalized_loading.py",
+          "line": 11,
+          "function": "_rows",
+          "profile_values": [
+            48,
+            48,
+            4.9000000000000005e-06,
+            4.9000000000000005e-06
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_generalized_restart.py",
+          "line": 71,
+          "function": "_history",
+          "profile_values": [
+            60,
+            60,
+            5.9e-06,
+            5.9e-06
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 454,
+          "function": "_block_checks",
+          "profile_values": [
+            8,
+            8,
+            1.1e-06,
+            1.1e-06
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_station_resultant_cell.py",
+          "line": 24,
+          "function": "solve",
+          "profile_values": [
+            96,
+            96,
+            1.01e-05,
+            1.01e-05
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_station_resultant_cell.py",
+          "line": 72,
+          "function": "cholesky",
+          "profile_values": [
+            24,
+            24,
+            3.4e-06,
+            3.4e-06
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\json\\__init__.py",
+          "line": 248,
+          "function": "detect_encoding",
+          "profile_values": [
+            148,
+            148,
+            2.7400000000000002e-05,
+            2.7400000000000002e-05
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\json\\decoder.py",
+          "line": 340,
+          "function": "decode",
+          "profile_values": [
+            148,
+            148,
+            2.29e-05,
+            2.29e-05
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\pathlib\\__init__.py",
+          "line": 60,
+          "function": "__len__",
+          "profile_values": [
+            23920,
+            23920,
+            0.0015213000000000002,
+            0.0015213000000000002
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\pathlib\\__init__.py",
+          "line": 63,
+          "function": "__getitem__",
+          "profile_values": [
+            23920,
+            23920,
+            0.0058903,
+            0.0108857
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\pathlib\\__init__.py",
+          "line": 330,
+          "function": "_raw_path",
+          "profile_values": [
+            9280,
+            9280,
+            0.0008380000000000001,
+            0.0008380000000000001
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\pathlib\\__init__.py",
+          "line": 476,
+          "function": "relative_to",
+          "profile_values": [
+            8920,
+            8920,
+            0.0007734,
+            0.0007734
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+          "line": 1431,
+          "function": "normalize_axis_tuple",
+          "profile_values": [
+            1932976,
+            1932976,
+            0.1202985,
+            0.1202985
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+          "line": 1493,
+          "function": "moveaxis",
+          "profile_values": [
+            963800,
+            963800,
+            0.054496100000000006,
+            0.054496100000000006
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+          "line": 1567,
+          "function": "cross",
+          "profile_values": [
+            160608,
+            160608,
+            0.0107831,
+            0.0107831
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\shape_base.py",
+          "line": 557,
+          "function": "_block_check_depths_match",
+          "profile_values": [
+            216,
+            216,
+            1.7e-05,
+            1.7e-05
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\shape_base.py",
+          "line": 954,
+          "function": "_block_setup",
+          "profile_values": [
+            24,
+            24,
+            1.7e-06,
+            1.7e-06
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_index_tricks_impl.py",
+          "line": 31,
+          "function": "ix_",
+          "profile_values": [
+            28,
+            28,
+            3.6000000000000003e-06,
+            3.6000000000000003e-06
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_index_tricks_impl.py",
+          "line": 343,
+          "function": "__getitem__",
+          "profile_values": [
+            26904,
+            26904,
+            0.0020222,
+            0.0020222
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_shape_base_impl.py",
+          "line": 515,
+          "function": "expand_dims",
+          "profile_values": [
+            2688,
+            2688,
+            0.0001722,
+            0.0001722
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_shape_base_impl.py",
+          "line": 737,
+          "function": "array_split",
+          "profile_values": [
+            17472,
+            17472,
+            0.0034046000000000002,
+            0.0034046000000000002
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_shape_base_impl.py",
+          "line": 798,
+          "function": "split",
+          "profile_values": [
+            17472,
+            17472,
+            0.004615500000000001,
+            0.004615500000000001
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\polynomial\\legendre.py",
+          "line": 612,
+          "function": "legder",
+          "profile_values": [
+            38,
+            38,
+            3.9e-06,
+            3.9e-06
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\polynomial\\legendre.py",
+          "line": 828,
+          "function": "legval",
+          "profile_values": [
+            456,
+            456,
+            3.0600000000000005e-05,
+            3.0600000000000005e-05
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\polynomial\\legendre.py",
+          "line": 1371,
+          "function": "legcompanion",
+          "profile_values": [
+            114,
+            114,
+            1.63e-05,
+            1.63e-05
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\polynomial\\polyutils.py",
+          "line": 34,
+          "function": "trimseq",
+          "profile_values": [
+            38,
+            38,
+            4.7e-06,
+            4.7e-06
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\dataclasses.py",
+      "line": 1499,
+      "function": "_asdict_inner",
+      "primitive_calls": 2738,
+      "total_calls": 539370,
+      "self_seconds": 0.18439570000000002,
+      "cumulative_seconds": 0.2422805,
+      "callers": [
+        {
+          "file": "C:\\Python\\Python314\\Lib\\dataclasses.py",
+          "line": 1475,
+          "function": "asdict",
+          "profile_values": [
+            2738,
+            2738,
+            0.0039276,
+            0.2422805
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\dataclasses.py",
+          "line": 1499,
+          "function": "_asdict_inner",
+          "profile_values": [
+            536632,
+            6240,
+            0.18046810000000002,
+            0.2328629
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "line": 1480,
+      "function": "<genexpr>",
+      "primitive_calls": 1932976,
+      "total_calls": 1932976,
+      "self_seconds": 0.1816443,
+      "cumulative_seconds": 0.2676404,
+      "callers": [
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+          "line": 1431,
+          "function": "normalize_axis_tuple",
+          "profile_values": [
+            1932976,
+            1932976,
+            0.1816443,
+            0.2676404
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+      "line": 47,
+      "function": "_package_manifest",
+      "primitive_calls": 20,
+      "total_calls": 20,
+      "self_seconds": 0.1634692,
+      "cumulative_seconds": 3.6128001000000003,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+          "line": 109,
+          "function": "contract",
+          "profile_values": [
+            20,
+            20,
+            0.1634692,
+            3.6128001000000003
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+      "line": 53,
+      "function": "__mul__",
+      "primitive_calls": 28080,
+      "total_calls": 28080,
+      "self_seconds": 0.16017830000000002,
+      "cumulative_seconds": 0.3154244,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_fibre_line_work.py",
+          "line": 55,
+          "function": "evaluate",
+          "profile_values": [
+            3456,
+            3456,
+            0.020384000000000003,
+            0.044412400000000005
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 72,
+          "function": "__truediv__",
+          "profile_values": [
+            2214,
+            2214,
+            0.012527600000000002,
+            0.023975
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 125,
+          "function": "<genexpr>",
+          "profile_values": [
+            15066,
+            15066,
+            0.085313,
+            0.16422420000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 149,
+          "function": "_exp_coefficients",
+          "profile_values": [
+            522,
+            522,
+            0.0029630000000000004,
+            0.005735400000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 164,
+          "function": "so3_exp",
+          "profile_values": [
+            3564,
+            3564,
+            0.020139,
+            0.038669300000000004
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 166,
+          "function": "<genexpr>",
+          "profile_values": [
+            594,
+            594,
+            0.0036337,
+            0.0070090000000000005
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 177,
+          "function": "_log_factor",
+          "profile_values": [
+            360,
+            360,
+            0.0021813,
+            0.0042535
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 197,
+          "function": "so3_log",
+          "profile_values": [
+            288,
+            288,
+            0.0016432,
+            0.0031147
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\compensated.py",
+          "line": 60,
+          "function": "<genexpr>",
+          "profile_values": [
+            864,
+            864,
+            0.0049528,
+            0.0109548
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\compensated.py",
+          "line": 61,
+          "function": "<genexpr>",
+          "profile_values": [
+            864,
+            864,
+            0.004856200000000001,
+            0.0095627
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_retained_generalized.py",
+          "line": 108,
+          "function": "<genexpr>",
+          "profile_values": [
+            288,
+            288,
+            0.0015845000000000002,
+            0.0035134000000000003
+          ]
+        }
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.isinstance>",
+      "primitive_calls": 1540932,
+      "total_calls": 1540932,
+      "self_seconds": 0.1438771,
+      "cumulative_seconds": 0.1530658,
+      "callers": [
+        {
+          "file": "<frozen importlib._bootstrap>",
+          "line": 1401,
+          "function": "_handle_fromlist",
+          "profile_values": [
+            12700,
+            12700,
+            0.0008852,
+            0.0008852
+          ]
+        },
+        {
+          "file": "<frozen ntpath>",
+          "line": 80,
+          "function": "isabs",
+          "profile_values": [
+            20,
+            20,
+            2.0000000000000003e-06,
+            2.0000000000000003e-06
+          ]
+        },
+        {
+          "file": "<frozen ntpath>",
+          "line": 99,
+          "function": "join",
+          "profile_values": [
+            9600,
+            9600,
+            0.0008648000000000001,
+            0.0008648000000000001
+          ]
+        },
+        {
+          "file": "<frozen os>",
+          "line": 297,
+          "function": "walk",
+          "profile_values": [
+            360,
+            360,
+            5.69e-05,
+            5.69e-05
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_fibre_section.py",
+          "line": 26,
+          "function": "encode",
+          "profile_values": [
+            12728,
+            12728,
+            0.0009480000000000001,
+            0.0009480000000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 35,
+          "function": "_coerce",
+          "profile_values": [
+            57654,
+            57654,
+            0.0038386,
+            0.0038386
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5_seeded\\core.py",
+          "line": 33,
+          "function": "encode",
+          "profile_values": [
+            23224,
+            23224,
+            0.0015324000000000002,
+            0.0015324000000000002
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\dataclasses.py",
+          "line": 1468,
+          "function": "is_dataclass",
+          "profile_values": [
+            25910,
+            25910,
+            0.0029651,
+            0.0029651
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\fractions.py",
+          "line": 206,
+          "function": "__new__",
+          "profile_values": [
+            67392,
+            67392,
+            0.0095574,
+            0.0187461
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\fractions.py",
+          "line": 697,
+          "function": "forward",
+          "profile_values": [
+            46944,
+            46944,
+            0.0026164,
+            0.0026164
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\json\\__init__.py",
+          "line": 304,
+          "function": "loads",
+          "profile_values": [
+            296,
+            296,
+            3.1400000000000004e-05,
+            3.1400000000000004e-05
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\json\\encoder.py",
+          "line": 185,
+          "function": "encode",
+          "profile_values": [
+            36196,
+            36196,
+            0.0038084000000000004,
+            0.0038084000000000004
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\pathlib\\__init__.py",
+          "line": 63,
+          "function": "__getitem__",
+          "profile_values": [
+            11960,
+            11960,
+            0.0013816000000000002,
+            0.0013816000000000002
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\pathlib\\__init__.py",
+          "line": 135,
+          "function": "__init__",
+          "profile_values": [
+            78880,
+            78880,
+            0.0074007000000000005,
+            0.0074007000000000005
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\pathlib\\__init__.py",
+          "line": 217,
+          "function": "__eq__",
+          "profile_values": [
+            20880,
+            20880,
+            0.0019885000000000002,
+            0.0019885000000000002
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\fromnumeric.py",
+          "line": 1879,
+          "function": "ravel",
+          "profile_values": [
+            672,
+            672,
+            0.00010130000000000001,
+            0.00010130000000000001
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+          "line": 1431,
+          "function": "normalize_axis_tuple",
+          "profile_values": [
+            966488,
+            966488,
+            0.0911999,
+            0.0911999
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\shape_base.py",
+          "line": 557,
+          "function": "_block_check_depths_match",
+          "profile_values": [
+            432,
+            432,
+            3.2500000000000004e-05,
+            3.2500000000000004e-05
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\shape_base.py",
+          "line": 767,
+          "function": "_block_dispatcher",
+          "profile_values": [
+            168,
+            168,
+            1.29e-05,
+            1.29e-05
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_index_tricks_impl.py",
+          "line": 31,
+          "function": "ix_",
+          "profile_values": [
+            56,
+            56,
+            6.8e-06,
+            6.8e-06
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_index_tricks_impl.py",
+          "line": 343,
+          "function": "__getitem__",
+          "profile_values": [
+            161424,
+            161424,
+            0.014006900000000001,
+            0.014006900000000001
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_shape_base_impl.py",
+          "line": 515,
+          "function": "expand_dims",
+          "profile_values": [
+            5376,
+            5376,
+            0.00042950000000000003,
+            0.00042950000000000003
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_shape_base_impl.py",
+          "line": 1080,
+          "function": "kron",
+          "profile_values": [
+            1344,
+            1344,
+            0.0001719,
+            0.0001719
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\polynomial\\legendre.py",
+          "line": 828,
+          "function": "legval",
+          "profile_values": [
+            228,
+            228,
+            3.8e-05,
+            3.8e-05
+          ]
+        }
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.sum>",
+      "primitive_calls": 96540,
+      "total_calls": 96540,
+      "self_seconds": 0.1435119,
+      "cumulative_seconds": 0.48694360000000003,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_generalized_cell.py",
+          "line": 100,
+          "function": "response",
+          "profile_values": [
+            24,
+            24,
+            6.8e-05,
+            0.000173
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 119,
+          "function": "matmul",
+          "profile_values": [
+            5022,
+            5022,
+            0.0084007,
+            0.20236030000000002
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 164,
+          "function": "so3_exp",
+          "profile_values": [
+            198,
+            198,
+            0.0004806,
+            0.0087524
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\compensated.py",
+          "line": 25,
+          "function": "sum_jets",
+          "profile_values": [
+            1488,
+            1488,
+            0.0081661,
+            0.0093483
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5_centered\\positions.py",
+          "line": 14,
+          "function": "station_position",
+          "profile_values": [
+            2016,
+            2016,
+            0.0025709,
+            0.0445899
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_retained_generalized.py",
+          "line": 89,
+          "function": "evaluate",
+          "profile_values": [
+            24,
+            24,
+            0.0003734,
+            0.0009781
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_station_resultant_cell.py",
+          "line": 16,
+          "function": "mul",
+          "profile_values": [
+            57024,
+            57024,
+            0.07429000000000001,
+            0.1247091
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_station_resultant_cell.py",
+          "line": 19,
+          "function": "mv",
+          "profile_values": [
+            11808,
+            11808,
+            0.015699400000000002,
+            0.0295889
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_station_resultant_cell.py",
+          "line": 20,
+          "function": "dot",
+          "profile_values": [
+            1152,
+            1152,
+            0.0016775000000000002,
+            0.0036222000000000003
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_station_resultant_cell.py",
+          "line": 24,
+          "function": "solve",
+          "profile_values": [
+            13680,
+            13680,
+            0.0279422,
+            0.055769200000000005
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_station_resultant_cell.py",
+          "line": 72,
+          "function": "cholesky",
+          "profile_values": [
+            4104,
+            4104,
+            0.0038431000000000003,
+            0.007052200000000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\lib\\_index_tricks_impl.py",
+      "line": 343,
+      "function": "__getitem__",
+      "primitive_calls": 26904,
+      "total_calls": 26904,
+      "self_seconds": 0.13814320000000002,
+      "cumulative_seconds": 0.19368200000000002,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py",
+          "line": 85,
+          "function": "_momentum_pairs",
+          "profile_values": [
+            672,
+            672,
+            0.0041868,
+            0.0056518
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+          "line": 48,
+          "function": "evaluate",
+          "profile_values": [
+            2016,
+            2016,
+            0.010595,
+            0.0148112
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+          "line": 93,
+          "function": "derivative",
+          "profile_values": [
+            24192,
+            24192,
+            0.12290300000000001,
+            0.172516
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_retained_generalized.py",
+          "line": 89,
+          "function": "evaluate",
+          "profile_values": [
+            24,
+            24,
+            0.00045840000000000003,
+            0.0007030000000000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy.lib.array_utils.normalize_axis_index>",
+      "primitive_calls": 1448350,
+      "total_calls": 1448350,
+      "self_seconds": 0.1331392,
+      "cumulative_seconds": 0.1331392,
+      "callers": [
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+          "line": 1480,
+          "function": "<genexpr>",
+          "profile_values": [
+            966488,
+            966488,
+            0.0859961,
+            0.0859961
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+          "line": 1567,
+          "function": "cross",
+          "profile_values": [
+            481824,
+            481824,
+            0.0471274,
+            0.0471274
+          ]
+        },
+        {
+          "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\polynomial\\legendre.py",
+          "line": 612,
+          "function": "legder",
+          "profile_values": [
+            38,
+            38,
+            1.5700000000000002e-05,
+            1.5700000000000002e-05
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\Python\\Python314\\Lib\\site-packages\\numpy\\_core\\numeric.py",
+      "line": 909,
+      "function": "outer",
+      "primitive_calls": 58470,
+      "total_calls": 58470,
+      "self_seconds": 0.1183651,
+      "cumulative_seconds": 0.1403066,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 53,
+          "function": "__mul__",
+          "profile_values": [
+            56160,
+            56160,
+            0.11362430000000001,
+            0.13468180000000002
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_mixed_ad.py",
+          "line": 79,
+          "function": "unary",
+          "profile_values": [
+            2310,
+            2310,
+            0.0047408,
+            0.0056248
+          ]
+        }
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method _hashlib.openssl_sha256>",
+      "primitive_calls": 24168,
+      "total_calls": 24168,
+      "self_seconds": 0.10950670000000001,
+      "cumulative_seconds": 0.10950670000000001,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 116,
+          "function": "observe",
+          "profile_values": [
+            6,
+            6,
+            0.0002068,
+            0.0002068
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_generalized_ellipsoid_section.py",
+          "line": 95,
+          "function": "guard",
+          "profile_values": [
+            6340,
+            6340,
+            0.003982,
+            0.003982
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_analysis.py",
+          "line": 139,
+          "function": "_graph_identity",
+          "profile_values": [
+            4348,
+            4348,
+            0.0040689,
+            0.0040689
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+          "line": 47,
+          "function": "_package_manifest",
+          "profile_values": [
+            8920,
+            8920,
+            0.0958683,
+            0.0958683
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5_seeded\\core.py",
+          "line": 41,
+          "function": "sha",
+          "profile_values": [
+            4554,
+            4554,
+            0.0053807,
+            0.0053807
+          ]
+        }
+      ]
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method '__exit__' of '_io._IOBase' objects>",
+      "primitive_calls": 8920,
+      "total_calls": 8920,
+      "self_seconds": 0.09653060000000001,
+      "cumulative_seconds": 0.09653060000000001,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+          "line": 47,
+          "function": "_package_manifest",
+          "profile_values": [
+            8920,
+            8920,
+            0.09653060000000001,
+            0.09653060000000001
+          ]
+        }
+      ]
+    }
+  ],
+  "selected": [
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 435,
+      "function": "_inertia",
+      "primitive_calls": 14,
+      "total_calls": 14,
+      "self_seconds": 0.0007202,
+      "cumulative_seconds": 4.981803,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 47,
+          "function": "signed_endpoint",
+          "profile_values": [
+            2,
+            2,
+            0.00010070000000000001,
+            0.7188222000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 516,
+          "function": "_endpoint_acceleration",
+          "profile_values": [
+            4,
+            4,
+            0.00021480000000000002,
+            1.4214689
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 559,
+          "function": "_stage",
+          "profile_values": [
+            6,
+            6,
+            0.0003055,
+            2.1335016
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 848,
+          "function": "endpoint_accounting",
+          "profile_values": [
+            2,
+            2,
+            9.920000000000001e-05,
+            0.7080103000000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py",
+      "line": 136,
+      "function": "evaluate_centered_finite_inertia",
+      "primitive_calls": 14,
+      "total_calls": 14,
+      "self_seconds": 0.0008003000000000001,
+      "cumulative_seconds": 4.980655400000001,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 435,
+          "function": "_inertia",
+          "profile_values": [
+            14,
+            14,
+            0.0008003000000000001,
+            4.980655400000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+      "line": 93,
+      "function": "derivative",
+      "primitive_calls": 8064,
+      "total_calls": 8064,
+      "self_seconds": 0.22216750000000002,
+      "cumulative_seconds": 3.5483741,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+          "line": 48,
+          "function": "evaluate",
+          "profile_values": [
+            8064,
+            8064,
+            0.22216750000000002,
+            3.5483741
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 559,
+      "function": "_stage",
+      "primitive_calls": 6,
+      "total_calls": 6,
+      "self_seconds": 0.0008821,
+      "cumulative_seconds": 2.6141755,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 116,
+          "function": "observe",
+          "profile_values": [
+            6,
+            6,
+            0.0008821,
+            2.6141755
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+      "line": 47,
+      "function": "signed_endpoint",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 6.52e-05,
+      "cumulative_seconds": 1.5990974,
+      "callers": []
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_analysis.py",
+      "line": 106,
+      "function": "endpoint_accounting",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 6.91e-05,
+      "cumulative_seconds": 1.5782985,
+      "callers": []
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 848,
+      "function": "endpoint_accounting",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 6.47e-05,
+      "cumulative_seconds": 1.5782280000000002,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_analysis.py",
+          "line": 106,
+          "function": "endpoint_accounting",
+          "profile_values": [
+            2,
+            2,
+            6.47e-05,
+            1.5782280000000002
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 516,
+      "function": "_endpoint_acceleration",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 5.83e-05,
+      "cumulative_seconds": 1.5693570000000001,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 635,
+          "function": "trial",
+          "profile_values": [
+            2,
+            2,
+            5.83e-05,
+            1.5693570000000001
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 426,
+      "function": "_loaded_work",
+      "primitive_calls": 12,
+      "total_calls": 12,
+      "self_seconds": 0.0002356,
+      "cumulative_seconds": 0.8897864000000001,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 47,
+          "function": "signed_endpoint",
+          "profile_values": [
+            2,
+            2,
+            3.8900000000000004e-05,
+            0.1511067
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 411,
+          "function": "_structural",
+          "profile_values": [
+            8,
+            8,
+            0.0001566,
+            0.5907570000000001
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 848,
+          "function": "endpoint_accounting",
+          "profile_values": [
+            2,
+            2,
+            4.0100000000000006e-05,
+            0.14792270000000002
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 485,
+      "function": "_solve_algebraic",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 1.54e-05,
+      "cumulative_seconds": 0.8826737,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 635,
+          "function": "trial",
+          "profile_values": [
+            2,
+            2,
+            1.54e-05,
+            0.8826737
+          ]
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_centered_reference.py",
+      "line": 107,
+      "function": "derivative",
+      "primitive_calls": 1536,
+      "total_calls": 1536,
+      "self_seconds": 0.0045242,
+      "cumulative_seconds": 0.015759000000000002,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\ge_beam3_curved_reference.py",
+          "line": 510,
+          "function": "jacobian",
+          "profile_values": [
+            864,
+            864,
+            0.0026439000000000002,
+            0.0090632
+          ]
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\ge_beam3_curved_reference.py",
+          "line": 513,
+          "function": "tangent",
+          "profile_values": [
+            672,
+            672,
+            0.0018803000000000001,
+            0.0066958
+          ]
+        }
+      ]
+    }
+  ],
+  "missing_selected_names": [
+    "_finish"
+  ]
+}

@@ -1,0 +1,5 @@
+{"stage": "authenticated_before_import", "input_sha256": "af89abc111c4f219ca158dccae0d69860c281d7e476aa93737bfd1675df4a244"}
+{"stage": "phase_start", "index": 0, "mode": "full", "elapsed": 0.001980600005481392}
+{"stage": "step_pass", "phase": 0, "step": 1, "elapsed": 7.38578049998614}
+{"stage": "step_pass", "phase": 0, "step": 2, "elapsed": 12.647853900009068}
+{"stage": "complete", "status": "PASS", "elapsed": 12.65901840000879}

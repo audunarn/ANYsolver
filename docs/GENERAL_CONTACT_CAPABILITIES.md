@@ -1,5 +1,23 @@
 # General-contact capability ledger
 
+## Native measured-cost disposition — 1 October
+
+Independent development review confirms exact physical parity for the new
+balanced default120s full/scoped four-step comparison:16 commits/gates and48
+original signed stages. Measured operation mean13.8799s to13.2130s is4.80% saving;
+scope overhead/evidence instrumentation is included. No general performance or
+840s-scope claim follows. [Measurement](d1_review_support/native_validation_cost_v1_20261001.summary.json)
+and [review](d1_review_support/native_validation_cost_v1_20261001.review.md).
+
+The independently reviewed two-step profile also passes original gates. Finite
+inertia4.982s (nested derivatives3.548s), exact package validation3.613s and extra
+harness recovery1.599s are substantial within10.541s profile; times overlap.
+One new NumPy batched inertia candidate is under development. Until reviewed and
+wired, the original finite kernel remains authoritative. No measured integrated
+batching benefit, accuracy-refinement affordability or C7 admission is claimed.
+[Profile](d1_review_support/native_step_profile_v1_20261001.summary.json) and
+[review](d1_review_support/native_step_profile_v1_20261001.review.md).
+
 ## Native finite-angle trajectory and application intent — 1 October
 
 **Native development control independently assessed; C7 acceptance remains open.**

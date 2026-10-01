@@ -1,0 +1,22 @@
+{"stage": "authenticated_before_import", "input_sha256": "2174d96e49206822324bfac176f57370fcf55f9466d1efcf408fb5949f191428"}
+{"stage": "phase_start", "index": 0, "mode": "full", "elapsed": 0.0019385000050533563}
+{"stage": "step_pass", "phase": 0, "step": 1, "elapsed": 5.598672199994326}
+{"stage": "step_pass", "phase": 0, "step": 2, "elapsed": 9.089975999988383}
+{"stage": "step_pass", "phase": 0, "step": 3, "elapsed": 12.61044530000072}
+{"stage": "step_pass", "phase": 0, "step": 4, "elapsed": 16.05818900000304}
+{"stage": "phase_start", "index": 1, "mode": "scoped", "elapsed": 16.108736299996963}
+{"stage": "step_pass", "phase": 1, "step": 1, "elapsed": 21.51454949998879}
+{"stage": "step_pass", "phase": 1, "step": 2, "elapsed": 24.846340399992187}
+{"stage": "step_pass", "phase": 1, "step": 3, "elapsed": 28.162345999997342}
+{"stage": "step_pass", "phase": 1, "step": 4, "elapsed": 31.45050020000781}
+{"stage": "phase_start", "index": 2, "mode": "scoped", "elapsed": 31.48992679998628}
+{"stage": "step_pass", "phase": 2, "step": 1, "elapsed": 36.78484489998664}
+{"stage": "step_pass", "phase": 2, "step": 2, "elapsed": 40.11129380000057}
+{"stage": "step_pass", "phase": 2, "step": 3, "elapsed": 43.41457629998331}
+{"stage": "step_pass", "phase": 2, "step": 4, "elapsed": 46.70757030000095}
+{"stage": "phase_start", "index": 3, "mode": "full", "elapsed": 46.7478667999967}
+{"stage": "step_pass", "phase": 3, "step": 1, "elapsed": 52.31295389999286}
+{"stage": "step_pass", "phase": 3, "step": 2, "elapsed": 55.79392480000388}
+{"stage": "step_pass", "phase": 3, "step": 3, "elapsed": 59.22441130000516}
+{"stage": "step_pass", "phase": 3, "step": 4, "elapsed": 62.67105080001056}
+{"stage": "complete", "status": "PASS", "elapsed": 62.89338090000092}

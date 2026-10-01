@@ -1,0 +1,254 @@
+{
+  "status": "PASS",
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 14.117735500010895,
+    "peak_process_tree_memory_mb": 156.332032,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/native_step_profile_v1_20261001.entry.py",
+      "docs/d1_review_support/native_step_profile_v1_20261001.inputs.json",
+      "af89abc111c4f219ca158dccae0d69860c281d7e476aa93737bfd1675df4a244"
+    ],
+    "log": "docs\\d1_review_support\\native_step_profile_v1_20261001.log"
+  },
+  "profile_seconds": 10.54092389999999,
+  "input_sha256": "af89abc111c4f219ca158dccae0d69860c281d7e476aa93737bfd1675df4a244",
+  "raw_sha256": "bc643226dfd00af7efcd31e0f467182c40803cde9ad26a901d125cebe181c38f",
+  "pstats_sha256": "2234379b38b4953eaabbde51df2dc9342caad3a972199ab1978d0657590bbccf",
+  "source_passes": 452,
+  "source_count": 452,
+  "solver_commits": 2,
+  "gate_passes": 2,
+  "original_stage_count": 6,
+  "selected": [
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 435,
+      "function": "_inertia",
+      "calls": 14,
+      "self_seconds": 0.0007202,
+      "cumulative_seconds": 4.981803,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 47,
+          "function": "signed_endpoint",
+          "calls": 2,
+          "cumulative_seconds": 0.7188222000000001
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 559,
+          "function": "_stage",
+          "calls": 6,
+          "cumulative_seconds": 2.1335016
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 516,
+          "function": "_endpoint_acceleration",
+          "calls": 4,
+          "cumulative_seconds": 1.4214689
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 848,
+          "function": "endpoint_accounting",
+          "calls": 2,
+          "cumulative_seconds": 0.7080103000000001
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+      "line": 47,
+      "function": "_package_manifest",
+      "calls": 20,
+      "self_seconds": 0.1634692,
+      "cumulative_seconds": 3.6128001000000003,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+          "line": 109,
+          "function": "contract",
+          "calls": 20,
+          "cumulative_seconds": 3.6128001000000003
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+      "line": 93,
+      "function": "derivative",
+      "calls": 8064,
+      "self_seconds": 0.22216750000000002,
+      "cumulative_seconds": 3.5483741,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_p5\\inertia.py",
+          "line": 48,
+          "function": "evaluate",
+          "calls": 8064,
+          "cumulative_seconds": 3.5483741
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 559,
+      "function": "_stage",
+      "calls": 6,
+      "self_seconds": 0.0008821,
+      "cumulative_seconds": 2.6141755,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 116,
+          "function": "observe",
+          "calls": 6,
+          "cumulative_seconds": 2.6141755
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+      "line": 47,
+      "function": "signed_endpoint",
+      "calls": 2,
+      "self_seconds": 6.52e-05,
+      "cumulative_seconds": 1.5990974,
+      "callers": []
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_analysis.py",
+      "line": 106,
+      "function": "endpoint_accounting",
+      "calls": 2,
+      "self_seconds": 6.91e-05,
+      "cumulative_seconds": 1.5782985,
+      "callers": []
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 848,
+      "function": "endpoint_accounting",
+      "calls": 2,
+      "self_seconds": 6.47e-05,
+      "cumulative_seconds": 1.5782280000000002,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_dynamic_analysis.py",
+          "line": 106,
+          "function": "endpoint_accounting",
+          "calls": 2,
+          "cumulative_seconds": 1.5782280000000002
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 516,
+      "function": "_endpoint_acceleration",
+      "calls": 2,
+      "self_seconds": 5.83e-05,
+      "cumulative_seconds": 1.5693570000000001,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 635,
+          "function": "trial",
+          "calls": 2,
+          "cumulative_seconds": 1.5693570000000001
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 426,
+      "function": "_loaded_work",
+      "calls": 12,
+      "self_seconds": 0.0002356,
+      "cumulative_seconds": 0.8897864000000001,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_step_profile_v1_20261001.runner.py",
+          "line": 47,
+          "function": "signed_endpoint",
+          "calls": 2,
+          "cumulative_seconds": 0.1511067
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 848,
+          "function": "endpoint_accounting",
+          "calls": 2,
+          "cumulative_seconds": 0.14792270000000002
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 411,
+          "function": "_structural",
+          "calls": 8,
+          "cumulative_seconds": 0.5907570000000001
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "line": 485,
+      "function": "_solve_algebraic",
+      "calls": 2,
+      "self_seconds": 1.54e-05,
+      "cumulative_seconds": 0.8826737,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_native_midpoint.py",
+          "line": 635,
+          "function": "trial",
+          "calls": 2,
+          "cumulative_seconds": 0.8826737
+        }
+      ]
+    },
+    {
+      "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\_ge_beam3_centered_reference.py",
+      "line": 107,
+      "function": "derivative",
+      "calls": 1536,
+      "self_seconds": 0.0045242,
+      "cumulative_seconds": 0.015759000000000002,
+      "callers": [
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\ge_beam3_curved_reference.py",
+          "line": 510,
+          "function": "jacobian",
+          "calls": 864,
+          "cumulative_seconds": 0.0090632
+        },
+        {
+          "file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\ge_beam3_curved_reference.py",
+          "line": 513,
+          "function": "tangent",
+          "calls": 672,
+          "cumulative_seconds": 0.0066958
+        }
+      ]
+    }
+  ],
+  "profiled_cumulative_fractions": {
+    "finite_inertia": 0.47261540328547524,
+    "structural_evaluate": 0.16194392599684757,
+    "exact_package_manifest": 0.34274036453294227,
+    "harness_signed_recovery": 0.15170372304841337,
+    "finite_inertia_derivative_nested": 0.33662837656953426
+  },
+  "selected_missing": [
+    "_finish"
+  ],
+  "interpretation": "Finite inertia is the largest measured component; retained structural work is smaller. Full package manifest checks are also substantial production boundary cost. Harness duplicate recovery is material but not the primary bottleneck; cumulative fractions overlap.",
+  "recommendation": "Target the existing finite inertia derivative contractions/cross-product array overhead with a reviewed algebraically equivalent implementation, retaining complete outputs/guards and independent derivative/parity checks. Removing duplicate harness recovery is a separate evidence-cost optimization, not a production speedup. No900s affordability claim follows from cProfile; benchmark the specific candidate once before authorizing a fineaccuracy case."
+}

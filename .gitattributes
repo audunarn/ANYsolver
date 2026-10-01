@@ -200,5 +200,7 @@ docs/d1_review_support/native_acceleration_restart* -text -whitespace
 docs/d1_review_support/native_dynamic_runtime* -text -whitespace
 docs/d1_review_support/native_finite_spin_resolution* -text -whitespace
 docs/d1_review_support/native_validation_cost* -text -whitespace
+docs/d1_review_support/native_step_profile* -text -whitespace
 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART34.md -text -whitespace
 docs/d1_review_support/anystructure_contact_slice_baseline_20261001.json -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART35.md -text -whitespace
