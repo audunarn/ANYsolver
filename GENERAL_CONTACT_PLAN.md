@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.43. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.44. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -19,6 +19,10 @@ target rotations. Complete local Jet2 derivatives, sparse physical work maps,
 bounded affine swept checks and ordinary static/restart integration pass local
 checks. [Source example](examples/general_contact_deformable_round_beam_s3.py)
 and [bounded guide](docs/GENERAL_CONTACT_C2_DEFORMABLE_BEAM_S3.md) are usable.
+The actual B3 coupled quadratic-field/reference/split-restart check also passes
+5.129s/270.28MB, with response discrepancy3.931e-6. Both B2 and native public
+examples run from a separately installed development wheel with445 exact source
+bindings (17.027s/194.33MB). Packaging/routing is not scientific admission.
 The explicit1e5N/m2 fixture meets10um, independent contact-force parity and the
 unchanged0.1% linearized structural comparison; earlier reference/gap and
 metadata/preflight failures remain retained. This does not close allD3 or confer

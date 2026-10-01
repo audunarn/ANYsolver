@@ -587,3 +587,28 @@ C7/temporal claim or installed broadening. Next principal question is complete
 finite-velocity restart/reissuance. Worker proposes the contract before codec
 changes; reviewer checks state completeness/atomicity. If unavailable, keep
 explicit unsupported behavior rather than issue reconstructed states.
+
+### Installed routing and actual B3 coupling — 2026-10-01
+
+New checkpoint4c3ac836 contains native opt-in API and beam result metadata.
+A separate local wheel8df161b0 installs445 exact package source files and runs both
+new public examples (17.027s/194.33MB); accepted installedartifact is untouched.
+This is development packaging/routing, not scientific admission.
+
+While the worker defines the dynamic restart contract, the lead closes an actual
+classical B3 integration gap: local quadratic line derivatives passed, but the
+ordinary coupled deformable-target solve has only B2 evidence. One B3 case uses
+unchanged geometry/material/law/gap and128 intervals per candidate, adding the
+actual midpoint unknown. An independent quadratic-field scalar line-work oracle
+will compare its coupled forces and bounded small-motion structural response.
+If it fails, classify the actual integration/geometry/enforcement discrepancy;
+do not silently fall back to B2 or increase the path budget. Existing B2 evidence
+is unchanged. This is one missing profile check, not a spatial refinement campaign.
+
+B3V1 actual coupled solve completed (4.773s/270.31MB), then its additional
+absolute1um curvature discriminator failed: actual departure0.5543um is0.05623%
+of tip motion and clearly resolves the quadratic field. This is a test-scale
+defect, not failed equilibrium or a new science threshold. Retain original test
+bytes/output. V2 replaces only that extra discriminator with prospective1e-4
+relative departure; forces/response/gap/restart gates and mechanical inputs are
+unchanged. No enforcement, mesh, load or resource change.

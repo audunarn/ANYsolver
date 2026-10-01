@@ -62,3 +62,19 @@ failures also remain. Smaller-vibration tighter-solve results are separately bou
 No general temporal convergence, contact impact, restart, installed-package
 admission, broader native scope or full C7 acceptance follows from these results.
 See the capability ledger and full programme for the outstanding requirements.
+
+### Installed development routing — 2026-10-01
+
+A separate local wheel from source checkpoint4c3ac836 verifies all445 package
+Python files and runs both public development examples successfully:17.027s,
+194.327MB peak process memory. Evidence:
+`d1_review_support/native_beam_installed_development_v1_20261001.summary.json`.
+Target:`C:/ANYworkspaceWork/general-contact-native-beam-dev-20261001/target`;
+wheel SHA256`8df161b0c70ee9bc2400e9e01f59352c559a366e036f01b704b6d055347f0ff9`.
+This closes packaging/routing only; accepted oldartifact and scientific admission
+remain unchanged. Source state is bound explicitly, including preserved development
+files; a commit label alone is not the package identity.
+
+Installed runtime diagnostics report effective BLAS pools of1 and an OpenMP
+pool of32, despite the requested environment value1. No effective whole-process
+single-thread or performance-improvement claim is made by this routing check.

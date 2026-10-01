@@ -69,3 +69,32 @@ records remain in `d1_review_support/d3_deformable_beam_s3_*_20261001.*`.
 Open: scientific/installed qualification, nonlinear materials, free target
 rotations, Q4/warped targets, multiple faces, rims/end caps, automatic/self
 contact, friction and dynamics. The profile does not imply these capabilities.
+
+### Installed development routing — 2026-10-01
+
+A separate local wheel from source checkpoint4c3ac836 verifies all445 package
+Python files and runs both public development examples successfully:17.027s,
+194.327MB peak process memory. Evidence:
+`d1_review_support/native_beam_installed_development_v1_20261001.summary.json`.
+Target:`C:/ANYworkspaceWork/general-contact-native-beam-dev-20261001/target`;
+wheel SHA256`8df161b0c70ee9bc2400e9e01f59352c559a366e036f01b704b6d055347f0ff9`.
+This closes packaging/routing only; accepted oldartifact and scientific admission
+remain unchanged. Source state is bound explicitly, including preserved development
+files; a commit label alone is not the package identity.
+
+### Actual classical B3 coupled control
+
+The actual quadratic structural element against the deforming S3 target passes
+one ordinary four-step static solve, independent scalar contact-force comparison,
+0.1% bounded linearized-response gate and JSON split restart in5.129s/270.279MB.
+Its midpoint differs from the B2 interpolant by0.5543um (0.05623% of tip motion),
+so the quadratic field is resolved. Response discrepancy3.931e-6, dimensional
+10um gap gate passes. This is source-only development; the installed example
+uses B2. An initial extra absolute1um curvature assertion failed after the actual
+solve completed; retainedV1 is NONPASS, followed by the explicitly corrected
+relative discriminator without mechanics or scientific-gate changes.
+`d1_review_support/d3_deformable_b3_s3_static_summary_v1_20261001.json` binds both.
+
+Installed runtime diagnostics report effective BLAS pools of1 and an OpenMP
+pool of32, despite the requested environment value1. No effective whole-process
+single-thread or performance-improvement claim is made by this routing check.

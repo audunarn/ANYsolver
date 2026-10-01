@@ -166,3 +166,7 @@ src/anysolver/ge_beam3_native_dynamics.py -text whitespace=cr-at-eol
 examples/native_contact_free_finite_velocity_dev.py -text whitespace=cr-at-eol
 tests/test_native_dynamic_main_example.py -text whitespace=cr-at-eol
 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART26.md -text -whitespace
+
+docs/d1_review_support/native_beam_installed_development* -text -whitespace
+docs/d1_review_support/d3_deformable_b3_s3_static*_20261001.* -text -whitespace
+tests/test_general_contact_deformable_b3_s3_static.py -text whitespace=cr-at-eol

@@ -3,9 +3,9 @@
 ## Objective and identity
 
 Full C0–C9 continues in `C:/ANYworkspaceWork/ANYsolver-general-contact`, branch
-`codex/general-contact-core`; last checkpoint HEAD `1d1faa508458ee1cb6caf49d8f89e4220e9a2a93`.
-Current integration is dirty and lead-owned. [Goal](GENERAL_CONTACT_GOAL.md)
-rev2026-09-30.4, [plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.43 and
+`codex/general-contact-core`; last checkpoint HEAD `4c3ac836574b085716a02d507e6b619ec18cd0ea`.
+The API/source integration is committed; subsequent packaging/B3 checks are dirty and lead-owned. [Goal](GENERAL_CONTACT_GOAL.md)
+rev2026-09-30.4, [plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.44 and
 [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md) govern.
 Original120-active-hour clock: last141126s (39.20h) used; no reset. No merge,
 publication, release or historical-default changes. Previous detailed ownership
@@ -20,7 +20,7 @@ accepted installed artifact. Radial1e8 timeout900.0605s remains stopped, no repl
 or cap raise. Prior native full-amplitude, velocity and default momentum failures
 remain. Routine180s/1GiB, integrated900s/4GB or stricter frozen caps survive.
 
-## Completed integration now needing exact-owned checkpoint
+## Latest integrated work
 
 Lead beam/S3 metadata addition labels stable pair/material feature identities,
 reference-line integration and moment origin. One result-interface check passes
@@ -37,14 +37,23 @@ Default API V4 passes two endpoints and issuance/cancellation/rollback controls
 Strict1e-15 V3 fails before first endpoint, unassigned cause, retained unchanged.
 The actual main example passes6.282s/197.93MB:448 source bindings/imports and
 actual owner1e-11 default verified. Guide `GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md`.
-No C7/temporal or installed admission. Exact import manifest
+Separate source-bound wheel8df161b0 runs both public examples and matches445
+installed Python sources (17.027s/194.33MB); development routing only, old
+acceptedartifact untouched. Actual B3 coupled/reference/split restart also
+passes5.129s/270.28MB, response3.931e-6. Original extra1um curvature assertion
+NONPASS retained; relative discriminator corrected with mechanics/gates unchanged.
+No C7/temporal or scientific admission. Exact import manifest
 `native_dynamic_main_imported_sources_v1_20261001.json`; source/example summary
 `native_dynamic_main_example_v1_20261001.summary.json`.
 
 ## Active next action and ownership
 
-Worker `/root/saved_radial_boundary` proposes complete dynamic checkpoint payload
-and fresh-owner reissuance in the existing D6 note, **no codec edits/numerics yet**.
+Worker `/root/saved_radial_boundary` completed the dynamic checkpoint payload
+and fresh-owner reissuance proposal in the existing D6 note, SHA30b73a64.
+Reviewer found one necessary original algebraic-correction witness, now explicitly
+required before implementation. Author implements in the managed tree only;
+source/test scrutiny precedes any new numeric run. Reviewer owns the separate
+saved B3/package assessment meanwhile. Native API review347fae47 is closed.
 Managed native tree: `C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver`.
 Do not archive. Reviewer `/root/checkpoint_review` owns the D6 review addendum and
 saved main-example impact assessment. Restart remains explicitly unsupported until

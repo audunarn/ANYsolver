@@ -570,3 +570,14 @@ before its first endpoint. No fullC7 or installed admission follows. Scope and
 usage: [native development guide](GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md).
 Durable finite-velocity restart remains unsupported pending complete codec and
 fresh-owner validation. Existing historical native selector/guards unchanged.
+
+## Development package and actual quadratic beam coupling
+
+Wheel8df161b0 from exact source-bound4c3ac836 runs the B2/S3 and contact-free
+native examples with445 installed Python source matches (17.027s/194.33MB).
+The old accepted installedartifact is untouched; this is tested routing only.
+Actual classical B3/S3 ordinary coupled solve, independent contact-force oracle,
+bounded linearized response3.931e-6 and split restart pass5.129s/270.28MB.
+Source-only B3 evidence retainsV1 curvature-discriminator NONPASS and its exact
+oldtest, then explicit test-scale correction; no mechanics/gap/response change.
+Scientific, installed B3 and broader D3/C7 admission remain open.
