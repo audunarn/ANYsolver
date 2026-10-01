@@ -1,0 +1,13 @@
+{
+  "status": "NONPASS",
+  "accepted_steps": 0,
+  "scope": "development restart only",
+  "trajectories": {},
+  "negative_controls": [],
+  "restore_controls": {},
+  "initial_energy_j": 0.03868091504221391,
+  "failure_type": "TypeError",
+  "failure": "unsupported private state value",
+  "last_stage": "failure",
+  "elapsed_seconds": 1.662079999980051
+}

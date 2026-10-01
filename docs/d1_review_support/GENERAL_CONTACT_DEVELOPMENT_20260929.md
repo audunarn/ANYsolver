@@ -664,3 +664,56 @@ checks, including atomic exit; no Newton-loop hashing or mechanics alteration.
 V1 snapshots remain NOT_EXECUTED. V2 source review then one four-step split check
 will discriminate exact continuation from state/identity defects. No cap increase
 or new dynamics campaign. Original clock144460s/40.13h used of120h.
+
+Installed-route preparation reuses native_beam_installed_development_entry.py.
+It now accepts optional pytest_args after selecting the installed package,
+suppresses pytest source-path injection, and checks every imported solver module
+remains under the target. Prior runner bytes are retained. No build/test yet;
+this permits the same reviewed split fixture to check the changed artifact
+without an additional solver stack or repeating unaffected examples.
+
+V2 source review closes transitive artifact binding. Before execution the lead
+identified Path.is_junction (added Python3.12) versus package>=3.11; official
+reference https://docs.python.org/3/library/pathlib.html#pathlib.Path.is_junction .
+V3 replaces only that guard with compatible lstat/stat reparse detection. V1/V2
+remain unexecuted source candidates; state/atomicity and all13 mechanics methods
+are unchanged. No new numerical experiment or criteria needed for this source fix.
+
+Restart V3 entry NONPASS0.143s/11.36MB before solver import: frozen raw env
+path uses backslashes, command used forward slashes. No state or timestep.
+V4 execution retains identical V3 sources/physics/gates/caps and uses a new output
+stem; environment is read directly from its input instead of duplicated spelling.
+V3 log/resource/input remain intact. This is an entry defect, not dynamics failure.
+
+Restart V4 entry imports the bound candidate and initializes successfully, then
+NONPASS6.209s/216.46MB at accounting reporting: existing rank_mass_checks isbytes
+and private canonical forbidsbytes. Zero accepted steps; no restore gate tested.
+Separate zero-step manifest test fails its defaultuserTEMPsetup (WinError5).
+Correct only reporting conversion to typed diagnostic JSON and use a unique
+workspace basetemp; source mechanics, numerical inputs/gates/caps stayfixed.
+Independent saved review confirms this classification; raw/XML/failures retained.
+
+### Complete native restart slice closes in installed development package
+
+V5 source fixturePASS2tests/4steps30.8566s205.619MB; independent assessment
+bd3ba246 reconciles canonical checkpoint/state/lineage, signedstageR+I, physical
+E/P/H, correction/balance and allcontrols. Exact four production/test files copied
+to main; other native dependency bytes are unchanged. No ordinary default/guard
+change. ProfileV2 has complete snapshot restore; external journals remainexternal.
+Installed wheel18d8046d matches446.py sources and executes actual publicexample
+plusfixture (6totalsteps),48.8383s205.586MB. All fixture native states/accounting
+match managed V5 bitexactly; each header binds its own different complete artifact.
+Separate target leaves accepted8af00b06 contact artifact untouched. Independent
+installed assessment pending. Next select a physical/temporal C7 discriminator
+from retained evidence rather than replay old campaigns; worker recommendation
+is source/saved-only, no numerical activity. Original clock continues.
+
+Independent installed disposition d701e528 closes state/routing:446exact wheel/
+target bytes, actual metadata/imports and all4branch parity. No broadening.
+Next question is weak constant-load response accuracy, distinct from conservation.
+Author source-only proposal reuses a matching full15modal M/Ke descriptor and
+independent line-load lift; coarse/fine/half-load plus midpoint-phase reference
+separate time dispersion, finite amplitude and solve accuracy. Positive energy
+scale is required at virginrest E0=0. Source review precedes one bounded run;
+no new diagnostics campaign or preemptive mechanics fix. Clock146738s/40.76h
+of120h. Source/installed slice checkpoint excludes active worker living note.

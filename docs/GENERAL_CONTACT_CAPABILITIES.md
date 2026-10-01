@@ -568,8 +568,15 @@ work and endpoint energy/momenta. Actual source example passes6.282s/197.93MB,
 with448 bindings and effective1e-11 tolerance checked. StrictV3 remains NONPASS
 before its first endpoint. No fullC7 or installed admission follows. Scope and
 usage: [native development guide](GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md).
-Durable finite-velocity restart remains unsupported pending complete codec and
-fresh-owner validation. Existing historical native selector/guards unchanged.
+Development V2 complete committed-state restart now passes the free/unloaded/default
+split fixture: two tests/four steps,30.857s/205.619MB; full state/checkpoint/accounting
+parity, original correction and stored-acceleration balance, malformed-input,
+credential, cancellation and publication-exit controls. Independent saved review
+is closed. Full bounded package Python-source identity replaces eight-owner binding;
+main/managed artifacts differ and cannot exchange checkpoints. Installed V2 example/fixture also passes48.838s/205.586MB with446exact sources,
+complete fixture state/accounting parity and independent assessment. Loaded/
+clamped restart and temporal/C7 scientific admission remain open. Existing
+historical native selector/guards unchanged.
 
 ## Development package and actual quadratic beam coupling
 

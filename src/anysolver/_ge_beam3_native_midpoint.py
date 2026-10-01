@@ -225,6 +225,12 @@ class MidpointContext:
             self._candidates = {}
             self._initial_checks = None
             self._transaction_lock = Lock()
+            self._restore_checks = None
+            self._restart_contract = None
+            if structural_owner == 'dynamic_elastic':
+                from ._ge_beam3_native_dynamic_restart import contract
+                self._restart_contract = canonical(contract(self))
+            self._captured_restart_contract = self._restart_contract
 
     @property
     def initial_checks(self):
@@ -233,6 +239,10 @@ class MidpointContext:
     @property
     def current(self):
         return self._visible_current
+
+    @property
+    def restore_checks(self):
+        return None if self._restore_checks is None else json.loads(self._restore_checks)
 
     def _identity_data(self):
         # The default route's payload is unchanged from its frozen V3 owner.
@@ -296,16 +306,24 @@ class MidpointContext:
             try:
                 with self._work_operation():
                     snapshot = (self._current, self._visible_current, self._current_bytes,
-                        self._issued.copy(), self._candidates.copy(), self._initial_checks)
+                        self._issued.copy(), self._candidates.copy(), self._initial_checks,
+                        self._restore_checks)
+                    if self._selected_owner == 'dynamic_elastic':
+                        from ._ge_beam3_native_dynamic_restart import require_contract
+                        require_contract(self)
                     yield
                 # A setting mutation during native/session exit cannot publish
                 # a state under the former numerical acceptance contract.
                 self._guard_stage_residual_tolerance()
+                if self._selected_owner == 'dynamic_elastic':
+                    from ._ge_beam3_native_dynamic_restart import require_contract
+                    require_contract(self)
                 self._visible_current = self._current
             except BaseException:
                 if snapshot is not None:
                     (self._current, self._visible_current, self._current_bytes,
-                     self._issued, self._candidates, self._initial_checks) = snapshot
+                     self._issued, self._candidates, self._initial_checks,
+                     self._restore_checks) = snapshot
                 raise
         finally:
             self._transaction_lock.release()
@@ -673,6 +691,64 @@ class MidpointContext:
             if record is None or record[0] is not candidate or canonical(candidate) != record[1]:
                 raise ValueError('issued immutable midpoint candidate required')
             del self._candidates[id(candidate)]
+
+    def create_checkpoint(self, *, cancellation_token=None):
+        """Export only the authenticated committed state, with no pending trial."""
+        from ._ge_beam3_native_dynamic_restart import encode
+        with self._atomic_operation():
+            self._guard(cancellation_token, 'midpoint.checkpoint.capture')
+            raw = encode(self, self.current)
+            self._guard(cancellation_token, 'midpoint.checkpoint.ready')
+            return raw
+
+    def restore_checkpoint(self, raw, *, expected_sha256, cancellation_token=None):
+        """Fresh-only semantic validation and official atomic local reissuance.
+
+        Stored q/v/a/material/time/lineage remain bit-exact. Newton correction is
+        a witness, never an update. No ordinary initializer or static codec.
+        """
+        from ._ge_beam3_native_dynamic_restart import decode
+        with self._atomic_operation():
+            self._guard(cancellation_token, 'midpoint.restore.capture')
+            if (self._current is not None or self._visible_current is not None
+                    or self._current_bytes is not None or self._issued or self._candidates
+                    or self._initial_checks is not None or self._restore_checks is not None):
+                raise ValueError('fresh never-initialized midpoint owner required for restore')
+            if self.structural_owner != 'dynamic_elastic':
+                raise ValueError('dynamic elastic midpoint restart only')
+            dynamic = self._dynamic
+            if len(dynamic._issued) != 1 or id(dynamic._reference) not in dynamic._issued:
+                raise ValueError('fresh elastic work owner required for restore')
+            dynamic._require(dynamic._reference)
+            state, initial = decode(self, raw, expected_sha256)
+            work = self._loaded_work(state.mechanical, state.histories)
+            inertia = self._inertia(state.mechanical, state.physical_velocity24,
+                                    state.physical_acceleration24)
+            rank_mass = self._block_checks(work.spatial_jacobian, inertia)
+            z = list(self.algebraic_free)
+            step = np.zeros(42)
+            step[z] = np.linalg.solve(work.spatial_jacobian[np.ix_(z,z)], -work.residual[z])
+            # Exact DynamicElasticContext._consistent392–402 normalization.
+            correction = max(float(np.linalg.norm(step[[i for i in z if i < 24]])),
+                float(np.linalg.norm(step[24:]))/max(1., float(np.linalg.norm(state.mechanical.resultants))))
+            algebraic = self._norm(work.residual, z)
+            physical = self._norm(work.residual+inertia.mixed_inertia, self.physical_free)
+            if (not np.isfinite((correction, algebraic, physical)).all() or algebraic > 1e-11
+                    or correction > 1e-11 or physical > 1e-11):
+                raise ValueError('stored dynamic endpoint residual/correction balance failed')
+            if canonical(work.state.mechanical) != canonical(state.mechanical):
+                raise ValueError('dynamic restore validation changed stored coordinates')
+            checks = canonical(dict(state_sha256=sha(state), epoch=state.epoch, time=state.time,
+                algebraic_residual_norm=algebraic, algebraic_correction_norm=correction,
+                physical_balance_norm=physical, rank_mass=rank_mass,
+                elastic_consistency_witness=abs(float(state.mechanical.resultants[0]@work.residual[24:42]))))
+            self._guard(cancellation_token, 'midpoint.restore.ready')
+            self._issued[id(state)] = (state, canonical(state))
+            self._current = state
+            self._current_bytes = canonical(state)
+            self._initial_checks = initial
+            self._restore_checks = checks
+            return state
 
     def _make(self, data):
         if self.structural_owner == 'legacy_clamp':

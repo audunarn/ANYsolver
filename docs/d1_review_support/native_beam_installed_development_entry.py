@@ -1,4 +1,4 @@
-"""Build/install a source-bound development wheel and run two actual examples."""
+"""Build/install a source-bound development wheel and run selected checks."""
 import contextlib
 import hashlib
 import io
@@ -83,7 +83,21 @@ for relative in record["examples"]:
     if "native_contact_free" in relative:
         assert payload["epoch"] == 2 and payload["time_seconds"] == .002
         assert payload["provenance"]["production_qualified"] is False
+        if "expected_native_profile_id" in record:
+            assert payload["provenance"]["profile_id"] == record["expected_native_profile_id"]
+        if "expected_native_restart_supported" in record:
+            assert payload["provenance"]["restart_supported"] is record["expected_native_restart_supported"]
     examples.append({"path": relative, "output": payload})
+test_result = None
+if record.get("pytest_args"):
+    import pytest
+    # The package is already imported from target. Suppress pytest's source-path
+    # injection and make only the public example helpers available to the test.
+    args = list(record["pytest_args"])
+    args.extend(["-o", "pythonpath=examples"])
+    test_exit = pytest.main(args)
+    test_result = {"args": args, "exit_code": int(test_exit)}
+    assert test_exit == 0, test_result
 for name, module in tuple(sys.modules.items()):
     if name == "anysolver" or name.startswith("anysolver."):
         assert Path(module.__file__).resolve().is_relative_to(target), name
@@ -93,6 +107,6 @@ summary = dict(status="PASS_INSTALLED_DEVELOPMENT_ROUTING_ONLY", scientific_acce
     input_sha256=hashlib.sha256(input_path.read_bytes()).hexdigest(),
     wheel=str(wheel), wheel_sha256=hashlib.sha256(wheel.read_bytes()).hexdigest(),
     installed_target=str(target), python=sys.version, numpy=numpy.__version__, scipy=scipy.__version__,
-    threadpools=threadpool_info(), examples=examples)
+    threadpools=threadpool_info(), examples=examples, test_result=test_result)
 Path(record["summary_path"]).write_text(json.dumps(summary, indent=2)+"\n", encoding="utf-8")
 print(json.dumps({key:summary[key] for key in ("status", "source_commit", "installed_python_source_count", "wheel_sha256")}))

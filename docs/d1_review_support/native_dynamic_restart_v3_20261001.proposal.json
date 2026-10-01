@@ -1,0 +1,68 @@
+{
+  "status": "SOURCE_AUTHORED_NOT_EXECUTED",
+  "owned_source_sha256": {
+    "codec": "3f26dc51cd9e87998c2b89610b92dce297ff4d1ed0194a5fd464e7954b7fa4af",
+    "midpoint": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a",
+    "owner": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215",
+    "public": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20",
+    "test": "32fdcdb6567d0de4ca612a88d580994f37603ec95e9954fbd4c3ddfd57475adb"
+  },
+  "unchanged_equation_methods": [
+    "initialize",
+    "_stage",
+    "trial",
+    "_solve_algebraic",
+    "_endpoint_acceleration",
+    "_structural",
+    "_loaded_work",
+    "_inertia",
+    "_block_checks",
+    "_norm",
+    "_correction",
+    "endpoint_accounting",
+    "physical_load_accounting"
+  ],
+  "scheme": "existing dynamic_elastic midpoint, one centered ellipsoid element, free supports",
+  "fixture": "exact V4 translated/rotated cross-inertia physical seed, default1e-11, loadNone, origin0",
+  "maximum_new_accepted_steps": 4,
+  "branches": "uninterrupted2 versus split1+freshrestore+1; no old API/time campaign replay",
+  "dt_seconds": 0.001,
+  "time_limit_seconds": 180,
+  "memory_limit_bytes": 1073741824,
+  "internal_time_limit_seconds": 120,
+  "threads": 1,
+  "criteria": {
+    "step_and_cumulative_E_P_H": 1e-06,
+    "stage_residual": 1e-11,
+    "endpoint_residual": 1e-11,
+    "restore_algebraic_correction": 1e-11,
+    "elastic_witness_over_E0": 1e-10,
+    "split_state_and_export_roundtrip": "complete canonical bytes equality"
+  },
+  "negative_controls": [
+    "externalSHA",
+    "noncanonical/bytebound/unknownkeys",
+    "model/settings/artifact",
+    "completehistory/properframes",
+    "inactivev/a",
+    "storedphysicalaccelerationbalance",
+    "smallRz-largeNewtoncorrection",
+    "freshonly/pendingexport",
+    "cancellationbeforeandaftersemanticvalidation",
+    "nativeexitrollback",
+    "oldobjectsnotnewcredentials"
+  ],
+  "limits": "no tests/imports/numerics yet; old static/native guards and all failures unchanged; no journal reconstruction or C7/release claim",
+  "supersedes": "V1 eight-source artifact boundary and V2 Python3.12-only junction call; both preserved SOURCE_AUTHORED_NOT_EXECUTED",
+  "artifact_contract": "Full bounded anysolver Python source manifest: canonical sorted relative path/length/SHA256 digest; captured constructor and live operation entry/export/restore/atomic exit; no stage/Newton-loop hashing",
+  "artifact_admission": {
+    "files": 1024,
+    "file_bytes": 2097152,
+    "total_bytes": 67108864,
+    "directories": 512,
+    "entries": 8192
+  },
+  "additional_zero_step_controls": "Disposable relative source/installed root parity; same path/count/byte-length transitive structural tangent-only change rejected by actual fresh owner identity operation-entry guard; added source and count/file/total/directory/entry bounds. Actual package files untouched.",
+  "python_compatibility_delta": "Python3.11 lstat/stat symlink plus Windows FILE_ATTRIBUTE_REPARSE_POINT guard; missing Windows file attributes reject; no missing-junction-method bypass",
+  "additional_guard_controls": "Prospective literal lstat metadata controls: normal Windows directory, reparse junction, missing Windows attribute, POSIX symbolic link and regular file. No changes to actual package sources or physics."
+}

@@ -45,9 +45,37 @@ model/settings identity, cancellation, stale/forged objects and atomic rollback.
 Its existing 120 s lifetime resource bound applies; it is not a general long-run
 transient driver. `endpoint_accounting` reports compensated momenta and energy.
 
-`create_checkpoint` and `restore_checkpoint` currently raise `NotImplementedError`.
-Durable restart needs complete dynamic state validation and fresh-owner reissuance;
-the native static checkpoint is insufficient. This is the next integrated slice.
+## Complete committed-state restart — development profile V2
+
+`create_checkpoint()` exports only a committed current state and rejects pending
+candidates. The payload includes compensated pose, physical cell rotations,
+material histories, physical velocity/acceleration, time, epoch and lineage.
+It binds model, numerical settings and the bounded complete package Python-source
+manifest. A different source artifact is incompatible, even if its version agrees.
+
+```python
+from hashlib import sha256
+
+payload = analysis.create_checkpoint()
+trusted_digest = sha256(payload).hexdigest()
+fresh = create_analysis(SELECTOR, (definition,), ())
+state = fresh.restore_checkpoint(payload, expected_sha256=trusted_digest)
+```
+
+Use matching definitions, supports and settings in a fresh, never-initialized
+owner. Restore validates the stored state, original algebraic correction witness
+and stored-acceleration physical balance without repairing the payload. Old
+states/candidates remain unusable as new-owner credentials. Cancellation and
+exceptional exits roll back reissuance. Each new owner retains its 120-second
+lifetime; restart does not renew an execution authority. Keep physical work and
+impulse journals externally: this snapshot does not reconstruct a prior trajectory.
+The expected digest is a caller-trusted integrity anchor, not a producer signature.
+
+The free, unloaded, default-tolerance split fixture passes two tests/four steps
+in30.857s/205.619MB, with complete state/checkpoint/accounting parity and independent
+saved assessment (`native_dynamic_restart_v5_20261001.summary.json`). Exact source is
+integrated in main; a separate installed V2 check also passes (details below). This does not
+qualify loaded/clamped restart, temporal convergence, impact or C7.
 
 ## Evidence and remaining limits
 
@@ -59,8 +87,9 @@ failed before its first accepted endpoint and remains NONPASS; its cause is not
 assigned by the default success. Earlier full-amplitude and momentum-refinement
 failures also remain. Smaller-vibration tighter-solve results are separately bound.
 
-No general temporal convergence, contact impact, restart, installed-package
+No general temporal convergence, contact impact, installed-package scientific
 admission, broader native scope or full C7 acceptance follows from these results.
+The separate restart fixture above is limited to its stated development scope.
 See the capability ledger and full programme for the outstanding requirements.
 
 ### Installed development routing — 2026-10-01
@@ -78,3 +107,19 @@ files; a commit label alone is not the package identity.
 Installed runtime diagnostics report effective BLAS pools of1 and an OpenMP
 pool of32, despite the requested environment value1. No effective whole-process
 single-thread or performance-improvement claim is made by this routing check.
+
+### Installed V2 restart development check — 2026-10-01
+
+Wheel18d8046d verifies all446 installed Python sources and runs the actual V2
+public example plus the complete split-restart fixture:48.838s/205.586MB,
+2example steps plus4fixture steps and2passing tests. Actual profile, restart flag
+and default1e-11 tolerance are checked in the target process; every imported
+solver module comes from the installed target. All four fixture states and
+endpoint accounting match managed V5 exactly. The package manifests differ, so
+checkpoints remain bound to their own artifact rather than interchangeable.
+
+Target:`C:/ANYworkspaceWork/general-contact-native-restart-dev-20261001/target`.
+Evidence:`d1_review_support/native_dynamic_restart_installed_v1_20261001.summary.json`.
+Independent saved assessment in `D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md`
+closes this installed development routing/state check, not C7 scientific
+admission or release. Earlier accepted contact artifacts and failures remain.

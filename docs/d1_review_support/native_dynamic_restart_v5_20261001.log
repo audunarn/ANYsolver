@@ -1,0 +1,19 @@
+{"anysolver_file": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "input_sha256": "4a28c8d4c9b0318bf8d8ed6837c965ac46e094057fe87c002d9e2abcf35f06bc", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+{"stage": "uninterrupted1", "elapsed_seconds": 4.969093299994711}
+{"stage": "uninterrupted2", "elapsed_seconds": 8.004731199995149}
+{"stage": "split1", "elapsed_seconds": 12.736389300000155}
+{"stage": "restored2", "elapsed_seconds": 26.630944100004854}
+{"stage": "complete", "elapsed_seconds": 27.76001559998258}
+..
+============================== warnings summary ===============================
+tests/test_ge_beam3_native_dynamic_restart.py::test_committed_native_dynamic_split_restart
+  tests\test_ge_beam3_native_dynamic_restart.py:28: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_committed_native_dynamic_split_restart(record_property):
+
+tests/test_ge_beam3_native_dynamic_restart.py::test_package_manifest_relative_transitive_binding
+  tests\test_ge_beam3_native_dynamic_restart.py:207: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_package_manifest_relative_transitive_binding(tmp_path, monkeypatch, record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2 passed, 2 warnings in 28.09s
+{"pytest_exit_code": 0, "verified_source_count": 444}

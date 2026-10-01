@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.45. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
+**Revision:** 2026-10-01.46. **Status:** D1-interior and named bounded D2 partial-shell handoff independently accepted; remaining programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact, branch codex/general-contact-core.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4; policy ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
@@ -45,10 +45,18 @@ NONPASS with unassigned cause. Earlier default momentum-refinement and other
 failures remain. Separate small-vibration tighter-solve20-step evidence passes
 its unchanged gates; momentum below the frozen floor does not establish order.
 Current scope is one centered elastic generalized ellipsoid, free or fully
-first-node-clamped, with retained physical internal inertia. Restart is explicitly
-unsupported. Next: implement the complete dynamic codec and fresh-owner reissuance
-under atomic state validation; do not substitute the static codec. The interface
-check is not full C7 or installed/scientific admission.
+first-node-clamped, with retained physical internal inertia. The separate V2
+complete committed-state codec now passes the free/unloaded/default split fixture
+(two tests/four steps,30.857s/205.619MB): exact canonical state/checkpoint/accounting,
+stored-acceleration balance, original algebraic correction, cancellation and
+atomic reissuance. Independent saved review is closed; all earlier failures remain.
+Eight-source artifact binding was replaced by a bounded full-package Python-source
+manifest; Python3.11 reparse compatibility and test-reporting defects were fixed
+before success, with prior unexecuted/failed candidates retained. Main sources are
+exact reviewed copies. Installed V2 example/fixture also passes48.838s/205.586MB with446 matching
+package files and its own artifact identity. Next select one remaining physical/
+temporal C7 discriminator using the retained failure/reference evidence. No fullC7 or
+scientific admission follows from this restart development slice.
 
 ## 1. Current position
 
@@ -61,7 +69,7 @@ check is not full C7 or installed/scientific admission.
 | D2 named partial-support/cycle handoff | Independently accepted for the exact foundation and installed cycle parameter sets | Remaining shell combinations, geometry and explicit multi-pair ownership |
 | D2 S3-source/Q4-target | Shared P1 pressure, complete both-body tangent, four-corner swept rejection, public lifecycle/open restart and mixed-load/pure-press deforming-target KKT comparisons locally pass | Spatial/geometry qualification, broader pair composition and installed admission remain open |
 | D3 classical beam static | Foundation and multiple-tool rows pass locally; new moving-normal, fixed-director deformable S3 work/tangent, coupled response and split restart pass | Scientific/installed qualification, free directors, broader pairings and geometry remain open |
-| D6 physical inertia/time integration | Free/loaded and tighter-solve small-vibration controls pass locally; all prior energy/velocity/default-solve failures remain | Complete actual dynamic restart; broader temporal/state/native qualification remains open |
+| D6 physical inertia/time integration | Free/loaded and tighter-solve small-vibration controls pass locally; all prior energy/velocity/default-solve failures remain | Complete-state restart now passes source and installed development; broader physical/temporal native qualification remains open |
 | D3–D8 | Required programme remains open | Bounded integrated deliveries |
 
 The [D1 handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md)

@@ -1,0 +1,56 @@
+{
+  "status": "RETAINED_NONPASS",
+  "production_changes": "none",
+  "records": {
+    "3": {
+      "classification": "entry environment spelling before import",
+      "accepted_steps": 0,
+      "qualification": "none",
+      "artifacts": {
+        "docs/d1_review_support/native_dynamic_restart_v3_20261001.inputs.json": "07dd06ec6f8f1b8affefa23260292143825d4aaf61244f769f755a39cd1753ca",
+        "docs/d1_review_support/native_dynamic_restart_v3_20261001.log": "f713daf7c71fa0fa341e527d4cd8f453d393b366bbad01c0c01f64ca6c257ad2",
+        "docs/d1_review_support/native_dynamic_restart_v3_20261001.resources.json": "05660d6928c6b273d60c7174093b7b01a1a97d717b706f986d5d6be42b4d2c20"
+      },
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_seconds": 0.14312839999911375,
+        "peak_process_tree_memory_mb": 11.362304,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "docs/d1_review_support/contact_development_check.py",
+          "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_dynamic_restart_v3_20261001.inputs.json"
+        ],
+        "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_restart_v3_20261001.log"
+      }
+    },
+    "4": {
+      "classification": "test accounting serialization after initialization; independent tmp_path setup error",
+      "accepted_steps": 0,
+      "qualification": "none",
+      "artifacts": {
+        "docs/d1_review_support/native_dynamic_restart_v4_20261001.inputs.json": "ea2052aa0acfb9e8998f2a20a80d66c22c6569325a94a5cf69c6a19b1b58bf77",
+        "docs/d1_review_support/native_dynamic_restart_v4_20261001.raw.json": "11b61e6e7f6810773ead74f180bf4c0cb94dd23522bad425f1f65419c4936902",
+        "docs/d1_review_support/native_dynamic_restart_v4_20261001.log": "c31c9fc6f3d273868616061871fbe1fc9012ab07df9ce3b0ec374c5dcb0ffefb",
+        "docs/d1_review_support/native_dynamic_restart_v4_20261001.resources.json": "960a27e8eaa809ef04d06acc95f43ce6fdabf23d86f93a9f310e27c19f22229f",
+        "docs/d1_review_support/native_dynamic_restart_v4_20261001.xml": "ccd96c0dfbc379fe5f4c20a665373ec267e388e2201cd57013ffdadee9227db9"
+      },
+      "resource": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_seconds": 6.208986299985554,
+        "peak_process_tree_memory_mb": 216.457216,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "docs/d1_review_support/contact_development_check.py",
+          "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_dynamic_restart_v4_20261001.inputs.json"
+        ],
+        "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_restart_v4_20261001.log"
+      }
+    }
+  }
+}

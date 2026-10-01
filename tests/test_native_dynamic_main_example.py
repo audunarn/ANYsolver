@@ -33,8 +33,8 @@ def test_public_example_effective_owner_and_imports(capsys):
     provenance = output["provenance"]
     assert provenance["status"] == "DEVELOPMENT"
     assert provenance["production_qualified"] is False
-    assert provenance["restart_supported"] is False
-    assert provenance["profile_id"] == "GE_BEAM3_NATIVE_CONTACT_FREE_FINITE_VELOCITY_DEV_V1"
+    assert provenance["restart_supported"] is True
+    assert provenance["profile_id"] == "GE_BEAM3_NATIVE_CONTACT_FREE_FINITE_VELOCITY_DEV_V2"
     import anysolver.ge_beam3_native_dynamics as public
     import anysolver._ge_beam3_native_dynamic_analysis as wrapper
     import anysolver._ge_beam3_native_midpoint as midpoint

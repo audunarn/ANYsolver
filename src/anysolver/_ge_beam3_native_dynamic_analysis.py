@@ -24,11 +24,14 @@ class NativeDynamicAnalysis:
     with zero *inertial placeholders*, not constrained frame derivatives.
     Only a single centered elastic ellipsoid element with free supports or a
     homogeneous full first-node clamp is admitted by the existing owner.
-    Restart is deliberately unsupported; current state belongs to this lifetime.
+    Restart admits only a complete committed snapshot into a matching fresh owner.
     """
     __slots__ = ('_native', '_context', '_binding', '_identity')
 
     def __init__(self, definitions, boundaries, *, profile_sha256, **settings):
+        from .ge_beam3_native_dynamics import PROFILE_SHA256
+        if type(profile_sha256) is not str or profile_sha256 != PROFILE_SHA256:
+            raise ValueError('exact current native dynamics development profile required')
         native = NativeBeamAnalysis(definitions, boundaries)
         # Constructor admission/rank ownership precedes any physical genesis.
         context = MidpointContext(native, structural_owner='dynamic_elastic', **settings)
@@ -60,6 +63,10 @@ class NativeDynamicAnalysis:
     @property
     def initial_checks(self):
         return self._owner().initial_checks
+
+    @property
+    def restore_checks(self):
+        return self._owner().restore_checks
 
     def initialize(self, positions=None, cell_rotations=None, physical_velocity15=None,
                    *, position_low=None, time=0., cancellation_token=None):
@@ -102,8 +109,9 @@ class NativeDynamicAnalysis:
     def physical_load_accounting(self, mechanical):
         return self._owner().physical_load_accounting(mechanical)
 
-    def restore_checkpoint(self, checkpoint):
-        raise NotImplementedError('native finite-velocity development restart unsupported')
+    def restore_checkpoint(self, checkpoint, *, expected_sha256, cancellation_token=None):
+        return self._owner().restore_checkpoint(checkpoint, expected_sha256=expected_sha256,
+                                                cancellation_token=cancellation_token)
 
-    def create_checkpoint(self):
-        raise NotImplementedError('native finite-velocity development restart unsupported')
+    def create_checkpoint(self, *, cancellation_token=None):
+        return self._owner().create_checkpoint(cancellation_token=cancellation_token)

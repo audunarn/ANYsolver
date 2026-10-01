@@ -1,0 +1,288 @@
+{
+  "base": "248867b6f12d50284ac638cecdb5f021b5b1f380",
+  "status": "complete native restart/source and installed development slice; no C7/release claim",
+  "active_worker_note_excluded": "docs/d1_review_support/D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md",
+  "main_example_metadata_impact": "only expected restart flag/profile version changed; actual new public example checked by installed route rather than unaffected old test replay",
+  "paths": [
+    {
+      "path": ".gitattributes",
+      "sha256": "61588e19b3d60fb8260317bfc778cbe1fa6c12159425ed9e38ece9eac064807f"
+    },
+    {
+      "path": "GENERAL_CONTACT_PLAN.md",
+      "sha256": "491f645dda1fed0bb36a494011023422f1f8dd54d1d1cc5f9c1a1d0ec9fdc834"
+    },
+    {
+      "path": "GENERAL_CONTACT_RESTART.md",
+      "sha256": "189b34ae1663442005cacdc343b1407272cee8ff332df9ca810c1c5e3a1c867a"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_CAPABILITIES.md",
+      "sha256": "554ea9bf90ff691bf64daae3087735ac4d8f7800e5bc579d792755e8b26d32e5"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md",
+      "sha256": "a0ee694067d84872de2d4aa5f8050171ccb9e9f5636fdecdc90ca7f61073ffb4"
+    },
+    {
+      "path": "docs/d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md",
+      "sha256": "d701e528649fb8b50706604247ce3daa1e0e7a22b3ee6b1a5642a29f9ea99811"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_DEVELOPMENT_20260929.md",
+      "sha256": "c681071795f8df2c3e77fb0ad6213d303779896f9ec659ebf0f18e178f2cfd52"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART28.md",
+      "sha256": "2f5b4a2b8a7d0228f810c738516edd9c2d4c1fef9b53a9dc5f73b2aedaf659eb"
+    },
+    {
+      "path": "docs/d1_review_support/native_beam_installed_development_entry.py",
+      "sha256": "8ca49eed7be6f0d6f3aa17f9ace045b86c2658b67225ee84e44e0c56b817c389"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_execution_failures_v1_20261001.json",
+      "sha256": "cad50b77a7ac95dede7b4d72dd32ae5ebd3c271f6fb55375f339f09a127ca394"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_installed_entry_prechange_20261001.source.py",
+      "sha256": "2f82efbfbccb531c76addc85657e3fa660d9e2a6b4051a7cb230dd2e76a5ed7f"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_installed_v1_20261001.inputs.json",
+      "sha256": "4fd04a96987c3feb3096a7f01c280fafa3b578feb725c17dac2eab91f429ef04"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_installed_v1_20261001.log",
+      "sha256": "36e46f405f82eff234cd2022bb44d0505093a70427ffe45dc0c3a3a6643285ec"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_installed_v1_20261001.raw.json",
+      "sha256": "211a69d2c02aabe52d7d3338743bea3f64de5fb45d065489156c04cc9cabf423"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_installed_v1_20261001.resources.json",
+      "sha256": "65f3ea85dc5ee898841142f1374bd26d2e84356179279608eda4973724ea6ed5"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_installed_v1_20261001.summary.json",
+      "sha256": "40747f95af1f1d465a69c58df5ef73cfb25a907318b0b9128cece8d1db926a6d"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_installed_v1_20261001.xml",
+      "sha256": "f663c00621cc44fd5e93a909a97fe272c68cac3d7b152c0253bff865520d6487"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_main_imported_owners_20261001.json",
+      "sha256": "1289b31939fbf1c4f7ca0ee9ed5af53d5868de18af7b7049a1e8d21acf9d299c"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_main_midpoint_prechange_20261001.source.py",
+      "sha256": "36da82603885f6f110adf40404331a5d519c7dccbe284dc67bb93ec44f75d1ac"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_main_owner_prechange_20261001.source.py",
+      "sha256": "79b173131e9cde52c07f3bb00721e6d07ebc5a68d8f92e0115a42649cb5d0914"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_main_preintegration_20261001.json",
+      "sha256": "2fac661f8dac3cf028dc4a4090c19bc70d3fafcee6020f6036f4f8cdf47feb8a"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_main_public_prechange_20261001.source.py",
+      "sha256": "cec497e3bcee79d50d8a52cc6358dd3a8249ccdff315d95db808fc78e74cefa7"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v1_20261001.codec.source.py",
+      "sha256": "29021a5967379cd39a313f9d377183f3a4b7be81539c520de13a5809e9823bef"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v1_20261001.midpoint.prechange.source.py",
+      "sha256": "36da82603885f6f110adf40404331a5d519c7dccbe284dc67bb93ec44f75d1ac"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v1_20261001.midpoint.source.py",
+      "sha256": "631f02ebcd2dbc2235d022cf70e923f6066eb8cfab1cbb4130c02c9d4b31f8c7"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v1_20261001.owner.prechange.source.py",
+      "sha256": "79b173131e9cde52c07f3bb00721e6d07ebc5a68d8f92e0115a42649cb5d0914"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v1_20261001.owner.source.py",
+      "sha256": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v1_20261001.proposal.json",
+      "sha256": "7e826b95ac7252a42fc9f7061b9efd0e7c4e98da55243314141cad353d0b5370"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v1_20261001.public.prechange.source.py",
+      "sha256": "cec497e3bcee79d50d8a52cc6358dd3a8249ccdff315d95db808fc78e74cefa7"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v1_20261001.public.source.py",
+      "sha256": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v1_20261001.test.source.py",
+      "sha256": "5333312be03fe221cfde80de04342a8fb3def3961a642437abd92ba41eca9a12"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v2_20261001.codec.source.py",
+      "sha256": "de2725263e671c22bcf1489059fd9a79788ab2131dd2721c244209959c9afa3d"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v2_20261001.midpoint.source.py",
+      "sha256": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v2_20261001.owner.source.py",
+      "sha256": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v2_20261001.proposal.json",
+      "sha256": "b1287d38426095d7ce975c1e9bd07015e3129eb263646f4291bc6c3393bb328d"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v2_20261001.public.source.py",
+      "sha256": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v2_20261001.test.source.py",
+      "sha256": "77cea2addf831f590a9620f98447a30bc2fb2d37c6e5e38aaa59bcbecce4f9bc"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v3_20261001.codec.source.py",
+      "sha256": "3f26dc51cd9e87998c2b89610b92dce297ff4d1ed0194a5fd464e7954b7fa4af"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v3_20261001.inputs.json",
+      "sha256": "07dd06ec6f8f1b8affefa23260292143825d4aaf61244f769f755a39cd1753ca"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v3_20261001.log",
+      "sha256": "f713daf7c71fa0fa341e527d4cd8f453d393b366bbad01c0c01f64ca6c257ad2"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v3_20261001.midpoint.source.py",
+      "sha256": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v3_20261001.owner.source.py",
+      "sha256": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v3_20261001.proposal.json",
+      "sha256": "8e111a12a183f016b48c9c40fd4d6850ff5e605918130db0104bd1f69b8ec21b"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v3_20261001.public.source.py",
+      "sha256": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v3_20261001.resources.json",
+      "sha256": "05660d6928c6b273d60c7174093b7b01a1a97d717b706f986d5d6be42b4d2c20"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v3_20261001.test.source.py",
+      "sha256": "32fdcdb6567d0de4ca612a88d580994f37603ec95e9954fbd4c3ddfd57475adb"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v4_20261001.inputs.json",
+      "sha256": "ea2052aa0acfb9e8998f2a20a80d66c22c6569325a94a5cf69c6a19b1b58bf77"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v4_20261001.log",
+      "sha256": "c31c9fc6f3d273868616061871fbe1fc9012ab07df9ce3b0ec374c5dcb0ffefb"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v4_20261001.raw.json",
+      "sha256": "11b61e6e7f6810773ead74f180bf4c0cb94dd23522bad425f1f65419c4936902"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v4_20261001.resources.json",
+      "sha256": "960a27e8eaa809ef04d06acc95f43ce6fdabf23d86f93a9f310e27c19f22229f"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v4_20261001.xml",
+      "sha256": "ccd96c0dfbc379fe5f4c20a665373ec267e388e2201cd57013ffdadee9227db9"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.codec.source.py",
+      "sha256": "3f26dc51cd9e87998c2b89610b92dce297ff4d1ed0194a5fd464e7954b7fa4af"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.inputs.json",
+      "sha256": "4a28c8d4c9b0318bf8d8ed6837c965ac46e094057fe87c002d9e2abcf35f06bc"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.log",
+      "sha256": "b6b034b3fd47c0342cc325c70daecc3cbed22f45816cfaf7ddb8dfc37d4fd98d"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.midpoint.source.py",
+      "sha256": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.owner.source.py",
+      "sha256": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.proposal.json",
+      "sha256": "30d963b15876203c64450b46e5390fe10af53c0720c54281c37dd178d3dd5d9e"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.public.source.py",
+      "sha256": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.raw.json",
+      "sha256": "1355002525f84ae6974233be38a14804b10678b36584744bd8c9ebf65197b4d5"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.resources.json",
+      "sha256": "3fe4338d96540060ccc36154200dc75d73db0a97b3877b810e1b2e8c0beaf23e"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.summary.json",
+      "sha256": "c950272c1e42f56f91f91b516401eba69b5ac5c84a904186abb48eea8e481ada"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.test.diff.txt",
+      "sha256": "7ca75dbfb72e5474a247e9ceed50fcec08db4a0aa16a2f7075f362cc853ca8b3"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.test.source.py",
+      "sha256": "4760849a084fa98091c3f473ee0231d2cffbef27df3a6fbd7b9f1ffbd5821230"
+    },
+    {
+      "path": "docs/d1_review_support/native_dynamic_restart_v5_20261001.xml",
+      "sha256": "e68bf062268cb35a3df5ae21f266701ec04cc5a0da3092bb38a65b085438b005"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_dynamic_analysis.py",
+      "sha256": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_dynamic_restart.py",
+      "sha256": "3f26dc51cd9e87998c2b89610b92dce297ff4d1ed0194a5fd464e7954b7fa4af"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_midpoint.py",
+      "sha256": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a"
+    },
+    {
+      "path": "src/anysolver/ge_beam3_native_dynamics.py",
+      "sha256": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_dynamic_restart.py",
+      "sha256": "4760849a084fa98091c3f473ee0231d2cffbef27df3a6fbd7b9f1ffbd5821230"
+    },
+    {
+      "path": "tests/test_native_dynamic_main_example.py",
+      "sha256": "037157194bb40d390a7f92666c69d342630ef538cb204eec3742cd3d16ff7e26"
+    }
+  ]
+}

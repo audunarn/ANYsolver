@@ -13,11 +13,11 @@ from ._ge_beam3_native_midpoint import (
     EndpointAccounting, PhysicalLoadAccounting)
 
 SELECTOR = 'ge-beam3-native-contact-free-midpoint-dev'
-PROFILE_ID = 'GE_BEAM3_NATIVE_CONTACT_FREE_FINITE_VELOCITY_DEV_V1'
+PROFILE_ID = 'GE_BEAM3_NATIVE_CONTACT_FREE_FINITE_VELOCITY_DEV_V2'
 PROFILE_BYTES = canonical(dict(profile_id=PROFILE_ID, status='DEVELOPMENT',
     scope='ONE_CENTERED_ELASTIC_ELLIPSOID_ELEMENT_FREE_OR_HOMOGENEOUS_FIRST_NODE_CLAMP',
     mechanics='EXISTING_DYNAMIC_ELASTIC_CENTERED_FINITE_INERTIA_MIDPOINT',
-    restart='UNSUPPORTED', contact='UNSUPPORTED', acceptance='EXTERNAL_FULL_C7_OPEN'))
+    restart='FRESH_OWNER_COMMITTED_MIDPOINT_DEV_V1', contact='UNSUPPORTED', acceptance='EXTERNAL_FULL_C7_OPEN'))
 PROFILE_SHA256 = sha256(PROFILE_BYTES).hexdigest()
 
 
@@ -44,5 +44,5 @@ def workflow_provenance(analysis):
         raise ValueError('exact native dynamic development analysis required')
     return dict(profile_id=PROFILE_ID, profile_sha256=PROFILE_SHA256,
                 analysis_sha256=analysis.identity, status='DEVELOPMENT',
-                production_qualified=False, restart_supported=False,
+                production_qualified=False, restart_supported=True,
                 acceptance='EXTERNAL_FULL_C7_OPEN')
