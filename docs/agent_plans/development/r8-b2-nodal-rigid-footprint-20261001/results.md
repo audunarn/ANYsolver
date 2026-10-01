@@ -78,10 +78,10 @@ file was reread against its SHA256; archive SHA256
 [Identity](raw-v1-identity.json) binds counts/sizes. Prior wheel5d4d8602 and its
 full source remain protected in the preceding nodal-footprint delivery archive.
 
-The current legacy ANYfem B2 from_definition factory can discard new footprint
-fields. Do not serialize nonempty footprints through that legacy type. A separate
-explicit consumer/schema and legacy rejection guard are the next owned slice;
-this core report makes no claim for that pending consumer.
+At this core delivery, the legacy ANYfem B2 from_definition factory could discard
+new footprint fields. The subsequent [consumer delivery](../r8-anyfem-b2-nodal-footprint-20261001/results.md)
+adds its rejection guard and a separate explicit schema, with new installed
+evidence. This core report does not relabel its original artifact or evidence.
 
 Full F04/F10/F11/M4, broader attachments, B2/S3/finite/spectral,
 consumer persistence, external references and practical scale remain open.

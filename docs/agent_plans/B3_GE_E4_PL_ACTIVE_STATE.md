@@ -8,14 +8,14 @@ Formal F03 unconsumed. No main merge/publication authority. Full programme remai
 ## Source, ownership and execution
 
 Solver: C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-codex/b3-ge-e4-pl-integration, HEAD a1f16198 (reviewed footprint delivery).
+codex/b3-ge-e4-pl-integration, HEAD a9277078 (reviewed GE and B2 footprints).
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-codex/experimental-ge-panel-consumer, HEAD f1626ea (paired consumer delivery).
+codex/experimental-ge-panel-consumer, HEAD cc9a490 (B2 footprint consumer).
 Root owns integration/evidence/note. Previous solver8/consumer4 source bindings
 are committed and recorded in their report; new B2 changes do not relabel those
-artifacts. B2 core source is frozen for root integration; bl5_consumer now edits
-only ANYfem B2 input/Project dispatch and new consumer test/example. Independent
-reviewer is readonly. All owned numerical jobs are terminal.
+artifacts. B2 core and consumer are committed. bl5_consumer owns the next bounded
+GE reference-modal source/test slice; reviewer is readonly. Root owns evidence,
+integration and checks. All owned numerical jobs are terminal.
 At most3 workers/one heavy job/100k rows/600s/8GiB/8 numerical threads.
 Python C:/Python/Python314/python.exe; child settings BLAS/Numba1/JIT off.
 
@@ -78,15 +78,24 @@ have complete independent review. Initial collinear-fixture/build/preparation
 failures remain in the63-file raw archive. New spectra reject; no finite/drill-free/
 distributing/full foundation claim. Root commits this bounded source/evidence now.
 
-Next: ANYfem B2 input/save-reopen/selected batches. The old from_definition can
-drop new footprint fields; do not serialize them through the legacy type. Author
-adds an explicit guard and distinct strict schema, including footprint-only input,
-using current public owner and unchanged Project selector/format. No duplicate
-mechanics or global assembly during persistence. Root owns installed checks after
-freeze; review covers complete consumer change. Preserve old payload/defaults,
-ordered IDs/load cases, complete-case cancellation and factor1. Unsupported law/
-material/finite/mass/spectral requests fail explicitly. Full consumer/qualification
-obligations remain open. No numerical jobs launched for this pending consumer.
+Completed [B2 consumer](development/r8-anyfem-b2-nodal-footprint-20261001/results.md):
+distinct strict input/Project schema, footprint-only input, legacy no-silent-drop
+guard, selected batches and complete-case cancellation. Paired ee6f70a2/c07432fb
+artifacts bind390+98 modules.37new+112legacy checks and installed1/10/100 examples
+pass, one factor each. Previous/current payload SHA99b4bf40 and observations
+406b29c9 are byte-identical. Independent review clear;119-file raw archive retains
+the initial bytes-JSON recorder failure and corrected UTF8 representation.
+
+Next M4/F07: supported virgin elastic flat-Q4/generalized-GE point-owner finite
+modes using the actual sparse descriptor. Decision: six retained half-cell beam
+rotations carry inertia;18 resultants, nodal rotational traces, shell normal spin
+and multipliers remain algebraic. Existing native kinetic factors and physical
+Q4 mass are reused. No positive-definite interpretation of native mixed K, no
+global production condensation. Author prepares bounded source/tests; root checks
+kinetic work, full descriptor-QZ parity, equations/gaps and unchanged owner state.
+Reject S3/footprints/lines/material histories/free-free/prestress in this initial
+slice. If actual physical mass or descriptor consistency fails, retain finding
+and repair affected seam before expanding. Full F07/G4B remains open.
 Do not reopen
 parked BL5/chart sweeps by default. [Historical note](history/ACTIVE_STATE_20261001_NODAL_S3_TRANSITION.md)
 is preserved byte-for-byte; immutable reports preserve failed runs and authority.

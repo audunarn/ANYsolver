@@ -6,10 +6,14 @@ owner. Installed35 unchanged+1 repaired predicate and38 legacy predicates pass,
 with complete independent review; initial collinear-success fixture failure stays
 preserved. Exact old/current13 operator arrays and default observable/ten-case
 JSON agree. Headless public example completes with factor1. Full F04/F10/F11/M4,
-normal-spin/drilling physics, finite/S3/spectral and consumer obligations remain
-open; new spectral requests reject. Legacy ANYfem from_definition can omit new
-footprint fields: its rejection guard and explicit new consumer are next, and
-this slice is not evidence for that pending consumer. No aggregate pass.
+normal-spin/drilling physics, finite/S3/spectral and complete consumer obligations
+remain open; new spectral requests reject. ANYfem cc9a490 adds a distinct strict
+B2 consumer and a legacy rejection guard. Installed37new+112legacy checks pass,
+1/10/100 examples reuse one factor each, and old/current payload/results are
+byte-identical;488 source/wheel/site modules bound, independent review clear.
+This is experimental input/Project roundtrip, not complete native persistence
+or aggregate acceptance.
+[Consumer evidence](development/r8-anyfem-b2-nodal-footprint-20261001/results.md).
 [Artifacts, limitations and raw review](development/r8-b2-nodal-rigid-footprint-20261001/results.md).
 
 Nodal rigid footprint, 1 October: experimental selected-node six-pose locking
