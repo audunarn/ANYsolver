@@ -1,116 +1,84 @@
 # B3-GE / E4-PL / B2 — active state, 2 October 2026
 
-## Decision, authority and owner
+## Authority and source
 
-Revision 8 goal/plan remain active. Continue under the adopted risk-proportionate
-policy2026-09-24.2 and source-first impact testing. AGENTS.md re-read. Use bounded
-tiered workers with separate ownership; do not contact the other task. Formal
-F03 authority is UNCONSUMED. No aggregate gate, main merge, default/version change
-or publication is accepted/authorized. Preserve all historical failed evidence.
+Revision8 full goal/plan remain active under risk-proportionate policy2026-09-24.2
+and source-first impact testing. AGENTS reread. Tiered workers, separate ownership,
+no communication with contact worker. Formal F03 authority UNCONSUMED; foreign
+scriptc908b1f3...9481 rehashed unchanged and never run/edit. Scientific criteria,
+historical failures, protected evidence and all final obligations remain binding.
+No main merge, publication, default/version change or aggregate qualification.
 
-Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Current product46026dca;
-U1/US3 canary evidence delivered with this note; inspect actual Git HEAD.
-shared-main testing baseline1a0ae901. Main and contact files remain untouched.
-Original foreign F03 script hashc908b1f3...9481 was reverified; never run/edit it.
+Solver owner: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001, product46026dca; preceding
+evidence1e4e6d7a. Current HEAD adds the same-action reference and this note; inspect
+Git. Shared-main testing baseline1a0ae901; unrelated main/contact work untouched.
+ANYfem owner: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
+branch codex/experimental-ge-panel-consumer, current26cc56eb3760530c457a18a8faec1cf93ae79ecd.
 
-## Delivered behavior and current evidence
+## Delivered behavior and accepted boundaries
 
-Experimental multi-element Q4/S3 GE point/footprint static owners, finite stepping,
-atomic lifecycle, recovery, checkpoints and virgin descriptor modes exist.
-Separate B2 static/batch and selected footprint-mode routes exist. Supported
-ANYfem Project experimental save/reopen is at consumer350c980. Implementation,
-testing, scientific acceptance and release remain separate.
+Experimental multi-element Q4/S3 GE point/footprint static/finite owners,
+atomic state, recovery/restart and selected virgin modes exist. Separate B2
+static/batch and selected footprint modes exist. Scoped F05/F08/F09 and selected
+F10/F11 point foundations have acceptance records; aggregateG0B/M1-M5 remain open.
+One authoritative matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md.
 
-Latest B2 repair binds solver wheeld99c59ac...981ea and unchanged consumer
-wheel11728ab8...fa56e:136 source/176 installed checks and both public workflows
-pass;391/98 module bytes match. Nine B2 cases agree with GE within6.8211e-11.
-E02 torque still changes1.36%, and thickness/external precision remain open.
-[E02/B2 results and boundaries](development/r8-b2-panel-resolution-20261001/results.md).
-E02 locks a rigid patch; it is not BL5 five-channel torque evidence.
+Latest usable delivery: explicit mixed Q4/native-S3 B2 static input schema in
+ANYfem native Project save/reopen, selected1/10/100 batches and complete-prefix
+cancellation. Installed167/167 and all three public examples pass; one eligible
+factorization per batch. Product391solver/98consumer module bytes match exact
+wheel/site/source; imported275modules stay onsite. Consumer15eb01d0...b76f6,
+unchanged solverfb12ac66...75fd. Two failed negative-fixture repairs retained,
+no product guard/tolerance change. Independent Read review clear, not a claim
+of different-model-family acceptance. S3 mass/modes/footprints and completeM3 open.
+[Consumer evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-mixed-panel-consumer-20261002/results.md).
+[Solver mixed-panel evidence](development/r8-b2-mixed-panel-20261002/results.md).
 
-Current M2 slice: all nine actual whole-element8:1 endpoint solves pass unchanged
-equilibrium/work/balance1e-8 and weak-gap1e-9 checks, one factor/three loads at
-shell16x4/32x8/64x16,128/256/512B3members and40/80/160P0rows. All retained native
-coordinates survive. Longest110.14s, sampled peak559.6MiB; effective1numerical
-thread,JIT-off; no new product wheel. Finest Mz equilibrium9.516e-9 is close to
-its unchanged cap. Pointwise g5 samples are diagnostics, not exact weak ties.
-[Source, raw outputs, review and interpretation](development/r8-bl5-endpoint-response-20261001/results.md).
+## Current scientific decision
 
-## Remaining uncertainty and resulting action
+Decision sought: defensible physical BL5 transfer and production multiplier
+policy. The completed whole-element8:1 endpoint series passes existing work,
+equilibrium and gap checks, retaining native variables. FinestMz equilibrium
+9.51604e-9 remains close to1e-8; lastMz refinement changes-1.354%. No endpoint
+repeat/fourth mesh follows. [Saved endpoint evidence](development/r8-bl5-endpoint-response-20261001/results.md).
 
-Decision sought: a defensible physical BL5 connection and production multiplier
-policy. Established trace/local-kernel premises and the new actual endpoint do
-not show a gross endpoint solve/work collapse. Finest endpoint work differs
-from saved1:1 by Fy+.00179%,Mx-.00000405%,Mz+.01449%. Mz still changes-1.354%
-at the last refinement; physical torque accuracy and locking remain open.
+Independent same-action US3 shell replay now completes Fy/Mx/Mz at the frozen
+finest1105nodes/2048triangles and identical root supports. All six shell covectors
+are applied directly; no beam/connection feedback or repeated eccentricity.
+Work differences-1.07386%/-.247769%/-1.15692% exceed DAT uncertainty. This establishes
+a shell-response contribution, not unique beam/connection or drilling causality.
+Normal-spin response differs but has zero direct load/work. Source review finds
+flat Q4 core has no spin block, PL couples translation/spin and HG is spin-only;
+the existing component API separates them. Prior PL+HG sensitivity scales the
+whole numerical sector, not bare spin or a finite-removal/independence result.
 
-The already completed PL+hourglass derivative is material for root transfer:
-beam-root Fy sensitivity.189386N versus native/reference discrepancy.198297N,
-although tip-work slope is only-.038355%. This is local alignment, not causal
-allocation or a finite-removal prediction. No coefficient tuning/repeated
-completion derivative follows. Finest endpoint root Fy differs only-.002517N
-from saved1:1, while Fz differs-.028353N; keep all components visible.
+Resulting action: evaluate the assembled supported completion action after spin
+relaxation on saved states, at unchanged coefficients, using existing components
+and sparse actions/solves. Verify actual frames/partition/spin equilibrium first.
+This separates completion feedback from physical core without tuning/removal.
+Do not repeat the combined sensitivity or infer causality from rz. Do not tune
+multipliers, automatically refine or reuse rigid-tipE02 as bonded-line evidence.
+Ready material/consumer work remains independent. FormalF03/M2 and physical
+coupled torque/shear, stability/ratios, scale/external/platform/release remain open.
+[Same-action result, raw evidence and review](development/r8-bl5-us3-same-action-20261002/results.md).
 
-Stop the completed endpoint batch. Next useful M2 action is the physically matched
-BL5 torque/shear reference and remaining actual response envelope. Define the
-missing observable/physical connection correspondence before another expensive
-reference; do not reuse rigid-tip E02, add a fourth mesh, rerun auxiliary metrics
-or select from rank/gaps/a quotient. Independent ready M3/M4 work may proceed.
-F03/G0B/M2 and mandatory external/scale/release obligations remain OPEN.
+## Execution and restart
 
-Independent source review identifies three reference seams: historical square
-J equals polar I rather than Saint-Venant torsion; the old solid port uses a
-position-gradient rotation rather than a thickness director; detached beam yaw
-requires a null-mode compatibility equation. No old deck is launched. Official
-CalculiX2.23 all-user U1/US3 canary now executes: one triangle/2members, exact
-nodal-P1 five-row port, shellroot clamp/beamroot1..5only, Mx1Nm. USER SECTION
-suppliesUS3thickness. Fourteen solved equations, sixU/all6nodes, positive work
-2.315852e-7J and rounding-compatible gaps; beamroot yaw staysfree/nonzero.
-No warnings/errors; effective CPUreports1, .047s. Memory/threadsampling missed
-the tinyjob: zeros meanunobserved, notmeasuredpeak. Originalrunner and tightened
-warning/resource guards retained; saved-data replay passes with no numerical rerun.
-Independent Read review clear. [Evidence/limits](development/r8-bl5-u1-us3-canary-20261002/results.md).
+All numerical jobs terminal. V2 external exit201 from20-character CLOAD field
+truncation is retained; two partial steps not scored. V3 repairs formatting only,
+records decoded action differences(max1.49944e-14relative), completes three steps
+once: .433s/25,153,536bytes sampledRSS, reportedCPU1,600s/1GiB supervision.
+Pairing serialization estimates are not forward-state error certificates.
+No solver product changed/no new solver wheel required. No speedup claim.
+Raw roots: Temp/r8-bl5-us3-same-action-v1/v2/v3 and
+Temp/r8-anyfem-b2-mixed-panel-installed-v1; archives linked in results.
 
-Resulting action: build a physically declared common-work reference through this
-usable director route. First resolve section/attachmentidealization and output
-work maps; do not assume nodal-P1 equals consistent U1 or retainedB3 traces.
-No RFwrench, physical torque accuracy or F03acceptance inferred. Do not repeat
-the canary, old U1+CPS failure or retrofit a square-torsion claim.
-
-Delivered product slice: explicit B2MixedPanelDefinition with Q4/native S3-V2D
-static shells, existing sparse/factor/batch/point services. Historical Q4 entry
-is unchanged; no triangular mass, spectral or footprint claim. Question: does
-the admitted native S3 operator and variable-width F10 port preserve dense-KKT
-work/reactions, ownership and complete-case batch semantics? Focused changed
-checks then one coherent installed wheel answer it. Failure is preserved; no
-fallback to a legacy triangle or relaxed tolerance. Scientific acceptance and
-ANYfem new-schema integration remain separate.
-
-Final changed source28/28 and fresh installed180/180 pass; reversed facets,
-normal scaling and nonzero prescribed motion included. Mixed/all-S3 public
-1/10/100 examples pass with one eligible factorization; legacy B2 and unchanged
-ANYfem native Project save/reopen pass. Independent Read review has no remaining
-finding. Wheel fb12ac66...75fd matches all391source/site modules; unchanged
-consumer11728ab8...fa56e matches98. Initial connectivity failures and incorrect
-normal-test expectation retained, no tolerance relaxed. Effective1thread/JIT-off;
-180s/1GiB supervision; all owned jobs terminal. No speedup, S3 consumer/mass/modes
-or aggregate acceptance inferred. [Evidence and boundaries](development/r8-b2-mixed-panel-20261002/results.md).
-
-## Verification and restart
-
-One acceptance matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md. Focused source
-checks use scripts/run_portable_ci.py --development <exact affected nodes>;
-installed checks occur at coherent product boundaries. No repeated broad suite,
-measured speedup, different-family acceptance or external BL5 acceptance claimed.
-
-Endpoint raw process records/runner: Temp/r8-bl5-endpoint-response-v1; all three
-owned numerical jobs exited0, no numerical slot remains held. Limits600s/8GiB,
-8numericalthreadceiling(request1),one heavy job. Evidence archived in the linked
-result folder. Source helper hashes, product imports and exact sparse/state roles
-are bound. Harness defects are retained separately; no numerical run was repeated.
-
-[Previous working note](history/ACTIVE_STATE_20261002_PRE_ENDPOINT_DELIVERY.md), with
-[exact original bytes](history/ACTIVE_STATE_20261002_PRE_ENDPOINT_DELIVERY.zip),
-links prior product/consumer/history details. Read current source/status first;
-do not follow obsolete historical pending-run instructions.
+Use focused exact affected source checks during implementation; installed checks
+at coherent boundaries. No unchanged campaign repeats or new helper-level gates.
+At most3workers, one heavy numerical job,100krows/600s/8GiB/8threadceiling;
+actual requested numerical settings1thread/JIT-off. No numerical slot held.
+[Prior note](history/ACTIVE_STATE_20261002_PRE_SAME_ACTION.md) and
+[exact original bytes](history/ACTIVE_STATE_20261002_PRE_SAME_ACTION.zip) preserve
+the complete prior checkpoint. Continue from actual source/status, not obsolete
+historical pending-run instructions. Full goal remains active, not complete.

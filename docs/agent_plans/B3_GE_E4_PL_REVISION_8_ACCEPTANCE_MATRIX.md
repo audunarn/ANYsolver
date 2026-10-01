@@ -430,7 +430,7 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 |---|---|---|
 | M1 matching-station GE | IMPLEMENTED_NOT_QUALIFIED | Accepted spatial point-action recovery and ordinary native ANYfem input roundtrip now verified. Latest consolidated installed slice covers171 distinct predicates (V1 170pass/1 fixturefail; V2 corrected1/1). Matched E01, physical torque/drilling, complete V01–V06/V17/V18/V28 evidence and independent acceptance open. |
 | M2 bonded line | IN_PROGRESS | BL5 physical law, multiplier resolution, F03 and ratios/refinement/transfer open. |
-| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/native-S3/B2 point-panel 1/10/100 and selected recovery tested; historical Q4 consumer save/reopen retained. Scoped F09 and F10/F11 point/static accepted; fixed E01 B2 reference executed with retained discrepancies. S3 consumer/mass/spectral/footprint routes, general F10/F11/F13, complete consumer workflow and converged E01 accuracy remain open. |
+| M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/native-S3/B2 point-panel and installed ANYfem native Project save/reopen/selected 1/10/100 batches tested with one eligible factorization; historical Q4 route retained. Scoped F09 and F10/F11 point/static accepted; fixed E01 B2 reference executed with retained discrepancies. S3 mass/spectral/footprint routes, general F10/F11/F13, complete consumer workflow and converged E01 accuracy remain open. |
 | M4 remaining mechanics | IN_PROGRESS | Selected-node rigid footprints have installed unrebased solver/consumer evidence; footprint chart transport and broader material/attachment/topology/load/spectral/imperfection/capacity requirements remain mandatory. |
 | M5 scale/release | NOT_STARTED | Practical scale, platforms, external programme and authorized release remain mandatory. |
 
@@ -994,3 +994,20 @@ This resolves all-user reference-route feasibility only; no native-half-cell,
 consistent U1 trace, RFwrench, physical torque accuracy or F03acceptance follows.
 Memorysamples unavailable; no numerical rerun after reporting-guard fixes.
 [Exact outputs, source identities and Read review](development/r8-bl5-u1-us3-canary-20261002/results.md).
+
+**2 October integrated consumer and reference delta:** ANYfem26cc56eb now
+persists explicit mixed Q4/S3 static B2 inputs through the existing native
+Project bridge. Fresh installed167/167 and1/10/100 examples pass; one eligible
+factorization per batch. All98consumer/391solver source/wheel/site module bytes
+match. Failed negative fixtures, actual imports/settings and independent Read
+review retained. No mass/material/checkpoint or aggregateM3 claim follows.
+[Consumer evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-mixed-panel-consumer-20261002/results.md).
+
+One independent US3 same-action plate model now completes the finest native
+Fy/Mx/Mz shell actions, with unchanged nodes/supports and all six covectors.
+Work differences-1.07386%/-.247769%/-1.15692% exceed printed uncertainty and
+establish a shell-response contribution, without unique beam/connection or
+drilling causality. V2 numeric-field failure retained; V3 explicitly bounds
+serialization width and records decoded action differences. No coupled physical
+accuracy, multiplier selection, refinement claim or formalF03 acceptance.
+[Evidence and resulting decision](development/r8-bl5-us3-same-action-20261002/results.md).
