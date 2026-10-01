@@ -8,13 +8,15 @@ No main merge/publication authority. Full programme/scientific criteria remain.
 ## Source, ownership and resources
 
 Solver worktree C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling,
-branch codex/b3-ge-e4-pl-integration; latest product commit5953cc93.
+branch codex/b3-ge-e4-pl-integration; latest product commit a9d22b54 (free-free).
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 branch codex/experimental-ge-panel-consumer; HEAD cc9a490.
 Main untouched. Root owns integration, independent oracles, evidence and note.
-bl5_consumer now owns the next free-free modal module/owner/facade/test/example;
-no docs/Git/ANYfem edits. b2_point_acceptance_gap is readonly independent reviewer.
-Previous delivery source/evidence is committed. Verify actual dirty state on resume.
+Free-free solver source is frozen; root owns its oracle/example and integration.
+bl5_consumer now owns only ANYfem solve/stiffened_shell.py and
+stiffened_shell_project.py plus a new modal-consumer test/example; no solver/docs/
+Git edits. b2_point_acceptance_gap is readonly independent reviewer. Verify dirty
+ownership on resume; previous supported delivery source/evidence is committed.
 
 Foreign dirty scripts/b3_e4_f03_c1_fy_supported_reference.py SHA
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481:
@@ -65,23 +67,32 @@ Park mesh/port/chart sweeps. F03/G0B/M2 and mandatory external references OPEN.
 
 ## Current decision and next action
 
-Advance required free-free rigid-body behavior rather than repeat passed screens.
-Author adds explicit nondefault LinearDefinition.modal_boundary_policy using
-GE_FREE_FREE_MODAL_ONLY_V1, preserving legacy supported defaults/identity and
-no-support rejection. New modal-only owner rejects static/finite/state writes.
-Keep connected virgin Q4/generalized six-pose point scope, native cell inertia,
-full sparse descriptor and canonical public modes(request).
+Free-free delivery uses explicit GE_FREE_FREE_MODAL_ONLY_V1 on the existing
+definition/owner, preserving supported defaults/identity and no-support rejection.
+Modal-only static/finite/restore/chart writes reject. Scope remains connected
+virgin Q4/generalized six-pose points, full native descriptor and physical inertia.
+[Current results](development/r8-ge-free-reference-modes-20261001/results.md):
+wheel4ddde579 binds391 modules;46 modal+116 legacy installed passes,15 exact
+default static bindings and the public free-free example. All root numerical
+jobs TERMINAL, including session53078. Setup failures/snapshots retained.
+Independent volume/particle Gram, KR/CR, full descriptor and a resolved extra
+physical mechanism are checked. Only6D rigid projection; no artificial inertia
+or static condensation. Six analytic rigid fields are verified; exactly-six
+nullity/absence of all unexcited mechanisms is NOT certified. Roundoff screen is
+not an Arnoldi/LU error bound. Independent review clear; source/evidence committed.
 
-Verify six common rigid fields (including retained rotations), KR/CR and physical
-six-dimensional kinetic Gram. Flexible modes use only bounded6D mass-orthogonal
-rigid projection; no global production dense basis, artificial inertia or static
-condensation. Distinct result records rigid and flexible fields; extra/unresolved
-mechanisms must fail. Root owns test_stiffened_shell_ge_free_reference_modal_oracle.py.
-Existing ANYfem GE input requires supports and has no arbitrary-definition
-factory: free-free consumer support remains explicit future work, no code change
-needed to prevent silent policy loss now. Independent review and installed checks
-follow freeze. If kernel/mass/descriptor checks obstruct, retain finding and repair
-the affected seam before claiming free-free acceptance. Full F07/G4B OPEN.
+Next: explicit ANYfem modal input record and Project dispatch using existing
+services. Own public supported/free-free policy and native inertia exactly;
+definition-only save/reopen does not assemble/factor or fabricate identity.
+Optional supplied model identity is validated at public owner creation. Strict
+old schemas must not silently drop policy. Consumer source37 passed at
+TEMP/r8-ge-modal-consumer-source-v2; V1 collection-only test-name failure retained.
+Paired TEMP/r8-ge-modal-consumer-installed-v1: solver4ddde579/consumer57ee44ef,
+391+98 exact modules, installed37new passed. Root legacy session74587 running149
+checks, no other numerical job. Do not duplicate/interrupt; verify actual status
+on resume. Then public consumer example, old-payload compatibility and independent
+complete-slice review. Author owns optional example only; product files frozen.
+Full F07/G4B/consumer/external/scale and aggregate acceptance remain OPEN.
 
 [Protected historical note](history/ACTIVE_STATE_20261001_NODAL_S3_TRANSITION.md)
 and immutable reports retain failures/authorities. No overall speedup or release.
