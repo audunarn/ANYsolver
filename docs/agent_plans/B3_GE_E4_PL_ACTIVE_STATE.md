@@ -75,21 +75,38 @@ restricted out-of-plane candidate, not normal-spin/full connection acceptance.
 Stop this batch; no automatic fourth mesh or formal F03 execution.
 [Complete matched inputs, failures and decision](development/r8-e02-rigid-tip-reference-20261001/results.md).
 
-Next bounded numerical decision: B2's same40-cell Fz screen fails its existing
-mixed-load resolution guard: global contribution bound8.326e-9 of explicit load
-versus1e-9. No tolerance or geometry tuning. Independent Read input permits
-investigating a compensated unscaled stored-KKT certificate only for zero
-offsets and pure coordinate selectors. Next check actual residual at every
-explicit load row against the unchanged1e-9 component cap; include lost tiny
-load/cancellation counterexamples. Success proves stored equations, not element
-or forward accuracy. Only then implement the narrow fallback/correction seam.
+B2 numerical repair is delivered: original40-Q4 fixture completes Fz/Mx/My,
+with one reused factorization and exactly three solves. Historical point-only
+admission is unchanged. A footprint-only exact active-row stored-KKT certificate
+avoids the conservative global force bound; zero offsets/unit selectors only.
+The41 quiet gaps exposed a distinct overstrict component-relative predicate.
+One unsuccessful correction was removed. New footprint compatibility admission
+maps separate translation/rotation amplitudes through actual C, bounded by1e-9
+reference length/radian caps. Length is2maxradius about node centroid. This is
+a development rule, not historical F10/F11 acceptance or a forward-error theorem.
+
+Final136 source/176 installed checks, solver example and unchanged ANYfem Project
+save/reopen pass;391/98 module bytes bound. Independent Read review has no
+remaining development blocker. Preserved failures include initial numerical
+attempts, omitted installed fixture helpers and consumer-harness wrong suffix.
+Three existing E02 grids/nine B2 cases complete, same geometry/load/stiffness.
+B2/GE work agrees within6.8211e-11; finest external differences+.148%/-.620%/+.120%.
+Torque still changes1.36% on lastmesh. No new external run/fourthgrid or gate pass.
+[Repair, raw evidence and review](development/r8-b2-panel-resolution-20261001/results.md).
+
+Next principal decision: return to the M2/BL5 physical torque/normal-spin and
+mixed-system obligations. Full-pose footprint parity cannot qualify BL5's
+released-normal-spin law. Reconcile existing matched actions and required
+observables before any substantial new batch; do not continue isolated E02
+refinement automatically. Independent material/lifecycle obligations remain
+available under Revision8; all aggregate programme gates remain binding.
 
 ## Verification and restart
 
 Focused source: scripts/run_portable_ci.py --development <exact affected nodes>.
 One installed artifact per coherent product slice; reuse unchanged evidence by
-impact. Current installed wheel SHA27660d7357eedf36a2d96a73282b9ede974fd3219903b2492d32553c118f47ec;
-raw site/runner: Temp/r8-b2-footprint-modes-installed-v1. Effective pools/Numba1,
+impact. Current solver wheel SHAd99c59ac0464613b15461dcd23c0b8fe158a67fe3b27192a886b6daf6aa981ea;
+raw site/runner: Temp/r8-b2-panel-resolution-installed-v1. Effective pools/Numba1,
 JIT-off, supervised180s/1GiB. All owned jobs are terminal, no numerical slot held.
 No broad acceptance/scale/platform campaign was repeated or overall saving claimed.
 Preserved history: [previous note](history/ACTIVE_STATE_20261001_B2_MODAL_PREDELIVERY.md).

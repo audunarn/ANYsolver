@@ -1,13 +1,25 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
-E02 physical rigid-tip development,1 October: matched installed GE/CalculiX
+B2 footprint numerical slice,1 October: original40-Q4 Fz/Mx/My obstruction
+repaired without changing geometry/section/load. Narrow active-row rational
+certificate and separately declared capped footprint gap admission; point-only
+route unchanged. Source136/136, installed176/176 and solver/consumer Project
+examples pass. Wheel d99c59ac...,391solver/98unchangedconsumer modules bound.
+New nine B2 cases over the existing three E02 grids agree with GE within6.8211e-11;
+finest external work+.148%/-.620%/+.120%. Torque1.36% refinement, thickness,
+externalprecision, signed eccentric/full-law evidence remain open. Independent
+Read review has no development blocker; failures preserved. No E02/F04/F03 or
+aggregate status is promoted. [Current repair and bound evidence](development/r8-b2-panel-resolution-20261001/results.md).
+
+
+Earlier E02 physical rigid-tip development at solver39d2ae3a,1 October: matched installed GE/CalculiX
 out-of-plane Fz/Mx/My cases run at three fixed in-plane levels, plus coarse
 signed-port parity. Actual membrane/drilling decoupling and negligible free-stub
 work hold. Finest work differences+.148%/-.620%/+.120% are not converged1%
 acceptance: native torque's last refinement is1.36%, solid thickness resolution
 is fixed and seven-digit output cannot certify1e-8 balance. Independent Read
 review supports retaining the restricted candidate and stopping the batch.
-B2's40-cell public resolution guard fails and remains unchanged; its accuracy
+At that prior source B2's40-cell public resolution guard fails; its accuracy
 was not compared. No normal-spin, F03, F04 or aggregate pass follows.
 [Combined physical evidence and failures](development/r8-e02-rigid-tip-reference-20261001/results.md).
 

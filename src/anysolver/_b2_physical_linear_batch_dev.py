@@ -104,11 +104,15 @@ def _load_value_snapshot(value: np.ndarray, shape: tuple[int, ...]
 
 
 def _accurate_sparse_residual(matrix: sparse.spmatrix, solution: np.ndarray,
-                              rhs: np.ndarray) -> np.ndarray:
-    """Residual of binary64 inputs with compensated products, on failure only."""
+                              rhs: np.ndarray, *, exact_products: bool = False) -> np.ndarray:
+    """Residual of binary64 inputs with compensated products, on failure only.
+
+    ``exact_products`` selects the existing rational path even where FMA is
+    available, for the exceptional active-row resolution certificate.
+    """
     rows = matrix.tocsr()
     result = np.empty_like(rhs)
-    fused = getattr(math, "fma", None)
+    fused = None if exact_products else getattr(math, "fma", None)
     for column in range(rhs.shape[1]):
         for row in range(rows.shape[0]):
             start, stop = rows.indptr[row:row+2]

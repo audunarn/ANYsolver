@@ -30,6 +30,7 @@ from ._b2_physical_linear_definition import (
 )
 from ._b2_physical_linear_batch_dev import (
     _load_value_snapshot, _checked_affine_projection as _project_affine_work,
+    _accurate_sparse_residual, B2NumericalSolveFailure,
 )
 from .control import CancellationToken, SolveCancelled
 from ._stiffened_shell_physical_q4_mass import physical_mass
@@ -48,6 +49,26 @@ class _NumericalFailure(RuntimeError):
 
 _MAX_DENSE_AUDIT_ROWS = 48
 _MAX_DENSE_AUDIT_VALUES = 16_384
+
+
+def _bounded_accurate_residual(matrix, solution, rhs):
+    """Stored-equation residual and outward bound using exact products.
+
+    Only selected explicitly loaded rows use this exceptional path. Fraction
+    products/summation avoid FMA/fsum portability and underflow assumptions.
+    Conversion to binary64 is correctly rounded; a full ULP and outward final
+    rounding conservatively enclose the absolute rational residual. This does
+    not certify element/assembly rounding or forward displacement accuracy.
+    """
+    if (not np.isfinite(matrix.data).all() or not np.isfinite(solution).all() or
+            not np.isfinite(rhs).all()):
+        raise B2NumericalSolveFailure("physical B2 residual is not representable")
+    defect = _accurate_sparse_residual(matrix, solution, rhs, exact_products=True)
+    magnitude = np.abs(defect)
+    with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+        rounding = np.nextafter(magnitude, np.inf)-magnitude
+        upper = np.nextafter(magnitude+rounding, np.inf)
+    return defect, upper
 
 
 def _checked_affine_projection(rows, multi, singles, values: np.ndarray) -> np.ndarray:
@@ -637,6 +658,16 @@ class ExperimentalB2Q4PanelAnalysis:
         if self._M is not None and not np.isfinite(self._M.data).all():
             raise ValueError("physical panel mass assembly is not representable")
         self._C = C
+        # Freeze a translation scale from the physical reference geometry;
+        # rotation constraints remain in radians. Origin shifts do not alter it.
+        self._compatibility_length = None
+        if footprints:
+            reference = np.asarray(tuple(positions.values())+tuple(beam_positions.values()))
+            relative = reference-reference[0]
+            radius = np.linalg.norm(relative-np.mean(relative, axis=0), axis=1)
+            self._compatibility_length = 2.*float(np.max(radius))
+            if not isfinite(self._compatibility_length) or self._compatibility_length <= 0.:
+                raise ValueError("representable physical reference length required")
         self._T = T
         self._Tt = T.T.tocsr()
         self._projection_multi = np.flatnonzero(
@@ -659,11 +690,70 @@ class ExperimentalB2Q4PanelAnalysis:
         self._cu0 = np.asarray(C @ u0).reshape(-1)
         self._factor_scale = factor_scale
         self._handle = handle
+        self._resolution_kkt = None
         self._closed = False
+
+    def _explicit_load_resolved(self, answer, rhs, explicit_rhs) -> bool:
+        """Certify active stored KKT rows without a model-wide force floor.
+
+        Fixed affine combinations and nonzero prescribed offsets can lose
+        explicit load information before this seam and remain ineligible.
+        Pure unit selectors copy stored entries, loads and coordinates exactly.
+        All existing physical equilibrium/compatibility checks still apply.
+        """
+        if (np.any(self._u0 != 0.) or not np.isfinite(answer).all() or
+                not np.isfinite(rhs).all()):
+            return False
+        selector = self._T.tocsc(copy=True)
+        selector.eliminate_zeros()
+        if (np.any(np.diff(selector.indptr) != 1) or
+                np.any(selector.data != 1.) or
+                len(np.unique(selector.indices)) != selector.shape[1]):
+            return False
+        active = np.flatnonzero(explicit_rhs > 0.)
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            cap = np.nextafter(1e-9*explicit_rhs[active], 0.)
+        if not len(active) or np.any(cap <= 0.) or not np.isfinite(cap).all():
+            return False
+        if self._resolution_kkt is None:
+            columns = selector.indices
+            rk = self._K.tocsr()[columns][:, columns]
+            rc = self._C.tocsr()[:, columns]
+            self._resolution_kkt = sparse.bmat(
+                ((rk, rc.T), (rc, None)), format="csr")
+        try:
+            _, upper = _bounded_accurate_residual(
+                self._resolution_kkt[active], answer[:, None], rhs[active, None])
+        except B2NumericalSolveFailure:
+            return False
+        return bool(np.isfinite(upper).all() and np.all(upper[:, 0] <= cap))
 
     def _project(self, values: np.ndarray) -> np.ndarray:
         return _checked_affine_projection(
             self._Tt, self._projection_multi, self._projection_single, values)
+
+    def _footprint_gap_tolerance(self, u, gap_scale, roundoff_fraction):
+        """Quiet-channel solve admission, bounded by reference compatibility.
+
+        Called only after explicit-load certification for unit selectors and
+        zero offsets. This is a solve/compatibility convention, not a bound on
+        rounding in C@u. Translation and rotation amplitudes stay separate;
+        actual row coefficients include eccentric lever arms. Historical point
+        rows retain their original check. Every footprint row also stays below
+        the independent reference-geometry 1e-9 compatibility cap.
+        """
+        tolerance = 1e-9*gap_scale
+        poses = np.abs(u).reshape(-1, 6)
+        amplitude = np.tile((float(np.max(poses[:, :3])),)*3+
+                            (float(np.max(poses[:, 3:])),)*3, len(poses))
+        allowance = roundoff_fraction*np.asarray(self._abs_C@amplitude).reshape(-1)
+        if not np.isfinite(allowance).all():
+            raise _NumericalFailure("footprint compatibility allowance is not representable")
+        for item in self._footprint_incidence:
+            rows = slice(item.row_start, item.row_start+6)
+            cap = 1e-9*np.array((self._compatibility_length,)*3+(1.,)*3)
+            tolerance[rows] = np.minimum(tolerance[rows]+allowance[rows], cap)
+        return tolerance
 
     @property
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
@@ -942,16 +1032,29 @@ class ExperimentalB2Q4PanelAnalysis:
             # small-load resolution guard applies to explicit applied work,
             # so a superposed tiny external load cannot disappear silently.
             active = explicit_rhs > 0.
+            certified = False
             if np.any(resolution_floor[active] >
                       1e-9*explicit_rhs[active]):
-                raise _NumericalFailure("panel mixed-load resolution insufficient")
+                certified = bool(self.footprints) and self._explicit_load_resolved(
+                    answer, rhs, explicit_rhs)
+                if not certified:
+                    raise _NumericalFailure("panel mixed-load resolution insufficient")
             equilibrium_tolerance = (1e-9*equilibrium_scale+
                                      roundoff_fraction*projected_roundoff)
+            gap_tolerance = 1e-9*gap_scale
+            if (self.footprints and np.any(np.abs(gap) > gap_tolerance) and
+                    (certified or self._explicit_load_resolved(answer, rhs, explicit_rhs))):
+                gap_tolerance = self._footprint_gap_tolerance(u, gap_scale, roundoff_fraction)
+            for item in self._footprint_incidence:
+                rows = slice(item.row_start, item.row_start+6)
+                cap = 1e-9*np.array((self._compatibility_length,)*3+(1.,)*3)
+                gap_tolerance[rows] = np.minimum(gap_tolerance[rows], cap)
             if (not np.isfinite(reaction).all() or
                     not np.isfinite(gap).all() or not np.isfinite(projected).all() or
                     not np.isfinite(gap_scale).all() or
                     not np.isfinite(equilibrium_tolerance).all() or
-                    np.any(np.abs(gap) > 1e-9*gap_scale) or
+                    not np.isfinite(gap_tolerance).all() or
+                    np.any(np.abs(gap) > gap_tolerance) or
                     np.any(np.abs(projected) > equilibrium_tolerance)):
                 raise _NumericalFailure("panel point gap or equilibrium failed")
         except _NumericalFailure as exc:
@@ -1138,6 +1241,7 @@ class ExperimentalB2Q4PanelAnalysis:
     def close(self) -> None:
         self._closed = True
         self._handle = None
+        self._resolution_kkt = None
 
 
 def _scatter(rows, columns, values, slots, local):
