@@ -50,11 +50,14 @@ from .core import (
     suspend_contact,
     validate_general_contact,
 )
+from .descriptor_rates import directional_descriptor_rate
 
 
 _PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V1"
 _S3_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0"
 _S3_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_HISTORY_DEV_V1"
+_S3_DIRECTIONAL_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_RATES_DEV_V1"
+_S3_DIRECTIONAL_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_HISTORY_DEV_V1"
 _RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
 _HISTORY_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V2"
 
@@ -122,6 +125,7 @@ class ContactTransientSolverControls:
     equilibrium_tolerance: float = 1.0e-8
     allow_s3_descriptor_dev: bool = False
     s3_descriptor_difference_step_s: float = 1.0e-5
+    s3_one_sided_rates_dev: bool = False
 
     def __post_init__(self) -> None:
         if type(self.maximum_newton_iterations) is not int or self.maximum_newton_iterations < 1:
@@ -134,6 +138,10 @@ class ContactTransientSolverControls:
             raise ValueError("equilibrium_tolerance must be finite and positive")
         if type(self.allow_s3_descriptor_dev) is not bool:
             raise ValueError("allow_s3_descriptor_dev must be boolean")
+        if type(self.s3_one_sided_rates_dev) is not bool:
+            raise ValueError("s3_one_sided_rates_dev must be boolean")
+        if self.s3_one_sided_rates_dev and not self.allow_s3_descriptor_dev:
+            raise ValueError("one-sided rates require the S3 descriptor opt-in")
         if (not np.isfinite(self.s3_descriptor_difference_step_s)
                 or self.s3_descriptor_difference_step_s <= 0.0):
             raise ValueError("s3_descriptor_difference_step_s must be finite and positive")
@@ -253,6 +261,9 @@ def _restart_analysis_contract(transient, controls, manager, profile,
     if load_history is not None:
         contract["nodal_load_history"] = [list(point)
                                           for point in load_history.points]
+    if controls.s3_one_sided_rates_dev:
+        # Absent for historical profiles, preserving their checkpoint contract.
+        contract["controls"]["s3_one_sided_rates_dev"] = True
     return contract
 
 
@@ -328,6 +339,7 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
 def _consistent_s3_descriptor_rates(
     model, T, Mred, basis, full_position, reduced_velocity,
     reduced_acceleration, full_tangent, committed_states, difference_step_s,
+    *, one_sided_manager=None, maximum_iterations=20,
 ):
     """Recover massless rates from the current nonlinear algebraic manifold.
 
@@ -341,15 +353,36 @@ def _consistent_s3_descriptor_rates(
     gram = Z.T @ Z
     K = (T.T @ full_tangent @ T).toarray()
     algebraic = Z.T @ K @ Z
+    if one_sided_manager is not None:
+        manager = one_sided_manager
+        _, contact_tangent, _ = manager.evaluate(full_position, tangent=True)
+        structural = K-(T.T @ contact_tangent @ T).toarray()
+        B = (sparse.diags(1./manager.support) @ manager.gap_gradient @ T).toarray()
+        shift = -float((manager.point-manager.reference_point) @ manager.normal)
+        reference_gap = manager.reference_weighted_gap/manager.support+shift
+        normalized_gap = (reference_gap
+                          +np.asarray(manager.gap_gradient @ full_position).reshape(-1)/manager.support)
+        # Tie budget follows arithmetic operands, not the physical gap budget.
+        operand_scale = (np.abs(reference_gap)
+                         +np.asarray(abs(manager.gap_gradient) @ np.abs(full_position)).reshape(-1)/manager.support)
+        touch = np.abs(normalized_gap) <= 64*np.finfo(float).eps*operand_scale
+        closed = (normalized_gap < 0.) & ~touch
+        weights = manager.stiffness*manager.support
 
     def physical_part(value):
         return value - Z @ np.linalg.solve(gram, Z.T @ value)
 
     try:
-        physical_velocity = physical_part(reduced_velocity)
-        velocity = physical_velocity + Z @ np.linalg.solve(
-            algebraic, -Z.T @ K @ physical_velocity,
-        )
+        if one_sided_manager is None:
+            physical_velocity = physical_part(reduced_velocity)
+            velocity = physical_velocity + Z @ np.linalg.solve(
+                algebraic, -Z.T @ K @ physical_velocity,
+            )
+        else:
+            velocity = directional_descriptor_rate(
+                structural, Z, reduced_velocity, B, weights, closed, touch,
+                maximum_iterations=maximum_iterations,
+            )
     except np.linalg.LinAlgError as exc:
         raise ValueError("S3 descriptor algebraic velocity solve is singular") from exc
     full_velocity = np.asarray(T @ velocity).reshape(-1)
@@ -369,11 +402,22 @@ def _consistent_s3_descriptor_rates(
         T.T @ ((plus-minus) @ full_velocity)
     ).reshape(-1)/(2.0*h)
     try:
-        physical_acceleration = physical_part(reduced_acceleration)
-        acceleration = physical_acceleration + Z @ np.linalg.solve(
-            algebraic,
-            -Z.T @ (K @ physical_acceleration+structural_curvature),
-        )
+        if one_sided_manager is None:
+            physical_acceleration = physical_part(reduced_acceleration)
+            acceleration = physical_acceleration + Z @ np.linalg.solve(
+                algebraic,
+                -Z.T @ (K @ physical_acceleration+structural_curvature),
+            )
+        else:
+            gap_rate = B @ velocity
+            rate_roundoff = 64*np.finfo(float).eps*(np.abs(B) @ np.abs(velocity))
+            stationary_touch = touch & (np.abs(gap_rate) <= rate_roundoff)
+            closing_touch = touch & (gap_rate < -rate_roundoff)
+            acceleration = directional_descriptor_rate(
+                structural, Z, reduced_acceleration, B, weights,
+                closed | closing_touch, stationary_touch,
+                offset=structural_curvature, maximum_iterations=maximum_iterations,
+            )
     except np.linalg.LinAlgError as exc:
         raise ValueError("S3 descriptor algebraic acceleration solve is singular") from exc
     if (not np.all(np.isfinite(velocity)) or not np.all(np.isfinite(acceleration))
@@ -524,6 +568,9 @@ def solve_transient_contact(
         if profile == _S3_PROFILE:
             profile = _S3_HISTORY_PROFILE
     s3_descriptor = profile in (_S3_PROFILE, _S3_HISTORY_PROFILE)
+    if controls.s3_one_sided_rates_dev:
+        profile = (_S3_DIRECTIONAL_HISTORY_PROFILE if nodal_load_history is not None
+                   else _S3_DIRECTIONAL_PROFILE)
     if base_load_case is not None:
         if (type(base_load_case) is not LoadCase
                 or not base_load_case.nodal_loads
@@ -594,7 +641,7 @@ def solve_transient_contact(
         if (nullity < 1 or int(np.count_nonzero(spectrum <= threshold)) != nullity
                 or np.any(spectrum < -threshold)):
             raise ValueError("S3 descriptor mass nullity disagrees with declared algebraic basis")
-        if profile == _S3_HISTORY_PROFILE:
+        if s3_descriptor and nodal_load_history is not None:
             # The complete base load must satisfy Z.T f_base = 0 so the scalar
             # history cannot force the algebraic manifold; a zero initial
             # scale must not hide an algebraic base load.
@@ -723,6 +770,8 @@ def solve_transient_contact(
                         model, T, Mred, descriptor_basis, full0, vred,
                         physical_acceleration, initial_tangent,
                         committed_states, controls.s3_descriptor_difference_step_s,
+                        one_sided_manager=(manager if controls.s3_one_sided_rates_dev else None),
+                        maximum_iterations=controls.maximum_newton_iterations,
                     )
                     if not np.allclose(recovered_velocity, vred,
                                        rtol=0.0, atol=1.0e-10):
@@ -808,6 +857,8 @@ def solve_transient_contact(
                                     candidate_velocity, candidate_acceleration,
                                     tangent, committed_states,
                                     controls.s3_descriptor_difference_step_s,
+                                    one_sided_manager=(manager if controls.s3_one_sided_rates_dev else None),
+                                    maximum_iterations=controls.maximum_newton_iterations,
                                 )
                             )
                         full_velocity = np.asarray(T @ candidate_velocity).reshape(-1)

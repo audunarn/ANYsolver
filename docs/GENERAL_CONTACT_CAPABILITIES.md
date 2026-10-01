@@ -786,3 +786,16 @@ See [results](d1_review_support/contact_c6_history_cancellation_20261001/results
 General dynamics, event-stage algebraic kinematics, nonlinear materials, production
 JIT, spatial/temporal qualification and fullC6 remain open. Q4 cancellation was
 executed; shared S3 cleanup is source-reviewed. No release admission follows.
+
+## Guided S3 directional rates — development only
+
+Explicit `s3_one_sided_rates_dev=True` selects distinct constant/history profiles.
+Right directional affine-penalty rate recovery preserves physical mass projection;
+acceleration uses closing/opening/stationary total gap-rate branches and structural
+curvature. Defaults and historical checkpoint identities remain unchanged.
+Scalar and enumerated oracles, manufactured integration and public failure cleanup
+support development testing. Mistral kernel and independent OpenAI integration
+reviews found no definite defect; neither supplies scientific C6 acceptance.
+Exact-zero represented algebraic base-force eligibility remains for histories.
+Event timing, interval trace/path certification, general loading and C6 remain open.
+Evidence: [results](d1_review_support/contact_c6_directional_rates_20261001/results.md).

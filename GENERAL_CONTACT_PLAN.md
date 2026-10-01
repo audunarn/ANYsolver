@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.62. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-01.63. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -59,13 +59,20 @@ are now implemented, installed-tested and independently reviewed:
 exactly zero represented algebraic base force, even at zero initial scale; old
 constant-load checks/profile remain. C6 acceptance stays open.
 
-**Next bounded decision:** review the saved S3 event-stage rate discontinuity,
-distinguishing legitimate massless algebraic rate jumps from an incorrect
-integration/reconstruction contract. Choose event splitting or a physical/algebraic
-coordinate-partition implementation from that evidence before expansion. Fix the
-contract and ownership before edits; do not repeat unchanged probes or launch a
-refinement campaign. Routine180s/1GB applies; no automatic cap increase. Cubic
-reconstruction does not establish conservative general dynamic event control.
+The explicit S3 right-directional-rate development extension now distinguishes
+physical Newmark motion from legitimate massless algebraic rate jumps. Independent
+force oracles and manufactured integration check branch selection/curvature; public
+split restart and failure cleanup exercise the driver. Old profiles, criteria and
+failures remain unchanged. See the linked capability ledger/result for exact scope.
+
+**Next bounded decision:** define incoming/outgoing interval traces at activation
+and release before broadening this route. A recovered right endpoint rate alone
+does not certify an interpolated interval or event timing. Compare the declared
+Hermite reconstruction with the physical/algebraic integration-stage path through
+one independently solvable transition fixture. Choose event splitting or a path
+adapter from that discriminator; avoid another unmotivated refinement campaign.
+Routine180s/953MiB/thread1 applies; no automatic cap increase or cross-chat
+coordination. Cubic reconstruction is not conservative general event control.
 
 After that row closes, select the next missing integrated D5/D6 capability from
 source inspection: advance physical composition/geometry or shared impact-driver

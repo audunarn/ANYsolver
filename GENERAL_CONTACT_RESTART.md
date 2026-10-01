@@ -1,77 +1,69 @@
 # General contact restart — 1 October 2026
 
-## Pause and location
-Goal status is paused (observed13:33:47UTC; clock stopped13:32:42UTC). Launch no
-new development until resumed. No owned process, numerical job or reservation.
-Current worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Starting checkpoint978a3c97; latest
-local checkpoint is the commit containing this note (read git log -1).
-Source merge9f8f2501 preserves contact0e9b7c74 and pinned mainef858828.
-Original contact checkout/six foreign dirty files remain untouched. No publication,
-merge to main, release, defaults or shared guard/export/dispatch changes.
-Goal rev2026-09-30.4, plan rev2026-10-01.62, fullC0–C9 remains required.
+## Active authority and location
 
-## Shared testing prerequisite completed while programme remains paused
-Main PR61 pin1a0ae90122995b8419f1ed87cf770590b4bd8c05 is fetched/reconciled at
-b9ee93942c26045b37f208fdae85623a0dbd0ad0, with parent contact39b9cb12. Only4testing
-files changed; no conflicts or kernel edits. Three explicit source checks pass
-under the new runner:12.94799s/200474624B, threads1/JIT-off,180s/953MiB cap.
-[Results/records](docs/d1_review_support/contact_testing_reconciliation_20261001/results.md).
-No wheel or260+11campaign repeated. Programme-resume clarification remains pending.
-Current local checkpoint is the commit containing this updated note; no owned
-job/reservation remains. Shared testing reconciliation was independently authorized
-by the human testing-coordination request, not a new scientific-run authority.
+User resumed development under the new testing regime and prohibits communication
+with the other task. No cross-chat messages, inspection or slot coordination.
+Goal remains active; no owned job is running at this checkpoint.
+Worktree: `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`;
+branch `codex/contact-main-reconcile-20261001`. Latest checkpoint is the commit
+containing this note; read `git log -1`. Slice started at `18ce7f6f`.
+[Goal](GENERAL_CONTACT_GOAL.md) rev2026-09-30.4 and
+[plan](GENERAL_CONTACT_PLAN.md) rev2026-10-01.63 control the remaining C0–C9
+programme. No publication, merge to main, release or historical-default changes.
+Original contact checkout/six foreign dirty files remain untouched.
 
-## Completed this slice
-[Guided S3 history/cancellation results and raw](docs/d1_review_support/contact_c6_history_cancellation_20261001/results.md):
-distinct elastic S3 history development profile with exact-zero represented
-algebraic base-force eligibility; original constant-S3 checks/profile unchanged.
-Shared exact-token cancellation and solve-owned pending-state cleanup integrated.
-Installed15focused checks plus ramped example pass;447source/wheel/site matches,
-35.0167s/164327424B and3.1318s/157650944B, thread1/JIT-off,180s/1GB caps.
-Independent OpenAI source/saved-evidence review supports development tested/reviewed,
-not C6 scientific acceptance. First9pass/1test-regex failure preserved; reviewer
-found force/tangent test assignment error before execution, corrected. Mistral
-produced source draft but ended18-turn cap without tests/final report; lead completed
-integration. No worker pass or runtime speedup claim.
-Wheel830f119b;35-file raw archive77b62eb3, byte-readback verified.
-Working evidence C:/ANYworkspaceWork/contact-c6-history-cancellation-20261001-v2.
+## Completed bounded slice
 
-[Native loaded/clamped saved assessment](docs/d1_review_support/native_loaded_clamped_restart_v1_20261001.assessment.md)
-closes historical development row without replaying consumed session98994. Ten
-exact frozen files archived across Git newline normalization. FullC7/release and
-reconciled installed qualification remain open.
-ANYfem630884ae supplied-settings snapshot received independent source review with
-no consequential defect; app admission stays false. Review saved in that worktree
-at docs/contact_result_bridge_evidence/contact-settings-review-20261001.md.
-Earlier local app and Mistral native reviews were incomplete, not cross-family
-acceptance. Application source review is saved at local checkpoint ebce855;
-no application product edit or admission follows.
+[S3 directional-rate results/raw](docs/d1_review_support/contact_c6_directional_rates_20261001/results.md):
+explicit opt-in right directional algebraic velocity/acceleration at affine penalty
+touch, distinct constant/history profiles, restart identity and CLI flag.
+Physical mass projection/Newmark motion remain; no inertia on massless rotations.
+Closing/opening/stationary acceleration branches include structural curvature.
+64ε arithmetic ties are separate from gap tolerance. Finite active-set exhaustion
+or singularity returns explicit non-success. Defaults/fingerprints stay unchanged;
+history requires exactly zero represented algebraic base force.
 
-## Preserved integration issue
-[Main reconciliation](docs/d1_review_support/contact_main_reconciliation_20261001/results.md)
-passed Schur2, main260/6explicit skips, contact11, normal app21. Full historical
-preimport still fails ABC annotation-cache guard (20pass/1fail). Contact owns
-reproducer; main guard maintainer owns agreed product correction. Shared application
-acceptance remains open; no duplicate investigation or shared guard patch.
+Independent force/branch oracles and integrated manufactured force checks pass;
+public tilted impact/split restart and injected-failure cleanup pass. Installed
+17 checks including example pass, 4.196s/157007872B, 448 source/wheel/site matches,
+197 onsite imports, JIT-off/thread1. Mistral kernel and independent OpenAI source/
+saved-evidence reviews find no definite defect. Integration Mistral attempt remains
+incomplete at8 turns. Development tested/reviewed, not C6 acceptance.
+First source9pass/1 split-partition failure remains: separately rounded end time
+changed the final step; same-partition correction kept1e-11 tolerance. Bad installed
+selectors/no tests ran are retained. No historical failure is regraded.
 
-## Next decision when resumed
-Use saved S3 activation evidence to distinguish legitimate massless algebraic rate
-jumps from a faulty integration/reconstruction contract. Select event splitting or
-physical/algebraic coordinate partition after reviewing that contract. Do not
-repeat the unchanged probe or add another tolerance/refinement campaign. Existing
-cubic reconstruction is not a conservative general dynamic certificate. Broader
-D2–D8 capabilities, materials and C6/C7 scientific acceptance remain open.
-Keep tiered workflow: narrow local tasks; bounded Mistral implementation/review;
-lead architecture/numerics/integration and OpenAI fallback. Fixed ownership, no
-nested workers. Cross-chat messages only for slot/shared-interface coordination.
+Shared testing pin `1a0ae901` reconciled at `b9ee9394` from contact `39b9cb12`;
+three focused source checks passed. [Testing records](docs/d1_review_support/contact_testing_reconciliation_20261001/results.md).
+Earlier installed history/cancellation slice and saved native loaded/clamped review
+remain linked in [history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART39.md);
+do not replay them or consumed native temporal authorities.
+ANYfem checkpoint `ebce855` is unchanged; application admission remains false.
+Historical full-preimport ABC annotation-cache guard NONPASS remains open;
+do not patch the shared guard/export/dispatch or repeat its campaign here.
 
-## Budget and ownership
-Original120active-hour budget not reset. Goal clock remains180845s. Preserve2400s
-prior manual reconciliation offset; conservatively charge720s for this testing-only
-reconciliation including lead-in. Offset3120s gives183965s/51.10h used,68.90h
-remaining. Idle/user-paused time and the other chat's CI campaign are not charged.
-No consumed native/temporal/F03 authority is renewed. Routine180s/1GB/thread1;
-stricter frozen caps prevail. Other ANYsolver worker has its own programme and slot;
-obtain a fresh slot handoff before future numerical work.
-[Earlier history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART38.md).
+## Next authorized decision
+
+Define incoming/outgoing interval traces at activation/release. Right endpoint
+rates alone do not certify a Hermite interval or event location. Use one independently
+solvable transition fixture to compare physical/algebraic integration-stage path
+and declared reconstruction, then choose event splitting or a path adapter.
+No broad refinement or unmotivated diagnostic campaign; existing scientific gates,
+failed evidence and frozen/consumed authorities remain unchanged.
+General C6 impact and the broader D2–D8/native/application capabilities remain open.
+
+## Testing, workers and budget
+
+Focused source runner: `C:/Python/Python314/python.exe -X utf8
+scripts/run_portable_ci.py --development <exact targets> --jit off
+--timeout-seconds 180 --memory-limit-mib 953`, with new `RUNNER_TEMP` evidence root.
+One numerical/Numba thread, isolated plugins; source first, one installed artifact
+per coherent integration. Stricter frozen caps prevail. No heavy campaign started.
+Tiered workflow and updated compact coordination AGENTS apply; fixed Read/Edit
+ownership, no nested workers. Reviewer is idle; no worker edits outstanding.
+
+Original120 active hours not reset. Observed goal183009s plus preserved3120s
+manual offset gives186129s /51.70h used,68.30h remaining at18:52UTC; subsequent
+active work is additional. Paused/user idle time is excluded. No consumed authority
+is renewed. Preserve the offset when reading the goal clock.

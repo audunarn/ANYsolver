@@ -45,7 +45,7 @@ derivative is zero. The structural directional second derivative is evaluated
 by a bounded central difference of its tangent, using the explicitly exposed
 `s3_descriptor_difference_step_s` control (default `1e-5 s`). These rate
 corrections lie in the certified mass-null space and are checked not to change
-physical inertia. At an exact touch or release endpoint the current code uses
+physical inertia. At an exact touch or release endpoint this original profile uses
 the closed-side tangent; the correct one-sided algebraic rate at that event has
 not been established. This limits the profile to development use even though
 the accepted endpoint gap and equilibrium checks run at every step.
@@ -142,3 +142,40 @@ solver `CancellationToken`. It checks safe boundaries before acceptance and rais
 solve-owned pending state trials are cleaned up; completed increments stay
 committed. Arbitrary token callbacks/subclasses are rejected. These elastic
 development profiles do not establish plastic-history transaction acceptance.
+
+## Right directional rate development extension — 1 October 2026
+
+Set `ContactTransientSolverControls(allow_s3_descriptor_dev=True,
+s3_one_sided_rates_dev=True)` to select
+`PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_RATES_DEV_V1`, or
+`PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_HISTORY_DEV_V1` with a scalar
+history. Defaults, original profiles and their restart identities are unchanged.
+Directional checkpoints bind this control and reject continuation under the
+original rate rule. The exact-zero algebraic history-load restriction still applies.
+
+At affine penalty touch, velocity solves the right derivative of the actual
+algebraic force. Its active set uses the complete physical-plus-algebraic gap
+rate. Acceleration uses the closed branch for closing velocity, the open branch
+for opening velocity, and a directional solve at stationary touch, including
+structural curvature. The certified physical mass projection is preserved;
+massless rotations receive no inertia. They satisfy the algebraic derivative
+equations rather than full-coordinate Newmark kinematics across a rate jump.
+
+Touch/stationary ties use a 64-machine-epsilon arithmetic operand budget. This
+represents floating-point uncertainty; it is separate from the dimensional gap
+tolerance and is not an exact derivative claim for every small nonzero gap.
+The finite active-set iteration reports singularity, cycling or exhausted limits
+as explicit failure. It does not guarantee convergence or uniqueness in general.
+
+Independent scalar/multiple-constraint oracles, manufactured curved structural
+force, physical Newmark checks, tilted active-contact split restart, history
+eligibility and injected-failure cleanup are development evidence. Restart parity
+uses the identical accepted time partition; a separately rounded end time can
+produce a different last step. Historical failures retain their original meaning.
+Event timing, incoming/outgoing interval traces and conservative integrated-path
+control remain open. Cubic Hermite reconstruction is a declared path only.
+This extension is implemented/tested/reviewed development, not C6 acceptance.
+
+Run `python examples/general_contact_s3_plane_impact.py --one-sided-rates`;
+combine with `--ramp-downward-load-n 0.0002` for the history extension.
+See [results](d1_review_support/contact_c6_directional_rates_20261001/results.md).

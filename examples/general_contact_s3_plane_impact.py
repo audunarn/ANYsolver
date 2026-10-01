@@ -24,6 +24,8 @@ def main() -> None:
     parser.add_argument("--constant-downward-load-n", type=float, default=0.0)
     parser.add_argument("--ramp-downward-load-n", type=float, default=0.0,
                         help="dead nodal force ramped from zero to this value at .012s")
+    parser.add_argument("--one-sided-rates", action="store_true",
+                        help="opt into right directional massless rates at touch (development)")
     args = parser.parse_args()
     if (not np.isfinite(args.constant_downward_load_n)
             or args.constant_downward_load_n < 0.0):
@@ -78,7 +80,7 @@ def main() -> None:
         nodal_load_history=(ContactNodalLoadHistory(((0., 0.), (.012, 1.)))
                             if args.ramp_downward_load_n else None),
         solver_controls=ContactTransientSolverControls(
-            allow_s3_descriptor_dev=True,
+            allow_s3_descriptor_dev=True, s3_one_sided_rates_dev=args.one_sided_rates,
         ),
     )
     ry = [model.mesh.dof_manager.get_node_dofs(node)[4] for node in (1, 2, 3)]
