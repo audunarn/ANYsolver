@@ -22,6 +22,7 @@ from scipy.spatial.transform import Rotation
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._ge_beam3_pose_joint import _exp_terms
 from ._stiffened_shell_point_recovery import PointTransferWrench, point_record
+from ._stiffened_shell_nodal_footprint import require_rotation_triples
 from ._ge_beam3_p5.algebra import skew
 from ._ge_beam3_retained_generalized_state import Mechanical
 from ._stiffened_shell_bl5_local_experimental import BL5TrialDomainError
@@ -638,6 +639,27 @@ class FinitePointDriver:
             raise ValueError("stale finite point recovery")
         return self._point_trial_recovery[1]
 
+    def _increment_origin(self, state):
+        """Detach one footprint Newton chart without publishing or moving history.
+
+        Equivalent accepted charts start the same numerical problem. The anchor
+        remains fixed for the whole increment; derivatives and _advance continue
+        to use their existing additive-coordinate contract. Empty-footprint
+        owners preserve their historical chart and numerical route.
+        """
+        owner = self.owner
+        if not owner._footprint_increment_chart:
+            return state
+        require_rotation_triples(owner._fixed, len(owner._shell_ids))
+        local = state.q[:owner._shell_count]
+        if not np.any(local.reshape(-1, 6)[:, 3:] != 0.):
+            return state
+        anchors = owned_anchors(physical_frames(local, state.shell_anchors),
+                                len(owner._shell_ids))
+        q = state.q.copy()
+        q[:owner._shell_count].reshape(-1, 6)[:, 3:] = 0.
+        return replace(state, q=_owned(q), shell_anchors=anchors)
+
     def _advance(self, state, increment, amount):
         owner = self.owner
         delta = amount*increment
@@ -668,6 +690,8 @@ class FinitePointDriver:
     def solve(self, actions, targets, *, cancellation_token=None,
               max_iterations=12, max_backtracks=8, increment_control=None,
               on_accepted=None):
+        if self.owner._footprint_increment_chart:
+            require_rotation_triples(self.owner._fixed, len(self.owner._shell_ids))
         pending = self._adaptive_state is not None and not self._adaptive_state.completed
         if increment_control is None:
             if pending:
@@ -755,7 +779,7 @@ class FinitePointDriver:
         for factor in targets:
             applied_load = None if programme is None else programme.load_at(factor)
             cancellation_safe_point(cancellation_token, "stiffened-shell.finite.increment")
-            trial = self._state
+            trial = self._increment_origin(self._state)
             counts = {"evaluations": 0, "linear_solves": 0, "rejected_trials": 0}
             accepted_from = float(self._load_factor)
             def evaluated(state):
@@ -1170,8 +1194,9 @@ class FinitePointDriver:
             rotation_anchors = owned_anchors(rotation_anchors, len(owner._shell_ids))
             witness = owned_anchors(pose_witness, len(owner._shell_ids))
             if (type(accepted_generation) is not int or
-                    accepted_generation <= value["generation"]):
-                raise ValueError("shell chart event generation must exceed its load-step count")
+                    accepted_generation < value["generation"] or
+                    (accepted_generation == value["generation"] and not owner._footprint_increment_chart)):
+                raise ValueError("shell chart generation is incompatible with its load-step count and chart policy")
             if not np.allclose(physical_frames(q[:owner._shell_count], rotation_anchors),
                                witness, rtol=0., atol=1e-11):
                 raise ValueError("shell chart anchor disagrees with physical pose witness")

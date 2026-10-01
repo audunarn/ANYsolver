@@ -24,6 +24,9 @@ from ._b2_physical_flexibility_linear import (
 )
 from ._stiffened_shell_b2_experimental import ExperimentalB2Analysis
 from ._stiffened_shell_point_recovery import PointTransferWrench
+from ._stiffened_shell_nodal_footprint import (
+    INCREMENT_ORIGIN_CHART_POLICY as GE_NODAL_FOOTPRINT_INCREMENT_ORIGIN_CHART_V2,
+)
 from ._stiffened_shell_increment_control import (
     AdaptiveIncrementControl, IncrementAttempt, FiniteIncrementFailure,
     AdaptiveIncrementExhausted,
@@ -152,6 +155,7 @@ __all__ = [
     "StagedDeadLoadProgramme",
     "GEReferenceModesRequest", "GEReferenceModesResult",
     "GEFreeReferenceModesResult", "GE_FREE_FREE_MODAL_ONLY_V1",
+    "GE_NODAL_FOOTPRINT_INCREMENT_ORIGIN_CHART_V2",
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",

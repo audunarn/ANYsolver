@@ -31,6 +31,8 @@ from ._stiffened_shell_nodal_footprint import (
     NodalRigidFootprint, NodalRigidFootprintSelection, NodalRigidFootprintWrench,
     validate_footprints, selected_wrenches, stable_s3_policy_descriptor,
     retained_scale_policy_descriptor, chart_admission_policy_descriptor,
+    require_rotation_triples,
+    CHART_ADMISSION_POLICY, INCREMENT_ORIGIN_CHART_POLICY,
 )
 from ._ge_beam3_generalized_static_boundary import spatial_jacobian
 from ._stiffened_shell_s3_algorithmic_pullback import POLICY as S3_J2_PULLBACK_POLICY
@@ -175,6 +177,7 @@ class LinearDefinition:
     q4_pullback_policy: str = Q4_HISTORICAL_POLICY
     footprints: tuple[NodalRigidFootprint, ...] = ()
     modal_boundary_policy: str = "supported"
+    footprint_chart_policy: str = CHART_ADMISSION_POLICY
 
 
 @dataclass(frozen=True)
@@ -532,7 +535,7 @@ class ExperimentalGEAnalysis:
             definition.profile, panel, tuple(definition.beams),
             tuple(definition.points), tuple(definition.fixed),
             definition.lines, definition.q4_pullback_policy, definition.footprints,
-            definition.modal_boundary_policy)
+            definition.modal_boundary_policy, definition.footprint_chart_policy)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count, beam_inertias = _beam_reference(
             definition.beams)
         self._reference_modal_inertias = beam_inertias
@@ -554,6 +557,12 @@ class ExperimentalGEAnalysis:
             definition.footprints, shell_index, shell_xyz,
             panel.q4_elements+panel.s3_elements, beam_index,
             definition.points, definition.lines))
+        chart_admission_policy_descriptor(definition.footprint_chart_policy)
+        if (definition.footprint_chart_policy == INCREMENT_ORIGIN_CHART_POLICY and
+                (not definition.footprints or definition.lines)):
+            raise ValueError("increment-origin chart policy requires an elastic nodal footprint model without lines")
+        self._footprint_increment_chart = bool(
+            definition.footprints and definition.footprint_chart_policy == INCREMENT_ORIGIN_CHART_POLICY)
         self._finite_elastic_footprint = bool(definition.footprints)
         self._footprint_stable_s3 = bool(definition.footprints and panel.s3_elements
                                         and not definition.lines)
@@ -625,7 +634,7 @@ class ExperimentalGEAnalysis:
             identity_payload["nodal_rigid_footprints"] = [
                 group.descriptor() for group in definition.footprints]
             identity_payload["footprint_retained_scale_policy"] = retained_scale_policy_descriptor()
-            identity_payload["footprint_chart_admission_policy"] = chart_admission_policy_descriptor()
+            identity_payload["footprint_chart_admission_policy"] = chart_admission_policy_descriptor(definition.footprint_chart_policy)
         if self._footprint_stable_s3:
             identity_payload["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         if self._modal_only:
@@ -840,8 +849,9 @@ class ExperimentalGEAnalysis:
                 ("reference_linear", "experimental_elastic_finite_nodal_footprint")
                 if not self._line_samples or self._finite_bl5 else ("reference_linear",))
             capabilities["footprint_retained_scale_policy"] = retained_scale_policy_descriptor()
-            capabilities["footprint_chart_admission_policy"] = chart_admission_policy_descriptor()
-            capabilities["excluded"] += ("nodal-footprint chart rebase and rebased checkpoint restore",)
+            capabilities["footprint_chart_admission_policy"] = chart_admission_policy_descriptor(self._definition.footprint_chart_policy)
+            capabilities["excluded"] += (("nodal-footprint finite charts with partial rotational supports",)
+                if self._footprint_increment_chart else ("nodal-footprint chart rebase and rebased checkpoint restore",))
         if self._footprint_stable_s3:
             capabilities["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         return capabilities
@@ -866,7 +876,7 @@ class ExperimentalGEAnalysis:
                 dict(group.descriptor(), point_indices=indices)
                 for group, indices in self._footprint_bindings)
             details["footprint_retained_scale_policy"] = retained_scale_policy_descriptor()
-            details["footprint_chart_admission_policy"] = chart_admission_policy_descriptor()
+            details["footprint_chart_admission_policy"] = chart_admission_policy_descriptor(self._definition.footprint_chart_policy)
         if self._footprint_stable_s3:
             details["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         if self._modal_only:
@@ -1020,7 +1030,7 @@ class ExperimentalGEAnalysis:
         """Issue an experimental physical shell-anchor reset at the same load."""
         self._require_open()
         self._require_stateful_scope()
-        if self._definition.footprints:
+        if self._definition.footprints and not self._footprint_increment_chart:
             raise ValueError("experimental nodal footprint chart rebase is unsupported: continuation parity not established")
         if self._finite_driver is None:
             raise RuntimeError("shell rebase requires an accepted finite point state")
@@ -1108,7 +1118,9 @@ class ExperimentalGEAnalysis:
             raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
         if raw.startswith(CHART_CHECKPOINT_MAGIC):
             if self._definition.footprints:
-                raise ValueError("experimental nodal footprint chart checkpoint restore is unsupported: continuation parity not established")
+                if not self._footprint_increment_chart:
+                    raise ValueError("experimental nodal footprint chart checkpoint restore is unsupported: continuation parity not established")
+                require_rotation_triples(self._fixed, len(self._shell_ids))
             if self._line_samples and not self._finite_bl5:
                 raise ValueError("owned shell charts require a supported finite model")
             event_generation, anchors, witness, raw = _decode_chart_checkpoint(

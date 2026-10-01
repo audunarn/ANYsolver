@@ -2,8 +2,17 @@
 
 Revision8 [goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md)
 and [matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) govern under policy
-2026-09-24.2. Goal ACTIVE. No aggregate gate accepted; formalF03 UNCONSUMED.
+2026-09-24.2. User authorized the first reconciliation step on 1 October:
+preserve pending work, integrate shared main in isolation, and verify impacted
+routes. Broader feature development remains paused. No aggregate gate accepted;
+formalF03 UNCONSUMED.
 No main merge/publication authority. Full programme/scientific criteria remain.
+
+User-authorized [contact coordination](ANYsolver_STIFFENED_CONTACT_COORDINATION_20261001.md)
+is agreed by both owners; baseline reconciliation is now authorized. Before further development,
+preserve this candidate and reconcile separate branches against one agreed main
+pin. Local main/origin-main advanced to ef858828 (plane-stress PR60) during the
+exchange; earlier evidence remains bound to its original source/artifact.
 
 ## Source, ownership and resources
 
@@ -65,41 +74,58 @@ BL5 remains distinct from six-pose points/footprints: normal spin released.
 has fine matched work gap<.061%, but Mz refinement>1.3% and unresolved transfer.
 Park mesh/port/chart sweeps. F03/G0B/M2 and mandatory external references OPEN.
 
-## Current decision and next action
+## Paused restart: footprint increment charts
 
-Free-free delivery uses explicit GE_FREE_FREE_MODAL_ONLY_V1 on the existing
-definition/owner, preserving supported defaults/identity and no-support rejection.
-Modal-only static/finite/restore/chart writes reject. Scope remains connected
-virgin Q4/generalized six-pose points, full native descriptor and physical inertia.
-[Current results](development/r8-ge-free-reference-modes-20261001/results.md):
-wheel4ddde579 binds391 modules;46 modal+116 legacy installed passes,15 exact
-default static bindings and the public free-free example. All root numerical
-jobs TERMINAL, including session53078. Setup failures/snapshots retained.
-Independent volume/particle Gram, KR/CR, full descriptor and a resolved extra
-physical mechanism are checked. Only6D rigid projection; no artificial inertia
-or static condensation. Six analytic rigid fields are verified; exactly-six
-nullity/absence of all unexcited mechanisms is NOT certified. Roundoff screen is
-not an Arnoldi/LU error bound. Independent review clear; source/evidence committed.
+Solver HEAD6eede4913a22987bf1a5e41b428ab496dffb3298. ANYfem HEADf4bb5ed2eecc21c915a3b78519f84b1a773d0a61 clean.
+Prior [free-free](development/r8-ge-free-reference-modes-20261001/results.md)
+and [modal consumer](development/r8-anyfem-ge-reference-modal-20261001/results.md)
+deliveries remain committed; do not repeat their completed campaigns by default.
 
-[ANYfem modal delivery](development/r8-anyfem-ge-reference-modal-20261001/results.md)
-at f4bb5ed owns exact inertia/policy and optional validated model identity;
-definition-only save/reopen does not assemble/factor or fabricate identity.
-Existing Project dispatches canonical modes; strict legacy schemas retain meaning.
-Paired solver4ddde579/consumer57ee44ef,391+98 exact modules,37new+149legacy
-installed passes, seven byte-exact legacy GE schema payloads. Supported/free-free
-public Project examples both complete; independent consumer/example review clear.
-Raw178-file archive9bc32f1f preserves source collection and runner-count failures.
-All jobs TERMINAL, including session74587; no numerical job or active worker.
+Decision resolved on the bounded footprint fixture: same-physical-state reset
+preserves Q4 local values, beam responses, point gaps and complete histories;
+mapped tangent difference4.15e-17 relative. First Newton arithmetic differences
+amplify into the preserved9.13e-8N successor difference. No roundoff floor proved.
+New explicit GE_NODAL_FOOTPRINT_INCREMENT_ORIGIN_CHART_V2 starts each increment
+from a detached physical shell chart; its anchor stays fixed through Newton and
+backtracking. Equations/tolerances/history/atomic publication remain unchanged.
+Default V1 still guards rebase/chart restore and preserves its identity/route.
+V2 scope: elastic generalized-beam nodal footprints, Q4/mixed/allS3, no lines,
+full or free rotational triples. Numerical-policy identity/checkpoint binding;
+internal chart selection is not an extra generation event. No broad F06 closure.
 
-Next concrete mandatory seam: inspect the preserved nodal-footprint postrebase
-parity failure before designing a bounded repair. Determine whether earliest
-divergence is physical pose/gap, chart pullback or transported shell state using
-the existing same-load evidence. Keep the unrebased guard until parity is proved;
-no chart/mesh sweep, law/criterion change or F03 run by implication. New code must
-preserve objective point/footprint laws, native histories and accepted generations.
-If no clear repair follows, record the exact obstruction and review it. Continue
-other required M4/F07 load/mass/prestress obligations only at actual prerequisites.
-Full F07/G4B/consumer/external/scale and aggregate acceptance remain OPEN.
+Uncommitted root-owned files: four product modules _stiffened_shell_ge_experimental,
+_stiffened_shell_ge_finite_experimental, _stiffened_shell_nodal_footprint and
+stiffened_shell; new tests/test_stiffened_shell_footprint_increment_charts.py;
+new examples/stiffened_shell_footprint_chart_restart.py; this note. Existing
+footprint test has no Git change. Foreign script remains protected/unchanged.
+
+Evidence under C:/Users/AUDUNA~1/AppData/Local/Temp:
+- r8-footprint-same-state-v1/v2, r8-footprint-newton-trace-v1/v2 and
+  r8-footprint-canonical-origin-v1 retain discriminator inputs/results/failures.
+- r8-footprint-increment-charts-source-v1:52pass/8fail (pre-opt-in chart schema).
+  source-v2:66pass/3fail (negative fixture restored into an already active owner).
+  source-v3: corrected6pass/14deselected; role-scaled actual-update derivatives
+  and checksummed corrupt/wrong-policy fresh-owner restore negatives passed.
+- r8-footprint-increment-charts-installed-v1: wheel SHA
+  6b65407603ba3e637c605ee9fc192af928b1c975781d480a501c6e280963cde7;
+  391 exact modules;69/69 installed footprint checks,214 onsite imports,
+  102.328s/190066688B peak; actual pools/Numba1,JIT disabled. session67417 TERMINAL.
+  Includes strict1e-9 four-branch successor parity, rejection/cancellation,
+  physical work/balance, derivatives, V1 guards and checkpoint negatives.
+- r8-footprint-increment-charts-review-v1.md SHA
+  f5e2abaa1b1759bf9bdb7e942978c41d8c62d74626e7c75744623887c4d08952;
+  independent source review clear, final artifact supplement PENDING.
+
+All root numerical jobs TERMINAL (78158,67169 failed-source evidence;
+84373 corrected controls;67417 installed). Reviewer paused; no active owned run.
+Do not repeat installed69 without changed inputs/failure/unresolved concern.
+Next on explicit resume: run remaining installed modal/legacy impact checks
+using targets.json/run_bounded.py in the existing installed directory; execute
+and freeze the lifetime-corrected public example (SHA4e505530b56da3ad35d79afa4f82400b5e9195936365507f16c90ece0c0e825c),
+which is newer than its unexecuted artifact fixture. Independently adjudicate,
+retain raw evidence/report, update matrix and commit ONLY owned paths. Then
+extend ANYfem with an explicit new-policy record without changing its V1 schema.
+Broader F06/F07/G4B/M4, consumer/external/scale and aggregate acceptance OPEN.
 
 [Protected historical note](history/ACTIVE_STATE_20261001_NODAL_S3_TRANSITION.md)
 and immutable reports retain failures/authorities. No overall speedup or release.

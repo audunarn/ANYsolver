@@ -3,8 +3,9 @@
 Each selected shell pose uses the existing six-row objective point law at one
 native beam node. Declared complete-patch admission requires all cell vertices;
 this is a product policy, not a universal rigidity criterion. No distributing
-weights, fit, area quadrature or new law occurs. Footprint chart rebase remains
-unsupported pending independently established continuation parity.
+weights, fit, area quadrature or new law occurs. The default unrebased policy
+retains its chart guards. Opt-in elastic V2 increments use one detached physical
+origin chart, held fixed throughout Newton/backtracking.
 """
 from dataclasses import dataclass, field
 from math import fsum, isfinite
@@ -16,13 +17,32 @@ LAW = "GE_NODAL_RIGID_FOOTPRINT_POINT_POSE_V1_EXPERIMENTAL"
 STABLE_S3_POLICY = "GE_NODAL_RIGID_FOOTPRINT_ELASTIC_S3_STABLE_NATIVE_HISTORY_V1"
 RETAINED_SCALE_POLICY = "GE_NODAL_RIGID_FOOTPRINT_RETAINED_FORCE6_MOMENT12_WORK_SCALE_V1"
 CHART_ADMISSION_POLICY = "GE_NODAL_RIGID_FOOTPRINT_UNREBASED_ADMISSION_V1"
+INCREMENT_ORIGIN_CHART_POLICY = "GE_NODAL_RIGID_FOOTPRINT_INCREMENT_ORIGIN_CHART_V2"
 
 
-def chart_admission_policy_descriptor():
-    return dict(policy=CHART_ADMISSION_POLICY,
-                rebase="unsupported", chart_checkpoint_restore="unsupported",
-                reason="footprint_chart_continuation_parity_not_established",
+def chart_admission_policy_descriptor(policy=CHART_ADMISSION_POLICY):
+    if policy == CHART_ADMISSION_POLICY:
+        return dict(policy=CHART_ADMISSION_POLICY,
+                    rebase="unsupported", chart_checkpoint_restore="unsupported",
+                    reason="footprint_chart_continuation_parity_not_established",
+                    production_qualified=False)
+    if policy != INCREMENT_ORIGIN_CHART_POLICY:
+        raise ValueError("explicit supported footprint chart policy required")
+    return dict(policy=INCREMENT_ORIGIN_CHART_POLICY,
+                rebase="experimental_elastic", chart_checkpoint_restore="experimental_elastic",
+                increment_origin="zero_rotation_coordinates_at_accepted_physical_frames",
+                newton_anchor="fixed_for_all_iterations_and_backtracks",
+                rotational_supports="fully_fixed_or_fully_free_triples",
                 production_qualified=False)
+
+
+def require_rotation_triples(fixed, shell_nodes):
+    """A chart reset cannot reinterpret a partially fixed coordinate triple."""
+    fixed = set(fixed)
+    for node in range(shell_nodes):
+        restrained = [6*node+j in fixed for j in (3, 4, 5)]
+        if any(restrained) and not all(restrained):
+            raise ValueError("nodal footprint finite charts require full rotational triples; partial supports need transformed equations")
 
 
 def retained_scale_policy_descriptor():
