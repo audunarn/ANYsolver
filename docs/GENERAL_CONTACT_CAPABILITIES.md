@@ -762,3 +762,27 @@ restore/re-export and default120s incompatibility before work/publication.
 Independent saved assessment closes this scoped development row. Evidence
 native_dynamic_runtime_v1_20261001.summary.json/.review.md. No long-duration, finite-angle,
 C7 or installed-profile admission follows.
+
+## Loaded/clamped native restart — historical development assessment closed
+
+Saved session98994 passes its original registered gates under independent review,
+without reexecution. Complete split continuation, signed work/support wrench and
+three incompatible headers checked;29.819s/217.219MB. Exact frozen bytes archived
+across Git newline normalization. See
+[native assessment](d1_review_support/native_loaded_clamped_restart_v1_20261001.assessment.md).
+One elastic constant-load homogeneous-clamp fixture only; evolving history,
+spatial/temporal breadth, reconciled installed artifact and fullC7 remain open.
+
+## Guided S3 history and transient cancellation — development tested/reviewed
+
+Distinct PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_HISTORY_DEV_V1 admits only
+exact-zero represented algebraic base force. Existing history/knot/work/restart
+infrastructure is reused; constant-S3 identity/checks remain. Shared driver admits
+exact unmodified CancellationToken, rejects arbitrary callbacks, cleans pending
+trials and preserves the acceptance boundary. Installed15focused checks pass
+35.0167s/164327424B; ramped S3 example passes3.1318s/157650944B,447module matches,
+thread1/JIT-off. Independent source/evidence review supports development disposition.
+See [results](d1_review_support/contact_c6_history_cancellation_20261001/results.md).
+General dynamics, event-stage algebraic kinematics, nonlinear materials, production
+JIT, spatial/temporal qualification and fullC6 remain open. Q4 cancellation was
+executed; shared S3 cleanup is source-reviewed. No release admission follows.

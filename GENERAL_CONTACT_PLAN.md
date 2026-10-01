@@ -1,9 +1,9 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-01.59. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-01.61. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
-**Worktree:** C:/ANYworkspaceWork/ANYsolver-general-contact.
-**Branch:** codex/general-contact-core.
+**Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
+**Branch:** codex/contact-main-reconcile-20261001.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision2026-09-30.4, and
 ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1 revision2026-09-24.2.
 
@@ -46,12 +46,26 @@ common leadingh² expansion; they are not certified bounds, independent continuu
 verification or fullC7 acceptance. Independent final assessment closes this slice.
 All previous failures and unexecuted inputs remain unchanged.
 
-**Next implementation slice:** exercise the actual public loaded/clamped
-acceleration-chart state codec through a split restart, using existing work/state
-interfaces and signed support accounting. Reuse unaffected free/unloaded restart
-evidence. Keep original physical gates; routine180s/1GB applies unless a named
-integrated case justifies the existing900s/4GB ceiling. A failure gets one targeted
-corrective action based on its cause, not an automatic refinement or cap increase.
+The saved loaded/clamped acceleration-chart split restart now has independent
+[assessment](docs/d1_review_support/native_loaded_clamped_restart_v1_20261001.assessment.md).
+Its historical development row closes without replaying consumed execution.
+Main reconciliation is complete at978a3c97, based on source merge9f8f2501 and
+pinned mainef858828. Compatibility results remain development evidence.
+
+Guided single-S3 physical dead-load history and shared exact-token cancellation
+are now implemented, installed-tested and independently reviewed:
+[results](docs/d1_review_support/contact_c6_history_cancellation_20261001/results.md).
+15focused checks plus the ramped example pass within180s/1GB. History requires
+exactly zero represented algebraic base force, even at zero initial scale; old
+constant-load checks/profile remain. C6 acceptance stays open.
+
+**Next bounded decision:** review the saved S3 event-stage rate discontinuity,
+distinguishing legitimate massless algebraic rate jumps from an incorrect
+integration/reconstruction contract. Choose event splitting or a physical/algebraic
+coordinate-partition implementation from that evidence before expansion. Fix the
+contract and ownership before edits; do not repeat unchanged probes or launch a
+refinement campaign. Routine180s/1GB applies; no automatic cap increase. Cubic
+reconstruction does not establish conservative general dynamic event control.
 
 After that row closes, select the next missing integrated D5/D6 capability from
 source inspection: advance physical composition/geometry or shared impact-driver
@@ -60,11 +74,14 @@ before implementation. Do not repeat native temporal screens merely to enlarge
 existing evidence. Broader native section/geometry acceptance and coupled impact
 remain required; the current one-element centered-ellipsoid owner does not admit them.
 
-The lead may progress application integration independently against stable public
-contracts. ANYfem b98cf7c now preserves supplied public numerical settings;25checks
-pass with accepted installed0b2ac9be and independent compatibility scrutiny. No
-defaults are invented when settings are absent. Applications still reject general
-contact jobs until the solver provides their actual admissible binding contract.
+The lead may progress application integration against stable contracts. ANYfem
+630884ae preserves supplied public numerical settings;21focused checks pass with
+the reconciled installed development artifact and independent source review found
+no consequential defect. Application admission remains false. A full historical
+preimport exposes ABC annotation-cache guard failure; contact owns the reproducer,
+main guard maintainer owns any agreed product correction. No shared guard or
+dispatch patch is authorized by this record. Earlier artifact evidence remains
+historical; current compatibility is not application acceptance.
 
 ## 3. Preserve mechanics and state
 

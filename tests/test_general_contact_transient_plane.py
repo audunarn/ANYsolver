@@ -263,16 +263,6 @@ def test_q4_nodal_load_history_rejects_invalid_or_unsupported_input():
             base_load_case=_constant_q4_load(),
             nodal_load_history=near_coincident,
         )
-    s3_model, s3_contact, s3_velocity = _guided_s3_descriptor_impact()
-    with pytest.raises(ValueError, match="Q4 plane nodal LoadCase"):
-        solve_transient_contact(
-            s3_model, s3_contact,
-            TransientConfig(.001, .01, initial_velocity=s3_velocity),
-            base_load_case=_constant_q4_load(), nodal_load_history=history,
-            solver_controls=ContactTransientSolverControls(
-                allow_s3_descriptor_dev=True,
-            ),
-        )
 
 
 def test_q4_constant_nodal_load_and_contact_match_mass_spring_impact():

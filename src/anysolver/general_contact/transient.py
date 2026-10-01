@@ -4,13 +4,17 @@ The coupled residual is evaluated by the ordinary nonlinear structural
 assembler inside one contact scope. The Q4 profile uses positive-definite
 reduced mass; a separate guided single-S3 V2D profile retains declared
 massless rotations and recovers their rates from algebraic equilibrium.
-Neither profile qualifies the broader C6 impact capability.
+A distinct S3 history profile scales the same dead nodal load by a
+piecewise-linear factor in time; its complete base load must lie in the
+physical mass range so the scalar history never forces the algebraic
+manifold. No profile here qualifies the broader C6 impact capability.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from bisect import bisect_right
+from functools import wraps
 from typing import Mapping
 
 import numpy as np
@@ -21,15 +25,21 @@ from anymaterial.isotropic import IsotropicMaterial
 from anysolver.algebraic_dynamics import build_declared_algebraic_basis
 from anysolver.assembly import assemble_mass_matrix, build_constraint_transformation
 from anysolver.boundary import LoadCase
+from anysolver.control import CancellationToken
 from anysolver.dynamics import TransientConfig
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
 from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 from anysolver.matrix_assembly import assemble_load_vector, assemble_stiffness_matrix
-from anysolver.nonlinear_state import commit_state_candidate, discard_active_state_candidate
+from anysolver.nonlinear_state import (
+    commit_state_candidate, discard_active_state_candidate,
+    _run_with_nonlinear_state_cleanup,
+)
 from anysolver.nonlinear_restart import (
     analysis_configuration_fingerprint, model_configuration_fingerprint,
 )
-from anysolver.nonlinear_static import _assemble_nonlinear_system
+from anysolver.nonlinear_static import (
+    _assemble_nonlinear_system, _is_known_cancellation_checkpoint,
+)
 
 from .core import (
     ContactDefinition,
@@ -44,6 +54,7 @@ from .core import (
 
 _PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V1"
 _S3_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0"
+_S3_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_HISTORY_DEV_V1"
 _RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
 _HISTORY_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V2"
 
@@ -443,6 +454,14 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
     return profile
 
 
+def _with_transient_state_cleanup(operation):
+    @wraps(operation)
+    def wrapped(*args, **kwargs):
+        return _run_with_nonlinear_state_cleanup(operation, *args, **kwargs)
+    return wrapped
+
+
+@_with_transient_state_cleanup
 def solve_transient_contact(
     model,
     definition: ContactDefinition,
@@ -454,6 +473,7 @@ def solve_transient_contact(
     solver_controls: ContactTransientSolverControls | None = None,
     restart_checkpoint: Mapping | None = None,
     emit_restart_checkpoint: bool = False,
+    cancellation_token: CancellationToken | None = None,
 ) -> TransientContactResults:
     """Solve bounded elastic Q4 or S3 V2D fixed-plane impact.
 
@@ -463,8 +483,21 @@ def solve_transient_contact(
     accepted endpoint and over its declared cubic Hermite integration path.
     S3 descriptor admission additionally requires explicit opt-in and a
     strictly open, stress-free rigid-normal initial state.
+    The S3 descriptor profiles admit a piecewise-linear nodal load history
+    only when the complete base load has zero algebraic projection; the
+    distinct history profile is bound into restart contracts.
+    Cancellation admits only the solver's exact unmodified token. It raises
+    SolveCancelled at a safe boundary, discards solve-owned pending trials and
+    returns no partial result or checkpoint. Completed increments remain committed.
     """
 
+    def check_cancel(stage):
+        if not _is_known_cancellation_checkpoint(cancellation_token):
+            raise TypeError("transient contact requires an exact unmodified CancellationToken")
+        if cancellation_token is not None:
+            cancellation_token.raise_if_cancelled(stage)
+
+    check_cancel("transient contact entry")
     transient, controls = _resolve_transient_inputs(transient, solver_controls)
     if (restart_checkpoint is not None or emit_restart_checkpoint) and transient.save_every != 1:
         raise ValueError("transient contact development restart requires save_every=1")
@@ -475,8 +508,8 @@ def solve_transient_contact(
     if nodal_load_history is not None:
         if type(nodal_load_history) is not ContactNodalLoadHistory:
             raise TypeError("nodal_load_history must be ContactNodalLoadHistory")
-        if base_load_case is None or profile != _PROFILE:
-            raise ValueError("nodal load history requires one Q4 plane nodal LoadCase")
+        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE):
+            raise ValueError("nodal load history requires one Q4 plane nodal LoadCase or opted-in S3 plane nodal LoadCase")
         if nodal_load_history.points[-1][0] < transient.t_end:
             raise ValueError("nodal load history must cover t_end")
         if any(
@@ -488,6 +521,9 @@ def solve_transient_contact(
                                    nodal_load_history.points[1:])
         ):
             raise ValueError("nodal load history knots are closer than the admitted minimum_dt or time resolution")
+        if profile == _S3_PROFILE:
+            profile = _S3_HISTORY_PROFILE
+    s3_descriptor = profile in (_S3_PROFILE, _S3_HISTORY_PROFILE)
     if base_load_case is not None:
         if (type(base_load_case) is not LoadCase
                 or not base_load_case.nodal_loads
@@ -524,7 +560,7 @@ def solve_transient_contact(
         raise ValueError("transient development profile requires zero prescribed displacements")
     if not len(independent_dofs):
         raise ValueError("transient contact requires at least one free coordinate")
-    if profile == _S3_PROFILE:
+    if s3_descriptor:
         element = next(iter(model.mesh.elements.values()))
         expected_free = sorted(
             int(model.mesh.dof_manager.get_node_dofs(node)[local])
@@ -558,6 +594,20 @@ def solve_transient_contact(
         if (nullity < 1 or int(np.count_nonzero(spectrum <= threshold)) != nullity
                 or np.any(spectrum < -threshold)):
             raise ValueError("S3 descriptor mass nullity disagrees with declared algebraic basis")
+        if profile == _S3_HISTORY_PROFILE:
+            # The complete base load must satisfy Z.T f_base = 0 so the scalar
+            # history cannot force the algebraic manifold; a zero initial
+            # scale must not hide an algebraic base load.
+            algebraic_base_force = np.asarray(
+                descriptor_basis.reduced_basis.T @ external_reduced
+            ).reshape(-1)
+            # History amplitude and slope are not bounded. A tolerance-sized
+            # nonzero algebraic base force could be amplified later, and its
+            # time derivatives are absent from the admitted rate equations.
+            if np.any(algebraic_base_force != 0.0):
+                raise ValueError(
+                    "S3 descriptor base load has unresolved algebraic force"
+                )
     q = np.asarray(initial_displacement[independent_dofs], dtype=float).copy()
     full_initial = np.asarray(T @ q).reshape(-1)
     if not np.allclose(full_initial, initial_displacement,
@@ -568,7 +618,7 @@ def solve_transient_contact(
     if not np.allclose(np.asarray(T @ vred).reshape(-1), vfull,
                        atol=1.0e-12, rtol=1.0e-12):
         raise ValueError("initial_velocity does not satisfy structural constraints")
-    if profile == _S3_PROFILE:
+    if s3_descriptor:
         # This first descriptor impact admits a stress-free rigid normal
         # approach. General DAE initial states require a separate consistency
         # solve for algebraic displacement, velocity and acceleration.
@@ -630,18 +680,19 @@ def solve_transient_contact(
             return (full, np.asarray(T.T @ force).reshape(-1)
                     - load_at(time_s), stiffness, trial)
 
+        check_cancel("transient contact initial evaluation")
         full0, force0, initial_tangent, trial0 = evaluate(
             q, current_time,
-            tangent=(profile == _S3_PROFILE and restart_checkpoint is None),
+            tangent=(s3_descriptor and restart_checkpoint is None),
         )
         contact0 = manager.evaluate(full0, tangent=False)[2]
         if not contact0.gap_tolerance_met:
             raise ValueError("initial contact gap exceeds the registered tolerance")
-        if (profile == _S3_PROFILE and restart_checkpoint is None
+        if (s3_descriptor and restart_checkpoint is None
                 and contact0.minimum_gap <= 1.0e-10):
             raise ValueError("S3 descriptor development requires a strictly open initial gap")
         if resumed_acceleration is None:
-            if profile == _S3_PROFILE:
+            if s3_descriptor:
                 basis = descriptor_basis.reduced_basis
                 reduced_tangent = (T.T @ initial_tangent @ T).tocsr()
                 algebraic_velocity_work = np.asarray(
@@ -685,6 +736,7 @@ def solve_transient_contact(
                         float(np.linalg.norm(force0)))
             if float(np.linalg.norm(balance)) > controls.equilibrium_tolerance*scale:
                 raise ValueError("transient contact checkpoint acceleration is inconsistent")
+        check_cancel("transient contact initial acceptance")
         committed_states = commit_state_candidate(committed_states, trial0)
         times = [current_time]
         positions = [full0.copy()]
@@ -738,6 +790,7 @@ def solve_transient_contact(
                 candidate = predictor.copy()
                 converged = False
                 for iteration in range(1, controls.maximum_newton_iterations + 1):
+                    check_cancel("transient contact Newton evaluation")
                     full, internal, tangent, trial = evaluate(
                         candidate, current_time+step, tangent=True,
                     )
@@ -748,7 +801,7 @@ def solve_transient_contact(
                     if float(np.linalg.norm(residual)) <= controls.equilibrium_tolerance * scale:
                         contact_result = manager.evaluate(full, tangent=False)[2]
                         candidate_velocity = velocity_predictor + gamma * step * candidate_acceleration
-                        if profile == _S3_PROFILE:
+                        if s3_descriptor:
                             candidate_velocity, candidate_acceleration = (
                                 _consistent_s3_descriptor_rates(
                                     model, T, Mred, descriptor_basis, full,
@@ -783,6 +836,7 @@ def solve_transient_contact(
                             previous_full, full, previous_velocity,
                             full_velocity, start_force, end_force, step,
                         )
+                    check_cancel("transient contact step acceptance")
                     committed_states = commit_state_candidate(committed_states, trial)
                     accumulated_work += step_work
                     q = candidate
@@ -829,6 +883,7 @@ def solve_transient_contact(
         raise ValueError(
             "transient contact checkpoint requires an accepted untruncated final time step"
         )
+    check_cancel("transient contact result export")
     checkpoint = (
         _new_restart_checkpoint(
             model_fingerprint, analysis_fingerprint, current_time,

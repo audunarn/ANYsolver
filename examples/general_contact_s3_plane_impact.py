@@ -7,6 +7,7 @@ from anysolver import (
     BoundaryCondition,
     ContactDefinition,
     ContactInteraction,
+    ContactNodalLoadHistory,
     ContactSurface,
     ContactTransientSolverControls,
     LoadCase,
@@ -21,10 +22,16 @@ from anysolver.fe_core import FEModel
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--constant-downward-load-n", type=float, default=0.0)
+    parser.add_argument("--ramp-downward-load-n", type=float, default=0.0,
+                        help="dead nodal force ramped from zero to this value at .012s")
     args = parser.parse_args()
     if (not np.isfinite(args.constant_downward_load_n)
             or args.constant_downward_load_n < 0.0):
         parser.error("constant downward load must be finite and nonnegative")
+    if not np.isfinite(args.ramp_downward_load_n) or args.ramp_downward_load_n < 0.0:
+        parser.error("ramp downward load must be finite and nonnegative")
+    if args.ramp_downward_load_n and args.constant_downward_load_n:
+        parser.error("select either constant or ramped load")
     director = np.asarray((0.002, 0.0, 1.0), dtype=float)
     director /= np.linalg.norm(director)
     span = 0.1
@@ -56,17 +63,20 @@ def main() -> None:
     for node_id in (1, 2, 3):
         initial_velocity[model.mesh.dof_manager.get_node_dofs(node_id)[2]] = -1.0
     load = None
-    if args.constant_downward_load_n:
+    downward_force = args.constant_downward_load_n or args.ramp_downward_load_n
+    if downward_force:
         load = LoadCase("uniform_s3_normal_dead_load")
         for node_id in (1, 2, 3):
             load.add_nodal_load(
                 node_id,
-                forces=(0.0, 0.0, -args.constant_downward_load_n/3.0),
+                forces=(0.0, 0.0, -downward_force/3.0),
             )
     result = solve_transient_contact(
         model, definition,
         TransientConfig(.0002, .012, initial_velocity=initial_velocity),
         base_load_case=load,
+        nodal_load_history=(ContactNodalLoadHistory(((0., 0.), (.012, 1.)))
+                            if args.ramp_downward_load_n else None),
         solver_controls=ContactTransientSolverControls(
             allow_s3_descriptor_dev=True,
         ),

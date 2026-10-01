@@ -31,7 +31,9 @@ solves that mass equation, checks the full initial balance, then recovers the
 algebraic rates. A nodal moment with unresolved algebraic force fails explicitly.
 The load enters every coupled Newmark residual and is bound by name and
 assembled vector in the existing version-1 checkpoint. Cumulative dead-load
-work is measured from the configured initial pose. Time-varying S3 loads remain
+work is measured from the configured initial pose. A separate development profile
+now admits scalar piecewise-linear dead nodal histories only with exactly zero
+represented algebraic base-load projection; other time-varying S3 loads remain
 unadmitted because their derivatives enter differentiated algebraic constraints.
 
 At each accepted pose, the algebraic velocity
@@ -105,7 +107,7 @@ Evidence: `tests/test_general_contact_transient_plane.py`,
 `reports/general_contact_c6_s3_discrete_kinematics*_20260928.txt` files. The source identity,
 command and environment for any claim-bearing qualification still need to be
 frozen and independently assessed. General shell descriptor states, moving
-tools, multiple elements, time-varying and non-nodal loads, nonlinear
+tools, multiple elements, general time-varying and non-nodal loads, nonlinear
 materials, friction, free rigid bodies, complete work/momentum accounting
 and installed package acceptance remain open.
 
@@ -116,3 +118,27 @@ example (`--constant-downward-load-n 0.0002`) completed 60 accepted steps,
 zero cutbacks, a −0.000830315 m minimum swept gap within its declared 1 mm
 budget, and a 1.11e−14 N maximum residual. This is an installed development
 smoke check, not qualification or release.
+
+## Guided dead-load history and cancellation development extension
+
+With `ContactNodalLoadHistory`, the result profile is
+`PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_HISTORY_DEV_V1`.
+The complete reduced base load must have `Z.T f_base == 0`, even if the initial
+history factor is zero. A tolerance-sized nonzero algebraic component is rejected:
+arbitrary finite history amplitudes/slopes could amplify it. For this restricted
+profile `G(q,t)=Z.T F_internal(q)` has no explicit time derivative, so the existing
+smooth-branch rate reconstruction applies. The original constant-load profile,
+its initial force checks and version-1 checkpoints remain unchanged.
+
+History knots split time steps; version-2 restart binds the profile, complete
+history, base load and accumulated external work. Work integrates the declared
+cubic Hermite path, not a certified continuum trajectory. Event-stage algebraic
+kinematics and general C6 acceptance remain open. Run
+`python examples/general_contact_s3_plane_impact.py --ramp-downward-load-n 0.0002`.
+
+`solve_transient_contact(..., cancellation_token=token)` admits the exact unmodified
+solver `CancellationToken`. It checks safe boundaries before acceptance and raises
+`SolveCancelled`, without returning a partial result/checkpoint. Contact scope and
+solve-owned pending state trials are cleaned up; completed increments stay
+committed. Arbitrary token callbacks/subclasses are rejected. These elastic
+development profiles do not establish plastic-history transaction acceptance.
