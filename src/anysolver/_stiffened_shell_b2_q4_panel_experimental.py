@@ -10,6 +10,7 @@ No line, geometric stiffness, nonlinear state or qualification is inferred.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from hashlib import sha256
 from math import fsum, isfinite
 from numbers import Real
 from typing import Callable, Mapping, Sequence
@@ -220,9 +221,10 @@ class B2ReferenceBodyLoad:
     shell_node_ids: tuple[int, ...]
     beam_node_ids: tuple[int, ...]
     load: np.ndarray
+    model_identity: str = ""
     policy: str = field(default="B2_E4_PL_REFERENCE_BODY_ACCELERATION_V1", init=False)
     production_qualified: bool = field(default=False, init=False)
-    member_recovery: str = field(default="nodal-state constitutive fields only; distributed-load particular field not included", init=False)
+    member_recovery: str = field(default="pass typed load for particular-load equilibrated fields; .load alone retains nodal-state constitutive recovery", init=False)
 
     def __post_init__(self):
         # Bytes-backed storage cannot be made writable, and never aliases the
@@ -232,6 +234,21 @@ class B2ReferenceBodyLoad:
         object.__setattr__(self, "acceleration_m_s2", tuple(self.acceleration_m_s2))
         object.__setattr__(self, "shell_node_ids", tuple(self.shell_node_ids))
         object.__setattr__(self, "beam_node_ids", tuple(self.beam_node_ids))
+
+
+@dataclass(frozen=True)
+class B2LoadedMemberSections:
+    """Static admissible section fields; not a new loaded kinematic state."""
+
+    member_id: str
+    stations: tuple[float, ...]
+    resultants_left: tuple[tuple[float, ...], ...]
+    resultants_right: tuple[tuple[float, ...], ...]
+    strains_left: tuple[tuple[float, ...], ...]
+    strains_right: tuple[tuple[float, ...], ...]
+    endpoint_tractions_local: tuple[float, ...]
+    policy: str = field(default="B2_REFERENCE_EQUILIBRATED_MEMBER_FIELDS_V1_DEV", init=False)
+    production_qualified: bool = field(default=False, init=False)
 
 
 def _beam_body_map(member: CompiledPhysicalB2Member, frame: np.ndarray) -> np.ndarray:
@@ -414,6 +431,34 @@ class ExperimentalB2Q4FootprintSelectedCase(ExperimentalB2Q4PanelSelectedCase):
 class ExperimentalB2Q4FootprintBatchResult(ExperimentalB2Q4PanelBatchResult):
     selected_footprints: tuple[str, ...] = ()
     footprint_law_id: str = FOOTPRINT_LAW_ID
+
+
+@dataclass(frozen=True)
+class B2BodyLoadedPanelResult(ExperimentalB2Q4PanelResult):
+    body_model_identity: str = ""
+    body_acceleration_m_s2: tuple[float, ...] = ()
+    equilibrated_sections: tuple[B2LoadedMemberSections, ...] = ()
+
+
+@dataclass(frozen=True)
+class B2BodyLoadedFootprintResult(ExperimentalB2Q4FootprintResult):
+    body_model_identity: str = ""
+    body_acceleration_m_s2: tuple[float, ...] = ()
+    equilibrated_sections: tuple[B2LoadedMemberSections, ...] = ()
+
+
+@dataclass(frozen=True)
+class B2BodyLoadedPanelSelectedCase(ExperimentalB2Q4PanelSelectedCase):
+    body_model_identity: str = ""
+    body_acceleration_m_s2: tuple[float, ...] = ()
+    equilibrated_sections: tuple[B2LoadedMemberSections, ...] = ()
+
+
+@dataclass(frozen=True)
+class B2BodyLoadedFootprintSelectedCase(ExperimentalB2Q4FootprintSelectedCase):
+    body_model_identity: str = ""
+    body_acceleration_m_s2: tuple[float, ...] = ()
+    equilibrated_sections: tuple[B2LoadedMemberSections, ...] = ()
 
 
 def _unique_ids(items, name):
@@ -771,6 +816,7 @@ class ExperimentalB2Q4PanelAnalysis:
         constraint_rows, constraint_cols, constraint_values = [], [], []
         point_reference_frames = []
         point_laws = []
+        section_point_actions = {}
         for point_index, point in enumerate(points):
             if (point.shell_id not in shell_lookup or
                     point.member_id not in member_lookup):
@@ -781,6 +827,14 @@ class ExperimentalB2Q4PanelAnalysis:
                 member.definition, vertices, station=point.station,
                 offset_local_m=point.offset_local_m)
             point_laws.append((point.point_id, law.law_id))
+            if 0. < point.station < 1.:
+                d = np.array(point.offset_local_m, dtype=float, copy=True)
+                shift = np.eye(6)
+                shift[3:, :3] = ((0., -d[2], d[1]), (d[2], 0., -d[0]), (-d[1], d[0], 0.))
+                pullback = shift@np.kron(np.eye(2), member.definition.local_frame_rows())@(-law.beam_constraint_differential.T)
+                pullback.setflags(write=False)
+                section_point_actions.setdefault(point.member_id, []).append(
+                    (point_index, float(point.station), pullback))
             if footprints:
                 point_reference_frames.append(tuple(
                     tuple(tuple(map(float, row)) for row in frame)
@@ -847,6 +901,7 @@ class ExperimentalB2Q4PanelAnalysis:
         self.footprint_ids = tuple(g.footprint_id for g in footprints)
         self._footprint_incidence = footprint_incidence
         self._members = tuple(member_lookup.items())
+        self._section_point_actions = {key: tuple(value) for key, value in section_point_actions.items()}
         self._K = K
         if body_map is not None and not np.isfinite(body_map).all():
             raise RepresentabilityError("reference body-load map is not representable")
@@ -891,6 +946,29 @@ class ExperimentalB2Q4PanelAnalysis:
         self._abs_Ct = abs(C.T.tocsr())
         self._abs_Tt = abs(T.T.tocsr())
         self._u0 = u0
+        # One compilation-time binding covers the numerical model and physical
+        # member data used by body action/recovery. Never hash the model per case.
+        identity = sha256(b"B2_REFERENCE_BODY_LOAD_BINDING_V1_DEV")
+        identity.update(repr((shell_ids, beam_ids, tuple((i, tuple(positions[i])) for i in shell_ids), self._shell_formulations,
+                              tuple(point_laws), reference_inertia_policy)).encode("utf-8"))
+        for matrix in (K, C, T):
+            data = matrix.tocsr()
+            identity.update(repr(data.shape).encode("ascii"))
+            for array in (data.indptr, data.indices):
+                identity.update(np.asarray(array, dtype="<i8").tobytes())
+            identity.update(np.asarray(data.data, dtype="<f8").tobytes())
+        identity.update(np.asarray(u0, dtype="<f8").tobytes())
+        if body_map is not None:
+            identity.update(np.asarray(body_map, dtype="<f8").tobytes())
+        for member_id, (member, _) in self._members:
+            identity.update(repr((member_id, member.definition.reference_points_m,
+                member.definition.local_y_global, member.definition.section,
+                member.definition.mass)).encode("utf-8"))
+        for key, actions in sorted(self._section_point_actions.items()):
+            identity.update(repr((key, tuple((i, s) for i, s, _ in actions))).encode("utf-8"))
+            for _, _, pullback in actions:
+                identity.update(np.asarray(pullback, dtype="<f8").tobytes())
+        self._body_model_identity = identity.hexdigest()
         self._footprint_rigid_supported = (not footprints or
             (self._coordinate_modal_supports() and
              _supports_all_panel_rigid_fields(T, positions, beam_positions)))
@@ -966,7 +1044,7 @@ class ExperimentalB2Q4PanelAnalysis:
     @property
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
         body_operations = (("body_acceleration_load",) if self._body_map is not None else ())
-        body_domain = ("experimental reference-linear uniform global acceleration with complete declared physical mass; member recovery excludes distributed-load particular fields; no finite gravity"
+        body_domain = ("experimental reference-linear uniform global acceleration; typed loads give separate equilibrated section fields including interior point actions; raw vectors retain nodal constitutive recovery; loaded interior pose and finite gravity unsupported"
                        if self._body_map is not None else "unavailable without complete physical density/mass")
         if self.footprints:
             admitted = (self._M is not None and self._coordinate_modal_supports()
@@ -1030,7 +1108,24 @@ class ExperimentalB2Q4PanelAnalysis:
                     or abs(actual/expected-1.) > 1e-9):
                 raise RepresentabilityError("required reference body force is not representable")
         return B2ReferenceBodyLoad(tuple(float(v) for v in acceleration),
-                                   self.shell_node_ids, self.beam_node_ids, applied)
+                                   self.shell_node_ids, self.beam_node_ids, applied,
+                                   self._body_model_identity)
+
+    def _body_load_snapshot(self, load):
+        if isinstance(load, B2ReferenceBodyLoad):
+            if (load.model_identity != self._body_model_identity or
+                    load.shell_node_ids != self.shell_node_ids or load.beam_node_ids != self.beam_node_ids):
+                raise ValueError("body load belongs to a different compiled model")
+            expected = self.body_acceleration_load(load.acceleration_m_s2)
+            if not np.array_equal(load.load, expected.load):
+                raise ValueError("body load values disagree with its physical acceleration")
+            snapshot, fingerprint = _load_value_snapshot(load.load, self._u0.shape)
+            metadata = sha256(fingerprint)
+            metadata.update(load.model_identity.encode("utf-8"))
+            metadata.update(repr((load.shell_node_ids, load.beam_node_ids)).encode("utf-8"))
+            metadata.update(np.asarray(load.acceleration_m_s2, dtype="<f8").tobytes())
+            return snapshot, metadata.digest()
+        return _load_value_snapshot(load, self._u0.shape)
 
     def _coordinate_modal_supports(self) -> bool:
         selector = self._T.copy()
@@ -1206,6 +1301,11 @@ class ExperimentalB2Q4PanelAnalysis:
                 solve_count=handle.solve_count if handle else 0, failure_reason=str(exc))
 
     def _panel_result(self, *args, **kwargs):
+        if "body_model_identity" in kwargs:
+            result_type = B2BodyLoadedFootprintResult if self.footprints else B2BodyLoadedPanelResult
+            if self.footprints:
+                kwargs["footprint_ids"] = self.footprint_ids
+            return result_type(*args, **kwargs)
         if self.footprints:
             return ExperimentalB2Q4FootprintResult(
                 *args, footprint_ids=self.footprint_ids, **kwargs)
@@ -1220,8 +1320,10 @@ class ExperimentalB2Q4PanelAnalysis:
         recovery = _checked_recovery(
             recover_members, {member_id for member_id, _ in self._members})
         try:
-            applied = np.array(load, dtype=float, copy=True)
+            applied, _ = self._body_load_snapshot(load)
         except (TypeError, ValueError, OverflowError) as exc:
+            if isinstance(load, B2ReferenceBodyLoad):
+                raise
             raise ValueError("finite panel load vector required") from exc
         if applied.shape != self._u0.shape or not np.isfinite(applied).all():
             raise ValueError("finite panel load vector required")
@@ -1320,6 +1422,7 @@ class ExperimentalB2Q4PanelAnalysis:
                 "failed", factorization_count=self._handle.factorization_count,
                 solve_count=self._handle.solve_count, failure_reason=str(exc))
         recovered = []
+        equilibrated = []
         for member_id, (member, slots) in self._members:
             if recovery is not None and member_id not in recovery:
                 continue
@@ -1340,6 +1443,26 @@ class ExperimentalB2Q4PanelAnalysis:
                     failure_reason="finite physical B2 recovery required")
             recovered.append((member_id, tuple(
                 tuple(map(float, row)) for row in result.resultants)))
+            if isinstance(load, B2ReferenceBodyLoad):
+                try:
+                    with np.errstate(over="ignore", invalid="ignore"):
+                        uniform = (member.definition.mass.matrix_at_reference_axis()[:, :3]@
+                                   member.definition.local_frame_rows()@np.asarray(load.acceleration_m_s2))
+                        actions = tuple((station, pullback@lam[6*i:6*i+6]) for i, station, pullback in
+                                        self._section_point_actions.get(member_id, ()))
+                    if (not np.isfinite(uniform).all() or
+                            any(not np.isfinite(wrench).all() for _, wrench in actions)):
+                        raise RepresentabilityError("physical section actions are not representable")
+                    fields = member.operator.recover_equilibrated_sections(local,
+                        uniform_wrench=uniform, point_actions=actions, stations=result.stations)
+                except RepresentabilityError as exc:
+                    return self._panel_result("failed", factorization_count=self._handle.factorization_count,
+                        solve_count=self._handle.solve_count, failure_reason=str(exc))
+                rows = lambda values: tuple(tuple(map(float, row)) for row in values)
+                equilibrated.append(B2LoadedMemberSections(member_id, tuple(map(float, fields.stations)),
+                    rows(fields.resultants_left), rows(fields.resultants_right),
+                    rows(fields.strains_left), rows(fields.strains_right),
+                    tuple(map(float, fields.endpoint_tractions))))
         energy = .5*float(u @ force)
         if not isfinite(energy):
             return self._panel_result(
@@ -1347,6 +1470,10 @@ class ExperimentalB2Q4PanelAnalysis:
                 solve_count=self._handle.solve_count,
                 failure_reason="finite panel strain energy required")
         extra = {}
+        if isinstance(load, B2ReferenceBodyLoad):
+            extra.update(body_model_identity=load.model_identity,
+                         body_acceleration_m_s2=load.acceleration_m_s2,
+                         equilibrated_sections=tuple(equilibrated))
         if chosen_footprints:
             try:
                 extra["footprint_wrenches"] = selected_wrenches(
@@ -1429,7 +1556,7 @@ class ExperimentalB2Q4PanelAnalysis:
         for _case_id, load in submitted:
             if cancellation_token is not None and cancellation_token.is_cancelled:
                 break
-            snapshot, fingerprint = _load_value_snapshot(load, self._u0.shape)
+            snapshot, fingerprint = self._body_load_snapshot(load)
             fingerprints.append(fingerprint)
             del snapshot
         completed = []
@@ -1463,10 +1590,10 @@ class ExperimentalB2Q4PanelAnalysis:
             if self._closed or (cancellation_token is not None and
                                 cancellation_token.is_cancelled):
                 break
-            snapshot, fingerprint = _load_value_snapshot(load, self._u0.shape)
+            snapshot, fingerprint = self._body_load_snapshot(load)
             if fingerprint != fingerprints[index]:
                 raise ValueError("B2 panel load case changed after submission")
-            result = self.solve_linear(snapshot, recover_members=recovery,
+            result = self.solve_linear(load if isinstance(load, B2ReferenceBodyLoad) else snapshot, recover_members=recovery,
                                        selected_footprints=selected_footprints)
             factorization_count = result.factorization_count
             solve_count = result.solve_count
@@ -1477,6 +1604,11 @@ class ExperimentalB2Q4PanelAnalysis:
             case_type = (ExperimentalB2Q4FootprintSelectedCase if self.footprints
                          else ExperimentalB2Q4PanelSelectedCase)
             extra = {"footprint_wrenches": result.footprint_wrenches} if self.footprints else {}
+            if isinstance(load, B2ReferenceBodyLoad):
+                case_type = B2BodyLoadedFootprintSelectedCase if self.footprints else B2BodyLoadedPanelSelectedCase
+                extra.update(body_model_identity=result.body_model_identity,
+                             body_acceleration_m_s2=result.body_acceleration_m_s2,
+                             equilibrated_sections=result.equilibrated_sections)
             completed.append(case_type(
                 case_id,
                 tuple(result.displacements[index] for index in chosen),

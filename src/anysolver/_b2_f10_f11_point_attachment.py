@@ -42,6 +42,7 @@ class ReferencePointLaw:
     reference_frames: np.ndarray
     law_id: str = ""
     production_qualified: bool = False
+    beam_constraint_differential: np.ndarray | None = None
 
     def __post_init__(self):
         port_shape = np.asarray(self.shell_port).shape
@@ -64,6 +65,10 @@ class ReferencePointLaw:
             # the reference curvature cannot drift from its stored rows.
             sealed = np.frombuffer(owned.tobytes(), dtype=np.float64).reshape(shape)
             object.__setattr__(self, name, sealed)
+        if self.beam_constraint_differential is not None:
+            owned = _finite(self.beam_constraint_differential, (6, 6), "beam pose differential")
+            object.__setattr__(self, "beam_constraint_differential",
+                               np.frombuffer(owned.tobytes(), dtype=float).reshape(6, 6))
 
     def gap(self, shell_displacement, beam_displacement):
         shell = _finite(shell_displacement, (self.shell_port.shape[1],),
@@ -155,4 +160,4 @@ def compile_reference_point(member: PhysicalB2Member, shell_vertices_m, *,
     constraint = np.column_stack((derivative[:, :6] @ shell_port,
                                   derivative[:, 6:] @ beam_port))
     return ReferencePointLaw(origin, point, shell_port, beam_port, constraint,
-                             reference_frames)
+                             reference_frames, beam_constraint_differential=derivative[:, 6:])

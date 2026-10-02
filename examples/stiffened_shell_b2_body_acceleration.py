@@ -2,8 +2,10 @@
 
 SI units, centroidal solid rectangular beams, separate shell plate mass. Point
 attachments are reference-linear ports, not qualified bonded lines or welds.
-Only displacements and global reactions are used: distributed-load particular
-beam section recovery, finite-configuration gravity and GE loading remain open.
+Typed loads retain provenance and return separate equilibrated force/strain
+fields with body loading and interior point reactions. These fields are not a
+loaded interior pose satisfying the original nodal-trace attachment constraints.
+Finite-configuration gravity, GE loading and mechanical qualification remain open.
 """
 import argparse
 import json
@@ -61,13 +63,18 @@ def main():
         body = analysis.body_acceleration_load((0., 0., -9.81))
         inventory = []
         for count in (1, 10, 100):
-            cases = tuple((f"weight-{i:03}", (1.+i/count)*body.load) for i in range(count))
-            result = analysis.solve_linear_many(cases, selected_dofs=(49, 50), recover_members={})
+            cases = tuple((f"weight-{i:03}", analysis.body_acceleration_load(
+                (0., 0., -9.81*(1.+i/count)))) for i in range(count))
+            result = analysis.solve_linear_many(cases, selected_dofs=(49, 50),
+                                                recover_members={"beam-0": (0., .5, 1.)})
             if result.status != "completed" or len(result.cases) != count or result.factorization_count != 1:
                 raise RuntimeError(result.failure_reason or "body-load batch failed")
+            fields = result.cases[0].equilibrated_sections[0]
             inventory.append(dict(cases=count, status=result.status, factorization_count=result.factorization_count,
-                                  first_displacements=result.cases[0].selected_displacements))
-        static = analysis.solve_linear(body.load, recover_members={})
+                first_displacements=result.cases[0].selected_displacements,
+                first_section_policy=fields.policy, first_section_stations=fields.stations,
+                first_resultants_left=fields.resultants_left, first_resultants_right=fields.resultants_right))
+        static = analysis.solve_linear(body, recover_members={})
         if static.status != "completed":
             raise RuntimeError(static.failure_reason)
         force = body.load.reshape(-1, 6)[:, :3].sum(axis=0)

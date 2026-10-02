@@ -126,12 +126,30 @@ and balanced3449.9808N weight. Separate Read review clear; no family-independent
 qualification. Prior fixture/overbroad-subnormal/example-scalar failures retained.
 [Product, exact raw and limits](development/r8-b2-body-acceleration-20261002/results.md).
 
-Payload/capabilities explicitly limit member recovery to nodal-state fields;
-distributed-load particular fields are absent. Examples select no member fields.
-No GE gravity, follower/current gravity, consumer load persistence or G4A pass.
-The force representability check is not a local-component or moment certificate.
-Next ready load slice: design body/distributed-load records and correct particular
-section recovery within existing owner/services, then consumer persistence;
-retain the primary coupled transfer/stability decision and all M4 obligations.
-Inspect Git for current delivery commit; all owned jobs terminal. No push while
-historical credential remediation is pending. Full Revision8 goal remains active.
+Next load slice (base7c91e4a5) is delivered: typed model-bound acceleration loads
+retain context through solves/batches and supply separate equilibrated member
+resultants/strains, actual interior point wrenches and sided jumps. Raw nodal
+trace/recovery/equations/energy meanings stay unchanged. Compiled pullback hashes
+and typed metadata fingerprints close both independent review findings.
+Final installed263/263 across twelve affected modules and three public Q4/mixed/
+S3 examples complete1/10/100 with onefactor and balanced3449.9808N weight.
+Wheel4c14d094...d3b7c binds391 modules; actual1thread/JIT off. Read review clear;
+no different-family qualification. All owned runs/reviewer terminal.
+[Delivery/raw/review](development/r8-b2-equilibrated-body-sections-20261002/results.md).
+
+Fixed-end/offset work, jumps, end closure and independent strain integration
+verify reconstructed fields. They do not supply loaded interior poses: inserting
+load bubbles into the point law changes constraint RHS/multiplier compliance.
+That mechanical extension remains M4/G4A. Nodal energy is not loaded-field energy.
+Retained fixtures expose dependent rows at a clamped endpoint and unchanged raw/
+typed mixed-load resolution failure at the other endpoint. Named ticket:
+B2_ENDPOINT_POINT_MIXED_LOAD_RESOLUTION; do not weaken admission to hide it.
+No GE gravity, consumer typed-load persistence or scientific G4A acceptance.
+Total active-axis force certificate does not certify every component/moment.
+
+Next integrated result: inspect the existing ANYfem public B2 load/persistence
+contract and add typed acceleration context without duplicating solver mechanics;
+independently resume the primary native physical-transfer/stability decision from
+combined evidence. Avoid indefinite B2 helper work or automatic refinements.
+F03 remains UNCONSUMED; full programme incomplete. Historical credential
+restriction persists; no push. Inspect Git for delivery commit; consumer unchanged.

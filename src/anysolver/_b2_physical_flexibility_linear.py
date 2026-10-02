@@ -376,6 +376,35 @@ class LocalSectionRecovery:
 
 
 @dataclass(frozen=True)
+class EquilibratedSectionRecovery:
+    """Static admissible fields, distinct from the nodal interpolation strain.
+
+    Interior concentrated actions have explicit left/right traces. At member
+    endpoints both columns are the inward trace. No loaded interior pose or
+    attachment compatibility is implied by these reconstructed fields.
+    """
+
+    stations: np.ndarray
+    resultants_left: np.ndarray
+    resultants_right: np.ndarray
+    strains_left: np.ndarray
+    strains_right: np.ndarray
+    endpoint_tractions: np.ndarray
+    operator_id: str = OPERATOR_ID
+    production_qualified: bool = False
+
+    def __post_init__(self):
+        n = len(self.stations)
+        for name, shape in (("stations", (n,)), ("resultants_left", (n, 6)),
+                            ("resultants_right", (n, 6)), ("strains_left", (n, 6)),
+                            ("strains_right", (n, 6)), ("endpoint_tractions", (12,))):
+            value = np.asarray(getattr(self, name), dtype=float)
+            if value.shape != shape or not np.isfinite(value).all():
+                raise RepresentabilityError("equilibrated section field is not representable")
+            object.__setattr__(self, name, np.frombuffer(value.tobytes(), dtype=float).reshape(shape))
+
+
+@dataclass(frozen=True)
 class LinearTrace:
     """Owned local reference points, offset poses, and their nodal derivatives."""
 
@@ -406,7 +435,7 @@ class LinearOperator:
 
     __slots__ = ("length", "section", "_stiffness", "_compliance", "_B",
                  "_modal", "_basic_inverse", "_trace_polynomials", "_sealed",
-                 "_tangent", "_output_certificate")
+                 "_tangent", "_output_certificate", "_uniform_load_map")
 
     def __setattr__(self, name, value):
         if getattr(self, "_sealed", False):
@@ -453,6 +482,10 @@ class LinearOperator:
                 coefficients[row][column] = pose[row]
         self._trace_polynomials = tuple(tuple(tuple(poly) for poly in row)
                                         for row in coefficients)
+        self._uniform_load_map = tuple(tuple(self.length*sum(
+            coefficient/Fraction(degree+1) for degree, coefficient in
+            enumerate(self._trace_polynomials[row][column])) for row in range(6))
+            for column in range(12))
         self._tangent = _nodal_tangent(self)
         self._output_certificate = _certify_output_tangent(self, self._tangent)
         self._sealed = True
@@ -546,6 +579,84 @@ class LinearOperator:
         resultants, strains = self._section_response(q, x)
         return LocalSectionRecovery(
             resultants, strains, np.array(x, dtype=float, copy=True))
+
+    def recover_equilibrated_sections(self, displacement, *, uniform_wrench=(0.,)*6,
+                                      point_actions=(), stations=(0., .5, 1.)):
+        """Reconstruct equilibrium under force/couple per reference length.
+
+        Point actions are (normalized interior station, external local wrench
+        about the reference axis). Endpoint actions remain nodal tractions.
+        Existing trace/element equations and nodal recovery are unchanged.
+        """
+        try:
+            u = np.asarray(displacement, dtype=float)
+            w = np.asarray(uniform_wrench, dtype=float)
+            x = np.asarray(stations, dtype=float)
+            submitted = tuple(point_actions)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("finite local state and physical section actions required") from exc
+        if (u.shape != (12,) or w.shape != (6,) or x.ndim != 1 or
+                not np.isfinite(u).all() or not np.isfinite(w).all() or
+                not np.isfinite(x).all() or np.any((x < 0.) | (x > 1.))):
+            raise ValueError("finite local state, wrench and normalized stations required")
+        actions = []
+        for action in submitted:
+            try:
+                station, wrench = action
+                values = np.asarray(wrench, dtype=float)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError("interior physical point action required") from exc
+            if (isinstance(station, (bool, np.bool_)) or not isinstance(station, (int, float)) or
+                    not math.isfinite(station) or not 0. < station < 1. or
+                    values.shape != (6,) or not np.isfinite(values).all()):
+                raise ValueError("finite strictly interior physical point action required")
+            actions.append((Fraction(float(station)), [Fraction(float(v)) for v in values]))
+        nodal = [Fraction(float(v)) for v in u]
+        distributed = [Fraction(float(v)) for v in w]
+        basic = self._basic_action(_multiply(self._B, nodal))
+        internal = _multiply(_transpose(self._B), basic)
+        # Integrate the existing polynomial trace exactly. No new stiffness,
+        # internal coordinate, numerical quadrature or dense global operation.
+        equivalent = _multiply(self._uniform_load_map, distributed)
+        for station, wrench in actions:
+            for column in range(12):
+                equivalent[column] += sum(wrench[row]*sum(
+                    coefficient*station**degree for degree, coefficient in
+                    enumerate(self._trace_polynomials[row][column])) for row in range(6))
+        tractions = [a-b for a,b in zip(internal, equivalent)]
+        left = [-v for v in tractions[:6]]
+
+        def cross_axis(vector):
+            return (Fraction(0), -vector[2], vector[1])
+
+        def section(station, right):
+            distance = self.length*station
+            n = [left[i]-distance*distributed[i] for i in range(3)]
+            hn, wp = cross_axis(left), cross_axis(distributed)
+            m = [left[i+3]-distance*hn[i]-distance*distributed[i+3]+distance**2*wp[i]/2
+                 for i in range(3)]
+            for at, wrench in actions:
+                if station > at or (right and station == at):
+                    lever = self.length*(station-at)
+                    turn = cross_axis(wrench)
+                    n = [n[i]-wrench[i] for i in range(3)]
+                    m = [m[i]-wrench[i+3]+lever*turn[i] for i in range(3)]
+            return n+m
+
+        # Exact stored-input work maps must give force and moment closure.
+        if section(Fraction(1), True) != tractions[6:]:
+            raise RepresentabilityError("equilibrated endpoint traction closure failed")
+        low, high, strain_low, strain_high = [], [], [], []
+        for value in x:
+            station = Fraction(float(value))
+            a, b = section(station, False), section(station, True)
+            low.append(a); high.append(b)
+            strain_low.append(_multiply(self._compliance, a))
+            strain_high.append(_multiply(self._compliance, b))
+        shape = (len(x), 6)
+        return EquilibratedSectionRecovery(np.array(x, copy=True),
+            _array(low).reshape(shape), _array(high).reshape(shape),
+            _array(strain_low).reshape(shape), _array(strain_high).reshape(shape), _array(tractions))
 
     def candidate_constant_axial_geometric_stiffness(self, axial_force):
         """Private centerline-stretch Hessian for constant conservative N.

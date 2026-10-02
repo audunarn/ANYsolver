@@ -1,5 +1,17 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October equilibrated body-section development delta:** typed B2 body loads
+now preserve model-bound context through static/batch solves and return separate
+equilibrated resultants/strains with actual interior attachment wrenches and
+sided jumps. Raw nodal equations, recovery and energy meanings are unchanged.
+Independent derivation/Read review and final installed263/263 plus three public
+1/10/100 examples pass; wheel4c14d094...d3b7c binds391 modules, actual1thread/JIT
+off. Two provenance findings repaired; fixture and endpoint mixed-load failures
+retained. B2_ENDPOINT_POINT_MIXED_LOAD_RESOLUTION, loaded interior pose, GE
+gravity, consumer load persistence and physical acceptance remain M4/G4A work.
+No aggregate gate is promoted; F03 UNCONSUMED; no push.
+[Exact delivery, raw and review](development/r8-b2-equilibrated-body-sections-20261002/results.md).
+
 **2 October B2 body-load implementation delta:** experimental reference-linear
 uniform acceleration now prepares owned equivalent nodal loads across Q4/mixed/S3
 and point/admitted nodal footprints. Independent physical work/wrench and
