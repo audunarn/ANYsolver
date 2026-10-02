@@ -68,3 +68,23 @@ the known identity-anchor frames on an owned copy. All failures remain retained.
 Next usable slice: exercise objective BL5/reference-linear parity and broader
 load/consumer integration by impact; keep physical connection acceptance separate.
 Do not launch a corrected U1 reference campaign or a fourth uniform mesh.
+
+## Public example and reference-linear parity
+
+After2067a594, the reference residual/tangent parity check now also exercises the
+explicit objective Q4 policy for P0/coarseP1. Four parity cases plus the public
+example pass source in13.788s/179109888B. Existing residual/gap/tangent thresholds
+are unchanged. This compares reference operators, not finite physical accuracy.
+
+`examples/stiffened_shell_bl5_staged.py` constructs its3Q4/2B3 definition through
+public types without importing test helpers. Signed100/-100N stages complete
+at .5/1/1.25/1.75/2 after cancellation, rebase, restore and identical continuation.
+Installed example passes in11.594s/172363776B on unchanged wheel d506e3f3...14be90;
+all398source/site module hashes were rechecked against the wheel manifest, with
+actual imported locations and1thread/JITdisabled checked. No rebuild was needed.
+Final equilibrium1.7531102372888848e-11 and compatibility1.3755035596190583e-17;
+12line-work samples recovered. These are solver checks, not connection fidelity.
+
+Archive example-installed-v1.zip SHA256 `d1122b5f1d3e3d956825d6e7362addf5cfacfc4ee54b81aee6612bec9a6e1d57`; source logs in example-source-v1.
+User documentation states the explicit policy, run command and scope limits.
+ANYfem line persistence and M2 acceptance remain open.

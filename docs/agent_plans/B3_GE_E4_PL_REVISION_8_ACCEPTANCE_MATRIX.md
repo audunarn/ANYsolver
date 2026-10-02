@@ -1,5 +1,12 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October BL5 public example:** objective/historical P0/coarseP1 reference
+operator parity passes. New public-API3Q4/2B3 signed staged example passes source
+and installed cancel/rebase/restart/continuation on unchanged wheeld506e3f3.
+User documentation reflects explicit Q4 policy and exclusions. Consumer line
+persistence and physical M2 acceptance remain open.
+[Evidence](development/r8-bl5-staged-loads-20261002/results.md).
+
 **2 October distributed material-history extension:** source and installed
 two-stiffener force-only route verifies simultaneous Q4 J2/physical-fibre yielding,
 yielded-prefix cancellation, snapshot/identical unload-reload continuation and

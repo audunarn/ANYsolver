@@ -26,8 +26,12 @@ def _evaluate(driver,state,pattern):
 
 
 @pytest.mark.parametrize("basis",["p0","continuous_p1_coarse"])
-def test_finite_line_reference_operator_matches_existing_sparse_linear(basis):
-    owner=stiffened_shell.create_analysis(definition=_model(basis=basis))
+@pytest.mark.parametrize("objective",[False,True])
+def test_finite_line_reference_operator_matches_existing_sparse_linear(basis,objective):
+    definition = _model(basis=basis)
+    if objective:
+        definition = replace(definition,q4_pullback_policy=stiffened_shell.Q4_ALGORITHMIC_PULLBACK_V1)
+    owner=stiffened_shell.create_analysis(definition=definition)
     driver=FinitePointDriver(owner)
     r,k,_,gap,_,_=_evaluate(driver,driver._state,np.zeros(owner._K.shape[0]))
     assert np.max(np.abs(r))<1e-10 and gap<1e-13

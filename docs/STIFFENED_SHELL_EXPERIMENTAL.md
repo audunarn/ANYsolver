@@ -228,10 +228,10 @@ Reference-linear and finite evaluations use the selected map consistently.
 The historical corotational policy remains the default. The selected policy
 changes model identity; checkpoints from the two maps cannot be interchanged.
 The existing anchor-envelope format is retained with that separate model
-identity. Selection requires at least one Q4 element and is currently admitted
-only for point panels, including mixed Q4/S3 panels. S3's existing map is
-unchanged. Unsupported material sections, line owners and all-S3 selection
-fail explicitly.
+identity. Selection requires at least one Q4 element. It is admitted for point
+panels, including mixed Q4/S3 panels, and elastic pure-Q4 BL5 line models with
+generalized beam sections. S3's existing map is unchanged. Other line/material
+combinations and all-S3 selection fail explicitly.
 
 ANYfem persists this selection in the separate experimental v3 panel schema;
 existing v1/v2 records retain their original selection and layout. These
@@ -335,6 +335,21 @@ candidate director/trace-chart failures backtrack; unclassified errors propagate
 Shell J2, physical-fibre lines, generalized plastic BL5 response, L1 finite
 analysis and qualified bonded-line claims remain excluded. Broader programme
 material/attachment requirements remain unfinished.
+
+With explicit `Q4_ALGORITHMIC_PULLBACK_V1`, elastic pure-Q4 BL5 models also admit
+`StagedDeadLoadProgramme` translation forces. Run:
+
+```text
+python examples/stiffened_shell_bl5_staged.py
+```
+
+This public-API example uses three Q4 shells and two native B3 elements with
+nonmatching segmentation, signed force stages, accepted-prefix cancellation,
+rotation rebasing and identical restored continuation. It reports experimental
+status and numerical equilibrium/compatibility, not physical accuracy. The
+historical Q4 policy remains unchanged and does not admit staged line loading.
+Distributed forces/couples, shell pressure and material histories on lines are
+outside this example's admitted scope. ANYfem line persistence remains unfinished.
 
 Run `scripts/experimental_stiffened_ge_bl5_history.py` with an installed
 development wheel for a3-Q4/2-B3, nonmatching3:4 elastic history and byte-exact

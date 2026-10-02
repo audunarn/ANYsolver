@@ -8,8 +8,8 @@ Risk-proportionate/tiered checks, scientific tolerances and protected evidence r
 Prior active note preserved byte-for-byte [here](development/r8-bl5-staged-loads-20261002/active-before-staged-lines.md).
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; base14c5d0eb plus current staged-line
-slice. ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
+branch codex/stiffened-main-reconcile-20261001; base2067a594 plus public line example
+and reference-parity checks. ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 branch codex/experimental-ge-panel-consumer, HEADe998e9b; no consumer edits this slice.
 Local commits permitted; no push/main merge/publication or contact-worker messaging.
 Historical archive contains credentials: no dissemination before authorized remediation.
@@ -32,6 +32,9 @@ adaptive/chart restart. Installed wheel d506e3f3...14be90 has398matching modules
 independent source/evidence review found no consequential issue. Historical line
 moment failures and test-helper failures preserved. No acceptance or release claim.
 [Complete slice evidence](development/r8-bl5-staged-loads-20261002/results.md).
+Public examples/stiffened_shell_bl5_staged.py now constructs and runs this path
+without test imports. Source/installed lifecycle passes on the same verified wheel;
+four historical/objective P0/P1 reference-parity cases pass. No new solver equation.
 
 ## Decision, uncertainty and next action
 
@@ -42,8 +45,9 @@ compliance at its actual discretization. Do not build a corrected U1 coupled
 reference or automatically repeat refinement/completion tests. Missing controlled
 coupled reference remains an M2/F03 obligation, not grounds for acceptance/failure.
 
-Next usable work: objective-BL5 reference-linear parity and load/consumer integration
-by impact, using this new policy explicitly. Staged line materials/S3 and distributed
+Next usable work: ANYfem experimental line-definition/staged-programme persistence
+through the same public solver types, with explicit distinct admission and no
+change to historical point schemas. Staged line materials/S3 and distributed
 line loads remain excluded until their compatibility and mechanics checks pass.
 All final topology/material/stability/capacity/scale/external/platform obligations
 remain mandatory. Do not repeat closed B2 or spectral campaigns without a discriminator.
