@@ -1,5 +1,19 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October native rigid-carrier normal-spin decision:** three prescribed levels
+complete with correct port pullback, work, release and wrench controls. Tip error
+3.0164% ->.48517% ->.10052%, but integratedFy error23.5946% ->8.4450% ->2.5023%
+and rootMz transfer24.8854% ->8.9086% ->2.6397%; highest moment remains2.9135%.
+Retain law/c2 candidate for development; boundary-layer transfer resolution stays
+OPEN, no fourthmesh or extrapolated1% acceptance. Tipwork/spin are one observable;
+this is normal-spin/bending, not beam-axis torsion or elastic coupled accuracy.
+Independent Read finding addressed with saved station/reaction data, no extra
+solve. Two analytical checks pass; initial import failure retained/repaired.
+Unchanged391module installedwheel4c14d094,211 onsite imports/run, actual1thread/
+JIT off; largest sampledRSS332464128B. FormalF03 UNCONSUMED; M2/G0B and complete
+mechanical/external/scale obligations remain OPEN.
+[Full interpretation, raw identities and review](development/r8-bl5-rigid-carrier-20261002/results.md).
+
 **2 October acceleration consumer integration delta:** ANYfem now persists
 explicit physical mass/density and ordered acceleration cases in separate Q4,
 mixed/S3 and Q4-footprint schemas; fresh public owners retain typed load context
