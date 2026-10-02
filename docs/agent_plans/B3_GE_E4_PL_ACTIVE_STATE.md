@@ -94,3 +94,35 @@ recording uses safe runtime allowlist; this new53member archive scanned clear.
 DO NOT PUSH/redistribute affected history until coordinated rotation/cleanup.
 Protected archive/history untouched. This is a dissemination block, not a reason
 to stop unrelated authorized local development. Full goal remains active.
+
+## Current material/consumer delivery
+
+Resumed by explicit user direction. Solver checkpointb4c10f00; product613e43f7
+unchanged. New public two-stiffener Q4 J2/physical-fibre staged example and full
+lifecycle test pass through unchanged installedwheel4c14d094...d3b7c,391modules.
+Actual simultaneous updates at1/3/4; reverse flow, complete histories/energy,
+force/moment balance, numerical rejection4/3.5, exception/cancellation atomicity,
+actual chart zeroing and restart continuation checked. Stage2 unloading is plastic.
+Final test119.030s/180449280B; public example74.334s/155455488B; actual1thread/JIToff.
+Separate Read source/evidence review clear. Initial inactive-shell failure and
+passed-source predecessor retained separately from final installed assertions.
+[Exact source, raw evidence and remaining limits](development/r8-ge-simultaneous-fibres-20261002/results.md).
+
+Solver dirty owned slice: example/test, result/review/raw records, this note and
+acceptance matrix; local commit next. Full programme remains incomplete. No new
+product wheel, broad campaign, formalF03 or aggregate acceptance is needed here.
+Sessions63788/87643 terminal0; do not restart them. Raw temporary evidence remains
+under C:/Users/AudunArnesenNyhus/AppData/Local/Temp/r8-ge-simultaneous-fibres-installed-v1.
+
+Consumer worker /root/b2_body_consumer owns ONLY
+examples/stiffened_shell_coupled_plastic_history_consumer.py and new
+ tests/test_stiffened_shell_simultaneous_history_consumer.py in ANYfem's above
+worktree. It is adapting the copied public fixture to existing typed native
+Project save/reopen, staged inputs and fresh-owner checkpoint continuation.
+No product/schema changes or numerical jobs delegated. Root owns installed
+verification, diff reconciliation and Git. Review worker is terminal/available.
+Next: inspect consumer changes, execute its focused installed workflow against
+unchanged artifact pair, independent review, then preserve and integrate it.
+S3 simultaneous plasticity, biaxial/large-rotation histories, typed recoverable
+material failure and the complete G3/M4 envelope remain OPEN. Dissemination
+restriction, protected history, scientific limits and unconsumedF03 persist.

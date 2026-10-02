@@ -1,5 +1,17 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October simultaneous material-history development:** two parallel native
+stiffeners with mixed physical-fibre/generalized sections and two Q4 J2 shells
+show actual simultaneous shell/fibre updates at positions1/3/4. Final installed
+lifecycle test and public staged example pass; rejection/exception/cancellation,
+real chart rebase, complete compensated histories, physical balance, independent
+fibre dissipation and restart checked. Separate Read review clear. No product
+equation or threshold change; initial inactive-shell fixture failure retained.
+This is scoped G3/M4 development evidence. General biaxial/large-rotation/S3
+simultaneous histories, full material/attachment envelope and aggregate acceptance
+remain OPEN. ANYfem native Project integration follows; F03 UNCONSUMED.
+[Evidence and limits](development/r8-ge-simultaneous-fibres-20261002/results.md).
+
 **2 October native rigid-carrier normal-spin decision:** three prescribed levels
 complete with correct port pullback, work, release and wrench controls. Tip error
 3.0164% ->.48517% ->.10052%, but integratedFy error23.5946% ->8.4450% ->2.5023%
