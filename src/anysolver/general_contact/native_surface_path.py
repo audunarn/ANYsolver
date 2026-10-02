@@ -108,8 +108,9 @@ def _certify_material_path(pair, start, translations, angular, shell_increment,
     """Certify strict facet ownership and unchanged open/closed state.
 
     Quadratic Bernstein bounds certify target orientation and area. Global
-    Lipschitz bounds enclose gap and each signed physical edge distance on every
-    visited interval. Sampling detects failures but never establishes success.
+    Lipschitz bounds enclose gap and each signed physical edge distance. A
+    second-derivative interpolation bound also encloses the gap on each interval.
+    Sampling detects failures but never establishes success.
     """
     if type(maximum_intervals) is not int or maximum_intervals < 1:
         raise ValueError('explicit state and positive interval cap required')
@@ -145,6 +146,11 @@ def _certify_material_path(pair, start, translations, angular, shell_increment,
         return result(False, 'target orientation/area unresolved', 0)
     normal_speed = (np.linalg.norm(a1-a0)*max(np.linalg.norm(b0), np.linalg.norm(b1))
         +np.linalg.norm(b1-b0)*max(np.linalg.norm(a0), np.linalg.norm(a1)))/area_lower
+    da,db=a1-a0,b1-b0
+    cross_speed=max(np.linalg.norm(np.cross(da,b0)+np.cross(a0,db)),
+                    np.linalg.norm(np.cross(da,b1)+np.cross(a1,db)))
+    normal_acceleration=(2*np.linalg.norm(np.cross(da,db))/area_lower
+                         +3*cross_speed**2/area_lower**2)
     variation = source.surface_variations(start.positions, start.position_low, start.cell_rotations)
     arm = np.linalg.norm(variation.surface_arm)
     nodes0 = start.positions+start.position_low
@@ -165,6 +171,8 @@ def _certify_material_path(pair, start, translations, angular, shell_increment,
         relative_speed = speed+np.linalg.norm(last[i]-first[i])
         if i == 0:
             gap_rate = relative_speed+normal_speed*radius
+            gap_curvature=(normal_acceleration*radius+2*normal_speed*relative_speed
+                           +np.linalg.norm(np.asarray(angular)[cell])**2*arm)
         edge = first[(i+1)%3]-first[i]
         change = last[(i+1)%3]-last[i]-edge
         denominator = change @ change
@@ -211,7 +219,12 @@ def _certify_material_path(pair, start, translations, angular, shell_increment,
         lo, hi, left, right = stack.pop(); count += 1
         if min(np.min(left), np.min(right)) < 0:
             return result(False, 'opening/closure or facet exit', count)
-        if np.all(np.minimum(left, right)-.5*(hi-lo)*rates-padding > 0):
+        lower=np.minimum(left,right)-.5*(hi-lo)*rates
+        if closed is not None:
+            # |g - linear endpoint interpolation| <= sup|g''| h^2/8.
+            # The sign-reversed closed margin has the same curvature bound.
+            lower[0]=max(lower[0],min(left[0],right[0])-gap_curvature*(hi-lo)**2/8)
+        if np.all(lower-padding > 0):
             continue
         mid = .5*(lo+hi)
         if mid in (lo, hi):

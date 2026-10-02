@@ -1,0 +1,46 @@
+
+def test_capture_unloading_path_certificate_discrepancy(monkeypatch):
+    """Bounded development capture; sampled fields diagnose, never certify."""
+    import json, os
+    from pathlib import Path
+    from dataclasses import asdict
+    from anysolver.general_contact.native_surface_path import material_path_pose, certify_material_ownership
+    owner,bridge=_patch(activation_policy='transverse_events')
+    transaction=NativeS3MaterialTransaction(bridge)
+    owner.solve_material_increment(transaction,1.)
+    records=[]
+    for index,pair in enumerate(bridge.pair.pairs):
+        original=pair.evaluate_path
+        def capture(start,history,translations,angular,shell_increment,*,maximum_intervals=256,
+                    pair=pair,index=index,original=original):
+            try:return original(start,history,translations,angular,shell_increment,maximum_intervals=maximum_intervals)
+            except ValueError as error:
+                if 'interval budget exhausted' not in str(error):raise
+                if len(records)>=128:raise RuntimeError('capture record limit')
+                gaps=[]; bary=[]
+                for alpha in np.linspace(0.,1.,33):
+                    pose=material_path_pose(start,translations,angular,shell_increment,float(alpha))
+                    point=pair.source.evaluate(pose.positions,pose.position_low,pose.cell_rotations).surface_position
+                    target=pair.target.physical_pose(pose.shell_displacement)
+                    gap=float((point-np.asarray(target.position))@np.asarray(target.material_frame)[:,2])
+                    corners=pair.target.adapter.current_positions(pose.shell_displacement)
+                    uv=np.linalg.lstsq(np.column_stack((corners[1]-corners[0],corners[2]-corners[0])),point-corners[0],rcond=None)[0]
+                    gaps.append(gap);bary.append(float(min(uv[0],uv[1],1-uv.sum())))
+                ownership=certify_material_ownership(pair,start,translations,angular,shell_increment,maximum_intervals=maximum_intervals)
+                records.append(dict(point=index,definition=pair._definition(),start={k:v.tolist() for k,v in vars(start).items()},
+                    history=asdict(history),translations=np.asarray(translations).tolist(),angular=np.asarray(angular).tolist(),
+                    shell_increment=np.asarray(shell_increment).tolist(),gaps=gaps,min_bary=min(bary),
+                    ownership=asdict(ownership),reason=str(error)))
+                raise
+        monkeypatch.setattr(pair,'evaluate_path',capture)
+    failure=None
+    for parameter in (.8,.6,.4,.2,0.):
+        try:owner.solve_material_increment(transaction,parameter)
+        except RuntimeError as error:
+            failure=str(error);break
+    assert failure is not None and records
+    path=Path(os.environ['CONTACT_RELEASE_CAPTURE']);path.parent.mkdir(parents=True,exist_ok=True)
+    path.write_text(json.dumps(dict(parameter=parameter,failure=failure,records=records),indent=2))
+    last=records[-1]
+    print('CAPTURE',len(records),'load',parameter,'last gap range',min(last['gaps']),max(last['gaps']),
+          'bary',last['min_bary'],'ownership',last['ownership'])

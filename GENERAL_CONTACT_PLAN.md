@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.20. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.21. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -256,20 +256,22 @@ engineering acceptance. [Evidence](docs/d1_review_support/contact_c6_free_sphere
 One additional history/work/V6 split check passes on the same unchanged wheel;
 172distinct checks are covered, with unaffected results reused by impact analysis.
 
-**Next bounded decision:** capture the first rejected native/S3 unloading path
-and classify its signed-gap and facet-ownership bounds. The coupled four-point
-press/open/recontact case still fails with interval-budget exhaustion, including
-smaller load steps. Do not repeat the complete lifecycle or enlarge limits before
-that local diagnosis. A same-sign monotone certificate experiment did not resolve
-the failure and was removed; its failed evidence is retained.
+**Next bounded decision:** independently evaluate physical gap over the fixed
+native surface patch and separate integration from normal enforcement error. The
+2x2/4x4/8x8 coupled screen converged;4x4->8x8 reaction changes0.105% and tip
+z0.368%, while maximum sampled penetration grows from0.138 to0.570mm. Agreement
+of integrated response is not a continuous-gap or engineering-acceptance result.
+Use the actual straight-reference patch's independent extremum calculation before
+another integration-order increase. Resource cap remains180s/953MiB.
 
-The explicit transverse_events candidate integrates disposable unloading history
-to a unique release root. Independent held-slip unloading shows decreasing work
-error (6.25%,1.5625%,0.390625% at16/64/256substeps). Review exposed exact-touch
-bypass and cancellation of small dissipation increments against large cumulative
-history; both corrected with focused regression evidence. This is local evidence,
-not a working coupled release delivery. See
-[release results](docs/d1_review_support/contact_c5_native_surface_point_20261002/release_results.md).
+Coupled rotating press/open/recontact/restart now passes. A captured failed path
+had strict facet ownership and about20micrometres compression throughout; the
+first-derivative enclosure was too loose. A conservative second-derivative gap
+interpolation bound resolves it without changing mechanics or caps.20focused
+checks pass, including historical hidden-crossing cases; independent source review
+found no defect in the proof. The saved reproducer also binds the exact definition.
+[Resolution and integration evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/release_resolution.md)
+retains all earlier release failures and supersedes their unresolved disposition.
 
 A fixed reference-area swept patch now shares the existing native contributor,
 owner and V2 transaction. Curved-reference frame derivatives give the physical

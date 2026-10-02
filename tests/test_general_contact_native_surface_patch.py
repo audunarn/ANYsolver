@@ -11,11 +11,11 @@ from anysolver.general_contact.s3_friction_point import S3SkinMaterialPoint
 from test_general_contact_native_retained_s3_static import _analysis
 
 
-def _patch(*,activation_policy='transverse_first_touch'):
+def _patch(*,activation_policy='transverse_first_touch',axial_order=2,angular_order=2):
     owner=_analysis(targets=(1.,1.05))
     reference=owner.context.elements[0][1].operator.reference
     rule=NativeRoundSurfaceRule(1,reference,.049,xi_range=(.2,.8),
-        angle_range=(np.pi-.34,np.pi+.34),axial_order=2,angular_order=2)
+        angle_range=(np.pi-.34,np.pi+.34),axial_order=axial_order,angular_order=angular_order)
     corners=owner.contact.shell.reference_positions
     edges=np.column_stack((corners[1]-corners[0],corners[2]-corners[0]))
     targets=[]

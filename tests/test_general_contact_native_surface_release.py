@@ -75,3 +75,21 @@ def test_exact_release_endpoint_matches_beyond_endpoint_and_retains_small_work()
         assert result.trial.dissipated_increment_density==pytest.approx(.0045*15/16,rel=1e-10)
         assert result.trial.candidate_state.partner_key is None
     assert results[0].event_fraction==1.
+
+
+def test_saved_closed_unloading_path_has_bounded_gap_certificate():
+    import json
+    from pathlib import Path
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    from anysolver.general_contact.native_surface_path import certify_material_path
+    record=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/release_rejected_path.json').read_text())['record']
+    _,bridge=_patch(activation_policy='transverse_events')
+    pair=bridge.pair.pairs[record['point']]
+    from anysolver._ge_beam3_p5_seeded.core import sha
+    assert sha(record['definition'])==pair.definition_sha256
+    start=NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in record['start'].items()})
+    result=certify_material_path(pair,start,np.asarray(record['translations']),np.asarray(record['angular']),
+        np.asarray(record['shell_increment']),closed=True,maximum_intervals=128)
+    assert result.certified
+    assert result.intervals<=3
+

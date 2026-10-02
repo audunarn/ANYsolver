@@ -2,9 +2,9 @@
 
 ## Authority and location
 
-Full C0ï¿½C9 remains active under goal2026-09-30.4, plan2026-10-02.20,
+Full C0ï¿½C9 remains active under goal2026-09-30.4, plan2026-10-02.21,
 policy2026-09-24.2. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001, base f13e78c6 plus this checkpoint.
+branch codex/contact-main-reconcile-20261001, base 08d88b8e plus this checkpoint.
 No original-worktree or other-chat inspection/communication, publication, main
 merge, release, historical-default or shared ABC-guard changes. Tiered workflow;
 prior local/Mistral failures remain, no availability-only reprobes.
@@ -38,26 +38,24 @@ Evidence: contact_c5_native_surface_point_20261002/surface_patch_results.md/.jso
 and surface_patch_raw.zip, including the retained initial target-ownership fixture
 failure. No general surface-gap or between-sample regularity claim.
 
-## Next bounded action — coupled release failure remains open
+## Latest resolution and next bounded action
 
-New explicit transverse_events policy binds event_history_substeps into identity.
-Unique monotone release integrates scalar return maps on the actual rotating path,
-retains dissipation and reports residual storage release; open endpoint work/tangent
-are zero. Local analytic unloading16/64/256substeps passes. Exact-root versus
-beyond-root history regression passes after independent review found a bypass.
-Direct accumulation preserves small reported increments against large prior totals.
+Captured34 rejected paths at load.8. Last retained path is compressed about20um
+and facet ownership certifies in1interval; first-derivative gap enclosure exhausted
+128. Added conservative |g''| bound and endpoint interpolation remainder M*h^2/8.
+It retains all edge/orientation/ownership checks and the same resource limits.
+20focused checks pass, including actual rotating patch press/open/recontact and
+exact restart; saved fixture binding check passes. Independent source review found
+no proof defect. No live numerical process/worker. Earlier failures remain evidence.
 
-The real four-point press/open/recontact test FAILS with geometric interval-budget
-exhaustion. Direct1->0 and .8/.6/.4/.2/0 unloading both failed. A same-sign monotone
-certificate did not fix it and was removed. All four runs retained in release_raw.zip;
-release_results.md/.json describe current hashes and limitations. The new lifecycle
-test is intentionally still failing, not xfailed or accepted. No live process/worker.
-
-Next: capture the first rejected candidate's exact pose/increments and identify
-whether gap or facet ownership defeats the bounded certificate. Do not repeat the
-full lifecycle or increase budgets until that kernel diagnosis changes the action.
-Distributed integration/refinement, continuous surface gaps, boundary transfer,
-classical finite R(s), native installed delivery and C5 acceptance remain open.
+One prospective 2x2/4x4/8x8 integration screen completed: reaction4->8 changes
+0.105%, tip z0.368%; sampled worst gap grows0.138->0.570mm. Next: independent
+physical gap extrema over this straight-reference patch, then enforcement versus
+integration assessment. Do not claim gap convergence from sampled data or repeat
+integration orders without that discriminator. General curved boundaries, partner
+transfer, installed native delivery and C5 acceptance remain open.
+Evidence: contact_c5_native_surface_point_20261002/release_resolution.md/.json,
+release_resolution_raw.zip, release_rejected_path.json and capture script.
 
 ## Scope and resources
 
@@ -69,7 +67,7 @@ Do not modify it or repeat consumed full shell workflow authorities.
 
 Routine180s/953MiB; named integrated ceiling900s/4GB, stricter frozen limits prevail.
 Original120active-hour budget = goal seconds+3120, never reset. Last observed
-244694+3120 =68.837h, advancing. Reassess at72h; at120h checkpoint/user decision.
+246934+3120 =69.459h, advancing. Reassess at72h; at120h checkpoint/user decision.
 Retained earlier transaction/path failures and all prior resources/evidence:
 [Part62](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART62.md),
 which links Part61/60. No new acceptance or release is implied by this checkpoint.

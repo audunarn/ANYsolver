@@ -961,3 +961,11 @@ exact-endpoint regression evidence, but its coupled patch opening/recontact test
 still fails geometric path admission. Smaller steps did not resolve it. No coupled
 release admission is claimed; the failed test and raw attempts are retained.
 [Release candidate](d1_review_support/contact_c5_native_surface_point_20261002/release_results.md).
+
+The captured release failure is now resolved by a conservative second-derivative
+gap enclosure.20focused checks pass, including actual patch opening/recontact and
+exact restart; independent source scrutiny supports the bound. A2x2/4x4/8x8
+coupled integration screen completes, but increasing sampled penetration makes
+independent physical-gap/extremum and enforcement assessment the next requirement.
+No continuous-gap or C5 acceptance claim follows from integrated-force agreement.
+[Resolution](d1_review_support/contact_c5_native_surface_point_20261002/release_resolution.md).
