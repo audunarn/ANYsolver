@@ -1300,3 +1300,12 @@ checks pass on wheel dd8ce52c...954cc74; all 398 module bytes match. Failed init
 test-fixture run is retained. No mechanics, tolerance or checkpoint-policy change,
 physical acceptance or F03 consumption. ANYfem distributed-BL5 persistence remains
 open. [Evidence](development/r8-bl5-distributed-20261002/results.md).
+
+
+**2 October distributed BL5 consumer:** ANYfem330cb22 preserves strict fixed
+force/couple or programme descriptors through standalone and native Project
+records.17 source and53 installed checks pass on consumer091b5d74...c66b786 /
+solverdd8ce52c...954cc74; unchanged historical formats, cancellation/chart/restart
+and exact continued state verified. Independent review clear within this bounded
+scope. Full G4/G6 and physical BL5 acceptance remain open.
+[Evidence](development/r8-anyfem-bl5-distributed-20261002/results.md).

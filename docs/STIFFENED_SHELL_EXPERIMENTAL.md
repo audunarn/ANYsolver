@@ -376,7 +376,9 @@ physical wrench balance, cancellation, rejected-trial preservation, chart restar
 and continued stepping. A mixed point/BL5 layout also passes. These are bounded
 integration checks, not acceptance of arbitrary layouts or BL5 physical accuracy.
 Historical Q4, L1 and footprint distributed-load admission remain unchanged.
-ANYfem BL5 distributed-load persistence is not yet implemented. Zero-load relative
+ANYfem now persists fixed and staged distributed BL5 inputs through distinct
+experimental envelopes and the native Project route; installed continuation
+checks pass. Zero-load relative
 assessment and all outstanding scientific obligations remain unchanged.
 
 Run `scripts/experimental_stiffened_ge_bl5_history.py` with an installed

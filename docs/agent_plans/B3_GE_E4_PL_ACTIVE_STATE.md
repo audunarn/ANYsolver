@@ -8,8 +8,8 @@ Risk-proportionate/tiered checks, scientific tolerances and protected evidence r
 Prior active note preserved byte-for-byte [here](development/r8-bl5-staged-loads-20261002/active-before-staged-lines.md).
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; solver basea0465a88 plus distributed-BL5 admission and evidence. ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer, HEAD8c411ec; consumer slice committed.
+branch codex/stiffened-main-reconcile-20261001; solver source58286d90; consumer evidence update follows. ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
+branch codex/experimental-ge-panel-consumer, HEAD330cb22; distributed consumer slice committed.
 Local commits permitted; no push/main merge/publication or contact-worker messaging.
 Historical archive contains credentials: no dissemination before authorized remediation.
 No numerical job live. At most3workers/one heavy numerical job;100krows/600s/8GiB/
@@ -47,9 +47,12 @@ coupled reference remains an M2/F03 obligation, not grounds for acceptance/failu
 ANYfem BL5 objective/staged inputs and distinct native Project route are delivered:
 49 source and70 installed checks pass, including cancellation/chart/restart.
 [Consumer evidence](development/r8-anyfem-bl5-project-20261002/results.md).
-Next: persist distributed BL5 inputs through the existing ANYfem experimental
-route, preserving the newly verified solver admission; no repeat consumer
-campaign without changed inputs. Line materials/S3 remain excluded. Native distributed BL5 loading now passes
+Distributed BL5 consumer persistence is now delivered:17 source and53 installed
+checks pass; independent review clear.
+[Consumer load evidence](development/r8-anyfem-bl5-distributed-20261002/results.md).
+Next: assess the missing line material-history integration against the existing
+algorithmic Q4 and native material owner. Preserve elastic admission until actual
+yielded-trial, rejection and restart checks justify a distinct extension. Line materials/S3 remain excluded. Native distributed BL5 loading now passes
 source and 11 installed checks, including signed stages, work, chart restart and
 a mixed point/line layout. Review clear within bounded experimental scope.
 [Distributed integration evidence](development/r8-bl5-distributed-20261002/results.md).
