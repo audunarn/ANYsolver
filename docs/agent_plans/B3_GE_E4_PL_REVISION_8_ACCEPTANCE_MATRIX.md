@@ -1,5 +1,14 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+
+**2 October coupled material excursion/branch:** implementation unchanged at
+33f7ba7c. Installed local unload/reload regression passes with exact paired-field
+and checkpoint restart. Bounded −70/−72um continuation also passes; actual
+compression reduces to485.652/483.431N. This supports observed equilibrium
+softening only; original−500N force-history failure, full cyclic qualification,
+physical stability and capacity remain OPEN. No aggregate gate closes.
+[Evidence and limitations](development/r8-event-material-excursion-20261002/results.md).
+
 **2 October BL5 public example:** objective/historical P0/coarseP1 reference
 operator parity passes. New public-API3Q4/2B3 signed staged example passes source
 and installed cancel/rebase/restart/continuation on unchanged wheeld506e3f3.
