@@ -1,36 +1,38 @@
 # General contact restart — 2 October 2026
 
 Full C0–C9 active. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Baseb21de1ca plus owned sequence routing.
-Goal2026-09-30.4/plan2026-10-02.46 govern. No original-worktree/other-chat access;
+branch codex/contact-main-reconcile-20261001. Basef3e6db3f plus owned local-front slice.
+Goal2026-09-30.4/plan2026-10-02.47 govern. No original-worktree/other-chat access;
 no main merge/push/publication/release/default/shared ABC changes. Tiered workflow;
-optional lower tiers previously unavailable. Owned OpenAI source review only.
+optional lower tiers previously unavailable. Owned OpenAI development reviews only.
 
-NEW: explicit transverse_event_sequence routes signed closed/open endpoints and certified
-no-event persistence. V2 definition binds restart; old V1 checkpoint rejects. Initially
-active opening replay retains first window and subsequent recontact work. Reviewer found
-closed persistence admitted released history; matching-partner guard/negative test added.
-Eight distinct focused checks passed; one failed parity fixture retained (old certificate
-rejected .8 rotation); .3 reference-admitted parity passed. Saved closed point .79,pi+.013
-replays as persistence, gap-.000704422676m, cumulativeD0. No coupled acceptance claim.
+NEW mixed endpoint aggregate helper has local stationary-strip enclosure:
+H=-A/B, H_t=0 => dH*/dangle=-A_angle/B; padded crossnorm*radius / padded min|B|,
+full uncertainty expansion/outward bounds. Only local strip needs open captured endpoints.
+Closed neighbor retained. Reviewer zero-branch closed-panel counterexample fixed. Geometry
+and independent zero-stationary closed force tests pass; full mixed integral still FAILS.
 
-Next principal question: local stationary uncertainty strips may remain open at captured
-endpoints even when rest of panel is closed. Current aggregate unnecessarily demands whole
-panel open. Derive local strip proof/error accounting, use one manufactured axial-varying
-pulse with closed neighbor as discriminator; retain both-body force/tangent outside strip.
-Do not apply open-strip zero-force logic to closed strips. Then multi-segment cumulative
-work. No blind refinement/cap increase/saved fullpatch retry before support is ready.
+Mixed failure1: duplicated endpoint roots/uncertainty edges made unresolved-gap micro-panels.
+Keep sole captured-pose endpoint roots; whole domain integrated, stationary strip bound kept.
+Mixed failure2: support128 at464queries/18frontqueries. Exact angular-band proof cache across
+axial children only reaches488/21, still128 atpanel4,error37.4572. No cap increase/speed claim.
+Final mixed test explicit-only via ANYSOLVER_RUN_UNRESOLVED_MIXED_FRONT=1; NOT a suite pass.
 
-Prior closed-ending original-origin Jet2 point helper passed independent work/force and
-both-body tangent checks. Open-endpoint aggregate pass remains one segment/one stationary
-branch only;75.6385s/234139648bytes.32substep history is discrete, not continuum convergence.
-First native load/rebase/restore passed development; secondload/split still unpassed.
-D1-interior/named D2 accepted; fullprogramme incomplete. Installed shell unchanged.
+Next principal action: derive prepared whole-angle coefficient/derivative error bounds from
+complete branch certificate, reuse for individual queried roots rather than recomputing
+full slabs per angle. Compare against current slab oracle/analytical roots before one same
+mixed-case replay. Preserve actual support accounting, strict B/root/uncertainty checks;
+no affine shortcut or blind fullpatch retry. Then multisegment work/closed-strip bounds.
+
+Explicit sequence V2 point routing already passes closing/opening/persistence and restart
+identity checks. Original-origin closed Jet2 tangent passed both-body tests. Existing open
+moving-front aggregate pass is one segment/open endpoints only.32substep history discrete,
+not continuum convergence. First native load/rebase/restore passes development; secondload/
+split unpassed. D1-interior/named D2 accepted; fullprogramme incomplete; installed unchanged.
 
 Evidence docs/d1_review_support/contact_c5_native_surface_point_20261002:
-event_sequence_routing_results.md/raw.zip/source.json; closed_event_sequence_results.md;
-front_work_integration_results.md; failures and restart history retained. No live numerical
-process; owned review completed. Routine180s/953MiB; named900s/3814MiB;
-native120s/context unchanged; consumed authorities remain consumed.
-120active-hour limit=goal seconds+3120; last76h advancing, no extension. At120h checkpoint
-and request decision. Full completion forecast unsupported.
+local_front_integration_results.md/raw.zip/source.json; event_sequence_routing_results.md;
+closed_event_sequence_results.md; prior plan section/restart histories retained. No live
+numerical process or reviewer. Routine180s/953MiB; named900s/3814MiB; native120s/context
+unchanged; consumed authorities remain consumed.120h limit=goal seconds+3120; last76.37h
+advancing, no extension. At120h checkpoint/request decision. Forecast unsupported.

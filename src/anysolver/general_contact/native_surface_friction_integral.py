@@ -88,7 +88,21 @@ def integrate_open_event_friction_fronts(field,settings,*,maximum_axial_uncertai
     return integrate_material_friction(field,settings,_front_uncertainty=maximum_axial_uncertainty)
 
 
-def integrate_material_friction(field,settings,*,_front_uncertainty=None):
+def integrate_event_friction_fronts(field,settings,*,maximum_axial_uncertainty):
+    """Development mixed endpoint integration with locally open front strips.
+
+    One segment/one stationary branch; closed material outside certified open
+    strips contributes its full endpoint force and tangent through point replay.
+    """
+    if not np.isfinite(maximum_axial_uncertainty) or maximum_axial_uncertainty<=0:
+        raise ValueError('positive explicit axial-front uncertainty required')
+    if field.patch.pairs[0].activation_policy!='transverse_event_sequence':
+        raise ValueError('moving-front development requires event-sequence policy')
+    return integrate_material_friction(field,settings,_front_uncertainty=maximum_axial_uncertainty,
+        _local_front_strips=True)
+
+
+def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_front_strips=False):
     """Friction-only work at the endpoint of the field's last declared segment.
 
     Its tangent holds earlier physical segments fixed. Partitions include contact
@@ -131,7 +145,7 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None):
         coefficients[cell]=[_coefficients(field,pose,cell) for pose in poses]
         panels.extend(front_panels(cell,left,right,alo,ahi))
     budget=NativeSurfaceReplayBudget(settings.maximum_point_paths)
-    cache={};front_cache={};front_error={};front_covers={};front_axes={};visited=accepted=empty_certificates=0
+    cache={};front_cache={};front_error={};front_covers={};front_axes={};front_band_cache={};visited=accepted=empty_certificates=0
     last_error=None
     open_queries=0
     size=60+60*60+4
@@ -209,7 +223,12 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None):
                                 queries=len(cache),front_queries=len(front_cache),support_intervals=support_budget.intervals,
                                 previous_scaled_error=last_error,axial_refinements=sum(front_axes.values()),
                                 angular_refinements=len(front_axes)-sum(front_axes.values()))) from error
-                        for value in (*stationary,*endpoints):
+                        # Captured-pose coefficient roots already partition endpoint
+                        # transitions. Do not add nearly coincident interval edges:
+                        # that manufactures unresolved-gap micro-panels. The full
+                        # domain remains covered, with the existing adaptive rule.
+                        # Stationary strips alone receive enclosure work accounting.
+                        for value in (stationary if _local_front_strips else (*stationary,*endpoints)):
                             cuts.extend((*value.axial_interval,value.axial_coordinate))
                         strips.extend(value.axial_interval for value in stationary)
                     front_cache[key]=(tuple(cuts),tuple(strips))
@@ -261,27 +280,52 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None):
             from .native_surface_front import stationary_front_angular_cover
             from .native_surface_support import _minimum
             cell,left,right,lower,upper=parent
+            all_endpoints_open=True
             for pose in poses:
                 gap,padding=_minimum(pose,field.patch.target,reference.nodal_triads[0],
                     rule.definition['radius'],cell,(left,right),(lower,upper))
-                if gap<=padding:raise ValueError('moving-front work slice requires open captured endpoints')
-            branch_count=0;covers=[]
-            for index in range(len(field.segments)):
-                cover=stationary_front_angular_cover(field,cell,index,(lower,upper),budget=support_budget)
-                covers.append(cover);branch_count+=len(cover)
-            front_covers[parent]=tuple(covers)
+                all_endpoints_open=all_endpoints_open and gap>padding
+            if not _local_front_strips and not all_endpoints_open:
+                raise ValueError('moving-front work slice requires open captured endpoints')
+            # Angular proof geometry is independent of an axial child panel.
+            # Reuse only identical bands within this immutable field evaluation.
+            band=(cell,lower,upper)
+            if _local_front_strips and band in front_band_cache:
+                covers,envelopes=front_band_cache[band]
+            else:
+                covers=tuple(stationary_front_angular_cover(field,cell,index,(lower,upper),budget=support_budget)
+                    for index in range(len(field.segments)))
+                envelopes=None
+            branch_count=sum(map(len,covers))
+            front_covers[parent]=covers
             if branch_count:
                 if branch_count!=1 or len(field.segments)!=1:
                     raise ValueError('front strip work requires one certified stationary branch and segment')
+                if _local_front_strips:
+                    from .native_surface_front import stationary_front_angular_envelopes
+                    if envelopes is None:
+                        envelopes=stationary_front_angular_envelopes(field,covers[0],
+                            maximum_axial_uncertainty=_front_uncertainty,budget=support_budget)
+                    front_band_cache[band]=(covers,envelopes)
+                    for a,b in envelopes:
+                        a,b=max(left,a),min(right,b)
+                        if a>=b:continue
+                        for pose in poses:
+                            gap,padding=_minimum(pose,field.patch.target,reference.nodal_triads[0],
+                                rule.definition['radius'],cell,(a,b),(lower,upper))
+                            if gap<=padding:
+                                raise ValueError('stationary uncertainty strip has unresolved or closed captured endpoint')
                 from .native_surface_front_work import open_front_strip_work_bound
                 density=open_front_strip_work_bound(field,cell,_front_uncertainty)
                 measure=rule.definition['radius']*np.linalg.norm(reference.coordinates[cell+1]-reference.coordinates[cell])
                 error=np.zeros(size)
                 error[-4:]=.5*density*_front_uncertainty*(upper-lower)*measure
                 front_error[parent]=error
+            if _local_front_strips and not branch_count:
+                front_band_cache[band]=(covers,())
             # Nonzero B, no stationary H, and open endpoint rectangles exclude
             # all crossings. Stationary branches require explicit moving cuts.
-            return HistoryPanelSupport('resolved' if branch_count else 'open',parent,
+            return HistoryPanelSupport('open' if not branch_count and all_endpoints_open else 'resolved',parent,
                 'whole-angle stationary branches; explicit moving cuts')
         pending=[parent];all_open=True;last_unresolved=None
         while pending:
@@ -344,5 +388,6 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None):
             open_material_queries_certified=open_queries,
             certified_intervals=orientation_intervals+budget.certified_intervals,
             support_intervals=support_budget.intervals,
+            cached_angular_front_bands=len(front_band_cache),
             stationary_strip_work_error_j=sum((front_error.get(leaf[0],np.zeros(size))[-4:] for leaf in leaves),np.zeros(4)).tolist(),
             maximum_scaled_error_estimate=float(np.max(scale*errors)),estimator='GAUSS_4_8_DIFFERENCE'))

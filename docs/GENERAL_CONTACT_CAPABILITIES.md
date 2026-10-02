@@ -1059,3 +1059,8 @@ Native explicit event-sequence V2 point routing: closing/opening/persistence, in
 multiple windows and checkpoint identity checks pass in development. Saved closed point
 replays on persistence branch. Aggregate mixed-endpoint/multisegment support and coupled
 second load/restart remain incomplete. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/event_sequence_routing_results.md).
+
+Local stationary-strip mixed-endpoint development: geometry enclosure and closed-material
+zero-branch guard pass independent controls. Mixed aggregate candidate exhausts unchanged
+support128 after488queries; remains unpassed. No capability promotion or speed-up claim.
+[Evidence](d1_review_support/contact_c5_native_surface_point_20261002/local_front_integration_results.md).

@@ -292,3 +292,46 @@ def stationary_front_partition(field,cell,segment_index,angle,*,maximum_interval
             raise ValueError('endpoint front axial uncertainty exceeds budget')
         endpoints.append(IsolatedStationaryFront(t,at(t).axial_coordinate(),(t,t),interval,at(t).stationary_numerator))
     return tuple((t,at(t).axial_coordinate()) for t in fractions),count,tuple(roots[t] for t in sorted(roots)),tuple(endpoints)
+
+
+def stationary_front_angular_envelopes(field,cover,*,maximum_axial_uncertainty,budget):
+    """Enclose every stationary uncertainty strip over a certified angular band.
+
+    On a simple root branch H_t=0, so dH*/dangle=-A_angle/B. The normal
+    cross product and round radius bound A_angle; B is angle independent.
+    Enlarge by the full declared fixed-angle uncertainty to include strips,
+    not just exact roots. Returned intervals are not contact history states.
+    """
+    if type(cover) is not StationaryAngularCover or cover.field_identity!=field.identity:
+        raise ValueError('bound stationary angular cover required')
+    lo,hi=cover.angle_bounds;middle=(lo+hi)/2
+    _,_,roots,_=stationary_front_partition(field,cover.cell,cover.segment_index,middle,
+        maximum_intervals=field.maximum_intervals,maximum_axial_uncertainty=maximum_axial_uncertainty,
+        budget=budget,angular_cover=cover)
+    if len(roots)!=len(cover):raise ValueError('stationary branch envelope count mismatch')
+    start,segments=_support_path(field,cover.segment_index);motion=segments[0]
+    radius=field.patch.rule.definition['radius'];intervals=[]
+    for root,(left,right) in zip(roots,cover.branches):
+        if not left<=root.fraction<=right:raise ValueError('stationary branch envelope ownership mismatch')
+        if not budget.consume():raise MemoryError('stationary envelope support interval cap exhausted')
+        bounds=stationary_front_slab(field,cover.cell,cover.segment_index,middle,left,right)
+        if bounds[0]<=0<=bounds[1]:raise ValueError('stationary envelope denominator unresolved')
+        denominator=min(abs(bounds[0]),abs(bounds[1]))
+        poses=[material_path_pose(start,motion.translations,motion.angular,motion.shell_increment,t)
+            for t in (left,right)]
+        corners=[field.patch.target.adapter.current_positions(p.shell_displacement) for p in poses]
+        (a,b),(c,d)=[(y[1]-y[0],y[2]-y[0]) for y in corners]
+        controls=(np.cross(a,b),.5*(np.cross(a,d)+np.cross(c,b)),np.cross(c,d))
+        coordinate_scale=max(1.,*(float(np.max(np.abs(y))) for y in corners))
+        edge_scale=max(1.,*(np.linalg.norm(e) for e in (a,b,c,d)))
+        coordinate_error=1024*np.finfo(float).eps*coordinate_scale
+        area_error=1024*np.finfo(float).eps*edge_scale**2+8*coordinate_error*edge_scale+16*coordinate_error**2
+        cross_upper=max(np.linalg.norm(v) for v in controls)+area_error
+        speed=cross_upper*radius/denominator
+        pad=1024*np.finfo(float).eps*max(1.,speed,abs(root.axial_interval[0]),abs(root.axial_interval[1]))
+        width=(speed+pad)*(hi-lo)/2+maximum_axial_uncertainty+pad
+        interval=(float(np.nextafter(root.axial_interval[0]-width,-np.inf)),
+                  float(np.nextafter(root.axial_interval[1]+width,np.inf)))
+        if not np.all(np.isfinite(interval)):raise ValueError('stationary angular envelope overflow')
+        intervals.append(interval)
+    return tuple(intervals)
