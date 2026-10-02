@@ -133,7 +133,7 @@ class NativeS3MaterialPointFriction:
         if self.activation_policy in ('transverse_events','transverse_event_sequence'):
             result['event_history_substeps']=self.event_history_substeps
         if self.activation_policy=='transverse_event_sequence':
-            result['sequence_profile']='NATIVE_S3_OPEN_EVENT_SEQUENCE_POINT_DEV_V1'
+            result['sequence_profile']='NATIVE_S3_OPEN_CLOSED_EVENT_SEQUENCE_POINT_DEV_V2'
         return result
 
     def evaluate_path(self, committed, history, translations, angular, shell_increment,
@@ -156,12 +156,17 @@ class NativeS3MaterialPointFriction:
             next_point=self.source.evaluate(candidate.positions,candidate.position_low,candidate.cell_rotations).surface_position
             next_target=self.target.physical_pose(candidate.shell_displacement)
             next_gap=float((next_point-np.asarray(next_target.position))@np.asarray(next_target.material_frame)[:,2])
-            if self.activation_policy=='transverse_event_sequence' and gap>0. and next_gap>0.:
+            if self.activation_policy=='transverse_event_sequence' and gap!=0. and next_gap>0.:
                 from .native_surface_event_sequence import evaluate_open_event_sequence
                 contribution=evaluate_open_event_sequence(self,committed,history,translations,angular,
                     shell_increment,maximum_intervals=maximum_intervals)
                 return NativeS3MaterialPathResult(candidate,contribution,contribution.path_sha256,
                     contribution.ownership_intervals)
+            if self.activation_policy=='transverse_event_sequence' and gap!=0. and next_gap<0.:
+                from .native_surface_event_sequence import evaluate_closed_or_persistent_sequence
+                contribution,sequence=evaluate_closed_or_persistent_sequence(self,committed,history,
+                    translations,angular,shell_increment,maximum_intervals=maximum_intervals)
+                return NativeS3MaterialPathResult(candidate,contribution,sequence.path_sha256,sequence.intervals)
             if gap>0. and next_gap<0.:
                 from .native_surface_activation import evaluate_first_touch
                 contribution=evaluate_first_touch(self,committed,history,translations,angular,shell_increment,

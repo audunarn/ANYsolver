@@ -1054,3 +1054,8 @@ Closed-ending native multi-event point helper: independent scalar work/force and
 tangent controls pass in development, including initially open three-event recontact.
 Full event/count diagnostics retained; standalone only. Path routing/restart identity,
 aggregate second load and acceptance remain open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/closed_event_sequence_results.md).
+
+Native explicit event-sequence V2 point routing: closing/opening/persistence, initial-active
+multiple windows and checkpoint identity checks pass in development. Saved closed point
+replays on persistence branch. Aggregate mixed-endpoint/multisegment support and coupled
+second load/restart remain incomplete. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/event_sequence_routing_results.md).

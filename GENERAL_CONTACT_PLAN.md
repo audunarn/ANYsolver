@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.45. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.46. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -31,6 +31,15 @@ Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTA
 independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
+
+Explicit event-sequence V2 now routes closing, opening and no-event persistence;
+initial-active three-event work and restart identity checks pass. Fullpatch remains
+unpassed. Next derive local uncertainty-strip treatment for a mixed open/closed panel,
+rather than requiring the entire panel open, then multi-segment accounting. Frozen
+limits stay unchanged; no saved fullpatch rerun before integrated support is ready.
+[Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/event_sequence_routing_results.md).
+
+The most recent paragraph governs next work; following slice entries retain history.
 
 Closed-ending multi-event point helper now passes independent discrete work, force,
 both-body stick/slip tangent, deforming target and three-event controls. Source review

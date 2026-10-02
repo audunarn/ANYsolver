@@ -106,32 +106,45 @@ class NativeS3OpenSequenceResult:
 
 
 def evaluate_open_event_sequence(pair,start,history,translations,angular,shell_increment,*,maximum_intervals=256):
-    """Disposable full replay of closed windows between strictly open endpoints."""
+    """Disposable replay of complete closed windows ending strictly open."""
     from .native_surface_activation import _release_history
-    if type(history) is not FrictionPointState or history.partner_key is not None:
-        raise ValueError('open event sequence requires released physical history')
+    if type(history) is not FrictionPointState:
+        raise ValueError('open event sequence requires physical friction history')
     sequence=locate_material_event_sequence(pair,start,translations,angular,shell_increment,
         maximum_intervals=maximum_intervals)
     endpoint=material_path_pose(start,translations,angular,shell_increment,1.)
     source=pair.source.evaluate(start.positions,start.position_low,start.cell_rotations).surface_position
     target=pair.target.physical_pose(start.shell_displacement)
     initial_gap=float((source-np.asarray(target.position))@np.asarray(target.material_frame)[:,2])
-    if not initial_gap>0. or not sequence.endpoint_gap>0.:
-        raise ValueError('open event sequence requires strictly open endpoints')
+    if initial_gap==0. or not sequence.endpoint_gap>0.:
+        raise ValueError('open event sequence requires nonzero initial and strictly open final gap')
+    initially_closed=initial_gap<0.
+    if history.partner_key!=(pair.partner_key if initially_closed else None):
+        raise ValueError('open event sequence history disagrees with initial contact')
     events=sequence.events
-    if len(events)%2 or any(event.opening!=(i%2==1) for i,event in enumerate(events)):
-        raise ValueError('open event sequence requires alternating closing/opening roots')
+    if ((bool(events) and not events[-1].opening) or
+        (initially_closed and not events) or
+        any(event.opening!=(initially_closed if i%2==0 else not initially_closed)
+            for i,event in enumerate(events))):
+        raise ValueError('open event sequence requires alternating roots ending in opening')
+    windows=[];a=0. if initially_closed else None
+    for event in events:
+        if not 0.<event.fraction<1.:raise ValueError('open event sequence endpoint root unresolved')
+        if event.opening:
+            if a is None:raise ValueError('open event sequence window ownership unresolved')
+            windows.append((a,event.fraction));a=None
+        else:a=event.fraction
     state=history;dissipations=[];released=[];plastic=np.zeros(3);evaluations=0
-    for closing,opening in zip(events[::2],events[1::2]):
-        a,b=closing.fraction,opening.fraction
-        if not 0.<a<b<1.:raise ValueError('open event sequence endpoint root unresolved')
+    for a,b in windows:
+        if not 0.<=a<b<1.:raise ValueError('open event sequence endpoint root unresolved')
         first=material_path_pose(start,translations,angular,shell_increment,a)
         last=material_path_pose(start,translations,angular,shell_increment,b)
-        frame=pair.target.physical_pose(first.shell_displacement).material_frame
-        state=trial_coulomb_point(state,material_frame=frame,relative_increment=(0.,0.,0.),
-            normal_pressure=0.,friction_coefficient=pair.friction_coefficient,
-            tangential_stiffness=pair.tangential_stiffness_Pa_per_m,partner_key=None).candidate_state
-        evaluations+=1
+        if a>0.:
+            frame=pair.target.physical_pose(first.shell_displacement).material_frame
+            state=trial_coulomb_point(state,material_frame=frame,relative_increment=(0.,0.,0.),
+                normal_pressure=0.,friction_coefficient=pair.friction_coefficient,
+                tangential_stiffness=pair.tangential_stiffness_Pa_per_m,partner_key=None).candidate_state
+            evaluations+=1
         value=_release_history(pair,first,last,state,np.asarray(translations)*(b-a),
             np.asarray(angular)*(b-a),np.asarray(shell_increment)*(b-a),1.,0.,sequence)
         state=value.trial.candidate_state;evaluations+=value.history_evaluations
@@ -148,7 +161,9 @@ def evaluate_open_event_sequence(pair,start,history,translations,angular,shell_i
     size=42+pair.target.adapter.work_map.shape[1]
     return NativeS3OpenSequenceResult(_readonly(np.zeros(size)),_readonly(np.zeros((size,size))),
         trial,sequence.endpoint_gap,tuple(e.fraction for e in events),sequence.path_sha256,
-        sequence.intervals,evaluations+1)
+        sequence.intervals,evaluations+1,
+        profile=('NATIVE_S3_RELEASED_ENDPOINT_EVENT_SEQUENCE_POINT_DEV_V2' if initially_closed
+                 else 'NATIVE_S3_OPEN_EVENT_SEQUENCE_POINT_DEV_V1'))
 
 
 def evaluate_closed_event_sequence(pair,start,history,translations,angular,shell_increment,*,maximum_intervals=256):
@@ -159,11 +174,31 @@ def evaluate_closed_event_sequence(pair,start,history,translations,angular,shell
     This is not a derivative of cumulative work and does not admit persistence
     without a closing event. No physical state is committed here.
     """
-    from .native_surface_activation import _release_history,_closing_event_endpoint,NativeS3ClosedSequenceResult
     if type(history) is not FrictionPointState:
         raise ValueError('closed event sequence requires physical friction history')
     sequence=locate_material_event_sequence(pair,start,translations,angular,shell_increment,
         maximum_intervals=maximum_intervals)
+    return _closed_sequence_from_schedule(pair,start,history,translations,angular,shell_increment,sequence)
+
+
+def evaluate_closed_or_persistent_sequence(pair,start,history,translations,angular,shell_increment,*,maximum_intervals=256):
+    """Explicit sequence policy: certify once, then replay or retain persistence."""
+    sequence=locate_material_event_sequence(pair,start,translations,angular,shell_increment,
+        maximum_intervals=maximum_intervals)
+    if sequence.events:
+        return _closed_sequence_from_schedule(pair,start,history,translations,angular,shell_increment,sequence),sequence
+    endpoint=material_path_pose(start,translations,angular,shell_increment,1.)
+    if sequence.endpoint_gap>=0.:
+        raise ValueError('closed sequence persistence requires a closed endpoint')
+    if type(history) is not FrictionPointState or history.partner_key!=pair.partner_key:
+        raise ValueError('closed sequence persistence requires matching active physical history')
+    return pair.evaluate(start,endpoint,history),sequence
+
+
+def _closed_sequence_from_schedule(pair,start,history,translations,angular,shell_increment,sequence):
+    from .native_surface_activation import _release_history,_closing_event_endpoint,NativeS3ClosedSequenceResult
+    if type(history) is not FrictionPointState:
+        raise ValueError('closed event sequence requires physical friction history')
     endpoint=material_path_pose(start,translations,angular,shell_increment,1.)
     source=pair.source.evaluate(start.positions,start.position_low,start.cell_rotations).surface_position
     target=pair.target.physical_pose(start.shell_displacement)
