@@ -1503,3 +1503,12 @@ Prescribed external rigid-marker kinematics pass their bounded comparison;
 free-carrier control fails its increment limit and remains failed evidence.
 No qualified finite beam/shell port or external capacity comparison yet.
 [Evidence and limitations](development/r8-e04-restart-and-port-20261002/results.md).
+
+
+**2 October curved ANYfem persistence: IMPLEMENTED_NOT_QUALIFIED.**
+Explicit public curved-reference identity survives standalone and ordinary native
+Project save/reopen. Ten installed focused checks and the actual 4x4 E04 roof
+solve/restore/exact continuation pass on bound artifacts. Old flat/v3 controls
+pass; unsupported S3/J2/load wrappers/moments/modal/footprint conversions reject.
+No external capacity, platform, aggregate gate or production qualification.
+[Artifact identities, failures and consumer evidence](development/r8-curved-consumer-20261002/results.md).

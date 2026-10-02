@@ -5,9 +5,9 @@
 Revision 8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full amended
 G0–G6, F01–F13, V01–V28, B01–B18 scope and scientific criteria remain binding.
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Parent c927770f; use git log for
+branch codex/stiffened-main-reconcile-20261001. Last behavior/evidence commit 2b5afc1a; use git log for
 latest committed identity. ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer
-at f92929f, unchanged. Scoped local commits only; no push/main merge/publication
+at 8a6e677 (curved-reference consumer). Scoped local commits only; no push/main merge/publication
 or contact-worker messages. All owned numerical runs/review terminal. Main untouched.
 
 Formal F03 UNCONSUMED; protected original script SHA256
@@ -54,8 +54,19 @@ prefix is close to the analytic energy minimum, but the moment residual exceeds
 printed rounding. Keep failure; no automatic repeat or higher budget. Any next
 external experiment must distinguish the specific tangent/work-mapping issue or
 use an explicitly justified engineering comparator. No formal F03 run.
-In parallel, the new curved policy still needs ANYfem persistence/admission;
-this consumer gap can advance without claiming external capacity acceptance.
+The explicit curved policy now passes standalone and native ANYfem persistence,
+installed actual-roof solve/restore/continued stepping. Ten focused installed
+checks and the E04 route pass; all 98 ANYfem and 412 solver modules match installed
+artifacts. [Consumer evidence](development/r8-curved-consumer-20261002/results.md).
+No external capacity acceptance follows. Next bounded implementation slice:
+coherent stress-free reference imperfections using the existing immutable
+shell/beam definitions and compile path. First check whether reference geometry,
+frames, point offsets and zero initial work/gaps can be regenerated within the
+current curved-Q4 admission. A specific distortion/admission obstruction must
+stay explicit; do not weaken the guard or silently reinterpret the connection.
+This advances required G4C behavior without further rigid-marker refinements. Curved materials/spectra/external loads,
+stress-free imperfections, complete stability, practical scale and full accepted
+milestones remain explicit programme gaps; retain the one acceptance matrix.
 
 Original 500N material-history and arc failures remain preserved. Curved 0.1N
 control still stops at 1.9145e-8 (required 1e-8), committing nothing; a green
