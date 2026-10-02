@@ -53,7 +53,28 @@ the top eigenvalue must be simple; repeated lower eigenvalues are harmless.
     if not gap > 1e-11*max(np.finfo(float).tiny, np.max(np.abs(eigenvalues))):
         raise ValueError('nonunique proper shell fit; refine or cut back')
     q = vectors[:, -1]
-    inverse = (vectors[:, :-1]/(eigenvalues[-1]-eigenvalues[:-1]))@vectors[:, :-1].T
+    if displacement is None:
+        inverse = (vectors[:, :-1]/(eigenvalues[-1]-eigenvalues[:-1]))@vectors[:, :-1].T
+    else:
+        # Recover small quaternion components from the preserved covariance
+        # increment. An eigensolver guarantees absolute eigenvector accuracy,
+        # which can swamp a tiny physical rotation. The largest-component
+        # chart avoids division by a small quaternion component.
+        pivot = int(np.argmax(np.abs(q)))
+        rest = np.array([i for i in range(4) if i != pivot])
+        refined = np.zeros(4)
+        refined[pivot] = 1.
+        refined[rest] = np.linalg.solve(
+            eigenvalues[-1]*np.eye(3)-matrix[np.ix_(rest, rest)],
+            matrix[rest, pivot])
+        refined /= np.linalg.norm(refined)
+        q = refined if q[pivot] >= 0. else -refined
+        # Differentiate on THIS quaternion's orthogonal complement. Reusing
+        # the old lower eigenvectors would break the normalization identities.
+        eigenvalue = float(q@matrix@q)
+        bordered = np.block([[eigenvalue*np.eye(4)-matrix, q[:, None]],
+                             [q[None, :], np.zeros((1, 1))]])
+        inverse = np.linalg.solve(bordered, np.vstack((np.eye(4), np.zeros((1, 4)))))[:4]
     derivatives = np.zeros((n, 4, 4))
     derivative_reference = ref if displacement is None else ref-ref.mean(axis=0)
     for node, r in enumerate(derivative_reference):
