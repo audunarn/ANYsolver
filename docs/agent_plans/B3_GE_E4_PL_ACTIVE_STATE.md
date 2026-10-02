@@ -11,7 +11,7 @@ criteria, protected history, default/version or main/release changes.
 Solver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
 branch codex/stiffened-main-reconcile-20261001. Product613e43f7; inspect Git for
 latest checkpoint. Consumer C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer,8af0784. Main/contact untouched.
+branch codex/experimental-ge-panel-consumer,b831411. Main/contact untouched.
 One acceptance matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md.
 
 Previous active note preserved byte-for-byte in
@@ -97,32 +97,34 @@ to stop unrelated authorized local development. Full goal remains active.
 
 ## Current material/consumer delivery
 
-Resumed by explicit user direction. Solver checkpointb4c10f00; product613e43f7
-unchanged. New public two-stiffener Q4 J2/physical-fibre staged example and full
-lifecycle test pass through unchanged installedwheel4c14d094...d3b7c,391modules.
-Actual simultaneous updates at1/3/4; reverse flow, complete histories/energy,
-force/moment balance, numerical rejection4/3.5, exception/cancellation atomicity,
-actual chart zeroing and restart continuation checked. Stage2 unloading is plastic.
-Final test119.030s/180449280B; public example74.334s/155455488B; actual1thread/JIToff.
-Separate Read source/evidence review clear. Initial inactive-shell failure and
-passed-source predecessor retained separately from final installed assertions.
-[Exact source, raw evidence and remaining limits](development/r8-ge-simultaneous-fibres-20261002/results.md).
+User resumed; full Revision8 goal active. Solver02e5c19f and consumerb831411 are
+local committed deliveries; product613e43f7 unchanged. New public two-stiffener
+Q4 J2/physical-fibre staged workflow exercises simultaneous updates at1/3/4,
+reverse flow, complete histories/energy and force/moment balance. Numerical
+rejection4/3.5, propagated exception/cancellation atomicity, actual chart zeroing
+and restart continuation verified. Stage2 unloading is plastic. Final solver
+installed test119.030s/180449280B; public example74.334s/155455488B;213 onsite
+imports, actual1thread/JIT off. Separate Read source/evidence review clear.
+[Solver exact source, retained failure and scope](development/r8-ge-simultaneous-fibres-20261002/results.md).
 
-Solver dirty owned slice: example/test, result/review/raw records, this note and
-acceptance matrix; local commit next. Full programme remains incomplete. No new
-product wheel, broad campaign, formalF03 or aggregate acceptance is needed here.
-Sessions63788/87643 terminal0; do not restart them. Raw temporary evidence remains
-under C:/Users/AudunArnesenNyhus/AppData/Local/Temp/r8-ge-simultaneous-fibres-installed-v1.
+Native ANYfem Project now saves/reopens the actual typed materials, native beam
+bindings and staged inputs; a separate prefix checkpoint restores into a fresh
+owner and continues to the identical final checkpoint. Final installed1/1 passes
+91.274s/181895168B,277 onsite imports; unchanged98consumer/391solver modules and
+artifact pair02a41991/4c14d094. Prefix1/fullprogramme4 explicitly checked after
+independent review found a missing completion assertion; both versions retained.
+[Consumer workflow/raw/review](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-ge-simultaneous-material-consumer-20261002/results.md).
 
-Consumer worker /root/b2_body_consumer owns ONLY
-examples/stiffened_shell_coupled_plastic_history_consumer.py and new
- tests/test_stiffened_shell_simultaneous_history_consumer.py in ANYfem's above
-worktree. It is adapting the copied public fixture to existing typed native
-Project save/reopen, staged inputs and fresh-owner checkpoint continuation.
-No product/schema changes or numerical jobs delegated. Root owns installed
-verification, diff reconciliation and Git. Review worker is terminal/available.
-Next: inspect consumer changes, execute its focused installed workflow against
-unchanged artifact pair, independent review, then preserve and integrate it.
-S3 simultaneous plasticity, biaxial/large-rotation histories, typed recoverable
-material failure and the complete G3/M4 envelope remain OPEN. Dissemination
-restriction, protected history, scientific limits and unconsumedF03 persist.
+All numerical sessions63788/87643/68895/78668 TERMINAL exit0. Implementation and
+review workers complete; no owned active job, no new authority consumed. Do not
+repeat unchanged campaigns. Raw consumer roots remain in Temp as
+r8-anyfem-simultaneous-material-installed-v1/v2; permanent evidence is linked above.
+Next useful independent delivery: native GE loads, starting by inspecting the
+finite driver's load-preparation and local mass/pose contracts for gravity.
+Derive actual physical force/moment work and derivatives before adding a route;
+reuse established operators instead of inferring density from stiffness. No
+new numerical experiment is registered or launched by this next-action note.
+S3 simultaneous plasticity, biaxial/large-rotation histories, recoverable material
+failure, full G3/M4 envelope and required mechanics/external/scale/platform
+acceptance remain OPEN. No aggregate promotion, main merge, push or release.
+Dissemination restriction and protected history remain; F03 UNCONSUMED.

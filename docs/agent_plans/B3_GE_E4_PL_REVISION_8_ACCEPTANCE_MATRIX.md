@@ -1,5 +1,15 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October native mixed-material consumer delivery:** ANYfem b831411 now has
+a runnable native Project save/reopen workflow for the two-stiffener Q4 J2 /
+physical-fibre/generalized case. Final installed1/1 verifies explicit completed
+prefix1 and full programme4, actual simultaneous/reversed material activity,
+fresh-owner restore and identical continued checkpoints. Initial passed run and
+review-driven prefix-status repair retained. Independent Read review clear;
+unchanged98consumer/391solver modules,277 onsite imports, actual1thread/JIT off.
+This adds scoped M1/M4 consumer/lifecycle evidence, not aggregate G3 acceptance.
+[Consumer evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-ge-simultaneous-material-consumer-20261002/results.md).
+
 **2 October simultaneous material-history development:** two parallel native
 stiffeners with mixed physical-fibre/generalized sections and two Q4 J2 shells
 show actual simultaneous shell/fibre updates at positions1/3/4. Final installed
