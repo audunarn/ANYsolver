@@ -121,63 +121,75 @@ class NativeGravity:
         The spatial Jacobian differentiates the returned torque after actual
         left updates Exp(delta) U; the Hessian differentiates work in one chart.
         """
-        x = _finite_array(positions, (3, 3), 'gravity positions')
-        low = _finite_array(position_low, (3, 3), 'gravity low positions')
-        rotation_values = _finite_array(rotations, (2, 3, 3), 'gravity rotations')
-        rotations = _frames(rotation_values, 2, 'gravity rotations')
-        g = _finite_array(acceleration, (3,), 'gravity acceleration')
-        for high, tail in zip(x.flat, low.flat):
-            validate_pair(float(high), float(tail))
-        forces = _product(self.nodal_masses[:, None], g[None, :])
-        gradient = np.zeros(42)
-        hessian = np.zeros((42, 42))
-        spatial = np.zeros((42, 42))
-        terms = []
-        moments = []
-        moment_products = [[], [], []]
-        for node in range(3):
-            gradient[6*node:6*node+3] = forces[node]
-            for component in range(3):
-                high, tail = split_sum((float(x[node, component]), float(low[node, component]),
-                                        -float(self.coordinates[node, component])))
-                terms.extend((_product(forces[node, component], high),
-                              _product(forces[node, component], tail)))
-            moments.extend((np.cross(x[node], forces[node]), np.cross(low[node], forces[node])))
-            for i, j, k in ((0, 1, 2), (1, 2, 0), (2, 0, 1)):
-                for position in (x[node], low[node]):
-                    moment_products[i].extend(((position[j], forces[node, k]),
-                                               (-position[k], forces[node, j])))
-        for cell in (0, 1):
-            b = self.cell_first_moments[cell]
-            rotated = rotations[cell]@b
-            local = slice(18+3*cell, 21+3*cell)
-            torque = np.cross(rotated, g)
-            for i, j, k in ((0, 1, 2), (1, 2, 0), (2, 0, 1)):
-                products = ((rotated[j], g[k]), (-rotated[k], g[j]))
-                torque[i] = _resolve_zero_underflow(torque[i], products)
-                moment_products[i].extend(products)
-            gradient[local] = torque
-            product = np.outer(rotated, g)
-            dot = _sum(product.diagonal())
-            spatial[local, local] = product-dot*np.eye(3)
-            hessian[local, local] = .5*product+.5*product.T-dot*np.eye(3)
-            for i in range(3):
-                for j in range(3):
-                    diagonal = [(-rotated[k], g[k]) for k in range(3)] if i == j else []
-                    row, column = 18+3*cell+i, 18+3*cell+j
-                    spatial[row, column] = _resolve_zero_underflow(spatial[row, column],
-                        [(rotated[i], g[j]), *diagonal])
-                    hessian[row, column] = _resolve_zero_underflow(hessian[row, column],
-                        [(.5, rotated[i], g[j]), (.5, rotated[j], g[i]), *diagonal])
-            # (U-I)b avoids subtracting two rounded first-moment vectors.
-            change = (rotations[cell]-np.eye(3))@b
-            terms.extend(_product(change, g))
-            moments.append(torque)
-        force = np.array([_sum(forces[:, i]) for i in range(3)])
-        moment = np.array([_sum(row[i] for row in moments) for i in range(3)])
+        return evaluate_reference_vector_work(
+            self.coordinates, self.nodal_masses, self.cell_first_moments,
+            positions, position_low, rotations, acceleration)
+
+
+def evaluate_reference_vector_work(coordinates, nodal_weights, cell_first_moments,
+                                   positions, position_low, rotations, vector):
+    """Analytical retained reference-vector work for preintegrated geometry.
+
+    Neutral weights need not represent mass. Gravity retains its original
+    validation labels and arithmetic through this shared private implementation.
+    """
+    x = _finite_array(positions, (3, 3), 'gravity positions')
+    low = _finite_array(position_low, (3, 3), 'gravity low positions')
+    rotation_values = _finite_array(rotations, (2, 3, 3), 'gravity rotations')
+    rotations = _frames(rotation_values, 2, 'gravity rotations')
+    g = _finite_array(vector, (3,), 'gravity acceleration')
+    for high, tail in zip(x.flat, low.flat):
+        validate_pair(float(high), float(tail))
+    forces = _product(nodal_weights[:, None], g[None, :])
+    gradient = np.zeros(42)
+    hessian = np.zeros((42, 42))
+    spatial = np.zeros((42, 42))
+    terms = []
+    moments = []
+    moment_products = [[], [], []]
+    for node in range(3):
+        gradient[6*node:6*node+3] = forces[node]
+        for component in range(3):
+            high, tail = split_sum((float(x[node, component]), float(low[node, component]),
+                                    -float(coordinates[node, component])))
+            terms.extend((_product(forces[node, component], high),
+                          _product(forces[node, component], tail)))
+        moments.extend((np.cross(x[node], forces[node]), np.cross(low[node], forces[node])))
+        for i, j, k in ((0, 1, 2), (1, 2, 0), (2, 0, 1)):
+            for position in (x[node], low[node]):
+                moment_products[i].extend(((position[j], forces[node, k]),
+                                           (-position[k], forces[node, j])))
+    for cell in (0, 1):
+        b = cell_first_moments[cell]
+        rotated = rotations[cell]@b
+        local = slice(18+3*cell, 21+3*cell)
+        torque = np.cross(rotated, g)
+        for i, j, k in ((0, 1, 2), (1, 2, 0), (2, 0, 1)):
+            products = ((rotated[j], g[k]), (-rotated[k], g[j]))
+            torque[i] = _resolve_zero_underflow(torque[i], products)
+            moment_products[i].extend(products)
+        gradient[local] = torque
+        product = np.outer(rotated, g)
+        dot = _sum(product.diagonal())
+        spatial[local, local] = product-dot*np.eye(3)
+        hessian[local, local] = .5*product+.5*product.T-dot*np.eye(3)
         for i in range(3):
-            moment[i] = _resolve_zero_underflow(moment[i], moment_products[i])
-        return Work(_sum(terms), gradient, hessian, spatial, force, moment)
+            for j in range(3):
+                diagonal = [(-rotated[k], g[k]) for k in range(3)] if i == j else []
+                row, column = 18+3*cell+i, 18+3*cell+j
+                spatial[row, column] = _resolve_zero_underflow(spatial[row, column],
+                    [(rotated[i], g[j]), *diagonal])
+                hessian[row, column] = _resolve_zero_underflow(hessian[row, column],
+                    [(.5, rotated[i], g[j]), (.5, rotated[j], g[i]), *diagonal])
+        # (U-I)b avoids subtracting two rounded first-moment vectors.
+        change = (rotations[cell]-np.eye(3))@b
+        terms.extend(_product(change, g))
+        moments.append(torque)
+    force = np.array([_sum(forces[:, i]) for i in range(3)])
+    moment = np.array([_sum(row[i] for row in moments) for i in range(3)])
+    for i in range(3):
+        moment[i] = _resolve_zero_underflow(moment[i], moment_products[i])
+    return Work(_sum(terms), gradient, hessian, spatial, force, moment)
 
 
 def compile_native_gravity(reference, inertia, order=24):

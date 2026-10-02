@@ -59,15 +59,34 @@ saved US3 same-action data does not uniquely allocate the cause. Spectral Q4/US3
 lastgap2.42% with moving reference is not2%qualification. F03 remains untouched.
 [Transfer evidence](development/r8-bl5-rigid-carrier-20261002/results.md).
 
-Next usable slice: inspect existing native distributed beam force/couple operators
-and load admission, then integrate the required physical load through the existing
-owner where its actual prerequisites pass. Do not invent a fixed-torque potential
-or duplicate element mechanics. Keep gravity line/footprint/combined-load and
-full material/curved/external coverage explicitly open. B2 loaded interior pose,
-complete spectra/prestress/capacity, practical scale, all unclosed foundation/matrix
-rows and installed platform/release obligations remain mandatory.
+## Latest completed slice and next action
 
-No live owned jobs: sessions82194(source66 earlier candidate) and51468(installed67)
-terminal exit0; workers complete. Previous numerical runs also terminal. Do not
-restart passed campaigns without changed inputs/findings. Current progress is
-implemented/installed-tested consumer behavior, not aggregate qualification.
+Native distributed beam force/couple densities delivered through
+GEBeamLineAction/GEBeamDistributedLoad and existing point-owner solve/recovery/
+checkpoint. Preserve42coordinates, actual4/8quadrature, curved lift and zero
+fixed-spatial-couple derivative. Never invent a couple endpoint potential.
+Compiled external context now serves gravity and distributed loads; legacy
+checkpoints/defaults remain unchanged. New descriptor/envelope binds exact model,
+element IDs and load. Finite objective Q4 policy and stable elastic S3 retained.
+
+Installed wheel7b0886fd...9999627f,395modules:60focused tests plus1curved-owner
+actual-update test and public twoQ4/twoGE example pass.219onsiteimports,effective
+1thread/JIToff. Example accepted0.25/0.5/1 with identical restored continuation;
+equilibrium3.424254e-10,compatibility7.798304e-18. Independent source review clear;
+no different-family qualification claim. Source/helper and installed fixture
+failures retained. [Evidence](development/r8-ge-native-distributed-20261002/results.md).
+
+Next usable slice: extend existing ANYfem point-panel input/persistence and Project
+load dispatch to this explicit distributed descriptor, retaining legacy/body/staged
+schemas. Verify actual new solver/consumer installed pair at this meaningful
+boundary; prior consumer artifacts do not establish new-load persistence. No new
+API or generic framework. Then continue open programme obligations by dependency.
+Line/footprint/combined loads, active yielding under the new loads, physical curved
+engineering/external references and complete G4 acceptance remain OPEN. Do not
+resume stopped refinement campaigns without a new discriminating hypothesis.
+
+No live owned jobs. Sessions1197failed(test helper),20698/98021sourcepass and
+17483installed60pass are terminal. Curved fixturev1/v2failures andv3pass, example
+pass all terminal. Kernel/reviewer workers complete; do not relaunch passed checks
+without changed inputs. Current work is installed-tested experimental behavior,
+not aggregate qualification. Full Revision8 goal remains active.

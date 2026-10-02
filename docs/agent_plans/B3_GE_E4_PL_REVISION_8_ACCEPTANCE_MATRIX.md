@@ -1,5 +1,16 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October native distributed GE loads:** public model-bound reference-arclength
+force/couple densities now run through the existing point owner, preserving native
+42-coordinate work, conservative force potential and nonconservative spatial
+couple semantics. Installed wheel395modules:60focused tests,1additional curved
+owner derivative and public checkpoint/continued panel example passed. Actual
+1thread/JIToff,219onsiteimports. Generalized/fibre/mixed families and Q4/mixed/S3
+ownership/reactions/restart checked. Independent source review clear. Scoped
+M4/G4A implementation only: consumer persistence, loaded line/footprint/combined
+programmes, new-load active yielding, engineering/external/scale/platform envelope
+remain OPEN. F03 UNCONSUMED. [Evidence](development/r8-ge-native-distributed-20261002/results.md).
+
 **2 October GE gravity native consumer delivery:** ANYfem83d41b1 adds strict
 body-input persistence and linear/explicit-finite Project dispatch. Installed67/67
 on the bound98consumer/393solver module pair verifies save/reopen, cancellation

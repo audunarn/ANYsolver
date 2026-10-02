@@ -109,14 +109,14 @@ def test_eccentric_native_load_scatter_matches_actual_update_derivative(request)
         return driver._assemble(trial, factor, driver._shell_origins, driver._beam_origins, pattern=pattern)
     r1,k1,*_ = residual(state, 1.)
     r0,k0,*_ = residual(state, 0.)
-    force,jac,_ = driver._body.evaluate(state)
+    force,jac,_ = driver._external.evaluate(state)
     np.testing.assert_allclose(r1[:len(zeros)]-r0[:len(zeros)], -force, rtol=1e-9, atol=1e-6)
     assert np.linalg.norm(force[analysis._shell_count+18:analysis._shell_count+24]) > .01
     np.testing.assert_allclose((k1-k0)[:len(zeros),:len(zeros)].toarray(), -jac.toarray(), rtol=1e-6, atol=1e-6)
     direction=np.zeros(len(r1));direction[analysis._shell_count+18:analysis._shell_count+24]=(.3,-.7,.2,-.4,.1,.8)
     step=1e-5
     plus=driver._advance(state,direction,step);minus=driver._advance(state,direction,-step)
-    numerical=(driver._body.evaluate(plus)[0]-driver._body.evaluate(minus)[0])/(2*step)
+    numerical=(driver._external.evaluate(plus)[0]-driver._external.evaluate(minus)[0])/(2*step)
     np.testing.assert_allclose(numerical,jac@direction[:len(zeros)],rtol=1e-7,atol=1e-8)
 
 

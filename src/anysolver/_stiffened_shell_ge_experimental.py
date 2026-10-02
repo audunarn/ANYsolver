@@ -194,6 +194,7 @@ class LinearResult:
     production_qualified: bool = False
     point_wrenches: tuple[PointTransferWrench, ...] = ()
     body_load: object | None = None
+    distributed_load: object | None = None
 
 
 def _owned(values, shape=None):
@@ -817,6 +818,8 @@ class ExperimentalGEAnalysis:
                 "point_recovery": "accepted global spatial connection actions; reference-linear or current ports",
                 "body_acceleration": (() if self._line_samples or self._definition.footprints else
                     ("experimental uniform spatial acceleration; explicit physical beam inertia and shell density; reference-linear or conservative finite work with objective Q4 pullback; GEBodyLoad",)),
+                "beam_distributed_loads": (() if self._line_samples or self._definition.footprints else
+                    ("experimental element-addressed fixed-spatial force/couple per reference arclength; native quadrature; couples nonconservative; GEBeamDistributedLoad",)),
                 "staged_dead_loads": (() if self._line_samples else
                     ("experimental immutable piecewise-affine translation forces; forward programme position",)),
                 "experimental_line_spaces": tuple(
@@ -910,9 +913,10 @@ class ExperimentalGEAnalysis:
             raise ValueError(self._unsupported_modes[0])
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.start")
         from ._stiffened_shell_ge_body_load import GEBodyLoad
+        from ._stiffened_shell_ge_distributed_load import GEBeamDistributedLoad
         body = None
-        if type(actions) is GEBodyLoad:
-            cached = getattr(self, "_body_context", None)
+        if type(actions) in (GEBodyLoad, GEBeamDistributedLoad):
+            cached = getattr(self, "_external_context", None)
             body = (cached if cached is not None and cached.request.identity == actions.identity
                     else actions.compile(self))
         load = (np.array(body.reference_gradient, copy=True) if body is not None else
@@ -985,8 +989,8 @@ class ExperimentalGEAnalysis:
                                   _owned(multipliers), _owned(support),
                                   relative, constraint, self._generation,
                                   point_wrenches=point_wrenches,
-                                  body_load=None if body is None else body.reference_recovery)
-            self._body_context = body
+                                  **({} if body is None else {body.result_field: body.reference_recovery}))
+            self._external_context = body
             self._accepted = (result, _owned(load))
         return result
 
@@ -1056,13 +1060,12 @@ class ExperimentalGEAnalysis:
             return self._finite_driver.checkpoint()
         if self._accepted is None:
             raise RuntimeError("no accepted mixed linear result")
-        body = getattr(self, "_body_context", None)
+        body = getattr(self, "_external_context", None)
         if body is not None:
-            from ._stiffened_shell_ge_body_load import encode_checkpoint
             prepared = copy(self)
-            prepared._body_context = None
+            prepared._external_context = None
             prepared._identity = body.augmented_model_identity
-            return encode_checkpoint(body, prepared.checkpoint())
+            return body.checkpoint(prepared.checkpoint())
         result, load = self._accepted
         arrays = (("q", np.r_[result.shell_displacement,
                                result.beam_coordinates]),
@@ -1096,15 +1099,19 @@ class ExperimentalGEAnalysis:
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
         from ._stiffened_shell_ge_body_load import MAGIC as BODY_MAGIC
-        if raw.startswith(BODY_MAGIC):
-            if getattr(self, "_body_context", None) is not None or getattr(self, "_staged_context", None) is not None:
+        from ._stiffened_shell_ge_distributed_load import MAGIC as DISTRIBUTED_MAGIC
+        if raw.startswith((BODY_MAGIC, DISTRIBUTED_MAGIC)):
+            if getattr(self, "_external_context", None) is not None or getattr(self, "_staged_context", None) is not None:
                 raise ValueError("nested body checkpoint is unsupported")
-            from ._stiffened_shell_ge_body_load import decode_checkpoint
+            if raw.startswith(BODY_MAGIC):
+                from ._stiffened_shell_ge_body_load import decode_checkpoint
+            else:
+                from ._stiffened_shell_ge_distributed_load import decode_checkpoint
             request, inner = decode_checkpoint(raw)
             compiled = request.compile(self)
             prepared = copy(self)
             prepared._identity = compiled.augmented_model_identity
-            prepared._body_context = compiled
+            prepared._external_context = compiled
             prepared._commit_lock = RLock()
             prepared._writing = False
             result = prepared.restore(inner)
@@ -1112,14 +1119,14 @@ class ExperimentalGEAnalysis:
             if driver is None:
                 if not np.array_equal(prepared._accepted[1], compiled.reference_gradient):
                     raise ValueError("body checkpoint load disagrees with declared acceleration")
-                result = replace(result, body_load=compiled.reference_recovery)
+                result = replace(result, **{compiled.result_field: compiled.reference_recovery})
                 prepared._accepted = (result, prepared._accepted[1])
             checkpoint = prepared.checkpoint()
             if driver is not None:
                 driver.owner = self
                 driver._adaptive_checkpoint = checkpoint
             with self._commit_lock:
-                self._body_context = compiled
+                self._external_context = compiled
                 self._finite_driver = driver
                 self._accepted = prepared._accepted
                 self._generation = result.generation
@@ -1128,7 +1135,7 @@ class ExperimentalGEAnalysis:
             MAGIC as STAGED_MAGIC, decode_checkpoint,
         )
         if raw.startswith(STAGED_MAGIC):
-            if self._line_samples or getattr(self, "_staged_context", None) is not None or getattr(self, "_body_context", None) is not None:
+            if self._line_samples or getattr(self, "_staged_context", None) is not None or getattr(self, "_external_context", None) is not None:
                 raise ValueError("staged checkpoint requires a fresh point owner")
             from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
             programme, position, inner = decode_checkpoint(raw)
@@ -1180,7 +1187,7 @@ class ExperimentalGEAnalysis:
                     raise ValueError("numeric shell chart snapshot requires matching outer policy")
                 kind = kind.replace("_chart", "")
                 stable_kind = kind == "finite_native_material_stable"
-                body_stable = bool(getattr(self, "_body_context", None) is not None and
+                body_stable = bool(getattr(self, "_external_context", None) is not None and
                     self._definition.shell.s3_elements and self._definition.shell.j2_curve is None)
                 if body_stable and kind not in ("linear", "finite_native_material_stable"):
                     raise ValueError("body S3 checkpoint requires its stable numerical policy")
@@ -1363,5 +1370,5 @@ class ExperimentalGEAnalysis:
         self._accepted = None
         self._finite_driver = None
         self._linear_factor = None
-        self._body_context = None
+        self._external_context = None
         self._closed = True

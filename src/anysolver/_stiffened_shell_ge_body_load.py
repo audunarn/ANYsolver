@@ -167,6 +167,13 @@ class GEBodyContext:
     reference_gradient: np.ndarray = field(init=False, repr=False)
     reference_recovery: GEBodyRecovery = field(init=False)
 
+    @property
+    def result_field(self):
+        return 'body_load'
+
+    def checkpoint(self, inner):
+        return encode_checkpoint(self, inner)
+
     def evaluate(self, state):
         q = np.asarray(state.q)
         cells = np.asarray(state.cells)
