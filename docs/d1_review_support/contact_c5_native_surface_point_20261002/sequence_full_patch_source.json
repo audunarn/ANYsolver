@@ -1,0 +1,5 @@
+{
+  "src/anysolver/general_contact/native_surface_support.py": "a3b4e4cb76729bc28f534c4c2cfcd030152c5ca90c7ce49167f65807f6890f09",
+  "tests/test_general_contact_native_surface_replay_owner.py": "15ad55de0cbf5f16175a07653c7df8a0ea7aa754db8629ab4429f7253b477809",
+  "tests/test_general_contact_native_surface_sequence_integral.py": "1ff296d386577b22d6cb5b4ec37d02ffced58dd7552533a1f7c78240b95c87ad"
+}

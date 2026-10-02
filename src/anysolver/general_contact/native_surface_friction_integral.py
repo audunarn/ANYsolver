@@ -141,7 +141,7 @@ def integrate_material_friction(field,settings):
         # predicate proves the queried point has never contacted.
         if support.status!='resolved':
             raise RuntimeError('native friction query requires resolved local support')
-        if all(fsum((offset,slope*xi,a*cos(angle),b*sin(angle)))>gap_padding
+        if field.patch.pairs[0].activation_policy!='transverse_event_sequence' and all(fsum((offset,slope*xi,a*cos(angle),b*sin(angle)))>gap_padding
                for offset,slope,a,b in coefficients[cell]):
             open_queries+=1
             return empty

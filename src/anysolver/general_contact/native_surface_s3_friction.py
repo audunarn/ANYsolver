@@ -93,7 +93,7 @@ class NativeS3MaterialPointFriction:
             raise TypeError('exact native round station and S3 material point required')
         if target.adapter.side!='top':raise ValueError('initial native/S3 material profile requires target top skin')
         self.source,self.target=source,target
-        if activation_policy not in ('reject','transverse_first_touch','transverse_events'):
+        if activation_policy not in ('reject','transverse_first_touch','transverse_events','transverse_event_sequence'):
             raise ValueError('explicit supported native material activation policy required')
         self.activation_policy=activation_policy
         if type(event_history_substeps) is not int or not 2<=event_history_substeps<=1024:
@@ -130,7 +130,10 @@ class NativeS3MaterialPointFriction:
             mu=self.friction_coefficient,tangent=self.tangential_stiffness_Pa_per_m,
             maximum_coupled_dofs=self.maximum_coupled_dofs)
         if self.activation_policy!='reject':result['activation_policy']=self.activation_policy
-        if self.activation_policy=='transverse_events':result['event_history_substeps']=self.event_history_substeps
+        if self.activation_policy in ('transverse_events','transverse_event_sequence'):
+            result['event_history_substeps']=self.event_history_substeps
+        if self.activation_policy=='transverse_event_sequence':
+            result['sequence_profile']='NATIVE_S3_OPEN_EVENT_SEQUENCE_POINT_DEV_V1'
         return result
 
     def evaluate_path(self, committed, history, translations, angular, shell_increment,
@@ -149,17 +152,23 @@ class NativeS3MaterialPointFriction:
                                      committed.cell_rotations).surface_position
         target = self.target.physical_pose(committed.shell_displacement)
         gap = float((point-np.asarray(target.position)) @ np.asarray(target.material_frame)[:, 2])
-        if self.activation_policy in ('transverse_first_touch','transverse_events'):
+        if self.activation_policy in ('transverse_first_touch','transverse_events','transverse_event_sequence'):
             next_point=self.source.evaluate(candidate.positions,candidate.position_low,candidate.cell_rotations).surface_position
             next_target=self.target.physical_pose(candidate.shell_displacement)
             next_gap=float((next_point-np.asarray(next_target.position))@np.asarray(next_target.material_frame)[:,2])
+            if self.activation_policy=='transverse_event_sequence' and gap>0. and next_gap>0.:
+                from .native_surface_event_sequence import evaluate_open_event_sequence
+                contribution=evaluate_open_event_sequence(self,committed,history,translations,angular,
+                    shell_increment,maximum_intervals=maximum_intervals)
+                return NativeS3MaterialPathResult(candidate,contribution,contribution.path_sha256,
+                    contribution.ownership_intervals)
             if gap>0. and next_gap<0.:
                 from .native_surface_activation import evaluate_first_touch
                 contribution=evaluate_first_touch(self,committed,history,translations,angular,shell_increment,
                                                    maximum_intervals=maximum_intervals)
                 return NativeS3MaterialPathResult(candidate,contribution,contribution.path_sha256,
                                                    contribution.ownership_intervals)
-            if self.activation_policy=='transverse_events' and gap<0. and next_gap>=0.:
+            if self.activation_policy in ('transverse_events','transverse_event_sequence') and gap<0. and next_gap>=0.:
                 from .native_surface_activation import evaluate_release
                 contribution=evaluate_release(self,committed,history,translations,angular,shell_increment,
                                                 maximum_intervals=maximum_intervals)

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.35. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.42. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -31,6 +31,49 @@ Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTA
 independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
+
+Whole-angle stationary branches now have bounded time/angular enclosure and explicit
+shared budget. Analytical geometry/control check passes. Next integrate moving axial
+cuts and uncertainty strips in adaptive quadrature before a saved full-patch retry.
+[Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/angular_front_results.md).
+
+Fixed-angle front uncertainty now bounded by correlated H'=-N/B^2 and explicit caller
+budget; saved width3.28052e-10 with5slabs. Uncertain endpoints reject. Two-root/singular
+controls pass. Next extreme-scale scrutiny and whole-angle/shared-budget moving cuts;
+no production integration or native acceptance yet.
+[Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/front_uncertainty_results.md).
+
+Fixed-angle stationary-front isolation now covers the saved fold in1slab. Product-scale
+roundoff corrected after review; root bracket and broad coordinate uncertainty retained.
+Before spatial integration: enforce dimensional front uncertainty, guard uncertain endpoint
+signs, verify singular/multiple roots and extreme scales, then share budgets across angles.
+[Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/stationary_isolation_results.md).
+
+Final rectangular support attempt remains non-success. Stop rectangular tuning;
+implement bounded moving-front spatial partition from exact affine axial gap A+Bxi.
+New coefficient/rate helper reproduces saved fold and actual-gap/derivative checks;
+complete stationary-root isolation and integration remain next. No cap increases.
+[Derivation/evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/axial_front_derivation.md).
+
+Full-patch successor remains non-success at shared128. Added proven same-oriented
+crossing support for mixed endpoints and conservative spatial-width yield. Three focused
+checks pass; final full-patch evaluation remains next. Stop arbitrary tuning if event-front
+ownership is still unresolved. [Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/sequence_full_patch_results.md).
+
+Spatial successor: explicit sequence policy now uses complete signed-gap/transverse
+slab coverage and retains hidden pulse work in integration. Independent analytical
+surface work passes; saved local neighborhood resolves in25 shared support intervals.
+Whole saved patch remains unverified. Next bounded aggregate evaluation must identify
+first unresolved front/resource before further mechanics changes. Existing caps retained.
+[Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/sequence_support_results.md).
+
+Latest slice: explicit open-endpoint event-sequence material replay now passes the saved
+second-load point history.24 focused checks plus1 admitted reversal check pass. Algorithm
+identity is distinct; legacy semantics unchanged. Aggregate support and closed-ending
+multi-event derivatives remain open. Next integrate bounded event-aware spatial support,
+then retry the coupled owner only after local integration succeeds. No tolerance/cap increase.
+[Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/open_event_sequence_results.md).
+
 
 Native replay friction has committed its first load and rebased in development;
 actual checkpoint reconstruction also passes. Second loading remains unpassed.

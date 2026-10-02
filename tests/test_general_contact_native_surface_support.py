@@ -17,7 +17,7 @@ from anysolver.general_contact.s3_friction_point import S3SkinMaterialPoint
 from test_general_contact_native_surface_s3_friction import _case
 
 
-def _field(*, height=.05, rotation=0., segments=(), maximum_intervals=256, narrow_rim=False):
+def _field(*, height=.05, rotation=0., segments=(), maximum_intervals=256, narrow_rim=False, activation_policy='transverse_events'):
     _, point_pair, initial, _ = _case()
     angles = (1.5*np.pi-.02, 1.5*np.pi+.02)
     rule = NativeRoundSurfaceRule(7, point_pair.source.reference, .03,
@@ -39,7 +39,7 @@ def _field(*, height=.05, rotation=0., segments=(), maximum_intervals=256, narro
         targets.append(S3SkinMaterialPoint(adapter, (1-uv.sum(), *uv)))
     patch = NativeS3MaterialSurfacePatch(rule, targets, normal_stiffness_Pa_per_m=1000.,
         friction_coefficient=.3, tangential_stiffness_Pa_per_m=1000.,
-        activation_policy='transverse_events', gap_check='straight_patch')
+        activation_policy=activation_policy, gap_check='straight_patch')
     return NativeSurfaceHistoryField(patch, initial, segments, maximum_intervals=maximum_intervals)
 
 

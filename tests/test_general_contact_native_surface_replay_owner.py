@@ -11,8 +11,8 @@ from test_general_contact_native_surface_normal import _settings as normal_setti
 from test_general_contact_native_surface_friction_integral import _settings as friction_settings
 
 
-def _replay_patch():
-    return _patch(activation_policy='transverse_events',gap_check='straight_patch',
+def _replay_patch(activation_policy='transverse_events'):
+    return _patch(activation_policy=activation_policy,gap_check='straight_patch',
         normal_integration='straight_segmented',normal_integration_settings=normal_settings(),
         friction_integration='replay',friction_integration_settings=friction_settings())
 
@@ -324,18 +324,19 @@ def test_saved_replay_candidate_branch_discriminator(tmp_path):
     assert len(rows)==9
 
 
+@pytest.mark.parametrize('activation_policy',['transverse_events','transverse_event_sequence'])
 @pytest.mark.parametrize('filename',[
     'replay_owner_rejected_path.json','replay_owner_support_rejected_path.json',
     'replay_owner_envelope_rejected_path.json','replay_owner_rebase_rejected_path.json',
     'replay_owner_second_load_rejected_path.json'])
-def test_saved_replay_candidate_front_refinement(tmp_path,filename,monkeypatch):
+def test_saved_replay_candidate_front_refinement(tmp_path,filename,monkeypatch,activation_policy):
     import json,os
     from pathlib import Path
     from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment
     from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
     from anysolver.general_contact.native_surface_friction_integral import integrate_material_friction
     saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002'/filename).read_text())
-    _,bridge=_replay_patch()
+    _,bridge=_replay_patch(activation_policy)
     field=NativeSurfaceHistoryField(bridge.pair,
         NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()}),
         tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments']),

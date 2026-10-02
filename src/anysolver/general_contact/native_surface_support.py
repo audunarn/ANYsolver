@@ -385,7 +385,6 @@ def segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index):
     and above its chord. Midpoint derivative extrema expanded by |g''|*dt/2
     enclose the derivative. No physical history is modified by this factory.
     """
-    from .native_surface_crossing import GapSlabEnclosure
     # Reuse the exact field/reference/selection contract. Its Boolean outcome
     # concerns whole-segment monotonicity and is not this certificate's result.
     history_endpoint_support_certified(field,xi_bounds=xi_bounds,
@@ -393,8 +392,28 @@ def segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index):
     if type(cell) is not int or cell not in (0,1) or not -1+cell<=xi_bounds[0]<xi_bounds[1]<=cell:
         raise ValueError('support rectangle must lie in one declared material half-cell')
     start,segments=_support_path(field,segment_index);segment=segments[0]
-    target=field.patch.target;frame0=field.patch.source.reference.nodal_triads[0]
-    radius=float(field.patch.rule.definition['radius']);omega=segment.angular[cell]
+    return _material_gap_slab_enclosure(start,segment,field.patch.target,
+        field.patch.source.reference.nodal_triads[0],float(field.patch.rule.definition['radius']),
+        cell,xi_bounds,angle_bounds)
+
+
+def point_gap_slab_enclosure(pair,start,translations,angular,shell_increment):
+    """Point specialization under the same straight/untwisted geometry contract."""
+    from .native_surface_history import NativeSurfaceMotionSegment
+    reference=pair.source.reference;coordinates=reference.coordinates;frames=reference.nodal_triads
+    if (any(Fraction(float(coordinates[0,i]))+Fraction(float(coordinates[2,i]))
+            !=2*Fraction(float(coordinates[1,i])) for i in range(3))
+            or not np.array_equal(frames,np.tile(frames[0],(3,1,1)))
+            or np.any(reference.half_cell_lift(pair.source.cell,pair.source.t))):
+        raise ValueError('event sequence requires straight untwisted reference')
+    segment=NativeSurfaceMotionSegment(translations,angular,shell_increment)
+    return _material_gap_slab_enclosure(start,segment,pair.target,frames[0],pair.source.radius,
+        pair.source.cell,(pair.source.xi,pair.source.xi),(pair.source.angle,pair.source.angle))
+
+
+def _material_gap_slab_enclosure(start,segment,target,frame0,radius,cell,xi_bounds,angle_bounds):
+    from .native_surface_crossing import GapSlabEnclosure
+    omega=segment.angular[cell]
     target_motion=np.asarray(target.adapter.work_map@segment.shell_increment).reshape(3,3)
     da=target_motion[1]-target_motion[0];db=target_motion[2]-target_motion[0]
     ref=target.adapter.reference_positions
@@ -477,6 +496,47 @@ def segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index):
     return enclose
 
 
+def panel_transverse_event_cover(field,cell,xi_bounds,angle_bounds,segment_index,*,budget):
+    """Complete time cover with transverse roots, allowing either orientation.
+
+    Strict signed slabs contain no root; strict derivative slabs contain at most
+    one root per material point. Unlike a single-crossing certificate, different
+    slabs may have opposite orientations only when both endpoint rectangles are
+    strictly open. Otherwise all potential roots must have one orientation, hence
+    each point has at most one root. Tangencies remain unresolved.
+    This proves admissible support, never zero physical history or quadrature accuracy.
+    """
+    start,segments=_support_path(field,segment_index)
+    segment=segments[0]
+    end=material_path_pose(start,segment.translations,segment.angular,segment.shell_increment,1.)
+    open_endpoints=True
+    for pose in (start,end):
+        value,padding=_minimum(pose,field.patch.target,field.patch.source.reference.nodal_triads[0],
+            field.patch.rule.definition['radius'],cell,xi_bounds,angle_bounds)
+        open_endpoints=open_endpoints and value>padding
+    enclose=segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index)
+    pending=[(0.,1.)];visited=0;orientation=0
+    while pending:
+        if visited>=field.maximum_intervals:return False
+        if not budget.consume():raise MemoryError('native friction aggregate support interval cap exhausted')
+        left,right=pending.pop();visited+=1;bounds=enclose(left,right)
+        if bounds.gap_lower>0. or bounds.gap_upper<0.:continue
+        direction=1 if bounds.derivative_lower>0. else -1 if bounds.derivative_upper<0. else 0
+        if direction:
+            if not open_endpoints and orientation and direction!=orientation:return False
+            orientation=direction
+            continue
+        # Temporal refinement cannot reduce this spatial contribution. Yield
+        # unresolved to the existing spatial refiner; this is never admission.
+        if (bounds.spatial_derivative_width>0.
+                and bounds.spatial_derivative_width>=bounds.temporal_derivative_width):
+            return False
+        middle=(left+right)/2
+        if not left<middle<right:return False
+        pending.extend(((middle,right),(left,middle)))
+    return True
+
+
 def classify_history_panel(field,cell,xi_bounds,angle_bounds,*,budget):
     """Resolve one full integration rectangle without sampling its support.
 
@@ -516,6 +576,9 @@ def classify_history_panel(field,cell,xi_bounds,angle_bounds,*,budget):
             pass
         elif panel_closed_over_history(field,cell,xi_bounds,angle_bounds,maximum_intervals=1,
                 budget=budget,segment_index=index):
+            all_open=False
+        elif (field.patch.pairs[0].activation_policy=='transverse_event_sequence'
+                and panel_transverse_event_cover(field,cell,xi_bounds,angle_bounds,index,budget=budget)):
             all_open=False
         else:
             return HistoryPanelSupport('unresolved',region,f'unresolved history segment {index}')

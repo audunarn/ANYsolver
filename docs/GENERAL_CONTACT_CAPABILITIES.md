@@ -1036,3 +1036,12 @@ within one captured segment; actual point replay rejects it. Single-crossing
 certificate tuning is stopped. Reviewed convex-origin/correlated-rate helpers
 remain unpromoted; bounded multi-event replay and integration are now the next
 implementation target. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_two_event_discovery_results.md).
+
+Open-endpoint native event sequence: explicit developmental profile passes saved material
+query, analytical discrete work, bounds/counts and reversal accumulation.24+1 focused checks.
+Aggregate support, closed-ending derivatives, coupled second load/restart and acceptance remain
+open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/open_event_sequence_results.md).
+
+Event-sequence spatial support: analytical integrated hidden pulse retains scalar-reference
+work; saved local neighborhood resolved in25intervals; tangency cap explicit. Whole saved
+aggregate and coupled owner unverified. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/sequence_support_results.md).
