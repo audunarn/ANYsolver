@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.26. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.27. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -36,12 +36,17 @@ Native replay friction now enters the retained native/S3 contributor and atomic
 transaction through an explicit development profile. Global componentwise
 integration error control resolves the saved query-cap failure without changing
 tolerances or caps; independent force/tangent/history and backtracking checks pass.
-The actual loading/restart workflow remains unpassed: its later trial exhausts the
-shared128-interval historical-support budget before any physical commit. Stop
-coupled reruns. Use the saved local path to distinguish conservative-bound cost
-from unresolved near-front support; do not increase caps or infer inactivity from
-zero samples. Require a corrected local result before another integrated run.
-See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_results.md).
+The128-interval failure is resolved by reusing the existing monotone/affine
+certificate instead of weaker repeated temporal subdivision. Removing duplicate
+Newton candidate evaluations preserves guards and independent commit reevaluation.
+The actual loading/restart workflow remains unpassed: it now ends at bounded
+backtracking on unresolved whole-patch historical support, before any commit.
+Stop coupled reruns. Use the saved envelope-failure path to distinguish a genuine
+interior contact event from mixed spatial motion that the global sufficient
+certificate cannot admit. A regional monotone-or-proven-open cover is a permitted
+candidate, provided it covers every material point and retains hidden-pulse
+rejection and the same budgets. No cap increase or zero-sample inactivity claim.
+See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_support_results.md).
 
 The pressure-coupled fixed-material S3 friction slice now uses the ordinary static
 path assembly/constraints, existing mortar pressure and accepted-step physical
@@ -450,3 +455,11 @@ Exact-open query elimination still reached2048queries (39.18s), but21panels acce
 Global error control passes the captured candidate:1322queries,27.01s,228438016B process peak; summed scaled error0.97439. Seven independent force/tangent/release/cap/history checks pass62.11s. Read-only reviewer found no blocking defect in changed integral; estimates remain developmental, not rigorous bounds. One new named integrated run contact-native-replay-coupled-global-20261002 uses unchanged actual owner loading/rebase/split-restart fixture and900s/3814MiB,JIT off. Source hashes recorded before execution. If it fails, retain the captured candidate and stop coupled reruns until its distinct cause is resolved.
 
 Coupled global-error run advanced to material call8, then a geometry-envelope ValueError escaped Newton backtracking (62.56s pytest). No accepted increment. Driver recognized older point-path refusals but not the new replay envelope/ownership refusals. Add only those two named retryable geometry conditions; unexpected errors remain fatal. Three focused injected-failure checks verify retry with unchanged physical state and unexpected-error rollback. After they pass, one corrected integrated run contact-native-replay-coupled-backtrack-20261002 under the same900s/3814MiB cap is permitted; retain any non-success and stop repeated coupled runs.
+
+Support-cap diagnosis: the integral already certifies each material gap affine/monotone over every segment, then redundantly uses a weaker velocity-bound temporal subdivision to prove open panels. Reuse the established certificate with exact affine-xi/sinusoidal-angle minima at all saved poses. Charge the shared finite support budget per inspected pose; retain swept ownership/orientation and padded positivity. One saved support-failure replay180s/953MiB discriminates this correction; no coupled rerun until it and affected component gates pass.
+
+Saved support-cap path now passes9.33s with19/128support intervals and480queries. Six affected force/tangent/release/guard checks pass60.73s; read-only review confirms per-segment monotonic directions may differ without invalidating endpoint minima. New integrated candidate contact-native-replay-coupled-support-20261002, unchanged loads/mechanics/tolerances and900s/3814MiB,JIT off; stage output records accepted sequence so progress is distinguishable from trial activity. Source hashes recorded before execution. Preserve any further non-success and use its saved local input.
+
+Coupled support-reuse execution ended at the retained context's stricter120s deadline (121.76s test), before first acceptance; outer900s authority does not override it. Preserve this failure. Remove duplicate evaluation of a line-search-accepted candidate at the next Newton iteration, retaining transaction/model/deadline guards and independent commit reevaluation. Focused call-identity and rollback checks precede any integrated retry; no deadline reset/enlargement.
+
+Candidate-reuse verification: four rollback/default-owner checks pass; initial counter test incorrectly assumed commit bypassed propose and failed3vs2 calls. Corrected test confirms exactly one commit reevaluation and no duplicate Newton candidate; it passes. New integrated case contact-native-replay-coupled-reuse-20261002 retains120s per native context and900s/3814MiB outer cap. Run uninterrupted path before constructing a fresh, identically defined owner for actual checkpoint restart; never reset an existing context timer. Save the first accepted checkpoint if reached. This also verifies reconstruction rather than same-instance restore. Further deadline failure ends coupled reruns pending a measured algorithmic cost change.

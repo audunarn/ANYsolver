@@ -386,10 +386,18 @@ class NativeRetainedRoundS3Analysis:
             raise ValueError('material transaction does not belong to native/S3 owner')
         n = self.context.count
         increment = np.zeros(n+self.shell_stiffness.shape[0])
+        proposal = None
         for iteration in range(self.program.max_iterations+1):
             cancellation_safe_point(cancellation_token, 'native material equilibrium')
-            proposal = transaction.propose(increment[:n], increment[n:], parameter,
-                                           cancellation_token=cancellation_token)
+            if proposal is None:
+                proposal = transaction.propose(increment[:n], increment[n:], parameter,
+                                               cancellation_token=cancellation_token)
+            else:
+                # The accepted line-search candidate already has this exact
+                # origin and total increment. Preserve every binding/deadline
+                # guard; physical commit still independently reevaluates it.
+                if proposal.origin_sha256 != transaction.origin_sha256:
+                    raise ValueError('native material Newton candidate origin changed')
             assembly = proposal.assembly
             step, correction = self._step(assembly.residual, assembly.origin_chart_tangent)
             if max(*assembly.metrics, correction) <= self.equilibrium_tolerance:
@@ -426,6 +434,7 @@ class NativeRetainedRoundS3Analysis:
                     continue
                 if max(candidate.assembly.metrics) < max(assembly.metrics):
                     increment = candidate_increment
+                    proposal = candidate
                     accepted = True
                     break
                 material_trial_reason = ('equilibrium merit did not decrease: '

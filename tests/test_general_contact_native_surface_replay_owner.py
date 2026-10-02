@@ -75,6 +75,28 @@ def test_replay_unexpected_trial_error_remains_fatal(monkeypatch):
     assert transaction.checkpoint()==before
 
 
+def test_material_newton_reuses_exact_candidate_but_rechecks_commit(monkeypatch):
+    owner,bridge=_replay_patch();transaction=NativeS3MaterialTransaction(bridge)
+    original_propose=transaction.propose;original_evaluate=bridge.evaluate
+    proposed=[];evaluated=[]
+    def key(native,shell,parameter):
+        return (sha256(np.asarray(native).tobytes()+np.asarray(shell).tobytes()).hexdigest(),float(parameter))
+    def propose(native,shell,parameter,**kwargs):
+        proposed.append(key(native,shell,parameter))
+        return original_propose(native,shell,parameter,**kwargs)
+    def evaluate(origin,history,native,shell,parameter):
+        evaluated.append(key(native,shell,parameter))
+        return original_evaluate(origin,history,native,shell,parameter)
+    monkeypatch.setattr(transaction,'propose',propose)
+    monkeypatch.setattr(bridge,'evaluate',evaluate)
+    owner.solve_material_increment(transaction,.001)
+    assert len(proposed[:-1])==len(set(proposed[:-1]))
+    # Commit alone repeats the final candidate's constitutive/contact work.
+    assert proposed[-1]==proposed[-2]
+    assert evaluated==proposed
+    assert transaction.accepted.sequence==1
+
+
 def test_replay_coupled_active_rebase_and_split_restart(monkeypatch):
     # Preserve a rejected integration path so subsequent diagnosis can replay
     # the local contribution without spending another structural solve.
@@ -100,7 +122,16 @@ def test_replay_coupled_active_rebase_and_split_restart(monkeypatch):
             raise
     monkeypatch.setattr(module,'integrate_material_friction',captured)
     owner,bridge=_replay_patch();transaction=NativeS3MaterialTransaction(bridge)
+    def stage(name):
+        folder=os.environ.get('RUNNER_TEMP')
+        if folder:
+            Path(folder,'coupled_stage.json').write_text(json.dumps(dict(stage=name,
+                accepted_sequence=transaction.accepted.sequence,integral_calls=calls))+'\n')
+            if transaction.accepted.sequence:
+                Path(folder,'accepted_material_checkpoint.json').write_bytes(transaction.checkpoint())
+    stage('initial')
     owner.solve_material_increment(transaction,1.)
+    stage('first_load_accepted')
     accepted=transaction.accepted
     assert len(accepted.friction_history.segments)==1
     same=transaction.propose(np.zeros(42),np.zeros(18),1.).assembly
@@ -108,10 +139,18 @@ def test_replay_coupled_active_rebase_and_split_restart(monkeypatch):
     assert same.material.contribution.friction_integral.stored_energy_j>0
     assert same.material.contribution.friction_integral.dissipated_increment_j==0.
     assert same.material.contribution.friction_integral.diagnostics['queries']>0
+    stage('committed_origin_rebased')
     capsule=transaction.checkpoint()
-    restored=NativeS3MaterialTransaction.restore(bridge,capsule,sha256(capsule).hexdigest())
-    for current in (transaction,restored):owner.solve_material_increment(current,1.05)
+    owner.solve_material_increment(transaction,1.05)
+    stage('uninterrupted_path_completed')
+    # A real restart reconstructs its analysis; it does not reset the original
+    # context's deadline. Each analysis retains its own unchanged120s guard.
+    restarted_owner,restarted_bridge=_replay_patch()
+    restored=NativeS3MaterialTransaction.restore(restarted_bridge,capsule,sha256(capsule).hexdigest())
+    stage('active_checkpoint_restored')
+    restarted_owner.solve_material_increment(restored,1.05)
     assert transaction.checkpoint()==restored.checkpoint()
+    stage('split_restart_identical')
 
 
 def test_saved_replay_candidate_branch_discriminator(tmp_path):
@@ -140,13 +179,15 @@ def test_saved_replay_candidate_branch_discriminator(tmp_path):
     assert len(rows)==9
 
 
-def test_saved_replay_candidate_front_refinement(tmp_path):
+@pytest.mark.parametrize('filename',[
+    'replay_owner_rejected_path.json','replay_owner_support_rejected_path.json'])
+def test_saved_replay_candidate_front_refinement(tmp_path,filename):
     import json,os
     from pathlib import Path
     from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment
     from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
     from anysolver.general_contact.native_surface_friction_integral import integrate_material_friction
-    saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_rejected_path.json').read_text())
+    saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002'/filename).read_text())
     _,bridge=_replay_patch()
     field=NativeSurfaceHistoryField(bridge.pair,
         NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()}),

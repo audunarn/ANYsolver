@@ -81,7 +81,7 @@ def integrate_material_friction(field,settings):
     fronts at every saved pose, with axial roots resolved for each angular query.
     Zero panels additionally need a conservative whole-history open certificate.
     """
-    from .native_surface_support import (panel_open_over_history,history_endpoint_support_certified,
+    from .native_surface_support import (_minimum,history_endpoint_support_certified,
         history_target_ownership_certified,SupportIntervalBudget)
     if type(field) is not NativeSurfaceHistoryField or type(settings) is not NativeSurfaceFrictionIntegrationSettings:
         raise TypeError('exact material history field and integration settings required')
@@ -100,6 +100,20 @@ def integrate_material_friction(field,settings):
     rule=field.patch.rule;lo,hi=rule.definition['xi_range'];alo,ahi=rule.definition['angle_range']
     reference=rule.samples[0].station.reference
     panels=[];coefficients={}
+
+    def certified_open_panel(cell,left,right,lower,upper):
+        # The entry certificate already proves every material gap monotone or
+        # affine on each segment. Repeating a temporal Lipschitz subdivision
+        # here both weakens that proof and spends the shared budget needlessly.
+        # Exact spatial endpoint minima therefore enclose the WHOLE history.
+        # Charge each inspected saved pose; retain the common finite budget.
+        for pose in poses:
+            if not support_budget.consume():
+                raise MemoryError('native friction aggregate support interval cap exhausted')
+            minimum,padding=_minimum(pose,field.patch.target,reference.nodal_triads[0],
+                rule.definition['radius'],cell,(left,right),(lower,upper))
+            if minimum<=padding:return False
+        return True
 
     def front_panels(cell,left,right,lower,upper):
         breaks={lower,upper}
@@ -212,8 +226,7 @@ def integrate_material_friction(field,settings):
                 panels.extend(((cell,left,right,lower,middle),(cell,left,right,middle,upper)))
         if visited>=settings.maximum_panels:raise MemoryError('native friction integration panel cap exhausted')
         panel=panels.pop();cell,left,right,lower,upper=panel;visited+=1
-        separated=panel_open_over_history(field,cell,(left,right),(lower,upper),
-            maximum_intervals=settings.maximum_support_intervals,budget=support_budget)
+        separated=certified_open_panel(cell,left,right,lower,upper)
         if separated or field.patch.pairs[0].friction_coefficient==0:
             # Exact empty-history panel: all material points stayed open.
             # Its friction force, tangent and work vanish without replay queries.

@@ -999,3 +999,9 @@ integration/state checks and three backtracking/error checks pass. The complete
 loading/restart test still fails before first commit at the shared historical-
 support interval cap. No native C5 acceptance or installed claim. Previous entry
 records the earlier component disposition. [Current evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_results.md).
+
+Successor: the support-budget failure is resolved locally by certificate reuse,
+and duplicate Newton candidate assembly is removed with guarded state and commit
+reevaluation intact. The actual coupled path now stops at its backtracking limit
+on unresolved historical support, before first acceptance. No scope promotion.
+[Latest evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_support_results.md).
