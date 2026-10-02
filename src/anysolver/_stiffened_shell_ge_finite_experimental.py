@@ -355,6 +355,7 @@ class FinitePointResult:
     shell_chart_coordinates: np.ndarray | None = None
     beam_fibre_material: tuple[BeamFibreStationRecovery, ...] = ()
     beam_fibre_energy: tuple[BeamFibreEnergyRecovery, ...] = ()
+    beam_generalized_material: tuple = ()
     increment_attempts: tuple[IncrementAttempt, ...] = ()
     beam_shell_line_work: tuple = ()
     point_wrenches: tuple[PointTransferWrench, ...] = ()
@@ -466,6 +467,7 @@ class FinitePointDriver:
         self._adaptive_checkpoint = None
         self._line_trial_recovery = None
         self._point_trial_recovery = None
+        self._generalized_trial_recovery = None
 
     def _load(self, actions):
         owner = self.owner
@@ -562,6 +564,7 @@ class FinitePointDriver:
         rows, columns, data = [], [], []
         shell_candidates = []
         beam_candidates = []
+        generalized_material = []
         beam_displacement = state.q[
             owner._shell_count:owner._shell_count+self._beam_nodal
         ].reshape(-1, 6)[:, :3]
@@ -623,6 +626,10 @@ class FinitePointDriver:
             if getattr(owner, "_finite_elastic_footprint", False):
                 _require_elastic_footprint_histories((response.history,), "candidate")
             beam_candidates.append(response.history)
+            if owner._bl5_material:
+                from ._ge_beam3_retained_generalized import RetainedGeneralizedOperator
+                if type(element.operator) is RetainedGeneralizedOperator:
+                    generalized_material.append((i,response.material))
 
         point_records = []
         for i, (joint, slots) in enumerate(zip(owner._connections,
@@ -706,7 +713,17 @@ class FinitePointDriver:
             residual[count:], owner._constraint_scale)
         self._line_trial_recovery = (state, tuple(line_records))
         self._point_trial_recovery = (state, tuple(point_records))
+        self._generalized_trial_recovery = (state,beam_origins,tuple(generalized_material))
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)
+
+    def _generalized_records(self,state,origins,accepted):
+        if not self.owner._bl5_material:return ()
+        cached=self._generalized_trial_recovery
+        if cached is None or cached[0] is not state or cached[1] is not origins:
+            raise ValueError("stale generalized material recovery")
+        from ._stiffened_shell_generalized_recovery import build
+        return tuple(build(self.owner._beam_parts[i][0],state.cells[i],raw,accepted[i])
+                     for i,raw in cached[2])
 
     def _point_records(self, state):
         if self._point_trial_recovery is None or self._point_trial_recovery[0] is not state:
@@ -981,7 +998,8 @@ class FinitePointDriver:
         cancellation_safe_point(cancellation_token,
                                 "stiffened-shell.finite.publish")
         next_result = _with_shell_chart(next_result, trial, owner._shell_count)
-        next_result = replace(next_result, point_wrenches=self._point_records(trial))
+        next_result = replace(next_result, point_wrenches=self._point_records(trial),
+            beam_generalized_material=self._generalized_records(trial,self._beam_origins,beam_next))
         next_result = self._programme_result(next_result, programme, factor, applied_load)
         next_result = self._external_result(next_result, trial, factor)
         if getattr(owner, "_finite_bl5", False):
@@ -1572,7 +1590,9 @@ class FinitePointDriver:
                                 shell_next[q4_count:])
              if s3_material else ()))
         result = _with_shell_chart(result, trial, owner._shell_count)
-        result = replace(result, point_wrenches=self._point_records(trial))
+        result = replace(result, point_wrenches=self._point_records(trial),
+            beam_generalized_material=self._generalized_records(trial,beam_origins,
+                beam_accepted if owner._bl5_material else beam_next))
         if getattr(owner, "_finite_bl5", False):
             result = replace(result, beam_shell_line_work=self._line_trial_recovery[1])
         if native_material:

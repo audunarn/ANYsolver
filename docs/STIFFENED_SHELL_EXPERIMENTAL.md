@@ -614,3 +614,32 @@ accepted displacement trials. Failure details and adaptive attempt records retai
 failed-trial event work separately. These counts exclude ordinary assembly and
 endpoint-validation work. Experimental execution does not qualify capacity or
 material reversal.
+
+
+### Generalized-beam material recovery on BL5 histories
+
+Accepted BL5 generalized-material and coupled-Q4 J2 results expose
+`beam_generalized_material`: typed element records containing native quadrature
+station records. `GERecoverySelection(beam_material_elements=(1, 2))` returns
+these records in the requested element order, with detached arrays. Other routes
+without an admitted predecessor contract return no such records.
+
+Station `local_strain` and `local_resultants` preserve separate `_low` arrays.
+The work order is extension/shear followed by curvature, and force followed by
+moment. `reference_frame` and `current_frame` identify the local section frame;
+`cell`, `station`, `xi` and `measure` identify the native reference quadrature.
+The measure is reference arclength in metres. The generalized law supplies no
+physical fibre stress distribution.
+
+`stored_energy_per_length` is the endpoint elastic plus recoverable hardening
+energy in J/m. `dissipation_per_length` is the last accepted material increment's
+dissipation from its saved predecessor, also J/m. Both retain `(high, low)` pairs.
+Neither is global total work or cumulative dissipation. `plastic_increment`,
+`plastic_strain`, its `_low` part, `accumulated` and `branch` describe the accepted
+update. A chart rebase is not another material increment.
+
+Publication formats the already evaluated native material payload. Recovery
+performs no element or constitutive evaluation. Restore uses the existing
+mechanical endpoint validation and saved accepted histories; no checkpoint schema
+change is required. This observational capability remains experimental and does
+not by itself establish global energy balance or complete reversal qualification.

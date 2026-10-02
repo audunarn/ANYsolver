@@ -43,6 +43,7 @@ class SelectedGERecovery:
     displacement_target: float | None
     amplitude: float | None
     production_qualified: bool = False
+    beam_generalized_material: tuple = ()
 
 
 def _owned(value):
@@ -90,6 +91,15 @@ def recover(owner, result, selection):
     position = getattr(result, "load_position", None)
     if position is None:
         position = getattr(result, "load_factor", None)
+    generalized={r.element_id:r for r in getattr(result,"beam_generalized_material",())}
+    generalized_records=[]
+    for element_id in selection.beam_material_elements:
+        if element_id in generalized:
+            record=generalized[element_id]
+            stations=tuple(replace(row,**{f.name:_owned(getattr(row,f.name))
+                for f in fields(row) if isinstance(getattr(row,f.name),np.ndarray)})
+                for row in record.stations)
+            generalized_records.append(replace(record,stations=stations))
     return SelectedGERecovery(owner._identity, result.generation, result.status,
         selection, _owned(displacement),
         _owned(frames), _owned(result.beam_positions[bi]),
@@ -99,4 +109,5 @@ def recover(owner, result, selection):
         tuple(records), tuple(accumulated[beam_material[i]]
             for i in selection.beam_material_elements),
         position,
-        getattr(result, "target", None), getattr(result, "amplitude", None))
+        getattr(result, "target", None), getattr(result, "amplitude", None),
+        beam_generalized_material=tuple(generalized_records))

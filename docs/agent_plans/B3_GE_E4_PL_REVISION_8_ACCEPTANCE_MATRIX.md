@@ -1408,3 +1408,13 @@ accepted event-work counts, rebase and exact continuation now integrated.
 35installed solver and2installed ANYfem checks pass. Public -66/-68um route
 reproduces the private endpoint and restarts exactly. No later physical targets,
 full reversal or aggregate qualification. [Evidence](development/r8-event-public-20261002/results.md).
+
+
+**2 October cached generalized-beam recovery: IMPLEMENTED_NOT_QUALIFIED.**
+BL5 material force/displacement results expose typed native station strain,
+resultants, accepted plastic state, endpoint stored-energy density and last-step
+dissipation density. Selected recovery is ordered/detached and executes no
+constitutive update. Rebase preserves previous increment dissipation; restart
+retains the saved accepted state. Constitutive identities and lifecycle are
+covered by installed checks. No full material-range, global-energy or aggregate
+scientific gate closes. [Evidence](development/r8-generalized-recovery-20261002/results.md).

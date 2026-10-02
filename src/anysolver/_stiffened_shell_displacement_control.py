@@ -59,6 +59,7 @@ class DisplacementResult:
     increment_attempts: tuple = ()
     trial_policy: str | None = None
     event_cell_evaluations: int = 0
+    beam_generalized_material: tuple = ()
 
 
 def prepare(owner,raw):
@@ -88,7 +89,8 @@ def prepare(owner,raw):
         tuple(tuple(float(v) for v in item["alpha"]) for item in shell_next),
         driver._line_trial_recovery[1],driver._point_records(state),
         trial_policy=metadata.get("trial_policy"),
-        event_cell_evaluations=metadata.get("event_cell_evaluations",0))
+        event_cell_evaluations=metadata.get("event_cell_evaluations",0),
+        beam_generalized_material=driver._generalized_records(state,beam_parent,beam_next))
     driver._state=state;driver._shell_predecessors=shell_parent
     driver._beam_predecessors=beam_parent
     driver._shell_origins=_accepted_shell_material_origins(owner,state,shell_next)

@@ -25,15 +25,39 @@ def test_cached_ordered_recovery_after_displacement_restart(request, monkeypatch
     from scipy.spatial.transform import Rotation
     np.testing.assert_array_equal(force_selected.shell_frames,
         Rotation.from_rotvec(force.shell_displacement.reshape(-1, 6)[[1, 0], 3:]).as_matrix())
+    force_rebased=owner.rebase_rotations(force.generation)
+    force_restored=make(request,coupled());force_restored.restore(owner.checkpoint())
+    for result in (force_rebased,force_restored.recover()):
+        for left,right in zip(result.beam_generalized_material,force.beam_generalized_material):
+            for a,b in zip(left.stations,right.stations):
+                assert a.dissipation_per_length==b.dissipation_per_length
+                assert a.stored_energy_per_length==b.stored_energy_per_length
+                assert a.accumulated==b.accumulated
     initial = float(force.beam_positions[-1, 2] - .0675)
     controlled = owner.solve(_action(50.), (initial*1.01,),
         displacement_control=ss.DisplacementControl("beam", 105, 2),
         increment_control=ss.AdaptiveIncrementControl(2, 8),
         max_iterations=20, max_backtracks=12)
+    assert len(controlled.beam_generalized_material)==2
+    for record,(element,_,_) in zip(controlled.beam_generalized_material,owner._beam_parts):
+        law=element.section
+        for station in record.stations:
+            stress=station.local_resultants+station.local_resultants_low
+            strain=station.local_strain+station.local_strain_low
+            plastic=station.plastic_strain+station.plastic_strain_low
+            np.testing.assert_allclose(law.elastic@(strain-plastic),stress,rtol=1e-9,atol=1e-8)
+            np.testing.assert_allclose(sum(station.dissipation_per_length),
+                law.yield_force*sum(station.plastic_increment),rtol=1e-12,atol=1e-14)
+            assert sum(station.dissipation_per_length)>=0.
+    driver=owner._finite_driver
+    with pytest.raises(ValueError,match="stale generalized"):
+        driver._generalized_records(driver._state,tuple(list(driver._beam_predecessors)),driver._beam_origins)
     snapshot = owner.checkpoint()
     resumed = make(request, coupled()); resumed.restore(snapshot)
     def forbidden(*args, **kwargs):
         raise AssertionError("selected recovery must not evaluate mechanics")
+    from anysolver._ge_beam3_generalized_cell import GeneralizedCellConjugate
+    monkeypatch.setattr(GeneralizedCellConjugate,"response",forbidden)
     for current in (owner, resumed):
         monkeypatch.setattr(current._finite_driver, "_assemble", forbidden)
     for current in (owner, resumed):
@@ -52,6 +76,14 @@ def test_cached_ordered_recovery_after_displacement_restart(request, monkeypatch
             np.testing.assert_array_equal(selected.beam_support_coordinate_covectors,
                 controlled.support_reactions[owner._shell_count:owner._shell_count+30].reshape(-1, 6)[[4, 0]])
             assert selected.beam_station_accumulated == controlled.beam_station_accumulated[::-1]
+            assert tuple(r.element_id for r in selected.beam_generalized_material)==(2,1)
+            for a,b in zip(selected.beam_generalized_material,controlled.beam_generalized_material[::-1]):
+                for left,right in zip(a.stations,b.stations):
+                    np.testing.assert_allclose(left.local_resultants,right.local_resultants,rtol=1e-12,atol=1e-10)
+                    assert not np.shares_memory(left.local_resultants,right.local_resultants)
+            selected.beam_generalized_material[0].stations[0].local_resultants.setflags(write=True)
+            selected.beam_generalized_material[0].stations[0].local_resultants[:]=123.
+
             assert tuple(r.element_id for r in selected.shell_material) == (ids[-1], ids[0])
             assert not np.shares_memory(selected.shell_material[0].layer_stress,
                                         controlled.shell_q4_material[-1].layer_stress)

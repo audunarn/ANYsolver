@@ -59,3 +59,22 @@ extend targets, enlarge backtrack budgets or restart axial/U1 refinement campaig
 Full reversal/material, F03 connection transfer, spectra/capacity, scale, external,
 platform and complete consumer/release obligations remain open. Implementation,
 testing, scientific acceptance and release are distinct.
+
+
+## Latest completed slice: accepted generalized material recovery
+
+Slice bases solver e78ae75e / ANYfem 481b4d1; resolve latest commits with git log.
+BL5 material force/displacement results now expose typed native station strain,
+resultants, frames, accepted plastic state, endpoint stored energy and incremental
+dissipation in J/m. Cache binds exact trial and predecessor; selected recovery
+executes no constitutive update. Rebase preserves last-increment dissipation;
+restore uses existing mechanics checks and saved history. No schema change.
+
+Source 12 and installed 19 solver + 2 consumer checks passed. Initial paired-history
+precision-context failure was fixed using the existing 80-digit context and retained.
+Independent source review has no remaining blocker. No full gate closes.
+[Artifacts, review and limitations](development/r8-generalized-recovery-20261002/results.md).
+All owned jobs terminal. Next: use these actual material observables for one
+bounded unload/reload comparison within the existing displacement interval,
+before considering larger amplitudes. State the discriminator and possible
+outcomes first; no automatic full-force retry or refinement campaign.

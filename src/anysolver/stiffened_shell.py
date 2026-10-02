@@ -263,3 +263,6 @@ __all__ += ["DisplacementAttempt", "DisplacementIncrementLimit"]
 
 from ._stiffened_shell_displacement_control import GENERALIZED_BRANCH_EVENT_TRIAL
 __all__ += ["GENERALIZED_BRANCH_EVENT_TRIAL"]
+
+from ._stiffened_shell_generalized_recovery import GeneralizedBeamElementRecovery, GeneralizedBeamStationRecovery
+__all__ += ["GeneralizedBeamElementRecovery", "GeneralizedBeamStationRecovery"]
