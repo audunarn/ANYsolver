@@ -275,3 +275,8 @@ __all__ += ["ArcLengthControl", "PhysicalChordMetric", "ArcResult", "ArcSelectio
 
 from ._stiffened_shell_ge_experimental import CURVED_Q4_POINT_REFERENCE_V1
 __all__ += ["CURVED_Q4_POINT_REFERENCE_V1"]
+
+from ._stiffened_shell_stress_free_reference import (
+    ReferencePosePerturbation, StressFreePointReference, create_stress_free_point_reference,
+)
+__all__ += ["ReferencePosePerturbation", "StressFreePointReference", "create_stress_free_point_reference"]

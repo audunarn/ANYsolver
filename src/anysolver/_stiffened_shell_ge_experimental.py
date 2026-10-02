@@ -924,6 +924,8 @@ class ExperimentalGEAnalysis:
                 capabilities["arc_length"] = "experimental_fixed_mesh_affine_nodal_dead_translation_v1"
             capabilities["selected_finite_recovery"] = "experimental_cached_nodes_material_v1"
         if self._curved_reference:
+            from ._stiffened_shell_stress_free_reference import POLICY as reference_policy
+            capabilities["stress_free_reference_construction"] = reference_policy
             capabilities["shell"] = "experimental elastic planar Q4 facets on curved reference"
             capabilities["beam"] = "generalized B3 retained, elastic response only"
             for key in ("body_acceleration","beam_distributed_loads","staged_beam_distributed_loads",

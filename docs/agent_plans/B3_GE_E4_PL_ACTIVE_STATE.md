@@ -5,7 +5,7 @@
 Revision 8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full amended
 G0–G6, F01–F13, V01–V28, B01–B18 scope and scientific criteria remain binding.
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Last behavior/evidence commit 2b5afc1a; use git log for
+branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 958559b7; use git log for
 latest committed identity. ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer
 at 8a6e677 (curved-reference consumer). Scoped local commits only; no push/main merge/publication
 or contact-worker messages. All owned numerical runs/review terminal. Main untouched.
@@ -41,32 +41,30 @@ modules matched. [Restart and external port evidence](development/r8-e04-restart
 
 ## Decision and next action
 
-Decision sought: a physically matched independent nonlinear E04 comparison.
-Established: sparse owner carries the coarse descending path and turning-point
-restart. Analytic prescribed finite rigid-marker motion matches CalculiX output.
-Remaining: finite external beam/shell section and pose/offset work mapping, then
-converged capacity comparison. U1 is small-deformation linear; original beam/shell
-nodes cannot enter RIGID BODY. REF/ROT RF in the prescribed control is zero and
-is not a support-wrench oracle. Marker controls do not qualify beam/shell ports.
+Decision resolved: a coherent new virgin curved-Q4/GE point reference can be
+constructed through existing admission without changing a loaded owner's state.
+The new typed public operation transports offsets/frames once, rejects conflicting
+local hosts and invalid geometry, and preserves native policies. Both signs of the
+actual roof crown imperfection pass installed solves/restart. +0.1mm passes ANYfem
+native persistence and exact continued arc steps; -0.1mm passes the runnable CLI
+and exact prefix continuation. Initial reference residual is zero. Seventeen
+installed checks pass; all 413 solver and unchanged 98 consumer modules match.
+Wheel 7cb1eedb...; [evidence and failures](development/r8-stress-free-reference-20261002/results.md).
 
-The free rigid carrier fails at 200 increments, fraction .02135127. Its accepted
-prefix is close to the analytic energy minimum, but the moment residual exceeds
-printed rounding. Keep failure; no automatic repeat or higher budget. Any next
-external experiment must distinguish the specific tangent/work-mapping issue or
-use an explicitly justified engineering comparator. No formal F03 run.
-The explicit curved policy now passes standalone and native ANYfem persistence,
-installed actual-roof solve/restore/continued stepping. Ten focused installed
-checks and the E04 route pass; all 98 ANYfem and 412 solver modules match installed
-artifacts. [Consumer evidence](development/r8-curved-consumer-20261002/results.md).
-No external capacity acceptance follows. Next bounded implementation slice:
-coherent stress-free reference imperfections using the existing immutable
-shell/beam definitions and compile path. First check whether reference geometry,
-frames, point offsets and zero initial work/gaps can be regenerated within the
-current curved-Q4 admission. A specific distortion/admission obstruction must
-stay explicit; do not weaken the guard or silently reinterpret the connection.
-This advances required G4C behavior without further rigid-marker refinements. Curved materials/spectra/external loads,
-stress-free imperfections, complete stability, practical scale and full accepted
-milestones remain explicit programme gaps; retain the one acceptance matrix.
+Next discriminating slice: determine the concrete prerequisite for broader G4C
+reference regeneration and curved material/loading admission using existing local
+adapters. Reuse fixed-predecessor and geometry evidence; extend only the missing
+contract and its consequential tests. Do not reopen marker refinement or infer
+capacity from these tiny-load paths. Material/line/footprint/S3/spectral
+imperfections, sensitivity and full G4C remain unfinished.
+
+The independent nonlinear E04 comparison remains open: finite external section/
+pose/offset mapping and convergence are not established. CalculiX U1 is linear;
+original beam/shell nodes cannot enter RIGID BODY. Prescribed REF/ROT RF is not a
+wrench oracle. The free marker carrier failed at200 increments/fraction.02135127;
+no automatic repeat or larger budget. Keep its failed evidence and limitations:
+[external port record](development/r8-e04-restart-and-port-20261002/results.md).
+No formal F03 run or aggregate acceptance follows from the reference slice.
 
 Original 500N material-history and arc failures remain preserved. Curved 0.1N
 control still stops at 1.9145e-8 (required 1e-8), committing nothing; a green

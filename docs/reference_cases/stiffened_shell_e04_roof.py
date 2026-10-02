@@ -88,6 +88,26 @@ def build(nx=8,ny=8):
         node(nx//2,ny//2),owned(weights),area,length)
 
 
+def crown_reference_perturbations(case, amplitude_m):
+    """Smooth axial-extruded crown change with transported physical ports.
+
+    This bounded field preserves planar Q4 facets and straight axial bars.
+    It is a new virgin reference, not a displacement of a loaded roof.
+    The amplitude sign follows downward global z at the crown.
+    """
+    from anysolver import stiffened_shell as ss
+    amplitude=float(amplitude_m)
+    if not np.isfinite(amplitude):
+        raise ValueError('finite crown imperfection amplitude required')
+    theta=np.arctan2(case.shell_directors[:,1],case.shell_directors[:,2])
+    shape=np.cos(np.pi*theta/(2*case.half_angle))**2
+    dz=amplitude*np.pi/(2*case.half_angle)*np.sin(np.pi*theta/case.half_angle)
+    angle=np.arctan2(case.radius*np.sin(theta)-dz,case.radius*np.cos(theta))
+    return tuple(ss.ReferencePosePerturbation('shell',i+1,
+        (0.,0.,-float(amplitude*shape[i])),(float(theta[i]-angle[i]),0.,0.))
+        for i in range(len(theta)))
+
+
 def definition(case, *, density_kg_m3):
     """Adapt declared geometry through the experimental public definition API.
 

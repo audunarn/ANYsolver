@@ -18,6 +18,8 @@ def main():
     parser.add_argument('--seed-force',type=float,default=10.)
     parser.add_argument('--radius',type=float,default=1e-5)
     parser.add_argument('--steps',type=int,default=2)
+    parser.add_argument('--imperfection-m',type=float,default=0.,
+        help='Downward crown amplitude for a new virgin reference; metres.')
     parser.add_argument('--restart-after',type=int,
         help='Restore after this arc prefix and compare continued owners exactly.')
     args=parser.parse_args()
@@ -25,18 +27,29 @@ def main():
         parser.error('--restart-after must be strictly between zero and --steps')
     args.output.mkdir(parents=True,exist_ok=False)
     from anysolver import stiffened_shell as ss
-    from docs.reference_cases.stiffened_shell_e04_roof import build,definition
+    from docs.reference_cases.stiffened_shell_e04_roof import build,definition,crown_reference_perturbations
     import anysolver,threadpoolctl,numba
     pools=threadpoolctl.threadpool_info()
     assert pools and all(p['num_threads']==1 for p in pools)
     assert numba.get_num_threads()==1 and numba.config.DISABLE_JIT
     c=build(args.size,args.size);d=definition(c,density_kg_m3=args.density)
+    reference_change=None
+    if args.imperfection_m:
+        reference_change=ss.create_stress_free_point_reference(d,
+            crown_reference_perturbations(c,args.imperfection_m))
+        d=reference_change.definition
     node=c.loaded_shell_node+1;row=c.loaded_shell_node
     action=(ss.NodalAction('shell',node,(0.,0.,-args.seed_force,0.,0.,0.)),)
     record=dict(status='IN_PROGRESS',size=args.size,shells=len(c.quads),beams=len(c.beam_cells),
         density_kg_m3=args.density,density_use='static bookkeeping; spectra excluded',
         seed_force_n=args.seed_force,radius=args.radius,requested_arc_steps=args.steps,
         restart_after=args.restart_after,
+        imperfection_m=args.imperfection_m,
+        reference_transport=(None if reference_change is None else dict(
+            policy=reference_change.policy,source_identity=reference_change.source_identity,
+            target_identity=reference_change.target_identity,
+            stress_free_scaled_max=reference_change.stress_free_scaled_max)),
+        continuation_metric='fixed nominal reference area/length; equal domain weights',
         connection='six-channel nodal full-pose bonds',samples=[],timings={},
         imported_solver=str(Path(anysolver.__file__).resolve()),threadpools=pools)
     def save():

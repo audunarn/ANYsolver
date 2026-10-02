@@ -651,7 +651,7 @@ This is implemented/tested development, not M2/F03/G0B/G2 acceptance.
 | G1 | IMPLEMENTED_NOT_QUALIFIED | Experimental sparse owner exists; foundation and full G1 acceptance open. |
 | G2 | IN_PROGRESS | Candidate line/footprint and topology incomplete. |
 | G3 | IN_PROGRESS | F05 fixed-predecessor foundation passed; full material domain open. |
-| G4Aâ€“G4D | NOT_STARTED | No aggregate load, stability, imperfection or capacity acceptance. |
+| G4Aâ€“G4D | IN_PROGRESS | Development controls/reference imperfections exist; no aggregate load, stability, imperfection or capacity acceptance. |
 | G5 | IN_PROGRESS | Development scale screens do not meet practical-scale qualification. |
 | G6Aâ€“G6D | IN_PROGRESS | Focused installed/consumer checks exist; final graph, external, reviews and release open. |
 
@@ -1512,3 +1512,14 @@ solve/restore/exact continuation pass on bound artifacts. Old flat/v3 controls
 pass; unsupported S3/J2/load wrappers/moments/modal/footprint conversions reject.
 No external capacity, platform, aggregate gate or production qualification.
 [Artifact identities, failures and consumer evidence](development/r8-curved-consumer-20261002/results.md).
+
+**2 October stress-free point reference: IMPLEMENTED_NOT_QUALIFIED.**
+Typed virgin-reference construction preserves loaded source state and native
+policies, transports eccentric poses once and rejects locally inconsistent
+hosts/unsupported geometry. Seventeen installed impact checks pass. Both signs
+of the actual crown perturbation solve and restart; the positive sign passes
+ANYfem standalone/native persistence and exact arc continuation, and the negative
+sign passes the runnable CLI with exact per-step checkpoints. Broader attachment,
+material, S3 and spectral imperfections, sensitivity and complete G4C remain open.
+No formal F03 consumption or aggregate acceptance.
+[Exact artifacts, review and failures](development/r8-stress-free-reference-20261002/results.md).

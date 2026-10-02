@@ -616,6 +616,57 @@ endpoint-validation work. Experimental execution does not qualify capacity or
 material reversal.
 
 
+### New stress-free point references
+
+`create_stress_free_point_reference(definition, perturbations)` constructs a new
+virgin immutable definition. It takes no accepted state or checkpoint and never
+resets a loaded model. This experimental operation currently requires the
+explicit curved-Q4 reference policy, algorithmic Q4 pullback, elastic generalized
+native beams and full-pose points. Lines, footprints, S3, shell J2, physical
+fibres and spectral requests remain outside this slice.
+
+Each `ReferencePosePerturbation(domain, node, translation_m,
+rotation_vector_rad)` owns its three-component vectors. Sparse shell rows move
+reference coordinates and transport attached physical ports. At each point,
+`r_bnew = r_b0 + u_s + (Q_s-I)(r_b0-r_s0)` and `R_bnew = Q_s R_b0`.
+The eccentric lever is transported once. The shell incremental reference frame
+stays identity, so stored point components are rebased as `e_new=Q_s e_old` and
+`A_new=Q_s A_old`; they are not unchanged material components.
+
+Shell rotations do not prescribe Q4 reference directors: geometry determines
+those directors. A rotation at an unattached shell node has no modeled effect.
+Unconnected beam nodes may have explicit rows; connected beam poses are derived
+from their shell hosts. Conflicting hosts reject using the roundoff scale of the
+local transport operands, independent of distant model geometry. One canonical
+pose propagates to all incident beam elements.
+
+Existing admission rejects warped Q4 facets and beam triads inconsistent with
+the new centerline tangent. It does not realign frames or relax tolerances.
+Supports retain their incremental meaning: moving a supported node relocates
+the zero-displacement reference fixture. The operation preserves sections,
+inertia, integration and native arithmetic policies. New model identity rejects
+old loaded checkpoints. Empty/zero changes preserve the original identity.
+Cancellation discards the unpublished result and closes temporary owners.
+
+The returned `StressFreePointReference` reports source/target identities,
+reference residual and transport disagreement. Zero initial work/gap establishes
+reference admission, not the physical suitability of a supplied imperfection or
+complete G4C acceptance. The new definition uses the existing ANYfem curved-point
+persistence contract; no loaded history is serialized as a virgin reference.
+
+The existing E04 development example now accepts a signed crown imperfection:
+
+```powershell
+python scripts/r8_e04_native_roof.py --output <new-output-directory> --size 4 --density 1 --imperfection-m 0.0001 --seed-force 10 --radius 0.00001 --steps 2 --restart-after 1
+```
+
+Run under the existing resource supervisor. This smooth axial-extruded field
+retains planar facets and straight axial bars; its positive amplitude moves the
+crown downward. The continuation metric retains the declared nominal
+area/length weights for comparisons across these references. Density is static
+bookkeeping; the example does not qualify mass, external capacity or a
+mesh-converged imperfection response.
+
 ### Generalized-beam material recovery on BL5 histories
 
 Accepted BL5 generalized-material and coupled-Q4 J2 results expose
