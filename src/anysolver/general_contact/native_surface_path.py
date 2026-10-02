@@ -7,9 +7,9 @@ from dataclasses import dataclass
 from fractions import Fraction
 
 import numpy as np
-from scipy.spatial.transform import Rotation
 
 from anysolver._ge_beam3_p5.compensated_coordinates import advance
+from anysolver._ge_beam3_p5.algebra import rotation
 from anysolver._ge_beam3_p5_seeded.core import sha
 from .native_surface_s3_friction import NativeS3MaterialConfiguration
 
@@ -83,7 +83,7 @@ def material_path_pose(start, translations, angular, shell_increment, fraction):
     for index in np.ndindex(3, 3):
         high[index], low[index] = advance(float(start.positions[index]),
             float(start.position_low[index]), float(fraction*translations[index]))
-    cells = Rotation.from_rotvec(fraction*angular).as_matrix() @ start.cell_rotations
+    cells = np.array([rotation(fraction*angular[i]) @ start.cell_rotations[i] for i in range(2)])
     return NativeS3MaterialConfiguration(high, low, cells,
         start.shell_displacement + fraction*shell_increment)
 

@@ -318,7 +318,8 @@ class NativeRetainedRoundS3Analysis:
             mechanical.cell_rotations[0], displacement,
         )
 
-    def _assemble(self, mechanical, displacement, parameter, origins):
+    def _assemble_structural(self, mechanical, displacement, parameter, origins):
+        """Shared retained/native and S3 blocks, before any contact profile."""
         self._guard()
         native_r, native_j, _, responses, _ = self.context.assemble(
             mechanical, parameter, origins,
@@ -329,22 +330,32 @@ class NativeRetainedRoundS3Analysis:
         tangent = np.zeros((n_native+n_shell, n_native+n_shell))
         tangent[:n_native, :n_native] = native_j
         tangent[n_native:, n_native:] = self.shell_stiffness
-        contact = self._contact(mechanical, displacement)
+        return residual, tangent, responses
+
+    def _add_spatial_contact(self, residual, tangent, contact_residual, contact_tangent):
+        """Add complete work blocks once; callers own chart conversion."""
+        n_native = self.context.count
+        n_shell = self.shell_stiffness.shape[0]
         slots = np.asarray((*self.context.slots[0],
                             *(n_native+i for i in range(n_shell))), dtype=int)
-        np.add.at(residual, slots, contact.residual)
-        block = contact.tangent.toarray()
-        block[:42, :42] = spatial_jacobian(
-            contact.residual[:42], block[:42, :42],
-        )
+        np.add.at(residual, slots, contact_residual)
         rows, columns = np.meshgrid(slots, slots, indexing="ij")
-        np.add.at(tangent, (rows, columns), block)
+        np.add.at(tangent, (rows, columns), contact_tangent)
         native_scaled = residual[:n_native]/self.context.scale
         metrics = (
             float(np.linalg.norm(native_scaled[self.context.equilibrium])),
             float(np.linalg.norm(native_scaled[self.context.compatibility])),
             float(np.linalg.norm(residual[n_native+self.shell_free])),
         )
+        return metrics
+
+    def _assemble(self, mechanical, displacement, parameter, origins):
+        residual, tangent, responses = self._assemble_structural(
+            mechanical, displacement, parameter, origins)
+        contact = self._contact(mechanical, displacement)
+        block = contact.tangent.toarray()
+        block[:42, :42] = spatial_jacobian(contact.residual[:42], block[:42, :42])
+        metrics = self._add_spatial_contact(residual, tangent, contact.residual, block)
         return residual, tangent, metrics, responses, contact
 
     def _step(self, residual, tangent):
@@ -359,6 +370,53 @@ class NativeRetainedRoundS3Analysis:
             float(np.max(np.abs(step[n_native:]))/self.context.length),
         )
         return step, correction
+
+    def solve_material_increment(self, transaction, parameter, *, cancellation_token=None):
+        """Bounded opt-in material increment on this retained structural owner.
+
+        Uses the same constraint solve, equilibrium scale and iteration limits.
+        Total physical-origin chart coordinates use their declared tangent.
+        Unresolved contact transitions require caller continuation/event cutback;
+        no rejected Newton iterate can advance the transaction's physical state.
+        """
+        from anysolver.control import cancellation_safe_point
+        from .native_surface_transaction import NativeS3MaterialTransaction
+
+        if type(transaction) is not NativeS3MaterialTransaction or transaction.contributor.owner is not self:
+            raise ValueError('material transaction does not belong to native/S3 owner')
+        n = self.context.count
+        increment = np.zeros(n+self.shell_stiffness.shape[0])
+        for iteration in range(self.program.max_iterations+1):
+            cancellation_safe_point(cancellation_token, 'native material equilibrium')
+            proposal = transaction.propose(increment[:n], increment[n:], parameter,
+                                           cancellation_token=cancellation_token)
+            assembly = proposal.assembly
+            step, correction = self._step(assembly.residual, assembly.origin_chart_tangent)
+            if max(*assembly.metrics, correction) <= self.equilibrium_tolerance:
+                return transaction.commit(proposal, cancellation_token=cancellation_token)
+            if iteration == self.program.max_iterations:
+                raise RuntimeError('native material Newton iteration limit; physical state unchanged')
+            accepted = False
+            for cut in range(self.program.max_backtracks+1):
+                cancellation_safe_point(cancellation_token, 'native material backtrack')
+                candidate_increment = increment+(0.5**cut)*step
+                try:
+                    candidate = transaction.propose(candidate_increment[:n], candidate_increment[n:], parameter,
+                                                      cancellation_token=cancellation_token)
+                except ValueError as exc:
+                    if str(exc).startswith(('native/S3 material history path requires subdivision',
+                            'native material path exceeds admitted rotation chart',
+                            'retained nodal chart requires cutback', 'retained cell chart requires cutback')):
+                        continue
+                    raise
+                if candidate.assembly.material.contribution.normal_gap_m < -self.gap_tolerance:
+                    continue
+                if max(candidate.assembly.metrics) < max(assembly.metrics):
+                    increment = candidate_increment
+                    accepted = True
+                    break
+            if not accepted:
+                raise RuntimeError('native material backtracking/event limit; physical state unchanged')
 
     @staticmethod
     def _recoverable_trial_error(exc):

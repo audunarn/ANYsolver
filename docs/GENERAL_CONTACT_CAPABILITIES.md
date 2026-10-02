@@ -922,3 +922,19 @@ staysfalse. [Usage](GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md),
 [results/failures/review](d1_review_support/contact_c6_free_sphere_20261002/results.md).
 An additional installed nodal-history/work/active-V6 restart check passes on the
 unchanged wheel (3.655s/174055424B), covering172distinct checks by impact analysis.
+
+## Native material transaction development successor — 2 October 2026
+
+The retained native/S3 material-point contribution now uses the existing owner's
+structural assembly and a bounded increment solve. Spatial and total-origin chart
+tangents are distinct and verified. V2 contact transactions bind native geometry,
+constitutive history and friction history; canonical replay includes the initial
+origin, even for empty checkpoints. Four coupled contributor checks and nine
+transaction/driver checks pass, with retained failed test runs and independent
+source scrutiny. Two-load open-state solve/restart matches the existing reference.
+
+This supersedes the point row's earlier lack of an owner transaction, but supplies
+no active-friction equilibrium, distributed surface, C5 acceptance or release.
+Rotating first touch remains an explicit unchanged-state failure. See
+[transaction scope/evidence](d1_review_support/contact_c5_native_surface_point_20261002/transaction.md)
+and [activation design](d1_review_support/contact_c5_native_surface_point_20261002/activation_design.md).

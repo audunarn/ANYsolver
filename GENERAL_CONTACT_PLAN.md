@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.16. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.17. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -257,8 +257,12 @@ One additional history/work/V6 split check passes on the same unchanged wheel;
 172distinct checks are covered, with unaffected results reused by impact analysis.
 
 **Next bounded decision:** integrate the certified native/S3 material contribution
-through the existing retained owner's transaction, including equilibrium at contact
-events. Persistent rotating paths and affine first-touch/release proposals now
+through rotating activation/event equilibrium. The existing retained owner now
+assembles the full contribution and solves bounded open-state increments; a V2
+transaction binds geometry/native/friction history with canonical physical replay.
+Two-load open restart and failure/cancellation/cap checks pass. Active friction
+equilibrium and distributed surface integration remain unverified. Persistent
+rotating paths and affine first-touch/release proposals now
 have15focused checks. Exact predicates on represented affine path data distinguish
 touch from a rounded-zero gap, preserving compensated native coordinates. General
 rotating crossings still require bounded event subdivision; a geometric event
