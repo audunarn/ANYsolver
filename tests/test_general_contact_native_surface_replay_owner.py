@@ -17,6 +17,104 @@ def _replay_patch():
         friction_integration='replay',friction_integration_settings=friction_settings())
 
 
+def test_saved_second_support_space_time_discriminator(tmp_path):
+    import json,os
+    from pathlib import Path
+    from dataclasses import asdict
+    from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    from anysolver.general_contact.native_surface_support import segment_gap_slab_enclosure,_minimum,_support_path
+    from anysolver.general_contact.native_surface_path import material_path_pose
+    saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_second_load_rejected_path.json').read_text())
+    _,bridge=_replay_patch()
+    field=NativeSurfaceHistoryField(bridge.pair,
+        NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()}),
+        tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments']),
+        maximum_intervals=saved['maximum_intervals'])
+    angles=(3.3238064996710945,3.323806598728249)
+    rows=[]
+    for xis in ((.5,.8),(.5,.65),(.65,.8)):
+        enclose=segment_gap_slab_enclosure(field,1,xis,angles,1)
+        for slab in ((0.,1.),(0.,.5),(.5,1.)):
+            rows.append(dict(xis=xis,slab=slab,**asdict(enclose(*slab))))
+    pose,segments=_support_path(field,1);segment=segments[0]
+    times=np.linspace(0.,1.,17);paths=[]
+    for xi in np.linspace(.5,.8,7):
+        for angle in angles:
+            gaps=[]
+            for t in times:
+                current=material_path_pose(pose,segment.translations,segment.angular,segment.shell_increment,float(t))
+                gaps.append(_minimum(current,field.patch.target,field.patch.source.reference.nodal_triads[0],
+                    field.patch.rule.definition['radius'],1,(xi,xi),(angle,angle))[0])
+            paths.append(dict(xi=float(xi),angle=angle,gaps=gaps,
+                sampled_sign_changes=int(np.count_nonzero(np.diff(np.sign(gaps))))))
+    output=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))/'space_time_discriminator.json'
+    output.write_text(json.dumps(dict(enclosures=rows,times=times.tolist(),sampled_paths=paths,
+        limitation='Sampled paths diagnose only; no event or support certificate.'),indent=2)+'\n')
+    assert all(np.isfinite(v) for row in paths for v in row['gaps'])
+
+
+def test_saved_second_stationary_front_discriminator(tmp_path):
+    import json,os
+    from pathlib import Path
+    from scipy.optimize import brentq
+    from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    from anysolver.general_contact.native_surface_support import _base,_support_path
+    from anysolver.general_contact.native_surface_path import material_path_pose
+    saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_second_load_rejected_path.json').read_text())
+    _,bridge=_replay_patch()
+    field=NativeSurfaceHistoryField(bridge.pair,
+        NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()}),
+        tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments']),
+        maximum_intervals=saved['maximum_intervals'])
+    pose,segments=_support_path(field,1);segment=segments[0];cell=1
+    angle=(3.2201636457638987+3.225719419125236)/2
+    target=field.patch.target;frame0=field.patch.source.reference.nodal_triads[0]
+    motion=np.asarray(target.adapter.work_map@segment.shell_increment).reshape(3,3)
+    da,db=motion[1]-motion[0],motion[2]-motion[0]
+    rho=field.patch.rule.definition['radius']*np.array((0.,np.cos(angle),np.sin(angle)))
+    def quantities(t,xi):
+        current=material_path_pose(pose,segment.translations,segment.angular,segment.shell_increment,float(t))
+        corners=target.adapter.current_positions(current.shell_displacement)
+        a,b=corners[1]-corners[0],corners[2]-corners[0]
+        cross=np.cross(a,b);area=np.linalg.norm(cross);normal=cross/area
+        cp=np.cross(da,b)+np.cross(a,db);normal_rate=(cp-normal*float(normal@cp))/area
+        arm=current.cell_rotations[cell]@frame0@rho
+        relative=_base(current,cell,xi,corners[0])+arm
+        velocity=(1-xi)*segment.translations[cell]+xi*segment.translations[cell+1]-motion[0]+np.cross(segment.angular[cell],arm)
+        return float(normal@relative),float(normal_rate@relative+normal@velocity)
+    times=np.linspace(0.,1.,65)
+    def roots(function):
+        rows=[]
+        values=[function(float(t)) for t in times]
+        for left,right,fl,fr in zip(times[:-1],times[1:],values[:-1],values[1:]):
+            if fl*fr<0:
+                value=brentq(function,float(left),float(right),xtol=1e-14)
+                rows.append(dict(bracket=[float(left),float(right)],root=value,residual=function(value)))
+        return rows,values
+    paths=[]
+    for xi in np.linspace(.725,.734375,9):
+        stationary,_=roots(lambda t:quantities(t,xi)[1])
+        crossings,_=roots(lambda t:quantities(t,xi)[0])
+        for row in stationary:row['gap']=quantities(row['root'],xi)[0]
+        paths.append(dict(xi=float(xi),stationary=stationary,crossings=crossings,
+            endpoints=[quantities(t,xi) for t in (0.,1.)]))
+    def determinant(t):
+        gl,dl=quantities(t,.725);gr,dr=quantities(t,.734375)
+        return dl*gr-gl*dr
+    folds,detvalues=roots(determinant)
+    for row in folds:
+        gl,_=quantities(row['root'],.725);gr,_=quantities(row['root'],.734375)
+        xi=.725-gl*(.734375-.725)/(gr-gl)
+        row.update(xi=xi,gap_and_rate=quantities(row['root'],xi))
+    output=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))/'stationary_front_discriminator.json'
+    output.write_text(json.dumps(dict(angle=angle,paths=paths,fold_roots=folds,
+        determinant_sample_range=[min(detvalues),max(detvalues)],
+        limitation='Sign-bracket diagnostic at one angle,not exhaustive root isolation or a support certificate.'),indent=2)+'\n')
+    assert all(np.isfinite(v) for row in paths for pair in row['endpoints'] for v in pair)
+
+
 def test_replay_initialization_rejected_trial_and_checkpoint_identity():
     owner,bridge=_replay_patch();transaction=NativeS3MaterialTransaction(bridge)
     before=transaction.checkpoint();history=transaction.accepted.friction_history

@@ -61,6 +61,14 @@ def test_strictly_open_gap_needs_no_derivative_sign():
     assert budget.intervals==1
 
 
+def test_spatially_mixed_slopes_yield_before_temporal_budget_is_spent():
+    budget=SupportIntervalBudget(128)
+    def mixed(left,right):
+        return GapSlabEnclosure(-1.,1.,-1.,1.,spatial_derivative_width=1.9,temporal_derivative_width=.1)
+    assert not certify_single_crossing(mixed,budget=budget,allow_spatial_refinement=True)
+    assert budget.intervals==1
+
+
 @pytest.mark.parametrize('values',[(float('nan'),1.,0.,1.),(2.,1.,0.,1.),(0.,1.,2.,1.)])
 def test_invalid_enclosures_rejected(values):
     with pytest.raises(ValueError,match='ordered'):

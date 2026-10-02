@@ -1024,3 +1024,9 @@ Zero-set geometry adapter now reviewed with11passing analytical/actual-path
 controls. Its single trial connection fails the savedsecond support budget before
 material queries and is removed. Adapter remains unpromoted; second loading and
 restart equivalence remain open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_zero_set_geometry_results.md).
+
+Space/time diagnostic successor: spatial-yield certificate remains unpromoted
+after savedsecond non-success. Pure proof bisection retained separately from
+quadrature fronts. Fine sign-bracket diagnostics support tighter motion bounds;
+no full-region certificate or new mechanics acceptance.
+[Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_space_time_discriminator_results.md).

@@ -403,7 +403,8 @@ def segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index):
         width=right-left
         return GapSlabEnclosure(min(v for v,_ in minima)-curvature*width**2/8-padding,
             -min(v for v,_ in negative_maxima)+curvature*width**2/8+padding,
-            dl-curvature*width/2-padding,du+curvature*width/2+padding)
+            dl-curvature*width/2-padding,du+curvature*width/2+padding,
+            spatial_derivative_width=du-dl,temporal_derivative_width=curvature*width+2*padding)
     return enclose
 
 

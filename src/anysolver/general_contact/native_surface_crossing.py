@@ -18,6 +18,8 @@ class GapSlabEnclosure:
     gap_upper: float
     derivative_lower: float
     derivative_upper: float
+    spatial_derivative_width: float = 0.
+    temporal_derivative_width: float = 0.
 
     def __post_init__(self):
         if (not all(isfinite(v) for v in (self.gap_lower,self.gap_upper,
@@ -25,15 +27,19 @@ class GapSlabEnclosure:
                 or self.gap_lower>self.gap_upper
                 or self.derivative_lower>self.derivative_upper):
             raise ValueError('finite ordered whole-slab enclosures required')
+        if any(not isfinite(v) or v<0. for v in (self.spatial_derivative_width,self.temporal_derivative_width)):
+            raise ValueError('finite nonnegative subdivision widths required')
 
 
-def certify_single_crossing(enclose, *, budget):
+def certify_single_crossing(enclose, *, budget, allow_spatial_refinement=False):
     """Prove at most one crossing per material point, or return False.
 
     Bounds must include arithmetic error and the full spatial rectangle.
     The derivative is with respect to the original segment parameter, not
     a rescaled local time. Strict inequalities exclude unresolved tangencies.
     Every inspected slab consumes the caller's shared support budget.
+    Optional width hints choose only a non-success return to the spatial
+    refiner; they never establish a gap or derivative certificate.
     """
     if type(budget) is not SupportIntervalBudget:
         raise TypeError('exact shared support interval budget required')
@@ -54,6 +60,9 @@ def certify_single_crossing(enclose, *, budget):
                 return False
             orientation=direction
             continue
+        if (allow_spatial_refinement and bounds.spatial_derivative_width>0.
+                and bounds.spatial_derivative_width>=bounds.temporal_derivative_width):
+            return False
         middle=(left+right)/2
         if not left<middle<right:
             return False

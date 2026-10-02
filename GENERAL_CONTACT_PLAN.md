@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.33. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.34. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -48,15 +48,18 @@ with extrema away from contact need not satisfy monotone/open/closed admission,
 even after spatial refinement. A new zero-set certificate core covers time by
 strictly signed gap slabs or same-oriented transverse derivative slabs. Seven
 analytic checks pass; it is NOT yet integrated into the geometry evaluator.
-The actual retained/S3 slab adapter now has reviewed formulas and11passing
-analytic/geometry controls, including a deforming target original-time derivative
-check. A single trial connection still exhausts128support on one narrow region
-before material queries; the connection is removed. Core and adapter remain
-unpromoted development components. Next distinguish spatially mixed crossing
-orientations from true multiple/nontransverse events in that exact saved region,
-then choose a unified space-time proof scheduler. No unchanged full-case rerun,
-scalar-bound tuning, cap increase or coupled continuation before local success.
-See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_zero_set_geometry_results.md).
+The actual retained/S3 slab adapter and spatial-yield scheduler pass focused
+controls, but their trial connection still fails support128 and is removed.
+Pure proof bisection avoids quadrature-front fragmentation; it also does not
+resolve savedsecond. Local sign-bracket diagnostics find no stationary/fold root
+at the inspected angle and one transverse crossing; this is not whole-region
+certification. The next candidate tightens relative-motion bounds using a fixed
+convex target-plane origin with compensated edge-relative arithmetic and explicit
+pre-cancellation/normal-conditioning allowances. Prior extrapolated-origin failure
+and review remain binding. Before savedcase retry, require a thin deforming target
+near/far translation comparison against high-precision independent gap/rate.
+No unchanged coupled run, budget increase, tolerance relaxation or scope promotion.
+See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_space_time_discriminator_results.md).
 
 The pressure-coupled fixed-material S3 friction slice now uses the ordinary static
 path assembly/constraints, existing mortar pressure and accepted-step physical
@@ -541,3 +544,5 @@ Local-origin trial:24support checks pass but savedsecond stillsupport128. Review
 Targeted temporal derivative enclosure: after the original start-derivative/M2 bound fails, local classifier evaluates exact spatial derivative extrema at t=.5 and1. With |g|<=M2, max nearest-node distance1/4 yields min(samples)-M2/4 or max(samples)+M2/4. Strict sign is still required; two extra evaluations charge shared support budget. Legacy helper default unchanged. One savedsecond/support control run,180s/953MiB; no coupled retry yet.
 
 Temporal enclosure savedsecond still fails128 after33proof panels;23controls pass. Avoid two provably useless time samples where initial spatial derivative range already overlaps zero: aggregate three-time strict sign necessarily includes that initial range. This is an exact short-circuit of the same certificate, not changed tolerances. One corrective savedcase run; stop this candidate on non-success.
+
+Bounded discriminator after ce0b06e8: inspect historysegment1 of savedsecond on xi[.5,.8],angle[3.3238064996710945,3.323806598728249]. Compare whole,axially halved and temporally halved enclosures with sampled gap paths. Samples diagnose,never certify. Spatially mixed signs suggest spatial refinement before temporal work; actual multiple/tangent events require revisiting endpoint support. One local diagnostic,no coupled run.

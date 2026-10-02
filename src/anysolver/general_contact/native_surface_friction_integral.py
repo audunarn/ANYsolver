@@ -197,6 +197,19 @@ def integrate_material_friction(field,settings):
         return ((cell,left,right,lower,middle),(cell,left,right,middle,upper))
 
     unresolved_support_panels=0;support_panels_visited=0
+    def subdivide_support(parent):
+        # Support enclosures cover complete rectangles analytically. Pressure
+        # fronts belong to quadrature partitioning, not this geometric proof;
+        # inserting their guard strips here needlessly fragments child proofs.
+        cell,left,right,lower,upper=parent
+        if (right-left)/(hi-lo)>=(upper-lower)/(ahi-alo):
+            middle=(left+right)/2
+            if middle in (left,right):raise ValueError('native friction axial support resolution exhausted')
+            return ((cell,left,middle,lower,upper),(cell,middle,right,lower,upper))
+        middle=(lower+upper)/2
+        if middle in (lower,upper):raise ValueError('native friction angular support resolution exhausted')
+        return ((cell,left,right,lower,middle),(cell,left,right,middle,upper))
+
     def resolve_support(parent):
         # Proof subdivisions need not become quadrature panels. Complete child
         # coverage certifies their union; the parent's independent integration
@@ -217,7 +230,7 @@ def integrate_material_friction(field,settings):
             if result.status=='unresolved':
                 unresolved_support_panels+=1
                 last_unresolved=dict(region=result.region,reason=result.reason)
-                pending.extend(subdivide(result.region))
+                pending.extend(subdivide_support(result.region))
             else:
                 all_open=all_open and result.status=='open'
         return HistoryPanelSupport('open' if all_open else 'resolved',parent,'complete union of local proofs')
