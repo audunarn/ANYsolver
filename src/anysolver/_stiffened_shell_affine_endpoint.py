@@ -15,6 +15,13 @@ from ._stiffened_shell_ge_finite_experimental import (
 from ._stiffened_shell_rotation_charts import owned_anchors,physical_frames
 
 
+def has_shell_material(owner):
+    """Only admitted algorithmic shell histories belong in affine endpoints."""
+    return owner._bl5_shell_material or (
+        getattr(owner, "_curved_material", False)
+        and owner._definition.shell.j2_curve is not None)
+
+
 def validate_arrays(owner,a):
     """Replay decoded fixed-affine translation arrays in isolated mechanics."""
     if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False)):
@@ -47,10 +54,10 @@ def validate_arrays(owner,a):
         for frame in a[name].reshape(-1,3,3):
             if np.linalg.norm(frame.T@frame-np.eye(3))>1e-9 or abs(np.linalg.det(frame)-1.)>1e-9:
                 raise ValueError("nonphysical displacement rotation")
-    for name in (("shell_alpha","shell_origin_alpha") if owner._bl5_shell_material else ()):
+    for name in (("shell_alpha","shell_origin_alpha") if has_shell_material(owner) else ()):
         if np.any(a[name]<0.):raise ValueError("nonphysical shell J2 history")
     shell_parent=(_shell_material_states(a["shell_origin_plastic"],a["shell_origin_alpha"])
-                  if owner._bl5_shell_material else driver._shell_origins)
+                  if has_shell_material(owner) else driver._shell_origins)
     beam_parent=_material_histories(prepared,a["beam_origin_plastic"],a["beam_origin_accumulated"])
     # Validate accepted beam history admissibility before replay comparison.
     _material_histories(prepared,a["beam_plastic"],a["beam_accumulated"])
@@ -61,7 +68,7 @@ def validate_arrays(owner,a):
         raise ValueError("mechanically inconsistent displacement equilibrium")
     bp,ba=_material_arrays(evaluation[5])
     comparisons=[("beam_plastic",bp),("beam_accumulated",ba)]
-    if owner._bl5_shell_material:
+    if has_shell_material(owner):
         sp,sa=_shell_material_arrays(evaluation[4])
         comparisons.extend((("shell_plastic",sp),("shell_alpha",sa)))
     for name,repeated in comparisons:

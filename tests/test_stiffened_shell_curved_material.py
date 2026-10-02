@@ -88,7 +88,7 @@ def test_old_curved_material_guards_and_new_policy_limits(request):
     with pytest.raises(ValueError,match='elastic Q4'):
         ss.create_analysis(definition=replace(d,shell_reference_policy=ss.CURVED_Q4_POINT_REFERENCE_V1))
     owner=make_owner(request,d);cap=owner.capabilities
-    assert 'J2' in cap['shell'] and 'arc_length' not in cap
+    assert 'J2' in cap['shell'] and cap['arc_length']=='experimental_curved_material_point_tangent_plane_v1'
     assert 'MATERIAL_REFERENCE_TRANSPORT' in cap['stress_free_reference_construction']
     assert not owner.reference_modal_capabilities['eligible']
     with pytest.raises(ValueError,match='reference definition'):
@@ -97,14 +97,16 @@ def test_old_curved_material_guards_and_new_policy_limits(request):
         owner.solve((ss.NodalAction('beam',105,(0.,0.,1.,0.,1.,0.)),),(.1,))
     assert owner._generation==0 and owner._finite_driver is None
     control=ss.ArcLengthControl('beam',105,2,ss.PhysicalChordMetric(np.ones(11),1.),1e-4,1)
-    with pytest.raises(ValueError,match='curved material arc'):
+    with pytest.raises(ValueError,match='accepted coupled'):
         owner.continue_arc_length(_actions(),control)
     with pytest.raises(ValueError,match='curved material displacement control'):
         owner.solve(_actions(),(.1,),displacement_control=object())
     from anysolver._stiffened_shell_arc_checkpoint import MAGIC as ARC_MAGIC
     from anysolver._stiffened_shell_displacement_checkpoint import MAGIC as DISPLACEMENT_MAGIC
     from anysolver._stiffened_shell_displacement_adaptive import MAGIC as ADAPTIVE_MAGIC,EVENT_MAGIC
-    for magic in (ARC_MAGIC,DISPLACEMENT_MAGIC,ADAPTIVE_MAGIC,EVENT_MAGIC):
+    with pytest.raises(ValueError,match='arc snapshot'):
+        owner.restore(ARC_MAGIC)
+    for magic in (DISPLACEMENT_MAGIC,ADAPTIVE_MAGIC,EVENT_MAGIC):
         with pytest.raises(ValueError,match='curved material .* checkpoints'):
             owner.restore(magic)
     assert owner._generation==0 and owner._finite_driver is None

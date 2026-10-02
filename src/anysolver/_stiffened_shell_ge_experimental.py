@@ -944,11 +944,12 @@ class ExperimentalGEAnalysis:
                 capabilities["fixed_step_max_backtracks"] = 16
                 capabilities["adaptive_max_backtracks"] = 12
                 capabilities["generalized_station_recovery"] = "cached_fixed_predecessor_v2; older snapshots omit last-increment records"
-            if getattr(self,"_external_context",None) is None and not self._curved_material:
-                capabilities["arc_length"] = "experimental_curved_elastic_point_tangent_plane_v1"
+            if getattr(self,"_external_context",None) is None:
+                capabilities["arc_length"] = ("experimental_curved_material_point_tangent_plane_v1"
+                    if self._curved_material else "experimental_curved_elastic_point_tangent_plane_v1")
             capabilities["excluded"] += ("curved reference spectra",
                 "curved reference external loads")
-            capabilities["excluded"] += (("curved material arc continuation", "curved material displacement control")
+            capabilities["excluded"] += (("curved material displacement control",)
                 if self._curved_material else ("curved reference material yielding",))
         return capabilities
 
@@ -977,7 +978,7 @@ class ExperimentalGEAnalysis:
             details["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         if self._modal_only:
             details["modal_boundary_policy"] = self._definition.modal_boundary_policy
-        if self._bl5_shell_material or (self._curved_reference and not self._curved_material):
+        if self._bl5_shell_material or self._curved_reference:
             details["arc_metric_node_order"] = (tuple(("shell",int(i)) for i in self._shell_ids)
                 +tuple(("beam",int(i)) for i in self._beam_ids))
         return details
@@ -1251,8 +1252,6 @@ class ExperimentalGEAnalysis:
             raise ValueError("bounded mixed linear checkpoint required")
         from ._stiffened_shell_arc_checkpoint import MAGIC as ARC_MAGIC
         if raw.startswith(ARC_MAGIC):
-            if self._curved_material:
-                raise ValueError('curved material arc checkpoints are not admitted')
             from ._stiffened_shell_arc_publication import publish
             return publish(self,raw,expected_driver=None,expected_generation=self._generation,restoring=True)
         from ._stiffened_shell_displacement_adaptive import MAGIC as DISPLACEMENT_ADAPTIVE_MAGIC, EVENT_MAGIC

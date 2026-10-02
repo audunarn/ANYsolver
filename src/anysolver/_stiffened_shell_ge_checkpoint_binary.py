@@ -35,6 +35,7 @@ SCHEMAS = {
     "finite_curved_points_coupled": "B3_GE_E4_PL_CURVED_POINT_COUPLED_J2_PREDECESSOR_V2_DEV",
     "finite_chart_curved_points_coupled": "B3_GE_E4_PL_ANCHORED_CURVED_POINT_COUPLED_J2_PREDECESSOR_V2_DEV",
     "finite_arc_curved_points": "B3_GE_E4_PL_CURVED_ELASTIC_POINT_ARC_MECHANICS_V1_DEV",
+    "finite_arc_curved_material": "B3_GE_E4_PL_CURVED_MATERIAL_POINT_ARC_MECHANICS_V1_DEV",
     "finite_arc_bl5_coupled": "B3_GE_E4_PL_BL5_COUPLED_PHYSICAL_ARC_MECHANICS_V1_DEV",
     "finite_displacement_bl5_coupled": "B3_GE_E4_PL_BL5_COUPLED_DISPLACEMENT_MECHANICS_V1",
     "finite_bl5_coupled": "B3_GE_E4_PL_STIFFENED_SHELL_BL5_COUPLED_J2_MATERIAL_V1",

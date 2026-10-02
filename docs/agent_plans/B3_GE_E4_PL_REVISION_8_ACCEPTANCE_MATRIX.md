@@ -1557,3 +1557,15 @@ and detailed restart pass. Recipe/source provenance remains separately retained;
 experimental input schema preserves only the new mechanical definition. No
 material capacity, external agreement or complete G4C/G3 acceptance.
 [Identities, source failure and boundary](development/r8-material-reference-20261003/results.md).
+
+**3 October curved material arc: IMPLEMENTED_NOT_QUALIFIED.**
+Separate controller/binary identities preserve fixed shell/beam predecessors.
+Installed23 solver checks cover yielded loading/unloading, force endpoints at
+matched increments, detailed restart, before/after-publication cancellation,
+stale ownership, history corruption and affected legacy arc/displacement routes.
+Installed2 native ANYfem checks include nonrigid material reference persistence
+and exact continued arc history. All511 source/artifact/site modules match.
+Existing physical metric, budgets and criteria remain unchanged. Retained-variable
+normalization, general unit/mesh invariance, material capacity and independent
+scientific/external acceptance remain open; no aggregate gate closes.
+[Identities and retained failures](development/r8-curved-material-arc-20261003/results.md).

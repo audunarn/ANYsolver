@@ -2,7 +2,9 @@
 
 `continue_arc_length` is available on the existing stiffened-shell owner for
 accepted Q4 shell J2 / generalized BL5 states, and separately selected
-`CURVED_Q4_POINT_REFERENCE_V1` elastic point states, with affine nodal dead forces.
+`CURVED_Q4_POINT_REFERENCE_V1` elastic point states or
+`CURVED_Q4_POINT_MATERIAL_REFERENCE_V1` generalized-beam material point states
+(with optional shell J2), with affine nodal dead forces.
 It is experimental and unqualified. It does not establish stability, a first
 limit point, branch uniqueness, mesh-independent continuation or capacity.
 Other materials, external load contexts, moments and chart rebasing on this
@@ -72,7 +74,16 @@ does not qualify the E04 roof, a first limit point or a descending branch. The
 known tiny-load nonconvergence in the curved force-control control remains open.
 
 Current limits are 1,024 accepted increments, bounded binary/metadata size and
-the explicit per-step budgets. These development limits do not fulfill the
+the unchanged twelve-backtrack arc budget. The curved material route has its own
+`B3_GE_CURVED_MATERIAL_POINT_TANGENT_PLANE_V1_DEV` controller policy and
+`B3_GE_E4_PL_CURVED_MATERIAL_POINT_ARC_MECHANICS_V1_DEV` mechanical kind.
+Accepted and fixed-predecessor beam histories are mandatory; shell J2 histories
+are stored only when the definition admits that material. Restore replays the
+actual endpoint update before atomic publication. Elastic checkpoint identities
+are unchanged. Bounded loading/unloading and restart evidence does not establish
+material limit loads or the programme's full continuation envelope.
+
+Other limits include the explicit per-step budgets. These development limits do not fulfill the
 programme's scale or capacity requirements. The standing test is
 `tests/test_stiffened_shell_arc_trial.py`; accepted evidence is tracked in the
 programme acceptance matrix.

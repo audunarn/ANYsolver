@@ -15,6 +15,8 @@ MAGIC=b'ANYSSARC1'
 KIND='finite_arc_bl5_coupled'
 POLICY='B3_GE_BL5_PHYSICAL_TANGENT_PLANE_V1_DEV'
 def identities(owner):
+    if getattr(owner, '_curved_material', False):
+        return 'finite_arc_curved_material', 'B3_GE_CURVED_MATERIAL_POINT_TANGENT_PLANE_V1_DEV'
     if getattr(owner, '_curved_reference', False):
         return 'finite_arc_curved_points', 'B3_GE_CURVED_ELASTIC_POINT_TANGENT_PLANE_V1_DEV'
     if owner._bl5_shell_material:
@@ -63,9 +65,10 @@ def _validate_attempt_group(group):
 def layout(owner,steps):
     # Reuse only the existing mechanical array layout, not its control fields.
     from ._stiffened_shell_displacement_checkpoint import _layout
+    from ._stiffened_shell_affine_endpoint import has_shell_material
     mechanical=tuple((name,shape) for name,shape in _layout(owner,steps)
                      if name not in ('seed','history') and
-                     (owner._bl5_shell_material or name not in
+                     (has_shell_material(owner) or name not in
                       ('shell_plastic','shell_alpha','shell_origin_plastic','shell_origin_alpha')))
     nodes=len(owner._shell_ids)+len(owner._beam_ids)
     return mechanical+(("history",(steps,2)),("metric_weights",(nodes,)),
@@ -166,6 +169,7 @@ def decode_snapshot(owner,raw):
 
 def from_selection(owner,selection,*,seed_generation,seed_sha256,history=(),attempt_history=()):
     from ._stiffened_shell_ge_finite_experimental import _material_arrays,_shell_material_arrays
+    from ._stiffened_shell_affine_endpoint import has_shell_material
     trial=selection.trial;state=trial.state;parent=trial.predecessor_state
     with owner._commit_lock:
         driver=owner._finite_driver
@@ -186,7 +190,7 @@ def from_selection(owner,selection,*,seed_generation,seed_sha256,history=(),atte
         origin_frames=np.concatenate((physical_frames(parent.q[:owner._shell_count],parent.shell_anchors),parent.frames)))
     arrays['beam_plastic'],arrays['beam_accumulated']=_material_arrays(trial.evaluation[5])
     arrays['beam_origin_plastic'],arrays['beam_origin_accumulated']=_material_arrays(trial.beam_predecessor)
-    if owner._bl5_shell_material:
+    if has_shell_material(owner):
         arrays['shell_plastic'],arrays['shell_alpha']=_shell_material_arrays(trial.evaluation[4])
         arrays['shell_origin_plastic'],arrays['shell_origin_alpha']=_shell_material_arrays(trial.shell_predecessor)
     group=dict(requested_radius=selection.requested_radius,amplitude_origin=trial.amplitude_origin,

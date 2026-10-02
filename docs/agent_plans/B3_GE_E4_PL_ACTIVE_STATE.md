@@ -5,9 +5,9 @@
 Revision 8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full amended
 G0–G6, F01–F13, V01–V28, B01–B18 scope and scientific criteria remain binding.
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 0a88f292; use git log for
+branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 80c3920c; use git log for
 latest committed identity. ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer
-at 7a00a0b (virgin-reference documentation; product85ed953). Scoped local commits only; no push/main merge/publication
+at b6ad370 (material arc documentation; product85ed953). Scoped local commits only; no push/main merge/publication
 or contact-worker messages. All owned numerical runs/review terminal. Main untouched.
 
 Formal F03 UNCONSUMED; protected original script SHA256
@@ -75,12 +75,19 @@ material panel yields in both domains and restarts exactly through native ANYfem
 Installed18 solver and2 consumer checks pass; all511 product modules match.
 [Artifacts and limits](development/r8-material-reference-20261003/results.md).
 
-Next decision: can the existing mixed arc machinery preserve physical metrics,
-normalization and complete material predecessors for the curved point route?
-Inspect the actual kind/array/update contracts first; successful parity permits
-one separate experimental identity and bounded seed/continue/restart checks.
-A contract defect is repaired before admitting it. No elastic-state relabeling,
-new globalization or external/finer-roof campaign. Material arc, displacement,
+Curved material arc slice delivered: distinct identity, complete optional shell
+and mandatory beam predecessors, endpoint replay and atomic publication. Both
+loading directions, matched force increments, exact detailed restart, cancellation
+and stale publication pass. Installed23 solver checks and2 native ANYfem checks
+pass; all511 product modules match. [Artifacts, failures and scope](development/r8-curved-material-arc-20261003/results.md).
+
+Next decision: assess actual native retained force/moment normalization before
+general material continuation or an actual-roof capacity claim. Inspect existing
+compiled scale/identity contracts; a bounded physical-similarity comparison can
+distinguish representation/normalization defects from a genuine load-path issue.
+Repair an identified contract defect under an explicit identity rather than
+changing old snapshots. Only then choose a bounded material roof discriminator.
+No automatic finer mesh, new globalization or external repeat. Displacement,
 spectra, external loads, fibres, curved S3 and broader attachments remain open;
 no aggregate qualification follows.
 

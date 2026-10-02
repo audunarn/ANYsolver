@@ -7,6 +7,7 @@ from scipy.spatial.transform import Rotation
 from .control import cancellation_safe_point
 from ._stiffened_shell_arc_checkpoint import validate_endpoint
 from ._stiffened_shell_arc_trial import ArcAttempt
+from ._stiffened_shell_affine_endpoint import has_shell_material
 
 
 @dataclass(frozen=True)
@@ -46,7 +47,7 @@ def prepare(owner,raw):
         _material_observables,_material_histories)
     m,a,driver,state,evaluation,shell_parent,beam_parent=validate_endpoint(owner,raw)
     residual,_,relative,gap,shell_next,beam_next=evaluation
-    if owner._bl5_shell_material:
+    if has_shell_material(owner):
         shell_next=tuple({**candidate,'plastic_strain':a['shell_plastic'][i],
                           'alpha':a['shell_alpha'][i]} for i,candidate in enumerate(shell_next))
     beam_next=_material_histories(owner,a['beam_plastic'],a['beam_accumulated'])
@@ -58,15 +59,15 @@ def prepare(owner,raw):
         history,m['generation'],_owned(display.ravel()),_owned(driver._beam_positions(state)),
         state.frames,state.cells,state.resultants,state.multipliers,_owned(support),
         a['applied_load'],relative,gap,a['shell_frames'],local,a['shell_anchors'],
-        (_shell_q4_recovery(owner._shell_parts,shell_next) if owner._bl5_shell_material else ()),_material_observables(beam_next),
-        (tuple(tuple(float(v) for v in row['alpha']) for row in shell_next) if owner._bl5_shell_material else ()),
+        (_shell_q4_recovery(owner._shell_parts,shell_next) if has_shell_material(owner) else ()),_material_observables(beam_next),
+        (tuple(tuple(float(v) for v in row['alpha']) for row in shell_next) if has_shell_material(owner) else ()),
         driver._line_trial_recovery[1],driver._point_records(state),
         driver._generalized_records(state,beam_parent,beam_next),
         tuple(ArcAttempt(**row) for row in m['attempts']),
         tuple(tuple(ArcAttempt(**row) for row in group['attempts']) for group in m['attempt_history']))
     driver._state=state;driver._shell_predecessors=shell_parent;driver._beam_predecessors=beam_parent
     driver._shell_origins=(_accepted_shell_material_origins(owner,state,shell_next)
-                           if owner._bl5_shell_material else shell_next)
+                           if has_shell_material(owner) else shell_next)
     driver._beam_origins=beam_next;driver._accepted=result
     driver._arc_applied_load=a['applied_load']
     return m,a,driver,result
@@ -79,7 +80,7 @@ def _bind_predecessor(owner,m,a,live,expected_generation):
             or m['predecessor_sha256']!=sha256(owner.checkpoint()).hexdigest()):
         raise ValueError('arc endpoint has a different accepted predecessor')
     nodes=len(owner._shell_ids)+len(owner._beam_ids)
-    shell=(_shell_material_arrays(live._shell_origins) if owner._bl5_shell_material else ())
+    shell=(_shell_material_arrays(live._shell_origins) if has_shell_material(owner) else ())
     beam=_material_arrays(live._beam_origins)
     frames=np.concatenate((physical_frames(live._state.q[:owner._shell_count],
         live._state.shell_anchors),live._state.frames))
@@ -90,7 +91,7 @@ def _bind_predecessor(owner,m,a,live,expected_generation):
     witnesses=(('origin_translations',live._state.q[:nodes*6].reshape(-1,6)[:,:3]),
         ('origin_frames',frames),
         ('beam_origin_plastic',beam[0]),('beam_origin_accumulated',beam[1]))
-    if owner._bl5_shell_material:
+    if has_shell_material(owner):
         witnesses+=(('shell_origin_plastic',shell[0]),('shell_origin_alpha',shell[1]))
     if (any(not np.array_equal(a[name],value) for name,value in witnesses)
             or not np.array_equal(a['base_load']+m['amplitude_origin']*a['load_direction'],applied)):

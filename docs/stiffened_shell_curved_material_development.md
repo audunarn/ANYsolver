@@ -15,10 +15,10 @@ this is not finite-strain plasticity. Transverse shear and drilling completion
 retain their existing elastic definitions. Every trial reads the same accepted
 shell and beam predecessor; the mixed owner commits them atomically.
 
-Only reference-linear and finite force control with fixed nodal translational
-dead forces are admitted in this slice. S3, physical beam fibres, line and
+Reference-linear, finite force control and experimental physical arc continuation
+with fixed nodal translational dead forces are admitted. S3, physical beam fibres, line and
 footprint attachments, external/staged load wrappers, displacement control,
-curved material arc continuation and spectra remain unsupported. The older curved elastic policy, defaults and checkpoint
+and spectra remain unsupported. The older curved elastic policy, defaults and checkpoint
 decoding contracts keep their meanings. No publication or qualification follows.
 
 The finite fixed-step driver retains its default eight backtracks. For this new
@@ -72,3 +72,11 @@ material panel with both-domain yielding and restart. These do not qualify
 imperfect material capacity, arbitrary geometry or the complete G4C scope.
 
 [Virgin material reference evidence](agent_plans/development/r8-material-reference-20261003/results.md).
+
+The existing `continue_arc_length` operation also admits accepted curved-material
+point states with affine nodal dead translations. It uses a distinct material
+arc checkpoint and retains fixed accepted predecessors for beam and optional
+shell J2 updates. The physical chord metric, twelve-backtrack arc budget and
+equilibrium/compatibility checks are unchanged. Force/displacement controllers
+cannot consume an arc history. This remains experimental; bounded continuation
+and restart do not qualify material capacity or a descending branch.
