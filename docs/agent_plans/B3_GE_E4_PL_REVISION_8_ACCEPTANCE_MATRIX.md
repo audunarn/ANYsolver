@@ -1400,3 +1400,11 @@ tolerances; accepted prefix unmodified.9installed checks pass. Extra22cell respo
 are counted separately from13global evaluations; no speedup claim. Public policy/
 restart integration and the broader path remain open. No aggregate gate closes.
 [Exact evidence and limitations](development/r8-branch-event-20261002/results.md).
+
+
+**2 October public branch-event policy: IMPLEMENTED_NOT_QUALIFIED.**
+Explicit selection from force seed, V3/ANYSSDCA2 compatibility, failed versus
+accepted event-work counts, rebase and exact continuation now integrated.
+35installed solver and2installed ANYfem checks pass. Public -66/-68um route
+reproduces the private endpoint and restarts exactly. No later physical targets,
+full reversal or aggregate qualification. [Evidence](development/r8-event-public-20261002/results.md).

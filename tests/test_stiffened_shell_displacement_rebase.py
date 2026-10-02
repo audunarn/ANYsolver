@@ -3,19 +3,20 @@ import numpy as np
 import pytest
 from anysolver import stiffened_shell as ss
 from anysolver.control import CancellationToken, SolveCancelled
-from anysolver._stiffened_shell_displacement_checkpoint import decode_snapshot, POLICY, CHART_POLICY, encode_snapshot
+from anysolver._stiffened_shell_displacement_checkpoint import decode_snapshot, POLICY, CHART_POLICY, EVENT_POLICY, encode_snapshot
 from test_stiffened_shell_bl5_coupled_material import coupled
 from test_stiffened_shell_bl5_material import make
 from test_stiffened_shell_bl5_finite import _action
 
 
-def test_chart_event_pending_adaptive_restart(request, monkeypatch):
+@pytest.mark.parametrize("policy",(None,ss.GENERALIZED_BRANCH_EVENT_TRIAL))
+def test_chart_event_pending_adaptive_restart(request, monkeypatch,policy):
     owner=make(request,coupled())
     programme=ss.StagedDeadLoadProgramme(owner.preflight()["identity"],(_action(500.),))
     seed=owner.solve(programme,(.5,1.),max_iterations=20,max_backtracks=12)
     initial=float(seed.beam_positions[-1,2]-.0675)
     targets=(initial*1.01,initial*1.02)
-    options=dict(displacement_control=ss.DisplacementControl("beam",105,2),
+    options=dict(displacement_control=ss.DisplacementControl("beam",105,2,trial_policy=policy),
                  increment_control=ss.AdaptiveIncrementControl(2,8),max_iterations=20,max_backtracks=12)
     token=CancellationToken()
     with pytest.raises(SolveCancelled):
@@ -23,7 +24,7 @@ def test_chart_event_pending_adaptive_restart(request, monkeypatch):
                     on_accepted=lambda result:token.cancel("prefix"))
     before=owner.recover();saved=owner.checkpoint()
     unrebased=make(request,coupled());unrebased.restore(saved)
-    m,a=decode_snapshot(owner,owner._displacement_snapshot[0]);assert m["policy"]==POLICY
+    m,a=decode_snapshot(owner,owner._displacement_snapshot[0]);assert m["policy"]==(POLICY if policy is None else EVENT_POLICY)
     with pytest.raises(ValueError,match="generation"):
         owner.rebase_rotations(before.generation-1)
     import anysolver._stiffened_shell_displacement_control as control
@@ -38,7 +39,9 @@ def test_chart_event_pending_adaptive_restart(request, monkeypatch):
     assert owner.checkpoint()==saved
     after=owner.rebase_rotations(before.generation)
     new_m,new_a=decode_snapshot(owner,owner._displacement_snapshot[0])
-    assert new_m["policy"]==CHART_POLICY and new_m["chart_events"]==1
+    assert new_m["policy"]==(CHART_POLICY if policy is None else EVENT_POLICY) and new_m["chart_events"]==1
+    assert after.event_cell_evaluations==before.event_cell_evaluations
+    assert after.trial_policy==before.trial_policy==policy
     assert new_m["generation"]==m["generation"]+1
     assert after.history==before.history and after.increment_attempts==before.increment_attempts
     assert after.amplitude==before.amplitude and after.target==before.target

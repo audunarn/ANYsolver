@@ -260,3 +260,6 @@ __all__ += ["DisplacementCorrectorFailure", "DisplacementFailureDetail"]
 
 from ._stiffened_shell_displacement_increment import DisplacementAttempt, DisplacementIncrementLimit
 __all__ += ["DisplacementAttempt", "DisplacementIncrementLimit"]
+
+from ._stiffened_shell_displacement_control import GENERALIZED_BRANCH_EVENT_TRIAL
+__all__ += ["GENERALIZED_BRANCH_EVENT_TRIAL"]

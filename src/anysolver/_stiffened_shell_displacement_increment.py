@@ -3,6 +3,8 @@ from dataclasses import dataclass,asdict,replace
 from math import isfinite
 from ._stiffened_shell_increment_control import AdaptiveIncrementControl
 
+MAX_EVENT_WORK = 2**63-1
+
 
 @dataclass(frozen=True)
 class DisplacementAttempt:
@@ -13,6 +15,7 @@ class DisplacementAttempt:
     evaluations: int
     linear_solves: int
     rejected_trials: int
+    event_cell_evaluations: int = 0
 
 
 class DisplacementIncrementLimit(RuntimeError):
@@ -54,6 +57,8 @@ class DisplacementIncrementState:
                         (row.displacement,row.accepted_from,row.requested_target)) or
                     any(type(v) is not int or v<0 for v in
                         (row.evaluations,row.linear_solves,row.rejected_trials)) or
+                    type(row.event_cell_evaluations) is not int or
+                    not 0<=row.event_cell_evaluations<=MAX_EVENT_WORK or
                     row.evaluations<1 or
                     depth>self.limits.max_cutbacks):
                 raise ValueError("inconsistent displacement attempt")
@@ -80,25 +85,35 @@ class DisplacementIncrementState:
             raise DisplacementIncrementLimit("displacement increment not representable",self)
         return proposed
 
-    def record(self,accepted,*,evaluations,linear_solves,rejected_trials):
+    def record(self,accepted,*,evaluations,linear_solves,rejected_trials,event_cell_evaluations=0):
         proposed=self.next_target();cursor,_,_,previous=self.progress()
         row=DisplacementAttempt(proposed,previous,self.targets[cursor],accepted,
-                                evaluations,linear_solves,rejected_trials)
+                                evaluations,linear_solves,rejected_trials,event_cell_evaluations)
         return replace(self,attempts=self.attempts+(row,))
 
     def payload(self):
-        return dict(policy="DISPLACEMENT_INCREMENT_V1",limits=asdict(self.limits),
-                    targets=list(self.targets),initial=self.initial,
-                    attempts=[asdict(row) for row in self.attempts])
+        eventful=any(row.event_cell_evaluations for row in self.attempts)
+        rows=[asdict(row) for row in self.attempts]
+        if not eventful:
+            for row in rows:row.pop("event_cell_evaluations")
+        return dict(policy="DISPLACEMENT_INCREMENT_V2" if eventful else "DISPLACEMENT_INCREMENT_V1",
+                    limits=asdict(self.limits),targets=list(self.targets),initial=self.initial,attempts=rows)
 
     @classmethod
     def from_payload(cls,value):
         if (type(value) is not dict or set(value)!={"policy","limits","targets","initial","attempts"} or
-                value["policy"]!="DISPLACEMENT_INCREMENT_V1" or
+                value["policy"] not in ("DISPLACEMENT_INCREMENT_V1","DISPLACEMENT_INCREMENT_V2") or
                 type(value["limits"]) is not dict or set(value["limits"])!={"max_cutbacks","max_attempts"} or
                 type(value["targets"]) is not list or type(value["attempts"]) is not list or
                 len(value["targets"])>1024 or len(value["attempts"])>1024):
             raise ValueError("invalid displacement controller payload")
+        eventful=value["policy"]=="DISPLACEMENT_INCREMENT_V2"
+        keys={"displacement","accepted_from","requested_target","accepted","evaluations","linear_solves","rejected_trials"}
+        if eventful:keys.add("event_cell_evaluations")
+        if any(type(row) is not dict or set(row)!=keys for row in value["attempts"]):
+            raise ValueError("invalid displacement attempt fields")
+        if eventful and not any(row["event_cell_evaluations"] for row in value["attempts"]):
+            raise ValueError("eventful displacement payload requires recorded event work")
         try:
             rows=tuple(DisplacementAttempt(**row) for row in value["attempts"])
             return cls(AdaptiveIncrementControl(**value["limits"]),tuple(value["targets"]),value["initial"],rows)

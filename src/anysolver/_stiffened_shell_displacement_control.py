@@ -4,6 +4,7 @@ from copy import deepcopy
 from hashlib import sha256
 import numpy as np
 from .control import cancellation_safe_point
+from ._stiffened_shell_branch_event_trial import POLICY as GENERALIZED_BRANCH_EVENT_TRIAL
 from ._stiffened_shell_displacement_corrector import correct
 from ._stiffened_shell_displacement_checkpoint import encode_snapshot,validate_endpoint
 
@@ -13,6 +14,11 @@ class DisplacementControl:
     domain: str
     node: int
     component: int
+    trial_policy: str | None = None
+
+    def __post_init__(self):
+        if self.trial_policy not in (None,GENERALIZED_BRANCH_EVENT_TRIAL):
+            raise ValueError("supported displacement trial policy required")
 
     def dof(self,owner):
         if self.domain not in ("shell","beam") or type(self.node) is not int or type(self.component) is not int or not 0<=self.component<3:
@@ -51,6 +57,8 @@ class DisplacementResult:
     point_wrenches: tuple
     production_qualified: bool = False
     increment_attempts: tuple = ()
+    trial_policy: str | None = None
+    event_cell_evaluations: int = 0
 
 
 def prepare(owner,raw):
@@ -78,7 +86,9 @@ def prepare(owner,raw):
         a["applied_load"],relative,gap,a["shell_frames"],local,a["shell_anchors"],
         _shell_q4_recovery(owner._shell_parts,shell_next),_material_observables(beam_next),
         tuple(tuple(float(v) for v in item["alpha"]) for item in shell_next),
-        driver._line_trial_recovery[1],driver._point_records(state))
+        driver._line_trial_recovery[1],driver._point_records(state),
+        trial_policy=metadata.get("trial_policy"),
+        event_cell_evaluations=metadata.get("event_cell_evaluations",0))
     driver._state=state;driver._shell_predecessors=shell_parent
     driver._beam_predecessors=beam_parent
     driver._shell_origins=_accepted_shell_material_origins(owner,state,shell_next)
@@ -126,14 +136,18 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
     if existing is None:
         raw=owner.checkpoint();generation=owner._generation
         base=(driver._applied_load if driver._programme is not None else driver._load_factor*driver._pattern)
-        metadata=dict(seed_generation=generation,seed_sha256=sha256(raw).hexdigest(),control_dof=dof)
+        metadata=dict(seed_generation=generation,seed_sha256=sha256(raw).hexdigest(),control_dof=dof,
+                      trial_policy=control.trial_policy,event_cell_evaluations=0)
         seed=np.array([driver._state.q[dof],0.]);history=();amplitude=0.
     else:
         _,m,a=existing
-        if dof!=m["control_dof"] or not np.array_equal(direction,a["load_direction"]):
+        if (dof!=m["control_dof"] or not np.array_equal(direction,a["load_direction"]) or
+                control.trial_policy!=m.get("trial_policy")):
             raise ValueError("displacement control and load direction must match restart")
         metadata={k:m[k] for k in ("seed_generation","seed_sha256","control_dof")}
         metadata["chart_events"]=m.get("chart_events",0)
+        metadata["trial_policy"]=m.get("trial_policy")
+        metadata["event_cell_evaluations"]=m.get("event_cell_evaluations",0)
         base=a["base_load"];seed=a["seed"];history=tuple(map(tuple,a["history"]))
         amplitude=float(history[-1][1] if history else seed[1])
     if any(float(x)==float(y) for x,y in zip((driver._state.q[dof],)+targets,targets)):
@@ -142,7 +156,8 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         driver=owner._finite_driver;generation=owner._generation
         trial=correct(driver,base_load=base,load_direction=direction,amplitude=amplitude,
             control_dof=dof,target=float(target),max_iterations=max_iterations,
-            max_backtracks=max_backtracks,cancellation_token=cancellation_token)
+            max_backtracks=max_backtracks,cancellation_token=cancellation_token,
+            trial_policy=control.trial_policy)
         state=trial.state
         anchors=(np.tile(np.eye(3),(len(owner._shell_ids),1,1)) if state.shell_anchors is None else state.shell_anchors)
         arrays={k:getattr(state,k) for k in ("q","frames","cells","resultants","multipliers")}
@@ -154,15 +169,18 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         arrays["beam_origin_plastic"],arrays["beam_origin_accumulated"]=_material_arrays(trial.beam_predecessor)
         arrays["shell_plastic"],arrays["shell_alpha"]=_shell_material_arrays(trial.evaluation[4])
         arrays["shell_origin_plastic"],arrays["shell_origin_alpha"]=_shell_material_arrays(trial.shell_predecessor)
-        raw=encode_snapshot(owner,generation=generation+1,**metadata,arrays=arrays)
+        next_metadata=dict(metadata,event_cell_evaluations=
+                           metadata["event_cell_evaluations"]+trial.event_cell_evaluations)
+        raw=encode_snapshot(owner,generation=generation+1,**next_metadata,arrays=arrays)
         next_adaptive=None
         if _adaptive is not None:
             next_adaptive=replace(_adaptive,state=_adaptive.state.record(True,
                 evaluations=trial.evaluations,linear_solves=trial.linear_solves,
-                rejected_trials=trial.rejected_trials))
+                rejected_trials=trial.rejected_trials,
+                event_cell_evaluations=trial.event_cell_evaluations))
         result=publish(owner,raw,expected_driver=driver,expected_generation=generation,
                        cancellation_token=cancellation_token,adaptive=next_adaptive)
-        history=next_history;amplitude=trial.amplitude
+        history=next_history;amplitude=trial.amplitude;metadata=next_metadata
         if on_accepted is not None:on_accepted(deepcopy(result))
     return owner._finite_driver._accepted
 
@@ -189,7 +207,9 @@ def rebase(owner,expected_generation,*,cancellation_token=None):
     raw=encode_snapshot(owner,generation=expected_generation+1,
         seed_generation=metadata["seed_generation"],seed_sha256=metadata["seed_sha256"],
         control_dof=metadata["control_dof"],arrays=arrays,
-        chart_events=metadata.get("chart_events",0)+1)
+        chart_events=metadata.get("chart_events",0)+1,
+        trial_policy=metadata.get("trial_policy"),
+        event_cell_evaluations=metadata.get("event_cell_evaluations",0))
     adaptive=getattr(owner,"_displacement_adaptive",None)
     return publish(owner,raw,expected_driver=driver,expected_generation=expected_generation,
         cancellation_token=cancellation_token,adaptive=None if adaptive is None else adaptive[0])

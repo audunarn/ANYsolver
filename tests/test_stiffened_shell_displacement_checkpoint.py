@@ -45,3 +45,24 @@ def test_inconsistent_controller_snapshot_rejected(request,fault):
     if fault=="repeated_target":a["history"][0,0]=a["seed"][0]
     if fault=="digest":args["seed_sha256"]="z"*64
     with pytest.raises(ValueError):encode_snapshot(owner,**args)
+
+
+def test_event_snapshot_zero_work_identity_and_strict_fields(request):
+    from hashlib import sha256
+    import json
+    from anysolver._stiffened_shell_displacement_checkpoint import MAGIC,EVENT_POLICY
+    from anysolver._stiffened_shell_branch_event_trial import POLICY as TRIAL
+    owner,_,args=fixture(request)
+    raw=encode_snapshot(owner,**args,trial_policy=TRIAL)
+    m,_=decode_snapshot(owner,raw)
+    assert m["policy"]==EVENT_POLICY and m["chart_events"]==m["event_cell_evaluations"]==0
+    start=len(MAGIC)+4;length=int.from_bytes(raw[len(MAGIC):start],"little")
+    for changes in ({"event_cell_evaluations":True},{"event_cell_evaluations":-1},
+                    {"event_cell_evaluations":2**63},{"trial_policy":None},
+                    {"chart_events":True},{"extra":0}):
+        header=json.dumps(dict(m,**changes),sort_keys=True,separators=(",",":"),allow_nan=False).encode("ascii")
+        content=MAGIC+len(header).to_bytes(4,"little")+header+raw[start+length:-32]
+        with pytest.raises(ValueError):decode_snapshot(owner,content+sha256(content).digest())
+    for count in (True,-1,2**63):
+        with pytest.raises(ValueError):encode_snapshot(owner,**args,trial_policy=TRIAL,event_cell_evaluations=count)
+    with pytest.raises(ValueError):encode_snapshot(owner,**args,event_cell_evaluations=1)

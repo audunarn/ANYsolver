@@ -12,6 +12,8 @@ from ._stiffened_shell_ge_checkpoint_binary import encode,decode,MAX_CHECKPOINT_
 MAGIC=b"ANYSSDC1"
 KIND="finite_displacement_bl5_coupled"
 POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_V1_DEV"
+EVENT_POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_EVENT_V3_DEV"
+from ._stiffened_shell_branch_event_trial import POLICY as EVENT_TRIAL_POLICY
 CHART_POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_CHART_V2_DEV"
 
 
@@ -36,16 +38,23 @@ def _canonical(value):
 
 
 def encode_snapshot(owner, *, generation, seed_generation, seed_sha256,
-                    control_dof, arrays, chart_events=0):
+                    control_dof, arrays, chart_events=0, trial_policy=None, event_cell_evaluations=0):
     """Frame owned endpoint arrays, without conferring mechanical validity."""
     if type(chart_events) is not int or chart_events < 0:
         raise ValueError("nonnegative displacement chart event count required")
+    if (trial_policy not in (None,EVENT_TRIAL_POLICY) or
+            type(event_cell_evaluations) is not int or not 0<=event_cell_evaluations<=2**63-1 or
+            (trial_policy is None and event_cell_evaluations!=0)):
+        raise ValueError("invalid displacement trial policy/work")
     steps=len(arrays["history"])
     metadata=dict(policy=POLICY,model=owner._identity,generation=generation,
         seed_generation=seed_generation,seed_sha256=seed_sha256,
         control_dof=control_dof,steps=steps)
     if chart_events:
         metadata.update(policy=CHART_POLICY,chart_events=chart_events)
+    if trial_policy is not None:
+        metadata.update(policy=EVENT_POLICY,trial_policy=trial_policy,
+                        chart_events=chart_events,event_cell_evaluations=event_cell_evaluations)
     header=_canonical(metadata)
     if len(header)>1024 or set(arrays)!={name for name,_ in _layout(owner,steps)}:
         raise ValueError("invalid displacement snapshot fields")
@@ -87,7 +96,13 @@ def decode_snapshot(owner,raw):
     if (canonical!=header or m.get("model")!=owner._identity or
             not ((m.get("policy")==POLICY and set(m)==base_keys) or
                  (m.get("policy")==CHART_POLICY and set(m)==base_keys|{"chart_events"}
-                  and type(chart_events) is int and chart_events>0))):
+                  and type(chart_events) is int and chart_events>0) or
+                 (m.get("policy")==EVENT_POLICY and
+                  set(m)==base_keys|{"chart_events","trial_policy","event_cell_evaluations"} and
+                  m["trial_policy"]==EVENT_TRIAL_POLICY and
+                  type(chart_events) is int and chart_events>=0 and
+                  type(m["event_cell_evaluations"]) is int and
+                  0<=m["event_cell_evaluations"]<=2**63-1))):
         raise ValueError("incompatible displacement metadata")
     if (any(type(m[k]) is not int for k in ("generation","seed_generation","control_dof","steps")) or
             not 1<=m["seed_generation"]<=m["generation"] or

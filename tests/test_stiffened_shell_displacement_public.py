@@ -8,7 +8,8 @@ from test_stiffened_shell_bl5_material import make
 from test_stiffened_shell_bl5_finite import _action
 
 
-def test_public_displacement_cancel_restart_and_atomic_publication(request,monkeypatch):
+@pytest.mark.parametrize("policy",(None,ss.GENERALIZED_BRANCH_EVENT_TRIAL))
+def test_public_displacement_cancel_restart_and_atomic_publication(request,monkeypatch,policy):
     owner=make(request,coupled())
     programme=ss.StagedDeadLoadProgramme(owner.preflight()["identity"],(_action(500.),))
     seed=owner.solve(programme,(.5,1.),max_iterations=20,max_backtracks=12)
@@ -16,7 +17,7 @@ def test_public_displacement_cancel_restart_and_atomic_publication(request,monke
     dof=owner._shell_count+6*owner._beam_index[105]+2
     initial=owner._finite_driver._state.q[dof]
     targets=(initial*1.01,initial*1.02)
-    control=ss.DisplacementControl("beam",105,2)
+    control=ss.DisplacementControl("beam",105,2,trial_policy=policy)
     token=CancellationToken()
     def observe(result):
         assert isinstance(result,ss.DisplacementResult)
@@ -27,6 +28,13 @@ def test_public_displacement_cancel_restart_and_atomic_publication(request,monke
     with pytest.raises(SolveCancelled):
         owner.solve(_action(50.),targets,**kw,cancellation_token=token,on_accepted=observe)
     saved=owner.checkpoint();prefix=owner.recover()
+    assert prefix.trial_policy==policy
+    assert prefix.event_cell_evaluations>=0
+    changed=ss.DisplacementControl("beam",105,2,trial_policy=
+        ss.GENERALIZED_BRANCH_EVENT_TRIAL if policy is None else None)
+    with pytest.raises(ValueError,match="match restart"):
+        owner.solve(_action(50.),(targets[1],),**{**kw,"displacement_control":changed})
+    assert owner.checkpoint()==saved
     from scipy.spatial.transform import Rotation
     np.testing.assert_allclose(prefix.shell_displacement.reshape(-1,6)[:,3:],
         Rotation.from_matrix(prefix.shell_frames).as_rotvec(),rtol=0.,atol=1e-14)

@@ -29,6 +29,7 @@ class DisplacementTrial:
     control_dof: int
     target: float
     linear_solves: int = 0
+    event_cell_evaluations: int = 0
 
 
 @dataclass(frozen=True)
@@ -43,6 +44,7 @@ class DisplacementFailureDetail:
     equilibrium_ratio: float
     constraint_max: float
     scaled_control_error: float
+    event_cell_evaluations: int = 0
 
 
 class DisplacementCorrectorFailure(RuntimeError):
@@ -134,6 +136,9 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
                 driver._shell_origins is not shell or driver._beam_origins is not beam):
             raise ValueError("stale displacement predecessor")
     evaluations=0;rejected=0;solves=0;amplitude=float(amplitude)
+    local_events=[]
+    def event_work():
+        return sum(row["cell_evaluations"] for row in local_events)
     def evaluate(trial,value):
         nonlocal evaluations
         cancellation_safe_point(cancellation_token,"stiffened-shell.displacement.trial")
@@ -149,7 +154,7 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
         return DisplacementCorrectorFailure(message,DisplacementFailureDetail(
             generation,float(target),amplitude,iteration,evaluations,solves,rejected,
             float(evaluation[2]),float(evaluation[3]),
-            float(abs(state.q[control_dof]-target)/owner._reference_length)))
+            float(abs(state.q[control_dof]-target)/owner._reference_length),event_work()))
     def correction(gap,iteration):
         nonlocal solves
         solves+=1
@@ -179,7 +184,7 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
                 cancellation_safe_point(cancellation_token,"stiffened-shell.displacement.return")
                 return DisplacementTrial(state,amplitude,evaluation,iteration,
                     evaluations,rejected,generation,predecessor,shell,beam,base,
-                    pattern,control_dof,float(target),solves)
+                    pattern,control_dof,float(target),solves,event_work())
         if iteration==max_iterations:
             raise failure("displacement Newton iteration limit",iteration)
         step,delta=correction(control_gap,iteration)
@@ -191,6 +196,7 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
                 current()
                 cancellation_safe_point(cancellation_token,"stiffened-shell.displacement.event")
             record=dict(iteration=iteration,cell_evaluations=0,amount=None,events=())
+            local_events.append(record)
             if event_records is not None:event_records.append(record)
             try:
                 initial_amount,events=trial_fraction(driver,state,step,beam,event_check,record)

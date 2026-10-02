@@ -7,14 +7,15 @@ from test_stiffened_shell_bl5_material import make
 from test_stiffened_shell_bl5_finite import _action
 
 
-def test_cutback_cancel_restart_preserves_attempts(request,monkeypatch):
+@pytest.mark.parametrize("policy",(None,ss.GENERALIZED_BRANCH_EVENT_TRIAL))
+def test_cutback_cancel_restart_preserves_attempts(request,monkeypatch,policy):
     owner=make(request,coupled())
     programme=ss.StagedDeadLoadProgramme(owner.preflight()["identity"],(_action(500.),))
     owner.solve(programme,(.5,1.),max_iterations=20,max_backtracks=12)
     seed_snapshot=owner.checkpoint()
     dof=owner._shell_count+6*owner._beam_index[105]+2
     initial=float(owner._finite_driver._state.q[dof]);targets=(initial*1.01,initial*1.02)
-    control=ss.DisplacementControl("beam",105,2);limits=ss.AdaptiveIncrementControl(2,8)
+    control=ss.DisplacementControl("beam",105,2,trial_policy=policy);limits=ss.AdaptiveIncrementControl(2,8)
     kw=dict(displacement_control=control,increment_control=limits,max_iterations=20,max_backtracks=12)
     import anysolver._stiffened_shell_displacement_control as module
     original=module.correct;first=True
@@ -22,7 +23,7 @@ def test_cutback_cancel_restart_preserves_attempts(request,monkeypatch):
         nonlocal first
         if first:
             first=False
-            detail=ss.DisplacementFailureDetail(driver.owner._generation,args["target"],0.,1,1,1,0,1.,0.,.01)
+            detail=ss.DisplacementFailureDetail(driver.owner._generation,args["target"],0.,1,1,1,0,1.,0.,.01,event_cell_evaluations=2 if policy else 0)
             raise ss.DisplacementCorrectorFailure("injected bounded cutback",detail)
         return original(driver,**args)
     token=CancellationToken()
@@ -34,6 +35,7 @@ def test_cutback_cancel_restart_preserves_attempts(request,monkeypatch):
     prefix=owner.recover();assert prefix.status=="accepted_prefix"
     assert len(prefix.increment_attempts)==2
     assert [r.accepted for r in prefix.increment_attempts]==[False,True]
+    assert prefix.increment_attempts[0].event_cell_evaluations==(2 if policy else 0)
     saved=owner.checkpoint();restored=make(request,coupled());restored.restore(saved)
     assert restored.checkpoint()==saved
     with pytest.raises(ValueError,match="must match"):
@@ -48,7 +50,7 @@ def test_cutback_cancel_restart_preserves_attempts(request,monkeypatch):
     # Exhaustion before any displacement acceptance still persists spent budget.
     exhausted=make(request,coupled());exhausted.restore(seed_snapshot)
     def reject(driver,**args):
-        detail=ss.DisplacementFailureDetail(driver.owner._generation,args["target"],0.,1,1,1,13,1.,0.,.01)
+        detail=ss.DisplacementFailureDetail(driver.owner._generation,args["target"],0.,1,1,1,13,1.,0.,.01,event_cell_evaluations=2 if policy else 0)
         raise ss.DisplacementCorrectorFailure("injected domain rejection",detail)
     limited={**kw,"increment_control":ss.AdaptiveIncrementControl(0,1)}
     with monkeypatch.context() as patch:

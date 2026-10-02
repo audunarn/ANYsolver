@@ -588,3 +588,29 @@ Restore validates the endpoint against the saved material predecessor, then uses
 the saved accepted histories exactly instead of installing tolerance-close replay
 histories. Cancellation before publication leaves the complete previous checkpoint.
 A chart event does not constitute a new equilibrium increment or a capacity claim.
+
+
+### Optional generalized-beam branch-event trials
+
+For the coupled Q4-J2/generalized-beam BL5 displacement route, explicitly select
+`DisplacementControl("beam", 105, 2, trial_policy=GENERALIZED_BRANCH_EVENT_TRIAL)`
+from an accepted force-controlled seed. The constant is exported by
+`anysolver.stiffened_shell`. The default remains `trial_policy=None`.
+
+This experimental policy estimates generalized-beam material branch crossings
+from the fixed accepted predecessor and implicit cell sensitivity. It proposes
+1.01 times the earliest positive estimated crossing, capped at a full correction,
+after the existing full displacement predictor. Actual residual reduction and
+physical equilibrium/compatibility checks still govern acceptance. It does not
+locate shell-J2 events, prove an exact crossing, change constitutive tangents, or
+increase Newton/backtrack budgets. Immediate yield boundaries fail explicitly.
+
+The policy cannot change within an existing displacement history. Event-policy
+snapshots use V3 metadata and adaptive envelopes use `ANYSSDCA2`, even with zero
+extra work. Default V1/V2 snapshots and `ANYSSDCA1` retain their existing formats.
+Rebase preserves policy and work; restore checks inner/outer policy agreement.
+`event_cell_evaluations` in results counts cumulative event-only cell calls in
+accepted displacement trials. Failure details and adaptive attempt records retain
+failed-trial event work separately. These counts exclude ordinary assembly and
+endpoint-validation work. Experimental execution does not qualify capacity or
+material reversal.

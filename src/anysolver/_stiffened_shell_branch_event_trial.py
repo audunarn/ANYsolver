@@ -1,8 +1,7 @@
-"""Private explicit generalized-cell event trial; no public solve admission."""
+"""Experimental generalized-cell event trial for explicit displacement selection."""
 from dataclasses import dataclass
 from decimal import Decimal, localcontext
 from math import isfinite
-from ._stiffened_shell_displacement_corrector import DisplacementCorrectorFailure
 
 POLICY="GENERALIZED_BRANCH_EVENT_TRIAL_V1_DEV"
 
@@ -28,6 +27,7 @@ def trial_fraction(driver,state,direction,predecessors,check,work):
     a crossing. Caller reassembles and accepts only actual merit reduction.
     Immediate yield boundaries are explicitly unresolved in this prototype.
     """
+    from ._stiffened_shell_displacement_corrector import DisplacementCorrectorFailure
     owner=driver.owner;events=[]
     retained=owner._shell_count+driver._beam_nodal
     with localcontext() as context:

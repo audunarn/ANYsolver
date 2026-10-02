@@ -1162,8 +1162,8 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
-        from ._stiffened_shell_displacement_adaptive import MAGIC as DISPLACEMENT_ADAPTIVE_MAGIC
-        if raw.startswith(DISPLACEMENT_ADAPTIVE_MAGIC):
+        from ._stiffened_shell_displacement_adaptive import MAGIC as DISPLACEMENT_ADAPTIVE_MAGIC, EVENT_MAGIC
+        if raw.startswith((DISPLACEMENT_ADAPTIVE_MAGIC,EVENT_MAGIC)):
             from ._stiffened_shell_displacement_adaptive import decode,validate_progress
             context,inner=decode(self,raw)
             prepared=copy(self);prepared._commit_lock=RLock();prepared._writing=False
