@@ -1217,3 +1217,13 @@ scope. Both finite histories still fail original component assessment with no
 commit. Pressure-vector assessment amendment awaiting user decision; private
 counterfactual lifecycle success is not acceptance. G4A remains OPEN.
 [Current implementation, failures and decision](development/r8-ge-pressure-work-20261002/s3-director-integration.md).
+
+**2 October signed distributed programme (G4A remains OPEN):** experimental
+GEBeamDistributedProgramme supplies absolute signed native densities at positive
+programme positions, with distinct identity, cancellation and durable restart.
+Installed elastic5 checks and simultaneous shell/fibre signed-history case pass
+on wheelb636e6a8; independent source/evidence review found no blocking defect.
+Negative-load activity at1.75/2 is recorded. Zero-total-load convergence still
+fails unchanged relative assessment; accepted-prefix preservation is tested.
+No consumer, mixed/S3 staged, zero-load or aggregate qualification claim.
+[Evidence and remaining scope](development/r8-ge-native-distributed-20261002/staged-programme-results.md).

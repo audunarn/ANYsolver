@@ -87,6 +87,19 @@ external-load reversal is explicitly unsupported (positive-factor guard); next
 independent slice is typed staged distributed loading, without bypassing it.
 [Material-history evidence](development/r8-ge-native-distributed-20261002/results.md).
 
+Continuation: public experimental GEBeamDistributedProgramme now supplies signed
+absolute force/couple stages with positive positions, owned interpolation, reused
+geometry, separate identity, cancellation and restart. Installed elastic5 checks
+and signed simultaneous-plasticity history pass on wheelb636e6a8 (398modules).
+Negative-load plastic activity at1.75/2 and identical resumed checkpoints verified.
+Independent source/evidence review clear; requested inventory/couple and negative
+activity checks added. Zero-total-load equilibrium remains a preserved failure:
+current relative assessment returns infinity for any nonzero residual. No criterion
+change, no zero-load success claim. Pressure amendment still pending. No job live.
+Next: integrate programme consumer serialization and mixed/S3 evidence; retain
+zero-load issue for explicit assessment/design resolution. No aggregate acceptance.
+[Staged results](development/r8-ge-native-distributed-20261002/staged-programme-results.md).
+
 BL5 law/transfer remains open:24growing-space checks cover7ratios/3levels plus1:16;
 one indefinite mixed kernel passes, not whole-matrix SPD. Rigid-carrier normalspin
 last tip0.10052%, integratedFy2.5023%, rootMz2.6397%, maxmoment2.9135%: no1%acceptance,

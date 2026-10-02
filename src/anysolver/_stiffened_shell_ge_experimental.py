@@ -821,6 +821,8 @@ class ExperimentalGEAnalysis:
                     ("experimental uniform spatial acceleration; explicit physical beam inertia and shell density; reference-linear or conservative finite work with objective Q4 pullback; GEBodyLoad",)),
                 "beam_distributed_loads": (() if self._line_samples or self._definition.footprints else
                     ("experimental element-addressed fixed-spatial force/couple per reference arclength; native quadrature; couples nonconservative; GEBeamDistributedLoad",)),
+                "staged_beam_distributed_loads": (() if self._line_samples or self._definition.footprints else
+                    ("experimental GEBeamDistributedProgramme; absolute signed force/couple densities at positive forward positions; point owner only; zero-load convergence unresolved under current equilibrium assessment; not qualified",)),
                 "shell_pressure_loads": (() if self._line_samples or self._definition.footprints else
                     ("experimental GEShellPressureLoad; shell IDs are Q4 then S3, one-based; reference-linear native dead pressure; finite Q4 dead and Q4/S3 interpolation-surface current-area follower pressure; finite native reference_dead S3 is unsupported; explicit reference_dead_director_v2 admits a distinct virgin-elastic S3 director-enhanced dead surface with relative tilt below 0.9*pi, not qualified",)),
                 "staged_dead_loads": (() if self._line_samples else
@@ -917,6 +919,9 @@ class ExperimentalGEAnalysis:
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.start")
         from ._stiffened_shell_ge_body_load import GEBodyLoad
         from ._stiffened_shell_ge_distributed_load import GEBeamDistributedLoad
+        from ._stiffened_shell_ge_distributed_programme import GEBeamDistributedProgramme
+        if type(actions) is GEBeamDistributedProgramme:
+            raise ValueError('distributed programmes require the finite solve operation')
         from ._stiffened_shell_ge_pressure_load import GEShellPressureLoad
         body = None
         if type(actions) in (GEBodyLoad, GEBeamDistributedLoad, GEShellPressureLoad):
@@ -1105,13 +1110,16 @@ class ExperimentalGEAnalysis:
         from ._stiffened_shell_ge_body_load import MAGIC as BODY_MAGIC
         from ._stiffened_shell_ge_distributed_load import MAGIC as DISTRIBUTED_MAGIC
         from ._stiffened_shell_ge_pressure_load import MAGIC as PRESSURE_MAGIC
-        if raw.startswith((BODY_MAGIC, DISTRIBUTED_MAGIC, PRESSURE_MAGIC)):
+        from ._stiffened_shell_ge_distributed_programme import MAGIC as DISTRIBUTED_PROGRAMME_MAGIC
+        if raw.startswith((BODY_MAGIC, DISTRIBUTED_MAGIC, PRESSURE_MAGIC, DISTRIBUTED_PROGRAMME_MAGIC)):
             if getattr(self, "_external_context", None) is not None or getattr(self, "_staged_context", None) is not None:
                 raise ValueError("nested external-load checkpoint is unsupported")
             if raw.startswith(BODY_MAGIC):
                 from ._stiffened_shell_ge_body_load import decode_checkpoint
             elif raw.startswith(DISTRIBUTED_MAGIC):
                 from ._stiffened_shell_ge_distributed_load import decode_checkpoint
+            elif raw.startswith(DISTRIBUTED_PROGRAMME_MAGIC):
+                from ._stiffened_shell_ge_distributed_programme import decode_checkpoint
             else:
                 from ._stiffened_shell_ge_pressure_load import decode_checkpoint
             request, inner = decode_checkpoint(raw)
@@ -1124,10 +1132,15 @@ class ExperimentalGEAnalysis:
             result = prepared.restore(inner)
             driver = prepared._finite_driver
             if driver is None:
+                if hasattr(compiled, 'evaluate_at'):
+                    raise ValueError('distributed programme requires a finite checkpoint')
                 if not np.array_equal(prepared._accepted[1], compiled.reference_gradient):
                     raise ValueError("checkpoint load disagrees with its declared external request")
                 result = replace(result, **{compiled.result_field: compiled.reference_recovery})
                 prepared._accepted = (result, prepared._accepted[1])
+            elif hasattr(compiled, 'evaluate_at') and driver._adaptive_state is not None and not driver._adaptive_state.completed:
+                controller = driver._adaptive_state
+                compiled.validate_targets(driver._load_factor, controller.targets[controller.cursor:])
             checkpoint = prepared.checkpoint()
             if driver is not None:
                 driver.owner = self

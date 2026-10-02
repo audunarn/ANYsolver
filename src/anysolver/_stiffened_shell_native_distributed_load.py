@@ -57,16 +57,31 @@ class NativeDistributed:
             raise ValueError('positive representable distributed load measures required')
 
     def evaluate(self, positions, position_low, rotations):
+        return self._evaluate(positions, position_low, rotations,
+                              self.force_density, self.couple_density, self.cell_couples)
+
+    def evaluate_density(self, positions, position_low, rotations, force_density, couple_density):
+        """Evaluate a stage's densities using captured geometry and quadrature.
+
+        Zero stages are valid. No density or result borrows caller storage, and
+        the original captured load remains unchanged.
+        """
+        force = _finite_array(force_density, (3,), 'spatial reference force density')
+        couple = _finite_array(couple_density, (3,), 'spatial reference couple density')
+        couples = _product(self.cell_measures[:, None], couple[None, :])
+        return self._evaluate(positions, position_low, rotations, force, couple, couples)
+
+    def _evaluate(self, positions, position_low, rotations, force_density, couple_density, cell_couples):
         work = evaluate_reference_vector_work(
             self.coordinates, self.nodal_weights, self.cell_first_moments,
-            positions, position_low, rotations, self.force_density)
+            positions, position_low, rotations, force_density)
         force = work.gradient.copy()
         for cell in (0, 1):
             sl = slice(18+3*cell, 21+3*cell)
-            force[sl] = [_sum((force[18+3*cell+i], self.cell_couples[cell, i])) for i in range(3)]
-        moment = [_sum((work.total_moment[i], *self.cell_couples[:, i])) for i in range(3)]
+            force[sl] = [_sum((force[18+3*cell+i], cell_couples[cell, i])) for i in range(3)]
+        moment = [_sum((work.total_moment[i], *cell_couples[:, i])) for i in range(3)]
         # Never use the couple torque in a conservative chart-skew correction.
-        potential = None if np.any(self.couple_density) else work.value
+        potential = None if np.any(couple_density) else work.value
         return DistributedWork(force, work.spatial_jacobian, work.total_force,
                                moment, work.value, potential)
 

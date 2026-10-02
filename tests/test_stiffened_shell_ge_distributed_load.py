@@ -20,6 +20,33 @@ def load(a, force=(0.,0.,-100.), couple=(3.,5.,2.)):
         ss.GEBeamLineAction(b.element_id,force,couple) for b,_,_ in a._beam_parts))
 
 
+def test_compiled_stage_density_scatter_reuses_geometry(request,monkeypatch):
+    from types import SimpleNamespace
+    import anysolver._stiffened_shell_native_distributed_load as native
+    a=owner(request);context=load(a).compile(a)
+    state=SimpleNamespace(q=np.zeros(context.count),
+        cells=np.tile(np.eye(3),(context.beam_count,2,1,1)))
+    densities=np.array([[1.,-2.,3.,-.5,.2,.1],[-3.,4.,-5.,.7,-.4,.8]])
+    descriptor=ss.GEBeamDistributedLoad(a._identity,tuple(
+        ss.GEBeamLineAction(row[3],densities[i,:3],densities[i,3:])
+        for i,row in enumerate(context.beams)))
+    expected=descriptor.compile(a).evaluate(state)
+    def forbidden(*args,**kwargs):raise AssertionError('stage rebuilt native geometry')
+    monkeypatch.setattr(native,'compile_native_distributed',forbidden)
+    force,jac,recovery=context.evaluate(state,densities=densities)
+    np.testing.assert_array_equal(force,expected[0])
+    np.testing.assert_array_equal(jac.toarray(),expected[1].toarray())
+    assert recovery.applied_force==expected[2].applied_force
+    assert recovery.applied_moment_about_origin==expected[2].applied_moment_about_origin
+    densities[:]=0.
+    zero,zjac,zrecovery=context.evaluate(state,densities=densities)
+    assert not np.any(zero) and zjac.nnz==0 and zrecovery.potential==0.
+    np.testing.assert_array_equal(context.evaluate(state)[0],context.reference_gradient)
+    assert np.any(force)
+    for bad in (np.zeros((1,6)),np.full((2,6),np.nan),np.ones((2,6))*1j):
+        with pytest.raises(ValueError):context.evaluate(state,densities=bad)
+
+
 def balance(a,r):
     reactions=r.support_reactions if hasattr(r,'support_reactions') else r.reactions
     points=np.asarray(a._shell_xyz)

@@ -493,8 +493,9 @@ class FinitePointDriver:
         from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
         from ._stiffened_shell_ge_body_load import GEBodyLoad
         from ._stiffened_shell_ge_distributed_load import GEBeamDistributedLoad
+        from ._stiffened_shell_ge_distributed_programme import GEBeamDistributedProgramme
         from ._stiffened_shell_ge_pressure_load import GEShellPressureLoad
-        if type(actions) in (GEBodyLoad, GEBeamDistributedLoad, GEShellPressureLoad):
+        if type(actions) in (GEBodyLoad, GEBeamDistributedLoad, GEShellPressureLoad, GEBeamDistributedProgramme):
             if (self.owner._definition.shell.q4_elements and
                     self.owner._definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_POLICY):
                 raise ValueError("finite configuration-dependent loading requires the objective Q4 algorithmic pullback")
@@ -504,12 +505,16 @@ class FinitePointDriver:
                 raise ValueError("finite configuration-dependent load changed after first increment")
             if self._external is None:
                 compiled = actions.compile(self.owner)
+                if type(actions) is GEBeamDistributedProgramme:
+                    compiled.validate_targets(self._load_factor, targets)
                 if not getattr(compiled, "finite_supported", True):
                     raise ValueError(compiled.finite_error)
                 self._external = compiled
                 self._external_stable_s3 = bool(self.owner._definition.shell.s3_elements and
                     self.owner._definition.shell.j2_curve is None)
                 self._stable_s3 = self._stable_s3 or self._external_stable_s3
+            elif type(actions) is GEBeamDistributedProgramme:
+                self._external.validate_targets(self._load_factor, targets)
             return _owned(np.zeros(self.owner._K.shape[0])), None
         if self._external is not None:
             raise ValueError("finite configuration-dependent and nodal/programme loads cannot be mixed")
@@ -679,12 +684,12 @@ class FinitePointDriver:
                     _owned(density), _owned(weight*local.gradient)))
 
         if self._external is not None:
-            body_force, body_jacobian, _ = self._external.evaluate(state)
-            applied_load = applied_load+factor*body_force
+            body_force, body_jacobian, _ = self._external_at(state, factor)
+            applied_load = applied_load+body_force
             external = body_jacobian.tocoo()
             rows.extend(external.row)
             columns.extend(external.col)
-            data.extend(-factor*external.data)
+            data.extend(-external.data)
         for row, value in enumerate(applied_load):
             force_terms[row].append(-float(value))
         residual = np.fromiter((fsum(terms) for terms in force_terms),
@@ -979,7 +984,7 @@ class FinitePointDriver:
                 if getattr(self._external, "freeze_trial_load_norm", False):
                     # _prepare_load excludes combined nodal/programme loads;
                     # this is the complete applied load for this profile.
-                    merit_applied = factor*self._external.evaluate(trial)[0]
+                    merit_applied = self._external_at(trial, factor)[0]
                     global_ratio = _trial_work_ratio(residual[owner._free],
                         merit_applied[owner._free], owner._coordinate_scale[owner._free])
                     # Once global equilibrium and compatibility meet their
@@ -1030,7 +1035,16 @@ class FinitePointDriver:
     def _external_result(self, result, state, factor):
         if self._external is None:
             return result
-        return replace(result, **{self._external.result_field: self._external.evaluate(state)[2].scaled(factor)})
+        result = replace(result, **{self._external.result_field: self._external_at(state, factor)[2]})
+        if hasattr(self._external, 'programme_result'):
+            result = self._external.programme_result(result, factor)
+        return result
+
+    def _external_at(self, state, factor):
+        if hasattr(self._external, 'evaluate_at'):
+            return self._external.evaluate_at(state, factor)
+        force, jacobian, recovery = self._external.evaluate(state)
+        return factor*force, factor*jacobian, recovery.scaled(factor)
 
     def _prospective_checkpoint(self, result, **changes):
         """Serialize the prepared accepted snapshot before publishing it.
@@ -1315,6 +1329,10 @@ class FinitePointDriver:
         resultants = _owned(value["resultants"], self._state.resultants.shape)
         multipliers = _owned(value["multipliers"], self._state.multipliers.shape)
         pattern = _owned(value[load_key], (owner._K.shape[0],))
+        if self._external is not None and hasattr(self._external, 'evaluate_at'):
+            self._external.validate_targets(0., tuple(factors))
+            if np.any(pattern):
+                raise ValueError('distributed programme checkpoint cannot contain a nodal pattern')
         if self._programme is not None:
             self._programme.validate_targets(0., tuple(factors))
             if not np.array_equal(pattern, self._programme.load_at(factors[-1])):

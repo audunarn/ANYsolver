@@ -11,7 +11,7 @@ import numpy as np
 from scipy import sparse
 from ._stiffened_shell_staged_load_experimental import _canonical, _identity, _number, _json
 from ._stiffened_shell_ge_checkpoint_binary import MAX_CHECKPOINT_BYTES
-from ._stiffened_shell_native_gravity import _owned, _sum, _product
+from ._stiffened_shell_native_gravity import _owned, _sum, _product, _finite_array
 from ._ge_beam3_p5.compensated_coordinates import split_sum
 
 POLICY='STIFFENED_SHELL_GE_NATIVE_DISTRIBUTED_LOAD_V1_DEV'
@@ -142,17 +142,23 @@ class GEDistributedContext:
 
     def checkpoint(self,inner):return encode_checkpoint(self,inner)
 
-    def evaluate(self,state):
+    def evaluate(self,state,*,densities=None):
+        # Rows follow the compiled element order, not caller/model numbering.
+        # This is a private evaluation seam for programmes with their own load
+        # identity. The existing public descriptor and its recovery stay fixed.
+        if densities is not None:
+            densities=_finite_array(densities,(len(self.beams),6),'distributed stage densities')
         q=np.asarray(state.q);cells=np.asarray(state.cells)
         if np.iscomplexobj(q) or q.shape!=(self.count,) or not np.isfinite(q).all() or cells.shape!=(self.beam_count,2,3,3):
             raise ValueError('finite matching distributed load state required')
         terms=[[] for _ in range(self.count)];rows=[];columns=[];values=[];forces=[];moments=[];potentials=[];conservative=True
-        for kernel,slots,i,element_id in self.beams:
+        for row,(kernel,slots,i,element_id) in enumerate(self.beams):
             displacement=q[list(slots[:18])].reshape(3,6)[:,:3]
             high=np.empty((3,3));low=np.empty((3,3))
             for at in np.ndindex(high.shape):
                 high[at],low[at]=split_sum((float(kernel.coordinates[at]),float(displacement[at])))
-            result=kernel.evaluate(high,low,cells[i])
+            result=(kernel.evaluate(high,low,cells[i]) if densities is None else
+                    kernel.evaluate_density(high,low,cells[i],densities[row,:3],densities[row,3:]))
             for slot,v in zip(slots,result.external_force,strict=True):terms[slot].append(float(v))
             rr,cc=np.nonzero(result.spatial_jacobian)
             rows.extend(slots[int(r)] for r in rr);columns.extend(slots[int(c)] for c in cc)

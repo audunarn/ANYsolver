@@ -24,6 +24,58 @@ def operator(kind='generalized', order=4, curved=True):
 
 @pytest.mark.parametrize('kind', ['generalized', 'fibre'])
 @pytest.mark.parametrize('order', [4, 8])
+def test_reusable_density_matches_fresh_compilation_without_preparation(kind, order, monkeypatch):
+    op = operator(kind, order)
+    x, low, u, force = state(op.reference)
+    kernel = compile_native_distributed(op, force, np.array([.3, -.4, .2]))
+    original = kernel.evaluate(x, low, u)
+    stages = [(force, [0., 0., 0.]), (-force, [.2, .1, -.4]),
+              (np.zeros(3), np.zeros(3)), (np.zeros(3), [-.3, .4, -.2])]
+    expected = [compile_native_distributed(op, f, c).evaluate(x, low, u) for f, c in stages]
+    def forbidden(*args, **kwargs):
+        raise AssertionError('stage evaluation rebuilt quadrature')
+    monkeypatch.setattr(np.polynomial.legendre, 'leggauss', forbidden)
+    for (f, c), want in zip(stages, expected, strict=True):
+        density, couple = np.array(f), np.array(c)
+        got = kernel.evaluate_density(x, low, u, density, couple)
+        density[:] = 99.; couple[:] = 99.
+        for name in ('external_force', 'spatial_jacobian', 'total_force', 'total_moment'):
+            np.testing.assert_array_equal(getattr(got, name), getattr(want, name))
+            assert not getattr(got, name).flags.writeable
+        assert got.force_potential == want.force_potential
+        assert got.potential == want.potential
+    np.testing.assert_array_equal(kernel.evaluate(x, low, u).external_force, original.external_force)
+
+
+@pytest.mark.parametrize('bad', [[float('nan'), 0., 0.], [1., 2.], [1j, 0., 0.]])
+def test_reusable_density_rejects_invalid_inputs(bad):
+    op = operator()
+    x, low, u, force = state(op.reference)
+    kernel = compile_native_distributed(op, force, np.zeros(3))
+    for f, c in ((bad, np.zeros(3)), (np.zeros(3), bad)):
+        with pytest.raises(ValueError):
+            kernel.evaluate_density(x, low, u, f, c)
+
+
+def test_reusable_density_preserves_resolution_failures():
+    from anysolver._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry as Reference
+    op = operator()
+    ref = Reference(op.reference.coordinates*1e-3, op.reference.nodal_triads)
+    small = RetainedGeneralizedOperator(ref, op.section, order=4)
+    kernel = compile_native_distributed(small, np.zeros(3), np.zeros(3))
+    rotations = np.tile(np.eye(3), (2, 1, 1))
+    tiny = [np.nextafter(0., 1.), 0., 0.]
+    for force, couple in ((tiny, np.zeros(3)), (np.zeros(3), tiny)):
+        with pytest.raises(ValueError, match='representable'):
+            kernel.evaluate_density(ref.coordinates, np.zeros((3, 3)), rotations, force, couple)
+    full = compile_native_distributed(op, np.zeros(3), np.zeros(3))
+    with pytest.raises(ValueError, match='representable'):
+        full.evaluate_density(op.reference.coordinates, np.zeros((3, 3)), rotations,
+                              [np.finfo(float).max, 0., 0.], np.zeros(3))
+
+
+@pytest.mark.parametrize('kind', ['generalized', 'fibre'])
+@pytest.mark.parametrize('order', [4, 8])
 @pytest.mark.parametrize('curved', [False, True])
 def test_same_rule_ad_force_and_existing_cell_couple(kind, order, curved):
     op = operator(kind, order, curved)
