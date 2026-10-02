@@ -1,5 +1,14 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October GE gravity native consumer delivery:** ANYfem83d41b1 adds strict
+body-input persistence and linear/explicit-finite Project dispatch. Installed67/67
+on the bound98consumer/393solver module pair verifies save/reopen, cancellation
+at accepted0.25, disk checkpoint restore and identical0.5/1 continuation. Independent
+Read review clear; actual1thread/JIToff,280onsiteimports. Legacy/staged formats
+preserved. This is scoped M1/M4/G6 behavior, not full G4 or aggregate acceptance.
+Line/footprint/combined gravity, full material/external/scale/platform obligations
+remain OPEN. F03 UNCONSUMED. [Evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-ge-gravity-consumer-20261002/results.md).
+
 **2 October native GE gravity development:** model-bound uniform acceleration
 now executes reference-linear and conservative finite point-owner work, including
 native retained-cell curvature/offset work. Isolated new wheel393modules:
