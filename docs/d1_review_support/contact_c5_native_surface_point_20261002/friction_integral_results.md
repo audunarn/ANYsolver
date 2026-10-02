@@ -1,0 +1,18 @@
+# Pressure/history-aware native friction integration
+
+Development component based on416432bd. Final source hashes and process resources in friction_integral_results.json; all raw logs/runtime/selection records in friction_integral_raw.zip. Source imports bind this reconcile checkout; JIT off,180s/953MiB. This component is not yet assembled in the native solver.
+
+Reference-area integration queries unit-area physical replay histories. It separately integrates friction-only residual/spatial tangent, elastic storage, incremental dissipation, released storage and cumulative dissipation. Contact fronts at all saved poses partition integration; axial roots are resolved at each angle. Floating-point guard bands around computed angular fronts are integrated rather than omitted. Gauss4/8 differences control dimensional force/tangent/energy estimates; rotational scaling uses explicit characteristic length. Query/cache/panel/path/support work is capped.
+
+Whole-history endpoint-support preflight requires affine-time gaps or a conservative uniform derivative sign. This excludes unrepresented temporal contact pulses. All-zero panels additionally require positive gap over the entire material/time region, with one shared support budget. These are sufficient restrictions, not general friction/geometry admission; spatial stick/slip accuracy remains subject to refinement and independent references.
+
+Evidence and retained failures:
+- Initial odd-order quadrature hit a contact-root tie and was explicitly rejected;1failed/1passed4.72s. Even-order quadrature preserved the law and passed the independent narrow-strip scalar force check12.79s. The old2x2 material rule misses this contact band entirely.
+- First integrated tangent/work run: tangent passed, release exhausted2048queries;1failed/1passed100.48s, process102.048s/253861888B. Generic gap rate overestimated tangential sliding. Exact affine temporal separation removed that discrepancy without increasing caps.
+- Final-envelope narrow-strip force and discrete release-work checks:2passed39.93s. Release oracle independently integrates the specified32-substep unloading law, not fully converged physical work.
+- Final tangent and guard checks:3passed57.95s. Directional error<=1e-5 at two perturbation sizes; aggregate support-cap exhaustion explicit. The pulse fixture axis was then corrected to the known hidden-pulse case and that check passed3.72s; earlier alternate-axis rejection remains evidence only for unresolved-envelope rejection.
+- Support worker: initial5passed4.57s, final10passed3.78s, with hidden interior pulse, deformed target, shared caps, monotone rotation and near-front tangential translation controls. Lead independently checked the exact spatial extrema, Bernstein area lower bound, normal-rate/acceleration and derivative-sign argument.
+
+Read-only scrutiny of lead integration found per-panel budget reset and inadequate historical coverage on nonzero panels. Shared budget and endpoint-envelope preflight now address these findings. The earlier tangent run loaded the initial helper while its source was subsequently edited; its complete source was not frozen. The final tangent run uses the frozen final helper, so the earlier run is not needed for the final tangent claim.
+
+Next: explicit assembly through the existing patch/contributor/transaction, preserving committed-path origin and candidate-only evaluation. Keep the continuous normal integral, immutable definition/restart binding and atomic rejection. No automatic solver promotion, new engineering acceptance, installed native artifact or complete C5 claim follows from these component checks.

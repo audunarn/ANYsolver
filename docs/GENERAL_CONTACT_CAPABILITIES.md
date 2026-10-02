@@ -985,3 +985,7 @@ Explicit straight/untwisted reference profile now integrates the normal potentia
 ### Native material-coordinate history replay — development
 
 Accepted initial geometry and actual motion increments can be queried at new fixed material coordinates without interpolating Coulomb history. Initial-projection anchors, owner path caps, aggregate replay limits and unchanged transaction/restart are checked. This supplies history for integration refinement; adaptive friction integration and C5 acceptance remain open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/material_history_results.md).
+
+### Native replayed friction integral — development component
+
+Friction-only work integrates unit-area history queries with pressure-front partitions, dimensional Gauss4/8 controls and conservative historical-support preflight. Independent narrow-strip force, moving-front tangent, discrete release-work and cap tests pass. Not yet assembled through the coupled owner; general history/geometry admission, spatial/time refinement and C5 acceptance remain open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/friction_integral_results.md).

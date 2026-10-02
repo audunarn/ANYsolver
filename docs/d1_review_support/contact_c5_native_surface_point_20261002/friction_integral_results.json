@@ -1,0 +1,119 @@
+{
+  "base": "416432bd",
+  "scope": "development component, not solver promotion",
+  "runs": [
+    {
+      "name": "contact-native-friction-integral-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 184811520,
+          "limit_mib": 953,
+          "elapsed_seconds": 6.1531797999632545,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact-native-friction-integral-even-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 200867840,
+          "limit_mib": 953,
+          "elapsed_seconds": 14.462576500023715,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact-native-friction-work-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 253861888,
+          "limit_mib": 953,
+          "elapsed_seconds": 102.04811989999143,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact-native-friction-envelope-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 207486976,
+          "limit_mib": 953,
+          "elapsed_seconds": 41.62335810001241,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact-native-friction-final-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 201269248,
+          "limit_mib": 953,
+          "elapsed_seconds": 59.364455299975816,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact-native-friction-pulse-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 183123968,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.1656848000129685,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact-native-swept-support-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 173621248,
+          "limit_mib": 953,
+          "elapsed_seconds": 6.319562399992719,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        },
+        {
+          "peak_sampled_bytes": 174759936,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.282186399970669,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "source_sha256": {
+    "src/anysolver/general_contact/native_surface_friction_integral.py": "39211140a8cdae659e25649e85f0b488fdd528cd848568213ef0b5008e8f0fbc",
+    "src/anysolver/general_contact/native_surface_support.py": "406538e68b036702e3d0d3b6b66c8c1422c7fc6dde6c60f0359de1e5e1448983",
+    "tests/test_general_contact_native_surface_friction_integral.py": "1195ef2eb501e22ca7040046aacb6e531a702d4d23d0c742ee01b032e9f854d4",
+    "tests/test_general_contact_native_surface_support.py": "d783cce030c61e814e7684127f855e6bba5fea8d93f52b0e8df032925a8ca7db"
+  }
+}
