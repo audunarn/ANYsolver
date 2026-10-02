@@ -55,17 +55,19 @@ save/reopen, separate checkpoint, cancellation, exact restored continuation and
 selected material recovery. One focused check passed;98consumer modules unchanged.
 See the subsequent-consumer section in the evidence above.
 
-Focused reference review found E04 still has no concrete executed mixed capacity
-case. The coupled("p0") low-yield history fixture has no independent capacity
-oracle; do not extend it to manufacture one. Next discriminating task is E04/V22
-case admission: fix physically matched geometry, supports, imperfection, materials
-and attachment idealization, then identify the bounded first-maximum bracket and
-external output. Current arc scope is Q4-J2/generalized BL5/affine translations;
-if the chosen reference needs another scope, implement that prerequisite rather
-than distort the reference. Use physical reference measures for metric weights,
-not equal nodal counts. No new continuation run is justified until that case
-and its required admission are concrete. Mesh-consistent normalization, first limit point and a
-registered descending branch must be demonstrated before capacity acceptance.
-Full material breadth, connection transfer, spectra, scale, external/platform and
-release obligations remain open. Use impact-based checks, not repeated campaigns.
-The previous active-note bytes are in the new evidence archive.
+E04 now has an executable development candidate: shallow cylindrical Q4 roof,
+two eccentric longitudinal rectangular bars, six-channel nodal point bonds and
+explicit hinged-side translations. docs/reference_cases/stiffened_shell_e04_roof.py
+and its companion .md define it. Bare-roof literature gives geometry provenance,
+not its capacity. Four geometry/metric checks pass; current owner still correctly
+rejects the curved reference. No external deck or mechanical solve executed.
+
+Next implementation seam: curved-reference elastic Q4/full-pose-point local
+operators. Reconcile facet frames versus nodal directors; prove reference zero
+strain/gap, objective rigid motion, derivatives and eccentric work before changing
+admission. Then extend elastic point arc/checkpoint scope. Do not use fake J2 or
+BL5 substitution. The E04 nonlinear bracket and matched external connection must
+be fixed after that admission, before any capacity campaign. The inspected local
+-500 N fixture has no independent capacity oracle and is not to be extended by
+habit. Stress-free imperfection, first-limit-point and stability remain open.
+Full material, connection, scale, external/platform and release obligations remain.

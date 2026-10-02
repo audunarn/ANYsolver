@@ -1461,3 +1461,11 @@ cancel/restore/continue passes on installed artifacts. Source23passed;
 installed v3 27passed/1fixture failure, final v4 affected2passed with unchanged
 unaffected module identities. No G4D, first-limit-point, stability, mesh-metric or
 ANYfem arc qualification. [Evidence](development/r8-arc-public-20261002/results.md).
+
+
+**E04 preparation, 2 October — geometry only, external comparison NOT_STARTED.**
+Executable stiffened-roof candidate and four geometry/reference-measure checks
+identify the prerequisite: curved elastic Q4/full-pose-point admission, followed
+by elastic point arc lifecycle. The current flat guard remains. No equilibrium,
+limit load or external reference executed; bare-roof values are not inherited.
+[Definition and next seam](../reference_cases/stiffened_shell_e04_roof.md).
