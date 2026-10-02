@@ -20,6 +20,8 @@ class GapSlabEnclosure:
     derivative_upper: float
     spatial_derivative_width: float = 0.
     temporal_derivative_width: float = 0.
+    zero_derivative_lower: float | None = None
+    zero_derivative_upper: float | None = None
 
     def __post_init__(self):
         if (not all(isfinite(v) for v in (self.gap_lower,self.gap_upper,
@@ -29,6 +31,11 @@ class GapSlabEnclosure:
             raise ValueError('finite ordered whole-slab enclosures required')
         if any(not isfinite(v) or v<0. for v in (self.spatial_derivative_width,self.temporal_derivative_width)):
             raise ValueError('finite nonnegative subdivision widths required')
+        if self.zero_derivative_lower is not None or self.zero_derivative_upper is not None:
+            if (self.zero_derivative_lower is None or self.zero_derivative_upper is None
+                    or not isfinite(self.zero_derivative_lower) or not isfinite(self.zero_derivative_upper)
+                    or self.zero_derivative_lower>self.zero_derivative_upper):
+                raise ValueError('finite ordered zero-set derivative bounds required')
 
 
 def certify_single_crossing(enclose, *, budget, allow_spatial_refinement=False):
@@ -40,6 +47,9 @@ def certify_single_crossing(enclose, *, budget, allow_spatial_refinement=False):
     Every inspected slab consumes the caller's shared support budget.
     Optional width hints choose only a non-success return to the spatial
     refiner; they never establish a gap or derivative certificate.
+    Optional zero-set bounds enclose the actual derivative at every possible
+    gap zero (for example by bounding g_t-k*g with fixed k over the slab).
+    They need not bound the derivative away from zero.
     """
     if type(budget) is not SupportIntervalBudget:
         raise TypeError('exact shared support interval budget required')
@@ -53,8 +63,9 @@ def certify_single_crossing(enclose, *, budget, allow_spatial_refinement=False):
             raise TypeError('exact whole-slab enclosure required')
         if bounds.gap_lower>0. or bounds.gap_upper<0.:
             continue
-        direction=(1 if bounds.derivative_lower>0. else
-                   -1 if bounds.derivative_upper<0. else 0)
+        lower=(bounds.derivative_lower if bounds.zero_derivative_lower is None else bounds.zero_derivative_lower)
+        upper=(bounds.derivative_upper if bounds.zero_derivative_upper is None else bounds.zero_derivative_upper)
+        direction=(1 if lower>0. else -1 if upper<0. else 0)
         if direction:
             if orientation and direction!=orientation:
                 return False

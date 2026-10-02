@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.34. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.35. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -48,18 +48,17 @@ with extrema away from contact need not satisfy monotone/open/closed admission,
 even after spatial refinement. A new zero-set certificate core covers time by
 strictly signed gap slabs or same-oriented transverse derivative slabs. Seven
 analytic checks pass; it is NOT yet integrated into the geometry evaluator.
-The actual retained/S3 slab adapter and spatial-yield scheduler pass focused
-controls, but their trial connection still fails support128 and is removed.
-Pure proof bisection avoids quadrature-front fragmentation; it also does not
-resolve savedsecond. Local sign-bracket diagnostics find no stationary/fold root
-at the inspected angle and one transverse crossing; this is not whole-region
-certification. The next candidate tightens relative-motion bounds using a fixed
-convex target-plane origin with compensated edge-relative arithmetic and explicit
-pre-cancellation/normal-conditioning allowances. Prior extrapolated-origin failure
-and review remain binding. Before savedcase retry, require a thin deforming target
-near/far translation comparison against high-precision independent gap/rate.
-No unchanged coupled run, budget increase, tolerance relaxation or scope promotion.
-See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_space_time_discriminator_results.md).
+The saved second-load path now has an isolated genuine two-event material
+history: open/contact/open inside captured segment1, with two bracketed roots
+and a reproduced point-level replay failure. At-most-one-crossing proof tuning
+cannot solve this region. Convex relative-motion and correlated zero-rate helpers
+remain reviewed/tested but unpromoted; their production connection is removed.
+Next implement bounded multi-event material replay including moving-event work
+and derivatives, starting with the exact witness and an independent analytical
+case. Then integrate support around historical fronts. Preserve physical history,
+tolerances and caps. No aggregate/coupled retry before local success.
+See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_two_event_discovery_results.md)
+and exact witness beside it. No acceptance boundary is reduced.
 
 The pressure-coupled fixed-material S3 friction slice now uses the ordinary static
 path assembly/constraints, existing mortar pressure and accepted-step physical

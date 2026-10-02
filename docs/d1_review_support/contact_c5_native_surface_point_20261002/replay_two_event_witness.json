@@ -1,0 +1,129 @@
+{
+  "source_fixture": "replay_owner_second_load_rejected_path.json",
+  "source_sha256": "f2da03a08c2394626bb7ece24f49e0305a01c3cac93beddc2ca9d3f58a5e75af",
+  "history_segment_index": 1,
+  "folds": [
+    {
+      "time": 0.25,
+      "angle_bracket": [
+        3.1423828187051774,
+        3.32016756626797
+      ],
+      "angle": 3.1990060898813266,
+      "xi": 0.7244806308388339,
+      "gap_and_rate": [
+        -8.271149349433264e-19,
+        3.2526065174565133e-19
+      ],
+      "nearby_xi": 0.7244806408388339,
+      "nearby_crossings": [
+        {
+          "bracket": [
+            0.078125,
+            0.09375
+          ],
+          "root": 0.07908128406201223,
+          "residual": -2.479845610216065e-18
+        },
+        {
+          "bracket": [
+            0.421875,
+            0.4375
+          ],
+          "root": 0.42224415525523307,
+          "residual": -1.6953894475709075e-19
+        }
+      ],
+      "nearby_endpoint_midpoint_gaps": [
+        1.0542441415808829e-10,
+        -9.294753613945152e-11,
+        1.679844684193933e-09
+      ]
+    },
+    {
+      "time": 0.5,
+      "angle_bracket": [
+        3.1423828187051774,
+        3.32016756626797
+      ],
+      "angle": 3.1990185900472157,
+      "xi": 0.7244843413242318,
+      "gap_and_rate": [
+        -2.989403029553991e-18,
+        2.168404344971009e-19
+      ],
+      "nearby_xi": 0.7244843513242318,
+      "nearby_crossings": [
+        {
+          "bracket": [
+            0.3125,
+            0.328125
+          ],
+          "root": 0.3281182052876165,
+          "residual": 4.946119136792721e-19
+        },
+        {
+          "bracket": [
+            0.671875,
+            0.6875
+          ],
+          "root": 0.6732072408988641,
+          "residual": 7.375752946739095e-20
+        }
+      ],
+      "nearby_endpoint_midpoint_gaps": [
+        6.974001926456466e-10,
+        -9.399369158583689e-11,
+        6.932148944316858e-10
+      ]
+    },
+    {
+      "time": 0.75,
+      "angle_bracket": [
+        3.1423828187051774,
+        3.32016756626797
+      ],
+      "angle": 3.1990312273148853,
+      "xi": 0.7244880511156958,
+      "gap_and_rate": [
+        9.319249663475333e-19,
+        -1.0842021724855044e-19
+      ],
+      "nearby_xi": 0.7244880611156959,
+      "nearby_crossings": [
+        {
+          "bracket": [
+            0.5625,
+            0.578125
+          ],
+          "root": 0.5771604583685143,
+          "residual": -1.6074131384991723e-18
+        },
+        {
+          "bracket": [
+            0.921875,
+            0.9375
+          ],
+          "root": 0.9241649969621258,
+          "residual": 3.523039628055677e-20
+        }
+      ],
+      "nearby_endpoint_midpoint_gaps": [
+        1.6840234508056793e-09,
+        -9.503984753665586e-11,
+        1.0123881086344465e-10
+      ]
+    }
+  ],
+  "actual_query": {
+    "point": [
+      0.7244843513242318,
+      3.1990185900472157
+    ],
+    "error_type": "ValueError",
+    "error": "native/S3 material history path requires subdivision: opening/closure or facet exit",
+    "point_paths": 3,
+    "certified_intervals": 18
+  },
+  "scope": "Diagnostic root brackets and real query failure; not full spatial certification."
+}

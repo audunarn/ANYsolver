@@ -1,0 +1,151 @@
+{
+  "base": "259a7acc",
+  "runs": [
+    {
+      "run": "contact-native-convex-origin-controls-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 175005696,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.289042500022333,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-convex-origin-decimal-controls-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 174227456,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.40291259996593,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-convex-origin-bound-controls-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 174731264,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.051214600040112,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-convex-origin-saved-second-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 200847360,
+          "limit_mib": 953,
+          "elapsed_seconds": 11.886241600033827,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-convex-front-discriminator-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 184619008,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.628782299987506,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-correlated-zero-rate-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 199204864,
+          "limit_mib": 953,
+          "elapsed_seconds": 11.432639300008304,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-correlated-front-discriminator-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 184102912,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.535441600019112,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-correlated-rate-contract-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 166445056,
+          "limit_mib": 953,
+          "elapsed_seconds": 4.916784700006247,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-angular-fold-discriminator-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 184467456,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.787481300008949,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-two-event-query-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 186527744,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.841339300037362,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    }
+  ],
+  "final_source_sha256": {
+    "src/anysolver/general_contact/native_surface_support.py": "be03d6692e87f58231bc38782f42b62d34a3a4e1bffc11f08d06afccb30270c8",
+    "src/anysolver/general_contact/native_surface_crossing.py": "06aa173fc985a53f304c053eb119aee67cc2fa4bc7a0b5bc54227afb1eb6219f",
+    "tests/test_general_contact_native_surface_crossing.py": "6e5d8c9ac359da12f22f7069fc3d10745e885ce14ce04f423c459c35011014a7",
+    "tests/test_general_contact_native_surface_replay_owner.py": "9d2d69183195314cd3a1350649c4756afe753551b0570bd02e43ea23626e5e3c"
+  }
+}

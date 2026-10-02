@@ -1030,3 +1030,9 @@ after savedsecond non-success. Pure proof bisection retained separately from
 quadrature fronts. Fine sign-bracket diagnostics support tighter motion bounds;
 no full-region certificate or new mechanics acceptance.
 [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_space_time_discriminator_results.md).
+
+Two-event discovery: savedsecond has a bracketed open/contact/open material path
+within one captured segment; actual point replay rejects it. Single-crossing
+certificate tuning is stopped. Reviewed convex-origin/correlated-rate helpers
+remain unpromoted; bounded multi-event replay and integration are now the next
+implementation target. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_two_event_discovery_results.md).

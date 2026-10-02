@@ -17,6 +17,32 @@ def _replay_patch():
         friction_integration='replay',friction_integration_settings=friction_settings())
 
 
+def test_saved_second_two_event_material_query(tmp_path):
+    import json,os
+    from pathlib import Path
+    from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment,NativeSurfaceReplayBudget
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_second_load_rejected_path.json').read_text())
+    _,bridge=_replay_patch()
+    field=NativeSurfaceHistoryField(bridge.pair,
+        NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()}),
+        tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments']),
+        maximum_intervals=saved['maximum_intervals'])
+    budget=NativeSurfaceReplayBudget(30)
+    output=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))/'two_event_material_query.json'
+    point=(0.7244843513242318,3.1990185900472157)
+    try:
+        value=field.query(*point,budget=budget)
+    except Exception as error:
+        output.write_text(json.dumps(dict(point=point,error_type=type(error).__name__,error=str(error),
+            point_paths=budget.point_paths,certified_intervals=budget.certified_intervals),indent=2)+'\n')
+        raise
+    output.write_text(json.dumps(dict(point=point,branch=value.last_contribution.trial.branch,
+        gap=value.last_contribution.normal_gap_m,dissipation=value.history.cumulative_dissipation_density,
+        point_paths=budget.point_paths,certified_intervals=budget.certified_intervals),indent=2)+'\n')
+    assert value.history.cumulative_dissipation_density>=0
+
+
 def test_saved_second_support_space_time_discriminator(tmp_path):
     import json,os
     from pathlib import Path
@@ -54,7 +80,10 @@ def test_saved_second_support_space_time_discriminator(tmp_path):
     assert all(np.isfinite(v) for row in paths for v in row['gaps'])
 
 
-def test_saved_second_stationary_front_discriminator(tmp_path):
+@pytest.mark.parametrize('region',[(.725,.734375,3.2201636457638987,3.225719419125236),
+    (.7244140625000001,.7250000000000001,3.2007184389992185,3.201065674834302),
+    (.7244140625000001,.724560546875,3.1990690687825714,3.1991558777413425)],ids=['previous','convex','correlated'])
+def test_saved_second_stationary_front_discriminator(tmp_path,region):
     import json,os
     from pathlib import Path
     from scipy.optimize import brentq
@@ -69,12 +98,14 @@ def test_saved_second_stationary_front_discriminator(tmp_path):
         tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments']),
         maximum_intervals=saved['maximum_intervals'])
     pose,segments=_support_path(field,1);segment=segments[0];cell=1
-    angle=(3.2201636457638987+3.225719419125236)/2
+    xi0,xi1,angle0,angle1=region
+    angle=(angle0+angle1)/2
     target=field.patch.target;frame0=field.patch.source.reference.nodal_triads[0]
     motion=np.asarray(target.adapter.work_map@segment.shell_increment).reshape(3,3)
     da,db=motion[1]-motion[0],motion[2]-motion[0]
     rho=field.patch.rule.definition['radius']*np.array((0.,np.cos(angle),np.sin(angle)))
-    def quantities(t,xi):
+    def quantities(t,xi,theta=angle):
+        rho=field.patch.rule.definition['radius']*np.array((0.,np.cos(theta),np.sin(theta)))
         current=material_path_pose(pose,segment.translations,segment.angular,segment.shell_increment,float(t))
         corners=target.adapter.current_positions(current.shell_displacement)
         a,b=corners[1]-corners[0],corners[2]-corners[0]
@@ -94,22 +125,37 @@ def test_saved_second_stationary_front_discriminator(tmp_path):
                 rows.append(dict(bracket=[float(left),float(right)],root=value,residual=function(value)))
         return rows,values
     paths=[]
-    for xi in np.linspace(.725,.734375,9):
+    for xi in np.linspace(xi0,xi1,9):
         stationary,_=roots(lambda t:quantities(t,xi)[1])
         crossings,_=roots(lambda t:quantities(t,xi)[0])
         for row in stationary:row['gap']=quantities(row['root'],xi)[0]
         paths.append(dict(xi=float(xi),stationary=stationary,crossings=crossings,
             endpoints=[quantities(t,xi) for t in (0.,1.)]))
     def determinant(t):
-        gl,dl=quantities(t,.725);gr,dr=quantities(t,.734375)
+        gl,dl=quantities(t,xi0);gr,dr=quantities(t,xi1)
         return dl*gr-gl*dr
     folds,detvalues=roots(determinant)
     for row in folds:
-        gl,_=quantities(row['root'],.725);gr,_=quantities(row['root'],.734375)
-        xi=.725-gl*(.734375-.725)/(gr-gl)
+        gl,_=quantities(row['root'],xi0);gr,_=quantities(row['root'],xi1)
+        xi=xi0-gl*(xi1-xi0)/(gr-gl)
         row.update(xi=xi,gap_and_rate=quantities(row['root'],xi))
+    angular_folds=[]
+    for time in (.25,.5,.75):
+        def angular_determinant(theta):
+            gl,dl=quantities(time,xi0,theta);gr,dr=quantities(time,xi1,theta)
+            return dl*gr-gl*dr
+        lower,upper=3.1423828187051774,3.32016756626797
+        if angular_determinant(lower)*angular_determinant(upper)<0:
+            theta=brentq(angular_determinant,lower,upper,xtol=1e-14)
+            gl,_=quantities(time,xi0,theta);gr,_=quantities(time,xi1,theta)
+            xi=xi0-gl*(xi1-xi0)/(gr-gl)
+            nearby=xi+1e-8
+            crossings,_=roots(lambda t:quantities(t,nearby,theta)[0])
+            angular_folds.append(dict(time=time,angle_bracket=[lower,upper],angle=theta,xi=xi,
+                gap_and_rate=quantities(time,xi,theta),nearby_xi=nearby,nearby_crossings=crossings,
+                nearby_endpoint_midpoint_gaps=[quantities(t,nearby,theta)[0] for t in (0.,time,1.)]))
     output=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))/'stationary_front_discriminator.json'
-    output.write_text(json.dumps(dict(angle=angle,paths=paths,fold_roots=folds,
+    output.write_text(json.dumps(dict(angle=angle,paths=paths,fold_roots=folds,angular_folds=angular_folds,
         determinant_sample_range=[min(detvalues),max(detvalues)],
         limitation='Sign-bracket diagnostic at one angle,not exhaustive root isolation or a support certificate.'),indent=2)+'\n')
     assert all(np.isfinite(v) for row in paths for pair in row['endpoints'] for v in pair)

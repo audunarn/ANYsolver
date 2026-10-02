@@ -44,6 +44,47 @@ def _base(pose, cell, xi, origin):
                            -float(origin[i]))) for i in range(3)])
 
 
+def _convex_support_origin(pose,cell,xis,corners):
+    """Choose fixed bounded plane coordinates, never extrapolated weights.
+
+    Selection accuracy affects tightness only. Any exact-simplex pair defines
+    an admissible material origin; edge-relative evaluation supplies its motion.
+    """
+    edges=np.column_stack((corners[1]-corners[0],corners[2]-corners[0]))
+    weights=np.linalg.lstsq(edges,_base(pose,cell,sum(xis)/2,corners[0]),rcond=None)[0]
+    if not np.all(np.isfinite(weights)):return (0.,0.)
+    weights=np.maximum(weights,0.)
+    if float(np.sum(weights))>1.:
+        weights=np.nextafter(weights/float(np.sum(weights)),0.)
+    first,second=map(float,weights)
+    if Fraction(first)+Fraction(second)>1:return (0.,0.)
+    return first,second
+
+
+def _convex_relative(pose,cell,xi,corners,weights):
+    alpha=xi+1 if cell==0 else xi
+    value=[];scale=1.
+    for i in range(3):
+        terms=((1-alpha)*float(pose.positions[cell,i]),
+               (1-alpha)*float(pose.position_low[cell,i]),
+               alpha*float(pose.positions[cell+1,i]),alpha*float(pose.position_low[cell+1,i]),
+               -float(corners[0,i]),-weights[0]*float(corners[1,i]-corners[0,i]),
+               -weights[1]*float(corners[2,i]-corners[0,i]))
+        value.append(fsum(terms));scale=max(scale,sum(abs(v) for v in terms))
+    return np.asarray(value),scale
+
+
+def _convex_velocity(segment,cell,xi,motion,weights):
+    alpha=xi+1 if cell==0 else xi
+    value=[];scale=1.
+    for i in range(3):
+        terms=((1-alpha)*float(segment.translations[cell,i]),alpha*float(segment.translations[cell+1,i]),
+               -float(motion[0,i]),-weights[0]*float(motion[1,i]-motion[0,i]),
+               -weights[1]*float(motion[2,i]-motion[0,i]))
+        value.append(fsum(terms));scale=max(scale,sum(abs(v) for v in terms))
+    return np.asarray(value),scale
+
+
 def _minimum(pose, target, reference_frame, radius, cell, xis, angles, *, gap_sign=1.):
     corners = target.adapter.current_positions(pose.shell_displacement)
     normal = np.asarray(target.physical_pose(pose.shell_displacement).material_frame)[:, 2]
@@ -359,11 +400,11 @@ def segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index):
     ref=target.adapter.reference_positions
     refcross=np.cross(ref[1]-ref[0],ref[2]-ref[0]);refarea=np.linalg.norm(refcross)
     refnormal=refcross/refarea
-    velocities=[]
-    for xi in xi_bounds:
-        alpha=xi+1 if cell==0 else xi
-        velocities.append((1-alpha)*segment.translations[cell]+alpha*segment.translations[cell+1]-target_motion[0])
-    speed=max(np.linalg.norm(v) for v in velocities)+np.linalg.norm(omega)*radius
+    origin_weights=_convex_support_origin(start,cell,xi_bounds,target.adapter.current_positions(start.shell_displacement))
+    velocity_rows=[_convex_velocity(segment,cell,xi,target_motion,origin_weights) for xi in xi_bounds]
+    velocities=[v for v,_ in velocity_rows]
+    velocity_error=512*np.finfo(float).eps*max(s for _,s in velocity_rows)
+    speed=max(np.linalg.norm(v) for v in velocities)+np.linalg.norm(omega)*radius+3*velocity_error
     def at(time):
         return material_path_pose(start,segment.translations,segment.angular,segment.shell_increment,time)
     def enclose(left,right):
@@ -381,14 +422,16 @@ def segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index):
         cp=[np.cross(da,b)+np.cross(a,db) for a,b in edges[:2]]
         normal_speed=max(np.linalg.norm(c) for c in cp)/area_lower
         normal_acceleration=2*np.linalg.norm(np.cross(da,db))/area_lower+3*normal_speed**2
-        relative_radius=max(np.linalg.norm(_base(p,cell,xi,c[0]))
-            for p,c in zip((first,last),corners[:2]) for xi in xi_bounds)+radius
+        relative_rows=[_convex_relative(p,cell,xi,c,origin_weights)
+            for p,c in zip((first,last),corners[:2]) for xi in xi_bounds]
+        position_error=512*np.finfo(float).eps*max(s for _,s in relative_rows)
+        relative_radius=max(np.linalg.norm(v) for v,_ in relative_rows)+radius+3*position_error
         curvature=normal_acceleration*relative_radius+2*normal_speed*speed+np.linalg.norm(omega)**2*radius
         cross=np.cross(am,bm);area=np.linalg.norm(cross);normal=cross/area
         cp_mid=np.cross(da,bm)+np.cross(am,db)
         normal_rate=(cp_mid-normal*float(normal@cp_mid))/area
         frame=mid.cell_rotations[cell]@frame0
-        offsets=[float(normal_rate@_base(mid,cell,xi,corners[2][0])+normal@v)
+        offsets=[float(normal_rate@_convex_relative(mid,cell,xi,corners[2],origin_weights)[0]+normal@v)
                  for xi,v in zip(xi_bounds,velocities)]
         ca=radius*float(normal_rate@frame[:,1]+normal@np.cross(omega,frame[:,1]))
         cb=radius*float(normal_rate@frame[:,2]+normal@np.cross(omega,frame[:,2]))
@@ -399,12 +442,38 @@ def segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index):
             *(float(np.max(np.abs(c))) for c in corners),
             *(float(np.max(np.abs(p.positions))) for p in (first,last,mid)))
         padding=max(512*np.finfo(float).eps*scale,*(p for _,p in minima+negative_maxima))
+        # Cover cancellation before the shifted radius became small, including
+        # derivative products and target normal/rate conditioning. This follows
+        # the existing padded binary64 bound convention, not interval arithmetic.
+        edge_scale=max(np.linalg.norm(a) for edge in edges for a in edge)
+        normal_error=512*np.finfo(float).eps*max(1.,edge_scale**2/area_lower)+6*position_error*edge_scale/area_lower
+        normal_rate_error=(512*np.finfo(float).eps*max(1.,normal_speed)
+                           +3*normal_error*normal_speed)
+        derivative_error=(3*position_error*np.linalg.norm(normal_rate)+3*velocity_error
+                          +normal_error*speed+normal_rate_error*relative_radius)
+        padding=max(padding,derivative_error)
         curvature+=padding
         width=right-left
+        # Preserve the correlation between axial gap and gap rate. k is only
+        # a fixed enclosure coordinate: at g=0, q=g_t-k*g equals g_t exactly.
+        relative_mid=[_convex_relative(mid,cell,xi,corners[2],origin_weights)[0] for xi in xi_bounds]
+        axial_gap=float(normal@(relative_mid[1]-relative_mid[0]))
+        k=0. if axial_gap==0. else (offsets[1]-offsets[0])/axial_gap
+        if not np.isfinite(k):raise ValueError('nonfinite zero-set rate coordinate')
+        qnormal=normal_rate-k*normal
+        qoffsets=[float(qnormal@r+normal@v) for r,v in zip(relative_mid,velocities)]
+        qa=radius*float(qnormal@frame[:,1]+normal@np.cross(omega,frame[:,1]))
+        qb=radius*float(qnormal@frame[:,2]+normal@np.cross(omega,frame[:,2]))
+        qlo,qhi=_sinusoidal_extrema(qoffsets,qa,qb,angle_bounds)
+        qpadding=padding*(1+abs(k))+512*np.finfo(float).eps*max(1.,np.linalg.norm(qnormal)*relative_radius+speed)
+        rate_bound=max(abs(dl),abs(du))+curvature*width/2+padding
+        qcurvature=curvature+abs(k)*rate_bound
         return GapSlabEnclosure(min(v for v,_ in minima)-curvature*width**2/8-padding,
             -min(v for v,_ in negative_maxima)+curvature*width**2/8+padding,
             dl-curvature*width/2-padding,du+curvature*width/2+padding,
-            spatial_derivative_width=du-dl,temporal_derivative_width=curvature*width+2*padding)
+            spatial_derivative_width=qhi-qlo,temporal_derivative_width=qcurvature*width+2*qpadding,
+            zero_derivative_lower=qlo-qcurvature*width/2-qpadding,
+            zero_derivative_upper=qhi+qcurvature*width/2+qpadding)
     return enclose
 
 
