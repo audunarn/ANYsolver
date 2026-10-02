@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.13. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.14. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -146,9 +146,9 @@ impact analysis, not rerun. Their coarse event work is not qualified by this reu
 A pressure-ramp material-point oracle gives dissipation errors11.72%,3.08%,.78%
 at8/32/128event subdivisions while force/slip/storage agree. Retained five-segment paths now show0.83% cumulative-work change from4 to32events,
 with spatial control~0.00007%. An exact input-bound comparison splitting the same segments gives0.016% dissipation change
-against32events; these are fixed-path comparisons, not coupled refinement. Next
-checkpoint the development source and verify an installed partial-replay profile
-with focused physics/state checks and scoped independent assessment. Released
+against32events; these are fixed-path comparisons, not coupled refinement. Local development checkpointec5bc0ad and its installed459-module artifact now
+pass12focused physics/state checks plus the standalone example first press. Exact
+module/import/runtime identity is verified; C5 acceptance remains open. Released
 storage changes7.9% from4 to32events; total-dissipation convergence must not be
 generalized to all work quantities. No history interpolation, automatic resource increase, full-route
 speedup claim or new acceptance follows. Installed verification and broader
@@ -256,9 +256,13 @@ engineering acceptance. [Evidence](docs/d1_review_support/contact_c6_free_sphere
 One additional history/work/V6 split check passes on the same unchanged wheel;
 172distinct checks are covered, with unaffected results reused by impact analysis.
 
-**Next bounded decision:** friction integration/step refinement using the existing
-solved deformable-target material-anchor workflow. Then
-extend its state to changing source overlap, retaining stable material identity.
+**Next bounded decision:** derive the swept-round beam material-surface work map
+from the actual B2/B3 structural kinematics before coupling the existing Coulomb
+law. A bounded read review identifies the authoritative section rotation and
+smallest integrated slice; do not substitute centreline velocities or invent a
+rotation interpolation. Retain the installed partial-overlap shell candidate and
+its unresolved scientific scope; fixed-path dissipation checks are complete for
+their named fixtures, not broad C5 qualification.
 Use the existing shared static driver; do not introduce a second solver/history
 stack or substitute more prescribed collinear demonstrations. This development
 route changes no accepted normal formulation or numerical criterion. Beam friction

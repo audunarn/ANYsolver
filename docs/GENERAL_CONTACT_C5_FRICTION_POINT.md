@@ -366,3 +366,10 @@ and quadrature coordinates/weights explicitly. Its assertion concerns total
 dissipation only; released storage changes7.9% from4 to32events. No claim that all
 work quantities meet the same relative accuracy follows. Original unbound records
 and the review finding remain in the evidence directory.
+
+
+A standalone [partial-replay example](../examples/general_contact_s3_partial_friction.py)
+now exposes the nonguided five-phase path and checkpoint continuation. Its first
+press/checkpoint plus12focused mechanics/state checks pass against the installed
+459-module ec5bc0ad artifact. See [installed results](d1_review_support/contact_c5_s3_partial_replay_20261002/installed_results.md).
+The complete installed five-phase execution is not claimed from that smoke check.
