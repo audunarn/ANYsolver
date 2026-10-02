@@ -533,9 +533,9 @@ def solve_static_contact_path(
             with contact_scope(model, definition, settings,
                                allow_augmented=augmented) as manager:
                 if friction is not None:
-                    from .s3_friction_static import S3MaterialFrictionManager
+                    from .s3_friction_static import create_s3_friction_manager
                     from .runtime import _ACTIVE_CONTACT
-                    manager = S3MaterialFrictionManager(model, manager, friction)
+                    manager = create_s3_friction_manager(model, manager, friction)
                     # The enclosing scope restores its original context token.
                     _ACTIVE_CONTACT.set(manager)
                 contract = {

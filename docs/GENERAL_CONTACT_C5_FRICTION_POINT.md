@@ -175,3 +175,73 @@ friction integration over moving overlap, curved/warped geometry, nonlinear
 materials, beam friction, arc length or impact friction. Those remain required C5
 work. Its fixed quadrature weights and derivative steps are explicit controls;
 neither is an application default. Engineering acceptance remains open.
+
+## Planar material-anchor development route
+
+`S3SlidingFrictionSettings` in `anysolver.general_contact.s3_sliding_friction`
+uses the same `contact_friction` argument and ordinary static path. Its target is
+a connected conforming convex planar S3 patch; the whole source face remains in
+the target union. Three positive reference-area quadrature points per source face
+have stable material identities. The target facet and barycentric material anchor
+are history: changing facets does not release traction or reset cumulative slip.
+The original fixed-pair profile remains selectable and unchanged.
+
+With source point x, committed target material anchor alpha, and current target
+interpolation X(u,alpha), the trial elastic gap is
+
+    e_trial = P [x(u) - X(u,alpha)], P = I - n n^T.
+
+Stick retains alpha. Slip returns to an elastic gap of length mu*p/kt in the trial
+direction and locates the resulting interacting point on the current target patch.
+Both target stretch/shear and rigid motion convect the anchor through the actual
+interpolation. Initial activation/recontact initializes a stress-free anchor at the
+current projection; physical opening releases the anchor and stored traction.
+At zero pressure with negative gap, the return retains a zero-elastic-gap material
+anchor. This finite-step initialization needs event/step refinement before general
+friction admission.
+
+The physical virtual work holds the trial returned anchor fixed as an internal
+variable. For r=x-X, g=n.r, Js=dx/du and Jt=dX/du at fixed material coordinates:
+
+    De = P (Js-Jt) - (n r^T + g I) Dn,
+    R_friction = -sum(area_reference * De^T traction), traction = -kt*e.
+
+The patch normal is the normalized sum of oriented triangle area vectors; Dn
+differentiates that same sum. Internal diagonals cancel in both definitions.
+An earlier candidate used a normal from the first facet but a derivative from the
+anchor facet; the independent review identified this mismatch, and focused apex/
+seam work checks cover its correction. Geometry and return derivatives are local
+development work, with bounded full-return finite differences assembled sparsely;
+candidate perturbations share one physical committed origin.
+
+Roundoff-sized seam ties use stable element-ID ownership. The admission tolerance
+does not snap a finite-width return band. Residuals and one-sided slopes have focused
+checks, but the exact sliding-seam/rim generalized tangent remains explicitly
+rejected. Perturbations that leave the patch or cannot resolve the slip direction
+fail explicitly; they do not silently change law or enlarge derivative budgets.
+
+Records identify force per source reference area and the shared mortar pressure
+coefficient. Endpoint pressure times the current anchor-motion chord is the discrete
+Coulomb dissipation measure. Storage, storage change, released storage, return
+storage drop and the return's projection loss are separate fields. It is not a
+continuous path-work certificate. Common affine stretch of a *nonzero* spatial
+elastic gap can trigger a return; a retained discriminator shows this contribution
+scales as 1/kt at equal traction. It is an exposed regularization consequence,
+requiring enforcement/step sensitivity before engineering admission.
+
+For the installed example, import `run_example` from
+`examples/general_contact_s3_friction_static.py` and call
+`run_example(material_anchor=True)`. The target's in-plane response is solved,
+and source quadrature/anchors cross the artificial target diagonal before reversal,
+opening and stress-free recontact. Default `run_example()` preserves the fixed-pair
+example. Restart binds geometry, quadrature, properties, derivative controls,
+initialization rule, committed pose and anchor/history; incompatible definitions
+and inconsistent stored elastic energy are rejected before mutation.
+
+The interacting-material-point idea is informed by
+[Duong and Sauer (2019), contact kinematics](https://arxiv.org/html/1808.10420).
+ANYsolver retains its own normal mortar law and derives the above work maps; this
+is not adoption or qualification of that paper's full discretization. No external
+contact code was copied. Partial overlap/history repartitioning, adaptive friction
+integration, finite rotations/creases, nonlinear materials, swept beam/native
+friction, arc length and impact friction remain required C5 work.

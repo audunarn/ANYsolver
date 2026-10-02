@@ -2,64 +2,65 @@
 
 ## Authority and checkpoint
 
-Full C0–C9 goal remains active; this turn is progress. Use the tiered/new testing
-workflow. Do not inspect or communicate with the other task. Worktree:
+Full C0–C9 goal remains active; this turn is progress. Tiered/new testing workflow.
+Do not inspect or communicate with the other task/original worktree. Use:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Parentfdcfa989; inspect actual HEAD/status.
-Goal rev2026-09-30.4, plan rev2026-10-02.5. No original-worktree, shared ABC-guard,
-publication, main merge, release or historical default change is authorized.
+codex/contact-main-reconcile-20261001. Parentc1f05cf8; inspect actual HEAD/status.
+Goal rev2026-09-30.4, plan rev2026-10-02.6. No shared ABC-guard, publication,
+main merge, release or historical-default change is authorized. Exact-path local
+checkpoint commits remain authorized. Preserve frozen/consumed run authorities.
 
-## Current result
+## Current integrated result
 
-Ordinary static contact path now composes fixed-material S3 friction with shared
-mortar normal pressure and real structural equilibrium, both-body work/tangents,
-accepted-step history, opening/recontact and split restart. Explicit development
-configuration supplies material points, reference weights and FE derivative steps.
-Only the entire source facet inside one declared target facet is admitted; weights
-cover its reference area. Cuts fail even if all quadrature points remain inside.
-Traction chain derivatives include pressure/frame motion; numerical pressure and
-geometric work-map differences remain development limits. No C5 acceptance follows.
+Ordinary static path now dispatches explicit fixed-pair or material-anchor S3
+friction. The new anchor is a target facet plus barycentric material coordinates;
+actual target interpolation convects it through stretch/shear. Coulomb return
+moves it across facets without resetting history. Fixed source reference quadrature,
+convex/conforming/coplanar target union and full source coverage only; inherits the
+normal owner's bounded faces, elastic material and analysis admission. Both-body
+residual/pressure tangent, deformable-target equilibrium, press/stick/slip/crossing/
+reversal/open/recontact and split restart have development evidence.
 
-Independent source review found omitted retained elastic transport in virtual work.
-The nonproportional-spin counterexample failed with0.20000000000004547 spurious work.
-Corrected map includes transported history; separate relative increment derivative
-avoids double counting. Zero rigid-spin work and no same-pose commit force jump pass.
-Reviewer checked the correction and final geometry guard; no concrete blocker within
-this bounded scope, no numerical reproduction or general engineering assessment.
+Completed Mistral design Read identified false slip from rotation-only anchor
+reprojection under affine strain. Early kernel review found a normal/derivative
+mismatch; corrected to the global patch area-vector normal, whose internal edges
+cancel. Roundoff-only seam ownership/cap checks, explicit storage/projection-loss
+channels and anchor/storage checkpoint validation added. Corrective Mistral Read
+found no equation error in the declared scope; reviews were source-only, not C5
+acceptance. Later column/scale/reporting safeguards are covered by the final install.
 
-Final installed candidate:23coherent passes,455source/wheel/site modules match,
-236onsite imports,32.8714166s/176373760B sampled peak within180s/1GB. Actual JIToff,
-BLAS/Numba1 verified. Coupled stick/slip/reversal/open/recontact, physical pressure
-cross derivative, rejected candidate, changed checkpoint, cancellation/context and
-standalone example pass. Sourcev6 had21passes plus a later targeted cut correction.
-[Results/raw](docs/d1_review_support/contact_c5_s3_pressure_history_20261002/results.md),
-[usage](docs/GENERAL_CONTACT_C5_FRICTION_POINT.md),
-[example](examples/general_contact_s3_friction_static.py).
+Final installed13pass selection covers all8 new checks,2 legacy static/state checks,
+retained-spin check and2 example modes.456source/wheel/site modules match;237
+onsite imports. Actual JIToff/BLAS+Numba1 verified before/after.37.2726979s/
+178061312B sampled process-tree peak within180s/999292928B. Build13.5378746s/
+125169664B. Source corrected6pass plus2limit checks. No speedup or no-contact5%
+performance claim; unchanged paths are reused by source impact analysis.
 
-## Evidence and limits
+[Results/raw](docs/d1_review_support/contact_c5_s3_material_anchor_20261002/results.md),
+[review disposition](docs/d1_review_support/contact_c5_s3_material_anchor_20261002/independent_review.md),
+[C5 equations/usage](docs/GENERAL_CONTACT_C5_FRICTION_POINT.md).
+Artifact C:/ANYworkspaceWork/contact-anchor-package-20261002; wheel SHA256
+30499198c1f20f514984600fa9c681682b59286b892ddd5ffb92f852089012f1.
+Raw41files/3038325B, readbackPASS; index/ZIP retained with results.
+[History Part48](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART48.md)
+links prior prototype, failures, native/impact, application and accepted evidence.
 
-Retain v1 unsupported Jet2 profile, v2 branch derivative rejection, v3 erroneous
-post-release strain observation, v4 passes, spin and cut counterexamples, and v5
-180s incomplete broad run. No cap/tolerance increased or failed result regraded.
-Bounded Mistral Read could inspect sources after sandbox escalation but had no final
-assessment in6turns; do not treat it as completed review. OpenAI independent Read
-found and assessed the corrective mechanics. Raw79files/5645182B readbackPASS.
-History [Part47](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART47.md)
-links prior native, sphere/beam impact, shell/application and acceptance evidence.
-Accepted D1/D2 normal subsets unchanged. C5/D2–D8 remain required and application
-admission remainsfalse. No speedup, general swept-friction certificate or release claim.
+## Next decision / remaining programme
 
-## Next action / resources
+Exact sliding-seam/rim generalized tangent still explicitly rejects; residual and
+one-sided slopes have checks. Resolve this derivative on the existing owner, then
+friction integration/step refinement and actual partial-overlap/history transfer.
+A finite co-stretch of a nonzero spatial elastic gap can return under this declared
+regularization; the independent endpoint calculation and4x-stiffness sensitivity
+show its dissipation contribution scales1/kt. This is not physical-slip truth or a
+continuous path-work certificate. Do not hide that consequence behind scalar tests.
+Recontact is stress-free at current projection; event/step sensitivity remains.
+Finite rotation/warped/crease, beam/native swept friction, nonlinear materials,
+arc length and coupled impact still required. C5 and full programme remain open;
+accepted D1/D2 normal subsets unchanged; application admission remainsfalse.
 
-Next discriminate deformable-target nonproportional/changing-normal response using
-this coupled owner, then implement persistent material-surface correspondence and
-history transfer under actual overlap repartition/facet crossing. Retain pressure
-coupling and work, transactional origin, restart and dimensional gap/error gates.
-Beam friction requires the swept round surface; centreline velocities cannot admit it.
-No owned job live; source/build/installed/review jobs terminal, reviewer idle.
-Final artifact C:/ANYworkspaceWork/contact-friction-static-package-v2-20261002;
-wheel SHA256b796c57516600cfb3546a5cf210b55f623136cb7ade9bb673e446beaff160c6b.
-Routine portable exact selectors, JIToff/threads1,180s/953MiB, fresh RUNNER_TEMP;
-stricter frozen limits prevail. Original120active-hour clock continues: as of
-00:48:38UTC goal204379s+retained3120s=207499s,57.639h used/62.361h remaining.
-Subsequent active time counts; no reset. Goal remains active.
+No owned job live: source/build/install/archive and both Mistral reviews terminal.
+Routine portable exact selectors, fresh RUNNER_TEMP, JIToff/threads1,180s/953MiB;
+stricter frozen caps prevail. Original120active-hour clock continues: as of
+01:32:13UTC goal206985s+retained3120s=210105s,58.363h used/61.637h remaining.
+Subsequent active time counts; do not reset. Reassess at72h, stop at120h for decision.

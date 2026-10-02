@@ -236,3 +236,11 @@ class S3MaterialFrictionManager:
                                rtol=0, atol=1e-9):
                 raise ValueError("friction checkpoint material frame differs")
         self.committed_displacement, self.history = u.copy(), history
+
+
+def create_s3_friction_manager(model, normal, settings):
+    """Explicit profile dispatch; never switch a failed candidate's friction law."""
+    from .s3_sliding_friction import S3SlidingFrictionSettings, S3SlidingFrictionManager
+    if type(settings) is S3SlidingFrictionSettings:
+        return S3SlidingFrictionManager(model, normal, settings)
+    return S3MaterialFrictionManager(model, normal, settings)

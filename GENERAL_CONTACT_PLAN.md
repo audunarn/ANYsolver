@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.5. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.6. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -21,7 +21,7 @@ Publication, merging, release and historical-default changes are separate action
 | D1 shell static | Named interior workflow independently accepted with installed0b2ac9be | Arbitrary model/application admission and release remain separate |
 | D2 partial shells | Named finite-penalty foundation/press/open/recontact/restart handoff accepted | Remaining geometry, search, finite rotation and self-contact |
 | D3 classical/native static | Restricted round-beam, retained-native and deformable-S3 prototypes integrated and reviewed | Full required pairings, endpoints, mesh/enforcement and section-family acceptance |
-| D4 friction/continuation | Local components preserved | Transactional material-surface history, pressure coupling and arc length |
+| D4 friction/continuation | Fixed-material and planar material-anchor S3 owners use shared static equilibrium/pressure/history/restart; facet-crossing deformable-target checks pass | Friction integration/refinement, seam derivative admission, finite rotation/warped surfaces, swept beam/native surfaces, nonlinear materials and arc length |
 | D5 impact | Q4/S3 planes and B2/B3 fixed/translating planes or coupled free isotropic sphere share Newmark driver/state/restart | General geometry, finite rotation, caps/pairs, shell/free-body work, anisotropic inertia, nonlinear materials and acceptance |
 | D6 native dynamics | Dedicated retained-inertia/SO(3) midpoint owner, state codec and installed development route | Broader geometry/sections, spatial accuracy and C7 acceptance |
 | Applications | ANYfem mapping/result summary plus supplied-settings persistence; ANYstructure intent/public mapping and early rejection | Source/model-bound capability admission, solve routing and full installed workflows |
@@ -45,12 +45,23 @@ normal profiles. See the [C5 guide](docs/GENERAL_CONTACT_C5_FRICTION_POINT.md) a
 [slice results](docs/d1_review_support/contact_c5_s3_pressure_history_20261002/results.md)
 for source/installed evidence.
 
-Next extend this integrated owner toward actual material-surface correspondence
-and quadrature/history transfer during finite sliding. First discriminate
-nonproportional and changing-normal response with deformable target motion before
-admitting repartitioned overlap. Retain the shared normal pressure space, objective
-work, atomic history/restart and dimensional gates. Beam friction must use swept
-round surfaces. Do not replace these required mechanics with more collinear toys.
+The next integrated candidate retains target facet/material coordinates, convects
+them by the actual S3 work map, and relocates them only in the Coulomb return.
+It covers a connected conforming convex planar patch, fixed source quadrature and
+full source coverage. Common affine target strain, nonproportional work, artificial
+diagonal crossing, both-body response and split restart have focused development
+evidence. Early Mistral scrutiny corrected a normal/derivative mismatch; the final
+normal is the patch area vector, so internal triangulation edges cancel. Exact
+sliding-seam tangents still reject. Stretch of an already nonzero spatial elastic
+gap can trigger a return; its dissipation tends to zero with tighter tangential
+regularization in the retained development discriminator. This is an explicit
+regularization consequence, not a claim of physical slip under common strain.
+
+Next close seam generalized derivatives and friction integration/step refinement
+on this coupled owner, then carry material history through actual partial overlap
+repartitioning. Preserve normal pressure space, both-body work, atomic state and
+dimensional gates. Beam friction uses swept round surfaces. Finite rotation,
+warped/crease geometry and all remaining D2–D8 outcomes remain required.
 
 The native finite-angle temporal programme now has terminal physical/source/state
 PASS for freshN162 andN216 atT=.0045s, reusing savedN192prefix108. Common times
@@ -148,16 +159,14 @@ engineering acceptance. [Evidence](docs/d1_review_support/contact_c6_free_sphere
 One additional history/work/V6 split check passes on the same unchanged wheel;
 172distinct checks are covered, with unaffected results reused by impact analysis.
 
-**Next bounded decision:** integrate transactional shell friction and its normal
-pressure coupling, using existing friction_point, s3_friction_point and
-s3_friction_pair components. Inspect their physical history/work maps and the
-ordinary static contributor/commit/restart contracts, then implement one coupled
-stick/slip/reversal/opening workflow. Advance requiredD4 coverage rather than expand
-another prescribed impact fixture. This is a route choice within the existing
-goal; it changes no scientific method, accepted normal profile or qualification
-criterion. Friction needs material-surface motion, pressure-dependent derivatives
-and accepted-step history; no centreline-only beam friction or arbitrary partner
-history is admitted. Follow with admitted warped/finite-rotation/beam/native rows.
+**Next bounded decision:** finish the planar material-anchor friction derivative
+and integration/step refinement using a solved deformable-target workflow. Then
+extend its state to changing source overlap, retaining stable material identity.
+Use the existing shared static driver; do not introduce a second solver/history
+stack or substitute more prescribed collinear demonstrations. This development
+route changes no accepted normal formulation or numerical criterion. Beam friction
+still requires a swept material surface, followed by native retained-coordinate
+work; warped/finite-rotation, material, continuation and impact rows remain open.
 
 Shell/free-body and anisotropic/rotating body work, broader native geometry/section
 and native/shell common-stage impact remain required. Preserve complete path and
