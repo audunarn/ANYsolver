@@ -9,10 +9,10 @@ protected evidence and resource authority. Expanded note preserved byte-for-byte
 in [history](development/r8-ge-pressure-work-20261002/active-before-consumer-v1.md).
 
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001, fit base641e05bb. Root owns
+branch codex/stiffened-main-reconcile-20261001, integration base84a02c36. Root owns
 pressure context/owner/facade/tests/example/docs. ANYfem consumer:
 C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, branch
-codex/experimental-ge-panel-consumer, HEAD095b60c. Consumer pressure slice committed;
+codex/experimental-ge-panel-consumer, HEADe998e9b. Consumer programme slice committed;
 worker complete. No numerical job live. Main untouched; no contact-worker messaging.
 Local scoped commits permitted; no main merge/push/publication.
 
@@ -99,7 +99,11 @@ Mixed/all-S3 elastic histories now pass source+installed restart/balance checks.
 ANYfem programme schema and real Project save/reopen/cancel/disk-restore/signed
 continuation pass139source/139installed focused checks; wheelc67232b6 with solver
 b636e6a8. Root independently reviewed worker edits. Runnable solver programme
-example passes source+installed. No job live. Next: mixed/S3 plastic staged-history
+example passes source+installed. Mixed and all-S3 plastic staged histories now pass
+installed cancellation/restart/reversal: mixedQ4+fibres active while S3 stays elastic;
+all-S3 has active S3+fibres. Observer fixed to compare native station histories by
+family/element identity (old mixed failure preserved).16helper checks and independent
+source review pass. No job live. Next: distributed-couple material work/history
 coverage; zero-load assessment/design remains open, with no automatic relaxation.
 No aggregate acceptance. Consumer evidence: ANYfem docs/development/
 r8-ge-distributed-programme-20261002/results.md.

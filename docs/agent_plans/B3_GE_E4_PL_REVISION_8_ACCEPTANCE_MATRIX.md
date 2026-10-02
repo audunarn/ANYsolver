@@ -1235,3 +1235,12 @@ programme schema and Project/cancellation/disk-restore route pass139source and
 139installed checks on consumerc67232b6. Root reviewed worker changes. Mixed/S3
 plastic histories and zero-load convergence are not established; G4A/G6 remain open.
 [Updated evidence](development/r8-ge-native-distributed-20261002/staged-programme-results.md).
+
+**2 October mixed/S3 signed material histories:** source/installed tests extend the
+same two-stiffener distributed programme to mixed Q4/S3 and all-S3 shells. Both
+installed paths pass cancellation, restart, reversed loading and exact checkpoint
+parity. Mixed activity is Q4+fibres with elastic S3; all-S3 activity is S3+fibres.
+An observation-only ragged-array failure is preserved and corrected by keyed
+native station comparison, with16helper checks and independent source review.
+No numerical equations/criteria changed; aggregate G3/G4A remain open.
+[Evidence](development/r8-ge-native-distributed-20261002/staged-programme-results.md).

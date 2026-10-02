@@ -62,13 +62,36 @@ def programme(owner):
               for node in (105,205)) for force in ENDPOINT_FORCES_N))
 
 
+def _shell_activity(result, previous=None):
+    """Match native station histories by formulation and element identity."""
+    def records(value):
+        rows={}
+        for family,size in (('q4',12),('s3',9)):
+            for record in getattr(value,'shell_'+family+'_material'):
+                key=(family,record.element_id)
+                alpha=np.asarray(record.alpha)
+                if key in rows or alpha.shape!=(size,) or not np.isfinite(alpha).all():
+                    raise ValueError('unique finite native shell material rows required')
+                rows[key]=alpha
+        if not rows:raise ValueError('shell material records required')
+        return rows
+    current=records(result)
+    old=({key:np.zeros_like(alpha) for key,alpha in current.items()}
+         if previous is None else records(previous))
+    if current.keys()!=old.keys():raise ValueError('shell material inventory changed')
+    families={key[0]:False for key in current}
+    for key,alpha in current.items():
+        before=old[key]
+        delta=alpha-before
+        budget=64.*np.finfo(float).eps*np.maximum(np.abs(alpha),np.abs(before))
+        assert np.all(delta>=-budget)
+        families[key[0]]=families[key[0]] or bool(np.any(delta>budget))
+    return any(families.values()),max(float(np.max(a)) for a in current.values()),families
+
+
 def activity(result, previous=None):
     """Actual last accepted update, rather than cumulative yielding alone."""
-    alpha = np.asarray(result.shell_layer_alpha)
-    before = np.zeros_like(alpha) if previous is None else np.asarray(previous.shell_layer_alpha)
-    delta = alpha-before
-    budget = 64.*np.finfo(float).eps*np.maximum(np.abs(alpha),np.abs(before))
-    assert np.all(delta >= -budget)
+    shell_active,shell_alpha_max,shell_families=_shell_activity(result,previous)
     fibre_increments = []
     active = []
     for station in result.beam_fibre_material:
@@ -82,10 +105,10 @@ def activity(result, previous=None):
     dissipation = [math.fsum(e.incremental_dissipation_j)
                    for e in result.beam_fibre_energy]
     assert all(math.isfinite(d) and d >= 0. for d in dissipation)
-    shell_active = bool(np.any(delta > budget))
     fibre_active = bool(active)
     return dict(position=result.load_position,generation=result.generation,
-        shell_alpha_max=float(np.max(alpha)),shell_active=shell_active,
+        shell_alpha_max=shell_alpha_max,shell_active=shell_active,
+        shell_active_by_family=shell_families,
         fibre_active=fibre_active,simultaneous=shell_active and fibre_active,
         active_fibres=active,
         fibre_plastic_increment_min=min(fibre_increments),

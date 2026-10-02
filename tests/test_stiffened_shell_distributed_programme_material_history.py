@@ -1,13 +1,21 @@
 """Signed external loading with actual simultaneous shell/fibre histories."""
 import numpy as np
 import pytest
+from dataclasses import replace
 from anysolver import stiffened_shell as ss
 from anysolver.control import CancellationToken, SolveCancelled
 from examples.stiffened_shell_coupled_plastic_history import definition, activity, OPTIONS, CONTROL
 
 
-def test_signed_distributed_material_history_restart(request,record_property):
-    a=ss.create_analysis(definition=definition());request.addfinalizer(a.close)
+@pytest.mark.parametrize('mesh',['q4','mixed','s3'])
+def test_signed_distributed_material_history_restart(request,record_property,mesh):
+    model=definition()
+    if mesh!='q4':
+        shell=replace(model.shell,q4_elements=() if mesh=='s3' else ((1,2,5,4),),
+            s3_elements=((1,2,5),(1,5,4),(2,3,6),(2,6,5)) if mesh=='s3' else ((2,3,6),(2,6,5)))
+        model=(ss.LinearDefinition(model.profile,shell,model.beams,model.points,model.fixed)
+               if mesh=='s3' else replace(model,shell=shell))
+    a=ss.create_analysis(definition=model);request.addfinalizer(a.close)
     endpoints=tuple(tuple(ss.GEBeamLineAction(e.element_id,(0.,0.,density))
                          for e,_,_ in a._beam_parts) for density in (3000.,-3000.))
     programme=ss.GEBeamDistributedProgramme(a.preflight()['identity'],endpoints)
@@ -32,7 +40,7 @@ def test_signed_distributed_material_history_restart(request,record_property):
         a.solve(programme,targets,increment_control=CONTROL,on_accepted=cancel,
                 cancellation_token=token,**OPTIONS)
     assert any(row['simultaneous'] for row in history)
-    b=ss.create_analysis(definition=definition());request.addfinalizer(b.close)
+    b=ss.create_analysis(definition=model);request.addfinalizer(b.close)
     b.restore(a.checkpoint());assert a.checkpoint()==b.checkpoint()
     last=a.solve(programme,targets,increment_control=CONTROL,on_accepted=observe,**OPTIONS)
     resumed=b.solve(programme,targets,increment_control=CONTROL,**OPTIONS)

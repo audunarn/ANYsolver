@@ -86,3 +86,43 @@ finite dispatch and real Project/cancel/disk-restore workflow pass139source and
 139installed focused checks. Consumer wheel c67232b6 uses solver b636e6a8.
 See C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/
 r8-ge-distributed-programme-20261002/results.md. No G4A/G6 aggregate acceptance.
+
+## Mixed and all-S3 material histories
+
+The same two-stiffener material model now also runs with the downstream shell
+split into two S3s, or both shells split into four S3s. Geometry, section laws,
+shell J2 law, force densities, support conditions and programme positions remain
+unchanged. Initial source run: one mixed observation failure and one all-S3 pass
+in65.83s pytest. The failure occurred after acceptance: the example helper tried
+to make a rectangular array from Q4's12 and S3's9 native alpha stations. It was
+not a failed material solve or partial solver commit.
+
+The helper now matches (formulation,element ID), checks unique matching inventories
+and native station shapes, preserves the existing stationwise roundoff budget,
+and reports family activity. Independent OpenAI Read review found no consequential
+defect and requested homogeneous station-local parity tests, which were added.
+16small helper checks pass, including unchanged Q4/S3 arithmetic, station-local
+increments around the existing tolerance, reordered elements and invalid histories.
+The corrected mixed history plus6initial helper checks pass in57.356s supervised.
+
+Both installed material histories pass in115.078s supervised,174166016B sampled
+peak process-tree memory, using unchanged solver wheelb636e6a8 (398source/wheel/site
+modules). Runtime verifies219onsite imports,1numerical thread and JIT disabled.
+Actual revised test/example fixture hashes are retained separately from the reused
+wheel manifest. The xunit2 recorded-property warning remains in the raw logs.
+
+At positions1,1.75,2 the mixed case has active Q4 and fibre updates; its downstream
+S3s remain elastic. The all-S3 case has active S3 and fibre updates at those same
+positions. Maximum accepted equilibrium ratios: mixed4.790159e-9, S3 1.284940e-10.
+Positive-prefix cancellation, snapshot restore, negative-load history, physical
+balance and exact final checkpoint parity pass. This does not establish simultaneous
+Q4 and S3 yielding within the mixed case, every material/load combination, or
+independent constitutive accuracy. Zero-load and broader qualification remain open.
+
+Source records: mixed-material-source-v1. Installed records:
+staged-programme-mixed-material-installed-v1.zip. No numerical product equation or
+acceptance criterion changed; this slice repairs example observation and extends
+executed lifecycle coverage.
+
+Installed archive SHA256:
+`5afb0d14925583076ba95714d26aba51f36e55964b3e69d3372f9592ea271250`.
