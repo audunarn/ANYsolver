@@ -1019,3 +1019,8 @@ structured support failure diagnostics tested. A reviewed at-most-one-crossing
 certificate core passes7analytic checks but lacks the production geometry
 enclosure adapter. Savedsecond remains non-success; no capability promotion.
 [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_zero_set_transition_results.md).
+
+Zero-set geometry adapter now reviewed with11passing analytical/actual-path
+controls. Its single trial connection fails the savedsecond support budget before
+material queries and is removed. Adapter remains unpromoted; second loading and
+restart equivalence remain open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_zero_set_geometry_results.md).

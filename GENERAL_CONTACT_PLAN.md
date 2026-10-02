@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.32. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.33. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -48,12 +48,15 @@ with extrema away from contact need not satisfy monotone/open/closed admission,
 even after spatial refinement. A new zero-set certificate core covers time by
 strictly signed gap slabs or same-oriented transverse derivative slabs. Seven
 analytic checks pass; it is NOT yet integrated into the geometry evaluator.
-Next implement conservative whole-rectangle gap/derivative slab enclosures using
-the actual retained/S3 path, including geometry and arithmetic guards. Review the
-adapter, test analytic rotating geometry and hidden pulses, then assess the saved
-second-load fixture once under existing caps. Full replay and quadrature gates
-remain authoritative. No coupled retry until local success; no budget increase.
-See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_zero_set_transition_results.md).
+The actual retained/S3 slab adapter now has reviewed formulas and11passing
+analytic/geometry controls, including a deforming target original-time derivative
+check. A single trial connection still exhausts128support on one narrow region
+before material queries; the connection is removed. Core and adapter remain
+unpromoted development components. Next distinguish spatially mixed crossing
+orientations from true multiple/nontransverse events in that exact saved region,
+then choose a unified space-time proof scheduler. No unchanged full-case rerun,
+scalar-bound tuning, cap increase or coupled continuation before local success.
+See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_zero_set_geometry_results.md).
 
 The pressure-coupled fixed-material S3 friction slice now uses the ordinary static
 path assembly/constraints, existing mortar pressure and accepted-step physical

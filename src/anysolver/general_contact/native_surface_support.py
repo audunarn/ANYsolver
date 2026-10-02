@@ -337,6 +337,76 @@ class HistoryPanelSupport:
     reason: str
 
 
+def segment_gap_slab_enclosure(field,cell,xi_bounds,angle_bounds,segment_index):
+    """Whole-rectangle gap/derivative bounds on the original captured time.
+
+    Endpoint spatial extrema and a uniform |g''| bound enclose the gap below
+    and above its chord. Midpoint derivative extrema expanded by |g''|*dt/2
+    enclose the derivative. No physical history is modified by this factory.
+    """
+    from .native_surface_crossing import GapSlabEnclosure
+    # Reuse the exact field/reference/selection contract. Its Boolean outcome
+    # concerns whole-segment monotonicity and is not this certificate's result.
+    history_endpoint_support_certified(field,xi_bounds=xi_bounds,
+        angle_bounds=angle_bounds,segment_index=segment_index)
+    if type(cell) is not int or cell not in (0,1) or not -1+cell<=xi_bounds[0]<xi_bounds[1]<=cell:
+        raise ValueError('support rectangle must lie in one declared material half-cell')
+    start,segments=_support_path(field,segment_index);segment=segments[0]
+    target=field.patch.target;frame0=field.patch.source.reference.nodal_triads[0]
+    radius=float(field.patch.rule.definition['radius']);omega=segment.angular[cell]
+    target_motion=np.asarray(target.adapter.work_map@segment.shell_increment).reshape(3,3)
+    da=target_motion[1]-target_motion[0];db=target_motion[2]-target_motion[0]
+    ref=target.adapter.reference_positions
+    refcross=np.cross(ref[1]-ref[0],ref[2]-ref[0]);refarea=np.linalg.norm(refcross)
+    refnormal=refcross/refarea
+    velocities=[]
+    for xi in xi_bounds:
+        alpha=xi+1 if cell==0 else xi
+        velocities.append((1-alpha)*segment.translations[cell]+alpha*segment.translations[cell+1]-target_motion[0])
+    speed=max(np.linalg.norm(v) for v in velocities)+np.linalg.norm(omega)*radius
+    def at(time):
+        return material_path_pose(start,segment.translations,segment.angular,segment.shell_increment,time)
+    def enclose(left,right):
+        if not 0<=left<right<=1:
+            raise ValueError('ordered original segment time slab required')
+        first,last=at(left),at(right);mid=at((left+right)/2)
+        corners=[target.adapter.current_positions(p.shell_displacement) for p in (first,last,mid)]
+        edges=[(c[1]-c[0],c[2]-c[0]) for c in corners]
+        a0,b0=edges[0];a1,b1=edges[1];am,bm=edges[2]
+        controls=(np.cross(a0,b0),.5*(np.cross(a0,b1)+np.cross(a1,b0)),np.cross(a1,b1))
+        area_scale=max(refarea,max(np.linalg.norm(a0),np.linalg.norm(a1))*max(np.linalg.norm(b0),np.linalg.norm(b1)))
+        area_lower=min(float(refnormal@c) for c in controls)-512*np.finfo(float).eps*area_scale
+        if area_lower<=1e-12*area_scale:
+            raise ValueError('unresolved target area/orientation in support slab')
+        cp=[np.cross(da,b)+np.cross(a,db) for a,b in edges[:2]]
+        normal_speed=max(np.linalg.norm(c) for c in cp)/area_lower
+        normal_acceleration=2*np.linalg.norm(np.cross(da,db))/area_lower+3*normal_speed**2
+        relative_radius=max(np.linalg.norm(_base(p,cell,xi,c[0]))
+            for p,c in zip((first,last),corners[:2]) for xi in xi_bounds)+radius
+        curvature=normal_acceleration*relative_radius+2*normal_speed*speed+np.linalg.norm(omega)**2*radius
+        cross=np.cross(am,bm);area=np.linalg.norm(cross);normal=cross/area
+        cp_mid=np.cross(da,bm)+np.cross(am,db)
+        normal_rate=(cp_mid-normal*float(normal@cp_mid))/area
+        frame=mid.cell_rotations[cell]@frame0
+        offsets=[float(normal_rate@_base(mid,cell,xi,corners[2][0])+normal@v)
+                 for xi,v in zip(xi_bounds,velocities)]
+        ca=radius*float(normal_rate@frame[:,1]+normal@np.cross(omega,frame[:,1]))
+        cb=radius*float(normal_rate@frame[:,2]+normal@np.cross(omega,frame[:,2]))
+        dl,du=_sinusoidal_extrema(offsets,ca,cb,angle_bounds)
+        minima=[_minimum(p,target,frame0,radius,cell,xi_bounds,angle_bounds) for p in (first,last)]
+        negative_maxima=[_minimum(p,target,frame0,radius,cell,xi_bounds,angle_bounds,gap_sign=-1.) for p in (first,last)]
+        scale=max(1.,relative_radius,speed,curvature,abs(dl),abs(du),
+            *(float(np.max(np.abs(c))) for c in corners),
+            *(float(np.max(np.abs(p.positions))) for p in (first,last,mid)))
+        padding=max(512*np.finfo(float).eps*scale,*(p for _,p in minima+negative_maxima))
+        curvature+=padding
+        width=right-left
+        return GapSlabEnclosure(min(v for v,_ in minima)-curvature*width**2/8-padding,
+            -min(v for v,_ in negative_maxima)+curvature*width**2/8+padding,
+            dl-curvature*width/2-padding,du+curvature*width/2+padding)
+    return enclose
+
+
 def classify_history_panel(field,cell,xi_bounds,angle_bounds,*,budget):
     """Resolve one full integration rectangle without sampling its support.
 
