@@ -1092,3 +1092,11 @@ transition,14support/0queries, rather than prior support128 exhaustion. Variable
 presence and endpoint-contact contributions are not yet admitted. No acceptance/speed
 claim; actual owner/split restart remains open. Preserved failures and next decision:
 [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/temporal_front_results.md).
+
+Native explicit angular endpoint geometry:8distinct new controls pass; direct
+trigonometric endpoint ranges, complete regular/uncertain bands, simple/near-tangent
+guards and bounded clamped extrema are implemented. All5saved local bands prepare
+under77/128support; review-caught rounded-magnitude clamp error is corrected with a
+counterexample. No material integration/owner admission follows. Captured-endpoint
+force/tangent and complete strip history accounting remain the next slice.
+[Evidence](d1_review_support/contact_c5_native_surface_point_20261002/angular_boundary_results.md).

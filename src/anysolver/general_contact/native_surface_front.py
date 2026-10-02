@@ -237,13 +237,15 @@ class StationaryAngularCover:
     front_time_slabs: tuple=()
     branch_bounds: tuple=()
     simple_time_slabs: tuple=()
+    variable_branches: tuple=()
 
     def __iter__(self):return iter(self.branches)
     def __len__(self):return len(self.branches)
     def __bool__(self):return bool(self.branches)
 
 
-def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budget,xi_bounds=None):
+def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budget,xi_bounds=None,
+        endpoint_partition=None,_variable_endpoint_branches=False):
     """Certify stationary-root branches over an entire angular interval.
 
     Each returned time bracket contains exactly one simple stationary root for
@@ -257,6 +259,12 @@ def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budge
     from .native_surface_support import SupportIntervalBudget
     if type(budget) is not SupportIntervalBudget:raise TypeError('shared support budget required')
     lo,hi=map(float,angle_bounds);angle=(lo+hi)/2
+    if endpoint_partition is not None:
+        if xi_bounds is None:raise ValueError('endpoint partition requires bound axial domain')
+        from .native_surface_front_boundary import endpoint_numerator_range
+        for time in (0.,1.):endpoint_numerator_range(endpoint_partition,field,cell,segment_index,time,(lo,hi))
+    if _variable_endpoint_branches and endpoint_partition is None:
+        raise ValueError('variable endpoint branches require bound endpoint angular partition')
     if xi_bounds is not None:
         xi_bounds=tuple(map(float,xi_bounds));domain=field.patch.rule.definition['xi_range']
         if (len(xi_bounds)!=2 or not all(np.isfinite(xi_bounds)) or
@@ -272,6 +280,15 @@ def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budge
             else:
                 cache[left,right]=stationary_front_slab(field,cell,segment_index,angle,left,right,
                     angle_bounds=(lo,hi),include_a=True,_return_error_controls=True)[0]
+            if endpoint_partition is not None and left==right and left in (0.,1.):
+                # A captured endpoint has exact sine/cosine dependence on the
+                # material angle. Reuse its complete analytic range, rather
+                # than a norm-only angular Lipschitz allowance. This never
+                # resolves an actual endpoint zero or omits its guard band.
+                from .native_surface_front_boundary import endpoint_numerator_range
+                nl,nu=endpoint_numerator_range(endpoint_partition,field,cell,segment_index,left,(lo,hi))
+                bounds=cache[left,right]
+                cache[left,right]=(*bounds[:2],nl,nu,*bounds[4:])
         return cache[left,right]
     while pending:
         left,right=pending.pop();bounds=enclosure(left,right);bl,bu,nl,nu,dl,du=bounds[:6]
@@ -312,13 +329,20 @@ def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budge
             simple_components.append((old[0],right,min(old[2],bl),max(old[3],bu),
                 min(old[4],dl),max(old[5],du)))
         else:simple_components.append((left,right,bl,bu,dl,du))
-    branch_bounds=[]
+    branch_bounds=[];variable_branches=[]
     for left,right,*bounds in simple_components:
         endpoint=[enclosure(t,t)[2:4] for t in (left,right)]
         signs=[1 if low>0 else -1 if high<0 else 0 for low,high in endpoint]
-        if 0 in signs:raise ValueError('stationary root angular endpoint transition unresolved')
+        if 0 in signs:
+            if not _variable_endpoint_branches:
+                raise ValueError('stationary root angular endpoint transition unresolved')
+            # Strict N' certifies at most one root at every material angle.
+            # Keep the potential branch even when its root enters/leaves the
+            # actual time interval; prepared queries bound its clamped extremum.
+            branches.append((left,right));branch_bounds.append(tuple(bounds));variable_branches.append(True)
+            continue
         if signs[0]!=signs[1]:
-            branches.append((left,right));branch_bounds.append(tuple(bounds))
+            branches.append((left,right));branch_bounds.append(tuple(bounds));variable_branches.append(False)
     cursor=0.
     for left,right in sorted([(a,b) for a,b,_ in open_slabs]+[(a,b) for a,b,_,_ in front_slabs]):
         if left!=cursor or not left<right:raise ValueError('incomplete stationary temporal cover')
@@ -331,7 +355,7 @@ def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budge
         else:components.append((left,right,bl,bu))
     return StationaryAngularCover(field.identity,cell,segment_index,(lo,hi),tuple(sorted(branches)),
         xi_bounds,tuple(sorted(open_slabs)),tuple(components),tuple(sorted(front_slabs)),
-        tuple(branch_bounds),tuple(sorted(simple_slabs)))
+        tuple(branch_bounds),tuple(sorted(simple_slabs)),tuple(variable_branches))
 
 
 def _front_components(cover):
@@ -345,6 +369,7 @@ class IsolatedStationaryFront:
     time_bracket: tuple
     axial_interval: tuple
     numerator_residual: float
+    kind: str='stationary'
 
 
 def stationary_front_partition(field,cell,segment_index,angle,*,maximum_intervals=128,maximum_axial_uncertainty=None,budget=None,angular_cover=None):
@@ -559,8 +584,31 @@ def stationary_front_partition_prepared(field,prepared,angle,*,maximum_axial_unc
             raise ValueError('prepared stationary axial uncertainty exceeds budget')
         return interval
     roots=[]
-    for left,right,bounds,(error,nerror) in prepared.branches:
+    if cover.variable_branches and len(cover.variable_branches)!=len(prepared.branches):
+        raise ValueError('prepared variable branch count mismatch')
+    for index,(left,right,bounds,(error,nerror)) in enumerate(prepared.branches):
         nl,nr=at(left).stationary_numerator,at(right).stationary_numerator
+        variable=bool(cover.variable_branches and cover.variable_branches[index])
+        if variable and (abs(nl)<=nerror or abs(nr)<=nerror or np.sign(nl)==np.sign(nr)):
+            uncertain=abs(nl)<=nerror or abs(nr)<=nerror
+            if uncertain:root=left if abs(nl)<=abs(nr) else right
+            else:
+                # Reliable endpoint and N' signs locate the external zero.
+                # Comparing rounded |N| magnitudes can reverse their order
+                # within the supplied error even when both signs are strict.
+                root=left if (nl>0)==(bounds[4]>0) else right
+            value=at(root)
+            minimum_rate=min(abs(bounds[4]),abs(bounds[5]));maximum_rate=max(abs(bounds[4]),abs(bounds[5]))
+            residual=abs(value.stationary_numerator)+nerror if uncertain else 0.
+            time_error=residual/minimum_rate
+            bracket=(max(left,float(np.nextafter(root-time_error,-np.inf))),
+                min(right,float(np.nextafter(root+time_error,np.inf)))) if uncertain else (root,root)
+            minimum_b=min(abs(bounds[0]),abs(bounds[1]))
+            motion=(residual*time_error+.5*maximum_rate*time_error**2)/minimum_b**2
+            interval=coordinate(value,bounds,error,motion)
+            roots.append(IsolatedStationaryFront(root,value.axial_coordinate(),bracket,interval,
+                value.stationary_numerator,'boundary_uncertain' if uncertain else 'clamped_endpoint'))
+            continue
         if abs(nl)<=nerror or abs(nr)<=nerror or np.sign(nl)==np.sign(nr):
             raise ValueError('prepared stationary endpoint sign unresolved')
         root=brentq(lambda t:at(t).stationary_numerator,left,right,

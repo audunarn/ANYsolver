@@ -1,42 +1,44 @@
 # General contact restart — 2 October 2026
 
 Full C0–C9 active. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001. Base4f55e051 +owned temporal/error slice.
-Goal2026-09-30.4/plan2026-10-02.51 govern. No original-worktree/other-chat access,
+branch codex/contact-main-reconcile-20261001. Base4fcaeb1e +owned angular-boundary slice.
+Goal2026-09-30.4/plan2026-10-02.52 govern. No original-worktree/other-chat access,
 main merge/push/publication/release/default/shared ABC changes. Tiered workflow;
 optional lower tiers previously unavailable. Owned OpenAI source scrutiny only.
 
-NEW complete domain-bound temporal covers exclude strictly open whole slabs before
-B!=0, retain each remaining component's B sign/extrema, and merge adjacent strict N'
-slabs before classification. Separate6coefficient errors replace private uniform
-derivative floors; historical no-controls route unchanged.17distinct geometry/error
-controls pass by affected-evidence reuse; initial pulse/test-ratio failures preserved.
-Affected actual mixed integral +4cache/geometry controls pass in one run:1968queries,
-3936pointpaths,17panels,29support,86.655s/250204160B. Independent force/checked tangent
-agree~1e-14relative; balance/work/error gates pass. No balanced speed-up claim.
+NEW angular endpoint partition derives direct sine/cosine N coefficients and exact
+sub-band extrema. All regular/uncertain bands remain represented. Explicit geometry
+option retains potential branches and bounded clamped extrema at temporal entry/exit.
+8distinct new controls pass by affected-evidence reuse: analytic boundary/clamp,
+near-tangent27perturbations, saved representation/regular/full covers and bounded-noise
+counterexample. Review caught wrong strict clamp from rounded |N| ordering; corrected
+with certified N/N' signs. Initial source retained. Legacy defaults unchanged.
 
-Savedsecond LOCAL window xi[.72,.80],angle[3.19,3.20] remains NONPASS. Actual origin,
-bothincrements/maps/laws/settings retained, V2 eventsequence explicit. Former128support
-failure is now angular endpoint transition at14support,0queries/.059s. Coefficient
-diagnosis: segment2N'<0 but N at both time endpoints changes sign acrossangleband.
-Root branch enters/leaves the actual increment; not an arbitrary subdivision boundary.
+Savedsecond LOCAL xi[.72,.80],angle[3.19,3.20]: all5bands prepare/query under77/128
+support. Branch counts0,1,1,1,0; two guards each~5.75e-7rad retained as boundary_uncertain.
+Geometry only: no material queries, integral, owner or split restart. The preceding
+full local integral still NONPASS (angular endpoint transition,14support/0queries).
+No frozen/consumed run is renewed and no old failure becomes a pass.
 
-NEXT derive explicit angular-boundary partitioning for variable branch presence.
-Resolve true crossing versus angular-bound overestimate; account for all regular and
-uncertain bands. Open-endpoint strip work cannot simply admit closed captured endpoints.
-Do not omit bands, relax tolerance/caps or retry saved fullpatch/coupled owner first.
-Keep one parameterized test route. No live process/worker. Exact local checkpoint
-commit authorized; this note identifies its base+slice without recursive commit binding.
+NEXT integrate this geometry in the existing local helper with captured-endpoint
+force/tangent retained through actual point replay. Derive complete-history strip
+work bounds only under proven penetration/ownership conditions; old open-endpoint
+bound cannot declare zero force/tangent/storage for a closed endpoint. First analytical
+boundary-ending mixed patch, then unchanged saved LOCAL integral if complete contribution
+checks pass. Do not omit guard bands, enlarge caps/tolerances, reset history, or run the
+saved fullpatch/coupled owner first. No live process/worker. Exact owned local checkpoint
+commit authorized; note records base+slice without recursive commit binding.
 
-Prior accepted development: one-segment mixed and restricted translated-prefix/middle-
-pulse/open-suffix integration. Actual secondload/split restart still unpassed;32step
-history is discrete, not continuum convergence. D1-interior/named D2 accepted; full
-programme incomplete. Installed shell unchanged; no native C5 admission/release claim.
-Temporal controls are padded developmental bounds, not formal floating-point proofs.
+Prior development controls: temporal cover/error propagation17distinct checks plus
+actual mixed integral and4cache controls pass (1968queries/3936paths/17panels/29support,
+86.655s/250204160B; independent force/checked tangent~1e-14relative). Restricted prefix/
+pulse/open-suffix work also passed. These are not general tangent, whole-route speed,
+continuum-history or engineering acceptance claims. Actual secondload/split is unpassed.
+D1-interior/named D2 accepted; full programme incomplete. Installed shell unchanged;
+no native C5 admission/release. Bounds remain padded development controls, not formal proofs.
 
 Evidence docs/d1_review_support/contact_c5_native_surface_point_20261002:
-temporal_front_results.md/review.md/raw.zip/source.json; earliermultisegment/lazy/prepared
-and all failed sources/results retained. Routine180s/953MiB; named900s/3814MiB;
-native120s/context unchanged; consumed authorities stay consumed.120h limit=goal
-seconds+3120,last77.999h advancing,no extension. Checkpoint/decision at120h.
-Forecast unsupported. Full programme/ledger linked from current plan.
+angular_boundary_results.md/source.json/raw.zip/initial_source.zip; preceding temporal,
+multisegment/lazy/prepared and all failures retained. Routine180s/953MiB; named900s/3814MiB;
+native120s/context unchanged.120h limit=goal seconds+3120,last78.46h advancing,no extension.
+Checkpoint/decision at120h. Forecast unsupported. Full programme/ledger linked from plan.

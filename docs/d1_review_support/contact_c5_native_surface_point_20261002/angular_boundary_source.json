@@ -1,0 +1,15 @@
+{
+  "base": "4fcaeb1e",
+  "scope": "owned development geometry; not material-integral or engineering acceptance",
+  "source_sha256": {
+    "src/anysolver/general_contact/native_surface_front.py": "0b65d53f1c8de292bfc489a8915d1b8757c9eab6929fdd12413b5bfcfe675306",
+    "src/anysolver/general_contact/native_surface_front_boundary.py": "657fdb973f55081c63800f8dc99fb67dd2700f8596132dae91e2a22e772c06a9",
+    "tests/test_general_contact_native_surface_temporal_fronts.py": "145044bbc08c7d14faa563ba140d7ac5ee548da0f2269dd777dcaee32034ec98",
+    "scripts/run_portable_ci.py": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+    "scripts/development_test_runtime.py": "8caf0b692a498e950e12a9646b66826d9a5aad44d43df74873b826ea646cacab"
+  },
+  "review": "Owned OpenAI read-only source scrutiny found rounded-magnitude strict-clamp defect; corrected certified-sign clamp confirmed. Initial source retained. No cross-family claim.",
+  "raw": "angular_boundary_raw.zip",
+  "initial_source": "angular_boundary_initial_source.zip",
+  "runtime": "portable --development exact selectors; JIT off;180s/953MiB; see full records"
+}

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.51. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.52. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -63,14 +63,28 @@ but N at both time endpoints changes sign with angle: its stationary branch ente
 and leaves the captured increment. This is not a material integration pass or a
 speed-up claim. Original full-time helpers and every failed run remain preserved.
 
-NEXT derive explicit angular boundary partitioning for variable stationary-branch
-presence. Distinguish a true endpoint crossing from an overly wide angular bound.
-Cover all regular bands and uncertainty bands; retain non-success until endpoint-
-contact force/tangent/work contributions are bounded or integrated. The existing
-open-endpoint work enclosure cannot simply be applied to a closed captured endpoint.
-Use the existing parameterized local tests and saved path; no fullpatch/owner retry
-until this geometry and contribution question is resolved. No cap/tolerance growth,
-unaccounted band removal, silent history reset or renewed consumed authority.
+Explicit angular endpoint partitioning now retains all three regular bands and
+both uncertain bands. Direct sine/cosine coefficients and analytic extrema remove
+the loose endpoint-only angular allowance without resolving a true zero by fiat.
+An explicit geometry-only option retains at-most-one potential time branch and
+bounds its clamped extremum when the root enters/leaves the increment. Analytic,
+near-tangent perturbation, saved-path representation and clamp-noise controls pass.
+All five saved local bands have bounded extrema under77of128support intervals.
+Review caught and corrected wrong strict clamp selection under rounding noise;
+use certified N/N' signs rather than comparing rounded magnitudes. No material-
+integral wiring/admission or repeat owner run follows from these geometry checks.
+
+NEXT integrate the complete variable-branch geometry through the existing local
+helper, retaining captured-endpoint force and tangent through actual point replay.
+Account for unresolved strip history using a derived bound only when its complete
+history penetration/ownership conditions hold. The old open-endpoint work enclosure
+cannot simply assert zero force/tangent/storage for a closed captured endpoint.
+Verify an analytical boundary-ending mixed patch first, then the unchanged saved
+LOCAL window if its contribution checks pass. Use the existing parameterized runner;
+no fullpatch/owner retry before complete local contribution accounting. No cap or
+tolerance growth, omitted angular bands, silent history reset or renewed authority.
+
+[Angular-boundary evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/angular_boundary_results.md).
 
 [Temporal/error-bound evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/temporal_front_results.md).
 
