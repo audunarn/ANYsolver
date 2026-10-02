@@ -1,56 +1,58 @@
-# General contact restart — active 2 October 2026
+# General contact restart
 
-## Authority / identity
+## Authority and location
 
-Full C0–C9 active/incomplete. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Source checkpoint ec5bc0ad;
-plan2026-10-02.14, goal2026-09-30.4, policy2026-09-24.2.
-No original-worktree/other-chat inspection or communication, publication, merge,
-release, historical-default or shared ABC guard changes. Tiered workflow applies.
-Local/Mistral earlier unavailable; do not repeat those probes solely for availability.
-Current dirty ownership: standalone partial example/test, installed evidence/archive,
-plan/guide/ledger and this note/history. No numerical job live.
+Continue full C0–C9 under goal2026-09-30.4, plan2026-10-02.16 and policy2026-09-24.2.
+Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
+branch codex/contact-main-reconcile-20261001, prior checkpoint12f89a93.
+No original-worktree or other-chat inspection/communication. No publication,
+main merge, release, historical-default/shared ABC guard changes. Tiered workflow;
+local/Mistral prior failures remain, do not reprobe solely for availability.
 
-## Current usable development candidate
+## Latest completed development slice
 
-Partial S3 material replay is committed ec5bc0ad. Immutable pose/pressure history,
-actual event pressure, bounded exact material cache, certified-separated candidate
-work and canonical commit/restore. Thin mixed-stick/slip integration bias uses a
-single bounded canonical-partition retry; original gates remain. Cancellation
-restores unvalidated retry policy. No scientific acceptance/application admission.
-Source five-phase nonguided workflow513.90s and authentic split529.94s passed;
-exact final checkpoint/history equality. Consumed authorities remain consumed.
+Native round material-point/S3 actual-gap Coulomb kernel and station section-frame/
+spatial work derivatives:11focused checks. Full42native/S3 work,15local AD seeds,
+reference area explicit, no condensation or invented classical finite R(s).
+Persistent path certificate includes full radial arm, rotating native geometry,
+affine S3 deformation, strict facet ownership, finite caps and exact path binding.
+Certified contribution evaluates from one physical committed origin. Affine first
+contact/release proposals and release/recontact history checks now exist.
+15path/contributor checks pass together3.66s; earlier runs retained. Last source
+change does not alter the11previous point-equation checks. No installed/native-owner
+or C5 acceptance claim. No live process or worker.
 
-Fixed-path dissipation:4/12/32events=.0456256362/.0459234282/.0460083354J;
-spatial level0/1 change~0.00007%. Split segments give0.01614% difference versus
-32events after exact path/geometry/pressure/settings/quadrature identity binding.
-Independent ramp work error falls11.72/3.08/.78% at8/32/128events. Release storage
-changes7.9% at4vs32, so no all-work-quantity or coupled-convergence claim. Original
-unbound comparison and reviewer finding retained. Historical timeouts preserved.
+Independent OpenAI read found and closed the barycentric-strip mismatch, missing
+moving-target coverage and path binding. Its rounded-zero concern is reproduced:
+ordinary gap zero may hide a positive compensated gap. Exact rational predicates
+on represented affine path data now decide signs/roots; true-touch tests use the
+native split_sum. Event poses report checked floating root residual/bound, which
+is not an engineering penetration allowance or equilibrium acceptance.
+Evidence: docs/d1_review_support/contact_c5_native_surface_point_20261002/
+(results.md, review.md, path_review.md, affine_event_results.json and retained logs).
 
-Fresh installed artifact C:/ANYworkspaceWork/contact-friction-partial-replay-package-20261002:
-wheel db4bc12dfb5194cc1ebf4b4f49787217d73a87efff0ce3ba17dc11905e330735.
-459source/wheel/site modules equal;12focused physics/state checks14.87s
-(process16.713s/193466368B), example press/checkpoint1check12.33s
-(process20.480s/191516672B). Actual JIT off, BLAS/Numba1;229/241onsite imports.
-Standalone examples/general_contact_s3_partial_friction.py supplies full five-phase
-path and checkpoint CLI; installed smoke covers only first press. Example/test
-hashes separately bound (added after source commit). Do not alter old artifacts.
+## Next action
 
-## Next action / live ownership
+Integrate through the existing retained native owner and shared transaction,
+without creating a second solver/history stack or replacing its line-contact
+profile. Existing native_retained_s3_static.py owns full structural coordinates,
+constraints, material transactions and checkpoint replay. New evaluate_path is
+safe only for certified persistence; geometric crossing proposals must be
+subdivided and equilibrated before physical commit. General rotating crossings
+remain unresolved; exact-touch affine paths do not stall. Distributed swept
+surface measure, retained-owner coupling/restart and real coupled convergence
+remain required. No prescribed-point demonstration substitutes for that handoff.
+Classical B2/B3 finite material R(s) remains a separate required contract.
 
-Own read-only worker /root/beam_surface_contract is inspecting authoritative beam
-surface kinematics. Preliminary: classical B2 Rc chord/fixed-orientation does not
-carry nodal spin; additive residual rotation is not a material R(s). B3 nonlinear
-override bypasses corot dispatch. Do not invent a section rotation adapter. Worker
-scope extended to native retained B3-GE R(s)/variations to identify a scientifically
-sound swept-round friction slice; read its final result before deciding. No source
-beam edits authorized to worker. Current package slice can be checkpointed first.
+## Preserved evidence and resources
 
-Evidence: docs/d1_review_support/contact_c5_s3_partial_replay_20261002/,
-installed_results.md, installed_raw_index.json/installed_raw.zip, history_cache_development.md.
-Raw archive readback verified. Full source/restart authorities and immutable
-c43881a7artifact history in [Part59](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART59.md)
-and its links. Routine180s/953MiB; named integrated ceiling900s/4GB, preserve stricter
-limits. Original120active-hour clock=goal seconds+3120, never reset. Last238106+3120
-=67.007h, advancing; reassess at72h, stop/checkpoint/user decision at120h.
+Installed shell replay/example checkpoint12f89a93 remains usable; immutable artifact
+C:/ANYworkspaceWork/contact-friction-partial-replay-package-20261002, wheel
+ db4bc12dfb5194cc1ebf4b4f49787217d73a87efff0ce3ba17dc11905e330735.
+459module matches;12physics/state and1first-press example checks. Full source5phase
+and split restart authorities consumed; exact checkpoint equality retained.
+See [Part61](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART61.md)
+and Part60 links for prior failures, work/refinement limits and installed evidence.
+Routine180s/953MiB; named integrated ceiling900s/4GB, stricter frozen limits prevail.
+Original120active-hour budget = goal seconds+3120, never reset. Latest241684+3120
+=68.001h, advancing. Reassess at72h; at120h checkpoint and request user decision.

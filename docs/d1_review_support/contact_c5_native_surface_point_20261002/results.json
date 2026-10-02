@@ -1,0 +1,64 @@
+{
+  "scope": "local work/derivatives only; not native analysis admission",
+  "source_sha256": {
+    "src/anysolver/general_contact/native_retained_station.py": "8f19f4de6cde46b32df212671d46417aaacf48b183c46c74de0a75990fc37958",
+    "src/anysolver/general_contact/native_surface_s3_friction.py": "a307723a8f328770575481ebfdddf71e2968a93128e28b51819835f16f6e1fee",
+    "tests/test_general_contact_native_surface_variations.py": "459eb245f8ed7c37a546715843b1aa3920af955169e2c7f46e7de946b9dad67e",
+    "tests/test_general_contact_native_surface_s3_friction.py": "13bec611722739bd2098f81c02750a5ba3e0c19ea4b51976e8aa9873793d2a01"
+  },
+  "runs": [
+    {
+      "root": "C:\\ANYworkspaceWork\\contact-native-surface-variations-20261002",
+      "resource": {
+        "peak_sampled_bytes": 171925504,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.251888200000394,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "log_sha256": "6ee55f6c7a8e5c1a62cdd6f840dca946a3fcd6742837dee8047dd8eaaa572f9a"
+    },
+    {
+      "root": "C:\\ANYworkspaceWork\\contact-native-surface-s3-point-20261002",
+      "resource": {
+        "peak_sampled_bytes": 174157824,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.222459500015248,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "log_sha256": "7ec18cb920c29d226e7082ada6784e9b53f0ac2189c7a151bcfd9bcf97db756b"
+    },
+    {
+      "root": "C:\\ANYworkspaceWork\\contact-native-surface-history-tangent-20261002",
+      "resource": {
+        "peak_sampled_bytes": 172752896,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.420116399996914,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "log_sha256": "da088a87ff9105fc8894f332dac55d497399c5681990b7f9876e3431e99adf47"
+    },
+    {
+      "root": "C:\\ANYworkspaceWork\\contact-native-surface-contract-20261002",
+      "resource": {
+        "peak_sampled_bytes": 173617152,
+        "limit_mib": 953,
+        "elapsed_seconds": 4.976687500020489,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "log_sha256": "588525367551fd16a4248fec83ffd266e8c12a2c8c550cdc797095248493cadb"
+    }
+  ],
+  "unique_checks": 11
+}

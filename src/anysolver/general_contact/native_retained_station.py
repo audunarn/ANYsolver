@@ -50,6 +50,41 @@ class NativeRetainedRoundStationState:
         return self.generalized_surface_jacobian().T @ force
 
 
+@dataclass(frozen=True)
+class NativeRetainedRoundSurfaceVariations:
+    """Local spatial rotation-chart derivatives of one material section point.
+
+    Second derivatives use Exp(delta_theta) Uc at delta_theta=0. Arrays stay
+    local to the three physical cell rotations. The section frame is not a
+    swept-surface normal frame: shear can make the radial direction non-normal.
+    """
+
+    station: NativeRetainedRoundStationState
+    angular_columns: tuple[int, int, int]
+    surface_arm: np.ndarray
+    section_frame: np.ndarray
+    section_frame_gradient: np.ndarray
+    section_frame_hessian: np.ndarray
+    surface_rotation_hessian: np.ndarray
+
+    def spatial_surface_force_tangent(self, physical_force, position_tangent=None):
+        """Derivative of J(x)^T f(x) under a new spatial multiplicative update.
+
+        position_tangent is df/dx with any other bodies held fixed. Other-body
+        and frame/history variations belong to the coupled law, not this map.
+        A chart energy Hessian alone is not this generally nonsymmetric tangent.
+        """
+        force=_array(physical_force,(3,),"native surface physical force")
+        derivative=(np.zeros((3,3)) if position_tangent is None else
+                    _array(position_tangent,(3,3),"native surface force derivative"))
+        J=self.station.generalized_surface_jacobian()
+        tangent=J.T@derivative@J
+        angular=np.asarray(self.angular_columns)
+        # d(v cross f)/d(theta) at fixed spatial force is [f]x [v]x.
+        tangent[np.ix_(angular,angular)]+=_cross_matrix(force)@_cross_matrix(self.surface_arm)
+        return _readonly(tangent)
+
+
 class NativeRetainedRoundStation:
     """One owned interior material station and declared circular section point."""
 
@@ -123,3 +158,22 @@ class NativeRetainedRoundStation:
             _readonly(centerline), _readonly(surface),
             _readonly(centerline_jacobian), _readonly(surface_jacobian),
         )
+
+    def surface_variations(self, positions, position_low, cell_rotations):
+        """Element-owned R=Uc R0 and exact local Jet2 position/frame variations."""
+        from anysolver._ge_beam3_mixed_ad import Jet2, so3_exp, matmul, constant_matrix
+        state=self.evaluate(positions,position_low,cell_rotations)
+        rotation=np.asarray(cell_rotations)[self.cell]
+        reference_frame=self.reference.frame(self.xi)
+        radial=self.radius*(cos(self.angle)*reference_frame[:,1]+sin(self.angle)*reference_frame[:,2])
+        arm=rotation@(self.reference.half_cell_lift(self.cell,self.t)+radial)
+        frame=rotation@reference_frame
+        delta=[Jet2.variable(0.,i,3) for i in range(3)]
+        increment=so3_exp(delta)
+        made_frame=matmul(increment,constant_matrix(frame,3))
+        made_arm=[sum(increment[i][j]*arm[j] for j in range(3)) for i in range(3)]
+        return NativeRetainedRoundSurfaceVariations(state,
+            tuple(range(18+3*self.cell,21+3*self.cell)),_readonly(arm),_readonly(frame),
+            _readonly(np.array([[value.gradient for value in row] for row in made_frame])),
+            _readonly(np.array([[value.hessian for value in row] for row in made_frame])),
+            _readonly(np.array([value.hessian for value in made_arm])))

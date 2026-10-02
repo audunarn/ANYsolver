@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.14. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.16. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -256,15 +256,29 @@ engineering acceptance. [Evidence](docs/d1_review_support/contact_c6_free_sphere
 One additional history/work/V6 split check passes on the same unchanged wheel;
 172distinct checks are covered, with unaffected results reused by impact analysis.
 
-**Next bounded decision:** derive the swept-round beam material-surface work map
-from the actual B2/B3 structural kinematics before coupling the existing Coulomb
-law. A bounded read review identifies the authoritative section rotation and
-smallest integrated slice; do not substitute centreline velocities or invent a
-rotation interpolation. Retain the installed partial-overlap shell candidate and
-its unresolved scientific scope; fixed-path dissipation checks are complete for
-their named fixtures, not broad C5 qualification.
-Use the existing shared static driver; do not introduce a second solver/history
-stack or substitute more prescribed collinear demonstrations. This development
+**Next bounded decision:** integrate the certified native/S3 material contribution
+through the existing retained owner's transaction, including equilibrium at contact
+events. Persistent rotating paths and affine first-touch/release proposals now
+have15focused checks. Exact predicates on represented affine path data distinguish
+touch from a rounded-zero gap, preserving compensated native coordinates. General
+rotating crossings still require bounded event subdivision; a geometric event
+proposal never establishes structural equilibrium. The local actual-gap point
+kernel and section-frame/spatial work derivatives now have11focused development
+checks, including retained-history stick/slip tangents and spin torque. Independent
+source scrutiny found no smooth-branch algebraic defect; endpoint checks remain
+insufficient alone for hidden opening/facet excursions. The new evaluate_path entry
+certifies geometry before returning disposable history from the committed origin;
+it neither commits Newton trials nor bypasses unresolved crossings. See
+[native point evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/results.md). Read scrutiny found
+classical B2/B3 do not yet define the needed finite material R(s); introducing one
+is a separate required structural contract. Native Uc R0(xi) and internal work maps
+already exist, so use that shorter sound route first. See
+[native slice decision](docs/d1_review_support/NATIVE_SWEPT_FRICTION_NEXT_SLICE_20261002.md).
+Keep exact surface gap, declared integration measure and rotation/frame derivatives;
+do not substitute centreline forces or radial normals under shear. The installed
+partial-overlap shell candidate and its unresolved scientific scope remain intact.
+Use the existing retained native owner and shared transaction machinery; do not
+introduce another solver/history stack or substitute prescribed collinear demonstrations. This development
 route changes no accepted normal formulation or numerical criterion. Beam friction
 still requires a swept material surface, followed by native retained-coordinate
 work; warped/finite-rotation, material, continuation and impact rows remain open.
