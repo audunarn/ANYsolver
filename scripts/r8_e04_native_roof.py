@@ -18,7 +18,11 @@ def main():
     parser.add_argument('--seed-force',type=float,default=10.)
     parser.add_argument('--radius',type=float,default=1e-5)
     parser.add_argument('--steps',type=int,default=2)
+    parser.add_argument('--restart-after',type=int,
+        help='Restore after this arc prefix and compare continued owners exactly.')
     args=parser.parse_args()
+    if args.restart_after is not None and not 0<args.restart_after<args.steps:
+        parser.error('--restart-after must be strictly between zero and --steps')
     args.output.mkdir(parents=True,exist_ok=False)
     from anysolver import stiffened_shell as ss
     from docs.reference_cases.stiffened_shell_e04_roof import build,definition
@@ -32,14 +36,17 @@ def main():
     record=dict(status='IN_PROGRESS',size=args.size,shells=len(c.quads),beams=len(c.beam_cells),
         density_kg_m3=args.density,density_use='static bookkeeping; spectra excluded',
         seed_force_n=args.seed_force,radius=args.radius,requested_arc_steps=args.steps,
+        restart_after=args.restart_after,
         connection='six-channel nodal full-pose bonds',samples=[],timings={},
         imported_solver=str(Path(anysolver.__file__).resolve()),threadpools=pools)
     def save():
         (args.output/'result.json').write_text(json.dumps(record,indent=2),encoding='utf-8')
     def sample(result,force,phase):
+        import hashlib
         value=dict(phase=phase,downward_force_n=float(force),global_z_force_n=-float(force),
             central_translation_m=result.shell_displacement.reshape(-1,6)[row,:3].tolist(),
-            equilibrium=float(result.free_equilibrium_ratio),constraint=float(result.constraint_max))
+            equilibrium=float(result.free_equilibrium_ratio),constraint=float(result.constraint_max),
+            checkpoint_sha256=hashlib.sha256(owner.checkpoint()).hexdigest())
         if phase=='arc':
             from dataclasses import asdict
             value['accepted_radius']=result.history[-1][0]
@@ -67,7 +74,43 @@ def main():
         def accepted(result):
             sample(result,args.seed_force*(1+result.amplitude),'arc')
             (args.output/'accepted.bin').write_bytes(owner.checkpoint())
-        t=time.monotonic();arc=owner.continue_arc_length(action,control,steps=args.steps,on_accepted=accepted)
+        t=time.monotonic();arc=owner.continue_arc_length(action,control,
+            steps=args.restart_after or args.steps,on_accepted=accepted)
+        if args.restart_after is not None:
+            import hashlib
+            prefix=owner.checkpoint();(args.output/'restart-prefix.bin').write_bytes(prefix)
+            continued=ss.create_analysis(definition=d)
+            try:
+                start=time.monotonic();at_prefix=continued.restore(prefix)
+                assert continued.checkpoint()==prefix
+                np.testing.assert_array_equal(at_prefix.cell_resultants,arc.cell_resultants)
+                record['timings']['prefix_restore']=time.monotonic()-start
+                remaining=args.steps-args.restart_after
+                start=time.monotonic();arc=owner.continue_arc_length(action,control,
+                    steps=remaining,on_accepted=accepted)
+                record['timings']['live_continuation']=time.monotonic()-start
+                restarted_samples=[]
+                def restarted_accepted(result):
+                    restarted_samples.append(dict(amplitude=result.amplitude,
+                        central_translation_m=result.shell_displacement.reshape(-1,6)[row,:3].tolist(),
+                        checkpoint_sha256=hashlib.sha256(continued.checkpoint()).hexdigest()))
+                start=time.monotonic();repeated=continued.continue_arc_length(action,control,
+                    steps=remaining,on_accepted=restarted_accepted)
+                record['timings']['restored_continuation']=time.monotonic()-start
+                assert continued.checkpoint()==owner.checkpoint()
+                np.testing.assert_array_equal(repeated.cell_resultants,arc.cell_resultants)
+                np.testing.assert_array_equal(repeated.shell_displacement,arc.shell_displacement)
+                assert repeated.history==arc.history
+                live_samples=record['samples'][-remaining:]
+                assert [s['checkpoint_sha256'] for s in restarted_samples]==[
+                    s['checkpoint_sha256'] for s in live_samples]
+                record['turning_point_restart']=dict(prefix_steps=args.restart_after,
+                    prefix_sha256=hashlib.sha256(prefix).hexdigest(),continued_steps=remaining,
+                    final_bytes_equal=True,history_equal=True,each_checkpoint_equal=True,
+                    samples=restarted_samples)
+                (args.output/'restarted-final.bin').write_bytes(continued.checkpoint())
+                save()
+            finally:continued.close()
         record['timings']['arc']=time.monotonic()-t
         saved=owner.checkpoint()
         t=time.monotonic();restored=ss.create_analysis(definition=d)

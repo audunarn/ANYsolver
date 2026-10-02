@@ -1493,3 +1493,13 @@ Public adapter and installed4x4/8x8 seed/arc/restore screens pass. One coarse
 This supplies a provisional capacity bracket,not external/mesh/stability acceptance.
 Finite external connector mapping remains unresolved. No aggregate gate closes.
 [Evidence](development/r8-e04-roof-20261002/results.md).
+
+
+**2 October actual E04 turning-point restart: IMPLEMENTED_NOT_QUALIFIED.**
+Installed 4x4 roof restored at the sampled coarse peak and continued three
+descending steps. Every continued checkpoint and final history/results match
+exactly. Product wheel unchanged; no refinement/external/G4D acceptance follows.
+Prescribed external rigid-marker kinematics pass their bounded comparison;
+free-carrier control fails its increment limit and remains failed evidence.
+No qualified finite beam/shell port or external capacity comparison yet.
+[Evidence and limitations](development/r8-e04-restart-and-port-20261002/results.md).
