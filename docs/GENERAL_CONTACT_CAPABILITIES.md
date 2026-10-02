@@ -889,3 +889,32 @@ Free rigid inertia, rotating/shell tools, radial/pair impact, friction, nonlinea
 material and broad impact acceptance remain open. Application admission staysfalse.
 [Guide](GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md),
 [results/review/raw](d1_review_support/contact_c6_translating_planes_20261002/results.md).
+
+## Coupled free isotropic sphere — installed-tested development
+
+Explicit `allow_free_sphere_dev` and classical beam opt-ins admit one named sphere
+against one uncapped elastic B2/B3 tube. Supplied mass/isotropic centre inertia and
+initial velocities join physical centre coordinates to the same constrained
+Newmark system. Both-body work and all tangent cross blocks follow the distributed
+radial potential. Central frictionless traction permits exact torque-free spin;
+physical centre motion, orientation, energy and momenta are separate result fields.
+V6 binds inertia/initial state/ownership and carries coupled q/v/a. Rejected trials,
+cancellation and exceptions do not publish partial body state.
+
+Complete relative Hermite bounds retain both endpoint velocities, exact squared
+Bernstein correlation, control-box bounds, exact square-root brackets and finite
+subdivision budget. Recorded exhausted enclosures remain failed under their
+original candidates; bound-gain split choice resolves the tested cases at unchanged
+1e-10m/512 settings. This is represented-path enclosure, not a continuum guarantee.
+
+One isolated installed171-pass selection includes nine coupled physical/state
+checks,60geometry checks, the prior100checks and two new free-sphere CLI variants.
+454module matches,214onsite imports, JIToff/threads1,29.241s/320790528B sampled peak
+meet180s/999292928B. Source-only independent scrutiny found no consequential
+blocker; two Mistral attempts without a final assessment remain incomplete.
+C6 engineering acceptance/release, shell/free-body work, anisotropic rotation,
+friction, nonlinear materials, caps and beam-pair impact remain open. App admission
+staysfalse. [Usage](GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md),
+[results/failures/review](d1_review_support/contact_c6_free_sphere_20261002/results.md).
+An additional installed nodal-history/work/active-V6 restart check passes on the
+unchanged wheel (3.655s/174055424B), covering172distinct checks by impact analysis.

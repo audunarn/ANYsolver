@@ -53,8 +53,11 @@ from .core import (
     validate_general_contact,
 )
 from .beam_plane import _BeamPlaneResults
+from .beam_radial import _RadialResults
 from .multiple_beam_rigid import MultipleBeamRigidResults
 from .rigid_translation import ContactRigidTranslationHistory, _PlaneTranslations
+from .free_rigid import (ContactFreeRigidBody, FreeRigidBodyState, _FreeSphereManager,
+                        FREE_SPHERE_PROFILE, FREE_SPHERE_HISTORY_PROFILE)
 from .descriptor_rates import directional_descriptor_rate
 from .algebraic_path import affine_descriptor_path
 from .event_subdivision import EventNeedsCutback, localize_branch_event
@@ -76,6 +79,7 @@ _MULTIPLE_BEAM_HISTORY_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_MULTIPLE_FIXED_PLAN
 _BEAM_TOOL_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_PRESCRIBED_TRANSLATION_NEWMARK_DEV_V1"
 _BEAM_TOOL_HISTORY_PROFILE = "CLASSICAL_B2_B3_ROUND_TUBE_PRESCRIBED_TRANSLATION_NEWMARK_HISTORY_DEV_V1"
 _TOOL_RESTART_SCHEMA = "ANYSOLVER_TRANSLATING_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V5"
+_FREE_RESTART_SCHEMA = "ANYSOLVER_FREE_SPHERE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V6"
 _RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V1"
 _HISTORY_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V2"
 _ALGEBRAIC_PATH_RESTART_SCHEMA = "ANYSOLVER_S3_ALGEBRAIC_PATH_TRANSIENT_CONTACT_DEV_CHECKPOINT_V3"
@@ -161,8 +165,13 @@ class ContactTransientSolverControls:
     tool_work_absolute_tolerance_j: float = 1e-10
     tool_work_relative_tolerance: float = 1e-8
     maximum_tool_work_subdivisions: int = 64
+    allow_free_sphere_dev: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.allow_free_sphere_dev) is not bool:
+            raise ValueError("allow_free_sphere_dev must be boolean")
+        if self.allow_free_sphere_dev and (not self.allow_classical_beam_dev or self.allow_multiple_beam_planes_dev):
+            raise ValueError("free sphere requires one classical beam interaction")
         for name in ("tool_work_absolute_tolerance_j", "tool_work_relative_tolerance"):
             value = getattr(self, name)
             if isinstance(value, (bool, np.bool_)) or not np.isfinite(value) or value <= 0.:
@@ -293,7 +302,7 @@ class TransientContactResults:
     displacements: np.ndarray
     velocities: np.ndarray
     accelerations: np.ndarray
-    contact: tuple[ContactResults | _BeamPlaneResults | MultipleBeamRigidResults, ...]
+    contact: tuple[ContactResults | _BeamPlaneResults | MultipleBeamRigidResults | _RadialResults, ...]
     swept_minimum_gaps: np.ndarray
     equilibrium_residuals: np.ndarray
     cutbacks: int
@@ -305,6 +314,7 @@ class TransientContactResults:
     event_endpoint_evaluations: int = 0
     prescribed_tool_work_j: tuple[dict[str, float], ...] = ()
     prescribed_tool_work_error_j: tuple[dict[str, float], ...] = ()
+    free_rigid_bodies: tuple[dict[str, FreeRigidBodyState], ...] = ()
 
 
 def _restart_analysis_contract(transient, controls, manager, profile,
@@ -352,6 +362,8 @@ def _restart_analysis_contract(transient, controls, manager, profile,
         )
     if controls.allow_multiple_beam_planes_dev:
         contract["controls"]["allow_multiple_beam_planes_dev"] = True
+    if controls.allow_free_sphere_dev:
+        contract["controls"]["allow_free_sphere_dev"] = True
     if tool_histories:
         contract["rigid_translation_histories"] = [
             {"body": h.body_name, "points": [list(point) for point in h.points]}
@@ -373,7 +385,8 @@ def _restart_analysis_contract(transient, controls, manager, profile,
 def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             current_time, q, velocity, acceleration,
                             accepted_steps, external_work_j=None, path_terminal_active=None,
-                            event_boundary_support=None, tool_work_j=None, tool_work_error_j=None) -> dict:
+                            event_boundary_support=None, tool_work_j=None, tool_work_error_j=None,
+                            free_body_name=None) -> dict:
     payload = {
         "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
                    else _RESTART_SCHEMA),
@@ -402,13 +415,16 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
         payload["schema"], payload["version"] = _TOOL_RESTART_SCHEMA, 5
         payload["state"]["tool_work_j"] = dict(tool_work_j)
         payload["state"]["tool_work_error_j"] = dict(tool_work_error_j)
+    if free_body_name is not None:
+        payload["schema"], payload["version"] = _FREE_RESTART_SCHEMA, 6
+        payload["state"]["free_rigid_body_names"] = [free_body_name]
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
 
 def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                              reduced_size, t_end, *, load_history, path_pressure_dofs=0,
-                             event_subdivision=False, tool_body_names=()):
+                             event_subdivision=False, tool_body_names=(), free_body_name=None):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -428,6 +444,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         expected_version, expected_schema = 4, _EVENT_RESTART_SCHEMA
     if tool_body_names:
         expected_version, expected_schema = 5, _TOOL_RESTART_SCHEMA
+    if free_body_name is not None:
+        expected_version, expected_schema = 6, _FREE_RESTART_SCHEMA
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -446,8 +464,12 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         expected_state_keys.add("event_boundary_support")
     if tool_body_names:
         expected_state_keys.update(("tool_work_j", "tool_work_error_j"))
+    if free_body_name is not None:
+        expected_state_keys.add("free_rigid_body_names")
     if not isinstance(state, Mapping) or set(state) != expected_state_keys:
         raise ValueError("transient contact checkpoint state is malformed")
+    if free_body_name is not None and state["free_rigid_body_names"] != [free_body_name]:
+        raise ValueError("transient contact checkpoint free body identity is invalid")
     time = float(state["time"])
     steps = state["accepted_steps"]
     if (not np.isfinite(time) or time <= 0.0 or time >= t_end
@@ -726,10 +748,12 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
             or (not multiple and (len(definition.surfaces) != 1
                 or len(definition.rigid_bodies) != 1 or len(definition.interactions) != 1))
             or (multiple and len(definition.interactions) < 2)
-            or any(body.kind != "plane" or body.path_translation is not None
+            or any(body.kind != ("sphere" if controls.allow_free_sphere_dev else "plane") or body.path_translation is not None
                    for body in definition.rigid_bodies)
             or any(pair.normal_law != "penalty" for pair in definition.interactions)):
         raise ValueError(
+            "free sphere transient development requires one beam surface and one unprescribed penalty sphere"
+            if controls.allow_free_sphere_dev else
             "multiple beam transient development requires at least two interactions against fixed penalty planes"
             if multiple else "transient development profile requires one shell surface and one fixed penalty plane")
     surfaces = definition.surfaces
@@ -745,7 +769,8 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
                 or any(surface.beam_radius is None or surface.beam_end_caps != "none"
                        for surface in surfaces)):
             raise ValueError("classical beam impact requires exact elastic B2/B3 round tubes without end caps")
-        profile = _MULTIPLE_BEAM_PROFILE if multiple else _BEAM_PROFILE
+        profile = (FREE_SPHERE_PROFILE if controls.allow_free_sphere_dev
+                   else _MULTIPLE_BEAM_PROFILE if multiple else _BEAM_PROFILE)
     elif all(type(element) is QualifiedE4PLShellElement for element in elements):
         if controls.allow_s3_descriptor_dev:
             raise ValueError("S3 descriptor opt-in requires one qualified S3 V2D element")
@@ -808,12 +833,13 @@ def solve_transient_contact(
     base_load_case: LoadCase | None = None,
     nodal_load_history: ContactNodalLoadHistory | None = None,
     rigid_translation_histories: tuple[ContactRigidTranslationHistory, ...] = (),
+    free_rigid_bodies: tuple[ContactFreeRigidBody, ...] = (),
     solver_controls: ContactTransientSolverControls | None = None,
     restart_checkpoint: Mapping | None = None,
     emit_restart_checkpoint: bool = False,
     cancellation_token: CancellationToken | None = None,
 ) -> TransientContactResults:
-    """Solve bounded elastic Q4, S3 V2D or classical round-beam plane impact.
+    """Solve bounded elastic Q4/S3 plane or classical round-beam impact.
 
     Every Newton evaluation starts from the last committed material state.
     A rejected step leaves both the displacement and material state at the
@@ -829,6 +855,9 @@ def solve_transient_contact(
     Classical B2/B3 require a separate explicit opt-in, scalar elastic von Karman
     sections, positive physical mass and round centreline geometry without caps.
     Their full Hermite curve/time path is bounded before physical commit.
+    The free-sphere opt-in additionally requires explicit mass and isotropic
+    centre inertia. Three centre coordinates join the same coupled equations;
+    torque-free spin is exact and does not expand friction/rotation admission.
     Full endpoint agreement and corner minima are checked; reported transitions
     describe this discrete path, not exact continuum event times.
     Cancellation admits only the solver's exact unmodified token. It raises
@@ -850,6 +879,18 @@ def solve_transient_contact(
         raise ValueError("transient contact checkpoint needs one accepted time step")
     settings = ContactSolverSettings() if contact_settings is None else contact_settings
     profile = _admit(model, definition, settings, controls)
+    free_bodies = tuple(free_rigid_bodies)
+    if any(type(body) is not ContactFreeRigidBody for body in free_bodies):
+        raise TypeError("free_rigid_bodies requires ContactFreeRigidBody entries")
+    if bool(free_bodies) != controls.allow_free_sphere_dev:
+        raise ValueError("free body definitions require explicit free-sphere opt-in")
+    if free_bodies and (len(free_bodies) != 1
+            or free_bodies[0].body_name != definition.rigid_bodies[0].name
+            or rigid_translation_histories):
+        raise ValueError("free sphere requires one matching body and no prescribed translation")
+    free_body = free_bodies[0] if free_bodies else None
+    if free_body is not None and not np.all(np.isfinite(transient.t_end*np.asarray(free_body.initial_angular_velocity_rad_s))):
+        raise ValueError("free sphere angular travel is nonfinite")
     tool_histories = tuple(rigid_translation_histories)
     if any(type(h) is not ContactRigidTranslationHistory for h in tool_histories):
         raise TypeError("rigid_translation_histories requires ContactRigidTranslationHistory entries")
@@ -868,7 +909,7 @@ def solve_transient_contact(
     if nodal_load_history is not None:
         if type(nodal_load_history) is not ContactNodalLoadHistory:
             raise TypeError("nodal_load_history must be ContactNodalLoadHistory")
-        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE, _BEAM_PROFILE, _MULTIPLE_BEAM_PROFILE):
+        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE, _BEAM_PROFILE, _MULTIPLE_BEAM_PROFILE, FREE_SPHERE_PROFILE):
             raise ValueError("nodal load history requires one Q4 plane nodal LoadCase or opted-in S3 plane nodal LoadCase")
         if nodal_load_history.points[-1][0] < transient.t_end:
             raise ValueError("nodal load history must cover t_end")
@@ -887,8 +928,11 @@ def solve_transient_contact(
             profile = _BEAM_HISTORY_PROFILE
         elif profile == _MULTIPLE_BEAM_PROFILE:
             profile = _MULTIPLE_BEAM_HISTORY_PROFILE
-    if tool_histories:
-        profile = _BEAM_TOOL_HISTORY_PROFILE if nodal_load_history is not None else _BEAM_TOOL_PROFILE
+        elif profile == FREE_SPHERE_PROFILE:
+            profile = FREE_SPHERE_HISTORY_PROFILE
+    if tool_histories or free_body is not None:
+        if tool_histories:
+            profile = _BEAM_TOOL_HISTORY_PROFILE if nodal_load_history is not None else _BEAM_TOOL_PROFILE
         all_knots = sorted({p[0] for h in tool_histories for p in h.points}
                            | ({p[0] for p in nodal_load_history.points} if nodal_load_history is not None else set()))
         if any(b-a < max(controls.minimum_dt, 16*np.finfo(float).eps*max(1., abs(b)))
@@ -941,6 +985,14 @@ def solve_transient_contact(
     _, _, T, u0, independent_dofs, _ = build_constraint_transformation(
         K0, np.zeros(size, dtype=float), model,
     )
+    if free_body is not None:
+        M = sparse.block_diag((M, free_body.mass_kg*sparse.eye(3)), format='csr')
+        T = sparse.block_diag((T, sparse.eye(3)), format='csr')
+        u0 = np.r_[u0, np.zeros(3)]
+        independent_dofs = np.r_[independent_dofs, np.arange(size, size+3)]
+        initial_displacement = np.r_[initial_displacement, np.zeros(3)]
+        initial_velocity = np.r_[initial_velocity, free_body.initial_velocity_m_s]
+        external_load = np.r_[external_load, np.zeros(3)]
     external_reduced = np.asarray(T.T @ external_load).reshape(-1)
     if np.linalg.norm(u0, ord=np.inf) > 1.0e-13:
         raise ValueError("transient development profile requires zero prescribed displacements")
@@ -963,7 +1015,8 @@ def solve_transient_contact(
         raise ValueError("transient development profile admits at most 512 free coordinates")
     descriptor_basis = None
     if profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE,
-                   _MULTIPLE_BEAM_PROFILE,_MULTIPLE_BEAM_HISTORY_PROFILE,_BEAM_TOOL_PROFILE,_BEAM_TOOL_HISTORY_PROFILE):
+                   _MULTIPLE_BEAM_PROFILE,_MULTIPLE_BEAM_HISTORY_PROFILE,_BEAM_TOOL_PROFILE,_BEAM_TOOL_HISTORY_PROFILE,
+                   FREE_SPHERE_PROFILE,FREE_SPHERE_HISTORY_PROFILE):
         try:
             np.linalg.cholesky(Mred.toarray())
         except np.linalg.LinAlgError as exc:
@@ -1027,16 +1080,21 @@ def solve_transient_contact(
     # The manager's fresh-start guard checks the original configured pose.
     # The resumed pose is validated separately against its accepted gap budget.
     with contact_scope(model, definition, settings,
-                       initial_displacement=full_initial) as manager:
+                       initial_displacement=full_initial[:size]) as manager:
         if controls.allow_classical_beam_dev:
             from .beam_plane import _BeamPlaneManager
             from .multiple_beam_rigid import MultipleBeamRigidManager
-            expected_manager = (MultipleBeamRigidManager if controls.allow_multiple_beam_planes_dev
+            from .beam_radial import _BeamRadialManager
+            expected_manager = (_BeamRadialManager if free_body is not None
+                                else MultipleBeamRigidManager if controls.allow_multiple_beam_planes_dev
                                 else _BeamPlaneManager)
         else:
             expected_manager = _PlanarQ4PlaneManager
         if type(manager) is not expected_manager:
             raise ValueError("transient development profile selected an unsupported contact owner")
+        if free_body is not None:
+            manager = _FreeSphereManager(manager, free_body)
+            manager.profile = profile
         translations = _PlaneTranslations(manager, tool_histories) if tool_histories else None
         path_adapter = (_S3AffinePathAdapter.prepare(
             model, T, descriptor_basis, manager, committed_states,
@@ -1067,6 +1125,7 @@ def solve_transient_contact(
                     path_pressure_dofs=(manager.support.size if path_adapter is not None else 0),
                     event_subdivision=controls.s3_event_subdivision_dev,
                     tool_body_names=tuple(h.body_name for h in tool_histories),
+                    free_body_name=free_body.body_name if free_body is not None else None,
                 )
             current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = resumed[:7]
             event_boundary_support = resumed[7] if controls.s3_event_subdivision_dev else ()
@@ -1089,6 +1148,18 @@ def solve_transient_contact(
             if translations is not None:
                 translations.set_pose(time_s)
             full = np.asarray(T @ position).reshape(-1)
+            if free_body is not None:
+                # Structural work is evaluated on its own coordinates; contact
+                # then supplies complete structural/centre residual and blocks.
+                with suspend_contact():
+                    force, stiffness, trial = _assemble_nonlinear_system(
+                        model, full[:size], committed_states, 3, tangent=tangent,
+                        kinematics="von_karman")
+                contact_force, contact_tangent, _ = manager.evaluate(full, tangent=tangent)
+                force = np.r_[force, np.zeros(3)]+contact_force
+                stiffness = (sparse.block_diag((stiffness, sparse.csr_matrix((3, 3))), format='csr')
+                             +contact_tangent if tangent else None)
+                return full, np.asarray(T.T @ force).reshape(-1)-load_at(time_s), stiffness, trial
             force, stiffness, trial = _assemble_nonlinear_system(
                 model, full, committed_states, 3, tangent=tangent,
                 kinematics="von_karman",
@@ -1155,6 +1226,8 @@ def solve_transient_contact(
             if float(np.linalg.norm(balance)) > controls.equilibrium_tolerance*scale:
                 raise ValueError("transient contact checkpoint acceleration is inconsistent")
         check_cancel("transient contact initial acceptance")
+        initial_body_state = (manager.state(current_time, full0, np.asarray(T @ vred).reshape(-1),
+            np.asarray(T @ acceleration).reshape(-1), contact0) if free_body is not None else None)
         committed_states = commit_state_candidate(committed_states, trial0)
         times = [current_time]
         positions = [full0.copy()]
@@ -1168,6 +1241,7 @@ def solve_transient_contact(
         )
         external_work = [accumulated_work]
         tool_works, tool_errors = [tool_work.copy()], [tool_error.copy()]
+        body_states = [{free_body.body_name: initial_body_state}] if free_body is not None else []
         swept_gaps = [contact0.minimum_gap]
         residuals = [float(np.linalg.norm(Mred @ acceleration + force0))]
         iterations = []
@@ -1181,11 +1255,11 @@ def solve_transient_contact(
         pending_residual = 0.0
         last_step_was_end_truncated = False
         _alpha, beta, gamma = transient.integration_parameters()
-        while (current_time < transient.t_end if tool_histories else
+        while (current_time < transient.t_end if tool_histories or free_body is not None else
                current_time < transient.t_end - 1.0e-14 * max(1.0, transient.t_end)):
             remaining = transient.t_end - current_time
             step = min(transient.dt, remaining)
-            if nodal_load_history is not None and not tool_histories:
+            if nodal_load_history is not None and not tool_histories and free_body is None:
                 knot_index = bisect_right(
                     nodal_load_history.points, (current_time, float("inf")),
                 )
@@ -1208,7 +1282,7 @@ def solve_transient_contact(
                 step = (knot_step if next_knot <= transient.t_end
                         and abs(step-knot_step) <= knot_roundoff
                         else min(step,knot_step))
-            if tool_histories:
+            if tool_histories or free_body is not None:
                 index = bisect_right(all_knots, current_time)
                 if index < len(all_knots) and all_knots[index] <= transient.t_end:
                     next_knot = all_knots[index]
@@ -1266,7 +1340,7 @@ def solve_transient_contact(
                     full, internal, tangent, trial = evaluate(
                         candidate, current_time+step, tangent=True,
                     )
-                    candidate_acceleration = (event_acceleration.copy() if controls.s3_event_subdivision_dev or tool_histories
+                    candidate_acceleration = (event_acceleration.copy() if controls.s3_event_subdivision_dev or tool_histories or free_body is not None
                                               else (candidate - predictor) / (beta * step * step))
                     residual = Mred @ candidate_acceleration + internal
                     scale = max(1.0, float(np.linalg.norm(Mred @ candidate_acceleration)),
@@ -1291,11 +1365,23 @@ def solve_transient_contact(
                         full_velocity = np.asarray(T @ candidate_velocity).reshape(-1)
                         if path_adapter is None:
                             if controls.allow_classical_beam_dev:
-                                swept_gap, beam_path_admissible = _beam_complete_path_gaps(
-                                    manager,previous_full,full,previous_velocity,full_velocity,step,
-                                    controls, lambda: check_cancel("transient beam complete-path bounds"),
-                                    translations, current_time,
-                                )
+                                if free_body is not None:
+                                    from .sphere_temporal_bounds import beam_sphere_hermite_gap_bounds
+                                    bounds = beam_sphere_hermite_gap_bounds(manager.child,
+                                        previous_full[:size], full[:size], previous_velocity[:size], full_velocity[:size], step,
+                                        sphere_start_point=manager.child.reference_point+previous_full[-3:],
+                                        sphere_end_point=manager.child.reference_point+full[-3:],
+                                        sphere_start_velocity=previous_velocity[-3:], sphere_end_velocity=full_velocity[-3:],
+                                        tolerance_m=controls.beam_swept_gap_tolerance_m,
+                                        maximum_subdivisions=controls.maximum_beam_swept_subdivisions,
+                                        check_cancel=lambda: check_cancel("free sphere complete-path bounds"))
+                                    swept_gap, beam_path_admissible = bounds.lower_gap, bounds.lower_gap >= -manager.gap_tolerance
+                                else:
+                                    swept_gap, beam_path_admissible = _beam_complete_path_gaps(
+                                        manager,previous_full,full,previous_velocity,full_velocity,step,
+                                        controls, lambda: check_cancel("transient beam complete-path bounds"),
+                                        translations, current_time,
+                                    )
                             else:
                                 swept_gap = _minimum_hermite_gap(
                                     manager, previous_full, full,
@@ -1403,7 +1489,7 @@ def solve_transient_contact(
                     if not np.all(np.isfinite(correction)):
                         break
                     candidate += correction
-                    if controls.s3_event_subdivision_dev or tool_histories:
+                    if controls.s3_event_subdivision_dev or tool_histories or free_body is not None:
                         event_acceleration += correction / (beta * step * step)
                     discard_active_state_candidate(committed_states)
                 if requested_event_step is not None:
@@ -1437,6 +1523,9 @@ def solve_transient_contact(
                                 load_at(current_time), load_at(current_time+step),
                             )
                     check_cancel("transient contact step acceptance")
+                    candidate_body_state = (manager.state(current_time+step, full, full_velocity,
+                        np.asarray(T @ candidate_acceleration).reshape(-1), contact_result)
+                        if free_body is not None else None)
                     if translations is not None:
                         added_work, added_error = translations.work(
                             previous_full, full, previous_velocity, full_velocity,
@@ -1488,6 +1577,8 @@ def solve_transient_contact(
                         external_work.append(accumulated_work)
                         tool_works.append(tool_work.copy())
                         tool_errors.append(tool_error.copy())
+                        if free_body is not None:
+                            body_states.append({free_body.body_name: candidate_body_state})
                         swept_gaps.append(pending_swept_gap)
                         residuals.append(pending_residual)
                         pending_swept_gap = float("inf")
@@ -1520,14 +1611,16 @@ def solve_transient_contact(
             event_boundary_support if controls.s3_event_subdivision_dev else None,
             tool_work if translations is not None else None,
             tool_error if translations is not None else None,
+            free_body.body_name if free_body is not None else None,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(
-        profile, np.asarray(times), np.asarray(positions),
-        np.asarray(velocities), np.asarray(accelerations), tuple(contacts),
+        profile, np.asarray(times), np.asarray(positions)[:, :size],
+        np.asarray(velocities)[:, :size], np.asarray(accelerations)[:, :size], tuple(contacts),
         np.asarray(swept_gaps), np.asarray(residuals), cutbacks, tuple(iterations),
         np.asarray(external_work), checkpoint, tuple(path_transitions),
         tuple(localized_events), event_evaluations,
         tuple(tool_works) if translations is not None else (),
         tuple(tool_errors) if translations is not None else (),
+        tuple(body_states),
     )

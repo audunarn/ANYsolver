@@ -120,3 +120,54 @@ Independent scalar trajectory/impulse/polynomial-work checks, pulse probes and
 restart tests support development. The scalar elastic energy screen improves
 under time refinement; this does not qualify arbitrary geometry, enforcement or
 C6 impact. [Slice](d1_review_support/C6_TRANSLATING_PLANES_SLICE_20261002.md).
+
+## Coupled free isotropic sphere
+
+Use the same `solve_transient_contact` with classical beam and free-sphere opt-ins:
+
+```python
+from anysolver.general_contact.transient import ContactFreeRigidBody
+body = ContactFreeRigidBody(
+    "sphere", mass_kg=.002, isotropic_inertia_kg_m2=8e-8,
+    initial_velocity_m_s=(0., 0., .2),
+    initial_angular_velocity_rad_s=(2., -3., 4.))
+# solver_controls: allow_classical_beam_dev=True, allow_free_sphere_dev=True
+# free_rigid_bodies=(body,)
+```
+
+The definition must declare one sphere, one round uncapped B2/B3 surface and one
+penalty line interaction. `line_integration_relative_tolerance` is explicit.
+The mass centre is the declared sphere point. Mass and each principal centre
+inertia are supplied independently; neither is inferred from geometry. Isotropic
+inertia, initial identity orientation and central frictionless forces permit exact
+torque-free spin `exp(t[omega]x)`. This does not admit anisotropic gyroscopic work,
+eccentric centres, friction, free planes/cylinders or prescribed and free ownership
+of the same body. Shell/free-body coupling remains a separate development boundary.
+
+Three sphere-centre coordinates join the same constrained Newton/Newmark system,
+with physical `mass*I` inertia and full structural/body contact cross blocks from
+the distributed potential. Structural assembly retains its original coordinates;
+returned displacement/velocity/acceleration fields keep their structural shapes.
+`free_rigid_bodies[i]["sphere"]` reports centre motion, rotation, angular velocity,
+contact force, kinetic energy, linear momentum and angular momentum about the
+stated global origin. These are physical body quantities, not prescribed tool work.
+The immutable body inputs and named coupled state bind restart schema6.
+
+The complete relative beam/sphere Hermite path includes both endpoint velocities.
+Exact tensor Bernstein squared-distance and component-box lower bounds, feasible
+point upper bounds and exact square-root brackets supply outward gap enclosures.
+Split choice uses certified lower-bound gain; every cell remains represented.
+The same finite split/resource budget applies and unresolved bounds fail explicitly.
+This is an enclosure of the declared interpolated path, not a continuum guarantee.
+
+```text
+python examples/general_contact_free_sphere_impact.py
+python examples/general_contact_free_sphere_impact.py --quadratic
+```
+
+Independent closed line-force/two-body Newmark, impulse, spin, virtual work/tangent,
+B3 momentum and elastic-energy refinement checks support the development profile.
+The isolated installed selection has171passes, including both examples and old
+fixed/prescribed/shell regressions. [Results](d1_review_support/contact_c6_free_sphere_20261002/results.md).
+General C6 engineering acceptance, finite rotations, nonlinear materials, caps,
+friction, beam-pair impact and arbitrary rigid-body geometry remain open.

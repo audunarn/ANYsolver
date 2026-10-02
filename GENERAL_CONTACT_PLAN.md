@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.3. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.4. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -22,7 +22,7 @@ Publication, merging, release and historical-default changes are separate action
 | D2 partial shells | Named finite-penalty foundation/press/open/recontact/restart handoff accepted | Remaining geometry, search, finite rotation and self-contact |
 | D3 classical/native static | Restricted round-beam, retained-native and deformable-S3 prototypes integrated and reviewed | Full required pairings, endpoints, mesh/enforcement and section-family acceptance |
 | D4 friction/continuation | Local components preserved | Transactional material-surface history, pressure coupling and arc length |
-| D5 impact | Q4/S3 and explicit B2/B3 single/multiple fixed or translating plane Newmark development share driver/state/restart | General geometry, finite rotation, caps/pairs, shell tools/free bodies, nonlinear materials and acceptance |
+| D5 impact | Q4/S3 planes and B2/B3 fixed/translating planes or coupled free isotropic sphere share Newmark driver/state/restart | General geometry, finite rotation, caps/pairs, shell/free-body work, anisotropic inertia, nonlinear materials and acceptance |
 | D6 native dynamics | Dedicated retained-inertia/SO(3) midpoint owner, state codec and installed development route | Broader geometry/sections, spatial accuracy and C7 acceptance |
 | Applications | ANYfem mapping/result summary plus supplied-settings persistence; ANYstructure intent/public mapping and early rejection | Source/model-bound capability admission, solve routing and full installed workflows |
 
@@ -117,16 +117,33 @@ scrutiny and retained counterexamples drove time-knot, terminal and acceleration
 corrections. This is development evidence; C6 acceptance stays open.
 [Results/review/failures](docs/d1_review_support/contact_c6_translating_planes_20261002/results.md).
 
-**Next bounded decision:** free rigid-body coupling through shared physical mass,
-work and state ownership. Inspect the existing rigid sphere/radial contact adapters
-and explicit mass/centre-of-mass/inertia contracts before choosing one coupled
-impact slice. It must advance physical mutual response and momentum accounting,
-not assign restitution or hidden mass, or independently advance lagged forces.
-Retain geometric path admission and restart/cancellation alongside coupled unknowns.
-Rotating prescribed tools and shell descriptor motion need their own path/work
-maps; plane translation does not admit them. Broad native geometry/section and
-native/shell common-stage impact remain required. Do not replay completed temporal
-screens or start unrelated diagnostic infrastructure for counts.
+Coupled free isotropic sphere/B2–B3 impact now retains explicit physical inertia,
+complete contact cross blocks, centre coordinates, exact central-force spin and
+namedV6 restart. Independent closed line-force/two-body, virtual-work, momentum,
+spin and energy-refinement checks pass. Exact relative squared-distance bounds and
+bound-gain subdivision resolve the recorded turning-path cap failure without cap
+growth. One installed171-pass selection, eight CLI variants and454module matches
+uses29.241s/320790528B. Independent source scrutiny supports development, not C6
+engineering acceptance. [Evidence](docs/d1_review_support/contact_c6_free_sphere_20261002/results.md).
+One additional history/work/V6 split check passes on the same unchanged wheel;
+172distinct checks are covered, with unaffected results reused by impact analysis.
+
+**Next bounded decision:** integrate transactional shell friction and its normal
+pressure coupling, using existing friction_point, s3_friction_point and
+s3_friction_pair components. Inspect their physical history/work maps and the
+ordinary static contributor/commit/restart contracts, then implement one coupled
+stick/slip/reversal/opening workflow. Advance requiredD4 coverage rather than expand
+another prescribed impact fixture. This is a route choice within the existing
+goal; it changes no scientific method, accepted normal profile or qualification
+criterion. Friction needs material-surface motion, pressure-dependent derivatives
+and accepted-step history; no centreline-only beam friction or arbitrary partner
+history is admitted. Follow with admitted warped/finite-rotation/beam/native rows.
+
+Shell/free-body and anisotropic/rotating body work, broader native geometry/section
+and native/shell common-stage impact remain required. Preserve complete path and
+physical inertia/state contracts; no hidden mass, restitution or lagged independent
+advance. Do not replay completed temporal screens or build diagnostic infrastructure
+for counts. Applications remain incremental consumers of actual capability status.
 
 The lead may progress application integration against stable contracts. ANYfem
 630884ae preserves supplied public numerical settings;21focused checks pass with

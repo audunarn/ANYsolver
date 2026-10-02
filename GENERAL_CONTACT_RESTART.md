@@ -2,64 +2,72 @@
 
 ## Authority and identity
 
-Full C0–C9 goal active; tiered/new testing workflow, no communication with or
-inspection of the other task. Active worktree:
+Full C0–C9 goal remains active. Use tiered/new testing workflow; do not communicate
+with or inspect the other task. Worktree:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Slice parent9ef78d5b; inspect currentHEAD/status
-for checkpoint. Goal rev2026-09-30.4; plan rev2026-10-02.3. No publication, merge,
-release, changed defaults, original-worktree or shared ABC-guard edits authorized.
-Previous instruction-only turn was no progress; this turn implements, verifies and
-checkpoints prescribed-plane impact. Full programme remains incomplete.
+codex/contact-main-reconcile-20261001. Slice parent0def128d; inspect HEAD/status for
+checkpoint. Goal rev2026-09-30.4, plan rev2026-10-02.4. No publication, merge,
+release, default change, original-worktree or shared ABC-guard edits authorized.
+This turn is progress: coupled free sphere implemented, checked and checkpointed.
 
 ## Current result
 
-Named immutable physical-time translations extend the shared elastic B2/B3
-single/multiple-plane Newmark driver. Fixed normals, actual mass/distributed work,
-per-pair dimensional gap gates and conservative relative Hermite/Bernstein bounds
-remain. Combined knots/terminal landing use explicit arithmetic resolution checks.
-Tool input work/errors are separate from nodal work. Support-root partitioning and
-bounded embedded quadrature retain zero-rule geometry checks; estimates are not
-certified continuum work bounds. Poses restore on exit; only accepted steps publish
-work. V5 restart binds motion/settings and per-body cumulative state. New profiles
-reuse accumulated Newmark acceleration corrections; old profiles remain unchanged.
+Free isotropic sphere/B2–B3 impact uses shared Newmark physical mass, constraints,
+work, commit/cancellation and restart. Explicit mass/centre inertia and initial
+velocities are immutable. Centre coordinates join the monolithic system; potential
+translation maps supply equal/opposite residuals and complete cross tangents.
+Central frictionless traction gives exact torque-free isotropic spin. Structural
+result arrays keep their old shapes; named body states report centre, spin, force,
+energy and momenta. V6 binds ownership/inertia/initial state and coupled q/v/a.
 
-Final installed artifact:100passed,452source/wheel/site modules match,211onsite
-imports,19.386s/313475072B sampled tree peak within180s/1GB. Eighteen new checks
-cover forced Newmark/impulse/polynomial work, temporal energy improvement, deforming
-B3, multiple tools, opening/recontact, relative bounds, knots, active restart and
-failure cleanup; six CLI variants pass. JIT off/BLAS and Numba threads1 verified.
-[Results/review/raw](docs/d1_review_support/contact_c6_translating_planes_20261002/results.md),
-[guide](docs/GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md).
+Exact squared-distance tensor Bernstein plus vector boxes bound the complete
+relative beam/sphere Hermite path. Both endpoint velocities, exact square-root
+brackets and outward conversions are retained. Bound-gain split choice resolves
+recorded turning minima at unchanged1e-10m/512 split settings. No continuum claim.
 
-## Failures and remaining boundary
+Final installed artifact:171passed,454source/wheel/site modules match,214onsite
+imports,29.241s/320790528B sampled peak within180s/1GB. Nine physical/state checks,
+60geometry checks, prior100checks and two new CLI variants (eight total) pass.
+Independent closed line-force/two-body, virtual work/tangent, impulse/momentum,
+Rodrigues spin, deforming B3 and energy refinement are exercised. JIToff/threads1
+verified. [Results/raw](docs/d1_review_support/contact_c6_free_sphere_20261002/results.md),
+[usage](docs/GENERAL_CONTACT_C6_CLASSICAL_BEAM_DEV.md).
+One additional installed nodal-history/independent forced response/work/V6 split
+check passes on the same wheel,3.655s/174055424B.172distinct checks covered by
+171coherent plus1targeted pass, not a172rerun. Supplemental archive retains its
+identity and changed test fixture; original raw.zip remains immutable.
 
-Retain v1 missed pulse-work error and independent polynomial fixture defect;
-v3 misplaced assertion; v6/v8 knot counterexamples; installedv2 96pass/3fail terminal
-steps and separate Unicode display failure; sourcev10 17pass/1fail acceleration
-restart discrepancy. v11 and final installed checks resolve affected paths without
-relaxed tolerances. Mistral initial review completed; follow-up limit reached.
-OpenAI Read review supplied knot counterexamples; lead checked corrections against
-source and executed the discriminators. No science acceptance is inferred.
-Raw131files/7549232B readbackPASS. Prior state/evidence in
-[Part45](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART45.md).
+## Failure/review boundaries
 
-Development only; toy gap budget is not qualification/default. C6 acceptance,
-free rigid inertia, rotating/shell tools, caps/radial/pair impact, friction and
-nonlinear materials remain open. Accepted static subsets unchanged; application
-admissionfalse. Historical ABC preimport NONPASS remains separately owned.
+Retain v1 collection indentation defect; v2 60pass/4fail (two512-cap failures,
+two wrong cancellation imports); v3 two actual-token cleanup passes; v4 59pass/3
+cap failures; v5 three corrected turning/trajectory passes. v6 stiff B3 fixture
+failed its intended deformation criterion while momentum passed; distinct E=10Pa
+fixture v7 passes unchanged criterion. v8 independent energy refinement passes.
+No science tolerance/cap increased. Two bounded Mistral Read attempts had useful
+inspections but no final assessment; both incomplete. Separate OpenAI source review
+found no consequential blocker, with no numerical reproduction/engineering claim.
+Raw75files/2596259B readbackPASS. Historical state/evidence in
+[Part46](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART46.md).
 
-Next inspect existing rigid sphere/radial adapters and explicit mass/centre/inertia
-contracts for a shared coupled free-body impact slice with physical mutual response,
-momentum, path/work and restart. Preserve native common-stage boundaries; no hidden
-mass, restitution or lagged separate integration. Full D2–D8 remains required.
+Development only; C6 acceptance remains open. Shell/free-body, anisotropic/rotating
+bodies, friction, caps, beam-pair impact, nonlinear materials and remaining D2–D8
+are required. Accepted static subsets unchanged; application admissionfalse.
+Historical ABC preimport NONPASS remains separately owned.
 
-## Processes, package and clock
+## Next action and resources
 
-No owned process live. Source/installed jobs terminal; review worker idle.
-Final package C:/ANYworkspaceWork/contact-translating-plane-package-20261002-v3.
-v1 build superseded/unexecuted; v2 failed artifact retained. Wheel SHA256
-036bf3061074a9636ffd19561dbaaa3429927868286b6b9c8be3389018165897.
-Routine checks: portable --development exact selectors, JIToff, threads1,
-180s/953MiB, uniqueRUNNER_TEMP; stricter frozen caps prevail.
-At23:23:47UTC goal199291s+retained3120s=202411s:56.225h used/63.775h remaining
-of original120activehours. Subsequent active time counts; no reset.
+Next inspect friction_point.py, s3_friction_point.py and s3_friction_pair.py plus
+ordinary static candidate/commit/restart interfaces. Integrate normal pressure,
+objective material-surface motion and accepted-step friction history through one
+coupled stick/slip/reversal/opening workflow. This advances required D4 coverage
+instead of another impact fixture; scientific methods/acceptance are unchanged.
+No centreline-only beam friction or arbitrary old-partner history is admitted.
+
+No owned process live; source/build/installed and review jobs terminal, workers idle.
+Package C:/ANYworkspaceWork/contact-free-sphere-package-20261002.
+Wheel SHA256765042560a8ee2d50ba5c29c395be6150b650d373a715f97943e20e50f391721.
+Routine portable --development exact targets, JIToff/threads1,180s/953MiB, fresh
+RUNNER_TEMP; stricter frozen caps prevail. Original120active-hour clock continues:
+at23:59:53UTC goal201458s+retained3120s=204578s,56.827h used/63.173h remaining.
+Subsequent active time counts; no reset.
