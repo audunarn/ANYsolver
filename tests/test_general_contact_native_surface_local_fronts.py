@@ -168,6 +168,70 @@ def test_multisegment_front_integral_has_independent_cumulative_work(tmp_path):
     assert result.released_storage_j==0.
 
 
+def _saved_local_front_field():
+    import json
+    from pathlib import Path
+    from anysolver.general_contact.native_surface_patch import NativeS3MaterialSurfacePatch
+    from anysolver.general_contact.native_surface_quadrature import NativeRoundSurfaceRule
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    from anysolver.general_contact.native_surface_friction_integral import NativeSurfaceFrictionIntegrationSettings
+    from test_general_contact_native_surface_replay_owner import _replay_patch
+    source=Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_second_load_rejected_path.json'
+    saved=json.loads(source.read_text());_,bridge=_replay_patch('transverse_event_sequence')
+    full=NativeSurfaceHistoryField(bridge.pair,
+        NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()}),
+        tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments']),
+        maximum_intervals=saved['maximum_intervals'])
+    base=full.patch.pairs[0]
+    rule=NativeRoundSurfaceRule(base.source.element_id,base.source.reference,base.source.radius,
+        xi_range=(.72,.80),angle_range=(3.19,3.20),axial_order=2,angular_order=2)
+    patch=NativeS3MaterialSurfacePatch(rule,[full._target_at(s.station) for s in rule.samples],
+        normal_stiffness_Pa_per_m=base.normal_stiffness_Pa_per_m,
+        friction_coefficient=base.friction_coefficient,
+        tangential_stiffness_Pa_per_m=base.tangential_stiffness_Pa_per_m,
+        activation_policy='transverse_event_sequence',event_history_substeps=base.event_history_substeps,
+        gap_check='straight_patch')
+    value=NativeSurfaceHistoryField(patch,full.initial,full.segments,maximum_intervals=full.maximum_intervals)
+    settings=NativeSurfaceFrictionIntegrationSettings(**saved['settings'])
+    return value,settings,source
+
+
+@pytest.mark.skipif(os.environ.get('ANYSOLVER_RUN_SAVED_NATIVE_LOCAL_FRONT')!='1',
+    reason='named saved-path local discriminator; no fullpatch or coupled run')
+def test_saved_second_load_local_front_window(tmp_path):
+    import json,os,time
+    from dataclasses import asdict
+    from pathlib import Path
+    from hashlib import sha256
+    value,settings,source=_saved_local_front_field()
+    folder=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)));folder.mkdir(parents=True,exist_ok=True)
+    record=dict(saved_input_sha256=sha256(source.read_bytes()).hexdigest(),
+        selected_xi=(.72,.80),selected_angle=(3.19,3.20),settings=asdict(settings),
+        event_policy='transverse_event_sequence',field_identity=value.identity,
+        scope='local saved-path integration only, no solve/fullpatch/owner admission')
+    (folder/'saved_local_front_preflight.json').write_text(json.dumps(record,indent=2),encoding='utf-8')
+    start=time.perf_counter()
+    try:
+        result=integrate_event_friction_fronts(value,settings,maximum_axial_uncertainty=1e-7)
+    except Exception as error:
+        record.update(elapsed_seconds=time.perf_counter()-start,error_type=type(error).__name__,
+            error=str(error),diagnostics=getattr(error,'integration_diagnostics',None))
+        (folder/'saved_local_front_failure.json').write_text(json.dumps(record,indent=2),encoding='utf-8')
+        raise
+    source_force=sum((result.residual[6*i:6*i+3] for i in range(3)),np.zeros(3))
+    target_force=sum((result.residual[42+6*i:45+6*i] for i in range(3)),np.zeros(3))
+    force_scale=max(np.linalg.norm(source_force),np.linalg.norm(target_force),1e-12)
+    record.update(elapsed_seconds=time.perf_counter()-start,diagnostics=result.diagnostics,
+        source_force=source_force.tolist(),target_force=target_force.tolist(),
+        force_balance_relative=float(np.linalg.norm(source_force+target_force)/force_scale),
+        work=dict(stored=result.stored_energy_j,dissipated=result.dissipated_increment_j,
+            released=result.released_storage_j,cumulative=result.cumulative_dissipation_j))
+    (folder/'saved_local_front_result.json').write_text(json.dumps(record,indent=2),encoding='utf-8')
+    assert result.diagnostics['maximum_scaled_error_estimate']<=1.
+    assert record['force_balance_relative']<=1e-6
+    assert all(x>=0 for x in record['work'].values())
+
+
 def test_deferred_directional_controls_match_eager_refined_integral(tmp_path,monkeypatch):
     """Polynomial code probe for evaluation order; no mechanics qualification."""
     import json,os,time

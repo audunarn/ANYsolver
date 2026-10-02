@@ -1083,3 +1083,12 @@ passes (~4.5e-9relative); full final R/K and final storage/increment/release zer
 closed captures reject. Review-caught incremental work routing failure preserved/corrected.
 Actual second-load owner, split restart, global geometry/history and admission still open.
 [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/multisegment_front_results.md).
+
+Native domain-bound temporal front cover: complete open/front coverage and separate
+coefficient-error propagation pass17distinct focused controls by affected-evidence reuse.
+Analytic hidden-pulse roots, opposite-B component/domain guards and Decimal amplification
+are checked. Actual saved local second-load window remains NONPASS: angular endpoint
+transition,14support/0queries, rather than prior support128 exhaustion. Variable branch
+presence and endpoint-contact contributions are not yet admitted. No acceptance/speed
+claim; actual owner/split restart remains open. Preserved failures and next decision:
+[Evidence](d1_review_support/contact_c5_native_surface_point_20261002/temporal_front_results.md).

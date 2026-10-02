@@ -70,7 +70,7 @@ def axial_contact_front(field,cell,segment_index,time,angle):
     return AxialContactFront(*map(float,values))
 
 
-def _front_coefficient_roundoff(coordinates,velocities,edge,edge_rate,c,cd,cdd,x,d,xrate,drate,omega,radius):
+def _front_coefficient_roundoff(coordinates,velocities,edge,edge_rate,c,cd,cdd,x,d,xrate,drate,omega,radius,*,components=False):
     """Propagate uniform binary64 input/operation errors before cancellation.
 
     Edge subtraction -> cross products -> coefficient dot products. This keeps
@@ -95,8 +95,9 @@ def _front_coefficient_roundoff(coordinates,velocities,edge,edge_rate,c,cd,cdd,x
         product(cd,ecd,d,ed)+product(c,ec,drate,edp),
         product(cdd,ecdd,x,ex)+2*product(cd,ecd,xrate,exp)+product(c,ec,xacc,exacc),
         product(cdd,ecdd,d,ed)+2*product(cd,ecd,drate,edp))
+    if not np.all(np.isfinite(errors)):raise ValueError('front coefficient roundoff overflow')
+    if components:return tuple(float(np.nextafter(e,np.inf)) for e in errors)
     result=max(errors)
-    if not np.isfinite(result):raise ValueError('front coefficient roundoff overflow')
     return float(np.nextafter(result,np.inf))
 
 
@@ -177,7 +178,7 @@ def stationary_front_slab(field,cell,segment_index,angle,left,right,*,include_a=
         # Uniform point-evaluation roundoff controls, not midpoint residuals.
         # Norm bounds cover the complete time slab and every material angle.
         edge_magnitude=max(1.,*(np.linalg.norm(e) for pair in edges for e in pair))
-        edge_speed=max(1.,np.linalg.norm(da),np.linalg.norm(db))
+        edge_speed=max(np.linalg.norm(da),np.linalg.norm(db))
         coordinate_magnitude=max(1.,
             *(float(np.max(np.abs(p.positions)))+float(np.max(np.abs(p.position_low))) for p in poses),
             *(float(np.max(np.abs(y))) for y in corners),
@@ -185,23 +186,40 @@ def stationary_front_slab(field,cell,segment_index,angle,left,right,*,include_a=
             float(np.max(np.abs(start.positions)))+float(np.max(np.abs(start.position_low))),
             float(np.max(np.abs(segment.translations))),
             *(float(np.max(abs(target.adapter.work_map)@np.abs(p.shell_displacement))) for p in poses))
-        velocity_magnitude=max(1.,float(np.max(np.abs(velocities))),
+        velocity_magnitude=max(float(np.max(np.abs(velocities))),
             float(np.max(np.abs(segment.translations))),
             float(np.max(abs(target.adapter.work_map)@np.abs(segment.shell_increment))))
-        uniform_error=max(pad,_front_coefficient_roundoff(coordinate_magnitude,velocity_magnitude,
-            edge_magnitude,edge_speed,c,cd,cdd,xnorm,dnorm,xrate,drate,omega,radius))
-        amag=c*xnorm+uniform_error;bmag=c*dnorm+uniform_error
-        apmag=cd*xnorm+c*xrate+uniform_error;bpmag=cd*dnorm+c*drate+uniform_error
-        numerator_error=uniform_error*(apmag+bmag+amag+bpmag)+2*uniform_error**2
-        numerator_error+=512*np.finfo(float).eps*(apmag*bmag+amag*bpmag)
-        a2mag=cdd*xnorm+2*cd*xrate+c*omega**2*radius+uniform_error
-        b2mag=cdd*dnorm+2*cd*drate+uniform_error
-        derivative_error=uniform_error*(a2mag+bmag+amag+b2mag)+2*uniform_error**2
-        derivative_error+=512*np.finfo(float).eps*(a2mag*bmag+amag*b2mag)
+        ea,eb,eap,ebp,eapp,ebpp=_front_coefficient_roundoff(coordinate_magnitude,velocity_magnitude,
+            edge_magnitude,edge_speed,c,cd,cdd,xnorm,dnorm,xrate,drate,omega,radius,components=True)
+        # Derivative arithmetic uses actual rate norms. A displacement-scale
+        # uncertainty is not an additive uncertainty on every time derivative.
+        # It still propagates through C', C'', and all product-rule terms above.
+        uniform_error=max(ea,eb)
+        def product_error(a,ae,b,be):
+            return ae*b+(a+ae)*be+1024*np.finfo(float).eps*(a+ae)*(b+be)
+        amag=c*xnorm;bmag=c*dnorm
+        apmag=cd*xnorm+c*xrate;bpmag=cd*dnorm+c*drate
+        a2mag=cdd*xnorm+2*cd*xrate+c*omega**2*radius
+        b2mag=cdd*dnorm+2*cd*drate
+        numerator_error=product_error(apmag,eap,bmag,eb)+product_error(amag,ea,bpmag,ebp)
+        derivative_error=product_error(a2mag,eapp,bmag,eb)+product_error(amag,ea,b2mag,ebpp)
         if not np.all(np.isfinite((numerator_error,derivative_error,uniform_error))):
             raise ValueError('front point error bound overflow')
-        result=(result[0]-uniform_error,result[1]+uniform_error,*result[2:4],
-            result[4]-derivative_error,result[5]+derivative_error,*result[6:])
+        # Rebuild private Taylor controls with separate coefficient errors.
+        # The historical no-controls route above remains unchanged.
+        a2=abs(value.a_acceleration)+eapp+a3*h;b2=abs(value.b_acceleration)+ebpp+b3*h
+        a1bound=abs(value.a_rate)+eap+a2*h;b1bound=abs(value.b_rate)+ebp+b2*h
+        a_bound=abs(value.a)+ea+a1bound*h;b_bound=abs(value.b)+eb+b1bound*h
+        n2=a3*b_bound+a2*b1bound+a1bound*b2+a_bound*b3
+        bwidth=(abs(value.b_rate)+ebp)*h+.5*b2*h*h+eb
+        nwidth=(abs(nd)+derivative_error)*h+.5*n2*h*h+numerator_error
+        ndwidth=n2*h+derivative_error
+        nwidth+=(arate_theta*b_bound+a_theta*b1bound)*angular_width
+        ndwidth+=(aacc_theta*b_bound+a_theta*b2)*angular_width
+        result=(value.b-bwidth,value.b+bwidth,n-nwidth,n+nwidth,nd-ndwidth,nd+ndwidth)
+        if include_a:
+            awidth=(abs(value.a_rate)+eap)*h+.5*a2*h*h+ea+a_theta*angular_width
+            result=(*result,value.a-awidth,value.a+awidth)
         return result,(float(uniform_error),float(numerator_error))
     return result
 
@@ -213,44 +231,111 @@ class StationaryAngularCover:
     segment_index: int
     angle_bounds: tuple
     branches: tuple
+    xi_bounds: tuple|None=None
+    open_time_slabs: tuple=()
+    front_components: tuple=()
+    front_time_slabs: tuple=()
+    branch_bounds: tuple=()
+    simple_time_slabs: tuple=()
 
     def __iter__(self):return iter(self.branches)
     def __len__(self):return len(self.branches)
     def __bool__(self):return bool(self.branches)
 
 
-def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budget):
+def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budget,xi_bounds=None):
     """Certify stationary-root branches over an entire angular interval.
 
     Each returned time bracket contains exactly one simple stationary root for
     every angle. All remaining time slabs exclude roots. Angular bands where
     roots enter/leave a time endpoint remain explicit non-success and require
-    boundary partitioning. This does not itself admit friction integration.
+    boundary partitioning. Optional xi_bounds exclude only whole-domain strictly
+    open slabs before requiring B!=0. Such covers count contact-relevant roots;
+    their recorded open and H-valid slabs cover the complete time interval.
+    This does not itself admit friction integration or replace orientation checks.
     """
     from .native_surface_support import SupportIntervalBudget
     if type(budget) is not SupportIntervalBudget:raise TypeError('shared support budget required')
     lo,hi=map(float,angle_bounds);angle=(lo+hi)/2
-    pending=[(0.,1.)];branches=[];cache={}
+    if xi_bounds is not None:
+        xi_bounds=tuple(map(float,xi_bounds));domain=field.patch.rule.definition['xi_range']
+        if (len(xi_bounds)!=2 or not all(np.isfinite(xi_bounds)) or
+            not max(domain[0],cell-1)<=xi_bounds[0]<xi_bounds[1]<=min(domain[1],cell)):
+            raise ValueError('stationary cover axial domain outside selected half-cell')
+    pending=[(0.,1.)];branches=[];cache={};open_slabs=[];front_slabs=[];simple_slabs=[]
     def enclosure(left,right):
         if (left,right) not in cache:
             if not budget.consume():raise MemoryError('stationary angular cover interval cap exhausted')
-            cache[left,right]=stationary_front_slab(field,cell,segment_index,angle,left,right,
-                angle_bounds=(lo,hi))
+            if xi_bounds is None:
+                cache[left,right]=stationary_front_slab(field,cell,segment_index,angle,left,right,
+                    angle_bounds=(lo,hi))
+            else:
+                cache[left,right]=stationary_front_slab(field,cell,segment_index,angle,left,right,
+                    angle_bounds=(lo,hi),include_a=True,_return_error_controls=True)[0]
         return cache[left,right]
     while pending:
-        left,right=pending.pop();bl,bu,nl,nu,dl,du=enclosure(left,right)
+        left,right=pending.pop();bounds=enclosure(left,right);bl,bu,nl,nu,dl,du=bounds[:6]
+        if xi_bounds is not None:
+            products=[float(np.nextafter(b*x,-np.inf)) for b in (bl,bu) for x in xi_bounds]
+            lower=float(np.nextafter(bounds[6]+min(products),-np.inf))
+            if lower>0:
+                open_slabs.append((left,right,lower))
+                continue
         if bl>0 or bu<0:
-            if nl>0 or nu<0:continue
+            if xi_bounds is not None and (dl>0 or du<0):
+                # A root may cross an arbitrary subdivision endpoint as the
+                # material angle varies. Classify the union of adjacent strict
+                # N' slabs below, rather than dropping or rejecting that root.
+                front_slabs.append((left,right,bl,bu))
+                simple_slabs.append((left,right,bl,bu,dl,du))
+                continue
+            if nl>0 or nu<0:
+                front_slabs.append((left,right,bl,bu))
+                continue
             if dl>0 or du<0:
                 endpoint=[enclosure(t,t)[2:4] for t in (left,right)]
                 signs=[1 if low>0 else -1 if high<0 else 0 for low,high in endpoint]
                 if 0 in signs:raise ValueError('stationary root angular endpoint transition unresolved')
                 if signs[0]!=signs[1]:branches.append((left,right))
+                front_slabs.append((left,right,bl,bu))
                 continue
         middle=(left+right)/2
         if not left<middle<right:raise ValueError('stationary angular cover temporal resolution exhausted')
         pending.extend(((middle,right),(left,middle)))
-    return StationaryAngularCover(field.identity,cell,segment_index,(lo,hi),tuple(sorted(branches)))
+    if xi_bounds is None:
+        return StationaryAngularCover(field.identity,cell,segment_index,(lo,hi),tuple(sorted(branches)))
+    simple_components=[]
+    for left,right,bl,bu,dl,du in sorted(simple_slabs):
+        if (simple_components and simple_components[-1][1]==left and
+            (simple_components[-1][2]>0)==(bl>0) and (simple_components[-1][4]>0)==(dl>0)):
+            old=simple_components.pop()
+            simple_components.append((old[0],right,min(old[2],bl),max(old[3],bu),
+                min(old[4],dl),max(old[5],du)))
+        else:simple_components.append((left,right,bl,bu,dl,du))
+    branch_bounds=[]
+    for left,right,*bounds in simple_components:
+        endpoint=[enclosure(t,t)[2:4] for t in (left,right)]
+        signs=[1 if low>0 else -1 if high<0 else 0 for low,high in endpoint]
+        if 0 in signs:raise ValueError('stationary root angular endpoint transition unresolved')
+        if signs[0]!=signs[1]:
+            branches.append((left,right));branch_bounds.append(tuple(bounds))
+    cursor=0.
+    for left,right in sorted([(a,b) for a,b,_ in open_slabs]+[(a,b) for a,b,_,_ in front_slabs]):
+        if left!=cursor or not left<right:raise ValueError('incomplete stationary temporal cover')
+        cursor=right
+    if cursor!=1.:raise ValueError('incomplete stationary temporal cover')
+    components=[]
+    for left,right,bl,bu in sorted(front_slabs):
+        if components and components[-1][1]==left and (components[-1][2]>0)==(bl>0):
+            old=components.pop();components.append((old[0],right,min(old[2],bl),max(old[3],bu)))
+        else:components.append((left,right,bl,bu))
+    return StationaryAngularCover(field.identity,cell,segment_index,(lo,hi),tuple(sorted(branches)),
+        xi_bounds,tuple(sorted(open_slabs)),tuple(components),tuple(sorted(front_slabs)),
+        tuple(branch_bounds),tuple(sorted(simple_slabs)))
+
+
+def _front_components(cover):
+    return ((0.,1.,None,None),) if cover.xi_bounds is None else cover.front_components
 
 
 @dataclass(frozen=True)
@@ -285,6 +370,8 @@ def stationary_front_partition(field,cell,segment_index,angle,*,maximum_interval
                 or angular_cover.cell!=cell or angular_cover.segment_index!=segment_index
                 or not angular_cover.angle_bounds[0]<=angle<=angular_cover.angle_bounds[1]):
             raise ValueError('stationary angular cover identity mismatch')
+        if angular_cover.xi_bounds is not None:
+            raise ValueError('domain-bound temporal cover requires prepared front query')
         pending=list(angular_cover.branches)
     else:pending=[(0.,1.)]
     roots={};count=0;slabs={}
@@ -354,7 +441,7 @@ def stationary_front_partition(field,cell,segment_index,angle,*,maximum_interval
     return tuple((t,at(t).axial_coordinate()) for t in fractions),count,tuple(roots[t] for t in sorted(roots)),tuple(endpoints)
 
 
-def stationary_front_angular_envelopes(field,cover,*,maximum_axial_uncertainty,budget):
+def stationary_front_angular_envelopes(field,cover,*,maximum_axial_uncertainty,budget,prepared=None):
     """Enclose every stationary uncertainty strip over a certified angular band.
 
     On a simple root branch H_t=0, so dH*/dangle=-A_angle/B. The normal
@@ -365,16 +452,23 @@ def stationary_front_angular_envelopes(field,cover,*,maximum_axial_uncertainty,b
     if type(cover) is not StationaryAngularCover or cover.field_identity!=field.identity:
         raise ValueError('bound stationary angular cover required')
     lo,hi=cover.angle_bounds;middle=(lo+hi)/2
-    _,_,roots,_=stationary_front_partition(field,cover.cell,cover.segment_index,middle,
-        maximum_intervals=field.maximum_intervals,maximum_axial_uncertainty=maximum_axial_uncertainty,
-        budget=budget,angular_cover=cover)
+    if cover.xi_bounds is None:
+        _,_,roots,_=stationary_front_partition(field,cover.cell,cover.segment_index,middle,
+            maximum_intervals=field.maximum_intervals,maximum_axial_uncertainty=maximum_axial_uncertainty,
+            budget=budget,angular_cover=cover)
+    else:
+        if prepared is None:prepared=prepare_stationary_band(field,cover,budget=budget)
+        if prepared.cover!=cover:raise ValueError('stationary envelope prepared cover mismatch')
+        _,_,roots,_=stationary_front_partition_prepared(field,prepared,middle,
+            maximum_axial_uncertainty=maximum_axial_uncertainty)
     if len(roots)!=len(cover):raise ValueError('stationary branch envelope count mismatch')
     start,segments=_support_path(field,cover.segment_index);motion=segments[0]
     radius=field.patch.rule.definition['radius'];intervals=[]
-    for root,(left,right) in zip(roots,cover.branches):
+    for index,(root,(left,right)) in enumerate(zip(roots,cover.branches)):
         if not left<=root.fraction<=right:raise ValueError('stationary branch envelope ownership mismatch')
         if not budget.consume():raise MemoryError('stationary envelope support interval cap exhausted')
-        bounds=stationary_front_slab(field,cover.cell,cover.segment_index,middle,left,right)
+        bounds=(prepared.branches[index][2] if cover.xi_bounds is not None else
+            stationary_front_slab(field,cover.cell,cover.segment_index,middle,left,right))
         if bounds[0]<=0<=bounds[1]:raise ValueError('stationary envelope denominator unresolved')
         denominator=min(abs(bounds[0]),abs(bounds[1]))
         poses=[material_path_pose(start,motion.translations,motion.angular,motion.shell_increment,t)
@@ -412,16 +506,26 @@ def prepare_stationary_band(field,cover,*,budget):
     if type(cover) is not StationaryAngularCover or cover.field_identity!=field.identity:
         raise ValueError('bound stationary angular cover required')
     middle=sum(cover.angle_bounds)/2;before=budget.intervals
-    def controls(left,right):
+    def controls(left,right,component_bounds=None,branch_bounds=None):
         if not budget.consume():raise MemoryError('prepared stationary band interval cap exhausted')
         bounds,errors=stationary_front_slab(field,cover.cell,cover.segment_index,middle,left,right,
             angle_bounds=cover.angle_bounds,_return_error_controls=True)
+        if component_bounds is not None:
+            bounds=(max(bounds[0],component_bounds[0]),min(bounds[1],component_bounds[1]),*bounds[2:])
+            if bounds[0]>bounds[1]:raise ValueError('prepared stationary component bound mismatch')
+        if branch_bounds is not None:
+            bounds=(*bounds[:4],max(bounds[4],branch_bounds[2]),min(bounds[5],branch_bounds[3]))
+            if bounds[4]>bounds[5]:raise ValueError('prepared stationary derivative bound mismatch')
         if bounds[0]<=0<=bounds[1]:raise ValueError('prepared stationary denominator unresolved')
         return (float(left),float(right),tuple(bounds),tuple(errors))
-    branches=tuple(controls(a,b) for a,b in cover.branches)
+    if cover.branch_bounds and len(cover.branch_bounds)!=len(cover.branches):
+        raise ValueError('prepared stationary branch bound count mismatch')
+    branches=tuple(controls(a,b,None if not cover.branch_bounds else cover.branch_bounds[i][:2],
+        None if not cover.branch_bounds else cover.branch_bounds[i]) for i,(a,b) in enumerate(cover.branches))
     for _,_,bounds,_ in branches:
         if bounds[4]<=0<=bounds[5]:raise ValueError('prepared stationary simple branch unresolved')
-    endpoints=tuple(controls(t,t) for t in (0.,1.))
+    endpoints=tuple(controls(t,t,None if bl is None else (bl,bu))
+        for left,right,bl,bu in _front_components(cover) for t in (left,right))
     return PreparedStationaryBand(cover,branches,endpoints,budget.intervals-before)
 
 
@@ -477,7 +581,7 @@ def stationary_front_partition_prepared(field,prepared,angle,*,maximum_axial_unc
         value=at(time)
         endpoints.append(IsolatedStationaryFront(time,value.axial_coordinate(),(time,time),
             coordinate(value,bounds,error),value.stationary_numerator))
-    fractions=tuple(sorted({0.,1.,*(r.fraction for r in roots)}))
+    fractions=tuple(sorted({*(e.fraction for e in endpoints),*(r.fraction for r in roots)}))
     return tuple((t,at(t).axial_coordinate()) for t in fractions),0,tuple(roots),tuple(endpoints)
 
 
@@ -490,12 +594,20 @@ def prepared_front_open_interval(prepared,partition,left,right):
     """
     if type(prepared) is not PreparedStationaryBand or not left<right:
         raise ValueError('prepared front and ordered axial interval required')
-    extrema=(*partition[2],*partition[3])
-    if len(partition[2])!=len(prepared.branches) or len(partition[3])!=2:
+    cover=prepared.cover
+    if cover.xi_bounds is not None and not cover.xi_bounds[0]<=left<right<=cover.xi_bounds[1]:
+        raise ValueError('prepared open query outside bound axial domain')
+    components=_front_components(cover)
+    if len(partition[2])!=len(prepared.branches) or len(partition[3])!=2*len(components):
         raise ValueError('complete prepared front extrema required')
-    lower=min(e.axial_interval[0] for e in extrema)
-    upper=max(e.axial_interval[1] for e in extrema)
-    b0=prepared.endpoints[0][2][:2]
     # Quadrature uses strictly interior material points. Equality at an
     # interval edge may be zero gap but cannot produce interior contact work.
-    return bool(left>=upper if b0[0]>0 else right<=lower if b0[1]<0 else False)
+    for i,(start,end,_,_) in enumerate(components):
+        endpoints=partition[3][2*i:2*i+2]
+        if (endpoints[0].fraction,endpoints[1].fraction)!=(start,end):
+            raise ValueError('prepared component endpoint ownership mismatch')
+        extrema=(*endpoints,*(r for r in partition[2] if start<=r.fraction<=end))
+        lower=min(e.axial_interval[0] for e in extrema);upper=max(e.axial_interval[1] for e in extrema)
+        b0=prepared.endpoints[2*i][2][:2]
+        if not (left>=upper if b0[0]>0 else right<=lower if b0[1]<0 else False):return False
+    return True

@@ -325,7 +325,9 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
             if _local_front_strips and band in front_band_cache:
                 covers,envelopes,prepared=front_band_cache[band]
             else:
-                covers=tuple(stationary_front_angular_cover(field,cell,index,(lower,upper),budget=support_budget)
+                domain=(max(rule.definition['xi_range'][0],cell-1),min(rule.definition['xi_range'][1],cell))
+                covers=tuple(stationary_front_angular_cover(field,cell,index,(lower,upper),budget=support_budget,
+                    xi_bounds=domain if _local_front_strips else None)
                     for index in range(len(field.segments)))
                 envelopes=None
                 if _local_front_strips:
@@ -343,7 +345,8 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                     from .native_surface_front import stationary_front_angular_envelopes
                     if envelopes is None:
                         envelopes=stationary_front_angular_envelopes(field,covers[owner_index],
-                            maximum_axial_uncertainty=_front_uncertainty,budget=support_budget)
+                            maximum_axial_uncertainty=_front_uncertainty,budget=support_budget,
+                            prepared=prepared[owner_index])
                     front_band_cache[band]=(covers,envelopes,prepared)
                     for a,b in envelopes:
                         a,b=max(left,a),min(right,b)
@@ -415,7 +418,19 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
             panels.extend(subdivide(parent))
         if visited>=settings.maximum_panels:raise MemoryError('native friction integration panel cap exhausted')
         panel=panels.pop();cell,left,right,lower,upper=panel;visited+=1
-        support=resolve_support(panel)
+        try:
+            support=resolve_support(panel)
+        except (ValueError,MemoryError) as error:
+            # Retain the original typed failure and add bounded context at
+            # the decision point; this neither retries nor admits the panel.
+            if not hasattr(error,'integration_diagnostics'):
+                error.integration_diagnostics=dict(stage='support',current_panel=panel,
+                    panels=visited,queries=len(cache),point_paths=budget.point_paths,
+                    support_intervals=support_budget.intervals,
+                    cached_angular_front_bands=len(front_band_cache),
+                    previous_panel_error_components=last_error_components,
+                    previous_global_error_components=global_error_components)
+            raise
         if _local_front_strips:support_by_panel[panel]=support
         if support.status=='open' or field.patch.pairs[0].friction_coefficient==0:
             accepted+=1;empty_certificates+=1

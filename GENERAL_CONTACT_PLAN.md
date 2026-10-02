@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.50. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.51. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -48,12 +48,31 @@ final force/tangent/storage/incremental dissipation/release are zero. Intermedia
 captures reject. Point/strip controls remain developmental, not formal floating proofs
 or native-owner engineering acceptance. Retain every failed candidate and test defect.
 
-NEXT one saved second-load LOCAL window xi[.72,.80],angle[3.19,3.20], preserving actual
-initial pose, both increments, work maps/laws and original settings. Question: do moving-
-geometry proofs or material integration now control failure? Report full resource/
-component diagnostics; no coupled solve. This is a discriminating local case, not full-
-patch admission. No cap/tolerance growth,blind retries or saved fullpatch retry. Choose
-next owner-adapter/proof work from the result; no coupled-owner retry until justified.
+Domain-bound temporal covers now exclude only strictly open whole time/angle/axial
+slabs before requiring nonzero B. Complete coverage and each component's own B sign
+are retained. Adjacent strict-derivative slabs merge before classifying roots, so an
+arbitrary subdivision boundary does not become a physical boundary. Independent
+analytic pulse, disconnected-component, domain and unresolved-boundary controls pass.
+Separate propagated coefficient errors replace the private uniform derivative floor;
+legacy no-controls bounds remain unchanged. Decimal amplification/rate controls pass.
+
+The unchanged saved second-load LOCAL window xi[.72,.80],angle[3.19,3.20] now reaches
+a genuine angular endpoint transition in14support intervals,0queries/.059s rather
+than exhausting128intervals. The second segment has N'<0 throughout the checked band,
+but N at both time endpoints changes sign with angle: its stationary branch enters
+and leaves the captured increment. This is not a material integration pass or a
+speed-up claim. Original full-time helpers and every failed run remain preserved.
+
+NEXT derive explicit angular boundary partitioning for variable stationary-branch
+presence. Distinguish a true endpoint crossing from an overly wide angular bound.
+Cover all regular bands and uncertainty bands; retain non-success until endpoint-
+contact force/tangent/work contributions are bounded or integrated. The existing
+open-endpoint work enclosure cannot simply be applied to a closed captured endpoint.
+Use the existing parameterized local tests and saved path; no fullpatch/owner retry
+until this geometry and contribution question is resolved. No cap/tolerance growth,
+unaccounted band removal, silent history reset or renewed consumed authority.
+
+[Temporal/error-bound evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/temporal_front_results.md).
 
 [Current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/multisegment_front_results.md).
 [Deferred-control evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/lazy_control_results.md).
