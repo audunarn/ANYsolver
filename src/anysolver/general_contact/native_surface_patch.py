@@ -33,6 +33,7 @@ class NativeSurfacePatchResult:
     normal_gap_m: float
     normal_storage_j: float
     points: tuple
+    continuous_gap: object=None
 
     def spatial_tangent(self):
         return self.tangent
@@ -42,9 +43,12 @@ class NativeS3MaterialSurfacePatch:
     """One fixed reference-area rule with independent point histories."""
     def __init__(self, rule, targets, *, normal_stiffness_Pa_per_m,
                  friction_coefficient, tangential_stiffness_Pa_per_m,
-                 activation_policy='reject',event_history_substeps=32):
+                 activation_policy='reject',event_history_substeps=32,gap_check='sampled'):
         if type(rule) is not NativeRoundSurfaceRule:
             raise TypeError('exact native reference surface rule required')
+        if gap_check not in ('sampled','straight_patch'):
+            raise ValueError('explicit supported patch gap check required')
+        self.gap_check=gap_check
         targets=tuple(targets)
         if len(targets)!=len(rule.samples):
             raise ValueError('one explicit material target required per surface sample')
@@ -65,9 +69,11 @@ class NativeS3MaterialSurfacePatch:
         self.definition_sha256=sha(self._definition())
 
     def _definition(self):
-        return dict(profile='NATIVE_S3_FIXED_MATERIAL_PATCH_DEV_V1',
+        result=dict(profile='NATIVE_S3_FIXED_MATERIAL_PATCH_DEV_V1',
                     rule=self.rule.identity,rule_definition=self.rule.definition,
                     points=[pair._definition() for pair in self.pairs])
+        if self.gap_check!='sampled':result['gap_check']=self.gap_check
+        return result
 
     def initial_history(self,shell_displacement):
         return NativeSurfacePatchHistory(self.definition_sha256,tuple(
@@ -91,12 +97,17 @@ class NativeS3MaterialSurfacePatch:
         current=values[0].configuration
         self.rule.evaluate(current.positions,current.position_low,current.cell_rotations)
         points=tuple(value.contribution for value in values)
+        continuous=None; gap=min(p.normal_gap_m for p in points)
+        if self.gap_check=='straight_patch':
+            from .native_surface_extrema import straight_patch_s3_gap
+            continuous=straight_patch_s3_gap(self.rule,self.target,current)
+            gap=min(gap,continuous.lower_bound)
         residual=sum((p.residual for p in points),np.zeros_like(points[0].residual))
         tangent=sum((p.spatial_tangent() for p in points),np.zeros_like(points[0].spatial_tangent()))
         trial=NativeSurfacePatchTrial(NativeSurfacePatchHistory(self.definition_sha256,
                                      tuple(p.trial.candidate_state for p in points)))
         result=NativeSurfacePatchResult(_readonly(residual),_readonly(tangent),trial,
-            min(p.normal_gap_m for p in points),sum(p.normal_storage_j for p in points),points)
+            gap,sum(p.normal_storage_j for p in points),points,continuous)
         return NativeS3MaterialPathResult(current,result,
             sha(dict(definition=self.definition_sha256,paths=[v.path_sha256 for v in values])),
             orientation_intervals+sum(v.certified_intervals for v in values))

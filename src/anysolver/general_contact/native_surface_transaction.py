@@ -70,6 +70,11 @@ class NativeS3MaterialTransaction:
                                            np.zeros(len(origin.shell_displacement)))
             if gap < 0:
                 raise ValueError('unresolved initial native material-surface penetration')
+        continuous=getattr(initial.material.contribution,'continuous_gap',None)
+        if continuous is not None and continuous.lower_bound<0:
+            # New continuous profile requires a resolved nonnegative initial
+            # gap. Roundoff uncertainty is not an interference allowance.
+            raise ValueError('unresolved initial continuous native material-surface gap')
         self._require_equilibrium(initial)
         self._accepted = self._make_accepted(initial, 0., 0)
         self._origin_sha = sha(dict(identity=self.identity, state=_payload(self._accepted)))

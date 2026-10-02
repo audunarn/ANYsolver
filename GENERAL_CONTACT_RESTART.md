@@ -2,9 +2,9 @@
 
 ## Authority and location
 
-Full C0�C9 remains active under goal2026-09-30.4, plan2026-10-02.21,
+Full C0�C9 remains active under goal2026-09-30.4, plan2026-10-02.22,
 policy2026-09-24.2. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001, base 08d88b8e plus this checkpoint.
+branch codex/contact-main-reconcile-20261001, base 67bce781 plus this checkpoint.
 No original-worktree or other-chat inspection/communication, publication, main
 merge, release, historical-default or shared ABC-guard changes. Tiered workflow;
 prior local/Mistral failures remain, no availability-only reprobes.
@@ -38,24 +38,33 @@ Evidence: contact_c5_native_surface_point_20261002/surface_patch_results.md/.jso
 and surface_patch_raw.zip, including the retained initial target-ownership fixture
 failure. No general surface-gap or between-sample regularity claim.
 
-## Latest resolution and next bounded action
+## Latest discriminator and next action
 
-Captured34 rejected paths at load.8. Last retained path is compressed about20um
-and facet ownership certifies in1interval; first-derivative gap enclosure exhausted
-128. Added conservative |g''| bound and endpoint interpolation remainder M*h^2/8.
-It retains all edge/orientation/ownership checks and the same resource limits.
-20focused checks pass, including actual rotating patch press/open/recontact and
-exact restart; saved fixture binding check passes. Independent source review found
-no proof defect. No live numerical process/worker. Earlier failures remain evidence.
+Continuous straight/untwisted patch extrema implemented independently of contact
+quadrature. Plane gap is affine in xi plus a*cos(alpha)+b*sin(alpha); both cell
+traces and all angular extrema checked. Full patch target ownership uses inward
+edge planes. Explicit gap_check=straight_patch binds restart and the owner gap gate.
+Review exposed unsampled initial penetration; initialization now rejects negative
+continuous lower bounds, including unresolved roundoff. Four geometry/screen,
+three admission/enforcement and one independent saved-pose integral checks pass.
 
-One prospective 2x2/4x4/8x8 integration screen completed: reaction4->8 changes
-0.105%, tip z0.368%; sampled worst gap grows0.138->0.570mm. Next: independent
-physical gap extrema over this straight-reference patch, then enforcement versus
-integration assessment. Do not claim gap convergence from sampled data or repeat
-integration orders without that discriminator. General curved boundaries, partner
-transfer, installed native delivery and C5 acceptance remain open.
-Evidence: contact_c5_native_surface_point_20261002/release_resolution.md/.json,
-release_resolution_raw.zip, release_rejected_path.json and capture script.
+8x8 stiffness1e4: continuous penetration.772mm versus sampled.570mm.
+8x8 stiffness1e5: continuous.287mm versus sampled.0866mm. Both below fixture1mm
+but above programme radius-based qualification starting budget49um. Crucially,
+independent continuous normal-force integral differs from fixed Gauss by.255%
+and19.68% respectively. Force-integration error is now the principal discrepancy.
+Full configurations and canonical checkpoints saved in continuous_gap_raw.zip.
+No need to resolve those poses again. No live process/worker.
+
+Next: contact-boundary-aware normal potential integration, analytic axial integral
+and bounded adaptive angular integration for this exact straight profile. Preserve
+both-body retained virtual work/tangent and shared owner/transaction; select the
+new algorithm explicitly and bind it. Separate normal contribution from point
+friction work to avoid double counting. Verify against saved-pose independent
+integrals and directional derivatives before another coupled enforcement solve.
+Do not increase penalty or fixed quadrature orders blindly. General curved
+surfaces, material history resolution, installed native delivery and C5 acceptance
+remain open. Evidence continuous_gap_results.md/.json and continuous_gap_raw.zip.
 
 ## Scope and resources
 

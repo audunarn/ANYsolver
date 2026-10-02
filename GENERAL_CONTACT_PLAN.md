@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.21. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.22. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -256,13 +256,25 @@ engineering acceptance. [Evidence](docs/d1_review_support/contact_c6_free_sphere
 One additional history/work/V6 split check passes on the same unchanged wheel;
 172distinct checks are covered, with unaffected results reused by impact analysis.
 
-**Next bounded decision:** independently evaluate physical gap over the fixed
-native surface patch and separate integration from normal enforcement error. The
-2x2/4x4/8x8 coupled screen converged;4x4->8x8 reaction changes0.105% and tip
-z0.368%, while maximum sampled penetration grows from0.138 to0.570mm. Agreement
-of integrated response is not a continuous-gap or engineering-acceptance result.
-Use the actual straight-reference patch's independent extremum calculation before
-another integration-order increase. Resource cap remains180s/953MiB.
+**Next bounded decision:** implement contact-boundary-aware normal integration
+for the native straight swept patch, through the existing work/contributor layer.
+Do not increase penalty or merely repeat higher fixed Gauss orders. Independent
+continuous normal-force integration on saved8x8poses shows0.255% discrepancy at
+normal stiffness1e4Pa/m and19.68% at1e5Pa/m. The stronger law is underintegrated.
+A sound bounded candidate analytically integrates the axial positive-part penalty
+potential and adaptively controls angular integration at activation boundaries,
+with complete native/S3 derivatives. Keep friction material history and its
+integration accuracy separate; preserve one transaction and explicit algorithm
+selection/identity. No silent route substitution inside failed increments.
+
+Independent continuous gap checks now cover exact straight, untwisted reference
+patches, including full target-facet ownership and both cell-interface traces.
+Optional straight_patch mode binds restart and feeds the continuous lower bound
+into the existing gate. Review found initial unsampled penetration could bypass
+initialization; a regression now rejects it, including unresolved roundoff.
+Four geometry/screen checks, three admission/enforcement checks and one saved-pose
+force screen pass. These tests expose the integration defect; they do not qualify
+native contact. See [continuous-gap evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/continuous_gap_results.md).
 
 Coupled rotating press/open/recontact/restart now passes. A captured failed path
 had strict facet ownership and about20micrometres compression throughout; the

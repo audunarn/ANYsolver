@@ -969,3 +969,11 @@ coupled integration screen completes, but increasing sampled penetration makes
 independent physical-gap/extremum and enforcement assessment the next requirement.
 No continuous-gap or C5 acceptance claim follows from integrated-force agreement.
 [Resolution](d1_review_support/contact_c5_native_surface_point_20261002/release_resolution.md).
+
+Optional straight_patch endpoint admission now checks continuous physical gap and
+target ownership on exact straight/untwisted native reference patches. Initial
+unsampled penetration and incompatible restart reject. Independent saved-pose
+pressure integration exposes19.68% normal-force error for the8x8 stronger-penalty
+case; contact-boundary-aware normal integration is required before promotion.
+This profile is developmental and supplies no general curved/swept or C5 admission.
+[Gap/enforcement evidence](d1_review_support/contact_c5_native_surface_point_20261002/continuous_gap_results.md).
