@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
+from numbers import Real
 from typing import Callable, Mapping, Sequence
 
 import numpy as np
@@ -33,8 +34,12 @@ from ._b2_physical_linear_batch_dev import (
     _accurate_sparse_residual, B2NumericalSolveFailure,
 )
 from .control import CancellationToken, SolveCancelled
-from ._stiffened_shell_physical_q4_mass import physical_mass
+from ._stiffened_shell_physical_q4_mass import physical_mass, POLICY as Q4_MASS_POLICY
 from .e4_pl_element import QualifiedE4PLShellElement
+from .e4_pl_s3_v2d_element import (
+    MASS_POLICY_ID as S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1,
+    FORMULATION_ID as S3_V2D_FORMULATION_ID,
+)
 from .elements import create_shell_element
 from .fe_core import FEModel
 from .linalg import MatrixClass, factorize_cached
@@ -177,7 +182,7 @@ class Q4B2Point:
 
 @dataclass(frozen=True)
 class S3V2DPanelShell:
-    """Explicit native S3 V2D elastic facet; physical inertia is deferred."""
+    """Explicit native S3 V2D elastic facet; reference mass requires modal opt-in."""
 
     shell_id: str
     node_ids: tuple[int, int, int]
@@ -215,6 +220,14 @@ class ExperimentalB2MixedPanelCapabilities(ExperimentalB2Q4PanelCapabilities):
     point_laws: tuple[tuple[str, str], ...] = ()
     footprint_law_id: str | None = None
     footprints: tuple[B2NodalRigidFootprint, ...] = ()
+
+
+@dataclass(frozen=True)
+class ExperimentalB2MixedReferenceModalCapabilities(ExperimentalB2MixedPanelCapabilities):
+    inertia_policy: str = S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1
+    shell_mass_policies: tuple[tuple[str, str], ...] = ()
+    s3_rotary_inertia: str = "omitted by S3 facet contributions; shared nodes may retain Q4 director inertia"
+    beam_mass_policy: str = "declared physical B2 sectional inertia through the station trace"
 
 
 @dataclass(frozen=True)
@@ -509,11 +522,18 @@ class ExperimentalB2Q4PanelAnalysis:
                  members: Sequence[PhysicalB2Member | CompiledPhysicalB2Member],
                  points: Sequence[Q4B2Point], *,
                  transformation: sparse.spmatrix, prescribed_offset,
-                 footprints: Sequence[B2NodalRigidFootprint] = ()):
+                 footprints: Sequence[B2NodalRigidFootprint] = (),
+                 reference_inertia_policy: str | None = None):
         shells = tuple(shells)
         supplied_members = tuple(members)
         points = tuple(points)
         footprints = tuple(footprints)
+        modal_mass = reference_inertia_policy is not None
+        if modal_mass and (not self._mixed_shells or
+                type(reference_inertia_policy) is not str or
+                reference_inertia_policy != S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1 or
+                footprints):
+            raise ValueError("explicit native-S3 reference inertia policy without footprints required")
         has_s3 = any(type(shell) is S3V2DPanelShell for shell in shells)
         if has_s3 and footprints:
             raise ValueError("S3 mixed-panel nodal footprints are unsupported")
@@ -536,6 +556,21 @@ class ExperimentalB2Q4PanelAnalysis:
         definitions = tuple(member.definition if isinstance(
             member, CompiledPhysicalB2Member) else member
             for member in supplied_members)
+        if modal_mass:
+            for shell in shells:
+                density = shell.density_kg_m3
+                if isinstance(density, (bool, np.bool_)) or not isinstance(density, Real):
+                    raise ValueError("mixed reference modes require complete positive finite shell density")
+                try:
+                    density_value = float(density)
+                except OverflowError as exc:
+                    raise ValueError("mixed reference modes require representable shell density") from exc
+                if not isfinite(density_value) or density_value <= 0.:
+                    raise ValueError("mixed reference modes require complete positive finite shell density")
+            if any(member.mass is None for member in definitions):
+                raise ValueError("mixed reference modes require complete declared physical B2 mass")
+            if any(member.geometric is not None for member in definitions):
+                raise ValueError("mixed reference modes are virgin elastic; prestress/geometric metadata unsupported")
         _unique_ids(definitions, "member_id")
         _require_connected_panel(shells, definitions, points, footprints)
         cache = PhysicalB2OperatorCache()
@@ -575,7 +610,7 @@ class ExperimentalB2Q4PanelAnalysis:
             model.add_node(node_id, *positions[node_id])
         rows, columns, values = [], [], []
         mass_rows, mass_columns, mass_values = [], [], []
-        complete_mass = not has_s3 and all(shell.density_kg_m3 is not None for shell in shells)
+        complete_mass = (not has_s3 or modal_mass) and all(shell.density_kg_m3 is not None for shell in shells)
         complete_mass = complete_mass and all(member.definition.mass is not None
                                              for member in compiled)
         shell_lookup = {}
@@ -590,7 +625,10 @@ class ExperimentalB2Q4PanelAnalysis:
             if count == 4:
                 _flat_vertices(vertices)
             material_id = f"panel-material-{index}"
-            model.add_material(material_id, shell.E, shell.nu)
+            if modal_mass:
+                model.add_material(material_id, shell.E, shell.nu, density=shell.density_kg_m3)
+            else:
+                model.add_material(material_id, shell.E, shell.nu)
             if self._mixed_shells:
                 element = create_shell_element(
                     index, list(shell.node_ids), material_id,
@@ -621,6 +659,16 @@ class ExperimentalB2Q4PanelAnalysis:
                     reference_normal=shell.reference_normal)
                 if complete_mass:
                     _scatter(mass_rows, mass_columns, mass_values, slots, local_mass)
+            elif count == 3 and modal_mass:
+                local_mass = element.compute_mass_matrix(model.mesh, model.get_material(material_id))
+                angular = np.array([6*i+j for i in range(3) for j in (3, 4, 5)])
+                translation = np.array([6*i+j for i in range(3) for j in (0, 1, 2)])
+                if (local_mass.shape != (18, 18) or not np.isfinite(local_mass).all()
+                        or np.any(np.diag(local_mass)[translation] <= 0.)
+                        or np.any(local_mass[angular, :] != 0.)
+                        or np.any(local_mass[:, angular] != 0.)):
+                    raise ValueError("native S3 translational mass is not representable with zero angular inertia")
+                _scatter(mass_rows, mass_columns, mass_values, slots, local_mass)
             shell_lookup[shell.shell_id] = (vertices, slots)
         member_lookup = {}
         for member in compiled:
@@ -636,6 +684,8 @@ class ExperimentalB2Q4PanelAnalysis:
                 local_mass = frame.T@member.local_candidate_mass_matrix()@frame
                 if not np.isfinite(local_mass).all():
                     raise ValueError("physical B2 mass assembly is not representable")
+                if modal_mass and np.any(np.diag(local_mass)[[0, 1, 2, 6, 7, 8]] <= 0.):
+                    raise ValueError("physical B2 translational mass is not representable")
                 _scatter(mass_rows, mass_columns, mass_values, slots, local_mass)
             member_lookup[member.definition.member_id] = (member, slots)
         K = sparse.coo_matrix((values, (rows, columns)),
@@ -683,6 +733,16 @@ class ExperimentalB2Q4PanelAnalysis:
                 u0.shape != (total,) or not np.isfinite(T.data).all() or
                 not np.isfinite(u0).all()):
             raise ValueError("finite sparse panel affine plan required")
+        if modal_mass:
+            if np.any(u0 != 0.):
+                raise ValueError("virgin mixed reference modes require zero prescribed offset")
+            selector = T.copy()
+            selector.eliminate_zeros()
+            if (np.any(np.diff(selector.tocsc().indptr) != 1) or
+                    np.any(np.diff(selector.indptr) > 1)):
+                raise ValueError("mixed reference modes require coordinate supports without MPCs")
+            if not _supports_all_panel_rigid_fields(T, positions, beam_positions):
+                raise ValueError("mixed reference modes require supports detecting all six rigid fields; free-free unsupported")
         reduced_c = (C @ T).tocsc()
         _require_independent_supported_point_rows(reduced_c)
         reduced_k = (T.T @ K @ T).tocsc()
@@ -700,6 +760,7 @@ class ExperimentalB2Q4PanelAnalysis:
         self.beam_node_ids = beam_ids
         self.point_ids = tuple(point.point_id for point in points)
         self._has_s3 = has_s3
+        self._reference_inertia_policy = reference_inertia_policy
         self._shell_formulations = tuple((shell.shell_id, element.formulation_id)
                                         for shell, _, element, _, _ in pieces)
         self._point_laws = tuple(point_laws)
@@ -879,7 +940,7 @@ class ExperimentalB2Q4PanelAnalysis:
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
-        if self._has_s3:
+        if self._has_s3 and self._reference_inertia_policy is None:
             raise ValueError("native S3 V2D physical mass and reference modes are deferred")
         if type(request) is not B2ReferenceModesRequest:
             raise ValueError("typed reference-mode request required")
@@ -1337,16 +1398,25 @@ class ExperimentalB2MixedPanelAnalysis(ExperimentalB2Q4PanelAnalysis):
     @property
     def capabilities(self) -> ExperimentalB2MixedPanelCapabilities:
         existing = super().capabilities
-        return ExperimentalB2MixedPanelCapabilities(
+        capability_type = (ExperimentalB2MixedReferenceModalCapabilities if
+                           self._reference_inertia_policy is not None else ExperimentalB2MixedPanelCapabilities)
+        extra = ({"shell_mass_policies": tuple((shell_id,
+                  S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1 if formulation ==
+                  S3_V2D_FORMULATION_ID else Q4_MASS_POLICY)
+                  for shell_id, formulation in self._shell_formulations)}
+                 if self._reference_inertia_policy is not None else {})
+        return capability_type(
             point_law_id=tuple(dict.fromkeys(law for _, law in self._point_laws)),
             attachment=existing.attachment,
             operations=existing.operations,
-            spectral_domain=("native S3 V2D physical mass and modes deferred" if self._has_s3
+            spectral_domain=("experimental virgin supported finite descriptor pairs; heterogeneous Q4 director and native S3 lumped translation inertia; S3 rotary inertia omitted; completeness unqualified; prestress unsupported"
+                             if self._reference_inertia_policy is not None else
+                             "native S3 V2D physical mass and modes deferred" if self._has_s3
                              else existing.spectral_domain),
             shell_formulations=self._shell_formulations,
             point_laws=self._point_laws,
             footprint_law_id=FOOTPRINT_LAW_ID if self.footprints else None,
-            footprints=self.footprints)
+            footprints=self.footprints, **extra)
 
 
 def create_experimental_b2_q4_panel_analysis(*args, **kwargs):

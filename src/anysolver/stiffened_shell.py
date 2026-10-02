@@ -38,6 +38,8 @@ from ._stiffened_shell_b2_q4_panel_experimental import (
     ExperimentalB2Q4PanelAnalysis, Q4PanelShell, Q4B2Point,
     ExperimentalB2MixedPanelAnalysis, S3V2DPanelShell,
     ExperimentalB2MixedPanelCapabilities,
+    ExperimentalB2MixedReferenceModalCapabilities,
+    S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1,
     ExperimentalB2Q4PanelResponseEnvelope,
     B2ReferenceModesRequest, B2ReferenceModesResult,
     B2FootprintReferenceModesResult, B2ModalConstraintRow,
@@ -132,6 +134,25 @@ class B2MixedPanelDefinition:
     footprints: tuple[B2NodalRigidFootprint, ...] = ()
 
 
+@dataclass(frozen=True)
+class B2MixedReferenceModalDefinition:
+    """Virgin supported reference modes with explicitly declared discrete inertia.
+
+    Q4 facets retain director mass; native S3 facets use translational lumped
+    mass and omit all rotary inertia. This does not qualify continuum dynamics.
+    """
+
+    profile: str
+    shell_nodes_m: object
+    shells: tuple[Q4PanelShell | S3V2DPanelShell, ...]
+    members: tuple[PhysicalB2Member | CompiledPhysicalB2Member, ...]
+    points: tuple[Q4B2Point, ...]
+    transformation: object
+    prescribed_offset: object
+    footprints: tuple[B2NodalRigidFootprint, ...] = ()
+    inertia_policy: str = S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1
+
+
 def create_analysis(*, definition, resources=None):
     """Create the explicitly selected experimental owner for an admitted profile."""
     if type(definition) is LinearDefinition:
@@ -173,6 +194,19 @@ def create_analysis(*, definition, resources=None):
             transformation=definition.transformation,
             prescribed_offset=definition.prescribed_offset,
             footprints=definition.footprints)
+    if type(definition) is B2MixedReferenceModalDefinition:
+        if definition.profile != B2_E4_PL_FAST_LINEAR_V1 or resources is not None:
+            raise ValueError("explicit experimental B2 mixed reference-modal definition required")
+        if (type(definition.inertia_policy) is not str or
+                definition.inertia_policy != S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1):
+            raise ValueError("explicit native-S3 reference inertia policy required")
+        return ExperimentalB2MixedPanelAnalysis(
+            definition.shell_nodes_m, definition.shells,
+            definition.members, definition.points,
+            transformation=definition.transformation,
+            prescribed_offset=definition.prescribed_offset,
+            footprints=definition.footprints,
+            reference_inertia_policy=definition.inertia_policy)
     raise ValueError("unsupported stiffened-shell definition/profile")
 
 
@@ -190,6 +224,8 @@ __all__ = [
     "GE_NODAL_FOOTPRINT_INCREMENT_ORIGIN_CHART_V2",
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
     "B2MixedPanelDefinition", "S3V2DPanelShell", "ExperimentalB2MixedPanelCapabilities",
+    "B2MixedReferenceModalDefinition", "ExperimentalB2MixedReferenceModalCapabilities",
+    "S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
     "B2FootprintReferenceModesResult", "B2ModalConstraintRow",

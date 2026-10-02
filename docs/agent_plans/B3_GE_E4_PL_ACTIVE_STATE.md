@@ -1,84 +1,80 @@
 # B3-GE / E4-PL / B2 — active state, 2 October 2026
 
-## Authority and source
+## Authority and actual owners
 
-Revision8 full goal/plan remain active under risk-proportionate policy2026-09-24.2
-and source-first impact testing. AGENTS reread. Tiered workers, separate ownership,
-no communication with contact worker. Formal F03 authority UNCONSUMED; foreign
-scriptc908b1f3...9481 rehashed unchanged and never run/edit. Scientific criteria,
-historical failures, protected evidence and all final obligations remain binding.
-No main merge, publication, default/version change or aggregate qualification.
+Revision8 complete goal/plan remain active under risk-proportionate policy
+2026-09-24.2 and source-first impact testing. AGENTS reread. Tiered delegation,
+no contact-worker communication. Formal F03 UNCONSUMED; foreign scriptc908b1f3
+...9481 remains protected/unexecuted. Scientific criteria, histories, resource
+limits, complete G0-G6/F01-F13/V01-V28/B01-B18 and release obligations unchanged.
+No main merge/publication/default/version change or aggregate qualification.
 
-Solver owner: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001, product46026dca; preceding
-evidence1e4e6d7a. Current HEAD adds the same-action reference and this note; inspect
-Git. Shared-main testing baseline1a0ae901; unrelated main/contact work untouched.
-ANYfem owner: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer, current26cc56eb3760530c457a18a8faec1cf93ae79ecd.
+Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001. Inspect Git for current HEAD;
+preceding2a7d7cb1, earlier static product46026dca. Main/contact work untouched.
+Consumer: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
+branch codex/experimental-ge-panel-consumer, unchanged26cc56eb3760530c457a18a8faec1cf93ae79ecd.
+One acceptance matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md.
 
-## Delivered behavior and accepted boundaries
+## Delivered behavior and current boundary
 
 Experimental multi-element Q4/S3 GE point/footprint static/finite owners,
 atomic state, recovery/restart and selected virgin modes exist. Separate B2
-static/batch and selected footprint modes exist. Scoped F05/F08/F09 and selected
-F10/F11 point foundations have acceptance records; aggregateG0B/M1-M5 remain open.
-One authoritative matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md.
+static/batch, selected footprint modes and mixed static ANYfem Project exist.
+Scoped F05/F08/F09 and selected F10/F11 have records; aggregateG0B/M1-M5 open.
 
-Latest usable delivery: explicit mixed Q4/native-S3 B2 static input schema in
-ANYfem native Project save/reopen, selected1/10/100 batches and complete-prefix
-cancellation. Installed167/167 and all three public examples pass; one eligible
-factorization per batch. Product391solver/98consumer module bytes match exact
-wheel/site/source; imported275modules stay onsite. Consumer15eb01d0...b76f6,
-unchanged solverfb12ac66...75fd. Two failed negative-fixture repairs retained,
-no product guard/tolerance change. Independent Read review clear, not a claim
-of different-model-family acceptance. S3 mass/modes/footprints and completeM3 open.
-[Consumer evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-mixed-panel-consumer-20261002/results.md).
-[Solver mixed-panel evidence](development/r8-b2-mixed-panel-20261002/results.md).
+New B2MixedReferenceModalDefinition uses the existing B2FAST profile/facade and
+sparse owner. Mixed/all-S3 supported virgin modes retain algebraic coordinates.
+Native S3 facet mass is lumped translation only: ALL facet rotary inertia omitted;
+shared Q4 nodes retain Q4 director contributions. No invented mass or equation
+change. Old static definitions do not opt in. New modal consumer persistence,
+physical frequency/spectrum accuracy, free-free/prestress/S3 footprints and
+full F07/F12/G4B/M3/M4/G6 remain open.
+
+Final installed429/429 (262solver/167consumer) and both public modal examples pass.
+Eight dense-pencil controls cover free/fixed spin, reversed/forward mixed/S3.
+One modal factor each; original static factor/response preserved. Source fixture
+error and wrong selector retained, repaired affected checks pass. Separate Read
+review findings resolved; no different-model-family acceptance claim.
+Wheel f41f07b2554e24ff843e73281479f09b965e878b4ce06f8693a4737055216fc0
+binds391solver modules; unchanged consumer15eb01d0...b76f6 binds98. Actual275
+imports onsite; BLAS/OpenMP/Numba1/JIT off. 36.994s/223223808B sampledRSS is a
+run record, not a speedup. [Delivery/raw/review](development/r8-b2-mixed-reference-modes-20261002/results.md).
 
 ## Current scientific decision
 
-Decision sought: defensible physical BL5 transfer and production multiplier
-policy. The completed whole-element8:1 endpoint series passes existing work,
-equilibrium and gap checks, retaining native variables. FinestMz equilibrium
-9.51604e-9 remains close to1e-8; lastMz refinement changes-1.354%. No endpoint
-repeat/fourth mesh follows. [Saved endpoint evidence](development/r8-bl5-endpoint-response-20261001/results.md).
+Decision sought: defensible physical BL5 transfer and production interface
+policy. Whole-element8:1 endpoint work/equilibrium/gaps pass unchanged;
+finestMz9.516e-9 is near1e-8; lastMz change-1.354% is not converged accuracy.
+Independent US3 same-action work differences-1.07386%/-.247769%/-1.15692%
+establish a shell-response contribution, not unique connection/beam/drilling cause.
+[Prior same-action result](development/r8-bl5-us3-same-action-20261002/results.md).
 
-Independent same-action US3 shell replay now completes Fy/Mx/Mz at the frozen
-finest1105nodes/2048triangles and identical root supports. All six shell covectors
-are applied directly; no beam/connection feedback or repeated eccentricity.
-Work differences-1.07386%/-.247769%/-1.15692% exceed DAT uncertainty. This establishes
-a shell-response contribution, not unique beam/connection or drilling causality.
-Normal-spin response differs but has zero direct load/work. Source review finds
-flat Q4 core has no spin block, PL couples translation/spin and HG is spin-only;
-the existing component API separates them. Prior PL+HG sensitivity scales the
-whole numerical sector, not bare spin or a finite-removal/independence result.
+Bounded completion discriminator is now complete: exact shell-operator parity
+permits reused PL+HG; one sparse unforced-spin factor serves three saved actions.
+Completion work fractions0.09843%/0.0003885%/0.09728%, free physical-action
+fractions7.88%/1.37%/2.33%. Work controls <=1.41e-12; spin balance about2e-16.
+Small energy coexists with opposing root partitions and earlier root sensitivity.
+Wrenches are completion resisting action on constrained shell coordinates about
+GLOBAL origin, not total ground reaction or removal-induced change.
 
-Resulting action: evaluate the assembled supported completion action after spin
-relaxation on saved states, at unchanged coefficients, using existing components
-and sparse actions/solves. Verify actual frames/partition/spin equilibrium first.
-This separates completion feedback from physical core without tuning/removal.
-Do not repeat the combined sensitivity or infer causality from rz. Do not tune
-multipliers, automatically refine or reuse rigid-tipE02 as bonded-line evidence.
-Ready material/consumer work remains independent. FormalF03/M2 and physical
-coupled torque/shear, stability/ratios, scale/external/platform/release remain open.
-[Same-action result, raw evidence and review](development/r8-bl5-us3-same-action-20261002/results.md).
+Action: retain candidate; STOP completion tuning/derivative repeats and automatic
+axial/shell refinement. This result does not select a law/space or prove drilling
+independence. Coupled physical reference/torque/shear and growing-space stability
+remain precise M2/F03 requirements. Advance ready independent consumer/material
+integration; use combined evidence when defining the next physical decision.
+[Reviewed supported action/raw](development/r8-bl5-supported-completion-20261002/results.md).
 
-## Execution and restart
+## Restart
 
-All numerical jobs terminal. V2 external exit201 from20-character CLOAD field
-truncation is retained; two partial steps not scored. V3 repairs formatting only,
-records decoded action differences(max1.49944e-14relative), completes three steps
-once: .433s/25,153,536bytes sampledRSS, reportedCPU1,600s/1GiB supervision.
-Pairing serialization estimates are not forward-state error certificates.
-No solver product changed/no new solver wheel required. No speedup claim.
-Raw roots: Temp/r8-bl5-us3-same-action-v1/v2/v3 and
-Temp/r8-anyfem-b2-mixed-panel-installed-v1; archives linked in results.
-
-Use focused exact affected source checks during implementation; installed checks
-at coherent boundaries. No unchanged campaign repeats or new helper-level gates.
-At most3workers, one heavy numerical job,100krows/600s/8GiB/8threadceiling;
-actual requested numerical settings1thread/JIT-off. No numerical slot held.
-[Prior note](history/ACTIVE_STATE_20261002_PRE_SAME_ACTION.md) and
-[exact original bytes](history/ACTIVE_STATE_20261002_PRE_SAME_ACTION.zip) preserve
-the complete prior checkpoint. Continue from actual source/status, not obsolete
-historical pending-run instructions. Full goal remains active, not complete.
+All owned workers and numerical jobs terminal. No resource slot held. Next usable
+slice: distinct explicit mixed-S3 modal consumer record/save-reopen through the
+existing ANYfem Project route, followed by matched physical spectral references.
+Complete GE material/load/attachment and practical-scale obligations remain active.
+Use focused source checks and installed artifacts at coherent boundaries; no
+unchanged campaigns or helper-level qualification packages. At most3workers and
+one heavy job; ceiling100krows/600s/8GiB/8threads. Recent jobs1thread/1GiB.
+Original Temp roots: r8-bl5-supported-completion-v1,
+r8-b2-mixed-reference-modes-source-v1-v4 and r8-b2-mixed-reference-modes-installed-v1;
+verified archives are in linked result folders. Protected earlier note bytes remain
+in history/ACTIVE_STATE_20261002_PRE_SAME_ACTION.zip. Full goal INCOMPLETE.

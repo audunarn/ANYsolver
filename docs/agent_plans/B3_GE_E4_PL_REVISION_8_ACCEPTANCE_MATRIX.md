@@ -1011,3 +1011,20 @@ drilling causality. V2 numeric-field failure retained; V3 explicitly bounds
 serialization width and records decoded action differences. No coupled physical
 accuracy, multiplier selection, refinement claim or formalF03 acceptance.
 [Evidence and resulting decision](development/r8-bl5-us3-same-action-20261002/results.md).
+
+**2 October supported completion and modal delivery:** one fixed-state sparse
+spin relaxation retains the saved state and passes existing controls. Completion
+work is below0.1% but action/root partitions are appreciable; no causal fraction,
+drilling independence or BL5/F03 pass follows. Stop completion tuning/repeats.
+[Exact supported action and reviewed decision](development/r8-bl5-supported-completion-20261002/results.md).
+
+Explicit B2MixedReferenceModalDefinition now offers experimental mixed/all-S3
+virgin supported descriptor modes with native translational lumped S3 facet mass
+and no S3 facet rotary contribution. Shared nodes may retain Q4 director inertia.
+Final installed429/429 (262solver/167consumer), both new public examples and
+free/fixed-spin dense-pencil parity pass; wheel f41f07b2...16fc0 binds391solver
+modules with unchanged15eb01d0...b76f6 consumer98modules. Independent source
+findings resolved; source fixture and selector failures retained. Static schemas
+unchanged. New modal consumer persistence, physical continuum/spectral accuracy,
+free-free/prestress/footprints, full F07/F12/G4B/M3/M4/G6 remain OPEN.
+[Implementation, exact artifacts and limits](development/r8-b2-mixed-reference-modes-20261002/results.md).
