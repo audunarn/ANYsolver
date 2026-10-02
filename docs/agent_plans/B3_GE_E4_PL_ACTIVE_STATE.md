@@ -5,9 +5,9 @@
 Revision 8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full amended
 G0–G6, F01–F13, V01–V28, B01–B18 scope and scientific criteria remain binding.
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 0b21ed0e; use git log for
+branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 2cef442c; use git log for
 latest committed identity. ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer
-at 85ed953 (curved-material consumer). Scoped local commits only; no push/main merge/publication
+at 3819b23 (curved-material recovery documentation; product85ed953). Scoped local commits only; no push/main merge/publication
 or contact-worker messages. All owned numerical runs/review terminal. Main untouched.
 
 Formal F03 UNCONSUMED; protected original script SHA256
@@ -61,13 +61,20 @@ addresses the bounded yield-boundary reload; defaults8 and adaptive/legacy12 sta
 Failed fixed/adaptive12 attempts remain failures. [Scope, review, failures and
 artifact identities](development/r8-curved-material-20261003/results.md).
 
-Next uncertainty: point material snapshots lack the preceding generalized beam
-return-map state needed for last-increment station recovery. Extend that existing
-checkpoint/recovery contract without changing its legacy decoder, then verify
-exact live/restored station fields and corruption rejection. No new framework,
-external campaign or finer roof sweep. New policy rejects displacement, material
-arc/spectra, external loads and material-reference construction; fibres, S3 and
-broader attachment/material obligations remain unfinished. No aggregate pass.
+Next gap resolved: new binary kinds retain fixed beam/shell predecessors for
+last-increment recovery. Installed27 checks pass, including exact station records,
+corrupt predecessor rejection, legacy snapshot upgrade, cached ownership and
+restored residual/tangent parity. Installed consumer native history/detail and
+strict guards pass. All511 modules match. [Artifacts, scope and retained helper
+failure](development/r8-curved-predecessor-20261003/results.md).
+
+Next bounded slice: admit coherent virgin curved material reference construction
+through the existing imperfection operation, with zero initial histories/gaps and
+exact consumer restart. This does not transport loaded history to a new geometry.
+Failure repairs the reference/admission seam; success admits only the supported
+point/material combination. No framework, external campaign or finer roof sweep.
+New policy still rejects displacement, material arc/spectra and external loads;
+fibres, curved S3, broader attachments and aggregate gates remain unfinished.
 
 The independent nonlinear E04 comparison remains open: finite external section/
 pose/offset mapping and convergence are not established. CalculiX U1 is linear;

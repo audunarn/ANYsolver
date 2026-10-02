@@ -50,6 +50,7 @@ from ._stiffened_shell_ge_experimental import (
 )
 from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import SCHEMAS as _BINARY_SCHEMAS
+from ._stiffened_shell_ge_checkpoint_binary import CURVED_POINT_MATERIAL_KINDS
 from ._stiffened_shell_ge_checkpoint_binary import encode_s3 as _encode_s3_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import encode_chart as _encode_chart_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import NATIVE_SHELL_SCHEMA
@@ -448,6 +449,7 @@ class FinitePointDriver:
             np.tile(np.eye(3), (len(owner._shell_ids), 1, 1)), len(owner._shell_ids))
         self._beam_origins = tuple(part[2] for part in owner._beam_parts)
         self._beam_predecessors = self._beam_origins
+        self._curved_material_predecessors = bool(owner._curved_material)
         self._pattern = None
         self._external = getattr(owner, "_external_context", None)
         if self._external is not None and not getattr(self._external, "finite_supported", True):
@@ -632,7 +634,7 @@ class FinitePointDriver:
             if getattr(owner, "_curved_reference", False) and not getattr(owner,"_curved_material",False):
                 _require_elastic_footprint_histories((response.history,), "candidate",scope="curved Q4 points")
             beam_candidates.append(response.history)
-            if owner._bl5_material:
+            if owner._bl5_material or owner._curved_material:
                 from ._ge_beam3_retained_generalized import RetainedGeneralizedOperator
                 if type(element.operator) is RetainedGeneralizedOperator:
                     generalized_material.append((i,response.material))
@@ -723,7 +725,7 @@ class FinitePointDriver:
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)
 
     def _generalized_records(self,state,origins,accepted):
-        if not self.owner._bl5_material:return ()
+        if not (self.owner._bl5_material or self.owner._curved_material):return ()
         cached=self._generalized_trial_recovery
         if cached is None or cached[0] is not state or cached[1] is not origins:
             raise ValueError("stale generalized material recovery")
@@ -1039,7 +1041,8 @@ class FinitePointDriver:
                 _beam_predecessors=self._beam_origins, _beam_origins=beam_next,
                 _load_factor=float(factor), _accepted_factors=next_factors,
                 _pattern=pattern, _programme=programme,
-                _applied_load=applied_load, _adaptive_state=next_control))
+                _applied_load=applied_load, _adaptive_state=next_control,
+                _curved_material_predecessors=bool(owner._curved_material)))
         if next_control is not None or programme is not None or self._external is not None:
             cancellation_safe_point(cancellation_token,
                                     "stiffened-shell.finite.controller-publish")
@@ -1051,6 +1054,7 @@ class FinitePointDriver:
             self._shell_origins = next_shell_origins
             self._beam_predecessors = self._beam_origins
             self._beam_origins = beam_next
+            self._curved_material_predecessors = bool(owner._curved_material)
             self._load_factor = float(factor)
             self._accepted_factors = next_factors
             self._pattern = pattern
@@ -1204,20 +1208,24 @@ class FinitePointDriver:
                   ("pattern" if self._programme is None else "applied_dead_load",
                    self._pattern if self._programme is None else self._applied_load),
                   ("accepted_factors", np.asarray(self._accepted_factors)))
-        if self.owner._bl5_material:
+        if self.owner._bl5_material or (self.owner._curved_material and self._curved_material_predecessors):
             plastic, accumulated = _material_arrays(self._beam_origins)
             origin_plastic, origin_accumulated = _material_arrays(self._beam_predecessors)
             material = (("beam_plastic", plastic), ("beam_accumulated", accumulated),
                         ("beam_origin_plastic", origin_plastic),
                         ("beam_origin_accumulated", origin_accumulated))
-            if self.owner._bl5_shell_material:
+            coupled = self.owner._bl5_shell_material or (self.owner._curved_material and
+                self.owner._definition.shell.j2_curve is not None)
+            if coupled:
                 shell_plastic, shell_alpha = _shell_material_arrays(self._shell_origins)
                 parent_plastic, parent_alpha = _shell_material_arrays(self._shell_predecessors)
                 material += (("shell_plastic", shell_plastic), ("shell_alpha", shell_alpha),
                              ("shell_origin_plastic", parent_plastic),
                              ("shell_origin_alpha", parent_alpha))
-            return _encode_binary_checkpoint(kind("finite_bl5_coupled" if
-                self.owner._bl5_shell_material else "finite_bl5_material"),
+            checkpoint_kind = (("finite_curved_points_coupled" if coupled else
+                "finite_curved_points_material") if self.owner._curved_material else
+                "finite_bl5_coupled" if coupled else "finite_bl5_material")
+            return _encode_binary_checkpoint(kind(checkpoint_kind),
                 self._checkpoint_identity(), generation, arrays + material)
         if getattr(self.owner, "_finite_bl5", False):
             return _encode_binary_checkpoint(kind("finite_bl5"),
@@ -1334,6 +1342,11 @@ class FinitePointDriver:
                 owner._bl5_material != (value.get("schema") in (_BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) or
                 owner._bl5_shell_material != (value.get("schema") == _BINARY_SCHEMAS["finite_bl5_coupled"])):
             raise ValueError("finite BL5 checkpoint requires its matching line policy")
+        curved_material = value.get("schema") in tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS)
+        curved_shell = value.get("schema") == _BINARY_SCHEMAS["finite_curved_points_coupled"]
+        if curved_material and (not owner._curved_material or
+                curved_shell != (owner._definition.shell.j2_curve is not None)):
+            raise ValueError("curved material predecessor checkpoint requires its matching policy")
         native_shell = value.get("schema") == NATIVE_SHELL_SCHEMA
         stable_s3 = value.get("schema") == STABLE_NATIVE_SCHEMA
         if (owner._footprint_stable_s3 or self._external_stable_s3) and not stable_s3:
@@ -1346,16 +1359,16 @@ class FinitePointDriver:
         s3_material = (value.get("schema") == FINITE_S3_MATERIAL_CHECKPOINT or
                        (native_shell and bool(owner._definition.shell.s3_elements)))
         shell_material = value.get("schema") in (
-            FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA, _BINARY_SCHEMAS["finite_bl5_coupled"])
+            FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA, _BINARY_SCHEMAS["finite_bl5_coupled"], _BINARY_SCHEMAS["finite_curved_points_coupled"])
         material = value.get("schema") in (
             _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"],
             FINITE_MATERIAL_CHECKPOINT, FINITE_SHELL_MATERIAL_CHECKPOINT,
-            FINITE_S3_MATERIAL_CHECKPOINT)
+            FINITE_S3_MATERIAL_CHECKPOINT) or curved_material
         expected_keys = (base_keys | {"beam_plastic", "beam_accumulated"}
                          if material else base_keys)
-        if owner._bl5_material:
+        if owner._bl5_material or curved_material:
             expected_keys |= {"beam_origin_plastic", "beam_origin_accumulated"}
-        if owner._bl5_shell_material:
+        if owner._bl5_shell_material or curved_shell:
             expected_keys |= {"shell_origin_plastic", "shell_origin_alpha"}
         if native_material:
             expected_keys |= {name for prefix in ("origin", "accepted")
@@ -1369,7 +1382,7 @@ class FinitePointDriver:
                               "shell_origin_q", "shell_origin_anchors", "s3_states"}
         if (set(value) != expected_keys or
                 value["schema"] not in
-                (FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
+                (*tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS), FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
@@ -1431,12 +1444,12 @@ class FinitePointDriver:
             plastic = _owned(value["beam_plastic"], (stations, 6, 2))
             accumulated = _owned(value["beam_accumulated"], (stations, 2))
             beam_origins = _material_histories(owner, plastic, accumulated)
-            if owner._bl5_material:
+            if owner._bl5_material or curved_material:
                 beam_accepted = beam_origins
                 origin_plastic = _owned(value["beam_origin_plastic"], (stations, 6, 2))
                 origin_accumulated = _owned(value["beam_origin_accumulated"], (stations, 2))
                 beam_origins = _material_histories(owner, origin_plastic, origin_accumulated)
-            if not owner._bl5_material and not shell_material and not np.any(accumulated) and all(
+            if not owner._bl5_material and not curved_material and not shell_material and not np.any(accumulated) and all(
                     b > a for a, b in zip(factors, factors[1:])):
                 raise ValueError("material checkpoint requires yielded or reversed history")
         else:
@@ -1474,7 +1487,7 @@ class FinitePointDriver:
         else:
             shell_origins = self._shell_origins
         shell_accepted = shell_origins
-        if owner._bl5_shell_material:
+        if owner._bl5_shell_material or curved_shell:
             origin_plastic = _owned(value["shell_origin_plastic"], (q4_count, 12, 3))
             origin_alpha = _owned(value["shell_origin_alpha"], (q4_count, 12))
             if np.any(origin_alpha < 0.):
@@ -1588,7 +1601,7 @@ class FinitePointDriver:
             _owned(self._beam_positions(trial)), frames, cells, resultants,
             multipliers, _owned(support), relative, gap, 0,
             value["generation"] if accepted_generation is None else accepted_generation, tuple(factors),
-            _material_observables(beam_accepted if native_material or owner._bl5_material else beam_origins),
+            _material_observables(beam_accepted if native_material or owner._bl5_material or curved_material else beam_origins),
             (tuple(tuple(float(v) for v in state["alpha"])
                    for state in shell_accepted) if shell_material else ()),
             (_shell_q4_recovery(owner._shell_parts[:q4_count],
@@ -1599,8 +1612,9 @@ class FinitePointDriver:
              if s3_material else ()))
         result = _with_shell_chart(result, trial, owner._shell_count)
         result = replace(result, point_wrenches=self._point_records(trial),
-            beam_generalized_material=self._generalized_records(trial,beam_origins,
-                beam_accepted if owner._bl5_material else beam_next))
+            beam_generalized_material=(self._generalized_records(trial,beam_origins,
+                beam_accepted if owner._bl5_material or curved_material else beam_next)
+                if not owner._curved_material or curved_material else ()))
         if getattr(owner, "_finite_bl5", False):
             result = replace(result, beam_shell_line_work=self._line_trial_recovery[1])
         if native_material:
@@ -1626,7 +1640,8 @@ class FinitePointDriver:
             self._shell_predecessor_anchors = origin_anchors
         self._shell_origins = shell_accepted if shell_material else shell_next
         self._beam_predecessors = beam_origins
-        self._beam_origins = beam_accepted if native_material or owner._bl5_material else beam_origins if material else beam_next
+        self._beam_origins = beam_accepted if native_material or owner._bl5_material or curved_material else beam_origins if material else beam_next
+        self._curved_material_predecessors = curved_material
         self._load_factor = factors[-1]
         self._accepted_factors = tuple(factors)
         self._accepted = result

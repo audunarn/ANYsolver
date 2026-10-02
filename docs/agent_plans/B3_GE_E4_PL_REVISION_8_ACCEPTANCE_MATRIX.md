@@ -1535,3 +1535,14 @@ remain failed; new-policy fixed steps explicitly admit up to16, defaults unchang
 Detailed generalized last-increment recovery/predecessor checkpoint remains open.
 No displacement/material arc/spectra/external-load admission or aggregate gate.
 [Artifacts, review scope and failure evidence](development/r8-curved-material-20261003/results.md).
+
+
+**3 October curved material predecessor recovery: IMPLEMENTED_NOT_QUALIFIED.**
+Distinct binary kinds retain beam/shell predecessors; cached generalized station
+work/history survives exact restored continuation and rebase. Installed27 focused
+checks pass, including valid-digest altered states, old-format upgrade, independent
+compiled layout rejection and bounded residual/tangent parity. Paired installed
+ANYfem native Project history/detail and input negatives pass. Same-code/native
+oracles and integration-owner review do not replace independent scientific or
+external acceptance. No aggregate gate or additional analysis/material admission.
+[Identities, scope and failures](development/r8-curved-predecessor-20261003/results.md).

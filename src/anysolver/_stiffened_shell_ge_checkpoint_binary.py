@@ -30,6 +30,10 @@ MAX_HEADER_BYTES = 8192
 MAX_CHECKPOINT_BYTES = 128 * 1024 * 1024
 MAX_S3_STATE_BYTES = 128 * 1024
 SCHEMAS = {
+    "finite_curved_points_material": "B3_GE_E4_PL_CURVED_POINT_GENERALIZED_PREDECESSOR_V2_DEV",
+    "finite_chart_curved_points_material": "B3_GE_E4_PL_ANCHORED_CURVED_POINT_GENERALIZED_PREDECESSOR_V2_DEV",
+    "finite_curved_points_coupled": "B3_GE_E4_PL_CURVED_POINT_COUPLED_J2_PREDECESSOR_V2_DEV",
+    "finite_chart_curved_points_coupled": "B3_GE_E4_PL_ANCHORED_CURVED_POINT_COUPLED_J2_PREDECESSOR_V2_DEV",
     "finite_arc_curved_points": "B3_GE_E4_PL_CURVED_ELASTIC_POINT_ARC_MECHANICS_V1_DEV",
     "finite_arc_bl5_coupled": "B3_GE_E4_PL_BL5_COUPLED_PHYSICAL_ARC_MECHANICS_V1_DEV",
     "finite_displacement_bl5_coupled": "B3_GE_E4_PL_BL5_COUPLED_DISPLACEMENT_MECHANICS_V1",
@@ -51,6 +55,8 @@ SCHEMAS = {
     "finite_native_material_stable": STABLE_NATIVE_SCHEMA,
     "finite_chart_native_material_stable": "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_ANCHORED_STABLE_S3_NATIVE_MATERIAL_V9",
 }
+
+CURVED_POINT_MATERIAL_KINDS = ("finite_curved_points_material", "finite_curved_points_coupled")
 
 
 def encode(kind: str, model: str, generation: int,

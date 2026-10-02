@@ -30,13 +30,25 @@ preserved. The larger explicit budget changes permitted work, not equilibrium
 tolerances or the globalization method, and makes no speedup claim.
 
 Results recover actual Q4 layer strains, stresses, plastic strains and hardening
-variables, native beam cell resultants and accumulated station history. The
-`beam_generalized_material` detailed last-increment records remain empty in this
-route. Its force-control snapshot stores the accepted Markov state, not the prior
-increment's material predecessor. Restore therefore supports accepted-state
-reconstruction and continuation; it does not promise the prior return-map tangent
-or last-increment dissipation. Extending that recovery/checkpoint contract is a
-separate open obligation.
+variables, native beam cell resultants and accumulated station history. Cached
+`beam_generalized_material` records include station strains/resultants, physical
+frames, endpoint stored energy, and last-increment plastic change/dissipation per
+reference length. Recovery reads accepted owned records without constitutive or
+assembly replay; these are generalized-section quantities, not fibre stresses.
+
+New V2 predecessor-aware binary kinds retain the preceding beam material state
+and, for shell J2, the preceding layer state. Endpoint re-evaluation from that
+fixed predecessor validates accepted histories before publication. The bounded
+check reproduces station records exactly after restore and preserves the assembled
+residual/tangent within its registered parity tolerance. It does not prove an
+arbitrary loading history from bytes, replace independent replay, or qualify all
+material branches. Existing byte-integrity, physical-layout and resource checks
+remain mandatory.
+
+Older curved material snapshots keep their decoding and re-encoding contracts.
+They omit last-increment station records because their predecessor is unknown;
+no zero incremental dissipation is invented. After a new increment is accepted,
+its known predecessor enables the new checkpoint and detailed recovery.
 
 ANYfem uses the existing `ExperimentalGEPointPanel` and the distinct strict
 `anyfem.experimental-ge-curved-q4-point-panel-material-v2` input schema.
@@ -46,3 +58,5 @@ Capabilities and persistence remain `EXPERIMENTAL_NOT_QUALIFIED`.
 
 Development evidence, including failed attempts, artifact identities and precise
 checks: [curved material slice](agent_plans/development/r8-curved-material-20261003/results.md).
+
+[Predecessor-aware recovery evidence](agent_plans/development/r8-curved-predecessor-20261003/results.md).

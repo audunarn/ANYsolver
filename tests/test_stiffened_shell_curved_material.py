@@ -14,6 +14,18 @@ from test_stiffened_shell_curved_reference_seam import curved_panel
 from anysolver.control import CancellationToken,SolveCancelled
 
 
+def assert_generalized_records_equal(left,right):
+    from dataclasses import fields
+    assert len(left)==len(right)
+    for a,b in zip(left,right):
+        assert a.element_id==b.element_id and len(a.stations)==len(b.stations)
+        for x,y in zip(a.stations,b.stations):
+            for field in fields(x):
+                u,v=getattr(x,field.name),getattr(y,field.name)
+                if isinstance(u,np.ndarray):np.testing.assert_array_equal(u,v)
+                else:assert u==v
+
+
 def curved_material_panel():
     geometry=curved_panel();material=_q4_shell_j2_panel();beams=[]
     for original,curved in zip(material.beams,geometry.beams):
@@ -40,6 +52,8 @@ def test_curved_shell_beam_yield_unload_restart_and_rejected_commit(request,monk
     assert fresh.checkpoint()==saved
     np.testing.assert_array_equal(restored.shell_layer_alpha,result.shell_layer_alpha)
     np.testing.assert_array_equal(restored.beam_station_accumulated,result.beam_station_accumulated)
+    assert result.beam_generalized_material
+    assert_generalized_records_equal(restored.beam_generalized_material,result.beam_generalized_material)
     for target in (.9,1.1):
         backtracks=16 if target==1.1 else 12
         try:
@@ -56,6 +70,7 @@ def test_curved_shell_beam_yield_unload_restart_and_rejected_commit(request,monk
             for name in ('layer_strain','layer_stress','plastic_strain','alpha'):
                 np.testing.assert_array_equal(getattr(left,name),getattr(right,name))
         np.testing.assert_array_equal(actual.cell_resultants,repeated.cell_resultants)
+        assert_generalized_records_equal(actual.beam_generalized_material,repeated.beam_generalized_material)
     prefix=owner.checkpoint();generation=owner._generation;token=CancellationToken()
     driver=owner._finite_driver;publish=driver._publish_equilibrium
     def cancelled(*args,**kwargs):
@@ -116,11 +131,13 @@ def test_curved_material_rebase_preserves_and_audits_histories(request,monkeypat
     actual=owner.rebase_rotations(owner._generation)
     np.testing.assert_array_equal(actual.shell_layer_alpha,accepted.shell_layer_alpha)
     np.testing.assert_array_equal(actual.beam_station_accumulated,accepted.beam_station_accumulated)
+    assert_generalized_records_equal(actual.beam_generalized_material,accepted.beam_generalized_material)
     for before,after in zip(accepted.shell_q4_material,actual.shell_q4_material):
         for name in ('layer_strain','layer_stress','plastic_strain','alpha'):
             np.testing.assert_allclose(getattr(before,name),getattr(after,name),rtol=1e-10,atol=1e-8)
     saved=owner.checkpoint();fresh=make_owner(request,owner._definition);fresh.restore(saved)
     assert fresh.checkpoint()==saved
+    assert_generalized_records_equal(fresh.recover().beam_generalized_material,actual.beam_generalized_material)
     live=owner.solve(_actions(),(.95,),max_iterations=20,max_backtracks=16)
     replay=fresh.solve(_actions(),(.95,),max_iterations=20,max_backtracks=16)
     assert owner.checkpoint()==fresh.checkpoint()

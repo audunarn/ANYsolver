@@ -51,7 +51,7 @@ from ._stiffened_shell_ge_checkpoint_binary import (
     decode_s3 as _decode_s3_binary_checkpoint,
     CHART_MAGIC as CHART_CHECKPOINT_MAGIC, decode_chart as _decode_chart_checkpoint,
     NATIVE_SHELL_MAGIC, NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA,
-    SCHEMAS as _BINARY_SCHEMAS,
+    SCHEMAS as _BINARY_SCHEMAS, CURVED_POINT_MATERIAL_KINDS,
 )
 from ._stiffened_shell_increment_control import (
     MAGIC as INCREMENT_CONTROL_MAGIC, decode_control, validate_control,
@@ -944,6 +944,7 @@ class ExperimentalGEAnalysis:
             if self._curved_material:
                 capabilities["fixed_step_max_backtracks"] = 16
                 capabilities["adaptive_max_backtracks"] = 12
+                capabilities["generalized_station_recovery"] = "cached_fixed_predecessor_v2; older snapshots omit last-increment records"
             if getattr(self,"_external_context",None) is None and not self._curved_material:
                 capabilities["arc_length"] = "experimental_curved_elastic_point_tangent_plane_v1"
             capabilities["excluded"] += ("curved reference spectra",
@@ -1393,6 +1394,9 @@ class ExperimentalGEAnalysis:
                     raise ValueError("body S3 checkpoint requires its stable numerical policy")
                 if self._footprint_stable_s3 and kind not in ("linear", "finite_native_material_stable"):
                     raise ValueError("nodal footprint S3 checkpoint requires its stable numerical policy")
+                if kind in CURVED_POINT_MATERIAL_KINDS and (not self._curved_material or
+                        (kind == "finite_curved_points_coupled") != (self._definition.shell.j2_curve is not None)):
+                    raise ValueError("curved material predecessor checkpoint requires its matching policy")
                 if (kind == "finite_bl5_coupled") != self._bl5_shell_material and kind != "linear":
                     raise ValueError("matching coupled BL5 material checkpoint required")
                 if kind == "finite_bl5_material" and not self._bl5_material:
@@ -1431,15 +1435,15 @@ class ExperimentalGEAnalysis:
                         raise ValueError("native material checkpoint requires elastic-shell fibre model")
                     from ._stiffened_shell_beam_history import shapes
                     return base + shapes(self._beam_parts, "origin") + shapes(self._beam_parts, "accepted")
-                if kind in ("finite_material", "finite_shell_material", "finite_bl5_material", "finite_bl5_coupled"):
+                if kind in ("finite_material", "finite_shell_material", "finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS:
                     stations = sum(len(part[0].operator.cell.stations)
                                    for part in self._beam_parts)
                     material = base + (("beam_plastic", (stations, 6, 2)),
                                        ("beam_accumulated", (stations, 2)))
-                    if kind in ("finite_bl5_material", "finite_bl5_coupled"):
+                    if kind in ("finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS:
                         material += (("beam_origin_plastic", (stations, 6, 2)),
                                      ("beam_origin_accumulated", (stations, 2)))
-                    if kind == "finite_bl5_coupled":
+                    if kind in ("finite_bl5_coupled", "finite_curved_points_coupled"):
                         shells = len(self._shell_parts)
                         material += (("shell_plastic", (shells, 12, 3)),
                                      ("shell_alpha", (shells, 12)),
@@ -1457,7 +1461,7 @@ class ExperimentalGEAnalysis:
                 raw, self._identity, expected_shapes)
             kind = kind.replace("_chart", "")
             schema = (CHECKPOINT if kind == "linear" else
-                      _BINARY_SCHEMAS[kind] if kind in ("finite_bl5", "finite_bl5_material", "finite_bl5_coupled") else
+                      _BINARY_SCHEMAS[kind] if kind in ("finite_bl5", "finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS else
                       STABLE_NATIVE_SCHEMA if kind == "finite_native_material_stable" else
                       "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"
                       if kind == "finite_native_material" else
@@ -1466,7 +1470,7 @@ class ExperimentalGEAnalysis:
                       else FINITE_CHECKPOINT)
             value = {"schema": schema, "model": self._identity,
                      "generation": generation, **arrays}
-            if kind in ("finite", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable"):
+            if kind in ("finite", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable") + CURVED_POINT_MATERIAL_KINDS:
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
         elif raw.startswith(NATIVE_SHELL_MAGIC):
             if (self._line_samples or not self._has_physical_fibre or
@@ -1520,13 +1524,16 @@ class ExperimentalGEAnalysis:
             if (type(value) is dict and value.get("schema") in (
                     "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7", NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA)):
                 raise ValueError("native material checkpoint requires binary framing")
+            if (type(value) is dict and value.get("schema") in tuple(
+                    _BINARY_SCHEMAS[k] for name in CURVED_POINT_MATERIAL_KINDS for k in (name,name.replace("finite","finite_chart",1)))):
+                raise ValueError("curved material predecessor checkpoint requires binary framing")
             if (type(value) is dict and value.get("schema") in (
                     _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_chart_bl5"],
                     _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_chart_bl5_material"],
                     _BINARY_SCHEMAS["finite_bl5_coupled"], _BINARY_SCHEMAS["finite_chart_bl5_coupled"])):
                 raise ValueError("finite BL5 checkpoint requires binary framing")
         if (type(value) is dict and value.get("schema") in
-                (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
+                (*tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS), FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
                  _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"],
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT,
