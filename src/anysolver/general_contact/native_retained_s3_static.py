@@ -407,6 +407,8 @@ class NativeRetainedRoundS3Analysis:
                 except ValueError as exc:
                     material_trial_reason = str(exc)
                     if str(exc).startswith(('native/S3 material history path requires subdivision',
+                            'native friction integration requires resolved historical contact envelope',
+                            'native friction integration requires swept whole-patch target ownership',
                             'native material path exceeds admitted rotation chart',
                             'first-touch transverse monotone path unresolved',
                             'first-touch physical ownership unresolved',

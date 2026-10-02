@@ -11,18 +11,21 @@ from anysolver.general_contact.native_surface_path import material_path_pose
 from anysolver.general_contact.native_surface_quadrature import NativeRoundSurfaceRule
 from anysolver.general_contact.native_surface_support import (
     SupportIntervalBudget, history_endpoint_support_certified, panel_open_over_history,
+    history_target_ownership_certified,
 )
 from anysolver.general_contact.s3_friction_point import S3SkinMaterialPoint
 from test_general_contact_native_surface_s3_friction import _case
 
 
-def _field(*, height=.05, rotation=0., segments=(), maximum_intervals=256):
+def _field(*, height=.05, rotation=0., segments=(), maximum_intervals=256, narrow_rim=False):
     _, point_pair, initial, _ = _case()
     angles = (1.5*np.pi-.02, 1.5*np.pi+.02)
     rule = NativeRoundSurfaceRule(7, point_pair.source.reference, .03,
         xi_range=(-.8, -.2), angle_range=angles, axial_order=1, angular_order=2)
     positions = initial.positions.copy()
     positions[:, 2] = -.04+height
+    if narrow_rim:
+        positions[:, 0] = -.019+.004*point_pair.source.reference.coordinates[:, 0]
     rotations = initial.cell_rotations.copy()
     rotations[0] = Rotation.from_rotvec((rotation, 0., 0.)).as_matrix()
     initial = replace(initial, positions=positions, cell_rotations=rotations)
@@ -154,3 +157,44 @@ def test_endpoint_support_rejects_hidden_pulse_and_target_collapse():
         shell[6*i:6*i+2] = -2*corners[i, :2]
     collapse = NativeSurfaceMotionSegment(np.zeros((3, 3)), np.zeros((2, 3)), shell)
     assert not history_endpoint_support_certified(_field(height=.08, segments=(collapse,)))
+
+
+def test_swept_ownership_static_translation_and_shared_budget():
+    assert history_target_ownership_certified(_field(), budget=SupportIntervalBudget(1))
+    segment = NativeSurfaceMotionSegment(np.tile((.01, 0., 0.), (3, 1)),
+                                        np.zeros((2, 3)), np.zeros(18))
+    field = _field(segments=(segment,))
+    budget = SupportIntervalBudget(1)
+    assert history_target_ownership_certified(field, budget=budget)
+    assert budget.intervals == 1
+    assert not history_target_ownership_certified(field, budget=budget)
+    assert budget.intervals == 1
+
+
+def test_open_rotational_rim_excursion_is_not_endpoint_owned():
+    segment = NativeSurfaceMotionSegment(np.zeros((3, 3)),
+        np.array(((2., 0., 0.), (0., 0., 0.))), np.zeros(18))
+    field = _field(height=.08, rotation=.6, narrow_rim=True, segments=(segment,))
+    # Triangle's diagonal is x+y=0. Source y=.03*sin(theta) at the
+    # centre angle, while x is in [-.0222,-.0198]. The endpoints are
+    # interior, but the midpoint theta=1.6 places points across the rim.
+    assert -.0198+.03*np.sin(.6+.02) < 0.
+    assert -.0198+.03*np.sin(2.6-.02) < 0.
+    assert -.0222+.03*np.sin(1.6) > 0.
+    assert _certify(field)  # Gap separation alone is insufficient ownership.
+    assert history_target_ownership_certified(_field(height=.08, rotation=.6, narrow_rim=True),
+                                            budget=SupportIntervalBudget(1))
+    assert history_target_ownership_certified(_field(height=.08, rotation=2.6, narrow_rim=True),
+                                            budget=SupportIntervalBudget(1))
+    assert not history_target_ownership_certified(field, budget=SupportIntervalBudget(256))
+
+
+def test_swept_ownership_with_finite_target_deformation():
+    shell = np.zeros(18)
+    shell[8] = .01
+    shell[14] = -.006
+    shell[12] = .025
+    segment = NativeSurfaceMotionSegment(np.tile((.015, 0., -.002), (3, 1)),
+        np.array(((.2, .1, -.05), (0., 0., 0.))), shell)
+    field = _field(height=.08, segments=(segment,))
+    assert history_target_ownership_certified(field, budget=SupportIntervalBudget(256))

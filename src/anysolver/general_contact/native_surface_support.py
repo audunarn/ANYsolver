@@ -284,3 +284,134 @@ def history_endpoint_support_certified(field):
                 return False
         pose = end
     return True
+
+
+def history_target_ownership_certified(field, *, budget):
+    """Prove the whole straight patch stays inside its S3 target over history.
+
+    Three inward edge-plane minima are exact in both material coordinates.
+    Temporal interval bounds cover every point, not only integration nodes.
+    Source orientation remains a separate required admission check.
+    """
+    if type(field) is not NativeSurfaceHistoryField:
+        raise TypeError('exact native surface history field required')
+    if type(budget) is not SupportIntervalBudget:
+        raise TypeError('exact shared support interval budget required')
+    if sha(field._definition()) != field.identity:
+        raise ValueError('native material history field definition changed')
+    rule = field.patch.rule
+    reference = field.patch.source.reference
+    coordinates, frames = reference.coordinates, reference.nodal_triads
+    if (any(Fraction(float(coordinates[0, i]))+Fraction(float(coordinates[2, i]))
+            != 2*Fraction(float(coordinates[1, i])) for i in range(3))
+            or not np.array_equal(frames, np.tile(frames[0], (3, 1, 1)))):
+        raise ValueError('material support requires exact straight untwisted reference')
+    target = field.patch.target
+    radius = float(rule.definition['radius'])
+    lo, hi = rule.definition['xi_range']
+    angles = rule.definition['angle_range']
+    cells = [(c, (l, r)) for c, l, r in
+             ((0, max(lo, -1.), min(hi, 0.)), (1, max(lo, 0.), min(hi, 1.))) if r > l]
+    reference_corners = target.adapter.reference_positions
+    reference_cross = np.cross(reference_corners[1]-reference_corners[0],
+                               reference_corners[2]-reference_corners[0])
+    reference_area = float(np.linalg.norm(reference_cross))
+    reference_normal = reference_cross/reference_area
+
+    def margins(pose, clearance):
+        corners = target.adapter.current_positions(pose.shell_displacement)
+        normal = np.asarray(target.physical_pose(pose.shell_displacement).material_frame)[:, 2]
+        values = []
+        for cell, xis in cells:
+            frame = pose.cell_rotations[cell] @ frames[0]
+            for i in range(3):
+                edge = corners[(i+1)%3]-corners[i]
+                inward = np.cross(normal, edge/np.linalg.norm(edge))
+                offsets = [float(inward @ _base(pose, cell, xi, corners[i])) for xi in xis]
+                a, b = radius*float(inward @ frame[:, 1]), radius*float(inward @ frame[:, 2])
+                minimum, _ = _sinusoidal_extrema(offsets, a, b, angles)
+                values.append(minimum-clearance)
+        scale = max(1., radius, float(np.max(np.abs(pose.positions))),
+                    float(np.max(np.abs(pose.position_low))), float(np.max(np.abs(corners))))
+        return np.asarray(values), 512*np.finfo(float).eps*scale
+
+    pose = field.initial
+    first = target.adapter.current_positions(pose.shell_displacement)
+    initial_clearance = 1e-12*max(np.linalg.norm(first[(i+1)%3]-first[i]) for i in range(3))
+    initial_values, initial_padding = margins(pose, initial_clearance)
+    if np.min(initial_values) <= initial_padding:
+        return False
+    for segment in field.segments:
+        end = material_path_pose(pose, segment.translations, segment.angular, segment.shell_increment, 1.)
+        last = target.adapter.current_positions(end.shell_displacement)
+        clearance = 1e-12*max(np.linalg.norm(corners[(i+1)%3]-corners[i])
+                              for corners in (first, last) for i in range(3))
+        first_values, first_padding = margins(pose, clearance)
+        last_values, last_padding = margins(end, clearance)
+        if min(np.min(first_values)-first_padding, np.min(last_values)-last_padding) <= 0.:
+            return False
+        a0, b0 = first[1]-first[0], first[2]-first[0]
+        a1, b1 = last[1]-last[0], last[2]-last[0]
+        controls = (np.cross(a0, b0), .5*(np.cross(a0, b1)+np.cross(a1, b0)), np.cross(a1, b1))
+        area_lower = min(float(reference_normal @ c) for c in controls)
+        area_scale = max(reference_area, max(np.linalg.norm(a0), np.linalg.norm(a1))
+                         *max(np.linalg.norm(b0), np.linalg.norm(b1)))
+        if area_lower <= 1e-12*area_scale:
+            return False
+        target_motion = np.asarray(target.adapter.work_map @ segment.shell_increment).reshape(3, 3)
+        if (not np.any(segment.angular)
+                and np.array_equal(target_motion, np.tile(target_motion[0], (3, 1)))):
+            # All inward planes translate without changing direction; every
+            # material point's edge distance is affine along the segment.
+            if not budget.consume():
+                return False
+            pose, first = end, last
+            continue
+        normal_speed = (np.linalg.norm(a1-a0)*max(np.linalg.norm(b0), np.linalg.norm(b1))
+                        +np.linalg.norm(b1-b0)*max(np.linalg.norm(a0), np.linalg.norm(a1)))/area_lower
+        inward_rates = []
+        for i in range(3):
+            edge = first[(i+1)%3]-first[i]
+            change = (last[(i+1)%3]-last[i])-edge
+            denominator = float(change @ change)
+            alpha = 0. if denominator == 0. else float(np.clip(-float(edge @ change)/denominator, 0., 1.))
+            edge_lower = float(np.linalg.norm(edge+alpha*change))
+            if edge_lower <= 0.:
+                return False
+            inward_rates.append(normal_speed+np.linalg.norm(change)/edge_lower)
+        rates = []
+        for cell, xis in cells:
+            for i in range(3):
+                relative_radius = max(np.linalg.norm(_base(p, cell, xi, corner))
+                                      for p, corner in ((pose, first[i]), (end, last[i]))
+                                      for xi in xis)+radius
+                speeds = []
+                for xi in xis:
+                    t = xi+1. if cell == 0 else xi
+                    speeds.append(np.linalg.norm((1-t)*segment.translations[cell]
+                                  +t*segment.translations[cell+1]-target_motion[i]))
+                relative_speed = max(speeds)+np.linalg.norm(segment.angular[cell])*radius
+                rates.append(relative_speed+inward_rates[i]*relative_radius)
+        rates = np.asarray(rates)
+        if not np.all(np.isfinite(rates)):
+            raise ValueError('nonfinite swept target ownership rate')
+        pending = [(0., 1.)]
+        segment_visits = 0
+        while pending:
+            if segment_visits >= field.maximum_intervals:
+                return False
+            left, right = pending.pop()
+            midpoint = left+(right-left)/2.
+            if midpoint == left or midpoint == right or not budget.consume():
+                return False
+            current = material_path_pose(pose, segment.translations, segment.angular,
+                                         segment.shell_increment, midpoint)
+            values, padding = margins(current, clearance)
+            segment_visits += 1
+            if np.min(values) <= padding:
+                return False
+            if np.all(values-rates*(right-left)/2. > max(padding, first_padding, last_padding)):
+                continue
+            pending.extend(((left, midpoint), (midpoint, right)))
+        pose, first = end, last
+    return True

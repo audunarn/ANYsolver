@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.25. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.26. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -31,6 +31,17 @@ Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTA
 independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
+
+Native replay friction now enters the retained native/S3 contributor and atomic
+transaction through an explicit development profile. Global componentwise
+integration error control resolves the saved query-cap failure without changing
+tolerances or caps; independent force/tangent/history and backtracking checks pass.
+The actual loading/restart workflow remains unpassed: its later trial exhausts the
+shared128-interval historical-support budget before any physical commit. Stop
+coupled reruns. Use the saved local path to distinguish conservative-bound cost
+from unresolved near-front support; do not increase caps or infer inactivity from
+zero samples. Require a corrected local result before another integrated run.
+See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_results.md).
 
 The pressure-coupled fixed-material S3 friction slice now uses the ordinary static
 path assembly/constraints, existing mortar pressure and accepted-step physical
@@ -425,3 +436,17 @@ Material-coordinate history replay now passes old-node lifecycle parity, indepen
 Next integrated component: reference-area friction R/K and work integrate replay queries with contact-front partitions at every saved pose, bounded Gauss3/5 controls, and conservative whole-history proof before accepting an all-zero panel. A narrow first-touch cylinder strip missed by the old2x2 material rule has an independent scalar integrated stick-force oracle. Routine180s/953MiB checks; measure actual query/cache/path cost. Support-bound worker owns only native_surface_support.py and its focused tests; lead owns integral/tests. No acceptance or solver promotion until force/tangent/history checks and owner integration pass.
 
 Pressure/history-aware friction integral is now implemented and component-tested: narrow-strip independent force, moving-front directional tangent<=1e-5, declared discrete unloading work, conservative historical support and shared resource caps. [Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/friction_integral_results.md). It is not yet in coupled assembly. Next connect it explicitly to existing native/S3 patch/contributor/transaction, with immutable replay state, compact restart identity and candidate-only history. Retain fixed-point default; qualify new integrated profile separately.
+
+Coupled replay integration slice: opt-in patch profile will assemble continuous normal plus replayed friction through the existing contributor. Immutable full motion state uses compact digest checkpoint descriptors; candidate zero increments rebase the endpoint law without adding physical history. Exact whole-history separation permits zero friction panels before expensive queries. First routine180s/953MiB checks cover initialization, rejected trial/state binding and unaffected default. One prospectively named coupled/restart run may use900s/4GB if the focused slice passes; do not repeat a consumed run without diagnosis.
+
+Named integrated development execution contact-native-replay-coupled-20261002: test_replay_coupled_active_rebase_and_split_restart,900s/3814MiB,JIT off. Source/input identities saved in its preflight.json before run. Focused initialization/rollback/identity and independent force checks passed. Question is actual equilibrium plus committed-origin rebase/restart; a failure requires specific classification/correction, not resource escalation.
+
+The named coupled run failed on its first loading solve at2048material queries (62.72s pytest), before accepting an increment. No limits change. One bounded diagnostic replay of the same fixture captures the exact rejected initial pose/increments/settings and panel/error counters;180s/953MiB. Competing explanations are unresolved stick/slip tangent integration versus repeated zero/support subdivisions. The saved local candidate determines the corrective slice; do not repeatedly resolve the structure.
+
+Saved-candidate front repartition still exhausted2048queries after33.00s, now away from the original edge. Next bounded correction avoids replay at strictly open material coordinates using the existing whole-history affine/monotone certificate plus padded endpoint gaps; swept ownership/orientation remain mandatory. Same saved candidate, tolerances and180s/953MiB caps; no coupled rerun. Retain numerical diagnostics on either outcome. This removes exact-zero work, not contact or historical traction.
+
+Exact-open query elimination still reached2048queries (39.18s), but21panels accepted and the preceding scaled local error was0.0029. Area-share allocation can force disproportionate refinement of tiny fronts. Change to global summed absolute componentwise Gauss differences and largest-error refinement, retaining all public force/tangent/work tolerances and resource caps. Verify saved candidate plus independent force/tangent/release checks before another coupled solve. This is an integration algorithm change, not qualification or a cap increase.
+
+Global error control passes the captured candidate:1322queries,27.01s,228438016B process peak; summed scaled error0.97439. Seven independent force/tangent/release/cap/history checks pass62.11s. Read-only reviewer found no blocking defect in changed integral; estimates remain developmental, not rigorous bounds. One new named integrated run contact-native-replay-coupled-global-20261002 uses unchanged actual owner loading/rebase/split-restart fixture and900s/3814MiB,JIT off. Source hashes recorded before execution. If it fails, retain the captured candidate and stop coupled reruns until its distinct cause is resolved.
+
+Coupled global-error run advanced to material call8, then a geometry-envelope ValueError escaped Newton backtracking (62.56s pytest). No accepted increment. Driver recognized older point-path refusals but not the new replay envelope/ownership refusals. Add only those two named retryable geometry conditions; unexpected errors remain fatal. Three focused injected-failure checks verify retry with unchanged physical state and unexpected-error rollback. After they pass, one corrected integrated run contact-native-replay-coupled-backtrack-20261002 under the same900s/3814MiB cap is permitted; retain any non-success and stop repeated coupled runs.

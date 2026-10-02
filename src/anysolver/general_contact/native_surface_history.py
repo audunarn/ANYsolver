@@ -36,11 +36,12 @@ class NativeSurfaceReplayBudget:
     """Total query-initialization and path count, shared across all queries."""
     maximum_point_paths: int
     point_paths: int=0
+    certified_intervals: int=0
 
     def __post_init__(self):
         if type(self.maximum_point_paths) is not int or self.maximum_point_paths<1:
             raise ValueError('positive replay point-path cap required')
-        if self.point_paths!=0:
+        if self.point_paths!=0 or self.certified_intervals!=0:
             raise ValueError('new replay budget must start at zero')
 
     def consume(self):
@@ -55,6 +56,30 @@ class NativeSurfaceHistoryQuery:
     configuration: NativeS3MaterialConfiguration
     history: object
     last_contribution: object
+
+
+@dataclass(frozen=True)
+class NativeSurfaceReplayState:
+    """Immutable physical motion history; transaction alone grants acceptance."""
+    definition_sha256: str
+    initial: NativeS3MaterialConfiguration
+    segments: tuple
+    maximum_intervals: int
+
+    def descriptor(self):
+        # Checkpoints already store each authoritative structural increment.
+        # A chain digest avoids embedding every full prefix into every record;
+        # restore reconstructs and checks the physical path by ordinary replay.
+        digest=sha(asdict(self.initial))
+        for segment in self.segments:digest=sha(dict(previous=digest,segment=asdict(segment)))
+        return dict(profile='NATIVE_SURFACE_REPLAY_STATE_DEV_V1',definition=self.definition_sha256,
+            path_sha256=digest,segments=len(self.segments),maximum_intervals=self.maximum_intervals)
+
+    def current(self):
+        pose=self.initial
+        for segment in self.segments:
+            pose=material_path_pose(pose,segment.translations,segment.angular,segment.shell_increment,1.)
+        return pose
 
 
 class NativeSurfaceHistoryField:
@@ -147,10 +172,11 @@ class NativeSurfaceHistoryField:
         last=None
         for segment in self.segments:
             budget.consume()
-            certify_station_orientation_path(pair.source,pose,segment.translations,segment.angular,
+            orientation=certify_station_orientation_path(pair.source,pose,segment.translations,segment.angular,
                 segment.shell_increment,maximum_intervals=maximum_intervals)
             value=pair.evaluate_path(pose,history,segment.translations,segment.angular,
                 segment.shell_increment,maximum_intervals=maximum_intervals)
+            budget.certified_intervals+=orientation+value.certified_intervals
             pose=value.configuration;last=value.contribution;history=last.trial.candidate_state
         return NativeSurfaceHistoryQuery(pair,pose,history,last)
 

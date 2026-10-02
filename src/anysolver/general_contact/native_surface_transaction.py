@@ -41,8 +41,11 @@ class NativeS3MaterialProposal:
 
 
 def _payload(state):
+    from .native_surface_history import NativeSurfaceReplayState
+    history=(state.friction_history.descriptor() if type(state.friction_history) is NativeSurfaceReplayState
+             else asdict(state.friction_history))
     return dict(mechanical=state.mechanical.descriptor(), native_histories=state.native_histories,
-        shell_displacement=state.shell_displacement, friction_history=asdict(state.friction_history),
+        shell_displacement=state.shell_displacement, friction_history=history,
         parameter=state.parameter, sequence=state.sequence)
 
 
@@ -57,13 +60,14 @@ class NativeS3MaterialTransaction:
         self.identity = sha(dict(schema=SCHEMA, contributor=contributor.identity,
                                  maximum_records=maximum_records))
         owner = contributor.owner; pair = contributor.pair; origin = owner.initial
-        history = (pair.initial_history(origin.shell_displacement) if type(pair) is NativeS3MaterialSurfacePatch else
-                   initial_friction_point(pair.target.physical_pose(origin.shell_displacement).material_frame))
-        initial = contributor.evaluate(origin, history, np.zeros(owner.context.count),
-                                       np.zeros(len(origin.shell_displacement)), 0.)
         nodes = owner.context.nodes[0]
         pose = NativeS3MaterialConfiguration(origin.mechanical.positions[nodes], origin.mechanical.position_low[nodes],
                                              origin.mechanical.cell_rotations[0], origin.shell_displacement)
+        history = (pair.initial_history(origin.shell_displacement,configuration=pose,
+            maximum_intervals=owner.maximum_swept_intervals) if type(pair) is NativeS3MaterialSurfacePatch else
+                   initial_friction_point(pair.target.physical_pose(origin.shell_displacement).material_frame))
+        initial = contributor.evaluate(origin, history, np.zeros(owner.context.count),
+                                       np.zeros(len(origin.shell_displacement)), 0.)
         pairs=pair.pairs if type(pair) is NativeS3MaterialSurfacePatch else (pair,)
         for point in pairs:
             gap, _ = affine_gap_polynomial(point, pose, np.zeros((3,3)), np.zeros((2,3)),

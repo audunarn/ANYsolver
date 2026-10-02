@@ -13,7 +13,8 @@ from test_general_contact_native_retained_s3_static import _analysis
 
 def _patch(*,activation_policy='transverse_first_touch',axial_order=2,angular_order=2,
            gap_check='sampled',normal_stiffness=1e4,radius=.049,
-           normal_integration='point',normal_integration_settings=None,friction_coefficient=.3):
+           normal_integration='point',normal_integration_settings=None,friction_coefficient=.3,
+           friction_integration='point',friction_integration_settings=None,maximum_replay_segments=256):
     owner=_analysis(targets=(1.,1.05))
     reference=owner.context.elements[0][1].operator.reference
     rule=NativeRoundSurfaceRule(1,reference,radius,xi_range=(.2,.8),
@@ -29,7 +30,9 @@ def _patch(*,activation_policy='transverse_first_touch',axial_order=2,angular_or
     pair=NativeS3MaterialSurfacePatch(rule,targets,normal_stiffness_Pa_per_m=normal_stiffness,
         friction_coefficient=friction_coefficient,tangential_stiffness_Pa_per_m=1000.,
         activation_policy=activation_policy,gap_check=gap_check,
-        normal_integration=normal_integration,normal_integration_settings=normal_integration_settings)
+        normal_integration=normal_integration,normal_integration_settings=normal_integration_settings,
+        friction_integration=friction_integration,friction_integration_settings=friction_integration_settings,
+        maximum_replay_segments=maximum_replay_segments)
     return owner,NativeS3MaterialContributor(owner,pair)
 
 

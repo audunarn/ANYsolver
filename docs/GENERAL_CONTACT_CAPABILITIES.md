@@ -989,3 +989,13 @@ Accepted initial geometry and actual motion increments can be queried at new fix
 ### Native replayed friction integral — development component
 
 Friction-only work integrates unit-area history queries with pressure-front partitions, dimensional Gauss4/8 controls and conservative historical-support preflight. Independent narrow-strip force, moving-front tangent, discrete release-work and cap tests pass. Not yet assembled through the coupled owner; general history/geometry admission, spatial/time refinement and C5 acceptance remain open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/friction_integral_results.md).
+
+### Native replay owner integration — tested components, coupled nonpass
+
+The opt-in replay profile now uses the retained owner and atomic transaction,
+compact physical-path restart binding and bounded geometry backtracking. Global
+integration-error control resolves the saved2048-query failure; seven independent
+integration/state checks and three backtracking/error checks pass. The complete
+loading/restart test still fails before first commit at the shared historical-
+support interval cap. No native C5 acceptance or installed claim. Previous entry
+records the earlier component disposition. [Current evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_results.md).
