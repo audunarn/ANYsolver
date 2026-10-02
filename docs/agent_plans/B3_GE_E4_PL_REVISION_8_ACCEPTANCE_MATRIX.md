@@ -1309,3 +1309,11 @@ solverdd8ce52c...954cc74; unchanged historical formats, cancellation/chart/resta
 and exact continued state verified. Independent review clear within this bounded
 scope. Full G4/G6 and physical BL5 acceptance remain open.
 [Evidence](development/r8-anyfem-bl5-distributed-20261002/results.md).
+
+
+**2 October generalized-material BL5:** explicit experimental elastic-Q4 /
+generalized-beam material policy and distinct history schemas implemented. Eight
+installed checks pass, including yielded history and legacy compatibility.
+Low-hardening1e6 convergence failure remains open; bounded1e8 evidence does not
+qualify the material envelope. No aggregate G3 or F03 acceptance.
+[Evidence](development/r8-bl5-material-20261002/results.md).

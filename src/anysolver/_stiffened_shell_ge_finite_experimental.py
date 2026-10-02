@@ -617,7 +617,7 @@ class FinitePointDriver:
             tangent = spatial_jacobian(
                 response.residual, response.hessian+response.hessian_low)
             scatter(slots+owner._shell_count, response.residual, tangent)
-            if getattr(owner, "_finite_bl5", False) and any(
+            if getattr(owner, "_finite_bl5", False) and not owner._bl5_material and any(
                     station.accumulated != (0., 0.) for station in response.history.stations):
                 raise ValueError("experimental finite BL5 admits elastic beam response only")
             if getattr(owner, "_finite_elastic_footprint", False):
@@ -1087,8 +1087,15 @@ class FinitePointDriver:
         if not np.allclose(physical_frames(q[:owner._shell_count], anchors), frames,
                            rtol=0., atol=1e-12):
             raise ValueError("rebase changed physical shell orientations")
-        residual, _, relative, gap, _, _ = self._assemble(
+        residual, _, relative, gap, _, beam_repeated = self._assemble(
             trial, self._load_factor, self._shell_origins, self._beam_origins)
+        if owner._bl5_material:
+            for saved, repeated in zip(_material_arrays(self._beam_origins),
+                                       _material_arrays(beam_repeated)):
+                scale = max(float(np.max(np.abs(saved), initial=0.)),
+                            float(np.max(np.abs(repeated), initial=0.)), np.finfo(float).tiny)
+                if np.max(np.abs(saved-repeated), initial=0.) > 64.*np.finfo(float).eps*scale:
+                    raise ValueError("BL5 chart rebase changed generalized material history")
         if not np.isfinite(relative) or not np.isfinite(gap) or relative > 1e-8 or gap > 1e-9:
             raise ValueError("mechanically inconsistent shell anchor reset")
         support = np.zeros(owner._K.shape[0]); support[owner._fixed] = residual[owner._fixed]
@@ -1144,6 +1151,14 @@ class FinitePointDriver:
                   ("pattern" if self._programme is None else "applied_dead_load",
                    self._pattern if self._programme is None else self._applied_load),
                   ("accepted_factors", np.asarray(self._accepted_factors)))
+        if self.owner._bl5_material:
+            plastic, accumulated = _material_arrays(self._beam_origins)
+            origin_plastic, origin_accumulated = _material_arrays(self._beam_predecessors)
+            return _encode_binary_checkpoint(kind("finite_bl5_material"),
+                self._checkpoint_identity(), generation, arrays +
+                (("beam_plastic", plastic), ("beam_accumulated", accumulated),
+                 ("beam_origin_plastic", origin_plastic),
+                 ("beam_origin_accumulated", origin_accumulated)))
         if getattr(self.owner, "_finite_bl5", False):
             return _encode_binary_checkpoint(kind("finite_bl5"),
                 self._checkpoint_identity(), generation, arrays)
@@ -1254,8 +1269,9 @@ class FinitePointDriver:
                      load_key}
         if type(value) is not dict:
             raise ValueError("incompatible experimental finite checkpoint")
-        if (value.get("schema") == _BINARY_SCHEMAS["finite_bl5"]) != bool(
-                getattr(owner, "_finite_bl5", False)):
+        if ((value.get("schema") in (_BINARY_SCHEMAS["finite_bl5"],
+                _BINARY_SCHEMAS["finite_bl5_material"])) != bool(owner._finite_bl5) or
+                owner._bl5_material != (value.get("schema") == _BINARY_SCHEMAS["finite_bl5_material"])):
             raise ValueError("finite BL5 checkpoint requires its matching line policy")
         native_shell = value.get("schema") == NATIVE_SHELL_SCHEMA
         stable_s3 = value.get("schema") == STABLE_NATIVE_SCHEMA
@@ -1271,10 +1287,13 @@ class FinitePointDriver:
         shell_material = value.get("schema") in (
             FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA)
         material = value.get("schema") in (
+            _BINARY_SCHEMAS["finite_bl5_material"],
             FINITE_MATERIAL_CHECKPOINT, FINITE_SHELL_MATERIAL_CHECKPOINT,
             FINITE_S3_MATERIAL_CHECKPOINT)
         expected_keys = (base_keys | {"beam_plastic", "beam_accumulated"}
                          if material else base_keys)
+        if owner._bl5_material:
+            expected_keys |= {"beam_origin_plastic", "beam_origin_accumulated"}
         if native_material:
             expected_keys |= {name for prefix in ("origin", "accepted")
                 for name, _ in native_history_shapes(owner._beam_parts, prefix)}
@@ -1287,7 +1306,7 @@ class FinitePointDriver:
                               "shell_origin_q", "shell_origin_anchors", "s3_states"}
         if (set(value) != expected_keys or
                 value["schema"] not in
-                (FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
+                (FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
@@ -1349,7 +1368,12 @@ class FinitePointDriver:
             plastic = _owned(value["beam_plastic"], (stations, 6, 2))
             accumulated = _owned(value["beam_accumulated"], (stations, 2))
             beam_origins = _material_histories(owner, plastic, accumulated)
-            if not shell_material and not np.any(accumulated) and all(
+            if owner._bl5_material:
+                beam_accepted = beam_origins
+                origin_plastic = _owned(value["beam_origin_plastic"], (stations, 6, 2))
+                origin_accumulated = _owned(value["beam_origin_accumulated"], (stations, 2))
+                beam_origins = _material_histories(owner, origin_plastic, origin_accumulated)
+            if not owner._bl5_material and not shell_material and not np.any(accumulated) and all(
                     b > a for a, b in zip(factors, factors[1:])):
                 raise ValueError("material checkpoint requires yielded or reversed history")
         else:
@@ -1495,7 +1519,7 @@ class FinitePointDriver:
             _owned(self._beam_positions(trial)), frames, cells, resultants,
             multipliers, _owned(support), relative, gap, 0,
             value["generation"] if accepted_generation is None else accepted_generation, tuple(factors),
-            _material_observables(beam_accepted if native_material else beam_origins),
+            _material_observables(beam_accepted if native_material or owner._bl5_material else beam_origins),
             (tuple(tuple(float(v) for v in state["alpha"])
                    for state in shell_accepted) if shell_material else ()),
             (_shell_q4_recovery(owner._shell_parts[:q4_count],
@@ -1531,7 +1555,7 @@ class FinitePointDriver:
             self._shell_predecessor_anchors = origin_anchors
         self._shell_origins = shell_accepted if shell_material else shell_next
         self._beam_predecessors = beam_origins
-        self._beam_origins = beam_accepted if native_material else beam_origins if material else beam_next
+        self._beam_origins = beam_accepted if native_material or owner._bl5_material else beam_origins if material else beam_next
         self._load_factor = factors[-1]
         self._accepted_factors = tuple(factors)
         self._accepted = result

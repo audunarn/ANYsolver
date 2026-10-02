@@ -381,6 +381,31 @@ experimental envelopes and the native Project route; installed continuation
 checks pass. Zero-load relative
 assessment and all outstanding scientific obligations remain unchanged.
 
+### Opt-in generalized beam histories on Q4 BL5
+
+`LinearDefinition(..., bl5_material_policy=BL5_GENERALIZED_MATERIAL_V1)` explicitly
+admits native generalized beam yielding with elastic objective-Q4 BL5. The default
+`"elastic"` keeps the existing yield guard and model/checkpoint identities. The new
+policy requires `Q4_ALGORITHMIC_PULLBACK_V1`; shell J2, S3 and physical-fibre lines
+remain outside this implementation. Their programme obligations remain open.
+
+The new material and chart checkpoint identities preserve both predecessor and
+accepted generalized station histories. Restoration re-evaluates from the saved
+predecessor and checks the accepted update before publishing. Chart rebasing also
+checks material invariance. Existing elastic V11 files are not reinterpreted.
+
+Bounded P0/coarse-P1 cases with generalized yield threshold 5 and hardening 1e8
+pass actual yielding, smooth-branch tangent, signed nodal load reversal, rejected
+trial/cancellation, rebasing and exact continued restart. A distributed force/couple
+case also passes yielded restart. These values describe test sections, not a
+physical material recommendation or a qualified parameter envelope. The same
+low-yield example with hardening 1e6 exhausted backtracking and adaptive cutbacks;
+that failure remains open. A trial-merit experiment did not resolve it and was
+removed. Final equilibrium/compatibility criteria and globalization are unchanged.
+
+This is an experimental history extension, not physical BL5 or material-envelope
+qualification. Zero-load relative assessment remains unresolved.
+
 Run `scripts/experimental_stiffened_ge_bl5_history.py` with an installed
 development wheel for a3-Q4/2-B3, nonmatching3:4 elastic history and byte-exact
 restart/continue. Physical torque/shear reference, interface stability, ratios,

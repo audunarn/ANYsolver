@@ -66,7 +66,7 @@ from ._stiffened_shell_ge_experimental import (
     LinearDefinition, LinearResult,
     NodalAction, PointConnection, ShellPanel,
     NodalRigidFootprint, NodalRigidFootprintSelection, NodalRigidFootprintWrench,
-    Q4_ALGORITHMIC_PULLBACK_V1,
+    Q4_ALGORITHMIC_PULLBACK_V1, BL5_GENERALIZED_MATERIAL_V1,
 )
 
 
@@ -221,7 +221,7 @@ def create_analysis(*, definition, resources=None):
 __all__ = [
     "AdaptiveIncrementControl", "IncrementAttempt", "FiniteIncrementFailure",
     "AdaptiveIncrementExhausted",
-    "Q4_ALGORITHMIC_PULLBACK_V1",
+    "Q4_ALGORITHMIC_PULLBACK_V1", "BL5_GENERALIZED_MATERIAL_V1",
     "B3_GE_E4_PL_STIFFENED_SHELL_V1", "B2_E4_PL_FAST_LINEAR_V1",
     "ShellPanel", "PointConnection", "PointTransferWrench",
     "NodalRigidFootprint", "NodalRigidFootprintSelection", "NodalRigidFootprintWrench",

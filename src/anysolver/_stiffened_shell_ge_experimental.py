@@ -64,6 +64,7 @@ from ._stiffened_shell_l1_assembly_experimental import (
 
 
 PROFILE = "B3_GE_E4_PL_STIFFENED_SHELL_V1"
+BL5_GENERALIZED_MATERIAL_V1 = "BL5_GENERALIZED_MATERIAL_V1_DEV"
 CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_LINEAR_V1"
 FINITE_CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"
 FINITE_MATERIAL_CHECKPOINT = (
@@ -178,6 +179,7 @@ class LinearDefinition:
     footprints: tuple[NodalRigidFootprint, ...] = ()
     modal_boundary_policy: str = "supported"
     footprint_chart_policy: str = CHART_ADMISSION_POLICY
+    bl5_material_policy: str = "elastic"
 
 
 @dataclass(frozen=True)
@@ -514,6 +516,13 @@ class ExperimentalGEAnalysis:
         self._modal_only = definition.modal_boundary_policy == GE_FREE_FREE_MODAL_ONLY_V1
         if self._modal_only and (definition.fixed or definition.lines or definition.footprints):
             raise ValueError("free-free modal-only policy requires empty supports and six-pose points only")
+        if (type(definition.bl5_material_policy) is not str or
+                definition.bl5_material_policy not in ("elastic", BL5_GENERALIZED_MATERIAL_V1)):
+            raise ValueError("explicit admitted BL5 material policy required")
+        self._bl5_material = definition.bl5_material_policy == BL5_GENERALIZED_MATERIAL_V1
+        if self._bl5_material and (not definition.lines or definition.footprints or
+                definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1):
+            raise ValueError("BL5 material policy requires objective Q4 line model")
         panel = definition.shell
         if type(panel) is not ShellPanel:
             raise ValueError("owned Q4 panel required")
@@ -540,7 +549,8 @@ class ExperimentalGEAnalysis:
             definition.profile, panel, tuple(definition.beams),
             tuple(definition.points), tuple(definition.fixed),
             definition.lines, definition.q4_pullback_policy, definition.footprints,
-            definition.modal_boundary_policy, definition.footprint_chart_policy)
+            definition.modal_boundary_policy, definition.footprint_chart_policy,
+            definition.bl5_material_policy)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count, beam_inertias = _beam_reference(
             definition.beams)
         self._reference_modal_inertias = beam_inertias
@@ -616,6 +626,8 @@ class ExperimentalGEAnalysis:
         ) and panel.j2_curve is None and not self._has_physical_fibre
         if definition.lines and definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and not self._finite_bl5:
             raise ValueError("algorithmic Q4 line pullback requires admitted elastic BL5 beams")
+        if self._bl5_material and not self._finite_bl5:
+            raise ValueError("BL5 material policy requires elastic Q4 shells and generalized beams")
         identity_payload = {
             "profile": PROFILE, "shell_ids": shell_ids,
             "shell_xyz": shell_xyz.tolist(), "shell_cells": panel.q4_elements,
@@ -626,6 +638,8 @@ class ExperimentalGEAnalysis:
             "points": [(v.shell_node, v.beam_node) for v in definition.points],
             "fixed": [(v.domain, v.node, v.component) for v in definition.fixed],
         }
+        if self._bl5_material:
+            identity_payload["bl5_material_policy"] = definition.bl5_material_policy
         if panel.j2_curve is not None:
             identity_payload["shell_j2_curve"] = panel.j2_curve.as_dict()
             if panel.s3_elements:
@@ -805,7 +819,7 @@ class ExperimentalGEAnalysis:
                     ("shell J2 plastic", "physical-fibre B3 finite",
                      "qualified bonded line", "footprint",
                      "modes", "buckling")+line_limits)
-        if self._finite_bl5:
+        if self._finite_bl5 and not self._bl5_material:
             excluded += ("generalized B3 plastic finite BL5",)
         if (self._definition.shell.s3_elements and shell_plastic and
                 not self._line_samples):
@@ -836,12 +850,13 @@ class ExperimentalGEAnalysis:
                 "experimental_line_spaces": tuple(
                     line.multiplier_space for line in self._definition.lines),
                 "q4_force_map": self._definition.q4_pullback_policy,
+                "bl5_material_policy": self._definition.bl5_material_policy,
                 "increment_control": (() if self._line_samples and not self._finite_bl5 else
                     ("fixed", "experimental_adaptive_halving")),
                 "rotation_chart": ("unchanged reference-linear chart"
                                    if self._line_samples and not self._finite_bl5 else
                                    "experimental owned shell anchors; full fixed/free rotational triples only"),
-                "analysis": (("reference_linear", "experimental_elastic_finite_bl5")
+                "analysis": (("reference_linear", "experimental_generalized_material_bl5" if self._bl5_material else "experimental_elastic_finite_bl5")
                              if self._finite_bl5 else
                              ("reference_linear",) if self._line_samples else
                              ("reference_linear", "experimental_native_fibre_finite_point")
@@ -1222,9 +1237,13 @@ class ExperimentalGEAnalysis:
                     raise ValueError("body S3 checkpoint requires its stable numerical policy")
                 if self._footprint_stable_s3 and kind not in ("linear", "finite_native_material_stable"):
                     raise ValueError("nodal footprint S3 checkpoint requires its stable numerical policy")
+                if kind == "finite_bl5_material" and not self._bl5_material:
+                    raise ValueError("BL5 material checkpoint requires selected material policy")
+                if kind == "finite_bl5" and self._bl5_material:
+                    raise ValueError("BL5 material checkpoint must retain histories")
                 if kind == "finite_bl5" and not self._finite_bl5:
                     raise ValueError("finite BL5 checkpoint requires elastic BL5 line model")
-                if self._line_samples and kind not in ("linear", "finite_bl5"):
+                if self._line_samples and kind not in ("linear", "finite_bl5", "finite_bl5_material"):
                     raise ValueError("experimental weak line requires its finite BL5 checkpoint identity"
                                      if self._finite_bl5 else
                                      "experimental weak line admits reference-linear checkpoints only")
@@ -1254,11 +1273,14 @@ class ExperimentalGEAnalysis:
                         raise ValueError("native material checkpoint requires elastic-shell fibre model")
                     from ._stiffened_shell_beam_history import shapes
                     return base + shapes(self._beam_parts, "origin") + shapes(self._beam_parts, "accepted")
-                if kind in ("finite_material", "finite_shell_material"):
+                if kind in ("finite_material", "finite_shell_material", "finite_bl5_material"):
                     stations = sum(len(part[0].operator.cell.stations)
                                    for part in self._beam_parts)
                     material = base + (("beam_plastic", (stations, 6, 2)),
                                        ("beam_accumulated", (stations, 2)))
+                    if kind == "finite_bl5_material":
+                        material += (("beam_origin_plastic", (stations, 6, 2)),
+                                     ("beam_origin_accumulated", (stations, 2)))
                     if kind == "finite_shell_material":
                         if self._definition.shell.j2_curve is None:
                             raise ValueError("shell J2 checkpoint requires matching material")
@@ -1271,7 +1293,7 @@ class ExperimentalGEAnalysis:
                 raw, self._identity, expected_shapes)
             kind = kind.replace("_chart", "")
             schema = (CHECKPOINT if kind == "linear" else
-                      _BINARY_SCHEMAS["finite_bl5"] if kind == "finite_bl5" else
+                      _BINARY_SCHEMAS[kind] if kind in ("finite_bl5", "finite_bl5_material") else
                       STABLE_NATIVE_SCHEMA if kind == "finite_native_material_stable" else
                       "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"
                       if kind == "finite_native_material" else
@@ -1280,7 +1302,7 @@ class ExperimentalGEAnalysis:
                       else FINITE_CHECKPOINT)
             value = {"schema": schema, "model": self._identity,
                      "generation": generation, **arrays}
-            if kind in ("finite", "finite_bl5", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable"):
+            if kind in ("finite", "finite_bl5", "finite_bl5_material", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable"):
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
         elif raw.startswith(NATIVE_SHELL_MAGIC):
             if (self._line_samples or not self._has_physical_fibre or
@@ -1335,11 +1357,12 @@ class ExperimentalGEAnalysis:
                     "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7", NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA)):
                 raise ValueError("native material checkpoint requires binary framing")
             if (type(value) is dict and value.get("schema") in (
-                    _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_chart_bl5"])):
+                    _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_chart_bl5"],
+                    _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_chart_bl5_material"])):
                 raise ValueError("finite BL5 checkpoint requires binary framing")
         if (type(value) is dict and value.get("schema") in
                 (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
-                 _BINARY_SCHEMAS["finite_bl5"],
+                 _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"],
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT,
                   NATIVE_SHELL_SCHEMA,
@@ -1348,7 +1371,9 @@ class ExperimentalGEAnalysis:
             if self._has_physical_fibre and value["schema"] not in (
                     NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA, "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"):
                 raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
-            if bool(self._finite_bl5) != (value["schema"] == _BINARY_SCHEMAS["finite_bl5"]):
+            if (bool(self._finite_bl5) != (value["schema"] in (
+                    _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"])) or
+                    self._bl5_material != (value["schema"] == _BINARY_SCHEMAS["finite_bl5_material"])):
                 raise ValueError("finite checkpoint requires matching BL5 mechanics identity")
             if self._line_samples and not self._finite_bl5:
                 raise ValueError(
