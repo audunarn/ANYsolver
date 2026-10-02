@@ -1,5 +1,17 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October paired modal development delta:** matched virgin plate Q4/US3 at
+16x4 and32x8 has dominant physical mode matches and consistent cross-grid tracks.
+The in-plane frequency gap reduces8.2494% to2.4201%; native/external frequencies
+change-.5619%/-6.5022%. Fine native equations<=3.4e-15; actual GE representative
+local parity and physical inertia controls pass. This identifies a discretization
+contribution, not converged2% accuracy, drilling causality or a failed formulation.
+Stop the bounded diagnosis; no automatic64 run or formalF03 consumption.
+F07/F12/G4B/M4 and all aggregate statuses stay OPEN.
+[Exact raw fields, interpretation and limitations](development/r8-b2-mixed-reference-modes-20261002/results.md).
+Credential-bearing historical metadata requires cleanup before any push;
+future recorder and new archive use allowlisted/sanitized runtime metadata.
+
 BL5 actual8:1 endpoint, completed2 October: nine retained mixed solves at the
 three registered grids pass unchanged controls, onefactor/threeRHS each.
 Finest Mz equilibrium9.516e-9 is close to its1e-8cap; last Mz work change-1.354%

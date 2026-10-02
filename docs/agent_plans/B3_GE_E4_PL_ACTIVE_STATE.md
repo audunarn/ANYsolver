@@ -65,41 +65,48 @@ remain precise M2/F03 requirements. Advance ready independent consumer/material
 integration; use combined evidence when defining the next physical decision.
 [Reviewed supported action/raw](development/r8-bl5-supported-completion-20261002/results.md).
 
-## Latest integration and next discriminator
+## Latest integration and spectral decision
 
-ANYfem cabb6ed adds a distinct mixed reference-modal Project schema. Installed
-224/224, both mixed/all-S3 save/reopen examples, owned inputs and failure/cleanup
-checks pass. Solver80ca5f5e/consumer93b21a20 wheels bind391/98 modules and275
-onsite imports. One factor per example; numerical threads1/JIT off. Source
-223pass/1 fixture failure and1pass repair retained. Read review clear; wording
-correction reran only affected examples. No continuum-frequency acceptance.
-[Results/raw/review](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-mixed-modal-consumer-20261002/results.md).
+ANYfem cabb6ed delivers distinct mixed reference-modal Project persistence.
+Installed224/224 and mixed/all-S3 examples pass against unchanged solver80ca5f5e/
+consumer93b21a20 wheels,391/98 modules bound,275 onsite imports. Actual1thread,
+JIT off; onefactor/example. Historical failures retained; no continuum acceptance.
+[Consumer evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-mixed-modal-consumer-20261002/results.md).
 
-Decision: can the retained CCX US3 executable provide a physically declared
-plate modal reference with six-coordinate mode output? Existing isolated B2
-frequency checks need no repeat. US3 consistent translation/director inertia
-matches the Q4 continuous kinetic law, not native S3's omitted rotary policy.
-One 16x4 plate-only canary, 1x.2m/h.035/E210GPa/nu.3/rho7850, all-six root
-clamp, now completes6 ordered modes/all6 nodal coordinates; first29.59976Hz.
-Bending rx/ry and in-plane rz are nonzero. No beams/ties/prestress/F03/refinement.
-Actual logs1 numerical CPU, .1032s/8.47MB sampledRSS, below600s/1GiB. Source
-NaN guard failure retained; repaired16 controls and1 changed-output check pass.
-Read review repaired standalone exit/resource/FATAL guards before execution.
-Decision: external observables are usable; proceed to matched native Q4 physical
-mass and mode comparison, with native eigen-residual checks and prospective
-convergence argument. CCX source ARPACKtol1e-2 and rounded output do not certify
-1e-8 eigen residual or2% converged agreement. Do not repeat isolated B2 tests.
-[Canary output/raw and limitations](development/r8-b2-mixed-reference-modes-20261002/results.md).
+Matched virgin Q4/US3 plate modal discriminator is complete at16x4 and32x8:
+1x.2m/h.035/E210GPa/nu.3/rho7850, all-six x=0 clamp; no beams/ties/prestress.
+Canonical Q4 physical director mass and native massless-spin equilibrium retained.
+Same6 physical modes dominate full MACs and cross-grid coarse-node tracking.
+In-plane gap8.2494% to2.4201%; native/external changes-.5619%/-6.5022%.
+Fine native equations<=3.4e-15; representative local GE parity<=2.5e-16 and
+analytic inertia<=1.6e-16. Native3.596s/186.9MB and CCX.176s/12.5MB sampledRSS,
+serial600s/1GiB/actual1thread. No product/inertia/equation/tolerance change.
 
-## Restart
+Decision: retain component operators; STOP this bounded diagnostic. The shrinking
+gap identifies a discretization contribution, not drilling causality or continuum
+accuracy. Other external modes move2-2.7%; two levels/common-nodal MAC and
+unverified external eigen-residual do not qualify2% agreement. No automatic64.
+Future spectral assessment needs its prospective convergence/reference-error
+argument; primary coupled transfer/stability and independent product work continue.
+Separate Read review clear, with coarse-restriction and unweighted rz limits.
+[Versioned raw, combined interpretation and review](development/r8-b2-mixed-reference-modes-20261002/results.md).
 
-All owned jobs terminal. No resource slot held. Next usable slice:
-matched Q4/US3 physical spectral comparison using the verified observable route.
-Complete GE material/load/attachment and practical-scale obligations remain active.
-Use focused source checks and installed artifacts at coherent boundaries; no
-unchanged campaigns or helper-level qualification packages. At most3workers and
-one heavy job; ceiling100krows/600s/8GiB/8threads. Recent jobs1thread/1GiB.
-Original Temp roots: r8-bl5-supported-completion-v1,
-r8-b2-mixed-reference-modes-source-v1-v4 and r8-b2-mixed-reference-modes-installed-v1;
-verified archives are in linked result folders. Protected earlier note bytes remain
-in history/ACTIVE_STATE_20261002_PRE_SAME_ACTION.zip. Full goal INCOMPLETE.
+## Restart and dissemination restriction
+
+Environment recorder defect found: prior committed us3-modal-canary-v1.zip
+contains inherited credential values. Future recorder uses explicit safe runtime
+allowlist; new mocked regression1/1 passes without engine execution. New fine
+archive53files/SHA48ac4018...ac7c contains sanitized derivative metadata, original
+SHA and retained local originals; credential-value scan clear. Prior protected
+archive/history unchanged. DO NOT PUSH/redistribute until coordinated credential
+rotation/history cleanup. Numerical evidence unchanged; unrelated work may proceed.
+
+Current solver HEADd0157b36 plus owned scripts/tests/active/matrix/result/review
+and two versioned comparison archives/manifests; inspect Git on resume. Consumer
+clean last checked. All owned numerical/reviewer jobs terminal; no resource slot.
+Next: scoped save of the reviewed discriminator, then return to primary coupled
+physical-transfer/stability or ready material/load implementation. No automatic
+refinement, unchanged suite, contact-worker communication or F03 execution.
+Keep <=3workers/oneheavyjob; ceiling100krows/600s/8GiB/8threads. Full goal remains
+INCOMPLETE. Raw roots: r8-q4-us3-modal-compare-v1, ...-n32-v1 and
+r8-us3-modal-reference-n32-v1; existing linked archives bind actual runs.

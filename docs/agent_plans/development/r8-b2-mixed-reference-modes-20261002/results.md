@@ -121,3 +121,85 @@ add refinement. Raw output, deck, executed/prepared runners, fields, failed and
 repaired decoder controls are in [the canary archive](us3-modal-canary-v1.zip)
 and [identity/result manifest](us3-modal-canary-v1.json). Review is separate
 implementer Read scrutiny, not different-model-family qualification.
+
+## Matched Q4/US3 two-level modal discriminator — 2 October
+
+The installed solver `80ca5f5e...d5` was used unchanged; all 391 module bytes
+match its frozen source inventory. A virgin 1 x .2 m plate, h=.035 m,
+E=210 GPa, nu=.3 and rho=7850 kg/m3 has the same physical nodes and all-six
+x=0 clamp in each pair. Q4 has 64/256 cells; US3 has 128/512 triangles.
+Native Q4 uses complete stationary stiffness and canonical physical director
+mass. Normal spin remains massless and in free-row equilibrium. There are no
+beams, attachments, prestress or imposed loads in this component comparison.
+
+| Physical mode | Native 16x4 Hz | US3 16x4 Hz | Native 32x8 Hz | US3 32x8 Hz | Fine signed gap |
+|---|---:|---:|---:|---:|---:|
+| 1 | 29.552973 | 29.599760 | 29.518805 | 29.535230 | -0.0556% |
+| 2, in-plane | 163.773412 | 178.498500 | 162.853180 | 166.892100 | -2.4201% |
+| 3 | 185.711618 | 185.787300 | 184.225939 | 184.281900 | -0.0304% |
+| 4 | 279.677590 | 283.765000 | 275.874331 | 277.862600 | -0.7156% |
+| 5 | 525.380336 | 524.857600 | 514.207027 | 514.242900 | -0.0070% |
+| 6 | 855.768528 | 872.116600 | 841.656150 | 848.649700 | -0.8241% |
+
+Full 8x6 common-Q4-mass MACs identify dominant matches 1–6 at each grid.
+Across grids, saved fine nodal fields are restricted to the identical coarse
+nodes and compared with the coarse physical Q4 mass: native/reference matching
+is consistent with both cross-family assignments. Minimum selected MAC over
+these six tracks is .9998966 native and .9987612 external. This is a nodal
+shape diagnostic, not exact US3 P1 integration or repeated-eigenspace acceptance.
+Massless rz is excluded from MAC and its differing shapes are reported separately.
+The reported rz difference is an unweighted nodal norm, not a mesh-independent
+drilling convergence measure. Coarse-node restriction can miss variation between
+those nodes; neither diagnostic is a substitute for physical strain/work checks.
+
+The disputed in-plane gap shrinks from -8.2494% to -2.4201%; native frequency
+changes -0.5619%, external -6.5022%. It establishes a substantial discretization
+contribution, without isolating interpolation, membrane/drilling stiffness,
+clamp treatment or external eigensolve error. US3 membrane is Kb+Kh with
+drilling coupling, not a plain CST oracle. Near-unit MAC does not prove equal
+drilling response or strain energy. No rotation-axis or inertia repair follows.
+
+Native controls: six local rigid fields <=1.1e-16; representative first-cell
+actual GE historical/algorithmic zero-state tangent parity <=2.5e-16; analytical
+uniform inertia error <=1.6e-16. Fine native original-equation residuals
+<=3.4e-15; one sparse factor and 27 solves, no global dense inverse/nullspace.
+This is representative local GE parity, not a measured whole-owner tangent check.
+
+Both jobs completed within 600 s / 1 GiB at effective one-thread settings,
+JIT off. Native fine run: 3.596 s / 186,875,904 B sampled tree RSS; external:
+.176 s / 12,476,416 B. Seven/four total process threads include infrastructure;
+numerical pools and actual CCX logs use one. These are resource records, not
+speedup measurements. Six MAC source controls and the changed 32-grid preparation
+check passed in distinct focused runs. An initial postprocessor syntax failure
+is retained; corrected saved-field interpretation required no numerical rerun.
+
+**Decision:** retain the component operators. Stop this diagnostic after the
+single planned refinement. Prepare a prospective three-level, physically
+matched spectral assessment with reference-error controls before claiming
+converged 2% accuracy; do not automatically launch nx64. Two grids, a shrinking
+gap and small native residuals establish neither reference convergence nor the
+external equation error. F07/F12/G4B/M4, coupled modal physics, free-free,
+prestress and full programme acceptance remain open. This plate-only result
+does not select BL5 mechanics or consume formal F03 authority.
+
+[Coarse raw/result](q4-us3-compare-n16-v1.json) and
+[fine raw/result with cross-grid fields](paired-modal-discriminator-n32-v1.json)
+bind their versioned ZIPs. The fine archive has 53 files, SHA-256
+`48ac40187dd5b1bf2eeb32b444214d65a48f3dd679c701a32da470c5019eac7c`.
+
+### Environment-recording correction and dissemination restriction
+
+The canary recorder copied the full inherited environment into metadata. Review
+found nonempty credential variables in the earlier committed canary archive and
+the new local raw metadata. Future recording now uses an explicit runtime
+allowlist; the integration-style mocked supervisor regression passed 1/1 and
+does not execute an engine. No scientific input/output or numerical run changed.
+
+The new archive contains a separately named sanitized metadata derivative with
+the original SHA and omitted-field disposition; original local bytes are retained.
+All proposed fine archive members were checked against the credential values
+without printing them. **Do not push or redistribute the earlier canary archive
+or its Git history until credentials and history have been remediated.** The
+historical archive/history have not been rewritten under scientific-preservation
+authority. This requires coordinated cleanup and rotation of affected keys,
+separately from numerical acceptance; the new archive has no credential values.

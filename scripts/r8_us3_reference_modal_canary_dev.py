@@ -1,8 +1,8 @@
 """Bounded US3 modal-output feasibility; not a spectral qualification run.
 
-One virgin plate, no beams, attachment, prestress, refinement or native accuracy
-comparison. Printed eigenvalues and full six-coordinate modal fields establish
-only whether the retained external route supplies the required observables.
+One virgin plate per declared grid, no beams, attachment or prestress. Printed
+eigenvalues and full six-coordinate modal fields support bounded comparisons;
+this runner does not establish refinement convergence or native accuracy.
 """
 from __future__ import annotations
 
@@ -18,14 +18,19 @@ import shutil
 
 EXE_SHA = '27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f'
 SUPERVISOR_SHA = '5837645ddf40e591451cbd58f8975ce8f026cb908e750044b848c8c04dcae5d4'
+RECORDED_ENVIRONMENT = ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS',
+    'NUMBA_NUM_THREADS', 'NUMBA_DISABLE_JIT', 'CCX_NPROC_RESULTS',
+    'CCX_NPROC_EQUATION_SOLVER', 'PYTHONPATH', 'PYTHONNOUSERSITE')
 HEADER = re.compile(r'^\s*E I G E N V A L U E\s+N U M B E R\s+(\d+)\s*$', re.M)
 TABLE_ROW = re.compile(r'^\s*(\d+)\s+((?:[-+\d.EeDd]+\s+){3}[-+\d.EeDd]+)\s*$')
 sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
 
 
-def prepare(output: Path):
+def prepare(output: Path, nx=16):
+    if type(nx) is not int or nx not in (16, 32, 64):
+        raise ValueError('declared 16/32/64 by 4/8/16 grid family required')
     output.mkdir(parents=True, exist_ok=False)
-    nx, ny = 16, 4
+    ny = nx//4
     nodes = {1+j*(nx+1)+i: (i/nx, .2*j/ny, 0.)
              for j in range(ny+1) for i in range(nx+1)}
     triangles = []
@@ -148,7 +153,9 @@ def run(output: Path, executable: Path, supervisor: Path):
         raise ValueError('prepared model changed before execution')
     shutil.copy2(Path(__file__), output/'run-runner.py')
     identity.update(executable=str(executable), executable_sha256=EXE_SHA,
-                    supervisor_sha256=SUPERVISOR_SHA, environment=service.ENV,
+                    supervisor_sha256=SUPERVISOR_SHA,
+                    environment={key: service.ENV[key] for key in RECORDED_ENVIRONMENT
+                                 if key in service.ENV},
                     executed_runner_sha256=sha(Path(__file__)))
     (output/'execution-identity.json').write_text(json.dumps(identity, indent=2)+'\n')
     outcome = service.supervised([str(executable), '-i', str(output/'plate-modes')], output/'run')
@@ -163,8 +170,9 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--executable', type=Path)
     parser.add_argument('--supervisor', type=Path)
+    parser.add_argument('--nx', type=int, default=16)
     args = parser.parse_args()
-    if args.mode == 'prepare': prepare(args.output)
+    if args.mode == 'prepare': prepare(args.output, args.nx)
     elif args.mode == 'parse': print(json.dumps(parse(args.output)))
     else:
         if args.executable is None or args.supervisor is None: parser.error('executable and supervisor required')

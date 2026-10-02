@@ -45,6 +45,40 @@ def test_complete_headers_associate_all_six_mode_fields(tmp_path):
         assert np.array_equal(saved['eigenvalues'], np.arange(1, 7)**2)
 
 
+def test_refined_reference_preserves_physical_plate_and_root_definition(tmp_path):
+    runner.prepare(tmp_path/'n32', nx=32)
+    record = json.loads((tmp_path/'n32/identity.json').read_text())
+    assert (record['nx'], record['ny'], record['nodes'], record['elements']) == (32,8,297,512)
+    assert record['dimensions_m'] == [1., .2]
+    assert record['thickness_m'] == .035 and record['density_kg_m3'] == 7850.
+    assert record['roots'] == list(range(1,298,33))
+    deck = (tmp_path/'n32/plate-modes.inp').read_text()
+    assert '*DENSITY\n7850.' in deck and '*FREQUENCY\n6' in deck
+    assert all(f'{node},1,6,0.' in deck for node in record['roots'])
+
+
+def test_execution_record_uses_runtime_allowlist_not_process_environment(tmp_path, monkeypatch):
+    output = tmp_path/'record'
+    runner.prepare(output)
+    executable, supervisor = tmp_path/'dummy.exe', tmp_path/'supervisor.py'
+    executable.write_bytes(b'unexecuted identity fixture')
+    supervisor.write_text("ENV={'OMP_NUM_THREADS':'1','NUMBA_DISABLE_JIT':'1',"
+        "'PYTHONPATH':'declared-site','FUTURE_CREDENTIAL':'do-not-record',"
+        "'MISTRAL_API_KEY':'synthetic-do-not-record'}\n"
+        "def supervised(command, folder):\n"
+        "    return {'exit_code':0,'resource_limit':None}\n")
+    monkeypatch.setattr(runner, 'EXE_SHA', runner.sha(executable))
+    monkeypatch.setattr(runner, 'SUPERVISOR_SHA', runner.sha(supervisor))
+    monkeypatch.setattr(runner, 'parse', lambda path: {'mocked': True})
+    assert runner.run(output, executable, supervisor) == {'mocked': True}
+    text = (output/'execution-identity.json').read_text()
+    record = json.loads(text)
+    assert record['environment'] == {'OMP_NUM_THREADS':'1',
+        'NUMBA_DISABLE_JIT':'1','PYTHONPATH':'declared-site'}
+    assert 'do-not-record' not in text and 'CREDENTIAL' not in text
+    assert 'MISTRAL_API_KEY' not in text
+
+
 @pytest.mark.parametrize('defect', ('missing-node', 'duplicate-node', 'missing-rotation',
     'missing-mode', 'duplicate-mode', 'negative-eigenvalue', 'complex-frequency',
     'nonfinite', 'support-motion', 'frequency-unit', 'arpack-warning', 'changed-deck',
