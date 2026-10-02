@@ -101,11 +101,13 @@ SHA and retained local originals; credential-value scan clear. Prior protected
 archive/history unchanged. DO NOT PUSH/redistribute until coordinated credential
 rotation/history cleanup. Numerical evidence unchanged; unrelated work may proceed.
 
-Current solver HEADd0157b36 plus owned scripts/tests/active/matrix/result/review
-and two versioned comparison archives/manifests; inspect Git on resume. Consumer
-clean last checked. All owned numerical/reviewer jobs terminal; no resource slot.
-Next: scoped save of the reviewed discriminator, then return to primary coupled
-physical-transfer/stability or ready material/load implementation. No automatic
+Solver integration base d0157b36, reviewed discriminator committed6732cd97;
+inspect Git for the current checkpoint commit and clean state. Consumer clean
+last checked. All owned numerical/reviewer jobs terminal; no resource slot.
+Next: return to primary coupled physical-transfer/stability or a ready material/
+load slice after inspecting its current contracts. Existing GE supported/free-free
+modal routes already exist; do not rebuild them. A convergence assessment must
+address the saved reference uncertainty rather than add automatic refinement. No automatic
 refinement, unchanged suite, contact-worker communication or F03 execution.
 Keep <=3workers/oneheavyjob; ceiling100krows/600s/8GiB/8threads. Full goal remains
 INCOMPLETE. Raw roots: r8-q4-us3-modal-compare-v1, ...-n32-v1 and
