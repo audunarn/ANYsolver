@@ -9,8 +9,8 @@ No line, geometric stiffness, nonlinear state or qualification is inferred.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from math import isfinite
+from dataclasses import dataclass, field
+from math import fsum, isfinite
 from numbers import Real
 from typing import Callable, Mapping, Sequence
 
@@ -40,6 +40,7 @@ from .e4_pl_s3_v2d_element import (
     MASS_POLICY_ID as S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1,
     FORMULATION_ID as S3_V2D_FORMULATION_ID,
 )
+from ._b2_physical_flexibility_linear import RepresentabilityError
 from .elements import create_shell_element
 from .fe_core import FEModel
 from .linalg import MatrixClass, factorize_cached
@@ -204,6 +205,49 @@ class ExperimentalB2Q4PanelCapabilities:
     attachment: str = "F10 reference points only"
     operations: tuple[str, ...] = ("solve_linear", "solve_linear_many", "close")
     spectral_domain: str = "unavailable without explicit physical mass"
+    body_load_domain: str = "unavailable without complete physical density/mass"
+
+
+@dataclass(frozen=True, eq=False)
+class B2ReferenceBodyLoad:
+    """Owned reference-linear body load; six global coordinates per node.
+
+    Shell nodes precede beam nodes, each in the returned ID order. Acceleration
+    is global in m/s2. This is a reference load, not finite-configuration gravity.
+    """
+
+    acceleration_m_s2: tuple[float, float, float]
+    shell_node_ids: tuple[int, ...]
+    beam_node_ids: tuple[int, ...]
+    load: np.ndarray
+    policy: str = field(default="B2_E4_PL_REFERENCE_BODY_ACCELERATION_V1", init=False)
+    production_qualified: bool = field(default=False, init=False)
+    member_recovery: str = field(default="nodal-state constitutive fields only; distributed-load particular field not included", init=False)
+
+    def __post_init__(self):
+        # Bytes-backed storage cannot be made writable, and never aliases the
+        # owner's compiled map or the caller's acceleration.
+        values = np.asarray(self.load, dtype=np.float64)
+        object.__setattr__(self, "load", np.frombuffer(values.tobytes(), dtype=np.float64))
+        object.__setattr__(self, "acceleration_m_s2", tuple(self.acceleration_m_s2))
+        object.__setattr__(self, "shell_node_ids", tuple(self.shell_node_ids))
+        object.__setattr__(self, "beam_node_ids", tuple(self.beam_node_ids))
+
+
+def _beam_body_map(member: CompiledPhysicalB2Member, frame: np.ndarray) -> np.ndarray:
+    """Integrate physical section action before any rotary-mass cancellation."""
+    section = member.definition.mass.matrix_at_reference_axis()[:, :3]
+    abscissae, weights = np.polynomial.legendre.leggauss(4)
+    stations = tuple(float((x+1.)/2.) for x in abscissae)
+    trace = member.operator.trace(np.zeros(12), stations=stations)
+    local = np.zeros((12, 3))
+    with np.errstate(over="ignore", invalid="ignore"):
+        for weight, jacobian in zip(weights, trace.jacobian):
+            local += member.definition.length_m*(weight/2.)*(jacobian.T@section)
+        result = frame.T@local@frame[:3, :3]
+    if not np.isfinite(result).all():
+        raise RepresentabilityError("physical B2 body-load map is not representable")
+    return result
 
 
 @dataclass(frozen=True)
@@ -605,6 +649,21 @@ class ExperimentalB2Q4PanelAnalysis:
             footprints, positions, shells, beam_positions,
             shell_index, beam_index, points)
         total = 6*(len(shell_ids)+len(beam_ids))
+        for shell in shells:
+            density = shell.density_kg_m3
+            if density is not None:
+                if isinstance(density, (bool, np.bool_)) or not isinstance(density, Real):
+                    raise ValueError("positive finite shell density required when supplied")
+                try:
+                    density_value = float(density)
+                except (ValueError, TypeError, OverflowError) as exc:
+                    raise ValueError("representable positive shell density required") from exc
+                if not isfinite(density_value) or density_value <= 0.:
+                    raise ValueError("positive finite shell density required when supplied")
+        complete_body_mass = (all(shell.density_kg_m3 is not None for shell in shells)
+                              and all(member.definition.mass is not None for member in compiled))
+        body_map = np.zeros((total, 3)) if complete_body_mass else None
+        body_masses = []
         model = FEModel("experimental-multi-Q4-B2-point")
         for node_id in shell_ids:
             model.add_node(node_id, *positions[node_id])
@@ -659,6 +718,13 @@ class ExperimentalB2Q4PanelAnalysis:
                     reference_normal=shell.reference_normal)
                 if complete_mass:
                     _scatter(mass_rows, mass_columns, mass_values, slots, local_mass)
+                if body_map is not None:
+                    translations = np.zeros((24, 3))
+                    for i in range(4):
+                        translations[6*i:6*i+3] = np.eye(3)
+                    local_body = local_mass@translations
+                    body_map[slots] += local_body
+                    body_masses.append(fsum(float(v) for v in local_body[::6, 0]))
             elif count == 3 and modal_mass:
                 local_mass = element.compute_mass_matrix(model.mesh, model.get_material(material_id))
                 angular = np.array([6*i+j for i in range(3) for j in (3, 4, 5)])
@@ -669,6 +735,15 @@ class ExperimentalB2Q4PanelAnalysis:
                         or np.any(local_mass[:, angular] != 0.)):
                     raise ValueError("native S3 translational mass is not representable with zero angular inertia")
                 _scatter(mass_rows, mass_columns, mass_values, slots, local_mass)
+            if count == 3 and body_map is not None:
+                density = shell.density_kg_m3
+                area = .5*float(np.linalg.norm(np.cross(vertices[1]-vertices[0], vertices[2]-vertices[0])))
+                weight = float(density)*shell.thickness_m*area/3.
+                if not isfinite(weight) or weight <= 0.:
+                    raise RepresentabilityError("S3 reference body load is not representable")
+                for i in range(3):
+                    body_map[slots[6*i:6*i+3]] += weight*np.eye(3)
+                body_masses.append(3.*weight)
             shell_lookup[shell.shell_id] = (vertices, slots)
         member_lookup = {}
         for member in compiled:
@@ -687,6 +762,9 @@ class ExperimentalB2Q4PanelAnalysis:
                 if modal_mass and np.any(np.diag(local_mass)[[0, 1, 2, 6, 7, 8]] <= 0.):
                     raise ValueError("physical B2 translational mass is not representable")
                 _scatter(mass_rows, mass_columns, mass_values, slots, local_mass)
+            if body_map is not None:
+                body_map[slots] += _beam_body_map(member, frame)
+                body_masses.append(member.definition.length_m*member.definition.mass.matrix_per_m[0][0])
             member_lookup[member.definition.member_id] = (member, slots)
         K = sparse.coo_matrix((values, (rows, columns)),
                               shape=(total, total)).tocsr()
@@ -770,6 +848,18 @@ class ExperimentalB2Q4PanelAnalysis:
         self._footprint_incidence = footprint_incidence
         self._members = tuple(member_lookup.items())
         self._K = K
+        if body_map is not None and not np.isfinite(body_map).all():
+            raise RepresentabilityError("reference body-load map is not representable")
+        self._body_map = body_map
+        self._body_mass = None
+        if self._body_map is not None:
+            try:
+                self._body_mass = fsum(body_masses)
+            except OverflowError as exc:
+                raise RepresentabilityError("total reference body mass is not representable") from exc
+            if not isfinite(self._body_mass) or self._body_mass <= 0.:
+                raise RepresentabilityError("total reference body mass is not representable")
+            self._body_map.setflags(write=False)
         self._M = (sparse.coo_matrix((mass_values, (mass_rows, mass_columns)),
                                     shape=(total, total)).tocsr()
                    if complete_mass else None)
@@ -875,13 +965,17 @@ class ExperimentalB2Q4PanelAnalysis:
 
     @property
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
+        body_operations = (("body_acceleration_load",) if self._body_map is not None else ())
+        body_domain = ("experimental reference-linear uniform global acceleration with complete declared physical mass; member recovery excludes distributed-load particular fields; no finite gravity"
+                       if self._body_map is not None else "unavailable without complete physical density/mass")
         if self.footprints:
             admitted = (self._M is not None and self._coordinate_modal_supports()
                         and not np.any(self._u0 != 0.) and self._footprint_rigid_supported)
             return ExperimentalB2Q4FootprintCapabilities(
                 attachment="explicit reference-linear selected-node rigid footprints and finite-vertex points",
                 operations=(("solve_linear", "solve_linear_many", "modes", "close")
-                            if admitted else ("solve_linear", "solve_linear_many", "close")),
+                            if admitted else ("solve_linear", "solve_linear_many", "close")) + body_operations,
+                body_load_domain=body_domain,
                 spectral_domain=("experimental virgin supported reference modes; normal-spin locked; "
                                  "mechanical qualification incomplete; prestress unsupported"
                                  if admitted else
@@ -889,10 +983,54 @@ class ExperimentalB2Q4PanelAnalysis:
                                  "normal-spin locked; mechanical qualification incomplete; prestress unsupported"),
                 footprints=self.footprints)
         if self._M is None:
-            return ExperimentalB2Q4PanelCapabilities()
+            return ExperimentalB2Q4PanelCapabilities(
+                operations=("solve_linear", "solve_linear_many", "close") + body_operations,
+                body_load_domain=body_domain)
         return ExperimentalB2Q4PanelCapabilities(
-            operations=("solve_linear", "solve_linear_many", "modes", "close"),
+            operations=("solve_linear", "solve_linear_many", "modes", "close") + body_operations,
+            body_load_domain=body_domain,
             spectral_domain="experimental reference B2/Q4 finite pairs with coordinate supports; completeness unqualified")
+
+    def body_acceleration_load(self, acceleration_m_s2) -> B2ReferenceBodyLoad:
+        """Prepare an owned dead-load vector without assembling or factoring.
+
+        f = integral D.T rho a uses the compiled physical trace and mass origin.
+        Pass ``result.load`` to the existing static or compatible batch route.
+        """
+        if self._closed:
+            raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        if self._body_map is None:
+            raise ValueError("complete physical density/mass required for reference body load")
+        raw = np.asarray(acceleration_m_s2, dtype=object)
+        if (raw.shape != (3,) or any(isinstance(v, (bool, np.bool_)) or
+                not isinstance(v, Real) for v in raw.flat)):
+            raise ValueError("three finite real global acceleration components required")
+        try:
+            acceleration = np.array(raw, dtype=float, copy=True)
+        except (ValueError, TypeError, OverflowError) as exc:
+            raise ValueError("three finite real global acceleration components required") from exc
+        if not np.isfinite(acceleration).all():
+            raise ValueError("three finite real global acceleration components required")
+        with np.errstate(over="ignore", invalid="ignore", under="ignore"):
+            applied = self._body_map@acceleration
+        if not np.isfinite(applied).all():
+            raise RepresentabilityError("reference body acceleration load is not representable")
+        # A finite vector can still lose a required force through underflow or
+        # cancellation. Test rigid-translation work against integrated physical
+        # mass without adding an absolute load floor or changing solver criteria.
+        for axis, component in enumerate(acceleration):
+            if component == 0.:
+                continue
+            expected = self._body_mass*float(component)
+            try:
+                actual = fsum(float(v) for v in applied[axis::6])
+            except OverflowError as exc:
+                raise RepresentabilityError("reference body force is not representable") from exc
+            if (not isfinite(expected) or expected == 0. or not isfinite(actual)
+                    or abs(actual/expected-1.) > 1e-9):
+                raise RepresentabilityError("required reference body force is not representable")
+        return B2ReferenceBodyLoad(tuple(float(v) for v in acceleration),
+                                   self.shell_node_ids, self.beam_node_ids, applied)
 
     def _coordinate_modal_supports(self) -> bool:
         selector = self._T.copy()
@@ -1409,6 +1547,7 @@ class ExperimentalB2MixedPanelAnalysis(ExperimentalB2Q4PanelAnalysis):
             point_law_id=tuple(dict.fromkeys(law for _, law in self._point_laws)),
             attachment=existing.attachment,
             operations=existing.operations,
+            body_load_domain=existing.body_load_domain,
             spectral_domain=("experimental virgin supported finite descriptor pairs; heterogeneous Q4 director and native S3 lumped translation inertia; S3 rotary inertia omitted; completeness unqualified; prestress unsupported"
                              if self._reference_inertia_policy is not None else
                              "native S3 V2D physical mass and modes deferred" if self._has_s3

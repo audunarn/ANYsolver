@@ -112,3 +112,26 @@ refinement, unchanged suite, contact-worker communication or F03 execution.
 Keep <=3workers/oneheavyjob; ceiling100krows/600s/8GiB/8threads. Full goal remains
 INCOMPLETE. Raw roots: r8-q4-us3-modal-compare-v1, ...-n32-v1 and
 r8-us3-modal-reference-n32-v1; existing linked archives bind actual runs.
+
+## Latest product delivery and next action
+
+B2 reference-linear uniform body acceleration now compiles physical shell/beam
+load maps once and reuses static/batch services. Q4/mixed/S3, point/admitted
+nodal footprints, mass origins and owned loads are exercised. Repaired reviewer
+underflow finding with a total active-axis force check (no absolute floor),
+density conversion and coupled-section controls. Representable subnormals pass.
+Final installed127/127,391 modules bound to wheel0c4d6edb...03e15; actual1numerical
+thread/JIT off. Public Q4/mixed/S3 examples complete1/10/100 cases with one factor
+and balanced3449.9808N weight. Separate Read review clear; no family-independent
+qualification. Prior fixture/overbroad-subnormal/example-scalar failures retained.
+[Product, exact raw and limits](development/r8-b2-body-acceleration-20261002/results.md).
+
+Payload/capabilities explicitly limit member recovery to nodal-state fields;
+distributed-load particular fields are absent. Examples select no member fields.
+No GE gravity, follower/current gravity, consumer load persistence or G4A pass.
+The force representability check is not a local-component or moment certificate.
+Next ready load slice: design body/distributed-load records and correct particular
+section recovery within existing owner/services, then consumer persistence;
+retain the primary coupled transfer/stability decision and all M4 obligations.
+Inspect Git for current delivery commit; all owned jobs terminal. No push while
+historical credential remediation is pending. Full Revision8 goal remains active.

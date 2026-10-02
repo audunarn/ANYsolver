@@ -1,5 +1,15 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October B2 body-load implementation delta:** experimental reference-linear
+uniform acceleration now prepares owned equivalent nodal loads across Q4/mixed/S3
+and point/admitted nodal footprints. Independent physical work/wrench and
+ownership controls pass; final installed127/127 and three public1/10/100 examples
+reuse one factor. Underflow/density findings repaired, failed evidence retained.
+Wheel0c4d6edb...03e15 binds391 modules, actual1numerical thread/JIT off. No member
+particular-field recovery or GE gravity; these remain named M4/G4A obligations.
+No consumer persistence, scientific qualification or aggregate status is promoted.
+[Delivery, limits, raw and separate Read review](development/r8-b2-body-acceleration-20261002/results.md).
+
 **2 October paired modal development delta:** matched virgin plate Q4/US3 at
 16x4 and32x8 has dominant physical mode matches and consistent cross-grid tracks.
 The in-plane frequency gap reduces8.2494% to2.4201%; native/external frequencies
