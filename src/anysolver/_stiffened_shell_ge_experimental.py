@@ -523,8 +523,10 @@ class ExperimentalGEAnalysis:
         if definition.footprints and definition.lines:
             raise ValueError("experimental nodal rigid footprints require point-owner-only attachment scope")
         if definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and (
-                not panel.q4_elements or definition.lines):
-            raise ValueError("algorithmic Q4 pullback requires a Q4-containing point model")
+                not panel.q4_elements or (definition.lines and (
+                    panel.s3_elements or panel.j2_curve is not None or
+                    any(type(line) is not ExperimentalBL5Line for line in definition.lines)))):
+            raise ValueError("algorithmic Q4 pullback requires a Q4-containing point or elastic Q4 BL5 model")
         shell_model, shell_ids, shell_xyz, shell_index, shell_parts = _shell_reference(panel)
         # The compiled owner must not consult caller-owned mutable connectivity
         # when selecting material recovery or decoding a later checkpoint.
@@ -612,6 +614,8 @@ class ExperimentalGEAnalysis:
         self._finite_bl5 = bool(definition.lines) and all(
             type(line) is ExperimentalBL5Line for line in definition.lines
         ) and panel.j2_curve is None and not self._has_physical_fibre
+        if definition.lines and definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and not self._finite_bl5:
+            raise ValueError("algorithmic Q4 line pullback requires admitted elastic BL5 beams")
         identity_payload = {
             "profile": PROFILE, "shell_ids": shell_ids,
             "shell_xyz": shell_xyz.tolist(), "shell_cells": panel.q4_elements,
@@ -825,7 +829,8 @@ class ExperimentalGEAnalysis:
                     ("experimental GEBeamDistributedProgramme; absolute signed force/couple densities at positive forward positions; point owner only; zero-load convergence unresolved under current equilibrium assessment; not qualified",)),
                 "shell_pressure_loads": (() if self._line_samples or self._definition.footprints else
                     ("experimental GEShellPressureLoad; shell IDs are Q4 then S3, one-based; reference-linear native dead pressure; finite Q4 dead and Q4/S3 interpolation-surface current-area follower pressure; finite native reference_dead S3 is unsupported; explicit reference_dead_director_v2 admits a distinct virgin-elastic S3 director-enhanced dead surface with relative tilt below 0.9*pi, not qualified",)),
-                "staged_dead_loads": (() if self._line_samples else
+                "staged_dead_loads": (() if self._line_samples and not (
+                    self._finite_bl5 and self._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1) else
                     ("experimental immutable piecewise-affine translation forces; forward programme position",)),
                 "experimental_line_spaces": tuple(
                     line.multiplier_space for line in self._definition.lines),
@@ -1155,8 +1160,11 @@ class ExperimentalGEAnalysis:
             MAGIC as STAGED_MAGIC, decode_checkpoint,
         )
         if raw.startswith(STAGED_MAGIC):
-            if self._line_samples or getattr(self, "_staged_context", None) is not None or getattr(self, "_external_context", None) is not None:
-                raise ValueError("staged checkpoint requires a fresh point owner")
+            if ((self._line_samples and not (self._finite_bl5 and
+                    self._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1)) or
+                    getattr(self, "_staged_context", None) is not None or
+                    getattr(self, "_external_context", None) is not None):
+                raise ValueError("staged checkpoint requires a fresh point or admitted elastic BL5 owner")
             from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
             programme, position, inner = decode_checkpoint(raw)
             compiled = programme.compile(self, FinitePointDriver(self)._load)

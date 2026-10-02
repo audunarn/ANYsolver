@@ -1266,3 +1266,11 @@ review confirms the limitation. Do not promote a corrected U1/US3 deck to matche
 shear-reference status; no new external solve/refinement is warranted by these
 checks. No native formulation rejection, acceptance relaxation or F03 consumption.
 [Source, raw checks and decision](development/r8-bl5-u1-us3-canary-20261002/results.md).
+
+**2 October objective-Q4 BL5 staged slice:** explicit algorithmic-Q4 policy now
+admits elastic Q4 BL5 and staged translation forces. Source/installed3checks pass
+signed stages, cancellation, restart, physical balance and P0 adaptive/chart path;
+5focused compatibility checks pass. New wheel d506e3f3...14be90. Historical-policy
+moment failures retained; its staged scope remains rejected. Independent review
+clear within experimental scope. No M2/F03/G4 physical acceptance or criterion
+change. [Evidence](development/r8-bl5-staged-loads-20261002/results.md).

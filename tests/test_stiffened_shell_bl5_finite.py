@@ -37,8 +37,12 @@ def test_finite_line_reference_operator_matches_existing_sparse_linear(basis):
     assert len(owner._line_terms)==len(owner._line_samples)
 
 
-def test_nonzero_multiplier_derivative_through_actual_owned_chart_updates():
-    owner=stiffened_shell.create_analysis(definition=_model())
+@pytest.mark.parametrize("objective", [False, True])
+def test_nonzero_multiplier_derivative_through_actual_owned_chart_updates(objective):
+    model = _model()
+    if objective:
+        model = replace(model, q4_pullback_policy=stiffened_shell.Q4_ALGORITHMIC_PULLBACK_V1)
+    owner=stiffened_shell.create_analysis(definition=model)
     driver=FinitePointDriver(owner); rng=np.random.default_rng(817)
     count=owner._K.shape[0]
     delta=rng.normal(size=count+owner._C.shape[0])*.002

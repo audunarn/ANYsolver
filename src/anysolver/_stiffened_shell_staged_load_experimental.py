@@ -1,4 +1,4 @@
-"""Immutable staged spatial translation dead forces for the GE point owner.
+"""Immutable staged spatial translation dead forces for admitted GE owners.
 
 This module owns descriptors, bounded compilation and checkpoint framing only.
 The existing finite owner owns mechanics, supported scope and atomic publication.

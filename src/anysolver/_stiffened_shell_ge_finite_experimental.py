@@ -519,8 +519,9 @@ class FinitePointDriver:
         if self._external is not None:
             raise ValueError("finite configuration-dependent and nodal/programme loads cannot be mixed")
         if type(actions) is StagedDeadLoadProgramme:
-            if self.owner._line_samples:
-                raise ValueError("staged translation dead loads require the experimental point owner")
+            if self.owner._line_samples and not (self.owner._finite_bl5 and
+                    self.owner._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_POLICY):
+                raise ValueError("staged translation dead loads require a point or admitted elastic BL5 owner")
             if self._accepted is not None and (self._programme is None or
                     actions.identity != self._programme.identity):
                 raise ValueError("finite load programme changed after first increment")
