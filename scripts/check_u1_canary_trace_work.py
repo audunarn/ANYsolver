@@ -58,7 +58,7 @@ def plane(length, ei, shear):
         assert abs(sum(v[i](x)*q for i,q in enumerate([1,0,1,0]))-1) < 1e-14
         assert abs(sum(v[i](x)*q for i,q in enumerate([0,1,length,1]))-length*x) < 1e-14
         assert abs(sum(theta[i](x)*q for i,q in enumerate([0,1,length,1]))-1) < 1e-14
-    return v, theta, error
+    return v, theta, error, source
 
 
 def main():
@@ -69,11 +69,20 @@ def main():
     with tarfile.open(ARCHIVE) as archive:
         identities = {name: hashlib.sha256(archive.extractfile(
             './CalculiX/ccx_2.23/src/'+name).read()).hexdigest()
-            for name in ('resultsmech_u1.f','e_c3d_u1.f')}
+            for name in ('resultsmech_u1.f','e_c3d_u1.f','us3_sub.f')}
     length = .5
     e, nu, area, inertia, kappa = 210e9, .3, .01, 8.333333333333333e-6, .8
     shear = kappa*e/(2*(1+nu))*area
-    v, theta, error = plane(length, e*inertia, shear)
+    v, theta, error, stiffness = plane(length, e*inertia, shear)
+    # Independent cantilever force-method compliance for the stated physical
+    # section. This is an accuracy discriminator, not a source-transcription test.
+    tip = np.linalg.solve(stiffness[2:,2:], np.eye(2))
+    physical = np.array([[length**3/(3*e*inertia)+length/shear,
+                          length**2/(2*e*inertia)],
+                         [length**2/(2*e*inertia),length/(e*inertia)]])
+    relative = (tip-physical)/physical
+    assert abs(relative[1,1]) < 1e-12
+    assert abs(relative[0,0]) > .1  # retained counterexample at this fixed fixture
     # Integral over each half-metre element; assemble all 18 beam columns.
     def integral(polys):
         return np.array([length*(p.integ()(1)-p.integ()(0)) for p in polys])
@@ -105,15 +114,57 @@ def main():
     assert np.linalg.norm(port @ p1 @ witness) == 0
     witness_gap = port @ mean @ witness
     assert abs(witness_gap[4]) > 1
+    # US3 physical five-field P1 trace: us3_sub.f:1396-1423 (mass),
+    # with P1 director gradients at :739-777. Its CS-DSG/ANDES strains
+    # are separate assumed-strain maps, not gradients of this whole trace.
+    shell_mean = np.hstack([.5*np.eye(6), .5*np.eye(6), np.zeros((6,6))])
+    shell_port = port.copy()
+    shell_port[0,4], shell_port[1,3] = .0175, -.0175
+    constraint = np.hstack([-shell_port @ shell_mean, port @ mean])
+    coordinates = np.array([[0,0,0],[1,0,0],[0,.2,0],
+                            [0,0,.0675],[.5,0,.0675],[1,0,.0675]])
+    rigid_errors = []
+    for j in range(6):
+        t, omega = np.zeros(3), np.zeros(3)
+        (t if j < 3 else omega)[j % 3] = 1
+        q = np.zeros((6,6))
+        q[:,:3] = t + np.cross(omega, coordinates)
+        q[:,3:] = omega
+        rigid_errors.append(float(np.max(np.abs(constraint @ q.ravel()))))
+    assert max(rigid_errors) < 1e-14
+    # Transpose forces: check physical balance about the actual common origin,
+    # independently of the gap calculation and including both eccentric arms.
+    balances = []
+    for j in range(5):
+        forces = constraint[j].reshape(6,6)
+        force = forces[:,:3].sum(axis=0)
+        moment = (np.cross(coordinates,forces[:,:3])+forces[:,3:]).sum(axis=0)
+        balances.append(float(max(np.max(np.abs(force)), np.max(np.abs(moment)))))
+    assert max(balances) < 1e-14
+    # Do not lock director rotation to geometric normal: a transverse slope
+    # with zero rotations has displacement trace, but zero director channels.
+    shear_field = np.zeros((3,6))
+    shear_field[:,2] = coordinates[:3,0]
+    shear_trace = shell_port @ shell_mean @ shear_field.ravel()
+    assert np.array_equal(shear_trace[3:], [0,0]) and shear_trace[2] == .5
+    # Normal spin is excluded from the attachment; not a zero-energy assertion.
+    for node in range(3):
+        assert np.array_equal(constraint[:,node*6+5], np.zeros(5))
     report = dict(source_archive_sha256=EXPECTED, source_members=identities,
                   canary_deck_sha256=deck_hash,
                   old_kernel_witness_new_gap=witness_gap.tolist(),
+                  full_port_rigid_errors=rigid_errors,
+                  full_port_wrench_balance_errors=balances,
+                  shell_transverse_shear_trace=shear_trace.tolist(),
                   source_energy_relative_error=error,
+                  u1_cantilever_tip_compliance=tip.tolist(),
+                  force_method_tip_compliance=physical.tolist(),
+                  cantilever_compliance_relative_difference=relative.tolist(),
                   beam_port_change_max_by_row=np.max(np.abs(change),axis=1).tolist(),
                   supported_beam_port_change_max_by_row=np.max(np.abs(supported),axis=1).tolist(),
                   mean_theta_y_columns=mean[4].tolist(),
                   status='NOT_EQUIVALENT_BEAM_TRACE',
-                  limits='Beam-side algebra only; shell trace, external execution and native B3 equivalence unverified.')
+                  limits='Declared US3 P1 physical trace with source-consistent U1 polynomial extension; no full strain-gradient identity, external execution, native B3 equivalence or qualification.')
     print(json.dumps(report, indent=2))
 
 

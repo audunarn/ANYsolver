@@ -1257,3 +1257,12 @@ Local energy/source-stiffness error1.495e-16; explicit old-kernel witness passes
 Independent OpenAI Read review found no blocking algebra error. Retain canary as
 feasibility only. US3 trace and physical/native equivalence remain open; no external
 rerun or F03 consumption. [Derivation](development/r8-bl5-u1-us3-canary-20261002/results.md).
+
+**2 October reference disposition after0888da71:** US3 P1 physical trace and full
+reference-linear work maps pass bounded rigid/wrench checks. A separate analytical
+cantilever check finds the actual U1 discretization11.1423% below physical
+Timoshenko tip-force compliance, despite pure-moment agreement. Independent Read
+review confirms the limitation. Do not promote a corrected U1/US3 deck to matched
+shear-reference status; no new external solve/refinement is warranted by these
+checks. No native formulation rejection, acceptance relaxation or F03 consumption.
+[Source, raw checks and decision](development/r8-bl5-u1-us3-canary-20261002/results.md).

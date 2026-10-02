@@ -9,7 +9,7 @@ protected evidence and resource authority. Expanded note preserved byte-for-byte
 in [history](development/r8-ge-pressure-work-20261002/active-before-consumer-v1.md).
 
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001, integration base65273eed. Root owns
+branch codex/stiffened-main-reconcile-20261001, integration base0888da71. Root owns
 pressure context/owner/facade/tests/example/docs. ANYfem consumer:
 C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, branch
 codex/experimental-ge-panel-consumer, HEADe998e9b. Consumer programme slice committed;
@@ -124,7 +124,12 @@ Current connection decision: the independent U1 canary's nodal-P1 beam port is
 not equivalent to its source-derived interior interpolation on supported DOFs.
 A bounded algebraic check reproduces U1 stiffness to1.49e-16 and exposes changed
 integrated work columns. Old canary remains feasibility-only; no native error
-allocation or formal F03 claim. Next: finish US3 shell-side interpolation/work
-contract before preparing a distinct consistent-trace reference. No external
-rerun or mesh campaign is needed to establish this beam-side difference.
+allocation or formal F03 claim. US3 declared P1 physical trace is now source-backed;
+full rigid/wrench checks pass5.56e-17, with assumed strains explicitly separate.
+However, U1 at the actual canary section/element length is11.1423% too stiff in
+tip-force compliance against the independent Timoshenko force method; isolated
+pure-moment compliance agrees. Independent review confirms this scoped limitation.
+Do not prepare/run a corrected coupled U1 deck as a matched shear reference.
+Next: use the existing physically matched external beam evidence/common work maps
+to select the native transfer discriminator. No automatic refinement or new solver.
 [Derivation and check](development/r8-bl5-u1-us3-canary-20261002/results.md).
