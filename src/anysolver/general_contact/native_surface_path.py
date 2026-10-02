@@ -90,13 +90,28 @@ def material_path_pose(start, translations, angular, shell_increment, fraction):
 
 def certify_material_path(pair, start, translations, angular, shell_increment,
                           *, closed, maximum_intervals=256):
+    if type(closed) is not bool:
+        raise ValueError('explicit persistent contact state required')
+    return _certify_material_path(pair, start, translations, angular, shell_increment,
+                                  closed=closed, maximum_intervals=maximum_intervals)
+
+
+def certify_material_ownership(pair, start, translations, angular, shell_increment,
+                               *, maximum_intervals=256):
+    """Certify only physical facet ownership; this does not admit contact history."""
+    return _certify_material_path(pair, start, translations, angular, shell_increment,
+                                  closed=None, maximum_intervals=maximum_intervals)
+
+
+def _certify_material_path(pair, start, translations, angular, shell_increment,
+                           *, closed, maximum_intervals):
     """Certify strict facet ownership and unchanged open/closed state.
 
     Quadratic Bernstein bounds certify target orientation and area. Global
     Lipschitz bounds enclose gap and each signed physical edge distance on every
     visited interval. Sampling detects failures but never establishes success.
     """
-    if type(closed) is not bool or type(maximum_intervals) is not int or maximum_intervals < 1:
+    if type(maximum_intervals) is not int or maximum_intervals < 1:
         raise ValueError('explicit state and positive interval cap required')
     if sha(pair._definition()) != pair.definition_sha256:
         raise ValueError('native/S3 material-point definition changed')
@@ -158,7 +173,7 @@ def certify_material_path(pair, start, translations, angular, shell_increment,
         if lower == 0:
             return result(False, 'target edge unresolved', 0)
         rates.append(relative_speed+(normal_speed+np.linalg.norm(change)/lower)*radius)
-    rates = np.array([gap_rate, *rates])
+    rates = np.array([0. if closed is None else gap_rate, *rates])
     padding = 256*np.finfo(float).eps*max(1., np.max(np.abs(nodes0)),
         np.max(np.abs(nodes1)), np.max(np.abs(first)), np.max(np.abs(last)), arm)
 
@@ -169,7 +184,7 @@ def certify_material_path(pair, start, translations, angular, shell_increment,
         normal = frame[:, 2]
         point = source.evaluate(pose.positions, pose.position_low, pose.cell_rotations).surface_position
         gap = float(normal @ (point-corners[0]))
-        result = [-gap if closed else gap]
+        result = [1. if closed is None else (-gap if closed else gap)]
         for i in range(3):
             edge = corners[(i+1)%3]-corners[i]
             result.append(float(np.cross(normal, edge/np.linalg.norm(edge)) @ (point-corners[i]))
@@ -185,7 +200,7 @@ def certify_material_path(pair, start, translations, angular, shell_increment,
     if polynomial is not None:
         gap0, change = polynomial
         sign = -1 if closed else 1
-        if (min(sign*gap0, sign*(gap0+change)) >= 0
+        if ((closed is None or min(sign*gap0, sign*(gap0+change)) >= 0)
                 and min(np.min(left[1:]), np.min(right[1:])) > padding):
             return result(True, 'affine persistent interior state', 1)
         return result(False, 'affine opening/closure or facet exit', 1)

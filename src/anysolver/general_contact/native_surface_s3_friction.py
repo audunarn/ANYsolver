@@ -4,7 +4,13 @@ Actual surface-point gap, explicit reference-area weight and persistent material
 labels. No centreline normal surrogate, partner transfer or surface quadrature is
 invented here. Native second derivatives use its spatial multiplicative chart.
 """
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .native_surface_activation import NativeS3ActivationResult
 
 import numpy as np
 
@@ -58,7 +64,7 @@ class NativeS3MaterialPointResult:
 class NativeS3MaterialPathResult:
     """Disposable certified contribution; structural equilibrium still required."""
     configuration: NativeS3MaterialConfiguration
-    contribution: NativeS3MaterialPointResult
+    contribution: NativeS3MaterialPointResult | NativeS3ActivationResult
     path_sha256: str
     certified_intervals: int
 
@@ -74,11 +80,15 @@ def _unit(v):
 
 class NativeS3MaterialPointFriction:
     def __init__(self,source,target,*,reference_weight_m2,normal_stiffness_Pa_per_m,
-                 friction_coefficient,tangential_stiffness_Pa_per_m,maximum_coupled_dofs=60):
+                 friction_coefficient,tangential_stiffness_Pa_per_m,maximum_coupled_dofs=60,
+                 activation_policy='reject'):
         if type(source) is not NativeRetainedRoundStation or type(target) is not S3SkinMaterialPoint:
             raise TypeError('exact native round station and S3 material point required')
         if target.adapter.side!='top':raise ValueError('initial native/S3 material profile requires target top skin')
         self.source,self.target=source,target
+        if activation_policy not in ('reject','transverse_first_touch'):
+            raise ValueError('explicit supported native material activation policy required')
+        self.activation_policy=activation_policy
         if type(maximum_coupled_dofs) is not int or maximum_coupled_dofs<1:
             raise ValueError('positive coupled-coordinate resource cap required')
         self.maximum_coupled_dofs=maximum_coupled_dofs
@@ -99,7 +109,7 @@ class NativeS3MaterialPointFriction:
 
     def _definition(self):
         source=self.source;target=self.target;mapping=target.adapter.work_map
-        return dict(profile=PROFILE,source=dict(identity=source.identity,
+        result=dict(profile=PROFILE,source=dict(identity=source.identity,
             reference=source.reference.canonical_data(),element=source.element_id,
             xi=source.xi,radius=source.radius,angle=source.angle,cell=source.cell,t=source.t),
             target=dict(body=target.adapter.body_id,element=target.adapter.element_id,
@@ -109,6 +119,8 @@ class NativeS3MaterialPointFriction:
             weight=self.reference_weight_m2,normal=self.normal_stiffness_Pa_per_m,
             mu=self.friction_coefficient,tangent=self.tangential_stiffness_Pa_per_m,
             maximum_coupled_dofs=self.maximum_coupled_dofs)
+        if self.activation_policy!='reject':result['activation_policy']=self.activation_policy
+        return result
 
     def evaluate_path(self, committed, history, translations, angular, shell_increment,
                       *, maximum_intervals=256):
@@ -126,6 +138,16 @@ class NativeS3MaterialPointFriction:
                                      committed.cell_rotations).surface_position
         target = self.target.physical_pose(committed.shell_displacement)
         gap = float((point-np.asarray(target.position)) @ np.asarray(target.material_frame)[:, 2])
+        if self.activation_policy=='transverse_first_touch' and gap>0.:
+            next_point=self.source.evaluate(candidate.positions,candidate.position_low,candidate.cell_rotations).surface_position
+            next_target=self.target.physical_pose(candidate.shell_displacement)
+            next_gap=float((next_point-np.asarray(next_target.position))@np.asarray(next_target.material_frame)[:,2])
+            if next_gap<0.:
+                from .native_surface_activation import evaluate_first_touch
+                contribution=evaluate_first_touch(self,committed,history,translations,angular,shell_increment,
+                                                   maximum_intervals=maximum_intervals)
+                return NativeS3MaterialPathResult(candidate,contribution,contribution.path_sha256,
+                                                   contribution.ownership_intervals)
         polynomial = affine_gap_polynomial(self, committed, np.asarray(translations), angular, shell_increment)
         if polynomial is not None:
             gap = polynomial[0] if polynomial[0] != 0 else polynomial[1]

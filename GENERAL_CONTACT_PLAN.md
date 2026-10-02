@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.17. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.18. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -256,12 +256,21 @@ engineering acceptance. [Evidence](docs/d1_review_support/contact_c6_free_sphere
 One additional history/work/V6 split check passes on the same unchanged wheel;
 172distinct checks are covered, with unaffected results reused by impact analysis.
 
-**Next bounded decision:** integrate the certified native/S3 material contribution
-through rotating activation/event equilibrium. The existing retained owner now
-assembles the full contribution and solves bounded open-state increments; a V2
-transaction binds geometry/native/friction history with canonical physical replay.
-Two-load open restart and failure/cancellation/cap checks pass. Active friction
-equilibrium and distributed surface integration remain unverified. Persistent
+**Next bounded decision:** extend the now-solved native/S3 material-point route
+into distributed swept-surface integration, retaining explicit reference measure,
+physical station identities and complete retained work. Before general lifecycle
+admission, rotating release/recontact needs event/work refinement. Avoid treating
+one point with a caller-declared area as a distributed beam friction handoff.
+
+The explicit transverse-first-touch selection now certifies unique approach,
+differentiates the event response separately from instantaneous endpoint work,
+and converges through the existing retained owner with a deformable S3 target.
+Same-load history rebase preserves equilibrium; full and restarted active
+continuation are identical. Seven mechanics/owner checks pass; a subsequent
+bound-definition guard and affected owner check pass. Default rejection remains.
+See [activation evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/activation_results.md).
+These are development results; no native friction engineering acceptance.
+Persistent
 rotating paths and affine first-touch/release proposals now
 have15focused checks. Exact predicates on represented affine path data distinguish
 touch from a rounded-zero gap, preserving compensated native coordinates. General

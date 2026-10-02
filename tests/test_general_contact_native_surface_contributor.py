@@ -11,7 +11,7 @@ from anysolver.general_contact.s3_friction_point import S3SkinMaterialPoint
 from test_general_contact_native_retained_s3_static import _analysis
 
 
-def _contributor(*,radius=.0515,targets=(1.,)):
+def _contributor(*,radius=.0515,targets=(1.,),activation_policy='reject'):
     owner=_analysis(targets=targets)
     reference=owner.context.elements[0][1].operator.reference
     source=NativeRetainedRoundStation(1,reference,.5,radius,np.pi)
@@ -20,7 +20,8 @@ def _contributor(*,radius=.0515,targets=(1.,)):
                        np.array((1.5,0.,-.051))-corners[0],rcond=None)[0]
     target=S3SkinMaterialPoint(owner.contact.shell,tuple((1-uv.sum(),*uv)))
     pair=NativeS3MaterialPointFriction(source,target,reference_weight_m2=.02,
-        normal_stiffness_Pa_per_m=1000.,friction_coefficient=.3,tangential_stiffness_Pa_per_m=1000.)
+        normal_stiffness_Pa_per_m=1000.,friction_coefficient=.3,tangential_stiffness_Pa_per_m=1000.,
+        activation_policy=activation_policy)
     history=initial_friction_point(target.physical_pose(owner.initial.shell_displacement).material_frame)
     return owner,NativeS3MaterialContributor(owner,pair),history
 

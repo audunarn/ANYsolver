@@ -406,6 +406,14 @@ class NativeRetainedRoundS3Analysis:
                 except ValueError as exc:
                     if str(exc).startswith(('native/S3 material history path requires subdivision',
                             'native material path exceeds admitted rotation chart',
+                            'first-touch transverse monotone path unresolved',
+                            'first-touch physical ownership unresolved',
+                            'first-touch needs resolved open and closed endpoints',
+                            'first-touch target area bound unresolved',
+                            'first-touch root residual unresolved',
+                            'first-touch derivative lost transversality',
+                            'first-touch differentiated root mismatch',
+                            'first-touch endpoint work geometry mismatch',
                             'retained nodal chart requires cutback', 'retained cell chart requires cutback')):
                         continue
                     raise

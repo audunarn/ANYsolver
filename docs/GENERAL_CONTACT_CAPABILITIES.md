@@ -935,6 +935,14 @@ source scrutiny. Two-load open-state solve/restart matches the existing referenc
 
 This supersedes the point row's earlier lack of an owner transaction, but supplies
 no active-friction equilibrium, distributed surface, C5 acceptance or release.
-Rotating first touch remains an explicit unchanged-state failure. See
+Default rotating first touch remains an explicit unchanged-state failure. See
 [transaction scope/evidence](d1_review_support/contact_c5_native_surface_point_20261002/transaction.md)
 and [activation design](d1_review_support/contact_c5_native_surface_point_20261002/activation_design.md).
+
+The explicit transverse-first-touch development successor now solves active native/
+deformable-S3 point contact. Seven mechanics/owner checks pass; a later definition
+guard and affected owner/restart check pass. Same-load history rebase preserves
+equilibrium and active split continuation replays exactly. This supersedes the
+earlier absence of active point equilibrium only: distributed surface integration,
+general release/recontact, refinement, native installed verification and engineering
+acceptance remain open. See [activation results](d1_review_support/contact_c5_native_surface_point_20261002/activation_results.md).

@@ -170,3 +170,34 @@ def test_cancellation_at_atomic_commit_discards_staged_native_and_friction_state
     assert transaction.checkpoint()==before
     transaction.commit(proposal)
     assert transaction.accepted.sequence==1
+
+
+def test_transverse_first_touch_owner_equilibrium_and_active_restart():
+    owner,bridge,_=_contributor(radius=.049,targets=(1.,1.05),activation_policy='transverse_first_touch')
+    transaction=NativeS3MaterialTransaction(bridge)
+    accepted=owner.solve_material_increment(transaction,1.)
+    assert accepted.friction_history.partner_key==bridge.pair.partner_key
+    assert np.linalg.norm(accepted.friction_history.elastic_slip)>0.
+    assert accepted.sequence==1
+    checkpoint=transaction.checkpoint()
+    restored=NativeS3MaterialTransaction.restore(bridge,checkpoint,sha256(checkpoint).hexdigest())
+    assert restored.checkpoint()==checkpoint
+    assert restored.accepted.friction_history==accepted.friction_history
+    # Retained internal rotation and deformable shell respond in the same solve.
+    assert np.linalg.norm(accepted.mechanical.cell_rotations-owner.initial.mechanical.cell_rotations)>1e-6
+    assert np.linalg.norm(accepted.shell_displacement)>1e-10
+    # Committing the return map must not change equilibrium when the accepted
+    # pose becomes the next history origin at the same physical load.
+    same=transaction.propose(np.zeros(42),np.zeros(18),1.)
+    assert max(same.assembly.metrics)<owner.equilibrium_tolerance
+    for current in (transaction,restored):owner.solve_material_increment(current,1.05)
+    assert transaction.checkpoint()==restored.checkpoint()
+    assert transaction.accepted.sequence==2
+
+
+def test_activation_selection_is_bound_into_transaction_restart():
+    _,enabled,_=_contributor(radius=.049,activation_policy='transverse_first_touch')
+    checkpoint=NativeS3MaterialTransaction(enabled).checkpoint()
+    _,disabled,_=_contributor(radius=.049)
+    with pytest.raises(ValueError,match='definition/settings'):
+        NativeS3MaterialTransaction.restore(disabled,checkpoint,sha256(checkpoint).hexdigest())

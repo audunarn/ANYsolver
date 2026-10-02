@@ -1,0 +1,177 @@
+"""Single transverse first touch on the declared native/S3 material path.
+
+Local development: the instantaneous force map holds the event fixed, while
+algorithmic derivatives include its sensitivity. No event is physically committed.
+"""
+from dataclasses import dataclass
+
+import numpy as np
+from scipy.optimize import brentq
+from anysolver._ge_beam3_p5_seeded.core import sha
+
+from anysolver._ge_beam3_mixed_ad import Jet2, so3_exp, so3_log, matmul, matvec, constant_matrix, dot
+from .native_retained_station import _readonly
+from .native_surface_path import material_path_pose, certify_material_ownership
+from .native_surface_s3_friction import _unit, _cross
+from .friction_point import FrictionPointState, trial_coulomb_point
+
+
+@dataclass(frozen=True)
+class NativeS3ActivationResult:
+    residual: np.ndarray
+    tangent: np.ndarray
+    trial: object
+    normal_gap_m: float
+    normal_pressure_Pa: float
+    normal_storage_j: float
+    event_fraction: float
+    event_gradient_local: np.ndarray
+    path_sha256: str
+    ownership_intervals: int
+    profile: str = 'NATIVE_S3_TRANSVERSE_FIRST_TOUCH_POINT_DEV_V1'
+
+    def spatial_tangent(self):
+        # Mixed virtual/algorithmic rotations already give spatial covectors.
+        return self.tangent
+
+
+def _frame(corners):
+    a=[corners[1][i]-corners[0][i] for i in range(3)]
+    b=[corners[2][i]-corners[0][i] for i in range(3)]
+    first=_unit(a); normal=_unit(_cross(a,b)); second=_cross(normal,first)
+    return [[first[i],second[i],normal[i]] for i in range(3)]
+
+
+def _point(corners, weights):
+    return [sum(weights[a]*corners[a][i] for a in range(3)) for i in range(3)]
+
+
+def evaluate_first_touch(pair, start, history, translations, angular, shell_increment,
+                         *, maximum_intervals=256):
+    """Actual-gap first-touch traction and complete spatial endpoint tangent.
+
+    A global second-derivative bound proves strict gap decrease, hence unique
+    first-root ownership. Unresolved/nonmonotone paths fail rather than dropping
+    crossings. This initial branch requires an open physical history.
+    """
+    if sha(pair._definition()) != pair.definition_sha256:
+        raise ValueError('native/S3 material-point definition changed')
+    if type(history) is not FrictionPointState or history.partner_key is not None:
+        raise ValueError('first-touch candidate requires released physical history')
+    end=material_path_pose(start,translations,angular,shell_increment,1.)
+    ownership=certify_material_ownership(pair,start,translations,angular,shell_increment,
+                                         maximum_intervals=maximum_intervals)
+    if not ownership.certified:
+        raise ValueError('first-touch physical ownership unresolved: '+ownership.reason)
+    source,target=pair.source,pair.target
+    old=source.surface_variations(start.positions,start.position_low,start.cell_rotations)
+    new=source.surface_variations(end.positions,end.position_low,end.cell_rotations)
+    y0=target.adapter.current_positions(start.shell_displacement)
+    y1=target.adapter.current_positions(end.shell_displacement)
+    base0=old.station.surface_position-old.surface_arm
+    base1=new.station.surface_position-new.surface_arm
+    omega=np.asarray(angular)[source.cell]
+    a,b=y0[1]-y0[0],y0[2]-y0[0]
+    da=(y1[1]-y1[0])-a; db=(y1[2]-y1[0])-b
+    c0=np.cross(a,b); c2=np.cross(a+da,b+db)
+    c1=.5*(np.cross(a,b+db)+np.cross(a+da,b))
+    normal0=c0/np.linalg.norm(c0)
+    lower=min(float(normal0@c) for c in (c0,c1,c2))
+    if lower<=0:raise ValueError('first-touch target area bound unresolved')
+    cp0=np.cross(da,b)+np.cross(a,db)
+    cp1=np.cross(da,b+db)+np.cross(a+da,db)
+    m1=max(np.linalg.norm(cp0),np.linalg.norm(cp1)); m2=2*np.linalg.norm(np.cross(da,db))
+    n1=m1/lower; n2=m2/lower+3*m1*m1/(lower*lower)
+    velocity=base1-base0-(y1[0]-y0[0])
+    arm=np.linalg.norm(old.surface_arm); angle=np.linalg.norm(omega)
+    radius=max(np.linalg.norm(base0-y0[0]),np.linalg.norm(base1-y1[0]))+arm
+    speed=np.linalg.norm(velocity)+angle*arm
+    second_bound=n2*radius+2*n1*speed+angle*angle*arm
+    normal_derivative=(cp0-normal0*(normal0@cp0))/np.linalg.norm(c0)
+    derivative0=float(normal_derivative@(old.station.surface_position-y0[0])
+                      +normal0@(velocity+np.cross(omega,old.surface_arm)))
+    padding=512*np.finfo(float).eps*max(1.,radius,speed,second_bound)
+    if derivative0+second_bound>=-padding:
+        raise ValueError('first-touch transverse monotone path unresolved')
+
+    def gap(alpha):
+        pose=material_path_pose(start,translations,angular,shell_increment,alpha)
+        x=source.evaluate(pose.positions,pose.position_low,pose.cell_rotations).surface_position
+        t=target.physical_pose(pose.shell_displacement)
+        return float((x-np.asarray(t.position))@np.asarray(t.material_frame)[:,2])
+
+    g0,g1=gap(0.),gap(1.)
+    if not g0>padding or not g1<-padding:
+        raise ValueError('first-touch needs resolved open and closed endpoints')
+    alpha=brentq(gap,0.,1.,xtol=4*np.finfo(float).eps,rtol=4*np.finfo(float).eps,maxiter=64)
+    if abs(gap(alpha))>padding:
+        raise ValueError('first-touch root residual unresolved')
+
+    def event_geometry(q, fraction, size):
+        # q is an endpoint spatial perturbation. The algorithmic path is the
+        # principal declared spatial chart from the fixed physical origin.
+        rotation=matmul(so3_exp(q[3:6]),constant_matrix(end.cell_rotations[source.cell]@start.cell_rotations[source.cell].T,size))
+        logarithm=so3_log(rotation)
+        rotated=matvec(so3_exp([fraction*v for v in logarithm]),
+                       [Jet2.constant(v,size) for v in old.surface_arm])
+        x=[base0[i]+fraction*(base1[i]+q[i]-base0[i])+rotated[i] for i in range(3)]
+        y=[[y0[a,i]+fraction*(y1[a,i]+q[6+3*a+i]-y0[a,i]) for i in range(3)] for a in range(3)]
+        frame=_frame(y); point=_point(y,target.barycentric)
+        relative=[x[i]-point[i] for i in range(3)]
+        return frame,relative
+
+    # Implicit first-root gradient. No alpha Hessian is needed for the mixed
+    # virtual/algorithmic blocks below (alpha has no virtual dependence).
+    q=[Jet2.variable(0.,i,16) for i in range(15)]
+    f,r=event_geometry(q,Jet2.variable(alpha,15,16),16)
+    G=dot([row[2] for row in f],r)
+    if abs(G.value)>padding:raise ValueError('first-touch differentiated root mismatch')
+    if G.gradient[15]>=-padding:raise ValueError('first-touch derivative lost transversality')
+    alpha_gradient=-G.gradient[:15]/G.gradient[15]
+    gradient=np.zeros(30);gradient[:15]=alpha_gradient
+    event_alpha=Jet2(alpha,gradient,np.zeros((30,30)))
+    q=[Jet2.variable(0.,i,30) for i in range(15)]
+    v=[Jet2.variable(0.,15+i,30) for i in range(15)]
+    event_frame,event_relative=event_geometry(q,event_alpha,30)
+    event_components=[sum(event_frame[j][i]*event_relative[j] for j in range(3)) for i in range(3)]
+    rotated=matvec(matmul(so3_exp(v[3:6]),so3_exp(q[3:6])),
+                   [Jet2.constant(x,30) for x in new.surface_arm])
+    x=[base1[i]+q[i]+v[i]+rotated[i] for i in range(3)]
+    y=[[y1[a,i]+q[6+3*a+i]+v[6+3*a+i] for i in range(3)] for a in range(3)]
+    frame=_frame(y);normal=[row[2] for row in frame];point=_point(y,target.barycentric)
+    relative=[x[i]-point[i] for i in range(3)]
+    transported=matvec(frame,event_components)
+    slip=[relative[i]-transported[i] for i in range(3)]
+    normal_slip=dot(normal,slip)
+    elastic=[slip[i]-normal[i]*normal_slip for i in range(3)]
+    g=dot(normal,relative);pressure=-pair.normal_stiffness_Pa_per_m*g.value
+    if abs(g.value-g1)>padding:raise ValueError('first-touch endpoint work geometry mismatch')
+    trial=trial_coulomb_point(history,material_frame=np.array([[j.value for j in row] for row in frame]),
+        relative_increment=np.array([j.value for j in elastic]),normal_pressure=pressure,
+        friction_coefficient=pair.friction_coefficient,tangential_stiffness=pair.tangential_stiffness_Pa_per_m,
+        partner_key=pair.partner_key)
+    energy=.5*pair.normal_stiffness_Pa_per_m*g*g
+    residual=energy.gradient[15:].copy(); tangent=energy.hessian[15:,:15].copy()
+    W=np.array([j.gradient[15:] for j in elastic]); D=np.array([j.gradient[:15] for j in elastic])
+    H=np.array([j.hessian[15:,:15] for j in elastic]); traction=np.asarray(trial.traction)
+    if trial.branch=='stick':
+        dt=-pair.tangential_stiffness_Pa_per_m*D
+    else:
+        e=np.array([j.value for j in elastic]);norm=np.linalg.norm(e);direction=e/norm
+        dp=-pair.normal_stiffness_Pa_per_m*g.gradient[:15]
+        dt=(-pair.friction_coefficient*pressure/norm*(np.eye(3)-np.outer(direction,direction))@D
+            -pair.friction_coefficient*np.outer(direction,dp))
+    residual-=W.T@traction
+    tangent-=np.einsum('i,ijk->jk',traction,H)+W.T@dt
+    count=42+target.adapter.work_map.shape[1]; mapping=np.zeros((15,count))
+    for node,weight in ((source.cell,1-source.t),(source.cell+1,source.t)):
+        mapping[:3,6*node:6*node+3]=weight*np.eye(3)
+    mapping[3:6,18+3*source.cell:21+3*source.cell]=np.eye(3)
+    mapping[6:,42:]=target.adapter.work_map.toarray()
+    residual=pair.reference_weight_m2*(mapping.T@residual)
+    tangent=pair.reference_weight_m2*(mapping.T@tangent@mapping)
+    if not np.all(np.isfinite(residual)) or not np.all(np.isfinite(tangent)):
+        raise ValueError('nonfinite first-touch material contribution')
+    return NativeS3ActivationResult(_readonly(residual),_readonly(tangent),trial,g.value,pressure,
+        pair.reference_weight_m2*energy.value,float(alpha),_readonly(alpha_gradient),ownership.path_sha256,
+        ownership.intervals)
