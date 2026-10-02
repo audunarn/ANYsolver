@@ -1,7 +1,8 @@
 # Experimental physical arc continuation
 
 `continue_arc_length` is available on the existing stiffened-shell owner for
-accepted Q4 shell J2 / generalized BL5 states with affine nodal dead forces.
+accepted Q4 shell J2 / generalized BL5 states, and separately selected
+`CURVED_Q4_POINT_REFERENCE_V1` elastic point states, with affine nodal dead forces.
 It is experimental and unqualified. It does not establish stability, a first
 limit point, branch uniqueness, mesh-independent continuation or capacity.
 Other materials, external load contexts, moments and chart rebasing on this
@@ -62,6 +63,13 @@ bind the model, predecessor, affine load and complete accepted-step attempt
 inventory; they also replay the final material update for consistency. A digest
 is not proof of physical loading history. Force/displacement drivers reject arc
 history instead of interpreting it as their own controller state.
+
+The curved elastic point route uses a separate mechanical kind and policy inside
+the arc envelope. It stores no shell plastic arrays and reports no shell plastic
+recovery. Native generalized beam history is validated as elastic. Its bounded
+cancel/restore/continue test also compares the endpoint with force control; it
+does not qualify the E04 roof, a first limit point or a descending branch. The
+known tiny-load nonconvergence in the curved force-control control remains open.
 
 Current limits are 1,024 accepted increments, bounded binary/metadata size and
 the explicit per-step budgets. These development limits do not fulfill the

@@ -1,4 +1,4 @@
-"""Private fixed-affine endpoint validation for coupled-Q4 BL5 J2 mechanics.
+"""Private fixed-affine endpoint validation for admitted Q4 arc mechanics.
 
 Decoding arrays or checkpoint framing is not mechanical acceptance. This module
 replays the decoded endpoint in an isolated owner and driver. The final publisher
@@ -17,7 +17,7 @@ from ._stiffened_shell_rotation_charts import owned_anchors,physical_frames
 
 def validate_arrays(owner,a):
     """Replay decoded fixed-affine translation arrays in isolated mechanics."""
-    if not owner._bl5_shell_material:
+    if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False)):
         raise ValueError("bounded coupled affine endpoint required")
     prepared=copy(owner);prepared._commit_lock=RLock();prepared._writing=False
     prepared._finite_driver=None;prepared._accepted=None
@@ -47,9 +47,10 @@ def validate_arrays(owner,a):
         for frame in a[name].reshape(-1,3,3):
             if np.linalg.norm(frame.T@frame-np.eye(3))>1e-9 or abs(np.linalg.det(frame)-1.)>1e-9:
                 raise ValueError("nonphysical displacement rotation")
-    for name in ("shell_alpha","shell_origin_alpha"):
+    for name in (("shell_alpha","shell_origin_alpha") if owner._bl5_shell_material else ()):
         if np.any(a[name]<0.):raise ValueError("nonphysical shell J2 history")
-    shell_parent=_shell_material_states(a["shell_origin_plastic"],a["shell_origin_alpha"])
+    shell_parent=(_shell_material_states(a["shell_origin_plastic"],a["shell_origin_alpha"])
+                  if owner._bl5_shell_material else driver._shell_origins)
     beam_parent=_material_histories(prepared,a["beam_origin_plastic"],a["beam_origin_accumulated"])
     # Validate accepted beam history admissibility before replay comparison.
     _material_histories(prepared,a["beam_plastic"],a["beam_accumulated"])
@@ -58,9 +59,12 @@ def validate_arrays(owner,a):
     evaluation=driver._assemble(state,0.,shell_parent,beam_parent,applied_load=a["applied_load"])
     if not np.isfinite(evaluation[2]) or evaluation[2]>1e-8 or evaluation[3]>1e-9:
         raise ValueError("mechanically inconsistent displacement equilibrium")
-    bp,ba=_material_arrays(evaluation[5]);sp,sa=_shell_material_arrays(evaluation[4])
-    for name,repeated in (("beam_plastic",bp),("beam_accumulated",ba),
-                          ("shell_plastic",sp),("shell_alpha",sa)):
+    bp,ba=_material_arrays(evaluation[5])
+    comparisons=[("beam_plastic",bp),("beam_accumulated",ba)]
+    if owner._bl5_shell_material:
+        sp,sa=_shell_material_arrays(evaluation[4])
+        comparisons.extend((("shell_plastic",sp),("shell_alpha",sa)))
+    for name,repeated in comparisons:
         saved=a[name]
         scale=max(float(np.max(abs(saved),initial=0.)),
                   float(np.max(abs(repeated),initial=0.)),np.finfo(float).tiny)

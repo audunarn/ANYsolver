@@ -63,11 +63,17 @@ The curved 0.1 N control fails at equilibrium1.9145e-8 (required1e-8), committin
 nothing; its test verifies honest failure, not successful equilibrium. Flat
 controls pass both scales. Independent admission/restart findings are resolved.
 [Current slice and preserved failures](development/r8-curved-reference-20261002/results.md).
-No curved arc, spectra, external-load, material or ANYfem admission is claimed.
+No curved spectra, external-load, material or ANYfem admission is claimed.
 
-Next: extend elastic point arc/checkpoint scope without fake J2 or BL5 substitution.
-Then fix the E04 nonlinear bracket and matched external connection before any
-capacity campaign. Do not infer a limit point from the unresolved low-load
-nonconvergence or relax tolerance. E04 itself has not been mechanically solved.
-Formal F03 and all scientific/release boundaries remain unchanged. Full material,
-connection, scale, external/platform and release obligations remain open.
+Curved elastic point arc lifecycle now passes22 installed checks: cancellation
+prefix, exact restore/continuation, force-control endpoint parity and rejection of
+nonelastic history. It has a separate mechanical checkpoint identity with no
+shell plastic fields. Existing material arc/displacement regressions pass.
+[Arc evidence](development/r8-curved-arc-20261002/results.md).
+
+Next: construct the actual E04 roof owner and run one bounded seed/continuation
+screen. Fix the nonlinear bracket and matched external connection before capacity
+qualification. Do not infer a limit point from low-load nonconvergence or relax
+tolerance. E04 itself has not been mechanically solved. Formal F03 and all
+scientific/release boundaries remain unchanged. Full material, connection,
+scale, external/platform and release obligations remain open.

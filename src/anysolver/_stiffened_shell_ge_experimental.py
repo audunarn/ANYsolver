@@ -930,7 +930,9 @@ class ExperimentalGEAnalysis:
                         "shell_pressure_loads","staged_dead_loads"):
                 capabilities[key] = ()
             capabilities["curved_reference_policy"] = CURVED_Q4_POINT_REFERENCE_V1
-            capabilities["excluded"] += ("curved reference spectra", "curved reference arc control",
+            if getattr(self,"_external_context",None) is None:
+                capabilities["arc_length"] = "experimental_curved_elastic_point_tangent_plane_v1"
+            capabilities["excluded"] += ("curved reference spectra",
                 "curved reference external loads", "curved reference material yielding")
         return capabilities
 
@@ -959,7 +961,7 @@ class ExperimentalGEAnalysis:
             details["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         if self._modal_only:
             details["modal_boundary_policy"] = self._definition.modal_boundary_policy
-        if self._bl5_shell_material:
+        if self._bl5_shell_material or self._curved_reference:
             details["arc_metric_node_order"] = (tuple(("shell",int(i)) for i in self._shell_ids)
                 +tuple(("beam",int(i)) for i in self._beam_ids))
         return details

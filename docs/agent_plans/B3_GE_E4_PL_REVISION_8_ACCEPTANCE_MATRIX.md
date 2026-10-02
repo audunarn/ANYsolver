@@ -1477,3 +1477,11 @@ translational dead loads, finite stepping and exact restart pass installed check
 44 tests include legacy controls and honest zero-commit rejection of the failed
 0.1 N control; positive curved path is 10–30 N. No E04 solve or gate acceptance.
 [Scope, failure and artifact](development/r8-curved-reference-20261002/results.md).
+
+
+**2 October curved elastic point arc: IMPLEMENTED_NOT_QUALIFIED.**
+Existing controller extended with separate checkpoint identity and no shell
+plastic state. Installed22 checks cover curved cancellation/restore/continuation,
+force endpoint parity, corrupted history and existing material-arc/displacement
+contracts. No E04 capacity or aggregate gate acceptance.
+[Evidence](development/r8-curved-arc-20261002/results.md).

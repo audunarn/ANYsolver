@@ -14,6 +14,14 @@ from ._stiffened_shell_rotation_charts import physical_frames
 MAGIC=b'ANYSSARC1'
 KIND='finite_arc_bl5_coupled'
 POLICY='B3_GE_BL5_PHYSICAL_TANGENT_PLANE_V1_DEV'
+def identities(owner):
+    if getattr(owner, '_curved_reference', False):
+        return 'finite_arc_curved_points', 'B3_GE_CURVED_ELASTIC_POINT_TANGENT_PLANE_V1_DEV'
+    if owner._bl5_shell_material:
+        return KIND, POLICY
+    raise ValueError('admitted material or curved elastic point arc owner required')
+
+
 CONTROL_LIMITS=(('max_cutbacks',0,8),('max_attempts',1,64),
                 ('max_iterations',1,24),('max_backtracks',0,12))
 ATTEMPT_GROUP_KEYS={'requested_radius','amplitude_origin','attempts',
@@ -56,7 +64,9 @@ def layout(owner,steps):
     # Reuse only the existing mechanical array layout, not its control fields.
     from ._stiffened_shell_displacement_checkpoint import _layout
     mechanical=tuple((name,shape) for name,shape in _layout(owner,steps)
-                     if name not in ('seed','history'))
+                     if name not in ('seed','history') and
+                     (owner._bl5_shell_material or name not in
+                      ('shell_plastic','shell_alpha','shell_origin_plastic','shell_origin_alpha')))
     nodes=len(owner._shell_ids)+len(owner._beam_ids)
     return mechanical+(("history",(steps,2)),("metric_weights",(nodes,)),
         ("normal_translations",(nodes,3)),("normal_spins",(nodes,3)),
@@ -71,7 +81,7 @@ def encode_snapshot(owner,metadata,arrays):
     header=canonical(metadata)
     if len(header)>262144 or set(arrays)!={name for name,_ in layout(owner,metadata['steps'])}:
         raise ValueError('bounded arc snapshot fields required')
-    inner=encode(KIND,owner._identity,metadata['generation'],
+    inner=encode(identities(owner)[0],owner._identity,metadata['generation'],
         tuple((name,arrays[name]) for name,_ in layout(owner,metadata['steps'])))
     content=MAGIC+len(header).to_bytes(4,'little')+header+inner
     if len(content)+32>MAX_CHECKPOINT_BYTES:raise ValueError('arc snapshot size limit')
@@ -81,7 +91,8 @@ def encode_snapshot(owner,metadata,arrays):
 
 
 def decode_snapshot(owner,raw):
-    if (not owner._bl5_shell_material or type(raw) is not bytes
+    identities(owner)
+    if (type(raw) is not bytes
             or not raw.startswith(MAGIC) or not len(MAGIC)+36<len(raw)<=MAX_CHECKPOINT_BYTES):
         raise ValueError('bounded coupled arc snapshot required')
     start=len(MAGIC)+4;length=int.from_bytes(raw[len(MAGIC):start],'little')
@@ -96,7 +107,7 @@ def decode_snapshot(owner,raw):
           'max_cutbacks','max_attempts','max_iterations','max_backtracks',
           'amplitude_origin','attempt_history','predecessor_sha256'}
     if (type(m) is not dict or set(m)!=keys or canonical(m)!=header
-            or m['policy']!=POLICY or m['model']!=owner._identity):
+            or m['policy']!=identities(owner)[1] or m['model']!=owner._identity):
         raise ValueError('incompatible arc metadata')
     if (any(type(m[k]) is not int for k in ('generation','seed_generation','steps','predictor_dof','orientation'))
             or not 1<=m['steps']<=1024 or not 1<=m['seed_generation']<m['generation']
@@ -118,7 +129,7 @@ def decode_snapshot(owner,raw):
                 (('max_cutbacks',0,8),('max_attempts',1,64),('max_iterations',1,24),('max_backtracks',0,12)))):
         raise ValueError('arc controller/scaling contract')
     def shapes(kind,generation):
-        if kind!=KIND or generation!=m['generation']:raise ValueError('arc mechanical identity')
+        if kind!=identities(owner)[0] or generation!=m['generation']:raise ValueError('arc mechanical identity')
         return layout(owner,m['steps'])
     _,_,a=decode(raw[start+length:-32],owner._identity,shapes)
     metric=PhysicalChordMetric(a['metric_weights'],m['metric_length'])
@@ -175,13 +186,14 @@ def from_selection(owner,selection,*,seed_generation,seed_sha256,history=(),atte
         origin_frames=np.concatenate((physical_frames(parent.q[:owner._shell_count],parent.shell_anchors),parent.frames)))
     arrays['beam_plastic'],arrays['beam_accumulated']=_material_arrays(trial.evaluation[5])
     arrays['beam_origin_plastic'],arrays['beam_origin_accumulated']=_material_arrays(trial.beam_predecessor)
-    arrays['shell_plastic'],arrays['shell_alpha']=_shell_material_arrays(trial.evaluation[4])
-    arrays['shell_origin_plastic'],arrays['shell_origin_alpha']=_shell_material_arrays(trial.shell_predecessor)
+    if owner._bl5_shell_material:
+        arrays['shell_plastic'],arrays['shell_alpha']=_shell_material_arrays(trial.evaluation[4])
+        arrays['shell_origin_plastic'],arrays['shell_origin_alpha']=_shell_material_arrays(trial.shell_predecessor)
     group=dict(requested_radius=selection.requested_radius,amplitude_origin=trial.amplitude_origin,
         attempts=[asdict(row) for row in selection.attempts],
         max_cutbacks=selection.max_cutbacks,max_attempts=selection.max_attempts,
         max_iterations=selection.max_iterations,max_backtracks=selection.max_backtracks)
-    m=dict(policy=POLICY,model=owner._identity,generation=trial.accepted_generation+1,
+    m=dict(policy=identities(owner)[1],model=owner._identity,generation=trial.accepted_generation+1,
         seed_generation=seed_generation,seed_sha256=seed_sha256,steps=len(history)+1,
         metric_length=trial.metric.length,predictor_dof=trial.predictor_dof,orientation=trial.orientation,
         predecessor_sha256=predecessor_sha256,

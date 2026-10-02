@@ -153,9 +153,9 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
     n=owner._K.shape[0]; nodal=owner._shell_count+6*len(owner._beam_ids)
     size=n+len(driver._state.multipliers)
     if (type(metric) is not PhysicalChordMetric or len(metric.weights)!=nodal//6
-            or not owner._bl5_shell_material or driver._accepted is None
+            or not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False)) or driver._accepted is None
             or driver._external is not None):
-        raise ValueError("accepted coupled BL5/J2 with fixed physical metric required")
+        raise ValueError("accepted admitted arc owner with fixed physical metric required")
     if (not np.isfinite(radius) or radius<=0. or type(orientation) is not int or orientation not in (-1,1)
             or type(predictor_dof) is not int or predictor_dof not in owner._free
             or not 0<=predictor_dof<nodal or predictor_dof%6>=3

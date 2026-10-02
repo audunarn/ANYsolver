@@ -37,7 +37,9 @@ geometry. Local rigid-motion, derivatives and eccentric work, plus a bounded
 curved control's finite solve/restart, have installed evidence. This is not an
 E04 roof solve. A separate low-load control remains nonconvergent with no commit.
 See [scope and evidence](../agent_plans/development/r8-curved-reference-20261002/results.md).
-Next extend the arc owner/checkpoint's elastic point-route admission explicitly.
+The separate elastic point arc/checkpoint route now has bounded installed
+lifecycle evidence. Next construct this actual roof owner and establish a bounded
+seed/continuation screen before selecting its capacity bracket.
 Do not select an artificial J2 law or replace six-channel points with BL5 merely
 to pass the current controller's material predicate.
 
