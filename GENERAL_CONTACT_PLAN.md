@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.42. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.44. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -31,6 +31,18 @@ Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTA
 independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
+
+Connected open-endpoint moving-front integration passes independent discrete-work
+reference in75.6s/234MB sampled memory. One released-origin segment/one stationary branch
+only; no owner/acceptance claim. Next closed-ending event composition/tangents and multi-
+segment cumulative work to reach actual saved second-load patch; preserve uncertainty
+and existing limits. [Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/front_work_integration_results.md).
+
+Moving axial cuts now connected to existing adaptive integration under an explicit
+open-endpoint development helper. First connected test fails in near-tangent uncertainty
+strip. Next derive/verify conservative whole-strip physical-work error accounting;
+retain strip and unchanged error budget or reject. No cap increase/full-patch retry.
+[Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/moving_front_integral_results.md).
 
 Whole-angle stationary branches now have bounded time/angular enclosure and explicit
 shared budget. Analytical geometry/control check passes. Next integrate moving axial

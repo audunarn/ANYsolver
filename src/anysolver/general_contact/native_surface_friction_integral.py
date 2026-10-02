@@ -74,7 +74,21 @@ def _coefficients(field,pose,cell):
     return offset,slope,radius*float(normal@frame[:,1]),radius*float(normal@frame[:,2])
 
 
-def integrate_material_friction(field,settings):
+def integrate_open_event_friction_fronts(field,settings,*,maximum_axial_uncertainty):
+    """Development open-endpoint pulse integration with moving axial cuts.
+
+    This explicit helper is not an analysis-owner/restart admission. Each angular
+    band needs complete stationary-branch coverage; uncertainty strips are fully
+    integrated. Closed endpoint regions are excluded from this first work slice.
+    """
+    if not np.isfinite(maximum_axial_uncertainty) or maximum_axial_uncertainty<=0:
+        raise ValueError('positive explicit axial-front uncertainty required')
+    if field.patch.pairs[0].activation_policy!='transverse_event_sequence':
+        raise ValueError('moving-front development requires event-sequence policy')
+    return integrate_material_friction(field,settings,_front_uncertainty=maximum_axial_uncertainty)
+
+
+def integrate_material_friction(field,settings,*,_front_uncertainty=None):
     """Friction-only work at the endpoint of the field's last declared segment.
 
     Its tangent holds earlier physical segments fixed. Partitions include contact
@@ -117,7 +131,7 @@ def integrate_material_friction(field,settings):
         coefficients[cell]=[_coefficients(field,pose,cell) for pose in poses]
         panels.extend(front_panels(cell,left,right,alo,ahi))
     budget=NativeSurfaceReplayBudget(settings.maximum_point_paths)
-    cache={};visited=accepted=empty_certificates=0
+    cache={};front_cache={};front_error={};front_covers={};front_axes={};visited=accepted=empty_certificates=0
     last_error=None
     open_queries=0
     size=60+60*60+4
@@ -168,7 +182,9 @@ def integrate_material_friction(field,settings):
     gauss=[leggauss(4),leggauss(8)]
     def estimate(panel,order):
         cell,left,right,lower,upper=panel
-        result=np.zeros(size);points,weights=gauss[order]
+        axial_order,angular_order=(order,order) if isinstance(order,int) else order
+        result=np.zeros(size);points,weights=gauss[angular_order]
+        axial_points,axial_weights=gauss[axial_order]
         measure=rule.definition['radius']*np.linalg.norm(reference.coordinates[cell+1]-reference.coordinates[cell])
         for angular,wa in zip(points,weights):
             angle=(lower+upper)/2+(upper-lower)*float(angular)/2
@@ -178,16 +194,42 @@ def integrate_material_friction(field,settings):
                     root=-(offset+a*cos(angle)+b*sin(angle))/slope
                     if left<root<right:roots.add(root)
             edges=sorted(roots)
+            if _front_uncertainty is not None:
+                from .native_surface_front import stationary_front_partition
+                key=(cell,float(angle))
+                if key not in front_cache:
+                    cuts=[];strips=[]
+                    for index in range(len(field.segments)):
+                        try:
+                            _,_,stationary,endpoints=stationary_front_partition(field,cell,index,float(angle),
+                                maximum_intervals=field.maximum_intervals,maximum_axial_uncertainty=_front_uncertainty,
+                                budget=support_budget,angular_cover=front_covers[panel][index])
+                        except MemoryError as error:
+                            raise NativeFrictionIntegrationLimit(str(error),dict(panel=panel,panels=visited,
+                                queries=len(cache),front_queries=len(front_cache),support_intervals=support_budget.intervals,
+                                previous_scaled_error=last_error,axial_refinements=sum(front_axes.values()),
+                                angular_refinements=len(front_axes)-sum(front_axes.values()))) from error
+                        for value in (*stationary,*endpoints):
+                            cuts.extend((*value.axial_interval,value.axial_coordinate))
+                        strips.extend(value.axial_interval for value in stationary)
+                    front_cache[key]=(tuple(cuts),tuple(strips))
+                roots.update(x for x in front_cache[key][0] if left<x<right)
+                edges=sorted(roots)
             for x0,x1 in zip(edges[:-1],edges[1:]):
-                for axial,wx in zip(points,weights):
+                if _front_uncertainty is not None and any(a<=x0 and x1<=b for a,b in front_cache[key][1]):
+                    # Integral enclosure replaces unresolved point evaluations;
+                    # no zero point history or never-contacted claim is created.
+                    continue
+                for axial,wx in zip(axial_points,axial_weights):
                     xi=(x0+x1)/2+(x1-x0)*float(axial)/2
                     if not x0<xi<x1:raise ValueError('native friction axial resolution exhausted')
                     result+=query(xi,angle)*(float(wx*wa)*(x1-x0)*(upper-lower)*measure/4)
+        if panel in front_error:result+=front_error[panel]
         return result
 
     def subdivide(parent):
         cell,left,right,lower,upper=parent
-        if (right-left)/(hi-lo)>=(upper-lower)/(ahi-alo):
+        if front_axes.get(parent,(right-left)/(hi-lo)>=(upper-lower)/(ahi-alo)):
             middle=(left+right)/2
             if middle in (left,right):raise ValueError('native friction axial panel resolution exhausted')
             return (*front_panels(cell,left,middle,lower,upper),
@@ -215,6 +257,32 @@ def integrate_material_friction(field,settings):
         # coverage certifies their union; the parent's independent integration
         # error estimate still decides whether its quadrature must subdivide.
         nonlocal unresolved_support_panels,support_panels_visited
+        if _front_uncertainty is not None:
+            from .native_surface_front import stationary_front_angular_cover
+            from .native_surface_support import _minimum
+            cell,left,right,lower,upper=parent
+            for pose in poses:
+                gap,padding=_minimum(pose,field.patch.target,reference.nodal_triads[0],
+                    rule.definition['radius'],cell,(left,right),(lower,upper))
+                if gap<=padding:raise ValueError('moving-front work slice requires open captured endpoints')
+            branch_count=0;covers=[]
+            for index in range(len(field.segments)):
+                cover=stationary_front_angular_cover(field,cell,index,(lower,upper),budget=support_budget)
+                covers.append(cover);branch_count+=len(cover)
+            front_covers[parent]=tuple(covers)
+            if branch_count:
+                if branch_count!=1 or len(field.segments)!=1:
+                    raise ValueError('front strip work requires one certified stationary branch and segment')
+                from .native_surface_front_work import open_front_strip_work_bound
+                density=open_front_strip_work_bound(field,cell,_front_uncertainty)
+                measure=rule.definition['radius']*np.linalg.norm(reference.coordinates[cell+1]-reference.coordinates[cell])
+                error=np.zeros(size)
+                error[-4:]=.5*density*_front_uncertainty*(upper-lower)*measure
+                front_error[parent]=error
+            # Nonzero B, no stationary H, and open endpoint rectangles exclude
+            # all crossings. Stationary branches require explicit moving cuts.
+            return HistoryPanelSupport('resolved' if branch_count else 'open',parent,
+                'whole-angle stationary branches; explicit moving cuts')
         pending=[parent];all_open=True;last_unresolved=None
         while pending:
             if support_panels_visited>=settings.maximum_panels:
@@ -257,6 +325,10 @@ def integrate_material_friction(field,settings):
             accepted+=1;empty_certificates+=1
             continue
         low=estimate(panel,0);high=estimate(panel,1);error=np.abs(high-low)
+        if panel in front_error:error+=front_error[panel]
+        if _front_uncertainty is not None:
+            axial_control=estimate(panel,(0,1));angular_control=estimate(panel,(1,0))
+            front_axes[panel]=float(np.max(scale*np.abs(high-axial_control)))>=float(np.max(scale*np.abs(high-angular_control)))
         last_error=float(np.max(scale*error))
         zero=not np.any(high) and not np.any(low)
         safe_zero=not zero
@@ -272,4 +344,5 @@ def integrate_material_friction(field,settings):
             open_material_queries_certified=open_queries,
             certified_intervals=orientation_intervals+budget.certified_intervals,
             support_intervals=support_budget.intervals,
+            stationary_strip_work_error_j=sum((front_error.get(leaf[0],np.zeros(size))[-4:] for leaf in leaves),np.zeros(4)).tolist(),
             maximum_scaled_error_estimate=float(np.max(scale*errors)),estimator='GAUSS_4_8_DIFFERENCE'))

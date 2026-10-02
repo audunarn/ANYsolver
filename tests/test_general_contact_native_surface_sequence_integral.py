@@ -102,3 +102,57 @@ def test_saved_full_patch_endpoint_scope_discriminator(tmp_path):
     assert rows[1]['endpoints'][0]['lower']<0<rows[1]['endpoints'][0]['upper']
     assert rows[1]['derivative'][1]<0
     assert classify_history_panel(value,1,xis,angles,budget=SupportIntervalBudget(128)).status=='resolved'
+
+
+def test_moving_front_integral_across_pulse_appearance(tmp_path):
+    from dataclasses import replace
+    from scipy.integrate import quad
+    from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField
+    from anysolver.general_contact.native_surface_friction_integral import integrate_open_event_friction_fronts
+    value=field(.035)
+    positions=value.initial.positions.copy();positions[:,2]+=.01*positions[:,0]
+    value=NativeSurfaceHistoryField(value.patch,replace(value.initial,positions=positions),value.segments)
+    try:
+        result=integrate_open_event_friction_fronts(value,_settings(),maximum_axial_uncertainty=1e-7)
+    except Exception as error:
+        import json,os
+        from pathlib import Path
+        output=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))/'moving_front_failure.json'
+        output.write_text(json.dumps(dict(error=str(error),diagnostics=getattr(error,'integration_diagnostics',None)),indent=2)+'\n')
+        raise
+    def work(xi):
+        height=.035+.01*xi
+        if height>=.03:return 0.
+        theta=acos(height/.03);elastic=0.;previous=.03*sin(-theta);terms=[]
+        for i in range(1,32):
+            angle=-theta+2*theta*i/32;y=.03*sin(angle)
+            trial=elastic+y-previous;cap=.3*1000*(.03*cos(angle)-height)
+            next_elastic=min(trial,cap/1000);terms.append(cap*(trial-next_elastic))
+            elastic=next_elastic;previous=y
+        return fsum(terms)
+    expected=.03*.04*quad(work,-.8,-.5,epsabs=1e-13,epsrel=1e-10)[0]
+    assert result.dissipated_increment_j==pytest.approx(expected,rel=1e-5,abs=1e-12)
+    assert result.dissipated_increment_j>0
+    assert np.array_equal(result.residual,np.zeros(60))
+
+
+def test_front_strip_bound_contains_independent_discrete_work():
+    from dataclasses import replace
+    from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField
+    from anysolver.general_contact.native_surface_front_work import open_front_strip_work_bound
+    value=field(.035);positions=value.initial.positions.copy();positions[:,2]+=.01*positions[:,0]
+    value=NativeSurfaceHistoryField(value.patch,replace(value.initial,positions=positions),value.segments)
+    width=1e-7;bounds=open_front_strip_work_bound(value,0,width)
+    height=.03-.01*width/2;theta=acos(height/.03)
+    elastic=0.;previous=.03*sin(-theta);terms=[]
+    for i in range(1,32):
+        angle=-theta+2*theta*i/32;y=.03*sin(angle)
+        trial=elastic+y-previous;cap=.3*1000*(.03*cos(angle)-height)
+        next_elastic=min(trial,cap/1000);terms.append(cap*(trial-next_elastic))
+        elastic=next_elastic;previous=y
+    assert 0<fsum(terms)<=bounds[1]
+    assert .5*1000*elastic**2<=bounds[2]
+    assert bounds[0]==0 and bounds[3]==bounds[1]
+    repeated=NativeSurfaceHistoryField(value.patch,value.initial,value.segments*2)
+    with pytest.raises(ValueError,match='one released-origin segment'):
+        open_front_strip_work_bound(repeated,0,width)

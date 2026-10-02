@@ -1045,3 +1045,7 @@ open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/open
 Event-sequence spatial support: analytical integrated hidden pulse retains scalar-reference
 work; saved local neighborhood resolved in25intervals; tangency cap explicit. Whole saved
 aggregate and coupled owner unverified. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/sequence_support_results.md).
+
+Moving-front open-endpoint work integration: one-segment/one-stationary-branch development
+case passes independent discrete work. Uncertainty-strip bounds included in error. Closed
+endpoints, multisegment owner/restart and acceptance remain open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/front_work_integration_results.md).

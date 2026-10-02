@@ -146,6 +146,19 @@ def stationary_front_slab(field,cell,segment_index,angle,left,right,*,include_a=
     return result
 
 
+@dataclass(frozen=True)
+class StationaryAngularCover:
+    field_identity: str
+    cell: int
+    segment_index: int
+    angle_bounds: tuple
+    branches: tuple
+
+    def __iter__(self):return iter(self.branches)
+    def __len__(self):return len(self.branches)
+    def __bool__(self):return bool(self.branches)
+
+
 def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budget):
     """Certify stationary-root branches over an entire angular interval.
 
@@ -177,7 +190,7 @@ def stationary_front_angular_cover(field,cell,segment_index,angle_bounds,*,budge
         middle=(left+right)/2
         if not left<middle<right:raise ValueError('stationary angular cover temporal resolution exhausted')
         pending.extend(((middle,right),(left,middle)))
-    return tuple(sorted(branches))
+    return StationaryAngularCover(field.identity,cell,segment_index,(lo,hi),tuple(sorted(branches)))
 
 
 @dataclass(frozen=True)
@@ -189,7 +202,7 @@ class IsolatedStationaryFront:
     numerator_residual: float
 
 
-def stationary_front_partition(field,cell,segment_index,angle,*,maximum_intervals=128,maximum_axial_uncertainty=None):
+def stationary_front_partition(field,cell,segment_index,angle,*,maximum_intervals=128,maximum_axial_uncertainty=None,budget=None,angular_cover=None):
     """Complete bounded time isolation, returning endpoint and stationary fronts.
 
     Singular B or unresolved multiple stationary roots cause explicit non-success.
@@ -200,16 +213,27 @@ def stationary_front_partition(field,cell,segment_index,angle,*,maximum_interval
         raise ValueError('positive stationary-front interval cap required')
     if maximum_axial_uncertainty is not None and (not np.isfinite(maximum_axial_uncertainty) or maximum_axial_uncertainty<=0):
         raise ValueError('positive dimensionless axial uncertainty required')
+    if budget is not None:
+        from .native_surface_support import SupportIntervalBudget
+        if type(budget) is not SupportIntervalBudget:raise TypeError('shared support budget required')
     cache={}
     def at(t):
         if t not in cache:cache[t]=axial_contact_front(field,cell,segment_index,t,angle)
         return cache[t]
-    pending=[(0.,1.)];roots={};count=0;slabs={}
+    if angular_cover is not None:
+        if (type(angular_cover) is not StationaryAngularCover or angular_cover.field_identity!=field.identity
+                or angular_cover.cell!=cell or angular_cover.segment_index!=segment_index
+                or not angular_cover.angle_bounds[0]<=angle<=angular_cover.angle_bounds[1]):
+            raise ValueError('stationary angular cover identity mismatch')
+        pending=list(angular_cover.branches)
+    else:pending=[(0.,1.)]
+    roots={};count=0;slabs={}
     def enclose(left,right):
         nonlocal count
         key=(left,right)
         if key not in slabs:
             if count>=maximum_intervals:raise MemoryError('stationary-front interval cap exhausted')
+            if budget is not None and not budget.consume():raise MemoryError('stationary-front shared interval cap exhausted')
             count+=1
             slabs[key]=stationary_front_slab(field,cell,segment_index,angle,left,right,include_a=True)
         return slabs[key]
