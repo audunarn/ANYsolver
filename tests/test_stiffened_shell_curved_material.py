@@ -89,10 +89,10 @@ def test_old_curved_material_guards_and_new_policy_limits(request):
         ss.create_analysis(definition=replace(d,shell_reference_policy=ss.CURVED_Q4_POINT_REFERENCE_V1))
     owner=make_owner(request,d);cap=owner.capabilities
     assert 'J2' in cap['shell'] and 'arc_length' not in cap
-    assert 'stress_free_reference_construction' not in cap
+    assert 'MATERIAL_REFERENCE_TRANSPORT' in cap['stress_free_reference_construction']
     assert not owner.reference_modal_capabilities['eligible']
     with pytest.raises(ValueError,match='reference definition'):
-        ss.create_stress_free_point_reference(d,())
+        ss.create_stress_free_point_reference(replace(d,q4_pullback_policy='historical_corotational'),())
     with pytest.raises(ValueError,match='dead translations'):
         owner.solve((ss.NodalAction('beam',105,(0.,0.,1.,0.,1.,0.)),),(.1,))
     assert owner._generation==0 and owner._finite_driver is None

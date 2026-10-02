@@ -18,8 +18,7 @@ shell and beam predecessor; the mixed owner commits them atomically.
 Only reference-linear and finite force control with fixed nodal translational
 dead forces are admitted in this slice. S3, physical beam fibres, line and
 footprint attachments, external/staged load wrappers, displacement control,
-curved material arc continuation, spectra and stress-free reference construction
-remain unsupported. The older curved elastic policy, defaults and checkpoint
+curved material arc continuation and spectra remain unsupported. The older curved elastic policy, defaults and checkpoint
 decoding contracts keep their meanings. No publication or qualification follows.
 
 The finite fixed-step driver retains its default eight backtracks. For this new
@@ -60,3 +59,16 @@ Development evidence, including failed attempts, artifact identities and precise
 checks: [curved material slice](agent_plans/development/r8-curved-material-20261003/results.md).
 
 [Predecessor-aware recovery evidence](agent_plans/development/r8-curved-predecessor-20261003/results.md).
+
+The existing `create_stress_free_point_reference` also admits a virgin material
+definition, returning the distinct
+`GE_STRESS_FREE_POINT_MATERIAL_REFERENCE_TRANSPORT_V1_DEV` operation policy.
+Material curves and native section/inertia definitions are preserved, but no
+accepted history is transferred. A loaded owner/checkpoint is not a reference
+definition. Q4 facets and native frames must still pass existing admission.
+Bounded checks cover both signs of the actual roof crown with zero initial stress
+and plasticity, rigid covariance of a yielded reference model, and a nonrigid
+material panel with both-domain yielding and restart. These do not qualify
+imperfect material capacity, arbitrary geometry or the complete G4C scope.
+
+[Virgin material reference evidence](agent_plans/development/r8-material-reference-20261003/results.md).

@@ -13,10 +13,12 @@ from scipy.spatial.transform import Rotation
 from .control import cancellation_safe_point
 from ._stiffened_shell_ge_experimental import (
     LinearDefinition, ShellPanel, CURVED_Q4_POINT_REFERENCE_V1,
+    CURVED_Q4_POINT_MATERIAL_REFERENCE_V1,
     PROFILE as B3_GE_E4_PL_STIFFENED_SHELL_V1, Q4_ALGORITHMIC_PULLBACK_V1,
 )
 
 POLICY = 'GE_STRESS_FREE_POINT_REFERENCE_TRANSPORT_V1_DEV'
+MATERIAL_POLICY = 'GE_STRESS_FREE_POINT_MATERIAL_REFERENCE_TRANSPORT_V1_DEV'
 
 
 def _vector(value):
@@ -66,7 +68,7 @@ class StressFreePointReference:
 
 def create_stress_free_point_reference(definition, perturbations, *,
                                       resources=None, cancellation_token=None):
-    """Transport an explicitly selected elastic Q4/GE point reference.
+    """Transport an explicitly selected virgin Q4/GE point reference.
 
     At a point, delta_b = u_s + (Q_s-I)(r_b0-r_s0) and R_bnew = Q_s R_b0.
     This transports the physical eccentricity and orientation once. The shell
@@ -87,11 +89,13 @@ def create_stress_free_point_reference(definition, perturbations, *,
     if (type(definition) is not LinearDefinition or
             type(definition.shell) is not ShellPanel or
             definition.profile != B3_GE_E4_PL_STIFFENED_SHELL_V1 or
-            definition.shell_reference_policy != CURVED_Q4_POINT_REFERENCE_V1 or
+            definition.shell_reference_policy not in (CURVED_Q4_POINT_REFERENCE_V1,
+                                                      CURVED_Q4_POINT_MATERIAL_REFERENCE_V1) or
             definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1 or
             definition.lines or definition.footprints or
-            definition.shell.s3_elements or definition.shell.j2_curve is not None):
-        raise ValueError('explicit elastic curved-Q4 point reference definition required')
+            definition.shell.s3_elements or (definition.shell.j2_curve is not None and
+                definition.shell_reference_policy != CURVED_Q4_POINT_MATERIAL_REFERENCE_V1)):
+        raise ValueError('explicit admitted curved-Q4 point reference definition required')
     if type(perturbations) is not tuple or any(type(v) is not ReferencePosePerturbation
                                               for v in perturbations):
         raise ValueError('typed immutable reference perturbation tuple required')
@@ -187,7 +191,9 @@ def create_stress_free_point_reference(definition, perturbations, *,
         cancellation_safe_point(cancellation_token, 'stiffened-shell.reference.complete')
         return StressFreePointReference(target._definition,
             source.preflight()['identity'], target.preflight()['identity'],
-            target.preflight()['stress_free_scaled_max'], disagreement)
+            target.preflight()['stress_free_scaled_max'], disagreement,
+            policy=(MATERIAL_POLICY if definition.shell_reference_policy ==
+                    CURVED_Q4_POINT_MATERIAL_REFERENCE_V1 else POLICY))
     finally:
         if target is not None:
             target.close()

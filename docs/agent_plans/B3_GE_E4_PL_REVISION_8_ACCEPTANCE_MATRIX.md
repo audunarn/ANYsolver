@@ -1546,3 +1546,14 @@ ANYfem native Project history/detail and input negatives pass. Same-code/native
 oracles and integration-owner review do not replace independent scientific or
 external acceptance. No aggregate gate or additional analysis/material admission.
 [Identities, scope and failures](development/r8-curved-predecessor-20261003/results.md).
+
+
+**3 October virgin material reference: IMPLEMENTED_NOT_QUALIFIED.**
+Existing operation now admits a separate virgin curved material reference policy,
+without transferring loaded histories. Installed18 solver checks cover rigid
+yielded covariance, zero-state signed roof crowns, nonrigid both-domain yielding,
+restart and legacy reference/lifecycle controls. Paired native ANYfem unload/reload
+and detailed restart pass. Recipe/source provenance remains separately retained;
+experimental input schema preserves only the new mechanical definition. No
+material capacity, external agreement or complete G4C/G3 acceptance.
+[Identities, source failure and boundary](development/r8-material-reference-20261003/results.md).

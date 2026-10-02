@@ -5,9 +5,9 @@
 Revision 8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full amended
 G0–G6, F01–F13, V01–V28, B01–B18 scope and scientific criteria remain binding.
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 2cef442c; use git log for
+branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 0a88f292; use git log for
 latest committed identity. ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer
-at 3819b23 (curved-material recovery documentation; product85ed953). Scoped local commits only; no push/main merge/publication
+at 7a00a0b (virgin-reference documentation; product85ed953). Scoped local commits only; no push/main merge/publication
 or contact-worker messages. All owned numerical runs/review terminal. Main untouched.
 
 Formal F03 UNCONSUMED; protected original script SHA256
@@ -68,13 +68,21 @@ restored residual/tangent parity. Installed consumer native history/detail and
 strict guards pass. All511 modules match. [Artifacts, scope and retained helper
 failure](development/r8-curved-predecessor-20261003/results.md).
 
-Next bounded slice: admit coherent virgin curved material reference construction
-through the existing imperfection operation, with zero initial histories/gaps and
-exact consumer restart. This does not transport loaded history to a new geometry.
-Failure repairs the reference/admission seam; success admits only the supported
-point/material combination. No framework, external campaign or finer roof sweep.
-New policy still rejects displacement, material arc/spectra and external loads;
-fibres, curved S3, broader attachments and aggregate gates remain unfinished.
+Virgin material reference slice delivered: existing point-reference operation
+has a distinct material policy, preserves zero initial history and leaves a loaded
+source unchanged. Both signed roof crowns initialize stress-free; a nonrigid
+material panel yields in both domains and restarts exactly through native ANYfem.
+Installed18 solver and2 consumer checks pass; all511 product modules match.
+[Artifacts and limits](development/r8-material-reference-20261003/results.md).
+
+Next decision: can the existing mixed arc machinery preserve physical metrics,
+normalization and complete material predecessors for the curved point route?
+Inspect the actual kind/array/update contracts first; successful parity permits
+one separate experimental identity and bounded seed/continue/restart checks.
+A contract defect is repaired before admitting it. No elastic-state relabeling,
+new globalization or external/finer-roof campaign. Material arc, displacement,
+spectra, external loads, fibres, curved S3 and broader attachments remain open;
+no aggregate qualification follows.
 
 The independent nonlinear E04 comparison remains open: finite external section/
 pose/offset mapping and convergence are not established. CalculiX U1 is linear;

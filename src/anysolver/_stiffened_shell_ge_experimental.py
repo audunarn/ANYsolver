@@ -929,9 +929,8 @@ class ExperimentalGEAnalysis:
                 capabilities["arc_length"] = "experimental_fixed_mesh_affine_nodal_dead_translation_v1"
             capabilities["selected_finite_recovery"] = "experimental_cached_nodes_material_v1"
         if self._curved_reference:
-            if not self._curved_material:
-                from ._stiffened_shell_stress_free_reference import POLICY as reference_policy
-                capabilities["stress_free_reference_construction"] = reference_policy
+            from ._stiffened_shell_stress_free_reference import POLICY, MATERIAL_POLICY
+            capabilities["stress_free_reference_construction"] = MATERIAL_POLICY if self._curved_material else POLICY
             capabilities["shell"] = ("experimental isotropic J2 planar Q4 facets on curved reference"
                 if self._definition.shell.j2_curve is not None else
                 "experimental elastic planar Q4 facets on curved reference")
@@ -949,7 +948,7 @@ class ExperimentalGEAnalysis:
                 capabilities["arc_length"] = "experimental_curved_elastic_point_tangent_plane_v1"
             capabilities["excluded"] += ("curved reference spectra",
                 "curved reference external loads")
-            capabilities["excluded"] += (("curved material arc continuation", "curved material displacement control", "curved material stress-free construction")
+            capabilities["excluded"] += (("curved material arc continuation", "curved material displacement control")
                 if self._curved_material else ("curved reference material yielding",))
         return capabilities
 
