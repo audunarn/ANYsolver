@@ -128,3 +128,28 @@ S3 simultaneous plasticity, biaxial/large-rotation histories, recoverable materi
 failure, full G3/M4 envelope and required mechanics/external/scale/platform
 acceptance remain OPEN. No aggregate promotion, main merge, push or release.
 Dissemination restriction and protected history remain; F03 UNCONSUMED.
+
+## Current GE gravity delivery / restart
+
+Native gravity is implemented locally through existing point-owner APIs; new
+GEBodyLoad is immutable/model-bound. Curved lift/eccentric mass work and tangent
+retain native cell coordinates. Reference-linear factor reuse, current wrench
+recovery, fixed/adaptive stepping, cancellation, chart reset and restore work.
+Finite Q4 requires objective pullback; elastic S3 uses its bound stable arithmetic.
+Installed37/37 plus public eccentric-mass twoQ4/twoGE example pass; newwheel
+4a287d55...b72b06,393module binding,actual1thread/JIToff. Independent Read review
+clear after restore-guard and lifecycle-coverage repairs. Failed development runs
+retained; no unmeasured speed claim, yielding-under-gravity or aggregate G4 claim.
+[Exact evidence, source, review and limits](development/r8-ge-native-gravity-20261002/results.md).
+
+All owned numerical sessions18746/30763/51708/96220 terminal;18746 failed and
+preserved, its unchanged mixed/S3 cases passed after bounded stable-policy repair.
+Workers done. No active numerical run to resume. F03 UNCONSUMED; foreign protected
+script hash remainsc908b1f3...481. Historical credential dissemination restriction
+unchanged; no contact communication, push, main merge, release or version change.
+Next: ANYfem native Project gravity descriptor/save/reopen/cancel/restart through
+this tested solver facade, followed by remaining required loads/material envelope.
+Do not repeat37test campaign unless source/dependencies/findings require it.
+Complete Revision8 goal remains active; mechanics/external/scale/platform gates
+and all unclosed matrix rows remain required. Existing simultaneous-material and
+rigid-carrier evidence above remains valid at its recorded identities.

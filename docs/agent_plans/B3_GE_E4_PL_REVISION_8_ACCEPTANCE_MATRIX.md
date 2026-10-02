@@ -1,5 +1,18 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October native GE gravity development:** model-bound uniform acceleration
+now executes reference-linear and conservative finite point-owner work, including
+native retained-cell curvature/offset work. Isolated new wheel393modules:
+37focused tests and public eccentric-mass twoQ4/twoGE example pass. Physical
+mass admission, Q4/mixed/S3, adaptive cancellation, chart/restart and affected
+staged regressions exercised. Objective Q4 finite map required; elastic S3 stable
+arithmetic is bound to the new checkpoint identity. Failed tests/build retained;
+independent source review clear. Material-enabled history/restart parity is tested,
+not verified yielding under gravity. This is scoped M4/G4A implementation evidence,
+not aggregate acceptance. Line/footprint gravity, native consumer persistence,
+full material/external/scale/platform envelope remain OPEN. No F03 consumption.
+[Evidence and boundaries](development/r8-ge-native-gravity-20261002/results.md).
+
 **2 October native mixed-material consumer delivery:** ANYfem b831411 now has
 a runnable native Project save/reopen workflow for the two-stiffener Q4 J2 /
 physical-fibre/generalized case. Final installed1/1 verifies explicit completed
