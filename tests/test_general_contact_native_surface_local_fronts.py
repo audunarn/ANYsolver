@@ -38,7 +38,7 @@ def test_whole_angle_stationary_envelope_is_locally_open_with_closed_neighbor():
 
 
 @pytest.mark.skipif(os.environ.get('ANYSOLVER_RUN_UNRESOLVED_MIXED_FRONT')!='1',
-    reason='development candidate exhausts unchanged support128; retained failed evidence, explicit replay only')
+    reason='development candidate exhausts unchanged query2048; retained failed evidence, explicit replay only')
 def test_mixed_endpoints_integrated_force_and_tangent(tmp_path):
     import json,os
     from pathlib import Path

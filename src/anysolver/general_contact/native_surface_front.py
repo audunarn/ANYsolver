@@ -70,7 +70,37 @@ def axial_contact_front(field,cell,segment_index,time,angle):
     return AxialContactFront(*map(float,values))
 
 
-def stationary_front_slab(field,cell,segment_index,angle,left,right,*,include_a=False,angle_bounds=None):
+def _front_coefficient_roundoff(coordinates,velocities,edge,edge_rate,c,cd,cdd,x,d,xrate,drate,omega,radius):
+    """Propagate uniform binary64 input/operation errors before cancellation.
+
+    Edge subtraction -> cross products -> coefficient dot products. This keeps
+    mixed coordinate/relative-distance/velocity products instead of replacing
+    them by a maximum. Controls are uniform norms over the declared slab.
+    """
+    gamma=1024*np.finfo(float).eps
+    coordinate_error=gamma*coordinates;velocity_error=gamma*velocities
+    ee=2*coordinate_error+gamma*edge;ev=2*velocity_error+gamma*edge_rate
+    ec=2*edge*ee+ee*ee+gamma*edge*edge
+    ecd=2*(edge*ev+edge_rate*ee+ee*ev+gamma*edge*edge_rate)
+    ecdd=2*(2*edge_rate*ev+ev*ev+gamma*edge_rate*edge_rate)
+    ex=2*coordinate_error+gamma*(x+radius)
+    ed=2*coordinate_error+gamma*d
+    exp=2*velocity_error+gamma*(xrate+3*omega*radius)
+    edp=2*velocity_error+gamma*drate
+    xacc=omega*omega*radius;exacc=4*gamma*xacc
+    def product(a,ea,b,eb):
+        return ea*b+(a+ea)*eb+gamma*(a+ea)*(b+eb)
+    errors=(product(c,ec,x,ex),product(c,ec,d,ed),
+        product(cd,ecd,x,ex)+product(c,ec,xrate,exp),
+        product(cd,ecd,d,ed)+product(c,ec,drate,edp),
+        product(cdd,ecdd,x,ex)+2*product(cd,ecd,xrate,exp)+product(c,ec,xacc,exacc),
+        product(cdd,ecdd,d,ed)+2*product(cd,ecd,drate,edp))
+    result=max(errors)
+    if not np.isfinite(result):raise ValueError('front coefficient roundoff overflow')
+    return float(np.nextafter(result,np.inf))
+
+
+def stationary_front_slab(field,cell,segment_index,angle,left,right,*,include_a=False,angle_bounds=None,_return_error_controls=False):
     """Padded binary64 Taylor bounds for B, N and N' on one time slab.
 
     C is quadratic, the chord is affine, and the material arm has constant
@@ -142,7 +172,37 @@ def stationary_front_slab(field,cell,segment_index,angle,left,right,*,include_a=
     if not np.all(np.isfinite(result)):raise ValueError('nonfinite stationary front bounds')
     if include_a:
         awidth=abs(value.a_rate)*h+.5*a2*h*h+pad+a_theta*angular_width
-        return (*result,value.a-awidth,value.a+awidth)
+        result=(*result,value.a-awidth,value.a+awidth)
+    if _return_error_controls:
+        # Uniform point-evaluation roundoff controls, not midpoint residuals.
+        # Norm bounds cover the complete time slab and every material angle.
+        edge_magnitude=max(1.,*(np.linalg.norm(e) for pair in edges for e in pair))
+        edge_speed=max(1.,np.linalg.norm(da),np.linalg.norm(db))
+        coordinate_magnitude=max(1.,
+            *(float(np.max(np.abs(p.positions)))+float(np.max(np.abs(p.position_low))) for p in poses),
+            *(float(np.max(np.abs(y))) for y in corners),
+            float(np.max(np.abs(target.adapter.reference_positions))),
+            float(np.max(np.abs(start.positions)))+float(np.max(np.abs(start.position_low))),
+            float(np.max(np.abs(segment.translations))),
+            *(float(np.max(abs(target.adapter.work_map)@np.abs(p.shell_displacement))) for p in poses))
+        velocity_magnitude=max(1.,float(np.max(np.abs(velocities))),
+            float(np.max(np.abs(segment.translations))),
+            float(np.max(abs(target.adapter.work_map)@np.abs(segment.shell_increment))))
+        uniform_error=max(pad,_front_coefficient_roundoff(coordinate_magnitude,velocity_magnitude,
+            edge_magnitude,edge_speed,c,cd,cdd,xnorm,dnorm,xrate,drate,omega,radius))
+        amag=c*xnorm+uniform_error;bmag=c*dnorm+uniform_error
+        apmag=cd*xnorm+c*xrate+uniform_error;bpmag=cd*dnorm+c*drate+uniform_error
+        numerator_error=uniform_error*(apmag+bmag+amag+bpmag)+2*uniform_error**2
+        numerator_error+=512*np.finfo(float).eps*(apmag*bmag+amag*bpmag)
+        a2mag=cdd*xnorm+2*cd*xrate+c*omega**2*radius+uniform_error
+        b2mag=cdd*dnorm+2*cd*drate+uniform_error
+        derivative_error=uniform_error*(a2mag+bmag+amag+b2mag)+2*uniform_error**2
+        derivative_error+=512*np.finfo(float).eps*(a2mag*bmag+amag*b2mag)
+        if not np.all(np.isfinite((numerator_error,derivative_error,uniform_error))):
+            raise ValueError('front point error bound overflow')
+        result=(result[0]-uniform_error,result[1]+uniform_error,*result[2:4],
+            result[4]-derivative_error,result[5]+derivative_error,*result[6:])
+        return result,(float(uniform_error),float(numerator_error))
     return result
 
 
@@ -335,3 +395,107 @@ def stationary_front_angular_envelopes(field,cover,*,maximum_axial_uncertainty,b
         if not np.all(np.isfinite(interval)):raise ValueError('stationary angular envelope overflow')
         intervals.append(interval)
     return tuple(intervals)
+
+
+@dataclass(frozen=True)
+class PreparedStationaryBand:
+    cover: StationaryAngularCover
+    branches: tuple
+    endpoints: tuple
+    prepared_intervals: int
+
+
+def prepare_stationary_band(field,cover,*,budget):
+    """Prepare uniform geometric/error bounds once for a certified angle band."""
+    from .native_surface_support import SupportIntervalBudget
+    if type(budget) is not SupportIntervalBudget:raise TypeError('shared support budget required')
+    if type(cover) is not StationaryAngularCover or cover.field_identity!=field.identity:
+        raise ValueError('bound stationary angular cover required')
+    middle=sum(cover.angle_bounds)/2;before=budget.intervals
+    def controls(left,right):
+        if not budget.consume():raise MemoryError('prepared stationary band interval cap exhausted')
+        bounds,errors=stationary_front_slab(field,cover.cell,cover.segment_index,middle,left,right,
+            angle_bounds=cover.angle_bounds,_return_error_controls=True)
+        if bounds[0]<=0<=bounds[1]:raise ValueError('prepared stationary denominator unresolved')
+        return (float(left),float(right),tuple(bounds),tuple(errors))
+    branches=tuple(controls(a,b) for a,b in cover.branches)
+    for _,_,bounds,_ in branches:
+        if bounds[4]<=0<=bounds[5]:raise ValueError('prepared stationary simple branch unresolved')
+    endpoints=tuple(controls(t,t) for t in (0.,1.))
+    return PreparedStationaryBand(cover,branches,endpoints,budget.intervals-before)
+
+
+def stationary_front_partition_prepared(field,prepared,angle,*,maximum_axial_uncertainty):
+    """Query a proved band without recomputing geometric slabs.
+
+    Actual scalar coefficients and roots are still evaluated. Only uniform
+    time/angle bounds are reused; no newly computed interval is hidden from
+    the shared budget. Root and endpoint coordinate uncertainties still gate.
+    """
+    from scipy.optimize import brentq
+    from anysolver._ge_beam3_p5_seeded.core import sha
+    if (type(prepared) is not PreparedStationaryBand or
+        prepared.cover.field_identity!=field.identity or sha(field._definition())!=field.identity or
+        not prepared.cover.angle_bounds[0]<=angle<=prepared.cover.angle_bounds[1]):
+        raise ValueError('prepared stationary band identity/angle mismatch')
+    if not np.isfinite(maximum_axial_uncertainty) or maximum_axial_uncertainty<=0:
+        raise ValueError('positive dimensionless axial uncertainty required')
+    cover=prepared.cover;cache={}
+    def at(t):
+        if t not in cache:cache[t]=axial_contact_front(field,cover.cell,cover.segment_index,t,angle)
+        return cache[t]
+    def coordinate(value,bounds,error,motion_error=0.):
+        denominator=(max(bounds[0],value.b-error),min(bounds[1],value.b+error))
+        if denominator[0]>denominator[1] or denominator[0]<=0<=denominator[1]:
+            raise ValueError('prepared front point denominator unresolved')
+        ratios=[-a/b for a in (value.a-error,value.a+error) for b in denominator]
+        interval=(float(np.nextafter(min(ratios)-motion_error,-np.inf)),
+                  float(np.nextafter(max(ratios)+motion_error,np.inf)))
+        if not np.all(np.isfinite(interval)) or interval[1]-interval[0]>maximum_axial_uncertainty:
+            raise ValueError('prepared stationary axial uncertainty exceeds budget')
+        return interval
+    roots=[]
+    for left,right,bounds,(error,nerror) in prepared.branches:
+        nl,nr=at(left).stationary_numerator,at(right).stationary_numerator
+        if abs(nl)<=nerror or abs(nr)<=nerror or np.sign(nl)==np.sign(nr):
+            raise ValueError('prepared stationary endpoint sign unresolved')
+        root=brentq(lambda t:at(t).stationary_numerator,left,right,
+            xtol=4*np.finfo(float).eps,rtol=4*np.finfo(float).eps,maxiter=64)
+        if not np.isfinite(root) or not left<=root<=right:
+            raise ValueError('prepared stationary root outside certified bracket')
+        value=at(root);residual=abs(value.stationary_numerator)+nerror
+        minimum_rate=min(abs(bounds[4]),abs(bounds[5]));maximum_rate=max(abs(bounds[4]),abs(bounds[5]))
+        time_error=residual/minimum_rate
+        bracket=(max(left,float(np.nextafter(root-time_error,-np.inf))),
+                 min(right,float(np.nextafter(root+time_error,np.inf))))
+        minimum_b=min(abs(bounds[0]),abs(bounds[1]))
+        motion=(residual*time_error+.5*maximum_rate*time_error**2)/minimum_b**2
+        interval=coordinate(value,bounds,error,motion)
+        roots.append(IsolatedStationaryFront(float(root),value.axial_coordinate(),bracket,interval,value.stationary_numerator))
+    endpoints=[]
+    for time,_,bounds,(error,_) in prepared.endpoints:
+        value=at(time)
+        endpoints.append(IsolatedStationaryFront(time,value.axial_coordinate(),(time,time),
+            coordinate(value,bounds,error),value.stationary_numerator))
+    fractions=tuple(sorted({0.,1.,*(r.fraction for r in roots)}))
+    return tuple((t,at(t).axial_coordinate()) for t in fractions),0,tuple(roots),tuple(endpoints)
+
+
+def prepared_front_open_interval(prepared,partition,left,right):
+    """Whole-time open certificate for the interior of an axial interval.
+
+    The complete band cover excludes B=0. H extrema are exactly its time
+    endpoints and certified stationary branches; use their outward intervals.
+    No sampled gap or endpoint-only contact assumption enters this test.
+    """
+    if type(prepared) is not PreparedStationaryBand or not left<right:
+        raise ValueError('prepared front and ordered axial interval required')
+    extrema=(*partition[2],*partition[3])
+    if len(partition[2])!=len(prepared.branches) or len(partition[3])!=2:
+        raise ValueError('complete prepared front extrema required')
+    lower=min(e.axial_interval[0] for e in extrema)
+    upper=max(e.axial_interval[1] for e in extrema)
+    b0=prepared.endpoints[0][2][:2]
+    # Quadrature uses strictly interior material points. Equality at an
+    # interval edge may be zero gap but cannot produce interior contact work.
+    return bool(left>=upper if b0[0]>0 else right<=lower if b0[1]<0 else False)

@@ -1064,3 +1064,8 @@ Local stationary-strip mixed-endpoint development: geometry enclosure and closed
 zero-branch guard pass independent controls. Mixed aggregate candidate exhausts unchanged
 support128 after488queries; remains unpassed. No capability promotion or speed-up claim.
 [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/local_front_integration_results.md).
+
+Prepared native whole-band stationary bounds:10distinct local geometry/error/guard controls
+pass in development; source-reviewed propagated roundoff. Mixed integrated candidate reaches
+query2048 with support49, still non-success. Final open-interior edge fix awaits integrated
+check. No acceptance or speed-up claim. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/prepared_front_results.md).

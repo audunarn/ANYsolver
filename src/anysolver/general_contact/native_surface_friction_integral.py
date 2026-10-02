@@ -145,7 +145,7 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
         coefficients[cell]=[_coefficients(field,pose,cell) for pose in poses]
         panels.extend(front_panels(cell,left,right,alo,ahi))
     budget=NativeSurfaceReplayBudget(settings.maximum_point_paths)
-    cache={};front_cache={};front_error={};front_covers={};front_axes={};front_band_cache={};visited=accepted=empty_certificates=0
+    cache={};front_cache={};front_error={};front_covers={};front_axes={};front_band_cache={};front_prepared={};visited=accepted=empty_certificates=0
     last_error=None
     open_queries=0
     size=60+60*60+4
@@ -197,6 +197,7 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
     def estimate(panel,order):
         cell,left,right,lower,upper=panel
         axial_order,angular_order=(order,order) if isinstance(order,int) else order
+        nonlocal open_queries
         result=np.zeros(size);points,weights=gauss[angular_order]
         axial_points,axial_weights=gauss[axial_order]
         measure=rule.definition['radius']*np.linalg.norm(reference.coordinates[cell+1]-reference.coordinates[cell])
@@ -212,12 +213,19 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                 from .native_surface_front import stationary_front_partition
                 key=(cell,float(angle))
                 if key not in front_cache:
-                    cuts=[];strips=[]
+                    cuts=[];strips=[];prepared_partitions=[]
                     for index in range(len(field.segments)):
                         try:
-                            _,_,stationary,endpoints=stationary_front_partition(field,cell,index,float(angle),
-                                maximum_intervals=field.maximum_intervals,maximum_axial_uncertainty=_front_uncertainty,
-                                budget=support_budget,angular_cover=front_covers[panel][index])
+                            if _local_front_strips:
+                                from .native_surface_front import stationary_front_partition_prepared
+                                partition=stationary_front_partition_prepared(field,
+                                    front_prepared[panel][index],float(angle),maximum_axial_uncertainty=_front_uncertainty)
+                                _,_,stationary,endpoints=partition
+                                prepared_partitions.append((front_prepared[panel][index],partition))
+                            else:
+                                _,_,stationary,endpoints=stationary_front_partition(field,cell,index,float(angle),
+                                    maximum_intervals=field.maximum_intervals,maximum_axial_uncertainty=_front_uncertainty,
+                                    budget=support_budget,angular_cover=front_covers[panel][index])
                         except MemoryError as error:
                             raise NativeFrictionIntegrationLimit(str(error),dict(panel=panel,panels=visited,
                                 queries=len(cache),front_queries=len(front_cache),support_intervals=support_budget.intervals,
@@ -231,10 +239,16 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                         for value in (stationary if _local_front_strips else (*stationary,*endpoints)):
                             cuts.extend((*value.axial_interval,value.axial_coordinate))
                         strips.extend(value.axial_interval for value in stationary)
-                    front_cache[key]=(tuple(cuts),tuple(strips))
+                    front_cache[key]=(tuple(cuts),tuple(strips),tuple(prepared_partitions))
                 roots.update(x for x in front_cache[key][0] if left<x<right)
                 edges=sorted(roots)
             for x0,x1 in zip(edges[:-1],edges[1:]):
+                if _local_front_strips:
+                    from .native_surface_front import prepared_front_open_interval
+                    if all(prepared_front_open_interval(prepared,partition,x0,x1)
+                           for prepared,partition in front_cache[key][2]):
+                        open_queries+=len(axial_points)
+                        continue
                 if _front_uncertainty is not None and any(a<=x0 and x1<=b for a,b in front_cache[key][1]):
                     # Integral enclosure replaces unresolved point evaluations;
                     # no zero point history or never-contacted claim is created.
@@ -291,11 +305,16 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
             # Reuse only identical bands within this immutable field evaluation.
             band=(cell,lower,upper)
             if _local_front_strips and band in front_band_cache:
-                covers,envelopes=front_band_cache[band]
+                covers,envelopes,prepared=front_band_cache[band]
             else:
                 covers=tuple(stationary_front_angular_cover(field,cell,index,(lower,upper),budget=support_budget)
                     for index in range(len(field.segments)))
                 envelopes=None
+                if _local_front_strips:
+                    from .native_surface_front import prepare_stationary_band
+                    prepared=tuple(prepare_stationary_band(field,cover,budget=support_budget) for cover in covers)
+                else:prepared=()
+            front_prepared[parent]=prepared
             branch_count=sum(map(len,covers))
             front_covers[parent]=covers
             if branch_count:
@@ -306,7 +325,7 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                     if envelopes is None:
                         envelopes=stationary_front_angular_envelopes(field,covers[0],
                             maximum_axial_uncertainty=_front_uncertainty,budget=support_budget)
-                    front_band_cache[band]=(covers,envelopes)
+                    front_band_cache[band]=(covers,envelopes,prepared)
                     for a,b in envelopes:
                         a,b=max(left,a),min(right,b)
                         if a>=b:continue
@@ -322,7 +341,7 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                 error[-4:]=.5*density*_front_uncertainty*(upper-lower)*measure
                 front_error[parent]=error
             if _local_front_strips and not branch_count:
-                front_band_cache[band]=(covers,())
+                front_band_cache[band]=(covers,(),prepared)
             # Nonzero B, no stationary H, and open endpoint rectangles exclude
             # all crossings. Stationary branches require explicit moving cuts.
             return HistoryPanelSupport('open' if not branch_count and all_endpoints_open else 'resolved',parent,

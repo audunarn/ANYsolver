@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.47. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.48. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -32,23 +32,22 @@ independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
 
-Explicit native event-sequence V2 point replay covers opening, recontact and persistent
-contact, with definition-bound restart and independent work/tangent checks. Aggregate
-mixed-endpoint support remains the blocker. Local stationary-strip geometry is implemented
-and source-reviewed; independent closed-neighbor/zero-stationary controls pass.
+Explicit native event-sequence V2 point replay covers opening, recontact and persistence.
+Prepared whole-angular-band stationary bounds now remove repeated geometric slab work:
+the mixed candidate reached2048material queries with49support intervals rather than128.
+It still failed the unchanged query cap. Local proof/roundoff controls pass; no integrated
+success or speed-up claim. Reviewed error propagation now includes coordinate->edge->cross->dot.
 
-The mixed integration candidate still exhausts support128 after488queries. Duplicate
-endpoint micro-panels were removed without dropping measure; exact angular-proof caching
-made only limited progress. No speed-up or mixed-integration acceptance is claimed.
+A certified open-interior shortcut avoids replay only where all front extrema prove no
+contact over every segment. Its corrected interval-edge convention has local controls;
+next run the same mixed case once with unchanged settings. If query cap persists, identify
+the controlling integration component before a new quadrature change. No cap increases,
+blind retries or saved fullpatch retry. Then extend multisegment cumulative work.
 
-Next derive reusable whole-angular-band coefficient/derivative bounds for queried stationary
-roots, using existing complete branch certificates and strict denominator/uncertainty gates.
-Compare with the current slab oracle before one unchanged mixed-case replay. Preserve all
-budgets; no saved fullpatch retry or automatic increase. Then extend multi-segment work.
-
-[Current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/local_front_integration_results.md).
-[Previous slice history](docs/d1_review_support/contact_c5_native_surface_point_20261002/plan_before_local_front_integration.txt)
-retains earlier evidence and frozen/consumed restrictions; it does not authorize reruns.
+[Current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/prepared_front_results.md).
+[Previous local integration evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/local_front_integration_results.md).
+[Earlier slice history](docs/d1_review_support/contact_c5_native_surface_point_20261002/plan_before_local_front_integration.txt)
+retains frozen/consumed restrictions; it does not authorize reruns.
 
 ## 3. Preserve mechanics and state
 
