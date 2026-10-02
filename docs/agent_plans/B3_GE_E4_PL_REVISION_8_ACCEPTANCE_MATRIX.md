@@ -1227,3 +1227,11 @@ Negative-load activity at1.75/2 is recorded. Zero-total-load convergence still
 fails unchanged relative assessment; accepted-prefix preservation is tested.
 No consumer, mixed/S3 staged, zero-load or aggregate qualification claim.
 [Evidence and remaining scope](development/r8-ge-native-distributed-20261002/staged-programme-results.md).
+
+**2 October programme consumer/mixed-shell continuation:** two elastic mixed/all-S3
+signed restart/balance cases and the runnable signed public example pass source
+and installed checks using unchanged solverb636e6a8. ANYfem's new experimental
+programme schema and Project/cancellation/disk-restore route pass139source and
+139installed checks on consumerc67232b6. Root reviewed worker changes. Mixed/S3
+plastic histories and zero-load convergence are not established; G4A/G6 remain open.
+[Updated evidence](development/r8-ge-native-distributed-20261002/staged-programme-results.md).

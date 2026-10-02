@@ -67,3 +67,22 @@ This is source/evidence review, not an independently executed mechanics campaign
 Archive SHA256: elastic
 `c72c713a39aabf30883e49f50377f516fb04988cd6f0fbf204b4b7b49ef7e67b`;
 material `1f94feb1fa8e14dfd4accc3834accee6c3b140cb0f3745781712a0b73dcaa575`.
+
+## Mixed shells, example and consumer continuation
+
+Two additional elastic cases (mixed Q4/S3 and all-S3) pass signed stages1/2,
+physical balance and identical restored continuation: source6.769s/175599616B;
+installed5.583s/173608960B, using the unchanged verified solver wheel above.
+The new runnable `examples/stiffened_shell_ge_distributed_programme.py` passes
+source4.342s/172843008B and installed4.062s/171495424B. It demonstrates accepted
+stage cancellation and restart on the two-Q4 eccentric panel; no zero-load point
+is requested. Fixture hashes and installed runtime checks retained in
+staged-programme-mixed-installed-v1.zip and staged-programme-example-installed-v1.zip;
+source records in mixed-example-source-v1. These tests do not broaden plasticity
+coverage to mixed/S3 material histories.
+
+ANYfem's separate distributed-programme schema, strict persistence, model binding,
+finite dispatch and real Project/cancel/disk-restore workflow pass139source and
+139installed focused checks. Consumer wheel c67232b6 uses solver b636e6a8.
+See C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/
+r8-ge-distributed-programme-20261002/results.md. No G4A/G6 aggregate acceptance.

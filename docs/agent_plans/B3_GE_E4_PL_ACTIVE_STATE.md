@@ -82,9 +82,8 @@ cancel/restart/rebase/balance; counterfactual only, NOT current-gate acceptance.
 Independent progress while pressure decision pending: distributed3000N/m on the
 existing two-stiffener J2/fibre model now passes source+installed active-yield,
 cancel/restore/unload/reload and rejected-next-step preservation. Wheel5cd1df65,
-397matching modules,218onsiteimports,actual1thread/JIToff. No job live. Signed
-external-load reversal is explicitly unsupported (positive-factor guard); next
-independent slice is typed staged distributed loading, without bypassing it.
+397matching modules,218onsiteimports,actual1thread/JIToff. That fixed-pattern route
+keeps its positive-factor guard. Signed loading uses the separate programme below.
 [Material-history evidence](development/r8-ge-native-distributed-20261002/results.md).
 
 Continuation: public experimental GEBeamDistributedProgramme now supplies signed
@@ -96,8 +95,14 @@ Independent source/evidence review clear; requested inventory/couple and negativ
 activity checks added. Zero-total-load equilibrium remains a preserved failure:
 current relative assessment returns infinity for any nonzero residual. No criterion
 change, no zero-load success claim. Pressure amendment still pending. No job live.
-Next: integrate programme consumer serialization and mixed/S3 evidence; retain
-zero-load issue for explicit assessment/design resolution. No aggregate acceptance.
+Mixed/all-S3 elastic histories now pass source+installed restart/balance checks.
+ANYfem programme schema and real Project save/reopen/cancel/disk-restore/signed
+continuation pass139source/139installed focused checks; wheelc67232b6 with solver
+b636e6a8. Root independently reviewed worker edits. Runnable solver programme
+example passes source+installed. No job live. Next: mixed/S3 plastic staged-history
+coverage; zero-load assessment/design remains open, with no automatic relaxation.
+No aggregate acceptance. Consumer evidence: ANYfem docs/development/
+r8-ge-distributed-programme-20261002/results.md.
 [Staged results](development/r8-ge-native-distributed-20261002/staged-programme-results.md).
 
 BL5 law/transfer remains open:24growing-space checks cover7ratios/3levels plus1:16;

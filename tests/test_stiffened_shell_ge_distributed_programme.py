@@ -131,3 +131,22 @@ def test_changed_element_inventory_and_couple_interpolation(request):
     cancelled=ss.GEBeamDistributedProgramme(a._identity,((left,),(opposite,))).compile(a)
     _,_,recovery=cancelled.evaluate_at(state,1.5)
     assert recovery.potential is not None and recovery.potential==recovery.force_potential
+
+
+@pytest.mark.parametrize('triangles',[False,True])
+def test_mixed_shell_signed_programme_restart(request,triangles):
+    from test_stiffened_shell_ge_experimental import _panel
+    base=_panel()
+    shell=replace(base.shell,q4_elements=() if triangles else ((1,2,5,4),),
+        s3_elements=((1,2,5),(1,5,4),(2,3,6),(2,6,5)) if triangles else ((2,3,6),(2,6,5)))
+    definition=replace(base,shell=shell,**({} if triangles else {'q4_pullback_policy':ss.Q4_ALGORITHMIC_PULLBACK_V1}))
+    a,b=owner(request,definition),owner(request,definition)
+    base=programme(a);p=replace(base,endpoints=(base.endpoints[0],base.endpoints[2]))
+    first=a.solve(p,(1.,),max_iterations=15);balance(a,first)
+    saved=a.checkpoint();b.restore(saved)
+    last=a.solve(p,(2.,),max_iterations=15)
+    resumed=b.solve(p,(2.,),max_iterations=15)
+    assert last.load_programme_complete and last.distributed_load.applied_force[2]<0.
+    assert a.checkpoint()==b.checkpoint()
+    np.testing.assert_array_equal(last.shell_displacement,resumed.shell_displacement)
+    balance(a,last)
