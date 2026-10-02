@@ -199,3 +199,48 @@ def test_inherited_relative_tilt_domain(fraction):
     else:
         with pytest.raises(ValueError):
             evaluate(xyz, normal, native, q)
+
+
+def test_nonuniform_cylindrical_bending_surface_and_shear_refinement():
+    """Manufactured kinematic screen, not an external shell-response oracle."""
+    errors = []
+    for length in (.2, .1, .05):
+        xyz = length*np.array(((0., 0., 0.), (1., 0., 0.), (.2, 1., 0.)))
+        current = np.column_stack((np.sin(xyz[:, 0]), xyz[:, 1], 1-np.cos(xyz[:, 0])))
+        directors = np.column_stack((-np.sin(xyz[:, 0]), np.zeros(3), np.cos(xyz[:, 0])))
+        u, _, vt = np.linalg.svd((current-current.mean(0)).T@(xyz-xyz.mean(0)))
+        fitted = u@np.diag((1., 1., np.linalg.det(u@vt)))@vt
+        normal = np.array((0., 0., 1.))
+        rho = np.array([director_tilt(normal, fitted.T@d) for d in directors])
+        a, b = np.empty(3), np.empty(3)
+        for i, j, k in ((0, 1, 2), (1, 2, 0), (2, 0, 1)):
+            a[i], b[i] = xyz[k, 0]-xyz[j, 0], xyz[j, 1]-xyz[k, 1]
+        gradients = np.array(((-1., -1.), (1., 0.), (0., 1.)))@np.linalg.inv(
+            np.array((xyz[1, :2]-xyz[0, :2], xyz[2, :2]-xyz[0, :2])).T)
+        np.testing.assert_allclose(xyz[:, :2].T@gradients, np.eye(2), atol=1e-15)
+        position_errors, shear_errors = [], []
+        for xi, eta in ((1/6, 1/6), (2/3, 1/6), (1/6, 2/3)):
+            shape = np.array((1-xi-eta, xi, eta))
+            height, dh = 0., np.zeros(2)
+            for i, j, k in ((0, 1, 2), (1, 2, 0), (2, 0, 1)):
+                l = .5*shape[i]*(b[k]*shape[j]-b[j]*shape[k])
+                m = .5*shape[i]*(a[j]*shape[k]-a[k]*shape[j])
+                dl = .5*(gradients[i]*(b[k]*shape[j]-b[j]*shape[k])
+                         +shape[i]*(b[k]*gradients[j]-b[j]*gradients[k]))
+                dm = .5*(gradients[i]*(a[j]*shape[k]-a[k]*shape[j])
+                         +shape[i]*(a[j]*gradients[k]-a[k]*gradients[j]))
+                height += -l*rho[i, 0]+m*rho[i, 1]
+                dh += -dl*rho[i, 0]+dm*rho[i, 1]
+            surface = shape@current+(fitted@normal)*height
+            tangents = current.T@gradients+np.outer(fitted@normal, dh)
+            point = shape@xyz
+            exact = np.array((np.sin(point[0]), point[1], 1-np.cos(point[0])))
+            d = shape@directors
+            d /= np.linalg.norm(d)
+            position_errors.append(np.linalg.norm(surface-exact))
+            shear_errors.append(np.linalg.norm(d@tangents))
+        errors.append((max(position_errors), max(shear_errors)))
+    # Geometry/interpolation consistency under fixed-radius refinement. This
+    # does not impose director-normal equality in the numerical model.
+    errors = np.asarray(errors)
+    assert np.all(errors[1:] < .6*errors[:-1]), errors

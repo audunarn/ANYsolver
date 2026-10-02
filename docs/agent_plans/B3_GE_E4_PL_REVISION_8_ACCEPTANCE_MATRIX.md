@@ -1199,3 +1199,12 @@ rejection checks. Independent Read review supports further private validation.
 No public admission: internal finite-kinematics compatibility and matched physical
 work remain open; mixed follower failure unchanged. G4A remains OPEN.
 [Bounded derivation, decision and evidence](development/r8-ge-pressure-work-20261002/s3-dead-work-candidate.md).
+
+**2 October explicit director-pressure integration:** separate experimental
+reference_dead_director_v2 owns full work/tangent/rotation-anchor recovery and
+versioned descriptor/checkpoint policy. Nonuniform manufactured bending and actual
+owner derivative checks pass; independent source review clear within development
+scope. Both finite histories still fail original component assessment with no
+commit. Pressure-vector assessment amendment awaiting user decision; private
+counterfactual lifecycle success is not acceptance. G4A remains OPEN.
+[Current implementation, failures and decision](development/r8-ge-pressure-work-20261002/s3-director-integration.md).

@@ -1,11 +1,12 @@
-"""Private finite MIN3 enhanced-surface work experiment; NOT owner admission.
+"""Experimental finite S3 director-enhanced reference-dead surface work.
 
 The linear native pressure vector does not uniquely specify a finite surface.
 This candidate explicitly lifts its enhanced displacement along the fitted
 normal, using the shortest relative director tilt. The rejected full-log lift
-is retained only as a counterexample. It changes no element,
-load dispatch, checkpoint, or finite-pressure admission. See the development
-note s3-dead-work-candidate.md for the equation and remaining physical checks.
+is retained only as a counterexample. Explicit reference_dead_director_v2 owner
+dispatch uses the director lift; historical reference_dead is unchanged. This
+does not qualify finite pressure or alter internal shell equations. See the
+development note s3-dead-work-candidate.md and subsequent integration evidence.
 """
 import numpy as np
 

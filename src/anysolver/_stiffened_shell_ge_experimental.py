@@ -822,7 +822,7 @@ class ExperimentalGEAnalysis:
                 "beam_distributed_loads": (() if self._line_samples or self._definition.footprints else
                     ("experimental element-addressed fixed-spatial force/couple per reference arclength; native quadrature; couples nonconservative; GEBeamDistributedLoad",)),
                 "shell_pressure_loads": (() if self._line_samples or self._definition.footprints else
-                    ("experimental GEShellPressureLoad; shell IDs are Q4 then S3, one-based; reference-linear native dead pressure; finite Q4 dead and Q4/S3 interpolation-surface current-area follower pressure; finite native enhanced-dead S3 is unsupported",)),
+                    ("experimental GEShellPressureLoad; shell IDs are Q4 then S3, one-based; reference-linear native dead pressure; finite Q4 dead and Q4/S3 interpolation-surface current-area follower pressure; finite native reference_dead S3 is unsupported; explicit reference_dead_director_v2 admits a distinct virgin-elastic S3 director-enhanced dead surface with relative tilt below 0.9*pi, not qualified",)),
                 "staged_dead_loads": (() if self._line_samples else
                     ("experimental immutable piecewise-affine translation forces; forward programme position",)),
                 "experimental_line_spaces": tuple(
