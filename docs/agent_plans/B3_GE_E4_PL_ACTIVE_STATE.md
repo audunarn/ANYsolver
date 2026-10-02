@@ -8,9 +8,8 @@ Risk-proportionate/tiered checks, scientific tolerances and protected evidence r
 Prior active note preserved byte-for-byte [here](development/r8-bl5-staged-loads-20261002/active-before-staged-lines.md).
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; base2067a594 plus public line example
-and reference-parity checks. ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer, HEADe998e9b; no consumer edits this slice.
+branch codex/stiffened-main-reconcile-20261001; solver source09670001. ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
+branch codex/experimental-ge-panel-consumer, HEAD8c411ec; consumer slice committed.
 Local commits permitted; no push/main merge/publication or contact-worker messaging.
 Historical archive contains credentials: no dissemination before authorized remediation.
 No numerical job live. At most3workers/one heavy numerical job;100krows/600s/8GiB/
@@ -45,9 +44,11 @@ compliance at its actual discretization. Do not build a corrected U1 coupled
 reference or automatically repeat refinement/completion tests. Missing controlled
 coupled reference remains an M2/F03 obligation, not grounds for acceptance/failure.
 
-Next usable work: ANYfem experimental line-definition/staged-programme persistence
-through the same public solver types, with explicit distinct admission and no
-change to historical point schemas. Staged line materials/S3 and distributed
+ANYfem BL5 objective/staged inputs and distinct native Project route are delivered:
+49 source and70 installed checks pass, including cancellation/chart/restart.
+[Consumer evidence](development/r8-anyfem-bl5-project-20261002/results.md).
+Next: select the next bounded unaffected programme obligation from the acceptance
+matrix; do not repeat this consumer campaign without changed inputs. Staged line materials/S3 and distributed
 line loads remain excluded until their compatibility and mechanics checks pass.
 All final topology/material/stability/capacity/scale/external/platform obligations
 remain mandatory. Do not repeat closed B2 or spectral campaigns without a discriminator.

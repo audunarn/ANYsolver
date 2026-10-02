@@ -39,7 +39,7 @@ geometry/load targets do not regenerate it; unrelated Project settings,
 resource policies and output requests are rejected. Native input save/reopen
 does not save an accepted solver checkpoint. Standalone experimental files,
 legacy/default routes, ordinary native format version and qualification status
-retain their meanings. BL5 and general consumer completion remain unfinished.
+retain their meanings. BL5 uses a distinct experimental Project route; general consumer completion remains unfinished.
 
 ## Native physical-fibre reference-linear point panels
 
@@ -349,7 +349,9 @@ rotation rebasing and identical restored continuation. It reports experimental
 status and numerical equilibrium/compatibility, not physical accuracy. The
 historical Q4 policy remains unchanged and does not admit staged line loading.
 Distributed forces/couples, shell pressure and material histories on lines are
-outside this example's admitted scope. ANYfem line persistence remains unfinished.
+outside this example's admitted scope. ANYfem now preserves explicit BL5 inputs and staged programmes in a distinct
+experimental native Project route, with cancellation/checkpoint continuation
+checks. Full consumer and physical qualification remain open.
 
 Run `scripts/experimental_stiffened_ge_bl5_history.py` with an installed
 development wheel for a3-Q4/2-B3, nonmatching3:4 elastic history and byte-exact

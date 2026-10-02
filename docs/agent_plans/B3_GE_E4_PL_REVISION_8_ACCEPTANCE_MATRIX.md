@@ -1281,3 +1281,12 @@ signed stages, cancellation, restart, physical balance and P0 adaptive/chart pat
 moment failures retained; its staged scope remains rejected. Independent review
 clear within experimental scope. No M2/F03/G4 physical acceptance or criterion
 change. [Evidence](development/r8-bl5-staged-loads-20261002/results.md).
+
+
+**2 October BL5 consumer slice:** ANYfem8c411ec adds explicit objective/staged
+BL5 inputs and distinct native Project persistence through public solver types.
+49 source and70 installed checks pass; wheel f591ca10...d54ea7 paired with
+solver d506e3f3...14be90. Cancellation/rebase/checkpoint continuation and historical
+format regressions pass. Review found no consequential issue in this scope.
+Implementation/test evidence only; no aggregate G2/G6 or physical acceptance.
+[Evidence](development/r8-anyfem-bl5-project-20261002/results.md).
