@@ -12,6 +12,7 @@ from ._stiffened_shell_ge_checkpoint_binary import encode,decode,MAX_CHECKPOINT_
 MAGIC=b"ANYSSDC1"
 KIND="finite_displacement_bl5_coupled"
 POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_V1_DEV"
+CHART_POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_CHART_V2_DEV"
 
 
 def _layout(owner,steps):
@@ -35,12 +36,16 @@ def _canonical(value):
 
 
 def encode_snapshot(owner, *, generation, seed_generation, seed_sha256,
-                    control_dof, arrays):
+                    control_dof, arrays, chart_events=0):
     """Frame owned endpoint arrays, without conferring mechanical validity."""
+    if type(chart_events) is not int or chart_events < 0:
+        raise ValueError("nonnegative displacement chart event count required")
     steps=len(arrays["history"])
     metadata=dict(policy=POLICY,model=owner._identity,generation=generation,
         seed_generation=seed_generation,seed_sha256=seed_sha256,
         control_dof=control_dof,steps=steps)
+    if chart_events:
+        metadata.update(policy=CHART_POLICY,chart_events=chart_events)
     header=_canonical(metadata)
     if len(header)>1024 or set(arrays)!={name for name,_ in _layout(owner,steps)}:
         raise ValueError("invalid displacement snapshot fields")
@@ -74,13 +79,19 @@ def decode_snapshot(owner,raw):
         canonical=_canonical(m)
     except (ValueError,UnicodeError,RecursionError) as error:
         raise ValueError("invalid displacement metadata") from error
-    if (type(m) is not dict or set(m)!={"policy","model","generation","seed_generation",
-            "seed_sha256","control_dof","steps"} or canonical!=header or
-            m["policy"]!=POLICY or m["model"]!=owner._identity):
+    base_keys={"policy","model","generation","seed_generation",
+               "seed_sha256","control_dof","steps"}
+    if type(m) is not dict:
+        raise ValueError("incompatible displacement metadata")
+    chart_events=m.get("chart_events",0)
+    if (canonical!=header or m.get("model")!=owner._identity or
+            not ((m.get("policy")==POLICY and set(m)==base_keys) or
+                 (m.get("policy")==CHART_POLICY and set(m)==base_keys|{"chart_events"}
+                  and type(chart_events) is int and chart_events>0))):
         raise ValueError("incompatible displacement metadata")
     if (any(type(m[k]) is not int for k in ("generation","seed_generation","control_dof","steps")) or
             not 1<=m["seed_generation"]<=m["generation"] or
-            not 1<=m["steps"]==m["generation"]-m["seed_generation"] or
+            not 1<=m["steps"]==m["generation"]-m["seed_generation"]-chart_events or
             m["generation"]>MAX_CHECKPOINT_BYTES//8):
         raise ValueError("invalid displacement generation/history")
     dof=m["control_dof"];nodal=owner._shell_count+6*len(owner._beam_ids)

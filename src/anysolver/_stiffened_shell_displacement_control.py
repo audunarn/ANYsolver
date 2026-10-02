@@ -58,6 +58,13 @@ def prepare(owner,raw):
         _owned,_accepted_shell_material_origins,_shell_q4_recovery,_material_observables)
     metadata,a,driver,state,evaluation,shell_parent,beam_parent=validate_endpoint(owner,raw)
     residual,_,relative,gap,shell_next,beam_next=evaluation
+    from ._stiffened_shell_ge_finite_experimental import _material_histories
+    # Replay validates both versions; saved accepted histories remain authoritative.
+    # Installing tolerance-close replay values would permit repeated restore drift.
+    shell_next=tuple({**candidate,"plastic_strain":a["shell_plastic"][i],
+                      "alpha":a["shell_alpha"][i]}
+                     for i,candidate in enumerate(shell_next))
+    beam_next=_material_histories(owner,a["beam_plastic"],a["beam_accumulated"])
     history=tuple(tuple(float(v) for v in row) for row in a["history"])
     target,amplitude=history[-1] if history else tuple(a["seed"])
     support=np.zeros(owner._K.shape[0]);support[owner._fixed]=residual[owner._fixed]
@@ -126,6 +133,7 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         if dof!=m["control_dof"] or not np.array_equal(direction,a["load_direction"]):
             raise ValueError("displacement control and load direction must match restart")
         metadata={k:m[k] for k in ("seed_generation","seed_sha256","control_dof")}
+        metadata["chart_events"]=m.get("chart_events",0)
         base=a["base_load"];seed=a["seed"];history=tuple(map(tuple,a["history"]))
         amplitude=float(history[-1][1] if history else seed[1])
     if any(float(x)==float(y) for x,y in zip((driver._state.q[dof],)+targets,targets)):
@@ -157,3 +165,31 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         history=next_history;amplitude=trial.amplitude
         if on_accepted is not None:on_accepted(deepcopy(result))
     return owner._finite_driver._accepted
+
+
+def rebase(owner,expected_generation,*,cancellation_token=None):
+    """Publish a chart event at the same accepted displacement and affine load."""
+    if type(expected_generation) is not int or expected_generation!=owner._generation:
+        raise ValueError("stale or invalid displacement rebase generation")
+    snapshot=getattr(owner,"_displacement_snapshot",None)
+    if snapshot is None:
+        raise ValueError("displacement rebase requires an accepted displacement step")
+    from ._stiffened_shell_nodal_footprint import require_rotation_triples
+    require_rotation_triples(owner._fixed,len(owner._shell_ids))
+    driver=owner._finite_driver
+    _,metadata,saved=snapshot
+    cancellation_safe_point(cancellation_token,"stiffened-shell.displacement.rebase.prepare")
+    q=saved["q"].copy()
+    rotations=q[:owner._shell_count].reshape(-1,6)[:,3:]
+    if not np.any(rotations!=0.):
+        raise ValueError("no nonzero shell chart coordinates to rebase")
+    rotations[:]=0.
+    arrays=dict(saved)
+    arrays.update(q=q,shell_anchors=saved["shell_frames"])
+    raw=encode_snapshot(owner,generation=expected_generation+1,
+        seed_generation=metadata["seed_generation"],seed_sha256=metadata["seed_sha256"],
+        control_dof=metadata["control_dof"],arrays=arrays,
+        chart_events=metadata.get("chart_events",0)+1)
+    adaptive=getattr(owner,"_displacement_adaptive",None)
+    return publish(owner,raw,expected_driver=driver,expected_generation=expected_generation,
+        cancellation_token=cancellation_token,adaptive=None if adaptive is None else adaptive[0])

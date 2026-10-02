@@ -6,8 +6,8 @@ Full Revision8 plan/goal in ../b3-ge-e4-pl-coupling remains active. G0–G6,
 F01–F13,V01–V28,B01–B18 and all final obligations remain binding. Experimental
 implementation/testing is not scientific acceptance or release.
 Solver: stiffened-main-reconcile-20261001, codex/stiffened-main-reconcile-20261001,
-Slice bases: solver3da750f8; ANYfem .worktrees/experimental-ge-panel-consumer
-base cf6b9b3. Resolve current local commits with git log; artifacts above bind code.
+Slice bases: solver52574281; ANYfem .worktrees/experimental-ge-panel-consumer
+base3b50cab. Resolve current local commits with git log; artifacts above bind code.
 Local scoped commits permitted; no push/main merge/publication or contact-worker
 communication. Historical us3-modal-canary-v1.zip contains credentials: do not
 print/copy/disseminate it; no history-rewrite authority. New evidence uses only
@@ -52,9 +52,15 @@ Installed solver8checks pass27.08s; consumer1complete workflow passes40.86s.
 Solver wheel4143309f...f002b01e;404modules match. Consumer60da1b9d...70c030;
 98modules match; onsite imports,1thread/JIT off. No speedup/qualification claim.
 [Selected-recovery evidence and failed source run](development/r8-selected-recovery-20261002/results.md).
-Current local commit scope: selector module, owner dispatch/public exports,
-selected-recovery test, ANYfem consumer test extension, docs/evidence. Local only;
-no push/main/default/version changes. All jobs terminal; complete goal not achieved.
+Displacement chart rebase now uses versioned event accounting; V1 remains intact.
+V2 distinguishes chart events from load steps, preserves adaptive budgets and saved
+accepted histories, and validates endpoint mechanics before atomic publication.
+Installed24solver checks pass178.21s, including rebased/unrebased continuation;
+ANYfem1workflow passes37.23s with rebase at a pending adaptive prefix. Review clear.
+Solver wheel5de06768...76578512a;consumer895f31ec...aa54a720. No full gate closes.
+[Chart-event and scientific diagnostic evidence](development/r8-displacement-rebase-20261002/results.md).
+Current local commit scope: displacement codec/control, owner dispatch, chart-event
+test, consumer test, docs/evidence. All runs terminal. Local only; no publication.
 
 ## Remaining decision and next action
 
@@ -66,14 +72,23 @@ TEMP/r8-displacement-branch-v1/step-1.bin. Stop that batch: no automatic smaller
 longer-interval or larger-budget campaign. Current adaptive lifecycle tests use
 known-working fixtures and injected failures; they do not resolve the branch.
 
-Next permitted development: address one bounded remaining lifecycle requirement
-(displacement chart rebase), preserving the verified artifacts.
-Before another branch experiment specify a material/tangent/path discriminator
-from the preserved failure and obtain focused review. No automatic refinement.
-Displacement still excludes external loads, post-seed rebase
-and force-mode continuation. These remain obligations, not permanent exclusions.
-M2/F03 controlled clamp-transfer reference remains outside1%; U1shearcanary11.1423%
-too stiff. No automatic corrected-U1 campaign. Pressure assessment amendment awaits
-user decision. Mixed/all-S3director histories, zero-load assessment, low-hardening
-failure, materials/topology/spectra/capacity/scale/external/platform/release remain
-open as detailed in the acceptance matrix. No aggregate gate closed here.
+The reviewed four-probe discriminator reproduced that failed state once, without
+new targets or changed budgets. Negative-direction secants match the tangent
+(errors5.84e-5/3.17e-5); positive secants do not (7.08/4.21) and increase merit.
+Stored-array review identifies only generalized-beam station7 crossing from plastic
+loading to elastic response. Both positive probes return plastic increments exactly
+to predecessor values; no shell loading-class change. Estimated boundary t~1.76e-5
+is below both probes and the existing search floor. This is not an evaluated step,
+a tangent-defect finding, or physical instability. Stop this diagnostic batch.
+
+Next permitted action: bounded design/implementation of an explicit branch-event-
+aware continuation candidate, with native material loading indicator/directional
+boundary estimate, actual branch tangent reassembly and unchanged equilibrium
+acceptance. Review mechanics before running it. No generic backtrack-budget
+increase, constitutive-tangent modification or automatic refinement campaign.
+Displacement external loads and rebase before first displacement acceptance remain
+open. F03 controlled clamp transfer still outside1%; U1canary11.1423% too stiff.
+No automatic U1/refinement campaign. Pressure amendment awaits user decision.
+Mixed/all-S3director histories, zero-load assessment, low-hardening and full
+material/topology/spectral/capacity/scale/external/platform/release obligations
+remain open. Full Revision8 goal stays active; no aggregate qualification claimed.

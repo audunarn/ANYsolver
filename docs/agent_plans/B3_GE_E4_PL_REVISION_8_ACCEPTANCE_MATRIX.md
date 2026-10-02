@@ -1382,3 +1382,13 @@ labelled support coordinate covectors. Installed8checks cover coupled force/
 displacement restart, ownership, unavailable IDs and legacy footprint selection.
 No full-storage reduction or performance claim; no aggregate gate closes.
 [Evidence](development/r8-selected-recovery-20261002/results.md).
+
+
+**2 October displacement chart events: IMPLEMENTED_NOT_QUALIFIED.**
+V1 remains unchanged when no chart event exists; V2 records positive chart events
+separately from accepted displacement steps. Rebase retains physical endpoint,
+loads, accepted material arrays and predecessor histories, and adaptive budgets.
+Restore validates by replay then installs saved accepted histories exactly.
+Source9checks passed; installed evidence and continuation parity are recorded in
+[results](development/r8-displacement-rebase-20261002/results.md). No aggregate
+F06/G3/capacity gate closed; no failed branch campaign was repeated.

@@ -1103,7 +1103,8 @@ class ExperimentalGEAnalysis:
         """Issue an experimental physical shell-anchor reset at the same load."""
         self._require_open()
         if getattr(self,"_displacement_snapshot",None) is not None or getattr(self,"_displacement_adaptive",None) is not None:
-            raise ValueError("displacement chart rebase is not yet admitted")
+            from ._stiffened_shell_displacement_control import rebase
+            return rebase(self,expected_generation,cancellation_token=cancellation_token)
         self._require_stateful_scope()
         if self._definition.footprints and not self._footprint_increment_chart:
             raise ValueError("experimental nodal footprint chart rebase is unsupported: continuation parity not established")

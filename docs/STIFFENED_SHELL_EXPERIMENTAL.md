@@ -543,7 +543,7 @@ control and numerical limits. Observer exceptions after commit propagate while
 preserving the committed state.
 
 Changing control/load direction after restart, force-mode continuation, external
-loads and post-seed chart rebasing are explicitly rejected.
+loads are explicitly rejected.
 These remain future obligations, not permanent programme exclusions. No arc-length,
 limit-point, capacity or full signed-reversal qualification is implied. Fixed-step
 installed checks passed for their recorded artifact; adaptive evidence is recorded
@@ -570,3 +570,21 @@ their local-frame conventions; beam accumulated station values keep the existing
 native recovery meaning. No interpolation, smoothing or elastic reconstruction is
 introduced. Selection does not evaluate elements or replay accepted history; the
 owner still retains its complete accepted result. No storage/speedup claim follows.
+
+
+### Displacement chart events
+
+After an accepted displacement step, `rebase_rotations(generation)` can reset
+shell rotation charts while preserving physical poses, affine load amplitude,
+displacement history, material histories and adaptive attempt budgets. It requires
+full rotational support triples and a nonzero local shell chart. Stale generations,
+partial supports and no-op events fail before publication. A pending adaptive force
+seed with no accepted displacement step is not yet admitted for this operation.
+
+Unrebased displacement snapshots retain their V1 format. A rebase introduces the
+V2 chart-event policy and a positive event count; generation equals seed generation
+plus accepted displacement steps plus chart events. Later steps carry that count.
+Restore validates the endpoint against the saved material predecessor, then uses
+the saved accepted histories exactly instead of installing tolerance-close replay
+histories. Cancellation before publication leaves the complete previous checkpoint.
+A chart event does not constitute a new equilibrium increment or a capacity claim.
