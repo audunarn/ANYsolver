@@ -82,3 +82,45 @@ ANYfem arc-specific workflow verification, physical metric/refinement evidence,
 registered first-limit-point/descending-branch acceptance and full programme
 requirements remain open. Do not extend this local pair into an automatic
 amplitude or mesh campaign. No release, push or main merge was authorized.
+
+## Subsequent ANYfem integration
+
+The previously open arc-specific consumer check now passes through the existing
+ANYfem adapter; no consumer product code changed. Local ANYfem commit `f92929f`
+adds a standing regression and usage documentation. One installed check passed
+in 5.39 s (7.56 s supervised), peak process-tree memory 187,777,024 bytes.
+It covers standalone input and native Project round trips, owner construction,
+accepted-prefix cancellation, a separately saved solver checkpoint, fresh-owner
+restore, exact continued checkpoint parity and selected material recovery.
+The small elastic-prefix case is integration evidence, not material/capacity
+qualification. Controller state remains in the solver checkpoint, not the
+Project definition.
+
+Reused ANYfem wheel SHA256
+`16e3d8634ecc0cdbc78c449066db448eddf312ead0f3119d45e9622ade57e754`;
+all 98 product modules still match source/wheel/site, paired with the final
+412-module solver wheel above. Actual imports, one-thread numerical pools/Numba
+and disabled JIT were checked. No new run authority was consumed.
+`consumer-v1.zip` contains the runner, preparation, module/fixture identities,
+raw logs, runtime observations and sanitized resource metadata; SHA256
+`d481f4c9a632f9552f4d17ce148422610227c043f567a7130cd92c56288f62a3`.
+
+## Next mechanics decision
+
+Read-only review by `pressure_precision_review` checked the coupled fixture and
+current acceptance records. E04 is still NOT_STARTED with no executed matched
+mixed capacity comparison. The `coupled("p0")` history fixture has no identified
+analytical or executed external capacity oracle. E01 elastic and E02 torque
+evidence cannot supply that oracle, and standalone B3 arch evidence does not
+qualify the coupled model. No additional solve was run for this review.
+
+The next task is concrete V22/E04 case admission: geometry, supports,
+imperfection, compatible laws and connection idealization; a bounded bracket
+around the first load maximum; and comparable external outputs. Ascending and
+descending accepted equilibria plus turning-point restart are required. Fixed
+reference physical measures and declared shell/beam weighting must replace
+fixed-mesh equal weights for refinement claims. If that physical case needs
+elastic-shell, S3, follower/moment or other attachment admission absent from the
+current controller, implement the prerequisite rather than change the reference
+to fit the current API. Another extension of the -500 N fixture would not answer
+the missing-reference question.

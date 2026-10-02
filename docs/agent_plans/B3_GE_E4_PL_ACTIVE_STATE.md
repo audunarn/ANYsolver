@@ -1,14 +1,14 @@
-# B3-GE / E4-PL / B2 — active state, 2 October 2026
+# B3-GE / E4-PL / B2 â€” active state, 2 October 2026
 
 ## Authority and restart
 
-Revision8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full G0–G6,
-F01–F13,V01–V28,B01–B18 scope and scientific criteria remain binding.
+Revision8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full G0â€“G6,
+F01â€“F13,V01â€“V28,B01â€“B18 scope and scientific criteria remain binding.
 Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
 branch codex/stiffened-main-reconcile-20261001. Arc lifecycle slice base4746de34;
 resolve latest local commit with git log. ANYfem worktree:
 C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, branch
-codex/experimental-ge-panel-consumer, unchanged at6fb7061.
+codex/experimental-ge-panel-consumer, atf92929f (arc consumer regression/documentation; product unchanged).
 Local scoped commits only; no push/main merge/publication/contact-worker messages.
 All owned numerical jobs and reviews terminal. Main untouched.
 
@@ -50,11 +50,21 @@ original -500 N force-history failure and earlier failed arc radius1e-5 remain
 failed evidence. The two local public steps are not a limit-point/stability proof.
 Do not automatically extend amplitudes, refine meshes or consume formal F03.
 
-Next useful slice: exercise this existing public route through the ANYfem owner
-and persistence construction path, without a second mechanics implementation.
-Then define the discriminating registered capacity case and physical metric/
-branch criteria before another mechanics campaign; reuse saved equilibria and
-existing references. Mesh-consistent normalization, first limit point and a
+ANYfem arc integration now passes on the installed package graph: native Project
+save/reopen, separate checkpoint, cancellation, exact restored continuation and
+selected material recovery. One focused check passed;98consumer modules unchanged.
+See the subsequent-consumer section in the evidence above.
+
+Focused reference review found E04 still has no concrete executed mixed capacity
+case. The coupled("p0") low-yield history fixture has no independent capacity
+oracle; do not extend it to manufacture one. Next discriminating task is E04/V22
+case admission: fix physically matched geometry, supports, imperfection, materials
+and attachment idealization, then identify the bounded first-maximum bracket and
+external output. Current arc scope is Q4-J2/generalized BL5/affine translations;
+if the chosen reference needs another scope, implement that prerequisite rather
+than distort the reference. Use physical reference measures for metric weights,
+not equal nodal counts. No new continuation run is justified until that case
+and its required admission are concrete. Mesh-consistent normalization, first limit point and a
 registered descending branch must be demonstrated before capacity acceptance.
 Full material breadth, connection transfer, spectra, scale, external/platform and
 release obligations remain open. Use impact-based checks, not repeated campaigns.

@@ -1,7 +1,12 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**Current arc lifecycle status (supersedes historical open-public-surface notes below):**
+Public solver and installed ANYfem Project/checkpoint continuation are
+IMPLEMENTED_NOT_QUALIFIED. Capacity/E04 remains open; no executed mixed first-limit-point
+reference has been identified. [Current evidence](development/r8-arc-public-20261002/results.md).
 
-**2 October adaptive private arc selection — IMPLEMENTED_NOT_QUALIFIED:**
+
+**2 October adaptive private arc selection â€” IMPLEMENTED_NOT_QUALIFIED:**
 Fixed1e-5radius remains failed;5e-6retry returns an uncommitted equilibrium with
 requested/actualradius and full failed-work accounting. Same accepted predecessor,
 cancellation/stale guards and20/12per-attempt limits preserved. Source15checks plus
@@ -10,7 +15,7 @@ publication/checkpoint/controller and installed/capacity acceptance remain OPEN.
 [Evidence](development/r8-arc-prototype-20261002/results.md).
 
 
-**2 October private arc prototype — IN_PROGRESS / native trial FAILED:** explicit
+**2 October private arc prototype â€” IN_PROGRESS / native trial FAILED:** explicit
 fixed-mesh physical chord metric and general sparse border implemented privately.
 Actual-chart derivative and stale/radius guards pass. Native coupled radius1e-5
 still fails (sphere Newton / plane backtrack limits); failing test retained.
@@ -22,9 +27,9 @@ restart identity, installed check, continuation or capacity acceptance.
 
 **2 October coupled material excursion/branch:** implementation unchanged at
 33f7ba7c. Installed local unload/reload regression passes with exact paired-field
-and checkpoint restart. Bounded −70/−72um continuation also passes; actual
+and checkpoint restart. Bounded âˆ’70/âˆ’72um continuation also passes; actual
 compression reduces to485.652/483.431N. This supports observed equilibrium
-softening only; original−500N force-history failure, full cyclic qualification,
+softening only; originalâˆ’500N force-history failure, full cyclic qualification,
 physical stability and capacity remain OPEN. No aggregate gate closes.
 [Evidence and limitations](development/r8-event-material-excursion-20261002/results.md).
 
@@ -127,7 +132,7 @@ mechanical/external/scale obligations remain OPEN.
 explicit physical mass/density and ordered acceleration cases in separate Q4,
 mixed/S3 and Q4-footprint schemas; fresh public owners retain typed load context
 and selected equilibrated fields. Installed286/286 and all12 Project examples
-(four routes ×1/10/100,onefactor) pass with consumer02a41991...5bab4 and unchanged
+(four routes Ã—1/10/100,onefactor) pass with consumer02a41991...5bab4 and unchanged
 solver4c14d094...d3b7c. Compatibility finding repaired; callback test failures
 retained. Independent Read review clear; no aggregate qualification promoted.
 Loaded interior pose, finite/GE gravity and practical-scale/resource acceptance
@@ -331,7 +336,7 @@ total energy, external and full programme obligations remain open.
 
 Controlled external P0 discriminator,1 October: exact non-equation inventory
 parity and independent complete review support external enforcement sensitivity.
-Strong→40-row P0 Mz work increases13.054405%; native/P0 differs-0.271358%,
+Strongâ†’40-row P0 Mz work increases13.054405%; native/P0 differs-0.271358%,
 with common beam/shell nodal L2 differences.497691%/.907274%. All14 recovery
 checks pass. Retain law/P0 candidate for required matched growing-space three-level
 convergence; no multiplier selection, converged1% or F03/M2 acceptance. Sampled
@@ -342,7 +347,7 @@ Original stopped execution and historical evidence unchanged.
 Matched growing-space family,1 October: three installed native owners/nine RHS
 and nine external cases (eight new/one exact reuse) complete with reviewed full
 states/actions. One eligible native factor per geometry; all eight old16/Mz array
-roles bit-identical. Finest cross work gaps≤.060712%, beam/shell nodal L2≤.484905%,
+roles bit-identical. Finest cross work gapsâ‰¤.060712%, beam/shell nodal L2â‰¤.484905%,
 shrinking across levels. Shared final Mz work changes exceed1.3%; some regional
 moments and root partitions remain unresolved (Fy degree-zero gap2.787207 N).
 Read-only fixed-distance integration localizes most of that gap near the clamp,
@@ -364,7 +369,7 @@ Finest-grid common-action control, 1 October: zero-LU work/compatibility screen
 and the three distinct saved loads complete with unchanged sparse operators.
 All 160 action-basis maps agree; native self-replay and full original-free/gauge
 stationarity pass. With the same physical P0 action, beam nodal rotations agree
-near roundoff and shell director rx/ry differences are about 0.0074–0.0107% in
+near roundoff and shell director rx/ry differences are about 0.0074â€“0.0107% in
 sampled-vector norm. Released normal spin dominates aggregate shell rotation
 differences and remains in raw outputs. No coupled yaw, integrated-L2 accuracy,
 drilling independence or root/reference convergence is inferred. Retain law/P0
@@ -385,10 +390,10 @@ current evidence and failures. No aggregate gate or milestone is accepted.
 F06 scoped loaded point-owner portion,1 October: prospectively declared
 independent-direction staged Q4/S3 paths pass control/reset/direct restart and
 same eight accepted positions. Actual physical rotations/commutators clear the
-unchanged .05rad/1e−5rad floors in every shell/beam branch. Two installed cases,
+unchanged .05rad/1eâˆ’5rad floors in every shell/beam branch. Two installed cases,
 388 byte-matched modules and210 canonical imports; independent raw SO(3),
 material and reaction review has no finding. The integration owner accepts this
-large-elastic point-owner foundation portion only, under Revision8 §6.
+large-elastic point-owner foundation portion only, under Revision8 Â§6.
 Earlier curved/proportional failures and the old closure review remain unchanged.
 Aggregate F06/V18 is IN_PROGRESS: plastic/cyclic, partial-support, curved/line/
 topology breadth, branch ownership and native-energy obligations remain open.
@@ -397,7 +402,7 @@ topology breadth, branch ownership and native-energy obligations remain open.
 BL5 matched physical comparison,1 October: external strong160-row and native
 weak40-row16x4/32-station five-channel models satisfy their own reference/work/
 equilibrium/recovery checks. Native applied work differs+2.232981% Fy/+12.747623%
-Mz; common nodal fields differ3–7%. Independent review finds no consequential
+Mz; common nodal fields differ3â€“7%. Independent review finds no consequential
 collector/recovery defect; cause is not uniquely allocated among enforcement,
 shell and beam operators. All poses, cell variables, cuts and smooth/atomic
 transfer measures remain. External numerical threads are unverified, and this
@@ -442,7 +447,7 @@ completion remain outside this slice. [Results](development/r8-staged-load-20261
 Positive reference-norm controls,30 September: independently reviewed sparse
 beam/shell analytical inverse actions, unit/coordinate-basis congruence and
 scalar resolved/unresolved/duplicate-action controls pass the preset predicates.
-Finest dual errors≤5.93e−5 beam/1.15e−4 shell. This does not verify native BL5
+Finest dual errorsâ‰¤5.93eâˆ’5 beam/1.15eâˆ’4 shell. This does not verify native BL5
 work/Q/gauges or beta criteria, consume F03 or close M2/G0B.
 [Ordinary development results](development/r8-bl5-riesz-controls-20260930/results.md).
 
@@ -467,7 +472,7 @@ actual KKT/locking/transfer remain open. No F03/M2/G0B acceptance follows.
 
 Native finite-family development,30 September: all21 explicit HALF-CELL:shell
 c2 cases pass complete physical work and frozen reference-relative predicates,
-beta0.793239–0.917197; complete-family independent review clear. Whole-B3-element
+beta0.793239â€“0.917197; complete-family independent review clear. Whole-B3-element
 8:1 endpoint supplement is separate and now passes at all three levels:
 beta0.886553/0.874043/0.867138. Original32/64 reference-precision failures remain
 preserved. Independently reviewed same-equation residual compensation and
@@ -585,7 +590,7 @@ aggregate gate claim. [Exact evidence](../../.qualification/b3-ge-e4-pl/r8-stabl
 
 F05/F06 development: solver `0da6cd12` selects a distinct Q4 full algorithmic pullback without changing the historical default. ANYfem `b0185b4` persists it in experimental v3. Exact installed solver/consumer checks pass 91/91, including independent local work/active-branch derivatives and yielded Q4/mixed Q4/S3 unload/reload, physical balance, actual rebase and restart. Independent review reports no actionable defect in this slice. Evidence: `.qualification/b3-ge-e4-pl/r8-q4-pullback-dev-20260930-v1/`. The missing active selected-Q4/S3 assembled and one-sided yield predicates now pass a separate frozen 10-case installed assessment. Independent adjudication accepts scoped F05; see `.qualification/b3-ge-e4-pl/r8-f05-foundation-20260930-v1/` and the contract below. The earlier 91 cases are reused by unchanged dependency identity, not retroactively relabeled. No aggregate pass follows.
 
-F06 development: product `ffc1afd0` adds actual owned shell-anchor resets, immutable state, atomic generation events and a distinct anchored checkpoint/restore contract. Source 33/33 and exact installed 77/77 pass with independent review findings closed; mixed Q4/S3 elastic/J2 continuation matches controls. Evidence: `.qualification/b3-ge-e4-pl/r8-owned-shell-chart-dev-20260930-v1/`. The fixed curved loaded-history discriminator is unsuccessful: v1 reference admission failed, v2 selected-Q4 rotations/commutators missed frozen coverage bounds despite completed reset/restore/continuation, and v2 S3 hit its first-step Newton limit. See `.qualification/b3-ge-e4-pl/r8-f06-noncommuting-dev-20260930-v1/`. Stop this fixture without automatic tuning/refinement; F06 remains open, not a formulation failure. Native total energy is unmeasured. The prior all-S3 `.5→.55` failure stays retained. Large noncommuting history, broader supports and chart/history qualification remain unfinished; F06/V18/G0B and aggregate acceptance stay IN_PROGRESS.
+F06 development: product `ffc1afd0` adds actual owned shell-anchor resets, immutable state, atomic generation events and a distinct anchored checkpoint/restore contract. Source 33/33 and exact installed 77/77 pass with independent review findings closed; mixed Q4/S3 elastic/J2 continuation matches controls. Evidence: `.qualification/b3-ge-e4-pl/r8-owned-shell-chart-dev-20260930-v1/`. The fixed curved loaded-history discriminator is unsuccessful: v1 reference admission failed, v2 selected-Q4 rotations/commutators missed frozen coverage bounds despite completed reset/restore/continuation, and v2 S3 hit its first-step Newton limit. See `.qualification/b3-ge-e4-pl/r8-f06-noncommuting-dev-20260930-v1/`. Stop this fixture without automatic tuning/refinement; F06 remains open, not a formulation failure. Native total energy is unmeasured. The prior all-S3 `.5â†’.55` failure stays retained. Large noncommuting history, broader supports and chart/history qualification remain unfinished; F06/V18/G0B and aggregate acceptance stay IN_PROGRESS.
 
 F07/F12 development correction: the distinct flat-Q4 director mass and corrected bounded descriptors pass 17/17 source and 17/17 exact installed checks, with independent review findings closed. Legacy mass and historical evidence are unchanged. Evidence: `.qualification/b3-ge-e4-pl/r8-physical-q4-mass-dev-20260929-v1/`. Sparse/public spectral qualification and aggregate acceptance remain open.
 
@@ -595,7 +600,7 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 
 | Milestone | Status | Main remaining obligation |
 |---|---|---|
-| M1 matching-station GE | IMPLEMENTED_NOT_QUALIFIED | Accepted spatial point-action recovery and ordinary native ANYfem input roundtrip now verified. Latest consolidated installed slice covers171 distinct predicates (V1 170pass/1 fixturefail; V2 corrected1/1). Matched E01, physical torque/drilling, complete V01–V06/V17/V18/V28 evidence and independent acceptance open. |
+| M1 matching-station GE | IMPLEMENTED_NOT_QUALIFIED | Accepted spatial point-action recovery and ordinary native ANYfem input roundtrip now verified. Latest consolidated installed slice covers171 distinct predicates (V1 170pass/1 fixturefail; V2 corrected1/1). Matched E01, physical torque/drilling, complete V01â€“V06/V17/V18/V28 evidence and independent acceptance open. |
 | M2 bonded line | IN_PROGRESS | BL5 physical law, multiplier resolution, F03 and ratios/refinement/transfer open. |
 | M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/native-S3/B2 point-panel and installed ANYfem native Project save/reopen/selected 1/10/100 batches tested with one eligible factorization; historical Q4 route retained. Scoped F09 and F10/F11 point/static accepted; fixed E01 B2 reference executed with retained discrepancies. S3 mass/spectral/footprint routes, general F10/F11/F13, complete consumer workflow and converged E01 accuracy remain open. |
 | M4 remaining mechanics | IN_PROGRESS | Selected-node rigid footprints have installed unrebased solver/consumer evidence; footprint chart transport and broader material/attachment/topology/load/spectral/imperfection/capacity requirements remain mandatory. |
@@ -616,7 +621,7 @@ M2 physical-transfer screen,30 September: matched ground supports retain BL5
 ports. A +10Nm normal couple transfers entirely by distributed force arms with
 zero direct normal couples/drilling constraint columns. Unchanged16-interval
 isolated OpenSees Fy/Mx runs retain full poses/covectors and verified equation
-work/root provenance; applied-work differences−0.4650%/+0.0872%, but Fy shell
+work/root provenance; applied-work differencesâˆ’0.4650%/+0.0872%, but Fy shell
 pose1.9279% and transfer-shape/root partitions remain different. Independent
 review finds no work-map defect. Installed61559673 BL5 finite impact9/9 passed.
 Proceed to growing-space/ratio and common-field, fixed-distance transfer
@@ -631,7 +636,7 @@ zero-load acceptance/restore of a known single-support rigid mode. Wheel5079b270
 passes73 installed checks. Two complete uniform c_lambda1/2 policies were
 screened at reciprocal ratios, then at three two-direction levels for beam:shell
 2:1; rows grow40/80/160 versus20/40/80. Mz policy-work difference contracts
-17.457%→6.244%→1.845%, with non-monotone transfer components still reported.
+17.457%â†’6.244%â†’1.845%, with non-monotone transfer components still reported.
 No policy is selected and no fourth mesh follows. Independently derived
 [reference norm contract](B3_GE_E4_PL_M2_TRACE_NORM_CONTRACT_DEV.md) resolves the
 supported continuous-axis/cell-director function-space question; inverse-actions,
@@ -646,9 +651,9 @@ This is implemented/tested development, not M2/F03/G0B/G2 acceptance.
 | G1 | IMPLEMENTED_NOT_QUALIFIED | Experimental sparse owner exists; foundation and full G1 acceptance open. |
 | G2 | IN_PROGRESS | Candidate line/footprint and topology incomplete. |
 | G3 | IN_PROGRESS | F05 fixed-predecessor foundation passed; full material domain open. |
-| G4A–G4D | NOT_STARTED | No aggregate load, stability, imperfection or capacity acceptance. |
+| G4Aâ€“G4D | NOT_STARTED | No aggregate load, stability, imperfection or capacity acceptance. |
 | G5 | IN_PROGRESS | Development scale screens do not meet practical-scale qualification. |
-| G6A–G6D | IN_PROGRESS | Focused installed/consumer checks exist; final graph, external, reviews and release open. |
+| G6Aâ€“G6D | IN_PROGRESS | Focused installed/consumer checks exist; final graph, external, reviews and release open. |
 
 F05, F08 and F09 are accepted only for their scoped foundations. Other
 foundations remain open; the earlier bounded F04 distinction does not close F04:
@@ -659,13 +664,13 @@ foundations remain open; the earlier bounded F04 distinction does not close F04:
 | F02 | IN_PROGRESS |
 | F03 | IN_PROGRESS |
 | F04 | IN_PROGRESS |
-| F05 | PASSED — selected Q4/existing S3 fixed-predecessor foundation |
+| F05 | PASSED â€” selected Q4/existing S3 fixed-predecessor foundation |
 | F06 | IN_PROGRESS |
 | F07 | IN_PROGRESS |
-| F08 | PASSED — native generalized/physical-fibre local extraction |
-| F09 | PASSED — physical B2 section/local operator and station trace |
-| F10 | IN_PROGRESS — finite-support Q4/S3 point/static portion PASSED; other attachments open |
-| F11 | IN_PROGRESS — finite-support Q4/S3 point affine/KKT portion PASSED; broader scope open |
+| F08 | PASSED â€” native generalized/physical-fibre local extraction |
+| F09 | PASSED â€” physical B2 section/local operator and station trace |
+| F10 | IN_PROGRESS â€” finite-support Q4/S3 point/static portion PASSED; other attachments open |
+| F11 | IN_PROGRESS â€” finite-support Q4/S3 point affine/KKT portion PASSED; broader scope open |
 | F12 | IN_PROGRESS |
 | F13 | IN_PROGRESS |
 
@@ -676,7 +681,7 @@ see the current scoped disposition above. AggregateF06 remains IN_PROGRESS for
 the remaining breadth. Historical failures and authorities stay unchanged.
 [Independent applicability review](B3_GE_E4_PL_F06_CURRENT_REVIEW_20260930.md).
 
-### F10/F11 finite-support point/static binding — prospective v1
+### F10/F11 finite-support point/static binding â€” prospective v1
 
 This assessment is limited to `B2_FINITE_Q4_POINT_REFERENCE_LINEAR_V1_DEV`
 and `B2_FINITE_S3_POINT_REFERENCE_LINEAR_V1_DEV`: physical vertex translations
@@ -705,11 +710,11 @@ Command: `python -u run_bounded.py` in that exclusive directory, once.
 Python3.14.2, one effective numerical thread, JIT disabled;600s/8GiB process-tree
 limits,100,000-row ceiling, one owned heavy job. No source-root fallback.
 
-Required inventory:40 positive cases (Q4/S3 × both eccentricity signs ×
-scalar/coupled SPD section × base/shift/rotation/equivalent-unit/support-winding)
+Required inventory:40 positive cases (Q4/S3 Ã— both eccentricity signs Ã—
+scalar/coupled SPD section Ã— base/shift/rotation/equivalent-unit/support-winding)
 and25 negative cases,65 JSON reports and65 executed pytest cases without
 skip/error/failure. Geometry uses the existing2m member, station.4, eccentric
-height±.2m and section offsets±(0,.08,-.03)m. Independent shell covariance/couple
+heightÂ±.2m and section offsetsÂ±(0,.08,-.03)m. Independent shell covariance/couple
 algebra, B2 force-method boundary-value fields and bounded constrained-nullspace
 solution supply the oracles. Actual left-rotation update steps are
 `1e-4,3e-5,1e-5`; every entry must be finite individually (pre-execution runner
@@ -749,7 +754,7 @@ proof does not imply public S3 B2 execution or finite B2 qualification.
 **E01 B2 fixed development comparison,30 September:** both eccentricity signs,
 six load channels; native12/12, six analytic external beam controls and12 isolated
 external panels pass. Independent C rows agree4.4409e-16; sampled same-state24
-beam covectors agree≤5.69e-16/load, with remaining assembled-force differences
+beam covectors agreeâ‰¤5.69e-16/load, with remaining assembled-force differences
 allocated to shell contributions (not unique drilling blame or all-state proof).
 Worst full-pose6.8574%, tip2.0534%, energy2.8973%, physical multipliers10.2708%,
 ground8.6424% discrepancies remain. No converged1% accuracy/M3 acceptance.
@@ -794,7 +799,7 @@ accuracy, scale or speedup are not claimed.
 
 F09 development, 30 September: the fixed-wrench physical aspect family passes the public session (4/4 installed including its private control); independent cut-work, tip and station predicates pass. Solver `227d5ea8` enforces the reviewed exact basic-energy plus separate bounded rigid/cross certificate on emitted tangents, replacing the arbitrary pivot veto while preserving exact SPD and strict representation checks. Installed 200/200 and six-row exact-input threshold checks pass with independent review, retaining historical below-floor mismatch and parity only where laws agree. Prospective candidate binding and current-wheel preservation now support the scoped foundation acceptance recorded below. Historical nonphysical shear-soft local passes and graph failures remain retained. Evidence: `.qualification/b3-ge-e4-pl/r8-f09-admission-dev-20260930-v1/`, `.qualification/b3-ge-e4-pl/r8-b2-output-guard-dev-20260930-v1/`, `.qualification/b3-ge-e4-pl/r8-f09-foundation-20260930-v1/`.
 
-### F09 candidate binding — frozen prospective v1, not a pass
+### F09 candidate binding â€” frozen prospective v1, not a pass
 
 Independently reviewed before candidate execution by `/root/anyfem_consumer`:
 no missing input identity or consequential overclaim within this foundation.
@@ -808,7 +813,7 @@ No F09 outcome is implied by freezing this contract.
 **Claim:** the distinct physical elastic B2 section/local operator and physical
 station trace foundation. This is not acceptance of attachments, arbitrary
 assembled graphs, mass/prestress, global forward-error bounds or production
-qualification. The full F09 inventory remains required; downstream F10–F13,
+qualification. The full F09 inventory remains required; downstream F10â€“F13,
 M3 and G0B are not inferred. Historical failed and nonphysical stress evidence
 remains visible. Independent review must resolve whether this exact foundation
 scope satisfies F09 before any PASSED disposition.
@@ -839,7 +844,7 @@ Every constructed local tangent must satisfy the exact implemented-law
 basic-energy Loewner bounds at 1e-8 and separate rigid wrench/work and cross
 work bounds at 1e-9/1e-8. Use the documented canonical right inverse R,
 centroid rigid basis Z, L-scaled translation and unit rotation, and
-F=max(section translational diagonals, rotational diagonals/L²), M=FL,
+F=max(section translational diagonals, rotational diagonals/LÂ²), M=FL,
 E=FL. These bound normalized amplitudes <=1 separately; they are neither
 one combined-energy bound nor all-amplitude relative error near rigid modes.
 They establish output representation, not independent constitutive correctness
@@ -884,16 +889,16 @@ instances, exit zero, no skip/error, 3.609 s and 204,144,640 bytes RSS. The
 existing installed 200+6 development cases are explicitly reused by unchanged
 relevant identities, not relabeled as formal runs. The historical release-wheel
 baseline and adverse graph failure remain distinct. No arbitrary graph,
-attachment, mass/prestress, F10–F13, M3 or aggregate qualification follows.
+attachment, mass/prestress, F10â€“F13, M3 or aggregate qualification follows.
 See [exact evidence and independent verdict](../../.qualification/b3-ge-e4-pl/r8-f09-foundation-20260930-v1/results.md).
 The pre-execution matrix is preserved as contract.snapshot.md, unchanged.
 
-The individual V01–V28 and B01–B18 obligations below are all
+The individual V01â€“V28 and B01â€“B18 obligations below are all
 **IN_PROGRESS for acceptance**; none is marked PASSED. Their exact cases
 and criteria remain in the programme. Split a group when a row reaches
 candidate adjudication; a failed required case cannot disappear within it.
 
-### F08 candidate binding — frozen prospective v1, failed collection
+### F08 candidate binding â€” frozen prospective v1, failed collection
 
 Independent pre-execution review by `/root/anyfem_consumer` accepts the
 scientific scope and corrected hash assertion: 28/28 fixture/config matches,
@@ -993,7 +998,7 @@ independent mechanics review and complete V06 adjudication remain open. See
 
 | External comparison | Status | Current boundary |
 |---|---|---|
-| E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees signed point screens, including 2×1/4×2/8×4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. At 8×4 the external axial-load shell action replays its coupled field to 1.93e-17; the changed coupled action explains 93.6% of the roll gap at fixed native shell stiffness. Direct +100 N m torque gives a 19.0% native/external torsional-compliance difference, stable under sparse-solve correction. Four same-action torque replays show the changed coupled action explains 109.1% of that gap while the isolated external shell is slightly stiffer; physical Mx distribution dominates and Mz contributes zero on this fixture. Beam-only section compliance agrees to roundoff. Shell/point torsional-transfer cause and matched idealization remain unresolved; stop diagnostic refinement pending focused mechanics review. Formal observables/floors, accepted physical reference and independent review remain open. |
+| E01 eccentric elastic panel | IN_PROGRESS | CalculiX six-row deck remains inert after an expansion-map defect. OpenSees signed point screens, including 2Ã—1/4Ã—2/8Ã—4 grids, pass link/work/wrench checks, but physical roll disagreement increases on two-direction refinement. At 8Ã—4 the external axial-load shell action replays its coupled field to 1.93e-17; the changed coupled action explains 93.6% of the roll gap at fixed native shell stiffness. Direct +100 N m torque gives a 19.0% native/external torsional-compliance difference, stable under sparse-solve correction. Four same-action torque replays show the changed coupled action explains 109.1% of that gap while the isolated external shell is slightly stiffer; physical Mx distribution dominates and Mz contributes zero on this fixture. Beam-only section compliance agrees to roundoff. Shell/point torsional-transfer cause and matched idealization remain unresolved; stop diagnostic refinement pending focused mechanics review. Formal observables/floors, accepted physical reference and independent review remain open. |
 | E02 torque/footprint | IN_PROGRESS | Executed matched rigid-tip GE/CalculiX out-of-plane comparison at three in-plane levels. Finest Fz/Mx/My work differences+.148%/-.620%/+.120%; native torque convergence, solid thickness resolution and tighter balance precision open. Normal-spin/full-law equivalence not claimed. B2 public resolution guard fails; B2 accuracy untested. See development/r8-e02-rigid-tip-reference-20261001/results.md. |
 | E03 curved stiffener | NOT_STARTED | No executed matched comparison. |
 | E04 nonlinear GE/capacity | NOT_STARTED | No executed matched comparison. |
@@ -1012,7 +1017,7 @@ without changing the accepted 40 N state. See the active note and
 Formal F03 execution authority is unconsumed. This matrix changes no
 scientific criterion, resource limit, release authority or final scope.
 
-## Prospective F05 foundation assessment — 30 September 2026, v1
+## Prospective F05 foundation assessment â€” 30 September 2026, v1
 
 **Status: PASSED, scoped independent adjudication.** This Level B assessment answers whether
 the selected Q4 and existing S3 full algorithmic pullbacks give the admitted
@@ -1046,7 +1051,7 @@ New inventory is **10 cases**:
   raw and work-scaled relative errors must each be <=`1e-5`; scaled constraint
   derivative error <=`1e-9`. Physical coordinate and constraint scales come from
   the unchanged owner. This unaccepted trial is not an equilibrium solution.
-- Eight Q4/S3 × virgin/yielded-reload × elastic-left/plastic-right local limits.
+- Eight Q4/S3 Ã— virgin/yielded-reload Ã— elastic-left/plastic-right local limits.
   Centered unit polygons, E=210 GPa, nu=.3, t=.02, C208 100/105/110 MPa,
   plastic strains .005/.01, K=400 MPa, n=.2; Q4 three and S3 five layers.
   Independent biaxial constitutive and boundary-traction identities determine
@@ -1095,7 +1100,7 @@ force oracle `7.25036e-11`. One numerical thread, JIT disabled, 19.988 s,
 [immutable results and review](../../.qualification/b3-ge-e4-pl/r8-f05-foundation-20260930-v1/results.md).
 The frozen pre-execution matrix remains `contract.snapshot.md` in that evidence;
 this disposition does not rewrite it. G0B and unrelated obligations stay open.
-### F08 corrected execution binding — frozen prospective v2, not a pass
+### F08 corrected execution binding â€” frozen prospective v2, not a pass
 
 Independent repair review by `/root/anyfem_consumer` confirms complete static
 closure, 32/32 matching fixture/config hashes, unchanged prior fixture bytes
@@ -1129,7 +1134,7 @@ Independent review accepts scoped native local extraction only. Preserve V1's
 two collection errors and yield-switch limitations; no aggregate gate follows.
 [Immutable results and review](../../.qualification/b3-ge-e4-pl/r8-f08-foundation-20260930-v1/results.md).
 
-### M2 finite BL5 development — 30 September 2026
+### M2 finite BL5 development â€” 30 September 2026
 
 Product `2d9ab38dd4037eda5ad808ffe6e4eb000b326970` adds experimental elastic
 nonmatching finite load/unload, actual station-port work, rejection/cancellation,
@@ -1280,7 +1285,7 @@ native station comparison, with16helper checks and independent source review.
 No numerical equations/criteria changed; aggregate G3/G4A remain open.
 [Evidence](development/r8-ge-native-distributed-20261002/staged-programme-results.md).
 
-**2 October continuation — signed couples/materials:** Q4 +/-100Nm/m couples
+**2 October continuation â€” signed couples/materials:** Q4 +/-100Nm/m couples
 combined with +/-3000N/m forces pass source/installed cancellation, reversal,
 physical recovery and exact restart; simultaneous J2/fibre activity is observed.
 Unchanged wheelb636e6a8. This closes this scoped history check, not full combination
