@@ -210,6 +210,7 @@ def _owned(values, shape=None):
 
 
 CURVED_Q4_POINT_REFERENCE_V1 = "CURVED_Q4_POINT_REFERENCE_V1_DEV"
+CURVED_Q4_POINT_MATERIAL_REFERENCE_V1 = "CURVED_Q4_POINT_MATERIAL_REFERENCE_V1_DEV"
 
 
 def _shell_reference(panel: ShellPanel, *, curved=False):
@@ -543,13 +544,17 @@ class ExperimentalGEAnalysis:
         panel = definition.shell
         if type(panel) is not ShellPanel:
             raise ValueError("owned Q4 panel required")
-        if definition.shell_reference_policy not in ("flat",CURVED_Q4_POINT_REFERENCE_V1):
+        if definition.shell_reference_policy not in ("flat",CURVED_Q4_POINT_REFERENCE_V1,
+                                                      CURVED_Q4_POINT_MATERIAL_REFERENCE_V1):
             raise ValueError("explicit admitted shell reference policy required")
-        self._curved_reference=definition.shell_reference_policy==CURVED_Q4_POINT_REFERENCE_V1
-        if self._curved_reference and (panel.s3_elements or panel.j2_curve is not None
+        self._curved_material=definition.shell_reference_policy==CURVED_Q4_POINT_MATERIAL_REFERENCE_V1
+        self._curved_reference=definition.shell_reference_policy!="flat"
+        if self._curved_reference and (panel.s3_elements or (panel.j2_curve is not None and not self._curved_material)
                 or definition.lines or definition.footprints or self._bl5_material or self._modal_only
                 or definition.q4_pullback_policy!=Q4_ALGORITHMIC_PULLBACK_V1):
-            raise ValueError("curved reference admits elastic Q4/full-pose points with algorithmic pullback only")
+            raise ValueError("curved material reference requires Q4/full-pose points with algorithmic pullback"
+                if self._curved_material else
+                "curved reference admits elastic Q4/full-pose points with algorithmic pullback only")
         if (type(definition.q4_pullback_policy) is not str or
                 definition.q4_pullback_policy not in (Q4_HISTORICAL_POLICY, Q4_ALGORITHMIC_PULLBACK_V1)):
             raise ValueError("explicit admitted Q4 pullback policy required")
@@ -924,18 +929,27 @@ class ExperimentalGEAnalysis:
                 capabilities["arc_length"] = "experimental_fixed_mesh_affine_nodal_dead_translation_v1"
             capabilities["selected_finite_recovery"] = "experimental_cached_nodes_material_v1"
         if self._curved_reference:
-            from ._stiffened_shell_stress_free_reference import POLICY as reference_policy
-            capabilities["stress_free_reference_construction"] = reference_policy
-            capabilities["shell"] = "experimental elastic planar Q4 facets on curved reference"
-            capabilities["beam"] = "generalized B3 retained, elastic response only"
+            if not self._curved_material:
+                from ._stiffened_shell_stress_free_reference import POLICY as reference_policy
+                capabilities["stress_free_reference_construction"] = reference_policy
+            capabilities["shell"] = ("experimental isotropic J2 planar Q4 facets on curved reference"
+                if self._definition.shell.j2_curve is not None else
+                "experimental elastic planar Q4 facets on curved reference")
+            capabilities["beam"] = ("generalized B3 retained, experimental yielding/hardening"
+                if self._curved_material else "generalized B3 retained, elastic response only")
             for key in ("body_acceleration","beam_distributed_loads","staged_beam_distributed_loads",
                         "shell_pressure_loads","staged_dead_loads"):
                 capabilities[key] = ()
-            capabilities["curved_reference_policy"] = CURVED_Q4_POINT_REFERENCE_V1
-            if getattr(self,"_external_context",None) is None:
+            capabilities["curved_reference_policy"] = self._definition.shell_reference_policy
+            if self._curved_material:
+                capabilities["fixed_step_max_backtracks"] = 16
+                capabilities["adaptive_max_backtracks"] = 12
+            if getattr(self,"_external_context",None) is None and not self._curved_material:
                 capabilities["arc_length"] = "experimental_curved_elastic_point_tangent_plane_v1"
             capabilities["excluded"] += ("curved reference spectra",
-                "curved reference external loads", "curved reference material yielding")
+                "curved reference external loads")
+            capabilities["excluded"] += (("curved material arc continuation", "curved material displacement control", "curved material stress-free construction")
+                if self._curved_material else ("curved reference material yielding",))
         return capabilities
 
     def preflight(self):
@@ -963,7 +977,7 @@ class ExperimentalGEAnalysis:
             details["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         if self._modal_only:
             details["modal_boundary_policy"] = self._definition.modal_boundary_policy
-        if self._bl5_shell_material or self._curved_reference:
+        if self._bl5_shell_material or (self._curved_reference and not self._curved_material):
             details["arc_metric_node_order"] = (tuple(("shell",int(i)) for i in self._shell_ids)
                 +tuple(("beam",int(i)) for i in self._beam_ids))
         return details
@@ -1109,6 +1123,8 @@ class ExperimentalGEAnalysis:
         if getattr(self,"_arc_snapshot",None) is not None:
             raise ValueError("arc history requires its dedicated continuation controller")
         if displacement_control is not None:
+            if self._curved_material:
+                raise ValueError("curved material displacement control is not admitted")
             if self._unsupported_modes:
                 raise ValueError(self._unsupported_modes[0])
             if increment_control is not None:
@@ -1235,10 +1251,14 @@ class ExperimentalGEAnalysis:
             raise ValueError("bounded mixed linear checkpoint required")
         from ._stiffened_shell_arc_checkpoint import MAGIC as ARC_MAGIC
         if raw.startswith(ARC_MAGIC):
+            if self._curved_material:
+                raise ValueError('curved material arc checkpoints are not admitted')
             from ._stiffened_shell_arc_publication import publish
             return publish(self,raw,expected_driver=None,expected_generation=self._generation,restoring=True)
         from ._stiffened_shell_displacement_adaptive import MAGIC as DISPLACEMENT_ADAPTIVE_MAGIC, EVENT_MAGIC
         if raw.startswith((DISPLACEMENT_ADAPTIVE_MAGIC,EVENT_MAGIC)):
+            if self._curved_material:
+                raise ValueError("curved material displacement checkpoints are not admitted")
             from ._stiffened_shell_displacement_adaptive import decode,validate_progress
             context,inner=decode(self,raw)
             prepared=copy(self);prepared._commit_lock=RLock();prepared._writing=False
@@ -1258,6 +1278,8 @@ class ExperimentalGEAnalysis:
             return result
         from ._stiffened_shell_displacement_checkpoint import MAGIC as DISPLACEMENT_MAGIC
         if raw.startswith(DISPLACEMENT_MAGIC):
+            if self._curved_material:
+                raise ValueError("curved material displacement checkpoints are not admitted")
             from ._stiffened_shell_displacement_control import publish
             return publish(self,raw,expected_driver=None,expected_generation=self._generation)
         from ._stiffened_shell_ge_body_load import MAGIC as BODY_MAGIC

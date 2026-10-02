@@ -629,7 +629,7 @@ class FinitePointDriver:
                 raise ValueError("experimental finite BL5 admits elastic beam response only")
             if getattr(owner, "_finite_elastic_footprint", False):
                 _require_elastic_footprint_histories((response.history,), "candidate")
-            if getattr(owner, "_curved_reference", False):
+            if getattr(owner, "_curved_reference", False) and not getattr(owner,"_curved_material",False):
                 _require_elastic_footprint_histories((response.history,), "candidate",scope="curved Q4 points")
             beam_candidates.append(response.history)
             if owner._bl5_material:
@@ -863,8 +863,9 @@ class FinitePointDriver:
                 any(a == b for a, b in zip((self._load_factor,)+targets,
                                             targets))):
             raise ValueError("positive finite load factors must change at each increment")
+        max_trial_halvings=16 if getattr(self.owner,'_curved_material',False) else 12
         if (type(max_iterations) is not int or not 1 <= max_iterations <= 24 or
-                type(max_backtracks) is not int or not 0 <= max_backtracks <= 12):
+                type(max_backtracks) is not int or not 0 <= max_backtracks <= max_trial_halvings):
             raise ValueError("bounded finite Newton controls required")
         if _prepared_programme is None and _prepared_pattern is None:
             pattern, programme = self._prepare_load(actions, targets)
@@ -1133,14 +1134,15 @@ class FinitePointDriver:
             raise ValueError("rebase changed physical shell orientations")
         residual, _, relative, gap, shell_repeated, beam_repeated = self._assemble(
             trial, self._load_factor, self._shell_origins, self._beam_origins)
-        if owner._bl5_material:
+        if owner._bl5_material or getattr(owner,'_curved_material',False):
             for saved, repeated in zip(_material_arrays(self._beam_origins),
                                        _material_arrays(beam_repeated)):
                 scale = max(float(np.max(np.abs(saved), initial=0.)),
                             float(np.max(np.abs(repeated), initial=0.)), np.finfo(float).tiny)
                 if np.max(np.abs(saved-repeated), initial=0.) > 64.*np.finfo(float).eps*scale:
                     raise ValueError("BL5 chart rebase changed generalized material history")
-        if owner._bl5_shell_material:
+        if owner._bl5_shell_material or (getattr(owner,'_curved_material',False) and
+                                       owner._definition.shell.j2_curve is not None):
             for saved, repeated in zip(_shell_material_arrays(self._shell_origins),
                                        _shell_material_arrays(shell_repeated)):
                 scale = max(float(np.max(np.abs(saved), initial=0.)),

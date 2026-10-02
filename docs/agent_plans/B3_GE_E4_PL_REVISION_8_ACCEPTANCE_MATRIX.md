@@ -1523,3 +1523,15 @@ sign passes the runnable CLI with exact per-step checkpoints. Broader attachment
 material, S3 and spectral imperfections, sensitivity and complete G4C remain open.
 No formal F03 consumption or aggregate acceptance.
 [Exact artifacts, review and failures](development/r8-stress-free-reference-20261002/results.md).
+
+
+**3 October curved Q4 point material slice: IMPLEMENTED_NOT_QUALIFIED.**
+Separate explicit curved material reference policy and ANYfem native schema;
+tilted fixed-predecessor covariance/derivatives, unload/reverse yielding, both-domain
+yielding, exact restored continuation, cancellation and history-audited rebase.
+Final solver wheel12 focused checks; final consumer pairing verifies actual native
+Project history and strict guards. Previous fixed/adaptive twelve-backtrack failures
+remain failed; new-policy fixed steps explicitly admit up to16, defaults unchanged.
+Detailed generalized last-increment recovery/predecessor checkpoint remains open.
+No displacement/material arc/spectra/external-load admission or aggregate gate.
+[Artifacts, review scope and failure evidence](development/r8-curved-material-20261003/results.md).

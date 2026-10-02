@@ -1,13 +1,13 @@
-# B3-GE / E4-PL / B2 — active state, 2 October 2026
+# B3-GE / E4-PL / B2 — active state, 3 October 2026
 
 ## Authority and restart
 
 Revision 8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full amended
 G0–G6, F01–F13, V01–V28, B01–B18 scope and scientific criteria remain binding.
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 958559b7; use git log for
+branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 0b21ed0e; use git log for
 latest committed identity. ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer
-at 8a6e677 (curved-reference consumer). Scoped local commits only; no push/main merge/publication
+at 85ed953 (curved-material consumer). Scoped local commits only; no push/main merge/publication
 or contact-worker messages. All owned numerical runs/review terminal. Main untouched.
 
 Formal F03 UNCONSUMED; protected original script SHA256
@@ -51,12 +51,23 @@ and exact prefix continuation. Initial reference residual is zero. Seventeen
 installed checks pass; all 413 solver and unchanged 98 consumer modules match.
 Wheel 7cb1eedb...; [evidence and failures](development/r8-stress-free-reference-20261002/results.md).
 
-Next discriminating slice: determine the concrete prerequisite for broader G4C
-reference regeneration and curved material/loading admission using existing local
-adapters. Reuse fixed-predecessor and geometry evidence; extend only the missing
-contract and its consequential tests. Do not reopen marker refinement or infer
-capacity from these tiny-load paths. Material/line/footprint/S3/spectral
-imperfections, sensitivity and full G4C remain unfinished.
+Delivered next slice: separate curved-Q4 material policy and strict ANYfem
+schema. Tilted fixed-predecessor J2 covariance, active/unloading/reverse derivative
+checks, simultaneous shell/beam yielding, exact restored continuation, cancellation
+and history-aware rebase pass. Final solver installed 12 checks; final paired
+consumer actual native-project history and guard checks pass. All 511 installed
+modules match current sources. Explicit new-policy fixed-step budget up to16
+addresses the bounded yield-boundary reload; defaults8 and adaptive/legacy12 stay.
+Failed fixed/adaptive12 attempts remain failures. [Scope, review, failures and
+artifact identities](development/r8-curved-material-20261003/results.md).
+
+Next uncertainty: point material snapshots lack the preceding generalized beam
+return-map state needed for last-increment station recovery. Extend that existing
+checkpoint/recovery contract without changing its legacy decoder, then verify
+exact live/restored station fields and corruption rejection. No new framework,
+external campaign or finer roof sweep. New policy rejects displacement, material
+arc/spectra, external loads and material-reference construction; fibres, S3 and
+broader attachment/material obligations remain unfinished. No aggregate pass.
 
 The independent nonlinear E04 comparison remains open: finite external section/
 pose/offset mapping and convergence are not established. CalculiX U1 is linear;
@@ -68,7 +79,7 @@ No formal F03 run or aggregate acceptance follows from the reference slice.
 
 Original 500N material-history and arc failures remain preserved. Curved 0.1N
 control still stops at 1.9145e-8 (required 1e-8), committing nothing; a green
-rejection check is not equilibrium. No tolerance relaxation. Curved spectra,
-external loads and materials remain unadmitted. Full connection, material,
+rejection check is not equilibrium. No tolerance relaxation. Curved spectra and
+external loads remain unadmitted; the new material scope above is experimental. Full connection, material,
 scale, external/platform and release obligations stay in the authoritative
 acceptance matrix. Historical notes remain in Git; immutable evidence unchanged.
