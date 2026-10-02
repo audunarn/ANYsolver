@@ -1100,3 +1100,11 @@ under77/128support; review-caught rounded-magnitude clamp error is corrected wit
 counterexample. No material integration/owner admission follows. Captured-endpoint
 force/tangent and complete strip history accounting remain the next slice.
 [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/angular_boundary_results.md).
+
+Native variable-endpoint friction integral — explicit development helper only:
+complete angular bands and history-wide work density, inherited storage and distinct
+final/cumulative work; certified-open endpoint R/K/storage with enclosed pulse work;
+closed point replay retained. Three new +four affected legacy controls pass. Analytical
+boundary-ending integral NONPASS at -1.33564e-13m closed final gap inside coordinate
+uncertainty; R/K/work gates remain unpassed. Saved local/owner/split not retried.
+No native C5 acceptance, installed or speed claim. [Evidence](d1_review_support/contact_c5_native_surface_point_20261003/variable_front_results.md).

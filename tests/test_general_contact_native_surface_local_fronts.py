@@ -89,6 +89,18 @@ def test_no_stationary_branch_does_not_discard_closed_material():
     assert result.diagnostics['zero_panels_certified']==0
 
 
+def test_variable_front_route_keeps_closed_no_stationary_surface_force():
+    from scipy.integrate import quad
+    from anysolver.general_contact.native_surface_friction_integral import integrate_variable_event_friction_fronts
+    value=_mixed(height=.024,slope=.001,rotation=.2)
+    result=integrate_variable_event_friction_fronts(value,_settings(),maximum_axial_uncertainty=1e-7)
+    expected=.03*.3*1000*.6*quad(lambda delta:.03*np.cos(-.6+delta)-.0235,-.02,.02,epsabs=1e-14)[0]
+    assert sum(result.residual[6*i+1] for i in range(3))==pytest.approx(expected,rel=1e-5,abs=1e-10)
+    assert result.stored_energy_j>0 and result.dissipated_increment_j>0
+    assert result.diagnostics['zero_panels_certified']==0
+    assert result.diagnostics['open_endpoint_strip_enclosures']==0
+
+
 def test_multisegment_strip_bound_uses_actual_branch_start():
     from math import acos,sin,cos,fsum
     from anysolver.general_contact.native_surface_path import material_path_pose
@@ -232,6 +244,34 @@ def test_saved_second_load_local_front_window(tmp_path):
     assert all(x>=0 for x in record['work'].values())
 
 
+def test_history_work_cap_covers_inherited_elastic_state_during_unloading():
+    from anysolver.general_contact.native_surface_front import prepare_stationary_band
+    from anysolver.general_contact.native_surface_front_work import history_front_strip_work_bound
+    from anysolver.general_contact.native_surface_history import NativeSurfaceReplayBudget
+    original=_mixed(rotation=0.)
+    def move(dy,dz):
+        translation=np.tile((0.,dy,dz),(3,1))
+        return NativeSurfaceMotionSegment(translation,np.zeros((2,3)),np.zeros(18))
+    motions=(move(.004,-.011),move(0.,.001))
+    value=NativeSurfaceHistoryField(original.patch,original.initial,motions)
+    budget=SupportIntervalBudget(128);angles=value.patch.rule.definition['angle_range']
+    covers=tuple(stationary_front_angular_cover(value,0,i,angles,budget=budget,
+        xi_bounds=(-.8,-.2)) for i in range(2))
+    prepared=tuple(prepare_stationary_band(value,cover,budget=budget) for cover in covers)
+    envelopes=tuple(stationary_front_angular_envelopes(value,cover,maximum_axial_uncertainty=1e-7,
+        budget=budget,prepared=item,_include_endpoints=True) for cover,item in zip(covers,prepared))
+    upper=history_front_strip_work_bound(value,0,(-.65,-.55),prepared,envelopes)
+    first=NativeSurfaceHistoryField(original.patch,original.initial,motions[:1]).query(-.6,1.5*np.pi,
+        budget=NativeSurfaceReplayBudget(16))
+    last=value.query(-.6,1.5*np.pi,budget=NativeSurfaceReplayBudget(16))
+    trial=last.last_contribution.trial
+    actual=np.array((trial.stored_energy_density,trial.dissipated_increment_density,
+        trial.released_storage_density,last.history.cumulative_dissipation_density))
+    assert first.last_contribution.trial.stored_energy_density>trial.stored_energy_density>0
+    assert actual[-1]>actual[1]>0 and np.all(actual<=upper)
+    assert np.all(upper>=0)
+
+
 def test_deferred_directional_controls_match_eager_refined_integral(tmp_path,monkeypatch):
     """Polynomial code probe for evaluation order; no mechanics qualification."""
     import json,os,time
@@ -282,3 +322,79 @@ def test_deferred_directional_controls_match_eager_refined_integral(tmp_path,mon
     with pytest.raises(MemoryError,match='material-query/cache cap'):
         integrate_material_friction(value,replace(settings,maximum_queries=1),
             _front_uncertainty=1e-7,_local_front_strips=True)
+
+
+def test_complete_history_envelopes_bound_boundary_endpoint_and_stored_work():
+    from anysolver.general_contact.native_surface_front_boundary import stationary_endpoint_angular_partition
+    from anysolver.general_contact.native_surface_front import prepare_stationary_band,axial_contact_front
+    from anysolver.general_contact.native_surface_front_work import history_front_strip_work_bound
+    from anysolver.general_contact.native_surface_history import NativeSurfaceReplayBudget
+    value=_mixed(rotation=.8);budget=SupportIntervalBudget(128)
+    partition=stationary_endpoint_angular_partition(value,0,value.patch.rule.definition['angle_range'],budget=budget)
+    saw_closed=False
+    for left,right,_,_ in partition.bands:
+        cover=stationary_front_angular_cover(value,0,0,(left,right),budget=budget,xi_bounds=(-.8,-.2),
+            endpoint_partition=partition,_variable_endpoint_branches=True)
+        prepared=prepare_stationary_band(value,cover,budget=budget)
+        envelopes=stationary_front_angular_envelopes(value,cover,maximum_axial_uncertainty=1e-7,
+            budget=budget,prepared=prepared,_include_endpoints=True)
+        # Independently evaluated coefficients at actual times must lie inside
+        # the union of the endpoint and stationary-extremum envelopes.
+        lower=min(a for a,_ in envelopes);upper=max(b for _,b in envelopes)
+        for angle in np.linspace(left,right,3):
+            for time in np.linspace(0.,1.,13):
+                root=axial_contact_front(value,0,0,float(time),float(angle)).axial_coordinate()
+                assert lower<=root<=upper
+        if not len(cover):continue
+        strip=(max(-.8,envelopes[0][0]),min(-.2,envelopes[0][1]))
+        density=history_front_strip_work_bound(value,0,strip,(prepared,),(envelopes,))
+        # The captured endpoint is genuinely closed at this material point;
+        # its nonzero storage is retained and bounded, never replaced by zero.
+        angle=(left+right)/2
+        xi=axial_contact_front(value,0,0,1.,angle).axial_coordinate()-1e-4
+        if not strip[0]<xi<strip[1]:continue
+        point=value.query(float(xi),float(angle),budget=NativeSurfaceReplayBudget(16));trial=point.last_contribution.trial
+        work=np.array((trial.stored_energy_density,trial.dissipated_increment_density,
+            trial.released_storage_density,point.history.cumulative_dissipation_density))
+        assert np.all(work>=0) and np.all(work<=density)
+        saw_closed=saw_closed or work[0]>0
+    assert saw_closed and budget.intervals<=128
+    with pytest.raises(ValueError,match='identity/domain'):
+        history_front_strip_work_bound(value,0,(-1.,0.),(prepared,),(envelopes,))
+
+
+@pytest.mark.skipif(os.environ.get('ANYSOLVER_RUN_UNRESOLVED_MIXED_FRONT')!='1',
+    reason='bounded actual boundary-ending development integration, not owner admission')
+def test_boundary_ending_front_retains_integrated_force_tangent_and_work(tmp_path):
+    import json,time
+    from pathlib import Path
+    from scipy.integrate import quad
+    from anysolver.general_contact.native_surface_friction_integral import integrate_variable_event_friction_fronts
+    value=_mixed(rotation=.8);folder=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))
+    folder.mkdir(parents=True,exist_ok=True);start=time.perf_counter()
+    try:
+        result=integrate_variable_event_friction_fronts(value,_settings(),maximum_axial_uncertainty=1e-7)
+    except Exception as error:
+        (folder/'boundary_ending_failure.json').write_text(json.dumps(dict(error_type=type(error).__name__,
+            error=str(error),diagnostics=getattr(error,'integration_diagnostics',None),
+            elapsed_seconds=time.perf_counter()-start),indent=2),encoding='utf-8')
+        raise
+    # Final section phase is zero. All closed points slide in +y; independent
+    # triangular linear pressure integral uses the physical final cylinder.
+    root=lambda delta:(.03*np.cos(delta)-.035)/.01
+    exact=.03*.3*1000*quad(lambda delta:.5*.01*(root(delta)+.8)**2,-.02,.02,epsabs=1e-14)[0]
+    derivative=-.03*.3*1000*quad(lambda delta:root(delta)+.8,-.02,.02,epsabs=1e-14)[0]
+    y=np.zeros(60);y[[1,7,13]]=1.;z=np.zeros(60);z[[2,8,14]]=1.
+    force=float(y@result.residual);tangent=float(y@result.tangent@z)
+    balance=sum((result.residual[6*i:6*i+3] for i in range(3)),np.zeros(3))
+    balance+=sum((result.residual[42+6*i:45+6*i] for i in range(3)),np.zeros(3))
+    record=dict(elapsed_seconds=time.perf_counter()-start,diagnostics=result.diagnostics,force=force,
+        reference_force=exact,tangent=tangent,reference_tangent=derivative,balance=balance.tolist(),
+        work=dict(stored=result.stored_energy_j,dissipated=result.dissipated_increment_j,
+            released=result.released_storage_j,cumulative=result.cumulative_dissipation_j))
+    (folder/'boundary_ending_result.json').write_text(json.dumps(record,indent=2),encoding='utf-8')
+    assert force==pytest.approx(exact,rel=1e-5,abs=1e-10)
+    assert tangent==pytest.approx(derivative,rel=1e-5,abs=1e-8)
+    np.testing.assert_allclose(balance,0.,atol=1e-12,rtol=0.)
+    assert result.stored_energy_j>0 and result.dissipated_increment_j>0
+    assert result.diagnostics['maximum_scaled_error_estimate']<=1.

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.52. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.53. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -32,67 +32,31 @@ independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
 
-Explicit native event-sequence V2 point replay covers opening, recontact and persistence.
-Prepared whole-angular-band bounds and deferred directional controls now let the one-
-segment mixed helper pass original integration/force/checked-tangent gates under its
-unchanged query2048 cap (1968queries,88.59s/250974208B). Polynomial eager/deferred parity
-passes. This demonstrates completion under the cap, not measured whole-route speed-up.
+The explicit variable-endpoint native friction helper now combines complete angular
+geometry with captured-endpoint contribution accounting. It retains closed point
+replay, all guard bands and a complete-history work density. A strictly open final
+surface has zero endpoint R/K/storage; earlier tiny pulse work remains enclosed,
+without a zero/reset point history. Legacy helpers and owners remain unchanged.
+Three new focused checks and four affected legacy checks pass, including independent
+closed-surface force, actual inherited storage and complete component extrema.
 
-The restricted multisegment helper also passes a translated-prefix/middle-pulse/open-
-suffix scalar history comparison:976queries,74.94s/217526272B,cumulative work~4.5e-9
-relative agreement. Exactly one stationary branch in total; complete nonzero-B/no-root
-covers for other segments and strict openness at every captured pose over its envelope.
-Its work bound reconstructs the owner's actual prefix pose. Review corrected earlier-
-pulse uncertainty routing: only cumulative dissipation remains with an open suffix;
-final force/tangent/storage/incremental dissipation/release are zero. Intermediate closed
-captures reject. Point/strip controls remain developmental, not formal floating proofs
-or native-owner engineering acceptance. Retain every failed candidate and test defect.
+The analytical boundary-ending integral remains NONPASS at a closed final gap of
+-1.33564e-13 m inside coordinate uncertainty (223queries/448paths/21support,10.364 s
+local evaluation). Neither integrated R/K/work nor the original error gates pass.
+Earlier open-pulse and adjacent-cut failures are retained. The saved second-load
+local integral, fullpatch, owner and split restart were not retried or admitted.
 
-Domain-bound temporal covers now exclude only strictly open whole time/angle/axial
-slabs before requiring nonzero B. Complete coverage and each component's own B sign
-are retained. Adjacent strict-derivative slabs merge before classifying roots, so an
-arbitrary subdivision boundary does not become a physical boundary. Independent
-analytic pulse, disconnected-component, domain and unresolved-boundary controls pass.
-Separate propagated coefficient errors replace the private uniform derivative floor;
-legacy no-controls bounds remain unchanged. Decimal amplification/rate controls pass.
+NEXT derive a bounded residual/tangent contribution for the unresolved closed strip
+from the actual discrete work. Verify the analytical fixture before any saved-path
+retry. If that bound cannot be justified for the declared geometry/work maps, retain
+this explicit helper's restriction and advance an independent remaining programme
+slice; do not enter another refinement/budget-growth campaign. No history reset,
+zero replacement of closed response, tolerance/cap increase or renewed authority.
 
-The unchanged saved second-load LOCAL window xi[.72,.80],angle[3.19,3.20] now reaches
-a genuine angular endpoint transition in14support intervals,0queries/.059s rather
-than exhausting128intervals. The second segment has N'<0 throughout the checked band,
-but N at both time endpoints changes sign with angle: its stationary branch enters
-and leaves the captured increment. This is not a material integration pass or a
-speed-up claim. Original full-time helpers and every failed run remain preserved.
-
-Explicit angular endpoint partitioning now retains all three regular bands and
-both uncertain bands. Direct sine/cosine coefficients and analytic extrema remove
-the loose endpoint-only angular allowance without resolving a true zero by fiat.
-An explicit geometry-only option retains at-most-one potential time branch and
-bounds its clamped extremum when the root enters/leaves the increment. Analytic,
-near-tangent perturbation, saved-path representation and clamp-noise controls pass.
-All five saved local bands have bounded extrema under77of128support intervals.
-Review caught and corrected wrong strict clamp selection under rounding noise;
-use certified N/N' signs rather than comparing rounded magnitudes. No material-
-integral wiring/admission or repeat owner run follows from these geometry checks.
-
-NEXT integrate the complete variable-branch geometry through the existing local
-helper, retaining captured-endpoint force and tangent through actual point replay.
-Account for unresolved strip history using a derived bound only when its complete
-history penetration/ownership conditions hold. The old open-endpoint work enclosure
-cannot simply assert zero force/tangent/storage for a closed captured endpoint.
-Verify an analytical boundary-ending mixed patch first, then the unchanged saved
-LOCAL window if its contribution checks pass. Use the existing parameterized runner;
-no fullpatch/owner retry before complete local contribution accounting. No cap or
-tolerance growth, omitted angular bands, silent history reset or renewed authority.
-
-[Angular-boundary evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/angular_boundary_results.md).
-
-[Temporal/error-bound evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/temporal_front_results.md).
-
-[Current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/multisegment_front_results.md).
-[Deferred-control evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/lazy_control_results.md).
-[Prepared proof evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/prepared_front_results.md).
-[Earlier slice history](docs/d1_review_support/contact_c5_native_surface_point_20261002/plan_before_local_front_integration.txt)
-retains frozen/consumed restrictions; it does not authorize reruns.
+[Current slice/evidence](docs/d1_review_support/contact_c5_native_surface_point_20261003/variable_front_results.md).
+[Prior checkpoint/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART76.md)
+links passed restricted helpers and all prior geometry/failure records. This is
+source development, not native acceptance, installed admission or a speed claim.
 
 ## 3. Preserve mechanics and state
 

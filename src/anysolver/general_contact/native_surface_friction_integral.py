@@ -102,8 +102,25 @@ def integrate_event_friction_fronts(field,settings,*,maximum_axial_uncertainty):
         _local_front_strips=True)
 
 
+def integrate_variable_event_friction_fronts(field,settings,*,maximum_axial_uncertainty):
+    """Explicit development route for captured-endpoint stationary transitions.
+
+    All angular guard bands remain represented. Point replay supplies closed
+    endpoint forces/tangents. A certified-open endpoint has zero R/K/storage;
+    unresolved earlier strip work is retained as an integral enclosure. A
+    complete-history work bound controls the spatial work error.
+    This is not analysis-owner or restart admission.
+    """
+    if not np.isfinite(maximum_axial_uncertainty) or maximum_axial_uncertainty<=0:
+        raise ValueError('positive explicit axial-front uncertainty required')
+    if field.patch.pairs[0].activation_policy!='transverse_event_sequence':
+        raise ValueError('moving-front development requires event-sequence policy')
+    return integrate_material_friction(field,settings,_front_uncertainty=maximum_axial_uncertainty,
+        _local_front_strips=True,_variable_endpoint_branches=True)
+
+
 def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_front_strips=False,
-        _eager_directional_controls=False):
+        _eager_directional_controls=False,_variable_endpoint_branches=False):
     """Friction-only work at the endpoint of the field's last declared segment.
 
     Its tangent holds earlier physical segments fixed. Partitions include contact
@@ -126,10 +143,15 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
     for pose in poses:straight_patch_s3_gap(field.patch.rule,field.patch.target,pose)
     rule=field.patch.rule;lo,hi=rule.definition['xi_range'];alo,ahi=rule.definition['angle_range']
     reference=rule.samples[0].station.reference
-    panels=[];coefficients={}
+    if _variable_endpoint_branches and (not _local_front_strips or _front_uncertainty is None):
+        raise ValueError('variable endpoint branches require the explicit local-front route')
+    panels=[];coefficients={};endpoint_partitions={}
 
     def front_panels(cell,left,right,lower,upper):
         breaks={lower,upper}
+        if _variable_endpoint_branches:
+            breaks.update(edge for band in endpoint_partitions[cell].bands
+                for edge in band[:2] if lower<edge<upper)
         for offset,slope,a,b in coefficients[cell]:
             for front in _breakpoints(offset+slope*left,offset+slope*right,a,b,lower,upper):
                 if lower<front<upper:
@@ -144,11 +166,15 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
     for cell,left,right in ((0,max(-1.,lo),min(0.,hi)),(1,max(0.,lo),min(1.,hi))):
         if right<=left:continue
         coefficients[cell]=[_coefficients(field,pose,cell) for pose in poses]
+        if _variable_endpoint_branches:
+            from .native_surface_front_boundary import stationary_endpoint_angular_partition
+            endpoint_partitions[cell]=stationary_endpoint_angular_partition(field,cell,(alo,ahi),budget=support_budget)
         panels.extend(front_panels(cell,left,right,alo,ahi))
     budget=NativeSurfaceReplayBudget(settings.maximum_point_paths)
     cache={};front_cache={};front_error={};front_covers={};front_axes={};front_band_cache={};front_prepared={};support_by_panel={};refinement_axes=[];visited=accepted=empty_certificates=0
+    front_work_density={}
     last_error=None;last_error_components=None;global_error_components=None
-    open_queries=0
+    open_queries=0;open_endpoint_strip_enclosures=0
     size=60+60*60+4
     empty=np.zeros(size)
     gap_padding=512*np.finfo(float).eps*max(1.,rule.definition['radius'],
@@ -190,7 +216,18 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                          previous_panel_error_components=last_error_components,
                          previous_global_error_components=global_error_components,
                          directional_control_panels=len(front_axes),refined_panels=len(refinement_axes)))
-            value=field.query(*key,budget=budget)
+            try:value=field.query(*key,budget=budget)
+            except (ValueError,MemoryError) as error:
+                # Preserve the typed non-success while binding it to the
+                # material coordinate and budgets of this candidate.
+                if not hasattr(error,'integration_diagnostics'):
+                    error.integration_diagnostics=dict(xi=key[0],angle=key[1],panel=panel,
+                        queries=len(cache),point_paths=budget.point_paths,panels=visited,
+                        support_intervals=support_budget.intervals,
+                        open_endpoint_strip_enclosure_visits=open_endpoint_strip_enclosures,
+                        captured_gaps=[fsum((offset,slope*xi,a*cos(angle),b*sin(angle)))
+                            for offset,slope,a,b in coefficients[cell]])
+                raise
             point=value.last_contribution
             packed=np.zeros(size)
             if point is not None:
@@ -207,7 +244,7 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
     def estimate(panel,order):
         cell,left,right,lower,upper=panel
         axial_order,angular_order=(order,order) if isinstance(order,int) else order
-        nonlocal open_queries
+        nonlocal open_queries,open_endpoint_strip_enclosures
         result=np.zeros(size);points,weights=gauss[angular_order]
         axial_points,axial_weights=gauss[axial_order]
         measure=rule.definition['radius']*np.linalg.norm(reference.coordinates[cell+1]-reference.coordinates[cell])
@@ -247,7 +284,14 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                         # domain remains covered, with the existing adaptive rule.
                         # Stationary strips alone receive enclosure work accounting.
                         for value in (stationary if _local_front_strips else (*stationary,*endpoints)):
-                            cuts.extend((*value.axial_interval,value.axial_coordinate))
+                            cuts.extend(value.axial_interval)
+                            # The interval already contains the stationary front.
+                            # A second nominal cut within that work-controlled
+                            # strip can duplicate the actual captured-pose front
+                            # to adjacent binary64 coordinates. Captured fronts
+                            # still partition endpoint R/K; the strip is intact.
+                            if not _variable_endpoint_branches:
+                                cuts.append(value.axial_coordinate)
                         strips.extend(value.axial_interval for value in stationary)
                     front_cache[key]=(tuple(cuts),tuple(strips),tuple(prepared_partitions))
                 roots.update(x for x in front_cache[key][0] if left<x<right)
@@ -259,15 +303,39 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                            for prepared,partition in front_cache[key][2]):
                         open_queries+=len(axial_points)
                         continue
-                if _front_uncertainty is not None and any(a<=x0 and x1<=b for a,b in front_cache[key][1]):
+                in_strip=_front_uncertainty is not None and any(a<=x0 and x1<=b for a,b in front_cache[key][1])
+                if in_strip and not _variable_endpoint_branches:
                     # Integral enclosure replaces unresolved point evaluations;
                     # no zero point history or never-contacted claim is created.
                     continue
+                if in_strip and _variable_endpoint_branches:
+                    offset,slope,a,b=coefficients[cell][-1]
+                    final_lower=min(fsum((offset,slope*x,a*cos(angle),b*sin(angle))) for x in (x0,x1))
+                    if final_lower>gap_padding:
+                        # A strictly open final surface has exactly zero endpoint
+                        # R/K/storage, independently of any earlier tiny pulse.
+                        # Its history work remains an interval enclosure, never
+                        # a reset/zero point state. Positive spatial quadrature of
+                        # this midpoint is bounded by the same full strip error.
+                        midpoint=np.zeros(size);midpoint[-3:]=.5*front_work_density[panel][-3:]
+                        result+=midpoint*((x1-x0)*float(wa)*(upper-lower)*measure/2)
+                        open_endpoint_strip_enclosures+=1
+                        continue
                 for axial,wx in zip(axial_points,axial_weights):
                     xi=(x0+x1)/2+(x1-x0)*float(axial)/2
-                    if not x0<xi<x1:raise ValueError('native friction axial resolution exhausted')
-                    result+=query(xi,angle)*(float(wx*wa)*(x1-x0)*(upper-lower)*measure/4)
-        if panel in front_error:result+=front_error[panel]
+                    if not x0<xi<x1:
+                        error=ValueError('native friction axial resolution exhausted')
+                        error.integration_diagnostics=dict(panel=panel,angle=angle,interval=(x0,x1),
+                            xi=xi,queries=len(cache),point_paths=budget.point_paths,
+                            panels=visited,support_intervals=support_budget.intervals)
+                        raise error
+                    point=query(xi,angle)
+                    if in_strip and _variable_endpoint_branches:
+                        density=front_work_density[panel]
+                        if np.any(point[-4:]<0) or np.any(point[-4:]>density):
+                            raise ValueError('replayed strip work exceeds complete-history density bound')
+                    result+=point*(float(wx*wa)*(x1-x0)*(upper-lower)*measure/4)
+        if panel in front_error and not _variable_endpoint_branches:result+=front_error[panel]
         return result
 
     def subdivide(parent):
@@ -327,7 +395,9 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
             else:
                 domain=(max(rule.definition['xi_range'][0],cell-1),min(rule.definition['xi_range'][1],cell))
                 covers=tuple(stationary_front_angular_cover(field,cell,index,(lower,upper),budget=support_budget,
-                    xi_bounds=domain if _local_front_strips else None)
+                    xi_bounds=domain if _local_front_strips else None,
+                    endpoint_partition=endpoint_partitions.get(cell),
+                    _variable_endpoint_branches=_variable_endpoint_branches)
                     for index in range(len(field.segments)))
                 envelopes=None
                 if _local_front_strips:
@@ -341,6 +411,25 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                 if branch_count!=1 or (not _local_front_strips and len(field.segments)!=1):
                     raise ValueError('front strip work requires one certified stationary branch; legacy helper requires one segment')
                 owner_index=next(index for index,cover in enumerate(covers) if len(cover))
+                if _variable_endpoint_branches:
+                    from .native_surface_front import stationary_front_angular_envelopes
+                    from .native_surface_front_work import history_front_strip_work_bound
+                    if envelopes is None:
+                        envelopes=tuple(stationary_front_angular_envelopes(field,cover,
+                            maximum_axial_uncertainty=_front_uncertainty,budget=support_budget,
+                            prepared=item,_include_endpoints=True) for cover,item in zip(covers,prepared))
+                    front_band_cache[band]=(covers,envelopes,prepared)
+                    density=np.zeros(4)
+                    for a,b in envelopes[owner_index][:len(covers[owner_index])]:
+                        a,b=max(left,a),min(right,b)
+                        if a<b:
+                            density=np.maximum(density,history_front_strip_work_bound(field,cell,(a,b),prepared,envelopes))
+                    front_work_density[parent]=density
+                    measure=rule.definition['radius']*np.linalg.norm(reference.coordinates[cell+1]-reference.coordinates[cell])
+                    error=np.zeros(size)
+                    error[-4:]=density*_front_uncertainty*(upper-lower)*measure
+                    front_error[parent]=error
+                    return HistoryPanelSupport('resolved',parent,'variable stationary branches; closed endpoint replay and open endpoint/work enclosure')
                 if _local_front_strips:
                     from .native_surface_front import stationary_front_angular_envelopes
                     if envelopes is None:
@@ -453,6 +542,8 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
         *map(float,total[-4:]),dict(panels=visited,accepted_panels=accepted,unresolved_support_panels=unresolved_support_panels,support_panels_visited=support_panels_visited,queries=len(cache),
             point_paths=budget.point_paths,cache_bytes=len(cache)*size*8,zero_panels_certified=empty_certificates,
             open_material_queries_certified=open_queries,
+            open_endpoint_strip_enclosures=open_endpoint_strip_enclosures,
+            front_profile='VARIABLE_ENDPOINT_STRIP_DEV_V1' if _variable_endpoint_branches else 'LEGACY_FRONT_OR_PANEL_DEV',
             certified_intervals=orientation_intervals+budget.certified_intervals,
             support_intervals=support_budget.intervals,
             cached_angular_front_bands=len(front_band_cache),

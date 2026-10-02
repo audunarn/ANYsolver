@@ -466,7 +466,8 @@ def stationary_front_partition(field,cell,segment_index,angle,*,maximum_interval
     return tuple((t,at(t).axial_coordinate()) for t in fractions),count,tuple(roots[t] for t in sorted(roots)),tuple(endpoints)
 
 
-def stationary_front_angular_envelopes(field,cover,*,maximum_axial_uncertainty,budget,prepared=None):
+def stationary_front_angular_envelopes(field,cover,*,maximum_axial_uncertainty,budget,prepared=None,
+        _include_endpoints=False):
     """Enclose every stationary uncertainty strip over a certified angular band.
 
     On a simple root branch H_t=0, so dH*/dangle=-A_angle/B. The normal
@@ -478,22 +479,27 @@ def stationary_front_angular_envelopes(field,cover,*,maximum_axial_uncertainty,b
         raise ValueError('bound stationary angular cover required')
     lo,hi=cover.angle_bounds;middle=(lo+hi)/2
     if cover.xi_bounds is None:
-        _,_,roots,_=stationary_front_partition(field,cover.cell,cover.segment_index,middle,
+        _,_,roots,endpoints=stationary_front_partition(field,cover.cell,cover.segment_index,middle,
             maximum_intervals=field.maximum_intervals,maximum_axial_uncertainty=maximum_axial_uncertainty,
             budget=budget,angular_cover=cover)
     else:
         if prepared is None:prepared=prepare_stationary_band(field,cover,budget=budget)
         if prepared.cover!=cover:raise ValueError('stationary envelope prepared cover mismatch')
-        _,_,roots,_=stationary_front_partition_prepared(field,prepared,middle,
+        _,_,roots,endpoints=stationary_front_partition_prepared(field,prepared,middle,
             maximum_axial_uncertainty=maximum_axial_uncertainty)
     if len(roots)!=len(cover):raise ValueError('stationary branch envelope count mismatch')
+    if _include_endpoints and cover.xi_bounds is None:
+        raise ValueError('complete history envelopes require a bound prepared domain')
     start,segments=_support_path(field,cover.segment_index);motion=segments[0]
     radius=field.patch.rule.definition['radius'];intervals=[]
-    for index,(root,(left,right)) in enumerate(zip(roots,cover.branches)):
+    entries=[(root,left,right,prepared.branches[i][2] if cover.xi_bounds is not None else None)
+        for i,(root,(left,right)) in enumerate(zip(roots,cover.branches))]
+    if _include_endpoints:
+        entries.extend((root,time,time,bounds) for root,(time,_,bounds,_) in zip(endpoints,prepared.endpoints))
+    for root,left,right,bounds in entries:
         if not left<=root.fraction<=right:raise ValueError('stationary branch envelope ownership mismatch')
         if not budget.consume():raise MemoryError('stationary envelope support interval cap exhausted')
-        bounds=(prepared.branches[index][2] if cover.xi_bounds is not None else
-            stationary_front_slab(field,cover.cell,cover.segment_index,middle,left,right))
+        if bounds is None:bounds=stationary_front_slab(field,cover.cell,cover.segment_index,middle,left,right)
         if bounds[0]<=0<=bounds[1]:raise ValueError('stationary envelope denominator unresolved')
         denominator=min(abs(bounds[0]),abs(bounds[1]))
         poses=[material_path_pose(start,motion.translations,motion.angular,motion.shell_increment,t)

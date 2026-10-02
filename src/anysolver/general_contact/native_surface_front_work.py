@@ -1,25 +1,19 @@
-"""Conservative work density bound near one contact-producing stationary front.
+"""Work density enclosures near a contact-producing stationary front.
 
-Caller supplies whole-angle/time proof of one simple stationary H=-A/B, nonzero
-B and open captured endpoints. This bounds an integral, never a point history.
+The released-origin specialization requires open captured endpoints. The complete-
+history route instead takes every certified component's extrema and retains stored
+work. These developmental bounds concern an integral, never a point history.
 """
 import numpy as np
 from .native_surface_path import material_path_pose
 from .native_surface_support import _base
 
 
-def open_front_strip_work_bound(field,cell,axial_width,*,segment_index=None):
-    if segment_index is None and len(field.segments)!=1:
-        raise ValueError('strip work enclosure currently requires one released-origin segment')
-    if segment_index is None:segment_index=0
+def _segment_motion_bounds(field,cell,segment_index):
     if type(segment_index) is not int or not 0<=segment_index<len(field.segments):
         raise ValueError('strip work enclosure requires a valid explicit segment index')
-    if not np.isfinite(axial_width) or axial_width<=0:
-        raise ValueError('positive explicit strip width required')
-    # The caller proves all other segments open on this entire strip using
-    # their complete branch covers and every captured endpoint. Only this
-    # segment then carries work. Its start includes the actual prefix motion,
-    # including shell displacement and finite rotations.
+    # Every segment's start includes its actual prefix motion, including shell
+    # displacement and finite rotations. Frame/slip bounds cover the full path.
     start=field.initial
     for prefix in field.segments[:segment_index]:
         start=material_path_pose(start,prefix.translations,prefix.angular,prefix.shell_increment,1.)
@@ -54,12 +48,71 @@ def open_front_strip_work_bound(field,cell,axial_width,*,segment_index=None):
     speed=max(np.linalg.norm(motion.translations[i]-v) for i in (cell,cell+1) for v in velocities)+omega*radius
     scale=max(1.,relative,speed,chord,frame_rate,*(float(np.max(np.abs(y))) for y in corners))
     padding=1024*np.finfo(float).eps*scale
+    return speed+frame_rate*relative+padding,chord,padding
+
+
+def open_front_strip_work_bound(field,cell,axial_width,*,segment_index=None):
+    if segment_index is None and len(field.segments)!=1:
+        raise ValueError('strip work enclosure currently requires one released-origin segment')
+    if segment_index is None:segment_index=0
+    if not np.isfinite(axial_width) or axial_width<=0:
+        raise ValueError('positive explicit strip width required')
+    slip,chord,padding=_segment_motion_bounds(field,cell,segment_index)
     penetration=chord*axial_width+padding
     pair=field.patch.pairs[0];pressure=pair.normal_stiffness_Pa_per_m*penetration
     cap=pair.friction_coefficient*pressure;kt=pair.tangential_stiffness_Pa_per_m
-    slip=speed+frame_rate*relative+padding
     dissipation=cap*(slip+2*pair.event_history_substeps*cap/kt)
     release=cap*cap/(2*kt)
     result=np.array((0.,dissipation,release,dissipation))
     if not np.all(np.isfinite(result)):raise ValueError('nonfinite strip work enclosure')
+    return result
+
+
+def history_front_strip_work_bound(field,cell,strip_bounds,prepared,envelopes):
+    """Work-only upper density for a complete, bound stationary history.
+
+    Unlike the released-origin specialization, this includes captured-endpoint
+    storage and inherited elastic state. It never supplies a residual/tangent or
+    replaces a point history. Positive quadrature and exact strip work both lie
+    in [0, area*density]; their difference is bounded by that same upper bound.
+    Envelopes list potential extrema first, then every component endpoint.
+    """
+    from .native_surface_front import PreparedStationaryBand,_front_components
+    left,right=map(float,strip_bounds)
+    if not np.isfinite((left,right)).all() or not left<right:
+        raise ValueError('ordered finite work-strip bounds required')
+    if len(prepared)!=len(field.segments) or len(envelopes)!=len(prepared):
+        raise ValueError('complete history work enclosure required')
+    depths=[];counts=[];motions=[]
+    for index,(band,values) in enumerate(zip(prepared,envelopes)):
+        if (type(band) is not PreparedStationaryBand or band.cover.field_identity!=field.identity
+                or band.cover.cell!=cell or band.cover.segment_index!=index
+                or band.cover.xi_bounds is None
+                or not band.cover.xi_bounds[0]<=left<right<=band.cover.xi_bounds[1]):
+            raise ValueError('history work enclosure identity/domain mismatch')
+        components=_front_components(band.cover);roots=len(band.branches)
+        if len(values)!=roots+2*len(components):
+            raise ValueError('complete component extrema envelopes required')
+        if any(not np.isfinite(value).all() or not value[0]<=value[1] for value in values):
+            raise ValueError('invalid component extrema enclosure')
+        depth=0.
+        for i,(start,end,_,_) in enumerate(components):
+            extrema=(*values[roots+2*i:roots+2*i+2],*(values[j] for j,(a,b,_,_) in enumerate(band.branches)
+                if start<=a<=b<=end))
+            bl,bu=band.endpoints[2*i][2][:2]
+            if bl>0:depth=max(depth,max(v[1] for v in extrema)-left)
+            elif bu<0:depth=max(depth,right-min(v[0] for v in extrema))
+            else:raise ValueError('history work enclosure denominator unresolved')
+        # Each stationary witness divides one monotone interval. The extra
+        # interval covers strictly open excluded slabs and boundary clamping.
+        counts.append((field.patch.pairs[0].event_history_substeps+2)*(len(components)+roots+1))
+        motions.append(_segment_motion_bounds(field,cell,index));depths.append(depth)
+    penetration=max(chord*depth+padding for depth,(_,chord,padding) in zip(depths,motions))
+    pair=field.patch.pairs[0];kt=pair.tangential_stiffness_Pa_per_m
+    cap=pair.friction_coefficient*pair.normal_stiffness_Pa_per_m*penetration
+    storage=cap*cap/(2*kt)
+    dissipations=[cap*(slip+2*maps*cap/kt) for (slip,_,_),maps in zip(motions,counts)]
+    result=np.array((storage,dissipations[-1],counts[-1]*storage,sum(dissipations)))
+    if not np.all(np.isfinite(result)) or np.any(result<0):
+        raise ValueError('nonfinite history strip work enclosure')
     return result
