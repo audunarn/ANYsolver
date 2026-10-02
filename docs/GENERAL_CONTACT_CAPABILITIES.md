@@ -11,11 +11,13 @@ selected-side/distance checks, supplied inertia/spin, cancellation/exception cle
 and active split restart are covered. Energy defect0.4623%→0.1133% under halved dt
 uses translational energy and independent continuum potential; source/installed
 example fields and208 loaded module hashes match. A2mm toy penetration budget does
-not qualify the programme gap target. Shell-specific nodal-history/work, broader
+not qualify the programme gap target. Shell-specific nodal-history/work and active
+restart now pass independent driven checks and isolated installed example; broader
 geometry/rotation/material admission and full C6 remain open. Same-family source
 scrutiny corrected two concrete guards; it is not engineering acceptance.
 [Guide](GENERAL_CONTACT_C6_FREE_SHELL_SPHERE_DEV.md) and
 [evidence](d1_review_support/C6_FREE_SHELL_SPHERE_SLICE_20261003.md).
+[Driven closure](d1_review_support/C6_FREE_SHELL_SPHERE_HISTORY_20261003.md).
 
 ## Native finite-angle temporal self-convergence — 1 October
 

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.54. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.55. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -64,14 +64,25 @@ regressions pass. This is development evidence, not D5 engineering acceptance.
 An isolated installed wheel reproduces all example fields and208 imported-source
 hashes; existing installed accepted-shell identity remains unchanged.
 
-NEXT close the new shell load-history/work branch and its restart-bound controls
-with one independent driven two-body case. Then select the next required impact
-boundary from measured risk/cost; broader rotation/material/event admission requires
-its own work/path evidence. Native friction can resume only after a justified
-closed-strip residual/tangent bound, not another refinement campaign.
+The driven shell-history case now closes load work/impulse, active split restart
+and changed history/swept-control rejection. Independent position/force errors are
+6.426e-11m/4.223e-9N. Every body-state field matches numerically; the retained extra
+bitwise comparison failure is not regraded. Unchanged solver wheel is reused after
+all208 loaded module hashes and new example fields match.
+
+NEXT explicit Q4/fixed-plane plastic impact, beginning with accepted material-state
+ownership and a versioned dynamic packet. Current dynamic checkpoints omit material
+history and cannot admit plasticity by dropping the elastic guard. Reuse qualified
+Q4 three-layer seal/semantic validation and canonical JSON; restore accepted history
+before balance and avoid a second same-pose physical commit. Demonstrate actual
+yield/unloading, independent material/structural reference, rejected trials, cutback,
+cancellation/exception and yielded restart. Constitutive kernels, static schemas
+and elastic profiles remain unchanged. Native friction can resume only after a
+justified closed-strip residual/tangent bound, not another refinement campaign.
 
 [New D5 guide](docs/GENERAL_CONTACT_C6_FREE_SHELL_SPHERE_DEV.md) and
 [slice evidence](docs/d1_review_support/C6_FREE_SHELL_SPHERE_SLICE_20261003.md).
+[Driven-history closure](docs/d1_review_support/C6_FREE_SHELL_SPHERE_HISTORY_20261003.md).
 
 [Current slice/evidence](docs/d1_review_support/contact_c5_native_surface_point_20261003/variable_front_results.md).
 [Prior checkpoint/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART76.md)

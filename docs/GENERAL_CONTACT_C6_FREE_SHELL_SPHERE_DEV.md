@@ -19,7 +19,14 @@ transformation. Independent nodal normal motion remains deformable. Every free
 direction is checked independently of its reduced-coordinate scaling. S3, finite
 rotation, anisotropic inertia, friction, multiple bodies and section/material
 extensions are outside this profile. Its history suffix is developmental and has
-not yet received a shell-specific load-history/work test.
+now passed a shell-specific driven two-body/work/active-restart test.
+Use `--load-history` on the example for a piecewise-linear force ramp. Its
+`...NEWMARK_HISTORY_DEV_V1` identity binds history and swept-check controls into V6.
+Every work row is checked against independent force-times-velocity integration;
+applied impulse accounts for changed momentum. Changed history, enclosure tolerance
+or split cap rejects restart. Body fields agree numerically; bitwise identity is
+not claimed. [Driven evidence](d1_review_support/C6_FREE_SHELL_SPHERE_HISTORY_20261003.md)
+reuses the unchanged installed wheel after verifying all208 imported-source hashes.
 
 The existing sphere nodal-pressure penalty potential is retained: face support and
 weighted gaps are aggregated before applying the normal law. This is neither a new
