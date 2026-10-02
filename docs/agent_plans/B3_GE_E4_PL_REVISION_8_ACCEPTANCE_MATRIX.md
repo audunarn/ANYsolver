@@ -1325,3 +1325,51 @@ both line bases with yielding, cancellation, rebase and exact restart.98 consume
 and398 solver module identities verified. Experimental implementation only;
 low-hardening failure, full G3/G6 and physical BL5 acceptance remain open.
 [Evidence](development/r8-anyfem-bl5-material-20261002/results.md).
+
+
+**2 October coupled Q4-J2 / generalized BL5 candidate: IN_PROGRESS.** P0
+monotonic simultaneous yielding/restart source smoke passed; full signed reversal
+failed near-500N; coarseP1 did not shell-yield at500N.3 ANYfem source checks pass.
+Candidate uncommitted; no installed/aggregate/material-envelope acceptance.
+[Preserved candidate/failure evidence](development/r8-bl5-coupled-material-20261002/results.md).
+
+
+**2 October coupled candidate update:** native retained-role scaling corrected only
+for this new policy with a distinct model identity. Five selected installed checks
+pass on wheel87146a8c...bec6410, including monotonic simultaneous material lifecycle
+and legacy isolation. Full signed reversal still fails; coarseP1 shell-yield
+coverage remains absent. Tangent sensitivity is observed, physical instability is
+not established. Status remains IN_PROGRESS, not accepted. See the same evidence
+record; previous failures and source versions are preserved.
+
+
+**2 October displacement-control foundation: IN_PROGRESS.** A private sparse
+bordered corrector reaches an uncommitted equilibrium on the saved coupled branch
+at-487.841N and preserves the accepted checkpoint. Four source checks pass.
+Full predictor/fixed-displacement corrector contract independently reviewed.
+No public controller, checkpoint publication, force-reversal completion, limit
+point or G4 acceptance is claimed. Next: atomic publication and distinct restart.
+
+
+**2 October displacement restore foundation:** separate signed-amplitude snapshot
+framing and isolated mechanical endpoint validation implemented privately.
+Eleven source checks pass including yielded-state replay and corruption rejection.
+Atomic controller publication/public restart, independent review and installed
+checks remain open. No G4 or full signed-reversal acceptance.
+
+
+**2 October seeded displacement workflow:** typed public solve/recovery and
+separate mechanical/controller restart delivered experimentally for coupled-Q4
+BL5.15 installed checks pass, including rebased seed, cancellation, atomic failure,
+exact restored continuation and force-route compatibility. Review findings fixed.
+Full material/capacity, adaptive/rebase/selected recovery and consumer obligations
+remain open; no -500N force-endpoint or G4 qualification claim.
+
+
+**2 October adaptive displacement integration: IMPLEMENTED_NOT_QUALIFIED.**
+Signed bounded cutback, failed-work accounting and durable spent budgets now run
+through the public coupled-Q4 BL5 owner. Source8/installed23affected checks pass;
+review fixes observer-after-commit handling and domain-rejection accounting.
+Cancellation/restart and failure before first displacement acceptance are covered.
+The -68um branch failure remains unresolved; no reversal/capacity acceptance.
+Installed artifact and limitations: [results](development/r8-bl5-coupled-material-20261002/results.md).

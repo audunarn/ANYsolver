@@ -1,72 +1,72 @@
 # B3-GE / E4-PL / B2 — active state, 2 October 2026
 
-## Authority and current checkout
+## Authority and exact checkout
 
-Full Revision8 goal/plan in ../b3-ge-e4-pl-coupling/docs/agent_plans remains active.
-No aggregate G0â€“G6/M1â€“M5 acceptance. Use the [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md).
-Risk-proportionate/tiered checks, scientific tolerances and protected evidence remain.
-Prior active note preserved byte-for-byte [here](development/r8-bl5-staged-loads-20261002/active-before-staged-lines.md).
-
-Solver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; solver material source a831adb1; ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer, HEADeaed5ec; material consumer slice committed.
-Local commits permitted; no push/main merge/publication or contact-worker messaging.
-Historical archive contains credentials: no dissemination before authorized remediation.
-No owned numerical job is running. At most3workers/one heavy numerical job;100krows/600s/8GiB/
-8numerical threads ceiling. Current checks600s/1GiB/1thread/JITdisabled.
-Local/Mistral unavailable earlier; no repeated probes. OpenAI review is not
-cross-family qualification. Formal F03 UNCONSUMED; protected original script SHA
+Full Revision8 plan/goal in ../b3-ge-e4-pl-coupling remains active. G0–G6,
+F01–F13,V01–V28,B01–B18 and all final obligations remain binding. Experimental
+implementation/testing is not scientific acceptance or release.
+Solver: stiffened-main-reconcile-20261001, codex/stiffened-main-reconcile-20261001,
+Slice bases: solver c32782ed; ANYfem .worktrees/experimental-ge-panel-consumer
+base eaed5ec. Resolve current local commits with git log; artifacts above bind code.
+Local scoped commits permitted; no push/main merge/publication or contact-worker
+communication. Historical us3-modal-canary-v1.zip contains credentials: do not
+print/copy/disseminate it; no history-rewrite authority. New evidence uses only
+whitelisted execution metadata, never inherited environment dumps.
+One heavy job at a time; ceiling100krows/600s/8GiB/8threads. Current checks use
+600s/1GiB/1thread/JIT off. No jobs remain active. Local/Mistral unavailable earlier;
+OpenAI review does not confer cross-family scientific acceptance.
+Formal F03 UNCONSUMED; protected original script SHA256
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
 
-## Delivered behavior
+## Delivered behavior and evidence
 
-GE/B2 installed owner/consumer, materials, gravity and signed distributed-load
-histories remain as linked in the matrix. Local0888da71 adds signed couple/material
-history evidence;14c5d0eb records the rejected U1 shear-comparator route.
+The uncommitted coupled-Q4 J2/generalized BL5 policy now has force-seed and
+signed displacement execution, accepted/predecessor histories, typed physical
+recovery, atomic commit and isolated mechanical checkpoint validation. Only this
+new policy uses corrected native force/moment retained-role scaling; legacy
+policies/tolerances unchanged. Earlier candidate failures/evidence are preserved.
 
-Current slice admits explicit objective-Q4 elastic BL5 with staged nodal translation
-forces. Both P0/coarseP1 pass signed stages/cancellation/restart/balance; P0 adds
-adaptive/chart restart. Installed wheel d506e3f3...14be90 has398matching modules,
-219onsite imports and3passing new checks. Five focused compatibility checks pass;
-independent source/evidence review found no consequential issue. Historical line
-moment failures and test-helper failures preserved. No acceptance or release claim.
-[Complete slice evidence](development/r8-bl5-staged-loads-20261002/results.md).
-Public examples/stiffened_shell_bl5_staged.py now constructs and runs this path
-without test imports. Source/installed lifecycle passes on the same verified wheel;
-four historical/objective P0/P1 reference-parity cases pass. No new solver equation.
+Adaptive displacement accepts existing AdaptiveIncrementControl limits. Failed
+work and spent budgets survive restart, including failure before the first accepted
+displacement step. Postcommit observer exceptions propagate without becoming
+rejected trials. Domain rejection counts may exceed residual evaluations.
+Source adaptive8checks pass; full affected installed solver23checks pass141.52s.
+Wheel9d133a513ca0e75c4edb5a2f99196d3f96a1c21c1ce9326c757a5634ef3e9237:
+403modules match source/wheel/site,223onsite imports,1thread/JIT off.
+Independent controller review has no unresolved implementation finding.
 
-## Decision, uncertainty and next action
+ANYfem strict coupled-v4 input/project roundtrip now has4installed checks passing
+38.13s against that solver. Wheelcf8a36dbf65781a5461c6acb8c07c7039ed4c41dfa884c55b4ff50744da9ade3;
+98modules match; combined287imports onsite. Public consumer verifies simultaneous
+yielding, force-prefix rebase/restart and two nearby adaptive displacement targets
+with cancellation/restart. It does not establish reversal or actual cutback in the
+consumer fixture. Independent consumer review found no blocking defect.
+[Results, raw evidence, reviews and retained failures](development/r8-bl5-coupled-material-20261002/results.md).
+Previous active note preserved byte-for-byte inside displacement-adaptive-installed-v1.zip.
 
-Retain BL5 experimentally. Common-action/root/completion checks do not identify a
-law defect; remaining clamp-transfer reference error is not bounded sufficiently
-for1% physical acceptance. U1 canary is11.1423% too stiff in isolated tip-force
-compliance at its actual discretization. Do not build a corrected U1 coupled
-reference or automatically repeat refinement/completion tests. Missing controlled
-coupled reference remains an M2/F03 obligation, not grounds for acceptance/failure.
+Local commit scope: solver coupled material changes in four original source modules,
+five new displacement modules, six associated test files and documentation/evidence.
+ANYfem scope: solve/stiffened_shell.py and coupled consumer test. Local commits only; no push, release/default/version changes. Complete goal is
+not achieved.
 
-ANYfem BL5 objective/staged inputs and distinct native Project route are delivered:
-49 source and70 installed checks pass, including cancellation/chart/restart.
-[Consumer evidence](development/r8-anyfem-bl5-project-20261002/results.md).
-Distributed BL5 consumer persistence is now delivered:17 source and53 installed
-checks pass; independent review clear.
-[Consumer load evidence](development/r8-anyfem-bl5-distributed-20261002/results.md).
-Explicit generalized yielding on elastic objective-Q4 BL5 is implemented with
-separate checkpoint identity and accepted/predecessor histories. Eight installed
-checks pass, including both bases, actual yield/reversal, tangent, rejection,
-rebase and restart. Low-hardening1e6 still fails backtracking/cutback; tested1e8
-history succeeds. No globalization/tolerance change or full material acceptance.
-[Material evidence](development/r8-bl5-material-20261002/results.md).
-ANYfem material-v3 input/Project integration passed4 source and17 installed
-checks; both line bases preserve yielded continuation through save/reopen.
-[Consumer evidence](development/r8-anyfem-bl5-material-20261002/results.md).
-Next: identify the smallest missing material/attachment admission slice from the
-existing adapters, keeping the low-hardening numerical failure explicit. Do not
-repeat this campaign or resume reference refinement without a discriminator.
-All final topology/material/stability/capacity/scale/external/platform obligations
-remain mandatory. Do not repeat closed B2 or spectral campaigns without a discriminator.
+## Remaining decision and next action
 
-Pressure vector-assessment amendment remains awaiting user decision. Mixed follower
-and mixed/all-S3 director finite histories fail current component checks; private
-overrides are counterfactual only. No criteria change authorized. Zero-total-load
-relative assessment remains unresolved; no silent floor or tiny-load relaxation.
-[Pressure boundary](development/r8-ge-pressure-work-20261002/s3-director-integration.md).
+Force reversal accepts-484.375N then fails toward-500N. Correct scaling/linear solve
+did not fix it. Off-equilibrium soft direction is not proof of physical instability.
+Bounded displacement branch accepts-66um at-487.859N, fails-68um: equilibrium1.625,
+gap3.49e-13,zero control error,61evaluations/7solves/54rejections. Saved prefix in
+TEMP/r8-displacement-branch-v1/step-1.bin. Stop that batch: no automatic smaller-step,
+longer-interval or larger-budget campaign. Current adaptive lifecycle tests use
+known-working fixtures and injected failures; they do not resolve the branch.
+
+Next permitted development: address one bounded remaining lifecycle requirement
+(selected recovery or displacement chart rebase), preserving the verified artifacts.
+Before another branch experiment specify a material/tangent/path discriminator
+from the preserved failure and obtain focused review. No automatic refinement.
+Displacement still excludes external loads, selected recovery, post-seed rebase
+and force-mode continuation. These remain obligations, not permanent exclusions.
+M2/F03 controlled clamp-transfer reference remains outside1%; U1shearcanary11.1423%
+too stiff. No automatic corrected-U1 campaign. Pressure assessment amendment awaits
+user decision. Mixed/all-S3director histories, zero-load assessment, low-hardening
+failure, materials/topology/spectra/capacity/scale/external/platform/release remain
+open as detailed in the acceptance matrix. No aggregate gate closed here.

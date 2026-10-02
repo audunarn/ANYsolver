@@ -491,3 +491,60 @@ representable, but the existing strict zero-load equilibrium check may prevent
 finite numerical completion after unloading; no residual floor is introduced.
 This capability remains experimental and does not itself close F06 or qualify
 the broader load programme.
+
+
+### Experimental simultaneous Q4 J2 and generalized BL5 histories
+
+`bl5_material_policy=BL5_COUPLED_J2_MATERIAL_V1` selects the separate coupled
+history path. It requires a pure Q4 shell with the existing isotropic J2 curve,
+`Q4_ALGORITHMIC_PULLBACK_V1`, generalized native beams and BL5 lines. It does not
+reinterpret `BL5_GENERALIZED_MATERIAL_V1`, which keeps elastic shells. Physical
+fibres, S3 line materials and other mandatory combinations remain open.
+
+The coupled checkpoint retains both domains' accepted and predecessor histories.
+Q4 replay consumes predecessor plastic strain and alpha plus current objective
+strain; predecessor coordinates are not required by this admitted local law.
+Restore replays the saved predecessor and checks material consistency before
+publication. Rebase cannot advance either material. No constitutive tolerance,
+globalisation or physical BL5 acceptance change follows from this opt-in.
+
+The coupled policy selects `native_force_moment_roles_v1` work scaling. Each
+beam retains two force triples followed by four moment triples, so compatibility
+rows receive the corresponding force and moment scales. This ordering follows
+native `p.dot(k)` virtual work. Earlier policies retain their historical numerical
+scales; their evidence is not silently reinterpreted. The coupled identity binds
+the corrected scale policy, and pre-correction coupled checkpoints are incompatible.
+
+
+### Seeded displacement control (experimental coupled-Q4 BL5)
+
+For `BL5_COUPLED_J2_MATERIAL_V1`, an accepted nodal-force seed may continue with
+`DisplacementControl("beam", node_id, component)` (components0–2 are global
+translations), supplied as `solve(..., displacement_control=control)`. In this
+mode `actions` specifies the affine dead-load direction and `targets` specifies
+absolute physical translation values. The seed load is the affine base; amplitude
+starts at zero. This is a distinct loading path, not a force-programme cursor.
+
+The result exposes amplitude, actual displacement history, physical shell rotations
+and separate chart coordinates/anchors, material recovery, loads, reactions and
+connection work. Checkpoints store the seed digest, signed amplitudes, physical
+state and accepted/predecessor materials. Restoration checks endpoint mechanics
+before atomic publication; it does not authenticate the full prior path.
+
+This initial route admits pure objective-Q4 J2 shells, generalized beams and BL5,
+with an existing accepted force seed. Cancellation returns the accepted prefix.
+Optional `increment_control=AdaptiveIncrementControl(...)` halves rejected signed
+translation intervals within the specified cutback and attempt budgets. Results
+include `increment_attempts`, including failed evaluations and linear solves.
+Cancellation preserves a complete accepted prefix. A separate bounded checkpoint
+envelope retains spent budgets, even when no displacement step has been accepted;
+restore cannot reset those budgets. Resume requires the same targets, load direction,
+control and numerical limits. Observer exceptions after commit propagate while
+preserving the committed state.
+
+Changing control/load direction after restart, force-mode continuation, external
+loads, selected recovery and post-seed chart rebasing are explicitly rejected.
+These remain future obligations, not permanent programme exclusions. No arc-length,
+limit-point, capacity or full signed-reversal qualification is implied. Fixed-step
+installed checks passed for their recorded artifact; adaptive evidence is recorded
+separately in the current development results.

@@ -65,6 +65,7 @@ from ._stiffened_shell_l1_assembly_experimental import (
 
 PROFILE = "B3_GE_E4_PL_STIFFENED_SHELL_V1"
 BL5_GENERALIZED_MATERIAL_V1 = "BL5_GENERALIZED_MATERIAL_V1_DEV"
+BL5_COUPLED_J2_MATERIAL_V1 = "BL5_COUPLED_J2_MATERIAL_V1_DEV"
 CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_LINEAR_V1"
 FINITE_CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"
 FINITE_MATERIAL_CHECKPOINT = (
@@ -374,10 +375,10 @@ def _reference_section_tangent(section):
 
 def _reference_scales(shell_xyz, beam_nodes, beam_parts, shell_count,
                       beam_count, *, footprint_retained_roles=False):
-    """Freeze compilation scales; new footprints use native retained roles.
+    """Freeze compilation scales; selected new profiles use native retained roles.
 
-    Empty-footprint owners retain the historical arrangement exactly. Only the
-    explicit footprint policy corrects its retained force/moment work pairing.
+    Legacy owners retain their historical arrangement exactly. The footprint and
+    coupled-J2 BL5 policies select native retained force/moment work pairing.
     """
     positions = np.vstack((shell_xyz, [value[0] for value in beam_nodes.values()]))
     centered = positions-np.mean(positions, axis=0)
@@ -396,7 +397,8 @@ def _reference_scales(shell_xyz, beam_nodes, beam_parts, shell_count,
         resultant_scale = np.abs(_reference_section_tangent(element.section))@strain_scale
         # Native p consists of six independent force coordinates followed by
         # twelve moment coordinates, not three recovered station wrenches.
-        # Preserve the historical arrangement for every empty-footprint owner.
+        # Preserve the historical arrangement for policies that have not selected
+        # the native retained-role scaling contract.
         if footprint_retained_roles:
             beam_scale[base+6:base+24] = np.r_[np.tile(resultant_scale[:3], 2),
                                              np.tile(resultant_scale[3:], 4)]
@@ -517,9 +519,10 @@ class ExperimentalGEAnalysis:
         if self._modal_only and (definition.fixed or definition.lines or definition.footprints):
             raise ValueError("free-free modal-only policy requires empty supports and six-pose points only")
         if (type(definition.bl5_material_policy) is not str or
-                definition.bl5_material_policy not in ("elastic", BL5_GENERALIZED_MATERIAL_V1)):
+                definition.bl5_material_policy not in ("elastic", BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1)):
             raise ValueError("explicit admitted BL5 material policy required")
-        self._bl5_material = definition.bl5_material_policy == BL5_GENERALIZED_MATERIAL_V1
+        self._bl5_shell_material = definition.bl5_material_policy == BL5_COUPLED_J2_MATERIAL_V1
+        self._bl5_material = definition.bl5_material_policy != "elastic"
         if self._bl5_material and (not definition.lines or definition.footprints or
                 definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1):
             raise ValueError("BL5 material policy requires objective Q4 line model")
@@ -533,9 +536,9 @@ class ExperimentalGEAnalysis:
             raise ValueError("experimental nodal rigid footprints require point-owner-only attachment scope")
         if definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and (
                 not panel.q4_elements or (definition.lines and (
-                    panel.s3_elements or panel.j2_curve is not None or
+                    panel.s3_elements or (panel.j2_curve is not None and not self._bl5_shell_material) or
                     any(type(line) is not ExperimentalBL5Line for line in definition.lines)))):
-            raise ValueError("algorithmic Q4 pullback requires a Q4-containing point or elastic Q4 BL5 model")
+            raise ValueError("algorithmic Q4 pullback requires a Q4-containing point or explicitly admitted Q4 BL5 model")
         shell_model, shell_ids, shell_xyz, shell_index, shell_parts = _shell_reference(panel)
         # The compiled owner must not consult caller-owned mutable connectivity
         # when selecting material recovery or decoding a later checkpoint.
@@ -589,7 +592,7 @@ class ExperimentalGEAnalysis:
         shell_count = 6*len(shell_ids)
         reference_length, shell_scale, beam_scale = _reference_scales(
             shell_xyz, beam_nodes, beam_parts, shell_count, beam_count,
-            footprint_retained_roles=self._finite_elastic_footprint)
+            footprint_retained_roles=(self._finite_elastic_footprint or self._bl5_shell_material))
         shell_r, shell_k, shell_local_error = _assemble_shell(
             shell_model, shell_parts, shell_count, shell_scale,
             definition.q4_pullback_policy)
@@ -623,11 +626,13 @@ class ExperimentalGEAnalysis:
             raise ValueError("typed experimental weak lines required")
         self._finite_bl5 = bool(definition.lines) and all(
             type(line) is ExperimentalBL5Line for line in definition.lines
-        ) and panel.j2_curve is None and not self._has_physical_fibre
+        ) and (panel.j2_curve is None or self._bl5_shell_material) and not self._has_physical_fibre
         if definition.lines and definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and not self._finite_bl5:
-            raise ValueError("algorithmic Q4 line pullback requires admitted elastic BL5 beams")
+            raise ValueError("algorithmic Q4 line pullback requires admitted generalized BL5 beams")
         if self._bl5_material and not self._finite_bl5:
-            raise ValueError("BL5 material policy requires elastic Q4 shells and generalized beams")
+            raise ValueError("BL5 material policy requires admitted Q4 shells and generalized beams")
+        if self._bl5_shell_material and panel.j2_curve is None:
+            raise ValueError("coupled BL5 material policy requires shell J2")
         identity_payload = {
             "profile": PROFILE, "shell_ids": shell_ids,
             "shell_xyz": shell_xyz.tolist(), "shell_cells": panel.q4_elements,
@@ -638,6 +643,8 @@ class ExperimentalGEAnalysis:
             "points": [(v.shell_node, v.beam_node) for v in definition.points],
             "fixed": [(v.domain, v.node, v.component) for v in definition.fixed],
         }
+        if self._bl5_shell_material:
+            identity_payload["bl5_retained_scale_policy"] = "native_force_moment_roles_v1"
         if self._bl5_material:
             identity_payload["bl5_material_policy"] = definition.bl5_material_policy
         if panel.j2_curve is not None:
@@ -816,9 +823,9 @@ class ExperimentalGEAnalysis:
                     ("nonpositive finite load factors", "line", "footprint",
                      "modes", "buckling")
                     if not self._line_samples else
-                    ("shell J2 plastic", "physical-fibre B3 finite",
+                    ((() if self._bl5_shell_material else ("shell J2 plastic",)) + ("physical-fibre B3 finite",
                      "qualified bonded line", "footprint",
-                     "modes", "buckling")+line_limits)
+                     "modes", "buckling"))+line_limits)
         if self._finite_bl5 and not self._bl5_material:
             excluded += ("generalized B3 plastic finite BL5",)
         if (self._definition.shell.s3_elements and shell_plastic and
@@ -856,7 +863,7 @@ class ExperimentalGEAnalysis:
                 "rotation_chart": ("unchanged reference-linear chart"
                                    if self._line_samples and not self._finite_bl5 else
                                    "experimental owned shell anchors; full fixed/free rotational triples only"),
-                "analysis": (("reference_linear", "experimental_generalized_material_bl5" if self._bl5_material else "experimental_elastic_finite_bl5")
+                "analysis": (("reference_linear", "experimental_coupled_j2_material_bl5" if self._bl5_shell_material else "experimental_generalized_material_bl5" if self._bl5_material else "experimental_elastic_finite_bl5")
                              if self._finite_bl5 else
                              ("reference_linear",) if self._line_samples else
                              ("reference_linear", "experimental_native_fibre_finite_point")
@@ -886,6 +893,8 @@ class ExperimentalGEAnalysis:
                 if self._footprint_increment_chart else ("nodal-footprint chart rebase and rebased checkpoint restore",))
         if self._footprint_stable_s3:
             capabilities["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
+        if self._bl5_shell_material:
+            capabilities["displacement_control"] = "experimental_nodal_translation_seeded_v1"
         return capabilities
 
     def preflight(self):
@@ -1028,7 +1037,7 @@ class ExperimentalGEAnalysis:
     def solve(self, actions: tuple[NodalAction, ...],
               targets: tuple[float, ...] = (1.,), *, cancellation_token=None,
               max_iterations: int = 12, max_backtracks: int = 8,
-              increment_control=None, on_accepted=None):
+              increment_control=None, on_accepted=None, displacement_control=None):
         """Advance finite trials; optionally observe each committed increment.
 
         ``on_accepted(result)`` receives a detached result after state and
@@ -1040,6 +1049,20 @@ class ExperimentalGEAnalysis:
         self._require_stateful_scope()
         if on_accepted is not None and not callable(on_accepted):
             raise TypeError("on_accepted must be callable or None")
+        if displacement_control is not None:
+            if self._unsupported_modes:
+                raise ValueError(self._unsupported_modes[0])
+            if increment_control is not None:
+                from ._stiffened_shell_displacement_adaptive import solve as adaptive_solve
+                return adaptive_solve(self,actions,targets,displacement_control,increment_control,
+                    max_iterations=max_iterations,max_backtracks=max_backtracks,
+                    cancellation_token=cancellation_token,on_accepted=on_accepted)
+            from ._stiffened_shell_displacement_control import solve
+            return solve(self,actions,targets,displacement_control,
+                max_iterations=max_iterations,max_backtracks=max_backtracks,
+                cancellation_token=cancellation_token,on_accepted=on_accepted)
+        if getattr(self,"_displacement_snapshot",None) is not None or getattr(self,"_displacement_adaptive",None) is not None:
+            raise ValueError("displacement history requires explicit displacement control")
         if self._unsupported_modes:
             raise ValueError(self._unsupported_modes[0])
         if self._line_samples and not self._finite_bl5:
@@ -1063,6 +1086,8 @@ class ExperimentalGEAnalysis:
     @_accepted_snapshot
     def recover(self, *, selection=None):
         self._require_open()
+        if selection is not None and getattr(self,"_displacement_snapshot",None) is not None:
+            raise ValueError("selected displacement recovery is not yet admitted")
         if self._finite_driver is not None:
             result = self._finite_driver.recover()
         else:
@@ -1075,6 +1100,8 @@ class ExperimentalGEAnalysis:
     def rebase_rotations(self, expected_generation: int, *, cancellation_token=None):
         """Issue an experimental physical shell-anchor reset at the same load."""
         self._require_open()
+        if getattr(self,"_displacement_snapshot",None) is not None or getattr(self,"_displacement_adaptive",None) is not None:
+            raise ValueError("displacement chart rebase is not yet admitted")
         self._require_stateful_scope()
         if self._definition.footprints and not self._footprint_increment_chart:
             raise ValueError("experimental nodal footprint chart rebase is unsupported: continuation parity not established")
@@ -1086,6 +1113,10 @@ class ExperimentalGEAnalysis:
     @_accepted_snapshot
     def checkpoint(self) -> bytes:
         self._require_open()
+        if getattr(self,"_displacement_adaptive",None) is not None:
+            return self._displacement_adaptive[1]
+        if getattr(self,"_displacement_snapshot",None) is not None:
+            return self._displacement_snapshot[0]
         if self._finite_driver is not None:
             return self._finite_driver.checkpoint()
         if self._accepted is None:
@@ -1128,6 +1159,29 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
+        from ._stiffened_shell_displacement_adaptive import MAGIC as DISPLACEMENT_ADAPTIVE_MAGIC
+        if raw.startswith(DISPLACEMENT_ADAPTIVE_MAGIC):
+            from ._stiffened_shell_displacement_adaptive import decode,validate_progress
+            context,inner=decode(self,raw)
+            prepared=copy(self);prepared._commit_lock=RLock();prepared._writing=False
+            prepared._displacement_adaptive=None
+            result=prepared.restore(inner)
+            validate_progress(prepared,context)
+            if getattr(prepared,"_displacement_snapshot",None) is not None:
+                result=replace(result,status="completed" if context.state.completed else "accepted_prefix",
+                               increment_attempts=context.state.attempts)
+                prepared._finite_driver._accepted=result
+            with self._commit_lock:
+                self._finite_driver=prepared._finite_driver
+                self._finite_driver.owner=self
+                self._generation=prepared._generation
+                self._displacement_snapshot=getattr(prepared,"_displacement_snapshot",None)
+                self._displacement_adaptive=(context,raw)
+            return result
+        from ._stiffened_shell_displacement_checkpoint import MAGIC as DISPLACEMENT_MAGIC
+        if raw.startswith(DISPLACEMENT_MAGIC):
+            from ._stiffened_shell_displacement_control import publish
+            return publish(self,raw,expected_driver=None,expected_generation=self._generation)
         from ._stiffened_shell_ge_body_load import MAGIC as BODY_MAGIC
         from ._stiffened_shell_ge_distributed_load import MAGIC as DISTRIBUTED_MAGIC
         from ._stiffened_shell_ge_pressure_load import MAGIC as PRESSURE_MAGIC
@@ -1237,13 +1291,15 @@ class ExperimentalGEAnalysis:
                     raise ValueError("body S3 checkpoint requires its stable numerical policy")
                 if self._footprint_stable_s3 and kind not in ("linear", "finite_native_material_stable"):
                     raise ValueError("nodal footprint S3 checkpoint requires its stable numerical policy")
+                if (kind == "finite_bl5_coupled") != self._bl5_shell_material and kind != "linear":
+                    raise ValueError("matching coupled BL5 material checkpoint required")
                 if kind == "finite_bl5_material" and not self._bl5_material:
                     raise ValueError("BL5 material checkpoint requires selected material policy")
                 if kind == "finite_bl5" and self._bl5_material:
                     raise ValueError("BL5 material checkpoint must retain histories")
                 if kind == "finite_bl5" and not self._finite_bl5:
                     raise ValueError("finite BL5 checkpoint requires elastic BL5 line model")
-                if self._line_samples and kind not in ("linear", "finite_bl5", "finite_bl5_material"):
+                if self._line_samples and kind not in ("linear", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled"):
                     raise ValueError("experimental weak line requires its finite BL5 checkpoint identity"
                                      if self._finite_bl5 else
                                      "experimental weak line admits reference-linear checkpoints only")
@@ -1273,14 +1329,20 @@ class ExperimentalGEAnalysis:
                         raise ValueError("native material checkpoint requires elastic-shell fibre model")
                     from ._stiffened_shell_beam_history import shapes
                     return base + shapes(self._beam_parts, "origin") + shapes(self._beam_parts, "accepted")
-                if kind in ("finite_material", "finite_shell_material", "finite_bl5_material"):
+                if kind in ("finite_material", "finite_shell_material", "finite_bl5_material", "finite_bl5_coupled"):
                     stations = sum(len(part[0].operator.cell.stations)
                                    for part in self._beam_parts)
                     material = base + (("beam_plastic", (stations, 6, 2)),
                                        ("beam_accumulated", (stations, 2)))
-                    if kind == "finite_bl5_material":
+                    if kind in ("finite_bl5_material", "finite_bl5_coupled"):
                         material += (("beam_origin_plastic", (stations, 6, 2)),
                                      ("beam_origin_accumulated", (stations, 2)))
+                    if kind == "finite_bl5_coupled":
+                        shells = len(self._shell_parts)
+                        material += (("shell_plastic", (shells, 12, 3)),
+                                     ("shell_alpha", (shells, 12)),
+                                     ("shell_origin_plastic", (shells, 12, 3)),
+                                     ("shell_origin_alpha", (shells, 12)))
                     if kind == "finite_shell_material":
                         if self._definition.shell.j2_curve is None:
                             raise ValueError("shell J2 checkpoint requires matching material")
@@ -1293,7 +1355,7 @@ class ExperimentalGEAnalysis:
                 raw, self._identity, expected_shapes)
             kind = kind.replace("_chart", "")
             schema = (CHECKPOINT if kind == "linear" else
-                      _BINARY_SCHEMAS[kind] if kind in ("finite_bl5", "finite_bl5_material") else
+                      _BINARY_SCHEMAS[kind] if kind in ("finite_bl5", "finite_bl5_material", "finite_bl5_coupled") else
                       STABLE_NATIVE_SCHEMA if kind == "finite_native_material_stable" else
                       "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"
                       if kind == "finite_native_material" else
@@ -1302,7 +1364,7 @@ class ExperimentalGEAnalysis:
                       else FINITE_CHECKPOINT)
             value = {"schema": schema, "model": self._identity,
                      "generation": generation, **arrays}
-            if kind in ("finite", "finite_bl5", "finite_bl5_material", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable"):
+            if kind in ("finite", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable"):
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
         elif raw.startswith(NATIVE_SHELL_MAGIC):
             if (self._line_samples or not self._has_physical_fibre or
@@ -1358,11 +1420,12 @@ class ExperimentalGEAnalysis:
                 raise ValueError("native material checkpoint requires binary framing")
             if (type(value) is dict and value.get("schema") in (
                     _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_chart_bl5"],
-                    _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_chart_bl5_material"])):
+                    _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_chart_bl5_material"],
+                    _BINARY_SCHEMAS["finite_bl5_coupled"], _BINARY_SCHEMAS["finite_chart_bl5_coupled"])):
                 raise ValueError("finite BL5 checkpoint requires binary framing")
         if (type(value) is dict and value.get("schema") in
                 (FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
-                 _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"],
+                 _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"],
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT,
                   NATIVE_SHELL_SCHEMA,
@@ -1372,8 +1435,9 @@ class ExperimentalGEAnalysis:
                     NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA, "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"):
                 raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
             if (bool(self._finite_bl5) != (value["schema"] in (
-                    _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"])) or
-                    self._bl5_material != (value["schema"] == _BINARY_SCHEMAS["finite_bl5_material"])):
+                    _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) or
+                    self._bl5_material != (value["schema"] in (_BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) or
+                    self._bl5_shell_material != (value["schema"] == _BINARY_SCHEMAS["finite_bl5_coupled"])):
                 raise ValueError("finite checkpoint requires matching BL5 mechanics identity")
             if self._line_samples and not self._finite_bl5:
                 raise ValueError(
@@ -1425,4 +1489,6 @@ class ExperimentalGEAnalysis:
         self._finite_driver = None
         self._linear_factor = None
         self._external_context = None
+        self._displacement_snapshot = None
+        self._displacement_adaptive = None
         self._closed = True

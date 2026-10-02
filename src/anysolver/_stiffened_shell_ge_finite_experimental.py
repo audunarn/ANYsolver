@@ -873,94 +873,12 @@ class FinitePointDriver:
                 if relative <= 1e-8 and gap <= 1e-9:
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.commit")
-                    support = np.zeros(owner._K.shape[0])
-                    support[owner._fixed] = residual[owner._fixed]
-                    next_factors = self._accepted_factors+(float(factor),)
-                    if owner._definition.shell.j2_curve is not None:
-                        next_shell_origins = _accepted_shell_material_origins(
-                            owner, trial, shell_next)
-                    else:
-                        next_shell_origins = shell_next
-                    q4_count = len(owner._definition.shell.q4_elements)
-                    next_result = FinitePointResult(
-                        "completed", float(factor),
-                        _owned(trial.q[:owner._shell_count]),
-                        _owned(self._beam_positions(trial)),
-                        _owned(trial.frames), _owned(trial.cells),
-                        _owned(trial.resultants), _owned(trial.multipliers),
-                        _owned(support), relative, gap, iteration,
-                        owner._generation+1, next_factors,
-                        _material_observables(beam_next),
-                        (tuple(tuple(float(v) for v in state["alpha"])
-                               for state in shell_next)
-                         if owner._definition.shell.j2_curve is not None else ()),
-                        (_shell_q4_recovery(owner._shell_parts[:q4_count],
-                                            shell_next[:q4_count])
-                         if owner._definition.shell.j2_curve is not None else ()),
-                        (_shell_s3_recovery(owner._shell_parts[q4_count:],
-                                            shell_next[q4_count:])
-                         if owner._definition.shell.j2_curve is not None else ()))
-                    cancellation_safe_point(cancellation_token,
-                                            "stiffened-shell.finite.publish")
-                    next_result = _with_shell_chart(next_result, trial, owner._shell_count)
-                    next_result = replace(next_result, point_wrenches=self._point_records(trial))
-                    next_result = self._programme_result(next_result, programme, factor, applied_load)
-                    next_result = self._external_result(next_result, trial, factor)
-                    if getattr(owner, "_finite_bl5", False):
-                        if self._line_trial_recovery[0] is not trial:
-                            raise ValueError("stale finite BL5 station recovery")
-                        next_result = replace(next_result,
-                            beam_shell_line_work=self._line_trial_recovery[1])
-                    if owner._has_physical_fibre:
-                        fibre_records, fibre_energies = _fibre_recovery(
-                            owner, trial, self._beam_origins, beam_next)
-                        next_result = replace(next_result, beam_fibre_material=fibre_records,
-                                              beam_fibre_energy=fibre_energies)
-                        cancellation_safe_point(cancellation_token,
-                                                "stiffened-shell.finite.material-publish")
-                    previous_shell_q = _owned(self._state.q[:owner._shell_count])
-                    previous_shell_anchors = (self._shell_predecessor_anchors
-                        if self._state.shell_anchors is None else self._state.shell_anchors)
-                    next_control = (None if _accepted_hook is None else
-                        _accepted_hook(attempt("accepted", iteration, relative, gap)))
-                    if next_control is not None:
-                        next_result = replace(next_result,
-                            status="completed" if next_control.completed else "accepted_prefix",
-                            increment_attempts=next_control.attempts)
-                    next_checkpoint = (None if next_control is None and programme is None and self._external is None else
-                        self._prospective_checkpoint(next_result, _state=trial,
-                            _shell_predecessors=self._shell_origins,
-                            _shell_predecessor_q=previous_shell_q,
-                            _shell_predecessor_anchors=previous_shell_anchors,
-                            _shell_origins=next_shell_origins,
-                            _beam_predecessors=self._beam_origins, _beam_origins=beam_next,
-                            _load_factor=float(factor), _accepted_factors=next_factors,
-                            _pattern=pattern, _programme=programme,
-                            _applied_load=applied_load, _adaptive_state=next_control))
-                    if next_control is not None or programme is not None or self._external is not None:
-                        cancellation_safe_point(cancellation_token,
-                                                "stiffened-shell.finite.controller-publish")
-                    with owner._commit_lock:
-                        self._shell_predecessors = self._shell_origins
-                        self._shell_predecessor_q = previous_shell_q
-                        self._shell_predecessor_anchors = previous_shell_anchors
-                        self._state = trial
-                        self._shell_origins = next_shell_origins
-                        self._beam_predecessors = self._beam_origins
-                        self._beam_origins = beam_next
-                        self._load_factor = float(factor)
-                        self._accepted_factors = next_factors
-                        self._pattern = pattern
-                        self._programme = programme
-                        self._applied_load = applied_load
-                        owner._generation += 1
-                        self._accepted = next_result
-                        self._adaptive_state = next_control
-                        self._adaptive_checkpoint = next_checkpoint
-                        if owner._finite_driver is None:
-                            owner._finite_driver = self
-                    if on_accepted is not None:
-                        on_accepted(deepcopy(next_result))
+                    self._publish_equilibrium(trial,
+                        (residual, matrix, relative, gap, shell_next, beam_next),
+                        factor, pattern=pattern, programme=programme,
+                        applied_load=applied_load, cancellation_token=cancellation_token,
+                        iteration=iteration, attempt=attempt,
+                        accepted_hook=_accepted_hook, on_accepted=on_accepted)
                     break
                 if iteration == max_iterations:
                     raise FiniteIncrementFailure(attempt("rejected", iteration,
@@ -1020,6 +938,108 @@ class FinitePointDriver:
                     raise FiniteIncrementFailure(attempt("rejected", iteration+1,
                         relative, gap, "finite mixed backtrack budget exhausted"))
         return self._accepted
+
+    def _publish_equilibrium(self, trial, evaluation, factor, *, pattern,
+                             programme, applied_load, cancellation_token,
+                             iteration, attempt, accepted_hook=None,
+                             on_accepted=None):
+        """Prepare all recovery/checkpoint data before one atomic publication.
+
+        The force controller supplies load/history semantics. Keeping preparation
+        here lets additional controllers share the physical/material transaction.
+        Call only from the owner's state-writer context after acceptance checks.
+        """
+        owner = self.owner
+        residual, _, relative, gap, shell_next, beam_next = evaluation
+        support = np.zeros(owner._K.shape[0])
+        support[owner._fixed] = residual[owner._fixed]
+        next_factors = self._accepted_factors+(float(factor),)
+        if owner._definition.shell.j2_curve is not None:
+            next_shell_origins = _accepted_shell_material_origins(
+                owner, trial, shell_next)
+        else:
+            next_shell_origins = shell_next
+        q4_count = len(owner._definition.shell.q4_elements)
+        next_result = FinitePointResult(
+            "completed", float(factor),
+            _owned(trial.q[:owner._shell_count]),
+            _owned(self._beam_positions(trial)),
+            _owned(trial.frames), _owned(trial.cells),
+            _owned(trial.resultants), _owned(trial.multipliers),
+            _owned(support), relative, gap, iteration,
+            owner._generation+1, next_factors,
+            _material_observables(beam_next),
+            (tuple(tuple(float(v) for v in state["alpha"])
+                   for state in shell_next)
+             if owner._definition.shell.j2_curve is not None else ()),
+            (_shell_q4_recovery(owner._shell_parts[:q4_count],
+                                shell_next[:q4_count])
+             if owner._definition.shell.j2_curve is not None else ()),
+            (_shell_s3_recovery(owner._shell_parts[q4_count:],
+                                shell_next[q4_count:])
+             if owner._definition.shell.j2_curve is not None else ()))
+        cancellation_safe_point(cancellation_token,
+                                "stiffened-shell.finite.publish")
+        next_result = _with_shell_chart(next_result, trial, owner._shell_count)
+        next_result = replace(next_result, point_wrenches=self._point_records(trial))
+        next_result = self._programme_result(next_result, programme, factor, applied_load)
+        next_result = self._external_result(next_result, trial, factor)
+        if getattr(owner, "_finite_bl5", False):
+            if self._line_trial_recovery[0] is not trial:
+                raise ValueError("stale finite BL5 station recovery")
+            next_result = replace(next_result,
+                beam_shell_line_work=self._line_trial_recovery[1])
+        if owner._has_physical_fibre:
+            fibre_records, fibre_energies = _fibre_recovery(
+                owner, trial, self._beam_origins, beam_next)
+            next_result = replace(next_result, beam_fibre_material=fibre_records,
+                                  beam_fibre_energy=fibre_energies)
+            cancellation_safe_point(cancellation_token,
+                                    "stiffened-shell.finite.material-publish")
+        previous_shell_q = _owned(self._state.q[:owner._shell_count])
+        previous_shell_anchors = (self._shell_predecessor_anchors
+            if self._state.shell_anchors is None else self._state.shell_anchors)
+        next_control = (None if accepted_hook is None else
+            accepted_hook(attempt("accepted", iteration, relative, gap)))
+        if next_control is not None:
+            next_result = replace(next_result,
+                status="completed" if next_control.completed else "accepted_prefix",
+                increment_attempts=next_control.attempts)
+        next_checkpoint = (None if next_control is None and programme is None and self._external is None else
+            self._prospective_checkpoint(next_result, _state=trial,
+                _shell_predecessors=self._shell_origins,
+                _shell_predecessor_q=previous_shell_q,
+                _shell_predecessor_anchors=previous_shell_anchors,
+                _shell_origins=next_shell_origins,
+                _beam_predecessors=self._beam_origins, _beam_origins=beam_next,
+                _load_factor=float(factor), _accepted_factors=next_factors,
+                _pattern=pattern, _programme=programme,
+                _applied_load=applied_load, _adaptive_state=next_control))
+        if next_control is not None or programme is not None or self._external is not None:
+            cancellation_safe_point(cancellation_token,
+                                    "stiffened-shell.finite.controller-publish")
+        with owner._commit_lock:
+            self._shell_predecessors = self._shell_origins
+            self._shell_predecessor_q = previous_shell_q
+            self._shell_predecessor_anchors = previous_shell_anchors
+            self._state = trial
+            self._shell_origins = next_shell_origins
+            self._beam_predecessors = self._beam_origins
+            self._beam_origins = beam_next
+            self._load_factor = float(factor)
+            self._accepted_factors = next_factors
+            self._pattern = pattern
+            self._programme = programme
+            self._applied_load = applied_load
+            owner._generation += 1
+            self._accepted = next_result
+            self._adaptive_state = next_control
+            self._adaptive_checkpoint = next_checkpoint
+            if owner._finite_driver is None:
+                owner._finite_driver = self
+        if on_accepted is not None:
+            on_accepted(deepcopy(next_result))
+        return next_result
 
     def _beam_positions(self, state):
         positions = self._reference_positions.copy()
@@ -1087,7 +1107,7 @@ class FinitePointDriver:
         if not np.allclose(physical_frames(q[:owner._shell_count], anchors), frames,
                            rtol=0., atol=1e-12):
             raise ValueError("rebase changed physical shell orientations")
-        residual, _, relative, gap, _, beam_repeated = self._assemble(
+        residual, _, relative, gap, shell_repeated, beam_repeated = self._assemble(
             trial, self._load_factor, self._shell_origins, self._beam_origins)
         if owner._bl5_material:
             for saved, repeated in zip(_material_arrays(self._beam_origins),
@@ -1096,6 +1116,13 @@ class FinitePointDriver:
                             float(np.max(np.abs(repeated), initial=0.)), np.finfo(float).tiny)
                 if np.max(np.abs(saved-repeated), initial=0.) > 64.*np.finfo(float).eps*scale:
                     raise ValueError("BL5 chart rebase changed generalized material history")
+        if owner._bl5_shell_material:
+            for saved, repeated in zip(_shell_material_arrays(self._shell_origins),
+                                       _shell_material_arrays(shell_repeated)):
+                scale = max(float(np.max(np.abs(saved), initial=0.)),
+                            float(np.max(np.abs(repeated), initial=0.)), np.finfo(float).tiny)
+                if np.max(np.abs(saved-repeated), initial=0.) > 64.*np.finfo(float).eps*scale:
+                    raise ValueError("BL5 chart rebase changed shell material history")
         if not np.isfinite(relative) or not np.isfinite(gap) or relative > 1e-8 or gap > 1e-9:
             raise ValueError("mechanically inconsistent shell anchor reset")
         support = np.zeros(owner._K.shape[0]); support[owner._fixed] = residual[owner._fixed]
@@ -1154,11 +1181,18 @@ class FinitePointDriver:
         if self.owner._bl5_material:
             plastic, accumulated = _material_arrays(self._beam_origins)
             origin_plastic, origin_accumulated = _material_arrays(self._beam_predecessors)
-            return _encode_binary_checkpoint(kind("finite_bl5_material"),
-                self._checkpoint_identity(), generation, arrays +
-                (("beam_plastic", plastic), ("beam_accumulated", accumulated),
-                 ("beam_origin_plastic", origin_plastic),
-                 ("beam_origin_accumulated", origin_accumulated)))
+            material = (("beam_plastic", plastic), ("beam_accumulated", accumulated),
+                        ("beam_origin_plastic", origin_plastic),
+                        ("beam_origin_accumulated", origin_accumulated))
+            if self.owner._bl5_shell_material:
+                shell_plastic, shell_alpha = _shell_material_arrays(self._shell_origins)
+                parent_plastic, parent_alpha = _shell_material_arrays(self._shell_predecessors)
+                material += (("shell_plastic", shell_plastic), ("shell_alpha", shell_alpha),
+                             ("shell_origin_plastic", parent_plastic),
+                             ("shell_origin_alpha", parent_alpha))
+            return _encode_binary_checkpoint(kind("finite_bl5_coupled" if
+                self.owner._bl5_shell_material else "finite_bl5_material"),
+                self._checkpoint_identity(), generation, arrays + material)
         if getattr(self.owner, "_finite_bl5", False):
             return _encode_binary_checkpoint(kind("finite_bl5"),
                 self._checkpoint_identity(), generation, arrays)
@@ -1270,8 +1304,9 @@ class FinitePointDriver:
         if type(value) is not dict:
             raise ValueError("incompatible experimental finite checkpoint")
         if ((value.get("schema") in (_BINARY_SCHEMAS["finite_bl5"],
-                _BINARY_SCHEMAS["finite_bl5_material"])) != bool(owner._finite_bl5) or
-                owner._bl5_material != (value.get("schema") == _BINARY_SCHEMAS["finite_bl5_material"])):
+                _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) != bool(owner._finite_bl5) or
+                owner._bl5_material != (value.get("schema") in (_BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) or
+                owner._bl5_shell_material != (value.get("schema") == _BINARY_SCHEMAS["finite_bl5_coupled"])):
             raise ValueError("finite BL5 checkpoint requires its matching line policy")
         native_shell = value.get("schema") == NATIVE_SHELL_SCHEMA
         stable_s3 = value.get("schema") == STABLE_NATIVE_SCHEMA
@@ -1285,15 +1320,17 @@ class FinitePointDriver:
         s3_material = (value.get("schema") == FINITE_S3_MATERIAL_CHECKPOINT or
                        (native_shell and bool(owner._definition.shell.s3_elements)))
         shell_material = value.get("schema") in (
-            FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA)
+            FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA, _BINARY_SCHEMAS["finite_bl5_coupled"])
         material = value.get("schema") in (
-            _BINARY_SCHEMAS["finite_bl5_material"],
+            _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"],
             FINITE_MATERIAL_CHECKPOINT, FINITE_SHELL_MATERIAL_CHECKPOINT,
             FINITE_S3_MATERIAL_CHECKPOINT)
         expected_keys = (base_keys | {"beam_plastic", "beam_accumulated"}
                          if material else base_keys)
         if owner._bl5_material:
             expected_keys |= {"beam_origin_plastic", "beam_origin_accumulated"}
+        if owner._bl5_shell_material:
+            expected_keys |= {"shell_origin_plastic", "shell_origin_alpha"}
         if native_material:
             expected_keys |= {name for prefix in ("origin", "accepted")
                 for name, _ in native_history_shapes(owner._beam_parts, prefix)}
@@ -1306,7 +1343,7 @@ class FinitePointDriver:
                               "shell_origin_q", "shell_origin_anchors", "s3_states"}
         if (set(value) != expected_keys or
                 value["schema"] not in
-                (FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
+                (FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
@@ -1411,6 +1448,12 @@ class FinitePointDriver:
         else:
             shell_origins = self._shell_origins
         shell_accepted = shell_origins
+        if owner._bl5_shell_material:
+            origin_plastic = _owned(value["shell_origin_plastic"], (q4_count, 12, 3))
+            origin_alpha = _owned(value["shell_origin_alpha"], (q4_count, 12))
+            if np.any(origin_alpha < 0.):
+                raise ValueError("nonphysical shell J2 predecessor")
+            shell_origins = _shell_material_states(origin_plastic, origin_alpha)
         if native_shell:
             origin_plastic = _owned(value["shell_origin_plastic"], (q4_count, 12, 3))
             origin_alpha = _owned(value["shell_origin_alpha"], (q4_count, 12))
