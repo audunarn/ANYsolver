@@ -266,3 +266,9 @@ __all__ += ["GENERALIZED_BRANCH_EVENT_TRIAL"]
 
 from ._stiffened_shell_generalized_recovery import GeneralizedBeamElementRecovery, GeneralizedBeamStationRecovery
 __all__ += ["GeneralizedBeamElementRecovery", "GeneralizedBeamStationRecovery"]
+
+from ._stiffened_shell_arc_control import ArcLengthControl
+from ._stiffened_shell_arc_metric import PhysicalChordMetric
+from ._stiffened_shell_arc_publication import ArcResult
+from ._stiffened_shell_arc_trial import ArcSelectionFailure, ArcAttempt
+__all__ += ["ArcLengthControl", "PhysicalChordMetric", "ArcResult", "ArcSelectionFailure", "ArcAttempt"]

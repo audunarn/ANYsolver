@@ -895,6 +895,8 @@ class ExperimentalGEAnalysis:
             capabilities["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         if self._bl5_shell_material:
             capabilities["displacement_control"] = "experimental_nodal_translation_seeded_v1"
+            if getattr(self,"_external_context",None) is None:
+                capabilities["arc_length"] = "experimental_fixed_mesh_affine_nodal_dead_translation_v1"
             capabilities["selected_finite_recovery"] = "experimental_cached_nodes_material_v1"
         return capabilities
 
@@ -923,6 +925,9 @@ class ExperimentalGEAnalysis:
             details["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         if self._modal_only:
             details["modal_boundary_policy"] = self._definition.modal_boundary_policy
+        if self._bl5_shell_material:
+            details["arc_metric_node_order"] = (tuple(("shell",int(i)) for i in self._shell_ids)
+                +tuple(("beam",int(i)) for i in self._beam_ids))
         return details
 
     @property
@@ -1050,6 +1055,8 @@ class ExperimentalGEAnalysis:
         self._require_stateful_scope()
         if on_accepted is not None and not callable(on_accepted):
             raise TypeError("on_accepted must be callable or None")
+        if getattr(self,"_arc_snapshot",None) is not None:
+            raise ValueError("arc history requires its dedicated continuation controller")
         if displacement_control is not None:
             if self._unsupported_modes:
                 raise ValueError(self._unsupported_modes[0])
@@ -1102,6 +1109,8 @@ class ExperimentalGEAnalysis:
     def rebase_rotations(self, expected_generation: int, *, cancellation_token=None):
         """Issue an experimental physical shell-anchor reset at the same load."""
         self._require_open()
+        if getattr(self,"_arc_snapshot",None) is not None:
+            raise ValueError("arc chart rebasing is not yet admitted")
         if getattr(self,"_displacement_snapshot",None) is not None or getattr(self,"_displacement_adaptive",None) is not None:
             from ._stiffened_shell_displacement_control import rebase
             return rebase(self,expected_generation,cancellation_token=cancellation_token)
@@ -1116,6 +1125,8 @@ class ExperimentalGEAnalysis:
     @_accepted_snapshot
     def checkpoint(self) -> bytes:
         self._require_open()
+        if getattr(self,"_arc_snapshot",None) is not None:
+            return self._arc_snapshot[0]
         if getattr(self,"_displacement_adaptive",None) is not None:
             return self._displacement_adaptive[1]
         if getattr(self,"_displacement_snapshot",None) is not None:
@@ -1150,6 +1161,15 @@ class ExperimentalGEAnalysis:
         return raw
 
     @_state_writer
+    def continue_arc_length(self, actions, control, *, steps=1,
+                            cancellation_token=None, on_accepted=None):
+        self._require_open()
+        self._require_stateful_scope()
+        from ._stiffened_shell_arc_control import solve
+        return solve(self,actions,control,steps=steps,cancellation_token=cancellation_token,
+                     on_accepted=on_accepted)
+
+    @_state_writer
     @_accepted_snapshot
     def restore(self, raw: bytes) -> LinearResult:
         self._require_open()
@@ -1162,6 +1182,10 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
+        from ._stiffened_shell_arc_checkpoint import MAGIC as ARC_MAGIC
+        if raw.startswith(ARC_MAGIC):
+            from ._stiffened_shell_arc_publication import publish
+            return publish(self,raw,expected_driver=None,expected_generation=self._generation,restoring=True)
         from ._stiffened_shell_displacement_adaptive import MAGIC as DISPLACEMENT_ADAPTIVE_MAGIC, EVENT_MAGIC
         if raw.startswith((DISPLACEMENT_ADAPTIVE_MAGIC,EVENT_MAGIC)):
             from ._stiffened_shell_displacement_adaptive import decode,validate_progress
@@ -1494,4 +1518,5 @@ class ExperimentalGEAnalysis:
         self._external_context = None
         self._displacement_snapshot = None
         self._displacement_adaptive = None
+        self._arc_snapshot = None
         self._closed = True

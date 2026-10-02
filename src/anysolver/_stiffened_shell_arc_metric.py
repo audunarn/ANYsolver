@@ -1,4 +1,4 @@
-"""Local physical chord constraint, private and not programme-qualified.
+"""Local physical chord metric, experimental and not programme-qualified.
 
 Weights are explicit reference quadrature weights, frozen by the caller. No
 nodal-count normalization or mass is inferred. This is a seminorm on the mixed

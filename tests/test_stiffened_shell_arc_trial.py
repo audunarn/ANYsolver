@@ -9,6 +9,10 @@ from anysolver._stiffened_shell_displacement_corrector import bordered_path_corr
 
 
 def test_physical_chord_gradient_units_frame_and_ownership():
+    from anysolver import stiffened_shell as ss
+    class AlteredMetric(PhysicalChordMetric):pass
+    with pytest.raises(ValueError,match='explicit physical arc metric'):
+        ss.ArcLengthControl('beam',105,2,AlteredMetric([1.],1.),1e-5)
     weights=np.array([.2,.8]);metric=PhysicalChordMetric(weights,2.)
     weights[:]=9.
     with pytest.raises(ValueError):metric.weights.setflags(write=True)
@@ -50,7 +54,7 @@ def test_native_arc_trial_preserves_accepted_owner(request,tmp_path):
     owner=make(request,coupled())
     seed=(Path(__file__).parent/'data/stiffened_shell_event_excursion/force-seed.bin').read_bytes()
     owner.restore(seed);driver=owner._finite_driver
-    count=len(owner._shell_ids)+len(owner._beam_ids)
+    count=len(owner.preflight()['arc_metric_node_order'])
     metric=PhysicalChordMetric(np.full(count,1/count),owner._reference_length)
     args=dict(load_direction=driver._load(_action(-15.625)).copy(),metric=metric,
         radius=1e-5,predictor_dof=owner._shell_count+6*owner._beam_index[105]+2,orientation=-1)
@@ -82,3 +86,98 @@ def test_native_arc_trial_preserves_accepted_owner(request,tmp_path):
     args['load_direction']=driver._load(_action(-15.625))
     with pytest.raises(SolveCancelled):correct(driver,**args,cancellation_token=token)
     assert owner.checkpoint()==seed
+    from hashlib import sha256
+    from anysolver._stiffened_shell_arc_checkpoint import from_selection,decode_snapshot,encode_snapshot
+    from anysolver._stiffened_shell_arc_publication import publish
+    raw=from_selection(owner,selected,seed_generation=owner._generation,
+        seed_sha256=sha256(seed).hexdigest())
+    metadata,arrays=decode_snapshot(owner,raw)
+    wrong=dict(metadata,predecessor_sha256='0'*64)
+    with pytest.raises(ValueError,match='predecessor'):
+        publish(owner,encode_snapshot(owner,wrong,arrays),expected_driver=driver,expected_generation=owner._generation)
+    wrong=dict(metadata,generation=metadata['generation']+1,seed_generation=metadata['seed_generation']+1)
+    with pytest.raises(ValueError,match='predecessor'):
+        publish(owner,encode_snapshot(owner,wrong,arrays),expected_driver=driver,expected_generation=owner._generation)
+    assert owner.checkpoint()==seed
+    with pytest.raises(SolveCancelled):
+        publish(owner,raw,expected_driver=driver,expected_generation=owner._generation,cancellation_token=token)
+    assert owner.checkpoint()==seed
+    accepted=publish(owner,raw,expected_driver=driver,expected_generation=owner._generation)
+    assert owner.checkpoint()==raw and accepted.arc_position==result.radius
+    restored=make(request,coupled());repeated=restored.restore(raw)
+    assert restored.checkpoint()==raw
+    np.testing.assert_array_equal(accepted.cell_resultants,repeated.cell_resultants)
+    np.testing.assert_array_equal(accepted.shell_layer_alpha,repeated.shell_layer_alpha)
+    with pytest.raises(ValueError,match='arc history'):owner.solve(_action(-15.625))
+    # Checksum-correct corruption still fails physical path validation.
+    metadata,arrays=decode_snapshot(owner,raw);bad=dict(arrays)
+    bad['normal_spins']=arrays['normal_spins']*2.
+    with pytest.raises(ValueError,match='normal|path'):encode_snapshot(owner,metadata,bad)
+
+
+def test_public_arc_cancel_restart_and_absolute_load(request,tmp_path,monkeypatch):
+    from dataclasses import replace
+    from anysolver import stiffened_shell as ss
+    from anysolver.control import CancellationToken,SolveCancelled
+    from test_stiffened_shell_bl5_coupled_material import coupled
+    from test_stiffened_shell_bl5_material import make
+    from test_stiffened_shell_bl5_finite import _action
+    from anysolver._stiffened_shell_arc_checkpoint import decode_snapshot,encode_snapshot
+    owner=make(request,coupled())
+    seed=(Path(__file__).parent/'data/stiffened_shell_event_excursion/force-seed.bin').read_bytes()
+    owner.restore(seed)
+    preflight=owner.preflight();count=len(preflight['arc_metric_node_order'])
+    control=ss.ArcLengthControl('beam',105,2,
+        ss.PhysicalChordMetric(np.full(count,1/count),preflight['reference_length_m']),5e-6,-1)
+    token=CancellationToken();seen=[]
+    def stop(result):
+        seen.append(result);token.cancel('accepted first arc step')
+        with pytest.raises(RuntimeError,match='reentrant'):
+            owner.continue_arc_length(_action(-15.625),control)
+    with pytest.raises(SolveCancelled):
+        owner.continue_arc_length(_action(-15.625),control,steps=2,cancellation_token=token,on_accepted=stop)
+    assert len(seen)==1 and seen[0].status=='accepted_prefix'
+    first=owner.checkpoint();m,a=decode_snapshot(owner,first)
+    assert m['steps']==1 and m['amplitude_origin']==0.
+    assert len(m['attempt_history'])==1
+    for changed in (replace(control,radius=1e-5),replace(control,orientation=1),replace(control,max_iterations=21)):
+        with pytest.raises(ValueError,match='differs'):
+            owner.continue_arc_length(_action(-15.625),changed)
+    assert owner.checkpoint()==first
+    second=owner.continue_arc_length(_action(-15.625),control)
+    assert second.status=='completed' and len(second.history)==2
+    assert len(second.attempt_history)==2
+    final=owner.checkpoint();m2,a2=decode_snapshot(owner,final)
+    assert m2['attempt_history'][0]==m['attempt_history'][0]
+    assert m2['amplitude_origin']==seen[0].amplitude
+    np.testing.assert_array_equal(a2['base_load'],a['base_load'])
+    np.testing.assert_array_equal(a2['applied_load'],a['base_load']+second.amplitude*a['load_direction'])
+    restored=make(request,coupled());restored.restore(first)
+    repeated=restored.continue_arc_length(_action(-15.625),control)
+    assert restored.checkpoint()==final
+    np.testing.assert_array_equal(second.cell_resultants,repeated.cell_resultants)
+    np.testing.assert_array_equal(second.shell_layer_alpha,repeated.shell_layer_alpha)
+    # A checksum-correct deletion of earlier failed/accepted work is invalid.
+    bad=dict(m2,attempt_history=m2['attempt_history'][1:])
+    with pytest.raises(ValueError,match='attempt history'):encode_snapshot(owner,bad,a2)
+    from copy import deepcopy
+    for key,value in (('amplitude_origin',1.),('max_iterations',21),('requested_radius',1e-5)):
+        bad=deepcopy(m2);bad['attempt_history'][0][key]=value
+        with pytest.raises(ValueError):encode_snapshot(owner,bad,a2)
+    def forbidden(*args,**kwargs):raise AssertionError('selected arc recovery must not assemble')
+    monkeypatch.setattr(owner._finite_driver,'_assemble',forbidden)
+    selected=owner.recover(selection=ss.GERecoverySelection(beam_nodes=(105,),
+        beam_material_elements=(second.beam_generalized_material[0].element_id,)))
+    assert selected.amplitude==second.amplitude and selected.beam_generalized_material
+    assert owner.checkpoint()==final
+    with monkeypatch.context() as guard:
+        guard.setattr(owner,'_external_context',object(),raising=False)
+        assert 'arc_length' not in owner.capabilities
+        with pytest.raises(ValueError,match='nodal dead translations'):
+            owner.continue_arc_length(_action(-15.625),control)
+    import json
+    from dataclasses import asdict
+    (tmp_path/'arc-public.json').write_text(json.dumps(dict(history=second.history,
+        equilibrium=second.free_equilibrium_ratio,constraint=second.constraint_max,
+        attempts=[[asdict(v) for v in group] for group in second.attempt_history],
+        restart_bytes_equal=True),indent=2))

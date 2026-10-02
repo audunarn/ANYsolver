@@ -1446,3 +1446,13 @@ constitutive update. Rebase preserves previous increment dissipation; restart
 retains the saved accepted state. Constitutive identities and lifecycle are
 covered by installed checks. No full material-range, global-energy or aggregate
 scientific gate closes. [Evidence](development/r8-generalized-recovery-20261002/results.md).
+
+
+**2 October public physical arc lifecycle: IMPLEMENTED_NOT_QUALIFIED.**
+Existing owner now supports fixed-mesh Q4-J2/generalized BL5 tangent-plane
+continuation, bounded cutbacks, cached recovery, atomic predecessor-bound commit,
+and distinct restart with cumulative attempts/fixed-seed amplitude. Two-step
+cancel/restore/continue passes on installed artifacts. Source23passed;
+installed v3 27passed/1fixture failure, final v4 affected2passed with unchanged
+unaffected module identities. No G4D, first-limit-point, stability, mesh-metric or
+ANYfem arc qualification. [Evidence](development/r8-arc-public-20261002/results.md).

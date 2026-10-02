@@ -1,7 +1,7 @@
 """Uncommitted local tangent-plane continuation of coupled BL5/J2 equilibria.
 
-Development seam only: fixed mesh, explicit frozen physical weights, affine
-translational dead loads. No public controller, checkpoint or capacity claim.
+Experimental fixed mesh, explicit frozen physical weights and affine
+translational dead loads. The public controller owns commit; no capacity claim.
 """
 from dataclasses import dataclass
 import numpy as np
@@ -33,6 +33,9 @@ class ArcTrial:
     normal_translations: np.ndarray
     normal_spins: np.ndarray
     metric: PhysicalChordMetric
+    predictor_dof: int
+    orientation: int
+    amplitude_origin: float
 
 
 class ArcTrialFailure(DisplacementCorrectorFailure):
@@ -59,6 +62,10 @@ class ArcSelection:
     requested_radius: float
     trial: ArcTrial
     attempts: tuple
+    max_cutbacks: int
+    max_attempts: int
+    max_iterations: int
+    max_backtracks: int
 
 
 class ArcSelectionFailure(RuntimeError):
@@ -85,6 +92,8 @@ def select_trial(driver, *, radius, max_cutbacks=4, max_attempts=5,
         shell=driver._shell_origins;beam=driver._beam_origins
     kwargs=dict(kwargs)
     kwargs['load_direction']=np.array(kwargs['load_direction'],dtype=float,copy=True)
+    if kwargs.get('load_base') is not None:
+        kwargs['load_base']=_owned(kwargs['load_base'])
     attempts=[]
     def current():
         if (owner._finite_driver is not driver or owner._generation!=generation
@@ -110,7 +119,8 @@ def select_trial(driver, *, radius, max_cutbacks=4, max_attempts=5,
         if failure is None:
             with owner._commit_lock:
                 current()
-                return ArcSelection(float(radius),trial,tuple(attempts))
+                return ArcSelection(float(radius),trial,tuple(attempts),max_cutbacks,max_attempts,
+                    kwargs.get('max_iterations',20),kwargs.get('max_backtracks',12))
     raise ArcSelectionFailure("arc cutback/attempt limit",attempts)
 
 
@@ -133,7 +143,8 @@ def path_row(driver,state,parent,metric,normal=None):
 
 def correct(driver, *, load_direction, metric, radius, predictor_dof,
             orientation, max_iterations=20, max_backtracks=12,
-            cancellation_token=None, iteration_records=None):
+            cancellation_token=None, iteration_records=None,
+            load_base=None, amplitude_origin=0.):
     """Return a candidate; all trial material updates share one predecessor."""
     from ._stiffened_shell_ge_finite_experimental import _RotationStepTooLarge
     from ._stiffened_shell_bl5_local_experimental import BL5TrialDomainError
@@ -145,7 +156,7 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
             or not owner._bl5_shell_material or driver._accepted is None
             or driver._external is not None):
         raise ValueError("accepted coupled BL5/J2 with fixed physical metric required")
-    if (not np.isfinite(radius) or radius<=0. or orientation not in (-1,1)
+    if (not np.isfinite(radius) or radius<=0. or type(orientation) is not int or orientation not in (-1,1)
             or type(predictor_dof) is not int or predictor_dof not in owner._free
             or not 0<=predictor_dof<nodal or predictor_dof%6>=3
             or type(max_iterations) is not int or not 1<=max_iterations<=24
@@ -165,12 +176,17 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
             raise ValueError("stale continuation driver")
         generation=owner._generation;parent=driver._state
         shell=driver._shell_origins;beam=driver._beam_origins
-        base=getattr(driver,"_displacement_applied_load",None)
-        if base is None:
-            base=driver._applied_load if driver._programme is not None else driver._load_factor*driver._pattern
-        base=np.array(base,copy=True)
-    if np.any(base[~allowed]):
-        raise ValueError("translational accepted dead load required")
+        accepted_load=getattr(driver,"_arc_applied_load",None)
+        if accepted_load is None:accepted_load=getattr(driver,"_displacement_applied_load",None)
+        if accepted_load is None:
+            accepted_load=driver._applied_load if driver._programme is not None else driver._load_factor*driver._pattern
+        base=_owned(accepted_load if load_base is None else load_base)
+        if (not isinstance(amplitude_origin,(float,int,np.floating,np.integer))
+                or isinstance(amplitude_origin,(bool,np.bool_)) or not np.isfinite(amplitude_origin)
+                or base.shape!=(n,) or not np.isfinite(base).all() or np.any(base[~allowed])
+                or not np.array_equal(base+float(amplitude_origin)*pattern,accepted_load)):
+            raise ValueError("affine arc load must start at the accepted endpoint")
+    pattern=_owned(pattern)
     free=np.r_[owner._free,np.arange(n,size)]
     direction=np.r_[pattern,np.zeros(size-n)]
     energy=float(np.max((abs(owner._K)@owner._coordinate_scale)*owner._coordinate_scale))
@@ -197,7 +213,7 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
         gap,_=path(state)
         return float(np.hypot(np.linalg.norm(evaluation[0][free]*weights[free]),gap))
 
-    state=driver._increment_origin(parent);amplitude=0.;evaluation=evaluate(state,amplitude)
+    state=driver._increment_origin(parent);amplitude=float(amplitude_origin);evaluation=evaluate(state,amplitude)
     # Homogeneous equilibrium tangent, oriented by a physical free translation.
     # Retained entries follow that tangent but do not determine its norm.
     step,delta=bordered_correction(evaluation[1],np.zeros(size),direction,
@@ -222,7 +238,7 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
         return ArcTrial(state,amplitude,evaluation,generation,parent,shell,beam,
             float(radius),float(gap/radius),evaluations,solves,rejected,
             sum(row['cell_evaluations'] for row in events),_owned(base),_owned(pattern),
-            _owned(normal[0]),_owned(normal[1]),metric)
+            _owned(normal[0]),_owned(normal[1]),metric,predictor_dof,orientation,float(amplitude_origin))
     for iteration in range(max_iterations+1):
         gap,gradient=path(state)
         if iteration_records is not None:
