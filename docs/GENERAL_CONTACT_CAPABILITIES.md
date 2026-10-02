@@ -981,3 +981,7 @@ This profile is developmental and supplies no general curved/swept or C5 admissi
 ### Segmented native normal potential — development
 
 Explicit straight/untwisted reference profile now integrates the normal potential across contact boundaries, with retained both-body work, dimensional error controls and definition-bound restart. Six local/integrated checks pass; friction still uses fixed material points. No native C5 acceptance or installed claim. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/segmented_normal_results.md).
+
+### Native material-coordinate history replay — development
+
+Accepted initial geometry and actual motion increments can be queried at new fixed material coordinates without interpolating Coulomb history. Initial-projection anchors, owner path caps, aggregate replay limits and unchanged transaction/restart are checked. This supplies history for integration refinement; adaptive friction integration and C5 acceptance remain open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/material_history_results.md).

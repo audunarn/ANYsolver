@@ -1,0 +1,53 @@
+{
+  "base": "4129e343",
+  "scope": "source development only",
+  "runs": [
+    {
+      "name": "contact-native-material-replay-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 189169664,
+          "limit_mib": 953,
+          "elapsed_seconds": 11.129086399974767,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact-native-material-replay-owner-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 186085376,
+          "limit_mib": 953,
+          "elapsed_seconds": 7.859489099995699,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact-native-material-replay-bound-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 185425920,
+          "limit_mib": 953,
+          "elapsed_seconds": 8.659164599957876,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "source_sha256": {
+    "src/anysolver/general_contact/native_surface_history.py": "e00249b7262a194674186dfde45e05b7fda5bc96079ba3dcf3ec47411f89abed",
+    "src/anysolver/general_contact/native_surface_quadrature.py": "8161ff6b66db73a8c21b6dc53131e7123aeabacf57391f91f67966934220d10d",
+    "tests/test_general_contact_native_surface_history.py": "76643772b6327933c5db8d7d0a105d18f64914aece2afbc0bc4d717298461da5"
+  }
+}

@@ -123,35 +123,42 @@ class NativeRoundSurfaceRule:
         The second term is constant. A chord/rotation Lipschitz bound encloses
         the first term on every interval; sampled positivity alone is not used.
         """
-        from .native_surface_path import material_path_pose
-        if type(maximum_intervals) is not int or maximum_intervals<1:
-            raise ValueError('positive surface orientation interval cap required')
-        end=material_path_pose(start,translations,angular,shell_increment,1.)
-        visited=0
-        for sample in self.samples:
-            station=sample.station; cell=station.cell; reference=station.reference
-            frame=reference.frame(station.xi); director=frame[:,0]
-            radial=station.radius*np.array((0.,cos(station.angle),sin(station.angle)))
-            lift=reference.derivative(station.xi)-(reference.coordinates[cell+1]-reference.coordinates[cell])
-            constant=float((lift+reference.frame_derivative(station.xi)@radial)@director)
-            def chord(pose):
-                return pose.positions[cell+1]-pose.positions[cell]+pose.position_low[cell+1]-pose.position_low[cell]
-            c0,c1=chord(start),chord(end)
-            rate=np.linalg.norm(c1-c0)+max(np.linalg.norm(c0),np.linalg.norm(c1))*np.linalg.norm(np.asarray(angular)[cell])
-            padding=512*np.finfo(float).eps*max(1.,np.linalg.norm(c0),np.linalg.norm(c1),abs(constant))
-            pending=[(0.,1.)]; point_visits=0
-            while pending:
-                if point_visits>=maximum_intervals:
-                    raise ValueError('native/S3 material history path requires subdivision: source orientation budget')
-                left,right=pending.pop(); middle=(left+right)/2
-                pose=material_path_pose(start,translations,angular,shell_increment,middle)
-                value=float(chord(pose)@(pose.cell_rotations[cell]@director))+constant
-                visited+=1; point_visits+=1
-                if value<=padding:
-                    raise ValueError('native/S3 material history path requires subdivision: source surface orientation')
-                if value-rate*(right-left)/2>padding:
-                    continue
-                if middle==left or middle==right:
-                    raise ValueError('native/S3 material history path requires subdivision: source parameter resolution')
-                pending.extend(((left,middle),(middle,right)))
-        return visited
+        return sum(certify_station_orientation_path(sample.station,start,translations,angular,
+            shell_increment,maximum_intervals=maximum_intervals) for sample in self.samples)
+
+
+def certify_station_orientation_path(station,start,translations,angular,shell_increment,*,maximum_intervals=256):
+    """Same conservative orientation bound for existing or newly queried points."""
+    from .native_surface_path import material_path_pose
+    if type(station) is not NativeRetainedRoundStation:
+        raise TypeError('exact native material station required')
+    if type(maximum_intervals) is not int or maximum_intervals<1:
+        raise ValueError('positive surface orientation interval cap required')
+    end=material_path_pose(start,translations,angular,shell_increment,1.)
+    visited=0
+    cell=station.cell; reference=station.reference
+    frame=reference.frame(station.xi); director=frame[:,0]
+    radial=station.radius*np.array((0.,cos(station.angle),sin(station.angle)))
+    lift=reference.derivative(station.xi)-(reference.coordinates[cell+1]-reference.coordinates[cell])
+    constant=float((lift+reference.frame_derivative(station.xi)@radial)@director)
+    def chord(pose):
+        return pose.positions[cell+1]-pose.positions[cell]+pose.position_low[cell+1]-pose.position_low[cell]
+    c0,c1=chord(start),chord(end)
+    rate=np.linalg.norm(c1-c0)+max(np.linalg.norm(c0),np.linalg.norm(c1))*np.linalg.norm(np.asarray(angular)[cell])
+    padding=512*np.finfo(float).eps*max(1.,np.linalg.norm(c0),np.linalg.norm(c1),abs(constant))
+    pending=[(0.,1.)]; point_visits=0
+    while pending:
+        if point_visits>=maximum_intervals:
+            raise ValueError('native/S3 material history path requires subdivision: source orientation budget')
+        left,right=pending.pop(); middle=(left+right)/2
+        pose=material_path_pose(start,translations,angular,shell_increment,middle)
+        value=float(chord(pose)@(pose.cell_rotations[cell]@director))+constant
+        visited+=1; point_visits+=1
+        if value<=padding:
+            raise ValueError('native/S3 material history path requires subdivision: source surface orientation')
+        if value-rate*(right-left)/2>padding:
+            continue
+        if middle==left or middle==right:
+            raise ValueError('native/S3 material history path requires subdivision: source parameter resolution')
+        pending.extend(((left,middle),(middle,right)))
+    return visited

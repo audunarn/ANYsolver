@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.23. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.24. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -417,3 +417,7 @@ retains all chronological findings and historical numerical dispositions.
 Explicit straight_segmented integration now passes independent saved-force, full work/tangent and actual coupled friction/restart development checks. See [evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/segmented_normal_results.md). The older sampled-force failure remains historical evidence. Next question: does stronger enforcement reduce the independent continuous gap with the corrected normal integral? One frictionless1e5/1e6 comparison,180s/953MiB, isolates normal enforcement from unresolved fixed-point friction integration. If gap improves and force stabilizes, proceed to pressure-aware friction/history integration; otherwise diagnose the observed failure before another solve. No acceptance gate is relaxed.
 
 The named frictionless comparison completed:307.864→122.569um continuous penetration,0.875% normal-reaction change;72.893s/202125312B. Existing fixture gates pass;49um qualification starting budget does not. [Retained screen](docs/d1_review_support/contact_c5_native_surface_point_20261002/segmented_enforcement_results.md). Next implement pressure-aware material-history integration/refinement, reusing saved poses to discriminate quadrature before new coupled solves.
+
+Current history slice: reconstruct bound accepted native motion at arbitrary material coordinates using unit-area point queries and frozen initial-projection anchors. Preserve actual rotation increments, all historical event/orientation checks and an aggregate point-path budget. Verify scalar new-node first touch, old-node press/open/recontact parity and one real coupled/restored transaction under180s/953MiB. This supplies quadrature refinement with physical history; it does not yet provide adaptive friction integration. Initial integrated fixture query was geometrically open, contradicting its test expectation; retain that test failure and move the query to the loaded end of the same unchanged fixture.
+
+Material-coordinate history replay now passes old-node lifecycle parity, independent new-node scalar first-touch and coupled/restored snapshot checks. Independent review corrected the captured path-cap binding. [Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/material_history_results.md). Next implement pressure/history-front-aware friction integration from these unit-area queries. Open Gauss samples alone cannot certify an inactive panel; include conservative historical support bounds or fail unresolved rather than lose narrow pulses. Keep normal integration separate and reuse saved poses before new coupled runs.
