@@ -895,6 +895,7 @@ class ExperimentalGEAnalysis:
             capabilities["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         if self._bl5_shell_material:
             capabilities["displacement_control"] = "experimental_nodal_translation_seeded_v1"
+            capabilities["selected_finite_recovery"] = "experimental_cached_nodes_material_v1"
         return capabilities
 
     def preflight(self):
@@ -1086,14 +1087,15 @@ class ExperimentalGEAnalysis:
     @_accepted_snapshot
     def recover(self, *, selection=None):
         self._require_open()
-        if selection is not None and getattr(self,"_displacement_snapshot",None) is not None:
-            raise ValueError("selected displacement recovery is not yet admitted")
         if self._finite_driver is not None:
             result = self._finite_driver.recover()
         else:
             if self._accepted is None:
                 raise RuntimeError("no accepted mixed linear result")
             result = self._accepted[0]
+        from ._stiffened_shell_selected_recovery import GERecoverySelection, recover
+        if type(selection) is GERecoverySelection:
+            return recover(self, result, selection)
         return result if selection is None else selected_wrenches(self, result, selection)
 
     @_state_writer

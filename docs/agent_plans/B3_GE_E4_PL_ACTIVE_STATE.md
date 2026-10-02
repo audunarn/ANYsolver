@@ -6,8 +6,8 @@ Full Revision8 plan/goal in ../b3-ge-e4-pl-coupling remains active. G0–G6,
 F01–F13,V01–V28,B01–B18 and all final obligations remain binding. Experimental
 implementation/testing is not scientific acceptance or release.
 Solver: stiffened-main-reconcile-20261001, codex/stiffened-main-reconcile-20261001,
-Slice bases: solver c32782ed; ANYfem .worktrees/experimental-ge-panel-consumer
-base eaed5ec. Resolve current local commits with git log; artifacts above bind code.
+Slice bases: solver3da750f8; ANYfem .worktrees/experimental-ge-panel-consumer
+base cf6b9b3. Resolve current local commits with git log; artifacts above bind code.
 Local scoped commits permitted; no push/main merge/publication or contact-worker
 communication. Historical us3-modal-canary-v1.zip contains credentials: do not
 print/copy/disseminate it; no history-rewrite authority. New evidence uses only
@@ -44,10 +44,17 @@ consumer fixture. Independent consumer review found no blocking defect.
 [Results, raw evidence, reviews and retained failures](development/r8-bl5-coupled-material-20261002/results.md).
 Previous active note preserved byte-for-byte inside displacement-adaptive-installed-v1.zip.
 
-Local commit scope: solver coupled material changes in four original source modules,
-five new displacement modules, six associated test files and documentation/evidence.
-ANYfem scope: solve/stiffened_shell.py and coupled consumer test. Local commits only; no push, release/default/version changes. Complete goal is
-not achieved.
+Selected finite recovery is now implemented through GERecoverySelection with
+ordered model IDs, detached node/material arrays and explicit coordinate-covector
+reaction labels. No assembly/history replay; full accepted storage remains.
+Initial absent-frame/test-guard defects corrected and independently reviewed.
+Installed solver8checks pass27.08s; consumer1complete workflow passes40.86s.
+Solver wheel4143309f...f002b01e;404modules match. Consumer60da1b9d...70c030;
+98modules match; onsite imports,1thread/JIT off. No speedup/qualification claim.
+[Selected-recovery evidence and failed source run](development/r8-selected-recovery-20261002/results.md).
+Current local commit scope: selector module, owner dispatch/public exports,
+selected-recovery test, ANYfem consumer test extension, docs/evidence. Local only;
+no push/main/default/version changes. All jobs terminal; complete goal not achieved.
 
 ## Remaining decision and next action
 
@@ -60,10 +67,10 @@ longer-interval or larger-budget campaign. Current adaptive lifecycle tests use
 known-working fixtures and injected failures; they do not resolve the branch.
 
 Next permitted development: address one bounded remaining lifecycle requirement
-(selected recovery or displacement chart rebase), preserving the verified artifacts.
+(displacement chart rebase), preserving the verified artifacts.
 Before another branch experiment specify a material/tangent/path discriminator
 from the preserved failure and obtain focused review. No automatic refinement.
-Displacement still excludes external loads, selected recovery, post-seed rebase
+Displacement still excludes external loads, post-seed rebase
 and force-mode continuation. These remain obligations, not permanent exclusions.
 M2/F03 controlled clamp-transfer reference remains outside1%; U1shearcanary11.1423%
 too stiff. No automatic corrected-U1 campaign. Pressure assessment amendment awaits

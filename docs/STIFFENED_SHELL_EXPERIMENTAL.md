@@ -543,8 +543,30 @@ control and numerical limits. Observer exceptions after commit propagate while
 preserving the committed state.
 
 Changing control/load direction after restart, force-mode continuation, external
-loads, selected recovery and post-seed chart rebasing are explicitly rejected.
+loads and post-seed chart rebasing are explicitly rejected.
 These remain future obligations, not permanent programme exclusions. No arc-length,
 limit-point, capacity or full signed-reversal qualification is implied. Fixed-step
 installed checks passed for their recorded artifact; adaptive evidence is recorded
 separately in the current development results.
+
+
+### Selected accepted finite recovery
+
+`recover(selection=GERecoverySelection(...))` returns ordered cached node and
+material outputs from an accepted finite state, including the experimental coupled
+BL5 displacement route. Select `shell_nodes`, `beam_nodes`,
+`shell_material_elements` and `beam_material_elements` using model IDs (material
+IDs match the full accepted records), not execution row numbers. Empty groups
+request no output; unknown/unavailable IDs, duplicates and untyped containers fail.
+The legacy rigid-footprint selector is unchanged.
+
+`SelectedGERecovery` carries model identity, generation, controller position and
+owned selected arrays. Shell rotations are physical display rotation vectors;
+`shell_frames` gives their physical orientation matrices, including before a chart
+rebase. Support rows are explicitly coordinate covectors in the current chart,
+not automatically display-ready spatial moments. Existing point/line wrench
+recovery retains its own physical-work contract. Shell material records preserve
+their local-frame conventions; beam accumulated station values keep the existing
+native recovery meaning. No interpolation, smoothing or elastic reconstruction is
+introduced. Selection does not evaluate elements or replay accepted history; the
+owner still retains its complete accepted result. No storage/speedup claim follows.

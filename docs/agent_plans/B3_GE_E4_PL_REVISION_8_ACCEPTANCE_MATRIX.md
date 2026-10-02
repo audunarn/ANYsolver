@@ -1373,3 +1373,12 @@ review fixes observer-after-commit handling and domain-rejection accounting.
 Cancellation/restart and failure before first displacement acceptance are covered.
 The -68um branch failure remains unresolved; no reversal/capacity acceptance.
 Installed artifact and limitations: [results](development/r8-bl5-coupled-material-20261002/results.md).
+
+
+**2 October selected finite recovery: IMPLEMENTED_NOT_QUALIFIED.**
+GERecoverySelection selects ordered model nodes and accepted material records
+without element evaluation/history replay; returns detached arrays and explicitly
+labelled support coordinate covectors. Installed8checks cover coupled force/
+displacement restart, ownership, unavailable IDs and legacy footprint selection.
+No full-storage reduction or performance claim; no aggregate gate closes.
+[Evidence](development/r8-selected-recovery-20261002/results.md).

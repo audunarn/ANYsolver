@@ -7,6 +7,7 @@ release are separate decisions tied to final installed artifacts.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from ._stiffened_shell_selected_recovery import GERecoverySelection, SelectedGERecovery
 from ._stiffened_shell_ge_distributed_load import GEBeamLineAction, GEBeamDistributedLoad, GEDistributedRecovery
 from ._stiffened_shell_ge_distributed_programme import GEBeamDistributedProgramme
 from ._stiffened_shell_ge_pressure_load import GEShellPressureAction, GEShellPressureLoad, GEPressureRecovery
