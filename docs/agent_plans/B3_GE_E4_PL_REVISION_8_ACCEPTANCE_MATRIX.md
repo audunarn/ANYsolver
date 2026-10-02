@@ -1190,3 +1190,12 @@ continuation. Source reviews complete within this experimental scope; no release
 Mixed follower still FAILED and finite S3 enhanced-dead still NOT_IMPLEMENTED;
 no aggregate G4A/G6 acceptance. Evidence lives in ANYfem docs/development/
 r8-ge-pressure-consumer-20261002/results.md and raw-v1.zip.
+
+**2 October finite S3 dead-work decision:** native reference pressure does not
+uniquely specify a finite enhanced surface. Full-log lift failed an unchanged-
+director drilling-work test; evidence retained. A director-only tilt revision
+passes11 distinct local consistency/physical-screen cases and2 existing owner
+rejection checks. Independent Read review supports further private validation.
+No public admission: internal finite-kinematics compatibility and matched physical
+work remain open; mixed follower failure unchanged. G4A remains OPEN.
+[Bounded derivation, decision and evidence](development/r8-ge-pressure-work-20261002/s3-dead-work-candidate.md).

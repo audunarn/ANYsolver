@@ -69,6 +69,15 @@ Next: resolve mixed-pressure representation/assessment decision without more bli
 precision substitutions, and complete finite native S3 dead-work contract. Preserve
 numerical failures; no mixed qualification from consumer serialization/mocks.
 
+2 October continuation from e59c9221: private S3 full-log dead-work lift rejected:
+unchanged directors with nodal drilling changed work by0.00832J. Targeted director
+tilt lift passes11 distinct local controls;2existing owner rejection checks pass.
+Independent Read review supports private investigation, not admission. No job live.
+Next: physical nonuniform director/surface shear compatibility and matched work
+reference, then distinct-identity owner integration if satisfactory. Internal
+full-log kinematics and this new finite surface are not yet physically reconciled.
+[Derivation, failed evidence and review](development/r8-ge-pressure-work-20261002/s3-dead-work-candidate.md).
+
 BL5 law/transfer remains open:24growing-space checks cover7ratios/3levels plus1:16;
 one indefinite mixed kernel passes, not whole-matrix SPD. Rigid-carrier normalspin
 last tip0.10052%, integratedFy2.5023%, rootMz2.6397%, maxmoment2.9135%: no1%acceptance,
