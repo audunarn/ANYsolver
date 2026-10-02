@@ -1,39 +1,34 @@
 # General contact restart — 2 October 2026
 
-Full C0–C9 active. Checkout C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001. Base1694c34f plus current front-work slice.
-No original-worktree/other-chat access, main merge/publication/release/default/shared ABC changes.
-Goal2026-09-30.4/current plan govern; old goal-tool paths stale. Own reviews only.
+Full C0–C9 active. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
+branch codex/contact-main-reconcile-20261001. Base5cfc905b plus owned closed-event slice.
+Goal2026-09-30.4/plan2026-10-02.45 govern. No original-worktree/other-chat access;
+no main merge/push/publication/release/default/shared ABC changes. Tiered workflow;
+optional lower-tier workers previously unavailable; owned OpenAI source review only.
 
-New integrated DEVELOPMENT PASS: integrate_open_event_friction_fronts reuses adaptive
-engine, whole-angle stationary branch proof, per-angle moving cuts and conservative
-uncertainty-strip work enclosure. Scalar independent pulse-appearance integral passes;
-70.46s test,75.6385s runner,234139648bytes sampled peak. Existing limits/tolerances kept.
-One released-origin segment/one stationary branch; all captured endpoints strictly open.
-Work midpoint enclosure uncertainty adds to absolute error; no zero point history invented.
-Source review corrected area/edge denominator error guards. Mixed4/8 estimates guide
-quadrature refinement; wrong support-vs-quadrature wiring corrected after saved failure.
-Proof identity and shared counters retained. Raw failed caps/diagnostic/success all saved.
+NEW: standalone evaluate_closed_event_sequence retains completed window history and
+uses original-origin final closing-root Jet2 derivative. No public path routing yet.
+19 focused checks passed across four bounded runs: scalar reactions/work, cumulative
+history, both-body stick/slip tangents, deforming target, three-event reclosure, actual
+history-call counters and historical first touch. Owned reviewer found diagnostics
+and untested intermediate closure gaps; both addressed. No engineering acceptance.
 
-Next EXTEND beyond this subset: closed-ending physical event composition and tangent,
-then multi-segment cumulative work/integration. Actual saved secondload has multiple
-segments and closed endpoints; do not run it through this restricted helper. Its fullpatch
-still unpassed. Strict-open zero residual/tangent argument must not leak to closed ends.
-Gauss error estimator and extreme-scale controls remain qualification limits.
+Next: connect explicit sequence policy with definition-bound restart identity; preserve
+no-event closed persistence, historical policies and finite resource failure. Then
+multi-segment aggregate integration/closed endpoint forces to reach saved second load.
+No blind refinement, cap increase, or saved fullpatch retry before those capabilities.
 
-Core modules native_surface_event_sequence.py, native_surface_front.py,
-native_surface_front_work.py, native_surface_friction_integral.py. Event sequence policy
-explicit and definition-bound. H=-A/B, N=A'B-AB', H'=-N/B²; fixed-angle roots have padded
-uncertainty and endpoint guards; angular covers prove branch count with finite budgets.
-Prior saved fold point/local support pass. Rectangular fullpatch proof failed and tuning
-stopped. Closed-ending multi-events remain unimplemented.32substeps is declared discrete
-history, not continuum convergence. First native load/rebase/restore pass development;
-secondload/split still open. D1-interior/named D2 accepted; fullprogramme incomplete.
+Previous moving-front integrated open-endpoint development pass remains valid: one
+released-origin segment/one stationary branch, strict open endpoints, conservative
+uncertainty-strip work budget; 75.6385s/234139648bytes. Closed helper does not broaden it.
+32-substep history is discrete, not continuum convergence. First native load/rebase/
+restore passes development; secondload/split still unpassed. D1-interior/named D2
+accepted; fullprogramme incomplete. Installed shell unchanged; no native acceptance.
 
 Evidence docs/d1_review_support/contact_c5_native_surface_point_20261002:
-front_work_integration_results.md/raw.zip/source.json; moving_front_integral_results.md;
-angular_front_results.md and earlier uncertainty/event/failure records. Prior note archived.
-No live numerical process or worker. Installed shell unchanged; no native acceptance.
-Routine180s/953MiB; named900s/3814MiB; native120s/context unchanged; consumed limits intact.
-Original120active-hour limit=goal seconds+3120; last75.473h advancing;72h preference
-unanswered, no extension; checkpoint/decision at120h. Full completion forecast unsupported.
+closed_event_sequence_results.md/raw.zip/source.json; front_work_integration_results.md;
+prior failures/reviews and restart_before_closed_event_sequence.txt retained.
+No live numerical process; owned review completed. Routine180s/953MiB;
+named900s/3814MiB; native120s/context unchanged; consumed authorities remain consumed.
+120active-hour limit=goal seconds+3120; last76.0h advancing, no extension. At120h
+checkpoint/request decision. Full completion forecast unsupported.

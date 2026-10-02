@@ -42,6 +42,13 @@ class NativeS3ActivationResult:
         return self.normal_tangent
 
 
+@dataclass(frozen=True)
+class NativeS3ClosedSequenceResult(NativeS3ActivationResult):
+    event_fractions: tuple = ()
+    history_evaluations: int = 0
+    profile: str = 'NATIVE_S3_CLOSED_EVENT_SEQUENCE_POINT_DEV_V1'
+
+
 def _frame(corners):
     a=[corners[1][i]-corners[0][i] for i in range(3)]
     b=[corners[2][i]-corners[0][i] for i in range(3)]
@@ -175,6 +182,25 @@ def _evaluate_transverse_event(pair, start, history, translations, angular, shel
     if opening:
         return _release_history(pair,start,end,history,translations,angular,shell_increment,
                                 alpha,g1,ownership)
+
+    return _closing_event_endpoint(pair,start,end,history,alpha,g1,padding,ownership)
+
+
+def _closing_event_endpoint(pair,start,end,history,alpha,g1,padding,ownership):
+    """Closing-root force map differentiated from the original physical path.
+
+    Caller certifies the root and event schedule. Earlier released windows may
+    contribute cumulative history, but must leave zero elastic traction.
+    """
+    if type(history) is not FrictionPointState or history.partner_key is not None:
+        raise ValueError('closing event requires released physical history')
+    source,target=pair.source,pair.target
+    old=source.surface_variations(start.positions,start.position_low,start.cell_rotations)
+    new=source.surface_variations(end.positions,end.position_low,end.cell_rotations)
+    y0=target.adapter.current_positions(start.shell_displacement)
+    y1=target.adapter.current_positions(end.shell_displacement)
+    base0=old.station.surface_position-old.surface_arm
+    base1=new.station.surface_position-new.surface_arm
 
     def event_geometry(q, fraction, size):
         # q is an endpoint spatial perturbation. The algorithmic path is the

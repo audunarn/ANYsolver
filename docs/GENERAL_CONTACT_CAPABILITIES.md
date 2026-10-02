@@ -1049,3 +1049,8 @@ aggregate and coupled owner unverified. [Evidence](d1_review_support/contact_c5_
 Moving-front open-endpoint work integration: one-segment/one-stationary-branch development
 case passes independent discrete work. Uncertainty-strip bounds included in error. Closed
 endpoints, multisegment owner/restart and acceptance remain open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/front_work_integration_results.md).
+
+Closed-ending native multi-event point helper: independent scalar work/force and both-body
+tangent controls pass in development, including initially open three-event recontact.
+Full event/count diagnostics retained; standalone only. Path routing/restart identity,
+aggregate second load and acceptance remain open. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/closed_event_sequence_results.md).

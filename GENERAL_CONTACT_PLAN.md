@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.44. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.45. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -31,6 +31,15 @@ Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTA
 independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
+
+Closed-ending multi-event point helper now passes independent discrete work, force,
+both-body stick/slip tangent, deforming target and three-event controls. Source review
+findings on diagnostics/coverage addressed. Next connect explicit event-sequence path
+with definition-bound restart identity, preserving no-event persistence; then extend
+aggregate multi-segment integration. No saved second-load retry yet.
+[Evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/closed_event_sequence_results.md).
+
+Earlier slice entries below are retained history; the paragraph above governs next work.
 
 Connected open-endpoint moving-front integration passes independent discrete-work
 reference in75.6s/234MB sampled memory. One released-origin segment/one stationary branch

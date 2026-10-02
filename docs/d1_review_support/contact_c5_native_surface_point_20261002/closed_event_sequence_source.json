@@ -1,0 +1,50 @@
+{
+  "base": "5cfc905b",
+  "files": {
+    "src/anysolver/general_contact/native_surface_activation.py": "ec869cb51ddd2d7bdc733824867a53c1baeb1a16f3dbaca483f2f7a56a942e9f",
+    "src/anysolver/general_contact/native_surface_event_sequence.py": "5c87cf7bab474163862d475048e5d39e3c9d715dc10411e30cf973a4bf961e76",
+    "tests/test_general_contact_native_surface_closed_sequence.py": "745ced8a1e9a73c265d0573d792cdcaf897ac75427acd40fd8fa2c49ad21f03f"
+  },
+  "resources": [
+    {
+      "run": "contact-native-closed-sequence-20261002",
+      "peak_sampled_bytes": 182317056,
+      "limit_mib": 953,
+      "elapsed_seconds": 6.268974300008267,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    {
+      "run": "contact-native-closed-work-20261002",
+      "peak_sampled_bytes": 182620160,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.185774599958677,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    {
+      "run": "contact-native-closed-counts-20261002",
+      "peak_sampled_bytes": 182501376,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.089326700021047,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    {
+      "run": "contact-native-closed-three-events-20261002",
+      "peak_sampled_bytes": 182210560,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.355440999963321,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    }
+  ]
+}
