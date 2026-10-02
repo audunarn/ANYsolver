@@ -52,11 +52,18 @@ class NativeS3MaterialPointResult:
     normal_gap_m: float
     normal_pressure_Pa: float
     normal_storage_j: float
+    normal_residual: np.ndarray
+    normal_chart_tangent: np.ndarray
     profile: str=PROFILE
 
     def spatial_tangent(self):
         result=self.chart_tangent.copy()
         result[:42,:42]=spatial_jacobian(self.residual[:42],result[:42,:42])
+        return _readonly(result)
+
+    def normal_spatial_tangent(self):
+        result=self.normal_chart_tangent.copy()
+        result[:42,:42]=spatial_jacobian(self.normal_residual[:42],result[:42,:42])
         return _readonly(result)
 
 
@@ -255,4 +262,6 @@ class NativeS3MaterialPointFriction:
         if not np.all(np.isfinite(residual)) or not np.all(np.isfinite(tangent)):
             raise ValueError('nonfinite native/S3 material-point response')
         return NativeS3MaterialPointResult(_readonly(residual),_readonly(tangent),trial,gap,
-            pressure,self.reference_weight_m2*E.value)
+            pressure,self.reference_weight_m2*E.value,
+            _readonly(self.reference_weight_m2*(mapping.T@E.gradient)),
+            _readonly(self.reference_weight_m2*(mapping.T@E.hessian@mapping)))

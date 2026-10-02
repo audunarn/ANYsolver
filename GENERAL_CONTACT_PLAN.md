@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.22. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.23. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -411,3 +411,9 @@ prevailing. At72active hours reassess the remaining measured route and forecast;
 at exhaustion preserve work and request the needed decision. See the goal for the
 exact authority. [Previous full plan](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261001_REV58.md)
 retains all chronological findings and historical numerical dispositions.
+
+## Latest integrated slice — segmented native normal potential
+
+Explicit straight_segmented integration now passes independent saved-force, full work/tangent and actual coupled friction/restart development checks. See [evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/segmented_normal_results.md). The older sampled-force failure remains historical evidence. Next question: does stronger enforcement reduce the independent continuous gap with the corrected normal integral? One frictionless1e5/1e6 comparison,180s/953MiB, isolates normal enforcement from unresolved fixed-point friction integration. If gap improves and force stabilizes, proceed to pressure-aware friction/history integration; otherwise diagnose the observed failure before another solve. No acceptance gate is relaxed.
+
+The named frictionless comparison completed:307.864→122.569um continuous penetration,0.875% normal-reaction change;72.893s/202125312B. Existing fixture gates pass;49um qualification starting budget does not. [Retained screen](docs/d1_review_support/contact_c5_native_surface_point_20261002/segmented_enforcement_results.md). Next implement pressure-aware material-history integration/refinement, reusing saved poses to discriminate quadrature before new coupled solves.

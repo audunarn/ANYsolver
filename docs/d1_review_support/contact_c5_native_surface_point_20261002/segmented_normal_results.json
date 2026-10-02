@@ -1,0 +1,47 @@
+{
+  "base": "d740c6d5",
+  "scope": "source development only",
+  "runs": [
+    {
+      "name": "contact-native-segmented-normal-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 184303616,
+          "limit_mib": 953,
+          "elapsed_seconds": 6.704034199996386,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "contact-native-segmented-owner-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 201191424,
+          "limit_mib": 953,
+          "elapsed_seconds": 49.84704530000454,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "sha256": {
+    "src\\anysolver\\general_contact\\native_surface_activation.py": "efe7e8ff9f203bfd551383216b55a6f758ad582e5c1fbb8352d2463fd3041ebf",
+    "src\\anysolver\\general_contact\\native_surface_contributor.py": "06afba7ed712ca84ccbf6ff3b7eb79c55294086f2b43f8b264ef5b685db96490",
+    "src\\anysolver\\general_contact\\native_surface_extrema.py": "b645e7a0a415f3a4191bc648a09d47513cde09b9eec3bf41835f767607c3f4e3",
+    "src\\anysolver\\general_contact\\native_surface_normal.py": "0dcd580a66de0c8676f6633b86312eca362980dacee47ef5fcc70f4cdb772ee9",
+    "src\\anysolver\\general_contact\\native_surface_patch.py": "912107f9dd690e33f89efe7e91305a4935ee294e32973e3a5c99c9499323e70a",
+    "src\\anysolver\\general_contact\\native_surface_path.py": "a124737992f3f3788e9998a2322943f134d469e81c91d9660bdcc626ba084a9c",
+    "src\\anysolver\\general_contact\\native_surface_quadrature.py": "64bdfb1e46a47edb2cdca46f367e97d806e4609d2e01e3e4decee3660c3ca2ab",
+    "src\\anysolver\\general_contact\\native_surface_s3_friction.py": "b4727d0f026de6e80c07002197775427b676cb36bc97ff97546672914eb69ffc",
+    "src\\anysolver\\general_contact\\native_surface_transaction.py": "d80c5b34e9975c955d8abf98ed993b70e77ffe342fcfa94546c2b8a0092294b0",
+    "tests\\test_general_contact_native_surface_normal.py": "f51a97bae6149eb66e1ac5e25859bcfbf60a6fe870edc6554e75374e89ad0ff0",
+    "tests\\test_general_contact_native_surface_patch.py": "cf963263ba3fd22a4fd4fe61e290edc3f3a90c075e5bc0197c3e466d5c290316"
+  }
+}

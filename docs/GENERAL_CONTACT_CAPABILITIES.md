@@ -977,3 +977,7 @@ pressure integration exposes19.68% normal-force error for the8x8 stronger-penalt
 case; contact-boundary-aware normal integration is required before promotion.
 This profile is developmental and supplies no general curved/swept or C5 admission.
 [Gap/enforcement evidence](d1_review_support/contact_c5_native_surface_point_20261002/continuous_gap_results.md).
+
+### Segmented native normal potential — development
+
+Explicit straight/untwisted reference profile now integrates the normal potential across contact boundaries, with retained both-body work, dimensional error controls and definition-bound restart. Six local/integrated checks pass; friction still uses fixed material points. No native C5 acceptance or installed claim. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/segmented_normal_results.md).

@@ -12,7 +12,8 @@ from test_general_contact_native_retained_s3_static import _analysis
 
 
 def _patch(*,activation_policy='transverse_first_touch',axial_order=2,angular_order=2,
-           gap_check='sampled',normal_stiffness=1e4,radius=.049):
+           gap_check='sampled',normal_stiffness=1e4,radius=.049,
+           normal_integration='point',normal_integration_settings=None,friction_coefficient=.3):
     owner=_analysis(targets=(1.,1.05))
     reference=owner.context.elements[0][1].operator.reference
     rule=NativeRoundSurfaceRule(1,reference,radius,xi_range=(.2,.8),
@@ -26,8 +27,9 @@ def _patch(*,activation_policy='transverse_first_touch',axial_order=2,angular_or
         uv=np.linalg.lstsq(edges,point-corners[0],rcond=None)[0]
         targets.append(S3SkinMaterialPoint(owner.contact.shell,tuple((1-uv.sum(),*uv))))
     pair=NativeS3MaterialSurfacePatch(rule,targets,normal_stiffness_Pa_per_m=normal_stiffness,
-        friction_coefficient=.3,tangential_stiffness_Pa_per_m=1000.,
-        activation_policy=activation_policy,gap_check=gap_check)
+        friction_coefficient=friction_coefficient,tangential_stiffness_Pa_per_m=1000.,
+        activation_policy=activation_policy,gap_check=gap_check,
+        normal_integration=normal_integration,normal_integration_settings=normal_integration_settings)
     return owner,NativeS3MaterialContributor(owner,pair)
 
 

@@ -29,11 +29,16 @@ class NativeS3ActivationResult:
     event_gradient_local: np.ndarray
     path_sha256: str
     ownership_intervals: int
+    normal_residual: np.ndarray
+    normal_tangent: np.ndarray
     profile: str = 'NATIVE_S3_TRANSVERSE_FIRST_TOUCH_POINT_DEV_V1'
 
     def spatial_tangent(self):
         # Mixed virtual/algorithmic rotations already give spatial covectors.
         return self.tangent
+
+    def normal_spatial_tangent(self):
+        return self.normal_tangent
 
 
 def _frame(corners):
@@ -197,7 +202,8 @@ def _evaluate_transverse_event(pair, start, history, translations, angular, shel
         raise ValueError('nonfinite first-touch material contribution')
     return NativeS3ActivationResult(_readonly(residual),_readonly(tangent),trial,g.value,pressure,
         pair.reference_weight_m2*energy.value,float(alpha),_readonly(alpha_gradient),ownership.path_sha256,
-        ownership.intervals)
+        ownership.intervals,_readonly(pair.reference_weight_m2*(mapping.T@energy.gradient[15:])),
+        _readonly(pair.reference_weight_m2*(mapping.T@energy.hessian[15:,:15]@mapping)))
 
 
 @dataclass(frozen=True)
@@ -215,6 +221,13 @@ class NativeS3ReleaseResult:
     profile: str='NATIVE_S3_TRANSVERSE_RELEASE_POINT_DEV_V1'
 
     def spatial_tangent(self):
+        return self.tangent
+
+    @property
+    def normal_residual(self):
+        return self.residual
+
+    def normal_spatial_tangent(self):
         return self.tangent
 
 
