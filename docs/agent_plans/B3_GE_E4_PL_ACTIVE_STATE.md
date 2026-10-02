@@ -1,79 +1,66 @@
-# B3-GE / E4-PL / B2 â€” active state, 2 October 2026
+# B3-GE / E4-PL / B2 — active state, 2 October 2026
 
 ## Authority and restart
 
-Revision8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full G0â€“G6,
-F01â€“F13,V01â€“V28,B01â€“B18 scope and scientific criteria remain binding.
-Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Arc lifecycle slice base4746de34;
-resolve latest local commit with git log. ANYfem worktree:
-C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, branch
-codex/experimental-ge-panel-consumer, atf92929f (arc consumer regression/documentation; product unchanged).
-Local scoped commits only; no push/main merge/publication/contact-worker messages.
-All owned numerical jobs and reviews terminal. Main untouched.
+Revision8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full amendedG0–G6,
+F01–F13,V01–V28,B01–B18 scope and scientific criteria remain binding.
+Solver worktree:C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001. Last committed324fede9; actual next
+commit from git log. Current dirty ownership: E04 definition adapter,runner,
+geometry test,documentation/evidence. ANYfem worktree:
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer atf92929f,unchanged.
+Scoped local commits only; no push/main merge/publication/contact-worker messages.
+All owned numerical runs and reviews terminal. Main untouched.
 
-Formal F03 UNCONSUMED; protected original script SHA256
+FormalF03 UNCONSUMED; protected original scriptSHA256
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
-Pressure assessment amendment still awaits its existing user decision. Preserve
+Pressure assessment amendment awaits its existing user decision. Preserve
 failed science and frozen evidence. Ceiling100krows/600s/8GiB/8threads; one heavy
-job. This slice used600s/1GiB/1thread/JIT off. Local/Mistral previously unavailable;
+job. Current screens600s/1GiB/1thread/JIToff. Local/Mistral previously unavailable;
 OpenAI review is not cross-family scientific qualification.
 Security: old tracked us3-modal-canary-v1.zip contains credentials. Do not print,
-copy, disseminate or push affected history. User informed; no history-rewrite
-permission. New archives contain whitelisted metadata, never environment maps.
+copy,disseminate or push affected history. User informed; no rewrite authority.
+New evidence contains whitelisted metadata,never full environment maps.
 
-## Delivered behavior and evidence
+## Delivered behavior
 
-Experimental multi-element GE/B2, coupled Q4-J2/generalized BL5, displacement,
-selected physical/material recovery and restart exist; no aggregate gate closes.
-Earlier installed/consumer evidence remains in the acceptance matrix.
+Experimental multi-element GE/B2,material BL5,displacement,physical/material
+recovery,restart and ANYfem exist; no aggregate acceptance gate closes.
+Material physical arc lifecycle and installed ANYfem arc path have their earlier
+[evidence](development/r8-arc-public-20261002/results.md).
+Explicit curved elastic Q4/full-pose points pass bounded installed solve/restart:
+[reference slice](development/r8-curved-reference-20261002/results.md).
+Separate curved elastic arc identity omits shell plastic fields; cancellation,
+exact restart and force-endpoint parity pass22installed checks:
+[arc slice](development/r8-curved-arc-20261002/results.md).
 
-New: public continue_arc_length with explicit fixed physical metric, bounded
-cutbacks and a distinct ANYSSARC1 checkpoint. Atomic publication binds the actual
-predecessor; restart binds fixed-seed load amplitude, orientation, controls and
-all accepted-step work. Public preflight supplies metric node order. Capability
-claims exclude external load contexts. Cached recovery requires no assembly.
+The actual E04 stiffened roof now constructs through the public facade.4x4 and
+8x8 seed10N/twoarc1e-5 screens complete with exact endpoint restoration. A single
+4x4 seed100N/24arc.003 bracket completes a sampled maximum2206.307N at9.439mm,
+then11descending samples to1374.343N at15.178mm. Final equilibrium2.71e-11;
+compatibility8.67e-18. Productwheel6086fd4e... unchanged; all412modules matched.
+[Raw evidence,idealization and limitations](development/r8-e04-roof-20261002/results.md).
+No external capacity,mesh convergence,stability or imperfection acceptance follows.
 
-Two5e-6 steps complete; amplitudes0.2141485/0.1381427; final equilibrium2.45e-11.
-Cancellation preserves the first accepted prefix. Fresh restore then continuation
-is byte-identical. Source23 checks passed. Installed v3 had27passes and1late test
-fixture error; final v4 affected2checks passed. All412final modules matched wheel
-and installed site; only one constructor predicate differs from v3, so unaffected
-passes are reused. Final wheel2e8ea7b90d11253fd0f9fb871481dd8e98e7c6d367038bb3bfb3192d78880c27.
-Independent lifecycle review findings resolved. No scientific acceptance implied.
-[Evidence and limits](development/r8-arc-public-20261002/results.md).
+## Decision and next action
 
-## Current decision and next action
+Question: obtain a physically matched independent nonlinear E04 comparison.
+Established: actual sparse owner sustains the coarse descending trajectory;
+section/offset/support review passed. Remaining: exact finite external pose/offset
+mapping and converged comparison bracket. Existing affine MPCs do not reproduce
+finite eccentric rotation. U1/US3 supplies a linear physical-DOF seam,not a finite
+six-channel connector. A rigid footprint/continuous bond is a different model.
+Next discriminator: a bounded external finite connector/section control (actual
+rectangle,offsets,translation-only supports),or an explicitly matched engineering
+comparator with justified differences. Verify rigid motion and eccentric work
+before using its roof response. Then freeze E04 bracket/refinement criteria;
+no automatic mesh campaign and no formalF03 execution.
 
-The local lifecycle is usable; physical capacity acceptance is still open. The
-original -500 N force-history failure and earlier failed arc radius1e-5 remain
-failed evidence. The two local public steps are not a limit-point/stability proof.
-Do not automatically extend amplitudes, refine meshes or consume formal F03.
-
-ANYfem arc integration now passes on the installed package graph: native Project
-save/reopen, separate checkpoint, cancellation, exact restored continuation and
-selected material recovery. One focused check passed;98consumer modules unchanged.
-See the subsequent-consumer section in the evidence above.
-
-E04 geometry remains an unexecuted capacity candidate. The curved-reference
-prerequisite now has an explicit elastic Q4/full-pose-point policy using existing
-algorithmic pullbacks and reference facet normals. Installed44 checks pass,
-including a bounded two-Q4/two-beam 10–30 N path and exact restored continuation.
-The curved 0.1 N control fails at equilibrium1.9145e-8 (required1e-8), committing
-nothing; its test verifies honest failure, not successful equilibrium. Flat
-controls pass both scales. Independent admission/restart findings are resolved.
-[Current slice and preserved failures](development/r8-curved-reference-20261002/results.md).
-No curved spectra, external-load, material or ANYfem admission is claimed.
-
-Curved elastic point arc lifecycle now passes22 installed checks: cancellation
-prefix, exact restore/continuation, force-control endpoint parity and rejection of
-nonelastic history. It has a separate mechanical checkpoint identity with no
-shell plastic fields. Existing material arc/displacement regressions pass.
-[Arc evidence](development/r8-curved-arc-20261002/results.md).
-
-Next: construct the actual E04 roof owner and run one bounded seed/continuation
-screen. Fix the nonlinear bracket and matched external connection before capacity
-qualification. Do not infer a limit point from low-load nonconvergence or relax
-tolerance. E04 itself has not been mechanically solved. Formal F03 and all
-scientific/release boundaries remain unchanged. Full material, connection,
-scale, external/platform and release obligations remain open.
+Original-500Nmaterialhistory failure and priorarc1e-5failure remain preserved.
+The curved0.1Ncontrol still stops at1.9145e-8(required1e-8),committing nothing;
+its green rejection check is not successful equilibrium. No tolerance relaxation.
+E04 final restore was checked; turning-point restart/continued trajectory remains
+open. Curved spectra,external loads,materials and ANYfem policy persistence remain
+unadmitted. Full connection,material,scale,external/platform and release obligations
+stay in the authoritative acceptance matrix. Historical live-note content is
+preserved in Git; immutable evidence and registrations are unchanged.

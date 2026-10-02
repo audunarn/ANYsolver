@@ -86,3 +86,41 @@ def build(nx=8,ny=8):
     return RoofCase(owned(positions),owned(directors),owned(quads,int),owned(beam),
         owned(frames),owned(cells,int),owned(pairs,int),owned(fixed,int),
         node(nx//2,ny//2),owned(weights),area,length)
+
+
+def definition(case, *, density_kg_m3):
+    """Adapt declared geometry through the experimental public definition API.
+
+    Density is an explicit caller input, not inferred from stiffness. This
+    curved profile admits static operations only. Rectangle properties are
+    centroidal; the point law supplies the geometric eccentricity once.
+    Local beam axes are (longitudinal, circumferential, outward).
+    """
+    from anysolver import b3_ge, stiffened_shell as ss
+    density=float(density_kg_m3)
+    if not np.isfinite(density) or density<=0.:
+        raise ValueError('explicit positive density required')
+    b,h=case.bar_width,case.bar_height
+    area=b*h;iy=b*h**3/12.;iz=h*b**3/12.
+    odd=np.arange(1,512,2,dtype=float)
+    torsion=h*b**3/3.*(1.-192.*b/(np.pi**5*h)*
+        np.sum(np.tanh(odd*np.pi*h/(2*b))/odd**5))
+    shear=case.young/(2*(1+case.poisson))
+    stiffness=np.diag((case.young*area,5/6*shear*area,5/6*shear*area,
+                       shear*torsion,case.young*iy,case.young*iz))
+    section=b3_ge.EllipsoidalGeneralizedSection(stiffness,np.eye(6),1e20,1e9)
+    inertia=np.diag(density*np.array((area,area,area,iy+iz,iy,iz)))
+    shell_ids=tuple(range(1,len(case.shell_positions)+1))
+    beam_ids=tuple(range(100001,100001+len(case.beam_positions)))
+    beams=tuple(b3_ge.define_beam('b3-ge',i+1,
+        tuple(beam_ids[j] for j in cell),case.beam_positions[cell],
+        case.beam_frames[cell],section,inertia) for i,cell in enumerate(case.beam_cells))
+    shell=ss.ShellPanel(shell_ids,tuple(map(tuple,case.shell_positions)),
+        tuple(tuple(shell_ids[j] for j in cell) for cell in case.quads),
+        case.thickness,case.young,case.poisson,density)
+    points=tuple(ss.PointConnection(shell_ids[s],beam_ids[b]) for s,b in case.point_pairs)
+    fixed=tuple(ss.FixedCoordinate('shell',shell_ids[s],axis)
+        for s in case.fixed_shell_translations for axis in range(3))
+    return ss.LinearDefinition(ss.B3_GE_E4_PL_STIFFENED_SHELL_V1,shell,beams,points,fixed,
+        q4_pullback_policy=ss.Q4_ALGORITHMIC_PULLBACK_V1,
+        shell_reference_policy=ss.CURVED_Q4_POINT_REFERENCE_V1)

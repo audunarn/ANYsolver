@@ -1485,3 +1485,11 @@ plastic state. Installed22 checks cover curved cancellation/restore/continuation
 force endpoint parity, corrupted history and existing material-arc/displacement
 contracts. No E04 capacity or aggregate gate acceptance.
 [Evidence](development/r8-curved-arc-20261002/results.md).
+
+
+**2 October actual E04 roof: IMPLEMENTED_NOT_QUALIFIED.**
+Public adapter and installed4x4/8x8 seed/arc/restore screens pass. One coarse
+4x4trajectory samples a2.206kN maximum and11descending points; final restore exact.
+This supplies a provisional capacity bracket,not external/mesh/stability acceptance.
+Finite external connector mapping remains unresolved. No aggregate gate closes.
+[Evidence](development/r8-e04-roof-20261002/results.md).

@@ -4,7 +4,8 @@
 It uses SI dimensions inspired by the [Kratos hinged cylindrical roof example](https://kratosmultiphysics.github.io/Kratos/pages/Applications/Structural_Mechanics_Application/Examples/Hinged-cylindrical-roof-snapthrough.html),
 which references Sze, Liu and Lo (2004). Two rectangular longitudinal stiffeners
 and explicit supports are added here. The published bare-roof response is **not**
-an oracle for this different model. No external deck or equilibrium was executed.
+an oracle for this different model. External comparison remains open. Installed native development screens now
+complete seed/arc/restore and a coarse ascending/descending trajectory.
 
 The generator defines the geometry, linear isotropic modulus/Poisson ratio,
 section dimensions, centroid offsets, node/cell ordering, full-pose point-pair
@@ -61,3 +62,15 @@ positive owned reference measures, an analytic affine-field refinement identity
 and continued rejection by the current flat owner. They are not numerical
 capacity or external-reference acceptance. Independent source review found no
 geometry/unit defect and identified the frame/admission seam above.
+
+
+## Actual native development screens
+
+`definition(case,density_kg_m3=...)` adapts the geometry through the public facade
+with explicit centroidal rectangle stiffness and separate density input.
+`scripts/r8_e04_native_roof.py` runs the bounded installed screen under the task
+supervisor.4x4/8x8 seed10N paths and final restore pass. A4x4seed100N/24arc.003
+trajectory samples2206.307N at9.439mm and descends to1374.343N at15.178mm.
+[Actual results,raw evidence and limitations](../agent_plans/development/r8-e04-roof-20261002/results.md).
+This establishes a development bracket; external mapping,three-level capacity
+convergence,turning-point restart,imperfection and stability remain open.

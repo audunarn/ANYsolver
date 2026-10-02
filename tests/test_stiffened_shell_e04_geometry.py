@@ -48,3 +48,21 @@ def test_reference_metric_converges_for_affine_physical_translation():
         assert measured==pytest.approx(exact*(1+1/size**2),rel=1e-13)
         errors.append(measured-exact)
     np.testing.assert_allclose(np.array(errors[:-1])/errors[1:],4.,rtol=1e-10)
+
+
+def test_roof_public_definition_preserves_geometry_and_centroidal_section():
+    from docs.reference_cases.stiffened_shell_e04_roof import definition
+    from anysolver import stiffened_shell as ss
+    c=build(4,4);d=definition(c,density_kg_m3=1.)
+    assert d.shell_reference_policy==ss.CURVED_Q4_POINT_REFERENCE_V1
+    assert len(d.points)==len(c.point_pairs)
+    assert len(d.fixed)==3*len(c.fixed_shell_translations)
+    element,inertia=d.beams[0].instantiate()
+    np.testing.assert_array_equal(element.operator.reference.coordinates,c.beam_positions[c.beam_cells[0]])
+    np.testing.assert_array_equal(element.operator.reference.nodal_triads,c.beam_frames[c.beam_cells[0]])
+    assert inertia[0,0]==pytest.approx(c.bar_width*c.bar_height)
+    assert inertia[4,4]==pytest.approx(c.bar_width*c.bar_height**3/12.)
+    assert inertia[5,5]==pytest.approx(c.bar_height*c.bar_width**3/12.)
+    # Repeated construction owns identical semantics; density is not guessed.
+    assert d.beams[0].sha256==definition(c,density_kg_m3=1.).beams[0].sha256
+    with pytest.raises(ValueError,match='density'):definition(c,density_kg_m3=0.)
