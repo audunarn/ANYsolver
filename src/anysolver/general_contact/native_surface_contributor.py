@@ -13,6 +13,7 @@ from anysolver.corotational import _rotation_right_jacobian
 from .native_retained_s3_static import NativeRetainedRoundS3Analysis
 from .native_retained_station import _readonly
 from .native_surface_s3_friction import NativeS3MaterialConfiguration, NativeS3MaterialPointFriction
+from .native_surface_patch import NativeS3MaterialSurfacePatch
 
 
 @dataclass(frozen=True)
@@ -30,7 +31,7 @@ class NativeS3MaterialAssembly:
 class NativeS3MaterialContributor:
     """Bound one persistent material pair to an existing structural owner."""
     def __init__(self, owner, pair):
-        if type(owner) is not NativeRetainedRoundS3Analysis or type(pair) is not NativeS3MaterialPointFriction:
+        if type(owner) is not NativeRetainedRoundS3Analysis or type(pair) not in (NativeS3MaterialPointFriction,NativeS3MaterialSurfacePatch):
             raise TypeError('exact retained native/S3 owner and material pair required')
         owner._guard()
         element_id, element = owner.context.elements[0]

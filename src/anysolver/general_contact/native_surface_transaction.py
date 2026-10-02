@@ -16,6 +16,7 @@ from .native_retained_station import _readonly
 from .native_surface_contributor import NativeS3MaterialContributor
 from .native_surface_path import affine_gap_polynomial
 from .native_surface_s3_friction import NativeS3MaterialConfiguration
+from .native_surface_patch import NativeS3MaterialSurfacePatch
 
 SCHEMA = 'NATIVE_S3_MATERIAL_TRANSACTION_DEV_V2'
 
@@ -56,16 +57,19 @@ class NativeS3MaterialTransaction:
         self.identity = sha(dict(schema=SCHEMA, contributor=contributor.identity,
                                  maximum_records=maximum_records))
         owner = contributor.owner; pair = contributor.pair; origin = owner.initial
-        history = initial_friction_point(pair.target.physical_pose(origin.shell_displacement).material_frame)
+        history = (pair.initial_history(origin.shell_displacement) if type(pair) is NativeS3MaterialSurfacePatch else
+                   initial_friction_point(pair.target.physical_pose(origin.shell_displacement).material_frame))
         initial = contributor.evaluate(origin, history, np.zeros(owner.context.count),
                                        np.zeros(len(origin.shell_displacement)), 0.)
         nodes = owner.context.nodes[0]
         pose = NativeS3MaterialConfiguration(origin.mechanical.positions[nodes], origin.mechanical.position_low[nodes],
                                              origin.mechanical.cell_rotations[0], origin.shell_displacement)
-        gap, _ = affine_gap_polynomial(pair, pose, np.zeros((3,3)), np.zeros((2,3)),
-                                       np.zeros(len(origin.shell_displacement)))
-        if gap < 0:
-            raise ValueError('unresolved initial native material-surface penetration')
+        pairs=pair.pairs if type(pair) is NativeS3MaterialSurfacePatch else (pair,)
+        for point in pairs:
+            gap, _ = affine_gap_polynomial(point, pose, np.zeros((3,3)), np.zeros((2,3)),
+                                           np.zeros(len(origin.shell_displacement)))
+            if gap < 0:
+                raise ValueError('unresolved initial native material-surface penetration')
         self._require_equilibrium(initial)
         self._accepted = self._make_accepted(initial, 0., 0)
         self._origin_sha = sha(dict(identity=self.identity, state=_payload(self._accepted)))

@@ -946,3 +946,12 @@ equilibrium and active split continuation replays exactly. This supersedes the
 earlier absence of active point equilibrium only: distributed surface integration,
 general release/recontact, refinement, native installed verification and engineering
 acceptance remain open. See [activation results](d1_review_support/contact_c5_native_surface_point_20261002/activation_results.md).
+
+Fixed native swept-surface patches now use derived reference-area quadrature and
+independent point histories through that same owner/transaction. Cylinder/curved
+area, parameter tangents and analytical integrated pressure pass. An active four-
+point patch with deformable S3 and exact restarted continuation passes. Independent
+scrutiny identified a hidden source-inversion path; conservative sample-path
+orientation bounds now reject it. Continuous-surface gap/regularity, refinement,
+rotating release/recontact, target boundaries and C5 acceptance remain open.
+[Patch evidence](d1_review_support/contact_c5_native_surface_point_20261002/surface_patch_results.md).

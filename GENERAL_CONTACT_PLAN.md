@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.18. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.19. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -256,11 +256,21 @@ engineering acceptance. [Evidence](docs/d1_review_support/contact_c6_free_sphere
 One additional history/work/V6 split check passes on the same unchanged wheel;
 172distinct checks are covered, with unaffected results reused by impact analysis.
 
-**Next bounded decision:** extend the now-solved native/S3 material-point route
-into distributed swept-surface integration, retaining explicit reference measure,
-physical station identities and complete retained work. Before general lifecycle
-admission, rotating release/recontact needs event/work refinement. Avoid treating
-one point with a caller-declared area as a distributed beam friction handoff.
+**Next bounded decision:** close rotating opening/recontact and work/step
+refinement on the distributed native/S3 patch, then demonstrate spatial integration
+convergence. Keep the existing fixed-material interior restriction explicit while
+extending contact ownership; do not confuse sample-path certificates with a
+continuous surface gap or regularity certificate.
+
+A fixed reference-area swept patch now shares the existing native contributor,
+owner and V2 transaction. Curved-reference frame derivatives give the physical
+area measure, and integration splits native cell boundaries. Cylinder/curved area,
+surface tangent and integrated normal force checks pass. A four-point patch solves
+active friction with a deformable S3 and exact full/restarted continuation. Review
+identified hidden source inversion between endpoints; conservative signed-area
+path bounds now reject it. This remains development, without general clipping,
+continuous-surface gap admission or C5 acceptance. See
+[surface patch evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/surface_patch_results.md).
 
 The explicit transverse-first-touch selection now certifies unique approach,
 differentiates the event response separately from instantaneous endpoint work,

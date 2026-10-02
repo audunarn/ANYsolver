@@ -1,10 +1,10 @@
-# General contact restart — 2 October 2026
+# General contact restart ï¿½ 2 October 2026
 
 ## Authority and location
 
-Full C0–C9 remains active under goal2026-09-30.4, plan2026-10-02.18,
+Full C0ï¿½C9 remains active under goal2026-09-30.4, plan2026-10-02.19,
 policy2026-09-24.2. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001, base dd8a7f95 plus this checkpoint.
+branch codex/contact-main-reconcile-20261001, base 902bf5ff plus this checkpoint.
 No original-worktree or other-chat inspection/communication, publication, main
 merge, release, historical-default or shared ABC-guard changes. Tiered workflow;
 prior local/Mistral failures remain, no availability-only reprobes.
@@ -25,21 +25,33 @@ six runs, initial failed guard expectation, effective runtime/resource records a
 final source hashes. Independent OpenAI source scrutiny requested finite-deformed
 S3 and active owner checks, now passed; no engineering acceptance claim.
 
+## Current distributed-surface successor
+
+NativeRoundSurfaceRule derives fixed reference weights from actual curved sweep
+partials, splits cells, binds material coordinates and caps points. A fixed S3
+patch aggregates complete spatial work and individual histories through the same
+contributor/owner/V2 transaction. Actual four-point active solve, same-load rebase
+and full/restarted continuation pass. Independent review found endpoint-only source
+orientation unsafe; signed-area Lipschitz bounds now certify each sample path.
+The explicit hidden-inversion regression and affected coupled routes pass.
+Evidence: contact_c5_native_surface_point_20261002/surface_patch_results.md/.json
+and surface_patch_raw.zip, including the retained initial target-ownership fixture
+failure. No general surface-gap or between-sample regularity claim.
+
 ## Next bounded action
 
-Develop distributed native swept-round surface integration through the existing
-owner/contributor/transaction, with explicit reference measure and stable material
-identities. Do not treat a caller-weighted single point as a surface handoff.
-Retain exact native Uc R0(xi), physical offsets and retained work. General rotating
-release/recontact, work/step refinement, boundary transfer and installed native
-verification remain open. No classical finite R(s) may be invented from its
-centreline; that structural contract is separately required. Existing state replay
-must remain authoritative rather than introducing another state/solver stack.
+Implement rotating opening/recontact through the same patch transaction, with
+work/step refinement. Then establish spatial integration convergence and physical
+boundary/partner handling. Avoid another state/solver stack. Reference weights
+must remain fixed during history continuation; a refined rule is a different
+identity. Classical finite R(s), native installed artifact and C5 acceptance remain
+open. No live numerical job; own review worker may be finishing the source-path
+certificate review. Other-chat prohibition remains.
 
 ## Scope and resources
 
 D1-interior and named bounded D2 normal workflows independently accepted. Current
-C5/native work is developmental; full D2–D8/C0–C9 remains incomplete. Immutable
+C5/native work is developmental; full D2ï¿½D8/C0ï¿½C9 remains incomplete. Immutable
 installed shell artifact contact-friction-partial-replay-package-20261002 retains
 wheel db4bc12dfb5194cc1ebf4b4f49787217d73a87efff0ce3ba17dc11905e330735.
 Do not modify it or repeat consumed full shell workflow authorities.
