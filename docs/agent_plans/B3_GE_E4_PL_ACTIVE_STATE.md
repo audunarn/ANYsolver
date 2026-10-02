@@ -80,17 +80,21 @@ plate modal reference with six-coordinate mode output? Existing isolated B2
 frequency checks need no repeat. US3 consistent translation/director inertia
 matches the Q4 continuous kinetic law, not native S3's omitted rotary policy.
 One 16x4 plate-only canary, 1x.2m/h.035/E210GPa/nu.3/rho7850, all-six root
-clamp, six modes, distinguishes usable output from unsupported mass/output.
-No beams, ties, prestress, new criterion, refinement or F03 run. If complete,
-derive matched native/eigen-residual comparison; if incomplete, inspect the
-precise output/source obstruction before another run. CCX hardcoded ARPACK
-tol1e-2 and rounded output cannot themselves certify1e-8 eigen residuals.
-Ceiling600s/1GiB/1 numerical thread for this Level-A route discriminator.
+clamp, now completes6 ordered modes/all6 nodal coordinates; first29.59976Hz.
+Bending rx/ry and in-plane rz are nonzero. No beams/ties/prestress/F03/refinement.
+Actual logs1 numerical CPU, .1032s/8.47MB sampledRSS, below600s/1GiB. Source
+NaN guard failure retained; repaired16 controls and1 changed-output check pass.
+Read review repaired standalone exit/resource/FATAL guards before execution.
+Decision: external observables are usable; proceed to matched native Q4 physical
+mass and mode comparison, with native eigen-residual checks and prospective
+convergence argument. CCX source ARPACKtol1e-2 and rounded output do not certify
+1e-8 eigen residual or2% converged agreement. Do not repeat isolated B2 tests.
+[Canary output/raw and limitations](development/r8-b2-mixed-reference-modes-20261002/results.md).
 
 ## Restart
 
-Installed consumer jobs terminal. No resource slot held. Next usable slice:
-the bounded US3 modal output canary above, then a matched physical comparison.
+All owned jobs terminal. No resource slot held. Next usable slice:
+matched Q4/US3 physical spectral comparison using the verified observable route.
 Complete GE material/load/attachment and practical-scale obligations remain active.
 Use focused source checks and installed artifacts at coherent boundaries; no
 unchanged campaigns or helper-level qualification packages. At most3workers and

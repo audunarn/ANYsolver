@@ -1037,3 +1037,11 @@ and focused repair retained; independent Read review clear. This closes the
 development input/persistence slice, not physical spectral accuracy, F07/F12/G4B,
 M3/M4/G6, external comparisons or complete acceptance.
 [Exact installed artifacts and evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-mixed-modal-consumer-20261002/results.md).
+
+One pinned CalculiX US3 plate modal canary returns6 ordered frequencies and
+complete six-coordinate fields, with nonzero bending rotations. This resolves
+modal observable feasibility; matched native comparison, convergence, actual
+reference eigen-residual, physical spectral accuracy and G4B remain OPEN.
+Failed NaN decoder control, review guard repairs and actual execution/settings
+are retained. No formalF03 consumption or aggregate acceptance.
+[Exact bounded canary and next decision](development/r8-b2-mixed-reference-modes-20261002/results.md).

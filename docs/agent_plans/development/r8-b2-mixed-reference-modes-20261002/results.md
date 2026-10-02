@@ -77,3 +77,47 @@ Original root: C:/Users/AudunArnesenNyhus/AppData/Local/Temp/r8-b2-mixed-referen
 No main merge, publication, default/version change, formal F03 consumption or
 aggregate acceptance. Next consumer work must use a distinct explicit modal
 input schema; full physical/spectral/external/scale acceptance remains required.
+
+## Follow-on consumer and external-route development
+
+The distinct modal input consumer is now delivered at ANYfem `cabb6ed`, with
+224 installed checks and mixed/all-S3 Project examples. The original artifact
+record above remains unchanged in scope; the new paired artifact and consumer
+evidence are [recorded separately](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-mixed-modal-consumer-20261002/results.md).
+
+One US3 plate modal output canary now completes on the pinned CalculiX 2.23
+executable `27a9426a...c9c5f`: 1 x .2 m, thickness .035 m, E210 GPa, nu .3,
+rho7850 kg/m3, nx16/ny4, 85 nodes, 128 triangles, all-six root clamp. No beams,
+attachments, prestress or imposed load. Six ordered modes and all six nodal
+coordinates are parsed by eigenvalue-number headers. The first illustrative
+frequency is 29.59976 Hz. Bending modes have nonzero rx/ry; the second in-plane
+mode has nonzero normal spin. Coordinate activity is reported separately, in
+the external normalization, without treating mixed-unit norms as accuracy.
+
+Actual logs report one numerical CPU for matrix/stress assembly and spooles.
+Supervision: 0.1032 s, sampled peak process-tree RSS 8,474,624 bytes, four total
+process threads including infrastructure, within 600 s / 1 GiB. No error/warning,
+resource abort or missing node/rotation inventory. Printed mass-normalization
+diagnostics are observations, not certified eigen-equation accuracy.
+
+Initial decoder checks exposed a NaN input reaching an untyped Decimal exponent
+error: 12 pass / 1 fail, preserved and corrected with a finite-value guard.
+Then 13 pass. Independent pre-execution review required standalone parsing to
+validate actual execution status/resource outcome and reject FATAL. Those guards
+and corruption/duplicate/missing-mode controls pass 16/16. The changed coordinate
+activity output passes its affected 1/1 check. No engine repeat was needed.
+
+This resolves route feasibility only. Retained source hardcodes ARPACK tol1e-2;
+rounded frequency and displacement output cannot establish the required 1e-8
+eigen-equation residual. No native comparison, spectrum completeness, refinement
+convergence, 2% reference acceptance or F03/G4B acceptance follows. The continuous
+US3 translation/director kinetic law is compatible with physical Q4 mass; it is
+not a same-inertia oracle for the native S3 policy that omits rotary inertia.
+
+Action: use these recoverable modal observables for a physically matched native
+Q4 comparison, retaining native residual checks and a prospective convergence
+argument. Do not repeat isolated B2 frequencies, change inertia, or automatically
+add refinement. Raw output, deck, executed/prepared runners, fields, failed and
+repaired decoder controls are in [the canary archive](us3-modal-canary-v1.zip)
+and [identity/result manifest](us3-modal-canary-v1.json). Review is separate
+implementer Read scrutiny, not different-model-family qualification.
