@@ -412,6 +412,14 @@ class NativeRetainedRoundS3Analysis:
                 try:
                     candidate = transaction.propose(candidate_increment[:n], candidate_increment[n:], parameter,
                                                       cancellation_token=cancellation_token)
+                except MemoryError as exc:
+                    # A bounded support proof can be inconclusive for a large
+                    # trial. Retry only this named geometric work limit, under
+                    # the existing backtrack/deadline bounds; never actual OOM.
+                    if str(exc)!='native friction aggregate support interval cap exhausted':
+                        raise
+                    material_trial_reason=str(exc)
+                    continue
                 except ValueError as exc:
                     material_trial_reason = str(exc)
                     if str(exc).startswith(('native/S3 material history path requires subdivision',

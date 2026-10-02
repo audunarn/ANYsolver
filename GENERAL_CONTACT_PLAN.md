@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.29. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.30. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -501,3 +501,17 @@ Projected-speed candidate passed15support checks but did not resolve saved rebas
 Curvature certificate passes saved rebase37/128units and15support checks; analytical shallow rotating arc and prefix-cost check pass. Admission109->15units. Independent source review finds no consequential defect, notes existing binary64 padding rather than interval arithmetic. One integrated loading/rebase/split-restart run contact-native-replay-coupled-curvature-20261002:900s/3814MiB outer, native120s/context unchanged; captured source hashes. Stop at first non-success and preserve exact stage/input.
 
 Current disposition: curvature proof fixes actual committed-origin rebase; second load fails at historical-cover cap(call16), before restart. Next local input replay_owner_second_load_rejected_path.json. Distinguish genuine nonmonotone contact history from over-conservative complete-history cover. No unchanged coupled rerun or cap increase. See replay_curvature_results.md.
+
+Second-load hypothesis: a common spatial cover across every history segment overconstrains proof selection (a region open now may contain old contact). Candidate certifies a complete spatial cover separately for each actual motion segment, retaining one shared budget and every material/history query. Logical guarantee is pointwise endpoint support on each segment; partitions need not share boundaries. Saved second-load replay plus support counterexamples first,180s/953MiB.
+
+Per-segment partition alone fails saved second loading; region trace shows sampled positive decreasing gap and conservative derivative curvature dominated by8.44m target-corner radius. Candidate bounds use a fixed barycentric target-plane point near each material region (least-squares planar projection of its initial axial midpoint). Its trajectory remains affine, and all relative positions/velocities use that same material point. Gap plane and ownership unchanged. This reduces origin-dependent bound looseness, not mechanical tolerance. Verify saved case and support counterexamples before further coupled work.
+
+Nearby plane origin reduces radius bound8.44->0.098m but reveals a persistent-contact region where derivative sign is unresolved. Add symmetric strictly-negative whole-segment certificate using exact spatial maxima and the same curvature/Lipschitz bounds. This excludes hidden opening and preserves endpoint support; it never skips physical friction queries. Per-segment cover may use monotone, strictly open or strictly closed leaves. Shared budget retained.
+
+Per-segment/local-origin/signed-region experiments remain non-success at128units and are discarded from production (source retained). New decision tests intended driver behavior: a named proof-budget exhaustion at a disposable Newton trial may require bounded backtracking, as other unresolved geometry does. Replay only half the saved candidate latest motion, with physical origin/history/settings unchanged, before driver change. No cap or tolerance increase.
+
+Saved half trial also exhausts support. Implement bounded backtracking for exactly the named support-proof MemoryError at disposable Newton trials; generic allocation/resource failures remain fatal, initial/commit evaluations are not caught, existing maxbacktracks and deadline unchanged. Verify one recovered rejection, persistent exhaustion and actual memory-error rollback. Then assess second loading from the actual saved accepted checkpoint in a reconstructed owner, avoiding first-load replay. This is genuine restart development, not resetting a live context deadline.
+
+Independent review confirms entry cover only needs all-saved-endpoints-open implies always-open. Add strict negative spatial maximum at any saved endpoint as alternative regional support witness, charged to same budget. Witnessed points cannot enter open shortcut and still receive full material path/event replay. This does not certify continuous closure or hidden response-boundary integration. Saved second-load evaluation must expose any remaining point-path/integration failure.
+
+Current decision: retain only named support-cap trial backtracking (3focused checks pass); restore all unsuccessful geometry candidates to ac5b8e56. Actual first checkpoint restore succeeds; secondload remains bounded non-success with state preserved. Stop scalar-bound tuning. Next assess replacing global endpoint-support prerequisite with conservative per-integration-panel proof or a front-aware certificate, explicitly addressing missed nonzero historical support. No coupled retry without a locally verified successor. Evidence replay_second_load_results.md.

@@ -1009,3 +1009,5 @@ on unresolved historical support, before first acceptance. No scope promotion.
 Successor development: first native/S3 replay loading increment committed; zero-motion rebase fails support128 before adaptive refinement. Restart/second loading not reached; no acceptance promotion. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_regional_results.md).
 
 Latest successor: native replay first loading AND committed-origin rebase pass through actual owner after reviewed curvature certificate. Second loading fails bounded historical admission; split restart remains unreached. No acceptance promotion. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_curvature_results.md).
+
+Development successor: exact named support-proof cap now causes bounded trial backtracking; three state/error controls pass. Actual saved first-load checkpoint restores; second loading still fails all backtracks without commit. Unsuccessful geometry experiments discarded. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_second_load_results.md).

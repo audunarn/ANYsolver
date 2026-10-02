@@ -44,7 +44,8 @@ def test_replay_initialization_rejected_trial_and_checkpoint_identity():
 
 @pytest.mark.parametrize('reason',[
     'native friction integration requires resolved historical contact envelope',
-    'native friction integration requires swept whole-patch target ownership'])
+    'native friction integration requires swept whole-patch target ownership',
+    'native friction aggregate support interval cap exhausted'])
 def test_replay_geometry_rejection_backtracks_without_commit(monkeypatch,reason):
     owner,bridge=_replay_patch();transaction=NativeS3MaterialTransaction(bridge)
     before=transaction.checkpoint();original=transaction.propose;calls=0
@@ -53,7 +54,7 @@ def test_replay_geometry_rejection_backtracks_without_commit(monkeypatch,reason)
         calls+=1
         if calls==2:
             assert transaction.checkpoint()==before
-            raise ValueError(reason)
+            raise (MemoryError if 'support interval cap' in reason else ValueError)(reason)
         if calls==3:assert transaction.checkpoint()==before
         return original(*args,**kwargs)
     monkeypatch.setattr(transaction,'propose',rejected_once)
@@ -181,7 +182,8 @@ def test_saved_replay_candidate_branch_discriminator(tmp_path):
 
 @pytest.mark.parametrize('filename',[
     'replay_owner_rejected_path.json','replay_owner_support_rejected_path.json',
-    'replay_owner_envelope_rejected_path.json','replay_owner_rebase_rejected_path.json'])
+    'replay_owner_envelope_rejected_path.json','replay_owner_rebase_rejected_path.json',
+    'replay_owner_second_load_rejected_path.json'])
 def test_saved_replay_candidate_front_refinement(tmp_path,filename,monkeypatch):
     import json,os
     from pathlib import Path
@@ -337,3 +339,56 @@ def test_saved_rebase_cover_prefix_cost(tmp_path):
         rows.append(dict(segments=count,certified=result,support_intervals=budget.intervals))
     Path(os.environ.get('RUNNER_TEMP',str(tmp_path)),'cover_prefix_cost.json').write_text(json.dumps(rows,indent=2)+'\n')
     assert all(row['certified'] for row in rows)
+
+
+def test_saved_second_load_half_trial(tmp_path):
+    import json,os
+    from pathlib import Path
+    from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    from anysolver.general_contact.native_surface_friction_integral import integrate_material_friction
+    saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_second_load_rejected_path.json').read_text())
+    _,bridge=_replay_patch()
+    initial=NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()})
+    segments=tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in row.items()}) for row in saved['segments'])
+    last=segments[-1]
+    half=NativeSurfaceMotionSegment(.5*last.translations,.5*last.angular,.5*last.shell_increment)
+    field=NativeSurfaceHistoryField(bridge.pair,initial,(*segments[:-1],half),maximum_intervals=saved['maximum_intervals'])
+    value=integrate_material_friction(field,friction_settings())
+    Path(os.environ.get('RUNNER_TEMP',str(tmp_path)),'half_trial_result.json').write_text(json.dumps(value.diagnostics,indent=2)+'\n')
+    assert value.diagnostics['maximum_scaled_error_estimate']<=1.
+
+
+@pytest.mark.parametrize('persistent',[False,True])
+def test_support_trial_limit_is_bounded_and_real_memory_error_is_fatal(monkeypatch,persistent):
+    owner,bridge=_replay_patch();transaction=NativeS3MaterialTransaction(bridge)
+    before=transaction.checkpoint();original=transaction.propose;calls=0
+    message='native friction aggregate support interval cap exhausted' if persistent else 'allocator out of memory'
+    def fail_trial(*args,**kwargs):
+        nonlocal calls
+        calls+=1
+        if calls>1:raise MemoryError(message)
+        return original(*args,**kwargs)
+    monkeypatch.setattr(transaction,'propose',fail_trial)
+    with pytest.raises(RuntimeError if persistent else MemoryError,match=message):
+        owner.solve_material_increment(transaction,.001)
+    assert calls==(owner.program.max_backtracks+2 if persistent else 2)
+    assert transaction.checkpoint()==before
+
+
+def test_saved_native_active_checkpoint_continues_second_load(tmp_path):
+    import json,os
+    from pathlib import Path
+    path=Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_first_accepted_checkpoint.json'
+    capsule=path.read_bytes();owner,bridge=_replay_patch()
+    transaction=NativeS3MaterialTransaction.restore(bridge,capsule,sha256(capsule).hexdigest())
+    assert transaction.accepted.sequence==1
+    folder=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))
+    (folder/'restored_stage.json').write_text(json.dumps(dict(stage='first_checkpoint_restored',sequence=1)))
+    try:owner.solve_material_increment(transaction,1.05)
+    except Exception as error:
+        (folder/'restored_stage.json').write_text(json.dumps(dict(stage='second_load_failed',sequence=transaction.accepted.sequence,error=str(error))))
+        raise
+    (folder/'restored_stage.json').write_text(json.dumps(dict(stage='second_load_accepted',sequence=transaction.accepted.sequence)))
+    (folder/'second_checkpoint.json').write_bytes(transaction.checkpoint())
+    assert transaction.accepted.sequence==2
