@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from ._stiffened_shell_ge_distributed_load import GEBeamLineAction, GEBeamDistributedLoad, GEDistributedRecovery
+from ._stiffened_shell_ge_pressure_load import GEShellPressureAction, GEShellPressureLoad, GEPressureRecovery
 from ._stiffened_shell_ge_body_load import GEBodyLoad, GEBodyRecovery
 from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
 from ._stiffened_shell_ge_reference_modal import (

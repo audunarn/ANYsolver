@@ -1168,3 +1168,25 @@ reference eigen-residual, physical spectral accuracy and G4B remain OPEN.
 Failed NaN decoder control, review guard repairs and actual execution/settings
 are retained. No formalF03 consumption or aggregate acceptance.
 [Exact bounded canary and next decision](development/r8-b2-mixed-reference-modes-20261002/results.md).
+
+
+**2 October shell pressure development (G4A remains OPEN):** typed native Q4/S3
+reference pressure and current-surface follower candidate exists. Source checks
+pass full Q4/all-S3 follower cancellation/restart/rebase/continuation, but mixed
+follower remains FAILED at its original component-equilibrium threshold. Finite
+S3 enhanced reference-dead work remains NOT_IMPLEMENTED, explicitly rejected.
+No installed pressure verification or complete pressure acceptance. Local stable
+fit correction641e05bb has48source checks and independent scoped review; pressure
+trial-merit choice has separate independent review and unchanged commit limits.
+[Current evidence, failures and next discriminator](development/r8-ge-pressure-work-20261002/status.md).
+
+
+**2 October pressure consumer milestone:** ANYfem095b60c adds strict pressure input
+and native Project persistence/dispatch.119source+119installed adapter checks and
+2source+2final installed Q4 full workflow/cleanup checks pass. Exact wheel pair
+ac2ea592...5199772 solver/a2739821...59a0e09 consumer,396/98modules,281onsiteimports.
+Real Project route covers cancellation0.25, disk restoration and identical0.5/1
+continuation. Source reviews complete within this experimental scope; no release.
+Mixed follower still FAILED and finite S3 enhanced-dead still NOT_IMPLEMENTED;
+no aggregate G4A/G6 acceptance. Evidence lives in ANYfem docs/development/
+r8-ge-pressure-consumer-20261002/results.md and raw-v1.zip.

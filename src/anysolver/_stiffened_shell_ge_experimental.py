@@ -195,6 +195,7 @@ class LinearResult:
     point_wrenches: tuple[PointTransferWrench, ...] = ()
     body_load: object | None = None
     distributed_load: object | None = None
+    pressure_load: object | None = None
 
 
 def _owned(values, shape=None):
@@ -820,6 +821,8 @@ class ExperimentalGEAnalysis:
                     ("experimental uniform spatial acceleration; explicit physical beam inertia and shell density; reference-linear or conservative finite work with objective Q4 pullback; GEBodyLoad",)),
                 "beam_distributed_loads": (() if self._line_samples or self._definition.footprints else
                     ("experimental element-addressed fixed-spatial force/couple per reference arclength; native quadrature; couples nonconservative; GEBeamDistributedLoad",)),
+                "shell_pressure_loads": (() if self._line_samples or self._definition.footprints else
+                    ("experimental GEShellPressureLoad; shell IDs are Q4 then S3, one-based; reference-linear native dead pressure; finite Q4 dead and Q4/S3 interpolation-surface current-area follower pressure; finite native enhanced-dead S3 is unsupported",)),
                 "staged_dead_loads": (() if self._line_samples else
                     ("experimental immutable piecewise-affine translation forces; forward programme position",)),
                 "experimental_line_spaces": tuple(
@@ -914,8 +917,9 @@ class ExperimentalGEAnalysis:
         cancellation_safe_point(cancellation_token, "stiffened-shell.linear.start")
         from ._stiffened_shell_ge_body_load import GEBodyLoad
         from ._stiffened_shell_ge_distributed_load import GEBeamDistributedLoad
+        from ._stiffened_shell_ge_pressure_load import GEShellPressureLoad
         body = None
-        if type(actions) in (GEBodyLoad, GEBeamDistributedLoad):
+        if type(actions) in (GEBodyLoad, GEBeamDistributedLoad, GEShellPressureLoad):
             cached = getattr(self, "_external_context", None)
             body = (cached if cached is not None and cached.request.identity == actions.identity
                     else actions.compile(self))
@@ -1100,13 +1104,16 @@ class ExperimentalGEAnalysis:
             raise ValueError("bounded mixed linear checkpoint required")
         from ._stiffened_shell_ge_body_load import MAGIC as BODY_MAGIC
         from ._stiffened_shell_ge_distributed_load import MAGIC as DISTRIBUTED_MAGIC
-        if raw.startswith((BODY_MAGIC, DISTRIBUTED_MAGIC)):
+        from ._stiffened_shell_ge_pressure_load import MAGIC as PRESSURE_MAGIC
+        if raw.startswith((BODY_MAGIC, DISTRIBUTED_MAGIC, PRESSURE_MAGIC)):
             if getattr(self, "_external_context", None) is not None or getattr(self, "_staged_context", None) is not None:
-                raise ValueError("nested body checkpoint is unsupported")
+                raise ValueError("nested external-load checkpoint is unsupported")
             if raw.startswith(BODY_MAGIC):
                 from ._stiffened_shell_ge_body_load import decode_checkpoint
-            else:
+            elif raw.startswith(DISTRIBUTED_MAGIC):
                 from ._stiffened_shell_ge_distributed_load import decode_checkpoint
+            else:
+                from ._stiffened_shell_ge_pressure_load import decode_checkpoint
             request, inner = decode_checkpoint(raw)
             compiled = request.compile(self)
             prepared = copy(self)
@@ -1118,7 +1125,7 @@ class ExperimentalGEAnalysis:
             driver = prepared._finite_driver
             if driver is None:
                 if not np.array_equal(prepared._accepted[1], compiled.reference_gradient):
-                    raise ValueError("body checkpoint load disagrees with declared acceleration")
+                    raise ValueError("checkpoint load disagrees with its declared external request")
                 result = replace(result, **{compiled.result_field: compiled.reference_recovery})
                 prepared._accepted = (result, prepared._accepted[1])
             checkpoint = prepared.checkpoint()

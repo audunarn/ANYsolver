@@ -69,6 +69,31 @@ MAX_JSON_CHECKPOINT_VALUES = 50_000
 NATIVE_MATERIAL_CHECKPOINT = _BINARY_SCHEMAS["finite_native_material"]
 
 
+def _trial_work_ratio(residual, applied, coordinate_scale):
+    """Pressure trial merit only; never an equilibrium acceptance test.
+
+    Coordinate scales and the parent's load define one work norm for the
+    entire backtracking comparison. Small physical components remain in the
+    norm and in the separate, unchanged component-wise acceptance check.
+    """
+    residual, applied, coordinate_scale = (np.asarray(v, dtype=float)
+        for v in (residual, applied, coordinate_scale))
+    if (residual.ndim != 1 or residual.shape != applied.shape or
+            residual.shape != coordinate_scale.shape or
+            not np.isfinite(coordinate_scale).all() or np.any(coordinate_scale <= 0.)):
+        raise ValueError("matching pressure trial rows and positive coordinate scales required")
+    r = residual*coordinate_scale
+    f = applied*coordinate_scale
+    if not np.isfinite(r).all() or not np.isfinite(f).all():
+        raise ValueError("finite pressure trial work required")
+    scale = max(float(np.max(np.abs(r), initial=0.)),
+                float(np.max(np.abs(f), initial=0.)))
+    if scale == 0.:
+        return 0.
+    denominator = float(np.linalg.norm(f/scale))
+    return float(np.linalg.norm(r/scale))/denominator if denominator else float("inf")
+
+
 def _require_elastic_footprint_histories(histories, context):
     for history in histories:
         for station in history.stations:
@@ -341,6 +366,7 @@ class FinitePointResult:
     applied_dead_load: np.ndarray | None = None
     body_load: object | None = None
     distributed_load: object | None = None
+    pressure_load: object | None = None
 
 
 @dataclass(frozen=True)
@@ -423,6 +449,8 @@ class FinitePointDriver:
         self._beam_predecessors = self._beam_origins
         self._pattern = None
         self._external = getattr(owner, "_external_context", None)
+        if self._external is not None and not getattr(self._external, "finite_supported", True):
+            raise ValueError(self._external.finite_error)
         self._external_stable_s3 = bool(self._external is not None and
             owner._definition.shell.s3_elements and owner._definition.shell.j2_curve is None)
         self._stable_s3 = self._stable_s3 or self._external_stable_s3
@@ -465,7 +493,8 @@ class FinitePointDriver:
         from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
         from ._stiffened_shell_ge_body_load import GEBodyLoad
         from ._stiffened_shell_ge_distributed_load import GEBeamDistributedLoad
-        if type(actions) in (GEBodyLoad, GEBeamDistributedLoad):
+        from ._stiffened_shell_ge_pressure_load import GEShellPressureLoad
+        if type(actions) in (GEBodyLoad, GEBeamDistributedLoad, GEShellPressureLoad):
             if (self.owner._definition.shell.q4_elements and
                     self.owner._definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_POLICY):
                 raise ValueError("finite configuration-dependent loading requires the objective Q4 algorithmic pullback")
@@ -474,7 +503,10 @@ class FinitePointDriver:
                     (self._accepted is not None and self._external is None)):
                 raise ValueError("finite configuration-dependent load changed after first increment")
             if self._external is None:
-                self._external = actions.compile(self.owner)
+                compiled = actions.compile(self.owner)
+                if not getattr(compiled, "finite_supported", True):
+                    raise ValueError(compiled.finite_error)
+                self._external = compiled
                 self._external_stable_s3 = bool(self.owner._definition.shell.s3_elements and
                     self.owner._definition.shell.j2_curve is None)
                 self._stable_s3 = self._stable_s3 or self._external_stable_s3
@@ -937,6 +969,27 @@ class FinitePointDriver:
                 full = np.zeros(matrix.shape[0])
                 full[free] = step
                 old_merit = max(relative, gap)
+                # A follower load can activate an initially zero component. Comparing
+                # candidates in different active-row norms can reject a Newton step
+                # despite a large physical residual reduction. Freeze only the
+                # backtracking comparison; the next iteration still requires the
+                # unchanged current-state equilibrium and compatibility checks.
+                merit_applied = None
+                trial_ratio = _linear_equilibrium
+                if getattr(self._external, "freeze_trial_load_norm", False):
+                    # _prepare_load excludes combined nodal/programme loads;
+                    # this is the complete applied load for this profile.
+                    merit_applied = factor*self._external.evaluate(trial)[0]
+                    global_ratio = _trial_work_ratio(residual[owner._free],
+                        merit_applied[owner._free], owner._coordinate_scale[owner._free])
+                    # Once global equilibrium and compatibility meet their
+                    # acceptance limits, polish the remaining component checks.
+                    # Polishing permits global-ratio increases; the next
+                    # current-state acceptance check still requires all limits.
+                    if global_ratio > 1e-8 or gap > 1e-9:
+                        trial_ratio = _trial_work_ratio
+                    old_merit = max(trial_ratio(residual[owner._free],
+                        merit_applied[owner._free], owner._coordinate_scale[owner._free]), gap)
                 for backtrack in range(max_backtracks+1):
                     cancellation_safe_point(
                         cancellation_token, "stiffened-shell.finite.backtrack")
@@ -950,7 +1003,10 @@ class FinitePointDriver:
                     except BL5TrialDomainError:
                         counts["rejected_trials"] += 1
                         continue
-                    if max(changed[2], changed[3]) < old_merit:
+                    candidate_relative = (changed[2] if merit_applied is None else
+                        trial_ratio(changed[0][owner._free],
+                            merit_applied[owner._free], owner._coordinate_scale[owner._free]))
+                    if max(candidate_relative, changed[3]) < old_merit:
                         trial = candidate
                         break
                     counts["rejected_trials"] += 1
