@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.7. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.8. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -60,7 +60,16 @@ gap can trigger a return; its dissipation tends to zero with tighter tangential
 regularization in the retained development discriminator. This is an explicit
 regularization consequence, not a claim of physical slip under common strain.
 
-Next close friction integration/step refinement on this coupled owner, then carry
+Explicit reference-cell friction refinement now addresses a measured8.47446%
+target-node integration error in the original three-point rule, without changing
+normal pressure space. The level3 candidate uses192 persistent material points
+per source face and local cached physical work maps; source quadrature/weights
+bind restart and cannot change inside continuation. The installed example selects
+level3 explicitly, preserving the historical default. See the linked C5 guide and
+integration evidence for the unchanged0.2% case-specific budget and actual results.
+This does not certify arbitrary friction fields or endpoint/chord time accuracy.
+
+Next close event/step sensitivity on this coupled owner, then carry
 material history through actual partial overlap
 repartitioning. Preserve normal pressure space, both-body work, atomic state and
 dimensional gates. Beam friction uses swept round surfaces. Finite rotation,

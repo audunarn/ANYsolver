@@ -246,6 +246,30 @@ example. Restart binds geometry, quadrature, properties, derivative controls,
 initialization rule, committed pose and anchor/history; incompatible definitions
 and inconsistent stored elastic energy are rejected before mutation.
 
+Reference-cell friction integration is now explicitly selectable with
+`source_quadrature_refinement`: level0 preserves the original three-point rule;
+each level divides every reference triangle into four cells and applies the same
+positive three-point rule. Level3 gives192 persistent material points per source
+face. The material-anchor example explicitly selects level3. The default remains
+level0 for compatibility, and is not an accuracy recommendation. A separate
+`maximum_material_points` cap is checked before allocation. Point coordinates,
+weights and refinement settings bind restart; changing them during continuation
+is rejected. Refinement does not add normal pressure unknowns or repartition
+history within an increment.
+
+An independent constant-traction fixture integrates the target-node shape
+`max(A-B*bary0,0)` exactly, using the triangle density `2*(1-bary0)` and a separate
+scalar quadrature check. The original three-point rule has8.47446% error at the
+selected target-node force despite correct total force. This failure is retained.
+The refined candidate must meet the unchanged case-specific0.2% integration
+budget, with positive first/second reference moments, complete target-force
+distribution, directional derivatives, solved deformable-target history and
+restart checks. This case alone is not a general integration-error estimator.
+Cached physical maps use only participating FE columns; full reaction rows remain
+and local tangent blocks scatter sparsely. Direct full-map comparisons and
+constrained-reaction checks cover that optimization. See
+[integration slice evidence](d1_review_support/contact_c5_s3_quadrature_20261002/results.md).
+
 The interacting-material-point idea is informed by
 [Duong and Sauer (2019), contact kinematics](https://arxiv.org/html/1808.10420).
 ANYsolver retains its own normal mortar law and derives the above work maps; this

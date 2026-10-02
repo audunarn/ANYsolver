@@ -101,8 +101,11 @@ def test_anchor_facet_crossing_work_wrench_reversal_and_release():
     assert set(manager.prepare_commit(press+.385*x+.02*y)[2]["branch"]) == {"activation"}
 
 
-def test_anchor_pressure_tangent_and_admitted_deformable_target_direction():
-    model, _d, _s, _f, manager = _manager()
+@pytest.mark.parametrize("refinement",(0,3))
+def test_anchor_pressure_tangent_and_admitted_deformable_target_direction(refinement):
+    model, definition, settings, friction, _unused = _manager()
+    manager=S3SlidingFrictionManager(model,GeneralS3PatchManager(model,definition,settings),
+        replace(friction,source_quadrature_refinement=refinement))
     x,y,z = (_mode(model,(1,2,3),a) for a in (0,1,2))
     press = -.02*z
     manager.commit(manager.prepare_commit(press))
@@ -125,8 +128,10 @@ def test_anchor_pressure_tangent_and_admitted_deformable_target_direction():
     assert np.all(np.isfinite(force))
 
 
-def test_real_deformable_target_crossing_history_and_split_restart():
+@pytest.mark.parametrize("refinement",(0,3))
+def test_real_deformable_target_crossing_history_and_split_restart(refinement):
     model, definition, settings, friction, _manager_unused = _manager()
+    friction=replace(friction,source_quadrature_refinement=refinement)
     model.add_boundary_condition(BoundaryCondition("target_plane",(4,5,6,7),
         {d:0 for d in ("uz","rx","ry","rz")}))
     model.add_boundary_condition(BoundaryCondition("target_origin",(4,),{"ux":0,"uy":0}))
@@ -154,6 +159,10 @@ def test_real_deformable_target_crossing_history_and_split_restart():
     assert resumed.status == "completed", resumed.info
     np.testing.assert_allclose(resumed.displacements,full.displacements,rtol=1e-7,atol=1e-9)
     assert resumed.info["force_displacement_history"] == history
+    assert history[0]["friction"]["friction_point_count"]==3*4**refinement
+    with pytest.raises(ValueError,match="contract|fingerprint|incompatible"):
+        solve_static_nonlinear(restart_checkpoint=half.to_restart_checkpoint(),
+            **{**kwargs,"contact_friction":replace(friction,source_quadrature_refinement=1)})
     with pytest.raises(ValueError,match="contract|fingerprint|incompatible"):
         solve_static_nonlinear(restart_checkpoint=half.to_restart_checkpoint(),
             **{**kwargs,"contact_friction":replace(friction,friction_coefficient=.4)})

@@ -2,71 +2,67 @@
 
 ## Authority and checkpoint
 
-Full C0–C9 goal remains active; this turn is progress. Tiered/new testing workflow.
-Do not inspect or communicate with the other task/original worktree. Use:
+Full C0–C9 goal active; this turn is progress. Tiered workflow; no other-chat
+communication or original-worktree inspection. Use only
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Parent6fe80cec; inspect actual HEAD/status.
-Goal rev2026-09-30.4, plan rev2026-10-02.7. No shared ABC-guard, publication,
-main merge, release or historical-default change authorized. Local exact-path
-checkpoint commits remain authorized; preserve frozen/consumed run authorities.
+codex/contact-main-reconcile-20261001. Source parent474a96c6; inspect HEAD/status.
+Goal rev2026-09-30.4, plan rev2026-10-02.8. No publication/main merge/release,
+historical-default or shared ABC-guard change authorized. Exact-path local
+checkpoint commits authorized; retain frozen/consumed execution restrictions.
 
-## Current result
+## Current integrated result
 
-Internal S3 material seams now have a fixed-return-facet generalized tangent.
-The base physical return chooses stable-ID ownership; all FE derivative columns
-extend that same facet's affine equations. Only disposable probes can extrapolate
-shape coordinates, within an explicit maximum_probe_barycentric_change bound.
-They return no physical histories. Real candidates/commits retain full coverage
-and nonnegative material coordinates. Physical target-rim tangent still rejects.
-New derivative/probe controls bind restart; old derivative identities reject.
+Explicit fixed reference-cell refinement closes a measured friction integration
+error: target-node7 force error8.47446% (3points) ->0.0487955% (192points), within
+this fixture's unchanged0.2% budget. Levels1/2 plateau at0.22501%; no order claim.
+Positive reference weights/moments, all target forces and unchanged normal pressure
+space checked independently. Settings/coordinates/weights bind restart; no point
+repartition inside an increment. Point cap checked before allocation. Level0
+remains the historical selection; material-anchor example explicitly uses level3.
 
-One-sided force and moment checks meet1e-5 at h=1e-4 and2e-5 using a second-order
-same-side oracle. Sourcev1 failed with first-order force error2.84e-4; preserved.
-The first-order error reduces4–6x when h reduces5x; second-order correction passes
-at the original interval/tolerance without a source-equation change. Solved normal
-response lands at the seam, continues and exactly reproduces a2/3 split history.
-The genuinely deformable-target crossing workflow remains tested.
+Physical work maps cached only on participating FE columns. Full reaction rows
+preserved and tangent blocks scatter sparsely. Cached/full normal/work maps and
+constrained reactions checked. Coarse/refined pressure-coupled directional tangents
+meet1e-5; solved deformable target press/stick/slide/seam/reverse/open/recontact
+and exact split history pass. Incompatible refinement/property restarts reject.
 
-Early Mistral Read supports coherent fixed-facet generalized differentiation and
-work/normal derivatives. Its findings led to stricter probe isolation, topology-list
-validation and bounded extrapolation. Source-only review, not C5 acceptance.
-A physical slip return is a convex combination of projected source and convected
-old anchor inside the admitted convex patch; no supported overshoot counterexample.
-Normal penalty multipliers fixed/read-only; augmented owners rejected.
+Independent Mistral focused Read supports weights/order and local scatter.
+Adapter assumptions checked by lead against source and added direct comparisons.
+First5turn review ended without assessment; focused6turn continuation delivered.
+An installed assertion wrongly required the entire normal/contact global column
+empty; actual normal owner restricts physical coordinates before driver T.T K T.
+Corrected friction-column assertion passes without a production equation change.
+Baseline8.47% failure, failed assertion and nonexistent-selector/no-tests run retained.
 
-Final isolated15pass selection: all10 anchor checks,2 legacy static/restart/context,
-retained-spin check and2 example modes.456source/wheel/site modules match;237onsite
-imports. Actual JIToff/BLAS+Numba1 verified pre/post.39.3181718s/178593792B sampled
-process-tree peak, within180s/999292928B. Build14.1133430s/125308928B. No whole-route
-speedup or no-contact5% performance claim; unchanged paths reused by impact analysis.
-[Results/raw](docs/d1_review_support/contact_c5_s3_seam_tangent_20261002/results.md),
-[review](docs/d1_review_support/contact_c5_s3_seam_tangent_20261002/independent_review.md),
-[C5 guide](docs/GENERAL_CONTACT_C5_FRICTION_POINT.md).
-Artifact C:/ANYworkspaceWork/contact-anchor-seam-package-20261002; wheel SHA256
-69427166669b317a825b73686ae2dcd1087da750d40e5265d30231b97ba437da.
-Raw35files/2797703B, readbackPASS; index/ZIP retained. History
-[Part49](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART49.md)
-links prior material-anchor defects, failures, native/impact, applications and acceptance.
+Installed24pass/1failed selection plus2corrected passes covers25unique checks.
+456source/wheel/site modules match;237onsite imports in full selection. Actual
+JIToff/BLAS+Numba1 checked pre/post. Build13.5463412s/124596224B; selection
+60.7496113s/185835520B; correction3.1236272s/177225728B sampled process-tree peak.
+No whole-route speedup or no-contact5% claim. Accepted normal/no-contact evidence
+reused by impact analysis; no structural/sphere/default path changed.
 
-## Next decision / resources
+[Results](docs/d1_review_support/contact_c5_s3_quadrature_20261002/results.md),
+[review/disposition](docs/d1_review_support/contact_c5_s3_quadrature_20261002/independent_review.md),
+[C5 guide](docs/GENERAL_CONTACT_C5_FRICTION_POINT.md). Artifact
+C:/ANYworkspaceWork/contact-friction-quadrature-package-20261002; wheel SHA256
+154d32192c8d456b83ca3f546fd3ce56c9f3fdf11971f4a1a6f618cc0b1d71bf.
+Raw42files/2938152B, readbackPASS; raw_index.json/raw.zip retained. History
+[Part50](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART50.md)
+links seam/anchor/accepted/native/impact/application evidence. C5 not accepted;
+applications remain admissionfalse; all remaining D2–D8 outcomes required.
 
-Principal next uncertainty:3-point friction integration of piecewise target nodal
-work as returned anchors cross facets. Start with independent exact constant-traction
-target-force integration, then same-pressure-basis integration refinement and solved
-response. Retain stable source material coordinates/history; do not add multiplier
-unknowns or change quadrature mid-step without a physical-history contract.
-Potential analytic fixture: full shifted source triangle, flat p=5Pa, kt=1000,
-mu=.3, slide=.39; target node7 shape=max(A-B*source_bary0,0), A=.1885,B=.4.
-Its reference-area mean is A^2/B-A^3/(3B^2). Verify this independent reference and
-measure the3-point discrepancy before choosing refinement; no pass is presumed.
+## Next decision and resources
 
-Endpoint/chord dissipation, nonzero retained-gap co-stretch regularization effects,
-recontact/event/step sensitivity, partial-overlap history, physical boundaries,
+Principal next question: event/step accuracy of activation, stress-free recontact
+and endpoint/chord dissipation. Use an independent exact planar slider/contact
+path with constant and changing normal pressure, then the existing coupled owner;
+state the discriminating hypothesis/inputs/cap before running. Keep quadrature
+fixed at level3, separate step from normal/tangential regularization convergence.
+Then extend actual partial-overlap/material-history transfer. Physical rims,
 finite rotation/warped/crease, swept beam/native friction, nonlinear materials,
-arc length and frictional impact remain required. C5/full programme remain open;
-accepted D1/D2 normal subsets unchanged, application admissionfalse.
-No owned job live: all source/build/install/archive/review jobs terminal.
-Routine portable exact selectors, fresh RUNNER_TEMP, JIToff/threads1,180s/953MiB;
-stricter frozen caps prevail. Original120active-hour clock continues: as of
-02:11:59UTC goal209383s+retained3120s=212503s,59.029h used/60.971h remaining.
+arc length and frictional impact remain required; do not substitute these prototypes.
+
+All owned jobs terminal. Routine180s/953MiB, fresh portable exact selectors;
+stricter frozen caps prevail. Original120active-hour budget continues. As of
+03:16:13UTC goal213238s+retained3120s=216358s:60.099h used/59.901h remaining.
 Subsequent active time counts; no reset. Reassess at72h; stop at120h for decision.

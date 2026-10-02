@@ -1,6 +1,6 @@
 """Development-only S3 mortar pressure/Coulomb press, slide, reverse and open.
 
-Run with an installed ANYsolver package. Fixed material quadrature partners,
+Run with an installed ANYsolver package. Fixed reference material quadrature,
 elastic shells and explicit regularization; this is not C5 qualification.
 """
 import json
@@ -56,7 +56,8 @@ def run_example(*, material_anchor=False):
     if material_anchor:
         from anysolver.general_contact.s3_sliding_friction import S3SlidingFrictionSettings
         friction = S3SlidingFrictionSettings(.3,1000.,
-            (2e-7,)*model.mesh.dof_manager.total_dofs,maximum_candidate_evaluations=100)
+            (2e-7,)*model.mesh.dof_manager.total_dofs,maximum_candidate_evaluations=100,
+            source_quadrature_refinement=3)
     sliding = (.39,.385) if material_anchor else (.008,.004)
     path = ContactPathProgram((ContactPathControl.node(1,"ux"),ContactPathControl.node(1,"uz")),
         ((0,0),(0,-.02),(.0002,-.02),(sliding[0],-.02),(sliding[1],-.02),
@@ -68,7 +69,7 @@ def run_example(*, material_anchor=False):
         raise RuntimeError(result.info)
     rows = result.info["force_displacement_history"]
     print(json.dumps(dict(status=result.status,profile=rows[0]["friction"]["profile"],
-        phases=[r["friction"]["branch"] for r in rows],
+        phases=[{b:r["friction"]["branch"].count(b) for b in sorted(set(r["friction"]["branch"]))} for r in rows],
         control_reactions_n=[r["reaction_generalized"] for r in rows],
         dissipation_j=sum(r["friction"]["dissipation_increment_j"] for r in rows))))
     return result

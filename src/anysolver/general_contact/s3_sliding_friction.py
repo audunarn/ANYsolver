@@ -21,6 +21,19 @@ PROFILE = "S3_PLANAR_MATERIAL_ANCHOR_STATIC_DEV_V1"
 _QUADRATURE = ((2/3, 1/6, 1/6), (1/6, 2/3, 1/6), (1/6, 1/6, 2/3))
 
 
+def _reference_quadrature(level):
+    cells=[np.eye(3)]
+    for _ in range(level):
+        refined=[]
+        for a,b,c in cells:
+            ab,bc,ca=(a+b)/2,(b+c)/2,(c+a)/2
+            refined.extend(((a,ab,ca),(ab,b,bc),(ca,bc,c),(ab,bc,ca)))
+        cells=[np.asarray(cell) for cell in refined]
+    fraction=1/(3*4**level)
+    return tuple((tuple(float(x) for x in np.asarray(bary)@cell),fraction)
+                 for cell in cells for bary in _QUADRATURE)
+
+
 @dataclass(frozen=True)
 class S3SlidingFrictionSettings:
     friction_coefficient: float
@@ -29,6 +42,8 @@ class S3SlidingFrictionSettings:
     maximum_candidate_evaluations: int = 145
     geometry_relative_tolerance: float = 1e-10
     maximum_probe_barycentric_change: float = 1e-3
+    source_quadrature_refinement: int = 0
+    maximum_material_points: int = 4096
 
     def __post_init__(self):
         steps = tuple(float(x) for x in self.steps_by_dof)
@@ -43,6 +58,10 @@ class S3SlidingFrictionSettings:
             raise ValueError("sliding friction needs explicit positive FE derivative steps")
         if type(self.maximum_candidate_evaluations) is not int or self.maximum_candidate_evaluations < 1:
             raise ValueError("sliding friction evaluation cap must be positive")
+        if type(self.source_quadrature_refinement) is not int or not 0<=self.source_quadrature_refinement<=5:
+            raise ValueError("friction quadrature refinement must be an integer from0 to5")
+        if type(self.maximum_material_points) is not int or self.maximum_material_points<1:
+            raise ValueError("friction material-point cap must be positive")
         object.__setattr__(self, "steps_by_dof", steps)
 
 
@@ -104,19 +123,31 @@ class S3SlidingFrictionManager:
                 edge = tuple(sorted(adapter.node_ids[k] for k in range(3) if k != i))
                 edge_owners.setdefault(edge, []).append(e)
         self.boundary_edges = frozenset(edge for edge, owners in edge_owners.items() if len(owners)==1)
+        point_count=len(self.source_adapters)*3*4**settings.source_quadrature_refinement
+        if point_count>settings.maximum_material_points:
+            raise MemoryError("friction reference quadrature exceeds its material-point cap")
+        columns=set(normal.map.indices)
+        for adapter in (*self.source_adapters,*self.target_adapters.values()):
+            columns.update(adapter.work_map.indices)
+        self.work_columns=np.asarray(sorted(columns),dtype=np.intp)
+        self.work_columns.setflags(write=False)
+        self.columns=tuple(self.work_columns)
+        self.target_maps={e:a.work_map[:,self.work_columns].toarray().reshape(3,3,-1)
+                          for e,a in self.target_adapters.items()}
         self.points, self.weights, self.pressure_indices = [], [], []
+        quadrature=_reference_quadrature(settings.source_quadrature_refinement)
         for adapter in self.source_adapters:
             c = adapter.reference_positions
             area = np.linalg.norm(np.cross(c[1]-c[0], c[2]-c[0]))/2
-            for bary in _QUADRATURE:
+            for bary,fraction in quadrature:
                 self.points.append(S3SkinMaterialPoint(adapter, bary))
-                self.weights.append(area/3)
+                self.weights.append(area*fraction)
                 self.pressure_indices.append(tuple(normal.law.source_node_ids.index(n)
                                                    for n in adapter.node_ids))
-        columns = set(normal.map.indices)
-        for adapter in (*self.source_adapters, *self.target_adapters.values()):
-            columns.update(adapter.work_map.indices)
-        self.columns = tuple(sorted(columns))
+        self.point_maps=tuple(p.position_map[:,self.work_columns].toarray() for p in self.points)
+        self.point_reference=tuple(np.asarray(p.barycentric)@p.adapter.reference_positions for p in self.points)
+        for mapping in (*self.point_maps,*self.target_maps.values()):
+            mapping.setflags(write=False)
         if 1+2*len(self.columns) > settings.maximum_candidate_evaluations:
             raise MemoryError("material-anchor friction derivative evaluation cap exceeded")
         self.committed_displacement = np.zeros(self.n_dof)
@@ -212,25 +243,28 @@ class S3SlidingFrictionManager:
                    and tuple(sorted(nodes[k] for k in range(3) if k != i)) in self.boundary_edges
                    for i,value in enumerate(bary))
 
-    def _normal_variation(self, corners, n):
-        raw, derivative = np.zeros(3), np.zeros((3, self.n_dof))
+    def _normal_variation(self, corners, n, *, local=False):
+        width=len(self.work_columns) if local else self.n_dof
+        raw, derivative = np.zeros(3), np.zeros((3,width))
         for element, c in corners.items():
             v, w = c[1]-c[0], c[2]-c[0]
-            J = self.target_adapters[element].work_map.toarray().reshape(3, 3, self.n_dof)
+            J=(self.target_maps[element] if local else
+               self.target_adapters[element].work_map.toarray().reshape(3,3,self.n_dof))
             raw += np.cross(v, w)
             derivative += -_skew(w)@(J[1]-J[0])+_skew(v)@(J[2]-J[0])
         return (np.eye(3)-np.outer(n, n))@derivative/np.linalg.norm(raw)
 
-    def _work(self, point, u, element, bary, n, Dn):
+    def _work(self, point, u, element, bary, n, Dn, *, local_index=None, corners=None):
         adapter = self.target_adapters[element]
-        c = adapter.current_positions(u)
+        c=adapter.current_positions(u) if corners is None else corners[element]
         P = np.eye(3)-np.outer(n, n)
-        Js = point.position_map.toarray()
+        Js=point.position_map.toarray() if local_index is None else self.point_maps[local_index]
         # Shape functions are extended off the chosen facet only by the private
         # disposable tangent probes. Physical state coordinates remain nonnegative.
-        Jt = np.einsum('i,ijk->jk',np.asarray(bary),
-                       adapter.work_map.toarray().reshape(3,3,self.n_dof))
-        x = np.asarray(point.barycentric)@point.adapter.current_positions(u)
+        Jt=np.einsum('i,ijk->jk',np.asarray(bary),
+            adapter.work_map.toarray().reshape(3,3,self.n_dof) if local_index is None else self.target_maps[element])
+        x=(np.asarray(point.barycentric)@point.adapter.current_positions(u) if local_index is None else
+           self.point_reference[local_index]+Js@u[self.work_columns])
         y = np.asarray(bary)@c
         r = x-y
         gap = n@r
@@ -239,7 +273,7 @@ class S3SlidingFrictionManager:
         return elastic, De, y
 
     def _friction(self, u, *, branches=None, validate=True, linearized_elements=None,
-                  linearized_barycentric=None):
+                  linearized_barycentric=None, local_force=False):
         if linearized_elements is not None and (validate or branches is None):
             raise ValueError("facet extrapolation is restricted to disposable tangent probes")
         if not validate and linearized_elements is None:
@@ -259,15 +293,16 @@ class S3SlidingFrictionManager:
         if u.shape != (self.n_dof,) or not np.all(np.isfinite(u)):
             raise ValueError("material friction pose needs finite authoritative coordinates")
         corners, n, frame, origin = self._patch(u, validate=validate)
-        Dn = self._normal_variation(corners, n)
+        Dn = self._normal_variation(corners,n,local=True)
         source, target = self.normal._positions(u)
         state = self.normal.law.evaluate(source, target, self.normal.normal_multipliers)
         settings = self.friction_settings
         kt, mu = settings.tangential_stiffness_Pa_per_m, settings.friction_coefficient
-        residual, records, histories = np.zeros(self.n_dof), [], []
+        residual, records, histories = np.zeros(len(self.work_columns)), [], []
+        local_u=u[self.work_columns]
         for j, (point, area, indices, old) in enumerate(zip(
                 self.points, self.weights, self.pressure_indices, self.history)):
-            x = np.asarray(point.barycentric)@point.adapter.current_positions(u)
+            x=self.point_reference[j]+self.point_maps[j]@local_u
             gap = float(n@(x-origin))
             pressure = 0.0 if gap >= 0 else float(np.asarray(point.barycentric)@state.pressure[list(indices)])
             fixed = None if branches is None else branches[j]
@@ -287,7 +322,7 @@ class S3SlidingFrictionManager:
                     branch = "activation"  # Recontact starts stress-free at the current projection.
                 else:
                     element, bary = old.target_element, old.barycentric
-                    elastic, _map, old_anchor = self._work(point, u, element, bary, n, Dn)
+                    elastic,_map,old_anchor=self._work(point,u,element,bary,n,Dn,local_index=j,corners=corners)
                     length = np.linalg.norm(elastic)
                     cap = mu*pressure
                     branch = ("stick" if kt*length <= cap else "slip") if fixed is None else fixed
@@ -305,7 +340,7 @@ class S3SlidingFrictionManager:
                         moved = np.asarray(bary)@corners[element]-old_anchor
                         plastic = float(np.linalg.norm((np.eye(3)-np.outer(n, n))@moved))
                         dissipation = cap*plastic
-                    elastic, work, _anchor = self._work(point, u, element, bary, n, Dn)
+                    elastic,work,_anchor=self._work(point,u,element,bary,n,Dn,local_index=j,corners=corners)
                     traction = -kt*elastic
                     storage = .5*kt*float(elastic@elastic)
                     if branch == "slip":
@@ -339,6 +374,10 @@ class S3SlidingFrictionManager:
                                 target_element=element,target_barycentric=bary))
             if new is not None:
                 histories.append(new)
+        if not local_force:
+            global_residual=np.zeros(self.n_dof)
+            global_residual[self.work_columns]=residual
+            residual=global_residual
         return residual, tuple(histories), records
 
     def evaluate(self, displacement, *, tangent=True):
@@ -347,7 +386,7 @@ class S3SlidingFrictionManager:
         if tangent:
             if any(r["sliding_rim"] for r in records):
                 raise ValueError("physical target-rim generalized tangent is not yet admitted")
-            derivative = np.zeros((self.n_dof, len(self.columns)))
+            derivative = np.zeros((len(self.work_columns),len(self.columns)))
             branches = [r["branch"] for r in records]
             elements = [r["target_element"] for r in records]
             coordinates = [r["target_barycentric"] for r in records]
@@ -355,21 +394,23 @@ class S3SlidingFrictionManager:
                 delta = np.zeros(self.n_dof)
                 delta[column] = self.friction_settings.steps_by_dof[column]
                 plus = self._friction(np.asarray(displacement)+delta,branches=branches,validate=False,
-                                      linearized_elements=elements,linearized_barycentric=coordinates)[0]
+                                      linearized_elements=elements,linearized_barycentric=coordinates,local_force=True)[0]
                 minus = self._friction(np.asarray(displacement)-delta,branches=branches,validate=False,
-                                       linearized_elements=elements,linearized_barycentric=coordinates)[0]
+                                       linearized_elements=elements,linearized_barycentric=coordinates,local_force=True)[0]
                 derivative[:, local] = (plus-minus)/(2*delta[column])
             if not np.all(np.isfinite(derivative)):
                 raise ValueError("material friction tangent exceeded finite range")
             rows, local = np.nonzero(derivative)
-            stiffness = stiffness+sparse.coo_matrix((derivative[rows, local],
-                (rows, np.asarray(self.columns)[local])), shape=(self.n_dof, self.n_dof)).tocsr()
+            stiffness = stiffness+sparse.coo_matrix((derivative[rows,local],
+                (self.work_columns[rows],np.asarray(self.columns)[local])),shape=(self.n_dof,self.n_dof)).tocsr()
         return force+friction, stiffness, certificate
 
     def prepare_commit(self, displacement):
         u = np.asarray(displacement, dtype=float).copy()
         _force, history, records = self._friction(u)
         summary = dict(profile=PROFILE, branch=[r["branch"] for r in records],
+                       friction_point_count=len(self.points),
+                       source_quadrature_refinement=self.friction_settings.source_quadrature_refinement,
                        traction_measure="force_per_source_reference_area",
                        pressure_measure="shared_mortar_pressure_coefficient",
                        dissipation_measure="endpoint_pressure_current_material_chord",
