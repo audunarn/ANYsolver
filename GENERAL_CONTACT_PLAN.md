@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.49. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.50. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -33,31 +33,31 @@ independently accepted and released remain distinct.
 ## 2. Current bounded slice and next action
 
 Explicit native event-sequence V2 point replay covers opening, recontact and persistence.
-Prepared whole-angular-band stationary bounds now remove repeated geometric slab work:
-the mixed candidate reached2048material queries with49support intervals rather than128.
-It still failed the unchanged query cap. Local proof/roundoff controls pass; no integrated
-success or speed-up claim. Reviewed error propagation now includes coordinate->edge->cross->dot.
+Prepared whole-angular-band bounds and deferred directional controls now let the one-
+segment mixed helper pass original integration/force/checked-tangent gates under its
+unchanged query2048 cap (1968queries,88.59s/250974208B). Polynomial eager/deferred parity
+passes. This demonstrates completion under the cap, not measured whole-route speed-up.
 
-A certified open-interior shortcut avoids replay only where all front extrema prove no
-contact over every segment. The corrected-edge run still exhausted2048 queries at panel13,
-49support intervals,82.40s/259608576B. No pass or speed claim. Source review identifies
-two cross-control estimates per leaf used only to choose a later refinement axis.
-Deferred controls now pass exact polynomial eager/deferred output/error/axis parity.
-The unchanged real mixed case passes with1968queries,49support,17panels,88.59s/250974208B;
-analytical integrated force and the checked tangent agree~1e-14relatively. This closes
-one-segment helper development, not native owner/acceptance or a measured runtime speed-up.
+The restricted multisegment helper also passes a translated-prefix/middle-pulse/open-
+suffix scalar history comparison:976queries,74.94s/217526272B,cumulative work~4.5e-9
+relative agreement. Exactly one stationary branch in total; complete nonzero-B/no-root
+covers for other segments and strict openness at every captured pose over its envelope.
+Its work bound reconstructs the owner's actual prefix pose. Review corrected earlier-
+pulse uncertainty routing: only cumulative dissipation remains with an open suffix;
+final force/tangent/storage/incremental dissipation/release are zero. Intermediate closed
+captures reject. Point/strip controls remain developmental, not formal floating proofs
+or native-owner engineering acceptance. Retain every failed candidate and test defect.
 
-Next admit multiple saved segments only with one stationary branch in total, complete
-nonzero-B branch covers, and strict openness at every captured pose over its whole
-envelope. Other segments then cannot contact there. Reconstruct the owner segment's
-actual prefix pose and use its index in the strip-work bound; retain full replay elsewhere.
-First independent scalar three-segment work and closed-envelope rejection checks, then
-the saved second-load local candidate. No coupled owner retry until this successor passes;
-no cap increases,blind retries or saved fullpatch retry.
+NEXT one saved second-load LOCAL window xi[.72,.80],angle[3.19,3.20], preserving actual
+initial pose, both increments, work maps/laws and original settings. Question: do moving-
+geometry proofs or material integration now control failure? Report full resource/
+component diagnostics; no coupled solve. This is a discriminating local case, not full-
+patch admission. No cap/tolerance growth,blind retries or saved fullpatch retry. Choose
+next owner-adapter/proof work from the result; no coupled-owner retry until justified.
 
-[Current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/lazy_control_results.md).
+[Current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/multisegment_front_results.md).
+[Deferred-control evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/lazy_control_results.md).
 [Prepared proof evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/prepared_front_results.md).
-[Previous local integration evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/local_front_integration_results.md).
 [Earlier slice history](docs/d1_review_support/contact_c5_native_surface_point_20261002/plan_before_local_front_integration.txt)
 retains frozen/consumed restrictions; it does not authorize reruns.
 

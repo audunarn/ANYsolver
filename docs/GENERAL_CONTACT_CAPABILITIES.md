@@ -1076,3 +1076,10 @@ pass (1968queries,49support,17panels). Deferred directional controls pass polyno
 parity; no runtime speed claim. Multisegment integration, actual second-load/split restart,
 independent engineering acceptance and installed admission remain incomplete.
 [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/lazy_control_results.md).
+
+Native restricted multisegment stationary-front integration: total one branch; translated
+prefix/middle pulse/open suffix independently calculated discrete scalar cumulative work
+passes (~4.5e-9relative); full final R/K and final storage/increment/release zero. Earlier
+closed captures reject. Review-caught incremental work routing failure preserved/corrected.
+Actual second-load owner, split restart, global geometry/history and admission still open.
+[Evidence](d1_review_support/contact_c5_native_surface_point_20261002/multisegment_front_results.md).

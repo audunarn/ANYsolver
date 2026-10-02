@@ -91,7 +91,7 @@ def integrate_open_event_friction_fronts(field,settings,*,maximum_axial_uncertai
 def integrate_event_friction_fronts(field,settings,*,maximum_axial_uncertainty):
     """Development mixed endpoint integration with locally open front strips.
 
-    One segment/one stationary branch; closed material outside certified open
+    One stationary branch over the complete history; closed material outside certified open
     strips contributes its full endpoint force and tangent through point replay.
     """
     if not np.isfinite(maximum_axial_uncertainty) or maximum_axial_uncertainty<=0:
@@ -336,12 +336,13 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
             branch_count=sum(map(len,covers))
             front_covers[parent]=covers
             if branch_count:
-                if branch_count!=1 or len(field.segments)!=1:
-                    raise ValueError('front strip work requires one certified stationary branch and segment')
+                if branch_count!=1 or (not _local_front_strips and len(field.segments)!=1):
+                    raise ValueError('front strip work requires one certified stationary branch; legacy helper requires one segment')
+                owner_index=next(index for index,cover in enumerate(covers) if len(cover))
                 if _local_front_strips:
                     from .native_surface_front import stationary_front_angular_envelopes
                     if envelopes is None:
-                        envelopes=stationary_front_angular_envelopes(field,covers[0],
+                        envelopes=stationary_front_angular_envelopes(field,covers[owner_index],
                             maximum_axial_uncertainty=_front_uncertainty,budget=support_budget)
                     front_band_cache[band]=(covers,envelopes,prepared)
                     for a,b in envelopes:
@@ -353,7 +354,13 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                             if gap<=padding:
                                 raise ValueError('stationary uncertainty strip has unresolved or closed captured endpoint')
                 from .native_surface_front_work import open_front_strip_work_bound
-                density=open_front_strip_work_bound(field,cell,_front_uncertainty)
+                density=open_front_strip_work_bound(field,cell,_front_uncertainty,
+                    segment_index=owner_index if _local_front_strips else None)
+                if _local_front_strips and owner_index<len(field.segments)-1:
+                    # Every other segment is proved open on this strip. Its
+                    # earlier pulse contributes cumulative work, but cannot
+                    # generate final-segment dissipation or storage release.
+                    density[1:3]=0.
                 measure=rule.definition['radius']*np.linalg.norm(reference.coordinates[cell+1]-reference.coordinates[cell])
                 error=np.zeros(size)
                 error[-4:]=.5*density*_front_uncertainty*(upper-lower)*measure

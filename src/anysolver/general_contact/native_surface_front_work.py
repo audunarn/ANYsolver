@@ -8,12 +8,22 @@ from .native_surface_path import material_path_pose
 from .native_surface_support import _base
 
 
-def open_front_strip_work_bound(field,cell,axial_width):
-    if len(field.segments)!=1:
+def open_front_strip_work_bound(field,cell,axial_width,*,segment_index=None):
+    if segment_index is None and len(field.segments)!=1:
         raise ValueError('strip work enclosure currently requires one released-origin segment')
+    if segment_index is None:segment_index=0
+    if type(segment_index) is not int or not 0<=segment_index<len(field.segments):
+        raise ValueError('strip work enclosure requires a valid explicit segment index')
     if not np.isfinite(axial_width) or axial_width<=0:
         raise ValueError('positive explicit strip width required')
-    start=field.initial;motion=field.segments[0];target=field.patch.target
+    # The caller proves all other segments open on this entire strip using
+    # their complete branch covers and every captured endpoint. Only this
+    # segment then carries work. Its start includes the actual prefix motion,
+    # including shell displacement and finite rotations.
+    start=field.initial
+    for prefix in field.segments[:segment_index]:
+        start=material_path_pose(start,prefix.translations,prefix.angular,prefix.shell_increment,1.)
+    motion=field.segments[segment_index];target=field.patch.target
     end=material_path_pose(start,motion.translations,motion.angular,motion.shell_increment,1.)
     poses=(start,end);corners=[target.adapter.current_positions(p.shell_displacement) for p in poses]
     velocities=np.asarray(target.adapter.work_map@motion.shell_increment).reshape(3,3)
