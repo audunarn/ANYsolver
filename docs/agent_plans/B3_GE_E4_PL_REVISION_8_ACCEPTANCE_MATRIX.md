@@ -1392,3 +1392,11 @@ Restore validates by replay then installs saved accepted histories exactly.
 Source9checks passed; installed evidence and continuation parity are recorded in
 [results](development/r8-displacement-rebase-20261002/results.md). No aggregate
 F06/G3/capacity gate closed; no failed branch campaign was repeated.
+
+
+**2 October generalized branch-event trial: private prototype, NOT QUALIFIED.**
+Previously failed-68um endpoint reached within unchanged20/12limits and physical
+tolerances; accepted prefix unmodified.9installed checks pass. Extra22cell responses
+are counted separately from13global evaluations; no speedup claim. Public policy/
+restart integration and the broader path remain open. No aggregate gate closes.
+[Exact evidence and limitations](development/r8-branch-event-20261002/results.md).

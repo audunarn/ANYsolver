@@ -6,8 +6,8 @@ Full Revision8 plan/goal in ../b3-ge-e4-pl-coupling remains active. G0–G6,
 F01–F13,V01–V28,B01–B18 and all final obligations remain binding. Experimental
 implementation/testing is not scientific acceptance or release.
 Solver: stiffened-main-reconcile-20261001, codex/stiffened-main-reconcile-20261001,
-Slice bases: solver52574281; ANYfem .worktrees/experimental-ge-panel-consumer
-base3b50cab. Resolve current local commits with git log; artifacts above bind code.
+Slice bases: solver01ef1331; ANYfem .worktrees/experimental-ge-panel-consumer
+base51e5298. Resolve current local commits with git log; artifacts above bind code.
 Local scoped commits permitted; no push/main merge/publication or contact-worker
 communication. Historical us3-modal-canary-v1.zip contains credentials: do not
 print/copy/disseminate it; no history-rewrite authority. New evidence uses only
@@ -81,14 +81,31 @@ to predecessor values; no shell loading-class change. Estimated boundary t~1.76e
 is below both probes and the existing search floor. This is not an evaluated step,
 a tangent-defect finding, or physical instability. Stop this diagnostic batch.
 
-Next permitted action: bounded design/implementation of an explicit branch-event-
-aware continuation candidate, with native material loading indicator/directional
-boundary estimate, actual branch tangent reassembly and unchanged equilibrium
-acceptance. Review mechanics before running it. No generic backtrack-budget
-increase, constitutive-tangent modification or automatic refinement campaign.
-Displacement external loads and rebase before first displacement acceptance remain
-open. F03 controlled clamp transfer still outside1%; U1canary11.1423% too stiff.
-No automatic U1/refinement campaign. Pressure amendment awaits user decision.
+The private event-aware candidate now reaches -68um: load-487.0911366402N,
+equilibrium1.51284e-11, gap8.56e-18,11iterations/13global evaluations/12solves/
+0rejections plus22event-only cell responses. Accepted prefix byte-identical;
+trial remains UNCOMMITTED and no later targets were attempted. Installed9checks
+pass31.80s on wheelaf4e498c...99f57191,405modules match,241onsite imports,
+1thread/JIT off. Review confirms narrow endpoint success, not a qualified method.
+[Private candidate, retained failures and installed evidence](development/r8-branch-event-20261002/results.md).
+
+Optional native cell indicators use existing implicit station sensitivity and
+paired/Decimal q-(Y+H*p0), unchanged fixed predecessors and default response.
+Private policy proposes min(1,1.01*first_positive_event) only after predictor;
+actual merit/acceptance and20/12limits unchanged. Exact boundaries fail explicitly.
+No generic budget change or constitutive-tangent modification. Source1test message
+assertion failure and installed fixture-collection failure preserved and corrected.
+All owned jobs terminal. Current local slice: optional cell indicator, private
+trial helper/corrector, focused tests, docs/evidence. Public routing unchanged.
+
+Next permitted action: bind an explicit trial-policy identity from the start of a
+public displacement path through fixed/adaptive controllers and versioned restart;
+reject mismatched resume settings, retain event work counts and legacy defaults.
+Verify integrated behavior before any physical-path extension. Do not silently
+change policy on an existing pending controller or claim -500N/capacity success.
+Displacement external loads/rebase before first displacement remain open.
+F03 controlled clamp transfer still outside1%; U1canary11.1423% too stiff. No
+automatic U1/refinement campaign. Pressure amendment awaits user decision.
 Mixed/all-S3director histories, zero-load assessment, low-hardening and full
 material/topology/spectral/capacity/scale/external/platform/release obligations
 remain open. Full Revision8 goal stays active; no aggregate qualification claimed.

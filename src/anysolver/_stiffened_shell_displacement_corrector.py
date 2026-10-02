@@ -75,7 +75,8 @@ def bordered_correction(matrix, residual, direction, control_dof, gap, free):
 
 
 def correct(driver, *, base_load, load_direction, amplitude, control_dof,
-            target, max_iterations=20, max_backtracks=12, cancellation_token=None):
+            target, max_iterations=20, max_backtracks=12, cancellation_token=None,
+            trial_policy=None, event_records=None):
     """Return an uncommitted equilibrium at a translational displacement.
 
     Current scope is nodal dead translations only. No load-programme cursor is
@@ -87,6 +88,9 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
     from ._stiffened_shell_ge_finite_experimental import _RotationStepTooLarge
     from ._stiffened_shell_bl5_local_experimental import BL5TrialDomainError
     owner=driver.owner
+    from ._stiffened_shell_branch_event_trial import POLICY as EVENT_POLICY
+    if trial_policy not in (None,EVENT_POLICY):
+        raise ValueError("explicit supported private displacement trial policy required")
     if driver._accepted is None or not owner._bl5_shell_material:
         raise ValueError("accepted coupled-J2 BL5 predecessor required")
     n=owner._K.shape[0];size=n+len(driver._state.multipliers)
@@ -180,8 +184,21 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
             raise failure("displacement Newton iteration limit",iteration)
         step,delta=correction(control_gap,iteration)
         old=merit(state,evaluation)
+        initial_amount=1.
+        if trial_policy==EVENT_POLICY:
+            from ._stiffened_shell_branch_event_trial import trial_fraction
+            def event_check():
+                current()
+                cancellation_safe_point(cancellation_token,"stiffened-shell.displacement.event")
+            record=dict(iteration=iteration,cell_evaluations=0,amount=None,events=())
+            if event_records is not None:event_records.append(record)
+            try:
+                initial_amount,events=trial_fraction(driver,state,step,beam,event_check,record)
+            except DisplacementCorrectorFailure as error:
+                raise failure(str(error),iteration) from error
+            record.update(amount=initial_amount,events=events)
         for backtrack in range(max_backtracks+1):
-            amount=.5**backtrack
+            amount=initial_amount*.5**backtrack
             try:
                 candidate=driver._advance(state,step,amount)
                 value=amplitude+amount*delta
