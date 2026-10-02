@@ -92,6 +92,8 @@ class _ModalFailure(RuntimeError):
 
 def _admit(owner):
     owner._require_open()
+    if getattr(owner,"_curved_reference",False):
+        raise ValueError("curved reference spectra are not admitted")
     definition = owner._definition
     if (owner._accepted is not None or owner._finite_driver is not None or
             owner._generation != 0):

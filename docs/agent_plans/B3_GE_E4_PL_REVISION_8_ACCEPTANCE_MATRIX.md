@@ -1469,3 +1469,11 @@ identify the prerequisite: curved elastic Q4/full-pose-point admission, followed
 by elastic point arc lifecycle. The current flat guard remains. No equilibrium,
 limit load or external reference executed; bare-roof values are not inherited.
 [Definition and next seam](../reference_cases/stiffened_shell_e04_roof.md).
+
+
+**2 October curved elastic point prerequisite: IMPLEMENTED_NOT_QUALIFIED.**
+Explicit planar-Q4 curved-reference admission, existing generalized elastic B3,
+translational dead loads, finite stepping and exact restart pass installed checks.
+44 tests include legacy controls and honest zero-commit rejection of the failed
+0.1 N control; positive curved path is 10–30 N. No E04 solve or gate acceptance.
+[Scope, failure and artifact](development/r8-curved-reference-20261002/results.md).

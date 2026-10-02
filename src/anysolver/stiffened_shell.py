@@ -272,3 +272,6 @@ from ._stiffened_shell_arc_metric import PhysicalChordMetric
 from ._stiffened_shell_arc_publication import ArcResult
 from ._stiffened_shell_arc_trial import ArcSelectionFailure, ArcAttempt
 __all__ += ["ArcLengthControl", "PhysicalChordMetric", "ArcResult", "ArcSelectionFailure", "ArcAttempt"]
+
+from ._stiffened_shell_ge_experimental import CURVED_Q4_POINT_REFERENCE_V1
+__all__ += ["CURVED_Q4_POINT_REFERENCE_V1"]

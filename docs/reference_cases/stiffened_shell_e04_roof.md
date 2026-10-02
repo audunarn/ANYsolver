@@ -29,13 +29,15 @@ variables must not enter that metric.
 
 ## Required next implementation
 
-The existing owner correctly rejects this nonflat shell. Implement a separately
-admitted curved-reference **elastic Q4/full-pose-point** slice before attempting
-this capacity path. Reconcile facet frames with the analytic nodal reference
-directors; they are not identical on a faceted cylinder. Establish zero reference
-strain/gap, rigid-motion invariance, actual-update derivatives and eccentric work
-using the existing local operators. Keep the flat guard until those checks pass.
-Then extend the arc owner/checkpoint's elastic point-route admission explicitly.
+The default owner still rejects nonflat geometry. The explicit development
+`CURVED_Q4_POINT_REFERENCE_V1` policy now admits elastic planar Q4 facets and
+full-pose nodal points through the existing algorithmic pullback. Shell nodal
+rotations are global incremental rotations; facet reference normals remain in
+geometry. Local rigid-motion, derivatives and eccentric work, plus a bounded
+curved control's finite solve/restart, have installed evidence. This is not an
+E04 roof solve. A separate low-load control remains nonconvergent with no commit.
+See [scope and evidence](../agent_plans/development/r8-curved-reference-20261002/results.md).
+Next extend the arc owner/checkpoint's elastic point-route admission explicitly.
 Do not select an artificial J2 law or replace six-channel points with BL5 merely
 to pass the current controller's material predicate.
 

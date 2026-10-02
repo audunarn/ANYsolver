@@ -181,6 +181,7 @@ class LinearDefinition:
     modal_boundary_policy: str = "supported"
     footprint_chart_policy: str = CHART_ADMISSION_POLICY
     bl5_material_policy: str = "elastic"
+    shell_reference_policy: str = "flat"
 
 
 @dataclass(frozen=True)
@@ -208,13 +209,16 @@ def _owned(values, shape=None):
     return np.frombuffer(result.tobytes(), dtype=float).reshape(result.shape)
 
 
-def _shell_reference(panel: ShellPanel):
+CURVED_Q4_POINT_REFERENCE_V1 = "CURVED_Q4_POINT_REFERENCE_V1_DEV"
+
+
+def _shell_reference(panel: ShellPanel, *, curved=False):
     ids = tuple(panel.node_ids)
     xyz = _owned(panel.coordinates_m, (len(ids), 3))
     if (len(ids) < 3 or len(ids) != len(set(ids)) or
             len(panel.q4_elements)+len(panel.s3_elements) < 1 or
             any(type(v) is not int or v <= 0 for v in ids) or
-            not np.allclose(xyz[:, 2], xyz[0, 2], rtol=0., atol=1e-12) or
+            (not curved and not np.allclose(xyz[:, 2], xyz[0, 2], rtol=0., atol=1e-12)) or
             not (np.isfinite(panel.thickness_m) and panel.thickness_m > 0. and
                  np.isfinite(panel.young_pa) and panel.young_pa > 0. and
                  np.isfinite(panel.poisson) and -1. < panel.poisson < .5 and
@@ -250,9 +254,19 @@ def _shell_reference(panel: ShellPanel):
         cell_keys.add(key)
         for node in nodes:
             neighbours[node].update(other for other in nodes if other != node)
+        normal = np.array((0.,0.,1.))
+        if curved:
+            vertices=xyz[[index[node] for node in nodes]]
+            normal=np.cross(vertices[1]-vertices[0],vertices[3]-vertices[0])
+            norm=float(np.linalg.norm(normal));length=float(np.max(np.linalg.norm(vertices-vertices[0],axis=1)))
+            if not np.isfinite(norm) or norm<=1e-12*length*length:
+                raise ValueError("nondegenerate curved Q4 facet required")
+            normal/=norm
+            if abs(float((vertices[2]-vertices[0])@normal))>1e-10*length:
+                raise ValueError("planar curved-reference Q4 facets required")
         element = create_shell_element(
             eid, list(nodes), "shell", formulation=formulation,
-            thickness=panel.thickness_m, reference_normal=(0., 0., 1.))
+            thickness=panel.thickness_m, reference_normal=tuple(normal))
         model.add_element(eid, element)
         slots = np.array([6*index[node]+axis for node in nodes for axis in range(6)])
         pieces.append((eid, element, slots, formulation))
@@ -529,6 +543,13 @@ class ExperimentalGEAnalysis:
         panel = definition.shell
         if type(panel) is not ShellPanel:
             raise ValueError("owned Q4 panel required")
+        if definition.shell_reference_policy not in ("flat",CURVED_Q4_POINT_REFERENCE_V1):
+            raise ValueError("explicit admitted shell reference policy required")
+        self._curved_reference=definition.shell_reference_policy==CURVED_Q4_POINT_REFERENCE_V1
+        if self._curved_reference and (panel.s3_elements or panel.j2_curve is not None
+                or definition.lines or definition.footprints or self._bl5_material or self._modal_only
+                or definition.q4_pullback_policy!=Q4_ALGORITHMIC_PULLBACK_V1):
+            raise ValueError("curved reference admits elastic Q4/full-pose points with algorithmic pullback only")
         if (type(definition.q4_pullback_policy) is not str or
                 definition.q4_pullback_policy not in (Q4_HISTORICAL_POLICY, Q4_ALGORITHMIC_PULLBACK_V1)):
             raise ValueError("explicit admitted Q4 pullback policy required")
@@ -539,7 +560,7 @@ class ExperimentalGEAnalysis:
                     panel.s3_elements or (panel.j2_curve is not None and not self._bl5_shell_material) or
                     any(type(line) is not ExperimentalBL5Line for line in definition.lines)))):
             raise ValueError("algorithmic Q4 pullback requires a Q4-containing point or explicitly admitted Q4 BL5 model")
-        shell_model, shell_ids, shell_xyz, shell_index, shell_parts = _shell_reference(panel)
+        shell_model, shell_ids, shell_xyz, shell_index, shell_parts = _shell_reference(panel,curved=self._curved_reference)
         # The compiled owner must not consult caller-owned mutable connectivity
         # when selecting material recovery or decoding a later checkpoint.
         panel = ShellPanel(
@@ -553,13 +574,15 @@ class ExperimentalGEAnalysis:
             tuple(definition.points), tuple(definition.fixed),
             definition.lines, definition.q4_pullback_policy, definition.footprints,
             definition.modal_boundary_policy, definition.footprint_chart_policy,
-            definition.bl5_material_policy)
+            definition.bl5_material_policy, definition.shell_reference_policy)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count, beam_inertias = _beam_reference(
             definition.beams)
         self._reference_modal_inertias = beam_inertias
         self._reference_modal_mass = None
         self._has_physical_fibre = any(type(element.section) is PhysicalFibreSection
                                       for element, _, _ in beam_parts)
+        if self._curved_reference and self._has_physical_fibre:
+            raise ValueError("curved reference admits generalized elastic beam response only")
         if definition.footprints:
             if (panel.q4_elements and
                     definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1):
@@ -645,6 +668,8 @@ class ExperimentalGEAnalysis:
         }
         if self._bl5_shell_material:
             identity_payload["bl5_retained_scale_policy"] = "native_force_moment_roles_v1"
+        if self._curved_reference:
+            identity_payload["shell_reference_policy"] = definition.shell_reference_policy
         if self._bl5_material:
             identity_payload["bl5_material_policy"] = definition.bl5_material_policy
         if panel.j2_curve is not None:
@@ -898,6 +923,15 @@ class ExperimentalGEAnalysis:
             if getattr(self,"_external_context",None) is None:
                 capabilities["arc_length"] = "experimental_fixed_mesh_affine_nodal_dead_translation_v1"
             capabilities["selected_finite_recovery"] = "experimental_cached_nodes_material_v1"
+        if self._curved_reference:
+            capabilities["shell"] = "experimental elastic planar Q4 facets on curved reference"
+            capabilities["beam"] = "generalized B3 retained, elastic response only"
+            for key in ("body_acceleration","beam_distributed_loads","staged_beam_distributed_loads",
+                        "shell_pressure_loads","staged_dead_loads"):
+                capabilities[key] = ()
+            capabilities["curved_reference_policy"] = CURVED_Q4_POINT_REFERENCE_V1
+            capabilities["excluded"] += ("curved reference spectra", "curved reference arc control",
+                "curved reference external loads", "curved reference material yielding")
         return capabilities
 
     def preflight(self):
@@ -940,13 +974,23 @@ class ExperimentalGEAnalysis:
     @_state_writer
     def modes(self, request, *, cancellation_token=None):
         """Supported virgin Q4/native-GE point modes with explicit physical mass."""
+        if self._curved_reference:raise ValueError("curved reference spectra are not admitted")
         from ._stiffened_shell_ge_reference_modal import solve
         return solve(self, request, cancellation_token=cancellation_token)
+
+    def _require_curved_load(self, load):
+        if not self._curved_reference or load is None:return
+        nodal=self._shell_count+6*len(self._beam_ids)
+        if np.any(load[nodal:]) or np.any(load[:nodal].reshape(-1,6)[:,3:]):
+            raise ValueError("curved reference requires nodal translational load coordinates")
 
     @_state_writer
     def solve_linear(self, actions: tuple[NodalAction, ...], *,
                      cancellation_token=None) -> LinearResult:
         self._require_open()
+        if self._curved_reference and (type(actions) is not tuple or any(
+                type(a) is not NodalAction or any(a.wrench[3:]) for a in actions)):
+            raise ValueError("curved reference admits nodal dead translations only")
         self._require_stateful_scope()
         if self._finite_driver is not None:
             raise RuntimeError("finite and reference-linear states cannot be mixed")
@@ -1052,6 +1096,9 @@ class ExperimentalGEAnalysis:
         intact. The observer is ephemeral and is not stored in checkpoints.
         """
         self._require_open()
+        if self._curved_reference and (type(actions) is not tuple or any(
+                type(a) is not NodalAction or any(a.wrench[3:]) for a in actions)):
+            raise ValueError("curved reference admits nodal dead translations only")
         self._require_stateful_scope()
         if on_accepted is not None and not callable(on_accepted):
             raise TypeError("on_accepted must be callable or None")
@@ -1214,6 +1261,7 @@ class ExperimentalGEAnalysis:
         from ._stiffened_shell_ge_pressure_load import MAGIC as PRESSURE_MAGIC
         from ._stiffened_shell_ge_distributed_programme import MAGIC as DISTRIBUTED_PROGRAMME_MAGIC
         if raw.startswith((BODY_MAGIC, DISTRIBUTED_MAGIC, PRESSURE_MAGIC, DISTRIBUTED_PROGRAMME_MAGIC)):
+            if self._curved_reference:raise ValueError("curved reference excludes external load checkpoints")
             if getattr(self, "_external_context", None) is not None or getattr(self, "_staged_context", None) is not None:
                 raise ValueError("nested external-load checkpoint is unsupported")
             if raw.startswith(BODY_MAGIC):
@@ -1257,6 +1305,7 @@ class ExperimentalGEAnalysis:
             MAGIC as STAGED_MAGIC, decode_checkpoint,
         )
         if raw.startswith(STAGED_MAGIC):
+            if self._curved_reference:raise ValueError("curved reference excludes staged load checkpoints")
             if ((self._line_samples and not (self._finite_bl5 and
                     self._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1)) or
                     getattr(self, "_staged_context", None) is not None or
@@ -1489,6 +1538,7 @@ class ExperimentalGEAnalysis:
         q = _owned(value["q"], (self._K.shape[0],))
         lam = _owned(value["multipliers"], (self._C.shape[0],))
         load = _owned(value["load"], (self._K.shape[0],))
+        self._require_curved_load(load)
         equilibrium = self._K@q+self._C.T@lam-load
         relative = _linear_equilibrium(
             equilibrium[self._free], load[self._free],

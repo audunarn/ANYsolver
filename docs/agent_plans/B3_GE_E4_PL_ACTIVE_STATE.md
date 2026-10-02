@@ -55,19 +55,19 @@ save/reopen, separate checkpoint, cancellation, exact restored continuation and
 selected material recovery. One focused check passed;98consumer modules unchanged.
 See the subsequent-consumer section in the evidence above.
 
-E04 now has an executable development candidate: shallow cylindrical Q4 roof,
-two eccentric longitudinal rectangular bars, six-channel nodal point bonds and
-explicit hinged-side translations. docs/reference_cases/stiffened_shell_e04_roof.py
-and its companion .md define it. Bare-roof literature gives geometry provenance,
-not its capacity. Four geometry/metric checks pass; current owner still correctly
-rejects the curved reference. No external deck or mechanical solve executed.
+E04 geometry remains an unexecuted capacity candidate. The curved-reference
+prerequisite now has an explicit elastic Q4/full-pose-point policy using existing
+algorithmic pullbacks and reference facet normals. Installed44 checks pass,
+including a bounded two-Q4/two-beam 10–30 N path and exact restored continuation.
+The curved 0.1 N control fails at equilibrium1.9145e-8 (required1e-8), committing
+nothing; its test verifies honest failure, not successful equilibrium. Flat
+controls pass both scales. Independent admission/restart findings are resolved.
+[Current slice and preserved failures](development/r8-curved-reference-20261002/results.md).
+No curved arc, spectra, external-load, material or ANYfem admission is claimed.
 
-Next implementation seam: curved-reference elastic Q4/full-pose-point local
-operators. Reconcile facet frames versus nodal directors; prove reference zero
-strain/gap, objective rigid motion, derivatives and eccentric work before changing
-admission. Then extend elastic point arc/checkpoint scope. Do not use fake J2 or
-BL5 substitution. The E04 nonlinear bracket and matched external connection must
-be fixed after that admission, before any capacity campaign. The inspected local
--500 N fixture has no independent capacity oracle and is not to be extended by
-habit. Stress-free imperfection, first-limit-point and stability remain open.
-Full material, connection, scale, external/platform and release obligations remain.
+Next: extend elastic point arc/checkpoint scope without fake J2 or BL5 substitution.
+Then fix the E04 nonlinear bracket and matched external connection before any
+capacity campaign. Do not infer a limit point from the unresolved low-load
+nonconvergence or relax tolerance. E04 itself has not been mechanically solved.
+Formal F03 and all scientific/release boundaries remain unchanged. Full material,
+connection, scale, external/platform and release obligations remain open.

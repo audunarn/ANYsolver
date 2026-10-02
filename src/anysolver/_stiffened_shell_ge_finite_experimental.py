@@ -94,12 +94,12 @@ def _trial_work_ratio(residual, applied, coordinate_scale):
     return float(np.linalg.norm(r/scale))/denominator if denominator else float("inf")
 
 
-def _require_elastic_footprint_histories(histories, context):
+def _require_elastic_footprint_histories(histories, context, *, scope="nodal rigid footprints"):
     for history in histories:
         for station in history.stations:
             if (station.accumulated != (0., 0.) or
                     any(value != 0. for pair in station.plastic for value in pair)):
-                raise ValueError("experimental nodal rigid footprints admit elastic beam response only: "+context)
+                raise ValueError("experimental "+scope+" admit elastic beam response only: "+context)
 
 
 def native_shell_checkpoint_shapes(owner, generation):
@@ -558,6 +558,10 @@ class FinitePointDriver:
         if applied_load is None and load_pattern is None:
             raise RuntimeError("finite load pattern has not been supplied")
         applied_load = factor*load_pattern if applied_load is None else applied_load
+        if getattr(owner,"_curved_reference",False):
+            if self._external is not None:raise ValueError("curved reference excludes external load contexts")
+            owner._require_curved_load(load_pattern)
+            owner._require_curved_load(applied_load)
         count = owner._K.shape[0]
         size = count+len(state.multipliers)
         force_terms = [[] for _ in range(size)]
@@ -625,6 +629,8 @@ class FinitePointDriver:
                 raise ValueError("experimental finite BL5 admits elastic beam response only")
             if getattr(owner, "_finite_elastic_footprint", False):
                 _require_elastic_footprint_histories((response.history,), "candidate")
+            if getattr(owner, "_curved_reference", False):
+                _require_elastic_footprint_histories((response.history,), "candidate",scope="curved Q4 points")
             beam_candidates.append(response.history)
             if owner._bl5_material:
                 from ._ge_beam3_retained_generalized import RetainedGeneralizedOperator
