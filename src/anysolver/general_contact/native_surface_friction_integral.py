@@ -102,7 +102,8 @@ def integrate_event_friction_fronts(field,settings,*,maximum_axial_uncertainty):
         _local_front_strips=True)
 
 
-def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_front_strips=False):
+def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_front_strips=False,
+        _eager_directional_controls=False):
     """Friction-only work at the endpoint of the field's last declared segment.
 
     Its tangent holds earlier physical segments fixed. Partitions include contact
@@ -145,8 +146,8 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
         coefficients[cell]=[_coefficients(field,pose,cell) for pose in poses]
         panels.extend(front_panels(cell,left,right,alo,ahi))
     budget=NativeSurfaceReplayBudget(settings.maximum_point_paths)
-    cache={};front_cache={};front_error={};front_covers={};front_axes={};front_band_cache={};front_prepared={};visited=accepted=empty_certificates=0
-    last_error=None
+    cache={};front_cache={};front_error={};front_covers={};front_axes={};front_band_cache={};front_prepared={};support_by_panel={};refinement_axes=[];visited=accepted=empty_certificates=0
+    last_error=None;last_error_components=None;global_error_components=None
     open_queries=0
     size=60+60*60+4
     empty=np.zeros(size)
@@ -159,6 +160,12 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
     scale=np.concatenate((rotational/settings.force_absolute_tolerance,
         (rotational[:,None]*rotational[None,:]).ravel()/settings.tangent_absolute_tolerance,
         np.full(4,1/settings.energy_absolute_tolerance)))
+
+    def scaled_error_components(error):
+        weighted=scale*error
+        return dict(force=float(np.max(weighted[:60])),tangent=float(np.max(weighted[60:3660])),
+            stored=float(weighted[-4]),dissipated=float(weighted[-3]),
+            released=float(weighted[-2]),cumulative=float(weighted[-1]))
 
     def query(xi,angle):
         nonlocal open_queries
@@ -179,7 +186,10 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
                 raise NativeFrictionIntegrationLimit('native friction material-query/cache cap exhausted',
                     dict(queries=len(cache),cache_bytes=len(cache)*size*8,point_paths=budget.point_paths,
                          panels=visited,accepted_panels=accepted,current_panel=panel,
-                         previous_panel_scaled_error=last_error,support_intervals=support_budget.intervals))
+                         previous_panel_scaled_error=last_error,support_intervals=support_budget.intervals,
+                         previous_panel_error_components=last_error_components,
+                         previous_global_error_components=global_error_components,
+                         directional_control_panels=len(front_axes),refined_panels=len(refinement_axes)))
             value=field.query(*key,budget=budget)
             point=value.last_contribution
             packed=np.zeros(size)
@@ -270,6 +280,14 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
         middle=(lower+upper)/2
         if middle in (lower,upper):raise ValueError('native friction angular panel resolution exhausted')
         return ((cell,left,right,lower,middle),(cell,left,right,middle,upper))
+
+    def directional_controls(parent,high):
+        # These estimates select an axis; they do not enter the accepted
+        # high/low integral or its error. Local-front candidates can therefore
+        # defer them until this parent actually needs refinement. The eager
+        # switch is retained solely as a bounded parity oracle.
+        axial_control=estimate(parent,(0,1));angular_control=estimate(parent,(1,0))
+        front_axes[parent]=float(np.max(scale*np.abs(high-axial_control)))>=float(np.max(scale*np.abs(high-angular_control)))
 
     unresolved_support_panels=0;support_panels_visited=0
     def subdivide_support(parent):
@@ -374,25 +392,33 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
             # front panels; the public absolute error limits are global.
             total=sum((leaf[1] for leaf in leaves),np.zeros(size))
             errors=sum((leaf[2] for leaf in leaves),np.zeros(size))
+            global_error_components=scaled_error_components(errors)
             if all(leaf[3] for leaf in leaves) and np.max(scale*errors)<=1.:
                 accepted+=len(leaves)
                 break
             index=max(range(len(leaves)),key=lambda i:
                 float(np.max(scale*leaves[i][2])) if leaves[i][3] else float('inf'))
-            parent,_,_,_=leaves.pop(index)
+            parent,parent_high,_,_=leaves.pop(index)
+            if _local_front_strips and not _eager_directional_controls:
+                # query() reads this outer context, including when estimate()
+                # uses a previously visited leaf. Reuse its proof and budgets.
+                panel=parent;support=support_by_panel[parent]
+                directional_controls(parent,parent_high)
+            if parent in front_axes:refinement_axes.append((parent,front_axes[parent]))
             panels.extend(subdivide(parent))
         if visited>=settings.maximum_panels:raise MemoryError('native friction integration panel cap exhausted')
         panel=panels.pop();cell,left,right,lower,upper=panel;visited+=1
         support=resolve_support(panel)
+        if _local_front_strips:support_by_panel[panel]=support
         if support.status=='open' or field.patch.pairs[0].friction_coefficient==0:
             accepted+=1;empty_certificates+=1
             continue
         low=estimate(panel,0);high=estimate(panel,1);error=np.abs(high-low)
         if panel in front_error:error+=front_error[panel]
-        if _front_uncertainty is not None:
-            axial_control=estimate(panel,(0,1));angular_control=estimate(panel,(1,0))
-            front_axes[panel]=float(np.max(scale*np.abs(high-axial_control)))>=float(np.max(scale*np.abs(high-angular_control)))
+        if _front_uncertainty is not None and (not _local_front_strips or _eager_directional_controls):
+            directional_controls(panel,high)
         last_error=float(np.max(scale*error))
+        last_error_components=scaled_error_components(error)
         zero=not np.any(high) and not np.any(low)
         safe_zero=not zero
         if not safe_zero and support_budget.intervals>=settings.maximum_support_intervals:
@@ -408,5 +434,6 @@ def integrate_material_friction(field,settings,*,_front_uncertainty=None,_local_
             certified_intervals=orientation_intervals+budget.certified_intervals,
             support_intervals=support_budget.intervals,
             cached_angular_front_bands=len(front_band_cache),
+            directional_control_panels=len(front_axes),refinement_axes=refinement_axes,
             stationary_strip_work_error_j=sum((front_error.get(leaf[0],np.zeros(size))[-4:] for leaf in leaves),np.zeros(4)).tolist(),
             maximum_scaled_error_estimate=float(np.max(scale*errors)),estimator='GAUSS_4_8_DIFFERENCE'))

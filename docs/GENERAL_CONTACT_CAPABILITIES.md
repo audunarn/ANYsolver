@@ -1069,3 +1069,10 @@ Prepared native whole-band stationary bounds:10distinct local geometry/error/gua
 pass in development; source-reviewed propagated roundoff. Mixed integrated candidate reaches
 query2048 with support49, still non-success. Final open-interior edge fix awaits integrated
 check. No acceptance or speed-up claim. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/prepared_front_results.md).
+
+Native explicit one-segment mixed endpoint integral: focused independent force and checked
+tangent projection, both-body balance, work signs and unchanged integration/resource gates
+pass (1968queries,49support,17panels). Deferred directional controls pass polynomial eager
+parity; no runtime speed claim. Multisegment integration, actual second-load/split restart,
+independent engineering acceptance and installed admission remain incomplete.
+[Evidence](d1_review_support/contact_c5_native_surface_point_20261002/lazy_control_results.md).

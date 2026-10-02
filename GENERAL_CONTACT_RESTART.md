@@ -1,41 +1,39 @@
 # General contact restart — 2 October 2026
 
-Full C0–C9 active. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Base07bd2eec plus owned prepared-front slice.
-Goal2026-09-30.4/plan2026-10-02.48 govern. No original-worktree/other-chat access;
-no main merge/push/publication/release/default/shared ABC changes. Tiered workflow;
-optional lower tiers previously unavailable. Owned OpenAI source reviews only.
+Full C0–C9 active. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
+branch codex/contact-main-reconcile-20261001. Basecc13138b +owned deferred-control slice.
+Goal2026-09-30.4/plan2026-10-02.49 govern. No original-worktree/other-chat access,
+main merge/push/publication/release/default/shared ABC changes. Tiered workflow;
+optional lower tiers previously unavailable. Owned OpenAI source scrutiny only.
 
-NEW PreparedStationaryBand prepares uniform A/B derivative/error bounds once per complete
-angular branch. Query reuses bounds, evaluates actual coefficients/Brent, strictB,N',endpoint
-sign,identity and uncertainty checks. r=|Nfloat|+eN,dt=r/min|N'|; H motion bound
-(r*dt+.5*max|N'|*dt²)/min|B|². Prepared slabs counted; no new geometry slab at queries.
-Reviewer found max-scale errors missing coordinate-relative amplification: replaced with
-explicit coordinate->edge->C/C'/C''->six coefficient dot error propagation; no further
-concrete omission found. Controls developmental, not formal floating proof.
+NEW one-segment mixed endpoint integral passes unchanged controls:1968queries,
+3936pointpaths,17panels,49support,88.5917s/250974208B. Independent integrated force/
+checked tangent agree~1e-14relative; both-body force balance/positive work pass.
+Deferred cross quadratures choose only selected parents, with saved support/panel/high
+restored. Exact polynomial eager/deferred R/K/work/error/axis parity passes (432→304
+queries); real no-stationary/closed force check passes. No full tangent/owner/acceptance
+or speed claim. Corrected-edge query2048 failure and initial parity/test-adapter failures
+retained. Historical/default routes unchanged; expensive mixed replay remains explicit.
 
-Mixed integration now reaches query2048/pointpaths4096,panel12,support49 rather than128;
-two failures ~79/78s runner,256MB. No pass/speed claim.10distinct local controls pass:
-analytical/slab roots,nearendpoint/cancellation,movingtarget,identity/budget,hiddenpulse
-open-side guard,Decimal cross-dot amplification,final open-interior boundary convention.
+NEXT restricted multisegment successor: total one stationary branch, strict captured-
+pose openness over its whole angular envelope, complete nonzero-B/no-stationary covers
+elsewhere. Source review supports monotone-H proof of no prior strip contact. Reconstruct
+branch-owning start through full prefix and index its work bound; full replay outside
+strip, earlier-history-fixed tangent, caps/ownership/orientation unchanged. Verify an
+independent three-segment scalar history with translated prefix/open suffix plus closed-
+envelope rejection, then saved secondload locally. No coupled retry before local success;
+no saved fullpatch retry/cap growth/blind repeat. This successor not implemented yet.
 
-NEXT one unchanged mixed-case run after final >=/<= edge correction: prepared_front_open_interval
-must allow interval starting exactly at outward H bound (quadrature strictly interior).
-Earlier >/< shortcut missed these cells, so prior integrated run did not test this fix.
-Set ANYSOLVER_RUN_UNRESOLVED_MIXED_FRONT=1; selector
- tests/test_general_contact_native_surface_local_fronts.py::test_mixed_endpoints_integrated_force_and_tangent
-Use fresh RUNNER_TEMP,180s/953MiB,JIT off. If query cap remains, diagnose controlling
-integration component/refinement before any new quadrature change; no cap growth or blind
-retry. Full mixed helper one segment/one stationary branch; multisegment still open.
-
-Explicit sequence V2 point routing/closed original-origin Jet2 derivative passes local
+PreparedBand/error propagation controls remain developmental, not formal floating proof.
+Explicit sequence V2 original-origin closed/open/persistent point replay passes local
 checks/restart binding. First native load/rebase/restore passes development; secondload/
-split unpassed. No saved fullpatch retry. D1-interior/named D2 accepted; fullprogramme
-incomplete; installed shell unchanged.32step history discrete, not continuum convergence.
+split remains unpassed.32step history is discrete, not continuum convergence.
+D1-interior/named bounded D2 accepted; fullprogramme incomplete. Installed shell unchanged;
+no native installed/accepted/released claim. Full programme linked from current plan.
 
 Evidence docs/d1_review_support/contact_c5_native_surface_point_20261002:
-prepared_front_results.md/raw.zip/source.json; local_front_integration_results.md;
-prior failures/reviews/restart notes retained. No live process/reviewer. Routine180s/953MiB;
+lazy_control_results.md/raw.zip/source.json,initial parity source.zip; prior prepared/
+local/point/review/failure evidence retained. No live process/reviewer. Routine180s/953MiB;
 named900s/3814MiB;native120s/context unchanged; consumed authorities remain consumed.
-120h limit=goal seconds+3120,last76.37h advancing,no extension; at120h checkpoint/decision.
-Forecast unsupported.
+120h limit=goal seconds+3120,last~77h advancing,no extension; checkpoint/decision at120h.
+Forecast unsupported. Exact owned-file local checkpoint authorized; publication separate.

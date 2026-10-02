@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.48. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.49. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -39,12 +39,24 @@ It still failed the unchanged query cap. Local proof/roundoff controls pass; no 
 success or speed-up claim. Reviewed error propagation now includes coordinate->edge->cross->dot.
 
 A certified open-interior shortcut avoids replay only where all front extrema prove no
-contact over every segment. Its corrected interval-edge convention has local controls;
-next run the same mixed case once with unchanged settings. If query cap persists, identify
-the controlling integration component before a new quadrature change. No cap increases,
-blind retries or saved fullpatch retry. Then extend multisegment cumulative work.
+contact over every segment. The corrected-edge run still exhausted2048 queries at panel13,
+49support intervals,82.40s/259608576B. No pass or speed claim. Source review identifies
+two cross-control estimates per leaf used only to choose a later refinement axis.
+Deferred controls now pass exact polynomial eager/deferred output/error/axis parity.
+The unchanged real mixed case passes with1968queries,49support,17panels,88.59s/250974208B;
+analytical integrated force and the checked tangent agree~1e-14relatively. This closes
+one-segment helper development, not native owner/acceptance or a measured runtime speed-up.
 
-[Current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/prepared_front_results.md).
+Next admit multiple saved segments only with one stationary branch in total, complete
+nonzero-B branch covers, and strict openness at every captured pose over its whole
+envelope. Other segments then cannot contact there. Reconstruct the owner segment's
+actual prefix pose and use its index in the strip-work bound; retain full replay elsewhere.
+First independent scalar three-segment work and closed-envelope rejection checks, then
+the saved second-load local candidate. No coupled owner retry until this successor passes;
+no cap increases,blind retries or saved fullpatch retry.
+
+[Current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/lazy_control_results.md).
+[Prepared proof evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/prepared_front_results.md).
 [Previous local integration evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/local_front_integration_results.md).
 [Earlier slice history](docs/d1_review_support/contact_c5_native_surface_point_20261002/plan_before_local_front_integration.txt)
 retains frozen/consumed restrictions; it does not authorize reruns.
