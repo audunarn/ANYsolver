@@ -78,3 +78,47 @@ common virtual work and usable physical output before any accuracy comparison.
 Do not infer root-wrench balance from RF, native half-cell equivalence, U1 interior
 trace equivalence or multiplier selection. Existing F5/solid/E02 evidence retains
 its original scope; F03/G0B/M2 and complete external obligations remain open.
+# Beam-trace discrimination, 2 October continuation
+
+The saved canary remains a nodal-P1 feasibility model. Its beam-side port is
+**not equivalent** to the interior U1 interpolation, even on the supported
+coordinate space. This finding does not attribute the native transfer discrepancy.
+
+Executed bounded command (no CalculiX solve):
+`C:/Python/Python314/python.exe scripts/check_u1_canary_trace_work.py`, with
+OPENBLAS_NUM_THREADS=OMP_NUM_THREADS=1. Exit0, about0.5s including Python startup.
+The script verifies the pinned archive hash, integrates the corrected derivative
+polynomials in `resultsmech_u1.f:443-468` from the left endpoint and checks endpoint
+values and rigid translation/rotation fields. Integrating bending and shear energy
+reproduces `e_c3d_u1.f:479-529` to relative1.4948928420860556e-16 for the actual
+half-metre, isotropic canary section. This is a local source-backed derivation;
+the routines themselves evaluate the derivative polynomials at endpoints.
+
+For one bending plane, a=12EI/(kGA L^2), b=1/(1-a). The derived element means are
+`mean(v)=(v1+v2)/2+L*(theta1-theta2)/12` and
+`mean(theta)=b*(v2-v1)/L-a*b*(theta1+theta2)/2`.
+They differ from the nodal-P1 means. Opposite-sign transverse rotation in the
+second plane follows the source's `w'+psi` shear convention. Torsion/axial traces
+remain linear. The script assembles all18 beam-coordinate columns across the two
+elements, including the -.05m beam-surface arm. Maximum absolute coefficient
+changes by port row (ux,uy,uz,rx,ry) are
+`[.05747126436781609,.020833333333333343,.020833333333333343,0,1.1494252873563218]`.
+Removing the actual root DOFs1–5 leaves nonzero changes of the same magnitudes
+(roundoff aside). These are dimensioned matrix entries, not normalized accuracy
+or stability measures. Independent OpenAI Read review found a stronger witness:
+with shell coordinates and beam rotations zero, beam Z translations `(0,-epsilon/2,
+epsilon)` satisfy every old nodal-P1 row and the root supports. The reconstructed
+mean Y rotation is `-1.149425287356322*epsilon`. Hence this is a different supported
+constraint space, not just a row rescaling. The executable now checks this witness
+and binds the canary deck hash. The strengthened check passes; raw scalar output
+is `beam-trace-work-v1.json`. Review found no blocking algebra error. This is not
+different-family qualification. No exposed interior-output API or uniqueness of
+all possible reconstructions is established by the polynomial extension.
+
+Decision: retain all old execution evidence under its original nodal-P1 meaning.
+Do not score a native interior-trace law against it as an equivalent connection.
+Next complete the US3 shell-side trace/work contract, then prepare a separately
+identified consistent-interpolation reference if it discriminates the physical
+question. No external rerun, native-law revision, multiplier selection or formal
+F03 authority was consumed. Energy identity does not establish physical adequacy
+of this U1 formulation, and no native B3 half-cell equivalence is claimed.

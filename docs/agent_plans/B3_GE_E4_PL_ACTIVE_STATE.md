@@ -9,7 +9,7 @@ protected evidence and resource authority. Expanded note preserved byte-for-byte
 in [history](development/r8-ge-pressure-work-20261002/active-before-consumer-v1.md).
 
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001, integration base84a02c36. Root owns
+branch codex/stiffened-main-reconcile-20261001, integration base65273eed. Root owns
 pressure context/owner/facade/tests/example/docs. ANYfem consumer:
 C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, branch
 codex/experimental-ge-panel-consumer, HEADe998e9b. Consumer programme slice committed;
@@ -103,8 +103,10 @@ example passes source+installed. Mixed and all-S3 plastic staged histories now p
 installed cancellation/restart/reversal: mixedQ4+fibres active while S3 stays elastic;
 all-S3 has active S3+fibres. Observer fixed to compare native station histories by
 family/element identity (old mixed failure preserved).16helper checks and independent
-source review pass. No job live. Next: distributed-couple material work/history
-coverage; zero-load assessment/design remains open, with no automatic relaxation.
+source review pass. Signed Q4 distributed-couple/material history now also passes
+source and installed checks, including actual-state force-arm subtraction, physical
+recovery and exact resumed checkpoints. No job live. Zero-load assessment/design
+remains open, with no automatic relaxation.
 No aggregate acceptance. Consumer evidence: ANYfem docs/development/
 r8-ge-distributed-programme-20261002/results.md.
 [Staged results](development/r8-ge-native-distributed-20261002/staged-programme-results.md).
@@ -117,3 +119,12 @@ US3 same-action does not allocate cause. Spectral movingreference gap2.42% is no
 qualification. Full attachments/topology, spectra/prestress/capacity, requiredscale,
 external/platform/consumer/release obligations stay open. Do not repeat stopped
 campaigns without a new discriminator or reuse consumed authority.
+
+Current connection decision: the independent U1 canary's nodal-P1 beam port is
+not equivalent to its source-derived interior interpolation on supported DOFs.
+A bounded algebraic check reproduces U1 stiffness to1.49e-16 and exposes changed
+integrated work columns. Old canary remains feasibility-only; no native error
+allocation or formal F03 claim. Next: finish US3 shell-side interpolation/work
+contract before preparing a distinct consistent-trace reference. No external
+rerun or mesh campaign is needed to establish this beam-side difference.
+[Derivation and check](development/r8-bl5-u1-us3-canary-20261002/results.md).

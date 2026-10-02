@@ -126,3 +126,32 @@ executed lifecycle coverage.
 
 Installed archive SHA256:
 `5afb0d14925583076ba95714d26aba51f36e55964b3e69d3372f9592ea271250`.
+
+## Signed fixed-spatial couples with material history
+
+The Q4 two-stiffener case now combines the existing +/-3000N/m force stages with
++/-100Nm/m global-X couples over4m total native reference arclength. No model,
+constitutive law, solve tolerance or stepping control changed. Source passes in
+65.489s supervised/175501312B; installed passes in64.381s/174280704B on unchanged
+wheelb636e6a8. The strengthened installed fixture also checks restored/final
+physical load recovery equality, and derives the potential flag from the current
+interpolated couple rather than from the presence of couples elsewhere in the
+programme. These assertion changes do not change numerical execution.
+
+Recovered additional couple is +200,+400,+200,-200,-400Nm at the five accepted
+positions. The oracle subtracts force-only recovery evaluated at the same actual
+accepted configuration, then checks the remaining couple against total reference
+length times prescribed density. It shares force-recovery code; it is not an
+independent local torque-distribution or tangent oracle. Nonzero applied couples
+have no scalar endpoint potential. Simultaneous shell/fibre activity occurs at
+.5,1,1.75,2; combined loading does not establish that couples caused the yielding.
+Maximum accepted equilibrium1.872360e-9 and gap9.403393e-17. Reaction balance,
+positive-prefix cancellation, restore and exact final checkpoint parity pass.
+
+Independent OpenAI Read review accepted these scoped test semantics and requested
+the interpolated-potential correction above. Earlier native derivative/work tests
+remain the local operator evidence. No point/line physical torque qualification,
+zero-load convergence, all-mesh couple/material coverage or aggregate gate closure.
+Raw source: couple-material-source-v1; installed archive
+staged-programme-couple-material-installed-v1.zip SHA256
+`d3c17f38f8422b3e75860ba09595e683d5b9287b0c324480c8ec1a1bab93c031`.

@@ -1244,3 +1244,16 @@ An observation-only ragged-array failure is preserved and corrected by keyed
 native station comparison, with16helper checks and independent source review.
 No numerical equations/criteria changed; aggregate G3/G4A remain open.
 [Evidence](development/r8-ge-native-distributed-20261002/staged-programme-results.md).
+
+**2 October continuation — signed couples/materials:** Q4 +/-100Nm/m couples
+combined with +/-3000N/m forces pass source/installed cancellation, reversal,
+physical recovery and exact restart; simultaneous J2/fibre activity is observed.
+Unchanged wheelb636e6a8. This closes this scoped history check, not full combination
+coverage, torque accuracy or G3/G4A. [Evidence](development/r8-ge-native-distributed-20261002/staged-programme-results.md).
+
+**2 October connection reference decision:** source-derived U1 polynomial beam
+trace has a different supported constraint kernel from the saved nodal-P1 canary.
+Local energy/source-stiffness error1.495e-16; explicit old-kernel witness passes.
+Independent OpenAI Read review found no blocking algebra error. Retain canary as
+feasibility only. US3 trace and physical/native equivalence remain open; no external
+rerun or F03 consumption. [Derivation](development/r8-bl5-u1-us3-canary-20261002/results.md).
