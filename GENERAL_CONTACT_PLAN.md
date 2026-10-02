@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.30. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.31. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -32,21 +32,19 @@ independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
 
-Native replay friction now enters the retained native/S3 contributor and atomic
-transaction through an explicit development profile. Global componentwise
-integration error control resolves the saved query-cap failure without changing
-tolerances or caps; independent force/tangent/history and backtracking checks pass.
-The128-interval failure is resolved by reusing the existing monotone/affine
-certificate instead of weaker repeated temporal subdivision. Removing duplicate
-Newton candidate evaluations preserves guards and independent commit reevaluation.
-The actual loading/restart workflow remains unpassed: it now ends at bounded
-backtracking on unresolved whole-patch historical support, before any commit.
-Stop coupled reruns. Use the saved envelope-failure path to distinguish a genuine
-interior contact event from mixed spatial motion that the global sufficient
-certificate cannot admit. A regional monotone-or-proven-open cover is a permitted
-candidate, provided it covers every material point and retains hidden-pulse
-rejection and the same budgets. No cap increase or zero-sample inactivity claim.
-See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_support_results.md).
+Native replay friction has committed its first load and rebased in development;
+actual checkpoint reconstruction also passes. Second loading remains unpassed.
+The current candidate uses local segmentwise history support and unions complete
+proof subdivisions before independently controlled quadrature. Unresolved support
+blocks every panel, including nonzero ones; all physical history remains intact.
+Independent force/tangent/state controls and source review support this structure.
+The saved second-load failure now stops at support128 after240queries/5.53s,
+instead of exhausting2048queries/43.68s. This reduces rejected work, not a
+successful solve or accepted speedup. No coupled rerun or cap increase.
+Next inspect unresolved proof regions in the saved input; assess the previously
+measured origin-dependent bound or a front-aware certificate in this new structure.
+No new scalar tuning campaign. Require local success before coupled continuation.
+See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_local_support_results.md).
 
 The pressure-coupled fixed-material S3 friction slice now uses the ordinary static
 path assembly/constraints, existing mortar pressure and accepted-step physical
@@ -515,3 +513,11 @@ Saved half trial also exhausts support. Implement bounded backtracking for exact
 Independent review confirms entry cover only needs all-saved-endpoints-open implies always-open. Add strict negative spatial maximum at any saved endpoint as alternative regional support witness, charged to same budget. Witnessed points cannot enter open shortcut and still receive full material path/event replay. This does not certify continuous closure or hidden response-boundary integration. Saved second-load evaluation must expose any remaining point-path/integration failure.
 
 Current decision: retain only named support-cap trial backtracking (3focused checks pass); restore all unsuccessful geometry candidates to ac5b8e56. Actual first checkpoint restore succeeds; secondload remains bounded non-success with state preserved. Stop scalar-bound tuning. Next assess replacing global endpoint-support prerequisite with conservative per-integration-panel proof or a front-aware certificate, explicitly addressing missed nonzero historical support. No coupled retry without a locally verified successor. Evidence replay_second_load_results.md.
+
+Architectural candidate: classify each actual integration panel as proven-open, resolved-monotone-history or unresolved. Unresolved blocks BOTH zero/nonzero quadrature acceptance and triggers bounded spatial subdivision before material queries. Remove global rectangular admission and unconditional endpoint-positive query skipping; all non-open-panel samples replay full history. Keep ownership/orientation/error controls and shared128proof budget. First verify classifier and mixed-support rejection, then saved local candidate; no coupled run yet.
+
+Local classifier18checks pass; savedsecond fails before queries, while independent force and saved directional tangent pass (2pass/1fail66.69s). Correction: each selected segment gets one coarse temporal signed-gap proof before unresolved spatial subdivision, avoiding spending all128units inside one panel. Independent review also found half-cell rectangle validation bypass on monotone/empty paths; fixed upfront, negative tests added. No caps/tolerances changed.
+
+Coarse local proof reaches material integration (67panels/104support) but exhausts2048queries. Retain endpoint-positive zero-history shortcut ONLY under an already resolved local certificate; each segment is monotone/open/closed, so all-positive endpoints imply no prior contact. Unresolved panels still never query/accept. Original persistent test demanded resolution from a one-interval bound too loose for its gap; change fixture to analytically deeper persistent contact while retaining real hidden pulse, not a solver tolerance change. First preserve22passes/2fail46.56s; verify corrected fixture and saved case.
+
+Final local candidate force/tangent/transaction3checks pass45.50s, savedsecond still2048query failure. Trace last_parent=null: geometry proofs, not error refinement, created tiny quadrature leaves. One correction unions complete child support certificates and integrates original parent independently; unresolved child blocks parent, sharedproof budget retained, separate support-panel counter bounded by existing maximum_panels. Quadrature still refines on its own unchanged componentwise error. No omitted region or new cap.

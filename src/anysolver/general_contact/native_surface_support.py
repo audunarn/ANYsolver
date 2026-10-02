@@ -44,7 +44,7 @@ def _base(pose, cell, xi, origin):
                            -float(origin[i]))) for i in range(3)])
 
 
-def _minimum(pose, target, reference_frame, radius, cell, xis, angles):
+def _minimum(pose, target, reference_frame, radius, cell, xis, angles, *, gap_sign=1.):
     corners = target.adapter.current_positions(pose.shell_displacement)
     normal = np.asarray(target.physical_pose(pose.shell_displacement).material_frame)[:, 2]
     frame = pose.cell_rotations[cell] @ reference_frame
@@ -58,12 +58,31 @@ def _minimum(pose, target, reference_frame, radius, cell, xis, angles):
               for xi in xis for angle in candidates]
     scale = max(1., radius, float(np.max(np.abs(pose.positions))),
                 float(np.max(np.abs(pose.position_low))), float(np.max(np.abs(corners))))
-    return min(values), 512*np.finfo(float).eps*scale
+    return min(gap_sign*v for v in values), 512*np.finfo(float).eps*scale
 
 
-def panel_open_over_history(field, cell, xi_bounds, angle_bounds, *, maximum_intervals,
-                            budget=None):
-    """True only for whole-panel positive gap over the initial pose and history.
+def _support_path(field,segment_index):
+    if segment_index is None:return field.initial,field.segments
+    if type(segment_index) is not int or not 0<=segment_index<len(field.segments):
+        raise ValueError('support segment index outside captured history')
+    pose=field.initial
+    for segment in field.segments[:segment_index]:
+        pose=material_path_pose(pose,segment.translations,segment.angular,segment.shell_increment,1.)
+    return pose,(field.segments[segment_index],)
+
+
+def panel_open_over_history(field,cell,xi_bounds,angle_bounds,*,maximum_intervals,budget=None,segment_index=None):
+    return _panel_signed_gap_over_history(field,cell,xi_bounds,angle_bounds,
+        maximum_intervals=maximum_intervals,budget=budget,segment_index=segment_index,gap_sign=1.)
+
+
+def panel_closed_over_history(field,cell,xi_bounds,angle_bounds,*,maximum_intervals,budget=None,segment_index=None):
+    return _panel_signed_gap_over_history(field,cell,xi_bounds,angle_bounds,
+        maximum_intervals=maximum_intervals,budget=budget,segment_index=segment_index,gap_sign=-1.)
+
+
+def _panel_signed_gap_over_history(field,cell,xi_bounds,angle_bounds,*,maximum_intervals,budget,segment_index,gap_sign):
+    """True only for whole-panel strictly signed gap over the initial pose and history.
 
     The interval cap is shared by all segments. Each segment also retains the
     history field's captured per-path cap. An optional budget additionally shares
@@ -97,8 +116,8 @@ def panel_open_over_history(field, cell, xi_bounds, angle_bounds, *, maximum_int
         raise ValueError('material support requires exact straight untwisted reference')
     target = field.patch.target
     radius = float(rule.definition['radius'])
-    pose = field.initial
-    minimum, padding = _minimum(pose, target, frames[0], radius, cell, xis, angles)
+    pose,segments = _support_path(field,segment_index)
+    minimum, padding = _minimum(pose, target, frames[0], radius, cell, xis, angles,gap_sign=gap_sign)
     if minimum <= padding:
         return False
     reference_corners = target.adapter.reference_positions
@@ -107,12 +126,12 @@ def panel_open_over_history(field, cell, xi_bounds, angle_bounds, *, maximum_int
     reference_area = float(np.linalg.norm(reference_cross))
     reference_normal = reference_cross/reference_area
     visited = 0
-    for segment in field.segments:
+    for segment in segments:
         end = material_path_pose(pose, segment.translations, segment.angular, segment.shell_increment, 1.)
         first = target.adapter.current_positions(pose.shell_displacement)
         last = target.adapter.current_positions(end.shell_displacement)
         # Also validates endpoint target degeneracy and the existing polarity.
-        endpoint_minimum, endpoint_padding = _minimum(end, target, frames[0], radius, cell, xis, angles)
+        endpoint_minimum, endpoint_padding = _minimum(end, target, frames[0], radius, cell, xis, angles,gap_sign=gap_sign)
         if endpoint_minimum <= endpoint_padding:
             return False
         a0, b0 = first[1]-first[0], first[2]-first[0]
@@ -160,7 +179,7 @@ def panel_open_over_history(field, cell, xi_bounds, angle_bounds, *, maximum_int
         normal_acceleration=2*np.linalg.norm(np.cross(da,db))/area_lower+3*normal_speed**2
         curvature=(normal_acceleration*relative_radius+2*normal_speed*speed
                    +np.linalg.norm(segment.angular[cell])**2*radius)
-        start_minimum,start_padding=_minimum(pose,target,frames[0],radius,cell,xis,angles)
+        start_minimum,start_padding=_minimum(pose,target,frames[0],radius,cell,xis,angles,gap_sign=gap_sign)
         if (np.isfinite(curvature) and min(start_minimum,endpoint_minimum)-curvature/8
                 >max(start_padding,endpoint_padding)):
             if visited>=maximum_intervals or (budget is not None and not budget.consume()):
@@ -184,7 +203,7 @@ def panel_open_over_history(field, cell, xi_bounds, angle_bounds, *, maximum_int
                 return False
             current = material_path_pose(pose, segment.translations, segment.angular,
                                          segment.shell_increment, midpoint)
-            value, roundoff = _minimum(current, target, frames[0], radius, cell, xis, angles)
+            value, roundoff = _minimum(current, target, frames[0], radius, cell, xis, angles,gap_sign=gap_sign)
             visited += 1
             segment_visits += 1
             if value <= roundoff:
@@ -207,7 +226,7 @@ def _sinusoidal_extrema(offsets, a, b, angles):
     return min(values), max(values)
 
 
-def history_endpoint_support_certified(field, *, xi_bounds=None, angle_bounds=None):
+def history_endpoint_support_certified(field, *, xi_bounds=None, angle_bounds=None, segment_index=None):
     """Sufficient whole-patch proof that contact cannot hide between poses.
 
     Every point's gap must be affine in time, or have a derivative of one
@@ -245,9 +264,9 @@ def history_endpoint_support_certified(field, *, xi_bounds=None, angle_bounds=No
                                reference_corners[2]-reference_corners[0])
     reference_area = float(np.linalg.norm(reference_cross))
     reference_normal = reference_cross/reference_area
-    pose = field.initial
+    pose,segments = _support_path(field,segment_index)
     target.physical_pose(pose.shell_displacement)
-    for segment in field.segments:
+    for segment in segments:
         end = material_path_pose(pose, segment.translations, segment.angular, segment.shell_increment, 1.)
         target.physical_pose(end.shell_displacement)
         first = target.adapter.current_positions(pose.shell_displacement)
@@ -308,6 +327,66 @@ def history_endpoint_support_certified(field, *, xi_bounds=None, angle_bounds=No
                 return False
         pose = end
     return True
+
+
+@dataclass(frozen=True)
+class HistoryPanelSupport:
+    """A geometric admission result, not a quadrature error estimate."""
+    status: str
+    region: tuple
+    reason: str
+
+
+def classify_history_panel(field,cell,xi_bounds,angle_bounds,*,budget):
+    """Resolve one full integration rectangle without sampling its support.
+
+    Unresolved regions must be subdivided or rejected even if quadrature gives
+    nonzero, mutually agreeing estimates. No constitutive history is altered.
+    """
+    if type(field) is not NativeSurfaceHistoryField:
+        raise TypeError('exact native surface history field required')
+    if type(cell) is not int or cell not in (0,1):
+        raise ValueError('one native half-cell required')
+    for bounds,patch_bounds,domain in (
+            (xi_bounds,field.patch.rule.definition['xi_range'],(-1.+cell,float(cell))),
+            (angle_bounds,field.patch.rule.definition['angle_range'],(0.,2*pi))):
+        values=np.asarray(bounds,dtype=float)
+        if (values.shape!=(2,) or not np.all(np.isfinite(values))
+                or not max(domain[0],patch_bounds[0])<=values[0]<values[1]<=min(domain[1],patch_bounds[1])):
+            raise ValueError('support rectangle must lie in one declared material half-cell')
+    if type(budget) is not SupportIntervalBudget:
+        raise TypeError('exact shared support interval budget required')
+    if not budget.consume():
+        raise MemoryError('native friction aggregate support interval cap exhausted')
+    region=(cell,*map(float,xi_bounds),*map(float,angle_bounds))
+    pose=field.initial;all_open=True
+    for index,segment in enumerate(field.segments):
+        end=material_path_pose(pose,segment.translations,segment.angular,segment.shell_increment,1.)
+        monotone=history_endpoint_support_certified(field,xi_bounds=xi_bounds,angle_bounds=angle_bounds,
+            segment_index=index)
+        if monotone:
+            for endpoint in (pose,end):
+                value,padding=_minimum(endpoint,field.patch.target,field.patch.source.reference.nodal_triads[0],
+                    field.patch.rule.definition['radius'],cell,xi_bounds,angle_bounds)
+                all_open=all_open and value>padding
+        # A coarse interval proof yields to spatial refinement when unresolved;
+        # it must not consume the full shared budget inside one local panel.
+        elif panel_open_over_history(field,cell,xi_bounds,angle_bounds,maximum_intervals=1,
+                budget=budget,segment_index=index):
+            pass
+        elif panel_closed_over_history(field,cell,xi_bounds,angle_bounds,maximum_intervals=1,
+                budget=budget,segment_index=index):
+            all_open=False
+        else:
+            return HistoryPanelSupport('unresolved',region,f'unresolved history segment {index}')
+        pose=end
+    if not field.segments:
+        # Validate the geometry contract even for an empty physical history.
+        history_endpoint_support_certified(field,xi_bounds=xi_bounds,angle_bounds=angle_bounds)
+        value,padding=_minimum(pose,field.patch.target,field.patch.source.reference.nodal_triads[0],
+            field.patch.rule.definition['radius'],cell,xi_bounds,angle_bounds)
+        all_open=value>padding
+    return HistoryPanelSupport('open' if all_open else 'resolved',region,'complete segmentwise support')
 
 
 def history_endpoint_support_cover_certified(field, *, budget):

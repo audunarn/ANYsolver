@@ -81,13 +81,11 @@ def integrate_material_friction(field,settings):
     fronts at every saved pose, with axial roots resolved for each angular query.
     Zero panels additionally need a conservative whole-history open certificate.
     """
-    from .native_surface_support import (_minimum,history_endpoint_support_cover_certified,
+    from .native_surface_support import (classify_history_panel,HistoryPanelSupport,
         history_target_ownership_certified,SupportIntervalBudget)
     if type(field) is not NativeSurfaceHistoryField or type(settings) is not NativeSurfaceFrictionIntegrationSettings:
         raise TypeError('exact material history field and integration settings required')
     support_budget=SupportIntervalBudget(settings.maximum_support_intervals)
-    if not history_endpoint_support_cover_certified(field,budget=support_budget):
-        raise ValueError('native friction integration requires resolved historical contact envelope')
     if not history_target_ownership_certified(field,budget=support_budget):
         raise ValueError('native friction integration requires swept whole-patch target ownership')
     poses=[field.initial]
@@ -100,21 +98,6 @@ def integrate_material_friction(field,settings):
     rule=field.patch.rule;lo,hi=rule.definition['xi_range'];alo,ahi=rule.definition['angle_range']
     reference=rule.samples[0].station.reference
     panels=[];coefficients={}
-
-    def certified_open_panel(cell,left,right,lower,upper):
-        # The entry cover proves each point monotone/affine on each segment
-        # or separated throughout history. Repeating temporal subdivision
-        # here weakens that proof and spends the shared budget needlessly.
-        # Under that cover, positive endpoint minima imply separation through
-        # the whole history, including already-proven nonmonotone open regions.
-        # Charge each inspected saved pose; retain the common finite budget.
-        for pose in poses:
-            if not support_budget.consume():
-                raise MemoryError('native friction aggregate support interval cap exhausted')
-            minimum,padding=_minimum(pose,field.patch.target,reference.nodal_triads[0],
-                rule.definition['radius'],cell,(left,right),(lower,upper))
-            if minimum<=padding:return False
-        return True
 
     def front_panels(cell,left,right,lower,upper):
         breaks={lower,upper}
@@ -152,10 +135,12 @@ def integrate_material_friction(field,settings):
     def query(xi,angle):
         nonlocal open_queries
         cell=0 if xi<0 else 1
-        # The entry cover proves affine/monotone gap on each saved segment OR
-        # separation throughout history. Ownership/orientation are checked above.
-        # Strictly open endpoints therefore imply zero history at this material
-        # coordinate. Near a rounded front, retain the full replay instead.
+        # Only a locally RESOLVED panel permits this shortcut. Every segment
+        # was proved monotone, strictly open, or strictly closed. A closed
+        # segment contradicts all-positive endpoints; in the other cases this
+        # predicate proves the queried point has never contacted.
+        if support.status!='resolved':
+            raise RuntimeError('native friction query requires resolved local support')
         if all(fsum((offset,slope*xi,a*cos(angle),b*sin(angle)))>gap_padding
                for offset,slope,a,b in coefficients[cell]):
             open_queries+=1
@@ -200,6 +185,35 @@ def integrate_material_friction(field,settings):
                     result+=query(xi,angle)*(float(wx*wa)*(x1-x0)*(upper-lower)*measure/4)
         return result
 
+    def subdivide(parent):
+        cell,left,right,lower,upper=parent
+        if (right-left)/(hi-lo)>=(upper-lower)/(ahi-alo):
+            middle=(left+right)/2
+            if middle in (left,right):raise ValueError('native friction axial panel resolution exhausted')
+            return (*front_panels(cell,left,middle,lower,upper),
+                    *front_panels(cell,middle,right,lower,upper))
+        middle=(lower+upper)/2
+        if middle in (lower,upper):raise ValueError('native friction angular panel resolution exhausted')
+        return ((cell,left,right,lower,middle),(cell,left,right,middle,upper))
+
+    unresolved_support_panels=0;support_panels_visited=0
+    def resolve_support(parent):
+        # Proof subdivisions need not become quadrature panels. Complete child
+        # coverage certifies their union; the parent's independent integration
+        # error estimate still decides whether its quadrature must subdivide.
+        nonlocal unresolved_support_panels,support_panels_visited
+        pending=[parent];all_open=True
+        while pending:
+            if support_panels_visited>=settings.maximum_panels:
+                raise MemoryError('native friction support panel cap exhausted')
+            current=pending.pop();c,l,r,a,b=current;support_panels_visited+=1
+            result=classify_history_panel(field,c,(l,r),(a,b),budget=support_budget)
+            if result.status=='unresolved':
+                unresolved_support_panels+=1
+                pending.extend(subdivide(result.region))
+            else:
+                all_open=all_open and result.status=='open'
+        return HistoryPanelSupport('open' if all_open else 'resolved',parent,'complete union of local proofs')
     total=np.zeros(size);errors=np.zeros(size)
     leaves=[]
     while panels or leaves:
@@ -215,22 +229,11 @@ def integrate_material_friction(field,settings):
             index=max(range(len(leaves)),key=lambda i:
                 float(np.max(scale*leaves[i][2])) if leaves[i][3] else float('inf'))
             parent,_,_,_=leaves.pop(index)
-            cell,left,right,lower,upper=parent
-            if (right-left)/(hi-lo)>=(upper-lower)/(ahi-alo):
-                middle=(left+right)/2
-                if middle in (left,right):raise ValueError('native friction axial panel resolution exhausted')
-                panels.extend(front_panels(cell,left,middle,lower,upper))
-                panels.extend(front_panels(cell,middle,right,lower,upper))
-            else:
-                middle=(lower+upper)/2
-                if middle in (lower,upper):raise ValueError('native friction angular panel resolution exhausted')
-                panels.extend(((cell,left,right,lower,middle),(cell,left,right,middle,upper)))
+            panels.extend(subdivide(parent))
         if visited>=settings.maximum_panels:raise MemoryError('native friction integration panel cap exhausted')
         panel=panels.pop();cell,left,right,lower,upper=panel;visited+=1
-        separated=certified_open_panel(cell,left,right,lower,upper)
-        if separated or field.patch.pairs[0].friction_coefficient==0:
-            # Exact empty-history panel: all material points stayed open.
-            # Its friction force, tangent and work vanish without replay queries.
+        support=resolve_support(panel)
+        if support.status=='open' or field.patch.pairs[0].friction_coefficient==0:
             accepted+=1;empty_certificates+=1
             continue
         low=estimate(panel,0);high=estimate(panel,1);error=np.abs(high-low)
@@ -244,7 +247,7 @@ def integrate_material_friction(field,settings):
     total=sum((leaf[1] for leaf in leaves),np.zeros(size))
     errors=sum((leaf[2] for leaf in leaves),np.zeros(size))
     return NativeSurfaceFrictionIntegral(_readonly(total[:60]),_readonly(total[60:3660].reshape(60,60)),
-        *map(float,total[-4:]),dict(panels=visited,accepted_panels=accepted,queries=len(cache),
+        *map(float,total[-4:]),dict(panels=visited,accepted_panels=accepted,unresolved_support_panels=unresolved_support_panels,support_panels_visited=support_panels_visited,queries=len(cache),
             point_paths=budget.point_paths,cache_bytes=len(cache)*size*8,zero_panels_certified=empty_certificates,
             open_material_queries_certified=open_queries,
             certified_intervals=orientation_intervals+budget.certified_intervals,

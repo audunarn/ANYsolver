@@ -1,0 +1,108 @@
+{
+  "runs": [
+    {
+      "run": "contact-native-local-support-contract-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 185843712,
+          "limit_mib": 953,
+          "elapsed_seconds": 7.56290129997069,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-local-support-integration-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 235565056,
+          "limit_mib": 953,
+          "elapsed_seconds": 68.21330120001221,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-local-proof-scheduling-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 261206016,
+          "limit_mib": 953,
+          "elapsed_seconds": 48.066536300000735,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-certified-query-skip-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 262279168,
+          "limit_mib": 953,
+          "elapsed_seconds": 49.133820899995044,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-local-support-final-checks-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 214347776,
+          "limit_mib": 953,
+          "elapsed_seconds": 46.89660849998472,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-proof-union-integration-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 197083136,
+          "limit_mib": 953,
+          "elapsed_seconds": 11.022478699975181,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-proof-union-tangent-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 211615744,
+          "limit_mib": 953,
+          "elapsed_seconds": 37.7448674000334,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "final_source_sha256": {
+    "src\\anysolver\\general_contact\\native_surface_support.py": "d039577ba4d9b9976943b58c4aac3c015f923c1cb9d5e74a2b8cd943540d7763",
+    "src\\anysolver\\general_contact\\native_surface_friction_integral.py": "0542c8a089f09a010286811cf0031a0c3178a321148dedc1d4d5f1e33e01da93",
+    "tests\\test_general_contact_native_surface_support.py": "2865ee146519eb5458b386d2427e7311d7a282fe0dd9b1d173bdf2a9a43f49c8"
+  },
+  "archive_sha256": "966a8d4cde94b9b625e1e7127cdf0e790f2926e6ec820ad5ca3caf7a2ab1088d"
+}

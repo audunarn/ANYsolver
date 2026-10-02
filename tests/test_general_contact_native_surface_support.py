@@ -232,3 +232,62 @@ def test_curvature_certificate_resolves_shallow_rotating_open_arc_in_one_interva
     assert panel_open_over_history(*args,maximum_intervals=1,budget=budget)
     assert budget.intervals==1
     assert not panel_open_over_history(*args,maximum_intervals=1,budget=budget)
+
+
+def test_panel_support_distinguishes_persistent_contact_from_hidden_pulse():
+    from anysolver.general_contact.native_surface_support import classify_history_panel,panel_closed_over_history
+    translations=np.zeros((3,3));translations[:,0]=.0001
+    translations[:,2]=(-.05,-.019,-.019)
+    press=NativeSurfaceMotionSegment(translations,np.zeros((2,3)),np.zeros(18))
+    pulse=NativeSurfaceMotionSegment(np.zeros((3,3)),np.array(((1.6,0.,0.),(0.,0.,0.))),np.zeros(18))
+    field=_field(height=.05,rotation=-.8,segments=(press,pulse))
+    angles=field.patch.rule.definition['angle_range']
+    # g=.05+dz(xi)-.03*cos(-.8+1.6*t+angle_offset).
+    # Left material remains closed; right material is open at both pulse ends.
+    assert .05-.05*.8-.019*.2-.03*np.cos(.82)<0
+    assert .05-.05*.2-.019*.8-.03*np.cos(.78)>0
+    assert .05-.05*.2-.019*.8-.03<0
+    persistent=classify_history_panel(field,0,(-.8,-.7),angles,budget=SupportIntervalBudget(128))
+    assert persistent.status=='resolved'
+    hidden=classify_history_panel(field,0,(-.25,-.2),angles,budget=SupportIntervalBudget(128))
+    assert hidden.status=='unresolved'
+    assert not panel_closed_over_history(field,0,(-.25,-.2),angles,
+        maximum_intervals=128,budget=SupportIntervalBudget(128),segment_index=1)
+    mixed=classify_history_panel(field,0,(-.8,-.2),angles,budget=SupportIntervalBudget(128))
+    assert mixed.status=='unresolved'
+
+
+def test_unresolved_nonzero_panel_cannot_be_accepted(monkeypatch):
+    from anysolver.general_contact.native_surface_support import HistoryPanelSupport
+    import anysolver.general_contact.native_surface_support as support
+    from anysolver.general_contact.native_surface_friction_integral import integrate_material_friction
+    from test_general_contact_native_surface_friction_integral import _field as integral_field,_settings
+    field=integral_field();calls=[]
+    def unresolved(field,cell,xis,angles,*,budget):
+        calls.append((cell,*xis,*angles))
+        return HistoryPanelSupport('unresolved',calls[-1],'unsampled historical pulse')
+    monkeypatch.setattr(support,'classify_history_panel',unresolved)
+    def forbidden_query(*args,**kwargs):
+        raise AssertionError('unresolved panel must refine before using quadrature agreement')
+    monkeypatch.setattr(field,'query',forbidden_query)
+    with pytest.raises(MemoryError,match='panel cap'):
+        integrate_material_friction(field,replace(_settings(),maximum_panels=4))
+    assert len(calls)==4
+    # Independent counterexample: both Gauss rules integrate background1 but
+    # miss a positive pulse strictly between their nearest nodes about zero.
+    from numpy.polynomial.legendre import leggauss
+    estimates=[]
+    for order in (4,8):
+        nodes,weights=leggauss(order)
+        estimates.append(float(weights@(1.+(np.abs(nodes)<.01))))
+    assert estimates[0]==pytest.approx(estimates[1],abs=1e-14)
+    assert 2.02-estimates[0]>.019
+
+
+@pytest.mark.parametrize('cell,xis,angles',[(1,(-.8,-.2),(4.70,4.72)),
+    (0,(-.8,.2),(4.70,4.72)),(0,(-.8,-.2),(float('nan'),4.72)),
+    (2,(-.8,-.2),(4.70,4.72)),(0,(-.2,-.2),(4.70,4.72))])
+def test_panel_classifier_rejects_mismatched_cell_rectangle(cell,xis,angles):
+    from anysolver.general_contact.native_surface_support import classify_history_panel
+    with pytest.raises(ValueError,match='half-cell'):
+        classify_history_panel(_field(),cell,xis,angles,budget=SupportIntervalBudget(128))
