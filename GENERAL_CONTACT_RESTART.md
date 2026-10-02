@@ -2,67 +2,74 @@
 
 ## Authority and checkpoint
 
-Full C0–C9 goal active; this turn is progress. Tiered workflow; no other-chat
-communication or original-worktree inspection. Use only
+Full C0–C9 active; previous/current goal turns are progress. Tiered workflow.
+No other-chat communication or original-worktree inspection. Use only
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Source parent474a96c6; inspect HEAD/status.
-Goal rev2026-09-30.4, plan rev2026-10-02.8. No publication/main merge/release,
+codex/contact-main-reconcile-20261001. Source parent6fd19c5d; inspect HEAD/status.
+Goal rev2026-09-30.4, plan rev2026-10-02.9. No publication/main merge/release,
 historical-default or shared ABC-guard change authorized. Exact-path local
 checkpoint commits authorized; retain frozen/consumed execution restrictions.
 
 ## Current integrated result
 
-Explicit fixed reference-cell refinement closes a measured friction integration
-error: target-node7 force error8.47446% (3points) ->0.0487955% (192points), within
-this fixture's unchanged0.2% budget. Levels1/2 plateau at0.22501%; no order claim.
-Positive reference weights/moments, all target forces and unchanged normal pressure
-space checked independently. Settings/coordinates/weights bind restart; no point
-repartition inside an increment. Point cap checked before allocation. Level0
-remains the historical selection; material-anchor example explicitly uses level3.
+Endpoint initialization lost post-touch sliding: independent simultaneous
+approach/slide failed with essentially0N/0J versus endpoint.12N and continuous
+work.00141J. Explicit linear_constant_normal_touch_dev now locates touch on
+u(alpha)=u_committed+alpha*(u_candidate-u_committed), initializes a material
+anchor at that target stage, convects it and returns at the endpoint. This is
+an increment-history contract, not the exact intervening equilibrium trajectory.
 
-Physical work maps cached only on participating FE columns. Full reaction rows
-preserved and tangent blocks scatter sparsely. Cached/full normal/work maps and
-constrained reactions checked. Coarse/refined pressure-coupled directional tangents
-meet1e-5; solved deformable target press/stick/slide/seam/reverse/open/recontact
-and exact split history pass. Incompatible refinement/property restarts reject.
+Whole-path quadratic extrema check target facet orientation, convexity and source
+coverage. Constant-normal bound uses minimum represented facet area. Moving
+normals, facet collapse and uncovered source reject. Tangent probes recompute
+fraction/stage coordinates on one fixed event facet, with explicit fraction/bary
+bounds; physical work holds the returned anchor fixed. No probe histories or rim
+reaching derivative probes admitted. Rule/path/recontact controls bind restart.
+Historical endpoint selection remains; material-anchor example chooses new rule.
 
-Independent Mistral focused Read supports weights/order and local scatter.
-Adapter assumptions checked by lead against source and added direct comparisons.
-First5turn review ended without assessment; focused6turn continuation delivered.
-An installed assertion wrongly required the entire normal/contact global column
-empty; actual normal owner restricts physical coordinates before driver T.T K T.
-Corrected friction-column assertion passes without a production equation change.
-Baseline8.47% failure, failed assertion and nonexistent-selector/no-tests run retained.
+Exact reaction.12N recovered; root.75, stick reaction.004N and cross derivative
+-.6N/m pass independently, with1e-5 directional checks. New/old selections at
+quadrature0/3 pass solved deformable-target press/stick/slide/reverse/open/recontact
+and exact split history. Translation, event-seam isolation, state restore and
+rotating/collapsed path rejection pass. Endpoint/chord dissipation remains first-
+order: measured errors100/50/25/12.5/1.5625% atN4/8/16/32/256. No coarse exact
+work, moving-normal event or general collision qualification claim follows.
 
-Installed24pass/1failed selection plus2corrected passes covers25unique checks.
-456source/wheel/site modules match;237onsite imports in full selection. Actual
-JIToff/BLAS+Numba1 checked pre/post. Build13.5463412s/124596224B; selection
-60.7496113s/185835520B; correction3.1236272s/177225728B sampled process-tree peak.
-No whole-route speedup or no-contact5% claim. Accepted normal/no-contact evidence
-reused by impact analysis; no structural/sphere/default path changed.
+Independent Mistral design/source Read supports event/work/tangent structure.
+Findings tightened normal bounds, corrected recontact metadata and rejected rim
+probes. Its claim that step dependence proves nonconvergence is not adopted.
+A misplaced fixture caused a seam-test NameError; repaired without equation or
+tolerance changes. Baseline/failed inputs/logs and reviews retained.
 
-[Results](docs/d1_review_support/contact_c5_s3_quadrature_20261002/results.md),
-[review/disposition](docs/d1_review_support/contact_c5_s3_quadrature_20261002/independent_review.md),
+Final installed32pass selection:457source/wheel/site modules match,239onsite
+imports. Actual JIToff/BLAS+Numba1 checked pre/post. Build14.6105607s/125489152B;
+selection108.1391011s/187318272B sampled process-tree peak, within180s/999292928B.
+No speedup/no-contact5% claim. Accepted normal/sphere/no-contact evidence reused
+by impact analysis; their owners/defaults unchanged. C5 not independently accepted;
+application admissionfalse; all remaining D2–D8 outcomes required.
+
+[Results](docs/d1_review_support/contact_c5_s3_activation_20261002/results.md),
+[review](docs/d1_review_support/contact_c5_s3_activation_20261002/independent_review.md),
 [C5 guide](docs/GENERAL_CONTACT_C5_FRICTION_POINT.md). Artifact
-C:/ANYworkspaceWork/contact-friction-quadrature-package-20261002; wheel SHA256
-154d32192c8d456b83ca3f546fd3ce56c9f3fdf11971f4a1a6f618cc0b1d71bf.
-Raw42files/2938152B, readbackPASS; raw_index.json/raw.zip retained. History
-[Part50](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART50.md)
-links seam/anchor/accepted/native/impact/application evidence. C5 not accepted;
-applications remain admissionfalse; all remaining D2–D8 outcomes required.
+C:/ANYworkspaceWork/contact-friction-activation-package-20261002; wheel SHA256
+0ada7f67b52ff143c0cb55ad9e7a5b224d2fc7f66f2a52252444820c3535b7c5.
+Raw38files/3007610B, readbackPASS. History
+[Part51](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261002_PART51.md)
+links quadrature/seam/anchor/accepted/native/impact/application evidence.
 
 ## Next decision and resources
 
-Principal next question: event/step accuracy of activation, stress-free recontact
-and endpoint/chord dissipation. Use an independent exact planar slider/contact
-path with constant and changing normal pressure, then the existing coupled owner;
-state the discriminating hypothesis/inputs/cap before running. Keep quadrature
-fixed at level3, separate step from normal/tangential regularization convergence.
-Then extend actual partial-overlap/material-history transfer. Physical rims,
-finite rotation/warped/crease, swept beam/native friction, nonlinear materials,
-arc length and frictional impact remain required; do not substitute these prototypes.
+Principal remaining integration: actual partial-overlap material history and
+force/tangent boundary contributions. Before extending it, derive one bounded
+unloading-with-sliding/changing-pressure work discriminator; endpoint opening can
+lose within-step work on a coarse step and needs measured refinement. Keep normal
+pressure space and level3 material coordinates unchanged; no nearest-partner or
+candidate-index history. Implement a coupled partial-coverage slice with objective
+state transfer, resource admission, complete work and independent force checks.
+Moving-normal events, physical rims/creases, nonlinear materials, arc length,
+beam/native friction and impact remain required, with no scope substitution.
 
 All owned jobs terminal. Routine180s/953MiB, fresh portable exact selectors;
 stricter frozen caps prevail. Original120active-hour budget continues. As of
-03:16:13UTC goal213238s+retained3120s=216358s:60.099h used/59.901h remaining.
+03:51:01UTC goal215325s+retained3120s=218445s:60.679h used/59.321h remaining.
 Subsequent active time counts; no reset. Reassess at72h; stop at120h for decision.

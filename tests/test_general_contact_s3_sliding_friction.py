@@ -129,9 +129,10 @@ def test_anchor_pressure_tangent_and_admitted_deformable_target_direction(refine
 
 
 @pytest.mark.parametrize("refinement",(0,3))
-def test_real_deformable_target_crossing_history_and_split_restart(refinement):
+@pytest.mark.parametrize("activation_history",("endpoint","linear_constant_normal_touch_dev"))
+def test_real_deformable_target_crossing_history_and_split_restart(refinement,activation_history):
     model, definition, settings, friction, _manager_unused = _manager()
-    friction=replace(friction,source_quadrature_refinement=refinement)
+    friction=replace(friction,source_quadrature_refinement=refinement,activation_history=activation_history)
     model.add_boundary_condition(BoundaryCondition("target_plane",(4,5,6,7),
         {d:0 for d in ("uz","rx","ry","rz")}))
     model.add_boundary_condition(BoundaryCondition("target_origin",(4,),{"ux":0,"uy":0}))
@@ -146,11 +147,16 @@ def test_real_deformable_target_crossing_history_and_split_restart(refinement):
     full = solve_static_nonlinear(**kwargs)
     assert full.status == "completed", full.info
     history = full.info["force_displacement_history"]
-    assert set(history[0]["friction"]["branch"]) == {"activation"}
+    if activation_history=="endpoint":
+        assert set(history[0]["friction"]["branch"]) == {"activation"}
+    else:
+        assert set(history[0]["friction"]["branch"]) <= {"stick","slip"}
+        assert all(0<=a<1 for a in history[0]["friction"]["first_touch_fraction"])
     assert 3 in history[2]["friction"]["target_elements"]
     assert set(history[2]["friction"]["branch"]) == {"slip"}
     assert set(history[4]["friction"]["branch"]) == {"open"}
-    assert set(history[5]["friction"]["branch"]) == {"activation"}
+    assert set(history[5]["friction"]["branch"]) <= (
+        {"activation"} if activation_history=="endpoint" else {"stick","slip"})
     assert all(r["friction"]["dissipation_increment_j"] >= 0 for r in history)
     moved = full.snapshots[2].displacements
     assert max(abs(moved[model.mesh.dof_manager.get_node_dofs(n)[0]]) for n in (5,6,7)) > 1e-8
@@ -163,6 +169,10 @@ def test_real_deformable_target_crossing_history_and_split_restart(refinement):
     with pytest.raises(ValueError,match="contract|fingerprint|incompatible"):
         solve_static_nonlinear(restart_checkpoint=half.to_restart_checkpoint(),
             **{**kwargs,"contact_friction":replace(friction,source_quadrature_refinement=1)})
+    with pytest.raises(ValueError,match="contract|fingerprint|incompatible"):
+        solve_static_nonlinear(restart_checkpoint=half.to_restart_checkpoint(),
+            **{**kwargs,"contact_friction":replace(friction,activation_history=(
+                "endpoint" if activation_history!="endpoint" else "linear_constant_normal_touch_dev"))})
     with pytest.raises(ValueError,match="contract|fingerprint|incompatible"):
         solve_static_nonlinear(restart_checkpoint=half.to_restart_checkpoint(),
             **{**kwargs,"contact_friction":replace(friction,friction_coefficient=.4)})

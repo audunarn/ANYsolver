@@ -57,7 +57,7 @@ def run_example(*, material_anchor=False):
         from anysolver.general_contact.s3_sliding_friction import S3SlidingFrictionSettings
         friction = S3SlidingFrictionSettings(.3,1000.,
             (2e-7,)*model.mesh.dof_manager.total_dofs,maximum_candidate_evaluations=100,
-            source_quadrature_refinement=3)
+            source_quadrature_refinement=3,activation_history="linear_constant_normal_touch_dev")
     sliding = (.39,.385) if material_anchor else (.008,.004)
     path = ContactPathProgram((ContactPathControl.node(1,"ux"),ContactPathControl.node(1,"uz")),
         ((0,0),(0,-.02),(.0002,-.02),(sliding[0],-.02),(sliding[1],-.02),

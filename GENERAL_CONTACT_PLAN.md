@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.8. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.9. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -69,8 +69,19 @@ level3 explicitly, preserving the historical default. See the linked C5 guide an
 integration evidence for the unchanged0.2% case-specific budget and actual results.
 This does not certify arbitrary friction fields or endpoint/chord time accuracy.
 
-Next close event/step sensitivity on this coupled owner, then carry
-material history through actual partial overlap
+The endpoint-only initialization loses simultaneous approach/sliding within a
+first-contact increment. An explicitly selected affine-FE, constant-target-normal
+first-touch rule now initializes at the represented touch stage, convects that
+material anchor to the candidate and differentiates the complete event response.
+Whole-path quadratic checks reject facet collapse, loss of convexity/coverage and
+moving normals. The independent slider recovers.12N rather than0N; endpoint/chord
+work remains first-order and reaches1.5625% error at256steps. Coupled target motion,
+opening/recontact and split restart pass. Historical endpoint selection remains;
+the material-anchor example explicitly chooses the first-touch rule. This is
+development evidence, not a general event/collision or C5 acceptance claim.
+See the [activation result](docs/d1_review_support/contact_c5_s3_activation_20261002/results.md).
+
+Next carry material history through actual partial overlap
 repartitioning. Preserve normal pressure space, both-body work, atomic state and
 dimensional gates. Beam friction uses swept round surfaces. Finite rotation,
 warped/crease geometry and all remaining D2–D8 outcomes remain required.

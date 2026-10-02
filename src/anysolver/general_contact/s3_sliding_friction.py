@@ -44,15 +44,19 @@ class S3SlidingFrictionSettings:
     maximum_probe_barycentric_change: float = 1e-3
     source_quadrature_refinement: int = 0
     maximum_material_points: int = 4096
+    activation_history: str = "endpoint"
+    maximum_probe_touch_fraction_change: float = 1e-3
 
     def __post_init__(self):
         steps = tuple(float(x) for x in self.steps_by_dof)
         values = (self.friction_coefficient, self.tangential_stiffness_Pa_per_m,
-                  self.geometry_relative_tolerance,self.maximum_probe_barycentric_change)
+                  self.geometry_relative_tolerance,self.maximum_probe_barycentric_change,
+                  self.maximum_probe_touch_fraction_change)
         if (not np.all(np.isfinite(values)) or self.friction_coefficient < 0
                 or self.tangential_stiffness_Pa_per_m <= 0
                 or not 0 < self.geometry_relative_tolerance <= 1e-6
-                or not 0 < self.maximum_probe_barycentric_change <= 1):
+                or not 0 < self.maximum_probe_barycentric_change <= 1
+                or not 0 < self.maximum_probe_touch_fraction_change <= 1):
             raise ValueError("sliding friction needs finite mu>=0, stiffness>0 and geometry tolerance")
         if not steps or not np.all(np.isfinite(steps)) or min(steps) <= 0:
             raise ValueError("sliding friction needs explicit positive FE derivative steps")
@@ -62,6 +66,8 @@ class S3SlidingFrictionSettings:
             raise ValueError("friction quadrature refinement must be an integer from0 to5")
         if type(self.maximum_material_points) is not int or self.maximum_material_points<1:
             raise ValueError("friction material-point cap must be positive")
+        if self.activation_history not in {"endpoint","linear_constant_normal_touch_dev"}:
+            raise ValueError("unsupported friction activation-history rule")
         object.__setattr__(self, "steps_by_dof", steps)
 
 
@@ -273,11 +279,13 @@ class S3SlidingFrictionManager:
         return elastic, De, y
 
     def _friction(self, u, *, branches=None, validate=True, linearized_elements=None,
-                  linearized_barycentric=None, local_force=False):
+                  linearized_barycentric=None, local_force=False,linearized_touch=None):
         if linearized_elements is not None and (validate or branches is None):
             raise ValueError("facet extrapolation is restricted to disposable tangent probes")
         if not validate and linearized_elements is None:
             raise ValueError("unvalidated evaluation is restricted to disposable tangent probes")
+        if linearized_touch is not None and (validate or len(linearized_touch)!=len(self.points)):
+            raise ValueError("first-touch probes must match disposable material points")
         if branches is not None and linearized_elements is None:
             raise ValueError("branch freezing is restricted to disposable tangent probes")
         if linearized_elements is not None:
@@ -300,6 +308,11 @@ class S3SlidingFrictionManager:
         kt, mu = settings.tangential_stiffness_Pa_per_m, settings.friction_coefficient
         residual, records, histories = np.zeros(len(self.work_columns)), [], []
         local_u=u[self.work_columns]
+        touch_path=None
+        if (settings.activation_history=="linear_constant_normal_touch_dev"
+                and any(h.target_element is None for h in self.history)):
+            from .s3_friction_touch import S3LinearTouchPath
+            touch_path=S3LinearTouchPath(self,u,corners)
         for j, (point, area, indices, old) in enumerate(zip(
                 self.points, self.weights, self.pressure_indices, self.history)):
             x=self.point_reference[j]+self.point_maps[j]@local_u
@@ -309,11 +322,18 @@ class S3SlidingFrictionManager:
             pressure = max(0.0, pressure)
             branch, traction, dissipation, plastic, storage, return_drop = "open", np.zeros(3), 0., 0., 0., 0.
             element, bary = None, None
+            touch=None
             new = (S3MaterialAnchorState(None,None,old.cumulative_plastic_slip_m,
                                          old.cumulative_dissipation_Pa_m)
                    if linearized_elements is None else None)
             if (fixed is None and gap < 0) or fixed in ("stick", "slip", "activation"):
-                if old.target_element is None:
+                anchor_element,anchor_bary=old.target_element,old.barycentric
+                if anchor_element is None and touch_path is not None:
+                    touch=touch_path.anchor(j,probe=None if linearized_touch is None else linearized_touch[j])
+                    if touch is None:
+                        raise ValueError("first-touch branch cannot resolve closing contact")
+                    anchor_element,anchor_bary,_fraction=touch
+                if anchor_element is None:
                     if linearized_elements is None:
                         element,bary = self._locate(x,corners,n,frame,origin)
                     else:
@@ -321,7 +341,7 @@ class S3SlidingFrictionManager:
                         bary = tuple(self._facet_coordinates(x,corners[element],frame))
                     branch = "activation"  # Recontact starts stress-free at the current projection.
                 else:
-                    element, bary = old.target_element, old.barycentric
+                    element,bary=anchor_element,anchor_bary
                     elastic,_map,old_anchor=self._work(point,u,element,bary,n,Dn,local_index=j,corners=corners)
                     length = np.linalg.norm(elastic)
                     cap = mu*pressure
@@ -372,6 +392,7 @@ class S3SlidingFrictionManager:
                                 sliding_seam=(branch=="slip" and min(bary) <= 128*np.finfo(float).eps),
                                 sliding_rim=(branch=="slip" and self._on_rim(element,bary)),
                                 target_element=element,target_barycentric=bary))
+            records[-1]["first_touch"]=touch
             if new is not None:
                 histories.append(new)
         if not local_force:
@@ -390,14 +411,19 @@ class S3SlidingFrictionManager:
             branches = [r["branch"] for r in records]
             elements = [r["target_element"] for r in records]
             coordinates = [r["target_barycentric"] for r in records]
+            touch=[r["first_touch"] for r in records]
             for local, column in enumerate(self.columns):
                 delta = np.zeros(self.n_dof)
                 delta[column] = self.friction_settings.steps_by_dof[column]
-                plus = self._friction(np.asarray(displacement)+delta,branches=branches,validate=False,
-                                      linearized_elements=elements,linearized_barycentric=coordinates,local_force=True)[0]
-                minus = self._friction(np.asarray(displacement)-delta,branches=branches,validate=False,
-                                       linearized_elements=elements,linearized_barycentric=coordinates,local_force=True)[0]
-                derivative[:, local] = (plus-minus)/(2*delta[column])
+                plus_probe = self._friction(np.asarray(displacement)+delta,branches=branches,validate=False,
+                                      linearized_elements=elements,linearized_barycentric=coordinates,local_force=True,
+                                      linearized_touch=touch)
+                minus_probe = self._friction(np.asarray(displacement)-delta,branches=branches,validate=False,
+                                       linearized_elements=elements,linearized_barycentric=coordinates,local_force=True,
+                                       linearized_touch=touch)
+                if any(r["sliding_rim"] for result in (plus_probe,minus_probe) for r in result[2]):
+                    raise ValueError("physical target-rim derivative probe is not admitted")
+                derivative[:, local] = (plus_probe[0]-minus_probe[0])/(2*delta[column])
             if not np.all(np.isfinite(derivative)):
                 raise ValueError("material friction tangent exceeded finite range")
             rows, local = np.nonzero(derivative)
@@ -411,6 +437,8 @@ class S3SlidingFrictionManager:
         summary = dict(profile=PROFILE, branch=[r["branch"] for r in records],
                        friction_point_count=len(self.points),
                        source_quadrature_refinement=self.friction_settings.source_quadrature_refinement,
+                       activation_history=self.friction_settings.activation_history,
+                       first_touch_fraction=[None if r["first_touch"] is None else r["first_touch"][2] for r in records],
                        traction_measure="force_per_source_reference_area",
                        pressure_measure="shared_mortar_pressure_coefficient",
                        dissipation_measure="endpoint_pressure_current_material_chord",
@@ -433,7 +461,10 @@ class S3SlidingFrictionManager:
                     friction_settings=asdict(self.friction_settings),
                     source_quadrature=[dict(element=p.adapter.element_id, barycentric=p.barycentric, weight_m2=w)
                                        for p, w in zip(self.points, self.weights)],
-                    recontact="stress_free_current_projection",
+                    recontact=("stress_free_first_touch_projection" if self.friction_settings.activation_history
+                               =="linear_constant_normal_touch_dev" else "stress_free_current_projection"),
+                    activation_path=("affine_full_FE_constant_target_normal_v1" if self.friction_settings.activation_history
+                                     =="linear_constant_normal_touch_dev" else "endpoint"),
                     tangent="bounded_fixed_return_facet_generalized_difference_v2")
 
     def restore(self, state, displacement):

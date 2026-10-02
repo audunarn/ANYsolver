@@ -195,7 +195,9 @@ Stick retains alpha. Slip returns to an elastic gap of length mu*p/kt in the tri
 direction and locates the resulting interacting point on the current target patch.
 Both target stretch/shear and rigid motion convect the anchor through the actual
 interpolation. Initial activation/recontact initializes a stress-free anchor at the
-current projection; physical opening releases the anchor and stored traction.
+current projection under the historical endpoint rule; physical opening releases
+the anchor and stored traction. The explicit first-touch option below initializes
+at the represented touch stage instead.
 At zero pressure with negative gap, the return retains a zero-elastic-gap material
 anchor. This finite-step initialization needs event/step refinement before general
 friction admission.
@@ -269,6 +271,44 @@ Cached physical maps use only participating FE columns; full reaction rows remai
 and local tangent blocks scatter sparsely. Direct full-map comparisons and
 constrained-reaction checks cover that optimization. See
 [integration slice evidence](d1_review_support/contact_c5_s3_quadrature_20261002/results.md).
+
+### Activation within an increment
+
+`activation_history="endpoint"` preserves the historical development selection.
+It misses post-touch sliding during simultaneous approach/sliding: the retained
+one-step slider failed with essentially0N instead of the independent.12N.
+`activation_history="linear_constant_normal_touch_dev"` is an explicit alternative;
+the material-anchor example now selects it. Its physical increment path is
+`u(alpha)=u_committed+alpha*(u_candidate-u_committed)` on the admitted affine skin
+maps, with constant target normal. This interpolant defines the history update;
+it is not the exact intervening equilibrium trajectory.
+
+Quadratic whole-path extrema check target facet orientation, convexity and source
+corner coverage. Normal-parallel coefficient bounds use the minimum represented
+facet area, so a large step does not loosen the angular tolerance. A rotating
+target normal, mid-path collapsed facet or unresolved path fails explicitly.
+Under these conditions a point's signed gap is affine: its first closing fraction
+is `g0/(g0-g1)`. A stress-free material anchor is located on that stage target and
+convected through the actual target interpolation to the endpoint before return.
+The residual holds the returned anchor fixed; disposable tangent probes recompute
+the touch fraction and stage material coordinates on the same selected event
+facet. `maximum_probe_touch_fraction_change` and the material-coordinate bound
+limit those probes. Physical candidates retain nonnegative coordinates; probes
+return no histories. Rim-reaching derivative probes explicitly reject.
+
+The exact slider hasg=.015−.02*tau andx=.1*tau, hence touch at.75. Its normal
+pressure is20*(tau−.75), elastic-gap slope.006 and plastic-slip slope.094.
+Endpoint reaction is.12N and continuous dissipation.00141J. The new rule recovers
+the reaction in one step. The existing endpoint-pressure/chord measure still gives
+`D_N=D_exact*(1+4/N)` forN divisible by4; measured errors are100%,50%,25%,12.5%
+and1.5625% atN4,8,16,32,256. It does not make coarse-step work exact. An independent
+stick reaction derivative−.6N/m and1e-5 directional checks include moving-event
+sensitivity. Recontact/path identity and controls bind restart; changing the rule
+on continuation rejects. See [activation evidence](d1_review_support/contact_c5_s3_activation_20261002/results.md).
+
+This bounded stage rule does not admit moving-normal/finite-rotation activation,
+partial overlap, general swept collisions, adaptive history repartitioning or
+continuous work without measured step refinement. Those programme rows remain.
 
 The interacting-material-point idea is informed by
 [Duong and Sauer (2019), contact kinematics](https://arxiv.org/html/1808.10420).
