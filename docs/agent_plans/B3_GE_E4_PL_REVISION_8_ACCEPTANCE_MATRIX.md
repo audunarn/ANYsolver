@@ -1,5 +1,14 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October distributed material-history extension:** source and installed
+two-stiffener force-only route verifies simultaneous Q4 J2/physical-fibre yielding,
+yielded-prefix cancellation, snapshot/identical unload-reload continuation and
+failed-next-step preservation.397module wheel5cd1df65,218onsiteimports,actual1thread.
+Scientific tolerances unchanged. Signed/staged external reversal rejected before
+execution; distributed-couple yielding and full combination coverage remain OPEN.
+This is scoped G3/G4A evidence, not aggregate acceptance or pressure-policy change.
+[Evidence and retained failures](development/r8-ge-native-distributed-20261002/results.md).
+
 **2 October distributed native consumer delivery:** ANYfem9d302cb preserves
 GEBeamDistributedLoad through native Project, legacy-compatible strict format and
 existing linear/explicit-finite dispatch. Installed98consumer/395solver pair:

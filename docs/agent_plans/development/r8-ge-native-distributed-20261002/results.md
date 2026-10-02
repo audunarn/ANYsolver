@@ -57,3 +57,48 @@ Raw archive SHA256: `33e7c74b5c2dc51740e45bfcf259846675f3d9bef9d6c7af76453c1ea49
 New records passed a scan against available inherited credential values; this does
 not remediate the previously identified historical archive. Do not disseminate
 that history until authorized remediation.
+# 2 October material-history extension
+
+Product base5e95e593; no product code changed in this extension. The existing
+two-stiffener Q4 J2/physical-fibre/generalized fixture now executes uniform native
+transverse force3000N/reference-m on all four beam elements. Accepted factors
+0.5/1/0.25/1.1 cover loading, positive-magnitude unloading and reloading. Shell and
+physical-fibre updates are simultaneously active at1 and1.1. This is not signed
+load reversal; the generalized member remains the existing elastic control.
+
+The source and installed lifecycle test pass: cancellation after the yielded
+factor1 prefix, material snapshot restoration, identical continued checkpoint,
+requested target order, actual distributed force, and failed-next-step checkpoint
+and immediate recovery preservation. Final shell alpha is1.4176071e-5 and final
+fibre incremental dissipation0.00200419J. Maximum observed equilibrium ratio
+7.53933e-9 and compatibility5.09575e-17 satisfy unchanged limits. Force/moment
+balance uses the programme's1e-8 normalized criterion with reference scales
+12000N (4m*3000N/m) and24000Nm (2m span); maxima1.52894e-9/1.95700e-10.
+
+Installed wheel SHA256
+`5cd1df657cf5191b896000e999a3dc7c4a408615b9b44fcb1d1b1cc9dbea46ad`
+matches all397 source/wheel/site Python modules.218 observed solver imports come
+from the isolated site; both OpenBLAS pools use1thread and Numba JIT is disabled.
+Final source route65.7032s/175845376B peak; installed65.8581s/174452736B. These are
+observed costs, not performance gains. One source and one installed case passed;
+repeated fixture revisions are not counted as additional independent checks.
+
+Retained failures:1500N/m activated fibres but not shell plasticity;3000N/m was
+chosen without changing laws. Negative-factor targets rejected before solving,
+exposing the still-open signed/staged distributed-load programme requirement.
+The first full history used an elastic helper's absolute zero-component balance
+tolerance; its1.81e-5N residual on13200N loading passes the programme's scaled
+criterion. The test was corrected to that existing material-history scheme.
+An assertion-order coding error was also repaired. The xunit record_property
+warning is retained; activity is additionally recorded in stdout and XML.
+
+Independent Read review of the history test requested explicit target-order and
+post-failure recovery checks; both are included. This is source scrutiny, not
+different-family scientific acceptance. Distributed couples with active yielding,
+signed/staged reversal, other attachment/material combinations, engineering
+accuracy and aggregate G3/G4A remain open. Pressure assessment remains unchanged.
+
+[Raw source revisions/failures, installed fixtures and identities](material-history-raw-v1.zip)
+SHA256 `2ac691d6541040508ed6c40929749a775d2d3fe606a77e7a24b9b867e2a4d908`.
+The wheel remains in the local r8-ge-distributed-material-installed-v1 evidence
+directory. No release or dissemination of the restricted repository history.

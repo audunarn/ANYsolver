@@ -79,6 +79,14 @@ Private override completes mixed/all-S3 director and mixed follower0.1/0.2/0.3,
 cancel/restart/rebase/balance; counterfactual only, NOT current-gate acceptance.
 [Integration and pending decision](development/r8-ge-pressure-work-20261002/s3-director-integration.md).
 
+Independent progress while pressure decision pending: distributed3000N/m on the
+existing two-stiffener J2/fibre model now passes source+installed active-yield,
+cancel/restore/unload/reload and rejected-next-step preservation. Wheel5cd1df65,
+397matching modules,218onsiteimports,actual1thread/JIToff. No job live. Signed
+external-load reversal is explicitly unsupported (positive-factor guard); next
+independent slice is typed staged distributed loading, without bypassing it.
+[Material-history evidence](development/r8-ge-native-distributed-20261002/results.md).
+
 BL5 law/transfer remains open:24growing-space checks cover7ratios/3levels plus1:16;
 one indefinite mixed kernel passes, not whole-matrix SPD. Rigid-carrier normalspin
 last tip0.10052%, integratedFy2.5023%, rootMz2.6397%, maxmoment2.9135%: no1%acceptance,
