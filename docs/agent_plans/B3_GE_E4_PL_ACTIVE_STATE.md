@@ -1,4 +1,4 @@
-# B3-GE / E4-PL / B2 â€” active state, 2 October 2026
+# B3-GE / E4-PL / B2 — active state, 2 October 2026
 
 ## Authority and current checkout
 
@@ -8,11 +8,11 @@ Risk-proportionate/tiered checks, scientific tolerances and protected evidence r
 Prior active note preserved byte-for-byte [here](development/r8-bl5-staged-loads-20261002/active-before-staged-lines.md).
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; solver base be285aa1 plus material slice; ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer, HEAD330cb22; distributed consumer slice committed.
+branch codex/stiffened-main-reconcile-20261001; solver material source a831adb1; ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
+branch codex/experimental-ge-panel-consumer, HEADeaed5ec; material consumer slice committed.
 Local commits permitted; no push/main merge/publication or contact-worker messaging.
 Historical archive contains credentials: no dissemination before authorized remediation.
-Consumer material source verification is running; recover its existing handle/log before launching another job. At most3workers/one heavy numerical job;100krows/600s/8GiB/
+No owned numerical job is running. At most3workers/one heavy numerical job;100krows/600s/8GiB/
 8numerical threads ceiling. Current checks600s/1GiB/1thread/JITdisabled.
 Local/Mistral unavailable earlier; no repeated probes. OpenAI review is not
 cross-family qualification. Formal F03 UNCONSUMED; protected original script SHA
@@ -56,8 +56,12 @@ checks pass, including both bases, actual yield/reversal, tangent, rejection,
 rebase and restart. Low-hardening1e6 still fails backtracking/cutback; tested1e8
 history succeeds. No globalization/tolerance change or full material acceptance.
 [Material evidence](development/r8-bl5-material-20261002/results.md).
-ANYfem material-v3 input/Project integration is under verification; next finish
-that installed consumer slice and preserve the exact outcome.
+ANYfem material-v3 input/Project integration passed4 source and17 installed
+checks; both line bases preserve yielded continuation through save/reopen.
+[Consumer evidence](development/r8-anyfem-bl5-material-20261002/results.md).
+Next: identify the smallest missing material/attachment admission slice from the
+existing adapters, keeping the low-hardening numerical failure explicit. Do not
+repeat this campaign or resume reference refinement without a discriminator.
 All final topology/material/stability/capacity/scale/external/platform obligations
 remain mandatory. Do not repeat closed B2 or spectral campaigns without a discriminator.
 

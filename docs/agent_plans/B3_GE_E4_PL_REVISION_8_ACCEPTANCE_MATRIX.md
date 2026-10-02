@@ -1317,3 +1317,11 @@ installed checks pass, including yielded history and legacy compatibility.
 Low-hardening1e6 convergence failure remains open; bounded1e8 evidence does not
 qualify the material envelope. No aggregate G3 or F03 acceptance.
 [Evidence](development/r8-bl5-material-20261002/results.md).
+
+
+**2 October generalized-material BL5 consumer:** ANYfem eaed5ec adds strict v3
+records and Project round-trip.4 source and17 installed checks pass, including
+both line bases with yielding, cancellation, rebase and exact restart.98 consumer
+and398 solver module identities verified. Experimental implementation only;
+low-hardening failure, full G3/G6 and physical BL5 acceptance remain open.
+[Evidence](development/r8-anyfem-bl5-material-20261002/results.md).
