@@ -4,7 +4,7 @@
 operator parity passes. New public-API3Q4/2B3 signed staged example passes source
 and installed cancel/rebase/restart/continuation on unchanged wheeld506e3f3.
 User documentation reflects explicit Q4 policy and exclusions. Consumer line
-persistence and physical M2 acceptance remain open.
+persistence was completed by the later slice below; physical M2 acceptance remains open.
 [Evidence](development/r8-bl5-staged-loads-20261002/results.md).
 
 **2 October distributed material-history extension:** source and installed
@@ -1290,3 +1290,13 @@ solver d506e3f3...14be90. Cancellation/rebase/checkpoint continuation and histor
 format regressions pass. Review found no consequential issue in this scope.
 Implementation/test evidence only; no aggregate G2/G6 or physical acceptance.
 [Evidence](development/r8-anyfem-bl5-project-20261002/results.md).
+
+
+**2 October BL5 distributed-load integration:** objective elastic Q4 BL5 now
+uses existing native force/couple and signed-programme operators. Both tested
+line bases pass work/lifecycle and actual-update derivative checks; additional
+mixed point/line scope is covered after independent review. Eleven installed
+checks pass on wheel dd8ce52c...954cc74; all 398 module bytes match. Failed initial
+test-fixture run is retained. No mechanics, tolerance or checkpoint-policy change,
+physical acceptance or F03 consumption. ANYfem distributed-BL5 persistence remains
+open. [Evidence](development/r8-bl5-distributed-20261002/results.md).

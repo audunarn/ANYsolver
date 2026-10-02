@@ -353,6 +353,32 @@ outside this example's admitted scope. ANYfem now preserves explicit BL5 inputs 
 experimental native Project route, with cancellation/checkpoint continuation
 checks. Full consumer and physical qualification remain open.
 
+The same explicit objective-Q4 BL5 owner now accepts `GEBeamDistributedLoad`
+and `GEBeamDistributedProgramme`. These use the existing native beam quadrature,
+including retained half-cell work, with fixed spatial force/couple densities per
+reference arclength. Spatial couples are nonconservative. For example, using the
+model from `examples/stiffened_shell_bl5_staged.py`:
+
+```python
+owner = stiffened_shell.create_analysis(definition=model)
+try:
+    load = stiffened_shell.GEBeamDistributedLoad(owner.preflight()["identity"], (
+        stiffened_shell.GEBeamLineAction(1, (0., 0., 100.), (2., 3., 0.)),
+        stiffened_shell.GEBeamLineAction(2, (0., 0., 100.), (2., 3., 0.)),
+    ))
+    result = owner.solve(load, targets=(.5, 1.))
+finally:
+    owner.close()
+```
+
+Both P0 and coarse continuous-P1 line cases pass signed force/couple programmes,
+physical wrench balance, cancellation, rejected-trial preservation, chart restart
+and continued stepping. A mixed point/BL5 layout also passes. These are bounded
+integration checks, not acceptance of arbitrary layouts or BL5 physical accuracy.
+Historical Q4, L1 and footprint distributed-load admission remain unchanged.
+ANYfem BL5 distributed-load persistence is not yet implemented. Zero-load relative
+assessment and all outstanding scientific obligations remain unchanged.
+
 Run `scripts/experimental_stiffened_ge_bl5_history.py` with an installed
 development wheel for a3-Q4/2-B3, nonmatching3:4 elastic history and byte-exact
 restart/continue. Physical torque/shear reference, interface stability, ratios,

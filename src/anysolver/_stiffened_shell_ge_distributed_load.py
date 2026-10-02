@@ -20,6 +20,16 @@ MAX_METADATA_BYTES=1024*1024
 MAX_ACTIONS=16384
 
 
+def admits_owner(owner):
+    """Attachment scope shared by public capabilities and load compilation."""
+    if owner._definition.footprints:
+        return False
+    if owner._line_samples:
+        from ._stiffened_shell_q4_algorithmic_pullback import POLICY
+        return bool(owner._finite_bl5 and owner._definition.q4_pullback_policy == POLICY)
+    return bool(owner._definition.points)
+
+
 def _vector(value):
     if np.shape(value)!=(3,): raise ValueError('three finite load density components required')
     return tuple(_number(v) for v in value)
@@ -93,8 +103,8 @@ class GEBeamDistributedLoad:
         from ._stiffened_shell_native_distributed_load import compile_native_distributed
         owner._require_open()
         if self.model_identity!=owner._identity:raise ValueError('distributed load belongs to a different model')
-        if owner._line_samples or owner._definition.footprints or not owner._definition.points:
-            raise ValueError('distributed load currently requires point-owner attachments')
+        if not admits_owner(owner):
+            raise ValueError('distributed load requires point or objective elastic Q4 BL5 attachments')
         parts={element.element_id:(i,element,slots) for i,(element,slots,_) in enumerate(owner._beam_parts)}
         compiled=[]
         for action in self.actions:

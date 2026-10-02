@@ -781,6 +781,7 @@ class ExperimentalGEAnalysis:
 
     @property
     def capabilities(self):
+        from ._stiffened_shell_ge_distributed_load import admits_owner as admits_distributed
         if self._modal_only:
             return dict(self.reference_modal_capabilities, profile=PROFILE,
                         modal_boundary_policy=self._definition.modal_boundary_policy,
@@ -823,10 +824,10 @@ class ExperimentalGEAnalysis:
                 "point_recovery": "accepted global spatial connection actions; reference-linear or current ports",
                 "body_acceleration": (() if self._line_samples or self._definition.footprints else
                     ("experimental uniform spatial acceleration; explicit physical beam inertia and shell density; reference-linear or conservative finite work with objective Q4 pullback; GEBodyLoad",)),
-                "beam_distributed_loads": (() if self._line_samples or self._definition.footprints else
+                "beam_distributed_loads": (() if not admits_distributed(self) else
                     ("experimental element-addressed fixed-spatial force/couple per reference arclength; native quadrature; couples nonconservative; GEBeamDistributedLoad",)),
-                "staged_beam_distributed_loads": (() if self._line_samples or self._definition.footprints else
-                    ("experimental GEBeamDistributedProgramme; absolute signed force/couple densities at positive forward positions; point owner only; zero-load convergence unresolved under current equilibrium assessment; not qualified",)),
+                "staged_beam_distributed_loads": (() if not admits_distributed(self) else
+                    ("experimental GEBeamDistributedProgramme; absolute signed force/couple densities at positive forward positions; point or objective elastic Q4 BL5 owner; zero-load convergence unresolved under current equilibrium assessment; not qualified",)),
                 "shell_pressure_loads": (() if self._line_samples or self._definition.footprints else
                     ("experimental GEShellPressureLoad; shell IDs are Q4 then S3, one-based; reference-linear native dead pressure; finite Q4 dead and Q4/S3 interpolation-surface current-area follower pressure; finite native reference_dead S3 is unsupported; explicit reference_dead_director_v2 admits a distinct virgin-elastic S3 director-enhanced dead surface with relative tilt below 0.9*pi, not qualified",)),
                 "staged_dead_loads": (() if self._line_samples and not (
