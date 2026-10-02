@@ -397,6 +397,7 @@ class NativeRetainedRoundS3Analysis:
             if iteration == self.program.max_iterations:
                 raise RuntimeError('native material Newton iteration limit; physical state unchanged')
             accepted = False
+            material_trial_reason = 'no candidate evaluated'
             for cut in range(self.program.max_backtracks+1):
                 cancellation_safe_point(cancellation_token, 'native material backtrack')
                 candidate_increment = increment+(0.5**cut)*step
@@ -404,6 +405,7 @@ class NativeRetainedRoundS3Analysis:
                     candidate = transaction.propose(candidate_increment[:n], candidate_increment[n:], parameter,
                                                       cancellation_token=cancellation_token)
                 except ValueError as exc:
+                    material_trial_reason = str(exc)
                     if str(exc).startswith(('native/S3 material history path requires subdivision',
                             'native material path exceeds admitted rotation chart',
                             'first-touch transverse monotone path unresolved',
@@ -418,13 +420,16 @@ class NativeRetainedRoundS3Analysis:
                         continue
                     raise
                 if candidate.assembly.material.contribution.normal_gap_m < -self.gap_tolerance:
+                    material_trial_reason = 'candidate gap tolerance'
                     continue
                 if max(candidate.assembly.metrics) < max(assembly.metrics):
                     increment = candidate_increment
                     accepted = True
                     break
+                material_trial_reason = ('equilibrium merit did not decrease: '
+                    f'{max(candidate.assembly.metrics):.17g} >= {max(assembly.metrics):.17g}')
             if not accepted:
-                raise RuntimeError('native material backtracking/event limit; physical state unchanged')
+                raise RuntimeError('native material backtracking/event limit; physical state unchanged; '+material_trial_reason)
 
     @staticmethod
     def _recoverable_trial_error(exc):

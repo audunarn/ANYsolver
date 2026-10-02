@@ -2,9 +2,9 @@
 
 ## Authority and location
 
-Full C0ï¿½C9 remains active under goal2026-09-30.4, plan2026-10-02.19,
+Full C0ï¿½C9 remains active under goal2026-09-30.4, plan2026-10-02.20,
 policy2026-09-24.2. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001, base 902bf5ff plus this checkpoint.
+branch codex/contact-main-reconcile-20261001, base f13e78c6 plus this checkpoint.
 No original-worktree or other-chat inspection/communication, publication, main
 merge, release, historical-default or shared ABC-guard changes. Tiered workflow;
 prior local/Mistral failures remain, no availability-only reprobes.
@@ -38,15 +38,26 @@ Evidence: contact_c5_native_surface_point_20261002/surface_patch_results.md/.jso
 and surface_patch_raw.zip, including the retained initial target-ownership fixture
 failure. No general surface-gap or between-sample regularity claim.
 
-## Next bounded action
+## Next bounded action — coupled release failure remains open
 
-Implement rotating opening/recontact through the same patch transaction, with
-work/step refinement. Then establish spatial integration convergence and physical
-boundary/partner handling. Avoid another state/solver stack. Reference weights
-must remain fixed during history continuation; a refined rule is a different
-identity. Classical finite R(s), native installed artifact and C5 acceptance remain
-open. No live numerical job; own review worker may be finishing the source-path
-certificate review. Other-chat prohibition remains.
+New explicit transverse_events policy binds event_history_substeps into identity.
+Unique monotone release integrates scalar return maps on the actual rotating path,
+retains dissipation and reports residual storage release; open endpoint work/tangent
+are zero. Local analytic unloading16/64/256substeps passes. Exact-root versus
+beyond-root history regression passes after independent review found a bypass.
+Direct accumulation preserves small reported increments against large prior totals.
+
+The real four-point press/open/recontact test FAILS with geometric interval-budget
+exhaustion. Direct1->0 and .8/.6/.4/.2/0 unloading both failed. A same-sign monotone
+certificate did not fix it and was removed. All four runs retained in release_raw.zip;
+release_results.md/.json describe current hashes and limitations. The new lifecycle
+test is intentionally still failing, not xfailed or accepted. No live process/worker.
+
+Next: capture the first rejected candidate's exact pose/increments and identify
+whether gap or facet ownership defeats the bounded certificate. Do not repeat the
+full lifecycle or increase budgets until that kernel diagnosis changes the action.
+Distributed integration/refinement, continuous surface gaps, boundary transfer,
+classical finite R(s), native installed delivery and C5 acceptance remain open.
 
 ## Scope and resources
 

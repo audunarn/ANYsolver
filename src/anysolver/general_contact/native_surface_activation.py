@@ -3,7 +3,8 @@
 Local development: the instantaneous force map holds the event fixed, while
 algorithmic derivatives include its sensitivity. No event is physically committed.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from math import fsum
 
 import numpy as np
 from scipy.optimize import brentq
@@ -11,9 +12,9 @@ from anysolver._ge_beam3_p5_seeded.core import sha
 
 from anysolver._ge_beam3_mixed_ad import Jet2, so3_exp, so3_log, matmul, matvec, constant_matrix, dot
 from .native_retained_station import _readonly
-from .native_surface_path import material_path_pose, certify_material_ownership
+from .native_surface_path import material_path_pose, certify_material_ownership, affine_gap_polynomial
 from .native_surface_s3_friction import _unit, _cross
-from .friction_point import FrictionPointState, trial_coulomb_point
+from .friction_point import FrictionPointState, trial_coulomb_point, objective_relative_tangent_increment
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,17 @@ def _point(corners, weights):
 
 def evaluate_first_touch(pair, start, history, translations, angular, shell_increment,
                          *, maximum_intervals=256):
+    return _evaluate_transverse_event(pair,start,history,translations,angular,shell_increment,
+                                      maximum_intervals=maximum_intervals,opening=False)
+
+
+def evaluate_release(pair,start,history,translations,angular,shell_increment,*,maximum_intervals=256):
+    return _evaluate_transverse_event(pair,start,history,translations,angular,shell_increment,
+                                      maximum_intervals=maximum_intervals,opening=True)
+
+
+def _evaluate_transverse_event(pair, start, history, translations, angular, shell_increment,
+                              *, maximum_intervals, opening):
     """Actual-gap first-touch traction and complete spatial endpoint tangent.
 
     A global second-derivative bound proves strict gap decrease, hence unique
@@ -56,7 +68,9 @@ def evaluate_first_touch(pair, start, history, translations, angular, shell_incr
     """
     if sha(pair._definition()) != pair.definition_sha256:
         raise ValueError('native/S3 material-point definition changed')
-    if type(history) is not FrictionPointState or history.partner_key is not None:
+    if opening and (type(history) is not FrictionPointState or history.partner_key!=pair.partner_key):
+        raise ValueError('release candidate requires matching active physical history')
+    if not opening and (type(history) is not FrictionPointState or history.partner_key is not None):
         raise ValueError('first-touch candidate requires released physical history')
     end=material_path_pose(start,translations,angular,shell_increment,1.)
     ownership=certify_material_ownership(pair,start,translations,angular,shell_increment,
@@ -91,7 +105,8 @@ def evaluate_first_touch(pair, start, history, translations, angular, shell_incr
     derivative0=float(normal_derivative@(old.station.surface_position-y0[0])
                       +normal0@(velocity+np.cross(omega,old.surface_arm)))
     padding=512*np.finfo(float).eps*max(1.,radius,speed,second_bound)
-    if derivative0+second_bound>=-padding:
+    if ((not opening and derivative0+second_bound>=-padding) or
+            (opening and derivative0-second_bound<=padding)):
         raise ValueError('first-touch transverse monotone path unresolved')
 
     def gap(alpha):
@@ -101,11 +116,19 @@ def evaluate_first_touch(pair, start, history, translations, angular, shell_incr
         return float((x-np.asarray(t.position))@np.asarray(t.material_frame)[:,2])
 
     g0,g1=gap(0.),gap(1.)
-    if not g0>padding or not g1<-padding:
+    exact_release_endpoint=False
+    if opening and g1==0.:
+        polynomial=affine_gap_polynomial(pair,start,np.asarray(translations),angular,shell_increment)
+        exact_release_endpoint=polynomial is not None and sum(polynomial)==0
+    if ((not opening and (not g0>padding or not g1<-padding)) or
+            (opening and (not g0<-padding or not (g1>padding or exact_release_endpoint)))):
         raise ValueError('first-touch needs resolved open and closed endpoints')
     alpha=brentq(gap,0.,1.,xtol=4*np.finfo(float).eps,rtol=4*np.finfo(float).eps,maxiter=64)
     if abs(gap(alpha))>padding:
         raise ValueError('first-touch root residual unresolved')
+    if opening:
+        return _release_history(pair,start,end,history,translations,angular,shell_increment,
+                                alpha,g1,ownership)
 
     def event_geometry(q, fraction, size):
         # q is an endpoint spatial perturbation. The algorithmic path is the
@@ -175,3 +198,60 @@ def evaluate_first_touch(pair, start, history, translations, angular, shell_incr
     return NativeS3ActivationResult(_readonly(residual),_readonly(tangent),trial,g.value,pressure,
         pair.reference_weight_m2*energy.value,float(alpha),_readonly(alpha_gradient),ownership.path_sha256,
         ownership.intervals)
+
+
+@dataclass(frozen=True)
+class NativeS3ReleaseResult:
+    residual: np.ndarray
+    tangent: np.ndarray
+    trial: object
+    normal_gap_m: float
+    normal_pressure_Pa: float
+    normal_storage_j: float
+    event_fraction: float
+    path_sha256: str
+    ownership_intervals: int
+    history_evaluations: int
+    profile: str='NATIVE_S3_TRANSVERSE_RELEASE_POINT_DEV_V1'
+
+    def spatial_tangent(self):
+        return self.tangent
+
+
+def _release_history(pair,start,end,history,translations,angular,shell_increment,alpha,gap,ownership):
+    """Disposable path return maps before opening; endpoint force/tangent zero.
+
+    Fixed substeps are a bound definition, not an accuracy certificate. Preserve
+    dissipation and separately report the final vanishing storage release.
+    """
+    previous=start; state=history; released=0.; plastic_material=np.zeros(3); dissipations=[]
+    for fraction in np.linspace(0.,alpha,pair.event_history_substeps+1)[1:]:
+        current=material_path_pose(start,translations,angular,shell_increment,float(fraction))
+        old_source=pair.source.evaluate(previous.positions,previous.position_low,previous.cell_rotations)
+        source=pair.source.evaluate(current.positions,current.position_low,current.cell_rotations)
+        old_target=pair.target.physical_pose(previous.shell_displacement)
+        target=pair.target.physical_pose(current.shell_displacement)
+        increment=objective_relative_tangent_increment(source_committed=old_source.surface_position,
+            target_committed=old_target.position,source_candidate=source.surface_position,
+            target_candidate=target.position,target_frame_committed=old_target.material_frame,
+            target_frame_candidate=target.material_frame)
+        normal=np.asarray(target.material_frame)[:,2]
+        pressure=max(0.,-pair.normal_stiffness_Pa_per_m*float((source.surface_position-np.asarray(target.position))@normal))
+        # Root residual is already bounded. The event is the zero-pressure stage.
+        if fraction==alpha:pressure=0.
+        trial=trial_coulomb_point(state,material_frame=target.material_frame,relative_increment=increment,
+            normal_pressure=pressure,friction_coefficient=pair.friction_coefficient,
+            tangential_stiffness=pair.tangential_stiffness_Pa_per_m,partner_key=pair.partner_key)
+        plastic_material+=np.asarray(target.material_frame).T@np.asarray(trial.plastic_slip_increment)
+        dissipations.append(trial.dissipated_increment_density)
+        state=trial.candidate_state; released+=trial.released_storage_density; previous=current
+    target=pair.target.physical_pose(end.shell_displacement)
+    trial=trial_coulomb_point(state,material_frame=target.material_frame,relative_increment=(0.,0.,0.),
+        normal_pressure=0.,friction_coefficient=pair.friction_coefficient,
+        tangential_stiffness=pair.tangential_stiffness_Pa_per_m,partner_key=None)
+    trial=replace(trial,dissipated_increment_density=fsum(dissipations),
+                  released_storage_density=released,
+                  plastic_slip_increment=tuple(np.asarray(target.material_frame)@plastic_material))
+    count=42+pair.target.adapter.work_map.shape[1]
+    return NativeS3ReleaseResult(_readonly(np.zeros(count)),_readonly(np.zeros((count,count))),trial,
+        gap,0.,0.,alpha,ownership.path_sha256,ownership.intervals,pair.event_history_substeps+1)

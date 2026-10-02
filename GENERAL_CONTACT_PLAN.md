@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.19. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.20. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -256,11 +256,20 @@ engineering acceptance. [Evidence](docs/d1_review_support/contact_c6_free_sphere
 One additional history/work/V6 split check passes on the same unchanged wheel;
 172distinct checks are covered, with unaffected results reused by impact analysis.
 
-**Next bounded decision:** close rotating opening/recontact and work/step
-refinement on the distributed native/S3 patch, then demonstrate spatial integration
-convergence. Keep the existing fixed-material interior restriction explicit while
-extending contact ownership; do not confuse sample-path certificates with a
-continuous surface gap or regularity certificate.
+**Next bounded decision:** capture the first rejected native/S3 unloading path
+and classify its signed-gap and facet-ownership bounds. The coupled four-point
+press/open/recontact case still fails with interval-budget exhaustion, including
+smaller load steps. Do not repeat the complete lifecycle or enlarge limits before
+that local diagnosis. A same-sign monotone certificate experiment did not resolve
+the failure and was removed; its failed evidence is retained.
+
+The explicit transverse_events candidate integrates disposable unloading history
+to a unique release root. Independent held-slip unloading shows decreasing work
+error (6.25%,1.5625%,0.390625% at16/64/256substeps). Review exposed exact-touch
+bypass and cancellation of small dissipation increments against large cumulative
+history; both corrected with focused regression evidence. This is local evidence,
+not a working coupled release delivery. See
+[release results](docs/d1_review_support/contact_c5_native_surface_point_20261002/release_results.md).
 
 A fixed reference-area swept patch now shares the existing native contributor,
 owner and V2 transaction. Curved-reference frame derivatives give the physical

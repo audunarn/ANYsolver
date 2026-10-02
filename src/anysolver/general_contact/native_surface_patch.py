@@ -42,7 +42,7 @@ class NativeS3MaterialSurfacePatch:
     """One fixed reference-area rule with independent point histories."""
     def __init__(self, rule, targets, *, normal_stiffness_Pa_per_m,
                  friction_coefficient, tangential_stiffness_Pa_per_m,
-                 activation_policy='reject'):
+                 activation_policy='reject',event_history_substeps=32):
         if type(rule) is not NativeRoundSurfaceRule:
             raise TypeError('exact native reference surface rule required')
         targets=tuple(targets)
@@ -53,7 +53,8 @@ class NativeS3MaterialSurfacePatch:
             normal_stiffness_Pa_per_m=normal_stiffness_Pa_per_m,
             friction_coefficient=friction_coefficient,
             tangential_stiffness_Pa_per_m=tangential_stiffness_Pa_per_m,
-            activation_policy=activation_policy) for sample,target in zip(rule.samples,targets))
+            activation_policy=activation_policy,event_history_substeps=event_history_substeps)
+            for sample,target in zip(rule.samples,targets))
         # This owner has one S3 domain. Require one exact prepared adapter;
         # material target coordinates can vary at every quadrature point.
         adapter=pairs[0].target.adapter

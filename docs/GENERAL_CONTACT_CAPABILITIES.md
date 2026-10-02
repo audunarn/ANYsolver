@@ -955,3 +955,9 @@ scrutiny identified a hidden source-inversion path; conservative sample-path
 orientation bounds now reject it. Continuous-surface gap/regularity, refinement,
 rotating release/recontact, target boundaries and C5 acceptance remain open.
 [Patch evidence](d1_review_support/contact_c5_native_surface_point_20261002/surface_patch_results.md).
+
+The subsequent transverse_events release candidate has local unloading-work and
+exact-endpoint regression evidence, but its coupled patch opening/recontact test
+still fails geometric path admission. Smaller steps did not resolve it. No coupled
+release admission is claimed; the failed test and raw attempts are retained.
+[Release candidate](d1_review_support/contact_c5_native_surface_point_20261002/release_results.md).

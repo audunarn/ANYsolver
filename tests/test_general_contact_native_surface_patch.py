@@ -11,7 +11,7 @@ from anysolver.general_contact.s3_friction_point import S3SkinMaterialPoint
 from test_general_contact_native_retained_s3_static import _analysis
 
 
-def _patch():
+def _patch(*,activation_policy='transverse_first_touch'):
     owner=_analysis(targets=(1.,1.05))
     reference=owner.context.elements[0][1].operator.reference
     rule=NativeRoundSurfaceRule(1,reference,.049,xi_range=(.2,.8),
@@ -26,7 +26,7 @@ def _patch():
         targets.append(S3SkinMaterialPoint(owner.contact.shell,tuple((1-uv.sum(),*uv))))
     pair=NativeS3MaterialSurfacePatch(rule,targets,normal_stiffness_Pa_per_m=1e4,
         friction_coefficient=.3,tangential_stiffness_Pa_per_m=1000.,
-        activation_policy='transverse_first_touch')
+        activation_policy=activation_policy)
     return owner,NativeS3MaterialContributor(owner,pair)
 
 

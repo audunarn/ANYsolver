@@ -1,0 +1,179 @@
+{
+  "scope": "local release development; coupled lifecycle remains FAILED",
+  "base_commit": "f13e78c6",
+  "runs": [
+    {
+      "run": "contact-native-release-lifecycle-20261002",
+      "resource": {
+        "peak_sampled_bytes": 186777600,
+        "limit_mib": 953,
+        "elapsed_seconds": 10.71538700000383,
+        "status": "terminal",
+        "child_exit_codes": [
+          1
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_general_contact_native_surface_release.py",
+          "tests/test_general_contact_native_surface_activation.py::test_first_touch_finite_deforming_target_frame_and_both_edge_changes"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\contact-native-release-lifecycle-20261002\\anysolver-portable-ci-w908rd5d\\P01\\basetemp",
+          "tests/test_general_contact_native_surface_release.py",
+          "tests/test_general_contact_native_surface_activation.py::test_first_touch_finite_deforming_target_frame_and_both_edge_changes"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_general_contact_native_surface_release.py": "66f8eb1bd4b7fd26b5ef1c03f99aae10bab689f3274faa20131b80e6a0ea7a81",
+          "tests/test_general_contact_native_surface_activation.py": "14bd709095e9be1ef7a01095965af39e507ee3f78ebc99a72288fc7ec895096b"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    },
+    {
+      "run": "contact-native-release-diagnosis-20261002",
+      "resource": {
+        "peak_sampled_bytes": 185778176,
+        "limit_mib": 953,
+        "elapsed_seconds": 10.084978300030343,
+        "status": "terminal",
+        "child_exit_codes": [
+          1
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_general_contact_native_surface_release.py::test_rotating_patch_open_recontact_and_restart"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\contact-native-release-diagnosis-20261002\\anysolver-portable-ci-ngv4zuel\\P01\\basetemp",
+          "tests/test_general_contact_native_surface_release.py::test_rotating_patch_open_recontact_and_restart"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_general_contact_native_surface_release.py": "66f8eb1bd4b7fd26b5ef1c03f99aae10bab689f3274faa20131b80e6a0ea7a81"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    },
+    {
+      "run": "contact-native-release-cutback-20261002",
+      "resource": {
+        "peak_sampled_bytes": 186568704,
+        "limit_mib": 953,
+        "elapsed_seconds": 11.266559700015932,
+        "status": "terminal",
+        "child_exit_codes": [
+          1
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_general_contact_native_surface_release.py::test_rotating_patch_open_recontact_and_restart",
+          "tests/test_general_contact_native_surface_release.py::test_exact_release_endpoint_matches_beyond_endpoint_and_retains_small_work"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\contact-native-release-cutback-20261002\\anysolver-portable-ci-cr6vbdar\\P01\\basetemp",
+          "tests/test_general_contact_native_surface_release.py::test_rotating_patch_open_recontact_and_restart",
+          "tests/test_general_contact_native_surface_release.py::test_exact_release_endpoint_matches_beyond_endpoint_and_retains_small_work"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_general_contact_native_surface_release.py": "1eac243fb1116bebb31dcea5fce8a367f484438d5f36482a9b25a732a7ac576b"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    },
+    {
+      "run": "contact-native-release-monotone-20261002",
+      "resource": {
+        "peak_sampled_bytes": 186871808,
+        "limit_mib": 953,
+        "elapsed_seconds": 10.303142400051001,
+        "status": "terminal",
+        "child_exit_codes": [
+          1
+        ]
+      },
+      "selection": {
+        "scope": "focused source development, not qualification",
+        "targets": [
+          "tests/test_general_contact_native_surface_release.py::test_rotating_patch_open_recontact_and_restart"
+        ],
+        "command": [
+          "C:\\Python\\Python314\\python.exe",
+          "-m",
+          "pytest",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-p",
+          "scripts.development_test_runtime",
+          "--durations=10",
+          "--basetemp=C:\\ANYworkspaceWork\\contact-native-release-monotone-20261002\\anysolver-portable-ci-krlthis2\\P01\\basetemp",
+          "tests/test_general_contact_native_surface_release.py::test_rotating_patch_open_recontact_and_restart"
+        ],
+        "source_root": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+        "timeout_seconds": 180,
+        "selected_file_sha256": {
+          "tests/test_general_contact_native_surface_release.py": "1eac243fb1116bebb31dcea5fce8a367f484438d5f36482a9b25a732a7ac576b"
+        },
+        "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+        "memory_limit_mib": 953,
+        "jit": "off"
+      }
+    }
+  ],
+  "final_source_sha256": {
+    "src/anysolver/general_contact/native_surface_activation.py": "5b1de1015953368394667dd072f91649f838308e8cce922ee2297e8e1f3efb39",
+    "src/anysolver/general_contact/native_surface_s3_friction.py": "4b2efd0ecf69dd0905238dfafbf1b51d8c2c9fa847d011fb8a3b7a86f7a80e5e",
+    "src/anysolver/general_contact/native_surface_patch.py": "2a4f87b5820ca8b24a4b69785208bb314a1b9486f91555a16946e4a6adfe3241",
+    "src/anysolver/general_contact/native_retained_s3_static.py": "460f5c617708b7f33f2dfce423aad910a5d65aeff0cf1140134389f85402b349",
+    "tests/test_general_contact_native_surface_release.py": "1eac243fb1116bebb31dcea5fce8a367f484438d5f36482a9b25a732a7ac576b",
+    "tests/test_general_contact_native_surface_patch.py": "112b6bf35e8d755c2d378faef6b6fa734000998e408bacab9b4b3bd08e0626a7"
+  }
+}
