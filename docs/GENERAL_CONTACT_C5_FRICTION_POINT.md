@@ -317,3 +317,52 @@ is not adoption or qualification of that paper's full discretization. No externa
 contact code was copied. Partial overlap/history repartitioning, adaptive friction
 integration, finite rotations/creases, nonlinear materials, swept beam/native
 friction, arc length and impact friction remain required C5 work.
+
+## Partial-overlap replay candidate — development only
+
+`S3ReplayFrictionSettings` selects an internal experimental material-coordinate
+history owner. It is not an accepted application capability. The existing
+full-coverage owner and its evidence remain separate.
+
+With `event_subdivisions=0`, replay uses the endpoint return and rejects hidden
+contact intervals. Positive subdivisions select event-resolved returns using
+actual stage mortar pressures, with bounded stage evaluations and temporal
+refinement still required. Histories are reconstructed from accepted poses;
+candidate quadrature indices never identify physical history. Reference-cell
+partitioning, pressure integration and event-time refinement are distinct.
+
+Independent pulse work, point-query independence, both-body work, resource
+rejection and local pressure-specialization checks pass in development. The
+complete coupled route exhausted routine resource limits. The named integrated development run accepted press and partial slide, then
+exhausted its pressure-stage cap during reversal. No C5 acceptance, installed
+handoff or speedup for the complete workflow is established. See the
+[derivation, limits and evidence](d1_review_support/contact_c5_s3_partial_replay_20261002/event_integration_development.md).
+
+Subsequent bounded development completed the original nonguided five-increment
+press/slide/reverse/open/recontact route in513.90s (224055296B process peak), with
+all five physical commits and a saved final checkpoint. Exact material-history
+reuse and certified-separated candidate integration reduce repeated work;
+canonical full-domain commit/restore retains complete history and partitions.
+The same retained tangent fell from622.763s to55.503s, with force/tangent differences
+within existing checks. This is local development performance, not whole-route
+qualification. Split restart matches the saved full checkpoint exactly; temporal,
+spatial/thin-transition refinement, independent acceptance and installed handoff
+remain required. Historical failures remain failures. See
+[current evidence](d1_review_support/contact_c5_s3_partial_replay_20261002/history_cache_development.md)
+and [full workflow result](d1_review_support/contact_c5_s3_partial_replay_20261002/separation_full_v1_result.json).
+
+
+Additional fixed-path development controls: an independent proportional-pressure
+slider converges in work (8/32/128events:11.72/3.08/.78% error). Replaying saved
+five-increment FE paths changes total dissipation0.83% from4 to32events; spatial
+control changes~0.00007%. Halving the same affine segments changes refined work
+0.016%. These do not establish re-equilibrated trajectory convergence or arbitrary
+cut accuracy. Thin mixed-stick/slip tangent bias now triggers one resource-bounded
+canonical-partition retry with unchanged integration/tangent gates; cancellation
+restores an unvalidated retry policy. Refer to the linked current evidence.
+
+The step-partition comparison now binds identical physical-path/pressure/settings
+and quadrature coordinates/weights explicitly. Its assertion concerns total
+dissipation only; released storage changes7.9% from4 to32events. No claim that all
+work quantities meet the same relative accuracy follows. Original unbound records
+and the review finding remain in the evidence directory.

@@ -241,6 +241,9 @@ class S3MaterialFrictionManager:
 def create_s3_friction_manager(model, normal, settings):
     """Explicit profile dispatch; never switch a failed candidate's friction law."""
     from .s3_sliding_friction import S3SlidingFrictionSettings, S3SlidingFrictionManager
+    from .s3_friction_replay import S3ReplayFrictionSettings,S3ReplayFrictionManager
+    if type(settings) is S3ReplayFrictionSettings:
+        return S3ReplayFrictionManager(model,normal,settings)
     if type(settings) is S3SlidingFrictionSettings:
         return S3SlidingFrictionManager(model, normal, settings)
     return S3MaterialFrictionManager(model, normal, settings)

@@ -1,0 +1,26 @@
+{
+  "id": "C5_PARTIAL_REPLAY_PREPARED_INTEGRATED_V1_20261002",
+  "kind": "prospective integrated development, not qualification",
+  "head": "c43881a767179f5c8c68e1a059a22b38f19c74cf",
+  "sha256": {
+    "src/anysolver/general_contact/s3_friction_replay.py": "0b179864b6a2349f134bdc92bb6cdd842d9ea81db077109ea92dcfedae00f6de",
+    "src/anysolver/general_contact/s3_friction_prepared_path.py": "9eac5c4704a123d6d361edfaadf44aa2ff69bc366243c1fefc61d7e2cb18f7a8",
+    "src/anysolver/general_contact/s3_friction_static.py": "6670c349825cc18894fc4fb1a78534a3c1f1de06512551335a1a7099d325bbc7",
+    "src/anysolver/general_contact/s3_friction_touch.py": "42ff9e313b1536672d8ad17984db5df0de54e0f872f8074b28f6a6f6ef1de795",
+    "src/anysolver/general_contact/s3_sliding_friction.py": "b2995997051dc18c0ebd42e66b53a3ef0010603f9644ca8d02ad3d32b5f48655",
+    "tests/test_general_contact_s3_friction_replay.py": "82f417dc491b0ed4df73a565474166754657a33a8bb4763ec88f68a3a8bede52"
+  },
+  "question": "Does certified prepared batching complete the original nonguided workflow and physical split restart without changing the event-return law?",
+  "selector": "tests/test_general_contact_s3_friction_replay.py::test_partial_overlap_coupled_workflow_and_split_restart[False]",
+  "timeout_seconds": 900,
+  "memory_limit_mib": 953,
+  "event_subdivisions": 4,
+  "prepared_pressure_paths": true,
+  "ordinary_geometry_cap": 4096,
+  "prepared_batch_cap": 256,
+  "prepared_sample_cap": 2097152,
+  "jit": "off",
+  "authority": "GENERAL_CONTACT_GOAL.md2026-09-30.4 named integrated development ceiling; new candidate, earlier authority consumed",
+  "decision": "One execution. Pass leads to broader refinement/review/install closure; failure is classified and preserved, with no automatic cap increase or rerun.",
+  "source_snapshot": "C:\\ANYworkspaceWork\\contact-friction-prepared-integrated-v1-20261002\\frozen_source"
+}

@@ -1,0 +1,13 @@
+{
+  "scope": "fixed-path step partition; not coupled qualification",
+  "input_identity": "0164af43da5bb173b81c9148a2e3e4a110cc12166c184452ba6142a600987bd0",
+  "points": 147,
+  "history_frames": 10,
+  "seconds": 9.560198599996511,
+  "dissipation_j": 0.04601576279499724,
+  "reference_j": 0.04600833537250637,
+  "relative_error": 0.0001614364534325544,
+  "storage_j": 2.4804924879666575e-15,
+  "released_storage_j": 6.587158975366251e-06,
+  "partial_samples": 4974
+}

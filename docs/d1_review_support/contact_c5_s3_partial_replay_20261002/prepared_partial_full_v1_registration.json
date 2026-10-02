@@ -1,0 +1,30 @@
+{
+  "id": "C5_PARTIAL_REPLAY_PREPARED_PARTIAL_FULL_V1_20261002",
+  "kind": "prospective integrated development, not qualification",
+  "head": "c43881a767179f5c8c68e1a059a22b38f19c74cf",
+  "sha256": {
+    "src/anysolver/general_contact/s3_friction_replay.py": "4d36965978494f43bbbeae0e6fbc7e76167d492d6337cf2d6ea0a64fc7395a58",
+    "src/anysolver/general_contact/s3_friction_prepared_path.py": "c8f4c046b6453c3247b982d67d48f6b79e646a45d71b39afe05fc798733eec6c",
+    "src/anysolver/general_contact/s3_friction_static.py": "6670c349825cc18894fc4fb1a78534a3c1f1de06512551335a1a7099d325bbc7",
+    "src/anysolver/general_contact/s3_friction_touch.py": "42ff9e313b1536672d8ad17984db5df0de54e0f872f8074b28f6a6f6ef1de795",
+    "src/anysolver/general_contact/s3_sliding_friction.py": "b2995997051dc18c0ebd42e66b53a3ef0010603f9644ca8d02ad3d32b5f48655",
+    "tests/test_general_contact_s3_friction_replay.py": "d3a4b51529827ebfd69f602b25600d7adb9f3c8133f56dd89ce42045833989da"
+  },
+  "selector": "tests/test_general_contact_s3_friction_replay.py::test_partial_overlap_coupled_full_workflow",
+  "question": "Does prepared partial trajectory geometry complete the original nonguided five-increment workflow, including unchanged full-domain commit controls?",
+  "timeout_seconds": 900,
+  "memory_limit_mib": 953,
+  "jit": "off",
+  "event_subdivisions": 4,
+  "prepared_pressure_paths": true,
+  "prepared_partial_pressure_paths": true,
+  "ordinary_geometry_cap": 4096,
+  "prepared_partial_sample_cap": 32768,
+  "prepared_sample_cap": 2097152,
+  "prepared_batch_cap": 256,
+  "split_restart": false,
+  "remaining_scope": "Separate matching-profile split restart remains required; full checkpoint retained only after successful solve.",
+  "authority": "GENERAL_CONTACT_GOAL.md2026-09-30.4 named integrated development ceiling; new source/representation, earlier authorities remain consumed",
+  "decision": "One execution. Preserve completed checkpoint or failing candidate. No automatic retry, cap increase or refinement.",
+  "source_snapshot": "C:\\ANYworkspaceWork\\contact-friction-prepared-partial-full-v1-20261002\\frozen_source"
+}

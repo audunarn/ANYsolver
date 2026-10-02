@@ -169,7 +169,7 @@ class S3SlidingFrictionManager:
         reachable = np.asarray(sparse.csr_matrix(transform).getnnz(axis=1)).ravel() > 0
         self.columns = tuple(c for c in self.columns if reachable[c])
 
-    def _patch(self, u, *, validate=True):
+    def _patch(self, u, *, validate=True,require_full_coverage=True):
         """Validate a conforming convex planar union; return current facet data."""
         corners = {e: a.current_positions(u) for e, a in self.target_adapters.items()}
         first = next(iter(corners.values()))
@@ -221,9 +221,10 @@ class S3SlidingFrictionManager:
             if abs(area-hull.volume) > tol*area:
                 raise ValueError("target friction patch must be a convex union without overlaps")
             # Convexity makes complete corner coverage sufficient for each source triangle.
-            for adapter in self.source_adapters:
-                for position in adapter.current_positions(u):
-                    self._locate(position, corners, n, frame, first[0])
+            if require_full_coverage:
+                for adapter in self.source_adapters:
+                    for position in adapter.current_positions(u):
+                        self._locate(position, corners, n, frame, first[0])
         return corners, n, frame, first[0]
 
     def _locate(self, position, corners, n, frame, origin):

@@ -1,0 +1,20 @@
+{
+  "final_displacement_gate": "rtol1e-7 atol1e-9 passed",
+  "status": "passed authentic split restart",
+  "scope": "nonguided partial-overlap planar S3 development, not engineering acceptance or release",
+  "source_bindings_verified": true,
+  "authority_consumed": true,
+  "resource": {
+    "peak_sampled_bytes": 249552896,
+    "limit_mib": 953,
+    "elapsed_seconds": 537.4239900000393,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "pytest_call_seconds": 529.94,
+  "id": "C5_PARTIAL_REPLAY_SEPARATION_RESTART_V1_20261002",
+  "accepted_history_exact": true,
+  "final_checkpoint_integrity_equal": true
+}

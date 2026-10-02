@@ -52,6 +52,32 @@ def test_endpoint_rule_is_preserved_and_touch_work_has_measured_step_accuracy(re
     record_property("steps_4_8_16_32_256_relative_work_error",str(errors))
 
 
+def test_unloading_slide_work_converges_to_independent_continuous_reference(record_property):
+    # Contact opens at tau=.25. Stick -> slip occurs at
+    # 100*tau=1.5-6*tau, tau_slip=1.5/106. Thereafter plastic rate=.106.
+    tau_slip=1.5/106
+    exact=.08*.106*3*(.25-tau_slip)**2
+    errors=[]
+    for steps in (4,16,64,256):
+        model,manager=_owner()
+        x,z=(_mode(model,(1,2,3),a) for a in (0,2))
+        press=-.02*z
+        manager.commit(manager.prepare_commit(press))
+        work=0.
+        for tau in np.linspace(0,1,steps+1)[1:]:
+            u=press+tau*(.1*x+.02*z)
+            state=manager.prepare_commit(u)
+            work+=state[2]["dissipation_increment_j"]
+            assert state[2]["dissipation_increment_j"]>=0
+            manager.commit(state)
+        assert all(h.target_element is None for h in manager.history)
+        np.testing.assert_allclose(manager._friction(u)[0],0,atol=1e-13)
+        errors.append(abs(work/exact-1))
+    assert errors[0]>.9 and errors[-1]<.02,errors
+    assert all(b<a for a,b in zip(errors,errors[1:])),errors
+    record_property("unloading_steps_4_16_64_256_relative_work_error",str(errors))
+
+
 def test_first_touch_fraction_tangent_includes_moving_event_and_anchor():
     model,manager=_owner()
     x,z=(_mode(model,(1,2,3),a) for a in (0,2))

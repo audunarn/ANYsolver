@@ -14,7 +14,7 @@ def _cross_coefficients(a,da,b,db):
 
 
 class S3LinearTouchPath:
-    def __init__(self,owner,u,corners):
+    def __init__(self,owner,u,corners,*,require_full_coverage=True):
         self.owner=owner
         self.u=np.asarray(u)
         self.first,self.normal,_frame,self.origin=owner._patch(owner.committed_displacement)
@@ -53,9 +53,10 @@ class S3LinearTouchPath:
             r,dr=vertices[edges[b]]
             if float(_extrema(_cross_coefficients(q-p,dq-dp,r-q,dr-dq)@n,0.,1.)[0]) < -tol*scale**2:
                 raise ValueError("first-touch affine target path is not convex")
-            for x,dx in source:
-                if float(_extrema(_cross_coefficients(q-p,dq-dp,x-p,dx-dp)@n,0.,1.)[0]) < -tol*scale**2:
-                    raise ValueError("first-touch affine path loses complete source coverage")
+            if require_full_coverage:
+                for x,dx in source:
+                    if float(_extrema(_cross_coefficients(q-p,dq-dp,x-p,dx-dp)@n,0.,1.)[0]) < -tol*scale**2:
+                        raise ValueError("first-touch affine path loses complete source coverage")
         self.local_start=owner.committed_displacement[owner.work_columns]
         self.local_end=self.u[owner.work_columns]
 

@@ -1,0 +1,14 @@
+{
+  "force": {
+    "max_absolute": 4.043459198108806e-12,
+    "relative": 2.525963407898129e-11
+  },
+  "tangent": {
+    "max_absolute": 7.356451327655833e-05,
+    "relative": 2.4996003092810412e-06
+  },
+  "paths": [
+    "C:\\ANYworkspaceWork\\contact-friction-separated-partition-tangent-20261002\\anysolver-portable-ci-_tk5ezzu\\P01\\basetemp\\test_saved_recontact_cached_ta0\\recontact_cached_tangent.npz",
+    "C:\\ANYworkspaceWork\\contact-friction-history-cache-tangent-v1-20261002\\anysolver-portable-ci-fmyteity\\P01\\basetemp\\test_saved_recontact_cached_ta0\\recontact_cached_tangent.npz"
+  ]
+}

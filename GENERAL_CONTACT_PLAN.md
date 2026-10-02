@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.9. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.13. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -81,8 +81,82 @@ the material-anchor example explicitly chooses the first-touch rule. This is
 development evidence, not a general event/collision or C5 acceptance claim.
 See the [activation result](docs/d1_review_support/contact_c5_s3_activation_20261002/results.md).
 
-Next carry material history through actual partial overlap
-repartitioning. Preserve normal pressure space, both-body work, atomic state and
+The partial-overlap candidate now reconstructs material history at arbitrary
+source coordinates from immutable accepted poses and pressures. Exact reference
+partitions and area-centroid integration resolve the retained tangent defect.
+Later material queries exposed genuine contact pulses inside old pose segments;
+current-step cutback cannot recover their work. Explicit event-resolved replay
+therefore evaluates the actual mortar pressure along those affine segments and
+retains intermediate dissipation and released storage. It remains a development
+candidate, with event-time refinement and full coupled acceptance open.
+
+Two routine integrated runs exhausted180s. Exact stage caching and a strictly
+eligible full-coverage S3 moment specialization improve measured local cost while
+preserving the normal law. The separately registered900s integrated development run accepted press and
+partial slide, then rejected reversal because1296 material queries exhausted the
+4096 actual-pressure stage cap. Pytest elapsed441.05s; peak235950080B. Its authority
+is consumed and its exact source/raw result retained. This is resource admission
+failure, not a completed workflow or a numerical mechanics pass. The next change
+must batch stage geometry/pressure with explicit work/memory accounting; simply
+raising the cap is not the chosen route. Cache work counters are now excluded
+from physical commit history, with a focused cold/warm identity check.
+
+Certified full-coverage S3 path preparation now batches exact pressure moments,
+with ordinary fallback and separate bounded sample/storage accounting. Focused
+parity and directional checks pass. The new integrated candidate still timed out
+at900s during reversal after accepting press/slide (peak200986624B); no full
+workflow or restart success. Its registration is consumed. Do not repeat it or
+increase limits automatically. The reviewed ordinary-cache snapshot defect is
+fixed. A retained residual profile separated stage construction4.546s from entry
+detection3.020s. Reusing the already checked event partition reduces that single
+profiled residual8.555s to6.263s with identical force/work; four focused checks and
+read-only scrutiny support the change. This is not a complete-route speed claim.
+Stage pressure now reuses ordinary per-face overlaps and shape-domain guards,
+without unused Gram/gradient recovery; guarded saved residual5.509s, identical
+force/work. Review rejected an earlier union-clipping variant and corrected a
+shape-domain omission; counterexamples are retained. The new full-workflow run
+terminated533.885s/241295360B at4096ordinary stage constructions in reversal's
+full-domain commit integration control. Press/slide are accepted; reversal is not
+committed. No full workflow or restart result. The isolated retained commit-control
+case now passes17.2866s using a new explicit prepared partial-trajectory representation:
+4292partial samples, no full ordinary stage builds, unchanged integration controls.
+Authoritative affine positions/bases are prepared once; ordinary per-face pressure
+and feature/shape guards remain. Ordinary fallback keeps4096cap; prepared partial
+samples have explicit32768cap, bounded batches and restart identity. Local parity,
+state/resource checks and retained both-body tangent pass, with Read scrutiny of
+the numerical fallback. That new900s workflow accepted reversal and opening, then
+timed out during recontact (910.085s including teardown,202661888B). A retained
+tangent geometry count found25620committed-history queries but8294unique material
+coordinates:67.6269% repeat exactly. Bounded exact history memoization is now
+implemented with focused parity, invalidation, resource and both-body tangent checks.
+Matched retained tangent: uncached622.763s versus343.481s cached with bitwise identical
+force/tangent output. A certified fully separated source then permits empty disposable
+candidate work state and omission of obsolete candidate history cuts, while canonical
+commit/restart replay and partitions remain unchanged. That same tangent passes55.503s;
+force/tangent relative differences2.526e-11/2.500e-6 satisfy existing checks. Current
+integrated five-increment run passed513.90s/224055296B, with all physical commits and
+saved final checkpoint. Authentic partial-slip split restart passed529.94s with
+exact final checkpoint integrity and accepted-history equality against that saved
+reference. The independent clipped-triangle check exposed integration bias when
+old cuts were omitted. A bounded canonical-partition retry now resolves its tangent
+without changing scientific gates; endpoint/event force and derivative checks pass.
+The shared evaluation cap is enforced, and success-guarded rollback covers ordinary
+exceptions and cancellation. Prior successful full/restart paths are reused by
+impact analysis, not rerun. Their coarse event work is not qualified by this reuse.
+A pressure-ramp material-point oracle gives dissipation errors11.72%,3.08%,.78%
+at8/32/128event subdivisions while force/slip/storage agree. Retained five-segment paths now show0.83% cumulative-work change from4 to32events,
+with spatial control~0.00007%. An exact input-bound comparison splitting the same segments gives0.016% dissipation change
+against32events; these are fixed-path comparisons, not coupled refinement. Next
+checkpoint the development source and verify an installed partial-replay profile
+with focused physics/state checks and scoped independent assessment. Released
+storage changes7.9% from4 to32events; total-dissipation convergence must not be
+generalized to all work quantities. No history interpolation, automatic resource increase, full-route
+speedup claim or new acceptance follows. Installed verification and broader
+moving-target, accumulated-history and floating-point geometry checks remain.
+
+See [event derivation and evidence](docs/d1_review_support/contact_c5_s3_partial_replay_20261002/event_integration_development.md)
+and the [living checkpoint](GENERAL_CONTACT_RESTART.md) for the active run and
+next decision. Preserve pressure space, both-body work, atomic state and
 dimensional gates. Beam friction uses swept round surfaces. Finite rotation,
 warped/crease geometry and all remaining D2–D8 outcomes remain required.
 
