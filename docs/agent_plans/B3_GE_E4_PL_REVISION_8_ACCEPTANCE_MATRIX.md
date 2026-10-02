@@ -1,5 +1,15 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October acceleration consumer integration delta:** ANYfem now persists
+explicit physical mass/density and ordered acceleration cases in separate Q4,
+mixed/S3 and Q4-footprint schemas; fresh public owners retain typed load context
+and selected equilibrated fields. Installed286/286 and all12 Project examples
+(four routes ×1/10/100,onefactor) pass with consumer02a41991...5bab4 and unchanged
+solver4c14d094...d3b7c. Compatibility finding repaired; callback test failures
+retained. Independent Read review clear; no aggregate qualification promoted.
+Loaded interior pose, finite/GE gravity and practical-scale/resource acceptance
+remain M4/G4A/G5. [Consumer delivery/evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-body-acceleration-consumer-20261002/results.md).
+
 **2 October equilibrated body-section development delta:** typed B2 body loads
 now preserve model-bound context through static/batch solves and return separate
 equilibrated resultants/strains with actual interior attachment wrenches and

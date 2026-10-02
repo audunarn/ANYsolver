@@ -10,10 +10,10 @@ limits, complete G0-G6/F01-F13/V01-V28/B01-B18 and release obligations unchanged
 No main merge/publication/default/version change or aggregate qualification.
 
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Inspect Git for current HEAD;
-preceding2a7d7cb1, earlier static product46026dca. Main/contact work untouched.
+branch codex/stiffened-main-reconcile-20261001. Product613e43f7; inspect Git for
+current checkpoint HEAD. Main/contact work untouched.
 Consumer: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer, cabb6ed; preceding26cc56eb.
+branch codex/experimental-ge-panel-consumer, latest8af0784; precedingcabb6ed.
 One acceptance matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md.
 
 ## Delivered behavior and current boundary
@@ -60,8 +60,8 @@ GLOBAL origin, not total ground reaction or removal-induced change.
 
 Action: retain candidate; STOP completion tuning/derivative repeats and automatic
 axial/shell refinement. This result does not select a law/space or prove drilling
-independence. Coupled physical reference/torque/shear and growing-space stability
-remain precise M2/F03 requirements. Advance ready independent consumer/material
+independence. Coupled physical reference/torque/shear and the actual mechanical
+envelope remain precise M2/F03 requirements. Advance ready independent consumer/material
 integration; use combined evidence when defining the next physical decision.
 [Reviewed supported action/raw](development/r8-bl5-supported-completion-20261002/results.md).
 
@@ -144,12 +144,28 @@ That mechanical extension remains M4/G4A. Nodal energy is not loaded-field energ
 Retained fixtures expose dependent rows at a clamped endpoint and unchanged raw/
 typed mixed-load resolution failure at the other endpoint. Named ticket:
 B2_ENDPOINT_POINT_MIXED_LOAD_RESOLUTION; do not weaken admission to hide it.
-No GE gravity, consumer typed-load persistence or scientific G4A acceptance.
+No GE gravity, loaded-pose compatibility or scientific G4A acceptance.
 Total active-axis force certificate does not certify every component/moment.
 
-Next integrated result: inspect the existing ANYfem public B2 load/persistence
-contract and add typed acceleration context without duplicating solver mechanics;
-independently resume the primary native physical-transfer/stability decision from
-combined evidence. Avoid indefinite B2 helper work or automatic refinements.
-F03 remains UNCONSUMED; full programme incomplete. Historical credential
-restriction persists; no push. Inspect Git for delivery commit; consumer unchanged.
+Consumer input/Project integration is now delivered against solver613e43f7:
+installed286/286 and all12 Q4/mixed/S3/footprint ×1/10/100 examples pass, onefactor,
+typed selected fields. Consumerwheel02a41991...5bab4 binds98 modules;275 actual
+imports onsite. Initial callback test failures and old-solver admission finding
+are retained/repaired; independent Read review clear. Input persistence is not
+a state checkpoint or loaded interior pose. Root integration/worker writes done;
+all owned runs terminal. [Consumer evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-body-acceleration-consumer-20261002/results.md).
+Next: primary native physical-transfer discriminator below. Avoid indefinite B2
+helper work or automatic refinements. F03 UNCONSUMED; full goal incomplete.
+Historical credential restriction persists; no push. Inspect Git for commits.
+
+Native Read reconciliation:24 growing trace assessments already cover all seven
+whole-element ratios/three levels plus1:16. One supported actual constrained
+kernel passes its composed uncertainty bound; the whole mechanical envelope is
+not established. Do not repeat the trace family. Next discriminating physical
+limit: clamp the carrier positions/directors, release beam normal spin, fix tip
+uy, apply tipMz10Nm. The uncoupled in-plane section gives EI_z*phi''-kGA_y*phi=0,
+phi'(0)=0, EI_z*phi'(L)=Mtip and phi(L)=Mtip*coth(kappa*L)/(EI_z*kappa).
+Check actual zero direct normal couple, transverse force-arm work and endpoint
+balance. Wrong release/map ->repair; correct map with discrepancy ->beam/weak
+enforcement diagnosis; agreement closes only this limiting property. Derivation
+checked from Timoshenko virtual work; no new threshold/formal execution implied.
