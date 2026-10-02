@@ -232,8 +232,25 @@ def test_seam_roundoff_ownership_wrench_and_one_sided_residual():
     assert sum(r["sliding_seam"] for r in records) == 2
     assert all(r["target_element"]==2 for r in records)
     assert max(np.linalg.norm(r["traction_pa"]) for r in records) <= 1.5+1e-12
-    with pytest.raises(ValueError,match="seam/rim generalized tangent"):
-        manager.evaluate(u)
+    full_force,K,_certificate=manager.evaluate(u)
+    # A single canonical lower-facet member is used throughout the tangent, not
+    # an average of unrelated facet choices for different FE columns.
+    direction=-x-.01*z
+    force_rows=[model.mesh.dof_manager.get_node_dofs(n)[a] for n in range(1,8) for a in range(3)]
+    moment_rows=[model.mesh.dof_manager.get_node_dofs(n)[a] for n in range(1,8) for a in range(3,6)]
+    first_order_errors=[]
+    for h in (1e-4,2e-5):
+        one=manager.evaluate(u+h*direction,tangent=False)[0]
+        two=manager.evaluate(u+2*h*direction,tangent=False)[0]
+        first=(one-full_force)/h
+        first_order_errors.append(np.linalg.norm((K@direction-first)[force_rows])/np.linalg.norm(first[force_rows]))
+        # Stay on the canonical side while removing O(h) forward truncation.
+        fd=(-3*full_force+4*one-two)/(2*h)
+        for rows in (force_rows,moment_rows):
+            assert np.linalg.norm((K@direction-fd)[rows])/max(np.linalg.norm(fd[rows]),1e-12) <= 1e-5
+    assert 4 < first_order_errors[0]/first_order_errors[1] < 6
+    assert not manager._on_rim(2,(0.,.5,.5))
+    assert manager._on_rim(2,(.5,.5,0.))
     # Independent moving-load shape derivative on either side of the diagonal:
     # force density is constant; nodal shape gradients change, the force does not jump.
     for side in (-1,1):
@@ -259,3 +276,76 @@ def test_seam_roundoff_ownership_wrench_and_one_sided_residual():
             ys=np.asarray(bary)@cs[element]
             return (np.eye(3)-np.outer(ns,ns))@(xs-ys)
         np.testing.assert_allclose(De@direction,(gap(h)-gap(-h))/(2*h),rtol=1e-8,atol=1e-9)
+
+
+def test_disposable_facet_probes_cannot_publish_extrapolated_material_history():
+    model,_d,_s,_f,manager=_manager()
+    x,z=(_mode(model,(1,2,3),a) for a in (0,2))
+    press=-.02*z
+    manager.commit(manager.prepare_commit(press))
+    u=press+(1-11/15+.0015)*x
+    _force,_states,records=manager._friction(u)
+    elements=[r["target_element"] for r in records]
+    coordinates=[r["target_barycentric"] for r in records]
+    branches=[r["branch"] for r in records]
+    before=manager.checkpoint_state()
+    _probe,states,_records=manager._friction(u+1e-5*x,branches=branches,validate=False,
+                                            linearized_elements=elements,linearized_barycentric=coordinates)
+    assert states==()
+    with pytest.raises(ValueError,match="disposable tangent probes"):
+        manager._friction(u+1e-5*x,branches=branches,linearized_elements=elements)
+    actual=manager.prepare_commit(u+1e-5*x)
+    assert all(min(h.barycentric)>=0 for h in actual[1])
+    assert {h.target_element for h in actual[1]}=={2,3}
+    assert manager.checkpoint_state()==before
+    with pytest.raises(ValueError,match="unvalidated evaluation"):
+        manager._friction(u,validate=False)
+    with pytest.raises(ValueError,match="same material points"):
+        manager._friction(u,branches=branches[:-1],validate=False,
+            linearized_elements=elements,linearized_barycentric=coordinates)
+    with pytest.raises(ValueError,match="derivative resolution bound"):
+        manager._friction(u+.01*x,branches=branches,validate=False,
+            linearized_elements=elements,linearized_barycentric=coordinates)
+    assert manager.checkpoint_state()==before
+
+
+def test_solved_normal_response_lands_at_material_seam_and_continues():
+    def fixture():
+        model,definition,settings,friction,manager=_manager()
+        model.add_boundary_condition(BoundaryCondition("target",(4,5,6,7),
+            {d:0 for d in ("ux","uy","uz","rx","ry","rz")}))
+        model.add_boundary_condition(BoundaryCondition("source_guide",(1,2,3),
+            {d:0 for d in ("uy","rx","ry","rz")}))
+        control=model.mesh.dof_manager.get_node_dofs(1)[0]
+        for n in (2,3):
+            dependent=model.mesh.dof_manager.get_node_dofs(n)[0]
+            model.add_constraint_equation(terms=((dependent,1.),(control,-1.)),
+                dependent_dof=dependent,source_id=f"rigid_slide_{n}")
+        return model,definition,settings,friction,manager
+    model,definition,settings,friction,manager=fixture()
+    controls=(ContactPathControl.node(1,"ux"),ContactPathControl.node(1,"uz"))
+    kwargs=dict(contact=definition,contact_settings=settings,contact_friction=friction,
+        max_iterations=18,tolerance=1e-8,record_increment_snapshots=True,emit_restart_checkpoint=True)
+    press=solve_static_nonlinear(model,contact_path_program=ContactPathProgram(controls,((0,0),(0,-.02)),1),**kwargs)
+    assert press.status=="completed",press.info
+    pressure=manager._friction(press.displacements)[2][1]["pressure_pa"]
+    # Tangential rigid translation leaves the actual solved normal response
+    # unchanged. Use its pressure to place one return point precisely on x+y=1.
+    slide=1-11/15+.3*pressure/1000.
+    model,definition,settings,friction,_unused=fixture()
+    program=ContactPathProgram(controls,((0,0),(0,-.02),(slide,-.02),(slide+.02,-.02)),1)
+    full=solve_static_nonlinear(model,contact_path_program=program,**kwargs)
+    assert full.status=="completed",full.info
+    assert abs(full.snapshots[1].displacements[model.mesh.dof_manager.get_node_dofs(2)[2]]+.02)>1e-7
+    state=full.snapshots[1].displacements
+    owner=S3SlidingFrictionManager(model,GeneralS3PatchManager(model,definition,settings),friction)
+    owner.commit(owner.prepare_commit(press.displacements))
+    _force,_history,records=owner._friction(state)
+    assert any(r["sliding_seam"] for r in records),records
+    assert not any(r["sliding_rim"] for r in records)
+    half=solve_static_nonlinear(model,max_load_factor=2/3,contact_path_program=program,**kwargs)
+    resumed=solve_static_nonlinear(model,restart_checkpoint=half.to_restart_checkpoint(),
+        contact_path_program=program,**kwargs)
+    assert resumed.status=="completed",resumed.info
+    np.testing.assert_allclose(resumed.displacements,full.displacements,rtol=1e-7,atol=1e-9)
+    assert resumed.info["force_displacement_history"]==full.info["force_displacement_history"]

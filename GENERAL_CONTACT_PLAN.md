@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.6. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.7. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -21,7 +21,7 @@ Publication, merging, release and historical-default changes are separate action
 | D1 shell static | Named interior workflow independently accepted with installed0b2ac9be | Arbitrary model/application admission and release remain separate |
 | D2 partial shells | Named finite-penalty foundation/press/open/recontact/restart handoff accepted | Remaining geometry, search, finite rotation and self-contact |
 | D3 classical/native static | Restricted round-beam, retained-native and deformable-S3 prototypes integrated and reviewed | Full required pairings, endpoints, mesh/enforcement and section-family acceptance |
-| D4 friction/continuation | Fixed-material and planar material-anchor S3 owners use shared static equilibrium/pressure/history/restart; facet-crossing deformable-target checks pass | Friction integration/refinement, seam derivative admission, finite rotation/warped surfaces, swept beam/native surfaces, nonlinear materials and arc length |
+| D4 friction/continuation | Fixed-material and planar material-anchor S3 owners use shared static equilibrium/pressure/history/restart; facet crossing, internal-seam generalized tangent and solved seam/restart checks pass in development | Friction integration/step refinement, partial overlap/history transfer, physical rims, finite rotation/warped surfaces, swept beam/native surfaces, nonlinear materials and arc length |
 | D5 impact | Q4/S3 planes and B2/B3 fixed/translating planes or coupled free isotropic sphere share Newmark driver/state/restart | General geometry, finite rotation, caps/pairs, shell/free-body work, anisotropic inertia, nonlinear materials and acceptance |
 | D6 native dynamics | Dedicated retained-inertia/SO(3) midpoint owner, state codec and installed development route | Broader geometry/sections, spatial accuracy and C7 acceptance |
 | Applications | ANYfem mapping/result summary plus supplied-settings persistence; ANYstructure intent/public mapping and early rejection | Source/model-bound capability admission, solve routing and full installed workflows |
@@ -51,14 +51,17 @@ It covers a connected conforming convex planar patch, fixed source quadrature an
 full source coverage. Common affine target strain, nonproportional work, artificial
 diagonal crossing, both-body response and split restart have focused development
 evidence. Early Mistral scrutiny corrected a normal/derivative mismatch; the final
-normal is the patch area vector, so internal triangulation edges cancel. Exact
-sliding-seam tangents still reject. Stretch of an already nonzero spatial elastic
+normal is the patch area vector, so internal triangulation edges cancel. Internal
+seams now use one stable-ID facet's generalized tangent, with all derivative columns
+on that same branch. Disposable probes can extrapolate shape functions but return
+no physical histories; bounded probe resolution, coverage and physical-rim guards
+remain explicit. Stretch of an already nonzero spatial elastic
 gap can trigger a return; its dissipation tends to zero with tighter tangential
 regularization in the retained development discriminator. This is an explicit
 regularization consequence, not a claim of physical slip under common strain.
 
-Next close seam generalized derivatives and friction integration/step refinement
-on this coupled owner, then carry material history through actual partial overlap
+Next close friction integration/step refinement on this coupled owner, then carry
+material history through actual partial overlap
 repartitioning. Preserve normal pressure space, both-body work, atomic state and
 dimensional gates. Beam friction uses swept round surfaces. Finite rotation,
 warped/crease geometry and all remaining D2–D8 outcomes remain required.
@@ -159,8 +162,8 @@ engineering acceptance. [Evidence](docs/d1_review_support/contact_c6_free_sphere
 One additional history/work/V6 split check passes on the same unchanged wheel;
 172distinct checks are covered, with unaffected results reused by impact analysis.
 
-**Next bounded decision:** finish the planar material-anchor friction derivative
-and integration/step refinement using a solved deformable-target workflow. Then
+**Next bounded decision:** friction integration/step refinement using the existing
+solved deformable-target material-anchor workflow. Then
 extend its state to changing source overlap, retaining stable material identity.
 Use the existing shared static driver; do not introduce a second solver/history
 stack or substitute more prescribed collinear demonstrations. This development

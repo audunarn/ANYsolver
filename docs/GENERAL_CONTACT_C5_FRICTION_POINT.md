@@ -216,9 +216,17 @@ candidate perturbations share one physical committed origin.
 
 Roundoff-sized seam ties use stable element-ID ownership. The admission tolerance
 does not snap a finite-width return band. Residuals and one-sided slopes have focused
-checks, but the exact sliding-seam/rim generalized tangent remains explicitly
-rejected. Perturbations that leave the patch or cannot resolve the slip direction
-fail explicitly; they do not silently change law or enlarge derivative budgets.
+checks. The internal-seam tangent now selects the stable-ID physical return facet
+at the base candidate and differentiates that same facet's affine equations for
+every FE column. Probe shape coordinates may be negative within the explicit
+`maximum_probe_barycentric_change` bound, but they are disposable and return no
+physical histories. Physical candidates/commits keep strict patch coverage and
+nonnegative anchor coordinates. One-sided force and moment checks and an actually
+solved normal-response path landing at the seam cover this construction. The
+physical-rim generalized tangent remains rejected. Unresolved slip directions or
+derivative resolution cause explicit non-success, with no law switch or budget growth.
+The new tangent identity/probe controls bind restart; prior checkpoints with the
+older derivative contract require a compatible migration rather than silent reuse.
 
 Records identify force per source reference area and the shared mortar pressure
 coefficient. Endpoint pressure times the current anchor-motion chord is the discrete

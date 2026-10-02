@@ -28,14 +28,16 @@ class S3SlidingFrictionSettings:
     steps_by_dof: tuple[float, ...]
     maximum_candidate_evaluations: int = 145
     geometry_relative_tolerance: float = 1e-10
+    maximum_probe_barycentric_change: float = 1e-3
 
     def __post_init__(self):
         steps = tuple(float(x) for x in self.steps_by_dof)
         values = (self.friction_coefficient, self.tangential_stiffness_Pa_per_m,
-                  self.geometry_relative_tolerance)
+                  self.geometry_relative_tolerance,self.maximum_probe_barycentric_change)
         if (not np.all(np.isfinite(values)) or self.friction_coefficient < 0
                 or self.tangential_stiffness_Pa_per_m <= 0
-                or not 0 < self.geometry_relative_tolerance <= 1e-6):
+                or not 0 < self.geometry_relative_tolerance <= 1e-6
+                or not 0 < self.maximum_probe_barycentric_change <= 1):
             raise ValueError("sliding friction needs finite mu>=0, stiffness>0 and geometry tolerance")
         if not steps or not np.all(np.isfinite(steps)) or min(steps) <= 0:
             raise ValueError("sliding friction needs explicit positive FE derivative steps")
@@ -96,6 +98,12 @@ class S3SlidingFrictionManager:
                                      for e in sorted(source.element_ids))
         self.target_adapters = {e: S3SkinWorkAdapter.from_model(model, 2, e, target.side)
                                 for e in sorted(target.element_ids)}
+        edge_owners = {}
+        for e, adapter in self.target_adapters.items():
+            for i in range(3):
+                edge = tuple(sorted(adapter.node_ids[k] for k in range(3) if k != i))
+                edge_owners.setdefault(edge, []).append(e)
+        self.boundary_edges = frozenset(edge for edge, owners in edge_owners.items() if len(owners)==1)
         self.points, self.weights, self.pressure_indices = [], [], []
         for adapter in self.source_adapters:
             c = adapter.reference_positions
@@ -183,10 +191,7 @@ class S3SlidingFrictionManager:
 
     def _locate(self, position, corners, n, frame, origin):
         for e, c in corners.items():  # Stable element-ID order owns seam ties.
-            q = (c-c[0])@frame[:, :2]
-            rhs = (np.asarray(position)-c[0])@frame[:, :2]
-            uv = np.linalg.solve(q[1:].T, rhs)
-            b = np.array((1-uv.sum(), *uv))
+            b = self._facet_coordinates(position,c,frame)
             # Geometry admission tolerance must not snap a return across a finite
             # band. Only machine-roundoff barycentric ties may be normalized.
             if min(b) >= -128*np.finfo(float).eps:
@@ -194,6 +199,18 @@ class S3SlidingFrictionManager:
                 b /= b.sum()
                 return e, tuple(float(x) for x in b)
         raise ValueError("material friction point/source facet left the target patch")
+
+    @staticmethod
+    def _facet_coordinates(position, corners, frame):
+        q = (corners-corners[0])@frame[:, :2]
+        uv = np.linalg.solve(q[1:].T,(np.asarray(position)-corners[0])@frame[:, :2])
+        return np.array((1-uv.sum(), *uv))
+
+    def _on_rim(self, element, bary):
+        nodes = self.target_adapters[element].node_ids
+        return any(value <= 128*np.finfo(float).eps
+                   and tuple(sorted(nodes[k] for k in range(3) if k != i)) in self.boundary_edges
+                   for i,value in enumerate(bary))
 
     def _normal_variation(self, corners, n):
         raw, derivative = np.zeros(3), np.zeros((3, self.n_dof))
@@ -206,10 +223,13 @@ class S3SlidingFrictionManager:
 
     def _work(self, point, u, element, bary, n, Dn):
         adapter = self.target_adapters[element]
-        target = S3SkinMaterialPoint(adapter, bary)
         c = adapter.current_positions(u)
         P = np.eye(3)-np.outer(n, n)
-        Js, Jt = point.position_map.toarray(), target.position_map.toarray()
+        Js = point.position_map.toarray()
+        # Shape functions are extended off the chosen facet only by the private
+        # disposable tangent probes. Physical state coordinates remain nonnegative.
+        Jt = np.einsum('i,ijk->jk',np.asarray(bary),
+                       adapter.work_map.toarray().reshape(3,3,self.n_dof))
         x = np.asarray(point.barycentric)@point.adapter.current_positions(u)
         y = np.asarray(bary)@c
         r = x-y
@@ -218,7 +238,23 @@ class S3SlidingFrictionManager:
         De = P@(Js-Jt)-(np.outer(n, r)+gap*np.eye(3))@Dn
         return elastic, De, y
 
-    def _friction(self, u, *, branches=None, validate=True):
+    def _friction(self, u, *, branches=None, validate=True, linearized_elements=None,
+                  linearized_barycentric=None):
+        if linearized_elements is not None and (validate or branches is None):
+            raise ValueError("facet extrapolation is restricted to disposable tangent probes")
+        if not validate and linearized_elements is None:
+            raise ValueError("unvalidated evaluation is restricted to disposable tangent probes")
+        if branches is not None and linearized_elements is None:
+            raise ValueError("branch freezing is restricted to disposable tangent probes")
+        if linearized_elements is not None:
+            if (linearized_barycentric is None or len(branches)!=len(self.points)
+                    or len(linearized_elements)!=len(self.points)
+                    or len(linearized_barycentric)!=len(self.points)
+                    or any(b not in {"open","activation","stick","slip"} for b in branches)):
+                raise ValueError("facet tangent topology must cover the same material points")
+            for branch,element,bary in zip(branches,linearized_elements,linearized_barycentric):
+                if branch!="open" and (element not in self.target_adapters or bary is None):
+                    raise ValueError("facet tangent topology contains an invalid material anchor")
         u = np.asarray(u, dtype=float)
         if u.shape != (self.n_dof,) or not np.all(np.isfinite(u)):
             raise ValueError("material friction pose needs finite authoritative coordinates")
@@ -237,11 +273,17 @@ class S3SlidingFrictionManager:
             fixed = None if branches is None else branches[j]
             pressure = max(0.0, pressure)
             branch, traction, dissipation, plastic, storage, return_drop = "open", np.zeros(3), 0., 0., 0., 0.
-            new = S3MaterialAnchorState(None, None, old.cumulative_plastic_slip_m,
-                                        old.cumulative_dissipation_Pa_m)
+            element, bary = None, None
+            new = (S3MaterialAnchorState(None,None,old.cumulative_plastic_slip_m,
+                                         old.cumulative_dissipation_Pa_m)
+                   if linearized_elements is None else None)
             if (fixed is None and gap < 0) or fixed in ("stick", "slip", "activation"):
                 if old.target_element is None:
-                    element, bary = self._locate(x, corners, n, frame, origin)
+                    if linearized_elements is None:
+                        element,bary = self._locate(x,corners,n,frame,origin)
+                    else:
+                        element = linearized_elements[j]
+                        bary = tuple(self._facet_coordinates(x,corners[element],frame))
                     branch = "activation"  # Recontact starts stress-free at the current projection.
                 else:
                     element, bary = old.target_element, old.barycentric
@@ -254,7 +296,11 @@ class S3SlidingFrictionManager:
                             raise ValueError("explicit FE step cannot resolve the slip generalized derivative")
                         returned = (cap/kt)*elastic/length
                         projected_source = x-gap*n
-                        element, bary = self._locate(projected_source-returned, corners, n, frame, origin)
+                        if linearized_elements is None:
+                            element,bary = self._locate(projected_source-returned,corners,n,frame,origin)
+                        else:
+                            element = linearized_elements[j]
+                            bary = tuple(self._facet_coordinates(projected_source-returned,corners[element],frame))
                         # Current physical distance between the advected and returned material anchors.
                         moved = np.asarray(bary)@corners[element]-old_anchor
                         plastic = float(np.linalg.norm((np.eye(3)-np.outer(n, n))@moved))
@@ -274,33 +320,44 @@ class S3SlidingFrictionManager:
                         if validate and cone_error > roundoff:
                             raise ValueError("material-anchor return violates its Coulomb cap")
                     residual -= area*(work.T@traction)
-                new = S3MaterialAnchorState(element, bary, old.cumulative_plastic_slip_m+plastic,
-                                            old.cumulative_dissipation_Pa_m+dissipation, storage)
+                if linearized_elements is not None:
+                    if (not np.all(np.isfinite(bary)) or
+                            np.max(np.abs(np.asarray(bary)-linearized_barycentric[j]))
+                            > settings.maximum_probe_barycentric_change):
+                        raise ValueError("explicit FE step exceeds the material-facet derivative resolution bound")
+                if linearized_elements is None:
+                    new = S3MaterialAnchorState(element,bary,old.cumulative_plastic_slip_m+plastic,
+                                                old.cumulative_dissipation_Pa_m+dissipation,storage)
             records.append(dict(branch=branch, pressure_pa=pressure, traction_pa=traction.tolist(),
                                 dissipation_increment_j=area*dissipation, storage_j=area*storage,
                                 storage_change_j=area*(storage-old.stored_energy_Pa_m),
                                 return_storage_drop_j=area*return_drop,
                                 return_projection_loss_j=area*max(0.,return_drop-dissipation),
                                 released_storage_j=area*old.stored_energy_Pa_m if branch=="open" else 0.,
-                                sliding_seam=(branch=="slip" and min(new.barycentric) <= 128*np.finfo(float).eps),
-                                target_element=new.target_element,
-                                target_barycentric=new.barycentric))
-            histories.append(new)
+                                sliding_seam=(branch=="slip" and min(bary) <= 128*np.finfo(float).eps),
+                                sliding_rim=(branch=="slip" and self._on_rim(element,bary)),
+                                target_element=element,target_barycentric=bary))
+            if new is not None:
+                histories.append(new)
         return residual, tuple(histories), records
 
     def evaluate(self, displacement, *, tangent=True):
         force, stiffness, certificate = self.normal.evaluate(displacement, tangent=tangent)
         friction, _history, records = self._friction(displacement)
         if tangent:
-            if any(r["sliding_seam"] for r in records):
-                raise ValueError("material seam/rim generalized tangent is not yet admitted")
+            if any(r["sliding_rim"] for r in records):
+                raise ValueError("physical target-rim generalized tangent is not yet admitted")
             derivative = np.zeros((self.n_dof, len(self.columns)))
             branches = [r["branch"] for r in records]
+            elements = [r["target_element"] for r in records]
+            coordinates = [r["target_barycentric"] for r in records]
             for local, column in enumerate(self.columns):
                 delta = np.zeros(self.n_dof)
                 delta[column] = self.friction_settings.steps_by_dof[column]
-                plus = self._friction(np.asarray(displacement)+delta, branches=branches, validate=False)[0]
-                minus = self._friction(np.asarray(displacement)-delta, branches=branches, validate=False)[0]
+                plus = self._friction(np.asarray(displacement)+delta,branches=branches,validate=False,
+                                      linearized_elements=elements,linearized_barycentric=coordinates)[0]
+                minus = self._friction(np.asarray(displacement)-delta,branches=branches,validate=False,
+                                       linearized_elements=elements,linearized_barycentric=coordinates)[0]
                 derivative[:, local] = (plus-minus)/(2*delta[column])
             if not np.all(np.isfinite(derivative)):
                 raise ValueError("material friction tangent exceeded finite range")
@@ -335,7 +392,8 @@ class S3SlidingFrictionManager:
                     friction_settings=asdict(self.friction_settings),
                     source_quadrature=[dict(element=p.adapter.element_id, barycentric=p.barycentric, weight_m2=w)
                                        for p, w in zip(self.points, self.weights)],
-                    recontact="stress_free_current_projection", tangent="bounded_full_return_difference")
+                    recontact="stress_free_current_projection",
+                    tangent="bounded_fixed_return_facet_generalized_difference_v2")
 
     def restore(self, state, displacement):
         if type(state) is not dict or set(state) != {"displacement", "history"}:
