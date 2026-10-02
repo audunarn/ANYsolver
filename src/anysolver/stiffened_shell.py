@@ -46,6 +46,7 @@ from ._stiffened_shell_b2_q4_panel_experimental import (
     ExperimentalB2Q4FootprintResult, ExperimentalB2Q4FootprintSelectedCase,
     ExperimentalB2Q4FootprintBatchResult, ExperimentalB2Q4FootprintCapabilities,
 )
+from ._stiffened_shell_physical_q4_mass import POLICY as Q4_DIRECTOR_MASS_POLICY
 from ._stiffened_shell_b2_nodal_footprint import (
     B2NodalRigidFootprint, B2NodalRigidFootprintSelection,
     B2NodalRigidFootprintWrench, B2NodalFootprintNodeAction,
@@ -226,6 +227,7 @@ __all__ = [
     "B2MixedPanelDefinition", "S3V2DPanelShell", "ExperimentalB2MixedPanelCapabilities",
     "B2MixedReferenceModalDefinition", "ExperimentalB2MixedReferenceModalCapabilities",
     "S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1",
+    "Q4_DIRECTOR_MASS_POLICY",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
     "B2FootprintReferenceModesResult", "B2ModalConstraintRow",

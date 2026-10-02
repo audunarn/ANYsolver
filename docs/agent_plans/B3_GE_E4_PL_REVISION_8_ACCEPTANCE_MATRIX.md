@@ -1028,3 +1028,12 @@ findings resolved; source fixture and selector failures retained. Static schemas
 unchanged. New modal consumer persistence, physical continuum/spectral accuracy,
 free-free/prestress/footprints, full F07/F12/G4B/M3/M4/G6 remain OPEN.
 [Implementation, exact artifacts and limits](development/r8-b2-mixed-reference-modes-20261002/results.md).
+
+**2 October mixed reference-modal consumer:** ANYfem cabb6ed persists a distinct
+experimental modal-only Project input schema. Installed224/224 and mixed/all-S3
+save/reopen examples pass with one factorization each. Solver public Q4 policy
+alias is a thin unchanged identity, wheel80ca5f5e; consumer93b21a20. Source failure
+and focused repair retained; independent Read review clear. This closes the
+development input/persistence slice, not physical spectral accuracy, F07/F12/G4B,
+M3/M4/G6, external comparisons or complete acceptance.
+[Exact installed artifacts and evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-mixed-modal-consumer-20261002/results.md).

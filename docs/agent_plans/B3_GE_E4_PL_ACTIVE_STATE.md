@@ -13,7 +13,7 @@ Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
 branch codex/stiffened-main-reconcile-20261001. Inspect Git for current HEAD;
 preceding2a7d7cb1, earlier static product46026dca. Main/contact work untouched.
 Consumer: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer, unchanged26cc56eb3760530c457a18a8faec1cf93ae79ecd.
+branch codex/experimental-ge-panel-consumer, cabb6ed; preceding26cc56eb.
 One acceptance matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md.
 
 ## Delivered behavior and current boundary
@@ -27,8 +27,8 @@ New B2MixedReferenceModalDefinition uses the existing B2FAST profile/facade and
 sparse owner. Mixed/all-S3 supported virgin modes retain algebraic coordinates.
 Native S3 facet mass is lumped translation only: ALL facet rotary inertia omitted;
 shared Q4 nodes retain Q4 director contributions. No invented mass or equation
-change. Old static definitions do not opt in. New modal consumer persistence,
-physical frequency/spectrum accuracy, free-free/prestress/S3 footprints and
+change. Old static definitions do not opt in. New modal consumer persistence is
+implemented and installed-tested; physical frequency/spectrum accuracy, free-free/prestress/S3 footprints and
 full F07/F12/G4B/M3/M4/G6 remain open.
 
 Final installed429/429 (262solver/167consumer) and both public modal examples pass.
@@ -65,11 +65,32 @@ remain precise M2/F03 requirements. Advance ready independent consumer/material
 integration; use combined evidence when defining the next physical decision.
 [Reviewed supported action/raw](development/r8-bl5-supported-completion-20261002/results.md).
 
+## Latest integration and next discriminator
+
+ANYfem cabb6ed adds a distinct mixed reference-modal Project schema. Installed
+224/224, both mixed/all-S3 save/reopen examples, owned inputs and failure/cleanup
+checks pass. Solver80ca5f5e/consumer93b21a20 wheels bind391/98 modules and275
+onsite imports. One factor per example; numerical threads1/JIT off. Source
+223pass/1 fixture failure and1pass repair retained. Read review clear; wording
+correction reran only affected examples. No continuum-frequency acceptance.
+[Results/raw/review](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-mixed-modal-consumer-20261002/results.md).
+
+Decision: can the retained CCX US3 executable provide a physically declared
+plate modal reference with six-coordinate mode output? Existing isolated B2
+frequency checks need no repeat. US3 consistent translation/director inertia
+matches the Q4 continuous kinetic law, not native S3's omitted rotary policy.
+One 16x4 plate-only canary, 1x.2m/h.035/E210GPa/nu.3/rho7850, all-six root
+clamp, six modes, distinguishes usable output from unsupported mass/output.
+No beams, ties, prestress, new criterion, refinement or F03 run. If complete,
+derive matched native/eigen-residual comparison; if incomplete, inspect the
+precise output/source obstruction before another run. CCX hardcoded ARPACK
+tol1e-2 and rounded output cannot themselves certify1e-8 eigen residuals.
+Ceiling600s/1GiB/1 numerical thread for this Level-A route discriminator.
+
 ## Restart
 
-All owned workers and numerical jobs terminal. No resource slot held. Next usable
-slice: distinct explicit mixed-S3 modal consumer record/save-reopen through the
-existing ANYfem Project route, followed by matched physical spectral references.
+Installed consumer jobs terminal. No resource slot held. Next usable slice:
+the bounded US3 modal output canary above, then a matched physical comparison.
 Complete GE material/load/attachment and practical-scale obligations remain active.
 Use focused source checks and installed artifacts at coherent boundaries; no
 unchanged campaigns or helper-level qualification packages. At most3workers and

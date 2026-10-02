@@ -229,6 +229,7 @@ def test_modal_definition_rejects_unsupported_inputs(bad):
 
 
 def test_opt_in_policy_is_frozen_and_static_and_legacy_routes_unchanged():
+    assert api.Q4_DIRECTOR_MASS_POLICY == Q4_MASS_POLICY
     definition, _ = _definition()
     with pytest.raises(FrozenInstanceError): definition.inertia_policy = "changed"
     values = {name: value for name, value in definition.__dict__.items() if name != "inertia_policy"}
