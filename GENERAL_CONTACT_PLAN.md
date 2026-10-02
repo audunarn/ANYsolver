@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.31. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.32. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -41,10 +41,19 @@ Independent force/tangent/state controls and source review support this structur
 The saved second-load failure now stops at support128 after240queries/5.53s,
 instead of exhausting2048queries/43.68s. This reduces rejected work, not a
 successful solve or accepted speedup. No coupled rerun or cap increase.
-Next inspect unresolved proof regions in the saved input; assess the previously
-measured origin-dependent bound or a front-aware certificate in this new structure.
-No new scalar tuning campaign. Require local success before coupled continuation.
-See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_local_support_results.md).
+The nearby-origin candidate and tighter temporal derivative candidate both fail
+at unchanged support128 and are removed; their source and failed evidence remain.
+Read-only scrutiny identifies a structural limitation: single-crossing histories
+with extrema away from contact need not satisfy monotone/open/closed admission,
+even after spatial refinement. A new zero-set certificate core covers time by
+strictly signed gap slabs or same-oriented transverse derivative slabs. Seven
+analytic checks pass; it is NOT yet integrated into the geometry evaluator.
+Next implement conservative whole-rectangle gap/derivative slab enclosures using
+the actual retained/S3 path, including geometry and arithmetic guards. Review the
+adapter, test analytic rotating geometry and hidden pulses, then assess the saved
+second-load fixture once under existing caps. Full replay and quadrature gates
+remain authoritative. No coupled retry until local success; no budget increase.
+See [current evidence](docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_zero_set_transition_results.md).
 
 The pressure-coupled fixed-material S3 friction slice now uses the ordinary static
 path assembly/constraints, existing mortar pressure and accepted-step physical
@@ -521,3 +530,11 @@ Local classifier18checks pass; savedsecond fails before queries, while independe
 Coarse local proof reaches material integration (67panels/104support) but exhausts2048queries. Retain endpoint-positive zero-history shortcut ONLY under an already resolved local certificate; each segment is monotone/open/closed, so all-positive endpoints imply no prior contact. Unresolved panels still never query/accept. Original persistent test demanded resolution from a one-interval bound too loose for its gap; change fixture to analytically deeper persistent contact while retaining real hidden pulse, not a solver tolerance change. First preserve22passes/2fail46.56s; verify corrected fixture and saved case.
 
 Final local candidate force/tangent/transaction3checks pass45.50s, savedsecond still2048query failure. Trace last_parent=null: geometry proofs, not error refinement, created tiny quadrature leaves. One correction unions complete child support certificates and integrates original parent independently; unresolved child blocks parent, sharedproof budget retained, separate support-panel counter bounded by existing maximum_panels. Quadrature still refines on its own unchanged componentwise error. No omitted region or new cap.
+
+New-architecture bound check: use fixed barycentric target-plane origin near source-region midpoint in both signed-gap and derivative bounds. The same affine material point supplies all relative positions and velocities; it is never reprojected through time or used for contact ownership. Independent plane-motion/gap identity test plus full support controls and saved second-load case,180s/953MiB. Prior failed old-architecture origin experiment remains evidence; no cap change.
+
+Local-origin trial:24support checks pass but savedsecond stillsupport128. Reviewer identified unbounded extrapolated-weight arithmetic not covered by reduced padding. Discard candidate; preserve source and test. Capture exact unresolved support subregion in structured resource error, distinguishing spatial-front ambiguity from insufficient temporal enclosure. One saved local replay, no mechanics/cap change.
+
+Targeted temporal derivative enclosure: after the original start-derivative/M2 bound fails, local classifier evaluates exact spatial derivative extrema at t=.5 and1. With |g|<=M2, max nearest-node distance1/4 yields min(samples)-M2/4 or max(samples)+M2/4. Strict sign is still required; two extra evaluations charge shared support budget. Legacy helper default unchanged. One savedsecond/support control run,180s/953MiB; no coupled retry yet.
+
+Temporal enclosure savedsecond still fails128 after33proof panels;23controls pass. Avoid two provably useless time samples where initial spatial derivative range already overlaps zero: aggregate three-time strict sign necessarily includes that initial range. This is an exact short-circuit of the same certificate, not changed tolerances. One corrective savedcase run; stop this candidate on non-success.

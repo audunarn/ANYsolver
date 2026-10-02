@@ -291,3 +291,31 @@ def test_panel_classifier_rejects_mismatched_cell_rectangle(cell,xis,angles):
     from anysolver.general_contact.native_surface_support import classify_history_panel
     with pytest.raises(ValueError,match='half-cell'):
         classify_history_panel(_field(),cell,xis,angles,budget=SupportIntervalBudget(128))
+
+
+def test_support_exhaustion_preserves_region_and_named_recovery_contract(monkeypatch):
+    import anysolver.general_contact.native_surface_support as support
+    from anysolver.general_contact.native_surface_friction_integral import (
+        integrate_material_friction, NativeFrictionIntegrationLimit)
+    from test_general_contact_native_surface_friction_integral import _field as integral_field,_settings
+    field=integral_field();regions=[]
+    message='native friction aggregate support interval cap exhausted'
+    def classify(field,cell,xis,angles,*,budget):
+        regions.append((cell,*xis,*angles))
+        if len(regions)==1:
+            return support.HistoryPanelSupport('unresolved',regions[-1],'hidden history control')
+        raise MemoryError(message)
+    monkeypatch.setattr(support,'classify_history_panel',classify)
+    def forbidden_query(*args,**kwargs):
+        raise AssertionError('support failure must precede material queries')
+    monkeypatch.setattr(field,'query',forbidden_query)
+    with pytest.raises(NativeFrictionIntegrationLimit) as caught:
+        integrate_material_friction(field,_settings())
+    assert isinstance(caught.value,MemoryError)
+    assert str(caught.value)==message
+    diagnostics=caught.value.integration_diagnostics
+    assert diagnostics['queries']==0
+    assert diagnostics['support_panels_visited']==2
+    assert diagnostics['support_region']==regions[1]
+    assert diagnostics['quadrature_panel']==regions[0]
+    assert diagnostics['last_unresolved']==dict(region=regions[0],reason='hidden history control')

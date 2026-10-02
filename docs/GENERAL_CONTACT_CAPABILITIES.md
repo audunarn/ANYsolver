@@ -1013,3 +1013,9 @@ Latest successor: native replay first loading AND committed-origin rebase pass t
 Development successor: exact named support-proof cap now causes bounded trial backtracking; three state/error controls pass. Actual saved first-load checkpoint restores; second loading still fails all backtracks without commit. Unsuccessful geometry experiments discarded. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_second_load_results.md).
 
 Local-support development successor: segmentwise open/closed/monotone classifier, unresolved-panel rejection, proof unions and scoped empty-history query skip implemented/reviewed with focused controls. Savedsecond still fails support128 after240queries; no second-load or restart-equivalence acceptance. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_local_support_results.md).
+
+Zero-set development successor: failed origin/temporal refinements removed;
+structured support failure diagnostics tested. A reviewed at-most-one-crossing
+certificate core passes7analytic checks but lacks the production geometry
+enclosure adapter. Savedsecond remains non-success; no capability promotion.
+[Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_zero_set_transition_results.md).

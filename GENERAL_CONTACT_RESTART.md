@@ -1,15 +1,36 @@
-# General contact restart - 2 October 2026
+# General contact restart — 2 October 2026
 
-Full C0-C9 active; goal2026-09-30.4/plan2026-10-02.31. Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch codex/contact-main-reconcile-20261001; baseb6827c0a plus this checkpoint. No original-worktree/other-chat interaction, main merge/publication/release/default/shared-ABC changes.
+Full C0–C9 active; goal2026-09-30.4/plan2026-10-02.32. Worktree
+C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
+branch codex/contact-main-reconcile-20261001. Base6ef1fa05 plus this checkpoint.
+No original-worktree/other-chat contact, main merge/publication/release/default
+or shared ABC guard changes.
 
-Current developmental architecture: local panel support classifier resolves every history segment as monotone/open/closed or returns unresolved. Complete child proofs union into parent; quadrature subdivision follows separate Gauss4/8 error control. Unresolved support blocks zero AND nonzero panels. Endpoint-positive query skipping is scoped to resolved certificates. Physical history/ownership/orientation and numerical gates retained. Added half-cell validation after reviewer finding.
+Actual native first loading, committed-origin rebase and first-checkpoint restore
+pass in development. Second loading and split continuation equivalence remain
+unpassed. Local support/proof-union production geometry restored to6ef1fa05;
+failed nearby-origin and temporal derivative refinements preserved as experiments.
+Last savedsecond failure: support128,240queries,49proof panels,5.32s test;
+no coupled rerun. No successful-solve acceleration or capability promotion.
 
-Independent force/tangent/transaction checks3pass45.50s; final union saved-pose tangent passes32.44s. Hidden-pulse/classifier/forced-unresolved/Gauss-counterexample and invalid-geometry controls pass in focused runs. Deeper persistent fixture replaces an over-demanding coarse-proof expectation; failed evidence retained. These are layered development checks, not a coupled hidden-pulse qualification.
+Retained change: structured support-cap diagnostics, original exception message
+and MemoryError recovery preserved. Focused test1pass3.85s after correcting a
+wrong test attribute; failed test retained. New non-production zero-set certificate
+core7pass3.27s: allows one crossing with an off-contact extremum, rejects pulse
+and unresolved tangency. Reviewer assesses the core separately; geometry adapter
+is not implemented. Full physical path/replay and integration gates unchanged.
 
-Saved second loading still fails support128 after240queries/5quadrature panels/5.53s. Before proof union it failed2048queries/43.68s. Reduced rejected work only, no successful-solve or accepted speedup claim. No coupled retry this slice. Earlier actual first loading/rebase and real first-checkpoint restore remain development evidence; second loading/restart equivalence open.
+Next: conservative actual-path whole-rectangle slab enclosures and analytic
+geometry controls, independent scrutiny, then one savedsecond evaluation within
+existing caps. Stop scalar-bound tuning. Do not rerun coupled continuation until
+local successor passes. Evidence: docs/d1_review_support/
+contact_c5_native_surface_point_20261002/replay_zero_set_transition_results.md,
+results JSON, raw ZIP and retained experimental source. Prior notePart72.
 
-Next use replay_owner_second_load_rejected_path.json in docs/d1_review_support/contact_c5_native_surface_point_20261002. Inspect unresolved proof regions; assess nearby fixed target-plane origin (old bound8.44->0.098m, previous old-architecture nonpass) or front-aware certificate. No scalar tuning campaign, cap increase or unchanged coupled rerun. Local success required before coupled work.
-
-Evidence same directory: replay_local_support_results.md/.json/replay_local_support_raw.zip and replay_local_support_review.md. No live numerical process/worker. D1-interior/named D2 normal handoffs accepted; broad programme incomplete. Installed shell unchanged; no native installed/accepted/released claim.
-
-Routine180s/953MiB; named900s/3814MiB outer; stricter native120s/context unchanged. Frozen/consumed authorities remain consumed. Original120active-hour budget=goal seconds+3120; last261296+3120=73.449h, advancing.72h preference unanswered; existing authority continues without extension; decision/checkpoint at120h. Full completion forecast unsupported. Prior restart Part71.
+D1-interior/named D2 normal subsets accepted; broad programme incomplete.
+Installed shell unchanged; no native installed/accepted/released claim.
+Routine180s/953MiB; named900s/3814MiB; native120s/context remains stricter.
+Consumed authorities remain consumed. Goal seconds+3120 count toward original
+120active-hour budget; last262332+3120=73.737h, advancing.72h preference unanswered;
+continue existing authority without extension. Decision/checkpoint at120h.
+Full-programme completion forecast unsupported. No live numerical process.

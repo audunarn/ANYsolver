@@ -202,14 +202,21 @@ def integrate_material_friction(field,settings):
         # coverage certifies their union; the parent's independent integration
         # error estimate still decides whether its quadrature must subdivide.
         nonlocal unresolved_support_panels,support_panels_visited
-        pending=[parent];all_open=True
+        pending=[parent];all_open=True;last_unresolved=None
         while pending:
             if support_panels_visited>=settings.maximum_panels:
                 raise MemoryError('native friction support panel cap exhausted')
             current=pending.pop();c,l,r,a,b=current;support_panels_visited+=1
-            result=classify_history_panel(field,c,(l,r),(a,b),budget=support_budget)
+            try:
+                result=classify_history_panel(field,c,(l,r),(a,b),budget=support_budget)
+            except MemoryError as error:
+                raise NativeFrictionIntegrationLimit(str(error),dict(
+                    queries=len(cache),support_intervals=support_budget.intervals,
+                    support_panels_visited=support_panels_visited,support_region=current,
+                    quadrature_panel=parent,last_unresolved=last_unresolved)) from error
             if result.status=='unresolved':
                 unresolved_support_panels+=1
+                last_unresolved=dict(region=result.region,reason=result.reason)
                 pending.extend(subdivide(result.region))
             else:
                 all_open=all_open and result.status=='open'
