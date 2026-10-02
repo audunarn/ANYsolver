@@ -81,13 +81,13 @@ def integrate_material_friction(field,settings):
     fronts at every saved pose, with axial roots resolved for each angular query.
     Zero panels additionally need a conservative whole-history open certificate.
     """
-    from .native_surface_support import (_minimum,history_endpoint_support_certified,
+    from .native_surface_support import (_minimum,history_endpoint_support_cover_certified,
         history_target_ownership_certified,SupportIntervalBudget)
     if type(field) is not NativeSurfaceHistoryField or type(settings) is not NativeSurfaceFrictionIntegrationSettings:
         raise TypeError('exact material history field and integration settings required')
-    if not history_endpoint_support_certified(field):
-        raise ValueError('native friction integration requires resolved historical contact envelope')
     support_budget=SupportIntervalBudget(settings.maximum_support_intervals)
+    if not history_endpoint_support_cover_certified(field,budget=support_budget):
+        raise ValueError('native friction integration requires resolved historical contact envelope')
     if not history_target_ownership_certified(field,budget=support_budget):
         raise ValueError('native friction integration requires swept whole-patch target ownership')
     poses=[field.initial]
@@ -102,10 +102,11 @@ def integrate_material_friction(field,settings):
     panels=[];coefficients={}
 
     def certified_open_panel(cell,left,right,lower,upper):
-        # The entry certificate already proves every material gap monotone or
-        # affine on each segment. Repeating a temporal Lipschitz subdivision
-        # here both weakens that proof and spends the shared budget needlessly.
-        # Exact spatial endpoint minima therefore enclose the WHOLE history.
+        # The entry cover proves each point monotone/affine on each segment
+        # or separated throughout history. Repeating temporal subdivision
+        # here weakens that proof and spends the shared budget needlessly.
+        # Under that cover, positive endpoint minima imply separation through
+        # the whole history, including already-proven nonmonotone open regions.
         # Charge each inspected saved pose; retain the common finite budget.
         for pose in poses:
             if not support_budget.consume():
@@ -151,8 +152,8 @@ def integrate_material_friction(field,settings):
     def query(xi,angle):
         nonlocal open_queries
         cell=0 if xi<0 else 1
-        # The entry certificate proves affine or monotone gap on EACH saved
-        # segment, and whole-path ownership/orientation were checked above.
+        # The entry cover proves affine/monotone gap on each saved segment OR
+        # separation throughout history. Ownership/orientation are checked above.
         # Strictly open endpoints therefore imply zero history at this material
         # coordinate. Near a rounded front, retain the full replay instead.
         if all(fsum((offset,slope*xi,a*cos(angle),b*sin(angle)))>gap_padding

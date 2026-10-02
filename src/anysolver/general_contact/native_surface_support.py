@@ -153,6 +153,22 @@ def panel_open_over_history(field, cell, xi_bounds, angle_bounds, *, maximum_int
             velocities.append((1-t)*segment.translations[cell]+t*segment.translations[cell+1]-target_motion)
         speed = max(np.linalg.norm(v) for v in velocities)+np.linalg.norm(segment.angular[cell])*radius
         rate = float(speed+normal_speed*relative_radius)
+        # A second-derivative bound encloses gap below the chord joining its
+        # endpoint values: g(t) >= (1-t)*g(0)+t*g(1)-curvature*t*(1-t)/2.
+        # Exact spatial endpoint minima therefore give a whole-panel proof.
+        da,db=a1-a0,b1-b0
+        normal_acceleration=2*np.linalg.norm(np.cross(da,db))/area_lower+3*normal_speed**2
+        curvature=(normal_acceleration*relative_radius+2*normal_speed*speed
+                   +np.linalg.norm(segment.angular[cell])**2*radius)
+        start_minimum,start_padding=_minimum(pose,target,frames[0],radius,cell,xis,angles)
+        if (np.isfinite(curvature) and min(start_minimum,endpoint_minimum)-curvature/8
+                >max(start_padding,endpoint_padding)):
+            if visited>=maximum_intervals or (budget is not None and not budget.consume()):
+                return False
+            visited+=1
+            pose=end
+            padding=endpoint_padding
+            continue
         if not np.isfinite(rate):
             raise ValueError('nonfinite whole-panel support rate')
         pending = [(0., 1.)]
@@ -191,7 +207,7 @@ def _sinusoidal_extrema(offsets, a, b, angles):
     return min(values), max(values)
 
 
-def history_endpoint_support_certified(field):
+def history_endpoint_support_certified(field, *, xi_bounds=None, angle_bounds=None):
     """Sufficient whole-patch proof that contact cannot hide between poses.
 
     Every point's gap must be affine in time, or have a derivative of one
@@ -214,6 +230,14 @@ def history_endpoint_support_certified(field):
     radius = float(rule.definition['radius'])
     lo, hi = rule.definition['xi_range']
     angles = rule.definition['angle_range']
+    for bounds,domain in ((xi_bounds,(lo,hi)),(angle_bounds,angles)):
+        if bounds is not None:
+            values=np.asarray(bounds,dtype=float)
+            if (values.shape!=(2,) or not np.all(np.isfinite(values))
+                    or not domain[0]<=values[0]<values[1]<=domain[1]):
+                raise ValueError('endpoint support rectangle outside declared patch')
+    if xi_bounds is not None:lo,hi=map(float,xi_bounds)
+    if angle_bounds is not None:angles=tuple(map(float,angle_bounds))
     cells = [(c, (l, r)) for c, l, r in
              ((0, max(lo, -1.), min(hi, 0.)), (1, max(lo, 0.), min(hi, 1.))) if r > l]
     reference_corners = target.adapter.reference_positions
@@ -283,6 +307,50 @@ def history_endpoint_support_certified(field):
             if not (derivative_min-curvature > padding or derivative_max+curvature < -padding):
                 return False
         pose = end
+    return True
+
+
+def history_endpoint_support_cover_certified(field, *, budget):
+    """Cover every material point by monotone history or proven separation.
+
+    This preserves the endpoint-support implication needed by integration;
+    uniform temporal derivative sign across the entire patch is unnecessary.
+    An unresolved region or exhausted shared budget never establishes admission.
+    """
+    if type(budget) is not SupportIntervalBudget:
+        raise TypeError('exact shared support interval budget required')
+    if history_endpoint_support_certified(field):return True
+    rule=field.patch.rule;lo,hi=rule.definition['xi_range'];alo,ahi=rule.definition['angle_range']
+    pending=[(c,l,r,alo,ahi) for c,l,r in
+        ((0,max(-1.,lo),min(0.,hi)),(1,max(0.,lo),min(1.,hi))) if l<r]
+    while pending:
+        if not budget.consume():
+            raise MemoryError('native friction aggregate support interval cap exhausted')
+        cell,left,right,lower,upper=pending.pop()
+        if history_endpoint_support_certified(field,xi_bounds=(left,right),angle_bounds=(lower,upper)):
+            continue
+        if panel_open_over_history(field,cell,(left,right),(lower,upper),
+                maximum_intervals=field.maximum_intervals,budget=budget):
+            continue
+        # A sampled hidden event can REJECT a cover, never certify it. This
+        # catches genuine open-contact-open pulses without blind subdivision.
+        xi=(left+right)/2;angle=(lower+upper)/2;pose=field.initial
+        for segment in field.segments:
+            middle=material_path_pose(pose,segment.translations,segment.angular,segment.shell_increment,.5)
+            end=material_path_pose(pose,segment.translations,segment.angular,segment.shell_increment,1.)
+            values=[_minimum(p,field.patch.target,field.patch.source.reference.nodal_triads[0],
+                rule.definition['radius'],cell,(xi,xi),(angle,angle)) for p in (pose,middle,end)]
+            if values[0][0]>values[0][1] and values[2][0]>values[2][1] and values[1][0]<-values[1][1]:
+                return False
+            pose=end
+        if (right-left)/(hi-lo)>=(upper-lower)/(ahi-alo):
+            midpoint=(left+right)/2
+            if midpoint in (left,right):return False
+            pending.extend(((cell,left,midpoint,lower,upper),(cell,midpoint,right,lower,upper)))
+        else:
+            midpoint=(lower+upper)/2
+            if midpoint in (lower,upper):return False
+            pending.extend(((cell,left,right,lower,midpoint),(cell,left,right,midpoint,upper)))
     return True
 
 

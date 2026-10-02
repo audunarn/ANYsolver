@@ -1,0 +1,117 @@
+{
+  "runs": [
+    {
+      "run": "contact-native-rebase-support-charges-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 201138176,
+          "limit_mib": 953,
+          "elapsed_seconds": 18.434994300012477,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-rebase-spatial-proof-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 186953728,
+          "limit_mib": 953,
+          "elapsed_seconds": 6.305777399975341,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-rebase-segment-proof-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 187179008,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.978928400028963,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-rebase-prefix-proof-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 184856576,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.438607799995225,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-normal-speed-proof-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 206249984,
+          "limit_mib": 953,
+          "elapsed_seconds": 17.50266359996749,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-curvature-proof-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 205574144,
+          "limit_mib": 953,
+          "elapsed_seconds": 16.90045580000151,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-curvature-analytic-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 183267328,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.39304200001061,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-replay-coupled-curvature-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 238129152,
+          "limit_mib": 3814,
+          "elapsed_seconds": 110.96415020001587,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    }
+  ],
+  "archive_sha256": "da34dc9a471000997a05933e869a1070b8f323493ac7128214708d3fcfd0dd10"
+}

@@ -1005,3 +1005,7 @@ and duplicate Newton candidate assembly is removed with guarded state and commit
 reevaluation intact. The actual coupled path now stops at its backtracking limit
 on unresolved historical support, before first acceptance. No scope promotion.
 [Latest evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_support_results.md).
+
+Successor development: first native/S3 replay loading increment committed; zero-motion rebase fails support128 before adaptive refinement. Restart/second loading not reached; no acceptance promotion. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_regional_results.md).
+
+Latest successor: native replay first loading AND committed-origin rebase pass through actual owner after reviewed curvature certificate. Second loading fails bounded historical admission; split restart remains unreached. No acceptance promotion. [Evidence](d1_review_support/contact_c5_native_surface_point_20261002/replay_curvature_results.md).

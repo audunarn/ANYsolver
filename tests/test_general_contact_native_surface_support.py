@@ -11,7 +11,7 @@ from anysolver.general_contact.native_surface_path import material_path_pose
 from anysolver.general_contact.native_surface_quadrature import NativeRoundSurfaceRule
 from anysolver.general_contact.native_surface_support import (
     SupportIntervalBudget, history_endpoint_support_certified, panel_open_over_history,
-    history_target_ownership_certified,
+    history_target_ownership_certified, history_endpoint_support_cover_certified,
 )
 from anysolver.general_contact.s3_friction_point import S3SkinMaterialPoint
 from test_general_contact_native_surface_s3_friction import _case
@@ -198,3 +198,37 @@ def test_swept_ownership_with_finite_target_deformation():
         np.array(((.2, .1, -.05), (0., 0., 0.))), shell)
     field = _field(height=.08, segments=(segment,))
     assert history_target_ownership_certified(field, budget=SupportIntervalBudget(256))
+
+def test_regional_cover_rejects_hidden_pulse_with_bounded_work():
+    segment=NativeSurfaceMotionSegment(np.zeros((3,3)),np.array(((1.6,0.,0.),(0.,0.,0.))),np.zeros(18))
+    field=_field(height=.025,rotation=-.8,segments=(segment,))
+    budget=SupportIntervalBudget(128)
+    assert not history_endpoint_support_cover_certified(field,budget=budget)
+    assert budget.intervals<=128
+    tiny=SupportIntervalBudget(1)
+    assert not history_endpoint_support_cover_certified(field,budget=tiny)
+    assert tiny.intervals<=1
+
+
+def test_regional_endpoint_certificate_rejects_outside_or_empty_selection():
+    field=_field()
+    for bounds in ((-.9,-.2),(-.3,-.3),(float('nan'),-.2)):
+        with pytest.raises(ValueError,match='rectangle outside'):
+            history_endpoint_support_certified(field,xi_bounds=bounds)
+    with pytest.raises(ValueError,match='rectangle outside'):
+        history_endpoint_support_certified(field,angle_bounds=(0.,1.))
+
+
+def test_curvature_certificate_resolves_shallow_rotating_open_arc_in_one_interval():
+    # Independent exact minimum: height-radius > 0 for every rotation angle.
+    # The first-order speed enclosure R*|omega|/2 exceeds this shallow gap.
+    radius=.03;height=radius+1e-5;omega=.04
+    assert height-radius>0 and radius*omega/2>height-radius
+    segment=NativeSurfaceMotionSegment(np.zeros((3,3)),
+        np.array(((omega,0.,0.),(0.,0.,0.))),np.zeros(18))
+    field=_field(height=height,rotation=-omega/2,segments=(segment,))
+    budget=SupportIntervalBudget(1)
+    args=(field,0,(-.8,-.2),field.patch.rule.definition['angle_range'])
+    assert panel_open_over_history(*args,maximum_intervals=1,budget=budget)
+    assert budget.intervals==1
+    assert not panel_open_over_history(*args,maximum_intervals=1,budget=budget)

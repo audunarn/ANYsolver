@@ -97,3 +97,45 @@ def test_first_touch_rejects_changed_bound_definition_before_history_evaluation(
     with pytest.raises(ValueError,match='definition changed'):
         evaluate_first_touch(pair,start,history,translation,angular,shell)
     assert history.partner_key is None
+
+@pytest.mark.parametrize('size',(16,30))
+def test_prepared_event_rotation_derivatives_match_uncached_jet_algebra(size):
+    import anysolver.general_contact.native_surface_activation as module
+    from anysolver._ge_beam3_mixed_ad import Jet2,so3_exp,so3_log,matmul,constant_matrix
+    for vector in ((0.,0.,0.),(.03,-.02,.01),(-.2,.1,.3)):
+        rotation=Rotation.from_rotvec(vector).as_matrix()
+        entries=tuple(rotation.ravel())
+        value=module._event_rotation_chart(entries,size)
+        q=[Jet2.variable(0.,3+i,size) for i in range(3)]
+        exact=so3_log(matmul(so3_exp(q),constant_matrix(rotation,size)))
+        for actual,expected in zip(value,exact):
+            assert actual.value==expected.value
+            np.testing.assert_array_equal(actual.gradient,expected.gradient)
+            np.testing.assert_array_equal(actual.hessian,expected.hessian)
+            assert not actual.gradient.flags.writeable and not actual.hessian.flags.writeable
+        assert module._event_rotation_chart(entries,size) is value
+    assert module._event_rotation_chart.cache_info().maxsize==32
+
+
+def test_prepared_mixed_rotation_matches_uncached_virtual_work_map():
+    import anysolver.general_contact.native_surface_activation as module
+    from anysolver._ge_beam3_mixed_ad import Jet2,so3_exp,matmul
+    q=[Jet2.variable(0.,3+i,30) for i in range(3)]
+    v=[Jet2.variable(0.,18+i,30) for i in range(3)]
+    exact=matmul(so3_exp(v),so3_exp(q))
+    actual=module._endpoint_virtual_rotation()
+    for row,expected in zip(actual,exact):
+        for a,b in zip(row,expected):
+            assert a.value==b.value
+            np.testing.assert_array_equal(a.gradient,b.gradient)
+            np.testing.assert_array_equal(a.hessian,b.hessian)
+    assert module._endpoint_virtual_rotation.cache_info().maxsize==1
+
+
+def test_prepared_root_retains_list_form_motion_inputs():
+    pair,start,history,translation,angular,shell=_approach(.003)
+    expected=evaluate_first_touch(pair,start,history,translation,angular,shell)
+    actual=evaluate_first_touch(pair,start,history,translation.tolist(),angular.tolist(),shell.tolist())
+    assert actual.event_fraction==expected.event_fraction
+    np.testing.assert_array_equal(actual.residual,expected.residual)
+    np.testing.assert_array_equal(actual.tangent,expected.tangent)

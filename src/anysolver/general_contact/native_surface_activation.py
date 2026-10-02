@@ -5,12 +5,13 @@ algorithmic derivatives include its sensitivity. No event is physically committe
 """
 from dataclasses import dataclass, replace
 from math import fsum
+from functools import lru_cache
 
 import numpy as np
 from scipy.optimize import brentq
 from anysolver._ge_beam3_p5_seeded.core import sha
 
-from anysolver._ge_beam3_mixed_ad import Jet2, so3_exp, so3_log, matmul, matvec, constant_matrix, dot
+from anysolver._ge_beam3_mixed_ad import Jet2, so3_exp, so3_log, matmul, matvec, constant_matrix, dot, rotation_exponential
 from .native_retained_station import _readonly
 from .native_surface_path import material_path_pose, certify_material_ownership, affine_gap_polynomial
 from .native_surface_s3_friction import _unit, _cross
@@ -50,6 +51,27 @@ def _frame(corners):
 
 def _point(corners, weights):
     return [sum(weights[a]*corners[a][i] for a in range(3)) for i in range(3)]
+
+
+def _freeze_jets(values):
+    for value in values:
+        value.gradient.setflags(write=False);value.hessian.setflags(write=False)
+    return tuple(values)
+
+
+@lru_cache(maxsize=32)
+def _event_rotation_chart(rotation_entries,size):
+    """Pure endpoint rotation derivatives; no geometry/history is cached."""
+    q=[Jet2.variable(0.,3+i,size) for i in range(3)]
+    rotation=matmul(so3_exp(q),constant_matrix(np.asarray(rotation_entries).reshape(3,3),size))
+    return _freeze_jets(so3_log(rotation))
+
+
+@lru_cache(maxsize=1)
+def _endpoint_virtual_rotation():
+    q=[Jet2.variable(0.,3+i,30) for i in range(3)]
+    v=[Jet2.variable(0.,18+i,30) for i in range(3)]
+    return tuple(_freeze_jets(row) for row in matmul(so3_exp(v),so3_exp(q)))
 
 
 def evaluate_first_touch(pair, start, history, translations, angular, shell_increment,
@@ -121,6 +143,25 @@ def _evaluate_transverse_event(pair, start, history, translations, angular, shel
         return float((x-np.asarray(t.position))@np.asarray(t.material_frame)[:,2])
 
     g0,g1=gap(0.),gap(1.)
+    prepared_translations=np.asarray(translations,dtype=float)
+    weights=(1.-source.t,source.t)
+    base_terms=tuple(tuple((weights[j]*float(start.positions[source.cell+j,i]),
+                           weights[j]*float(start.position_low[source.cell+j,i])) for j in range(2))
+                     for i in range(3))
+    base_velocity=np.array([fsum(weights[j]*float(prepared_translations[source.cell+j,i]) for j in range(2))
+                            for i in range(3)])
+    def root_gap(alpha):
+        # Prepared scalar geometry for root iterations only. Endpoint and final
+        # root checks still use the authoritative adapters above/below. Native
+        # base motion is affine; the material arm follows the declared Exp path.
+        if alpha==0.:return g0
+        if alpha==1.:return g1
+        base=np.array([fsum((*base_terms[i][0],*base_terms[i][1],alpha*base_velocity[i])) for i in range(3)])
+        x=base+rotation_exponential(alpha*omega)@old.surface_arm
+        y=y0+alpha*(y1-y0)
+        normal=np.cross(y[1]-y[0],y[2]-y[0]);normal/=np.linalg.norm(normal)
+        point=np.asarray(target.barycentric)@y
+        return float((x-point)@normal)
     exact_release_endpoint=False
     if opening and g1==0.:
         polynomial=affine_gap_polynomial(pair,start,np.asarray(translations),angular,shell_increment)
@@ -128,7 +169,7 @@ def _evaluate_transverse_event(pair, start, history, translations, angular, shel
     if ((not opening and (not g0>padding or not g1<-padding)) or
             (opening and (not g0<-padding or not (g1>padding or exact_release_endpoint)))):
         raise ValueError('first-touch needs resolved open and closed endpoints')
-    alpha=brentq(gap,0.,1.,xtol=4*np.finfo(float).eps,rtol=4*np.finfo(float).eps,maxiter=64)
+    alpha=brentq(root_gap,0.,1.,xtol=4*np.finfo(float).eps,rtol=4*np.finfo(float).eps,maxiter=64)
     if abs(gap(alpha))>padding:
         raise ValueError('first-touch root residual unresolved')
     if opening:
@@ -138,8 +179,8 @@ def _evaluate_transverse_event(pair, start, history, translations, angular, shel
     def event_geometry(q, fraction, size):
         # q is an endpoint spatial perturbation. The algorithmic path is the
         # principal declared spatial chart from the fixed physical origin.
-        rotation=matmul(so3_exp(q[3:6]),constant_matrix(end.cell_rotations[source.cell]@start.cell_rotations[source.cell].T,size))
-        logarithm=so3_log(rotation)
+        relative_rotation=end.cell_rotations[source.cell]@start.cell_rotations[source.cell].T
+        logarithm=_event_rotation_chart(tuple(relative_rotation.ravel()),size)
         rotated=matvec(so3_exp([fraction*v for v in logarithm]),
                        [Jet2.constant(v,size) for v in old.surface_arm])
         x=[base0[i]+fraction*(base1[i]+q[i]-base0[i])+rotated[i] for i in range(3)]
@@ -162,7 +203,7 @@ def _evaluate_transverse_event(pair, start, history, translations, angular, shel
     v=[Jet2.variable(0.,15+i,30) for i in range(15)]
     event_frame,event_relative=event_geometry(q,event_alpha,30)
     event_components=[sum(event_frame[j][i]*event_relative[j] for j in range(3)) for i in range(3)]
-    rotated=matvec(matmul(so3_exp(v[3:6]),so3_exp(q[3:6])),
+    rotated=matvec(_endpoint_virtual_rotation(),
                    [Jet2.constant(x,30) for x in new.surface_arm])
     x=[base1[i]+q[i]+v[i]+rotated[i] for i in range(3)]
     y=[[y1[a,i]+q[6+3*a+i]+v[6+3*a+i] for i in range(3)] for a in range(3)]

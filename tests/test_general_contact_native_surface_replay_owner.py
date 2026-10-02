@@ -180,8 +180,9 @@ def test_saved_replay_candidate_branch_discriminator(tmp_path):
 
 
 @pytest.mark.parametrize('filename',[
-    'replay_owner_rejected_path.json','replay_owner_support_rejected_path.json'])
-def test_saved_replay_candidate_front_refinement(tmp_path,filename):
+    'replay_owner_rejected_path.json','replay_owner_support_rejected_path.json',
+    'replay_owner_envelope_rejected_path.json','replay_owner_rebase_rejected_path.json'])
+def test_saved_replay_candidate_front_refinement(tmp_path,filename,monkeypatch):
     import json,os
     from pathlib import Path
     from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment
@@ -193,12 +194,146 @@ def test_saved_replay_candidate_front_refinement(tmp_path,filename):
         NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()}),
         tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments']),
         maximum_intervals=saved['maximum_intervals'])
+    support_charges={}
+    if os.environ.get('NATIVE_REPLAY_SUPPORT_TRACE'):
+        import inspect
+        from anysolver.general_contact.native_surface_support import SupportIntervalBudget
+        original_consume=SupportIntervalBudget.consume
+        def counted_consume(budget):
+            frame=inspect.currentframe().f_back
+            names=[]
+            while frame is not None and len(names)<4:
+                names.append(frame.f_code.co_name)
+                frame=frame.f_back
+            key='/'.join(names)
+            result=original_consume(budget)
+            row=support_charges.setdefault(key,dict(consumed=0,rejected=0))
+            row['consumed' if result else 'rejected']+=1
+            return result
+        monkeypatch.setattr(SupportIntervalBudget,'consume',counted_consume)
     output=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))/'saved_candidate_result.json'
     try:
-        value=integrate_material_friction(field,friction_settings())
+        if os.environ.get('NATIVE_REPLAY_PROFILE_PATH'):
+            import cProfile
+            profiler=cProfile.Profile()
+            try:value=profiler.runcall(integrate_material_friction,field,friction_settings())
+            finally:profiler.dump_stats(os.environ['NATIVE_REPLAY_PROFILE_PATH'])
+        else:value=integrate_material_friction(field,friction_settings())
     except MemoryError as error:
-        output.write_text(json.dumps(dict(error=str(error),diagnostics=getattr(error,'integration_diagnostics',None)),indent=2)+'\n')
+        snapshot=None
+        traceback=error.__traceback__
+        while traceback is not None:
+            if traceback.tb_frame.f_code.co_name=='integrate_material_friction':
+                local=traceback.tb_frame.f_locals
+                scale=local.get('scale')
+                rows=[]
+                for bounds,_,estimate,safe_zero in local.get('leaves',[]):
+                    scaled=scale*estimate
+                    index=int(np.argmax(scaled))
+                    rows.append(dict(bounds=list(bounds),safe_zero=bool(safe_zero),
+                        maximum_scaled_error=float(scaled[index]),component=index,
+                        error_kind='force' if index<60 else 'tangent' if index<3660 else 'work'))
+                snapshot=dict(current_panel=local.get('panel'),last_parent=local.get('parent'),
+                    visited=local.get('visited'),accepted=local.get('accepted'),
+                    queries=len(local.get('cache',{})),pending_panels=len(local.get('panels',[])),
+                    support_intervals=local['support_budget'].intervals,leaves=rows,
+                    limitation='Cap snapshot only; no refinement ancestry or per-panel charge trace.')
+            traceback=traceback.tb_next
+        output.write_text(json.dumps(dict(error=str(error),diagnostics=getattr(error,'integration_diagnostics',None),
+            cap_snapshot=snapshot,support_charges=support_charges),indent=2)+'\n')
         raise
     output.write_text(json.dumps(value.diagnostics,indent=2)+'\n')
     assert value.diagnostics['maximum_scaled_error_estimate']<=1.
     assert value.stored_energy_j>0
+
+
+def test_saved_envelope_regional_cover(tmp_path):
+    import json,os
+    from pathlib import Path
+    from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    from anysolver.general_contact.native_surface_support import (
+        SupportIntervalBudget,history_endpoint_support_certified,history_endpoint_support_cover_certified)
+    saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_envelope_rejected_path.json').read_text())
+    _,bridge=_replay_patch()
+    field=NativeSurfaceHistoryField(bridge.pair,
+        NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()}),
+        tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments']),
+        maximum_intervals=saved['maximum_intervals'])
+    assert not history_endpoint_support_certified(field)
+    budget=SupportIntervalBudget(friction_settings().maximum_support_intervals)
+    output=Path(os.environ.get('RUNNER_TEMP',str(tmp_path)))/'regional_cover.json'
+    try:result=history_endpoint_support_cover_certified(field,budget=budget)
+    except (MemoryError,ValueError) as error:
+        output.write_text(json.dumps(dict(error=str(error),support_intervals=budget.intervals))+'\n')
+        raise
+    output.write_text(json.dumps(dict(certified=result,support_intervals=budget.intervals))+'\n')
+    assert result
+    with pytest.raises(MemoryError,match='aggregate support interval cap'):
+        history_endpoint_support_cover_certified(field,budget=SupportIntervalBudget(1))
+
+
+def test_saved_regional_candidate_directional_tangent():
+    import json
+    from pathlib import Path
+    from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    from anysolver.general_contact.native_surface_friction_integral import integrate_material_friction
+    saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_envelope_rejected_path.json').read_text())
+    _,bridge=_replay_patch()
+    initial=NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()})
+    segments=tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments'])
+    def evaluate(shift):
+        translation=segments[-1].translations.copy();translation[2,0]+=shift
+        last=replace(segments[-1],translations=translation)
+        field=NativeSurfaceHistoryField(bridge.pair,initial,(*segments[:-1],last),
+            maximum_intervals=saved['maximum_intervals'])
+        return integrate_material_friction(field,friction_settings())
+    value=evaluate(0.)
+    direction=np.zeros(60);direction[12]=1.
+    predicted=value.tangent@direction
+    for step in (1e-7,2e-8):
+        numerical=(evaluate(step).residual-evaluate(-step).residual)/(2*step)
+        assert np.linalg.norm(numerical-predicted)/np.linalg.norm(numerical)<=1e-5
+
+def test_saved_rebase_branch_discriminator(tmp_path):
+    import json,os
+    from pathlib import Path
+    from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment,NativeSurfaceReplayBudget
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_rebase_rejected_path.json').read_text())
+    _,bridge=_replay_patch()
+    initial=NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()})
+    segments=tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments'])
+    assert len(segments)==2 and not np.any(segments[-1].translations) and not np.any(segments[-1].angular)
+    fields=[NativeSurfaceHistoryField(bridge.pair,initial,s,maximum_intervals=saved['maximum_intervals']) for s in (segments[:-1],segments)]
+    budget=NativeSurfaceReplayBudget(60);rows=[]
+    for xi in (.25,.5,.75):
+        for angle in (np.pi-.15,np.pi,np.pi+.15):
+            points=[f.query(xi,angle,budget=budget).last_contribution for f in fields]
+            rows.append(dict(xi=xi,angle=angle,steps=[dict(branch=p.trial.branch,gap=p.normal_gap_m,
+                traction_norm=float(np.linalg.norm(p.trial.traction)),cap=.3*p.normal_pressure_Pa,
+                friction_tangent_norm=float(np.linalg.norm(p.spatial_tangent()-p.normal_spatial_tangent())),
+                dissipation=p.trial.dissipated_increment_density) for p in points]))
+    Path(os.environ.get('RUNNER_TEMP',str(tmp_path)),'rebase_branch_discriminator.json').write_text(json.dumps(rows,indent=2)+'\n')
+    assert len(rows)==9
+
+
+def test_saved_rebase_cover_prefix_cost(tmp_path):
+    import json,os
+    from pathlib import Path
+    from anysolver.general_contact.native_surface_history import NativeSurfaceHistoryField,NativeSurfaceMotionSegment
+    from anysolver.general_contact.native_surface_s3_friction import NativeS3MaterialConfiguration
+    from anysolver.general_contact.native_surface_support import SupportIntervalBudget,history_endpoint_support_cover_certified
+    saved=json.loads((Path(__file__).parents[1]/'docs/d1_review_support/contact_c5_native_surface_point_20261002/replay_owner_rebase_rejected_path.json').read_text())
+    _,bridge=_replay_patch()
+    initial=NativeS3MaterialConfiguration(**{k:np.asarray(v) for k,v in saved['initial'].items()})
+    segments=tuple(NativeSurfaceMotionSegment(**{k:np.asarray(v) for k,v in s.items()}) for s in saved['segments'])
+    rows=[]
+    for count in (1,2):
+        field=NativeSurfaceHistoryField(bridge.pair,initial,segments[:count],maximum_intervals=saved['maximum_intervals'])
+        budget=SupportIntervalBudget(128)
+        result=history_endpoint_support_cover_certified(field,budget=budget)
+        rows.append(dict(segments=count,certified=result,support_intervals=budget.intervals))
+    Path(os.environ.get('RUNNER_TEMP',str(tmp_path)),'cover_prefix_cost.json').write_text(json.dumps(rows,indent=2)+'\n')
+    assert all(row['certified'] for row in rows)
