@@ -58,3 +58,27 @@ Full material breadth, F03 connection transfer, spectra/capacity, scale, externa
 platform and complete consumer/release obligations remain open. Pressure amendment
 requires its existing decision. No formal authority consumed. Historical note bytes
 are preserved in the evidence archives; do not expand this into a feature ledger.
+
+
+## Current implementation and next integration
+
+Private tangent-plane arc trial plus bounded adaptive selection is implemented.
+Physical nodal translation/rotation weights exclude retained/multiplier variables
+from the norm, not equilibrium. Actual chart/anchor derivatives pass. Frozen
+trial context owns affine loads and physical normal. Shared sparse border preserves
+the displacement route. Local changes are source-verified, not publicly admitted.
+
+Requested1e-5 still fails; unchanged predecessor retry5e-6 converges. Both attempts
+and work are retained. This selects ONE uncommitted step, not a completed1e-5path.
+Only typed Newton/backtrack failures retry, with4cutbacks/5attempts and unchanged
+20/12per-attempt limits. Original sphere/plane failure evidence remains protected.
+Source15checks plus final11affected checks passed; independent source review has
+no remaining findings. No new installed artifact or scientific gate closes.
+[Complete evidence and remaining limits](development/r8-arc-prototype-20261002/results.md).
+
+Next deliverable: atomic arc publication and separate checkpoint/controller
+identity binding metric, load, orientation and attempts; cancel/restore/continue
+through the public owner. Reuse existing lifecycle/serialization services without
+fabricating force/displacement history. Then verify installed public behavior.
+Physical radius/mesh normalization and capacity/limit-point acceptance remain open.
+All owned numerical jobs and reviews terminal. No push/main/publication authority.

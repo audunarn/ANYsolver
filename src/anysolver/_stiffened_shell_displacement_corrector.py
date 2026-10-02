@@ -56,13 +56,22 @@ class DisplacementCorrectorFailure(RuntimeError):
 
 def bordered_correction(matrix, residual, direction, control_dof, gap, free):
     """Solve general sparse [K, -p; e, 0], including algebraic variables."""
-    count=matrix.shape[0]
     selected=np.flatnonzero(free==control_dof)
     if len(selected)!=1:
         raise ValueError("displacement control must be a free coordinate")
+    gradient=np.zeros(matrix.shape[0]);gradient[control_dof]=1.
+    return bordered_path_correction(matrix,residual,direction,gradient,gap,free)
+
+
+def bordered_path_correction(matrix,residual,direction,gradient,gap,free):
+    """General sparse border for a physical path row; no tangent inversion."""
+    count=matrix.shape[0]
+    gradient=np.asarray(gradient,dtype=float)
+    if gradient.shape!=(count,) or not np.isfinite(gradient).all() or not np.isfinite(gap):
+        raise ValueError("finite complete path gradient required")
     column=sparse.csc_matrix((-direction[free],(np.arange(len(free)),
                               np.zeros(len(free),dtype=int))),shape=(len(free),1))
-    row=sparse.csc_matrix(([1.],([0],[int(selected[0])])),shape=(1,len(free)))
+    row=sparse.csc_matrix(gradient[free].reshape(1,-1))
     bordered=sparse.bmat([[matrix[free,:][:,free],column],[row,None]],format="csc")
     try:
         with warnings.catch_warnings():

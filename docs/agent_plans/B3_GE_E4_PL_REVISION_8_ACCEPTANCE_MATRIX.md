@@ -1,6 +1,25 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
 
+**2 October adaptive private arc selection — IMPLEMENTED_NOT_QUALIFIED:**
+Fixed1e-5radius remains failed;5e-6retry returns an uncommitted equilibrium with
+requested/actualradius and full failed-work accounting. Same accepted predecessor,
+cancellation/stale guards and20/12per-attempt limits preserved. Source15checks plus
+final11affected checks pass; independent source review closed. Public atomic arc
+publication/checkpoint/controller and installed/capacity acceptance remain OPEN.
+[Evidence](development/r8-arc-prototype-20261002/results.md).
+
+
+**2 October private arc prototype — IN_PROGRESS / native trial FAILED:** explicit
+fixed-mesh physical chord metric and general sparse border implemented privately.
+Actual-chart derivative and stale/radius guards pass. Native coupled radius1e-5
+still fails (sphere Newton / plane backtrack limits); failing test retained.
+Saved-direction evidence supports a nearby shell active-set transition; bounded
+adaptive arc cutback is next, not a claim of passing that radius. No public controller,
+restart identity, installed check, continuation or capacity acceptance.
+[Failure and next discriminator](development/r8-arc-prototype-20261002/results.md).
+
+
 **2 October coupled material excursion/branch:** implementation unchanged at
 33f7ba7c. Installed local unload/reload regression passes with exact paired-field
 and checkpoint restart. Bounded −70/−72um continuation also passes; actual

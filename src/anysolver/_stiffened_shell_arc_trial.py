@@ -1,0 +1,257 @@
+"""Uncommitted local tangent-plane continuation of coupled BL5/J2 equilibria.
+
+Development seam only: fixed mesh, explicit frozen physical weights, affine
+translational dead loads. No public controller, checkpoint or capacity claim.
+"""
+from dataclasses import dataclass
+import numpy as np
+from .control import cancellation_safe_point
+from ._ge_beam3_pose_joint import _exp_terms
+from ._stiffened_shell_rotation_charts import physical_frames
+from ._stiffened_shell_arc_metric import PhysicalChordMetric, ChordDomainError, _owned
+from ._stiffened_shell_displacement_corrector import (
+    bordered_correction, bordered_path_correction, DisplacementCorrectorFailure)
+
+
+@dataclass(frozen=True)
+class ArcTrial:
+    state: object
+    amplitude: float
+    evaluation: tuple
+    accepted_generation: int
+    predecessor_state: object
+    shell_predecessor: object
+    beam_predecessor: object
+    radius: float
+    path_error: float
+    evaluations: int
+    linear_solves: int
+    rejected_trials: int
+    event_cell_evaluations: int
+    base_load: np.ndarray
+    load_direction: np.ndarray
+    normal_translations: np.ndarray
+    normal_spins: np.ndarray
+    metric: PhysicalChordMetric
+
+
+class ArcTrialFailure(DisplacementCorrectorFailure):
+    """Failed uncommitted candidate and work, retained for a caller's cutback."""
+    def __init__(self,message,trial):
+        super().__init__(message)
+        self.trial=trial
+
+
+@dataclass(frozen=True)
+class ArcAttempt:
+    radius: float
+    accepted: bool
+    evaluations: int
+    linear_solves: int
+    rejected_trials: int
+    event_cell_evaluations: int
+    failure: str | None
+
+
+@dataclass(frozen=True)
+class ArcSelection:
+    """One selected, uncommitted step; not completion of a requested path."""
+    requested_radius: float
+    trial: ArcTrial
+    attempts: tuple
+
+
+class ArcSelectionFailure(RuntimeError):
+    def __init__(self,message,attempts):
+        super().__init__(message)
+        self.attempts=tuple(attempts)
+
+
+def select_trial(driver, *, radius, max_cutbacks=4, max_attempts=5,
+                 attempt_records=None, **kwargs):
+    """Bounded cutback from one unchanged accepted predecessor.
+
+    Retry only the explicitly typed Newton/backtrack failures emitted below.
+    Cancellation, stale ownership, programming errors and unclassified numerical
+    failures propagate. The caller still owns atomic publication and path control.
+    """
+    if (type(max_cutbacks) is not int or not 0<=max_cutbacks<=8
+            or type(max_attempts) is not int or not 1<=max_attempts<=64
+            or not np.isfinite(radius) or radius<=0.):
+        raise ValueError("bounded arc selection controls required")
+    owner=driver.owner
+    with owner._commit_lock:
+        generation=owner._generation;parent=driver._state
+        shell=driver._shell_origins;beam=driver._beam_origins
+    kwargs=dict(kwargs)
+    kwargs['load_direction']=np.array(kwargs['load_direction'],dtype=float,copy=True)
+    attempts=[]
+    def current():
+        if (owner._finite_driver is not driver or owner._generation!=generation
+                or driver._state is not parent or driver._shell_origins is not shell
+                or driver._beam_origins is not beam):
+            raise ValueError("stale arc selection predecessor")
+        cancellation_safe_point(kwargs.get('cancellation_token'),"stiffened-shell.arc.selection")
+    for depth in range(min(max_attempts,max_cutbacks+1)):
+        current()
+        actual=float(radius)*(.5**depth)
+        if not np.isfinite(actual*actual) or actual*actual<=0.:
+            raise ArcSelectionFailure("arc radius no longer representable",attempts)
+        failure=None
+        try:
+            trial=correct(driver,radius=actual,**kwargs)
+        except ArcTrialFailure as error:
+            trial=error.trial;failure=str(error)
+        with owner._commit_lock:current()
+        row=ArcAttempt(actual,failure is None,trial.evaluations,trial.linear_solves,
+            trial.rejected_trials,trial.event_cell_evaluations,failure)
+        attempts.append(row)
+        if attempt_records is not None:attempt_records.append(row)
+        if failure is None:
+            with owner._commit_lock:
+                current()
+                return ArcSelection(float(radius),trial,tuple(attempts))
+    raise ArcSelectionFailure("arc cutback/attempt limit",attempts)
+
+
+def path_row(driver,state,parent,metric,normal=None):
+    """Squared physical chord and row in the driver's actual update columns."""
+    owner=driver.owner
+    nodal=owner._shell_count+6*len(owner._beam_ids)
+    reference=np.concatenate((physical_frames(parent.q[:owner._shell_count],parent.shell_anchors),parent.frames))
+    frames=np.concatenate((physical_frames(state.q[:owner._shell_count],state.shell_anchors),state.frames))
+    displacement=(state.q[:nodal]-parent.q[:nodal]).reshape(-1,6)[:,:3]
+    value,translations,spins=(metric.evaluate(displacement,frames,reference) if normal is None
+        else metric.plane(displacement,frames,reference,*normal))
+    gradient=np.zeros(len(state.q)+len(state.multipliers))
+    rows=gradient[:nodal].reshape(-1,6)
+    rows[:,:3]=translations;rows[:,3:]=spins
+    for i,chart in enumerate(state.q[:owner._shell_count].reshape(-1,6)):
+        rows[i,3:]=_exp_terms(chart[3:])[1].T@spins[i]
+    return value,gradient
+
+
+def correct(driver, *, load_direction, metric, radius, predictor_dof,
+            orientation, max_iterations=20, max_backtracks=12,
+            cancellation_token=None, iteration_records=None):
+    """Return a candidate; all trial material updates share one predecessor."""
+    from ._stiffened_shell_ge_finite_experimental import _RotationStepTooLarge
+    from ._stiffened_shell_bl5_local_experimental import BL5TrialDomainError
+    from ._stiffened_shell_branch_event_trial import trial_fraction
+    owner=driver.owner
+    n=owner._K.shape[0]; nodal=owner._shell_count+6*len(owner._beam_ids)
+    size=n+len(driver._state.multipliers)
+    if (type(metric) is not PhysicalChordMetric or len(metric.weights)!=nodal//6
+            or not owner._bl5_shell_material or driver._accepted is None
+            or driver._external is not None):
+        raise ValueError("accepted coupled BL5/J2 with fixed physical metric required")
+    if (not np.isfinite(radius) or radius<=0. or orientation not in (-1,1)
+            or type(predictor_dof) is not int or predictor_dof not in owner._free
+            or not 0<=predictor_dof<nodal or predictor_dof%6>=3
+            or type(max_iterations) is not int or not 1<=max_iterations<=24
+            or type(max_backtracks) is not int or not 0<=max_backtracks<=12):
+        raise ValueError("bounded radius, orientation and physical predictor required")
+    radius2=float(radius)*float(radius)
+    if not np.isfinite(radius2) or radius2<=0.:
+        raise ValueError("representable squared radius required")
+    pattern=np.array(load_direction,dtype=float,copy=True)
+    allowed=np.zeros(n,dtype=bool)
+    for start in range(0,nodal,6):allowed[start:start+3]=True
+    if (pattern.shape!=(n,) or not np.isfinite(pattern).all()
+            or np.any(pattern[~allowed]) or not np.any(pattern[owner._free])):
+        raise ValueError("finite free translational dead-load direction required")
+    with owner._commit_lock:
+        if owner._finite_driver is not driver:
+            raise ValueError("stale continuation driver")
+        generation=owner._generation;parent=driver._state
+        shell=driver._shell_origins;beam=driver._beam_origins
+        base=getattr(driver,"_displacement_applied_load",None)
+        if base is None:
+            base=driver._applied_load if driver._programme is not None else driver._load_factor*driver._pattern
+        base=np.array(base,copy=True)
+    if np.any(base[~allowed]):
+        raise ValueError("translational accepted dead load required")
+    free=np.r_[owner._free,np.arange(n,size)]
+    direction=np.r_[pattern,np.zeros(size-n)]
+    energy=float(np.max((abs(owner._K)@owner._coordinate_scale)*owner._coordinate_scale))
+    if not np.isfinite(energy) or energy<=0.:raise ValueError("positive reference work scale required")
+    weights=np.r_[owner._coordinate_scale,energy/owner._constraint_scale]/energy
+    evaluations=solves=rejected=0; events=[]
+
+    def current():
+        if (owner._finite_driver is not driver or owner._generation!=generation or driver._state is not parent
+                or driver._shell_origins is not shell or driver._beam_origins is not beam):
+            raise ValueError("stale continuation predecessor")
+        cancellation_safe_point(cancellation_token,"stiffened-shell.arc.trial")
+
+    def evaluate(state,amplitude):
+        nonlocal evaluations
+        current();evaluations+=1
+        return driver._assemble(state,0.,shell,beam,applied_load=base+amplitude*pattern)
+
+    def path(state):
+        value,gradient=path_row(driver,state,parent,metric,normal)
+        return value-radius,gradient
+
+    def merit(state,evaluation):
+        gap,_=path(state)
+        return float(np.hypot(np.linalg.norm(evaluation[0][free]*weights[free]),gap))
+
+    state=driver._increment_origin(parent);amplitude=0.;evaluation=evaluate(state,amplitude)
+    # Homogeneous equilibrium tangent, oriented by a physical free translation.
+    # Retained entries follow that tangent but do not determine its norm.
+    step,delta=bordered_correction(evaluation[1],np.zeros(size),direction,
+        predictor_dof,-orientation*metric.length,free);solves+=1
+    translations=step[:nodal].reshape(-1,6)[:,:3].copy()
+    spins=step[:nodal].reshape(-1,6)[:,3:].copy()
+    for i,chart in enumerate(state.q[:owner._shell_count].reshape(-1,6)):
+        spins[i]=_exp_terms(chart[3:])[1]@spins[i]
+    norm=float(np.sqrt(np.sum(metric.weights*(np.sum((translations/metric.length)**2,axis=1)
+        +np.sum(spins*spins,axis=1)))))
+    if not np.isfinite(norm) or norm<=0.:
+        raise DisplacementCorrectorFailure("unmeasured physical continuation tangent")
+    normal=(translations/norm,spins/norm)
+    step*=radius/norm;delta*=radius/norm
+    if (not np.isfinite(normal[0]).all() or not np.isfinite(normal[1]).all()
+            or not np.isfinite(step).all() or not np.isfinite(delta)):
+        raise DisplacementCorrectorFailure("continuation tangent normalization not representable")
+    state=driver._advance(state,step,1.);amplitude+=delta
+    evaluation=evaluate(state,amplitude)
+    def trial_snapshot():
+        gap,_=path(state)
+        return ArcTrial(state,amplitude,evaluation,generation,parent,shell,beam,
+            float(radius),float(gap/radius),evaluations,solves,rejected,
+            sum(row['cell_evaluations'] for row in events),_owned(base),_owned(pattern),
+            _owned(normal[0]),_owned(normal[1]),metric)
+    for iteration in range(max_iterations+1):
+        gap,gradient=path(state)
+        if iteration_records is not None:
+            iteration_records.append(dict(iteration=iteration,amplitude=amplitude,
+                equilibrium=float(evaluation[2]),constraint=float(evaluation[3]),
+                path_error=float(gap/radius),evaluations=evaluations,
+                solves=solves,rejected=rejected,
+                events=sum(row['cell_evaluations'] for row in events)))
+        if evaluation[2]<=1e-8 and evaluation[3]<=1e-9 and abs(gap)/radius<=1e-9:
+            with owner._commit_lock:
+                current()
+                return trial_snapshot()
+        if iteration==max_iterations:
+            raise ArcTrialFailure("local arc Newton limit",trial_snapshot())
+        step,delta=bordered_path_correction(evaluation[1],evaluation[0],direction,gradient,gap,free);solves+=1
+        record=dict(cell_evaluations=0);events.append(record)
+        initial,_=trial_fraction(driver,state,step,beam,current,record)
+        old=merit(state,evaluation)
+        for backtrack in range(max_backtracks+1):
+            amount=initial*.5**backtrack
+            try:
+                candidate=driver._advance(state,step,amount)
+                value=amplitude+amount*delta
+                changed=evaluate(candidate,value)
+                improved=merit(candidate,changed)<old
+            except (_RotationStepTooLarge,BL5TrialDomainError,ChordDomainError):
+                rejected+=1;continue
+            if improved:
+                state,amplitude,evaluation=candidate,value,changed;break
+            rejected+=1
+        else:raise ArcTrialFailure("local arc backtrack limit",trial_snapshot())
+    raise AssertionError("unreachable")
