@@ -57,7 +57,8 @@ from .beam_radial import _RadialResults
 from .multiple_beam_rigid import MultipleBeamRigidResults
 from .rigid_translation import ContactRigidTranslationHistory, _PlaneTranslations
 from .free_rigid import (ContactFreeRigidBody, FreeRigidBodyState, _FreeSphereManager,
-                        FREE_SPHERE_PROFILE, FREE_SPHERE_HISTORY_PROFILE)
+                        FREE_SPHERE_PROFILE, FREE_SPHERE_HISTORY_PROFILE,
+                        FREE_SHELL_SPHERE_PROFILE, FREE_SHELL_SPHERE_HISTORY_PROFILE)
 from .descriptor_rates import directional_descriptor_rate
 from .algebraic_path import affine_descriptor_path
 from .event_subdivision import EventNeedsCutback, localize_branch_event
@@ -166,11 +167,18 @@ class ContactTransientSolverControls:
     tool_work_relative_tolerance: float = 1e-8
     maximum_tool_work_subdivisions: int = 64
     allow_free_sphere_dev: bool = False
+    allow_free_shell_sphere_dev: bool = False
 
     def __post_init__(self) -> None:
         if type(self.allow_free_sphere_dev) is not bool:
             raise ValueError("allow_free_sphere_dev must be boolean")
-        if self.allow_free_sphere_dev and (not self.allow_classical_beam_dev or self.allow_multiple_beam_planes_dev):
+        if type(self.allow_free_shell_sphere_dev) is not bool:
+            raise ValueError('allow_free_shell_sphere_dev must be boolean')
+        if self.allow_free_shell_sphere_dev and (not self.allow_free_sphere_dev
+                or self.allow_classical_beam_dev or self.allow_s3_descriptor_dev):
+            raise ValueError('free shell sphere requires its separate Q4/free-body opt-ins')
+        if self.allow_free_sphere_dev and ((not self.allow_classical_beam_dev and not self.allow_free_shell_sphere_dev)
+                or self.allow_multiple_beam_planes_dev):
             raise ValueError("free sphere requires one classical beam interaction")
         for name in ("tool_work_absolute_tolerance_j", "tool_work_relative_tolerance"):
             value = getattr(self, name)
@@ -364,6 +372,10 @@ def _restart_analysis_contract(transient, controls, manager, profile,
         contract["controls"]["allow_multiple_beam_planes_dev"] = True
     if controls.allow_free_sphere_dev:
         contract["controls"]["allow_free_sphere_dev"] = True
+    if controls.allow_free_shell_sphere_dev:
+        contract['controls'].update(allow_free_shell_sphere_dev=True,
+            beam_swept_gap_tolerance_m=controls.beam_swept_gap_tolerance_m,
+            maximum_beam_swept_subdivisions=controls.maximum_beam_swept_subdivisions)
     if tool_histories:
         contract["rigid_translation_histories"] = [
             {"body": h.body_name, "points": [list(point) for point in h.points]}
@@ -737,13 +749,87 @@ def _minimum_hermite_gap(
     return minimum
 
 
+def _free_shell_sphere_path_on_selected_side(manager,start,end,start_velocity,
+                                             end_velocity,dt,maximum_subdivisions,
+                                             check_cancel):
+    """Certify the radial owner's centroid-side domain over the full cubic path.
+
+    The admitted shell has fixed directors and zero rotational coordinates.
+    Exact binary-input Bernstein controls enclose each face's signed centre
+    separation. Negative/zero feasible values reject the path; unresolved
+    positivity fails explicitly. Subdivisions share the distance-bound budget.
+    """
+    from .beam_temporal_bounds import _fraction,_split_curve,BeamHermiteGapBoundsError
+    sign=1 if manager.child.side=='top' else -1
+    step=_fraction(dt)
+    count=0
+    for face in manager.child.faces:
+        gaps=[];rates=[]
+        for state,velocity in ((start,start_velocity),(end,end_velocity)):
+            gap=rate=0
+            for axis,director in enumerate(face.director):
+                d=_fraction(director)
+                centre=_fraction(float(manager.reference_point[axis]+state[-3+axis]))
+                position=sum((_fraction(face.reference[i,axis])
+                    +_fraction(state[face.dofs[i,axis]]) for i in range(4)),start=0)/4
+                position+=_fraction(face.offset)*d
+                gap+=sign*d*(centre-position)
+                shell_rate=sum((_fraction(velocity[face.dofs[i,axis]])
+                                for i in range(4)),start=0)/4
+                rate+=sign*d*(_fraction(velocity[-3+axis])-shell_rate)
+            gaps.append(gap);rates.append(rate)
+        stack=[(gaps[0],gaps[0]+step*rates[0]/3,
+                gaps[1]-step*rates[1]/3,gaps[1])]
+        while stack:
+            check_cancel('free shell sphere complete-path physical side')
+            controls=stack.pop()
+            if min(controls)>0:continue
+            left,right=_split_curve(controls)
+            if min(controls[0],controls[-1],left[-1])<=0:return False,count
+            if count>=maximum_subdivisions:
+                raise BeamHermiteGapBoundsError('free shell sphere selected-side path unresolved')
+            stack.extend((left,right));count+=1
+    return True,count
+
+
+def _admit_free_shell_coordinates(model, transformation, prescribed):
+    """Guided Q4 profile: fixed in-plane geometry and zero shell rotations.
+
+    Independent normal nodal coordinates remain deformable. Their cubic path
+    cannot invert its projection onto the planar reference surface. This is a
+    physical work-map check of the actual constraint transformation.
+    """
+    for element in model.mesh.elements.values():
+        reference=np.asarray(element.get_node_coordinates(model.mesh),dtype=float)
+        normal=np.cross(reference[1]-reference[0],reference[3]-reference[0])
+        length=np.linalg.norm(normal)
+        if length<=0:raise ValueError('free shell sphere requires nondegenerate planar Q4 reference')
+        normal/=length
+        padding=64*np.finfo(float).eps*max(np.linalg.norm(reference-reference[0]),np.finfo(float).tiny)
+        if np.max(np.abs((reference-reference[0])@normal))>padding:
+            raise ValueError('free shell sphere requires planar Q4 reference geometry')
+        projector=np.eye(3)-np.outer(normal,normal)
+        for node in element.node_ids:
+            dofs=np.asarray(model.mesh.dof_manager.get_node_dofs(node),dtype=int)
+            if transformation[dofs[3:6]].nnz or np.any(prescribed[dofs[3:6]]):
+                raise ValueError('free shell sphere requires constrained zero shell rotations')
+            work=transformation[dofs[:3]].toarray()
+            column_scale=np.max(np.abs(work),axis=0)
+            active=column_scale>0
+            normalized=work[:,active]/column_scale[active]
+            if np.any(np.linalg.norm(projector@normalized,axis=0)>64*np.finfo(float).eps):
+                raise ValueError('free shell sphere requires constrained in-plane shell motion')
+            if np.linalg.norm(projector@prescribed[dofs[:3]])>padding:
+                raise ValueError('free shell sphere requires zero prescribed in-plane shell displacement')
+
+
 def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings,
            controls: ContactTransientSolverControls) -> str:
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
         raise ValueError("unsupported transient contact: " + "; ".join(report.issues))
     multiple = controls.allow_multiple_beam_planes_dev
-    required_motion = "general" if controls.allow_classical_beam_dev else "guided"
+    required_motion = "general" if controls.allow_classical_beam_dev or controls.allow_free_shell_sphere_dev else "guided"
     if (settings.pair_motion != required_motion or settings.warped_q4_plane
             or (not multiple and (len(definition.surfaces) != 1
                 or len(definition.rigid_bodies) != 1 or len(definition.interactions) != 1))
@@ -752,7 +838,7 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
                    for body in definition.rigid_bodies)
             or any(pair.normal_law != "penalty" for pair in definition.interactions)):
         raise ValueError(
-            "free sphere transient development requires one beam surface and one unprescribed penalty sphere"
+            "free sphere transient development requires one admitted surface and one unprescribed penalty sphere"
             if controls.allow_free_sphere_dev else
             "multiple beam transient development requires at least two interactions against fixed penalty planes"
             if multiple else "transient development profile requires one shell surface and one fixed penalty plane")
@@ -774,7 +860,7 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
     elif all(type(element) is QualifiedE4PLShellElement for element in elements):
         if controls.allow_s3_descriptor_dev:
             raise ValueError("S3 descriptor opt-in requires one qualified S3 V2D element")
-        profile = _PROFILE
+        profile = FREE_SHELL_SPHERE_PROFILE if controls.allow_free_shell_sphere_dev else _PROFILE
     elif (len(elements) == 1
           and type(elements[0]) is NativeParityE4PLS3V2DShellElement
           and controls.allow_s3_descriptor_dev):
@@ -839,7 +925,7 @@ def solve_transient_contact(
     emit_restart_checkpoint: bool = False,
     cancellation_token: CancellationToken | None = None,
 ) -> TransientContactResults:
-    """Solve bounded elastic Q4/S3 plane or classical round-beam impact.
+    """Solve bounded elastic shell or classical round-beam contact impact.
 
     Every Newton evaluation starts from the last committed material state.
     A rejected step leaves both the displacement and material state at the
@@ -858,6 +944,10 @@ def solve_transient_contact(
     The free-sphere opt-in additionally requires explicit mass and isotropic
     centre inertia. Three centre coordinates join the same coupled equations;
     torque-free spin is exact and does not expand friction/rotation admission.
+    The separate free-shell-sphere opt-in admits planar-reference Q4 skins,
+    constrained zero shell rotations/in-plane motion, and the same supplied
+    isotropic body. Its nodal-pressure radial law and complete two-space/time
+    Hermite bound have their own development profile and restart identity.
     Full endpoint agreement and corner minima are checked; reported transitions
     describe this discrete path, not exact continuum event times.
     Cancellation admits only the solver's exact unmodified token. It raises
@@ -909,7 +999,7 @@ def solve_transient_contact(
     if nodal_load_history is not None:
         if type(nodal_load_history) is not ContactNodalLoadHistory:
             raise TypeError("nodal_load_history must be ContactNodalLoadHistory")
-        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE, _BEAM_PROFILE, _MULTIPLE_BEAM_PROFILE, FREE_SPHERE_PROFILE):
+        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE, _BEAM_PROFILE, _MULTIPLE_BEAM_PROFILE, FREE_SPHERE_PROFILE, FREE_SHELL_SPHERE_PROFILE):
             raise ValueError("nodal load history requires one Q4 plane nodal LoadCase or opted-in S3 plane nodal LoadCase")
         if nodal_load_history.points[-1][0] < transient.t_end:
             raise ValueError("nodal load history must cover t_end")
@@ -930,6 +1020,8 @@ def solve_transient_contact(
             profile = _MULTIPLE_BEAM_HISTORY_PROFILE
         elif profile == FREE_SPHERE_PROFILE:
             profile = FREE_SPHERE_HISTORY_PROFILE
+        elif profile == FREE_SHELL_SPHERE_PROFILE:
+            profile = FREE_SHELL_SPHERE_HISTORY_PROFILE
     if tool_histories or free_body is not None:
         if tool_histories:
             profile = _BEAM_TOOL_HISTORY_PROFILE if nodal_load_history is not None else _BEAM_TOOL_PROFILE
@@ -985,6 +1077,8 @@ def solve_transient_contact(
     _, _, T, u0, independent_dofs, _ = build_constraint_transformation(
         K0, np.zeros(size, dtype=float), model,
     )
+    if controls.allow_free_shell_sphere_dev:
+        _admit_free_shell_coordinates(model, T, u0)
     if free_body is not None:
         M = sparse.block_diag((M, free_body.mass_kg*sparse.eye(3)), format='csr')
         T = sparse.block_diag((T, sparse.eye(3)), format='csr')
@@ -1016,7 +1110,8 @@ def solve_transient_contact(
     descriptor_basis = None
     if profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE,
                    _MULTIPLE_BEAM_PROFILE,_MULTIPLE_BEAM_HISTORY_PROFILE,_BEAM_TOOL_PROFILE,_BEAM_TOOL_HISTORY_PROFILE,
-                   FREE_SPHERE_PROFILE,FREE_SPHERE_HISTORY_PROFILE):
+                   FREE_SPHERE_PROFILE,FREE_SPHERE_HISTORY_PROFILE,
+                   FREE_SHELL_SPHERE_PROFILE,FREE_SHELL_SPHERE_HISTORY_PROFILE):
         try:
             np.linalg.cholesky(Mred.toarray())
         except np.linalg.LinAlgError as exc:
@@ -1088,12 +1183,15 @@ def solve_transient_contact(
             expected_manager = (_BeamRadialManager if free_body is not None
                                 else MultipleBeamRigidManager if controls.allow_multiple_beam_planes_dev
                                 else _BeamPlaneManager)
+        elif controls.allow_free_shell_sphere_dev:
+            from .sphere import _SphereShellManager
+            expected_manager = _SphereShellManager
         else:
             expected_manager = _PlanarQ4PlaneManager
         if type(manager) is not expected_manager:
             raise ValueError("transient development profile selected an unsupported contact owner")
         if free_body is not None:
-            manager = _FreeSphereManager(manager, free_body)
+            manager = _FreeSphereManager(manager, free_body,allow_shell=controls.allow_free_shell_sphere_dev)
             manager.profile = profile
         translations = _PlaneTranslations(manager, tool_histories) if tool_histories else None
         path_adapter = (_S3AffinePathAdapter.prepare(
@@ -1364,7 +1462,22 @@ def solve_transient_contact(
                             )
                         full_velocity = np.asarray(T @ candidate_velocity).reshape(-1)
                         if path_adapter is None:
-                            if controls.allow_classical_beam_dev:
+                            if controls.allow_free_shell_sphere_dev:
+                                from .shell_sphere_temporal_bounds import q4_sphere_hermite_gap_bounds
+                                side_admissible,side_splits=_free_shell_sphere_path_on_selected_side(
+                                    manager,previous_full,full,previous_velocity,full_velocity,step,
+                                    controls.maximum_beam_swept_subdivisions,check_cancel)
+                                bounds=q4_sphere_hermite_gap_bounds(manager.child,
+                                    previous_full[:size],full[:size],previous_velocity[:size],full_velocity[:size],step,
+                                    sphere_start_point=manager.reference_point+previous_full[-3:],
+                                    sphere_end_point=manager.reference_point+full[-3:],
+                                    sphere_start_velocity=previous_velocity[-3:],sphere_end_velocity=full_velocity[-3:],
+                                    tolerance_m=controls.beam_swept_gap_tolerance_m,
+                                    maximum_subdivisions=controls.maximum_beam_swept_subdivisions-side_splits,
+                                    check_cancel=lambda:check_cancel('free shell sphere complete-path bounds'))
+                                swept_gap=bounds.lower_gap
+                                beam_path_admissible=side_admissible and bounds.lower_gap>=-manager.gap_tolerance
+                            elif controls.allow_classical_beam_dev:
                                 if free_body is not None:
                                     from .sphere_temporal_bounds import beam_sphere_hermite_gap_bounds
                                     bounds = beam_sphere_hermite_gap_bounds(manager.child,
@@ -1480,7 +1593,7 @@ def solve_transient_contact(
                                                 event_seed = boundary.position
                                                 break
                         if (contact_result.gap_tolerance_met
-                                and (beam_path_admissible if controls.allow_classical_beam_dev
+                                and (beam_path_admissible if controls.allow_classical_beam_dev or controls.allow_free_shell_sphere_dev
                                      else swept_gap >= -manager.gap_tolerance)):
                             converged = True
                         break

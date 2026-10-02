@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.53. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.54. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -22,7 +22,7 @@ Publication, merging, release and historical-default changes are separate action
 | D2 partial shells | Named finite-penalty foundation/press/open/recontact/restart handoff accepted | Remaining geometry, search, finite rotation and self-contact |
 | D3 classical/native static | Restricted round-beam, retained-native and deformable-S3 prototypes integrated and reviewed | Full required pairings, endpoints, mesh/enforcement and section-family acceptance |
 | D4 friction/continuation | Fixed-material and planar material-anchor S3 owners use shared static equilibrium/pressure/history/restart; facet crossing, internal-seam generalized tangent and solved seam/restart checks pass in development | Friction integration/step refinement, partial overlap/history transfer, physical rims, finite rotation/warped surfaces, swept beam/native surfaces, nonlinear materials and arc length |
-| D5 impact | Q4/S3 planes and B2/B3 fixed/translating planes or coupled free isotropic sphere share Newmark driver/state/restart | General geometry, finite rotation, caps/pairs, shell/free-body work, anisotropic inertia, nonlinear materials and acceptance |
+| D5 impact | Q4/S3 planes, B2/B3 fixed/translating planes and explicit guided Q4/free isotropic sphere share Newmark driver/state/restart; new shell work/path/energy/restart checks and isolated installed example pass | Broader shell/free-body admission, general geometry, finite rotation, caps/pairs, anisotropic inertia, nonlinear materials and acceptance |
 | D6 native dynamics | Dedicated retained-inertia/SO(3) midpoint owner, state codec and installed development route | Broader geometry/sections, spatial accuracy and C7 acceptance |
 | Applications | ANYfem mapping/result summary plus supplied-settings persistence; ANYstructure intent/public mapping and early rejection | Source/model-bound capability admission, solve routing and full installed workflows |
 
@@ -46,12 +46,32 @@ local evaluation). Neither integrated R/K/work nor the original error gates pass
 Earlier open-pulse and adjacent-cut failures are retained. The saved second-load
 local integral, fullpatch, owner and split restart were not retried or admitted.
 
-NEXT derive a bounded residual/tangent contribution for the unresolved closed strip
-from the actual discrete work. Verify the analytical fixture before any saved-path
-retry. If that bound cannot be justified for the declared geometry/work maps, retain
-this explicit helper's restriction and advance an independent remaining programme
-slice; do not enter another refinement/budget-growth campaign. No history reset,
-zero replacement of closed response, tolerance/cap increase or renewed authority.
+Source scrutiny confirms the proposed envelopes cannot bound the event-sensitive
+closed tangent: alpha_q=-G_q/G_alpha, plus mixed elastic Hessian/work maps. Simple
+normal-root slope does not bound G_alpha away from zero at grazing. This is a missing
+derivative/singular-integral bound, not formulation failure. Retain the explicit
+native restriction; no saved-path retry, reset, zero closed-response replacement,
+tolerance/cap increase or renewed authority.
+
+The permitted alternative D5 slice now implements planar-reference guided Q4
+physical-skin/free isotropic sphere impact. Eight new driver/work/state checks,
+43 complete-Hermite geometry checks and five affected legacy outcomes pass by
+changed-source impact reuse. The independent symmetric two-body response matches
+within6.322e-11m/4.078e-9N; energy defect improves0.4623% to0.1133% on halving dt.
+Nonuniform shell normal modes remain coupled. Source review found and corrected
+interior selected-side loss and reduced-coordinate scaling-dependent admission;
+regressions pass. This is development evidence, not D5 engineering acceptance.
+An isolated installed wheel reproduces all example fields and208 imported-source
+hashes; existing installed accepted-shell identity remains unchanged.
+
+NEXT close the new shell load-history/work branch and its restart-bound controls
+with one independent driven two-body case. Then select the next required impact
+boundary from measured risk/cost; broader rotation/material/event admission requires
+its own work/path evidence. Native friction can resume only after a justified
+closed-strip residual/tangent bound, not another refinement campaign.
+
+[New D5 guide](docs/GENERAL_CONTACT_C6_FREE_SHELL_SPHERE_DEV.md) and
+[slice evidence](docs/d1_review_support/C6_FREE_SHELL_SPHERE_SLICE_20261003.md).
 
 [Current slice/evidence](docs/d1_review_support/contact_c5_native_surface_point_20261003/variable_front_results.md).
 [Prior checkpoint/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART76.md)

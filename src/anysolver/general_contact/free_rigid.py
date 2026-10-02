@@ -13,6 +13,8 @@ from scipy.spatial.transform import Rotation
 
 FREE_SPHERE_PROFILE = "CLASSICAL_B2_B3_FREE_ISOTROPIC_SPHERE_NEWMARK_DEV_V1"
 FREE_SPHERE_HISTORY_PROFILE = "CLASSICAL_B2_B3_FREE_ISOTROPIC_SPHERE_NEWMARK_HISTORY_DEV_V1"
+FREE_SHELL_SPHERE_PROFILE = "PLANAR_GUIDED_Q4_FREE_ISOTROPIC_SPHERE_NEWMARK_DEV_V1"
+FREE_SHELL_SPHERE_HISTORY_PROFILE = "PLANAR_GUIDED_Q4_FREE_ISOTROPIC_SPHERE_NEWMARK_HISTORY_DEV_V1"
 
 
 @dataclass(frozen=True)
@@ -71,17 +73,27 @@ class FreeRigidBodyState:
 
 class _FreeSphereManager:
     """Extend the radial contributor by the same potential's centre derivatives."""
-    def __init__(self, child, body):
+    def __init__(self, child, body, *, allow_shell=False):
+        from .beam_radial import _BeamRadialManager
+        from .sphere import _SphereShellManager
+        if type(allow_shell) is not bool:
+            raise TypeError('free-sphere shell selection must be explicit boolean')
+        expected = _SphereShellManager if allow_shell else _BeamRadialManager
+        if type(child) is not expected or (allow_shell and child.kind != 'sphere'):
+            raise ValueError('free sphere requires its explicitly selected radial work owner')
         self.child, self.body = child, body
         self.definition, self.settings = child.definition, child.settings
-        self.profile = FREE_SPHERE_PROFILE
+        self.profile = FREE_SHELL_SPHERE_PROFILE if allow_shell else FREE_SPHERE_PROFILE
         self.gap_tolerance = child.gap_tolerance
-        self.radius, self.cells = child.radius, child.cells
+        self.radius = child.radius
+        self.cells = child.faces if allow_shell else child.cells
+        self.reference_point = child.reference_center if allow_shell else child.reference_point
+        self.shell = allow_shell
         self.structural_size = child.model.mesh.dof_manager.total_dofs
         # Uniform nodal translation is the exact centre work map because the
         # centreline shape functions sum to one, including deformed B3 curves.
         nodes = {node: dofs for cell in self.cells for node, dofs in zip(cell.node_ids, cell.dofs)}
-        rows = [int(dof) for dofs in nodes.values() for dof in dofs]
+        rows = [int(dof) for dofs in nodes.values() for dof in dofs[:3]]
         columns = list(range(3))*len(nodes)
         self.translation_map = sparse.coo_matrix((np.ones(len(rows)), (rows, columns)),
             shape=(self.structural_size, 3)).tocsr()
@@ -94,7 +106,8 @@ class _FreeSphereManager:
         u = np.asarray(displacement, dtype=float)
         if u.shape != (self.structural_size+3,) or not np.all(np.isfinite(u)):
             raise ValueError("free sphere needs structural and three centre coordinates")
-        self.child.point = self.child.reference_point+u[-3:]
+        if self.shell:self.child.center = self.reference_point+u[-3:]
+        else:self.child.point = self.reference_point+u[-3:]
         force, stiffness, result = self.child.evaluate(u[:self.structural_size], tangent=tangent)
         A = self.translation_map
         residual = np.r_[force, -np.asarray(A.T @ force).reshape(-1)]
@@ -106,7 +119,7 @@ class _FreeSphereManager:
         return residual, coupled, replace(result, profile=self.profile)
 
     def state(self, time_s, displacement, velocity, acceleration, contact):
-        centre = self.child.reference_point+np.asarray(displacement)[-3:]
+        centre = self.reference_point+np.asarray(displacement)[-3:]
         v, a = np.asarray(velocity)[-3:], np.asarray(acceleration)[-3:]
         omega = np.asarray(self.body.initial_angular_velocity_rad_s)
         rotation = Rotation.from_rotvec(time_s*omega).as_matrix()
