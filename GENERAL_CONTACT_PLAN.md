@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-02.4. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-02.5. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -31,6 +31,26 @@ Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTA
 independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
+
+The pressure-coupled fixed-material S3 friction slice now uses the ordinary static
+path assembly/constraints, existing mortar pressure and accepted-step physical
+history. Independent review exposed a nonproportional-slip rigid-spin work defect
+in the prior local pair map; the reproduced failure is retained and transported
+elastic history now contributes to virtual work. Traction chain derivatives include
+pressure and frame motion; bounded numerical pressure/geometric derivatives remain
+development limitations. Fixed quadrature requires full source-facet coverage by
+one target facet and reference-area-consistent weights. Cuts fail explicitly.
+This advances D4; it does not complete general shell friction or change accepted
+normal profiles. See the [C5 guide](docs/GENERAL_CONTACT_C5_FRICTION_POINT.md) and
+[slice results](docs/d1_review_support/contact_c5_s3_pressure_history_20261002/results.md)
+for source/installed evidence.
+
+Next extend this integrated owner toward actual material-surface correspondence
+and quadrature/history transfer during finite sliding. First discriminate
+nonproportional and changing-normal response with deformable target motion before
+admitting repartitioned overlap. Retain the shared normal pressure space, objective
+work, atomic history/restart and dimensional gates. Beam friction must use swept
+round surfaces. Do not replace these required mechanics with more collinear toys.
 
 The native finite-angle temporal programme now has terminal physical/source/state
 PASS for freshN162 andN216 atT=.0045s, reusing savedN192prefix108. Common times

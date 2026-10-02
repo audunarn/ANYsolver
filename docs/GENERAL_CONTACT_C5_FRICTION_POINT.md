@@ -100,7 +100,7 @@ committed history owner remain to be implemented.
 `S3FrictionPointPair` is an internal fixed-material-pair force map. It takes
 two S3 points in one structural coordinate space, an explicit reference-area
 weight and a **prescribed** normal pressure. It builds the derivative `J_slip`
-of the objective relative increment only on relevant structural columns and
+of the elastic predictor, including transported retained elastic history, on relevant structural columns and
 returns the physical nodal force `A_ref J_slip^T t`. This includes frame terms
 that a direct `J_source^T t - J_target^T t` scatter would miss. It reports a
 disposable friction trial and does not mutate physical history. At zero
@@ -134,3 +134,44 @@ rejection. `tests/test_general_contact_s3_friction_pair.py` covers the local
 paired force map. These checks do not qualify coupled equilibrium, general
 frictional moment maps, finite sliding,
 restart, or energy accounting for a full structural step.
+
+## Pressure-coupled static development path
+
+`S3MaterialFrictionSettings` in `anysolver.general_contact.s3_friction_static`
+declares fixed S3 material quadrature pairs, reference area weights, Coulomb
+properties and dimensioned FE derivative steps. Pass it as `contact_friction`
+to `solve_static_nonlinear` with an explicit `contact_path_program`, or as
+`friction` to the shared `solve_static_contact_path`. No additional solver stack
+is introduced. This is an explicit development profile, not an accepted general
+shell-friction capability or application admission.
+
+The contributor interpolates the existing shared mortar nodal pressure at each
+source material quadrature point. Physical opening releases traction. The whole
+source facet must remain within its single selected target facet, and the declared
+quadrature weights must cover its reference area. A cut face fails even when all
+quadrature points remain inside. Both-body physical slip work is
+assembled with the opposite sign in the structural residual. Retained elastic
+history contributes to the work map; omitting it produces a spurious common-spin
+moment under nonproportional slip. The retained counterexample and its correction
+are checked separately from collinear sliding.
+
+Traction derivatives use the material-frame Coulomb chain rule, including pressure
+variation. Numerical differences of mortar pressure and geometric work maps remain
+bounded development derivatives. The explicit equality selection uses the stick
+member of the generalized derivative; activation uses the open member. Only FE
+columns reached by the actual constraint transformation are differentiated in the
+solve; force and reaction rows on both bodies are retained. Standalone work/tangent
+checks use all physical columns.
+
+Every candidate starts from the same accepted structural/friction origin. All
+friction states are prepared and validated before structural commit, then published
+without evaluation before reaction recovery. Restart binds quadrature identities,
+properties, numerical settings, committed pose, partner and material frame.
+Per-increment records distinguish traction, dissipation, storage and released
+regularization storage.
+
+This slice does not implement changing material partners, facet transfer, mortar
+friction integration over moving overlap, curved/warped geometry, nonlinear
+materials, beam friction, arc length or impact friction. Those remain required C5
+work. Its fixed quadrature weights and derivative steps are explicit controls;
+neither is an application default. Engineering acceptance remains open.

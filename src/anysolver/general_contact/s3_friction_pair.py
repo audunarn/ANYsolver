@@ -21,6 +21,7 @@ class S3FrictionPairEvaluation:
     relative_increment: tuple[float, float, float]
     structural_force: np.ndarray
     slip_map: np.ndarray
+    relative_increment_map: np.ndarray
     active_columns: tuple[int, ...]
 
 
@@ -125,11 +126,14 @@ class S3FrictionPointPair:
             force.setflags(write=False)
             slip_map.setflags(write=False)
             return S3FrictionPairEvaluation(
-                trial, relative, force, slip_map, (),
+                trial, relative, force, slip_map, slip_map, (),
             )
         source_map = self.source.position_map
         target_map = self.target.position_map
         slip_map = np.zeros((3, count))
+        relative_map = np.zeros((3, count))
+        retained = (np.asarray(committed_history.elastic_slip)
+                    if committed_history.partner_key == self.partner_key else np.zeros(3))
         active = np.unique(np.concatenate((
             source_map.indices,
             target_map.indices,
@@ -140,7 +144,9 @@ class S3FrictionPointPair:
         for column in active:
             direction = np.zeros(count)
             direction[column] = 1.0
-            slip_map[:, column] = objective_relative_tangent_variation(
+            frame_variation = self.target.frame_directional_variation(
+                candidate_displacement, direction)
+            relative_map[:, column] = objective_relative_tangent_variation(
                 source_committed=source_old.position,
                 target_committed=target_old.position,
                 source_candidate=source_new.position,
@@ -151,12 +157,13 @@ class S3FrictionPointPair:
                     source_map @ direction).reshape(3),
                 target_position_variation=np.asarray(
                     target_map @ direction).reshape(3),
-                target_frame_variation=(
-                    self.target.frame_directional_variation(
-                        candidate_displacement, direction,
-                    )
-                ),
+                target_frame_variation=frame_variation,
             )
+            # Traction is conjugate to the elastic predictor, including the
+            # objective transport of retained elastic history. Omitting this
+            # term creates rigid-spin work for nonproportional increments.
+            slip_map[:, column] = (relative_map[:, column]
+                + frame_variation @ np.asarray(committed_history.material_frame).T @ retained)
         force = self.reference_weight_m2 * (
             slip_map.T @ np.asarray(trial.traction)
         )
@@ -164,8 +171,9 @@ class S3FrictionPointPair:
             raise ValueError("S3 friction structural force exceeded finite range")
         force.setflags(write=False)
         slip_map.setflags(write=False)
+        relative_map.setflags(write=False)
         return S3FrictionPairEvaluation(
-            trial, relative, force, slip_map,
+            trial, relative, force, slip_map, relative_map,
             tuple(int(column) for column in active),
         )
 

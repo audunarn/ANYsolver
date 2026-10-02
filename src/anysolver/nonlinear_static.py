@@ -7817,9 +7817,12 @@ def solve_static_nonlinear(
     contact: Optional[Any] = None,
     contact_settings: Optional[Any] = None,
     contact_path_program: Optional[Any] = None,
+    contact_friction: Optional[Any] = None,
 ) -> NonlinearStaticResult:
     """Run nonlinear static analysis under one non-renewable family lease."""
 
+    if contact_friction is not None and contact_path_program is None:
+        raise ValueError("development shell friction requires an explicit contact path program")
     if contact_path_program is not None:
         from .general_contact.static_path import (
             ContactPathProgram,
@@ -7849,6 +7852,7 @@ def solve_static_nonlinear(
             emit_restart_checkpoint=emit_restart_checkpoint,
             record_increment_snapshots=record_increment_snapshots,
             cancellation_token=cancellation_token,
+            friction=contact_friction,
         )
 
     if contact is not None:

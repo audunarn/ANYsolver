@@ -356,6 +356,7 @@ def solve_static_contact_path(
         emit_restart_checkpoint: bool = False,
         record_increment_snapshots: bool = False,
         cancellation_token: CancellationToken | None = None,
+        friction=None,
         ) -> NonlinearStaticResult:
     """Solve one multi-control path under an admitted static contact profile.
 
@@ -531,6 +532,12 @@ def solve_static_contact_path(
         def run():
             with contact_scope(model, definition, settings,
                                allow_augmented=augmented) as manager:
+                if friction is not None:
+                    from .s3_friction_static import S3MaterialFrictionManager
+                    from .runtime import _ACTIVE_CONTACT
+                    manager = S3MaterialFrictionManager(model, manager, friction)
+                    # The enclosing scope restores its original context token.
+                    _ACTIVE_CONTACT.set(manager)
                 contract = {
                     "schema": "ANYSOLVER_STATIC_RESTART_CONTRACT_V2",
                     "control": "contact_path",
@@ -631,6 +638,8 @@ def solve_static_contact_path(
                         expected_keys.add("normal_multipliers")
                     if semismooth:
                         expected_keys.add("normal_forces")
+                    if friction is not None:
+                        expected_keys.add("friction_state")
                     if set(state) != expected_keys or state["mode"] != "contact_path":
                         raise ValueError("contact path checkpoint state is incompatible")
                     if state["terminal_status"] != "completed":
@@ -671,6 +680,8 @@ def solve_static_contact_path(
                                 or np.any(normal_forces < 0.0)):
                             raise ValueError("contact path checkpoint nodal forces are invalid")
                     committed_states = validated.element_states
+                    if friction is not None:
+                        manager.restore(state["friction_state"], validated.displacements)
                 if accepted_step > requested_step:
                     raise ValueError("contact path checkpoint is beyond requested target")
                 initial_u = np.asarray(T @ q + u0).reshape(-1)
@@ -1575,10 +1586,14 @@ def solve_static_contact_path(
                             manager.set_normal_multipliers(start_normal_multipliers)
                         status = "stopped_at_limit" if previous_steps else "diverged"
                         break
+                    friction_candidate = (manager.prepare_commit(accepted_u)
+                                          if friction is not None else None)
                     committed_states = _commit_nonlinear_state_candidate(
                         committed_states, candidate_states,
                         model=model, accepted_displacements=accepted_u,
                     )
+                    if friction is not None:
+                        manager.commit(friction_candidate)
                     recovered, _K, _states = _assemble_nonlinear_system(
                         model, accepted_u, committed_states, num_layers,
                         tangent=False, kinematics="von_karman",
@@ -1599,6 +1614,8 @@ def solve_static_contact_path(
                         "normal_multiplier_change": normal_multiplier_change,
                         "contact": certificate.to_dict(),
                     }
+                    if friction is not None:
+                        record["friction"] = manager.last_committed_summary
                     if settings.augmentation_support_resolution == "roundoff":
                         record["support_resets"] = support_resets
                     if accelerator is not None:
@@ -1704,6 +1721,8 @@ def solve_static_contact_path(
                                if augmented else {}),
                             **({"normal_forces": normal_forces.tolist()}
                                if semismooth else {}),
+                            **({"friction_state": manager.checkpoint_state()}
+                               if friction is not None else {}),
                         },
                     )
                 return NonlinearStaticResult(

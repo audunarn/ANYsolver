@@ -295,8 +295,14 @@ def trial_coulomb_point_directional(
     friction_coefficient: float,
     tangential_stiffness: float,
     partner_key: str | None,
+    allow_stick_slip_equality: bool = False,
 ) -> tuple[float, float, float]:
-    """Smooth-branch traction derivative with frame and pressure variation."""
+    """Traction derivative with frame and pressure variation.
+
+    Equality rejects by default. The explicit development option selects the
+    branch returned by the projection (stick at exact equality), a member of
+    the generalized derivative; it is not a smooth derivative at that kink.
+    """
 
     response = trial_coulomb_point(
         committed, material_frame=material_frame,
@@ -344,7 +350,7 @@ def trial_coulomb_point_directional(
     coefficient = float(friction_coefficient)
     cap = coefficient * float(normal_pressure)
     magnitude = float(np.linalg.norm(trial_vector))
-    if abs(stiffness*magnitude - cap) <= 1.0e-12 * max(
+    if not allow_stick_slip_equality and abs(stiffness*magnitude - cap) <= 1.0e-12 * max(
             1.0, stiffness*magnitude, cap):
         raise ValueError("stick/slip equality has no smooth traction derivative")
     if response.branch == "stick":

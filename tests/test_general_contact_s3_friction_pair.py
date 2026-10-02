@@ -54,6 +54,24 @@ def _translation_mode(model, nodes, component):
     return mode
 
 
+def test_retained_nonproportional_slip_has_no_rigid_spin_work_or_commit_jump():
+    model, positions, pair, origin, history = _case()
+    old = origin + .0001*_translation_mode(model,(1,2,3),0)
+    retained = pair.evaluate(origin,old,history,normal_pressure_Pa=2e6).trial.candidate_state
+    u = old + .0002*_translation_mode(model,(1,2,3),1)
+    trial = pair.evaluate(old,u,retained,normal_pressure_Pa=2e6)
+    assert trial.trial.branch == "stick"
+    spin = np.zeros(u.size)
+    axis = np.array((0.,0.,1.))
+    for node, reference in positions.items():
+        dofs = model.mesh.dof_manager.get_node_dofs(node)
+        spin[dofs[:3]] = np.cross(axis,np.asarray(reference)+u[dofs[:3]])
+        spin[dofs[3:6]] = axis
+    assert abs(float(trial.structural_force@spin)) <= 1e-8
+    refreshed = pair.evaluate(u,u,trial.trial.candidate_state,normal_pressure_Pa=2e6)
+    np.testing.assert_allclose(refreshed.structural_force,trial.structural_force,rtol=1e-10,atol=1e-8)
+
+
 def test_s3_pair_force_is_objective_virtual_work_and_balanced():
     model, positions, pair, committed, history = _case()
     candidate = committed.copy()
