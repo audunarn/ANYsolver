@@ -1,5 +1,15 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**2 October distributed native consumer delivery:** ANYfem9d302cb preserves
+GEBeamDistributedLoad through native Project, legacy-compatible strict format and
+existing linear/explicit-finite dispatch. Installed98consumer/395solver pair:
+91initial checks plus2final affected checks cover92unique checks; full on-disk
+save/reopen/cancel/restore/continue workflow passes. Independent review cleanup
+finding fixed/injection-tested.282onsiteimports,actual1thread/JIToff. GeneralizedQ4
+consumer example only; solver-family coverage does not substitute for additional
+consumer qualification. Remaining G4/G6/external/scale/platform obligations OPEN.
+[Evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-ge-distributed-consumer-20261002/results.md).
+
 **2 October native distributed GE loads:** public model-bound reference-arclength
 force/couple densities now run through the existing point owner, preserving native
 42-coordinate work, conservative force potential and nonconservative spatial

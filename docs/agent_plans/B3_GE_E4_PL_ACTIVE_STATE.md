@@ -9,9 +9,9 @@ Risk-proportionate/tiered development applies; historical scientific decisions,
 failed evidence and resource/execution restrictions remain binding.
 
 Solver root: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001, productb9ea639e. Consumer root:
+branch codex/stiffened-main-reconcile-20261001, producte4676e5b. Consumer root:
 C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, branch
-codex/experimental-ge-panel-consumer, HEAD83d41b1. Main is untouched.
+codex/experimental-ge-panel-consumer, HEAD9d302cb. Main is untouched.
 No contact-worker communication. Local scoped commits permitted; no current
 main merge/push/publication. Historical solver archive contains credential values:
 DO NOT disseminate affected history until authorized rotation/cleanup. New
@@ -76,17 +76,28 @@ equilibrium3.424254e-10,compatibility7.798304e-18. Independent source review cle
 no different-family qualification claim. Source/helper and installed fixture
 failures retained. [Evidence](development/r8-ge-native-distributed-20261002/results.md).
 
-Next usable slice: extend existing ANYfem point-panel input/persistence and Project
-load dispatch to this explicit distributed descriptor, retaining legacy/body/staged
-schemas. Verify actual new solver/consumer installed pair at this meaningful
-boundary; prior consumer artifacts do not establish new-load persistence. No new
-API or generic framework. Then continue open programme obligations by dependency.
-Line/footprint/combined loads, active yielding under the new loads, physical curved
-engineering/external references and complete G4 acceptance remain OPEN. Do not
-resume stopped refinement campaigns without a new discriminating hypothesis.
+ANYfem9d302cb now persists and dispatches the explicit distributed request via the
+existing native Project and point-panel adapter. Default linear/explicit finite
+dispatch, save/reopen, accepted0.25 cancellation, disk restore and identical0.5/1
+continuation pass on the actual installed pair.98consumer/395solver modules;
+282onsiteimports,effective1thread/JIToff.91initialchecks plus2finalaffected checks
+cover92unique checks by impact. Independent review caught an example second-owner
+creation cleanup leak; fixed and injection-tested. Source/product wheel unchanged
+after build; final example/fixture identities retained separately.
+[Consumer evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-ge-distributed-consumer-20261002/results.md).
 
-No live owned jobs. Sessions1197failed(test helper),20698/98021sourcepass and
-17483installed60pass are terminal. Curved fixturev1/v2failures andv3pass, example
-pass all terminal. Kernel/reviewer workers complete; do not relaunch passed checks
-without changed inputs. Current work is installed-tested experimental behavior,
-not aggregate qualification. Full Revision8 goal remains active.
+Next usable slice: inspect existing shell pressure and external-load operators for
+G4A mixed-owner integration, beginning from their actual force/derivative/frame
+contracts. Reuse admitted mechanics; distinguish reference dead pressure from
+current-area follower pressure. Do not substitute nodal dead forces for required
+pressure loading or infer complete qualification from existing standalone cases.
+Line/footprint/combined loads, active yielding under new loads, physical curved
+engineering/external references, spectra/prestress/capacity, practical scale and
+complete programme acceptance remain OPEN. Do not resume stopped refinement
+campaigns without a new discriminating hypothesis.
+
+No live owned jobs. Solver sessions1197failed(test helper),20698/98021sourcepass,
+17483installed60pass and curved/example runs all terminal. Consumer62834source91,
+28415installed91 and finalaffected2 all terminal/pass; workers complete. Failed
+fixtures retained. No repeated passed checks without changed inputs/findings.
+Full Revision8 goal remains active; this is experimental installed-tested behavior.
