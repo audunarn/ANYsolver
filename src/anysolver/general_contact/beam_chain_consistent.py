@@ -61,6 +61,12 @@ def _roots(coefficients,lo,hi):
     not collapse distinct roots before domain filtering. Unresolved enclosure
     overlap with a nonroot domain end is an explicit precision-limit failure.
     """
+    coefficients=tuple(Fraction(v) for v in coefficients)
+    leading=next((v for v in coefficients if v),None)
+    if leading is None:return ()
+    # Canonical rational coefficients make root midpoint identity invariant
+    # under scaling, including genuine irrational three-feature ties.
+    coefficients=tuple(v/leading for v in coefficients)
     a,b,c=coefficients
     if a==0:
         bounds=[] if b==0 else [(-c/b,-c/b)]
@@ -155,18 +161,48 @@ def _equal_work(first,second):
     return np.linalg.norm(first-second)<=512*np.finfo(float).eps*max(1.,np.linalg.norm(first),np.linalg.norm(second))
 
 
+def _nearest_indices(source,targets,s,*,partition=False):
+    """Exact squared-distance ownership, with registered irrational root cuts.
+
+    A physical length tolerance can falsely tie nearby but distinct projections
+    on a gently bent chain. Rational distances distinguish these features. At a
+    partition cut, an irrational root is recognized by its verified enclosure
+    midpoint identity rather than rounded distance equality.
+    """
+    source,targets=_rational_geometry(source,targets);s=Fraction(s)
+    coefficients=[_coefficients(source,target,s)[0] for target in targets]
+    values=[_value(poly,s) for poly in coefficients]
+    winner=min(range(len(values)),key=values.__getitem__)
+    cuts={Fraction(0),Fraction(1)}
+    if partition:
+        for target in targets:
+            _,raw,slope=_coefficients(source,target,s)
+            if slope:cuts.update(v for v in (-raw/slope,(1-raw)/slope) if 0<v<1)
+        # Use the generating projection branch interval, including an exact
+        # left projection cut. A nonroot enclosure overlap still fails closed.
+        lo=max(v for v in cuts if v<=s) if s<1 else max(v for v in cuts if v<s)
+        hi=min(v for v in cuts if v>s) if s<1 else Fraction(1)
+    tied=[]
+    for index,value in enumerate(values):
+        if value==values[winner]:tied.append(index)
+        elif partition:
+            difference=tuple(a-b for a,b in zip(coefficients[index],coefficients[winner]))
+            if s in _roots(difference,lo,hi):tied.append(index)
+    return tuple(tied)
+
+
 def _check_owner(source_cell,source,target_cells,targets,owner,s,radius):
     """Resolve harmless shared-material ties; reject ambiguous active work."""
     gap,gradient,_=_point_law(source,targets[owner],s,radius,True)
-    tolerance=512*np.finfo(float).eps*max(radius,source_cell.length,*(cell.length for cell in target_cells))
+    tied=_nearest_indices(source,targets,s)
+    if owner not in tied:
+        raise ValueError('beam-chain owner partition is inconsistent with closest distance')
     if gap>=0.: return
     _check_projection_plateau(source,targets[owner],s)
     for index,target in enumerate(targets):
         if index==owner: continue
         other,other_gradient,_=_point_law(source,target,s,radius,True)
-        if other<gap-tolerance:
-            raise ValueError('beam-chain owner partition is inconsistent with closest distance')
-        if abs(other-gap)<=tolerance:
+        if index in tied:
             _check_projection_plateau(source,target,s)
             _,(first,second)=_mapped_gradients(source_cell,
                 (target_cells[owner],target_cells[index]),(gradient,other_gradient))
@@ -186,8 +222,7 @@ def _check_partition_knot(cell,source,target_cells,targets,windows,s,radius):
     evaluations=[_point_law(source,target,s,radius,True) for target in targets]
     gap=min(row[0] for row in evaluations)
     if gap>=0.: return
-    tolerance=512*np.finfo(float).eps*max(radius,cell.length,*(c.length for c in target_cells))
-    tied=[index for index,row in enumerate(evaluations) if row[0]-gap<=tolerance]
+    tied=_nearest_indices(source,targets,s,partition=True)
     if len(tied)<2: return
     _,mapped=_mapped_gradients(cell,tuple(target_cells[i] for i in tied),
                                tuple(evaluations[i][1] for i in tied))
@@ -229,12 +264,13 @@ def moving_owner_block(source_cell,source,target_cells,targets,left_owner,right_
         raise ValueError('beam-chain moving ownership boundary is unresolved')
     # A third distinct physical work map at this distance is not one simple
     # two-owner interface. Deterministic cell ordering does not repair it.
+    tied=_nearest_indices(source,targets,s,partition=True)
+    if left_owner not in tied or right_owner not in tied:
+        raise ValueError('beam-chain switch does not have nearest owners')
     for index,target in enumerate(targets):
         if index in (left_owner,right_owner): continue
         other,gradient,_=_point_law(source,target,s,radius,True)
-        if other<gap-tolerance:
-            raise ValueError('beam-chain switch does not have nearest owners')
-        if abs(other-gap)<=tolerance:
+        if index in tied:
             union,gradients=_mapped_gradients(source_cell,
                 (*selected,target_cells[index]),(left_gradient,right_gradient,gradient))
             if not (_equal_work(gradients[0],gradients[2]) or _equal_work(gradients[1],gradients[2])):

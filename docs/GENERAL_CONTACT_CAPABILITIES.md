@@ -1,6 +1,19 @@
 # General-contact capability ledger
 ## Consistent classical B2-chain tangent — 3 October
 
+Successor partial-contact code verification: exact squared-distance ties and
+canonical rational root identity correct false near-seam rejection and preserve
+genuine irrational triple guards under all target permutations. Six independent
+Timoshenko/P1 cases (mesh2/4/8;line stiffness1000/10000) yield maximum displacement/
+reaction errors1.368e-10/4.692e-9 against1e-6 target. Independent full-curve gap
+and contact force balance pass. Installed44checks plus6changed gap/balance checks
+pass49.427s/336564224B and12.450s/165916672B;209modules/491files byte-match,JIT0/pools1.
+Current guided median3.979517→0.368139s (10.810x),same18Newton/0cutbacks.
+New9runs/56records retain oracle/tie/helper/preflight failures. Small-motion code
+verification and sensitivity do not establish continuum/general-geometry acceptance.
+[Current evidence](d1_review_support/contact_chain_refinement_20261003/summary.json).
+The initial implementation/timing below retains its earlier candidate meaning.
+
 Explicit beam_chain_tangent="consistent_dev" differentiates the existing
 half-weighted directional nearest-cell potential with local implicit projection
 Hessians and moving-owner cross-target blocks. Exact rational partitioning retains

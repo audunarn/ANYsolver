@@ -55,6 +55,13 @@ from collapsing before domain filtering. Enclosure overlap or unresolved nonroot
 domain-end overlap fails within a finite precision budget. Irrational cuts are
 enclosure midpoints, not exact algebraic roots.
 
+Nearest-feature classification uses exact squared distances. A length tolerance
+previously mistook distinct nearby projections on a gently bent chain for an
+unequal-work tie. At irrational cuts, canonical rational polynomial normalization
+makes verified root midpoint identity invariant under scaling; the containing
+all-feature projection interval retains branch-boundary rejection. Genuine
+irrational triple ties are checked under all target permutations.
+
 Active unequal-work domain-end ties, repeated nontransverse ties, distinct triple
 ownership and projection-clamp plateaus reject. Strict shared-material-vertex
 cones with identical mapped work are distinguished from these ambiguities;
@@ -80,3 +87,10 @@ failed; the displacement comparison is a different development case. All earlier
 root/panel/fixture failures are retained in the raw archive. Supporting Read
 scrutiny by a different author using the same model family is not independent
 engineering acceptance. Scientific tolerances and resource limits are unchanged.
+
+The [partial-contact reference evidence](d1_review_support/contact_chain_refinement_20261003/summary.json)
+compares guided small-motion cantilever chains against an independently assembled
+Timoshenko/P1 unilateral line-foundation reference. Mesh and penalty sensitivity
+are separate axes. The reference excludes finite-sliding geometry nonlinearities;
+very small loads/gaps explicitly bound that comparison. It verifies distributed
+work and measured sensitivity, not arbitrary-motion or continuum acceptance.

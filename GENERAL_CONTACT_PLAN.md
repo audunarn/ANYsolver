@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.78. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.79. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -21,16 +21,23 @@ exact branch polynomials and verified rational root enclosures distinguish activ
 transverse interfaces from ambiguous repeated/end/triple/projection-plateau ties.
 Ambiguities fail; legacy defaults and old default restart identities remain.
 
-Installed29checks plus1capability check pass, including force/displacement, active
-fresh restart, independent work/tangent, numbering, public example and compatibility.
-Final route34.584s/330788864B;208imported solver modules/491package files byte-match,
-effective JIT0/pools1. Balanced identical guided four-step displacement solves:
-median3.851780s legacy →0.315607s consistent (12.204x), same18Newton iterations,
-zero cutbacks, displacement difference2.73659e-11m. This is a measured narrow
-development route, not shell/native/programme speed qualification. Full14runs/
-72raw records, earlier failures and supporting source scrutiny are retained.
+The partial-contact cantilever discriminator exposed a false near-projection tie.
+Exact squared-distance classification, canonical rational root normalization and
+containing projection intervals correct it without weakening genuine ambiguity
+guards. Irrational triple ties reject under all target permutations. Six independent
+Timoshenko/P1 reference cases separate mesh2/4/8 and line stiffness1000/10000:
+maximum displacement/reaction errors1.368e-10/4.692e-9 versus1e-6 target; independent
+whole-curve gap and contact force balance meet retained gates. This verifies the
+small-motion distributed work and sensitivity, not general continuum acceptance.
+Installed44checks and6additional changed gap/balance checks pass49.427s/336564224B
+and12.450s/165916672B;209modules/491package files byte-match,JIT0/pools1. Latest
+balanced guided medians3.979517→0.368139s (10.810x),same18Newton/0cutbacks,
+displacement difference2.73659e-11m. Prior12.204x timing is retained for its earlier
+candidate; no shell/native/programme speed qualification. New9runs/56raw records
+retain failed oracle/tie/helper/preflight evidence and supporting source scrutiny.
+[Refinement evidence](docs/d1_review_support/contact_chain_refinement_20261003/summary.json).
 [Guide/evidence](docs/GENERAL_CONTACT_BEAM_CHAIN_CONSISTENT_DEV.md).
-Broader refinement/physical endpoints and engineering/application admission remain
+Broader continuum/geometry refinement, physical endpoints and engineering/application admission remain
 open. Adaptive integration and irrational enclosure-midpoint cuts are not a general
 integration-error certificate. Next pursue a genuine outstanding mechanics or
 refinement row using one bounded discriminator; do not repeat this passed suite.

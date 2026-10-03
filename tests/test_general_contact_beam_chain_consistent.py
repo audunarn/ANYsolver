@@ -3,6 +3,7 @@ from dataclasses import replace
 from pathlib import Path
 from fractions import Fraction
 import json,os,time
+from itertools import permutations
 
 import numpy as np
 import pytest
@@ -12,7 +13,7 @@ from anysolver import (BoundaryCondition,ContactSolverSettings,DisplacementContr
     LoadCase,solve_static_nonlinear,validate_general_contact)
 from anysolver.general_contact.beam_chain_pair import _BeamChainPairManager,PROFILE_CONSISTENT
 from anysolver.general_contact.beam_chain_consistent import moving_owner_block
-from anysolver.general_contact.beam_chain_consistent import _check_partition_knot,_windows,_roots
+from anysolver.general_contact.beam_chain_consistent import _check_partition_knot,_windows,_roots,_nearest_indices,_coefficients,_rational_geometry
 from anysolver.general_contact.beam_pair import _Segment
 from anysolver.elements import BeamElement
 from test_general_contact_beam_chain_pair import _chains,_closed
@@ -73,7 +74,7 @@ def test_v_switch_tangent_includes_positive_cross_owner_interface():
     # The branch-bulk Hessian alone must fail this discriminator.
     positions=manager._positions(u)
     cell=manager.segments[0][0]; source=positions[0][0]
-    s=-source[0,0]/(source[1,0]-source[0,0])
+    s=-Fraction.from_float(float(source[0,0]))/(Fraction.from_float(float(source[1,0]))-Fraction.from_float(float(source[0,0])))
     dofs,block,nonzero=moving_owner_block(cell,source,manager.segments[1],positions[1],0,1,s,
                                         manager.radius,manager.stiffness)
     assert nonzero and np.linalg.eigvalsh(block).min()>-1e-9
@@ -336,3 +337,46 @@ def test_capability_does_not_admit_development_or_foreign_geometry():
         'foreign','plane',(0.,0.,0.),normal=(0.,1.,0.)),))
     invalid=validate_general_contact(model,foreign,controls)
     assert not invalid.valid and any('explicit multi-cell beam pair' in x for x in invalid.issues)
+
+
+def test_near_projection_cut_does_not_create_a_false_unequal_work_tie():
+    source=np.array([[0.,0.,0.],[1.,0.,0.]])
+    targets=(np.array([[0.,.001999991,0.],[.5,.00199999,0.]]),
+             np.array([[.5,.00199999,0.],[1.,.001999988,0.]]))
+    rational,(second,)=_rational_geometry(source,(targets[1],))
+    _,raw,slope=_coefficients(rational,second,Fraction(1,2))
+    cut=-raw/slope
+    # Float distances are too close to classify ownership using a geometric
+    # tolerance; exact squared distances prove the first feature is nearest.
+    assert _nearest_indices(source,targets,cut,partition=True)==(0,)
+    cell=_Segment(1,(1,2),source,np.arange(6).reshape(2,3),1.)
+    cells=(_Segment(2,(3,4),targets[0],np.arange(6,12).reshape(2,3),.5),
+           _Segment(3,(4,5),targets[1],np.arange(9,15).reshape(2,3),.5))
+    windows=_windows(source,targets,(2,3),.002)
+    _check_partition_knot(cell,source,cells,targets,windows,cut,.002)
+
+
+def test_irrational_root_identity_is_invariant_under_rational_scaling():
+    polynomial=(Fraction(1),Fraction(0),Fraction(-1,2))
+    root=_roots(polynomial,Fraction(0),Fraction(1))
+    for scale in (Fraction(-2),Fraction(3),Fraction(1,7)):
+        assert _roots(tuple(scale*v for v in polynomial),Fraction(0),Fraction(1))==root
+
+
+@pytest.mark.parametrize('order',list(permutations(range(3))))
+def test_irrational_triple_tie_rejects_all_target_permutations(order):
+    source=np.array([[0.,0.,0.],[10.,0.,0.]])
+    # Distances squared: 100s²+1, 50s²+25 and 49. Three unequal
+    # material work maps meet at s=sqrt(.48); differences are proportional.
+    raw=(np.array([[0.,1.,-20.],[0.,1.,20.]]),
+         np.array([[-20.,5.,-20.],[20.,5.,20.]]),
+         np.array([[-20.,7.,0.],[20.,7.,0.]]))
+    targets=tuple(raw[i] for i in order)
+    cell=_Segment(1,(1,2),source,np.arange(6).reshape(2,3),10.)
+    cells=tuple(_Segment(i+2,(2*i+3,2*i+4),pose,np.arange(6+6*i,12+6*i).reshape(2,3),40.)
+                for i,pose in enumerate(targets))
+    windows=_windows(source,targets,(2,3,4),8.)
+    cut=_roots((Fraction(100),Fraction(0),Fraction(-48)),Fraction(0),Fraction(1))[0]
+    assert len(_nearest_indices(source,targets,cut,partition=True))==3
+    with pytest.raises(ValueError,match='triple ownership'):
+        _check_partition_knot(cell,source,cells,targets,windows,cut,8.)
