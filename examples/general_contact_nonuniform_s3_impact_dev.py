@@ -1,0 +1,100 @@
+"""Two finite S3 bodies with nonuniform target motion at a common Newmark stage.
+
+The source has uniform normal translation. The target retains translation and
+an affine normal slope with fixed rotations: actual S3 shear work remains active.
+This explicit fixed-projection development profile is not engineering acceptance.
+"""
+import argparse
+import json
+from pathlib import Path
+import numpy as np
+from anysolver import (BoundaryCondition, ContactDefinition, ContactInteraction,
+    ContactSurface, ContactSolverSettings, ContactTransientSolverControls, FEModel,
+    TransientConfig, create_shell_element, solve_transient_contact)
+
+GAP = .0002
+KN = 1.e9
+SUPPORT = np.array([1/3, 1/6, 1/3, 1/6])
+X_BAR = np.array([.375, .75, .625, .25])-1/3
+B = np.column_stack((np.ones(4), -np.ones(4), -X_BAR))
+# The admitted S3 profile owns lumped translational mass: target nodal
+# masses m/3 at x=(-2,5,-2), giving mean-square (x-1/3)^2=98/9.
+MASS = np.diag([20., 49., 49.*98./9.])
+INITIAL_VELOCITY = np.array([-.1, 0., 0.])
+SETTINGS = ContactSolverSettings(pair_motion='general',
+    general_s3_difference_step=1.e-5, general_s3_differentiation='jet2_s3_dev')
+CONTROLS = ContactTransientSolverControls(allow_fixed_projection_s3_target_dev=True,
+    q4_plane_event_subdivision_dev=True, batch_plane_event_fronts_dev=True,
+    save_constraint_reactions_dev=True, equilibrium_tolerance=1.e-10)
+
+
+def build_model():
+    model = FEModel('nonuniform-S3-target-impact-dev')
+    model.add_material('source', 1.e7, .3, density=1000.)
+    model.add_material('target', 1.e7, .3, density=100.)
+    coordinates = ((0,0,.0202), (1,0,.0202), (1,1,.0202), (0,1,.0202),
+                   (-2,-2,0), (5,-2,0), (-2,5,0))
+    for node, point in enumerate(coordinates, 1):
+        model.add_node(node, *point)
+    for eid, nodes in ((1,[1,2,3]), (2,[1,3,4]), (3,[5,6,7])):
+        model.add_element(eid, create_shell_element(eid, nodes,
+            'source' if eid < 3 else 'target', thickness=.02,
+            formulation='e4-pl-s3-v2d', reference_normal=(0.,0.,1.)))
+    model.add_boundary_condition(BoundaryCondition('normal-guides', list(range(1,8)),
+        dict(ux=0., uy=0., rx=0., ry=0., rz=0.)))
+    normal_dofs = [model.mesh.dof_manager.get_node_dofs(node)[2] for node in range(1,8)]
+    for dof in normal_dofs[1:4]:
+        model.add_constraint_equation(terms=((dof,1.), (normal_dofs[0],-1.)))
+    model.add_constraint_equation(terms=((normal_dofs[6],1.), (normal_dofs[4],-1.)))
+    modes = np.zeros((42,3))
+    for node, point in enumerate(coordinates, 1):
+        dof = normal_dofs[node-1]
+        if node <= 4:
+            modes[dof,0] = 1.
+        else:
+            modes[dof,1:] = [1., point[0]-1/3]
+    definition = ContactDefinition(
+        (ContactSurface('source', (1,2), side='bottom'),
+         ContactSurface('target', (3,), side='top')), (),
+        (ContactInteraction('pair', 'source', 'target', KN, 2.e-5,
+                            normal_law='projected_penalty'),))
+    return model, definition, modes
+
+
+def modal(values, modes):
+    return np.asarray(values)@modes@np.linalg.inv(modes.T@modes)
+
+
+def solve(*, dt=2.5e-5, end=.003, checkpoint=None, emit=False,
+          controls=CONTROLS, cancellation_token=None):
+    model, definition, modes = build_model()
+    result = solve_transient_contact(model, definition,
+        TransientConfig(dt, end, initial_velocity=modes@INITIAL_VELOCITY),
+        contact_settings=SETTINGS, solver_controls=controls,
+        restart_checkpoint=checkpoint, emit_restart_checkpoint=emit,
+        cancellation_token=cancellation_token)
+    return model, result, modes
+
+
+def run():
+    _, result, modes = solve()
+    q, v = modal(result.displacements, modes), modal(result.velocities, modes)
+    return dict(status='development; not engineering acceptance', profile=result.profile,
+        times_s=result.times.tolist(), q_m=q.tolist(), v_m_s=v.tolist(),
+        contact=[row.to_dict() for row in result.contact],
+        swept_minimum_gaps_m=result.swept_minimum_gaps.tolist(),
+        cutbacks=result.cutbacks, events_s=result.localized_contact_event_times,
+        cutback_diagnostics=result.cutback_diagnostics,
+        endpoint_requests=result.event_endpoint_evaluations,
+        stage_evaluations=result.plane_event_stage_evaluations)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path)
+    args = parser.parse_args()
+    text = json.dumps(run(), indent=2, allow_nan=False)
+    if args.output:
+        args.output.write_text(text+'\n', encoding='utf-8')
+    else:
+        print(text)

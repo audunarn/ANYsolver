@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.63. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.64. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -171,11 +171,24 @@ exact represented motion and actual mapped skin-path checks now gate this compon
 integer motion and hidden-crossing/normal tests. This is source-tested components,
 not new driver/installed/engineering admission.
 [Evidence](docs/d1_review_support/C6_NONUNIFORM_S3_COMPONENTS_20261003.md).
-NEXT connect this exact nonuniform-target profile to shared Newmark pressure events,
-physical path, transactions and restart under explicit selection. Preserve the
-projected law's separate regularization-storage reporting and all old defaults.
-Use one physically referenced equilibrated impact before broader source deformation;
-arbitrary motion cannot inherit the fixed-projection affine event assumptions.
+That integration is now implemented/source/installed-tested under the explicit
+fixed-projection S3 target profile. Full general Jet2 both-body work remains in
+shared Newmark; exact pressure/physical path checks precede acceptance. Sixteen
+scoped successful outcomes(15unique) cover actual lumped mass, coupled branch
+reference, gap/accounting, V12 state/identity, rollback/cutback and two old-profile
+checks. The125-state route has5pressure events/0cutbacks, physical lower−12.00um
+within20um and named reachable-coordinate energy defect2.97e−9. An initial oracle
+mass error and the unresolved-proof abort are retained; the latter now takes
+bounded cutback before commit. Supporting review's missing panel-budget identity
+is bound/rejection-tested. Source/installed231hashes/all fields match;6.25/6.26s
+single runs are compatibility observations, not speed-up or release claims.
+[Guide](docs/GENERAL_CONTACT_C6_NONUNIFORM_S3_DEV.md),
+[evidence](docs/d1_review_support/C6_NONUNIFORM_S3_DRIVER_SLICE_20261003.md).
+NEXT exercise both target normal slopes with independently derived full nodal
+mass/pressure moments on this existing profile. Then derive a bounded actual
+deforming-source event/work route: arbitrary source motion cannot inherit the
+fixed-projection affine sidecar. Preserve separate regularization storage, all
+old defaults and the complete C0–C9 acceptance requirements.
 No open-ended mesh/dt campaign, resource increase or weakening of scientific gates.
 The earlier uncoupled example cannot supply contact-driven-plasticity claims.
 Its prior120-step route is approximately78s; no speed-up claim.

@@ -1330,8 +1330,37 @@ values, integer overflow and poisoned support fail explicitly.
 89 scoped current pass outcomes(87unique) include53 geometry,30 pressure/work,
 3 reference-plane delta and3 combined path/rounding checks; failed initial reporting
 field tests and supporting review findings remain retained. The combined path is
-prescribed component geometry, not equilibrated impact. Implemented/source-tested;
-driver admission, installed testing, independent acceptance, release and application
-admission remain false. General source deformation/rotation/sliding and full C6
-outcomes remain required.
+prescribed component geometry, not equilibrated impact. This historical component
+packet establishes source-tested prerequisites; the integrated development route
+and its additional evidence are listed below. Independent acceptance, release and
+application admission remain false. General source deformation/rotation/sliding
+and full C6 outcomes remain required.
 [Evidence](d1_review_support/C6_NONUNIFORM_S3_COMPONENTS_20261003.md).
+
+## Nonuniform S3 target impact — installed-tested development
+
+`allow_fixed_projection_s3_target_dev=True` explicitly selects two elastic S3 V2D
+surfaces/one S3 target with a projected-penalty interaction. Exact uniform-source
+normal translation and nonuniform target normal nodal motion preserve reference
+projection/support. Shared Newmark uses the full general Jet2 contributor for both
+bodies, not a guided force substitute. Candidate pressure agreement and actual
+mapped physical skin Hermite proofs gate every increment. V12 binds ordered
+pressure identities, physical sweep budgets and existing definitions/settings.
+Unresolved face proof requests bounded cutback; cancellation/exception cleanup is
+tested. Existing profile selection and V1–V11 schemas remain separate.
+
+Sixteen successful scoped outcomes(15unique,13new-profile plus2legacy) cover
+declared lumped mass, one retained target slope with actual S3 work, coupled
+16-branch pressure/Newmark reference, complete wrench/momentum, physical gap,
+reachable-coordinate accounting, active restart and identity rejection, cutback
+and cancellation. The spatial structural stiffness is an accepted oracle input;
+these checks do not independently qualify S3 spatial mechanics. Source/wheel
+231imported hashes and all example fields agree. Initial wrong oracle mass and
+unresolved-proof abort failures remain retained; no scientific tolerance changed.
+
+Implemented: **yes**. Source-tested: **yes, named fixture**. Installed-tested:
+**yes**. Independently accepted: **no**. Released/application-admitted: **no**.
+General source deformation, rotation/sliding, full target two-direction fixtures,
+nonlinear materials, friction and unrestricted C6 impact remain incomplete.
+[Guide](GENERAL_CONTACT_C6_NONUNIFORM_S3_DEV.md),
+[evidence](d1_review_support/C6_NONUNIFORM_S3_DRIVER_SLICE_20261003.md).
