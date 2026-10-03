@@ -443,6 +443,15 @@ class FinitePointDriver:
             np.zeros((len(owner._beam_parts), 18)),
             np.zeros(owner._C.shape[0]))
         self._shell_origins = tuple(part[3] for part in owner._shell_parts)
+        # Immutable preparation is owner-local, not accepted/checkpoint state.
+        # Unsupported or material Q4 inputs keep the complete evaluation route.
+        self._q4_corrections = {}
+        if owner._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_POLICY:
+            for eid, element, slots, _ in owner._shell_parts:
+                if len(slots) == 24:
+                    material = owner._shell_model.get_material(element.material_name)
+                    self._q4_corrections[eid] = element._prepare_nonlinear_linear_correction(
+                        owner._shell_model.mesh, material)
         if owner._has_physical_fibre and owner._definition.shell.j2_curve is not None:
             material = owner._shell_model.get_material("shell")
             self._shell_origins = tuple(
@@ -611,7 +620,8 @@ class FinitePointDriver:
             elif owner._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_POLICY:
                 force, tangent, candidate = q4_algorithmic_response(
                     owner._shell_model, element, state.q[slots], origin, 3,
-                    rotation_anchors=anchors)
+                    rotation_anchors=anchors,
+                    prepared_correction=self._q4_corrections.get(eid))
             else:
                 total, chart_map = (state.q[slots], None) if anchors is None else total_coordinates(state.q[slots], anchors)
                 force, tangent, candidate = corotational_element_response(

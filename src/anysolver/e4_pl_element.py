@@ -819,6 +819,44 @@ class _Q4FastInputSnapshot(NamedTuple):
     vector_metadata: Any
 
 
+class _PreparedQ4LinearCorrection:
+    """Owner-local immutable preparation, never a checkpoint/material state."""
+    __slots__ = ("__weakref__",)
+
+
+def _make_prepared_q4_correction_provenance():
+    records = weakref.WeakKeyDictionary()
+
+    def prepare(element, mesh, material, post_observation):
+        correction = element._qualified_linear_correction(
+            mesh, material, 5, post_observation=post_observation)
+        if element._qualified_component_guard is None:
+            return None
+        element._validate_qualified_component_guard(post_observation=post_observation)
+        inputs = _capture_q4_fast_input_snapshot(element, mesh, material)
+        if inputs is None:
+            return None
+        record = _PreparedQ4LinearCorrection()
+        # Payload and original binding stay closure-owned. There is no arbitrary
+        # bytes registrar, and no record attribute is trusted during evaluation.
+        records[record] = (weakref.ref(record), element, mesh, material,
+            element._qualified_component_guard, inputs,
+            np.ascontiguousarray(correction, dtype=float).tobytes())
+        return record
+
+    def lookup(record):
+        value = records.get(record)
+        if value is None or value[0]() is not record:
+            return None
+        return value[1:]
+
+    return prepare, lookup
+
+
+_prepare_q4_correction_payload, _lookup_prepared_q4_correction = (
+    _make_prepared_q4_correction_provenance())
+
+
 class _Q4FastCacheRecord(NamedTuple):
     reference: Any
     components: Any
@@ -5714,6 +5752,67 @@ class QualifiedE4PLShellElement(
         remain a constant separately recoverable part of the tangent.
         """
 
+        return self._nonlinear_response_core(
+            mesh, material, u_elem, state, num_layers, tangent,
+            _return_tangent_components=_return_tangent_components,
+            post_observation=_qualified_runtime_post_observation,
+        )
+
+    def _prepare_nonlinear_linear_correction(
+        self, mesh: Any, material: Any, *,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
+    ) -> Optional[_PreparedQ4LinearCorrection]:
+        """Prepare only exact builtin, nonyielding scalar-section Q4 inputs."""
+        if (type(self) is not QualifiedE4PLShellElement or
+                self.shell_section is not None or
+                type(mesh) is not _Q4_FAST_MESH_TYPE or
+                type(material) is not _Q4_FAST_MATERIAL_TYPE or
+                material.hardening_curve is not None or material.yield_stress != 0.):
+            return None
+        if _capture_q4_fast_input_snapshot(self, mesh, material) is None:
+            return None
+        return _prepare_q4_correction_payload(
+            self, mesh, material, _qualified_runtime_post_observation)
+
+    def _compute_prepared_nonlinear_response(
+        self, mesh: Any, material: Any, u_elem: np.ndarray,
+        state: Optional[Any], num_layers: int, tangent: bool, *,
+        prepared: _PreparedQ4LinearCorrection,
+        _return_tangent_components: bool = False,
+        _qualified_runtime_post_observation: Optional[Callable[[], None]] = None,
+    ) -> Any:
+        """Same nonlinear update with an originally bound elastic correction."""
+        def require_preparation() -> bytes:
+            if type(prepared) is not _PreparedQ4LinearCorrection:
+                raise TypeError("qualified Q4 correction preparation required")
+            binding = _lookup_prepared_q4_correction(prepared)
+            if (binding is None or binding[0] is not self or
+                    binding[1] is not mesh or binding[2] is not material or
+                    self._qualified_component_guard is not binding[3] or
+                    not _q4_fast_input_snapshot_matches(self, mesh, material, binding[4])):
+                raise RuntimeError("qualified Q4 correction preparation is stale")
+            self._validate_qualified_component_guard(
+                post_observation=_qualified_runtime_post_observation)
+            return binding[5]
+
+        correction = np.frombuffer(require_preparation(), dtype=float).reshape(24, 24)
+        result = self._nonlinear_response_core(
+            mesh, material, u_elem, state, num_layers, tangent,
+            _return_tangent_components=_return_tangent_components,
+            post_observation=_qualified_runtime_post_observation,
+            prepared_correction=correction)
+        # User-supplied arrays/state may execute observation callbacks. Recheck
+        # the ORIGINAL binding as well as the ordinary runtime boundary.
+        require_preparation()
+        return result
+
+    def _nonlinear_response_core(
+        self, mesh, material, u_elem, state, num_layers, tangent, *,
+        _return_tangent_components=False, post_observation=None,
+        prepared_correction=None,
+    ):
+        _qualified_runtime_post_observation = post_observation
+
         _validate_q4_quadrature_authority(self)
         layers = _qualified_q4_layer_count(num_layers)
         observed_vector = np.asarray(u_elem, dtype=float)
@@ -5755,7 +5854,7 @@ class QualifiedE4PLShellElement(
             layers,
             tangent_evaluated=bool(tangent),
         )
-        correction = self._qualified_linear_correction(
+        correction = prepared_correction if prepared_correction is not None else self._qualified_linear_correction(
             mesh,
             material,
             layers,
@@ -7454,6 +7553,8 @@ _q4_guarded_public_names = (
     "compute_geometric_stiffness_matrix",
     "compute_internal_forces",
     "compute_nonlinear_response",
+    "_prepare_nonlinear_linear_correction",
+    "_compute_prepared_nonlinear_response",
     "compute_committed_current_tangent_components",
     "compute_stresses",
     "numerical_internal_force",

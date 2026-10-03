@@ -18,7 +18,8 @@ def local_coordinates(model, element, displacement, *, rotation_anchors=None):
                        rotation_anchors=rotation_anchors)[0]
 
 
-def response(model, element, displacement, origin, layers, *, rotation_anchors=None):
+def response(model, element, displacement, origin, layers, *, rotation_anchors=None,
+             prepared_correction=None):
     """Differentiate the unchanged local update from one accepted predecessor."""
     material = model.get_material(element.material_name)
     curve = material.hardening_curve
@@ -31,8 +32,13 @@ def response(model, element, displacement, origin, layers, *, rotation_anchors=N
     u = np.asarray(displacement, dtype=float)
     local, differential, second = deformation(reference, u, stable_translation=True,
                                               rotation_anchors=rotation_anchors)
-    force, tangent, candidate = element.compute_nonlinear_response(
-        model.mesh, material, local, origin, layers, True)
+    if prepared_correction is None:
+        force, tangent, candidate = element.compute_nonlinear_response(
+            model.mesh, material, local, origin, layers, True)
+    else:
+        force, tangent, candidate = element._compute_prepared_nonlinear_response(
+            model.mesh, material, local, origin, layers, True,
+            prepared=prepared_correction)
     force, tangent = np.asarray(force), np.asarray(tangent)
     if (force.shape != (24,) or tangent.shape != (24, 24) or
             not np.isfinite(force).all() or not np.isfinite(tangent).all() or
