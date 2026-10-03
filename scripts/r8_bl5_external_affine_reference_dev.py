@@ -1,9 +1,10 @@
 """One fixed-grid independent external affine BL5 reference, development only.
 
-The 16x4 ASDShellQ4/32 ElasticTimoshenkoBeam model has eight physical supports
-and both [1, xi] density modes in every channel. No native C or product module
-is imported. Physical integrated rows and OpenSees dependent-row normalization
-are retained separately. This is not a refinement, locking or F03 assessment.
+The default 16x4 ASDShellQ4/32 ElasticTimoshenkoBeam model and one bounded
+32x8/64-interval Mx discriminator retain the SAME eight physical supports and
+both [1, xi] density modes in every channel. No native C or product module is
+imported. Physical rows and dependent-row normalization are retained separately.
+This is not a growing-support refinement, locking or F03 assessment.
 """
 from __future__ import annotations
 
@@ -135,16 +136,24 @@ def coefficient_maps(rows):
 
 def aggregate_rows(model, reference):
     """Independent 80 physical rows; 80 row-equivalent unique-dependent rows."""
-    if (model["nx"], model["ny"], model["beam_intervals"], model["support_count"]) != (16, 4, 32, 8):
-        raise ValueError("only the existing 16x4/32/eight-support model is admitted")
+    nx, nb = model["nx"], model["beam_intervals"]
+    if (type(nx) is not int or type(nb) is not int or
+            (nx, model["ny"], nb, model["support_count"]) not in ((16, 4, 32, 8), (32, 8, 64, 8))):
+        raise ValueError("only the declared 16x4/32 or 32x8/64 eight-support model is admitted")
     first, rb, rs = model["beam_root"], F(reference.BEAM_BOTTOM_ARM_M), F(reference.SHELL_THICKNESS_M)/2
-    knots = sorted({F(i, 32) for i in range(33)} | {F(i, 16) for i in range(17)})
+    if (tuple(model["beam_node_ids"]) != tuple(range(first, first+nb+1)) or
+            any(tuple(model["nodes"][first+i]) != (float(F(i, nb)), 0., reference.BEAM_AXIS_Z_M)
+                for i in range(nb+1)) or
+            any(tuple(model["nodes"][1+i]) != (float(F(i, nx)), 0., 0.) for i in range(nx+1))):
+        raise ValueError("declared uniform matching physical traces required")
+    knots = sorted({F(i, nb) for i in range(nb+1)} | {F(i, nx) for i in range(nx+1)})
+    stride, hb = nb//8, F(1, nb)
     physical, emitted, supports, all_dependent = [], [], [], []
     exact_blocks = []
     for index in range(8):
         left, right = F(index, 8), F(index+1, 8)
-        bw, bp = integrated_affine_weights(left, right, 32, first, knots)
-        sw, sp = integrated_affine_weights(left, right, 16, 1, knots)
+        bw, bp = integrated_affine_weights(left, right, nb, first, knots)
+        sw, sp = integrated_affine_weights(left, right, nx, 1, knots)
         block = [{} for _ in range(10)]  # support, channel, degree
         for weights, sign, arm in ((bw, F(1), rb), (sw, F(-1), rs)):
             for degree, nodes in enumerate(weights):
@@ -153,7 +162,10 @@ def aggregate_rows(model, reference):
                         block[2*d+degree][n, d+1] = sign*w
                     block[degree][n, 5] = sign*arm*w
                     block[2+degree][n, 4] = -sign*arm*w
-        quarter_nodes = (first+4*index+1, first+4*index+3)
+        quarter_nodes = (first+stride*index+stride//4, first+stride*index+3*stride//4)
+        if any((bw[0][n], bw[1][n]) != (hb, sign*hb/2)
+               for n, sign in zip(quarter_nodes, (-1, 1))):
+            raise ValueError("exact uniform quarter-station shape integrals required")
         dependent = [(n, d) for n in quarter_nodes for d in range(1, 6)]
         if any(model["fixes"].get(n, (0,)*6)[d-1] for n, d in dependent):
             raise ValueError("all selected interior dependent coordinates must be free")
@@ -169,6 +181,7 @@ def aggregate_rows(model, reference):
         emitted.extend(flat_row(row, key) for row, key in zip(transformed, dependent))
         supports.append({"support_id": index, "interval_m": [float(left), float(right)],
             "width_m": float(right-left), "row_indices": list(range(10*index, 10*index+10)),
+            "beam_spacing_m": float(hb),
             "physical_row_order": "channel0..4, degree0/1 per channel",
             "beam_shape_integrals_m": [{n: float(v) for n, v in w.items()} for w in bw],
             "shell_shape_integrals_m": [{n: float(v) for n, v in w.items()} for w in sw],
@@ -201,20 +214,26 @@ def transpose_action(rows, multipliers, nodes):
 def recover_densities(pairing, beam_resisting, rb):
     """Independent closed two-station recovery of D.T*lambda=L-G.
 
-    Quarter/three-quarter integrals are w0=h/4, w1=-/+h/8. Undo the
+    Quarter/three-quarter integrals are w0=hb, w1=-/+hb/2, hb=1/nb. Undo the
     physical arm map at each node before recovering the constant/slope pair.
     The center's degree-one shape integral is zero and cannot recover a slope.
     """
     densities, records = [], []
     maps = coefficient_maps(pairing["physical_rows"])
     for support in pairing["supports"]:
-        nodes, h = support["recovery_beam_nodes"], support["width_m"]
+        nodes, h, hb = support["recovery_beam_nodes"], support["width_m"], support["beam_spacing_m"]
         rhs = [float(beam_resisting[n][d]) for n in nodes for d in range(5)]
         pulled = [[*rhs[5*i:5*i+3], math.fsum((rhs[5*i+3], rb*rhs[5*i+1])),
                    math.fsum((rhs[5*i+4], -rb*rhs[5*i]))] for i in range(2)]
-        lam = [v for d in range(5) for v in
-               (2*math.fsum((pulled[0][d], pulled[1][d]))/h,
-                4*math.fsum((pulled[1][d], -pulled[0][d]))/h)]
+        if hb == h/4:
+            # Preserve the completed coarse route's operation order exactly.
+            lam = [v for d in range(5) for v in
+                   (2*math.fsum((pulled[0][d], pulled[1][d]))/h,
+                    4*math.fsum((pulled[1][d], -pulled[0][d]))/h)]
+        else:
+            lam = [v for d in range(5) for v in
+                   (math.fsum((pulled[0][d], pulled[1][d]))/(2*hb),
+                    math.fsum((pulled[1][d], -pulled[0][d]))/hb)]
         indices = support["row_indices"]
         actual = [[maps[r].get((n, d), 0.) for r in indices]
                   for n in nodes for d in range(1, 6)]
@@ -224,7 +243,7 @@ def recover_densities(pairing, beam_resisting, rb):
         records.append({"support_id": support["support_id"], "recovery_beam_nodes": nodes,
             "actual_D_transpose": actual, "rhs_L_minus_G": rhs,
             "lambda_physical_channel_degree": lam, "residual": residual,
-            "formula": "undo arm map; a=2*(left+right)/h; b=4*(right-left)/h"})
+            "formula": "undo arm map; a=(left+right)/(2*hb); b=(right-left)/hb; hb=beam spacing"})
         densities.extend(lam)
     return densities, records
 
@@ -471,12 +490,17 @@ def finalize(recorder, service, output, summary, *, earlier_error):
         raise errors[0]
 
 
-def main(site, output, case):
-    if case not in ("fy", "mx", "mz"):
-        raise ValueError("one existing physical load case required")
+def admit_case(nx, case):
+    if (type(nx) is not int or nx not in (16, 32) or case not in ("fy", "mx", "mz") or
+            (nx == 32 and case != "mx")):
+        raise ValueError("coarse16 Fy/Mx/Mz or the single finer32 Mx discriminator required")
+
+
+def main(site, output, case, *, nx=16):
+    admit_case(nx, case)
     output.mkdir(parents=True, exist_ok=False)
     recorder, service = None, None
-    summary = {"status": "failed", "nx": 16, "case": case, "basis": BASIS,
+    summary = {"status": "failed", "nx": nx, "case": case, "basis": BASIS,
         "classification": "Fixed-grid independent affine development only; no locking/accuracy/F03 acceptance",
         "source_sha256": sha(__file__), "helper_sources": HELPER_SHA256,
         "python": sys.version, "requested_threads": {name: os.environ.get(name) for name in
@@ -486,7 +510,8 @@ def main(site, output, case):
         refinement, p0, frozen, service, reference = services()
         if any(name == "anysolver" or name.startswith("anysolver.") for name in sys.modules):
             raise ValueError("independent external runner must not import product modules")
-        model = refinement.geometry(16, reference)
+        model = refinement.geometry(nx, reference)
+        model["support_count"] = 8  # Fixed physical endpoints i/8, not the helper's growing space.
         pairing = aggregate_rows(model, reference)
         commands = refinement.command_recipe(model, reference, pairing["emitted_rows"], case)
         expected = refinement.planned_inventory(commands)
@@ -541,5 +566,6 @@ if __name__ == "__main__":
     parser.add_argument("--site", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--case", required=True, choices=("fy", "mx", "mz"))
+    parser.add_argument("--nx", type=int, choices=(16, 32), default=16)
     args = parser.parse_args()
-    main(args.site, args.output_dir, args.case)
+    main(args.site, args.output_dir, args.case, nx=args.nx)

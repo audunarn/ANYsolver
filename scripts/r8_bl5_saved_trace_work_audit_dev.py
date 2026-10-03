@@ -37,15 +37,26 @@ def run(root, output):
     pools = threadpool_info()
     assert pools and all(p['num_threads'] == 1 for p in pools)
     inputs = json.loads((root/'native/inputs.json').read_text())
+    summary = json.loads((root/'native/summary.json').read_text())
+    nx = inputs['layout']['nx']
+    ns = len(inputs['layout']['shell_node_ids'])
+    shell_end, physical = 6*ns, inputs['layout']['counts']['physical_dofs']
     traces = inputs['station_traces']
-    assert len(traces) == 64 and inputs['layout']['counts']['physical_dofs'] == 708
+    assert nx in (16, 32) and len(traces) == 4*nx and physical == 6*(ns+2*nx+1)
+    assert inputs['policy']['support_endpoints_m'] == [i/8 for i in range(9)]
     with np.load(root/'native/operators.npz', allow_pickle=False) as op:
         c = sparse.csr_matrix((op['C_data'], op['C_indices'], op['C_indptr']), shape=tuple(op['C_shape']))
     result = {'scope': 'saved-state trace/work development only; no causal allocation/locking/F03 acceptance',
               'source_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               'channel_map': 'native g=(-common translation, -common Ry, common Rx); same orthogonal density map',
-              'pools': pools, 'cases': {}, 'source_files': {}}
-    for case in ('fy', 'mx', 'mz'):
+              'nx': nx, 'pools': pools, 'cases': {}, 'source_files': {}}
+    for name in ('inputs.json', 'operators.npz', 'summary.json'):
+        path = root/'native'/name
+        result['source_files']['native/'+name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert summary['status'] == 'COMPLETED_DEVELOPMENT_ONLY'
+    cases = tuple(summary['cases'])
+    assert cases and set(cases).issubset(('fy', 'mx', 'mz')) and (nx == 16 or cases == ('mx',))
+    for case in cases:
         paths = [root/'native'/case/'raw-state.npz', root/'native'/case/'physical-transfer.json',
                  root/'external'/case/'inputs.json', root/'external'/case/'raw-inventory.json',
                  root/'external'/case/'recovered-actions.json']
@@ -72,9 +83,9 @@ def run(root, output):
             first, second = port['node_indices']; alpha = port['weight']; sw = trace['shell_alpha']
             shell = (1-sw)*q[slots[:6]]+sw*q[slots[6:12]]
             exshell = (1-sw)*exq[slots[:6]]+sw*exq[slots[6:12]]
-            beam = (1-alpha)*q[510+6*first:516+6*first]+alpha*q[510+6*second:516+6*second]
-            exbeam = (1-alpha)*exq[510+6*first:516+6*first]+alpha*exq[510+6*second:516+6*second]
-            cell_slot = 708+24*port['member_index']+3*port['native_cell']
+            beam = (1-alpha)*q[shell_end+6*first:shell_end+6*(first+1)]+alpha*q[shell_end+6*second:shell_end+6*(second+1)]
+            exbeam = (1-alpha)*exq[shell_end+6*first:shell_end+6*(first+1)]+alpha*exq[shell_end+6*second:shell_end+6*(second+1)]
+            cell_slot = physical+24*port['member_index']+3*port['native_cell']
             director = q[cell_slot:cell_slot+3]
             broken = physical_gap(beam, shell, director)
             nodal = physical_gap(beam, shell, beam[3:])
@@ -94,7 +105,7 @@ def run(root, output):
                 'native_nodal_P1_rotation': beam[3:].tolist()})
         direct_native = (c@q).reshape(5, 8, 2).transpose(1, 0, 2)
         expected_broken = np.array([common_channels(v) for v in direct_native])
-        independent_nodal = row_action(external_inputs['physical_rows'], q[:708], ids)
+        independent_nodal = row_action(external_inputs['physical_rows'], q[:physical], ids)
         independent_external = row_action(external_inputs['physical_rows'], exq, ids)
         # Independent saved Jacobian and independently integrated external hats.
         np.testing.assert_allclose(moments_broken, expected_broken, rtol=1e-9, atol=1e-17)

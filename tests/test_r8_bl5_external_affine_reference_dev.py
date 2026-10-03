@@ -1,5 +1,6 @@
 """Independent finite-dimensional work and exact-integration controls; no OpenSees."""
 from fractions import Fraction as F
+from copy import deepcopy
 import json
 from types import SimpleNamespace
 
@@ -9,10 +10,11 @@ import pytest
 from scripts import r8_bl5_external_affine_reference_dev as affine
 
 
-@pytest.fixture(scope="module")
-def fixture():
+@pytest.fixture(scope="module", params=(16, 32))
+def fixture(request):
     refinement, p0, frozen, service, reference = affine.services()
-    model = refinement.geometry(16, reference)
+    model = refinement.geometry(request.param, reference)
+    model["support_count"] = 8
     pairing = affine.aggregate_rows(model, reference)
     return refinement, p0, frozen, service, reference, model, pairing
 
@@ -26,10 +28,10 @@ def dense(rows, nodes):
     return matrix, slots
 
 
-@pytest.mark.parametrize("intervals,first", ((16, 1), (32, 100001)))
+@pytest.mark.parametrize("intervals,first", ((16, 1), (32, 100001), (64, 100001)))
 def test_signed_exact_weight_identities_and_independent_quadrature(intervals, first):
     left, right = F(1, 10), F(7, 10)
-    knots = sorted({F(i, 32) for i in range(33)} | {F(i, 16) for i in range(17)})
+    knots = sorted({F(i, 64) for i in range(65)} | {F(i, 32) for i in range(33)})
     weights, pieces = affine.integrated_affine_weights(left, right, intervals, first, knots)
     assert sum(weights[0].values()) == right-left
     assert sum(weights[1].values()) == 0
@@ -77,6 +79,12 @@ def test_emission_is_verified_invertible_row_transform_and_unique_free_dependenc
         e = np.array(support["emitted_from_physical_E"])
         np.testing.assert_allclose(e@d, np.eye(10), atol=2e-16, rtol=0.)
     assert not np.any(c[:, 5::6])  # Released normal spin in all five channels.
+    stride = model["beam_intervals"]//8
+    for support in pairing["supports"]:
+        start = model["beam_root"]+stride*support["support_id"]
+        assert support["recovery_beam_nodes"] == [start+stride//4, start+3*stride//4]
+        assert support["interval_m"] == [support["support_id"]/8, (support["support_id"]+1)/8]
+        assert support["beam_spacing_m"] == 1/model["beam_intervals"]
 
 
 def test_density_to_emitted_dual_and_noncompatible_virtual_work(fixture):
@@ -104,9 +112,10 @@ def test_all_channel_continuous_virtual_work_against_independent_point_gap(fixtu
     rng = np.random.default_rng(622)
     field = {n: rng.normal(size=6) for n in nodes}
     lam = rng.normal(size=80)
-    bx, sx = np.linspace(0., 1., 33), np.linspace(0., 1., 17)
+    nb, nx = model["beam_intervals"], model["nx"]
+    bx, sx = np.linspace(0., 1., nb+1), np.linspace(0., 1., nx+1)
     bq = np.array([field[n] for n in model["beam_node_ids"]])
-    sq = np.array([field[n] for n in range(1, 18)])
+    sq = np.array([field[n] for n in range(1, nx+2)])
     rb, rs = reference.BEAM_BOTTOM_ARM_M, reference.SHELL_THICKNESS_M/2
     gauss, weights = np.polynomial.legendre.leggauss(3)
     continuous_work = 0.
@@ -135,9 +144,9 @@ def test_known_synthetic_coefficients_recover_through_independent_arm_map(fixtur
     rb = reference.BEAM_BOTTOM_ARM_M
     for support in pairing["supports"]:
         coefficients = known[support["row_indices"]].reshape(5, 2)
-        h = support["width_m"]
+        hb = 1/model["beam_intervals"]
         for n, sign in zip(support["recovery_beam_nodes"], (-1., 1.)):
-            weighted = coefficients@np.array((h/4, sign*h/8))
+            weighted = coefficients@np.array((hb, sign*hb/2))
             resisting[n] = [*weighted[:3], weighted[3]-rb*weighted[1],
                              weighted[4]+rb*weighted[0], 0.]
     recovered, records = affine.recover_densities(pairing, resisting, rb)
@@ -186,6 +195,35 @@ def test_existing_derivative_objectivity_controls_with_both_modes(fixture):
     assert max(controls["actual_left_exp_derivative_relative"]) < affine.DERIVATIVE_LIMIT
     assert controls["row_transform_max_abs"] < affine.BALANCE_LIMIT
     assert controls["normal_spin_columns_zero"]
+
+
+@pytest.mark.parametrize("nx,case", ((16, "fy"), (16, "mx"), (16, "mz"), (32, "mx")))
+def test_only_declared_grid_load_pairs_are_admitted(nx, case):
+    affine.admit_case(nx, case)
+
+
+@pytest.mark.parametrize("nx,case", ((32, "fy"), (32, "mz"), (64, "mx"), (16, "unknown"), (16., "mx")))
+def test_other_grid_load_pairs_are_rejected_without_loading_helpers(nx, case, tmp_path, monkeypatch):
+    def must_not_load():
+        pytest.fail("unsupported case loaded helpers")
+    monkeypatch.setattr(affine, "services", must_not_load)
+    output = tmp_path/"not-executed"
+    with pytest.raises(ValueError, match="single finer32 Mx"):
+        affine.main(tmp_path/"unused-site", output, case, nx=nx)
+    assert not output.exists()
+
+
+def test_nonuniform_trace_and_growing_support_space_are_rejected(fixture):
+    *_, reference, model, pairing = fixture
+    shifted = deepcopy(model)
+    node = model["beam_root"]+1
+    xyz = shifted["nodes"][node]
+    shifted["nodes"][node] = (np.nextafter(xyz[0], np.inf), *xyz[1:])
+    with pytest.raises(ValueError, match="uniform matching"):
+        affine.aggregate_rows(shifted, reference)
+    changed = deepcopy(model); changed["support_count"] = 16
+    with pytest.raises(ValueError, match="eight-support"):
+        affine.aggregate_rows(changed, reference)
 
 
 def test_helper_identity_failure_is_retained_without_loaded_services(tmp_path, monkeypatch):

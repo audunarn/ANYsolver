@@ -1818,3 +1818,16 @@ family acceptance unmet. Formal F03 UNCONSUMED/full goal ACTIVE. No release/main
 change. Raw81-file explicit whitelist binds nativeinputs/operators and all new
 source/outcomes; no protected history sweep.
 [Results, limitations, review and evidence](development/r8-bl5-affine-flexible-20261003/results.md).
+
+**3 October fixed-eight finer mechanical discriminator:** source parent8dd348bb,
+32x8Q4/64half-cells/768retained/80rows, sameeight physical supports and Mx10Nm.
+Work difference -1.02387 to -0.01097%; interiorMz11.0894 to1.2003Nm; beamgroundFy
+20.4266 to2.2260N. Trace-work witness -0.84021 to -0.01856%. Retain nativephysical
+trace experimentally; physicaltransfer/M2 OPEN. Two fixed-space grids do not
+establish convergence/locking/growing-space stability or converged1% acceptance.
+36focusedchecks pass; independent OpenAI Read tooling/outcome review clear;
+417unchanged installedmodulebytes. Serialruns completed; exact controls<=4.12e-12.
+External effectiveDLLsettings/different-familyacceptance remainunmet. NextONE
+completeallchannelspan4/sixteensupport comparison onexistingfinegrid, notanother
+mesh/channel tuning. FormalF03 UNCONSUMED/fullgoalACTIVE; no main/release change.
+[Combined results, review and immutable51-file evidence](development/r8-bl5-fixed-support-fine-20261003/results.md).

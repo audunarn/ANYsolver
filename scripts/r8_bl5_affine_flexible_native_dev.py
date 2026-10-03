@@ -1,4 +1,4 @@
-"""One installed native16x4 affine BL5 comparison; no new refinement or gate.
+"""Bounded installed affine BL5 comparison on two explicit mechanical grids.
 
 External rows are independently assembled, never imported into the native owner.
 Common physical fields are compared separately from native retained coordinates.
@@ -73,7 +73,29 @@ def exact_transfer_moments(records, bounds=(0., 1.)):
     return [[math.fsum(component) for component in row] for row in terms]
 
 
-def run(site, wheel, source, fixtures, external, output):
+def fixed_support_model(coherent, nx):
+    """Freeze eight physical intervals while mechanical resolution doubles.
+
+    This is distinct from the growing-space production-policy investigation.
+    Never infer support locations from an automatic resolution policy here.
+    """
+    from dataclasses import replace
+    require(nx in (16, 32), 'only coarse and one finer mechanical grid admitted')
+    definition, policy = coherent.model(nx, nx//4, 2*nx, 2, basis='discontinuous_p1')
+    span = nx//4
+    definition = replace(definition, lines=(replace(definition.lines[0], multiplier_span=span),))
+    policy = dict(policy, span_halfcells=span,
+        support_membership=[list(range(a, a+span)) for a in range(0, 2*nx, span)],
+        support_endpoints_m=[i/8 for i in range(9)],
+        fixed_support_policy='SAME_EIGHT_AFFINE_MECHANICAL_DISCRIMINATOR_V1',
+        c_lambda_actual=nx/8,
+        scope='fixed interface space, not growing-space stability or qualified production policy')
+    return definition, policy
+
+
+def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 'mx', 'mz')):
+    require(nx in (16, 32) and cases and all(c in LOADS for c in cases), 'bounded grid/load request required')
+    require(nx == 16 or tuple(cases) == ('mx',), 'the single finer discriminator is Mx only')
     require(not any(n.split('.')[0] == 'anysolver' for n in sys.modules), 'fresh installed process required')
     site, fixtures = site.resolve(strict=True), fixtures.resolve(strict=True)
     sys.path[:0] = [str(site), str(fixtures)]
@@ -90,7 +112,7 @@ def run(site, wheel, source, fixtures, external, output):
     inventory.matched = matched
     output.mkdir(parents=True, exist_ok=False)
     summary = {'status': 'FAILED', 'scope': 'bounded flexible physical development; no locking/F03/accuracy acceptance',
-               'source_sha256': sha(__file__), 'basis': 'discontinuous_p1', 'cases': {}}
+               'source_sha256': sha(__file__), 'basis': 'discontinuous_p1', 'nx': nx, 'cases': {}}
     try:
         _, _, service, _, reference, _ = matched.reference_services()
     except BaseException as error:
@@ -118,18 +140,18 @@ def run(site, wheel, source, fixtures, external, output):
               'anysolver_import': anysolver.__file__, 'pools': pools, 'numba_threads': numba.get_num_threads(),
               'jit_disabled': bool(numba.config.DISABLE_JIT),
               'helpers': {Path(m.__file__).name: sha(m.__file__) for m in (coherent, matched, inventory)}})
-        definition, policy = coherent.model(16, 4, 32, 2, basis='discontinuous_p1')
+        definition, policy = fixed_support_model(coherent, nx)
         owner = stiffened_shell.create_analysis(definition=definition)
-        xyz, layout = inventory.layout(owner, definition, policy, 16)
+        xyz, layout = inventory.layout(owner, definition, policy, nx)
         trace = inventory.station_inventory(owner)
         ns, nb = len(owner._shell_ids), len(owner._beam_ids)
-        require(owner._C.shape == (80, 6*(ns+nb)+24*16) and ns == 85 and nb == 33,
+        require(owner._C.shape == (80, 6*(ns+nb)+24*nx) and ns == (nx+1)*(nx//4+1) and nb == 2*nx+1,
                 'fixed native physical/retained layout required')
-        require(policy['span_halfcells'] == 4 and policy['support_endpoints_m'] == [i/8 for i in range(9)],
+        require(policy['span_halfcells'] == nx//4 and policy['support_endpoints_m'] == [i/8 for i in range(9)],
                 'same eight complete supports required')
-        require(np.allclose(xyz[:ns], [(i/16, .2*j/4, 0.) for j in range(5) for i in range(17)],
+        require(np.allclose(xyz[:ns], [(i/nx, .2*j/(nx//4), 0.) for j in range(nx//4+1) for i in range(nx+1)],
                             rtol=0, atol=1e-13), 'fixed shell geometry required')
-        require(np.allclose(xyz[ns:], [(i/32, 0., reference.BEAM_AXIS_Z_M) for i in range(33)],
+        require(np.allclose(xyz[ns:], [(i/(2*nx), 0., reference.BEAM_AXIS_Z_M) for i in range(2*nx+1)],
                             rtol=0, atol=1e-13), 'fixed beam geometry required')
         elastic = np.diag((reference.E_PA*reference.BEAM_AREA_M2,
             reference.G_PA*reference.BEAM_SHEAR_AREA_M2, reference.G_PA*reference.BEAM_SHEAR_AREA_M2,
@@ -154,10 +176,11 @@ def run(site, wheel, source, fixtures, external, output):
         ids = [r['external_node'] for r in layout['typed_physical_nodes']]
         shell_index = {n: i for i, n in enumerate(owner._shell_ids)}
         cells = [tuple(shell_index[n] for n in cell) for cell in definition.shell.q4_elements]
-        for case, wrench in LOADS.items():
+        for case in cases:
+            wrench = LOADS[case]
             folder = output/case; folder.mkdir()
             cw = lambda name, value: service._atomic(folder/(name+'.json'), matched.plain(value))
-            result = owner.solve_linear((stiffened_shell.NodalAction('beam', 133, wrench),))
+            result = owner.solve_linear((stiffened_shell.NodalAction('beam', 101+2*nx, wrench),))
             q = np.r_[result.shell_displacement, result.beam_coordinates]
             load = np.array(owner._accepted[1], copy=True)
             g, ct = owner._K@q, owner._C.T@result.multipliers
@@ -165,7 +188,7 @@ def run(site, wheel, source, fixtures, external, output):
                 'Kq': g, 'connection_resisting': ct, 'reactions': result.reactions, 'xyz_m': xyz,
                 'external_ids': ids, 'weak_gaps': owner._C@q, 'full_equilibrium': g+ct-load,
                 'shell_poses': q[:6*ns].reshape(ns, 6), 'beam_nodal_poses': q[6*ns:6*(ns+nb)].reshape(nb, 6),
-                'beam_retained': q[6*(ns+nb):].reshape(16, 24)})
+                'beam_retained': q[6*(ns+nb):].reshape(nx, 24)})
             transfer = coherent.physical_transfer(owner, result)
             exact = exact_transfer_moments(transfer['station_records'])
             np.testing.assert_allclose(exact[:2], transfer['polynomial_transfer_moments'][:2], rtol=1e-10, atol=1e-9)
@@ -194,11 +217,12 @@ def run(site, wheel, source, fixtures, external, output):
             ei = json.loads((external/case/'inputs.json').read_text())
             er = json.loads((external/case/'raw-inventory.json').read_text())
             ea = json.loads((external/case/'recovered-actions.json').read_text())
-            require(es['status'] == 'completed' and es['case'] == case and es['nx'] == 16
+            require(es['status'] == 'completed' and es['case'] == case and es['nx'] == nx
                     and es['basis'] == 'discontinuous_p1' and es['source_sha256'] == sha(independent.__file__),
                     'same independent external affine candidate required')
             ext_refinement, _, _, _, ext_reference = independent.services()
-            ext_model = ext_refinement.geometry(16, ext_reference)
+            ext_model = ext_refinement.geometry(nx, ext_reference)
+            ext_model['support_count'] = 8
             ext_pairing = independent.aggregate_rows(ext_model, ext_reference)
             expected = ext_refinement.planned_inventory(ext_refinement.command_recipe(
                 ext_model, ext_reference, ext_pairing['emitted_rows'], case))
@@ -236,7 +260,7 @@ def run(site, wheel, source, fixtures, external, output):
                 'external_files': {n: sha(external/case/n) for n in ('summary.json', 'inputs.json', 'raw-inventory.json', 'recovered-actions.json')},
                 'scope': 'same-law/same-affine support, different element and retained-trace discretizations; no locking/converged1% claim'})
             summary['cases'][case] = {'checks': checks, 'work_J': work, 'raw_state_sha256': sha(folder/'raw-state.npz')}
-        require(owner.preflight()['reference_linear_factorizations'] == 1, 'one eligible factor for three compatible loads')
+        require(owner.preflight()['reference_linear_factorizations'] == 1, 'one eligible factor for selected compatible loads')
         imports = {n: str(Path(m.__file__).resolve()) for n, m in sys.modules.copy().items()
                    if n.split('.')[0] == 'anysolver' and getattr(m, '__file__', None)}
         require(all(Path(p).is_relative_to(site) for p in imports.values()), 'canonical installed imports required')
@@ -254,5 +278,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     for name in ('site', 'wheel', 'source', 'fixtures', 'external', 'output'):
         parser.add_argument('--'+name, type=Path, required=True)
+    parser.add_argument('--nx', type=int, choices=(16, 32), default=16)
+    parser.add_argument('--case', choices=tuple(LOADS))
     args = parser.parse_args()
-    run(args.site, args.wheel, args.source, args.fixtures, args.external, args.output)
+    run(args.site, args.wheel, args.source, args.fixtures, args.external, args.output,
+        nx=args.nx, cases=(args.case,) if args.case else tuple(LOADS))

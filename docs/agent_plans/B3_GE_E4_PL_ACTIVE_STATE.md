@@ -9,7 +9,7 @@ Risk-proportionate tiered development; historical failures/consumed authority
 retain meaning. Prior note preserved byte-for-byte in latest raw evidence.
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; latest source41adee98242377bc1d3b05566320deacf98c6473
+branch codex/stiffened-main-reconcile-20261001; slice source parent8dd348bb
 (reference9c75d6e9; product0f902f88/7d24f906 and B2af787671 unchanged).
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 2ede338ba28932bb9dd3e8eb0f0a4908d37fc765. Check Git for later evidence commit.
@@ -46,34 +46,26 @@ new distinct [1,xi] basis on complete member supports,104installed checks,
 independent BVP/finite/restart controls and bounded actual mixed-system oracle.
 Legacy P0 unchanged. Positive nominal kernel is not locking/accuracy evidence.
 
-## Current native decision and next discriminating action
+## Current decision and next action
 
-[Flexible reference and saved-state audit](development/r8-bl5-affine-flexible-20261003/results.md):
-SAME16x4/32-halfcell grid/eight affine supports/all five channels; independent
-ASDShellQ4/Timoshenko reference. Three external cases and installed native three
-RHS/onefactor complete;417module bytes match unchanged wheel.16focused checks
-pass; controls below4.1e-12. Warning logs/failures retained; no new F03 run.
-Native/external work -1.0465/-1.0239/-0.8433%, common fields about1.27–1.62%.
-But Fy interfaceFx differs70.416N and Mx interiorMz differs11.089Nm: close
-fields do not qualify physical transfer. Historical P0 is a different space.
-Saved-state audit verifies actual broken director vs common nodalP1 trace;
-density-weighted gap-work witnesses -0.2954/-0.8402/-0.1739% of applied work.
-This is not causal allocation or permission to replace native directors.
+[Fixed-support finer comparison](development/r8-bl5-fixed-support-fine-20261003/results.md)
+retains native trace as an experimental candidate. SAMEeight supports/affine law,
+Mx10Nm: coarse16x4 to fine32x8 work difference -1.02387 to -0.01097%; interior
+Mz difference11.0894 to1.2003Nm; beam-groundFy20.4266 to2.2260N. Broken/nodal
+trace-work witness -0.84021 to -0.01856% supports finite approximation, not causal
+allocation or permission to replace retained directors. Remaining transfer error
+keeps M2 open. Two fixed-space grids are not growing-space stability/convergence.
+36focused checks passed; independent source/runtime Read scrutiny clear. Allowned
+runs terminal, source/wheel/site417modules match unchanged wheel. Prior coarse
+and new51-file raw evidence immutable; no protected history sweep.
 
-Question: finite mechanical/director approximation or persistent force-transfer
-instability? Next bounded discriminator is ONE finer Mx comparison,32x8 shells/
-64half-cells with SAMEeight physical support endpoints [0,1/8,...,1], all channels
-and affine basis. Explicit span8 freezes the interface; automatic span4 would
-confound this question. Compare trace/work/fields, exact interiorMz and root
-partitions together. Shrinking trace defect with stable transfer justifies the
-required growing-space envelope; persistent transfer differences require focused
-force-stability/operator analysis. No automatic refinement/sweep/channel tuning,
-new norm, tolerance relaxation or acceptance follows. One grid is not convergence.
-Use existing bounded authority; record input/criteria/resources before execution.
-
-F01 OPEN: historical corotational work failure retained; forward nonlinear routes
-explicitly Q4_ALGORITHMIC_PULLBACK_V1. Scoped F05/F08/F09 accepted, but aggregate
-G0/M2/M3, required attachments/materials/loads/spectra/capacity, external/platform,
-consumer/scale/release obligations remain open. E04 first-limit-point unexecuted.
-Implementation, testing, acceptance and release remain separate. Full matrix:
-[B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md).
+Next bounded discriminator: ONE complete five-channel growing-space rule,
+span4/sixteen supports on EXISTING32x8/64halfcell grid, matched independent
+Fy/Mx/Mz. Hold geometry, sections, grounds and load measures fixed; compare exact
+transfer windows, root partitions, directors, fields and physical work against
+this span8 baseline. Better physical transfer without anomalous action patterns
+supports the registered envelope; worsening transfer calls for targeted mixed-
+operator analysis. No automatic finer grid, channel tuning, new norm or acceptance.
+Formal F03 remains unconsumed. Unrelated ready M3/M4 work may proceed; fullscope
+external/scale/platform/release obligations remain open. Development reviews do
+not confer different-family scientific acceptance.

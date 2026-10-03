@@ -42,3 +42,23 @@ def test_adjacent_segments_fz_slope_has_opposite_my_lever_arm_sign():
     for p in range(3):
         assert clipped[p][2] == pytest.approx((.75**(p+1)-.125**(p+1))/(p+1)
             +2*(.75**(p+2)-.125**(p+2))/(p+2), abs=1e-13)
+
+
+@pytest.mark.parametrize('nx,span', ((16, 4), (32, 8)))
+def test_mechanical_refinement_keeps_physical_interface_fixed(nx, span):
+    import json
+    from scripts import b3_e4_bl5_coherent_aggregation_dev as coherent
+    from scripts.r8_bl5_affine_flexible_native_dev import fixed_support_model
+    definition, policy = fixed_support_model(coherent, nx)
+    assert len(definition.beams) == nx
+    assert len(definition.shell.q4_elements) == nx*nx//4
+    assert definition.lines[0].multiplier_span == span
+    assert len(definition.lines[0].beam_halfcells)//span == 8
+    assert policy['support_endpoints_m'] == [i/8 for i in range(9)]
+    assert len(policy['support_membership']) == 8
+    # Check actual geometry at every support endpoint, not only stored metadata.
+    points = [json.loads(beam.raw)['reference']['coordinates'] for beam in definition.beams]
+    node_x = [points[i//2][i%2][0] for i in range(2*nx)]+[points[-1][-1][0]]
+    assert node_x[::span] == policy['support_endpoints_m']
+    assert all(len(support) == span and support[0] % 2 == 0 and support[-1] % 2 == 1
+               for support in policy['support_membership'])
