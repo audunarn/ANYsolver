@@ -1799,3 +1799,22 @@ transfer/locking/full-ratio checks; no norm, default space, law, F03 or aggregat
 qualification selected/closed. Formal F03 UNCONSUMED; scientific/resource/release
 authority unchanged, full goal ACTIVE.
 [Pairing, partitioned results, nominal oracle and evidence](development/r8-bl5-affine-density-20261003/results.md).
+
+**3 October affine flexible/reference development delta:** source9c75d6e9 and
+saved-state audit41adee98 deliver independent signed affine enforcement/dual
+recovery and an installed SAME16x4/eight-support comparison, not qualification.
+16focused checks; three external loads and three native RHS/onefactor complete;
+417source/wheel/site bytes match unchanged affine wheel. Equilibrium/work controls
+below4.1e-12; warning logs retained. Work differences -1.0465/-1.0239/-0.8433%
+and fields1.27–1.62% do not establish converged1% accuracy or locking freedom.
+Physical fidelity OPEN: Fy integratedFx -70.416N, Mx interiorMz +11.089Nm.
+Saved-state audit confirms broken/P1 discrete-trace differences with work witnesses;
+not causal allocation or authorization to replace native retained directors.
+Next one bounded finer Mx comparison must FREEZEeight support intervals/span8;
+automatic growing supports would confound the approximation/force-instability
+question. No automatic campaign/norm/tolerance/default selection. Independent
+OpenAI Read tooling review clear; scientific finding remains open and different-
+family acceptance unmet. Formal F03 UNCONSUMED/full goal ACTIVE. No release/main
+change. Raw81-file explicit whitelist binds nativeinputs/operators and all new
+source/outcomes; no protected history sweep.
+[Results, limitations, review and evidence](development/r8-bl5-affine-flexible-20261003/results.md).
