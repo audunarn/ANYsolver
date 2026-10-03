@@ -11,7 +11,7 @@ Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-2
 branch codex/stiffened-main-reconcile-20261001; library commit1a620808; earlier reference-compile commit5136f026.
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 commit4d6d4d0, clean. Scoped local commits only: no push/main merge/publication
-or contact-worker messages. All numerical jobs are terminal; a Read-only correction-cache investigation is active.
+or contact-worker messages. All owned numerical jobs and Read reviews are terminal; solver library1a620808, evidence/exampleade56f50.
 Main untouched. Use git log for the subsequent documentation/evidence commit.
 
 Formal F03 UNCONSUMED. Protected original script SHA256:
@@ -87,8 +87,16 @@ compatibility2.55e-18, force1.61e-14, moment3.61e-15. cProfile route352.056s,
 301MB sampled peak; profiled solve330.424s/14assemblies. No timing gain claim.
 Repeated constant Q4 correction103.378s cumulative(overlapping) is the next
 measured bottleneck. Before a10k nonlinear run, inspect dependency-correct reuse
-of that correction with qualified guards/ownership intact. Independent Read
-investigation is active; no new numerical job. Resource limits unchanged.
+of that correction with qualified guards/ownership intact. Independent Read investigation is complete; no numerical job. Reuse seam: per-driver
+owned immutable correction record for exact elastic Q4/full algorithmic route.
+A bare matrix or only-current guard check is unsafe: record original component-
+guard/cache-key identities, element revision and mesh direct-state token/generation
+to detect mutation/ABA even after valid guard rebinding. Share qualified nonlinear
+core through a private validated entry; do not bypass inherited/public guards.
+J2/S3/historical/generalized-section/ordinary element paths retain full evaluation.
+Next: implement this bounded seam, compare full force/tangent/state and restarted
+paths, test stale/ABA/provider mutations, then measure paired installed routes.
+No cache serialized, no tangent lag or borrowed matrix retained. Resources unchanged.
 [Coherent precision/work-map/profile slice and all failures](development/r8-q4-finite-arithmetic-20261003/results.md).
 New headless example: python -m scripts.experimental_stiffened_ge_finite_panel;
 installed public execution and exact restart/balance pass. No aggregate science,
