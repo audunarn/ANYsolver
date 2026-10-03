@@ -1,4 +1,30 @@
 # General-contact capability ledger
+## Consistent classical B2-chain tangent — 3 October
+
+Explicit beam_chain_tangent="consistent_dev" differentiates the existing
+half-weighted directional nearest-cell potential with local implicit projection
+Hessians and moving-owner cross-target blocks. Exact rational partitioning retains
+positive sub-double panels; bounded verified root enclosures fail unresolved cuts.
+Active unequal-work domain-end/repeated/triple ties and projection plateaus reject,
+including tied competitors regardless of ID order. Shared-node physical work is
+mapped before forming interface blocks. Legacy defaults/restart remain unchanged;
+the new profile/selection is checkpoint-bound. No automatic fallback.
+
+Installed29+1checks pass: independent scalar work/derivatives, moving-owner blocks,
+actual force/displacement, fresh active restart, incompatible selection, guarded
+ambiguities, public example, legacy pair/chain and lazy no-contact compatibility.
+Final34.584s/330788864B,208imported modules/491package files byte-match,JIT0/pools1.
+Balanced guided displacement median3.851780→0.315607s (12.204x),same18Newton/0cutbacks,
+displacement difference2.73659e-11m. This is not a universal speed or acceptance claim.
+All14bounded runs/72raw records and failed force/integration comparisons retained.
+Status: implemented/tested development; no engineering/application admission/release.
+Existing elastic scalar/von-Karman B2≤16cells/side/no-caps scope only. Broader
+refinement, endpoints, B3/native/friction and full D3 remain open. Adaptive Gauss
+estimates are not rigorous arbitrary-geometry certificates; supporting same-family
+Read scrutiny does not establish independent acceptance.
+[Guide](GENERAL_CONTACT_BEAM_CHAIN_CONSISTENT_DEV.md),
+[evidence](d1_review_support/contact_chain_consistent_20261003/summary.json).
+
 ## Exterior classical round-line capped cylinder — 3 October
 
 New public RigidCappedCylinder descriptor and exact development profile preserve

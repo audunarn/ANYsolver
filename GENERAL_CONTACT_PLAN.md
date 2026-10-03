@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.77. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.78. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -14,7 +14,28 @@ capabilities, scientific targets and exclusions. Historical plans and failures
 remain evidence; frozen or consumed execution authorities are never renewed.
 Publication, merging, release and historical-default changes are separate actions.
 
-Current D2/D3 slice: an explicit finite flat-capped cylinder now owns exterior
+Current D3 slice: explicit beam_chain_tangent="consistent_dev" replaces global
+perturbed assemblies with local B2 closest-point Hessians and the complete moving
+nearest-owner interface/cross-target blocks. Fine positive panels are retained;
+exact branch polynomials and verified rational root enclosures distinguish active
+transverse interfaces from ambiguous repeated/end/triple/projection-plateau ties.
+Ambiguities fail; legacy defaults and old default restart identities remain.
+
+Installed29checks plus1capability check pass, including force/displacement, active
+fresh restart, independent work/tangent, numbering, public example and compatibility.
+Final route34.584s/330788864B;208imported solver modules/491package files byte-match,
+effective JIT0/pools1. Balanced identical guided four-step displacement solves:
+median3.851780s legacy →0.315607s consistent (12.204x), same18Newton iterations,
+zero cutbacks, displacement difference2.73659e-11m. This is a measured narrow
+development route, not shell/native/programme speed qualification. Full14runs/
+72raw records, earlier failures and supporting source scrutiny are retained.
+[Guide/evidence](docs/GENERAL_CONTACT_BEAM_CHAIN_CONSISTENT_DEV.md).
+Broader refinement/physical endpoints and engineering/application admission remain
+open. Adaptive integration and irrational enclosure-midpoint cuts are not a general
+integration-error certificate. Next pursue a genuine outstanding mechanics or
+refinement row using one bounded discriminator; do not repeat this passed suite.
+
+Preceding D2/D3 slice: an explicit finite flat-capped cylinder now owns exterior
 round B2/B3 line contact through the ordinary static force/displacement route.
 Side/cap/rim work, whole-curve rational Bernstein gap bounds, exact correlated
 inactivity and affine-path crossing control preserve the declared line potential.
@@ -92,7 +113,7 @@ Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTA
 [restart note](GENERAL_CONTACT_RESTART.md) and linked guides. Implemented, tested,
 independently accepted and released remain distinct.
 
-## 2. Current bounded slice and next action
+## 2. Preceding integrated application slices
 
 The permitted D8 slice now joins persisted Q4/S3 selections and exact settings
 to both a prescribed press/open/recontact path (independent144N reaction) and

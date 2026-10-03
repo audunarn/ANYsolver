@@ -256,17 +256,23 @@ def _point_law(source: np.ndarray, target: np.ndarray, s: float,
                   / (target_vector @ target_vector))
     t = float(np.clip(raw_t, 0.0, 1.0))
     separation = source_position - ((1.0 - t) * target[0] + t * target[1])
+    return _projection_work((1.0-s,s),(1.0-t,t),separation,target_vector,
+                            0.0<raw_t<1.0,radius,source_is_a)
+
+
+def _projection_work(source_shape,target_shape,separation,target_vector,interior,radius,source_is_a=True):
+    """Physical positional work from one resolved closest-point projection."""
     distance = float(np.linalg.norm(separation))
     if distance <= 0.0:
         raise ValueError("coincident beam centreline points cannot define a contact normal")
     direction = separation / distance
     projector = np.eye(3) - np.outer(direction, direction)
-    coefficients = ([1.0 - s, s, -(1.0 - t), -t] if source_is_a else
-                    [-(1.0 - t), -t, 1.0 - s, s])
+    coefficients = ([*source_shape,*(-v for v in target_shape)] if source_is_a else
+                    [*(-v for v in target_shape),*source_shape])
     jacobian = np.hstack([coefficient * np.eye(3) for coefficient in coefficients])
     gradient = jacobian.T @ direction
     hessian = jacobian.T @ projector @ jacobian / distance
-    if 0.0 < raw_t < 1.0:
+    if interior:
         derivative_coefficients = ([0.0, 0.0, 1.0, -1.0] if source_is_a else
                                    [1.0, -1.0, 0.0, 0.0])
         jacobian_t = np.hstack([coefficient * np.eye(3)

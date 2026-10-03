@@ -1,6 +1,7 @@
 """Two connected B2 chains in distributed round-centreline contact.
 
 Run after installing ANYsolver: python examples/general_contact_round_beam_chain_pair.py
+Use --consistent for the opt-in development tangent with moving-owner terms.
 SI units are used throughout. This is a development example, not qualification.
 """
 
@@ -13,7 +14,7 @@ from anysolver.elements import BeamElement
 from anysolver.fe_core import FEModel
 
 
-def main() -> None:
+def main(*, beam_chain_tangent: str = "finite_difference") -> None:
     model = FEModel("round_b2_chain_pair")
     model.add_material("elastic", 1.0e3, 0.3, density=1.0)
     for node, point in enumerate((
@@ -50,6 +51,7 @@ def main() -> None:
     settings = ContactSolverSettings(
         pair_motion="general", line_integration_relative_tolerance=1.0e-6,
         maximum_line_subdivisions=12, sliding_difference_step=1.0e-7,
+        beam_chain_tangent=beam_chain_tangent,
     )
     admission = validate_general_contact(model, definition, settings)
     if not admission.valid:
@@ -75,4 +77,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--consistent", action="store_true")
+    args = parser.parse_args()
+    main(beam_chain_tangent="consistent_dev" if args.consistent else "finite_difference")

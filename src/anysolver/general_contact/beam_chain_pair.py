@@ -16,6 +16,8 @@ from .beam_pair import (
 )
 from .core import ContactDefinition, ContactSolverSettings, ContactValidationReport
 
+PROFILE_CONSISTENT = "CLASSICAL_B2_CHAIN_ROUND_TUBE_NEAREST_CONSISTENT_STATIC_DEV_V1"
+
 
 def _chain_topology(segments: tuple[_Segment, ...]) -> None:
     neighbours: dict[int, set[int]] = {}
@@ -46,12 +48,13 @@ def validate_beam_chain_pair_contact(model, definition: ContactDefinition,
                                      settings: ContactSolverSettings | None = None,
                                      ) -> ContactValidationReport:
     controls = ContactSolverSettings() if settings is None else settings
+    profile = PROFILE_CONSISTENT if controls.beam_chain_tangent == "consistent_dev" else PROFILE_CHAIN
     issues = []
     if tuple(map(len, (definition.surfaces, definition.rigid_bodies,
                        definition.interactions))) != (2, 0, 1):
         return ContactValidationReport("invalid", (
             "beam-chain pair needs two beam surfaces and one interaction",
-        ), PROFILE_CHAIN)
+        ), profile)
     a, b = definition.surfaces
     interaction = definition.interactions[0]
     if (interaction.surface, interaction.target) != (a.name, b.name):
@@ -63,7 +66,7 @@ def validate_beam_chain_pair_contact(model, definition: ContactDefinition,
         issues.append("beam-chain pair requires pair_motion='general'")
     if controls.line_integration_relative_tolerance is None:
         issues.append("beam-chain pair requires explicit line integration tolerance")
-    if controls.sliding_difference_step is None:
+    if controls.beam_chain_tangent == "finite_difference" and controls.sliding_difference_step is None:
         issues.append("beam-chain pair requires explicit dimensional sliding_difference_step")
     if (len(a.element_ids) * len(b.element_ids) > controls.maximum_candidate_pairs
             or len(a.element_ids) > 16 or len(b.element_ids) > 16):
@@ -112,7 +115,7 @@ def validate_beam_chain_pair_contact(model, definition: ContactDefinition,
         selected_nodes.append(nodes)
     if selected_nodes[0] & selected_nodes[1]:
         issues.append("beam-chain pair surfaces must not share material nodes")
-    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), PROFILE_CHAIN)
+    return ContactValidationReport("invalid" if issues else "ok", tuple(issues), profile)
 
 
 def _distance_coefficients(source: np.ndarray, target: np.ndarray,
@@ -316,9 +319,18 @@ class _BeamChainPairManager(_BeamPairManager):
 
     def evaluate(self, displacement: np.ndarray, *, tangent: bool = True):
         u = np.asarray(displacement, dtype=float).reshape(-1)
-        force, energy, count, points, error = self._assemble(u)
-        stiffness = None
-        if tangent:
+        consistent = self.settings.beam_chain_tangent == "consistent_dev"
+        if consistent:
+            from .beam_chain_consistent import assemble_consistent_chain
+            force, stiffness, energy, count, points, error, interfaces = assemble_consistent_chain(self,u,tangent)
+            self.last_force_assemblies = 1
+            self.last_moving_owner_interfaces = interfaces
+        else:
+            force, energy, count, points, error = self._assemble(u)
+            stiffness = None
+            self.last_force_assemblies = 1
+            self.last_moving_owner_interfaces = None
+        if tangent and not consistent:
             columns = sorted({int(dof) for side in self.segments for cell in side
                               for dof in cell.dofs.reshape(-1)})
             rows, cols, values = [], [], []
@@ -328,6 +340,7 @@ class _BeamChainPairManager(_BeamPairManager):
                 perturbation[column] = step
                 plus = self._assemble(u + perturbation)[0]
                 minus = self._assemble(u - perturbation)[0]
+                self.last_force_assemblies += 2
                 derivative = (plus - minus) / (2.0 * step)
                 nonzero = np.flatnonzero(derivative)
                 rows.extend(int(row) for row in nonzero)
@@ -397,4 +410,7 @@ class _BeamChainPairManager(_BeamPairManager):
     def restart_contract(self) -> dict[str, object]:
         contract = super().restart_contract()
         contract["settings"]["sliding_difference_step"] = self.settings.sliding_difference_step
+        if self.settings.beam_chain_tangent == "consistent_dev":
+            contract["settings"]["beam_chain_tangent"] = "consistent_dev"
+            contract["tangent_geometry_revision"] = "moving_nearest_owner_interface_v1"
         return contract

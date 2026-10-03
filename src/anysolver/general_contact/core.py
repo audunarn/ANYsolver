@@ -231,8 +231,11 @@ class ContactSolverSettings:
     d1_interior_boundary_force_tolerance_n: float | None = None
     beam_shell_geometry: str = "translated_planar"
     beam_shell_maximum_swept_intervals: int | None = None
+    beam_chain_tangent: str = "finite_difference"
 
     def __post_init__(self) -> None:
+        if self.beam_chain_tangent not in {"finite_difference", "consistent_dev"}:
+            raise ValueError("unsupported beam_chain_tangent")
         if self.beam_shell_geometry not in {"translated_planar", "jet2_deformable_s3_dev"}:
             raise ValueError("unsupported beam_shell_geometry")
         if self.beam_shell_maximum_swept_intervals is not None and (type(self.beam_shell_maximum_swept_intervals) is not int or self.beam_shell_maximum_swept_intervals <= 0):
@@ -582,6 +585,12 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if settings is not None and settings.beam_chain_tangent == "consistent_dev":
+        if (definition.rigid_bodies or len(definition.surfaces) != 2
+                or len(definition.interactions) != 1
+                or not all(surface.beam_radius is not None for surface in definition.surfaces)
+                or not any(len(surface.element_ids) > 1 for surface in definition.surfaces)):
+            return ContactValidationReport("invalid", ("consistent beam-chain tangent requires one explicit multi-cell beam pair",))
     if settings is not None and settings.beam_shell_geometry == "jet2_deformable_s3_dev":
         if (definition.rigid_bodies or len(definition.surfaces) != 2
                 or sum(surface.beam_radius is not None for surface in definition.surfaces) != 1
