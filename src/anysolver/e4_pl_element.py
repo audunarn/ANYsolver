@@ -6851,6 +6851,33 @@ def _make_q4_runtime_boundary_holder() -> tuple[Any, Any]:
 ) = _make_q4_runtime_boundary_holder()
 
 
+def _make_prepared_q4_input_validator() -> Any:
+    # Capture the already-bound authority and original preparation registry.
+    # This checks reuse without observing a new constitutive trial.
+    boundary = _require_exact_q4_runtime_authority
+    lookup = _lookup_prepared_q4_correction
+    matches = _q4_fast_input_snapshot_matches
+    prepared_type = _PreparedQ4LinearCorrection
+
+    def require(element: Any, mesh: Any, material: Any, prepared: Any) -> None:
+        boundary(element, context="qualified Q4 same-parent trial reuse")
+        if type(prepared) is not prepared_type:
+            raise TypeError("qualified Q4 correction preparation required")
+        binding = lookup(prepared)
+        if (binding is None or binding[0] is not element or
+                binding[1] is not mesh or binding[2] is not material or
+                element._qualified_component_guard is not binding[3] or
+                not matches(element, mesh, material, binding[4])):
+            raise RuntimeError("qualified Q4 correction preparation is stale")
+        element._validate_qualified_component_guard()
+        boundary(element, context="qualified Q4 same-parent trial reuse")
+
+    return require
+
+
+_validate_prepared_q4_correction_inputs = _make_prepared_q4_input_validator()
+
+
 def _make_q4_cached_stiffness_epoch_holder() -> tuple[Any, Any]:
     """Expose only the closure-bound runtime epoch check used by warm Q4."""
 

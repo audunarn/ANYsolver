@@ -894,7 +894,11 @@ class FinitePointDriver:
         free = np.r_[owner._free,
                      np.arange(owner._K.shape[0],
                                owner._K.shape[0]+len(self._state.multipliers))]
+        from ._stiffened_shell_same_parent_trial import FixedTrialHandoff
+        allow_handoff = (programme is None and _accepted_hook is None and
+                         self._adaptive_state is None)
         for factor in targets:
+            handoff = None
             applied_load = None if programme is None else programme.load_at(factor)
             cancellation_safe_point(cancellation_token, "stiffened-shell.finite.increment")
             trial = self._increment_origin(self._state)
@@ -912,8 +916,11 @@ class FinitePointDriver:
                     constraint_max=float(gap), failure=failure)
             for iteration in range(max_iterations+1):
                 cancellation_safe_point(cancellation_token, "stiffened-shell.finite.trial")
+                # Observe cancellation before validating a single-use payload.
+                ready = None if handoff is None else handoff.take(self, trial, factor, pattern)
+                handoff = None
                 residual, matrix, relative, gap, shell_next, beam_next = (
-                    evaluated(trial))
+                    evaluated(trial) if ready is None else ready)
                 if relative <= 1e-8 and gap <= 1e-9:
                     cancellation_safe_point(cancellation_token,
                                             "stiffened-shell.finite.commit")
@@ -967,6 +974,8 @@ class FinitePointDriver:
                         counts["rejected_trials"] += 1
                         continue
                     try:
+                        before = (FixedTrialHandoff.begin(self, candidate, factor, pattern)
+                                  if allow_handoff else None)
                         changed = evaluated(candidate)
                     except BL5TrialDomainError:
                         counts["rejected_trials"] += 1
@@ -976,6 +985,8 @@ class FinitePointDriver:
                             merit_applied[owner._free], owner._coordinate_scale[owner._free]))
                     if max(candidate_relative, changed[3]) < old_merit:
                         trial = candidate
+                        if allow_handoff:
+                            handoff = FixedTrialHandoff.capture(self, trial, factor, pattern, changed, before=before)
                         break
                     counts["rejected_trials"] += 1
                 else:

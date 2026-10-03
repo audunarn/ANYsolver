@@ -84,7 +84,24 @@ quadrature/cache/input and native reference/cell/joint guards, and matching
 recovery records. Clear on invalidation or consumption. Initially exclude
 external/programme/adaptive/unsupported routes. Count actual assemblies honestly.
 If existing observation guards cannot be retained, stop this proposal and
-address measured element-map cost instead. No reuse code or run yet.
+address measured element-map cost instead. Restricted candidate now implemented: full same-parent payload handoff for
+fixed nodal-dead-load elastic Q4/full-pullback native-generalized point models.
+No S3/fibre/curved/material-active/line/footprint/external/programme/adaptive reuse.
+Single-use bindings cover pre/post calculation, parent/trial arrays, compiled
+layout, recovery, admitted executable graph and NumPy/Decimal arithmetic modes.
+Existing Q4/native/joint guards run after cancellation; observer modes fall back.
+Final focused34checks pass25.56s; prior correction13checks pass. Initial four
+fixture failures are preserved, not numerical product failures. Independent
+OpenAI development review has no unresolved finding; not scientific acceptance.
+
+Next: installed artifact checks, then three serial alternating baseline bccd4952
+pairs on24Q4/32B3 .01/.02 full route. Keep exact physical/history/checkpoint
+comparison and physical tolerances; actual assembly counts may decrease while
+Newton/accepted inventory remains equal. Advance only if >=3% median reduction
+and at least two favorable pairs; otherwise revert and preserve evidence.
+No performance claim yet. Source identity and outputs bind each new run.
+Disposable runner root %TEMP%/r8-same-parent-installed-v1; all source jobs terminal;
+installed prepare/checks not launched at this checkpoint.
 
 G0/F01/G5/M5 and every incomplete mandatory row remain open. Full goal ACTIVE;
 scientific scope, resources, formal F03 and release authority unchanged.
