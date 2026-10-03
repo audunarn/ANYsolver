@@ -1,0 +1,44 @@
+"""Recovery counterexample independent of native assembly and external solver."""
+import math
+
+import pytest
+
+from scripts.r8_bl5_affine_flexible_native_dev import exact_transfer_moments
+
+
+def test_affine_force_quartic_wrench_moment_is_integrated_exactly():
+    # Fy=2+3x; intrinsic Mz=4-5x; about-root Mz=4-3x+3x^2.
+    points = [(1-t/math.sqrt(3))/2 for t in (1, -1)]
+    records = [dict(x_m=x, measure_m=.5,
+                    beam_wrench_about_root_density=[0., 2+3*x, 0., 0., 0., 4-3*x+3*x*x]) for x in points]
+    result = exact_transfer_moments(records)
+    for p in range(3):
+        assert result[p][1] == pytest.approx(2/(p+1)+3/(p+2), abs=1e-13)
+        assert result[p][5] == pytest.approx(4/(p+1)-3/(p+2)+3/(p+3), abs=1e-13)
+    sampled = sum(r['measure_m']*r['x_m']**2*r['beam_wrench_about_root_density'][5] for r in records)
+    assert abs(sampled-result[2][5]) > .01
+
+
+def test_partial_or_wrong_measure_segment_is_rejected():
+    with pytest.raises(ValueError, match='complete'):
+        exact_transfer_moments([{}])
+    records = [dict(x_m=x, measure_m=.1, beam_wrench_about_root_density=[0.]*6) for x in (.2, .8)]
+    with pytest.raises(ValueError, match='measure'):
+        exact_transfer_moments(records)
+
+
+def test_adjacent_segments_fz_slope_has_opposite_my_lever_arm_sign():
+    records = []
+    for left, right in ((0., .25), (.25, 1.)):
+        for t in (-1., 1.):
+            x = (left+right)/2+(right-left)*t/(2*math.sqrt(3))
+            records.append(dict(x_m=x, measure_m=(right-left)/2,
+                beam_wrench_about_root_density=[0., 0., 1+2*x, 0., 3+4*x-x*(1+2*x), 0.]))
+    result = exact_transfer_moments(records)
+    for p in range(3):
+        assert result[p][2] == pytest.approx(1/(p+1)+2/(p+2), abs=1e-13)
+        assert result[p][4] == pytest.approx(3/(p+1)+3/(p+2)-2/(p+3), abs=1e-13)
+    clipped = exact_transfer_moments(records, (.125, .75))
+    for p in range(3):
+        assert clipped[p][2] == pytest.approx((.75**(p+1)-.125**(p+1))/(p+1)
+            +2*(.75**(p+2)-.125**(p+2))/(p+2), abs=1e-13)
