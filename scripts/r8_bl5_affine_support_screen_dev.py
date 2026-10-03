@@ -7,9 +7,19 @@ normal-spin bending, not Saint-Venant torsion, external agreement or qualificati
 """
 from dataclasses import replace
 from pathlib import Path
+from fractions import Fraction
 import argparse, json
 
 import numpy as np
+
+
+def affine_force_moment(left, right, a, b, order):
+    """Exact stored-coefficient integral of x**order*(a+b*xi)."""
+    left, right, a, b = map(lambda v: Fraction(float(v)), (left, right, a, b))
+    slope = 2*b/(right-left)
+    constant = a-b-slope*left
+    return float(constant*(right**(order+1)-left**(order+1))/(order+1)+
+                 slope*(right**(order+2)-left**(order+2))/(order+2))
 
 
 def run(output):
@@ -83,9 +93,22 @@ def run(output):
         np.savez_compressed(output/"state.npz", q=q, load=load,
             multipliers=solved.multipliers, reactions=solved.reactions,
             weak_gaps=owner._C@q, free=owner._free, fixed=owner._fixed)
-        native = np.array([row[1] for row in transfer["polynomial_transfer_moments"]]+[
-            sum(r["measure_m"]*r["x_m"]**3*r["beam_wrench_about_root_density"][1]
-                for r in transfer["station_records"])])
+        endpoints = np.array(policy["support_endpoints_m"])
+        supports = len(endpoints)-1
+        coefficients = solved.multipliers[2*supports:4*supports].reshape(-1, 2)
+        # At this admitted reference state rb=I; establish the physical Fy
+        # coefficient mapping against recovered station actions before scoring.
+        for record in transfer["station_records"]:
+            x = record["x_m"]
+            j = min(int(np.searchsorted(endpoints, x, side="right"))-1, supports-1)
+            xi = 2.*(x-endpoints[j])/(endpoints[j+1]-endpoints[j])-1.
+            np.testing.assert_allclose(record["beam_wrench_about_root_density"][1],
+                coefficients[j, 0]+xi*coefficients[j, 1], rtol=1e-12, atol=1e-8)
+        native = np.array([sum(affine_force_moment(left, right, a, b, order)
+            for left, right, (a, b) in zip(endpoints[:-1], endpoints[1:], coefficients))
+            for order in range(4)])
+        np.testing.assert_allclose(native[:3],
+            np.array(transfer["polynomial_transfer_moments"])[:, 1], rtol=1e-11, atol=1e-8)
         reference = solve_affine_carrier(1., bending, shear, moment,
                                          policy["support_endpoints_m"])
         work = float(q@load)

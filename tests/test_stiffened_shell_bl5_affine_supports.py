@@ -54,6 +54,18 @@ def test_distinct_basis_and_complete_member_admission():
         candidate(4, 6)
 
 
+def test_third_transfer_moment_uses_exact_affine_recovery():
+    from scripts.r8_bl5_affine_support_screen_dev import affine_force_moment
+    # Fy=x: x**3*Fy is quartic, outside production two-point exactness.
+    assert affine_force_moment(0., 1., .5, .5, 3) == .2
+    xi, wi = np.polynomial.legendre.leggauss(2)
+    x = (xi+1.)/2.
+    assert abs(float((wi/2.)@x**4)-.2) > 1e-3
+    xi, wi = np.polynomial.legendre.leggauss(3)
+    x = (xi+1.)/2.
+    assert abs(float((wi/2.)@x**4)-.2) < 1e-15
+
+
 def test_nonuniform_support_coordinate_and_all_channel_work():
     definition = candidate(4, 8)
     # Each quadratic member has its true midpoint. Different member lengths
