@@ -9,7 +9,7 @@ Protected original must not be accessed.
 No other human-chat messages, publication, merge/default changes or consumed
 run replay. Local checkpoints authorized. All owned runs/reviewer terminal.
 History: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART95.md
-→94→94→93→92→91 retains all earlier mechanical failures, restrictions and evidence.
+→94→93→92→91 retains all earlier mechanical failures, restrictions and evidence.
 
 NEW integrated D8 reporting: ANYfem isolated root
 C:/ANYworkspaceWork/ANYfem-contact-intent, branch codex/anyfem-contact-intent,
