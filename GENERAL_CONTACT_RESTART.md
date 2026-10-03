@@ -1,67 +1,62 @@
-# General contact restart — 3 October 2026
+# General contact restart — 4 October 2026
 
-Full C0–C9 ACTIVE/incomplete. Goal2026-09-30.4 / plan2026-10-03.81 govern.
+Full C0–C9 ACTIVE/incomplete. Goal2026-09-30.4 / plan2026-10-04.82 govern.
 Solver: C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001; local HEAD binds this checkpoint.
 Protected original must not be accessed. No other human-chat messages,
 push/merge/publication/release/default changes or consumed authority replay.
 Local commits authorized. No owned live runs; supporting reviewer terminal.
-[History](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART102.md)
-→101→100→99 retains mechanics/evidence/failures/identities/restrictions.
+[History](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PART103.md)
+→102→101→100 retains source identities, failures, evidence and restrictions.
 
-## Current integrated outcome
+## Current integrated result
 
-Two D3 physical-end slices committed locally. First6158f882 adds exterior finite
-capped-cylinder hemisphere endpoints: additive line-plus-point potential, actual
-B3 derivatives/all-material-node topology, exact affine ownership, and atomic
-cylinder feature-seam rejection. Installed67pass29.849s/337104896B,209modules/492files
-parity; failures retained in10runs/63records. Earlier unaligned tool-work1e-6 gate
-stays NONPASS; independent history isolates activation trapezoid error. A different
-activation-staged path/open restart passes2.579e-12 without tolerance change.
-Unevaluated swept preflight infinity now records null residual/explicit reason;
-computed nonfinite results still fail. [Guide/evidence](docs/GENERAL_CONTACT_CAPPED_CYLINDER_ENDCAPS_DEV.md).
+Sphere/infinite-cylinder B2/B3 hemisphere ends now use one opt-in owner.
+Literal fixed-map line+point work/tangent, actual B3 end derivative/all-material-
+node topology, conservative whole-curve gap, affine regularity/ownership and
+relative moving-tool sweep certificates are implemented. Active ownership roots,
+hidden through-crossing, intermediate collapsed curves and unresolved finite
+budgets reject. Exact activation cuts plus inactive/sign-variation bounds protect
+hidden curved pockets. No-cap radial owner/identity and public defaults unchanged.
 
-Successor plane cap owner now checks exact affine end-gap/orientation roots:
-closed crossings and closed tangent candidates reject; open changes remain valid.
-Actual B3 derivative, not chord. Cap-only ownership revision/subdivision setting
-bind restart; uncapped identity/arithmetic order preserved. Installed23pass4.613s/
-320753664B,208modules/492files parity,JIT0/pools1,180s/953MiB. Independent axial-bar
-response, active fresh restart/incompatible control, tilted B2/curved-B3 complete
-work/tangent/wrench and ownership, public --plane/cylinder examples, earlier
-plane/junction/current installed no-contact compatibility pass.7runs/31records
-retain preliminary artifacts and supporting review's missing-setting finding.
-[Guide](docs/GENERAL_CONTACT_C2_BEAM_PLANE.md),
-[evidence](docs/d1_review_support/contact_plane_endownership_20261003/summary.json).
-Current wheel SHA256:bd6dadf514ebb507625d00e57bb3b3c138f9bfe43ef5bba585e88976957057b4.
-External runner C:/ANYworkspaceWork/contact_plane_endownership_20261003/run.py,
-private target installed2. Supporting same-family scrutiny is not engineering
-acceptance; no finite-rotation structural/native/friction/impact/application admission.
+Installed37pass31.110s/336408576B;211modules/494files match source,JIT0/pools1,
+180s/953MiB. Independent work/tangent/covariance/pockets/bar, force/displacement,
+active/open fresh restart, staged tool work2.680e-12 vs1e-6, exception/cancellation,
+reuse, examples and legacy/no-contact checks pass. Thirteen runs/78records retain
+integration-cut failures, singular fixture, degree-zero restriction and incorrect
+progress-callback expectation. Supporting reviewer identified constant B2 control
+restriction; equal degree-one controls and regular/collapsed tests resolve it.
+Same-family supporting scrutiny is not independent engineering acceptance.
+[Guide](docs/GENERAL_CONTACT_RADIAL_ENDCAPS_DEV.md) links exact evidence.
+Private artifact C:/ANYworkspaceWork/contact_radial_endcaps_20261003/installed;
+wheel1d83631bfcbfa9ce034543bde693a078c821e2f3ae1be7468eb33d14230ee0b7.
 
-Previous B2-chain code/reference and10.810x guided speed evidence retain recorded
-scope. Mixed-panel Gauss estimates are not rigorous arbitrary integration proof.
-No general speed/delivery forecast. Next inspect missing sphere/infinite-cylinder
-beam-end work and implement through one shared shape-owned end-work/path contract,
-using bounded independent geometry/work/root checks. No repeat of unchanged passed
-suites or restricted native/impact cases. Full C0–C9 remains incomplete.
+Previous commits6158f882 capped-cylinder endpoints and76a3519f plane ownership,
+installed67/23 evidence and retained unaligned work NONPASS stay scoped.
+B2-chain independent code/reference and10.810x guided speed remain narrow.
+No broad finite-rotation/native/friction/impact/application acceptance inferred.
 
-## Preserved blockers and boundaries
+Next authorized slice: inspect existing multiple_beam_rigid.py for explicit fixed
+physical-end composition, complete summed work/tangent/wrench and duplicate feature
+ownership. Use one integrated independent case and bounded restart/rejection checks.
+No new solver stack, optimization campaign or restricted native/impact replay.
+Lower tiers unavailable; no unchanged reprobe. Supporting worker terminal.
 
-ANYfem root C:/ANYworkspaceWork/ANYfem-contact-intent,
-branch codex/anyfem-contact-intent, HEAD434ec0041733fa750f71a14fb8ca78e42f8eca64,
-clean/unchanged. Existing skin/wrench/request/bootstrap evidence remains bounded.
-Current accepted-D1 source impact (swept orientation/lifecycle cadence) still needs
-historical force/displacement freeze/raw copies; authorized archive requested,
-unanswered. Do not access protected original or reconstruct consumed authority.
-Normal application admission flags remain false.
+## Preserved blockers and budget
 
-Impact hidden-point policy relaxation NOT approved. No cap/tolerance/policy change
-or old full retry. V4/V16 NONPASS900s at1.79779ms/3ms;868strong642fail655.090s,
-218weak10.324s; real65nm pulse/original oracle sign defect retained. Native grazing
-friction NONPASS−1.33564e−13m,223queries448paths21support10.364s: missing closed
-alpha_q=-G_q/G_alpha and mixed-work enclosure. No saved/full/owner/split retry,
-reset/zero-response/native acceptance or cap growth. Q4 FD appcycle180.124s timeout
-remains unchanged. Lower tiers unavailable; no unchanged reprobe.
+ANYfem C:/ANYworkspaceWork/ANYfem-contact-intent, branch codex/anyfem-contact-intent,
+HEAD434ec0041733fa750f71a14fb8ca78e42f8eca64, unchanged. Accepted-D1 source-impact
+freeze/raw copies requested and unanswered. Do not reconstruct consumed evidence
+or access protected original; normal application admission flags remain false.
 
-Budget120active hours: goal364510+3120=367630s (~102.12h) at21:34:28UTC3October.
-Check current clock before substantial work. At120h preserve/request time/scope/
-method decision; never silently extend or mark full goal complete. D2–D8 still required.
+Impact hidden-point policy relaxation NOT approved. V4/V16 NONPASS900s at
+1.79779ms/3ms;868strong642fail655.090s,218weak10.324s, real65nm pulse/original oracle
+sign defect retained. No cap/tolerance/policy change or full replay. Native grazing
+friction NONPASS−1.33564e-13m,223queries448paths21support10.364s: closed
+alpha_q=-G_q/G_alpha and mixed-work enclosure missing. No saved/full/owner/split
+retry, reset/zero-response/native acceptance. Q4 FD appcycle180.124s remains timeout.
+
+120active-hour clock: at22:17:05UTC3October, goal367066+3120=370186s (~102.83h).
+Check current clock before substantial work; no reset. At120h preserve work and
+request time/scope/method decision, never silently extend or mark full goal complete.
+D2–D8 and full qualification/package/application/resource gates remain required.

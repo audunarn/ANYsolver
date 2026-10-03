@@ -1,4 +1,27 @@
 # General-contact capability ledger
+## Radial physical beam ends — 4 October
+
+One opt-in sphere/infinite-cylinder B2/B3 hemisphere owner now shares literal
+fixed-map work for distributed line and endpoint penalties. Explicit N/m endpoint
+stiffness remains distinct from N/m² line stiffness. Actual B3 derivatives and
+all-material-node topology determine ends; exact Bernstein norm/regularity and
+ownership bounds certify affine static tool/beam paths. Closed ownership changes,
+hidden crossings, intermediate curve collapse and unresolved budgets reject.
+Activation cuts use exact open-side certificates; hidden multiple pockets cannot
+be discarded by sampled-zero quadrature. No-cap owner and identity are unchanged.
+
+Installed37checks pass31.110s/336408576B,211modules/494files match source,
+JIT0/pools1,180s/953MiB. Independent energies/work/tangents, tilted covariance,
+curved pockets, grazing/budgets, force/displacement/bar response, active/open
+restart, prescribed-tool work, exception/cancellation/reuse, public examples and
+legacy radial/no-contact compatibility pass. Staged work/storage error2.680e-12
+meets unchanged1e-6. Thirteen runs/78records retain preliminary failures and the
+review-found B2 constant-derivative restriction, now corrected and tested.
+Supporting same-family scrutiny is not independent engineering acceptance.
+Normal application admission, release and broader C2/D3 qualification stay open.
+[Guide](GENERAL_CONTACT_RADIAL_ENDCAPS_DEV.md),
+[evidence](d1_review_support/contact_radial_endcaps_20261003/summary.json).
+
 ## Fixed-plane physical-end ownership — 3 October
 
 Exact end gap and actual B2/B3 outward derivative projections certify affine

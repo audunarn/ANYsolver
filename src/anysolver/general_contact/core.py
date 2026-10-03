@@ -777,6 +777,9 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {
                 "sphere", "cylinder",
             }:
+                if any(surface.beam_end_caps=='hemisphere' for surface in definition.surfaces):
+                    from .beam_radial_ends import validate_radial_beam_ends
+                    return validate_radial_beam_ends(model,definition,settings)
                 from .beam_radial import validate_beam_radial_contact
 
                 return validate_beam_radial_contact(model, definition, settings)
@@ -1305,9 +1308,12 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
             elif len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {
                 "sphere", "cylinder",
             }:
-                from .beam_radial import _BeamRadialManager
-
-                manager = _BeamRadialManager(model, definition, settings, initial_displacement)
+                if any(surface.beam_end_caps=='hemisphere' for surface in definition.surfaces):
+                    from .beam_radial_ends import BeamRadialEndManager
+                    manager=BeamRadialEndManager(model,definition,settings,initial_displacement)
+                else:
+                    from .beam_radial import _BeamRadialManager
+                    manager = _BeamRadialManager(model, definition, settings, initial_displacement)
             else:
                 from .beam_plane import _BeamPlaneManager
 

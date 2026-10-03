@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.81. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.82. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -13,6 +13,36 @@ This plan chooses the shortest useful implementation route within that authority
 capabilities, scientific targets and exclusions. Historical plans and failures
 remain evidence; frozen or consumed execution authorities are never renewed.
 Publication, merging, release and historical-default changes are separate actions.
+
+## Radial physical beam ends — 4 October
+
+One opt-in sphere/infinite-cylinder B2/B3 hemisphere owner now shares literal
+fixed-map work for distributed line and endpoint penalties. Explicit N/m endpoint
+stiffness remains distinct from N/m² line stiffness. Actual B3 derivatives and
+all-material-node topology determine ends; exact Bernstein norm/regularity and
+ownership bounds certify affine static tool/beam paths. Closed ownership changes,
+hidden crossings, intermediate curve collapse and unresolved budgets reject.
+Activation cuts use exact open-side certificates; hidden multiple pockets cannot
+be discarded by sampled-zero quadrature. No-cap owner and identity are unchanged.
+
+Installed37checks pass31.110s/336408576B,211modules/494files match source,
+JIT0/pools1,180s/953MiB. Independent energies/work/tangents, tilted covariance,
+curved pockets, grazing/budgets, force/displacement/bar response, active/open
+restart, prescribed-tool work, exception/cancellation/reuse, public examples and
+legacy radial/no-contact compatibility pass. Staged work/storage error2.680e-12
+meets unchanged1e-6. Thirteen runs/78records retain preliminary failures and the
+review-found B2 constant-derivative restriction, now corrected and tested.
+Supporting same-family scrutiny is not independent engineering acceptance.
+Normal application admission, release and broader C2/D3 qualification stay open.
+[Guide](docs/GENERAL_CONTACT_RADIAL_ENDCAPS_DEV.md),
+[evidence](docs/d1_review_support/contact_radial_endcaps_20261003/summary.json).
+
+Next bounded D3 opportunity: compose existing physical-end contributors for
+multiple explicit fixed rigid interactions through the existing aggregate owner.
+Check duplicate physical-feature ownership, complete summed work/tangent/wrench,
+common rejection and restart before extending its admission. Prefer reuse over a
+new solver. Moving multi-tool and generalized ownership remain separately bounded.
+Retained native and restricted impact nonpasses are not renewed by this slice.
 
 Current D3 plane endpoint slice closes the known finite-energy ownership hole.
 Exact represented end gap and actual B2/B3 outward derivative are affine along
@@ -31,11 +61,9 @@ review is not independent engineering acceptance. C2/D3 and full C0–C9 remain 
 [Guide](docs/GENERAL_CONTACT_C2_BEAM_PLANE.md),
 [evidence](docs/d1_review_support/contact_plane_endownership_20261003/summary.json).
 
-Next bounded mechanics slice: inspect existing classical radial owners for genuine
-sphere/infinite-cylinder beam-end work. Prefer one shared end-work/path contract
-with shape-owned smooth distance maps and conservative ownership roots over
-additional independent solver stacks. Keep public laws and existing no-cap
-selection; reject unsupported branches. No native/impact restricted-case replay.
+The preceding radial-end question is implemented and installed-tested above.
+Its qualification remains open. [Plan81](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261003_REV81.md)
+retains the previous decision, evidence and all execution restrictions.
 
 Preceding D3 slice: exterior capped-cylinder B2/B3 contact now includes declared
 physical hemisphere ends with separately dimensioned N/m endpoint stiffness.
