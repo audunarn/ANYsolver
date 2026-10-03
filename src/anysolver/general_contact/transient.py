@@ -57,6 +57,7 @@ from .beam_plane import _BeamPlaneResults
 from .beam_radial import _RadialResults
 from .multiple_beam_rigid import MultipleBeamRigidResults
 from .multiple_shell_planes import MultipleShellPlaneResults
+from .pair import _PairResults
 from .rigid_translation import ContactRigidTranslationHistory, _PlaneTranslations
 from .free_rigid import (ContactFreeRigidBody, FreeRigidBodyState, _FreeSphereManager,
                         FREE_SPHERE_PROFILE, FREE_SPHERE_HISTORY_PROFILE,
@@ -75,6 +76,8 @@ _Q4_EVENT_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_EVENT_TRANSIENT_CONTACT_DEV_CHECK
 _Q4_PLASTIC_EVENT_RESTART_SCHEMA = "ANYSOLVER_Q4_PLASTIC_PLANE_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V9"
 _MULTIPLE_Q4_EVENT_PROFILE = "MULTIPLE_Q4_FIXED_PLANES_NEWMARK_EVENT_DEV_V1"
 _MULTIPLE_Q4_EVENT_RESTART_SCHEMA = "ANYSOLVER_MULTIPLE_Q4_PLANE_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V10"
+_GUIDED_SHELL_PAIR_EVENT_PROFILE = 'GUIDED_Q4_S3_SHELL_PAIR_NEWMARK_EVENT_DEV_V1'
+_GUIDED_SHELL_PAIR_RESTART_SCHEMA = 'ANYSOLVER_GUIDED_SHELL_PAIR_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V11'
 _S3_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0"
 _S3_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_HISTORY_DEV_V1"
 _S3_DIRECTIONAL_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_RATES_DEV_V1"
@@ -188,13 +191,21 @@ class ContactTransientSolverControls:
     save_constraint_reactions_dev: bool = False
     allow_multiple_shell_planes_dev: bool = False
     batch_plane_event_fronts_dev: bool = False
+    allow_guided_shell_pair_dev: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.allow_guided_shell_pair_dev) is not bool:
+            raise ValueError('guided shell pair selection must be boolean')
+        if self.allow_guided_shell_pair_dev and (not self.q4_plane_event_subdivision_dev
+                or self.allow_multiple_shell_planes_dev or self.allow_classical_beam_dev
+                or self.allow_q4_plastic_dev or self.allow_s3_descriptor_dev
+                or self.allow_free_sphere_dev):
+            raise ValueError('guided shell pairs require the separate elastic pressure-event profile')
         if type(self.batch_plane_event_fronts_dev) is not bool:
             raise ValueError('batched plane event front selection must be boolean')
         if self.batch_plane_event_fronts_dev and (not self.q4_plane_event_subdivision_dev
-                or not self.allow_multiple_shell_planes_dev):
-            raise ValueError('batched plane event fronts require the explicit multiple-Q4 plane event profile')
+                or not (self.allow_multiple_shell_planes_dev or self.allow_guided_shell_pair_dev)):
+            raise ValueError('batched plane event fronts require an explicit multiple-Q4 or guided-shell-pair event profile')
         if type(self.allow_multiple_shell_planes_dev) is not bool:
             raise ValueError('multiple-shell-plane selection must be boolean')
         if self.allow_multiple_shell_planes_dev and (not self.q4_plane_event_subdivision_dev
@@ -364,7 +375,7 @@ class TransientContactResults:
     displacements: np.ndarray
     velocities: np.ndarray
     accelerations: np.ndarray
-    contact: tuple[ContactResults | _BeamPlaneResults | MultipleBeamRigidResults | MultipleShellPlaneResults | _RadialResults, ...]
+    contact: tuple[ContactResults | _PairResults | _BeamPlaneResults | MultipleBeamRigidResults | MultipleShellPlaneResults | _RadialResults, ...]
     swept_minimum_gaps: np.ndarray
     equilibrium_residuals: np.ndarray
     cutbacks: int
@@ -431,6 +442,9 @@ def _restart_analysis_contract(transient, controls, manager, profile,
         contract['controls']['plane_event_front_revision'] = 'SHARED_MINIMUM_ORIENTED_GAP_V1'
     if controls.allow_multiple_shell_planes_dev:
         contract['controls']['allow_multiple_shell_planes_dev'] = True
+    if controls.allow_guided_shell_pair_dev:
+        contract['controls']['allow_guided_shell_pair_dev'] = True
+        contract['controls']['guided_shell_pair_revision'] = 'FIXED_OVERLAP_PHYSICAL_TRANSLATIONS_V1'
     if controls.allow_classical_beam_dev:
         contract["controls"].update(
             allow_classical_beam_dev=True,
@@ -476,7 +490,7 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             accepted_steps, external_work_j=None, path_terminal_active=None,
                             event_boundary_support=None, tool_work_j=None, tool_work_error_j=None,
                             free_body_name=None,material_checkpoint=None,plane_event_state=None,
-                            plane_pressure_features=None) -> dict:
+                            plane_pressure_features=None,guided_shell_pair=False) -> dict:
     payload = {
         "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
                    else _RESTART_SCHEMA),
@@ -518,6 +532,8 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
     if plane_pressure_features is not None:
         payload['schema'],payload['version']=_MULTIPLE_Q4_EVENT_RESTART_SCHEMA,10
         payload['state']['plane_pressure_features']=[list(feature) for feature in plane_pressure_features]
+        if guided_shell_pair:
+            payload['schema'],payload['version']=_GUIDED_SHELL_PAIR_RESTART_SCHEMA,11
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
@@ -558,7 +574,7 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                              reduced_size, t_end, *, load_history, path_pressure_dofs=0,
                              event_subdivision=False, tool_body_names=(), free_body_name=None,
                              q4_material_state=False,plane_event_state=False,
-                             plane_pressure_features=None):
+                             plane_pressure_features=None,guided_shell_pair=False):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -587,6 +603,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
             if q4_material_state else (8,_Q4_EVENT_RESTART_SCHEMA))
     if plane_pressure_features is not None:
         expected_version,expected_schema=10,_MULTIPLE_Q4_EVENT_RESTART_SCHEMA
+        if guided_shell_pair:
+            expected_version,expected_schema=11,_GUIDED_SHELL_PAIR_RESTART_SCHEMA
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -996,6 +1014,34 @@ def _admit_free_shell_coordinates(model, transformation, prescribed):
 
 def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings,
            controls: ContactTransientSolverControls) -> str:
+    if controls.allow_guided_shell_pair_dev:
+        if (settings.pair_motion!='guided' or settings.warped_q4_plane
+                or settings.normal_discretization!='primal_mortar'
+                or len(definition.surfaces)!=2 or definition.rigid_bodies
+                or any(surface.beam_radius is not None for surface in definition.surfaces)
+                or len(definition.interactions)!=1
+                or definition.interactions[0].normal_law!='penalty'):
+            raise ValueError('guided shell pair impact requires two explicit surfaces, no rigid body and one penalty pair')
+        elements=tuple(model.mesh.elements.values())
+        if (not elements or any(type(element) not in (QualifiedE4PLShellElement,
+                NativeParityE4PLS3V2DShellElement) for element in elements)
+                or set(eid for surface in definition.surfaces for eid in surface.element_ids)!=set(model.mesh.elements)):
+            raise ValueError('guided shell pair impact requires exact qualified Q4/S3 V2D on the declared surfaces')
+        for element in elements:
+            material=model.get_material(element.material_name)
+            if (type(material) is not IsotropicMaterial or material.yield_stress!=0.
+                    or material.hardening_curve is not None):
+                raise ValueError('guided shell pair impact admits only isotropic elastic material')
+        pair=definition.interactions[0]
+        selections={surface.name:surface for surface in definition.surfaces}
+        if pair.surface in selections and pair.target in selections:
+            source,target=selections[pair.surface],selections[pair.target]
+            if len(source.element_ids)*len(target.element_ids)>settings.maximum_candidate_pairs:
+                raise MemoryError('guided shell pair candidate preflight limit exceeded; no contacts discarded')
+        report=validate_general_contact(model,definition,settings)
+        if not report.valid:
+            raise ValueError('unsupported guided shell pair impact: '+'; '.join(report.issues))
+        return _GUIDED_SHELL_PAIR_EVENT_PROFILE
     report = validate_general_contact(model, definition, settings)
     if not report.valid:
         raise ValueError("unsupported transient contact: " + "; ".join(report.issues))
@@ -1133,6 +1179,12 @@ def solve_transient_contact(
     Hermite bound have their own development profile and restart identity.
     Full endpoint agreement and corner minima are checked; reported transitions
     describe this discrete path, not exact continuum event times.
+    The guided-shell-pair opt-in couples two finite FE bodies on fixed projected
+    overlap, admitting only uniform face-normal translation, common tangential
+    motion and zero rotations. Exact qualified planar Q4/S3 V2D, elastic material
+    and positive physical reduced mass are required. Both-body work, complete
+    relative Hermite gaps and feature-bound V11 restart use the shared driver.
+    This development profile does not admit general deforming/sliding targets.
     Cancellation admits only the solver's exact unmodified token. It raises
     SolveCancelled at a safe boundary, discards solve-owned pending trials and
     returns no partial result or checkpoint. Completed increments remain committed.
@@ -1180,11 +1232,11 @@ def solve_transient_contact(
                for h in tool_histories for a, b in zip(h.points, h.points[1:])):
             raise ValueError("rigid translation knots are closer than admitted time resolution")
     if nodal_load_history is not None:
-        if controls.q4_plane_event_subdivision_dev and not controls.allow_multiple_shell_planes_dev:
+        if controls.q4_plane_event_subdivision_dev and not (controls.allow_multiple_shell_planes_dev or controls.allow_guided_shell_pair_dev):
             raise ValueError('Q4 plane event development does not admit load histories')
         if type(nodal_load_history) is not ContactNodalLoadHistory:
             raise TypeError("nodal_load_history must be ContactNodalLoadHistory")
-        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE, _BEAM_PROFILE, _MULTIPLE_BEAM_PROFILE, FREE_SPHERE_PROFILE, FREE_SHELL_SPHERE_PROFILE, _MULTIPLE_Q4_EVENT_PROFILE):
+        if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE, _BEAM_PROFILE, _MULTIPLE_BEAM_PROFILE, FREE_SPHERE_PROFILE, FREE_SHELL_SPHERE_PROFILE, _MULTIPLE_Q4_EVENT_PROFILE,_GUIDED_SHELL_PAIR_EVENT_PROFILE):
             raise ValueError("nodal load history requires one Q4 plane nodal LoadCase or opted-in S3 plane nodal LoadCase")
         if nodal_load_history.points[-1][0] < transient.t_end:
             raise ValueError("nodal load history must cover t_end")
@@ -1293,7 +1345,7 @@ def solve_transient_contact(
     if Mred.shape[0] > 512:
         raise ValueError("transient development profile admits at most 512 free coordinates")
     descriptor_basis = None
-    if profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE,_MULTIPLE_Q4_EVENT_PROFILE,
+    if profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE,_MULTIPLE_Q4_EVENT_PROFILE,_GUIDED_SHELL_PAIR_EVENT_PROFILE,
                    _Q4_PLASTIC_PROFILE,_Q4_EVENT_PROFILE,_Q4_PLASTIC_EVENT_PROFILE,
                    _MULTIPLE_BEAM_PROFILE,_MULTIPLE_BEAM_HISTORY_PROFILE,_BEAM_TOOL_PROFILE,_BEAM_TOOL_HISTORY_PROFILE,
                    FREE_SPHERE_PROFILE,FREE_SPHERE_HISTORY_PROFILE,
@@ -1380,6 +1432,9 @@ def solve_transient_contact(
         elif controls.allow_multiple_shell_planes_dev:
             from .multiple_shell_planes import MultipleShellPlaneManager
             expected_manager = MultipleShellPlaneManager
+        elif controls.allow_guided_shell_pair_dev:
+            from .pair import _PlanarShellPairManager
+            expected_manager = _PlanarShellPairManager
         elif controls.allow_free_shell_sphere_dev:
             from .sphere import _SphereShellManager
             expected_manager = _SphereShellManager
@@ -1388,6 +1443,11 @@ def solve_transient_contact(
         if type(manager) is not expected_manager:
             raise ValueError("transient development profile selected an unsupported contact owner")
         plane_state=None
+        pressure_features=(manager.pressure_features if controls.allow_multiple_shell_planes_dev else None)
+        if controls.allow_guided_shell_pair_dev:
+            from .guided_pair_transient_geometry import (prepare_guided_shell_pair_transient,
+                guided_shell_pair_path_minimum_gap)
+            pressure_features=prepare_guided_shell_pair_transient(manager,T)
         if controls.q4_plane_event_subdivision_dev:
             from .plane_newmark_events import (hermite_branch_extrema,
                 branch_path_admissible,localize_endpoint_event)
@@ -1431,8 +1491,8 @@ def solve_transient_contact(
                     free_body_name=free_body.body_name if free_body is not None else None,
                     q4_material_state=controls.allow_q4_plastic_dev,
                     plane_event_state=controls.q4_plane_event_subdivision_dev,
-                    plane_pressure_features=(manager.pressure_features
-                        if controls.allow_multiple_shell_planes_dev else None),
+                    plane_pressure_features=pressure_features,
+                    guided_shell_pair=controls.allow_guided_shell_pair_dev,
                 )
             current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = resumed[:7]
             if controls.allow_q4_plastic_dev:
@@ -1810,6 +1870,10 @@ def solve_transient_contact(
                                 swept_gap,beam_path_admissible,pair_swept_gaps=_multiple_shell_plane_path_gaps(
                                     manager,previous_full,full,previous_velocity,full_velocity,step,
                                     lambda:check_cancel('multiple shell planes path'))
+                            elif controls.allow_guided_shell_pair_dev:
+                                swept_gap=guided_shell_pair_path_minimum_gap(manager,
+                                    previous_full,full,previous_velocity,full_velocity,step,
+                                    lambda:check_cancel('guided shell pair physical path'))
                             else:
                                 swept_gap = _minimum_hermite_gap(
                                     manager, previous_full, full,
@@ -2147,7 +2211,8 @@ def solve_transient_contact(
             free_body.body_name if free_body is not None else None,
             material_packet,
             plane_state,
-            manager.pressure_features if controls.allow_multiple_shell_planes_dev else None,
+            pressure_features,
+            controls.allow_guided_shell_pair_dev,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(

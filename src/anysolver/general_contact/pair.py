@@ -334,6 +334,7 @@ class _PlanarShellPairManager:
         if overlap_area <= 0.0:
             raise ValueError("guided pair has no reference overlap")
         active_rows = np.flatnonzero(support > 0.0)
+        self.pressure_nodes = tuple(pressure_nodes[int(row)] for row in active_rows)
         self.support = support[active_rows]
         self.reference_weighted_gap = weighted_reference_gap[active_rows]
         pressure_selector = np.full(len(pressure_nodes), -1, dtype=int)

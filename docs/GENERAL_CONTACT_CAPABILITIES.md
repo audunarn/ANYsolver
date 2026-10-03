@@ -1282,3 +1282,36 @@ admitted remain false. Temporal/spatial accuracy, deformable-target impact,
 finite rotations/descriptor/plastic multiple pairs/friction/free bodies stay open.
 [Guide](GENERAL_CONTACT_C6_DEFORMING_SHELL_PLANES_DEV.md),
 [evidence](d1_review_support/C6_DEFORMING_SHELL_PLANES_SLICE_20261003.md).
+
+## Guided finite-mass Q4/S3 paired impact — installed-tested development
+
+`allow_guided_shell_pair_dev=True` with pressure events admits one explicit
+fixed-overlap planar shell pair through the shared Newmark driver. Both selected
+FE bodies retain physical inertia and receive corresponding contact work. Exact
+qualified Q4/S3 V2D, isotropic elastic material, uniform face-normal translation,
+common tangential motion and zero rotations are required. Constraint generators
+receive normalized floating-contract checks; actual endpoint/rate vectors are
+checked again. This does not admit arbitrary cancellation combinations or general
+nonuniform/sliding/rotating target geometry. All represented overlap and pressure
+Hermite gaps gate acceptance; positive support is not discarded. V11 binds ordered
+pair/node features and the new analysis identity. Existing schemas/defaults stay.
+The batched-front opt-in now also admits this explicit profile and stays bound to
+the same algorithm revision; no automatic switching within a failed increment.
+
+52 scoped pass outcomes (including one strengthened cancellation repeat) cover
+local Q4/S3 target inertia/work, full two-body recoil, public admission/state safety,
+active split restart/rehash tampering rejection, complete path helper controls and
+one temporal halving. Continuous q/v errors on the named gap/speed scales improve
+0.1091/0.7802% to0.02839/0.1964%; elastic energy defect1.78e−8 to3.51e−10.
+Independent modal balance1.96e−10 N, exchange wrench below9.1e−13 on the declared
+force/moment units; maximum physical penetration16.71um within20um. Initial
+constructor-fixture failures remain retained; no broad-suite replay or cap growth.
+
+WheelSHAec15777b30f96ac9e9555d83e9e29a27e8d44c998f95fc7eedc77b5b66daeca2
+matches208 imported source hashes/all example fields. Source/installed5.70/5.65s
+single runs establish compatibility, not performance acceleration. Supporting
+read scrutiny found no concrete defect; independent engineering acceptance,
+release and application admission remain false. Broader target deformation,
+friction/material/rotation and full C6 outcomes remain required.
+[Guide](GENERAL_CONTACT_C6_GUIDED_SHELL_PAIR_DEV.md),
+[evidence](d1_review_support/C6_GUIDED_SHELL_PAIR_SLICE_20261003.md).

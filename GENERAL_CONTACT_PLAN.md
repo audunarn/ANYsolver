@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.61. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.62. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -150,10 +150,22 @@ agreement and energy defect6.06e-7 resolve this discrete development slice, not
 continuous impact accuracy or engineering acceptance. No twofold speed claim.
 [Guide](docs/GENERAL_CONTACT_C6_DEFORMING_SHELL_PLANES_DEV.md),
 [evidence](docs/d1_review_support/C6_DEFORMING_SHELL_PLANES_SLICE_20261003.md).
-NEXT implement bounded paired deformable-body impact through the shared driver,
-reusing verified static shell-pair work. Fix exact formulation/geometry admission,
-both-body mass/work, represented path and restart contracts before expanding;
-first finite-target recoil/reference case then nonuniform/deformable targets.
+The finite-target recoil slice now reuses guided fixed-overlap shell mortar through
+the shared transient driver. Both finite Q4/S3 FE bodies act in one stage; physical
+mass/work, pressure features, relative Hermite paths and V11 restart are verified.
+52scoped pass outcomes include local both-body work, full recoil, restart/tampering,
+unsupported-motion rejection and cancellation, with a strengthened cleanup repeat.
+Source/installed208hashes/all fields match. One bounded halving improves continuous
+q error0.1091→0.02839% and v error0.7802→0.1964% on the named physical scales;
+energy defect1.78e−8→3.51e−10. Physical penetration16.71um is within20um.
+This is implemented/tested development, not acceptance or general deforming-target
+admission. Old controls/schemas/accepted-shell identity remain unchanged.
+[Guide](docs/GENERAL_CONTACT_C6_GUIDED_SHELL_PAIR_DEV.md),
+[evidence](docs/d1_review_support/C6_GUIDED_SHELL_PAIR_SLICE_20261003.md).
+NEXT derive nonuniform paired-target geometry/work and conservative path ownership
+before admitting it to the shared driver. Reuse existing general shell contributors;
+do not extend affine guided-gap assumptions to arbitrary deformation. Select the
+shortest independently checkable slice with a physical both-body reference.
 No open-ended mesh/dt campaign, resource increase or weakening of scientific gates.
 The earlier uncoupled example cannot supply contact-driven-plasticity claims.
 Its prior120-step route is approximately78s; no speed-up claim.
