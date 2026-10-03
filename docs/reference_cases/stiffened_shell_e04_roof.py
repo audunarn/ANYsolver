@@ -135,7 +135,8 @@ def definition(case, *, density_kg_m3):
     beams=tuple(b3_ge.define_beam('b3-ge',i+1,
         tuple(beam_ids[j] for j in cell),case.beam_positions[cell],
         case.beam_frames[cell],section,inertia) for i,cell in enumerate(case.beam_cells))
-    shell=ss.ShellPanel(shell_ids,tuple(map(tuple,case.shell_positions)),
+    # The consumer's strict native input record uses builtin JSON numerics.
+    shell=ss.ShellPanel(shell_ids,tuple(tuple(float(v) for v in row) for row in case.shell_positions),
         tuple(tuple(shell_ids[j] for j in cell) for cell in case.quads),
         case.thickness,case.young,case.poisson,density)
     points=tuple(ss.PointConnection(shell_ids[s],beam_ids[b]) for s,b in case.point_pairs)
@@ -144,3 +145,41 @@ def definition(case, *, density_kg_m3):
     return ss.LinearDefinition(ss.B3_GE_E4_PL_STIFFENED_SHELL_V1,shell,beams,points,fixed,
         q4_pullback_policy=ss.Q4_ALGORITHMIC_PULLBACK_V1,
         shell_reference_policy=ss.CURVED_Q4_POINT_REFERENCE_V1)
+
+
+def material_definition(case, *, density_kg_m3, shell_curve,
+                        beam_yield_limits, beam_hardening_n):
+    """Declare a material development case without inferring rectangle strength.
+
+    Limits are positive reference resultants in (N,N,N,Nm,Nm,Nm), respectively
+    axial, the two shears, torque and the two bending moments. The associated
+    ellipsoid is a declared generalized law, not physical fibre plasticity.
+    Geometry, centroidal elastic stiffness, inertia and point offsets come from
+    the existing reference adapter. Caller-supplied strength is not calibration.
+    """
+    from dataclasses import replace
+    from numbers import Real
+    from anymaterial import DNVC208MaterialCurve
+    from anysolver import b3_ge, stiffened_shell as ss
+    limits=np.asarray(beam_yield_limits,dtype=object)
+    if (limits.shape!=(6,) or any(isinstance(v,(bool,np.bool_)) or
+            not isinstance(v,Real) for v in limits) or
+            not np.isfinite(limits.astype(float)).all() or np.any(limits.astype(float)<=0.) or
+            isinstance(beam_hardening_n,(bool,np.bool_)) or not isinstance(beam_hardening_n,Real) or
+            not np.isfinite(beam_hardening_n) or beam_hardening_n<=0.):
+        raise ValueError('six positive finite native resultant limits and hardening force required')
+    if shell_curve is not None and type(shell_curve) is not DNVC208MaterialCurve:
+        raise ValueError('explicit admitted isotropic shell J2 curve or elastic shell required')
+    base=definition(case,density_kg_m3=density_kg_m3)
+    limits=limits.astype(float);yield_force=float(limits[0]);beams=[]
+    for stored in base.beams:
+        element,inertia=stored.instantiate()
+        section=b3_ge.EllipsoidalGeneralizedSection(element.section.elastic,
+            np.diag((yield_force/limits)**2),yield_force,float(beam_hardening_n))
+        candidate=type(element)(element.element_id,element.node_ids,
+            element.operator.reference,section,order=element.operator.order,
+            arithmetic_policy=element.operator.arithmetic_policy)
+        beams.append(type(stored).capture(candidate,inertia))
+    return replace(base,shell=replace(base.shell,j2_curve=shell_curve),beams=tuple(beams),
+        shell_reference_policy=ss.CURVED_Q4_POINT_MATERIAL_REFERENCE_V1,
+        retained_scale_policy='native_force_moment_roles_v1')

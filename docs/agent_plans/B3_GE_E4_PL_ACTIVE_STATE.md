@@ -2,114 +2,95 @@
 
 ## Authority and restart
 
-Revision 8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full amended
-G0–G6, F01–F13, V01–V28, B01–B18 scope and scientific criteria remain binding.
-Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 1cb98e95; use git log for
-latest committed identity. ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer
-at 295f667 (installed native scaling consumer). Scoped local commits only; no push/main merge/publication
-or contact-worker messages. All owned numerical runs/review terminal. Main untouched.
+Active unbudgeted goal and Revision8 plan remain in
+C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_plans.
+Full amended G0–G6/F01–F13/V01–V28/B01–B18 scope and scientific criteria remain
+binding. Experimental implementation is not aggregate acceptance.
+Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001. Current slice source parent4f9abaa9;
+use git log for its committed identity. ANYfem worktree:
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, at295f667, unchanged.
+Scoped local commits only: no push/main merge/publication/contact-worker messages.
+All owned numerical runs are terminal; main untouched by this task.
 
-Formal F03 UNCONSUMED; protected original script SHA256
+Formal F03 UNCONSUMED. Protected original script SHA256:
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
-Pressure assessment amendment awaits its existing user decision. Preserve failed
-science and frozen evidence. Ceiling 100k rows/600s/8GiB/8threads, one heavy job.
-Current screens 600s/1GiB/1thread/JIT off. Optional local/Mistral unavailable;
-OpenAI development review is not cross-family scientific qualification.
-Security: old tracked us3-modal-canary-v1.zip contains credentials. Do not print,
-copy, disseminate or push affected history. User informed; no rewrite authority.
-New evidence contains whitelisted metadata, never full environment maps.
+The existing pressure-assessment amendment still awaits its user decision.
+Preserve protected evidence, failed science and consumed authorities. Ceiling:
+100k rows/600s/8GiB/8threads, one heavy numerical job. Current screens:
+600s/1GiB/1thread/JIT off. Optional local/Mistral unavailable; OpenAI development
+review does not satisfy independent cross-family scientific acceptance.
+Security: historical us3-modal-canary-v1.zip contains credentials. Do not read,
+print, copy, disseminate or push affected history. User informed; no rewrite
+permission. Fresh evidence contains whitelisted metadata, not full environment.
 
-## Delivered behavior
+## Working behavior and applicable evidence
 
-Experimental multi-element GE/B2, material BL5, displacement, physical/material
-recovery, restart and ANYfem exist; no aggregate acceptance gate closes. Earlier
-material arc and consumer evidence: [public arc](development/r8-arc-public-20261002/results.md).
-Explicit curved elastic Q4/full-pose points pass bounded installed solve/restart:
-[reference slice](development/r8-curved-reference-20261002/results.md).
-Separate curved elastic arc identity omits shell plastic fields; cancellation,
-exact restart and force-endpoint parity: [arc slice](development/r8-curved-arc-20261002/results.md).
+Multi-element GE/B2 owners, flat material BL5, displacement, physical/material
+recovery, snapshots and ANYfem exist. The acceptance matrix remains authoritative.
+Recent curved-Q4/full-pose-point slices are explicitly experimental:
 
-Actual E04 roof constructs through the public facade. Installed 4x4/8x8 seed,
-arc and final-restore screens pass. Coarse 4x4 trajectory samples 2206.307 N at
-9.439 mm, then eleven descending samples; this is not converged capacity.
-[Geometry, section idealization and raw evidence](development/r8-e04-roof-20261002/results.md).
-New actual-roof restart at step 13 reproduces three descending steps through
-fresh restoration, with every checkpoint and final history/results exactly equal.
-77.06s / 165003264 bytes, unchanged installed wheel 6086fd4e...; all 412 product
-modules matched. [Restart and external port evidence](development/r8-e04-restart-and-port-20261002/results.md).
+- Elastic finite force/arc and actual E04 roof: installed4x4/8x8 screens and
+  exact turning-point restart. The coarse elastic sample peak2206.307N at9.439mm
+  is not converged capacity. [Application and external port boundary](development/r8-e04-restart-and-port-20261002/results.md).
+- Virgin references preserve zero initial history and loaded-source ownership;
+  both signed crown changes pass bounded initialization. [Material reference](development/r8-material-reference-20261003/results.md).
+- Curved material force/arc preserves fixed shell/beam predecessors, actual
+  station/layer recovery, cancellation and exact restart. Separate snapshot and
+  controller identities preserve legacy meanings. [Arc](development/r8-curved-material-arc-20261003/results.md),
+  [predecessor recovery](development/r8-curved-predecessor-20261003/results.md).
+- Explicit native retained scaling binds a distinct compiled identity, preserves
+  default identities and survives strict native ANYfem persistence. Three-scale
+  physical similitude passes; both old/new routes solved the small screen, so
+  no convergence/speed improvement is claimed. [Normalization](development/r8-native-retained-scale-20261003/results.md).
 
-## Decision and next action
+Current application slice: actual4x4 E04 material roof, unchanged reference
+geometry, centroidal elastic section, frame, supports, point offsets and load.
+Declared synthetic strengths: shell proportional stress3.10275MPa, existing DNV
+curve shape; generalized beam limits(500,300,300,1,2,.5) in N/Nm and hardening25000N.
+Density1kg/m3 is explicit static bookkeeping; spectra excluded. These are not
+calibrated roof/rectangle strengths or physical fibre plasticity.
 
-Decision resolved: a coherent new virgin curved-Q4/GE point reference can be
-constructed through existing admission without changing a loaded owner's state.
-The new typed public operation transports offsets/frames once, rejects conflicting
-local hosts and invalid geometry, and preserves native policies. Both signs of the
-actual roof crown imperfection pass installed solves/restart. +0.1mm passes ANYfem
-native persistence and exact continued arc steps; -0.1mm passes the runnable CLI
-and exact prefix continuation. Initial reference residual is zero. Seventeen
-installed checks pass; all 413 solver and unchanged 98 consumer modules match.
-Wheel 7cb1eedb...; [evidence and failures](development/r8-stress-free-reference-20261002/results.md).
+Installed nominal route completed:100N seed,20 .003 arc increments. Both domains
+have active plastic history. Sample maximum1348.518N at5.949mm, then12 descending
+samples to739.599N/13.627mm. Restore from prefix5 reproduces every15 continued
+checkpoint, final bytes/history/displacements/resultants and detailed material
+recovery exactly.260.260s/167358464 sampled peak bytes.
+Native ANYfem standalone/Project save/reopen restores that accepted final state;
+two additional descending increments match a fresh public owner exactly, ending
+603.248N/14.704mm.28.502s/176828416 bytes. Installed11 input checks pass; three
+affected checks repeated after canonical numeric correction. Source mixed-bool
+failure and first strict-consumer NumPy scalar failure are preserved. All511
+source/wheel/site product modules match; no product library changed in this slice.
+[Current evidence, runnable scripts and limitations](development/r8-e04-material-roof-20261003/results.md).
 
-Delivered next slice: separate curved-Q4 material policy and strict ANYfem
-schema. Tilted fixed-predecessor J2 covariance, active/unloading/reverse derivative
-checks, simultaneous shell/beam yielding, exact restored continuation, cancellation
-and history-aware rebase pass. Final solver installed 12 checks; final paired
-consumer actual native-project history and guard checks pass. All 511 installed
-modules match current sources. Explicit new-policy fixed-step budget up to16
-addresses the bounded yield-boundary reload; defaults8 and adaptive/legacy12 stay.
-Failed fixed/adaptive12 attempts remain failures. [Scope, review, failures and
-artifact identities](development/r8-curved-material-20261003/results.md).
+Installed solver wheel780e77539f6c511026ff626485af7d583cc5562f7f4c7452e0fbc45222489e34;
+consumer937eb59f99fc72463af3daad8c7363755fb957648f81d7647591305af61d3374.
+Sites: %TEMP%/r8-native-retained-scale-installed-v1/site and
+%TEMP%/r8-native-retained-scale-consumer-installed-v1/site. Fresh raw evidence
+and fixture bytes are retained in the current linked slice, not those temp paths
+alone. Live sessions87136 and86827 completed successfully; do not relaunch them.
 
-Next gap resolved: new binary kinds retain fixed beam/shell predecessors for
-last-increment recovery. Installed27 checks pass, including exact station records,
-corrupt predecessor rejection, legacy snapshot upgrade, cached ownership and
-restored residual/tangent parity. Installed consumer native history/detail and
-strict guards pass. All511 modules match. [Artifacts, scope and retained helper
-failure](development/r8-curved-predecessor-20261003/results.md).
+## Next decision and open findings
 
-Virgin material reference slice delivered: existing point-reference operation
-has a distinct material policy, preserves zero initial history and leaves a loaded
-source unchanged. Both signed roof crowns initialize stress-free; a nonrigid
-material panel yields in both domains and restarts exactly through native ANYfem.
-Installed18 solver and2 consumer checks pass; all511 product modules match.
-[Artifacts and limits](development/r8-material-reference-20261003/results.md).
+Next authorised application slice: use the existing virgin-reference operation
+for one declared +0.1mm crown material roof, preserving these strengths, supports,
+physical metric and limits. The competing possibilities are coherent stress-free
+reference/history continuation versus a reference/ownership inconsistency. Check
+zero initial material/gap, active continuation and exact restart with a bounded
+route; success completes the combined imperfection/material demonstrator at its
+valid development level. Failure preserves its accepted prefix and identifies
+one affected contract. Do not automatically launch mesh/sign sweeps, increase
+budgets, change tolerances or infer calibrated capacity.
 
-Curved material arc slice delivered: distinct identity, complete optional shell
-and mandatory beam predecessors, endpoint replay and atomic publication. Both
-loading directions, matched force increments, exact detailed restart, cancellation
-and stale publication pass. Installed23 solver checks and2 native ANYfem checks
-pass; all511 product modules match. [Artifacts, failures and scope](development/r8-curved-material-arc-20261003/results.md).
-
-Normalization decision resolved: new explicit retained_scale_policy selects the
-existing native force/moment builder and a distinct compiled identity. Defaults
-and old snapshots keep their meanings. Three-scale physical similitude and exact
-continued restart pass; installed7 solver and12 consumer checks pass, all511
-source/wheel/site modules match. New strict native-scale-v3 consumer record
-preserves the opt-in through Project persistence. The old arrangement mis-scales
-18 coordinates but also solved this small screen; no convergence gain is claimed.
-[Artifacts, ownership repair, reporting/fixture failures and scope](development/r8-native-retained-scale-20261003/results.md).
-
-Next application decision: inspect actual E04 roof section/frame and material
-assumptions, then define one bounded material continuation/restart comparison
-using the delivered native normalization. A declared development material case
-can establish implemented behavior; calibrated engineering accuracy still needs
-matched independent evidence. Do not invent calibration or hide a failed path.
-No automatic finer mesh, new globalization or external repeat. Displacement,
-spectra, external loads, fibres, curved S3 and broader attachments remain open;
-no aggregate qualification follows.
-
-The independent nonlinear E04 comparison remains open: finite external section/
+Physical connection/drilling/shear and full multiplier qualifications remain open.
+The independent nonlinear E04 comparison is unresolved: external finite section,
 pose/offset mapping and convergence are not established. CalculiX U1 is linear;
-original beam/shell nodes cannot enter RIGID BODY. Prescribed REF/ROT RF is not a
-wrench oracle. The free marker carrier failed at200 increments/fraction.02135127;
-no automatic repeat or larger budget. Keep its failed evidence and limitations:
-[external port record](development/r8-e04-restart-and-port-20261002/results.md).
-No formal F03 run or aggregate acceptance follows from the reference slice.
-
-Original 500N material-history and arc failures remain preserved. Curved 0.1N
-control still stops at 1.9145e-8 (required 1e-8), committing nothing; a green
-rejection check is not equilibrium. No tolerance relaxation. Curved spectra and
-external loads remain unadmitted; the new material scope above is experimental. Full connection, material,
-scale, external/platform and release obligations stay in the authoritative
-acceptance matrix. Historical notes remain in Git; immutable evidence unchanged.
+original beam/shell nodes cannot enter RIGID BODY, prescribed REF/ROT RF is not a
+wrench oracle, and the free marker carrier failed at200 increments/fraction.02135127.
+No automatic external rerun or larger budget. Original500N material/arc failures
+remain failures. Curved0.1N control stops at1.9145e-8(required1e-8), committing
+nothing; its rejection test is not equilibrium. Full required material families,
+loads, spectra, attachment/scale/external/platform and release obligations remain
+open. Curved material displacement and external loads are explicitly unadmitted.
+No aggregate gate closes from this nominal material application.

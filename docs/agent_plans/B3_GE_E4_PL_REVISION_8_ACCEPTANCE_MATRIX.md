@@ -1581,3 +1581,16 @@ old-role dimensional mismatch but both arrangements solved the bounded case;
 no convergence/speed gain, full unit/mesh qualification, material roof capacity
 or aggregate acceptance follows. Independent/external obligations remain open.
 [Identities, interpretations and failures](development/r8-native-retained-scale-20261003/results.md).
+
+**3 October actual material roof and consumer: IMPLEMENTED_NOT_QUALIFIED.**
+Declared synthetic shell/generalized-beam laws preserve the existing 4x4 roof
+geometry, stiffness, supports, eccentric full-pose points and native normalization.
+Installed20 arc increments develop both material histories and a sampled descending
+branch; all15 continued checkpoints from restored prefix5 match exactly, including
+detailed material recovery. Native ANYfem save/reopen restores the same final state
+and matches two additional increments exactly against a fresh public owner.
+Installed11 input checks pass, with three affected checks repeated after builtin
+numeric fixture correction. Mixed-boolean and initial consumer failures retained.
+All511 source/wheel/site product modules match; no product equations changed.
+No calibrated yield/limit-load, mesh/external capacity, aggregate acceptance or
+release claim follows. [Evidence](development/r8-e04-material-roof-20261003/results.md).
