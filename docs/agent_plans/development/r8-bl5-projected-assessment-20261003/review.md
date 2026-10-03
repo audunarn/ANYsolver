@@ -62,3 +62,29 @@ Recommended next action: one complete five-channel nested40-row policy and
 actual mechanical constraint-kernel check, preserving old80 rows and physical
 gaps/transfer obligations. New constant=L0+R0; new affine=.5*(-L0+L1+R0+R1).
 No automatic loaded/refinement campaign or policy selection follows.
+
+
+## Complete nested40 slice disposition
+
+The exact density/physical work and independently registered norm, fresh actual
+mechanical kernel, installed public owner and same-law supplementary reference
+are reviewed together. Independent OpenAI Read reviewers left no blocking
+correctness defect in this bounded slice; [immutable findings](../../../../.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/independent-review.md)
+are part of raw-manifest-v4. Registration now binds allfour parent inputs and
+full40 Cauchy interlacing. Raw unrefined fullKKT failure remains; the corrected
+full solve uses the installed mandatory compensated-residual policy with its
+samefactor, not the reduced oracle. Owner physical checks/recovery bind actual
+geometry/frames/supports and exact moments, including retained-cell work.
+
+The external physical rows are independent of native C and checked against
+old80 nesting; old runner admission is preserved. Actual command inventory,
+sections/frames/offsets/grounds/load matching and commonnodal-only comparisons
+pass. v4/v5 harness failures are retained. All417 source/site hashes and20 final
+bindings were independently inspected; no reviewer numerical run was claimed.
+
+Retain candidate for growing-space assessment, not qualification. Work agreement
+is coarse and bothmodels changed constraint space; remaining regional/support
+errors cannot be discarded. Effective external library resource qualification,
+different-family scientific acceptance, fullseven ratios/threerefined levels,
+physical shear/drilling/director/mixedsystem and mandatory CalculiX/F03/G0 remain
+open. No existing tolerance/authority/default/version is changed.

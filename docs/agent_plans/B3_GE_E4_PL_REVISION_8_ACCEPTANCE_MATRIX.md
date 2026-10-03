@@ -1,6 +1,19 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
 **3 October projected-density assessment - IMPLEMENTED_NOT_QUALIFIED:**
+Latest complete coarse candidate is the distinct nested40-row/four-support
+space, spanning four shell intervals. Independently registered sufficient
+auxiliary floor.4066549 and observed beta.8379451 pass; fresh enlarged mechanical
+kernel is positive with reduced saddle inertia769+/40-/0. Unrefined full-KKT
+failure remains preserved; the existing mandatory accurate residual correction
+gives full/reduced agreement<=1.01e-11. Installed owner K/C/state/reaction and
+physical work/balance checks pass with one factorization/three corrections.
+Same-law projected40 supplementary OpenSees comparisons give work%
+Fy-.5992343/Mx+.0141450/Mz-.2675928, with regional improvement and remaining
+support-force differences. Retain this experimental candidate for the growing
+envelope; no production resolution selection or converged1% claim. Complete
+slice Read review has no blocker; different-family acceptance remains open.
+Prior80-row weakness and all historical failures below retain their meaning.
 Distinct optional `discontinuous_p1_cell_average` uses physical reference half-cell
 means in all five channels; defaults/legacy meanings preserved. 8distinct source,
 29distinct installed and79math/reference controls pass; harness failures retained.

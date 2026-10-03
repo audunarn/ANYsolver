@@ -196,3 +196,81 @@ preserves69 explicitly whitelisted files/3607678B, prior failures, commands,
 source snapshots, exact arrays and predecessor/prospective notes. Earlier
 manifests/evidence remain unchanged. FormalF03 UNCONSUMED; no product/API/default,
 release, resource ceiling or scientific acceptance threshold changed.
+
+
+## Nested complete40-row development decision — 3 October
+
+One complete policy pairs adjacent old supports on the SAME16x4 shell/32 native
+halfcells: new0=L0+R0; new1=.5*(-L0+L1+R0+R1), in allfive channels. Four supports
+span four shell intervals; this removes40 constraints rather than changing
+coordinates. Independent rational halfcell density and quarter-support actions
+agree. Registration bound allscalar/physical input hashes BEFORE native values;
+CS squared1.5102603 derives safe sufficient floor.4066548912. Full40-column beta
+.8379451049 exceeds it (prior80 beta.2555151765). All40 interlacing inequalities,
+reference error.0002419613, norm conditions57.3761/40.3748 and work controls pass.
+No mechanical K inverse or new norm is introduced.
+
+Fresh actual-K enlarged kernel preserves769 free nodal/cell coordinates and
+verified resultant stationarity. Minimum kernel eigenvalue1.73803656e-5 exceeds
+uncertainty3.10607102e-11; reduced inertia769positive/40negative/0zero. Initial
+fullunrefined sparse solution failed parity/equilibrium/energy despite a passing
+kernel; maximum full/reduced parity6.25e-6. This failure is retained. Applying
+exactly the EXISTING installed owner policy (one compensated residual correction
+using the same fullfactor) gives maximum parity1.01e-11 and passing three-RHS
+controls. The reduced oracle does not supply the correction.
+
+Installed unchanged417-module wheel/source/site identity is exact. Actual owner
+K agrees exactly and C differs3.56e-18; states/resultants/multipliers/reactions
+agree within the existing1e-10. One eligible factorization and three mandatory
+corrections suffice for Fy/Mx/Mz. Extended recovery binds actual layout, sections,
+frames, supports and stations, exact regional moments and full physical work/
+ground/domain balance (maximum9.34e-13). Two development harness failures
+(missing scripts import path and the detached inventory's numerical binding)
+are preserved before correctedv6. No product/API/default/version change.
+
+ONE supplementary OpenSees batch uses identical geometry, sections, offsets,
+grounds, loads and independently assembled projected40 physical action. Exact
+nested external rows agree with old80 congruence in784 columns to1.09e-19.
+Allphysical derivative/work/equilibrium/weak-gap and emitted inventory controls
+pass. Native cell rotations are retained; comparison uses common nodal fields
+without identifying them as external beam rotations. Exact region [0.25,0.75]
+and x0/x1/x2 wrench moments include the eccentric/root lever arm.
+
+| Load | Prior80 work difference | Nested40 work difference |
+| --- | ---: | ---: |
+| Fy100N | -0.593604% | -0.599234% |
+| Mx10Nm | +0.015248% | +0.014145% |
+| Mz10Nm | -0.182889% | -0.267593% |
+
+Regional differences generally improve: regionFy-force difference for Fy falls
+1.9771 to.06352N; regionMz-moment difference falls1.2594 to.12070Nm. Under Mz,
+corresponding differences fall1.4003 to.10735N and1.0651 to.08454Nm. Some other
+components worsen, and beam-support axial-force differences remain5.0629N(Fy),
+-.23972N(Mx), .40447N(Mz). Coarse whole-field differences therefore cannot confer
+converged1% acceptance or allocate the remaining shell/beam/connection error.
+Both reference and native constraint spaces changed; neither is the historical
+strong bond. Pointwise gaps are reported independently of weak equilibrium.
+
+Decision: RETAIN the complete40-row space as an experimental candidate for its
+required growing-space assessment. Stronger norm plus positive actual kernel
+and similar global work with improved regional transfer make it defensible to
+advance; they do not select a production policy. First next discriminator is a
+joint refinement with the SAME complete four-shell-interval policy and unchanged
+physical ratio, after checking the registered meaning of beam ratio/halfcells.
+This distinguishes a growing-space improvement from a coarse-space benefit; a
+norm/kernel/physical-transfer failure stops expansion for its precise cause.
+Allseven ratios/three levels, locking/director/shear/drilling and fullmixed checks
+remain required. No automatic axial/S8R campaign or formal F03 execution follows.
+
+Independent complete-slice Read review has no unresolved development defect;
+it does not satisfy different-family scientific acceptance. Norm/owner checks
+are below4s/196MB; each serial external check below.52s/50MB, one sampled numeric
+or unresolved thread. These are diagnostic costs, not measured speedup or fully
+qualified external thread settings. Failed runs and limits remain recorded.
+
+[140-file extension](raw-manifest-v4.json), SHA256
+cccb7bb60aba3bd42057d0e01f4b63931a18d6424b8dd0617e291965bedd27c4,
+preserves13193716B of explicitly whitelisted source/commands/raw arrays/outputs/
+failures/reviews and prospective/parent notes. Prior manifests are unchanged;
+exact bytes will be verified in source and Git staging. FullM2/G0/F03 and all
+programme/material/platform/scale/consumer/release duties remain open.
