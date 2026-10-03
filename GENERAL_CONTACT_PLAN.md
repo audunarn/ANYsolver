@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.57. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.58. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -96,10 +96,26 @@ versus legacy64.27s; these single runs establish no performance claim.101steps,
 two localized events,zero cutbacks. Historical profiles and failed evidence stay.
 This resolves the identified event-phase discrepancy for this development fixture,
 not general impact/material acceptance or monotonic temporal qualification.
-NEXT close impact-induced plasticity through one independent mechanically coupled
-case and a matched-end temporal/work check before broader D5 admission. Prefer a
-derived reduced structural fixture over a broad mesh/time sweep; preserve actual
-Q4 work, material history and all numerical gates. Do not start an open-ended sweep.
+The manufactured oblique-plane case now excites an initially quiescent membrane
+and produces predicted plasticity during contact. Independent Q1/mass/work and
+affine branch-enumeration Newmark references match both modes and all material
+core values at coarse/half timesteps. Separate modal equilibrium checks resolve
+the tiny coupling; total normal energy alone cannot. Source/installed example
+matches all205 imported module hashes/numerical fields. Explicit cutback records
+identify a non-equilibrating endpoint trial; bounded recovery preserves history.
+The first extra zero-cutback assertion failure is retained and not regraded.
+
+Matched-end halving changes final plastic strain/alpha by3.4446% and membrane
+coordinate by3.4034%. It establishes sensitivity, not temporal convergence or
+the representative2% accuracy gate. The manufactured material/scales and constant
+plateau bounds are explicit; this is not broad engineering material admission.
+NEXT derive and cross-check a cheap independent continuous two-mode affine-branch
+reference (existing SciPy matrix exponential or segmented ODE integration), with
+actual contact/material events and bounded reference error. Use it to distinguish
+time error from work-map error and choose a specific next admitted step before
+another expensive shell solve. No production contact/material calls in the oracle;
+retain modal force/work scales, dimensional gaps and original numerical gates.
+Do not start an open-ended sweep or increase caps after failure.
 The current example has uncoupled membrane and normal modes and cannot supply
 those claims. Its prior120-step route is approximately78s; no speed-up claim.
 Measure material-packet preparation/validation cost before optimizing it; preserve
@@ -111,6 +127,7 @@ bound, not another refinement campaign. Full C0–C9 completion remains required
 [Plastic profile guide](docs/GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md) and
 [source/package evidence](docs/d1_review_support/C6_Q4_PLASTIC_SLICE_20261003.md).
 [Event slice/evidence](docs/d1_review_support/C6_Q4_PLANE_EVENT_SLICE_20261003.md).
+[Coupled plastic discriminator](docs/d1_review_support/C6_Q4_OBLIQUE_PLASTIC_SLICE_20261003.md).
 
 [New D5 guide](docs/GENERAL_CONTACT_C6_FREE_SHELL_SPHERE_DEV.md) and
 [slice evidence](docs/d1_review_support/C6_FREE_SHELL_SPHERE_SLICE_20261003.md).

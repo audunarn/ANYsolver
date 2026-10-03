@@ -1,60 +1,61 @@
 # General contact restart — 3 October 2026
 
-Full C0–C9 ACTIVE/incomplete. Authoritative worktree:
+Full C0–C9 ACTIVE/incomplete. Worktree:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001. Parent ee22dc60; Git HEAD identifies
-owned checkpoint. Goal2026-09-30.4/plan2026-10-03.57 govern. Do not access original
-worktree or inspect/message other user chat, merge main, publish/release, alter
-historical defaults/shared ABCs. Owned local checkpoint commits authorized.
-Frozen/consumed authority and all numerical criteria remain intact.
+branch codex/contact-main-reconcile-20261001. Parent a2b142a1; Git HEAD identifies
+owned checkpoint. Goal2026-09-30.4/plan2026-10-03.58 govern. Do not access original
+worktree/other user chat, merge main, publish/release or alter defaults/shared ABCs.
+Owned local checkpoints authorized; frozen/consumed authority remains unchanged.
+D1-interior/named bounded D2 independently accepted; installed accepted shell
+unchanged. All remaining C0–C9 outcomes still required.
 
-D1-interior/named bounded D2 independently accepted; existing installed accepted
-shell artifact unchanged. Full remaining beam/friction/dynamics/apps still required.
-History: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART80.md
-links previous plastic/free-sphere/native checkpoint records and retained failures.
+Prior event/control/plastic/sphere/native records:
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART81.md
+links Part80/79 and retained failed evidence. Q4 plane event profiles bind V8/V9
+support/gaps/rates/phase and accepted plastic parent. Their equations are unchanged.
 
-NEW explicit q4_plane_event_subdivision_dev for guided Q4/fixed-plane elastic or
-DNV plastic Newmark. Actual normalized nodal pressure gaps drive branch events.
-Acceleration-primary endpoint-duration solves use one committed material parent;
-proposals reequilibrate and every complete represented Hermite branch plus physical
-gap gate must pass. Hidden/unresolved crossings cause bounded cutback. No force law,
-material, mass or old profile changes. Shared query/stage budgets include failed
-attempts across retries. V8/V9 bind phase/support/gaps/rates/settings; V9 retains
-accepted material parent. Arbitrary END truncation inside/outside gap band rejects.
+NEW manufactured oblique Q4 impact excites initially zero membrane motion; first
+yield .000893363s while contact active. Unit-square affine modes with oblique
+normal(sin2e-5,0,cos2e-5), E1e9Pa,rho1e4kg/m3,h.05m,constant DNV plateauY.2Pa,
+kn4e11Pa/m,gap.0008m,physicalbudget5e-5m,eqtol1e-13. These are manufactured scales.
+Independent supports1/4,weighted x±1/6,diagonal masses and3material×4pressure-group
+branch Newmark oracle call no production kernels. Local work/mass, both modal
+trajectories, all material cores and separate equilibrium pass at3e-5/1.5e-5s,
+end.003s. Max normalized residuals1.9e-13/2.7e-15. Independent no-contact reference
+stays zero; production precontact is zero, not a full contact-free production run.
+Alpha remains below.005; test/public plateau diagnostics guard that assumption.
 
-44 helper +8 new integrated +2 affected legacy outcomes pass in scoped development
-runs. Independent elastic/plateau response and energy, yielded active split/tamper,
-failed-query accounting, yielded localization cancellation/reuse and END controls
-pass. Same-family Read scrutiny finds no concrete defect, not engineering acceptance.
-Guide: docs/GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md; exact evidence:
-docs/d1_review_support/C6_Q4_PLANE_EVENT_SLICE_20261003.md and
-contact_c6_q4_plane_events_20261003/{source.json,raw.zip}.
+Coarse104steps,4events,1cutback,132endpoint requests,567stage evaluations; final
+p_xx-1.282989468e-8,alpha1.481468629e-8,min physicalpathgap-4.52339e-5m withinbudget.
+Halving changes finalp/alpha3.4446%,membrane coordinate3.4034%: temporal accuracy
+and representative2% gate remain unproven. Tiny membrane work is not established
+by the dominant250J normal-energy balance. No full impact/material acceptance.
 
-Isolated wheel SHA256b4b0a30be0562a86fe41c1c57b1ef5ffd733d07ee15da78aac30f404c05ced01
-at C:/ANYworkspaceWork/contact_q4_event_package_20261003/wheels. All205 imported
-module hashes/numerical fields match.101steps,2 events,42 endpoint requests,291
-stage evaluations,zero cutbacks; min represented gap-3.53587e-5m within5e-5m.
-Matched dt3e-5s/end.003s: maximum fixture energy defect13.4695% ->0.00007234%,
-final1.46088% ->0.00007234%. Legacy64.27s/164163584B; event source68.52s/
-165969920B,installed73.73s/169127936B. No speed-up or formal temporal acceptance.
-Fixture modes uncoupled, constant-yield plateau energy formula explicitly bounded.
+5 physical/reference +2 diagnostic +4 affected outcomes pass through scoped runs.
+First extra zero-cutback assertion fails and is retained, not regraded. One bounded
+endpoint query fails to equilibrate within existing Newton budget; cutback recovers
+from same parent. New cutback records give time/duration/reason/work; typed callback
+failures retain actual cause/count/diagnostics, malformed gap vectors stay distinct.
+Result tuple contains owned mutable dictionaries. No mechanics or restart changes.
+Read-only same-family scrutiny finds no concrete defect, not engineering acceptance.
 
-NEXT one mechanically coupled impact-induced plasticity fixture with independent
-reduced-work reference and matched-end temporal/work check before broader D5
-admission. Preserve actual Q4 work/history, gates and resource limits. No open-ended
-mesh/time sweep. Measure packet cost before optional optimization. Multimode
-stationary/grazing integrated event cases and general hardening remain unverified.
+Source/isolated installed example matches all205 module hashes/numerical fields.
+WheelSHA256fbffc76ee0cd57d5ac932ba048556fc1112a673ab4ea54ac91670e653a1d5535,
+C:/ANYworkspaceWork/contact_q4_oblique_package_20261003/wheels.
+Source85.38s/170393600B,installed78.80s/170258432B; no speed claim. Half pytest143.48s.
+Guide docs/GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md; evidence
+ docs/d1_review_support/C6_Q4_OBLIQUE_PLASTIC_SLICE_20261003.md and
+ contact_c6_q4_oblique_plastic_20261003/{source.json,raw.zip}.
 
-Native variable-endpoint friction remains NONPASS: final closed gap-1.33564e-13m,
-missing event-sensitive tangent alpha_q=-G_q/G_alpha/mixed work bounds at grazing.
-No saved local/owner/split retry, cap/tolerance growth, history reset, zero closed
-response substitution or nativeC5 installed/accepted/released admission.
+NEXT cheap independently checked continuous two-mode affine-branch reference
+(existing SciPy matrix exponential or segmented ODE), actual contact/material
+events and bounded reference error. Determine temporal accuracy/work before another
+expensive shell solve; no open-ended dt sweep or cap increase after failure.
+Native friction remains NONPASS: missing closed-strip alpha_q=-G_q/G_alpha/mixed
+work bound at grazing. No saved local/owner/split retry, history reset or admission.
 
-Tiered workflow; optional lower tiers previously unavailable, do not repeat probes
-without changed circumstances. Owned geometry worker authored helper/tests; owned
-Read reviewer inspected driver/event/state/example; no other-chat coordination.
-All owned numerical/package processes finished; workers completed. Routine180s/
-953MiB, named900s/3814MiB and native restrictions unchanged.120 active-hour budget
-=goal timeUsedSeconds+3120; last81.8h, advancing. At120h checkpoint/request decision,
-no extension. Delivery forecast unsupported. Current turn made implementation
-progress; full programme is not complete.
+Tiered workflow; lower tiers previously unavailable, no unchanged reprobes. Owned
+reviewer completed, no other-chat coordination. Owned numerical/package activity
+finished. Routine180s/953MiB,named900s/3814MiB/native restrictions intact. Active-hour
+budget120h=goal.timeUsedSeconds+3120,last82.5h advancing. At120h checkpoint/request
+decision; no extension. Current turn made progress; delivery forecast unsupported.

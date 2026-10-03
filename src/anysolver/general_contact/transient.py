@@ -361,6 +361,7 @@ class TransientContactResults:
     element_states: Mapping = field(default_factory=dict)
     material_state_history: tuple[Mapping,...] = ()
     plane_event_stage_evaluations: int = 0
+    cutback_diagnostics: tuple[dict[str, object], ...] = ()
 
 
 def _restart_analysis_contract(transient, controls, manager, profile,
@@ -1499,6 +1500,7 @@ def solve_transient_contact(
         plane_total_stage_evaluations = int(controls.q4_plane_event_subdivision_dev)
         plane_total_endpoint_requests = 0
         cutbacks = 0
+        cutback_diagnostics = []
         previous_full = full0.copy()
         previous_velocity = np.asarray(T @ vred).reshape(-1)
         pending_swept_gap = float("inf")
@@ -1617,6 +1619,7 @@ def solve_transient_contact(
                 raise EventNeedsCutback('plane Newmark endpoint family did not equilibrate')
 
             while True:
+                last_event_failure = None
                 predictor = q + step * vred + step * step * (0.5 - beta) * acceleration
                 velocity_predictor = vred + step * (1.0 - gamma) * acceleration
                 # In event/tool profiles iterate on acceleration as well as its
@@ -1987,6 +1990,13 @@ def solve_transient_contact(
                 discard_active_state_candidate(committed_states)
                 event_targets = ()
                 plane_localized_boundary=False
+                cutback_diagnostics.append(dict(time_s=float(current_time),
+                    attempted_dt_s=float(step),reason=(last_event_failure
+                        or 'equilibrium or physical-gap acceptance failed'),
+                    plane_endpoint_requests=plane_endpoint_requests
+                        if controls.q4_plane_event_subdivision_dev else 0,
+                    plane_stage_evaluations=plane_stage_evaluations
+                        if controls.q4_plane_event_subdivision_dev else 0))
                 event_seed = None
                 local_cutbacks += 1
                 cutbacks += 1
@@ -2028,4 +2038,5 @@ def solve_transient_contact(
         tuple(body_states),
         committed_states if controls.allow_q4_plastic_dev else {},tuple(material_history),
         plane_total_stage_evaluations,
+        tuple(cutback_diagnostics),
     )

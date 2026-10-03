@@ -1171,3 +1171,27 @@ multimode stationary/grazing driver paths, broader geometry and temporal/mesh
 qualification remain open. Application admission remains false for this profile.
 [Guide](GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md),
 [evidence](d1_review_support/C6_Q4_PLANE_EVENT_SLICE_20261003.md).
+
+## Oblique Q4 plastic impact — manufactured installed-tested development
+
+The existing opt-in Q4/plane event route excites initially zero affine membrane
+motion through an oblique pressure field. A manufactured DNV plateau yields during
+contact. Local mass/work and independent affine-branch Newmark references match
+both physical modes and material history at dt3e-5/1.5e-5,end.003. Separate modal
+residuals are below1.9e-13 and2.7e-15 using explicit strain/translation scales.
+An independent no-contact reference stays elastic/quiescent; production precontact
+membrane motion stays zero. This is not a full production no-contact counterfactual.
+
+Coarse104steps,4 events,1 bounded cutback; first yield.000893363s while active,
+finalalpha1.48147e-8,minimum represented gap-4.52339e-5m within5e-5m. Matched-end
+halving changes final plastic strain/alpha3.4446%, so temporal/representative
+accuracy is not established. Small membrane work is not validated by the dominant
+normal-energy balance. Explicit plateau and manufactured-scale limits remain.
+
+Isolated wheelSHAfbffc76ee0cd57d5ac932ba048556fc1112a673ab4ea54ac91670e653a1d5535;
+all205 imported hashes and numerical fields match. Source85.38s/170393600B,
+installed78.80s/170258432B; no performance claim.5 physical/reference outcomes,
+2 diagnostic outcomes and4 affected controls pass through scoped selections.
+Engineering acceptance, release and application admission remain open/false.
+[Guide](GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md),
+[evidence](d1_review_support/C6_Q4_OBLIQUE_PLASTIC_SLICE_20261003.md).

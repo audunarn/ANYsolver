@@ -216,7 +216,15 @@ def localize_endpoint_event(endpoint_gaps, duration, active, required_indices,
                 fail('plane Newmark endpoint evaluation budget exhausted')
             evaluations += 1
             try:
-                gaps = _vector(endpoint_gaps(h), 'endpoint_gaps', active.size)
+                values = endpoint_gaps(h)
+            except EventNeedsCutback as exc:
+                raise EventNeedsCutback(str(exc),endpoint_evaluations=evaluations,
+                                        diagnostics=exc.diagnostics) from exc
+            except ValueError as exc:
+                raise EventNeedsCutback('plane Newmark endpoint candidate failed: '+str(exc),
+                                        endpoint_evaluations=evaluations) from exc
+            try:
+                gaps = _vector(values, 'endpoint_gaps', active.size)
             except ValueError as exc:
                 raise EventNeedsCutback('invalid equilibrated plane Newmark endpoint gaps',
                                         endpoint_evaluations=evaluations) from exc

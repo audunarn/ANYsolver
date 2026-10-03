@@ -74,3 +74,34 @@ the fixture's independently specified mass, elastic storage, plateau dissipation
 that formula to arbitrary hardening/nonproportional paths. Source and isolated
 installed development checks pass; engineering acceptance remains open.
 [Event evidence](d1_review_support/C6_Q4_PLANE_EVENT_SLICE_20261003.md).
+
+## Manufactured contact-driven membrane plasticity
+
+`examples/general_contact_q4_oblique_plastic_impact_dev.py` starts the affine
+membrane with zero displacement/rate and impacts an oblique fixed plane. The
+pressure field excites the membrane, which yields while contact remains active.
+The independent reference enumerates pressure/material branches and solves each
+affine two-coordinate Newmark system; it calls no production contact, material or
+structural kernel. Local mass and generalized work checks verify the reduction.
+The no-contact counterfactual is an independent-reference calculation; production
+zero membrane motion is checked before first contact, not in a separate full
+contact-free production run.
+
+The unit-square midsurface fixture explicitly uses E1e9Pa,nu.3,rho1e4kg/m3,h.05m,
+constant DNV plateau.2Pa,kn4e11Pa/m,angle2e-5rad,normal gap.0008m and5e-5m physical
+gap budget. These are manufactured scales. Generalized scales5Nm and1.5e7N apply separately
+to the generalized strain and translation equations (their coordinates/units
+differ). Tight1e-13 equilibrium control prevents normal force from hiding the
+small membrane response. Plasticity remains below.005; the example rejects an
+energy diagnostic outside its plateau assumption.
+
+`cutback_diagnostics` reports time, attempted duration, reason and plane query/stage
+work from one committed origin. It is a tuple of owned mutable dictionaries, not
+deeply immutable state. Typed endpoint cutbacks preserve their diagnostic cause;
+invalid callback candidates and malformed gap vectors are distinguished.
+
+Coarse/half matched-end discrete references and isolated installed checks pass.
+Final plastic strain changes3.44% under halving, so temporal accuracy remains open.
+The dominant250J normal energy cannot verify the tiny membrane/plastic work;
+use independent modal response, force and core-state checks.
+[Coupled evidence](d1_review_support/C6_Q4_OBLIQUE_PLASTIC_SLICE_20261003.md).

@@ -236,3 +236,22 @@ def test_invalid_event_controls_rejected(changes):
     arguments.update(changes)
     with pytest.raises(ValueError):
         localize_endpoint_event(**arguments)
+
+
+def test_endpoint_candidate_failure_retains_cause_and_actual_query_count():
+    def candidate(duration):
+        raise ValueError('owned structural candidate failure')
+    with pytest.raises(EventNeedsCutback,match='endpoint candidate failed: owned structural candidate failure') as info:
+        localize(candidate)
+    assert info.value.endpoint_evaluations==1
+    assert isinstance(info.value.__cause__,ValueError)
+
+
+def test_typed_endpoint_cutback_preserves_diagnostics_and_callback_units():
+    def candidate(duration):
+        raise EventNeedsCutback('nonconverged endpoint',endpoint_evaluations=9,
+            diagnostics={'inner_stage_evaluations':20})
+    with pytest.raises(EventNeedsCutback,match='nonconverged endpoint') as info:
+        localize(candidate)
+    assert info.value.endpoint_evaluations==1
+    assert info.value.diagnostics=={'inner_stage_evaluations':20}
