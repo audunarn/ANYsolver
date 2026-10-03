@@ -182,8 +182,11 @@ class ContactTransientSolverControls:
     plane_event_gap_tolerance_m: float = 1.e-10
     maximum_plane_event_endpoint_evaluations: int = 64
     maximum_plane_event_stage_evaluations: int = 128
+    save_constraint_reactions_dev: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.save_constraint_reactions_dev) is not bool:
+            raise ValueError('constraint-reaction selection must be boolean')
         if type(self.q4_plane_event_subdivision_dev) is not bool:
             raise ValueError('Q4 plane event selection must be boolean')
         if self.q4_plane_event_subdivision_dev and (self.allow_s3_descriptor_dev
@@ -362,6 +365,9 @@ class TransientContactResults:
     material_state_history: tuple[Mapping,...] = ()
     plane_event_stage_evaluations: int = 0
     cutback_diagnostics: tuple[dict[str, object], ...] = ()
+    # Generalized structural constraint forces M a + f_internal/contact - f_load.
+    # These require formulation-owned maps before interpretation as physical moments.
+    constraint_reactions: np.ndarray = field(default_factory=lambda: np.empty((0, 0)))
 
 
 def _restart_analysis_contract(transient, controls, manager, profile,
@@ -401,6 +407,8 @@ def _restart_analysis_contract(transient, controls, manager, profile,
     if controls.s3_one_sided_rates_dev:
         # Absent for historical profiles, preserving their checkpoint contract.
         contract["controls"]["s3_one_sided_rates_dev"] = True
+    if controls.save_constraint_reactions_dev:
+        contract['controls']['save_constraint_reactions_dev'] = True
     if controls.allow_classical_beam_dev:
         contract["controls"].update(
             allow_classical_beam_dev=True,
@@ -1378,6 +1386,24 @@ def solve_transient_contact(
                 return external_reduced
             return nodal_load_history.factor(time_s)*external_reduced
 
+        reaction_candidate = None
+
+        def capture_reaction(full, force, time_s):
+            nonlocal reaction_candidate
+            if controls.save_constraint_reactions_dev:
+                factor = 1.0 if nodal_load_history is None else nodal_load_history.factor(time_s)
+                reaction_candidate = (full.copy(), float(time_s),
+                                      np.asarray(force).reshape(-1).copy() - factor*external_load)
+
+        def accepted_reaction(full, time_s, candidate_acceleration):
+            if (reaction_candidate is None or reaction_candidate[1] != float(time_s)
+                    or not np.array_equal(reaction_candidate[0], full)):
+                raise RuntimeError('constraint reaction does not match the accepted candidate')
+            reaction = np.asarray(M @ (T @ candidate_acceleration)).reshape(-1) + reaction_candidate[2]
+            if not np.all(np.isfinite(reaction)):
+                raise RuntimeError('nonfinite accepted constraint reaction')
+            return reaction[:size].copy()
+
         def evaluate(position: np.ndarray, time_s: float, *, tangent: bool):
             if translations is not None:
                 translations.set_pose(time_s)
@@ -1393,11 +1419,15 @@ def solve_transient_contact(
                 force = np.r_[force, np.zeros(3)]+contact_force
                 stiffness = (sparse.block_diag((stiffness, sparse.csr_matrix((3, 3))), format='csr')
                              +contact_tangent if tangent else None)
+                if controls.save_constraint_reactions_dev:
+                    capture_reaction(full, force, time_s)
                 return full, np.asarray(T.T @ force).reshape(-1)-load_at(time_s), stiffness, trial
             force, stiffness, trial = _assemble_nonlinear_system(
                 model, full, committed_states, 3, tangent=tangent,
                 kinematics="von_karman",
             )
+            if controls.save_constraint_reactions_dev:
+                capture_reaction(full, force, time_s)
             return (full, np.asarray(T.T @ force).reshape(-1)
                     - load_at(time_s), stiffness, trial)
 
@@ -1466,6 +1496,8 @@ def solve_transient_contact(
         if controls.q4_plane_event_subdivision_dev:
             plane_state=_plane_event_state(pressure_reference,pressure_gradient,q,vred,
                 controls.plane_event_gap_tolerance_m)
+        constraint_reactions = ([accepted_reaction(full0, current_time, acceleration)]
+                               if controls.save_constraint_reactions_dev else [])
         if controls.allow_q4_plastic_dev:
             if restart_checkpoint is None:
                 if any(np.any(np.asarray(state['alpha'])!=0.) for state in trial0.values()):
@@ -1927,6 +1959,8 @@ def solve_transient_contact(
                         next_plane_state=_plane_event_state(pressure_reference,pressure_gradient,
                             candidate,candidate_velocity,controls.plane_event_gap_tolerance_m)
                         check_cancel('plane Newmark event-state acceptance')
+                    candidate_reaction = (accepted_reaction(full, current_time+step, candidate_acceleration)
+                                          if controls.save_constraint_reactions_dev else None)
                     committed_states = commit_state_candidate(committed_states, trial)
                     if controls.allow_q4_plastic_dev:
                         material_packet=next_material_packet
@@ -1968,6 +2002,8 @@ def solve_transient_contact(
                         positions.append(full.copy())
                         velocities.append(np.asarray(T @ vred).reshape(-1))
                         accelerations.append(np.asarray(T @ acceleration).reshape(-1))
+                        if controls.save_constraint_reactions_dev:
+                            constraint_reactions.append(candidate_reaction)
                         contacts.append(contact_result)
                         if nodal_load_history is None:
                             # Constant dead-load path integral is exact.
@@ -2039,4 +2075,5 @@ def solve_transient_contact(
         committed_states if controls.allow_q4_plastic_dev else {},tuple(material_history),
         plane_total_stage_evaluations,
         tuple(cutback_diagnostics),
+        np.asarray(constraint_reactions) if controls.save_constraint_reactions_dev else np.empty((0, 0)),
     )

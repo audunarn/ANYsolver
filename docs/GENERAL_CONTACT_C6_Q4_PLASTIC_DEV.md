@@ -105,3 +105,45 @@ Final plastic strain changes3.44% under halving, so temporal accuracy remains op
 The dominant250J normal energy cannot verify the tiny membrane/plastic work;
 use independent modal response, force and core-state checks.
 [Coupled evidence](d1_review_support/C6_Q4_OBLIQUE_PLASTIC_SLICE_20261003.md).
+
+## Opt-in generalized constraint reactions
+
+`ContactTransientSolverControls(save_constraint_reactions_dev=True)` reports
+`result.constraint_reactions` at the saved dynamic states, with the same structural
+DOF ordering as displacement. The support force on the structure is
+`M @ acceleration + internal/contact residual - external nodal load`. Inertial
+force and the actual time-dependent load are included. MPC reactions are retained
+on all participating structural coordinates; their work on allowed motion vanishes
+within the equilibrium tolerance. Free-body centre coordinates are not exported
+in this structural field.
+
+The opt-in copies the already assembled candidate residual, binds exact pose/time,
+and validates it before commit. It does not perform another structural/contact
+assembly. Rotational entries are generalized forces: physical moment recovery
+requires the admitted formulation's work map. Disabled output is an empty `(0,0)`
+array and preserves old checkpoint identity. Enabled output is bound in the
+analysis checkpoint contract; changing that selection rejects continuation.
+
+Eight focused source-development checks cover oblique support balance, unchanged
+dynamics, restart, external load subtraction, unequal-load MPC forces and a ramp
+with sparse output, descriptor algebraic equilibrium and free-body assembly.
+These checks and source review are not independent engineering acceptance or an
+installed-package claim for this new opt-in output.
+
+## Continuous manufactured reference
+
+`tests/reference_oblique_q4_plateau.py` integrates independently derived affine
+contact/material branches without importing solver/material kernels. Tighter
+exponential and dimensionless DOP853 propagation controls agree within8e-13 and
+1.6e-13 on declared response scales. The two propagation controls share event
+selection/enclosure logic; separate analytical event, branch and hidden-excursion
+checks cover that logic. Exact-boundary output phases have the documented incoming
+tolerance convention; grouped roots must each satisfy their residual before any
+branch switch. Floating branch enclosures do not certify all upstream arithmetic.
+
+Use `scripts/check_general_contact_oblique_temporal_dev.py <saved-field.json>
+--output <comparison.json>` to compare saved states without another production
+solve. Null relative errors mean a zero reference; scaled absolute errors remain
+reported. At end.003s, coarse/half final plastic-strain errors are4.889%/1.396%,
+and membrane kinetic errors10.45%/2.929%. These development measurements support
+timestep error, not broad impact/material acceptance or asymptotic order.

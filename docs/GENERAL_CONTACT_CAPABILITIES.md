@@ -1195,3 +1195,31 @@ installed78.80s/170258432B; no performance claim.5 physical/reference outcomes,
 Engineering acceptance, release and application admission remain open/false.
 [Guide](GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md),
 [evidence](d1_review_support/C6_Q4_OBLIQUE_PLASTIC_SLICE_20261003.md).
+
+## Generalized transient reactions and continuous manufactured reference
+
+Opt-in `save_constraint_reactions_dev` exports accepted structural generalized
+constraint forces, including inertia and actual external load. Exact candidate
+pose/time, copied residual ownership and precommit validation avoid another
+assembly and stale trial output. Eight source checks cover Q4 support balance,
+default trajectory parity/restart, constant/ramped loading, sparse output, MPC
+forces, S3 descriptor algebraic equilibrium and free-shell-sphere assembly.
+The contact-driven oblique yielded restart also matches the independent discrete
+reference through separation and preserves the complete accepted material parent
+and allowed-mode reaction work. Generalized rotations require physical work maps.
+This output is implemented/source-tested/source-reviewed, not installed-tested,
+independently engineering-accepted or released; application admission stays false.
+
+The no-production-call continuous manufactured reference uses affine branches,
+bounded Taylor/Bernstein event checks, exponential propagation and separate
+dimensionless DOP853 propagation controls. Controls share event logic; analytic
+event/unloading/hidden-excursion checks are separate. Review corrected incoming
+boundary-phase semantics and grouped-root residual enforcement. Frozen control
+errors are below8e-13/1.6e-13 on declared scales. Previously20pass evidence and4
+affected outcomes are retained/reused, not reported as a new full-suite run.
+
+Saved coarse/half final plastic/alpha errors against this reference4.889%/1.396%,
+strain4.829%/1.379%, membrane kinetic energy10.45%/2.929%. Normal-energy dominance
+does not certify small-component work. Temporal discrepancy is diagnosed; broad
+impact/material accuracy, asymptotic order and engineering acceptance remain open.
+[Evidence](d1_review_support/C6_REACTIONS_CONTINUOUS_REFERENCE_SLICE_20261003.md).

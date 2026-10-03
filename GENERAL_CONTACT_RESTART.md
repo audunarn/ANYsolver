@@ -1,61 +1,61 @@
 # General contact restart — 3 October 2026
 
-Full C0–C9 ACTIVE/incomplete. Worktree:
+Full C0–C9 ACTIVE/incomplete. Worktree
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001. Parent a2b142a1; Git HEAD identifies
-owned checkpoint. Goal2026-09-30.4/plan2026-10-03.58 govern. Do not access original
-worktree/other user chat, merge main, publish/release or alter defaults/shared ABCs.
-Owned local checkpoints authorized; frozen/consumed authority remains unchanged.
-D1-interior/named bounded D2 independently accepted; installed accepted shell
-unchanged. All remaining C0–C9 outcomes still required.
+branch codex/contact-main-reconcile-20261001. Parent7124e166; Git HEAD identifies
+the owned checkpoint. Goal2026-09-30.4/plan2026-10-03.59 govern. No other-user-chat
+coordination, original protected worktree access, main merge, push/publication,
+release, historical default change or consumed-authority renewal. Owned local
+checkpoint commits authorized. D1-interior/named bounded D2 independently accepted;
+installed accepted shell remains unchanged; all required programme rows remain.
 
-Prior event/control/plastic/sphere/native records:
-docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART81.md
-links Part80/79 and retained failed evidence. Q4 plane event profiles bind V8/V9
-support/gaps/rates/phase and accepted plastic parent. Their equations are unchanged.
+History: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART82.md
+links Part81/80/79 and preserved failed evidence. Oblique manufactured Q4 impact
+matches independent discrete work/material equations; coarse/half fields retained.
 
-NEW manufactured oblique Q4 impact excites initially zero membrane motion; first
-yield .000893363s while contact active. Unit-square affine modes with oblique
-normal(sin2e-5,0,cos2e-5), E1e9Pa,rho1e4kg/m3,h.05m,constant DNV plateauY.2Pa,
-kn4e11Pa/m,gap.0008m,physicalbudget5e-5m,eqtol1e-13. These are manufactured scales.
-Independent supports1/4,weighted x±1/6,diagonal masses and3material×4pressure-group
-branch Newmark oracle call no production kernels. Local work/mass, both modal
-trajectories, all material cores and separate equilibrium pass at3e-5/1.5e-5s,
-end.003s. Max normalized residuals1.9e-13/2.7e-15. Independent no-contact reference
-stays zero; production precontact is zero, not a full contact-free production run.
-Alpha remains below.005; test/public plateau diagnostics guard that assumption.
+NEW opt-in save_constraint_reactions_dev exports structural generalized support
+forces M*a+internal/contact−external load at saved states. Exact candidate pose/time,
+copied residual and precommit validation; no extra assembly. False preserves old
+checkpoint identity; True is restart-bound. Physical rotational moments need work
+maps; free-body centre coordinates are excluded. Eight scoped source checks pass:
+oblique balance, default parity/restart, loads, MPC, ramp/sparse output, descriptor
+equilibrium and free-shell-sphere assembly. Read review found no concrete defect.
+New contact-driven yielded restart at saved nominal.0008933632224845885s through
+.0011s matches independent discrete histories, exact parent and allowed-mode
+reaction work.44.92s/187584512bytes. No new installed/accepted/released output claim.
 
-Coarse104steps,4events,1cutback,132endpoint requests,567stage evaluations; final
-p_xx-1.282989468e-8,alpha1.481468629e-8,min physicalpathgap-4.52339e-5m withinbudget.
-Halving changes finalp/alpha3.4446%,membrane coordinate3.4034%: temporal accuracy
-and representative2% gate remain unproven. Tiny membrane work is not established
-by the dominant250J normal-energy balance. No full impact/material acceptance.
+Continuous no-production-call manufactured reference implements affine branches,
+Taylor/Bernstein path checks, bounded root handling and dimensionless propagation.
+Tighter exponential agreement8e-13; separately evaluated DOP8531.6e-13 on declared
+scales. Controls share event logic; analytic tests assess it separately.20previous
+pass outcomes +4affected checks retained/reused, not a new full-suite run. Review
+corrected incoming/tolerance exact-boundary phase semantics and enforces every
+grouped event residual before any switch. Frozenfiveevent case has no unloading;
+analytic no-contact unloading checked separately. Floating enclosure/propagation
+limits remain explicit. One comparator zero-reference check passes (relative=null,
+absolute/scaled errors retained). Pre-review artifact/hash retained separately.
 
-5 physical/reference +2 diagnostic +4 affected outcomes pass through scoped runs.
-First extra zero-cutback assertion fails and is retained, not regraded. One bounded
-endpoint query fails to equilibrate within existing Newton budget; cutback recovers
-from same parent. New cutback records give time/duration/reason/work; typed callback
-failures retain actual cause/count/diagnostics, malformed gap vectors stay distinct.
-Result tuple contains owned mutable dictionaries. No mechanics or restart changes.
-Read-only same-family scrutiny finds no concrete defect, not engineering acceptance.
+Saved end.003s final coarse/half plastic/alpha errors4.889%/1.396%, membrane strain
+4.829%/1.379%, membrane kineticenergy10.45%/2.929% against corrected reference.
+This supports timestep error, not broad impact/material acceptance or asymptotic
+order. Dominant250J normal energy cannot verify tiny membrane work. No third full
+refinement run. Plateau alpha<.005/manufactured scales remain explicit.
+Evidence docs/d1_review_support/C6_REACTIONS_CONTINUOUS_REFERENCE_SLICE_20261003.md,
+contact_c6_reactions_reference_20261003/{source.json,raw.zip} (44records).
+Guide docs/GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md; capability ledger updated.
 
-Source/isolated installed example matches all205 module hashes/numerical fields.
-WheelSHA256fbffc76ee0cd57d5ac932ba048556fc1112a673ab4ea54ac91670e653a1d5535,
-C:/ANYworkspaceWork/contact_q4_oblique_package_20261003/wheels.
-Source85.38s/170393600B,installed78.80s/170258432B; no speed claim. Half pytest143.48s.
-Guide docs/GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md; evidence
- docs/d1_review_support/C6_Q4_OBLIQUE_PLASTIC_SLICE_20261003.md and
- contact_c6_q4_oblique_plastic_20261003/{source.json,raw.zip}.
+NEXT D5 simultaneous shell/plane contact through composed existing plane
+contributors. Fix explicit contributor/admission/restart boundaries; concatenate
+pair-owned pressure/event data, preserve per-pair physical-gap gates and shared
+resource limits. Small coupled two-patch affine reference before broader expansion.
+Old single-pair defaults/descriptor/native guards stay intact. Stop manufactured
+dt diagnostics until a specific qualification gap requires refinement.
 
-NEXT cheap independently checked continuous two-mode affine-branch reference
-(existing SciPy matrix exponential or segmented ODE), actual contact/material
-events and bounded reference error. Determine temporal accuracy/work before another
-expensive shell solve; no open-ended dt sweep or cap increase after failure.
-Native friction remains NONPASS: missing closed-strip alpha_q=-G_q/G_alpha/mixed
-work bound at grazing. No saved local/owner/split retry, history reset or admission.
-
-Tiered workflow; lower tiers previously unavailable, no unchanged reprobes. Owned
-reviewer completed, no other-chat coordination. Owned numerical/package activity
-finished. Routine180s/953MiB,named900s/3814MiB/native restrictions intact. Active-hour
-budget120h=goal.timeUsedSeconds+3120,last82.5h advancing. At120h checkpoint/request
-decision; no extension. Current turn made progress; delivery forecast unsupported.
+Native grazing friction remains NONPASS: missing closed-strip alpha_q=-G_q/G_alpha
+and mixed-work bounds; no saved local/owner/split retry, history reset, zero closed
+response replacement, tolerance/cap growth or native acceptance. Prior failures stay.
+Tiered workflow; lower tiers unavailable earlier, no unchanged probes. Owned workers
+complete, numerical processes finished; no other-chat contact. Routine180s/953MiB,
+named900s/3814MiB and stricter native restrictions intact.120active-hour budget=
+goal.timeUsedSeconds+3120,last83.0h advancing. At120h checkpoint/request decision;
+no extension. Current turn made progress; delivery forecast remains unsupported.

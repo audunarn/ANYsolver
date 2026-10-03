@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 
 from anysolver.assembly import assemble_mass_matrix
+from anysolver import ContactTransientSolverControls, TransientConfig, solve_transient_contact
 from anysolver.general_contact.core import ContactSolverSettings,_PlanarQ4PlaneManager
 
 example=runpy.run_path(str(Path(__file__).parents[1]/'examples/general_contact_q4_oblique_plastic_impact_dev.py'))
@@ -157,3 +158,39 @@ def test_independent_no_contact_counterfactual_has_no_membrane_motion_or_yield(i
     first_active=next(i for i,row in enumerate(result.contact) if row.active_pressure_dofs)
     q=example['modal'](result.displacements,modes)
     np.testing.assert_allclose(q[:first_active,0],0.,rtol=0.,atol=1.e-18)
+
+
+def test_contact_driven_yielded_restart_keeps_material_origin_and_constraint_work():
+    controls=ContactTransientSolverControls(allow_q4_plastic_dev=True,
+        save_q4_material_history_dev=True,q4_plane_event_subdivision_dev=True,
+        save_constraint_reactions_dev=True,equilibrium_tolerance=1.e-13)
+    def run(end,checkpoint=None,emit=False):
+        model,_,_,modes,definition=example['build_model']()
+        result=solve_transient_contact(model,definition,
+            TransientConfig(3.e-5,end,initial_velocity=modes@np.array([0.,-1.])),
+            solver_controls=controls,restart_checkpoint=checkpoint,
+            emit_restart_checkpoint=emit)
+        return result,modes
+    # Previously saved nominal step, not an arbitrary END in the event gap band.
+    prefix,modes=run(.0008933632224845885,emit=True)
+    assert prefix.contact[-1].active_pressure_dofs>0
+    assert np.min(prefix.element_states[1]['alpha'])>0.
+    resumed,_=run(.0011,checkpoint=prefix.restart_checkpoint)
+    assert resumed.material_state_history[0][1]==prefix.element_states[1]
+    times=np.r_[prefix.times[:-1],resumed.times]
+    positions=np.concatenate((prefix.displacements[:-1],resumed.displacements))
+    velocities=np.concatenate((prefix.velocities[:-1],resumed.velocities))
+    states=(*prefix.material_state_history[:-1],*resumed.material_state_history)
+    expected=reference(times)
+    q,v=example['modal'](positions,modes),example['modal'](velocities,modes)
+    np.testing.assert_allclose(q,[row['q'] for row in expected],rtol=0.,atol=1.e-11)
+    np.testing.assert_allclose(v[:,0],[row['v'][0] for row in expected],rtol=1.e-5,atol=2.e-11)
+    np.testing.assert_allclose(v[:,1],[row['v'][1] for row in expected],rtol=0.,atol=1.e-7)
+    for state,row in zip(states,expected):
+        np.testing.assert_allclose(state[1]['alpha'],row['alpha'],rtol=1.e-5,atol=2.e-15)
+        np.testing.assert_allclose(state[1]['plastic_strain'],np.tile([row['p'],-row['p'],0.],(12,1)),
+                                   rtol=1.e-5,atol=2.e-15)
+    for result in (prefix,resumed):
+        reaction_work=result.constraint_reactions@modes
+        assert np.max(np.abs(reaction_work)/FORCE_SCALES)<1.e-6
+    assert resumed.contact[-1].active_pressure_dofs==0

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.58. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.59. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -109,15 +109,32 @@ Matched-end halving changes final plastic strain/alpha by3.4446% and membrane
 coordinate by3.4034%. It establishes sensitivity, not temporal convergence or
 the representative2% accuracy gate. The manufactured material/scales and constant
 plateau bounds are explicit; this is not broad engineering material admission.
-NEXT derive and cross-check a cheap independent continuous two-mode affine-branch
-reference (existing SciPy matrix exponential or segmented ODE integration), with
-actual contact/material events and bounded reference error. Use it to distinguish
-time error from work-map error and choose a specific next admitted step before
-another expensive shell solve. No production contact/material calls in the oracle;
-retain modal force/work scales, dimensional gaps and original numerical gates.
-Do not start an open-ended sweep or increase caps after failure.
-The current example has uncoupled membrane and normal modes and cannot supply
-those claims. Its prior120-step route is approximately78s; no speed-up claim.
+The independent continuous affine-branch reference now agrees with tighter
+exponential and separately evaluated DOP853 propagation to8e-13/1.6e-13 on the
+declared scales. Event logic is shared by those controls and receives separate
+branch/enclosure/root checks. Exact-boundary output phases use an explicit incoming
+tolerance convention; grouped events enforce each residual before any switch.
+Saved coarse/half fields show final plastic/alpha errors4.889%/1.396%, strain
+errors4.829%/1.379%, and membrane kinetic-energy errors10.45%/2.929%. This resolves
+the principal discrepancy as timestep error; it is not temporal qualification.
+Do not repeat a full refinement solve until its named acceptance gap requires it.
+
+Opt-in generalized constraint reactions now reuse the assembled stage residual,
+with exact pose/time identity and precommit validation. Eight source checks cover
+oblique support balance, default parity/restart, nodal load, MPCs, ramp/sparse output,
+descriptor coordinates and free-body assembly. Physical rotational moment recovery
+still requires formulation maps. The new output has no installed or accepted claim.
+The contact-driven active/yielded restart case through separation now passes,
+including the discrete independent reference, exact accepted material parent and
+allowed-mode reaction work (44.92s/187584512bytes). Stop this manufactured dt study.
+NEXT implement the D5 simultaneous shell/plane-contact slice through composed
+existing fixed-plane contributors, explicit selection and pair-owned pressure
+support/event state. First fix the contributor/admission/restart boundaries and
+verify the coupled affine work/path model; keep old single-pair defaults and
+descriptor/native restrictions. Use a small coupled two-patch reference before
+broader geometry/material expansion; no resource/tolerance increase.
+The earlier uncoupled example cannot supply contact-driven-plasticity claims.
+Its prior120-step route is approximately78s; no speed-up claim.
 Measure material-packet preparation/validation cost before optimizing it; preserve
 accepted-parent semantics and every required restart check. Do not repeat broad
 suites or expand caps. Reuse unchanged geometry/static/material evidence.
