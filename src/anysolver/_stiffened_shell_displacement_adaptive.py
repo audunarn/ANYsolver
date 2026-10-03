@@ -56,7 +56,9 @@ def encode(model,context,inner):
 
 
 def decode(owner,raw):
-    if not owner._bl5_shell_material or type(raw) is not bytes or not raw.startswith((MAGIC,EVENT_MAGIC)) or not len(MAGIC)+36<len(raw)<=MAX_CHECKPOINT_BYTES:
+    if (not (owner._bl5_shell_material or getattr(owner,"_curved_material",False)) or
+            type(raw) is not bytes or not raw.startswith((MAGIC,EVENT_MAGIC)) or
+            not len(MAGIC)+36<len(raw)<=MAX_CHECKPOINT_BYTES):
         raise ValueError("bounded adaptive displacement checkpoint required")
     eventful=raw.startswith(EVENT_MAGIC)
     start=len(MAGIC)+4;size=int.from_bytes(raw[len(MAGIC):start],"little")

@@ -106,8 +106,9 @@ def test_old_curved_material_guards_and_new_policy_limits(request):
     from anysolver._stiffened_shell_displacement_adaptive import MAGIC as ADAPTIVE_MAGIC,EVENT_MAGIC
     with pytest.raises(ValueError,match='arc snapshot'):
         owner.restore(ARC_MAGIC)
+    assert cap['displacement_control']=='experimental_curved_material_point_translation_v1'
     for magic in (DISPLACEMENT_MAGIC,ADAPTIVE_MAGIC,EVENT_MAGIC):
-        with pytest.raises(ValueError,match='curved material .* checkpoints'):
+        with pytest.raises(ValueError):
             owner.restore(magic)
     assert owner._generation==0 and owner._finite_driver is None
     assert cap['fixed_step_max_backtracks']==16 and cap['adaptive_max_backtracks']==12

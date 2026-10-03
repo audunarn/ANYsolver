@@ -951,6 +951,7 @@ class ExperimentalGEAnalysis:
                 capabilities[key] = ()
             capabilities["curved_reference_policy"] = self._definition.shell_reference_policy
             if self._curved_material:
+                capabilities["displacement_control"] = "experimental_curved_material_point_translation_v1"
                 capabilities["fixed_step_max_backtracks"] = 16
                 capabilities["retained_coordinate_scale_policy"] = (
                     "native_force_moment_roles_v1" if self._native_retained_scale else
@@ -962,8 +963,8 @@ class ExperimentalGEAnalysis:
                     if self._curved_material else "experimental_curved_elastic_point_tangent_plane_v1")
             capabilities["excluded"] += ("curved reference spectra",
                 "curved reference external loads")
-            capabilities["excluded"] += (("curved material displacement control",)
-                if self._curved_material else ("curved reference material yielding",))
+            if not self._curved_material:
+                capabilities["excluded"] += ("curved reference material yielding",)
         return capabilities
 
     def preflight(self):
@@ -1137,8 +1138,6 @@ class ExperimentalGEAnalysis:
         if getattr(self,"_arc_snapshot",None) is not None:
             raise ValueError("arc history requires its dedicated continuation controller")
         if displacement_control is not None:
-            if self._curved_material:
-                raise ValueError("curved material displacement control is not admitted")
             if self._unsupported_modes:
                 raise ValueError(self._unsupported_modes[0])
             if increment_control is not None:
@@ -1269,8 +1268,6 @@ class ExperimentalGEAnalysis:
             return publish(self,raw,expected_driver=None,expected_generation=self._generation,restoring=True)
         from ._stiffened_shell_displacement_adaptive import MAGIC as DISPLACEMENT_ADAPTIVE_MAGIC, EVENT_MAGIC
         if raw.startswith((DISPLACEMENT_ADAPTIVE_MAGIC,EVENT_MAGIC)):
-            if self._curved_material:
-                raise ValueError("curved material displacement checkpoints are not admitted")
             from ._stiffened_shell_displacement_adaptive import decode,validate_progress
             context,inner=decode(self,raw)
             prepared=copy(self);prepared._commit_lock=RLock();prepared._writing=False
@@ -1290,8 +1287,6 @@ class ExperimentalGEAnalysis:
             return result
         from ._stiffened_shell_displacement_checkpoint import MAGIC as DISPLACEMENT_MAGIC
         if raw.startswith(DISPLACEMENT_MAGIC):
-            if self._curved_material:
-                raise ValueError("curved material displacement checkpoints are not admitted")
             from ._stiffened_shell_displacement_control import publish
             return publish(self,raw,expected_driver=None,expected_generation=self._generation)
         from ._stiffened_shell_ge_body_load import MAGIC as BODY_MAGIC

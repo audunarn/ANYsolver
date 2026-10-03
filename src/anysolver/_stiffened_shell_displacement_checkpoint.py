@@ -17,10 +17,22 @@ from ._stiffened_shell_branch_event_trial import POLICY as EVENT_TRIAL_POLICY
 CHART_POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_CHART_V2_DEV"
 
 
+def identities(owner):
+    """Bind the controller and mechanical payload to their admitted profile."""
+    if getattr(owner,"_curved_material",False):
+        return ("finite_displacement_curved_material",
+                "B3_GE_CURVED_MATERIAL_POINT_DISPLACEMENT_V1_DEV",
+                "B3_GE_CURVED_MATERIAL_POINT_DISPLACEMENT_CHART_V1_DEV",
+                "B3_GE_CURVED_MATERIAL_POINT_DISPLACEMENT_EVENT_V1_DEV")
+    if owner._bl5_shell_material:
+        return KIND,POLICY,CHART_POLICY,EVENT_POLICY
+    raise ValueError("admitted coupled BL5 or curved material displacement owner required")
+
+
 def _layout(owner,steps):
     n=owner._K.shape[0];members=len(owner._beam_parts);shells=len(owner._shell_parts)
     stations=sum(len(part[0].operator.cell.stations) for part in owner._beam_parts)
-    return (("q",(n,)),("frames",(len(owner._beam_ids),3,3)),
+    layout=(("q",(n,)),("frames",(len(owner._beam_ids),3,3)),
         ("cells",(members,2,3,3)),("resultants",(members,18)),
         ("multipliers",(owner._C.shape[0],)),
         ("shell_anchors",(len(owner._shell_ids),3,3)),
@@ -31,6 +43,11 @@ def _layout(owner,steps):
         ("beam_origin_plastic",(stations,6,2)),("beam_origin_accumulated",(stations,2)),
         ("shell_plastic",(shells,12,3)),("shell_alpha",(shells,12)),
         ("shell_origin_plastic",(shells,12,3)),("shell_origin_alpha",(shells,12)))
+    from ._stiffened_shell_affine_endpoint import has_shell_material
+    if getattr(owner,"_curved_material",False) and not has_shell_material(owner):
+        layout=tuple(item for item in layout if item[0] not in (
+            "shell_plastic","shell_alpha","shell_origin_plastic","shell_origin_alpha"))
+    return layout
 
 
 def _canonical(value):
@@ -46,19 +63,20 @@ def encode_snapshot(owner, *, generation, seed_generation, seed_sha256,
             type(event_cell_evaluations) is not int or not 0<=event_cell_evaluations<=2**63-1 or
             (trial_policy is None and event_cell_evaluations!=0)):
         raise ValueError("invalid displacement trial policy/work")
+    kind,policy,chart_policy,event_policy=identities(owner)
     steps=len(arrays["history"])
-    metadata=dict(policy=POLICY,model=owner._identity,generation=generation,
+    metadata=dict(policy=policy,model=owner._identity,generation=generation,
         seed_generation=seed_generation,seed_sha256=seed_sha256,
         control_dof=control_dof,steps=steps)
     if chart_events:
-        metadata.update(policy=CHART_POLICY,chart_events=chart_events)
+        metadata.update(policy=chart_policy,chart_events=chart_events)
     if trial_policy is not None:
-        metadata.update(policy=EVENT_POLICY,trial_policy=trial_policy,
+        metadata.update(policy=event_policy,trial_policy=trial_policy,
                         chart_events=chart_events,event_cell_evaluations=event_cell_evaluations)
     header=_canonical(metadata)
     if len(header)>1024 or set(arrays)!={name for name,_ in _layout(owner,steps)}:
         raise ValueError("invalid displacement snapshot fields")
-    inner=encode(KIND,owner._identity,generation,
+    inner=encode(kind,owner._identity,generation,
                  tuple((name,arrays[name]) for name,_ in _layout(owner,steps)))
     content=MAGIC+len(header).to_bytes(4,"little")+header+inner
     if len(content)+32>MAX_CHECKPOINT_BYTES:
@@ -75,7 +93,8 @@ def decode_snapshot(owner,raw):
     physical frames, supports, material state, equilibrium and endpoint work before
     atomic publication in an isolated restoration owner.
     """
-    if (not owner._bl5_shell_material or type(raw) is not bytes or
+    kind,policy,chart_policy,event_policy=identities(owner)
+    if (type(raw) is not bytes or
             not raw.startswith(MAGIC) or not len(MAGIC)+4+32<len(raw)<=MAX_CHECKPOINT_BYTES):
         raise ValueError("bounded coupled displacement snapshot required")
     start=len(MAGIC)+4;length=int.from_bytes(raw[len(MAGIC):start],"little")
@@ -94,10 +113,10 @@ def decode_snapshot(owner,raw):
         raise ValueError("incompatible displacement metadata")
     chart_events=m.get("chart_events",0)
     if (canonical!=header or m.get("model")!=owner._identity or
-            not ((m.get("policy")==POLICY and set(m)==base_keys) or
-                 (m.get("policy")==CHART_POLICY and set(m)==base_keys|{"chart_events"}
+            not ((m.get("policy")==policy and set(m)==base_keys) or
+                 (m.get("policy")==chart_policy and set(m)==base_keys|{"chart_events"}
                   and type(chart_events) is int and chart_events>0) or
-                 (m.get("policy")==EVENT_POLICY and
+                 (m.get("policy")==event_policy and
                   set(m)==base_keys|{"chart_events","trial_policy","event_cell_evaluations"} and
                   m["trial_policy"]==EVENT_TRIAL_POLICY and
                   type(chart_events) is int and chart_events>=0 and
@@ -115,8 +134,8 @@ def decode_snapshot(owner,raw):
     digest=m["seed_sha256"]
     if type(digest) is not str or len(digest)!=64 or any(c not in "0123456789abcdef" for c in digest):
         raise ValueError("canonical seed checkpoint digest required")
-    def shapes(kind,generation):
-        if kind!=KIND or generation!=m["generation"]:
+    def shapes(decoded_kind,generation):
+        if decoded_kind!=kind or generation!=m["generation"]:
             raise ValueError("displacement mechanical identity mismatch")
         return _layout(owner,m["steps"])
     _,_,a=decode(raw[start+length:-32],owner._identity,shapes)

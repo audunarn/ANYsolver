@@ -102,7 +102,8 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
     from ._stiffened_shell_branch_event_trial import POLICY as EVENT_POLICY
     if trial_policy not in (None,EVENT_POLICY):
         raise ValueError("explicit supported private displacement trial policy required")
-    if driver._accepted is None or not owner._bl5_shell_material:
+    if driver._accepted is None or not (
+            owner._bl5_shell_material or getattr(owner,"_curved_material",False)):
         raise ValueError("accepted coupled-J2 BL5 predecessor required")
     n=owner._K.shape[0];size=n+len(driver._state.multipliers)
     nodal=owner._shell_count+6*len(owner._beam_ids)

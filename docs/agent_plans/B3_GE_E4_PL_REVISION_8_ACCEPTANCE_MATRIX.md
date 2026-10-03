@@ -1605,3 +1605,17 @@ material recovery. All511 source/wheel/site modules match. This supplies a bound
 combined application for the third demonstrator, not converged/calibrated capacity
 or aggregate G3/G4C/G4D acceptance. No F03 or external execution.
 [Evidence](development/r8-e04-imperfect-material-20261003/results.md).
+
+**3 October curved material displacement: IMPLEMENTED_NOT_QUALIFIED.**
+The existing public translation controller now admits the explicit curved-Q4
+generalized-material point profile, with optional shell J2. Distinct snapshot,
+chart and event identities preserve old BL5 semantics; a fresh previous-wheel
+oracle confirms byte-identical legacy checkpoint recomputation and exact continued
+restart. Installed25 solver checks pass, including fixed/adaptive histories,
+matched physical force endpoints, chart replay, cancellation/stale publication,
+predecessor corruption, foreign-profile rejection and fixed displacement-to-arc.
+Installed2 native ANYfem workflows pass with strict definition save/reopen and
+exact active-history continuation. All511 source/wheel/site modules match.
+The first adaptive outer-guard failure and targeted repair are retained.
+No changed physics, tolerances, budgets, scientific acceptance or aggregate gate.
+[Evidence and limits](development/r8-curved-material-displacement-20261003/results.md).

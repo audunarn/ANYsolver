@@ -70,9 +70,11 @@ def prepare(owner,raw):
     from ._stiffened_shell_ge_finite_experimental import _material_histories
     # Replay validates both versions; saved accepted histories remain authoritative.
     # Installing tolerance-close replay values would permit repeated restore drift.
-    shell_next=tuple({**candidate,"plastic_strain":a["shell_plastic"][i],
-                      "alpha":a["shell_alpha"][i]}
-                     for i,candidate in enumerate(shell_next))
+    from ._stiffened_shell_affine_endpoint import has_shell_material
+    if has_shell_material(owner):
+        shell_next=tuple({**candidate,"plastic_strain":a["shell_plastic"][i],
+                          "alpha":a["shell_alpha"][i]}
+                         for i,candidate in enumerate(shell_next))
     beam_next=_material_histories(owner,a["beam_plastic"],a["beam_accumulated"])
     history=tuple(tuple(float(v) for v in row) for row in a["history"])
     target,amplitude=history[-1] if history else tuple(a["seed"])
@@ -85,8 +87,8 @@ def prepare(owner,raw):
         _owned(display.ravel()),_owned(driver._beam_positions(state)),
         state.frames,state.cells,state.resultants,state.multipliers,_owned(support),
         a["applied_load"],relative,gap,a["shell_frames"],local,a["shell_anchors"],
-        _shell_q4_recovery(owner._shell_parts,shell_next),_material_observables(beam_next),
-        tuple(tuple(float(v) for v in item["alpha"]) for item in shell_next),
+        (_shell_q4_recovery(owner._shell_parts,shell_next) if has_shell_material(owner) else ()),_material_observables(beam_next),
+        (tuple(tuple(float(v) for v in item["alpha"]) for item in shell_next) if has_shell_material(owner) else ()),
         driver._line_trial_recovery[1],driver._point_records(state),
         trial_policy=metadata.get("trial_policy"),
         event_cell_evaluations=metadata.get("event_cell_evaluations",0),
@@ -123,8 +125,9 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
           cancellation_token=None,on_accepted=None,_adaptive=None):
     from ._stiffened_shell_ge_finite_experimental import _material_arrays,_shell_material_arrays
     from ._stiffened_shell_rotation_charts import physical_frames
-    if type(control) is not DisplacementControl or not owner._bl5_shell_material:
-        raise ValueError("coupled Q4 J2 BL5 displacement control required")
+    if type(control) is not DisplacementControl or not (
+            owner._bl5_shell_material or getattr(owner,"_curved_material",False)):
+        raise ValueError("coupled BL5 or curved material displacement control required")
     pending=getattr(owner,"_displacement_adaptive",None)
     if _adaptive is None and pending is not None and not pending[0].state.completed:
         raise ValueError("pending adaptive displacement controls must match")
@@ -169,8 +172,10 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
             seed=seed,history=np.asarray(next_history))
         arrays["beam_plastic"],arrays["beam_accumulated"]=_material_arrays(trial.evaluation[5])
         arrays["beam_origin_plastic"],arrays["beam_origin_accumulated"]=_material_arrays(trial.beam_predecessor)
-        arrays["shell_plastic"],arrays["shell_alpha"]=_shell_material_arrays(trial.evaluation[4])
-        arrays["shell_origin_plastic"],arrays["shell_origin_alpha"]=_shell_material_arrays(trial.shell_predecessor)
+        from ._stiffened_shell_affine_endpoint import has_shell_material
+        if has_shell_material(owner):
+            arrays["shell_plastic"],arrays["shell_alpha"]=_shell_material_arrays(trial.evaluation[4])
+            arrays["shell_origin_plastic"],arrays["shell_origin_alpha"]=_shell_material_arrays(trial.shell_predecessor)
         next_metadata=dict(metadata,event_cell_evaluations=
                            metadata["event_cell_evaluations"]+trial.event_cell_evaluations)
         raw=encode_snapshot(owner,generation=generation+1,**next_metadata,arrays=arrays)

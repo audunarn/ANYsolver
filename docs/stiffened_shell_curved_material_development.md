@@ -15,9 +15,10 @@ this is not finite-strain plasticity. Transverse shear and drilling completion
 retain their existing elastic definitions. Every trial reads the same accepted
 shell and beam predecessor; the mixed owner commits them atomically.
 
-Reference-linear, finite force control and experimental physical arc continuation
-with fixed nodal translational dead forces are admitted. S3, physical beam fibres, line and
-footprint attachments, external/staged load wrappers, displacement control,
+Reference-linear, finite force control, translation displacement control and
+experimental physical arc continuation with fixed nodal translational dead forces
+are admitted. S3, physical beam fibres, line and
+footprint attachments, external/staged load wrappers,
 and spectra remain unsupported. The older curved elastic policy, defaults and checkpoint
 decoding contracts keep their meanings. No publication or qualification follows.
 
@@ -80,6 +81,27 @@ shell J2 updates. The physical chord metric, twelve-backtrack arc budget and
 equilibrium/compatibility checks are unchanged. Force/displacement controllers
 cannot consume an arc history. This remains experimental; bounded continuation
 and restart do not qualify material capacity or a descending branch.
+
+For translation displacement control, first solve or restore an accepted
+force-controlled seed, then use the existing public request:
+
+```python
+control = anysolver.stiffened_shell.DisplacementControl("beam", node_id, 2)
+result = analysis.solve(actions, target_displacements_m,
+                        displacement_control=control)
+```
+
+Targets are absolute physical translations. The affine applied load is the
+accepted seed load plus the solved amplitude times the declared load direction;
+the amplitude is not a force-control load factor. Fixed and adaptive stepping,
+atomic cancellation, actual material recovery, chart rebasing and restart use
+distinct curved-material displacement identities. Shell J2 arrays are present
+only when admitted by the model. Legacy BL5 checkpoint bytes and policies retain
+their meanings. A fixed displacement endpoint can seed arc continuation;
+an arc history cannot return to displacement control. Native ANYfem definition
+save/reopen and a separate solver checkpoint preserve the continued state.
+These operations remain experimental, with the existing equilibrium and
+compatibility criteria and controller trial budgets.
 
 For new development models, opt in to native retained-coordinate normalization
 with `dataclasses.replace(definition, retained_scale_policy="native_force_moment_roles_v1")`.
