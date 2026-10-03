@@ -9,11 +9,13 @@ Risk-proportionate tiered development; historical failures/consumed authority
 retain meaning. Prior note preserved byte-for-byte in latest raw evidence.
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; slice source parent8dd348bb
+branch codex/stiffened-main-reconcile-20261001; latest committed slice16cec54f (fixed-support evidenceef07ddad)
 (reference9c75d6e9; product0f902f88/7d24f906 and B2af787671 unchanged).
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 2ede338ba28932bb9dd3e8eb0f0a4908d37fc765. Check Git for later evidence commit.
-All owned numerical jobs/workers/reviews TERMINAL; no replacement run needed.
+All owned numerical jobs TERMINAL. M4 implementation worker stopped after model
+capacity failure; root completed verification. M2 independent Read reviews complete.
+No replacement historical run needed.
 Local scoped commits only; no push/main merge/publication/contact-worker messages.
 Main and unrelated dirty work preserved.
 
@@ -63,12 +65,32 @@ auditterminalexit0.417modulebytes matchwheel. Separate source/runtime Read scrut
 clear, physical controls<=2.77e-11. Raw84-file explicit evidence immutable.
 No numerical/tooling failure; neither span8 nor continuouslawfailure is accepted.
 
-Mechanics question now: consistency/uniformstability of projected affine director
-moments using actual retained half-cell fields versus continuum connection work.
-Next bounded decision is source/equation/admissiblepatch/physicaldualnorm scrutiny,
-not another loaded refinement. FullindefiniteK is not anenergy norm; substitution
-with nodalP1 rotations needs its own work justification. FormalF03 UNCONSUMED.
-IndependentreadyM4: inspect exact nativegravity/rigidfootprint dependency and
-implement a useful combined-load slice if its mechanics already suffice. Read
-worker owns no edits. No contactworker messages/mainmerge/publication. Fullscope
-external/scale/material/platform/release obligations and scientific criteria remain.
+[Actual retained torsion patch](development/r8-bl5-torsion-consistency-20261003/results.md)
+confirms growing affine director inconsistency: prescribed compatible twist costs
+16/15 continuum beam energy at m4 and64/63 at m8. Saved virgin K/C only,0.537s;
+complete gaps<=1.483e-21, restricted mixed equilibrium<=1.003e-13. Withhold the
+unmodified rule; this does not reject the continuous law or accept span8.
+[Complete projected-density screen](development/r8-bl5-projected-density-20261003/results.md)
+now passes: same native trace, allfive fixed reference half-cell averaged densities,
+torsion energy1.0 m4/m8, finite rigid motion and work, nonzero off-root physical
+wrenches. Review fixed test-origin/sign/unit/energy interpretation gaps; v3/v4
+failures retained. Altered force first moments/Gram, quadratic bending mismatch
+and interface-blind nodal rotations remain explicit counterexamples/limits.
+Next ONE assessment of common work/recovery and constrained mixed-system behavior
+for this separately identified candidate before a matched loaded comparison.
+No product basis selected/changed; no automatic refinement. No worker source
+writes. Full indefinite K is not an energy norm. Formal F03 unconsumed; M2/G0 open.
+
+[Installed gravity/rigid-footprint slice](development/r8-ge-footprint-gravity-20261003/results.md)
+completed. Narrow elastic-response flatQ4/generalized/increment-origin V2 scope;
+existing point behavior preserved. New context uses existing fixed-parent trial
+comparison, strict physical acceptance unchanged. Source failures7/23 retained;
+installed47pass/3testfail then corrected affected3pass. Complete derivatives,
+prefix/cancellation, physical predecessor/chart parity and restart checked.
+Installed public example factors.25/.5/1, equilibrium5.425e-9/gap4.444e-16.
+417 source/wheel/site module identities, wheel16ce45d9, pools1/JIT off. Review
+found two test defects now repaired; different-family scientific acceptance open.
+Gravity product/evidence committed locally8e388e20; root owns diagnostic/docs
+changes pending local scoped commit. No contact
+worker messages/main merge/publication. Full external/scale/material/platform/
+release obligations and scientific criteria remain. No timing gain claimed.

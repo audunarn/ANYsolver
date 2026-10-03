@@ -1845,3 +1845,36 @@ Advance independentreadyM4 work. FormalF03 UNCONSUMED, fullgoalACTIVE;
 no scientificcriterion/default/version/main/publication change. Explicit84-file
 archive preserves exact inputs, actions, raw states, commands, outcomes and checks.
 [Results, unresolved property, source/runtime review and evidence](development/r8-bl5-growing-affine-20261003/results.md).
+
+**3 October saved-operator torsion consistency decision:** actual virgin native
+K/C confirm prescribed compatible-twist energy16/15 at m4 and64/63 at m8.
+Independent scalar reduction agrees; actual allfive constraint gaps<=1.483e-21,
+restricted mixed equilibrium<=1.003e-13. Unmodified growing affine director
+moments WITHHELD on consistency; neither span8 nor continuouslawfailure selected.
+One allchannel cell-average affine-density correction under equation review;
+no loaded campaign or automatic refinement. M2/G0/F03 OPEN, authority unconsumed.
+[Decision and seven-file raw evidence](development/r8-bl5-torsion-consistency-20261003/results.md).
+
+**3 October gravity plus selected-node rigid footprints:** IMPLEMENTED_NOT_QUALIFIED
+for flat elastic-response Q4/generalized beams, physical mass, increment-origin V2.
+Source7failed/23passed preserved, targeted unchanged diagnostic identifies trial
+merit starvation; existing fixed-parent hook enabled only this new context.
+Strict current physical acceptance unchanged, no pressure amendment. Installed
+47pass/3testfail then affected3pass; same wheel417bytebinding. Public example
+gravity/rebase/checkpoint/restore/continue completes at5.425e-9equilibrium.
+Material histories exact, predecessor physical charts parity, cancellation/prefix,
+fulltangent/work derivatives checked. Independent OpenAI source review clear after
+two test defects fixed. M4/G4 aggregate and different-family acceptance OPEN.
+No complete graph/platform/scale/release claim. Failure evidence preserved.
+[Scope, checks, review and54-file raw evidence](development/r8-ge-footprint-gravity-20261003/results.md).
+
+**3 October complete projected-density diagnostic:** fixed material half-cell
+averages of allfive affine channels, distinct identity, no product basis change.
+Actual originalC parity0, projectedtorsion energy1.0 for m4/m8, finiteobjectivity,
+actual-update work and nonzero off-root resisting-wrench checks pass. V3/V4 test
+origin failures preserved; v5 correct beam-root origin terminalexit0/4.660s.
+Independent source/runtime review findings resolved within bounded screen.
+Force first moments/Gram change, quadratic bending interpolation gap and positive
+moment-eliminated interface-kernel witness remain explicit limits, not stability
+acceptance. No loaded solve or formalassessment; F03unconsumed/M2/G0OPEN.
+[Decision, counterexamples, review and versioned raw evidence](development/r8-bl5-projected-density-20261003/results.md).

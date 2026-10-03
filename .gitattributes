@@ -77,3 +77,6 @@ docs/agent_plans/development/r8-bl5-matched-comparison-20261001/** -text
 docs/agent_plans/development/r8-anyfem-staged-20261001/** -text
 docs/agent_plans/development/r8-staged-material-history-20261001/** -text
 tests/test_stiffened_shell_staged_material_history.py -text
+docs/agent_plans/development/r8-ge-footprint-gravity-20261003/** -text
+docs/agent_plans/development/r8-bl5-torsion-consistency-20261003/** -text
+docs/agent_plans/development/r8-bl5-projected-density-20261003/** -text
