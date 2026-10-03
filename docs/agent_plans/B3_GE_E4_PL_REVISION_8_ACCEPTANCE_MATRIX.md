@@ -12,6 +12,9 @@ passes physical controls with one native factorization. Mx work difference impro
 retained. Both models changed density action. Retain experimental candidate;
 WITHHOLD resolution-policy/formulation qualification. No growing-space/converged
 accuracy, mandatory external or aggregate gate acceptance. Formal F03 UNCONSUMED.
+Saved physical bare-beam yaw has K*yaw=0 but nonzero interface work; reviewed
+norm contract must handle `(C*r)^T*lambda=r^T*f` compatibility and nullspaces.
+This is an assessment obstruction, not attached-system failure or a relaxed metric.
 [Evidence and disposition](development/r8-bl5-projected-assessment-20261003/results.md).
 
 **Current arc lifecycle status (supersedes historical open-public-surface notes below):**

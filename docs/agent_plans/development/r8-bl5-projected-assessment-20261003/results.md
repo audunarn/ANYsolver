@@ -102,6 +102,25 @@ It preserves 225 explicit safe files, without protected F03 or canary/history sc
 
 ## Next action and limits
 
+A further saved-array work check identifies a concrete requirement for the
+prospective stability contract. A unit infinitesimal bare-beam normal-axis rigid
+rotation respects the physical supports, agrees EXACTLY with the saved physical
+beam rigid-work map, and has actual full native K*q EXACTLY zero. Its supported
+moment-eliminated S residual has normalized backward error8.33e-19. Nevertheless
+its absolute norm is 7.405e-6, not exactly zero after floating-point elimination.
+C*q is nonzero; one physical density row performs -.1171875J virtual work on it.
+This bare structural mode is NOT admissible under the attached constraints;
+the coupled KKT check remains valid. An ordinary unconstrained inverse-compliance
+norm is therefore not defined for arbitrary interface actions. Rigid nullspaces
+and work compatibility require explicit treatment. For a conservative structural
+null vector r, the equilibrium requirement is `(C*r)^T*lambda = r^T*f`;
+a pseudoinverse alone omits this balance. Neither invented stiffness
+nor mass repairs the mathematical interpretation. This is not a nullity count,
+SPD proof, stability quotient or formulation-failure claim. No fresh mesh solve
+was needed: .535s/63.4MB, one sampled numerical thread. The original manifest
+remains unchanged; [supplemental9-file evidence](raw-manifest-v2.json) preserves
+the prospective note, exact arrays, source, command and complete diagnostics.
+
 Retain this complete experimental candidate. Next assess whether its consistency
 correction survives growing interface spaces, rather than automatically refining
 classical axial or fixed-support models. State the specific trace-resolution,

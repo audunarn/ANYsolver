@@ -9,8 +9,8 @@ complete release remain binding. Use risk-proportionate tiered development.
 The preceding active note is preserved byte-for-byte in the latest raw manifest.
 
 Active worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Source parent d5653ec6; new compiler,
-assessment/reference scripts/tests and evidence are the current local slice.
+branch codex/stiffened-main-reconcile-20261001. Product/evidence commit ccab1681
+(source parent d5653ec6) contains the new compiler and assessment/reference slice.
 Confirm current Git HEAD/status on resume; later checkpoint commits change no
 wheel identity. Previous product8e388e20/mechanics2ec41a29 remain accepted only
 within their recorded development scope.
@@ -74,6 +74,16 @@ do not silently extend/replay it. Valid unchanged preparation may be reused.
 No automatic classical axial/S8R refinement, isolated coarsening, channel tuning
 or campaign. Keep director/shear/drilling,seven ratios,three-level convergence,
 physical norms, external/mechanics review and all release requirements open.
+
+The saved-array norm check now identifies a concrete obstruction: bare-beam
+normal-axis rigid rotation respects supports and matches the physical rigid-work
+map EXACTLY; full native K*q is EXACTLY zero, S backward8.33e-19, but C*q is
+nonzero and one density row performs -.1171875J work. This is not an admissible
+attached-system mode or KKT failure. An ordinary unconstrained inverse-compliance
+norm cannot handle arbitrary interface actions. Next derive/verify explicit
+rigid-nullspace/work-compatibility treatment in the prospective assessment;
+do not repeat this check or add stiffness/mass to evade it. No threshold/F03/
+resource change or another mesh/reference solve occurred.
 
 ## Other delivered behavior and remaining programme
 

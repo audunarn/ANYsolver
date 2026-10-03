@@ -24,3 +24,12 @@ checks support the bounded result. The Mx improvement does not prove continuum
 accuracy or allocate all loaded error: both native/reference density actions
 changed. Fy/Mz regional/ground differences, director fidelity, growing spaces,
 physical norms and all required acceptance obligations remain open.
+
+The reviewer separately checked the saved-array rigid-work counterexample. Its
+physical yaw equals the saved rigid-work column, respects supports and gives
+K*yaw=0 in saved arithmetic. Row30 is unit native Fy density on [.875,1], whose
+work is `-integral(x dx)=-.1171875`, confirming the transpose pairing. S*yaw is
+not exactly zero (norm7.405e-6), but backward error8.33e-19. For structural null
+vector r, `(C*r)^T*lambda=r^T*f` must be enforced; a pseudoinverse alone omits
+the rigid-mode balance. The reviewer agreed with this bounded obstruction to
+ordinary inverse-compliance interpretation, not KKT failure/SPD/qualification.
