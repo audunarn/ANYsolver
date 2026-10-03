@@ -1651,3 +1651,23 @@ development review closed; cross-family scientific acceptance unchanged.
 400Q4/120B3 cProfile identifies qualified Q4 zero/reference response as the next
 cost target; overlapping cumulative times establish no optimization gain.
 [Inputs, identities, raw runs, interpretation and review](development/r8-ge-member-scale-20261003/results.md).
+
+**3 October guarded Q4 reference-compilation development delta:** library
+commit5136f026 reuses qualified stiffness only for exactly flat/zero-chart virgin
+elastic Q4. Same consistent chart tangent, observation guards, owned responses
+and rotation diagnostics; J2/S3/algorithmic/curved paths retain full evaluation.
+35 distinct installed checks pass, including material/restart, dense oracle,
+modal/footprint and32-member ANYfem routes. Independent OpenAI development
+review found no product correctness defect; scoped scientific acceptance unchanged.
+Seven alternating installed pairs: warm400Q4/120B3 workflow median32.349→14.244s
+(55.97% reduction), smaller24Q4/32B3 case3.506→2.409s(31.29%); physical errors
+<=3.30e-13, factorization/refinement/rotation work match. Imports/warmup/output
+writing/cleanup excluded; no cold-start or broad representative-suite claim.
+Same frozen10kQ4/1kB3/110point model now completes the combined persisted
+compile/solve/recover/fresh-compile/restore/continue route in282.497s/4.59GB
+sampled peak, within600s/8GiB.97,320rows/4,972,608nnz; frozen-vector error3.97e-11,
+equilibrium/compatibility/balance pass; exact within-artifact restart and one
+factorization per owner. Candidate-only scale run establishes no large speedup.
+G5/M5 remain IN_PROGRESS; required nonmatching/nonlinear/plastic scale and all
+other mandatory acceptance/platform/external/release rows remain open.
+[Scoped metrics, artifact/provenance bindings and preserved evidence](development/r8-q4-reference-reuse-20261003/results.md).
