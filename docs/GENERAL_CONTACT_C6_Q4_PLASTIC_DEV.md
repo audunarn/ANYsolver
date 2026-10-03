@@ -39,3 +39,38 @@ These do not establish impact-induced yielding, hardening, nonproportional loadi
 plastic work balance, mesh/time refinement or complete C6 acceptance.
 
 Evidence and installed status: [slice record](d1_review_support/C6_Q4_PLASTIC_SLICE_20261003.md).
+
+## Opt-in pressure-mode events
+
+`q4_plane_event_subdivision_dev=True` selects a separate development profile for
+guided Q4/fixed-plane elastic or DNV plastic impact. The actual normalized nodal
+pressure gaps determine branch events; physical corner-gap checks remain separate.
+Positive endpoint-duration proposals are equilibrated from the same committed
+origin using acceleration-primary Newmark equations. Every proposed endpoint is
+reequilibrated and its complete represented Hermite path is checked for every
+pressure mode. Hidden crossings without a usable endpoint bracket cause bounded
+cutback. This does not certify the exact continuous trajectory.
+
+Controls are explicit: `plane_event_time_tolerance_s`,
+`plane_event_gap_tolerance_m`, `maximum_plane_event_endpoint_evaluations`,
+`maximum_plane_event_stage_evaluations` and the existing localization/cutback
+limits. Stage/query budgets are shared across retries from one committed origin.
+Failed query attempts are counted; candidates never commit material history.
+`plane_event_stage_evaluations`, `event_endpoint_evaluations` and
+`localized_contact_event_times` report work and represented event times.
+The event time list also records certified gap-band arrivals at nominal endpoints;
+it is not a list of exact continuum roots. An arbitrary truncated END inside that
+band does not become a restartable localized boundary.
+
+Elastic event packets use V8, plastic event packets V9. They bind event controls
+and validate pressure support, normalized gaps, rates and departure phase against
+restored coordinates; V9 retains the full accepted material parent. Old schemas
+and defaults remain unchanged. Load history, moving tools, free bodies, S3 and
+beams remain outside this particular event profile.
+
+Run the example with `--events --dt 3e-5 --end .003`. Its energy diagnostic uses
+the fixture's independently specified mass, elastic storage, plateau dissipation
+`20*volume*alpha`, contact storage and zero external work. It does not generalize
+that formula to arbitrary hardening/nonproportional paths. Source and isolated
+installed development checks pass; engineering acceptance remains open.
+[Event evidence](d1_review_support/C6_Q4_PLANE_EVENT_SLICE_20261003.md).

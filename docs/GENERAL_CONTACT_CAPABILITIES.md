@@ -1144,3 +1144,30 @@ bounded finer-step contact-release cases; nonmonotonic, different final times,
 and no temporal qualification or engineering impact acceptance claim.
 [Guide](GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md),
 [evidence](d1_review_support/C6_Q4_PLASTIC_SLICE_20261003.md).
+
+## Q4 fixed-plane pressure-mode events — installed-tested development
+
+Explicit `q4_plane_event_subdivision_dev` admits separate guided elastic/plastic
+Newmark profiles. Actual nodal pressure gaps, equilibrated duration proposals,
+complete represented Hermite branch enclosures and independent physical gaps
+govern step acceptance. Localized trials retain one committed material origin;
+shared query/stage budgets, cancellation and cutback remain bounded. V8/V9 restart
+binds phase/support/gaps/rates/settings and retains the plastic accepted parent.
+Arbitrary END truncations remain non-restartable. Historical routes stay selected
+unless callers opt in.
+
+44 local helper outcomes,8 event-driver outcomes and2 affected legacy outcomes
+pass in scoped development runs. Single-mode elastic impact and the independent
+two-mode DNV plateau fixture match their references; yielded split/tamper,
+event-family cancellation/reuse, failed query accounting and END rejection pass.
+Installed example matches source fields and205 imported module hashes. Matched
+dt3e-5s/end.003s maximum fixture energy defect13.4695% ->0.00007234%; final1.46088%
+->0.00007234%. Source68.52s/165969920B,installed73.73s/169127936B,legacy64.27s/
+164163584B; no speed-up claim. Physical gap budget5e-5m is developmental.
+
+Implementation/source/installed testing do not establish independent engineering
+acceptance or release. Coupled impact-induced plasticity, general work accounting,
+multimode stationary/grazing driver paths, broader geometry and temporal/mesh
+qualification remain open. Application admission remains false for this profile.
+[Guide](GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md),
+[evidence](d1_review_support/C6_Q4_PLANE_EVENT_SLICE_20261003.md).

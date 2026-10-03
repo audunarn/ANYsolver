@@ -86,7 +86,7 @@ def source_provenance():
     ))
 
 
-def run(*, dt=2.5e-5, end=.003):
+def run(*, dt=2.5e-5, end=.003, events=False):
     model, modes, definition = build_model()
     result = solve_transient_contact(
         model, definition,
@@ -94,6 +94,7 @@ def run(*, dt=2.5e-5, end=.003):
         solver_controls=ContactTransientSolverControls(
             allow_q4_plastic_dev=True, save_q4_material_history_dev=True,
             equilibrium_tolerance=1.e-9,
+            q4_plane_event_subdivision_dev=events,
         ),
     )
     projection = modes @ np.linalg.inv(modes.T @ modes)
@@ -120,6 +121,10 @@ def run(*, dt=2.5e-5, end=.003):
     first_yield = np.flatnonzero(yielded)
     final_plastic_strain = np.asarray(result.element_states[1]['plastic_strain'])
     final_stress = stresses[-1]
+    tau=stresses[:,0,0]
+    energy=(.5/120.*velocities[:,0]**2+.5*.05*velocities[:,1]**2
+        +.05*tau*tau/(2.*E/2.6)+.05*20.*alpha
+        +np.array([item.penalty_energy for item in result.contact]))
     return dict(
         status='development; not accepted or qualified',
         scope='uncoupled affine membrane plasticity and rigid-normal fixed-plane impact',
@@ -127,6 +132,13 @@ def run(*, dt=2.5e-5, end=.003):
         initial_time_s=float(result.times[0]), final_time_s=float(result.times[-1]),
         saved_states=len(result.times), accepted_steps=len(result.newton_iterations),
         cutbacks=result.cutbacks,
+        localized_contact_event_times_s=list(result.localized_contact_event_times),
+        event_endpoint_requests=result.event_endpoint_evaluations,
+        plane_event_stage_evaluations=result.plane_event_stage_evaluations,
+        energy_diagnostic=dict(scope='fixture plateau branch only; zero external work',
+            initial_j=float(energy[0]),final_j=float(energy[-1]),
+            maximum_relative_defect=float(np.max(np.abs(energy/energy[0]-1.))),
+            final_relative_defect=float(energy[-1]/energy[0]-1.)),
         modal_coordinate_order=['deviatoric_strain', 'normal_displacement_m'],
         initial_modal_coordinates=coordinates[0].tolist(),
         final_modal_coordinates=coordinates[-1].tolist(),
@@ -164,9 +176,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dt', type=float, default=2.5e-5, help='Newmark step in seconds')
     parser.add_argument('--end', type=float, default=.003, help='End time in seconds')
+    parser.add_argument('--events', action='store_true', help='Opt in to Q4 pressure-mode stage events')
     parser.add_argument('--output', type=Path, help='Also save the JSON report at this path')
     args = parser.parse_args()
-    report = json.dumps(run(dt=args.dt, end=args.end), indent=2, allow_nan=False)
+    report = json.dumps(run(dt=args.dt, end=args.end, events=args.events), indent=2, allow_nan=False)
     if args.output is not None:
         args.output.write_text(report+'\n', encoding='utf-8')
     print(report)

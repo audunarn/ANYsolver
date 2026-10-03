@@ -68,6 +68,10 @@ from .event_subdivision import EventNeedsCutback, localize_branch_event
 _PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V1"
 _Q4_PLASTIC_PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_DNV_PLASTIC_DEV_V1"
 _Q4_PLASTIC_RESTART_SCHEMA = "ANYSOLVER_Q4_PLASTIC_TRANSIENT_CONTACT_DEV_CHECKPOINT_V7"
+_Q4_EVENT_PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_EVENT_DEV_V1"
+_Q4_PLASTIC_EVENT_PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_DNV_PLASTIC_EVENT_DEV_V1"
+_Q4_EVENT_RESTART_SCHEMA = "ANYSOLVER_Q4_PLANE_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V8"
+_Q4_PLASTIC_EVENT_RESTART_SCHEMA = "ANYSOLVER_Q4_PLASTIC_PLANE_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V9"
 _S3_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0"
 _S3_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_HISTORY_DEV_V1"
 _S3_DIRECTIONAL_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_RATES_DEV_V1"
@@ -173,8 +177,27 @@ class ContactTransientSolverControls:
     allow_free_shell_sphere_dev: bool = False
     allow_q4_plastic_dev: bool = False
     save_q4_material_history_dev: bool = False
+    q4_plane_event_subdivision_dev: bool = False
+    plane_event_time_tolerance_s: float = 1.e-10
+    plane_event_gap_tolerance_m: float = 1.e-10
+    maximum_plane_event_endpoint_evaluations: int = 64
+    maximum_plane_event_stage_evaluations: int = 128
 
     def __post_init__(self) -> None:
+        if type(self.q4_plane_event_subdivision_dev) is not bool:
+            raise ValueError('Q4 plane event selection must be boolean')
+        if self.q4_plane_event_subdivision_dev and (self.allow_s3_descriptor_dev
+                or self.allow_classical_beam_dev or self.allow_free_sphere_dev):
+            raise ValueError('Q4 plane events require the separate guided Q4 profile')
+        for name in ('plane_event_time_tolerance_s','plane_event_gap_tolerance_m'):
+            value=getattr(self,name)
+            if isinstance(value,(bool,np.bool_)) or not np.isfinite(value) or value<=0.:
+                raise ValueError(f'{name} must be finite and positive')
+        for name in ('maximum_plane_event_endpoint_evaluations','maximum_plane_event_stage_evaluations'):
+            if type(getattr(self,name)) is not int or getattr(self,name)<1:
+                raise ValueError(f'{name} must be a positive integer')
+        if self.maximum_plane_event_endpoint_evaluations<2:
+            raise ValueError('plane event localization requires at least two endpoint evaluations')
         if type(self.allow_q4_plastic_dev) is not bool or type(self.save_q4_material_history_dev) is not bool:
             raise ValueError('Q4 plastic/material-history selections must be boolean')
         if self.save_q4_material_history_dev and not self.allow_q4_plastic_dev:
@@ -337,6 +360,7 @@ class TransientContactResults:
     free_rigid_bodies: tuple[dict[str, FreeRigidBodyState], ...] = ()
     element_states: Mapping = field(default_factory=dict)
     material_state_history: tuple[Mapping,...] = ()
+    plane_event_stage_evaluations: int = 0
 
 
 def _restart_analysis_contract(transient, controls, manager, profile,
@@ -399,6 +423,11 @@ def _restart_analysis_contract(transient, controls, manager, profile,
     if controls.allow_q4_plastic_dev:
         contract['controls'].update(allow_q4_plastic_dev=True,num_layers=3,
             save_q4_material_history_dev=controls.save_q4_material_history_dev)
+    if controls.q4_plane_event_subdivision_dev:
+        for name in ('q4_plane_event_subdivision_dev','plane_event_time_tolerance_s',
+                'plane_event_gap_tolerance_m','maximum_plane_event_endpoint_evaluations',
+                'maximum_plane_event_stage_evaluations','maximum_event_localizations'):
+            contract['controls'][name]=getattr(controls,name)
     if controls.s3_algebraic_path_dev:
         contract["controls"]["s3_algebraic_path_dev"] = True
         contract["controls"]["s3_path_position_tolerance_m"] = controls.s3_path_position_tolerance_m
@@ -415,7 +444,7 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             current_time, q, velocity, acceleration,
                             accepted_steps, external_work_j=None, path_terminal_active=None,
                             event_boundary_support=None, tool_work_j=None, tool_work_error_j=None,
-                            free_body_name=None,material_checkpoint=None) -> dict:
+                            free_body_name=None,material_checkpoint=None,plane_event_state=None) -> dict:
     payload = {
         "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
                    else _RESTART_SCHEMA),
@@ -450,14 +479,50 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
     if material_checkpoint is not None:
         payload['schema'],payload['version']=_Q4_PLASTIC_RESTART_SCHEMA,7
         payload['state']['material_checkpoint']=deepcopy(material_checkpoint)
+    if plane_event_state is not None:
+        payload['schema'],payload['version']=((_Q4_PLASTIC_EVENT_RESTART_SCHEMA,9)
+            if material_checkpoint is not None else (_Q4_EVENT_RESTART_SCHEMA,8))
+        payload['state']['plane_event_state']=deepcopy(plane_event_state)
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
+
+
+def _plane_event_state(reference, gradient, position, velocity, gap_tolerance):
+    """Numerical boundary evidence; it never changes the pressure law."""
+    gaps=np.asarray(reference+gradient@position).reshape(-1)
+    rates=np.asarray(gradient@velocity).reshape(-1)
+    phase=np.zeros(gaps.size,dtype=int)
+    phase[gaps < -gap_tolerance]=-1
+    phase[gaps > gap_tolerance]=1
+    boundary=np.abs(gaps)<=gap_tolerance
+    phase[boundary & (rates<0.)]=-1
+    phase[boundary & (rates>0.)]=1
+    return dict(pressure_dofs=int(gaps.size),
+        support_indices=np.flatnonzero(boundary).tolist(),
+        normalized_gaps_m=gaps.tolist(),gap_rates_m_s=rates.tolist(),
+        departing_phase=phase.tolist())
+
+
+def _validate_plane_event_state(value,expected):
+    if (type(value) is not dict or set(value)!=set(expected)
+            or type(value['pressure_dofs']) is not int
+            or value['pressure_dofs']!=expected['pressure_dofs']):
+        raise ValueError('transient plane event checkpoint boundary is malformed')
+    for name in ('support_indices','departing_phase'):
+        if (type(value[name]) is not list or any(type(i) is not int for i in value[name])
+                or value[name]!=expected[name]):
+            raise ValueError('transient plane event checkpoint phase/support is incompatible')
+    for name in ('normalized_gaps_m','gap_rates_m_s'):
+        if (type(value[name]) is not list
+                or any(type(i) not in (int,float) or not np.isfinite(i) for i in value[name])
+                or not np.array_equal(value[name],expected[name])):
+            raise ValueError('transient plane event checkpoint gaps/rates are incompatible')
 
 
 def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                              reduced_size, t_end, *, load_history, path_pressure_dofs=0,
                              event_subdivision=False, tool_body_names=(), free_body_name=None,
-                             q4_material_state=False):
+                             q4_material_state=False,plane_event_state=False):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -481,6 +546,9 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         expected_version, expected_schema = 6, _FREE_RESTART_SCHEMA
     if q4_material_state:
         expected_version,expected_schema=7,_Q4_PLASTIC_RESTART_SCHEMA
+    if plane_event_state:
+        expected_version,expected_schema=((9,_Q4_PLASTIC_EVENT_RESTART_SCHEMA)
+            if q4_material_state else (8,_Q4_EVENT_RESTART_SCHEMA))
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -503,6 +571,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         expected_state_keys.add("free_rigid_body_names")
     if q4_material_state:
         expected_state_keys.add('material_checkpoint')
+    if plane_event_state:
+        expected_state_keys.add('plane_event_state')
     if not isinstance(state, Mapping) or set(state) != expected_state_keys:
         raise ValueError("transient contact checkpoint state is malformed")
     if free_body_name is not None and state["free_rigid_body_names"] != [free_body_name]:
@@ -548,6 +618,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
             values += (dict(data),)
     if q4_material_state:
         values+=(state['material_checkpoint'],)
+    if plane_event_state:
+        values+=(state['plane_event_state'],)
     return values
 
 
@@ -904,6 +976,10 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
         elif (type(material) is not IsotropicMaterial
                 or float(material.yield_stress) != 0.0 or material.hardening_curve is not None):
             raise ValueError("transient development profile admits only isotropic elastic material")
+    if controls.q4_plane_event_subdivision_dev:
+        if profile not in (_PROFILE,_Q4_PLASTIC_PROFILE):
+            raise ValueError('Q4 plane events require exact qualified Q4 elements')
+        profile=(_Q4_PLASTIC_EVENT_PROFILE if controls.allow_q4_plastic_dev else _Q4_EVENT_PROFILE)
     return profile
 
 
@@ -1028,6 +1104,8 @@ def solve_transient_contact(
                for h in tool_histories for a, b in zip(h.points, h.points[1:])):
             raise ValueError("rigid translation knots are closer than admitted time resolution")
     if nodal_load_history is not None:
+        if controls.q4_plane_event_subdivision_dev:
+            raise ValueError('Q4 plane event development does not admit load histories')
         if type(nodal_load_history) is not ContactNodalLoadHistory:
             raise TypeError("nodal_load_history must be ContactNodalLoadHistory")
         if base_load_case is None or profile not in (_PROFILE, _S3_PROFILE, _BEAM_PROFILE, _MULTIPLE_BEAM_PROFILE, FREE_SPHERE_PROFILE, FREE_SHELL_SPHERE_PROFILE):
@@ -1140,7 +1218,7 @@ def solve_transient_contact(
         raise ValueError("transient development profile admits at most 512 free coordinates")
     descriptor_basis = None
     if profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE,
-                   _Q4_PLASTIC_PROFILE,
+                   _Q4_PLASTIC_PROFILE,_Q4_EVENT_PROFILE,_Q4_PLASTIC_EVENT_PROFILE,
                    _MULTIPLE_BEAM_PROFILE,_MULTIPLE_BEAM_HISTORY_PROFILE,_BEAM_TOOL_PROFILE,_BEAM_TOOL_HISTORY_PROFILE,
                    FREE_SPHERE_PROFILE,FREE_SPHERE_HISTORY_PROFILE,
                    FREE_SHELL_SPHERE_PROFILE,FREE_SHELL_SPHERE_HISTORY_PROFILE):
@@ -1230,6 +1308,14 @@ def solve_transient_contact(
             expected_manager = _PlanarQ4PlaneManager
         if type(manager) is not expected_manager:
             raise ValueError("transient development profile selected an unsupported contact owner")
+        plane_state=None
+        if controls.q4_plane_event_subdivision_dev:
+            from .plane_newmark_events import (hermite_branch_extrema,
+                branch_path_admissible,localize_endpoint_event)
+            normalized_gradient=sparse.diags(1./manager.support)@manager.gap_gradient
+            pressure_gradient=(normalized_gradient@T).tocsr()
+            pressure_reference=(manager.reference_weighted_gap
+                +manager.gap_gradient@u0)/manager.support
         if free_body is not None:
             manager = _FreeSphereManager(manager, free_body,allow_shell=controls.allow_free_shell_sphere_dev)
             manager.profile = profile
@@ -1265,11 +1351,16 @@ def solve_transient_contact(
                     tool_body_names=tuple(h.body_name for h in tool_histories),
                     free_body_name=free_body.body_name if free_body is not None else None,
                     q4_material_state=controls.allow_q4_plastic_dev,
+                    plane_event_state=controls.q4_plane_event_subdivision_dev,
                 )
             current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = resumed[:7]
             if controls.allow_q4_plastic_dev:
                 material_packet=resumed[7]
                 committed_states=restore_q4_material_checkpoint(model,u0+np.asarray(T@q).reshape(-1),material_packet,num_layers=3)
+            if controls.q4_plane_event_subdivision_dev:
+                expected=_plane_event_state(pressure_reference,pressure_gradient,q,vred,
+                    controls.plane_event_gap_tolerance_m)
+                _validate_plane_event_state(resumed[-1],expected)
             event_boundary_support = resumed[7] if controls.s3_event_subdivision_dev else ()
             if tool_histories:
                 tool_work, tool_error = resumed[-2:]
@@ -1371,6 +1462,9 @@ def solve_transient_contact(
         check_cancel("transient contact initial acceptance")
         initial_body_state = (manager.state(current_time, full0, np.asarray(T @ vred).reshape(-1),
             np.asarray(T @ acceleration).reshape(-1), contact0) if free_body is not None else None)
+        if controls.q4_plane_event_subdivision_dev:
+            plane_state=_plane_event_state(pressure_reference,pressure_gradient,q,vred,
+                controls.plane_event_gap_tolerance_m)
         if controls.allow_q4_plastic_dev:
             if restart_checkpoint is None:
                 if any(np.any(np.asarray(state['alpha'])!=0.) for state in trial0.values()):
@@ -1402,6 +1496,8 @@ def solve_transient_contact(
         path_transitions = []
         localized_events = []
         event_evaluations = 0
+        plane_total_stage_evaluations = int(controls.q4_plane_event_subdivision_dev)
+        plane_total_endpoint_requests = 0
         cutbacks = 0
         previous_full = full0.copy()
         previous_velocity = np.asarray(T @ vred).reshape(-1)
@@ -1475,6 +1571,51 @@ def solve_transient_contact(
             event_seed = None
             event_localizations = 0
             last_event_failure = None
+            plane_stage_evaluations=0
+            plane_endpoint_requests=0
+            plane_localized_boundary=False
+            plane_endpoint_cache={}
+
+            def consume_plane_stage():
+                nonlocal plane_stage_evaluations,plane_total_stage_evaluations
+                if plane_stage_evaluations>=controls.maximum_plane_event_stage_evaluations:
+                    raise RuntimeError(f'plane Newmark event stage-work budget exhausted at t={current_time:.9g}')
+                plane_stage_evaluations+=1
+                plane_total_stage_evaluations+=1
+
+            def plane_endpoint_gaps(duration):
+                """Actual equilibrated endpoint, always from the committed origin."""
+                nonlocal plane_endpoint_requests,plane_total_endpoint_requests
+                plane_endpoint_requests+=1
+                plane_total_endpoint_requests+=1
+                if plane_endpoint_requests>controls.maximum_plane_event_endpoint_evaluations:
+                    raise RuntimeError(f'plane Newmark event endpoint budget exhausted at t={current_time:.9g}')
+                if duration in plane_endpoint_cache:
+                    return plane_endpoint_cache[duration].copy()
+                predictor_h=q+duration*vred+duration*duration*(.5-beta)*acceleration
+                a_h=np.zeros_like(q)
+                try:
+                    for _ in range(controls.maximum_newton_iterations):
+                        check_cancel('plane Newmark event stage evaluation')
+                        consume_plane_stage()
+                        q_h=predictor_h+beta*duration*duration*a_h
+                        _,f_h,k_h,_=evaluate(q_h,current_time+duration,tangent=True)
+                        r_h=Mred@a_h+f_h
+                        scale_h=max(1.,float(np.linalg.norm(Mred@a_h)),float(np.linalg.norm(f_h)))
+                        if np.linalg.norm(r_h)<=controls.equilibrium_tolerance*scale_h:
+                            gaps_h=np.asarray(pressure_reference+pressure_gradient@q_h).reshape(-1)
+                            plane_endpoint_cache[duration]=gaps_h.copy()
+                            return gaps_h
+                        jac_h=(Mred+beta*duration*duration*(T.T@k_h@T)).tocsr()
+                        delta_a=np.asarray(spsolve(jac_h,-r_h)).reshape(-1)
+                        if not np.isfinite(delta_a).all():
+                            break
+                        a_h+=delta_a
+                        discard_active_state_candidate(committed_states)
+                finally:
+                    discard_active_state_candidate(committed_states)
+                raise EventNeedsCutback('plane Newmark endpoint family did not equilibrate')
+
             while True:
                 predictor = q + step * vred + step * step * (0.5 - beta) * acceleration
                 velocity_predictor = vred + step * (1.0 - gamma) * acceleration
@@ -1484,17 +1625,20 @@ def solve_transient_contact(
                 # Always start from the same predictor, including at a requested
                 # checkpoint boundary; the localized position is not a separate
                 # numerical initialization for the same physical endpoint.
-                candidate = predictor.copy() if controls.s3_event_subdivision_dev or event_seed is None else event_seed.copy()
+                candidate = predictor.copy() if controls.s3_event_subdivision_dev or controls.q4_plane_event_subdivision_dev or event_seed is None else event_seed.copy()
                 event_acceleration = np.zeros_like(candidate)
                 event_seed = None
                 converged = False
                 requested_event_step = None
                 for iteration in range(1, controls.maximum_newton_iterations + 1):
                     check_cancel("transient contact Newton evaluation")
+                    if controls.q4_plane_event_subdivision_dev:
+                        consume_plane_stage()
+                        candidate=predictor+beta*step*step*event_acceleration
                     full, internal, tangent, trial = evaluate(
                         candidate, current_time+step, tangent=True,
                     )
-                    candidate_acceleration = (event_acceleration.copy() if controls.s3_event_subdivision_dev or tool_histories or free_body is not None
+                    candidate_acceleration = (event_acceleration.copy() if controls.s3_event_subdivision_dev or controls.q4_plane_event_subdivision_dev or tool_histories or free_body is not None
                                               else (candidate - predictor) / (beta * step * step))
                     residual = Mred @ candidate_acceleration + internal
                     scale = max(1.0, float(np.linalg.norm(Mred @ candidate_acceleration)),
@@ -1648,11 +1792,80 @@ def solve_transient_contact(
                                                 requested_event_step = boundary.duration
                                                 event_seed = boundary.position
                                                 break
+                        if controls.q4_plane_event_subdivision_dev:
+                            start_state=_plane_event_state(pressure_reference,pressure_gradient,q,vred,
+                                controls.plane_event_gap_tolerance_m)
+                            g_start=np.asarray(start_state['normalized_gaps_m'])
+                            rate_start=np.asarray(start_state['gap_rates_m_s'])
+                            g_end=np.asarray(pressure_reference+pressure_gradient@candidate).reshape(-1)
+                            rate_end=np.asarray(pressure_gradient@candidate_velocity).reshape(-1)
+                            phases=np.asarray(start_state['departing_phase'])
+                            extrema=hermite_branch_extrema(g_start,g_end,rate_start,rate_end,step)
+                            tolerance=controls.plane_event_gap_tolerance_m
+                            unresolved=phases==0
+                            active=phases<0
+                            active[unresolved]=(extrema.maximum_gaps[unresolved]<=tolerance)
+                            near=np.abs(g_start)<=tolerance
+                            only_closed=(extrema.maximum_gaps<=tolerance)&(extrema.minimum_gaps<-tolerance)
+                            only_open=(extrema.minimum_gaps>=-tolerance)&(extrema.maximum_gaps>tolerance)
+                            # A tiny initial rate is not a certificate of the
+                            # first departure outside the declared gap band.
+                            active[near&only_closed]=True
+                            active[near&only_open]=False
+                            bounds=branch_path_admissible(g_start,g_end,rate_start,rate_end,step,
+                                active=active,gap_tolerance=tolerance)
+                            if event_targets and np.any(np.abs(g_end[list(event_targets)])>tolerance):
+                                last_event_failure='reequilibrated plane endpoint exceeds event gap tolerance'
+                                break
+                            if not bounds.admissible:
+                                required=tuple(int(i) for i in np.flatnonzero(np.where(active,-g_end,g_end)<-tolerance))
+                                if not required:
+                                    last_event_failure='hidden pressure-mode crossing has no endpoint bracket'
+                                    break
+                                event_localizations+=1
+                                if event_localizations>controls.maximum_event_localizations:
+                                    last_event_failure='plane event localization count exhausted'
+                                    break
+                                remaining_queries=controls.maximum_plane_event_endpoint_evaluations-plane_endpoint_requests
+                                if remaining_queries<2:
+                                    raise RuntimeError('plane Newmark event endpoint budget exhausted')
+                                if step<=controls.minimum_dt or step<=controls.plane_event_time_tolerance_s:
+                                    last_event_failure='plane event is below the resolved duration budget'
+                                    break
+                                try:
+                                    boundary=localize_endpoint_event(plane_endpoint_gaps,step,active,required,
+                                        minimum_dt=controls.minimum_dt,
+                                        time_tolerance=controls.plane_event_time_tolerance_s,
+                                        gap_tolerance=tolerance,maximum_evaluations=remaining_queries,
+                                        check_cancel=lambda context:check_cancel(context))
+                                except EventNeedsCutback as exc:
+                                    event_evaluations+=exc.endpoint_evaluations
+                                    last_event_failure=str(exc)
+                                    break
+                                event_evaluations+=boundary.endpoint_evaluations
+                                if not boundary.duration<step:
+                                    last_event_failure='localized plane endpoint lacks complete branch certificate'
+                                    break
+                                requested_event_step=boundary.duration
+                                event_targets=boundary.support_indices
+                                plane_localized_boundary=True
+                                break
+                            arrivals=tuple(int(i) for i in np.flatnonzero((np.abs(g_end)<=tolerance)&(np.abs(g_start)>tolerance)))
+                            if not event_targets:
+                                event_targets=arrivals
                         if (contact_result.gap_tolerance_met
                                 and (beam_path_admissible if controls.allow_classical_beam_dev or controls.allow_free_shell_sphere_dev
                                      else swept_gap >= -manager.gap_tolerance)):
                             converged = True
                         break
+                    if controls.q4_plane_event_subdivision_dev:
+                        jacobian=(Mred+beta*step*step*(T.T@tangent@T)).tocsr()
+                        delta_acceleration=np.asarray(spsolve(jacobian,-residual)).reshape(-1)
+                        if not np.isfinite(delta_acceleration).all():
+                            break
+                        event_acceleration+=delta_acceleration
+                        discard_active_state_candidate(committed_states)
+                        continue
                     jacobian = (Mred / (beta * step * step) + T.T @ tangent @ T).tocsr()
                     correction = np.asarray(spsolve(jacobian, -residual)).reshape(-1)
                     if not np.all(np.isfinite(correction)):
@@ -1707,6 +1920,10 @@ def solve_transient_contact(
                     if controls.allow_q4_plastic_dev:
                         next_material_packet,trial=sealed_material_candidate(full,trial)
                         check_cancel('Q4 plastic material-state acceptance')
+                    if controls.q4_plane_event_subdivision_dev:
+                        next_plane_state=_plane_event_state(pressure_reference,pressure_gradient,
+                            candidate,candidate_velocity,controls.plane_event_gap_tolerance_m)
+                        check_cancel('plane Newmark event-state acceptance')
                     committed_states = commit_state_candidate(committed_states, trial)
                     if controls.allow_q4_plastic_dev:
                         material_packet=next_material_packet
@@ -1717,6 +1934,12 @@ def solve_transient_contact(
                     if controls.s3_event_subdivision_dev and event_targets:
                         localized_events.append(float(current_time+step))
                         end_truncated = False
+                    if controls.q4_plane_event_subdivision_dev:
+                        plane_state=next_plane_state
+                        if event_targets:
+                            localized_events.append(float(current_time+step))
+                            if plane_localized_boundary:
+                                end_truncated=False
                     if path_adapter is not None:
                         for event_time in _accepted_path_transition_times(
                                 last_path_active, candidate_path, current_time, step):
@@ -1763,6 +1986,7 @@ def solve_transient_contact(
                     break
                 discard_active_state_candidate(committed_states)
                 event_targets = ()
+                plane_localized_boundary=False
                 event_seed = None
                 local_cutbacks += 1
                 cutbacks += 1
@@ -1789,6 +2013,7 @@ def solve_transient_contact(
             tool_error if translations is not None else None,
             free_body.body_name if free_body is not None else None,
             material_packet,
+            plane_state,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(
@@ -1796,9 +2021,11 @@ def solve_transient_contact(
         np.asarray(velocities)[:, :size], np.asarray(accelerations)[:, :size], tuple(contacts),
         np.asarray(swept_gaps), np.asarray(residuals), cutbacks, tuple(iterations),
         np.asarray(external_work), checkpoint, tuple(path_transitions),
-        tuple(localized_events), event_evaluations,
+        tuple(localized_events), (plane_total_endpoint_requests
+            if controls.q4_plane_event_subdivision_dev else event_evaluations),
         tuple(tool_works) if translations is not None else (),
         tuple(tool_errors) if translations is not None else (),
         tuple(body_states),
         committed_states if controls.allow_q4_plastic_dev else {},tuple(material_history),
+        plane_total_stage_evaluations,
     )

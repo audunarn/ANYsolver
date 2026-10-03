@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.56. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.57. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -84,11 +84,24 @@ The bounded temporal discriminator reduces the coarse11.648% endpoint energy
 excess to0.26977%/0.46223% on half/quarter dt. It supports contact timestep/event
 phase error, but the fine trend is nonmonotonic and endpoints differ; no formal
 temporal acceptance. Both finer cases complete within180s/953MiB.
-NEXT implement/review the actual contact-stage event policy and register matched
-endpoint temporal/work checks, then close impact-induced plasticity through one
-independent case before broader D5 admission. Do not start an open-ended dt sweep.
+An explicit Q4/fixed-plane pressure-mode event profile now reequilibrates each
+duration proposal from one committed material origin and checks every accepted
+Hermite branch plus independent physical gaps. Shared endpoint/stage budgets,
+yielded event-family cancellation, failed-query/cutback accounting, ordinary END
+rejection and phase-bound V8/V9 restart are implemented and source-tested. The
+isolated installed example matches all205 imported module hashes and numerical
+fields. At matched dt3e-5s/end.003s, the uncoupled fixture's maximum energy defect
+falls from13.4695% to0.00007234%, final1.46088% to0.00007234%. Source event68.52s
+versus legacy64.27s; these single runs establish no performance claim.101steps,
+two localized events,zero cutbacks. Historical profiles and failed evidence stay.
+This resolves the identified event-phase discrepancy for this development fixture,
+not general impact/material acceptance or monotonic temporal qualification.
+NEXT close impact-induced plasticity through one independent mechanically coupled
+case and a matched-end temporal/work check before broader D5 admission. Prefer a
+derived reduced structural fixture over a broad mesh/time sweep; preserve actual
+Q4 work, material history and all numerical gates. Do not start an open-ended sweep.
 The current example has uncoupled membrane and normal modes and cannot supply
-those claims. Its full120-step route is approximately78s; no speed-up claim.
+those claims. Its prior120-step route is approximately78s; no speed-up claim.
 Measure material-packet preparation/validation cost before optimizing it; preserve
 accepted-parent semantics and every required restart check. Do not repeat broad
 suites or expand caps. Reuse unchanged geometry/static/material evidence.
@@ -97,6 +110,7 @@ bound, not another refinement campaign. Full C0–C9 completion remains required
 
 [Plastic profile guide](docs/GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md) and
 [source/package evidence](docs/d1_review_support/C6_Q4_PLASTIC_SLICE_20261003.md).
+[Event slice/evidence](docs/d1_review_support/C6_Q4_PLANE_EVENT_SLICE_20261003.md).
 
 [New D5 guide](docs/GENERAL_CONTACT_C6_FREE_SHELL_SPHERE_DEV.md) and
 [slice evidence](docs/d1_review_support/C6_FREE_SHELL_SPHERE_SLICE_20261003.md).

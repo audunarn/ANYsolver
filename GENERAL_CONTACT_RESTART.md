@@ -1,61 +1,60 @@
 # General contact restart — 3 October 2026
 
-Full C0–C9 goal ACTIVE/incomplete. Authoritative worktree:
+Full C0–C9 ACTIVE/incomplete. Authoritative worktree:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001. Parent26402e72; Git HEAD identifies
-the owned checkpoint. Goal2026-09-30.4/plan2026-10-03.56 govern. Do not access the
-original general-contact worktree or inspect/message other user chat, merge main,
-push/publish/release, alter defaults/shared ABCs. Owned local checkpoint commits
-authorized. Frozen/consumed numerical authority remains unchanged.
+branch codex/contact-main-reconcile-20261001. Parent ee22dc60; Git HEAD identifies
+owned checkpoint. Goal2026-09-30.4/plan2026-10-03.57 govern. Do not access original
+worktree or inspect/message other user chat, merge main, publish/release, alter
+historical defaults/shared ABCs. Owned local checkpoint commits authorized.
+Frozen/consumed authority and all numerical criteria remain intact.
 
-D1-interior/named bounded D2 independently accepted. Existing installed accepted
-shell artifact unchanged. Prior guided Q4/free isotropic sphere and driven-history
-checkpoints: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART78.md.
+D1-interior/named bounded D2 independently accepted; existing installed accepted
+shell artifact unchanged. Full remaining beam/friction/dynamics/apps still required.
+History: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART80.md
+links previous plastic/free-sphere/native checkpoint records and retained failures.
 
-NEW explicit Q4/fixed-plane DNV plastic Newmark profile, opted in by
-allow_q4_plastic_dev. Three-layer material history/accepted return-map parent
-retained in dynamic packetV7. Restore before initial balance; discard its same-pose
-observation instead of another physical commit. Optional output history, final
-state and emitted checkpoint have safe packet ownership. Exact qualified Q4/
-isotropic DNV only; no S3, beam, free body, motion or load history. Kernel/static
-schemas/elastic defaults unchanged. Guide: docs/GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md;
-evidence: docs/d1_review_support/C6_Q4_PLASTIC_SLICE_20261003.md and
-contact_c6_q4_plastic_20261003/{source.json,raw.zip}.
+NEW explicit q4_plane_event_subdivision_dev for guided Q4/fixed-plane elastic or
+DNV plastic Newmark. Actual normalized nodal pressure gaps drive branch events.
+Acceleration-primary endpoint-duration solves use one committed material parent;
+proposals reequilibrate and every complete represented Hermite branch plus physical
+gap gate must pass. Hidden/unresolved crossings cause bounded cutback. No force law,
+material, mass or old profile changes. Shared query/stage budgets include failed
+attempts across retries. V8/V9 bind phase/support/gaps/rates/settings; V9 retains
+accepted material parent. Arbitrary END truncation inside/outside gap band rejects.
 
-51 codec +10 new driver +2 affected legacy outcomes pass through bounded selections.
-Independent plateau/affine-membrane plus rigid-normal reference matches yielding,
-unloading, active yielded restart and material core. Modes are uncoupled: no
-impact-driven plasticity/general hardening claim. Cancellation/exception and
-controlled rejection after a yielded commit leave reusable model/history. Review
-caught lost old tool-work fingerprints and checkpoint/export aliasing; corrected
-regressions pass. Same-family source scrutiny is not engineering acceptance.
+44 helper +8 new integrated +2 affected legacy outcomes pass in scoped development
+runs. Independent elastic/plateau response and energy, yielded active split/tamper,
+failed-query accounting, yielded localization cancellation/reuse and END controls
+pass. Same-family Read scrutiny finds no concrete defect, not engineering acceptance.
+Guide: docs/GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md; exact evidence:
+docs/d1_review_support/C6_Q4_PLANE_EVENT_SLICE_20261003.md and
+contact_c6_q4_plane_events_20261003/{source.json,raw.zip}.
 
-Installed development wheel SHA256cb8105e15051d98531ab4513ff8897e144d26211d2e435c31ef06193e79cdd7c
-at C:/ANYworkspaceWork/contact_q4_plastic_package_20261003/wheels;
-source/installed numerical fields and204 loaded module hashes match.120steps,
-zero cutbacks,yield.00085s,maxalpha8.00007e−5,min represented gap−3.54007e−5m
-within5e−5m. Source77.89s/165937152B,installed78.95s/166027264B; no speed claim.
+Isolated wheel SHA256b4b0a30be0562a86fe41c1c57b1ef5ffd733d07ee15da78aac30f404c05ced01
+at C:/ANYworkspaceWork/contact_q4_event_package_20261003/wheels. All205 imported
+module hashes/numerical fields match.101steps,2 events,42 endpoint requests,291
+stage evaluations,zero cutbacks; min represented gap-3.53587e-5m within5e-5m.
+Matched dt3e-5s/end.003s: maximum fixture energy defect13.4695% ->0.00007234%,
+final1.46088% ->0.00007234%. Legacy64.27s/164163584B; event source68.52s/
+165969920B,installed73.73s/169127936B. No speed-up or formal temporal acceptance.
+Fixture modes uncoupled, constant-yield plateau energy formula explicitly bounded.
 
-Energy discriminator: coarse dt2.5e−5s has11.648% excess in KE+elastic storage+
-exact plateau20*V*alpha,zero external work. Half/quarter dt gives0.26977%/0.46223%
-after contact release (ends.0012s vs coarse.003s after unloading),64.44/120.22s.
-Large timestep sensitivity supports contact branch timing error; fine trend is
-nonmonotonic and endpoints differ. No formal temporal/energy acceptance follows.
-NEXT implement/review actual integration-stage event policy and register matched
-endpoint temporal/work checks, then independent contact-induced plasticity case.
-No open-ended dt sweep. Measure packet preparation cost before optimizing it.
+NEXT one mechanically coupled impact-induced plasticity fixture with independent
+reduced-work reference and matched-end temporal/work check before broader D5
+admission. Preserve actual Q4 work/history, gates and resource limits. No open-ended
+mesh/time sweep. Measure packet cost before optional optimization. Multimode
+stationary/grazing integrated event cases and general hardening remain unverified.
 
-Native variable-endpoint friction remains NONPASS: closed gap−1.33564e−13m and
-missing event-sensitive tangent bound alpha_q=−G_q/G_alpha/mixed work derivatives
-at grazing. No saved local/owner/split retry, cap/tolerance growth, history reset,
-zero closed-response substitution or nativeC5 installed/accepted/released admission.
-History79 retains prior details/prospective experiments and links Part78/77/native
-evidence: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART79.md.
+Native variable-endpoint friction remains NONPASS: final closed gap-1.33564e-13m,
+missing event-sensitive tangent alpha_q=-G_q/G_alpha/mixed work bounds at grazing.
+No saved local/owner/split retry, cap/tolerance growth, history reset, zero closed
+response substitution or nativeC5 installed/accepted/released admission.
 
-Tiered workflow; optional lower tiers previously unavailable, do not reprobe the
-same failure without a useful changed circumstance. Owned workers completed:
-shell_sphere_swept authored codec/tests/example; history_cache_review Read-reviewed
-driver/codec/oracle/example. No other-chat coordination. All owned numerical
-processes finished; no outstanding run. Routine180s/953MiB, named900s/3814MiB and
-native restrictions intact. Active-hour budget120h=goal seconds+3120; last81.0h
-advancing. At120h checkpoint/request decision, no extension. Forecast unsupported.
+Tiered workflow; optional lower tiers previously unavailable, do not repeat probes
+without changed circumstances. Owned geometry worker authored helper/tests; owned
+Read reviewer inspected driver/event/state/example; no other-chat coordination.
+All owned numerical/package processes finished; workers completed. Routine180s/
+953MiB, named900s/3814MiB and native restrictions unchanged.120 active-hour budget
+=goal timeUsedSeconds+3120; last81.8h, advancing. At120h checkpoint/request decision,
+no extension. Delivery forecast unsupported. Current turn made implementation
+progress; full programme is not complete.
