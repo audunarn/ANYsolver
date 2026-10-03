@@ -7,7 +7,7 @@ nor grants production qualification. See GE_BEAM3_VARIATIONAL_SHELL_MAP.md.
 """
 import numpy as np
 
-from ._ge_beam3_mixed_ad import Jet2, constant_matrix, matmul, matmul_constant_right, matvec, transpose, so3_exp, so3_log
+from ._ge_beam3_mixed_ad import Jet2, constant_matrix, matmul, matvec, transpose, so3_exp, so3_log
 from ._ge_beam3_pose_joint import _exp_terms
 
 POLICY = 'GE_BEAM3_PROCRUSTES_VARIATIONAL_SHELL_PULLBACK_V2'
@@ -138,7 +138,7 @@ def deformation(reference, displacement, *, stable_translation=False, rotation_a
             values.extend(local[j]-refc[i, j] for j in range(3))
         physical = so3_exp(jets[i][3:])
         if rotation_anchors is not None:
-            physical = matmul_constant_right(physical, rotation_anchors[i])
+            physical = matmul(physical, constant_matrix(rotation_anchors[i], n))
         values.extend(so3_log(matmul(rt, physical)))
     return (np.array([v.value for v in values]),
             np.array([v.gradient for v in values]),

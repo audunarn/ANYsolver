@@ -172,27 +172,6 @@ def matmul(left: Sequence[Sequence[Jet2]], right: Sequence[Sequence[Jet2]]) -> l
     return result
 
 
-def matmul_constant_right(left: Sequence[Sequence[Jet2]], values: Any) -> list[list[Jet2]]:
-    """Ordered local product with an owned, explicitly constant right matrix.
-
-    This does not infer constancy from mutable Jet derivatives. Unsupported
-    left layouts retain the ordinary matrix/product behavior. Snapshot the
-    coefficients before any arithmetic, as constant_matrix does.
-    """
-    size = left[0][0].gradient.size
-    array = np.asarray(values, dtype=np.float64).copy()
-    if (type(left) not in (list, tuple) or array.ndim != 2 or array.shape[0] == 0 or
-            any(type(row) not in (list, tuple) or len(row) < array.shape[0] or any(
-                type(entry) is not Jet2 or not _scalar_layout(entry) or
-                entry.gradient.size != size
-                for entry in row[:array.shape[0]]) for row in left)):
-        return matmul(left, constant_matrix(array, size))
-    return [[sum((row[index] * float(array[index, column])
-                  for index in range(array.shape[0])),
-                 start=Jet2.constant(0.0, size))
-             for column in range(array.shape[1])] for row in left]
-
-
 def matvec(matrix: Sequence[Sequence[Jet2]], vector: Sequence[Jet2]) -> list[Jet2]:
     size = vector[0].gradient.size
     return [
