@@ -3,7 +3,7 @@
 Full C0–C9 ACTIVE/incomplete. Authoritative solver root:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
 branch codex/contact-main-reconcile-20261001; numerical source04535859.
-HEAD binds this checkpoint; goal2026-09-30.4 / plan2026-10-03.70 govern.
+HEAD binds this checkpoint; goal2026-09-30.4 / plan2026-10-03.71 govern.
 Protected original must not be accessed. No other human-chat messages, publication,
 merge/default changes or consumed-authority replay. Local checkpoints authorized.
 All owned runs/reviewer terminal. Prior restrictions/history:
@@ -11,22 +11,28 @@ docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART93.md→92�
 
 NEW unblocked D8 outcome: ANYfem isolated root
 C:/ANYworkspaceWork/ANYfem-contact-intent; branch codex/anyfem-contact-intent;
-HEAD847f8908361b6779faeb8611715b1e3f8bb1ae55, clean after commit.
-Explicit solve_mapped_contact_development binds persisted named-face selections,
-complete public settings, owner-validated static path and actual result artifact.
-Real meshed Q4/Q4 press/open/recontact passes independent uniform18N reaction and
-opposite force; active serialized restart resumes in a fresh built owner.
-Cancellation propagates SolveCancelled; no returned payload. Normal job admission
-stays false. Source checks and11correctly isolated-installed outcomes pass;
-296loaded app/solver module hashes match current source, actual JIT0/pools1.
-Installed138.829s/215433216B, within180s/953MiB. No acceptance/release/speed claim.
-100um development gap is not10um programme qualification for10mm shell.
-Guide/evidence: ANYfem docs/GENERAL_CONTACT_DEVELOPMENT_SOLVE.md and
-docs/contact_development_evidence_20261003/{source.json,raw.zip}(66records).
-Fixture/cancellation expectation/harness/cache failures retained. The first
-installed attempt had11test passes but failed import admission (source ANYfem);
-corrected pytest pythonpath override passes both installed roots. Supporting
-same-family source scrutiny, not independent engineering acceptance.
+HEADff3a8a54b8ed234bdcc52745f3ea4b6ed064bd79, clean after commit.
+Mapped helper now supports selected dead nodal loads as well as explicit paths.
+Real persisted/meshed two-Q4/S3 press/open/recontact passes144N reaction;0.1N
+guided fixed-target ordinary force matches independent analytic Q1 mortar/KKT
+reference with supplied rest structural stiffness:reaction0.0931952663N,
+physical gap−3.938462um within50um,residual2.88e−11N,complementarity6.38e−12.
+Both-body wrench and fresh-owner serialized active force restart pass. Conflict
+loads reject before owner. Explicit existing projected_matching replaces fixture
+whole_face selection after remote-corner extrapolation/backtracking NONPASS;
+mechanics/loading/tolerance/defaults unchanged, original failure retained.
+V2 mesher policy/soft-target metadata strict; soft target not an admission gate.
+Current-identity V1 schema compatible, obsolete contracts reject. Source13new
+checks pass; stale default-test fixture corrected, prior failures retained.
+Installed24outcomes pass142.514s/219332608B, within180s/953MiB; actual JIT0/pools1,
+298loaded module hashes match both intended sources. Old Q4/Q4 cycle/restart/
+cancellation also pass. Normal application admission remainsfalse.
+Guide/evidence: ANYfem docs/GENERAL_CONTACT_MIXED_FORCE_DEV.md and
+docs/contact_mixed_force_evidence_20261003/{source.json,raw.zip}(91records).
+Prior18N path evidence/import/cache/cancellation failures remain linked through
+docs/GENERAL_CONTACT_DEVELOPMENT_SOLVE.md and its original66-record packet.
+No engineering acceptance/release/speed claim. Supporting source-only scrutiny
+resolved a V2 shape finding; it is not independent engineering acceptance.
 
 PENDING async user decision remains: allow a SEPARATE experimental impact policy
 retaining full20um swept-gap/discrete-pressure-phase control but omitting V3/V4's
@@ -46,10 +52,12 @@ friction/material/continuation, impact/native dynamics, applications and scale
 acceptance still required. No supportable programme delivery forecast.
 
 Next: act on pending user decision only if received. Otherwise choose a genuinely
-unblocked required row; next app boundary is mixed-shell/force-driven routing,
-results/export and source/model-bound capability admission. Preserve separately
+unblocked required row; next app boundary is accepted-profile source/model-bound
+admission plus actual result fields/export/visualization. Fixed-target guided
+force does not admit general nonlinear/deformable-target application models.
+Preserve separately
 owned dirty canonical application work; new slice touched only isolated ANYfem.
-Budget120activehours: lastgoal333539+3120=336659s(~93.52h), ~26.48h remaining.
+Budget120activehours: lastgoal336569+3120=339689s(~94.36h), ~25.64h remaining.
 Read current goal clock before a substantial slice; at120h checkpoint/request
 scope/time/method decision, never silently extend or complete. Lower tiers remain
 previously unavailable; do not reprobe unchanged failures. Goal ACTIVE.

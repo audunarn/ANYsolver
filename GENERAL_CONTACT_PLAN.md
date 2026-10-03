@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.70. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.71. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -24,7 +24,7 @@ Publication, merging, release and historical-default changes are separate action
 | D4 friction/continuation | Fixed-material and planar material-anchor S3 owners use shared static equilibrium/pressure/history/restart; facet crossing, internal-seam generalized tangent and solved seam/restart checks pass in development | Friction integration/step refinement, partial overlap/history transfer, physical rims, finite rotation/warped surfaces, swept beam/native surfaces, nonlinear materials and arc length |
 | D5 impact | Q4/S3 planes, B2/B3 fixed/translating planes and explicit guided Q4/free isotropic sphere share Newmark driver/state/restart; new shell work/path/energy/restart checks and isolated installed example pass | Broader shell/free-body admission, general geometry, finite rotation, caps/pairs, anisotropic inertia, nonlinear materials and acceptance |
 | D6 native dynamics | Dedicated retained-inertia/SO(3) midpoint owner, state codec and installed development route | Broader geometry/sections, spatial accuracy and C7 acceptance |
-| Applications | ANYfem persisted mapping→development solve→results plus active fresh-owner restart and isolated installed checks; ANYstructure intent/public mapping and early rejection | Source/model-bound capability admission, solve routing and full installed workflows |
+| Applications | ANYfem persisted Q4/Q4 and Q4/S3 development solves, selected ordinary nodal force, independent reaction/KKT checks and active fresh-owner restart verified in installed packages; ANYstructure intent/public mapping and early rejection | Source/model-bound accepted-profile admission, full routing, result fields/export/visualization and C9 acceptance |
 
 Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md),
 [restart note](GENERAL_CONTACT_RESTART.md) and linked guides. Implemented, tested,
@@ -32,20 +32,27 @@ independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
 
-The permitted unblocked D8 slice now connects ANYfem persisted face selections
-and exact settings to the ordinary static contact-path driver and its result
-artifact. A real meshed Q4/Q4 press/open/recontact case passes independent18N
-uniform-penalty reaction, opposite-body force and summary persistence. Serialized
-active restart resumes in a fresh built owner; cancellation propagates the owner
-exception. Source checks and11isolated-installed outcomes pass;296loaded app/solver
-module hashes match source, JIT off and numerical pools one thread. Installed run
-138.83s/215433216B stays within180s/953MiB. No application admission, engineering
-acceptance, release or speed claim. The100um development gap does not qualify the
-programme's10um starting budget for this10mm shell. Normal job rejection remains.
-ANYfem checkpoint847f890; solver numerical source04535859 unchanged.
-[Guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_DEVELOPMENT_SOLVE.md).
-Fixture, cancellation-expectation, startup/cache and installed-import failures
-are retained. Same-family supporting source scrutiny is not engineering acceptance.
+The permitted D8 slice now joins persisted Q4/S3 selections and exact settings
+to both a prescribed press/open/recontact path (independent144N reaction) and
+ordinary selected dead nodal load. The0.1N guided fixed-target force case agrees
+with an independently assembled analytic Q1 mass/enumerated KKT reference using
+admitted rest structural stiffness: reaction0.0931952663N, gap−3.938462um,
+residual2.88e−11N and relative complementarity6.38e−12. Physical50um gap budget
+unchanged. Active restart resumes in a fresh built owner. The first whole-face
+profile fails backtracking due to remote-corner extrapolation; that failure stays
+failed. Explicit existing projected_matching certifies represented matching points
+and the actual trial path. No equation, tolerance or production default changes.
+Strict V2 mesher-record compatibility includes policy/soft-target shape checks;
+soft-target failure is not a new admission condition. Obsolete identities reject.
+
+ANYfem checkpointff3a8a54; solver numerical04535859 unchanged. Source13mixed/force
+checks pass, affected legacy/path checks pass after one stale-fixture correction;
+all failures retained. Isolated installed24outcomes pass, including prior Q4/Q4
+cycle/restart/cancellation:142.514s/219332608B within180s/953MiB,298module hashes
+match source, actual JIT off/pools1. No engineering/application admission, release
+or speed claim. Supporting source scrutiny is not independent acceptance.
+[Guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_MIXED_FORCE_DEV.md).
+Previous18N path evidence and fixture/harness failures remain at its linked guide.
 
 The impact question remains pending user authority. Explicit V4/V16 signed-polygon
 pressure certification resolves218encountered paths in10.324s, but the refined
@@ -58,8 +65,9 @@ caps/tolerances or infer approval. V3/V15 default and old evidence remain intact
 Next: use the user decision if it arrives. A separately named policy experiment
 requires that authority. Meanwhile continue genuine remaining application or
 mechanics rows; production admission must follow solver capability status. The
-next application boundary is mixed-shell/force-driven routing, results/export and
-source/model-bound admission, not merely additional persistence metadata. Preserve
+next application boundary is accepted-profile source/model binding and actual
+result fields/export/visualization; the guided fixed-target force case does not
+admit general nonlinear or deformable-target application analysis. Preserve
 the explicit native grazing-friction NONPASS and no-retry restrictions: the missing
 closed alpha_q=-G_q/G_alpha plus mixed-work bound is unresolved; caps/history/errors
 are unchanged. Full programme and independent/package/resource gates remain.

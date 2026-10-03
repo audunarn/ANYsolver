@@ -1,5 +1,33 @@
 # General-contact capability ledger
 
+## Mapped ANYfem mixed-shell and ordinary-force development — 3 October
+
+ANYfem isolated checkpointff3a8a54b8ed234bdcc52745f3ea4b6ed064bd79, solver
+numerical04535859 unchanged. Real persisted/meshed two-Q4/S3 skins pass144N
+prescribed press/open/recontact reaction. Explicit ordinary-force helper binds
+the built dead nodal load to its selected stored case; conflicts reject before
+the owner.0.1N guided fixed-target force agrees within1e−6 relative with analytic
+Q1 mortar mass/enumerated KKT using admitted rest structural stiffness (no
+independent structural/continuum claim). Both-body wrench, physical gap, residual,
+complementarity and serialized fresh-owner active restart pass. Physical gap
+−3.938462um within unchanged50um budget; reaction0.0931952663N.
+
+Existing projected_matching profile explicitly selected after the whole-face
+remote-corner bound caused backtracking NONPASS; old failure retained. No default,
+mechanical equation or tolerance changes. V1/V2 mesher schema shape is consumed
+with current exact owner identities and actual geometry admission; V2 soft target
+report is validated but missing the target does not fail admission. Obsolete
+contract records still reject. Stale test fixture/chart/schema/preflight failures
+are retained; supporting source scrutiny is not engineering acceptance.
+
+Source13focused outcomes pass. Final installed24outcomes pass,142.514s/219332608B
+within180s/953MiB; actual JIT0/pools1 and298loaded module hashes match source.
+Prior Q4/Q4 cycle/restart/cancellation included. Normal jobs still reject contact.
+Implemented/source-tested/installed-tested: **named development fixtures**.
+Independently accepted/released/application-admitted: **no**. General nonlinear,
+deformable target, accepted-profile routing and result visualization/export remain
+open. No speed claim. [Evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_MIXED_FORCE_DEV.md).
+
 ## Mapped ANYfem static contact development — 3 October
 
 ANYfem isolated checkpoint `847f8908361b6779faeb8611715b1e3f8bb1ae55`
