@@ -9,7 +9,8 @@ Risk-proportionate tiered development; historical failures/consumed authority
 retain meaning. Prior note preserved byte-for-byte in latest raw evidence.
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; latest committed slice16cec54f (fixed-support evidenceef07ddad)
+branch codex/stiffened-main-reconcile-20261001; mechanics/evidence2ec41a29,
+gravity product8e388e20 (prior growing16cec54f/fixed-support evidenceef07ddad)
 (reference9c75d6e9; product0f902f88/7d24f906 and B2af787671 unchanged).
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 2ede338ba28932bb9dd3e8eb0f0a4908d37fc765. Check Git for later evidence commit.
@@ -90,7 +91,9 @@ prefix/cancellation, physical predecessor/chart parity and restart checked.
 Installed public example factors.25/.5/1, equilibrium5.425e-9/gap4.444e-16.
 417 source/wheel/site module identities, wheel16ce45d9, pools1/JIT off. Review
 found two test defects now repaired; different-family scientific acceptance open.
-Gravity product/evidence committed locally8e388e20; root owns diagnostic/docs
-changes pending local scoped commit. No contact
+Gravity product/evidence committed locally8e388e20; diagnostic/docs2ec41a29.
+94 archived files verified byte-for-byte in both worktree and Git blobs; scoped
+product/script checks clear. Root checkpoint only, no pending source writes.
+No active workers/jobs or queued experiments. No contact
 worker messages/main merge/publication. Full external/scale/material/platform/
 release obligations and scientific criteria remain. No timing gain claimed.
