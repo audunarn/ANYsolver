@@ -7612,7 +7612,19 @@ def _solve_static_nonlinear_under_lease(
                         "next_step_size": float(step_size),
                         "action": "cutback_after_nonconvergence",
                         "previous_step_size": float(previous_step_size),
-                        "residual_norm": float(residual_norm),
+                        # The swept preflight rejects before equilibrium assembly.
+                        # Infinity is its internal failure sentinel, not a measured
+                        # residual, and must not enter a canonical checkpoint.
+                        "residual_norm": (
+                            None if failure_reason == "contact_gap_exceeded"
+                            and iterations_used == 0 and np.isinf(residual_norm)
+                            else float(residual_norm)
+                        ),
+                        **({"residual_evaluated": False,
+                            "failure_reason": "contact_gap_exceeded"}
+                           if failure_reason == "contact_gap_exceeded"
+                           and iterations_used == 0 and np.isinf(residual_norm)
+                           else {}),
                     }
                 )
                 if step_size < min_step:

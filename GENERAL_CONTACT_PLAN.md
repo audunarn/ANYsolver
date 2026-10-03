@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.79. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.80. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -14,56 +14,39 @@ capabilities, scientific targets and exclusions. Historical plans and failures
 remain evidence; frozen or consumed execution authorities are never renewed.
 Publication, merging, release and historical-default changes are separate actions.
 
-Current D3 slice: explicit beam_chain_tangent="consistent_dev" replaces global
-perturbed assemblies with local B2 closest-point Hessians and the complete moving
-nearest-owner interface/cross-target blocks. Fine positive panels are retained;
-exact branch polynomials and verified rational root enclosures distinguish active
-transverse interfaces from ambiguous repeated/end/triple/projection-plateau ties.
-Ambiguities fail; legacy defaults and old default restart identities remain.
+Current D3 slice: exterior capped-cylinder B2/B3 contact now includes declared
+physical hemisphere ends with separately dimensioned N/m endpoint stiffness.
+The additive line-plus-point potential has complete endpoint work/tangent and
+both-body force/moment reporting. Actual B3 derivatives and all classical material
+node uses prevent phantom caps at unselected neighbours and middle-node junctions.
+Exact affine directional-derivative intervals certify ownership; active ownership
+changes and atomic cap/rim or side/rim Hessian seams reject. Fixed exterior and
+small-motion structural restrictions remain; no dynamic/friction/native admission.
 
-The partial-contact cantilever discriminator exposed a false near-projection tie.
-Exact squared-distance classification, canonical rational root normalization and
-containing projection intervals correct it without weakening genuine ambiguity
-guards. Irrational triple ties reject under all target permutations. Six independent
-Timoshenko/P1 reference cases separate mesh2/4/8 and line stiffness1000/10000:
-maximum displacement/reaction errors1.368e-10/4.692e-9 versus1e-6 target; independent
-whole-curve gap and contact force balance meet retained gates. This verifies the
-small-motion distributed work and sensitivity, not general continuum acceptance.
-Installed44checks and6additional changed gap/balance checks pass49.427s/336564224B
-and12.450s/165916672B;209modules/491package files byte-match,JIT0/pools1. Latest
-balanced guided medians3.979517→0.368139s (10.810x),same18Newton/0cutbacks,
-displacement difference2.73659e-11m. Prior12.204x timing is retained for its earlier
-candidate; no shell/native/programme speed qualification. New9runs/56raw records
-retain failed oracle/tie/helper/preflight evidence and supporting source scrutiny.
-[Refinement evidence](docs/d1_review_support/contact_chain_refinement_20261003/summary.json).
-[Guide/evidence](docs/GENERAL_CONTACT_BEAM_CHAIN_CONSISTENT_DEV.md).
-Broader continuum/geometry refinement, physical endpoints and engineering/application admission remain
-open. Adaptive integration and irrational enclosure-midpoint cuts are not a general
-integration-error certificate. Next pursue a genuine outstanding mechanics or
-refinement row using one bounded discriminator; do not repeat this passed suite.
+Installed67checks pass29.849s/337104896B,209modules/492package files byte-match,
+JIT0/pools1,180s/953MiB. Independent scalar work/one-sided/tangent/covariance checks,
+actual force/displacement/tool paths, active/open fresh restart, incompatible laws,
+public example, existing beam routes and current installed no-contact compatibility
+are covered. The swept preflight diagnostic now records an unevaluated residual
+as null rather than an infinity sentinel, enabling strict canonical restart.
 
-Preceding D2/D3 slice: an explicit finite flat-capped cylinder now owns exterior
-round B2/B3 line contact through the ordinary static force/displacement route.
-Side/cap/rim work, whole-curve rational Bernstein gap bounds, exact correlated
-inactivity and affine-path crossing control preserve the declared line potential.
-The initial interior moving-seam tangent defect is explicitly excluded by a
-whole-centreline exterior certificate and gap budget below tube radius. No cap,
-tolerance or legacy geometry schema change. Actual moving-tool work, active fresh
-restart and incompatible half-length rejection pass. Source34 checks; installed37
-checks plus1source-child compatibility and2additional installed checks pass.
-Final route13.877s/350388224B,237modules/490package files byte-match, JIT0/pools1.
-Caps and existing sphere/infinite-cylinder routes pass; all failures retained.
-[Guide/evidence](docs/GENERAL_CONTACT_CAPPED_CYLINDER_DEV.md).
+The old unaligned tool-work case remains NONPASS (relative defect5.8413e-6).
+Independent force history identifies trapezoidal activation error. A prospectively
+prescribed activation stage plus open restart meets the unchanged1e-6 work target
+(relative defect2.579e-12). This does not qualify general event/work handling.
+Ten bounded runs/63raw records preserve failures; supporting same-family scrutiny
+found the atomic seam. No engineering/application acceptance or release inferred.
+[Guide](docs/GENERAL_CONTACT_CAPPED_CYLINDER_ENDCAPS_DEV.md),
+[evidence](docs/d1_review_support/contact_capped_endcaps_20261003/summary.json).
+Full integration/refinement/acceptance and broader D3 pairings remain open.
 
-This is tested development, not engineering/application admission or release.
-Mixed-panel Gauss estimates are not a rigorous general integration-error bound;
-spatial/enforcement refinement and independent acceptance remain open. The next
-mechanics slice should address an actual remaining pairing or refinement gap,
-with a bounded independent discriminator, not duplicate reporting infrastructure.
-Optional shell skins/display from ANYfem434ec00 retain their previously tested
-scope; [previous plan](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261003_REV76.md)
-preserves its full evidence. Missing historical archive/current-source admission
-and the separate impact/native restrictions remain pending. Full C0–C9 is active.
+Previous exact B2-chain partial-contact code verification and10.810x guided-case
+speed result, earlier exterior no-cap cylinder evidence and all failed candidates
+retain their scope in [plan79](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261003_REV79.md).
+Do not replay their passed suites unless changed assumptions require it. Next
+select a genuine remaining pairing, retained-coordinate work or independently
+bounded refinement discriminator; no open-ended diagnostic sweep or metadata-only
+substitute for mechanics. Full C0–C9 remains active.
 
 Current reporting slice: ANYfem3d6a7bb adds both owner-reported global contact
 moments with explicit origin/units through persisted artifacts and CSV. Patch

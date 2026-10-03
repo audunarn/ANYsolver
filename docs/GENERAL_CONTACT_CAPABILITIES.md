@@ -1,4 +1,29 @@
 # General-contact capability ledger
+## Capped-cylinder physical beam ends — 3 October
+
+Implemented/installed-tested development profile
+`CLASSICAL_B2_B3_ROUND_TUBE_CAPPED_CYLINDER_HEMISPHERE_ENDS_STATIC_DEV_V1`:
+explicit radius, hemispherical-end policy and N/m endpoint stiffness; additive
+line plus endpoint-point potential, not continuous section-surface integration.
+Actual B3 end derivatives and all-material-node topology prevent false ends at
+junctions/unselected neighbours. Exact affine ownership certificates reject active
+switches; atomic cap/rim and side/rim Hessian seams reject before integration.
+Plane caps share the corrected topology and new restart identity; uncapped keys
+are unchanged. Other plane ownership mechanics are not accepted by these tests.
+
+Installed67checks pass29.849s/337104896B,209modules/492package-file parity,JIT0/pools1.
+Force/displacement, independent scalar/tangent/wrench/one-sided work, active/open
+fresh restart, tool work, public example and old beam/no-contact compatibility
+pass. Unevaluated swept preflight residuals are restartable null diagnostics;
+computed nonfinite values remain invalid. The unaligned1e-6 work gate remains
+failed; independent history isolates quadrature activation error. A different,
+prospectively activation-staged load path passes with2.579e-12 relative work error.
+Ten runs/63raw records retain failures. Supporting same-family review is not
+engineering acceptance. Broader refinement/integration and full D3 remain open;
+no native/friction/impact/normal-application admission or release.
+[Guide](GENERAL_CONTACT_CAPPED_CYLINDER_ENDCAPS_DEV.md),
+[evidence](d1_review_support/contact_capped_endcaps_20261003/summary.json).
+
 ## Consistent classical B2-chain tangent — 3 October
 
 Successor partial-contact code verification: exact squared-distance ties and

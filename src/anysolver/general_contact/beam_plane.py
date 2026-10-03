@@ -226,17 +226,8 @@ class _BeamPlaneManager:
             ))
         self.endpoints: dict[int, tuple[_BeamCell, int, float]] = {}
         if self.end_caps == "hemisphere":
-            b2, b3 = _beam_types()
-            incidence: dict[int, int] = {}
-            for element in model.mesh.elements.values():
-                if type(element) in {b2, b3}:
-                    for node in (element.node_ids[0], element.node_ids[-1]):
-                        incidence[int(node)] = incidence.get(int(node), 0) + 1
-            for cell in self.cells:
-                for local, outward in ((0, -1.0), (len(cell.node_ids) - 1, 1.0)):
-                    node = cell.node_ids[local]
-                    if incidence[node] == 1:
-                        self.endpoints[node] = (cell, local, outward)
+            from .beam_end_topology import physical_beam_ends
+            self.endpoints = physical_beam_ends(model,self.cells,_beam_types())
         n_dof = model.mesh.dof_manager.total_dofs
         initial = np.zeros(n_dof) if initial_displacement is None else np.asarray(
             initial_displacement, dtype=float,
@@ -379,7 +370,7 @@ class _BeamPlaneManager:
         surface = self.definition.surfaces[0]
         body = self.definition.rigid_bodies[0]
         interaction = self.definition.interactions[0]
-        return {
+        contract = {
             "profile": self.profile,
             "surface": {"name": surface.name, "element_ids": list(surface.element_ids),
                         "beam_radius": surface.beam_radius,
@@ -395,3 +386,10 @@ class _BeamPlaneManager:
             "settings": {"pair_motion": self.settings.pair_motion,
                          "maximum_candidate_pairs": self.settings.maximum_candidate_pairs},
         }
+        if self.end_caps == "hemisphere":
+            contract["end_topology_revision"] = "all_classical_material_node_incidence_v1"
+            contract["physical_endpoints"] = [
+                {"node": node, "element": cell.element_id, "local": local}
+                for node, (cell, local, sign) in sorted(self.endpoints.items())
+            ]
+        return contract
