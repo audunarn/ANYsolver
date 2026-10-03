@@ -63,45 +63,36 @@ Variability retained: one screen pair regresses11.08%, six of seven favor the
 candidate; easy worst paired regression4.15%. No memory or broad speedup claim.
 Wheel280dfa5d...1497701fe; archive265files/658dbf62...4b6db25.
 
-## Next discriminating action
+## Current retained result and next discriminating action
 
-Reference-matrix candidate edf914d1 was reverted in78f52582:146installed
-checks and exact physical/history/checkpoint parity pass, but the three-pair
-median gain0.19% fails the prospective3% screen. No further campaign.
-[Closed candidate and design review](development/r8-ge-ad-constant-20261003/results.md).
-All jobs are terminal; retained source modules match bccd4952 wheel/site bytes.
+[Same-parent trial handoff](development/r8-same-parent-trial-20261003/results.md),
+librarybb17ecac:34focused and169installed checks pass; existing guard/input,
+cancellation, predecessor and atomic-publication contracts preserved. Full current
+residual/tangent/material/recovery payload reused once within its increment.
+No tangent lag, API/default/schema/physics change. Restricted elastic Q4/full
+pullback +native-generalized points/fixed dead loads; other routes evaluate fully.
+Independent OpenAI development review clear, not scientific acceptance.
 
-Decision sought: remove duplicate same-parent full evaluation in fixed Newton
-stepping without weakening observation or state ownership. Candidate assembly
-already supplies the current residual, tangent and material/recovery payload;
-next iteration evaluates the exact candidate again with the same predecessor.
-A bare tuple handoff is unsafe because callbacks may mutate writable arrays.
+Seven installed pairs:24Q4/32B3 median31.62% faster; easy8Q4/12B3 31.44% faster,
+7/7favorable each. Physical/history/preflight/checkpoint arrays and bytes exact.
+Separate work probe:assemblies16→10, native544→352, point612→396, Q4response408→264;
+physical advances8→8. All169installed checks pass;415solver/98consumer/13material
+bindings reverified. ANYfem save/reopen +preceding-wheel checkpoint/.03continuation
+passes14.493s; force1.26e-11/moment1.10e-10. All jobs/reviews TERMINAL.
+Wheel50001b03...63a3e50e; archive300files/d24d6785...45d89b6f. Raw root
+%TEMP%/r8-same-parent-installed-v1. No campaign needs replacement/interruption.
 
-Next bounded action: establish a guard-only validation boundary first. Require
-single-use invocation-local trial/parent/generation/load/origin/content binding,
-validation AFTER the next cancellation observation, existing Q4 runtime/class/
-quadrature/cache/input and native reference/cell/joint guards, and matching
-recovery records. Clear on invalidation or consumption. Initially exclude
-external/programme/adaptive/unsupported routes. Count actual assemblies honestly.
-If existing observation guards cannot be retained, stop this proposal and
-address measured element-map cost instead. Restricted candidate now implemented: full same-parent payload handoff for
-fixed nodal-dead-load elastic Q4/full-pullback native-generalized point models.
-No S3/fibre/curved/material-active/line/footprint/external/programme/adaptive reuse.
-Single-use bindings cover pre/post calculation, parent/trial arrays, compiled
-layout, recovery, admitted executable graph and NumPy/Decimal arithmetic modes.
-Existing Q4/native/joint guards run after cancellation; observer modes fall back.
-Final focused34checks pass25.56s; prior correction13checks pass. Initial four
-fixture failures are preserved, not numerical product failures. Independent
-OpenAI development review has no unresolved finding; not scientific acceptance.
+Rejected matrixcandidateedf914d1 remains reverted78f52582:146installed checks pass
+but0.19%median failed screen. [Preserved failure](development/r8-ge-ad-constant-20261003/results.md).
 
-Next: installed artifact checks, then three serial alternating baseline bccd4952
-pairs on24Q4/32B3 .01/.02 full route. Keep exact physical/history/checkpoint
-comparison and physical tolerances; actual assembly counts may decrease while
-Newton/accepted inventory remains equal. Advance only if >=3% median reduction
-and at least two favorable pairs; otherwise revert and preserve evidence.
-No performance claim yet. Source identity and outputs bind each new run.
-Disposable runner root %TEMP%/r8-same-parent-installed-v1; all source jobs terminal;
-installed prepare/checks not launched at this checkpoint.
+Decision sought next: does same-parent payload byte binding preserve useful cost,
+physical behavior and bounded memory at larger sparse incidence? One serial
+installed400Q4/120B3 baseline/candidate complete-route pair, with existing
+physical/history/checkpoint oracle and600s/1GiB child limits, distinguishes a
+larger-route regression from the small-route benefit. No medium run launched yet.
+If it fails/regresses, diagnose or narrow reuse; if it passes, report PRELIMINARY
+and move to practical nonlinear/remaining engineering obligations. No repeated
+seven-pair medium campaign or another isolated scalar optimization is justified.
 
-G0/F01/G5/M5 and every incomplete mandatory row remain open. Full goal ACTIVE;
-scientific scope, resources, formal F03 and release authority unchanged.
+G0/F01/G5/M5 and every incomplete mandatory row remain open; full goal ACTIVE.
+No scientific criteria, formal F03, resources or release boundary changed.

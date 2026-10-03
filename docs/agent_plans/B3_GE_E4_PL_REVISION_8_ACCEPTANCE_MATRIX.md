@@ -1725,3 +1725,17 @@ No aggregate gate, scientific tolerance or authority changed. Next targeted
 opportunity is duplicate same-parent full-candidate assembly; guard-only
 validation and writable-input/recovery binding must be established before reuse.
 [Closed candidate, raw samples and next design findings](development/r8-ge-ad-constant-20261003/results.md).
+
+
+**3 October same-parent full-trial development delta:** librarybb17ecac retains
+single-use fixed elastic Q4/full-pullback generalized-point payload handoff with
+pre/post input/parent/recovery/dispatch/arithmetic binding and existing guards
+after cancellation.34focused/169installed checks pass; independent OpenAI review
+clear (not scientific acceptance). Seven pairs24Q4/32B3 median31.62% faster;
+easy8Q4/12B3 31.44%,7/7favorable each. Exact physical/history/checkpoint parity;
+actual assemblies16→10, physical advances8→8. ANYfem preceding-wheel restart/
+save-reopen/continue passes;415/98/13source/artifact/dependency bindings reverified.
+No broad, plastic, large-scale, memory or aggregate gate claim. G0/F01/G5/M5 and
+other mandatory rows remain open; F03 UNCONSUMED and pressure/release authority
+unchanged. Next larger-route one-pair screen is preliminary and not launched.
+[Scoped implementation, samples, work, failures and review](development/r8-same-parent-trial-20261003/results.md).
