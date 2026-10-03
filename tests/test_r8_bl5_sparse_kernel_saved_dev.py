@@ -69,12 +69,15 @@ def test_complete_graph_error_contains_exact_local_kernel():
     assert details[0]['residual_one'] < 1.
 
 
-def test_graph_rejects_incomplete_and_cross_support_pivots():
+@pytest.mark.parametrize('local_column_limit', (256, 384))
+def test_graph_rejects_incomplete_and_cross_support_pivots(local_column_limit):
     c = sparse.csr_matrix([[1., .1, .2], [.5, 1., .3]])
     with pytest.raises(ValueError, match='another support'):
-        proof.graph_kernel(c, c, c, [np.array([0]), np.array([1])], [np.array([0]), np.array([1])])
+        proof.graph_kernel(c, c, c, [np.array([0]), np.array([1])], [np.array([0]), np.array([1])],
+                           local_column_limit=local_column_limit)
     with pytest.raises(ValueError, match='complete'):
-        proof.graph_kernel(c, c, c, [np.array([0])], [np.array([0])])
+        proof.graph_kernel(c, c, c, [np.array([0])], [np.array([0])],
+                           local_column_limit=local_column_limit)
 
 
 def test_graph_checks_arithmetic_before_computing_bounds(monkeypatch):
@@ -90,6 +93,83 @@ def test_graph_checks_arithmetic_before_computing_bounds(monkeypatch):
 def test_uncertain_local_inverse_cannot_claim_rank():
     with pytest.raises(ArithmeticError, match='rank'):
         proof.inverse_bound(np.array([[-.1]]), np.array([[2.1]]))
+
+
+def test_exact_338_column_graph_requires_explicit_local_budget():
+    values = np.resize(np.array((.25, -.5, .75, -1.)), 338)
+    c = sparse.csr_matrix(np.r_[1., values][None, :])
+    groups, pivots = [np.array([0])], [np.array([0])]
+    with pytest.raises(ValueError, match='exceeds256'):
+        proof.graph_kernel(c, c, c, groups, pivots)
+    with pytest.raises(ValueError, match='exceeds337'):
+        proof.graph_kernel(c, c, c, groups, pivots, local_column_limit=337)
+    z, error, details = proof.graph_kernel(c, c, c, groups, pivots, local_column_limit=384)
+    assert z.shape == (339, 338) and details[0]['active_columns'] == 338
+    assert (z[1:]-sparse.eye(338, format='csr')).nnz == 0
+    assert (c@z).nnz == 0
+    for column, value in enumerate(values):
+        assert F(float(z[0, column])) == -F(float(value))
+    assert np.isfinite(error) and error >= 0.
+
+
+def test_wide_box_dot_encloses_exact_products_and_preserves_inner_limit():
+    left = np.array([[.3]])
+    right = np.resize(np.array((.25, -.5, .75, -1.)), 338)[None, :]
+    with pytest.raises(ValueError, match='bounded'):
+        proof.box_dot(left, left, right)
+    low, high = proof.box_dot(left, left, right, local_column_limit=384)
+    for column, value in enumerate(right[0]):
+        exact = F(float(left[0, 0]))*F(float(value))
+        assert F(float(low[0, column])) <= exact <= F(float(high[0, column]))
+    # An explicit wide output budget cannot relax the local inner24 bound.
+    with pytest.raises(ValueError, match='bounded'):
+        proof.box_dot(np.ones((1, 25)), np.ones((1, 25)), np.ones((25, 1)), local_column_limit=384)
+    with pytest.raises(ValueError, match='bounded'):
+        proof.box_dot(np.ones((257, 1)), np.ones((257, 1)), np.ones((1, 1)), local_column_limit=384)
+
+
+@pytest.mark.parametrize('limit', (0, -1, 385, True, False, 384., np.int64(384), None))
+def test_local_column_budget_rejects_invalid_or_inexact_limits(limit):
+    a = np.ones((1, 1))
+    with pytest.raises(ValueError, match='integer local column'):
+        proof.box_dot(a, a, a, local_column_limit=limit)
+    c = sparse.csr_matrix([[1., 1.]])
+    with pytest.raises(ValueError, match='integer local column'):
+        proof.graph_kernel(c, c, c, [np.array([0])], [np.array([0])], local_column_limit=limit)
+
+
+def test_owned_explicit_sparse_budget_admits_full_order_without_changing_default():
+    original = proof.SB
+    explicit = proof.SparseBudget(25068, 1_000_000, 1, 384*1024**2)
+    matrix = sparse.eye(25068, format='csr', dtype=np.float64)
+    saved = dict(K_data=matrix.data, K_indices=matrix.indices,
+                 K_indptr=matrix.indptr, K_shape=np.array(matrix.shape))
+    with pytest.raises(ValueError, match='shape exceeds'):
+        proof.saved_csr(saved, 'K')
+    admitted = proof.saved_csr(saved, 'K', sparse_budget=explicit)
+    assert admitted.shape == matrix.shape and (admitted-matrix).nnz == 0
+    assert not np.shares_memory(admitted.data, matrix.data)
+    # The graph's own input traversal also requires the explicit shape budget.
+    c = sparse.csr_matrix(([1., .5], ([0, 0], [0, 25067])), shape=(1, 25068))
+    groups, pivots = [np.array([0])], [np.array([0])]
+    with pytest.raises(ValueError, match='shape exceeds'):
+        proof.graph_kernel(c, c, c, groups, pivots)
+    z, _, _ = proof.graph_kernel(c, c, c, groups, pivots, sparse_budget=explicit)
+    assert z.shape == (25068, 25067) and (c@z).nnz == 0
+    assert proof.SB is original and proof.SB.max_order == 2400
+    with pytest.raises(ValueError, match='shape exceeds'):
+        proof.saved_csr(saved, 'K', sparse_budget=None)
+
+
+@pytest.mark.parametrize('budget', (True, 25068, {}, object()))
+def test_invalid_sparse_budget_still_fails_before_graph_inverse(budget, monkeypatch):
+    c = sparse.csr_matrix([[1., 1.]])
+    saved = dict(C_data=c.data, C_indices=c.indices, C_indptr=c.indptr, C_shape=np.array(c.shape))
+    monkeypatch.setattr(proof, 'inverse_bound', lambda *args: pytest.fail('inverse called with invalid budget'))
+    with pytest.raises(ValueError, match='sparse budget'):
+        proof.saved_csr(saved, 'C', square=False, sparse_budget=budget)
+    with pytest.raises(ValueError, match='sparse budget'):
+        proof.graph_kernel(c, c, c, [np.array([0])], [np.array([0])], sparse_budget=budget)
 
 
 def test_stationary_error_contains_exact_nonsymmetric_saved_schur():

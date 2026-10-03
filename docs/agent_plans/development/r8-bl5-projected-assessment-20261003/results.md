@@ -536,3 +536,66 @@ UNCONSUMED. Complete goal ACTIVE; no push/main merge/publication.
 4c6ffe7a94e0553b83b67a4f420d11599ed05c1e89b99e5093388a0ad4b0f73a,
 retains sources, commands, raw operators/states, failed preparations, reviews and
 both predecessor/prospective live notes. Earlier evidence bytes unchanged.
+## Actual sparse envelope kernels and arithmetic obstruction
+
+Development slice, parent f571fc13, 4 October2026. No product change; the same
+417-module installed wheel and frozen21-owner campaign supply the operands.
+The new sparse caller binds actual K/C, full native physical/resultant roles,
+all10-row support maps and the v8-to-v5 immutable state/action chain. It proves
+local negative18-resultant work, then assesses the constrained physical work
+kernel with both coupling sides and complete symbolic fill. Explicit budgets
+admit up to25068 input rows,15745 physical rows/15585 kernel rows and384-column
+local graphs; old2400/3000 and local defaults remain unchanged. SuperLU gives
+ordering only. No global dense inverse, nullspace or eigenanalysis is used.
+
+| Saved actual owner | Physical/kernel order | Initial result | Positive scaled-physical lower bound |
+|---|---:|---|---:|
+| Nx16, whole1:8 | 517/507 | POSITIVE | 1.48496244e-11 |
+| Nx16, whole8:1 | 2785/2745 | HOLD | — |
+| Nx32, whole1:8 | 1801/1781 | POSITIVE | 2.95309209e-11 |
+
+Bounds refer to dimensionless stored physical u, q_phys=diag(scale)u, not the
+unscaled nodal Euclidean norm. They prove only these exact saved work kernels,
+not full nativeK SPD, native inf-sup, uniform stability or connection accuracy.
+The original three numerical screens used caller8021f614...; later guard-only
+changes do not receive those run identities.
+
+The8:1 original error8.05073983e-8 is dominated by stationary accumulation;
+its required2epsilon shift1.61014797e-7 yields a nonpositive representative in
+Decimal50. This does not establish a negative actual mechanical work mode.
+The unshifted representative remains intervalHOLD at2197/2745 pivots in50 digits
+and2641/2745 in100 digits. Zero shift is diagnostic only, never acceptance.
+
+A reviewed weighted-Cauchy bound uses actual two-sided local supports: if local
+error E_j has norm2<=delta_j, then norm2(sum E_j)<=max_i sum(j:i in I_j)delta_j.
+Each delta retains the original local Frobenius enclosure. Original whole-block
+assembly gamma, scaling/reconstruction/graph/triangle errors and2epsilon remain
+unchanged; no backend-specific tighter addition count was adopted. Counts and
+errors survive cancellation. Induced2 fields do not claim a Frobenius bound.
+Explicit incidence candidate lowers epsilon to5.85522965e-9 (about14-fold), but
+its shifted Decimal100 proof still HOLDS at2640/2745. No positive bound follows.
+This is an uncertainty-bound improvement, not a measured performance gain.
+
+The final98 distinct focused controls pass, including exact-Fraction pivot/work,
+negative/zero sign, support/role mutations, local failure retention, cancellation,
+50/100 precision and unchanged default controls. Actual six current/reused owner
+bind smokes pass. Independent review caught the frozen v7 predecessor schema and
+mutable JSON/NPZ pair guards; repaired exact-chain binding and controls pass.
+All27 original screen state/action inputs match frozen hashes, so no unrelated
+mechanical solves were replayed. Local failure proof endpoints are now retained.
+
+Largest new complete candidate85.177s/175812608B sampled tree peak; numeric pools1,
+JIToff and sampled numerical/unresolved max1. The test-v4 slice sampled5 threads,
+inside8 but not a one-thread claim; final test-v6 sampled1. All jobs TERMINAL,
+shared600s/1GiB supervisor, one numerical job at a time. The source/dependency,
+command, pair, failed/HOLD, sample and review identities are preserved separately.
+
+Decision: stop automatic precision/refinement escalation. Complete interval
+elimination develops dependency width even at zero shift; remaining work needs
+a justified sparse verified-factor/residual enclosure or an actual physical work
+counterexample. Do not weaken epsilon or infer formulation failure. Full21 native
+mixed assessment, beta, physical accuracy/locking/shear/drilling, references,
+different-family acceptance and M2/G0/F03 remain OPEN. FormalF03 UNCONSUMED.
+
+[Immutable99-file raw extension](raw-manifest-v9.json),6505022bytes,
+SHA 5af39a3e686138941bfc7ccd02cbba65f74a22c5b99de363a77f04c408ec96f8. Earlier manifests/evidence remain unchanged.

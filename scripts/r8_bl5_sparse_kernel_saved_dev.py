@@ -44,12 +44,19 @@ def fro_upper(values):
     return float(up(magnitude*_sqrt(square, True)))
 
 
-def box_dot(lo, hi, right):
+def _local_column_limit(value):
+    if type(value) is not int or not 1 <= value <= 384:
+        raise ValueError('explicit integer local column limit1..384 required')
+    return value
+
+
+def box_dot(lo, hi, right, *, local_column_limit=256):
     """Local uncertain left operand times exact stored right (<=24 inner)."""
+    local_column_limit = _local_column_limit(local_column_limit)
     lo, hi, right = np.asarray(lo), np.asarray(hi), np.asarray(right)
     if (lo.shape != hi.shape or lo.ndim != 2 or right.ndim != 2 or
             lo.shape[1] != right.shape[0] or lo.shape[1] > 24 or
-            max(lo.shape+right.shape) > 256 or np.any(lo > hi) or
+            lo.shape[0] > 256 or right.shape[1] > local_column_limit or np.any(lo > hi) or
             not all(np.isfinite(x).all() for x in (lo, hi, right))):
         raise ValueError('bounded finite ordered local interval operands required')
     low = np.zeros((lo.shape[0], right.shape[1])); high = low.copy()
@@ -160,16 +167,19 @@ def scaled_data(matrix, left, right, divide_left=False):
     return build(value), build(lo), build(hi)
 
 
-def graph_kernel(c, clo, chi, groups, pivots):
+def graph_kernel(c, clo, chi, groups, pivots, *, sparse_budget=None, local_column_limit=256):
     """Complete exact-kernel graph from disjoint bounded local D blocks.
 
     For each true C in its boxes, Z*=[I;-D^-1 E]. Local residual enclosures
     bound ||Zhat-Z*||F. Identity rows give full column rank. No rows are removed.
+    Explicit primitive budgets do not change the saved assessor's admissions.
     """
     check_arithmetic()  # Before ANY inverse/graph residual bounds.
-    c = validate_sparse(c, SB, square=False)
-    clo = validate_sparse(clo, SB, square=False)
-    chi = validate_sparse(chi, SB, square=False)
+    local_column_limit = _local_column_limit(local_column_limit)
+    budget = SB if sparse_budget is None else sparse_budget
+    c = validate_sparse(c, budget, square=False)
+    clo = validate_sparse(clo, budget, square=False)
+    chi = validate_sparse(chi, budget, square=False)
     if (clo.shape != c.shape or chi.shape != c.shape or
             np.any((clo-c).data > 0.) or np.any((c-chi).data > 0.)):
         raise ValueError('constraint boxes must enclose the stored representative')
@@ -195,14 +205,14 @@ def graph_kernel(c, clo, chi, groups, pivots):
         union = np.unique(np.concatenate([matrix[group][:, independent].nonzero()[1]
                                          for matrix in (clo, chi)]))
         active = np.union1d(active, union)
-        if len(active) > 256:
-            raise ValueError('local graph support exceeds256 independent coordinates')
+        if len(active) > local_column_limit:
+            raise ValueError(f'local graph support exceeds{local_column_limit} independent coordinates')
         dl, dh = clo[group][:, pivot].toarray(), chi[group][:, pivot].toarray()
         w, inv, info = inverse_bound(dl, dh)
         el, eh = clo[group][:, independent[active]].toarray(), chi[group][:, independent[active]].toarray()
         e = c[group][:, independent[active]].toarray()
         bhat = -w@e
-        rlo, rhi = box_dot(dl, dh, bhat)
+        rlo, rhi = box_dot(dl, dh, bhat, local_column_limit=local_column_limit)
         residual = box_abs(down(rlo+el), up(rhi+eh))
         error = float(up(inv*fro_upper(residual)))
         bounds.append(float(up(error*error)))
@@ -255,10 +265,11 @@ def stationary_error(k, s_hat, scale, x, blocks):
     return sum_up(error_terms), details
 
 
-def saved_csr(data, name, square=True):
+def saved_csr(data, name, square=True, *, sparse_budget=None):
+    """Own saved CSR within a caller budget; None retains the original SB."""
     matrix = sparse.csr_matrix((data[name+'_data'].copy(), data[name+'_indices'].copy(),
         data[name+'_indptr'].copy()), shape=tuple(data[name+'_shape']))
-    return validate_sparse(matrix, SB, square=square)
+    return validate_sparse(matrix, SB if sparse_budget is None else sparse_budget, square=square)
 
 
 def sha(path):

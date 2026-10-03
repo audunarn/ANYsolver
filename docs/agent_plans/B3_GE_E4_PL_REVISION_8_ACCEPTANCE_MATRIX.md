@@ -1970,3 +1970,13 @@ changes10.682% between last levels, so accuracy/convergence is unresolved.
 and reviewed. Full mixed-kernel/native-beta/locking/director/shear/drilling,
 external/different-family acceptance and M2/G0/F03 remain OPEN. FormalF03
 UNCONSUMED. [Results and475-file immutable raw extension](development/r8-bl5-projected-assessment-20261003/results.md).
+**4 October sparse actual-owner family:** IMPLEMENTED_NOT_QUALIFIED.
+Exact saved constrained work kernels507/1781 proven positive;2745 at8:1 remains
+HOLD. Original shift/nonpositive representative and zero-shift50/100 HOLD retained.
+Reviewed actual-incidence induced2 error bound reduces epsilon~14fold without
+changing local enclosures, original assemblygamma, physical criteria or2epsilon;
+shifted100 stillHOLD2640/2745.98distinct controls and six frozen-owner binds pass;
+manifest-schema/state-pair/failure-retention guards repaired. Next justify a sparse
+verified-factor/residual method or identify actual work counterexample, not refine
+or escalate precision automatically. Full21 mixed/beta and M2/G0/F03 OPEN;
+formalF03 UNCONSUMED. [Results and reviews](development/r8-bl5-projected-assessment-20261003/results.md).

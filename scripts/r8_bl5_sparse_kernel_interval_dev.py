@@ -228,13 +228,15 @@ def complete_symbolic_pattern(matrix, permutation, *, budget=None):
     return sparse.coo_matrix((np.ones(len(rows)), (rows, cols)), shape=owned.shape).tocsr()
 
 
-def certify_decimal_lower(matrix, pattern, permutation, *, shift=0., budget=None):
-    """Same proof target, fixed50-digit directed arithmetic, no tolerance change.
+def certify_decimal_lower(matrix, pattern, permutation, *, shift=0., budget=None, precision=50):
+    """Same proof target, explicit50/100-digit directed arithmetic, no tolerance change.
 
     Decimal.from_float stores the exact input. FLOOR/CEILING elementary
     operations enclose exact-real Schur steps without binary64 dependency-width
     accumulation. A width crossing zero remains HOLD. No backend pivot verdict.
     """
+    if type(precision) is not int or precision not in (50, 100):
+        raise ValueError('explicit integer decimal precision50 or100 required')
     started = time.monotonic(); budget = IntervalBudget() if budget is None else budget
     if type(budget) is not IntervalBudget or not np.isfinite(shift) or shift < 0.:
         raise ValueError('valid finite nonnegative shift and budget required')
@@ -259,8 +261,8 @@ def certify_decimal_lower(matrix, pattern, permutation, *, shift=0., budget=None
         if np.any(pos >= len(keys)) or np.any(keys[pos] != query):
             raise ValueError('missing initial entry or elimination clique in fill candidate')
         return pos
-    lowctx = Context(prec=50, rounding=ROUND_FLOOR)
-    highctx = Context(prec=50, rounding=ROUND_CEILING)
+    lowctx = Context(prec=precision, rounding=ROUND_FLOOR)
+    highctx = Context(prec=precision, rounding=ROUND_CEILING)
     for context in (lowctx, highctx):
         context.traps[Underflow] = context.traps[Subnormal] = True
     zero = Decimal(0); lo = [zero]*len(keys); hi = lo.copy()
@@ -296,7 +298,8 @@ def certify_decimal_lower(matrix, pattern, permutation, *, shift=0., budget=None
             lo[dest] = lowctx.subtract(lo[dest], qh)
             hi[dest] = highctx.subtract(hi[dest], ql)
     return dict(status=status, target='exact stored binary64 LOWER completion after symmetric permutation minus shiftI',
-        arithmetic='exact binary64 inputs; Decimal50 digits FLOOR/CEILING elementary operations',
+        arithmetic=f'exact binary64 inputs; Decimal{precision} digits FLOOR/CEILING elementary operations',
+        arithmetic_precision=precision,
         shift=float(shift), order=n, pattern_nnz=fill.nnz, update_count=updates,
         maximum_clique_entries=maximum, workspace_estimate_bytes=workspace,
         pivot_lower=np.asarray(pivlo), pivot_upper=np.asarray(pivhi),

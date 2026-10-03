@@ -2,81 +2,71 @@
 
 ## Authority and restart
 
-Full Revision8 goal ACTIVE, unbudgeted, under its plan/goal in the historical
-b3-ge-e4-pl-coupling/docs/agent_plans directory. Complete amendedG0–G6/F01–F13/
-V01–V28/B01–B18 obligations remain binding. BL5 releases normal spin explicitly;
-historical six-row points are unchanged. Development is not acceptance/release.
+Full Revision8 goal ACTIVE, unbudgeted, plan/goal in historical
+b3-ge-e4-pl-coupling/docs/agent_plans. Complete amendedG0–G6/F01–F13/V01–V28/
+B01–B18 remains binding. BL5 explicitly releases normalspin; historical six-row
+points unchanged. Development is not acceptance/release.
 
-Active checkout C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Slice parent a7327da2; verify actual
-HEAD/status on resume. Product parent0cec5c7, unreleased0.4.7 wheel SHA
+Checkout C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001; slice parent f571fc13. Verify HEAD
+and status on resume. Same unreleased0.4.7 wheel SHA
 1bf7dabd8771e76ed09825fb66a89e3e48d513dbb0321989c41701096a679632,
-417 source/site/wheel modules identical. ANYfem2ede338b separate; ANYmaterial
-editable graph is not final isolated qualification. No product files changed.
+417 modules identical. ANYfem2ede338b separate; ANYmaterial editable graph is not
+final isolated qualification. No product changes in this slice.
 
-All owned jobs/reviews TERMINAL; no heavy run queued. Local scoped commits only:
-NO push/main merge/publication/contact-worker messages. Local/Mistral unavailable;
-OpenAI supporting reviews are not different-family acceptance. Pressure amendment
-pending. FormalF03 UNCONSUMED; protected original runner SHA
-c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
-Never execute/substitute consumed/copied authorities. Limits100k rows/600s/8GiB/
-8 numerical threads/ONE numerical job. Current jobs1GiB/pools1/JIToff, sampled
-numerical-or-unresolved max2. Historical us3-modal-canary contains credentials:
-never read/copy/archive/push; exact new-owned whitelists only. Preserve dirty work.
+All owned jobs TERMINAL. Local scoped commits only; NO push/main merge/release/
+contact-worker messages. Local/Mistral unavailable; supporting OpenAI reviews are
+not different-family acceptance. Pressure amendment pending. FormalF03 UNCONSUMED;
+protected original runner SHA c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
+Never execute/substitute it. Limits100krows/600s/8GiB/8threads, one numerical job;
+current supervisor1GiB/pools1/JIToff. NEVER read/copy historical us3-modal-canary
+(credentials). Exact owned evidence whitelists only. No Get-CimInstance reprobes.
 
-## Decision and established behavior
+## Established behavior and current decision
 
-Retain experimental complete projected five-channel law with coherent support
-Hhalf=4max(1,Nhalf/Nshell), four coarser shell/native-halfcell intervals.
-Whole-member ratios1/8..8 differ byfactor2 from halfcell ratios. All21 scalar
-cases at Nx16/32/64 now have eligible independent norms. Original19/21 campaign
-retains ns64_b4/b8 conservative-tail failures. A reviewed exact-uniform2N-block
-majorant of the SAME equation passes both at4096modes (relative3.678e-5/4.983e-5),
-unchanged1e-3 criterion and mode budget. Nonuniform inputs keep the old bracket.
-Exact theory is not a directed-rounding certificate for binary64 diagnostics.
+Retain experimental projected five-channel candidate Hhalf=4max(1,Nhalf/Nshell).
+All21 scalar preparations eligible at Nx16/32/64, whole-member ratios1/8..8;
+halfcell ratios are twice these. Original19/21 and later unchanged-criterion V2
+records preserved. All21 samewheel physical screens, max work/balance/equilibrium
+4.156e-12. Coarse1:8 Mz lastlevel work change10.682% is not converged accuracy.
+No multiplier selection or uniform qualification follows.
 
-All21 installed physical screens available:18new and three same-wheel cases
-reused. Fy/Mx/Mz, actual physical/retained layout, recovery and factor1/corrections6
-pass; max work/balance/equilibrium4.156e-12. Largest25121KKT/15745physical free,
-57.66s/507752448B sampled peak. No G5 resource or uniform-stability claim.
-Lastlevel work changes: Fy-.465%..+.175%, Mx-.0527%..+.0833%; Mz-10.682% at1:8,
--3.671% at1:4, about-.77%..-.82% otherwise. Coarse-beam rotational accuracy is
-unresolved. Small weak gaps do not qualify a physical law or select a space.
+New actual-owner sparse seam preserves native resultant variables in product and
+uses an independent local stationary work assessment. Exact saved kernels507/
+1781 positive, scaledphysical bounds1.48496e-11/2.95309e-11;8:1 kernel2745 HOLD.
+Complete nativeK neverSPD. Original binary64/Decimal50 and zero-shift50/100 HOLD
+are preserved. Actual-incidence induced2 bound reduces epsilon8.05074e-8 to
+5.85523e-9; original assemblygamma/local enclosures and2epsilon unchanged.
+Shifted100 stillHOLD2640/2745. This is arithmetic uncertainty, not a physical
+negative-mode finding. No acceptance or measured speedup claim.
 
-98 distinct final controls pass. Reviewed stale-current-norm legacy reuse guard
-now pins the exact compatible preparation source and coordinate/count contracts.
-Mutation tests pass; numerical body unchanged, no broad replay after guard fix.
-Sources and each run's hashes remain distinct. Earlier sparse exact-real proofs
-on SAVED reciprocal kernels625/1057 remain valid only there (scaled physical
-bounds6.3061e-11/2.5692e-10); no fullK SPD or uniform positivity claimed.
+98 distinct controls and six current/reused frozen-owner binds pass. Schema,
+frozen JSON/NPZ pair and failure-retention findings repaired/reviewed; each screen
+keeps its actual source. Final complete candidate85.18s/175.8MB sampled; all jobs
+terminal. Earlier installed51 controls remain applicable to unchanged product.
 
-[Grouped results/review](development/r8-bl5-projected-assessment-20261003/results.md),
-[475-file259984603B raw extension](development/r8-bl5-projected-assessment-20261003/raw-manifest-v8.json)
-and [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) bind current
-evidence. Manifest SHA4c6ffe7a94e0553b83b67a4f420d11599ed05c1e89b99e5093388a0ad4b0f73a.
-Parent/prospective notes preserved byte-for-byte. Raw envelope/aggregate-v1.json
-records all21 bindings/reuse and response changes. Temp root
-%TEMP%/r8-bl5-envelope-campaign-v1 contains terminal logs; archived copies durable.
+[Grouped results/review](development/r8-bl5-projected-assessment-20261003/results.md)
+and [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) carry bindings.
+Raw sparse-family/ holds source versions, commands, failed/HOLD/proof and reviews;
+parent/prospective notes retained byte-for-byte. Temp r8-bl5-sparse-family-v1.
 Do not rebuild delivered GE/B2/consumer/material/load/reuse/arc workflows.
 
 ## Remaining uncertainty and next discriminating action
 
-M2/G0/F03 and full programme acceptance OPEN. Scalar eligibility is resolved;
-complete actual mechanical-kernel/native-beta assessment across growing spaces
-is still missing. Next build one explicit sparse raw-owner assessment seam,
-using saved fullK/C, actual physical/retained partitions, local18-resultant blocks
-and complete10-row quarter-pivot graphs. Reuse current physical operators, no
-new solve or external reference merely for finer data. Raw envelope/
-sparse-envelope-next-seam-v1.md identifies exact extraction and explicit budgets:
-fullmatrix25068, physical15745/kernel15585; local graph supports reach338 columns.
-Preserve old2400/3000 defaults/admissions. No global dense nullspace/inverse/eigen
-or SPD assumption on native mixedK. Check local invertibility, negative resultant
-blocks, graph/sparse rounding/metric error and complete symbolic fill before
-acceptance. A HOLD/resource refusal preserves the obstruction and requires a
-bounded discriminating fix, not tolerance relaxation or formulation failure.
+M2/G0/F03 OPEN. Do not automatically refine or escalate beyond100digits. Remaining
+obstruction is interval-elimination dependency width: zero100 HOLD2641/2745 and
+shifted incidence100 HOLD2640/2745. Next derive/review one sparse verified-factor/
+residual enclosure on the SAME saved8:1 operator, pattern and required2epsilon,
+or identify a genuine admissible negative work direction. Distinguish arithmetic
+width from actual work sign; keep all old limits/admissions and historical failures.
+No global dense inverse/nullspace/eigenanalysis, epsilon relaxation or formulation
+failure claim. Advance full21 actual kernels/native-beta only after method works.
 
-Then assess physical work/accuracy/locking/director/shear/drilling together with
-mixed-system evidence. Coarse Mz responses need a specifically justified accuracy
-discriminator, not automatic axial/refinement campaigns. Mandatory CalculiX,
-consumer/platform/scale and different-family acceptance remain open. Full goal
-and final authorized publication/clean synchronized main remain required.
+Then combine mixed-system with physical accuracy, transfer, locking, director/
+shear/drilling; coarseMz needs a justified action-resolution discriminator, not
+an axial/refinement campaign. Mandatory CalculiX, consumer/platform/scale and
+independent acceptance remain open. Complete goal and final authorized published
+installation/clean synchronized main remain required.
+
+Raw extensionv9: 99files/6505022bytes; SHA
+5af39a3e686138941bfc7ccd02cbba65f74a22c5b99de363a77f04c408ec96f8.

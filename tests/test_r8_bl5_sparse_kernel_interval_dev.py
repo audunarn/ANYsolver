@@ -65,22 +65,68 @@ def test_symbolic_closure_keeps_generated_zero_value_fill():
 
 @pytest.mark.parametrize('matrix,shift', ((np.array([[2., .1], [.1, 1.]]), .125),
     (np.array([[1., 1.], [1., np.nextafter(1., np.inf)]]), 0.)))
-def test_directed_decimal_contains_fraction_exact_pivots(matrix, shift):
+@pytest.mark.parametrize('precision', (50, 100))
+def test_directed_decimal_contains_fraction_exact_pivots(matrix, shift, precision):
     order = [1, 0]
-    result = certify_decimal_lower(sparse.csr_matrix(matrix), full_pattern(2), order, shift=shift)
+    result = certify_decimal_lower(sparse.csr_matrix(matrix), full_pattern(2), order, shift=shift, precision=precision)
     assert result['status'] == 'POSITIVE_SHIFTED_LOWER_COMPLETION'
     for lo, hi, exact in zip(result['pivot_lower'], result['pivot_upper'], exact_pivots(matrix, order, shift)):
         assert F(str(lo)) <= exact <= F(str(hi))
     assert all(F(str(v)) > 0 for v in result['pivot_lower'])
+    assert result['arithmetic_precision'] == precision
 
 
-def test_directed_decimal_rejects_indefinite_and_missing_pattern():
+@pytest.mark.parametrize('precision', (50, 100))
+def test_directed_decimal_rejects_indefinite_and_missing_pattern(precision):
     a = sparse.csr_matrix([[1., 2.], [2., 1.]])
-    assert certify_decimal_lower(a, full_pattern(2), [0, 1])['status'] == 'NONPOSITIVE_REPRESENTATIVE'
+    result = certify_decimal_lower(a, full_pattern(2), [0, 1], precision=precision)
+    assert result['status'] == 'NONPOSITIVE_REPRESENTATIVE'
+    assert result['stopping_pivot'] == 1 and F(str(result['pivot_upper'][-1])) < 0
     with pytest.raises(ValueError, match='missing initial'):
-        certify_decimal_lower(a, sparse.eye(2, format='csr'), [0, 1])
+        certify_decimal_lower(a, sparse.eye(2, format='csr'), [0, 1], precision=precision)
     with pytest.raises(ValueError, match='ceiling|budget'):
-        certify_decimal_lower(a, full_pattern(2), [0, 1], budget=replace(IntervalBudget(), max_updates=1, max_clique_entries=1, max_workspace_bytes=1))
+        certify_decimal_lower(a, full_pattern(2), [0, 1], precision=precision,
+            budget=replace(IntervalBudget(), max_updates=1, max_clique_entries=1, max_workspace_bytes=1))
+
+
+def test_decimal100_tightens_same_exact_pivot_without_changing_default_target():
+    matrix = np.array([[2., .1], [.1, 1.]])
+    pattern, order, shift = full_pattern(2), [1, 0], .125
+    implicit = certify_decimal_lower(sparse.csr_matrix(matrix), pattern, order, shift=shift)
+    explicit = certify_decimal_lower(sparse.csr_matrix(matrix), pattern, order, shift=shift, precision=50)
+    higher = certify_decimal_lower(sparse.csr_matrix(matrix), pattern, order, shift=shift, precision=100)
+    for key in ('status', 'target', 'arithmetic', 'arithmetic_precision', 'shift', 'order',
+                'pattern_nnz', 'update_count', 'maximum_clique_entries', 'budget', 'limitations'):
+        assert implicit[key] == explicit[key]
+    np.testing.assert_array_equal(implicit['pivot_lower'], explicit['pivot_lower'])
+    np.testing.assert_array_equal(implicit['pivot_upper'], explicit['pivot_upper'])
+    assert implicit['arithmetic'] == 'exact binary64 inputs; Decimal50 digits FLOOR/CEILING elementary operations'
+    assert higher['target'] == implicit['target']
+    assert higher['arithmetic'] == 'exact binary64 inputs; Decimal100 digits FLOOR/CEILING elementary operations'
+    widths = []
+    exact = exact_pivots(matrix, order, shift)[-1]
+    for result in (implicit, higher):
+        lo, hi = F(str(result['pivot_lower'][-1])), F(str(result['pivot_upper'][-1]))
+        assert lo <= exact <= hi
+        widths.append(hi-lo)
+    # Division by the exact dyadic .875 leaves a factor7: neither decimal
+    # precision represents this rational pivot exactly, so tightening is real.
+    assert 0 < widths[1] < widths[0]
+
+
+@pytest.mark.parametrize('precision', (True, False, None, 49, 51, 99, 101, 50., np.int64(100), '100'))
+def test_invalid_decimal_precision_is_rejected(precision):
+    with pytest.raises(ValueError, match='integer decimal precision'):
+        certify_decimal_lower(sparse.eye(1, format='csr'), full_pattern(1), [0], precision=precision)
+
+
+@pytest.mark.parametrize('precision', (50, 100))
+def test_decimal_zero_pivot_and_shift_remain_unresolved_or_nonpositive(precision):
+    zero = certify_decimal_lower(sparse.csr_matrix([[0.]]), full_pattern(1), [0], precision=precision)
+    assert zero['status'] == 'HOLD_INTERVAL_PIVOT' and zero['stopping_pivot'] == 0
+    shifted = certify_decimal_lower(sparse.eye(1, format='csr'), full_pattern(1), [0], shift=2., precision=precision)
+    assert shifted['status'] == 'NONPOSITIVE_REPRESENTATIVE'
+    assert F(str(shifted['pivot_upper'][0])) < 0
 
 
 def test_zero_crossing_is_unresolved_even_for_positive_matrix():

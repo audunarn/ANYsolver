@@ -143,3 +143,15 @@ Uniform-tail binary64 diagnostics are not interval proofs. Aggregate work change
 expose unresolved coarse-beam rotational convergence. Mixed-system/native-beta,
 engineering accuracy, scientific acceptance and mandatory external comparisons
 remain separate. No formalF03 execution or release authority consumed.
+## Actual sparse-family slice
+
+Root implemented the actual saved-owner caller; bounded worker edits extended
+only explicit sparse/local admissions and selected Decimal100, preserving defaults.
+Root inspected all owned diffs and ran the98-control slice and frozen-owner bind
+smokes. Supporting non-implementing OpenAI Read review checked both coupling
+sides, graph/rank, exact target, norm conversion, incidence theorem, complete fill,
+precision and failure retention. The v7-schema and frozen-state-pair findings were
+fixed and independently checked. Numerical screens remain bound to their actual
+source revisions, rather than the final guard version. The8:1 terminalHOLD is an
+unresolved arithmetic enclosure, not a passed mechanical gate. These supporting
+same-family reviews do not satisfy different-family scientific acceptance.
