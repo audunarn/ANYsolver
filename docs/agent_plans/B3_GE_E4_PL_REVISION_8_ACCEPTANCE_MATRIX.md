@@ -1,5 +1,18 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**3 October reciprocal projected resolution — IMPLEMENTED_NOT_QUALIFIED:**
+Latest two-correction417module installed wheel preserves all retained roles.
+One complete H=4max(1,Nhalf/Nshell) rule passes bounded whole1:2 and2:1 cases
+with fixed16x4shell/four supports, fresh auxiliary floors and actual mixed
+kernel/inertia/forward parity/work/reaction gates. Beta.8229206/.8424106;
+supplementary matched work differences<.62%, common shell rotations up to1.30%.
+Retain candidate for full registered envelope; no uniform/converged accuracy,
+mandatory CalculiX, multiplier-selection or F03 acceptance. All16 serial
+stages terminal; no product/default/tolerance change. Supporting Read reviews
+have no blocker; different-family acceptance stays open. Previous rows remain
+historical for their original artifacts, including old one-correction routes.
+[Results and safe raw](development/r8-bl5-projected-assessment-20261003/results.md).
+
 **3 October projected-density assessment - IMPLEMENTED_NOT_QUALIFIED:**
 Latest complete coarse candidate is the distinct nested40-row/four-support
 space, spanning four shell intervals. Independently registered sufficient

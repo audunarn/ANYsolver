@@ -94,3 +94,8 @@ scripts/r8_bl5_projected_joint_kernel_dev.py -text
 scripts/r8_bl5_projected_joint_owner_dev.py -text
 scripts/r8_bl5_projected_joint_external_dev.py -text
 scripts/r8_bl5_projected_joint_comparison_dev.py -text
+scripts/r8_bl5_projected_ratio_norm_dev.py -text
+scripts/r8_bl5_projected_ratio_owner_dev.py -text
+scripts/r8_bl5_projected_ratio_kernel_dev.py -text
+scripts/r8_bl5_projected_ratio_external_dev.py -text
+scripts/r8_bl5_projected_ratio_comparison_dev.py -text

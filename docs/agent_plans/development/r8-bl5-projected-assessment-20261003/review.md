@@ -101,3 +101,12 @@ visible. Old coarse drivers retain their old-wheel correction-count contract;
 rerunning them on the new wheel requires prospective versioned admission, not
 rewriting old evidence. Different-family acceptance, external effective threading,
 complete ratio/refinement/mechanics and mandatory references remain open.
+
+## Reciprocal development extension
+
+Root inspected both workers' scoped edits and actual16 serial executions.
+Supporting Read reviews are preserved byte-exactly in raw ratios/
+resolution-review.md, slice-review-v1.md and physical-review-v1.md.
+No blocking development defect remains; reviewer did not implement these changes.
+This same-family input is not different-family scientific acceptance.
+Engineering accuracy, full envelope and F03 remain open.

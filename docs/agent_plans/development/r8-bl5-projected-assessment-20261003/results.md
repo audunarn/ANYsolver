@@ -349,3 +349,66 @@ remain open; formalF03 authority remains unconsumed.
 stale-wheel norm failure, installed harness failure, original notes, source,
 commands, all arrays, fresh artifact/bindings, references and separate reviews.
 Manifest SHA `6818598b00e3cc5871f440044362f2b510287828d35d4ad216b51e967531ae30`. Previous evidence and statuses are unchanged.
+
+## Reciprocal resolution discriminator — 3 October
+
+Parent0cec5c7; unchanged two-correction unreleased0.4.7 installed wheel
+1bf7dabd8771e76ed09825fb66a89e3e48d513dbb0321989c41701096a679632.
+No product edits in this slice. One complete rule spans four times the coarser
+shell/native-halfcell interval: H=4max(1,Nhalf/Nshell), all five channels together.
+The two cases keep16x4shell, geometry, frames, arms, sections, supports, Fy100N/
+Mx10Nm/Mz10Nm and four physical support boundaries fixed; only native partition
+and the projected halfcell density change. Whole-member and halfcell ratios
+are explicitly different. No old main/admission is broadened or invoked.
+
+Fresh product-free scalar bounds precede native evaluation. Canonical affine
+mass is (1-1/H²)/(3S), not the old H8 constant. On the coarser native grid the
+supported Q1 action is injective, so a native-grid checkerboard cannot be
+required. An explicitly finer OUT-OF-CANDIDATE4*NX density has exact shell-null
+action and positive reference compliance; native action rank is descriptive.
+Independent work, duplicate deficiency, units and basis controls pass.
+
+| Whole: shell / halfcell:shell | Native halfcells | Beta / independent floor | Kernel min / uncertainty | Kernel order | Matched work% Fy / Mx / Mz |
+|---|---:|---:|---:|---:|---:|
+| 1:2 / 1:1 | 16 | 0.822920605 / 0.408952913 | 3.78259228e-05 / 4.00628657e-11 | 585 | -0.5476274 / +0.0119082 / -0.0206060 |
+| 2:1 / 4:1 | 64 | 0.842410585 / 0.406403781 | 5.42343280e-06 / 6.77601376e-11 | 1017 | -0.6114009 / +0.0147494 / -0.3246643 |
+
+Full sizes804/1668 retain625/1057 physical/nodal/cell coordinates after fixed
+supports and only local negative-resultant reduction. Reduced inertia625+/40-/0
+and1057+/40-/0 implies full625+/184-/0 and1057+/616-/0. All physical roles,
+resultants and multipliers remain in the actual owner. Full mixedK is not an SPD
+norm. Raw unrefined solves FAIL energy/forward-parity predicates (also equilibrium
+on2:1); those states remain in the kernel arrays. The existing samefactor
+accurate corrections give full/reduced/installed parity passing1e-10, energy,
+physical work/reactions and weak-gap gates. One factorization/six corrections
+for each installed three-load route; no solver tolerance or equation changes.
+
+Six supplementary OpenSees3.8.0 runs use independently integrated exact40-row
+actions and rational quarter-node elimination. Comparators verify actual command
+inventory, all417 installed/source/wheel modules, registration, typed physical
+geometry, frames/arms/sections/supports/loads and complete native states. Work
+differences stay below.62%, but shell-rotation L2 errors reach1.3018%/1.2920%Fy
+and1.0283%Mz on1:2. Native retained traces are not equated to external nodal
+rotations. Pointwise gaps, polynomial/fixed-region transfer and ground actions
+remain saved; weak residuals are not a pointwise welded-surface assertion.
+This does not establish converged1% accuracy, uniform stability or eliminate
+retained-director blind fields. Mandatory CalculiX remains open.
+
+Decision: retain the complete candidate and coarser-trace rule for the next
+registered envelope. These two reciprocal cases provide no norm/work or
+supported-kernel reason to revise individual channels. Remaining physical and
+growing-family requirements stay separate: allseven ratios/three levels,
+locking/shear/drilling/director, actual mixed systems and external convergence.
+No automatic axial/S8R campaign, F03 consumption or production selection.
+
+All16 serial stages terminal; maxelapsed5.415s, sampled peak246198272B,
+numerical/unresolved threads1. Native pools1/Numba1/JIT-off verified. These are
+diagnostic costs, not measured speedup or complete external-library thread
+qualification. Independent OpenAI Read source and physical reviews find no
+blocking development defect; different-family scientific acceptance remains open.
+
+[183-file extension](raw-manifest-v6.json), SHA
+c5723a6a294390f2ec1d6b10e114f0f1bc1198fd4686007a33457567cd702249,
+retains26326297B of explicit owned source, raw state/failed unrefined states,
+registration, commands, reference outputs, supervision and reviews. Previous
+manifest/evidence bytes unchanged. Full programme goal ACTIVE and gates OPEN.
