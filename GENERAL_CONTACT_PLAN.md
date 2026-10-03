@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.82. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.83. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -14,129 +14,37 @@ capabilities, scientific targets and exclusions. Historical plans and failures
 remain evidence; frozen or consumed execution authorities are never renewed.
 Publication, merging, release and historical-default changes are separate actions.
 
-## Radial physical beam ends — 4 October
+## Latest integrated slices — 4 October
 
-One opt-in sphere/infinite-cylinder B2/B3 hemisphere owner now shares literal
-fixed-map work for distributed line and endpoint penalties. Explicit N/m endpoint
-stiffness remains distinct from N/m² line stiffness. Actual B3 derivatives and
-all-material-node topology determine ends; exact Bernstein norm/regularity and
-ownership bounds certify affine static tool/beam paths. Closed ownership changes,
-hidden crossings, intermediate curve collapse and unresolved budgets reject.
-Activation cuts use exact open-side certificates; hidden multiple pockets cannot
-be discarded by sampled-zero quadrature. No-cap owner and identity are unchanged.
+Local98350a45 adds classical sphere/infinite-cylinder physical ends with literal
+line/endpoint work, exact whole-curve bounds and affine regularity/ownership.
+Installed37pass31.110s/336408576B;211modules/494files match. Failures and exact
+source/environment remain in [radial evidence](docs/d1_review_support/contact_radial_endcaps_20261003/summary.json).
 
-Installed37checks pass31.110s/336408576B,211modules/494files match source,
-JIT0/pools1,180s/953MiB. Independent energies/work/tangents, tilted covariance,
-curved pockets, grazing/budgets, force/displacement/bar response, active/open
-restart, prescribed-tool work, exception/cancellation/reuse, public examples and
-legacy radial/no-contact compatibility pass. Staged work/storage error2.680e-12
-meets unchanged1e-6. Thirteen runs/78records retain preliminary failures and the
-review-found B2 constant-derivative restriction, now corrected and tested.
-Supporting same-family scrutiny is not independent engineering acceptance.
-Normal application admission, release and broader C2/D3 qualification stay open.
-[Guide](docs/GENERAL_CONTACT_RADIAL_ENDCAPS_DEV.md),
-[evidence](docs/d1_review_support/contact_radial_endcaps_20261003/summary.json).
+The successor multiple fixed-interaction owner composes existing plane/radial/
+finite-cylinder children on shared structural coordinates. Explicit physical ends,
+duplicate-feature rejection, per-body wrenches, common regular-prefix limiting and
+child restart contracts have one new profile; no-cap identity/arithmetic remain.
+Installed27pass9.228s/326455296B;212modules/494files match,JIT0/pools1,180s/953MiB.
+Independent two-ended B3 bar response matches within2.015e-14 vs1e-6 target;
+complete work/tangents, shared-body wrench, restart and inherited routes pass.
+Seven runs/46records preserve early artifacts and review-found count corrections.
+[Guide](docs/GENERAL_CONTACT_MULTIPLE_BEAM_ENDS_DEV.md),
+[evidence](docs/d1_review_support/contact_multiple_endcaps_20261004/summary.json).
+Both slices are implemented/installed-tested development, not independent
+engineering acceptance or normal application admission. C2/D3 and C0–C9 remain open.
 
-Next bounded D3 opportunity: compose existing physical-end contributors for
-multiple explicit fixed rigid interactions through the existing aggregate owner.
-Check duplicate physical-feature ownership, complete summed work/tangent/wrench,
-common rejection and restart before extending its admission. Prefer reuse over a
-new solver. Moving multi-tool and generalized ownership remain separately bounded.
-Retained native and restricted impact nonpasses are not renewed by this slice.
+Next principal D3 question: existing beam-pair/chain validators reject physical
+caps and endpoint laws. Derive a bounded two-body endpoint contribution that
+coexists with the symmetric distributed potential. Distinguish cap–cap from
+end–interior ownership, retain both-body cross blocks and prevent phantom ends or
+duplicate directional point laws. Use one independent two-bar work/response case
+and a complete coupled directional derivative before broadening that profile.
+No new differentiation engine, solver stack or unrestricted native/impact replay.
 
-Current D3 plane endpoint slice closes the known finite-energy ownership hole.
-Exact represented end gap and actual B2/B3 outward derivative are affine along
-static paths. Closed ownership roots and closed tangent candidates reject;
-open changes remain admissible. Trial cutbacks are bounded. Cap-only ownership
-revision and subdivision settings bind restart; uncapped identity/arithmetic
-order are preserved. No generalized tangent, hidden zero force or tolerance change.
-
-Source15plus4changed checks and installed23checks pass. Final4.613s/320753664B,
-208modules/492files byte-match,JIT0/pools1,180s/953MiB. Independent axial-bar
-reaction, active fresh restart/incompatible subdivision, tilted B2/curved-B3
-work/tangent/wrench and ownership, public --plane/cylinder examples and old
-plane/topology/no-contact compatibility pass. Seven runs/31records retain the
-preliminary artifact and review-found contract omission. Supporting same-family
-review is not independent engineering acceptance. C2/D3 and full C0–C9 remain open.
-[Guide](docs/GENERAL_CONTACT_C2_BEAM_PLANE.md),
-[evidence](docs/d1_review_support/contact_plane_endownership_20261003/summary.json).
-
-The preceding radial-end question is implemented and installed-tested above.
-Its qualification remains open. [Plan81](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261003_REV81.md)
-retains the previous decision, evidence and all execution restrictions.
-
-Preceding D3 slice: exterior capped-cylinder B2/B3 contact now includes declared
-physical hemisphere ends with separately dimensioned N/m endpoint stiffness.
-The additive line-plus-point potential has complete endpoint work/tangent and
-both-body force/moment reporting. Actual B3 derivatives and all classical material
-node uses prevent phantom caps at unselected neighbours and middle-node junctions.
-Exact affine directional-derivative intervals certify ownership; active ownership
-changes and atomic cap/rim or side/rim Hessian seams reject. Fixed exterior and
-small-motion structural restrictions remain; no dynamic/friction/native admission.
-
-Installed67checks pass29.849s/337104896B,209modules/492package files byte-match,
-JIT0/pools1,180s/953MiB. Independent scalar work/one-sided/tangent/covariance checks,
-actual force/displacement/tool paths, active/open fresh restart, incompatible laws,
-public example, existing beam routes and current installed no-contact compatibility
-are covered. The swept preflight diagnostic now records an unevaluated residual
-as null rather than an infinity sentinel, enabling strict canonical restart.
-
-The old unaligned tool-work case remains NONPASS (relative defect5.8413e-6).
-Independent force history identifies trapezoidal activation error. A prospectively
-prescribed activation stage plus open restart meets the unchanged1e-6 work target
-(relative defect2.579e-12). This does not qualify general event/work handling.
-Ten bounded runs/63raw records preserve failures; supporting same-family scrutiny
-found the atomic seam. No engineering/application acceptance or release inferred.
-[Guide](docs/GENERAL_CONTACT_CAPPED_CYLINDER_ENDCAPS_DEV.md),
-[evidence](docs/d1_review_support/contact_capped_endcaps_20261003/summary.json).
-Full integration/refinement/acceptance and broader D3 pairings remain open.
-
-Previous exact B2-chain partial-contact code verification and10.810x guided-case
-speed result, earlier exterior no-cap cylinder evidence and all failed candidates
-retain their scope in [plan79](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261003_REV79.md).
-Do not replay their passed suites unless changed assumptions require it. Next
-select a genuine remaining pairing, retained-coordinate work or independently
-bounded refinement discriminator; no open-ended diagnostic sweep or metadata-only
-substitute for mechanics. Full C0–C9 remains active.
-
-Current reporting slice: ANYfem3d6a7bb adds both owner-reported global contact
-moments with explicit origin/units through persisted artifacts and CSV. Patch
-owner states its existing zero-origin cross-force convention; equations, work
-maps, tolerances and mechanical state are unchanged. Source20pass and installed
-21plus3passing executions cover translation, actual saved graph/CSV and fresh
-owner current/earlier-report-shape restart;312loaded-module byte matches, JIT0/
-pools1, peak204374016B. Earlier history is not backfilled and is not an old-binary
-admission claim. The old finite-difference cycle timeout180.124s and test/harness
-failures remain NONPASS; no cap increase or repeat. Evidence:
-ANYfem docs/contact_wrench_evidence_20261003/{source.json,raw.zip},49records.
-
-Supporting Read assessment confirms D1's older accepted profile does not certify
-arbitrary current-source models. Next application critical boundary is an explicit
-accepted-source/current-source impact assessment, then a genuinely source/model-bound
-owner admission and normal routing. Do not turn the D1 validator or an implementation flag into that
-certificate. The isolated package bootstrap closes the ordinary-job preimport
-failure:116source pass/1skip,25installed plus4import-order and4integrated checks;
-strict namespace guards remain intact,312module byte parity. Baseline failure and
-wrong-child-import defects retained. Shared main promotion and broader interpreter
-qualification remain separate. [Evidence](docs/d1_review_support/abc_annotation_bootstrap_20261003/results.md).
-Preserve normal rejection until the admission boundary closes; use genuinely
-unblocked mechanics rows alongside the admission work.
-
-Current D8 request slice: owner-generated immutable identity binds actual package
-files, guarded model/contact/settings, effective static path/dead load/name,
-controls and integrity-checked checkpoint hash. ANYfem96d6f86 verifies request
-correspondence before/after actual solve and preserves detached analysis labels
-through artifacts. Source19plus7app outcomes and installed26pass20.564s/203046912B;
-314module/488package-file byte matches, JIT0/pools1,180s/953MiB. It is metadata,
-not acceptance or proof of execution; normal jobs/capability flags remain false.
-[Guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_REQUEST_IDENTITY_DEV.md).
-
-Current-source impact review identifies changed swept orientation admission and
-lifecycle scan cadence; old acceptance cannot be silently extended. Referenced
-historical force/displacement freeze/raw records are absent here; an authorized
-archive was requested. Preserve protected-root/consumed-authority restrictions.
-Pending that prerequisite, proceed with genuine physical-skin artifact/display
-and other remaining mechanics rows. No scientific target or full scope changes.
+Earlier prototype chronology, scoped speed evidence, source identities and failed
+or consumed authorities are retained in [plan82](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV82.md)
+→81→80. They are evidence, not renewed run authority.
 
 ## 1. Current technical position
 

@@ -1,4 +1,22 @@
 # General-contact capability ledger
+## Multiple fixed physical beam-end interactions — 4 October
+
+Implemented/installed-tested development PROFILE_ENDS composes existing
+plane/sphere/infinite-cylinder/finite-cylinder work and actual B2/B3 ends through
+one sparse aggregate owner. Pair-feature duplication rejects; shared-body wrenches,
+separate line/point storage and endpoint counts are reported. Exact physical-curve
+regularity, bounded common prefix and child gap/ownership rechecks govern trials.
+Endpoint laws and child settings bind restart; legacy no-cap aggregate stays intact.
+Installed27pass9.228s/326455296B;212modules/494files match,JIT0/pools1.
+Independent two-ended B3 bar relative error<=2.015e-14 vs1e-6 target, complete
+work/tangents, force/displacement, active restart/changed-law rejection, shared-body
+wrench, exception cleanup, duplicate/resource rejection and old/no-contact cases pass.
+Seven runs/46records retain early artifacts and reviewer-found count corrections.
+Supporting same-family scrutiny is not independent acceptance. Moving multi-tools,
+native/friction/dynamics, normal application admission, release and full C2/D3 remain open.
+[Guide](GENERAL_CONTACT_MULTIPLE_BEAM_ENDS_DEV.md),
+[evidence](d1_review_support/contact_multiple_endcaps_20261004/summary.json).
+
 ## Radial physical beam ends — 4 October
 
 One opt-in sphere/infinite-cylinder B2/B3 hemisphere owner now shares literal
