@@ -18,6 +18,15 @@ the capability boundary, architecture, theory, and qualification evidence.
 
 from importlib import import_module
 
+# Establish CPython's lazy ABC metadata before any qualified MRO capture.
+# Do not execute an annotation callback supplied before package import.
+from abc import ABC as _stdlib_ABC
+if (type.__getattribute__(_stdlib_ABC, "__dict__").get("__annotate_func__") is not None
+        or type.__getattribute__(_stdlib_ABC, "__dict__").get("__annotate__") is not None):
+    raise RuntimeError("stdlib ABC annotation callback is incompatible with authority capture")
+type.__getattribute__(_stdlib_ABC, "__annotations__")
+del _stdlib_ABC
+
 from .fe_core import DOFManager, FEMesh, FEModel, Material, Node
 from .control import (
     CancellationToken,

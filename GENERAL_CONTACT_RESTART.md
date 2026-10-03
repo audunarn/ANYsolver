@@ -3,12 +3,13 @@
 Full C0–C9 ACTIVE/incomplete. Root:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
 branch codex/contact-main-reconcile-20261001; HEAD binds this checkpoint.
-Goal2026-09-30.4 / plan2026-10-03.73 govern; previous mechanical source04535859,
-current change is reporting only. Protected original must not be accessed.
+Goal2026-09-30.4 / plan2026-10-03.74 govern; previous mechanical source04535859,
+Current changes are reporting and package bootstrap only.
+Protected original must not be accessed.
 No other human-chat messages, publication, merge/default changes or consumed
 run replay. Local checkpoints authorized. All owned runs/reviewer terminal.
-History: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART94.md
-→93→92→91 retains all earlier mechanical failures, restrictions and evidence.
+History: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART95.md
+→94→94→93→92→91 retains all earlier mechanical failures, restrictions and evidence.
 
 NEW integrated D8 reporting: ANYfem isolated root
 C:/ANYworkspaceWork/ANYfem-contact-intent, branch codex/anyfem-contact-intent,
@@ -38,11 +39,16 @@ solver7b69fcb0540cca82a053f8eb22adc914c0a8c0f501c9bb25b10ea6569838e702.
 Previous solved developer path/force/restart/fields and whole-face backtracking
 failure remain at linked Part94 and mixed/field guides. Normal job guard stays:
 D1 historical0b2ac9be acceptance is a bounded profile, not arbitrary exact-model
-admission. Current descriptive flags remain false. Next significant boundary:
-accepted-source/current-source impact and ordinary-job preimport failure
-CRITICAL_API_MISMATCH=ABC.__annotate_func__,ABC.__annotations_cache__
-(reconciliation results.md). Check current main owner changes read-only before
-an isolated correction; don't write shared main or message the other chat.
+admission. Current descriptive flags remain false. Isolated annotation bootstrap
+closes ordinary-job preimport failure without
+weakening exact guards. Source116pass/1skip, installed25 plus4 order and4 actual
+artifact/restart checks;312module byte parity, JIT0/pools1. Baseline20pass/1fail
+retained. Preexisting callbacks refuse without invocation; both Q4/S3 observer
+orders pass. Stdlib-only3.11/3.14 checks are not cross-version numerical admission.
+Evidence docs/d1_review_support/abc_annotation_bootstrap_20261003 includes156
+raw records and source manifest. Shared main untouched; app3d6a7bb unchanged.
+Next significant boundary: accepted-source/current-source impact and owner
+source/model/path/settings-bound admission; descriptive capability flags stay false.
 Only then design source/model-bound admission and routing without broadening scope.
 
 PENDING user decision: separate experimental discrete-pressure impact policy
@@ -57,7 +63,7 @@ zero response, cap/tolerance growth or native acceptance. All details Part94→9
 Accepted named D1-interior/D2 scope unchanged. Remaining shells/beams/friction/
 material/continuation, impact/native dynamics, applications and scale acceptance
 required. No supportable programme forecast. Budget120active hours:
-goal341541+3120=344661s(~95.74h), ~24.26h remaining at checkpoint preparation.
+goal344716+3120=347836s(~96.62h), ~23.38h remaining at checkpoint preparation.
 Check actual clock before substantial slice; at120h save state/request needed
 scope/time/method decision, never silently extend or complete. Lower tiers remain
 previously unavailable; no unchanged reprobe. Goal ACTIVE.

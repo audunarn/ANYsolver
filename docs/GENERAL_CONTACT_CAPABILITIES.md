@@ -1558,3 +1558,15 @@ restart and source/installed235hash parity pass. No independent acceptance/relea
 The refined coupled case times out900s:218weak proofs pass,642strong-path failures
 dominate. No complete trajectory or impact admission. A separate guard-policy
 experiment needs explicit authority. [Evidence](d1_review_support/C6_S3_POLYGON_PRESSURE_SLICE_20261003.md).
+
+## Ordinary-job annotation bootstrap — isolated 3 October development
+
+Package import establishes lazy stdlib ABC metadata before exact qualified MRO
+capture; preexisting callbacks reject without execution. Normal non-contact
+application preimport regression closes on isolated source/wheels:116source pass/
+1skip,25installed plus4order and4integrated checks,312module byte parity. Baseline
+NONPASS and child-routing failures retained. No contact equations or admission
+flags changed. Supporting source scrutiny closes identified order concerns;
+shared-main promotion, cross-version numerical qualification, contact model
+admission, independent engineering acceptance and release remain separate.
+[Evidence](d1_review_support/abc_annotation_bootstrap_20261003/results.md).

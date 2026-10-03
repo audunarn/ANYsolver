@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.73. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.74. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -28,11 +28,15 @@ ANYfem docs/contact_wrench_evidence_20261003/{source.json,raw.zip},49records.
 
 Supporting Read assessment confirms D1's older accepted profile does not certify
 arbitrary current-source models. Next application critical boundary is an explicit
-accepted-source/current-source impact assessment and retained ordinary-job
-preimport guard issue, then a genuinely source/model-bound owner admission and
-normal routing. Do not turn the D1 validator or an implementation flag into that
-certificate. Preserve normal rejection until this boundary closes; use genuinely
-unblocked mechanics rows if owner guard correction is not available.
+accepted-source/current-source impact assessment, then a genuinely source/model-bound
+owner admission and normal routing. Do not turn the D1 validator or an implementation flag into that
+certificate. The isolated package bootstrap closes the ordinary-job preimport
+failure:116source pass/1skip,25installed plus4import-order and4integrated checks;
+strict namespace guards remain intact,312module byte parity. Baseline failure and
+wrong-child-import defects retained. Shared main promotion and broader interpreter
+qualification remain separate. [Evidence](docs/d1_review_support/abc_annotation_bootstrap_20261003/results.md).
+Preserve normal rejection until the admission boundary closes; use genuinely
+unblocked mechanics rows alongside the admission work.
 
 ## 1. Current technical position
 
