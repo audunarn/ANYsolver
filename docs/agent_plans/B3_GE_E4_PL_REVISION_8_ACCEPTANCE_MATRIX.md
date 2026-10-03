@@ -604,7 +604,7 @@ B2 consumer mass/modal persistence development: ANYfem `a615c4b` adds explicitly
 | M2 bonded line | IN_PROGRESS | BL5 physical law, multiplier resolution, F03 and ratios/refinement/transfer open. |
 | M3 physical B2 | IMPLEMENTED_NOT_QUALIFIED | Multi-Q4/native-S3/B2 point-panel and installed ANYfem native Project save/reopen/selected 1/10/100 batches tested with one eligible factorization; historical Q4 route retained. Scoped F09 and F10/F11 point/static accepted; fixed E01 B2 reference executed with retained discrepancies. S3 mass/spectral/footprint routes, general F10/F11/F13, complete consumer workflow and converged E01 accuracy remain open. |
 | M4 remaining mechanics | IN_PROGRESS | Selected-node rigid footprints have installed unrebased solver/consumer evidence; footprint chart transport and broader material/attachment/topology/load/spectral/imperfection/capacity requirements remain mandatory. |
-| M5 scale/release | NOT_STARTED | Practical scale, platforms, external programme and authorized release remain mandatory. |
+| M5 scale/release | IN_PROGRESS | Installed point-bond 10,000-Q4/1,000-B3 linear/persistence/restart development routes complete; full nonmatching/nonlinear scale, measured scaling, platforms, external programme and authorized release remain mandatory. |
 
 M2 bounded decision,30 September: independent local stationary elimination and
 one nodal-root counterfactual identify termination enforcement as the leading
@@ -1633,3 +1633,21 @@ All511 source/wheel/site modules match. Source fixture and installed collection
 failures retained; review's misleading translation label corrected before final
 wheel checks. No new equations, criteria, budget, version or aggregate acceptance.
 [Evidence, reviewer scope and limitations](development/r8-curved-material-staged-20261003/results.md).
+
+
+**3 October practical-size/member-admission development delta:** inherited
+ANYfem16-member cap removed across shared GE bindings; byte/type/hash and
+mechanical guards unchanged. Old installed consumer rejects the actual32-member
+fixture; new installed public/Project solve/restart passes. Unchanged GE library
+also compiles/solves/persists/recovers/restarts10,000Q4/1,000B3 elements on ten
+stiffener lines with110explicit point ties:97,320mixed unknowns/4,972,608nnz.
+Existing equilibrium/compatibility/force/moment limits pass. Four recovered
+arrays, binary re-encoding and subsequent-load arrays match exactly. Separate
+checkpoint/restart runs370.787s/373.073s,3.073GB/3.071GB, one eligible factorization
+per owner, compute pools1/JIT off verified. This does not qualify the full
+nonmatching/nonlinear G5 workload, scaling ratios, external references or release.
+Failed restore-fixture/header-driver evidence retained. Independent OpenAI
+development review closed; cross-family scientific acceptance unchanged.
+400Q4/120B3 cProfile identifies qualified Q4 zero/reference response as the next
+cost target; overlapping cumulative times establish no optimization gain.
+[Inputs, identities, raw runs, interpretation and review](development/r8-ge-member-scale-20261003/results.md).

@@ -8,12 +8,13 @@ Full amended G0–G6/F01–F13/V01–V28/B01–B18 scope and scientific criteria
 binding. Experimental implementation is not aggregate acceptance.
 
 Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Latest slice source parent2653b6d5;
-use git log for its committed identity. ANYfem worktree:
-C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, atc78b55c, curved material staged schema delivered.
+branch codex/stiffened-main-reconcile-20261001. Latest slice source parentf58abf96;
+solver library unchanged; use git log for the new example/evidence commit. ANYfem worktree:
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, local commit4d6d4d0;
+member-count cap removed, installed artifact verified. Consumer worktree clean.
 Scoped local commits only: no push/main merge/publication/contact-worker messages.
-All prior source/installed jobs are terminal. Current staged source40222/39660,
-prepare55585, installed61676, consumer70348 and signed-cycle72270 are terminal.
+All prior source/installed jobs are terminal. Current large82251, checkpoint58718, restore73687 and profile87572 are terminal;
+all current small installed checks and workers are also terminal.
 No owned numerical job is live. Main untouched by this task.
 
 Formal F03 UNCONSUMED. Protected original script SHA256:
@@ -70,12 +71,37 @@ accessor and installed missing-fixture failures retained. Independent OpenAI
 review's misleading translation label was corrected before final wheel runs.
 No physics, criteria, default, version or budget changed; no measured speed gain.
 
-Next bounded target: inspect actual compiler/consumer prototype limits and sparse
-storage against the required practical-scale envelope, reusing existing valid
-screens. Remove only obsolete size restrictions within resource authority and
-prepare a genuine installed sparse model route. Do not substitute a point-only
-screen for the full nonmatching G5 workload, invent a new framework, relax
-mechanical guards or repeat the completed curved refinement campaigns.
+Current practical-size slice is delivered experimentally:
+[Grouped evidence](development/r8-ge-member-scale-20261003/results.md).
+ANYfem's inherited16-member cap is removed across shared GE binding schemas;
+typed/nonempty, per-definition and32MiB file guards remain. Old installed
+consumer rejects the actual32-member fixture; the new installed consumer passes
+Project save/reopen, solve, physical balance, factor reuse and exact restart.
+Three maintained solver and eight distinct consumer checks pass across focused
+installed runs; no clean aggregate-suite claim. All413solver/98consumer source,
+wheel and site modules match. Consumer wheel5f5c203c...223a; solverc795a5da...7d
+reused unchanged. Grouped independent OpenAI development review is closed.
+
+10,000Q4/1,000native B3 elements on ten stiffener lines,110explicit point ties
+and a complete clamped edge compile/solve/recover/persist/restart experimentally:
+97,320mixed unknowns,4,972,608nnz; equilibrium5.14e-10, compatibility2.32e-14,
+force/moment~1e-9. Binary snapshot1,561,799bytes; exact four-array recovery,
+re-encoding bytes and subsequent-load parity. One factorization per unchanged
+owner. Separate checkpoint/restart processes370.787s/373.073s, peaks3.073GB/
+3.071GB, within each600s/8GiB bound. Compute pools1/JIT off verified, not one OS
+thread; no combined<=600s route claim. Initial driver-header failure retained.
+This point-bond static probe does not qualify the required nonmatching G5 route.
+
+Next bounded decision: historical flat/virgin Q4 reference-state reuse.
+Separated400Q4/120B3 profile: shell assembly22.635/27.722s (~82%), qualified
+response19.194s, inherited zero kernels800calls/12.560s, zero correction
+400calls/11.471s, frame sensitivity1.351s. Cumulative times overlap.
+Investigate removing repeated reference-state work only with required1e-10
+local/assembled parity, elastic/J2 virgin geometry/order/thickness variants,
+rigid modes and state ownership. Preserve S3/algorithmic/curved paths and the
+global current-state correction contract. No speedup yet. No larger-size sweep.
+Python COO object memory is a separate optimization candidate. All jobs stopped;
+formal F03/resources/scientific boundaries unchanged.
 
 ## Open boundaries
 
