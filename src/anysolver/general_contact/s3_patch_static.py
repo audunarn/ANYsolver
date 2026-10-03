@@ -459,8 +459,14 @@ class _PatchResults:
     contact_work_convention: str | None = None
     regularization_storage_j: float | None = None
 
+    @property
+    def wrench_origin_m(self):
+        """Global origin used by the physical-position cross-force sums."""
+        return (0.0, 0.0, 0.0)
+
     def to_dict(self):
         result = dict(vars(self))
+        result["wrench_origin_m"] = list(self.wrench_origin_m)
         for name in ("integration_force", "target_force", "integration_moment",
                      "target_moment", "source_pressure_node_ids",
                      "normalized_weighted_gap_m", "numerical_pressure_pa",

@@ -1,67 +1,63 @@
 # General contact restart — 3 October 2026
 
-Full C0–C9 ACTIVE/incomplete. Authoritative solver root:
+Full C0–C9 ACTIVE/incomplete. Root:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001; numerical source04535859.
-HEAD binds this checkpoint; goal2026-09-30.4 / plan2026-10-03.72 govern.
-Protected original must not be accessed. No other human-chat messages, publication,
-merge/default changes or consumed-authority replay. Local checkpoints authorized.
-All owned runs/reviewer terminal. Prior restrictions/history:
-docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART93.md→92→91.
+branch codex/contact-main-reconcile-20261001; HEAD binds this checkpoint.
+Goal2026-09-30.4 / plan2026-10-03.73 govern; previous mechanical source04535859,
+current change is reporting only. Protected original must not be accessed.
+No other human-chat messages, publication, merge/default changes or consumed
+run replay. Local checkpoints authorized. All owned runs/reviewer terminal.
+History: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART94.md
+→93→92→91 retains all earlier mechanical failures, restrictions and evidence.
 
-NEW unblocked D8 outcome: ANYfem isolated root
-C:/ANYworkspaceWork/ANYfem-contact-intent; branch codex/anyfem-contact-intent;
-HEAD5259cd43604de9e3fc72f5346aab6aa420ef3530, clean after commit.
-Mapped explicit paths/selected dead nodal loads and active fresh-owner restart
-pass for named Q4/Q4 and Q4/S3 developer fixtures. Mixed press144N; guided0.1N
-force agrees with independent Q1/KKT using rest structural stiffness, reaction
-0.0931952663N/gap−3.938462um within50um. Whole-face remote-corner/backtracking
-NONPASS retained; explicit existing projected_matching passes unchanged mechanics.
-Strict V2/current-identity V1 schema handling preserves soft target and obsolete
-contract rejection. Prior24installed checks/298hashes and old18N route evidence:
-ANYfem docs/GENERAL_CONTACT_MIXED_FORCE_DEV.md→GENERAL_CONTACT_DEVELOPMENT_SOLVE.md;
-91/66-record packets preserve all fixture/contract/import/cancellation failures.
+NEW integrated D8 reporting: ANYfem isolated root
+C:/ANYworkspaceWork/ANYfem-contact-intent, branch codex/anyfem-contact-intent,
+HEAD3d6a7bb. Existing physical patch cross-force sums now state global-zero
+wrench_origin_m; accepted increment summaries preserve it. Explicit opt-in fields
+persist/export both N*m moments with origin provenance. Owner calculation,
+work maps, derivatives, settings and physical state equations unchanged.
+Current saved project/mesh/result and CSV round-trip and both-body rigid
+translation pass. Malformed origins refuse. Legacy missing origin retains raw
+moments and explicit unavailable fields; missing history is not backfilled.
 
-NEW explicit include_fields=True copies nodal displacement, reference pressure
-coefficients/weak gap/support and integrated forces through existing artifact/
-CSV/headless contour. Saved/reloaded owner project/mesh/result correspondence
-passes; shifted solver reference, changed mesh/lineage and malformed associations
-reject. Target pressure stays unavailable, contour uses deformed reference mesh/
-element averaging. Default summary-only/application admissionfalse preserved.
-Source45affected plus8review-correction outcomes pass; installed22plus4saved-graph
-checks pass6.322s/201027584B and3.585s/197885952B (180s/953MiB), actual JIT0/pools1,
-313/312hash parity. ANYfem docs/GENERAL_CONTACT_RESULT_FIELDS_DEV.md and
-docs/contact_field_evidence_20261003/{source.json,raw.zip}(55records) retain one
-actual saved graph/CSV,4test defects and collector correction. Supporting source
-scrutiny fixed imperfection-frame/missing-ID errors; no independent engineering
-acceptance, release, physical-pressure recovery or full model/source admission.
-Solver numerical04535859/defaults unchanged; all owned activity terminal.
+Source20pass6.823s/201740288B; installed21plus3passing executions8.340s/204374016B
+and7.851s/197799936B,312loaded-module hashes match, JIT0/Numba1/BLAS1.
+Actual current and owner-issued earlier-report-shape canonical checkpoints
+resume fresh BuiltModel/FEModel and keep independent mixed-force/KKT gates.
+Simulation alters only reporting before actual owner issuance; no forged hash
+or old-binary admission. Generic increment summary checked on real certificate.
+Old full finite-difference cycle timed out180.124s/213061632B; no retry or cap
+increase. Two history test defects and two preflight mistakes retained.
+ANYfem docs/GENERAL_CONTACT_RESULT_FIELDS_DEV.md and
+contact_wrench_evidence_20261003/{source.json,raw.zip,supporting_review.md},
+49records/3.27MB, include actual saved graph. Supporting source scrutiny found
+no reporting blocker; no renewed mechanics qualification or application admission.
+Private wheels app f75c750e60023e7e0227b0b8e66429dc114c537ce2a4540fd5d148ae64fe8b04,
+solver7b69fcb0540cca82a053f8eb22adc914c0a8c0f501c9bb25b10ea6569838e702.
 
-PENDING async user decision remains: allow a SEPARATE experimental impact policy
-retaining full20um swept-gap/discrete-pressure-phase control but omitting V3/V4's
-tighter hidden material-point pulse safeguard, or retain it/proceed other rows.
-NOT authorized yet; no change to guard, caps, tolerances, old V3/V15 defaults.
-Do not retry old full cases. Numerical04535859 V4/V16 has218weak proofs pass in
-10.324s, but900s full timeout at1.79779ms/3ms:868strong/642fail consume655.090s.
-Corrected independent witness shows real65nm hidden pulse; sign-error oracle
-output retained. Polygon/preparation installed evidence,14.14% covered-route
-observed cache saving and all prior failures remain at linked Part93/92; no2× claim.
+Previous solved developer path/force/restart/fields and whole-face backtracking
+failure remain at linked Part94 and mixed/field guides. Normal job guard stays:
+D1 historical0b2ac9be acceptance is a bounded profile, not arbitrary exact-model
+admission. Current descriptive flags remain false. Next significant boundary:
+accepted-source/current-source impact and ordinary-job preimport failure
+CRITICAL_API_MISMATCH=ABC.__annotate_func__,ABC.__annotations_cache__
+(reconciliation results.md). Check current main owner changes read-only before
+an isolated correction; don't write shared main or message the other chat.
+Only then design source/model-bound admission and routing without broadening scope.
 
-Native grazing friction NONPASS unchanged:−1.33564e−13m,223queries/448paths/21support,
-10.364s. Missing closed alpha_q and mixed-work enclosure; no saved/full/owner retry,
-reset/zero response, cap growth, tolerance increase or native acceptance.
-Accepted D1-interior/named bounded D2 evidence unaffected; remaining shells/beams,
-friction/material/continuation, impact/native dynamics, applications and scale
-acceptance still required. No supportable programme delivery forecast.
+PENDING user decision: separate experimental discrete-pressure impact policy
+without tighter hidden material-point safeguard, retaining full20um swept gap.
+NOT approved; no safeguard/cap/tolerance/default change or old full-case retry.
+V4/V16 refined900s timeout retains868strong/642fail655.090s and218weak proofs
+pass10.324s; corrected real65nm hidden pulse/sign-error oracle retained.
+Native grazing friction NONPASS−1.33564e−13m,223queries/448paths/21support10.364s;
+missing closed alpha_q/mixed-work enclosure. No saved/full/owner retry, reset,
+zero response, cap/tolerance growth or native acceptance. All details Part94→93.
 
-Next: act on pending user decision only if received. Otherwise choose a genuinely
-unblocked required row; next app boundary is accepted-profile source/model-bound
-admission and normal routing, then physical-skin/traction and broader quantities.
-Fixed-target guided
-force does not admit general nonlinear/deformable-target application models.
-Preserve separately
-owned dirty canonical application work; new slice touched only isolated ANYfem.
-Budget120activehours: lastgoal339190+3120=342310s(~95.09h), ~24.91h remaining.
-Read current goal clock before a substantial slice; at120h checkpoint/request
+Accepted named D1-interior/D2 scope unchanged. Remaining shells/beams/friction/
+material/continuation, impact/native dynamics, applications and scale acceptance
+required. No supportable programme forecast. Budget120active hours:
+goal341541+3120=344661s(~95.74h), ~24.26h remaining at checkpoint preparation.
+Check actual clock before substantial slice; at120h save state/request needed
 scope/time/method decision, never silently extend or complete. Lower tiers remain
-previously unavailable; do not reprobe unchanged failures. Goal ACTIVE.
+previously unavailable; no unchanged reprobe. Goal ACTIVE.

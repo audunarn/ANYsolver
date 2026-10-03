@@ -12,7 +12,7 @@ from anysolver.fe_core import FEModel
 from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
 
 
-def _case():
+def _case(origin_shift=(0., 0., 0.)):
     model = FEModel("q4_pressure_side_patch")
     model.add_material("elastic", 1e5, .3, density=1.)
     source = ((.1, .1, .055), (1.1, .1, .055),
@@ -20,7 +20,7 @@ def _case():
     target = ((0., 0., 0.), (1., 0., 0.),
               (1., 1., 0.), (0., 1., 0.))
     for node, position in enumerate((*source, *target), 1):
-        model.add_node(node, *position)
+        model.add_node(node, *(np.asarray(position) + origin_shift))
     model.add_element(1, create_shell_element(
         1, (1, 2, 3, 4), "elastic", thickness=.05,
         reference_normal=(0., 0., 1.),
@@ -47,6 +47,33 @@ def _case():
         maximum_q4_source_integration_triangles=300,
     )
     return model, definition, settings
+
+
+def test_reported_patch_wrench_origin_and_translation():
+    shift = np.array((2.0, -3.0, 0.7))
+    reports = []
+    for offset in (np.zeros(3), shift):
+        model, definition, settings = _case(offset)
+        manager = GeneralS3PatchManager(model, definition, settings)
+        u = np.zeros(model.mesh.dof_manager.total_dofs)
+        for node in (1, 2, 3, 4):
+            u[model.mesh.dof_manager.get_node_dofs(node)[2]] = -.02
+        _, _, report = manager.evaluate(u, tangent=False)
+        assert report.to_dict()["wrench_origin_m"] == [0., 0., 0.]
+        from anysolver.nonlinear_static import _augmented_contact_increment_summary
+        summary = _augmented_contact_increment_summary(report)
+        assert summary["wrench_origin_m"] == report.to_dict()["wrench_origin_m"]
+        assert summary["integration_moment"] == report.to_dict()["integration_moment"]
+        assert summary["target_moment"] == report.to_dict()["target_moment"]
+        reports.append(report)
+    base, moved = reports
+    for body in ("integration", "target"):
+        force = np.asarray(getattr(base, body + "_force"))
+        np.testing.assert_allclose(getattr(moved, body + "_force"), force,
+                                   rtol=1e-6, atol=1e-8)
+        expected = getattr(base, body + "_moment") + np.cross(shift, force)
+        np.testing.assert_allclose(getattr(moved, body + "_moment"), expected,
+                                   rtol=1e-6, atol=1e-8)
 
 
 def test_q4_pressure_side_patch_maps_four_q1_nodes_and_both_body_wrenches():
@@ -107,6 +134,7 @@ def test_q4_pressure_side_patch_four_phase_path_and_restart():
         True, True, False, True,
     ]
     assert all(row["contact"]["gap_tolerance_met"] for row in phases)
+    assert all(row["contact"]["wrench_origin_m"] == [0., 0., 0.] for row in phases)
     half = solve_static_nonlinear(
         model, max_load_factor=.5, emit_restart_checkpoint=True, **common,
     )
@@ -115,5 +143,7 @@ def test_q4_pressure_side_patch_four_phase_path_and_restart():
         model, restart_checkpoint=half.to_restart_checkpoint(), **common,
     )
     assert resumed.status == "completed", resumed.failure_reason
+    assert all(row["contact"]["wrench_origin_m"] == [0., 0., 0.]
+               for row in resumed.info["force_displacement_history"])
     np.testing.assert_allclose(resumed.displacements, full.displacements,
                                rtol=1e-7, atol=1e-9)

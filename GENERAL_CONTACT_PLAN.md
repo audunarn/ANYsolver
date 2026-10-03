@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.72. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.73. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -14,6 +14,26 @@ capabilities, scientific targets and exclusions. Historical plans and failures
 remain evidence; frozen or consumed execution authorities are never renewed.
 Publication, merging, release and historical-default changes are separate actions.
 
+
+Current reporting slice: ANYfem3d6a7bb adds both owner-reported global contact
+moments with explicit origin/units through persisted artifacts and CSV. Patch
+owner states its existing zero-origin cross-force convention; equations, work
+maps, tolerances and mechanical state are unchanged. Source20pass and installed
+21plus3passing executions cover translation, actual saved graph/CSV and fresh
+owner current/earlier-report-shape restart;312loaded-module byte matches, JIT0/
+pools1, peak204374016B. Earlier history is not backfilled and is not an old-binary
+admission claim. The old finite-difference cycle timeout180.124s and test/harness
+failures remain NONPASS; no cap increase or repeat. Evidence:
+ANYfem docs/contact_wrench_evidence_20261003/{source.json,raw.zip},49records.
+
+Supporting Read assessment confirms D1's older accepted profile does not certify
+arbitrary current-source models. Next application critical boundary is an explicit
+accepted-source/current-source impact assessment and retained ordinary-job
+preimport guard issue, then a genuinely source/model-bound owner admission and
+normal routing. Do not turn the D1 validator or an implementation flag into that
+certificate. Preserve normal rejection until this boundary closes; use genuinely
+unblocked mechanics rows if owner guard correction is not available.
+
 ## 1. Current technical position
 
 | Area | Actual disposition | Remaining boundary |
@@ -24,7 +44,7 @@ Publication, merging, release and historical-default changes are separate action
 | D4 friction/continuation | Fixed-material and planar material-anchor S3 owners use shared static equilibrium/pressure/history/restart; facet crossing, internal-seam generalized tangent and solved seam/restart checks pass in development | Friction integration/step refinement, partial overlap/history transfer, physical rims, finite rotation/warped surfaces, swept beam/native surfaces, nonlinear materials and arc length |
 | D5 impact | Q4/S3 planes, B2/B3 fixed/translating planes and explicit guided Q4/free isotropic sphere share Newmark driver/state/restart; new shell work/path/energy/restart checks and isolated installed example pass | Broader shell/free-body admission, general geometry, finite rotation, caps/pairs, anisotropic inertia, nonlinear materials and acceptance |
 | D6 native dynamics | Dedicated retained-inertia/SO(3) midpoint owner, state codec and installed development route | Broader geometry/sections, spatial accuracy and C7 acceptance |
-| Applications | ANYfem persisted shell/path/force development solves and restart; opt-in associated fields, CSV export and guarded saved-model/mesh/result headless contours verified in installed packages; ANYstructure intent/public mapping and early rejection | Source/model-bound accepted-profile admission, normal routing, physical skin/traction and broader postprocessing, C9 acceptance |
+| Applications | ANYfem persisted shell/path/force development solves and restart; opt-in associated fields and explicitly referenced physical moments, CSV export and guarded saved-model/mesh/result headless contours verified in installed packages; ANYstructure intent/public mapping and early rejection | Source/model-bound accepted-profile admission, normal routing, physical skin/traction and broader postprocessing, C9 acceptance |
 
 Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md),
 [restart note](GENERAL_CONTACT_RESTART.md) and linked guides. Implemented, tested,

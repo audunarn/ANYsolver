@@ -1174,7 +1174,7 @@ def _static_restart_path_payload(
 
 def _augmented_contact_increment_summary(certificate: Any) -> Dict[str, Any]:
     """Keep accepted contact history dimensional and bounded in size."""
-    return {
+    summary = {
         "profile": str(certificate.profile),
         "minimum_gap": float(certificate.minimum_gap),
         "gap_tolerance_met": bool(certificate.gap_tolerance_met),
@@ -1184,6 +1184,10 @@ def _augmented_contact_increment_summary(certificate: Any) -> Dict[str, Any]:
         "integration_moment": list(map(float, certificate.integration_moment)),
         "target_moment": list(map(float, certificate.target_moment)),
     }
+    origin = getattr(certificate, "wrench_origin_m", None)
+    if origin is not None:
+        summary["wrench_origin_m"] = list(map(float, origin))
+    return summary
 
 
 def _local_dof_index(dof: Union[str, int]) -> int:

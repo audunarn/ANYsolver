@@ -1,4 +1,21 @@
 # General-contact capability ledger
+## Explicit physical-wrench result origin — 3 October
+
+Patch owner reports the existing global-zero moment origin without changing
+physical force/moment computation. ANYfem3d6a7bb persists/exports both N*m moment
+vectors with origin provenance, retains legacy raw values and explicitly marks
+moment fields unavailable when the owner origin is absent. Malformed origins
+refuse. Source20passing checks include both-body rigid-translation law; installed
+21plus3passing executions include actual saved project/mesh/result/CSV and current
+and owner-issued earlier-report-shape fresh-model active restart.312imported
+module hashes match; JIT0/pools1, peak204374016B, each completed route<9s.
+Supporting source scrutiny found no remaining reporting blocker. One old full
+finite-difference cycle timed out180.124s/213061632B; two history test defects and
+two runner preflight failures are retained. No old-binary checkpoint admission,
+mechanics qualification, normal application admission, release or speed claim.
+[Guide](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_RESULT_FIELDS_DEV.md),
+[exact evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/contact_wrench_evidence_20261003/source.json).
+Previous field/restart and accepted D1/D2 evidence keep their original scope.
 
 ## Mapped ANYfem contact fields/export/contours — 3 October
 
