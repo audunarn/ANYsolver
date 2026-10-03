@@ -105,3 +105,11 @@ scripts/r8_bl5_projected_modal_envelope_dev.py -text
 tests/test_r8_bl5_sparse_kernel_saved_dev.py -text
 tests/test_r8_bl5_sparse_kernel_interval_dev.py -text
 tests/test_r8_bl5_projected_modal_envelope_dev.py -text
+
+scripts/r8_bl5_projected_envelope_norm_dev.py -text
+scripts/r8_bl5_projected_envelope_owner_dev.py -text
+scripts/r8_bl5_projected_uniform_modal_dev.py -text
+tests/test_r8_bl5_projected_envelope_norm_dev.py -text
+tests/test_r8_bl5_projected_envelope_owner_dev.py -text
+tests/test_r8_bl5_projected_uniform_modal_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope/** -text

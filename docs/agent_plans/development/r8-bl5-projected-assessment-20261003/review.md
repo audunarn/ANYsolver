@@ -122,3 +122,24 @@ and both completed585/1017-pivot proofs. Reports v1/v2 and failed/inconclusive
 runs are retained under sparse-envelope/ in raw-manifest-v7. No blocking
 false-positive defect was identified. This is supporting same-family review,
 not different-family scientific acceptance. Broad applicability remains open.
+
+##21-case envelope continuation
+
+Root reviewed the worker's exact uniform-helper/test scope and the independently
+challenged2N-block derivation, exact-uniform gate, original fallback and arithmetic
+limits. Root executed serial36/93/98-control slices and23 original/V2 scalar
+preparations, then18 new installed owners. Three unchanged same-wheel owners
+were reused with their original bindings. Source snapshots preserve every actual
+run revision. Supporting independent OpenAI Read review inspected417-module
+source/wheel/site identities, recorded raw bindings, resource settings, actual
+physical inventory and work; reviewed the optional route and found the legacy
+reuse defect. Root repaired its exact-current compatibility guard and added
+coordinate/count/source mutations. Final source review v3 finds that defect
+resolved and confirms solve-body equivalence, so no unrelated numerical campaign
+was repeated. Reviews are byte-exact under raw envelope/ (v1/v2/v3 and runtime).
+
+These are supporting same-family reviews, not different-family acceptance.
+Uniform-tail binary64 diagnostics are not interval proofs. Aggregate work changes
+expose unresolved coarse-beam rotational convergence. Mixed-system/native-beta,
+engineering accuracy, scientific acceptance and mandatory external comparisons
+remain separate. No formalF03 execution or release authority consumed.

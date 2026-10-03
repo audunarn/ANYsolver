@@ -1958,3 +1958,15 @@ unconverged. Separate Read review clear; different-family/external threading/
 fullratios/threelevels/mandatoryreferences and M2/G0/F03 OPEN. Formalauthority
 unconsumed; no version/default/tolerance/format change or measured speedup.
 [Results, failures, review and235-file manifest](development/r8-bl5-projected-assessment-20261003/results.md).
+
+**4 October21-case growing-envelope development:** IMPLEMENTED_NOT_QUALIFIED.
+All seven whole-member ratios at Nx16/32/64 now have independent eligible scalar
+preparations and installed physical screens (18new/3 unchanged reused). Original
+19/21 scalar campaign retains two conservative-tail failures; the reviewed exact-
+uniform reference V2 repairs only those two under unchanged criteria/mode budget.
+Maximum physical check4.156e-12; largest25121KKT/508MB/57.66s. Coarse1:8 Mzwork
+changes10.682% between last levels, so accuracy/convergence is unresolved.
+98 distinct focused controls pass; stale-current-norm legacy reuse guard repaired
+and reviewed. Full mixed-kernel/native-beta/locking/director/shear/drilling,
+external/different-family acceptance and M2/G0/F03 remain OPEN. FormalF03
+UNCONSUMED. [Results and475-file immutable raw extension](development/r8-bl5-projected-assessment-20261003/results.md).

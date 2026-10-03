@@ -469,3 +469,70 @@ physical transfer, mandatory references and M2/G0/F03 acceptance remain OPEN.
 [106-file raw extension](raw-manifest-v7.json), SHA
 8320998b8ac6a4a41efe0f1b45386095f049db0ebc7849daf7cee6c385696951,
 preserves943212bytes. Prior manifests and protected history remain byte-identical.
+
+## Full21-case scalar eligibility and installed physical screen
+
+Development continuation, source parent a7327da2, 4 October2026. The product
+wheel remains1bf7dabd.../417 identical modules; no product equation, tolerance,
+legacy default, checkpoint format or version changes. The coherent complete
+five-channel candidate uses Hhalf=4max(1,Nhalf/Nshell), whole-member ratios
+1:8/1:4/1:2/1:1/2:1/4:1/8:1 and Nx16/32/64. Actual halfcell ratios are twice
+those member ratios. All typed layouts, reference geometry/frames/arms, physical
+supports and retained-variable roles are checked on the assembled owner.
+
+Original scalar preparation passed19/21. ns64_b4/b8 exhausted its unchanged
+4096/8192/16384 modal budget; final tail bounds.00155739/.00316445 exceeded1e-3.
+Those failed records and original sources remain unchanged. The independently
+derived complete2N cosine-block identity supplies a NEW optional exact-uniform
+majorant of the SAME reference equation. Exact rational stored knots are required;
+nonuniform inputs retain the original bracket. No modes, floors or criteria were
+tuned from native values. Only the two changed-dependent failures were rerun:
+
+| Case | New4096-mode relative tail | Independent safe floor |
+|---|---:|---:|
+| ns64_b4 | 3.67796669e-5 | .4026055333 |
+| ns64_b8 | 4.98261462e-5 | .4025980113 |
+
+All21 scalar preparations are now eligible within their development contracts.
+The exact-arithmetic theorem is not a directed-rounding certificate for binary64
+cos/tanh/Gram calculations. No exact-real numerical enclosure, uniform stability
+or F03 acceptance follows from these scalar diagnostics.
+
+All21 installed physical cases are available:18 new and three unchanged
+same-wheel owners reused (coarse1:2/2:1 and fine matched1:1). The coarse matched
+case was run on the corrected wheel because its earlier source predates the
+linear-precision change. Each new case completed Fy100N/Mx10Nm/Mz10Nm, physical
+recovery, one factorization and six samefactor corrections. Maximum declared
+work/balance/equilibrium check4.15596446e-12. Largest actual case25121 supported
+KKT rows/15745 physical free variables,57.659s supervised elapsed and507752448B
+sampled process-tree peak; no claim about G5 scale follows. Numerical pools and
+Numba settings were1/JIToff; sampled numerical-or-unresolved maximum2, inside
+the8-thread authority. All jobs TERMINAL, one numerical job at a time.
+
+This is a physical-work screen, not accuracy acceptance. Between Nx32 and64,
+Fy work changes span-.465%..+.175%, Mx-.0527%..+.0833%. Mz changes by-10.682%
+for1:8,-3.671% for1:4 and about-.772%..-.822% for the other ratios. The coarse
+beam responses are not converged; finer action/beam resolution cannot be inferred
+from exact weak gaps. No automatic refinement or multiplier selection follows.
+
+Final98 distinct focused controls passed; previous36/93 runs remain retained,
+not additional distinct totals. Review found a future stale-source reuse defect:
+legacy V1 was initially accepted against arbitrary current norm code. Repaired
+admission pins the reviewed compatible source and binds coordinates/counts;
+mutation controls reject changed sources, norms, empty/nonboolean predicates,
+nonfinite floors and stale hashes. Solve body unchanged, so no whole-campaign
+rerun followed the guard fix. Each actual run keeps its original source SHA.
+A read-only aggregation KeyError on a historical record is retained with its v1
+source; v2 handles its different binding schema without rerunning mechanics.
+
+Decision: scalar eligibility no longer blocks the growing-envelope work. Proceed
+with complete sparse mixed-kernel assessment on actual saved operators using
+explicit new budgets and local graph work; preserve old2400/3000 admissions.
+Native-beta, physical transfer/accuracy, locking/director/shear/drilling and
+mandatory external evidence remain OPEN. No law/space qualified; formalF03
+UNCONSUMED. Complete goal ACTIVE; no push/main merge/publication.
+
+[Immutable475-file extension](raw-manifest-v8.json),259984603B, SHA
+4c6ffe7a94e0553b83b67a4f420d11599ed05c1e89b99e5093388a0ad4b0f73a,
+retains sources, commands, raw operators/states, failed preparations, reviews and
+both predecessor/prospective live notes. Earlier evidence bytes unchanged.
