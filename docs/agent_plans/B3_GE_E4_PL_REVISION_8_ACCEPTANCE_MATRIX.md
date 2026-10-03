@@ -1688,3 +1688,15 @@ force/moment pass; profile352.056s/301MB. Constant Q4 correction is the next
 measured reuse target. No large nonlinear, G5/M5 or aggregate acceptance closes;
 formal F03/pressure/release authority unchanged.
 [Bounded cases, failures, artifacts, work interpretation and review](development/r8-q4-finite-arithmetic-20261003/results.md).
+
+**3 October guarded Q4 correction development delta:** library0d494d1a retains
+only eligible elastic constant preparation, originally bound to cache/token/
+input identity, with full trial kernels and all guard/state contracts.57installed
+checks pass; independent OpenAI Read findings resolved. Seven-pair24Q4/32B3
+warm route7.22% faster; easy8Q4/12B3 median6.72% faster. Physical/history/
+checkpoint arrays and bytes match exactly. One400Q4/120B3 pair9.56% faster is
+preliminary. Separate work probe136→16constant corrections with unchanged
+assembly/beam/point/trial counts. No aggregate criterion or scientific threshold
+changed; G0/F01/G5/M5 and other incomplete obligations remain open. F03 remains
+UNCONSUMED; pressure/publication authority unchanged.
+[Artifacts, raw samples, costs, failures and review](development/r8-q4-correction-reuse-20261003/results.md).
