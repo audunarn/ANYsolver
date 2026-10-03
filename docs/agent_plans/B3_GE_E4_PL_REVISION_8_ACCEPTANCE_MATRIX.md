@@ -1700,3 +1700,16 @@ assembly/beam/point/trial counts. No aggregate criterion or scientific threshold
 changed; G0/F01/G5/M5 and other incomplete obligations remain open. F03 remains
 UNCONSUMED; pressure/publication authority unchanged.
 [Artifacts, raw samples, costs, failures and review](development/r8-q4-correction-reuse-20261003/results.md).
+
+
+**3 October shared Jet2 scalar development delta:** librarybccd4952 retains
+owned scalar MUL/DIV results in the ordinary binary64 layout, with original
+zero terms, addition order, exceptions and generic Jet x Jet/subclass fallback.
+135installed checks pass; preceding-wheel checkpoint restores/continues exactly
+through ANYfem. Independent OpenAI static review clear (not different-family
+scientific acceptance). Seven installed pairs:24Q4/32B3 median2.61% faster;
+easy8Q4/12B3 median3.87% faster. Exact physical/history/checkpoint parity and
+unchanged mechanics work counts. Timing variability and failed fixtures/setup
+preserved. No10% programme,10k nonlinear or aggregate qualification claim;
+open mandatory rows, F03 UNCONSUMED and pressure/release authority unchanged.
+[Scoped result, raw samples/artifacts and review](development/r8-ge-ad-scalar-20261003/results.md).

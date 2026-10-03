@@ -1,78 +1,79 @@
 # B3-GE / E4-PL / B2 — active state, 3 October 2026
 
-## Authority and exact restart
+## Exact restart and authority
 
 Active unbudgeted goal and Revision8 plan:
 C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_plans.
-Full amended G0–G6/F01–F13/V01–V28/B01–B18 and failures remain binding.
-Experimental implementation is not aggregate acceptance.
+Full amended G0–G6/F01–F13/V01–V28/B01–B18, scientific criteria and failures
+remain binding. Experimental implementation is not aggregate acceptance.
 
-Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; library0d494d1a.
+Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001; librarybccd4952.
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-4d6d4d0, unchanged. Local scoped commits only: no push/main merge/publication
-or contact-worker messages. Main and unrelated dirty work preserved.
-All owned numerical jobs and Read reviews are terminal. Use git log/status for
-the subsequent evidence/checkpoint commit; no experiment needs interruption.
+4d6d4d0, clean/unchanged. Local scoped commits only; no push/main merge,
+publication or contact-worker messages. Main and unrelated dirty work preserved.
+All owned numerical jobs/Read reviews are terminal. Check git log/status for
+the subsequent evidence commit; no run needs interruption or replacement.
 
-Formal F03 UNCONSUMED, protected script SHA256:
+Formal F03 UNCONSUMED; protected script SHA256:
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
-Pressure-assessment amendment still awaits user decision. Ceiling100k mixed
-rows/600s/8GiB/8numerical threads; one heavy numerical job. Small development
-runs600s/1GiB/pools1/JIT off. Optional local/Mistral unavailable; no reprobes.
-OpenAI Read development review is not different-family scientific acceptance.
-
-Historical us3-modal-canary-v1.zip contains inherited credentials: never
-read/print/copy/disseminate/push affected history. User informed; no rewrite
+Pressure amendment awaits user decision. Ceiling100k mixed rows/600s/8GiB/
+8numerical threads; one heavy numerical job. Small development runs600s/1GiB,
+pools1/JIT off. Optional local/Mistral unavailable; no reprobes. OpenAI static
+review is development scrutiny, not different-family scientific acceptance.
+Historical us3-modal-canary ZIP contains inherited credentials: never read,
+print, copy, disseminate or push affected history. User informed; no rewrite
 or publication authority. New evidence uses explicit safe whitelists.
 
-## Decision, established behavior and remaining uncertainty
+## Current decision, delivered behavior and open findings
 
-Decision sought: complete practical nonlinear scale without repeated preparation
-or weakened mechanical/lifecycle acceptance.
+Decision sought: practical nonlinear scale with unchanged mechanics/state,
+using measured cost reductions rather than repeated preparation or refinement.
 
 [Reference compile reuse and large linear route](development/r8-q4-reference-reuse-20261003/results.md):
-35installed checks; seven-pair400Q4/120B3 warm linear-route median32.349→14.244s.
-Candidate-only10kQ4/1kB3 persisted point route finishes282.497s/4.59GB,
-97,320rows/4,972,608nnz, exact restart and one factorization per owner. No
-large nonlinear, nonmatching or aggregate G5 acceptance.
+5136f026,35installed checks. Seven-pair400Q4/120B3 warm linear median32.349→14.244s.
+Candidate-only persisted10kQ4/1kB3 point route282.497s/4.59GB,97,320rows/
+4,972,608nnz, exact restart, one factorization per owner. No large speedup,
+nonmatching/nonlinear scale or aggregate G5 acceptance.
 
 [Finite arithmetic and physical-work decision](development/r8-q4-finite-arithmetic-20261003/results.md):
-1a620808 fixes tiny Q4 rotation subtraction only for fresh historical flat
-point histories; legacy checkpoints retain original arithmetic.24installed
-checks pass. Historical ANYfem moment2.23e-8 FAILS1e-8; old/stable force both
-share the inherited work defect. Full Q4 pullback gives6.36e-16 at that held
-state. F01 stays OPEN. Forward physical nonlinear routes explicitly select
-existing Q4_ALGORITHMIC_PULLBACK_V1. ANYfem save/reopen/step/restart and public
-headless example pass.400Q4/120B3 completes .01/.02 with physical balance.
+1a620808 fixes tiny Q4 subtraction for fresh historical flat point histories;
+legacy snapshots retain arithmetic/format.24installed checks. Historical
+ANYfem moment2.23e-8 FAILS1e-8; inherited rotated-force work defect remains.
+Full Q4 pullback held-state moment6.36e-16. F01 OPEN. Forward physical nonlinear
+routes explicitly use Q4_ALGORITHMIC_PULLBACK_V1; consumer restart and small
+public example pass.400Q4/120B3 completes .01/.02 with physical balance.
 
-[Guarded constant correction reuse](development/r8-q4-correction-reuse-20261003/results.md):
-0d494d1a prepares eligible elastic Q4 correction once, with closure-owned bytes
-and ORIGINAL guard/token/input binding. Ordinary/J2 calls remain full; all
-runtime/class/quadrature/observation guards and trial updates remain. Cache is
-not checkpoint state. Source parity/ownership/ABA/rejection/restart checks pass;
-independent OpenAI Read findings resolved.57installed checks, no failures/skips;
-414solver/98consumer modules reverified. Candidate wheelad81df53...83253.
+[Guarded correction reuse](development/r8-q4-correction-reuse-20261003/results.md):
+0d494d1a,57installed checks; closure-owned prepared bytes bound to ORIGINAL
+cache/token/input. Full kernels, guards and trial ownership remain. Seven-pair
+24Q4/32B3 median7.22% faster, easy6.72%; exact physical/history/checkpoint parity.
+One400Q4/120B3 pair9.56% faster is PRELIMINARY. Correction calls136→16; solver
+work unchanged. Findings/failures retained. No programme-wide10% claim.
 
-Seven alternating installed pairs:24Q4/32B3 median26.976→25.027s(7.22%);
-easy8Q4/12B3 median9.582→8.938s(6.72%). Exact physical/history/checkpoint parity.
-One400Q4/120B3 pair223.223→201.879s(9.56%, PRELIMINARY). Avoided45–50minute
-routine medium campaign; G5 protocol unchanged. Separate profile: correction
-calls136→16; assemblies16, updates8, beam204 and point255 evaluations match.
-Archive260files/a6e65f09...35056c2. Failed checks and reporting fixes preserved.
-No programme-wide10% claim, large nonlinear acceptance, platform/external
-acceptance or release. All mandatory unfinished matrix rows remain visible.
+[Shared scalar arithmetic](development/r8-ge-ad-scalar-20261003/results.md):
+bccd4952,135installed checks and preceding-wheel checkpoint continuation pass.
+414solver/98consumer/13material modules bound/reverified. Census raw MUL18,016/
+321,910; raw DIV32,615/33,225. Ordinary-layout scalar MUL/DIV avoids constant
+matrices while preserving zero terms/order/ownership/exceptions; Jet x Jet,
+subclass/malformed fallback and guards unchanged. Independent OpenAI review clear.
+Seven installed pairs:24Q4/32B3 median25.026→24.374s(2.61%); easy9.151→8.797s
+(3.87%). Exact physical/history/checkpoint parity, same mechanics work counts.
+Variability retained: one screen pair regresses11.08%, six of seven favor the
+candidate; easy worst paired regression4.15%. No memory or broad speedup claim.
+Wheel280dfa5d...1497701fe; archive265files/658dbf62...4b6db25.
 
-## Next bounded action
+## Next discriminating action
 
-Use saved profile/source to identify the raw-scalar share and constant-matrix
-preparation cost of shared Jet2; it serves shell maps and native beams. Most
-multiplications arise in matrix products, so scalar shortcuts must not be
-assumed to address all341k calls. No AD edit or new experiment has started.
-A justified candidate must preserve Jet×Jet formulas, nonfinite/conversion/
-division behavior, derivative ownership, actual-update derivatives and accepted
-histories. Guard removal or tangent lagging is not an acceleration option.
-Use focused source checks then one bounded matched installed screen; repeat
-passed campaigns only for affected inputs. Do not launch10k nonlinear from
-extrapolation: the600s feasibility boundary remains unresolved. Continue other
-permitted programme work where dependencies allow; no aggregate gate closes.
+Scalar-only benefit is modest; stop extending isolated scalar shortcuts.
+Census identifies107,077right-constant and26,209left-constant Jet products versus
+149,550both-varying products. Inspect saved profile/source to choose one bounded
+acceleration of multiplication by known reference matrices in existing local
+operators. Preserve ordered products/sums, exceptional behavior, owned arrays,
+actual-update mechanics and generic fallback; no mutable constant tags, guard
+removal, tangent lagging or new framework. Use existing full formulas as oracle.
+A bounded installed complete-route screen decides retain/stop; only promising
+results advance to seven pairs. Do not extrapolate a10k nonlinear run into the
+600s budget. Continue unrelated permitted scope where dependencies allow.
+G0/F01/G5/M5 and every unfinished mandatory matrix row remain open. Full goal
+remains ACTIVE; no acceptance, scope, resource or release boundary changed.
