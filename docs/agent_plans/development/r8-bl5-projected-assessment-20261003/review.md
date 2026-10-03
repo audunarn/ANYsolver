@@ -88,3 +88,16 @@ errors cannot be discarded. Effective external library resource qualification,
 different-family scientific acceptance, fullseven ratios/threerefined levels,
 physical shear/drilling/director/mixedsystem and mandatory CalculiX/F03/G0 remain
 open. No existing tolerance/authority/default/version is changed.
+
+## Joint32 and reference-linear accuracy repair
+
+Complete-slice OpenAI Read review and final impact addendum are retained under
+`joint32/installed-v2/complete-review.md` and `review-addendum.md` in raw-manifest-v5.
+The reviewer inspected source, correction signs/scales/independent factors,
+atomic acceptance/cancellation, artifact hashes and physical comparison binding.
+No blocking correctness defect remains in this bounded slice. Final installed
+coverage is51 distinct passed cases; raw failures and pytest cleanup error stay
+visible. Old coarse drivers retain their old-wheel correction-count contract;
+rerunning them on the new wheel requires prospective versioned admission, not
+rewriting old evidence. Different-family acceptance, external effective threading,
+complete ratio/refinement/mechanics and mandatory references remain open.

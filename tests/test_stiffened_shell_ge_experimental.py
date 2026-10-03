@@ -272,11 +272,12 @@ def test_reference_linear_load_cases_reuse_one_factorization():
     np.testing.assert_allclose(second.beam_coordinates,
                                2*first.beam_coordinates, rtol=1e-10, atol=1e-12)
     assert analysis.preflight()["reference_linear_factorizations"] == 1
-    assert analysis.preflight()["reference_linear_refinements"] == 2
+    assert analysis.preflight()["reference_linear_refinements"] == 4
     assert second.generation == first.generation+1
 
 
-def test_linear_refinement_recovers_a_roundoff_sized_response_error(monkeypatch):
+@pytest.mark.parametrize("correction_error", [0., .2])
+def test_linear_refinement_recovers_a_roundoff_sized_response_error(monkeypatch, correction_error):
     analysis = ExperimentalGEAnalysis(_panel())
     factor = ge_experimental.spla.splu(analysis._A)
     calls = []
@@ -287,7 +288,11 @@ def test_linear_refinement_recovers_a_roundoff_sized_response_error(monkeypatch)
             calls.append(np.array(rhs, copy=True))
             # This relative defect fits inside the physical equilibrium gate,
             # but is too large for equivalent-response precision.
-            return answer*(1.+3.e-9) if len(calls) == 1 else answer
+            if len(calls) == 1:
+                return answer*(1.+3.e-9)
+            # A rounded first correction can leave a forward error below the
+            # equilibrium gate but above equivalent-response precision.
+            return answer*(1.+correction_error) if len(calls) == 2 else answer
 
     monkeypatch.setattr(ge_experimental.spla, "splu",
                         lambda _matrix: RoundedFactor())
@@ -298,11 +303,11 @@ def test_linear_refinement_recovers_a_roundoff_sized_response_error(monkeypatch)
                         observed.beam_coordinates][analysis._free],
                    observed.multipliers]
     assert np.linalg.norm(actual-dense)/np.linalg.norm(dense) <= 1.e-10
-    assert len(calls) == 2
-    assert analysis.preflight()["reference_linear_refinements"] == 1
+    assert len(calls) == 3
+    assert analysis.preflight()["reference_linear_refinements"] == 2
 
 
-@pytest.mark.parametrize("failure", ["cancel", "numerical", "programming"])
+@pytest.mark.parametrize("failure", ["cancel", "cancel_second", "numerical", "programming"])
 def test_linear_refinement_failure_preserves_accepted_snapshot(monkeypatch, failure):
     from anysolver import _b2_physical_linear_batch_dev as residual_service
     analysis = ExperimentalGEAnalysis(_panel())
@@ -310,12 +315,16 @@ def test_linear_refinement_failure_preserves_accepted_snapshot(monkeypatch, fail
     accepted = analysis.solve_linear(action)
     raw = analysis.checkpoint()
     token = CancellationToken()
-    if failure == "cancel":
+    if failure in ("cancel", "cancel_second"):
         safe_point = ge_experimental.cancellation_safe_point
+        refinements = 0
 
         def cancel_refinement(current_token, phase):
+            nonlocal refinements
             if phase == "stiffened-shell.linear.refined":
-                current_token.cancel("after accurate refinement")
+                refinements += 1
+                if refinements == (2 if failure == "cancel_second" else 1):
+                    current_token.cancel("after accurate refinement")
             return safe_point(current_token, phase)
 
         monkeypatch.setattr(ge_experimental, "cancellation_safe_point", cancel_refinement)

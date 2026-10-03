@@ -89,3 +89,8 @@ scripts/r8_bl5_nested_projected_kernel_dev.py -text
 scripts/r8_bl5_nested_projected_owner_dev.py -text
 scripts/r8_bl5_nested_projected_external_dev.py -text
 scripts/r8_bl5_nested_projected_comparison_dev.py -text
+scripts/r8_bl5_projected_joint_norm_dev.py -text
+scripts/r8_bl5_projected_joint_kernel_dev.py -text
+scripts/r8_bl5_projected_joint_owner_dev.py -text
+scripts/r8_bl5_projected_joint_external_dev.py -text
+scripts/r8_bl5_projected_joint_comparison_dev.py -text

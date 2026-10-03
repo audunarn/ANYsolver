@@ -1087,8 +1087,11 @@ class ExperimentalGEAnalysis:
             return value+correction
 
         # A rounded sparse residual can pass the physical gates while losing
-        # retained forces or multipliers. One accurate correction uses this
-        # owner's unchanged matrix and cached factor, not a comparison oracle.
+        # retained forces or multipliers. On fine mixed grids the first accurate
+        # correction can itself lose retained-force accuracy even when physical
+        # equilibrium passes. Two bounded corrections use this owner's unchanged
+        # matrix and cached factor, not a comparison oracle or altered tangent.
+        solution = refine(solution)
         solution = refine(solution)
         for attempt in range(2):
             if not np.isfinite(solution).all():

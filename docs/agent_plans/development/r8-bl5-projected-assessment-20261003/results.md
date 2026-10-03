@@ -274,3 +274,78 @@ preserves13193716B of explicitly whitelisted source/commands/raw arrays/outputs/
 failures/reviews and prospective/parent notes. Prior manifests are unchanged;
 exact bytes will be verified in source and Git staging. FullM2/G0/F03 and all
 programme/material/platform/scale/consumer/release duties remain open.
+
+## Joint refinement and retained-force accuracy repair — 3 October
+
+Parent961a755c. Whole-member:shell ratio1:1; native-halfcell:shell ratio2:1.
+Grow16x4/32halfcells/4supports to32x8/64halfcells/8supports, retaining the
+complete five-channel four-shell-interval policy. Crosslevel projected spaces
+are **not nested**; no interlacing or coarse-array/floor reuse is claimed.
+Fresh scalar registration precedes native evaluation: CS²1.5331111684 and safe
+case floor.4036129255. Actual complete80-row beta.8210778835 versus coarse40-row
+.8379451049 (signed two-level exponent.02933666, descriptive only). This is no
+uniform stability or production policy decision.
+
+Fine installed reference-linear execution, positive norm and mechanical kernel
+are complete. Retain2305 physical/nodal/cell coordinates and locally eliminate
+only576 negative resultants for the bounded independent oracle. Kernel2225 has
+eigenmin4.3350511468e-6 above summed uncertainty1.2555133927e-10. Reduced inertia
+2305+/80-/0 implies full2305+/656-/0; full mixedK is not an SPD norm.
+
+The first kernel run failed strict solution parity (multipliers2.71754e-8),
+while physical gates and full-versus-installed agreement passed. One original
+mixed residual correction through independent reduced/local factors improved
+backward error but did not resolve forward parity; both failed runs remain.
+Saved-array diagnosis then showed a second SAME full-factor correction reduces
+parity to1.16e-13. This identifies retained-force forward error in the original
+one-correction owner, rather than a demonstrated attachment-law failure.
+
+The product reference-linear owner now applies two bounded compensated-residual
+corrections before unchanged physical acceptance. No tangent averaging, new
+physical tolerance, factor rebuilding, equation, default selector, checkpoint
+format, version or nonlinear globalization changes. Three compatible cases
+retain one factorization/six corrections. Independent reduced LU/local-particular
+correction borrows no full factor/owner answer. Current installed full/reduced/
+owner parity<=1.16002e-13 over coordinates, resultants, multipliers, reactions,
+wrenches and work; all seven kernel predicates pass.
+
+New unreleased0.4.7 wheel SHA
+`1bf7dabd8771e76ed09825fb66a89e3e48d513dbb0321989c41701096a679632`
+binds all417 source/site modules. Six focused source checks pass. A meaningful
+first-correction-error regression fails old wheel at~6e-10 equivalent response
+and passes new. Installed evidence:38pass/8missing-helper-import failures, then
+only those8 pass after fixing the harness; added second-correction cancellation
+passes; Q4/mixed/allS3 footprint recovery/restart and curved reference/finite/
+restart4pass. Total51 distinct passed installed cases, not a full release suite.
+Ignored pytest atexit permission error is preserved and is not solver failure.
+
+One matched supplementary OpenSees batch uses the actual fine geometry, sections,
+frames, arms, supports, load measures and complete projected80 physical work.
+Fy100N/Mx10Nm/Mz10Nm work differences are-.1836532%/+.0038521%/-.0803186%, versus
+coarse-.5992343%/+.0141450%/-.2675928%. Fine shell translation/rotation L2 differences
+are .2118/.7739%, .01639/.01742%, .1665/.5127%; common nodal comparison does not
+identify retained beam fields. Exact regional/polynomial wrenches, grounds and
+pointwise gaps remain recorded. Native Mz work changes-3.4266% while external
+changes-3.6076%; the shared refinement trend does not support allocating that
+change solely to the native connection. No converged1% or external acceptance.
+
+All runs terminal within600s/1GiB/effective native pools1; final kernel14.40s and
+sampled483446784B. Effective external library threading remains unresolved.
+Setup/solve work is recorded; no development-speed or performance gain measured.
+Separate OpenAI Read review found no blocking defect, including correction
+algebra, atomic cancellation/publication and artifact/physical matching. It does
+not satisfy the unavailable different-family scientific acceptance requirement.
+
+Retain the candidate and accuracy repair for the next registered mesh-ratio
+assessment. First derive one complete coarser-trace support rule applicable to
+all seven ratios; assess the previously troublesome off-ratio Fy/rotation branch
+with fixed physical work and independently bound norm. Do not clone this1:1
+span8 as a universal rule, tune individual channels, or automatically launch
+another axial/third-grid campaign. Full seven ratios/three growing levels,
+locking/shear/drilling/director/mixed-system, mandatory CalculiX and M2/G0/F03
+remain open; formalF03 authority remains unconsumed.
+
+[235 safe raw files](raw-manifest-v5.json) retain both failed kernel runs,
+stale-wheel norm failure, installed harness failure, original notes, source,
+commands, all arrays, fresh artifact/bindings, references and separate reviews.
+Manifest SHA `6818598b00e3cc5871f440044362f2b510287828d35d4ad216b51e967531ae30`. Previous evidence and statuses are unchanged.

@@ -1922,3 +1922,17 @@ policy chosen, no F03 consumed. Next compare a distinct nested40-row complete
 policy plus actual mechanical kernel, not another refinement campaign.
 M2/G0 and all aggregate acceptance rows remain OPEN.
 [Grouped exact results, review and immutable evidence](development/r8-bl5-projected-assessment-20261003/results.md).
+
+**3 October joint growing projected branch and linear precision repair:**
+IMPLEMENTED_NOT_QUALIFIED. Whole-member:shell1:1/halfcell2:1; four-shell supports
+40->80 rows, fresh beta.837945->.821078 above independentlyregisteredfinefloor
+.403613. No crosslevel nesting/uniform claim. Fresh kernel positive/inertia pass.
+Preserved parity failures identify one-correction retained-force forward error;
+two samefactor owner corrections plus independent mixed oracle yield<=1.16002e-13.
+New417module wheel1bf7dabd...;51distinct installed checks pass, including failedold
+wheel regression and second-correction cancellation. Matched fine supplementary
+work% Fy-.183653/Mx+.003852/Mz-.080319 improvescoarse; sharedMz~3.5%change remains
+unconverged. Separate Read review clear; different-family/external threading/
+fullratios/threelevels/mandatoryreferences and M2/G0/F03 OPEN. Formalauthority
+unconsumed; no version/default/tolerance/format change or measured speedup.
+[Results, failures, review and235-file manifest](development/r8-bl5-projected-assessment-20261003/results.md).

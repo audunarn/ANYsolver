@@ -1,88 +1,77 @@
-# B3-GE / E4-PL / B2 active state — 3 October 2026
+# B3-GE / E4-PL / B2 active state â€” 3 October 2026
 
 ## Restart and authority
 
-Full Revision8 goal ACTIVE, unbudgeted. Controlling plan/goal remain under
+Full Revision8 goal ACTIVE, unbudgeted; controlling plan/goal remain in
 C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_plans.
-Complete amended G0–G6/F01–F13/V01–V28/B01–B18 obligations remain binding.
-BL5 explicitly releases normal spin; historical six-row point law unchanged.
-Development implementation/evidence do not confer programme acceptance.
+Complete amended G0â€“G6/F01â€“F13/V01â€“V28/B01â€“B18 obligations remain binding.
+BL5 explicitly releases normal spin; historical six-row point law is unchanged.
+Implementation and development evidence do not confer programme acceptance.
 
-Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001, source parent39f12419bbe11a5cfcc73a286320a8a039789bdb;
-confirm current HEAD/status on resume. Product ccab1681 and417-module wheel
-SHA a47e518fe36050e1a2d5a93d9d8c9802138e46c0cc9d8c1c840cc5efdd8650d3 unchanged.
-ANYfem consumer2ede338ba28932bb9dd3e8eb0f0a4908d37fc765 in separate experimental
-worktree; editable ANYmaterial graph is not final isolated-package qualification.
+Active worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001, source parent961a755cb651f3a85c2380245c3dfbf3dd334829;
+confirm HEAD/status on resume. New unreleased0.4.7 wheel SHA
+1bf7dabd8771e76ed09825fb66a89e3e48d513dbb0321989c41701096a679632 binds417modules.
+ANYfem consumer2ede338b remains in its separate experimental worktree; editable
+ANYmaterial graph is not final isolated-package qualification.
 
-All owned jobs TERMINAL, workers complete; no queued experiment. Local scoped
-commits only, no push/main merge/publication/contact-worker messages. Local/
-Mistral unavailable, no reprobes; OpenAI Read review does not satisfy required
-different-family scientific acceptance. No development review finding remains.
+All owned jobs TERMINAL; reviewers complete, no queued experiment. Local scoped
+commits only: no push/main merge/publication/contact-worker messages. Local/
+Mistral unavailable; OpenAI Read review does not satisfy different-family
+scientific acceptance. Formal F03 UNCONSUMED: original protected runner SHA
+c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
+Never execute/substitute reconcile copies or old consumed authorities. Pressure
+amendment remains pending. Limits100k rows/600s/8GiB/8threads, ONE numerical job;
+use smaller screens. Historical us3-modal-canary contains inherited credentials:
+never read/copy/print/archive/push it. Explicit safe whitelists only.
 
-Formal F03 UNCONSUMED, ORIGINAL runner:
-C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/scripts/b3_e4_f03_c1_fy_supported_reference.py
-SHA c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481
-verified this slice. Never execute/substitute reconcile copy or consumed authority.
-Pressure amendment awaits user. Ceiling100k rows/600s/8GiB/8numerical threads,
-ONE heavy job; small checks1GiB, actual native pools1/JIT off. Supplementary
-external sampled1 does not qualify effective library threads. Historical
-us3-modal-canary archive contains inherited credentials: NEVER read/copy/print/
-archive/push it. Use explicit safe evidence whitelists; histories unchanged.
+## Decision and established behavior
 
-## Decision, established facts and remaining uncertainty
+Retain experimental complete projected five-channel candidate. At whole-member:
+shell1:1 (halfcell:shell2:1), four-shell-interval supports grow16x4/32/4 to32x8/64/8.
+Spaces across these levels are NOT nested. Independent fresh case floor.4036129;
+complete beta.8210779 versus coarse.8379451; no uniform-policy acceptance.
 
-M2/G0 OPEN. [Complete projected-candidate record](development/r8-bl5-projected-assessment-20261003/results.md)
-and [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) bind evidence.
-The optional projected halfcell density fixes the16/15 native torsion patch to1.0;
-quadratic trace interpolation remains. Original defaults/identities unchanged.
-Bare yaw is K-null/C-active: structural `(C*r)^T*lambda=r^T*f` must be retained;
-positive auxiliary norm is valid, full indefinite K is not an SPD norm.
-Prior80-row raw scalar condition15998>1e4 remains UNRESOLVED; physical-L2
-normalization correction unchanged quotient. Complete80 beta.255515 identifies
-actual coarse auxiliary weakness, not demonstrated loaded/uniform failure.
+Fine mixed kernel retains2305physical/nodal/cell coordinates; eigenmin4.33505e-6
+>uncertainty1.25551e-10, inertia2305+/80-/0 after only local negative-resultant
+reduction. Full indefiniteK is not an SPD norm. Initial strict solve-parity
+failures exposed retained-force forward error after one owner correction.
+Two bounded samefactor compensated corrections now preserve physical gates;
+installed/full/independent-reduced parity<=1.16002e-13. Factor1/corrections6 for
+three cases; no equations/tolerances/defaults/checkpoint/version changes.
 
-ONE distinct nested40-row space now passed all bounded checks: new0=L0+R0;
-new1=.5*(-L0+L1+R0+R1), allfive channels, four-shell-interval supports. Independent
-rational work and preregistered floor.4066549; actual beta.8379451. Fresh enlarged
-mechanical kernel retains allphysical/cell rotations: eigenmin1.73804e-5 above
-uncertainty3.10607e-11, inertia769+/40-/0. Raw unrefinedfullKKT failure preserved;
-EXISTING mandatory compensated-residual correction gives parity<=1.01e-11.
-Installed owner K0/C3.56e-18, states/resultants/reactions and physical work/balance
-pass; factor1/corrections3. Actual geometry/frames/sections/supports saved.
+New-wheel51 distinct installed checks pass, including synthetic old-wheel
+regression, cancellation after second correction, Q4/mixed/allS3 footprint
+recovery/restart and curved owner behavior. Full release suite not run. Failed
+kernel/harness/norm runs and ignored pytest cleanup error remain archived.
 
-ONE same-law projected40 supplementary OpenSees batch passes allphysical controls:
-work% Fy-.5992343/Mx+.0141450/Mz-.2675928. Regional differences generally decrease;
-beam-support axial-force differences remain5.0629/-.23972/.40447N. Nodal field
-comparison does not identify retained cell rotations. Bothmodels changed weak
-constraint space; coarsework below1% is not converged accuracy. Exact regional/
-polynomial wrench recovery and pointwise gaps are saved. Mandatory CalculiX open.
+Matched fine supplementary OpenSees work% Fy-.1836532/Mx+.0038521/Mz-.0803186
+improves coarse-.5992343/+.0141450/-.2675928. Bothmodels show~3.5% Mz refinement
+change; this does not isolate a native connection defect. Regional wrench, gap,
+field and support comparisons remain explicit. Common nodal fields do not
+identify retained cell fields; no converged accuracy/mandatory external acceptance.
+Effective OpenSees threading unresolved. Separate Read review has no blocker.
 
-Decision: retain the complete40-row policy as EXPERIMENTAL candidate for growing
-space assessment, without selecting a production policy. Complete-slice Read
-review has no blocker. [140 safe files](development/r8-bl5-projected-assessment-20261003/raw-manifest-v4.json)
-bind failures/source/commands/arrays/reviews; prior/prospective notes preserved.
-No product/API/default/version change or formalF03 execution this slice.
+[Grouped results/review](development/r8-bl5-projected-assessment-20261003/results.md)
+and [235 safe raw files](development/r8-bl5-projected-assessment-20261003/raw-manifest-v5.json)
+bind source, registration, failures, artifacts and exact prior/prospective notes.
+Use the [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md); do not
+rebuild delivered GE/B2/consumer/material/load/reuse/arc behavior.
 
-## Next discriminating action
+## Remaining uncertainty and next discriminating action
 
-First reconcile the registered meaning of beam:shell ratios versus native
-halfcell counts, then ONE jointrefinement at the same physical ratio and same
-complete four-shell-interval resolution policy. Reuse valid preparation; do
-not holdfour supports fixed. Derive/reference-bind the appropriate auxiliary
-norm and test actual constrained mechanics/physical transfer, retaining every
-nodal/cell variable. It distinguishes growing-space improvement from coarse
-space benefit: passing permits next registered envelope; failing/unresolved
-stops expansion for its exact norm/kernel/transfer cause. Do not extrapolate
-oldkernel/SPD or scalarfloor to changed grids. Fullseven ratios/growingthree
-levels, locking/director/shear/drilling/mixedsystem remain mandatory. No automatic
-axial/S8R refinement, channel tuning or decreasing-floor acceptance.
+First derive one complete coarser-trace support rule over the seven ratios:
+span8 is this1:1 branch only. Check support/quarter-station representability,
+work and reference consistency before any loaded solve; no channel-specific knobs.
+Then ONE bounded previously troublesome off-ratio Fy/rotation assessment with
+unchanged physical geometry/supports/load/law and fresh independent norm bound.
+It distinguishes branch-specific improvement from a transferable resolution rule.
+Pass permits the next registered envelope; failure identifies the exact norm,
+representation, supported kernel or physical transfer cause and stops expansion.
+No automatic axial/S8R or third-grid refinement campaign, inherited floor or
+fullK/SPD inference. Historical coarse scripts keep their old-wheel count contract.
 
-## Remaining complete programme
-
-Use the matrix/grouped reports for installed GE/B2/consumer/material/load/reuse/
-arc slices; do not rebuild delivered behavior. Large reference-linear evidence
-is not G5; arc is not accepted firstlimit/descendingbranch. Remaining foundation,
-attachment/material combinations, spectra/capacity, practical scale, mandatory
-external, installed platforms/consumers, independent acceptance and authorized
-complete-release duties remain open. Resume from actual state, not oldplans.
+M2/G0/F03 OPEN: allseven ratios/three growing levels, shear/drilling/director,
+locking/mixed-system, required foundations/attachments/materials, spectra/capacity,
+practical scale, mandatory CalculiX, installed platforms/consumers, independent
+acceptance and authorized complete release remain required. No speedup measured.
