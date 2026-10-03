@@ -1,97 +1,77 @@
 # B3-GE / E4-PL / B2 — active state, 3 October 2026
 
-## Exact restart and authority
+## Restart, scope and authority
 
 Full unbudgeted Revision8 goal ACTIVE; plan/goal at
 C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_plans.
-Full amended G0–G6/F01–F13/V01–V28/B01–B18 and existing criteria remain binding.
-Prior longer note is preserved byte-for-byte in Git d693b3a3 at this path.
+Amended G0–G6/F01–F13/V01–V28/B01–B18 and scientific criteria remain binding.
+Risk-proportionate, tiered development applies prospectively; protected history
+and consumed authority retain meaning. Prior active note preserved byte-for-byte
+in [delivery evidence](development/r8-b2-loaded-point-owner-20261003/active-state-before-consolidation.md).
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; product c83c5d4e (helper), prior owner bb17ecac, reference a32c2cc0.
+branch codex/stiffened-main-reconcile-20261001; product af7876710ad0952050c8a03ad988a5601cda668b.
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-4d6d4d0 unchanged. Local scoped commits only; no push/main merge/publication
-or contact-worker messages. Main and unrelated working changes preserved.
-All owned numerical jobs and Read reviews TERMINAL; handle73132 completed.
-Check Git log/status for subsequent evidence commit; no run needs replacement.
+2ede338ba28932bb9dd3e8eb0f0a4908d37fc765. Check log for later evidence commits.
+No source job needs replacement. Previous owned numerical jobs TERMINAL.
+One bounded Read review of the next native transfer-resolution decision is active;
+it has no edits/numerical-job/Git authority. Check collaboration state on resume.
+Local scoped commits only; no push/main merge/publication/contact-worker messages.
+Main and unrelated dirty work preserved.
 
-Formal F03 UNCONSUMED. Protected ORIGINAL-worktree runner
+Formal F03 UNCONSUMED. ORIGINAL-worktree dirty runner
 scripts/b3_e4_f03_c1_fy_supported_reference.py SHA256 remains
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
-Its pre-existing dirty bytes were not changed. Reconcile checkout's differently
-bound HEAD version is not that runner and must not be substituted/executed.
-Neither runner was executed. Pressure amendment awaits user decision.
-Ceiling100k rows/600s/8GiB/8numerical threads; one heavy job at a time.
-Small checks600s/1GiB, pools1/JIT off where applicable.
-Optional local/Mistral unavailable: no reprobes. OpenAI Read review is
- development scrutiny, not different-family scientific acceptance.
-Historical us3-modal-canary ZIP contains inherited credentials: never read,
-copy, print, disseminate or push affected history. No rewrite/publication
- authority. New evidence uses explicit mechanical/source/check whitelists.
+Do not execute/substitute the differently bound reconcile-worktree runner.
+Pressure amendment awaits user. Ceiling100k rows/600s/8GiB/8numerical threads,
+one heavy job at a time; small checks600s/1GiB, pools1/JIT off.
+Optional local/Mistral unavailable; no reprobes. OpenAI Read scrutiny is not
+different-family scientific acceptance. Historical us3-modal-canary archive
+contains inherited credentials: never read/copy/print/archive/push affected
+history. Use explicit safe evidence whitelists.
 
-## Current decision and delivered behavior
+## Delivered behavior and evidence
 
-M2 causal discriminator resolved within the straight rigid-carrier fixture.
-[Same-P0 reference](development/r8-bl5-p0-carrier-20261003/results.md) uses saved
-physical supports/loads/section and finite P0 means. Finest native-versus-P0 tip
-+0.0912%; force moments+0.0769…+0.0883%. P0-versus-continuous-tie force moments
-−2.5773…−2.9992% dominate the saved2.5–2.9% transfer discrepancy. Independent
-one-support algebra and60-digit displacement formulation corroborate the
-reference;10focused tests pass. Initial3test failures and script-import failure
-are retained. No new native solve, fourth grid or scientific acceptance.
+[B2 loaded-point workflow](development/r8-b2-loaded-point-owner-20261003/results.md):
+explicit Q4 opt-in includes actual loaded interior compatibility, all member-local
+Green cross-work, selected poses/sections and full loaded energy. Existing facade,
+1/10/100 batches, one eligible factor, complete-case cancellation and strict new
+ANYfem experimental schemas preserve defaults.188 final installed checks pass;
+417solver/98fem source/wheel/site identities match. Public physical example:
+10cases, onefactor, exact consumer round-trip. Meaningful failures/reviews retained.
+ANYmaterial is recorded editable source, not isolated final package-graph acceptance.
+Footprints/mixed/S3/loaded spectra reject this policy. M3 aggregate remains open.
 
-[Same-parent full-trial handoff](development/r8-same-parent-trial-20261003/results.md):
-34focused/169installed checks; seven pairs24Q4/32B3 median31.62% faster,
-easy31.44%; exact physical/history/checkpoint parity. Full current tangent,
-not lagged. Restricted elastic Q4/full-pullback generalized points/dead loads.
-ANYfem preceding-wheel checkpoint/save-reopen/.03continuation passes.
-[One larger installed pair](development/r8-same-parent-middle-20261003/results.md):
-400Q4/120B3 192.008→130.495s (32.04% PRELIMINARY); exact parity, physical
-balance and child resources pass. Stop medium timing campaigns.
+[Same-parent full-trial reuse](development/r8-same-parent-trial-20261003/results.md):
+34focused/169installed; seven pairs24Q4/32B3 median31.62% faster, easy31.44%,
+exact history/checkpoint/physical parity. Full current tangent, restricted elastic
+Q4/full-pullback generalized points/dead loads. [One larger pair](development/r8-same-parent-middle-20261003/results.md)
+32.04% preliminary; no more timing campaign. [Reference compile/large linear](development/r8-q4-reference-reuse-20261003/results.md)
+includes candidate-only10kQ4/1kGE linear; not G5 nonlinear/nonmatching qualification.
+Earlier correction/scalar gains and rejected constant-matrix candidate remain
+linked by the acceptance matrix; no campaign needs repeating.
 
-Other retained costs/failures are linked in preceding evidence:
-[Reference compile/large linear](development/r8-q4-reference-reuse-20261003/results.md),
-[correction reuse](development/r8-q4-correction-reuse-20261003/results.md),
-[scalar arithmetic](development/r8-ge-ad-scalar-20261003/results.md).
-[Matrix candidate rejected/reverted](development/r8-ge-ad-constant-20261003/results.md).
-No10k nonlinear, plastic-suite, broad performance or aggregate G5 acceptance.
+## Native decision and next action
 
-## Remaining uncertainty and next action
+[Same-P0 causal reference](development/r8-bl5-p0-carrier-20261003/results.md):
+finest native-versus-same-P0 transfer+0.0769…+0.0883%, tip+0.0912%; P0-versus-
+continuous-tie transfer−2.5773…−2.9992% dominates saved2.5–2.9% discrepancy.
+This resolves the straight carrier's causal allocation, not M2 acceptance.
+[Saved stabilization discriminator](development/r8-bl5-stabilization-20261003/results.md)
+passes full mixed-work/physical controls; local PL/HG sensitivity is not drilling
+independence. No new native mesh or F03 execution.
 
-Retain BL5/c2 for development; its finest strong-tie physical transfer failure
-remains. Finite weak enforcement resolution must reflect physical transfer
-length scales. A changed complete support rule requires matching physical and
-stability evidence; do not tune channels, select from tip/gap/beta alone or
-automatically refine the carrier again. Next M2 action is the transfer-aware
-resolution/mixed-system obligation, using this causal result and completed
-auxiliary-reference family; do not repeat completed norm campaigns.
+Decision sought: complete transfer-aware interface resolution consistent with
+the declared BL5 law, all channels and intended physical length scales.
+Remaining uncertainty: a rule that resolves transfer without locking/unstable
+mixed modes across admitted ratios. Next bounded action: reconcile the Read
+review against the existing complete c1/c2 candidates and physical/mixed-system
+obligations; implement one justified missing control or complete rule, not another
+isolated carrier refinement/norm campaign. An unsupported proposal is parked with
+its precise obstruction while independent mandatory implementation continues.
 
-F01 remains OPEN: historical corotational force mapping violates physical work;
-[failure preserved](development/r8-q4-finite-arithmetic-20261003/results.md).
-Forward nonlinear physical routes explicitly use Q4_ALGORITHMIC_PULLBACK_V1.
-Scoped F05/F08/F09 accepted; aggregate G0, required attachments/materials,
-spectra/capacity, external/platform/consumer and scale/release rows remain open.
-E04 first-limit-point execution and pressure amendment remain pending.
-Implementation, testing, acceptance and release remain separate statuses.
-
-Completed saved-fixture stabilization discriminator:
-[results](development/r8-bl5-stabilization-20261003/results.md). Actual shell
-decomposition and full mixed-work derivatives pass; first reproducibility failure
-preserved and corrected with compensated residual refinement. PL relative work
-slopes Fy0.6133%, Mx0.0003775%, Mz0.3426%; hourglass smaller. Local sensitivity,
-not drilling independence or physical-law acceptance. No new mesh/F03 execution.
-
-B2 fixed-end load-bubble helper c83c5d4e:
-[results](development/r8-b2-load-bubbles-20261003/results.md).32 source and32
-installed checks pass,416 source/wheel/site modules verified; owned immutable
-maps, independent BVP/work/unit/representability controls. Not public integration.
-
-Current bounded implementation: explicit opt-in Q4 loaded-point trace, preserving
-default homogeneous route. Owner must include C*u+a_body-H*lambda, all same-member
-Green cross-blocks, actual loaded recovery and separate full energy. Footprints,
-mixed/S3 and modes reject this initial new policy. Root owns facade/tests/evidence;
-worker /root/b2_body_consumer owns owner and optional local compilation helper.
-No worker numerical jobs. Independent design scrutiny /root/q4_correction_review
-complete; complete implementation review follows. Next checks discriminate offsets/
-frames, two points, affine supports, body vs raw nodal loads, units and batches.
-No new timing campaign. Full goal ACTIVE; aggregate gates/authority unchanged.
+F01 OPEN: historical corotational physical-work failure retained. Forward nonlinear
+routes explicitly use Q4_ALGORITHMIC_PULLBACK_V1. Scoped F05/F08/F09 accepted;
+aggregate G0, required attachments/materials, spectra/capacity, external/platform,
+consumer, scale and release rows remain open. E04 first-limit-point unexecuted.
+Implementation, testing, acceptance and release remain distinct.

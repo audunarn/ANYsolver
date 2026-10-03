@@ -1767,3 +1767,17 @@ Private B2 helper c83c5d4e passes32source/32installed checks with416module bindi
 independent BVP/Green/work/unit controls. Owner integration pending; no new public
 qualification. Full goal ACTIVE, mandatory gates and authority unchanged.
 [Helper and actual artifact](development/r8-b2-load-bubbles-20261003/results.md).
+
+**3 October loaded-point owner/consumer development delta:** solver af787671,
+ANYfem2ede338 deliver explicit B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV through
+the existing facade and strict experimental input persistence. Actual loaded
+interior gaps, same-member Green cross-work, selected poses/sections and separate
+full energy are included.188installed checks pass,417/98source/wheel/site modules
+match; ten-case physical steel example uses onefactor and exact consumer round-trip.
+Default identities/routes remain unchanged. Independent BVP strain/work controls
+and OpenAI Read findings resolved; this is not different-family scientific acceptance.
+Meaningful failed source/installed/example attempts retained. Mixed/S3, footprints
+and loaded spectral requests reject the initial policy. Material dependency is
+recorded editable source; no full graph/platform/G6 claim. M3/aggregate gates stay
+open; F03 UNCONSUMED, resources/scientific tolerances/release authority unchanged.
+[Product, artifacts, raw outcomes, failures and scope](development/r8-b2-loaded-point-owner-20261003/results.md).
