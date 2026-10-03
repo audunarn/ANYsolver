@@ -847,6 +847,7 @@ class ExperimentalGEAnalysis:
     @property
     def capabilities(self):
         from ._stiffened_shell_ge_distributed_load import admits_owner as admits_distributed
+        from ._stiffened_shell_ge_body_load import admits_owner as admits_body
         if self._modal_only:
             return dict(self.reference_modal_capabilities, profile=PROFILE,
                         modal_boundary_policy=self._definition.modal_boundary_policy,
@@ -887,8 +888,10 @@ class ExperimentalGEAnalysis:
                 "beam_section_families": self._beam_families,
                 "attachment": attachment,
                 "point_recovery": "accepted global spatial connection actions; reference-linear or current ports",
-                "body_acceleration": (() if self._line_samples or self._definition.footprints else
-                    ("experimental uniform spatial acceleration; explicit physical beam inertia and shell density; reference-linear or conservative finite work with objective Q4 pullback; GEBodyLoad",)),
+                "body_acceleration": (() if not admits_body(self) else
+                    (("experimental selected-nodal rigid footprint uniform spatial acceleration; elastic response of generalized sections; flat Q4 and increment-origin charts; explicit physical beam inertia and shell density; GEBodyLoad",)
+                     if self._definition.footprints else
+                     ("experimental uniform spatial acceleration; explicit physical beam inertia and shell density; reference-linear or conservative finite work with objective Q4 pullback; GEBodyLoad",))),
                 "beam_distributed_loads": (() if not admits_distributed(self) else
                     ("experimental element-addressed fixed-spatial force/couple per reference arclength; native quadrature; couples nonconservative; GEBeamDistributedLoad",)),
                 "staged_beam_distributed_loads": (() if not admits_distributed(self) else

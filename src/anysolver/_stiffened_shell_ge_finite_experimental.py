@@ -71,7 +71,7 @@ NATIVE_MATERIAL_CHECKPOINT = _BINARY_SCHEMAS["finite_native_material"]
 
 
 def _trial_work_ratio(residual, applied, coordinate_scale):
-    """Pressure trial merit only; never an equilibrium acceptance test.
+    """State-dependent-load trial merit; never an equilibrium acceptance test.
 
     Coordinate scales and the parent's load define one work norm for the
     entire backtracking comparison. Small physical components remain in the

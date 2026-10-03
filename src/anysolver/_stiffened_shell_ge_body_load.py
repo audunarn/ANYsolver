@@ -25,6 +25,46 @@ MAX_METADATA_BYTES = 4096
 MAX_COMPILED_VALUES = 1_000_000
 
 
+def _admission_error(owner):
+    """Keep the new footprint intersection narrower than either parent route."""
+    definition = owner._definition
+    if definition.lines or owner._line_samples:
+        return 'GE body load admits point owners only; lines unsupported'
+    if not definition.footprints:
+        return None if definition.points else 'GE body load requires point attachments'
+    from ._stiffened_shell_nodal_footprint import INCREMENT_ORIGIN_CHART_POLICY
+    from ._stiffened_shell_q4_algorithmic_pullback import POLICY as Q4_POLICY
+    from ._ge_beam3_generalized_ellipsoid_section import EllipsoidalGeneralizedSection
+    from ._stiffened_shell_ge_reference_modal import _physical_spatial_inertia
+    panel = definition.shell
+    if (definition.shell_reference_policy != 'flat' or not panel.q4_elements or
+            panel.s3_elements or panel.j2_curve is not None or
+            definition.q4_pullback_policy != Q4_POLICY or
+            definition.footprint_chart_policy != INCREMENT_ORIGIN_CHART_POLICY or
+            not owner._point_incidence or owner._has_physical_fibre):
+        return 'GE body footprint load requires flat elastic Q4 and increment-origin charts'
+    # A generalized law can yield. Candidate/restore history guards continue to
+    # reject every nonelastic response; no yield-magnitude classification is used.
+    try:
+        _positive(panel.density_kg_m3, 'shell density')
+        _positive(panel.thickness_m, 'shell thickness')
+        if len(owner._reference_modal_inertias) != len(owner._beam_parts):
+            return 'GE body footprint load requires explicit physical beam inertia'
+        for (element, _, _), inertia in zip(owner._beam_parts, owner._reference_modal_inertias, strict=True):
+            if type(element.section) is not EllipsoidalGeneralizedSection:
+                return 'GE body footprint load requires declared generalized sections'
+            element.section.guard()
+            _physical_spatial_inertia(inertia)
+            np.linalg.cholesky(inertia)
+    except (ValueError, np.linalg.LinAlgError):
+        return 'GE body footprint load requires unchanged generalized laws and physical mass'
+    return None
+
+
+def admits_owner(owner):
+    return _admission_error(owner) is None
+
+
 @dataclass(frozen=True)
 class GEBodyLoad:
     model_identity: str
@@ -79,8 +119,9 @@ class GEBodyLoad:
             raise ValueError('body load belongs to a different model')
         owner._require_open()
         definition = owner._definition
-        if definition.lines or definition.footprints or owner._line_samples or not definition.points:
-            raise ValueError('GE body load admits point owners only; lines and footprints unsupported')
+        admission_error = _admission_error(owner)
+        if admission_error is not None:
+            raise ValueError(admission_error)
         count = owner._K.shape[0]
         if type(count) is not int or not 0 < count <= MAX_COMPILED_VALUES:
             raise ValueError('bounded body-load coordinate layout required')
@@ -130,7 +171,8 @@ class GEBodyLoad:
             raise ValueError('positive body mass required')
         augmented = sha256(_canonical(dict(policy=POLICY, model_identity=self.model_identity,
                                            body_load=self.identity))).hexdigest()
-        context = GEBodyContext(self, augmented, count, shell_xyz, shell_masses, tuple(beams), total_mass)
+        context = GEBodyContext(self, augmented, count, shell_xyz, shell_masses, tuple(beams), total_mass,
+                                freeze_trial_load_norm=bool(definition.footprints))
         reference = SimpleNamespace(q=np.zeros(count), cells=np.tile(np.eye(3), (len(beams), 2, 1, 1)))
         gradient, _, recovery = context.evaluate(reference)
         object.__setattr__(context, 'reference_gradient', _owned(gradient))
@@ -164,6 +206,10 @@ class GEBodyContext:
     shell_masses: np.ndarray
     beams: tuple
     total_mass: float
+    # New footprint/body route only. Compare backtracks in their parent's work
+    # norm when eccentric mass activates previously quiet torque rows. Strict
+    # current-state equilibrium and compatibility acceptance remain unchanged.
+    freeze_trial_load_norm: bool = False
     reference_gradient: np.ndarray = field(init=False, repr=False)
     reference_recovery: GEBodyRecovery = field(init=False)
 
