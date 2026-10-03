@@ -1441,3 +1441,9 @@ Implemented: **yes**. Source-tested: **named bounded/default fixtures only**.
 Installed-tested: **default covered example**. Independently accepted: **no**.
 Released/application-admitted: **no**. No complete-route speed claim.
 [Evidence and next action](d1_review_support/C6_S3_MATCHED_OVERLAP_SLICE_20261003.md).
+
+Disposable shared geometry preparation subsequently passes24local and2restart
+outcomes plus isolated default field/234hash parity. Covered ABBA median decreases
+14.14%, with no general speed claim. Refined changed-source C1 times out900s,
+showing strong-gap cutbacks and a later costly weak proof; no completed trajectory
+or acceptance. [Preparation evidence](d1_review_support/C6_S3_PREPARATION_SLICE_20261003.md).

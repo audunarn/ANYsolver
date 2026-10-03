@@ -194,9 +194,56 @@ def _prepare_overlap(reference_source,reference_target,source_faces,
     return tuple(prepared)
 
 
+class _PreparationCache:
+    """One disposable exact geometry payload; no proof, phase or physical state.
+
+    Snapshot every supplied coordinate/rate, reference, face identity and duration.
+    A matching key can reuse only immutable original-face polynomials. Every proof
+    still checks its own controls, orientation, support, phase and cancellation.
+    """
+    def __init__(self):
+        self._key=self._faces=None
+        self.preparations=0
+        self.hits=0
+
+    def get(self,reference_source,reference_target,source_faces,
+            a0,a1,b0,b1,av0,av1,bv0,bv1,duration,count):
+        snapshots=[];signature=[]
+        for supplied,name,n in ((reference_source,'reference_source',count),
+                (reference_target,'reference_target',3),(a0,'source start',count),
+                (a1,'source end',count),(b0,'target start',3),(b1,'target end',3),
+                (av0,'source start rate',count),(av1,'source end rate',count),
+                (bv0,'target start rate',3),(bv1,'target end rate',3)):
+            raw=np.asarray(supplied)
+            if (raw.shape!=(n,3) or raw.dtype.kind not in 'fiu' or not np.all(np.isfinite(raw))
+                    or any(isinstance(x,(bool,np.bool_,complex,np.complexfloating))
+                           for x in np.asarray(supplied,dtype=object).flat)):
+                raise ValueError(name+' requires finite real original coordinates')
+            data=raw.tobytes(order='C')
+            signature.append((raw.dtype.str,raw.shape,data))
+            snapshots.append(np.frombuffer(data,dtype=raw.dtype).reshape(raw.shape))
+        faces=[]
+        for face in source_faces:
+            if (len(face)!=3 or any(isinstance(i,(bool,np.bool_))
+                    or not isinstance(i,(int,np.integer)) or not 0<=int(i)<count for i in face)
+                    or len(set(face))!=3):
+                raise ValueError('source_faces require original valid triangle indices')
+            faces.append(tuple(int(i) for i in face))
+        key=(count,duration,tuple(faces),tuple(signature))
+        if key==self._key:
+            self.hits+=1
+            return self._faces
+        prepared=_prepare_overlap(snapshots[0],snapshots[1],tuple(faces),
+            *snapshots[2:],duration,count)
+        self._key,self._faces=key,prepared
+        self.preparations+=1
+        return prepared
+
+
 def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
         a0,a1,b0,b1,av0,av1,bv0,bv1,dt,*,active,gap_tolerance_m,
-        maximum_time_panels=128,maximum_spatial_cells=1024,maximum_depth=14,cancel=None):
+        maximum_time_panels=128,maximum_spatial_cells=1024,maximum_depth=14,cancel=None,
+        _preparation_cache=None):
     """Certify one pressure phase throughout all represented overlap.
 
     active names every original pressure node; unsupported modes are retained.
@@ -218,7 +265,10 @@ def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
     if phase.ndim!=1 or not phase.size or phase.dtype.kind!='b':
         raise ValueError('active must name every source pressure node with booleans')
     count=len(phase)
-    prepared=_prepare_overlap(reference_source,reference_target,source_faces,
+    if _preparation_cache is not None and type(_preparation_cache) is not _PreparationCache:
+        raise ValueError('invalid S3 preparation cache')
+    prepare=_prepare_overlap if _preparation_cache is None else _preparation_cache.get
+    prepared=prepare(reference_source,reference_target,source_faces,
         a0,a1,b0,b1,av0,av1,bv0,bv1,duration,count)
     visited_time=visited_space=0
     minima=[inf]*count;maxima=[-inf]*count

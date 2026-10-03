@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.67. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.68. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -31,6 +31,19 @@ Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTA
 independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
+
+Shared normal-S3 preparation is now source/installed tested: one exact immutable
+candidate geometry payload, with all proof decisions/controls rerun. Local24 and
+active/open restart2 outcomes pass; default allfields/234 imported hashes match.
+ABBA covered-route median10.556→9.063s (observed14.14%, two observations each).
+The refined changed-source coupled run still times out900s: strong hidden-approach
+cutbacks and later expensive weak spatial certification both contribute. No refined
+trajectory or general speed claim. [Evidence](docs/d1_review_support/C6_S3_PREPARATION_SLICE_20261003.md).
+Capture the exact stalled weak path and first hidden failure using a bounded prefix;
+then distinguish exact-aggregation cost/loose enclosure from actual phase change.
+Preserve all laws, dimensional/event tolerances and finite budgets. Accelerate
+unchanged rational decisions where demonstrated; do not repeat the full case first.
+Earlier slices and failures below remain scoped history.
 
 The explicit variable-endpoint native friction helper now combines complete angular
 geometry with captured-endpoint contribution accounting. It retains closed point

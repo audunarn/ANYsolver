@@ -131,3 +131,11 @@ record survived; partial stdout is not counted as a completed assessed check.
 The refined moving-clipped workflow remains NONPASS/unqualified. V3's default
 covered workflow, restart and isolated installed parity pass. These are separate
 dispositions; they do not substitute for the required refined trajectory.
+
+Shared exact preparation now reuses one disposable candidate payload between
+strong and weak proofs. All geometry inputs/topology/duration bind its identity;
+every proof control and phase decision reruns. Local24/restart2 outcomes and
+isolated default allfields/234hash parity pass. Covered ABBA median runtime decreases
+14.14%; the refined changed-source run still times out900s. Its partial trace shows
+both strong-gap cutbacks and expensive weak spatial certification. See the
+[preparation evidence](d1_review_support/C6_S3_PREPARATION_SLICE_20261003.md).

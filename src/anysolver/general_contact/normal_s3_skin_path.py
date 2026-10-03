@@ -4,7 +4,7 @@ No affine pressure coordinate is supplied. The full general contact contributor
 owns nonlinear gap/work; this helper admits the constrained motion and maps the
 actual supplied-float Hermite skins for conservative geometry checks.
 """
-from dataclasses import dataclass,replace
+from dataclasses import dataclass,field,replace
 from fractions import Fraction
 import numpy as np
 from scipy import sparse
@@ -12,6 +12,7 @@ from .fixed_projection_s3_events import _calculated, _parallel
 from .s3_patch_static import GeneralS3PatchManager
 from .shell_pair_hermite_sweep import shell_pair_hermite_lower
 from .s3_overlap_hermite_gap import s3_overlap_hermite_gap_bounds
+from .s3_pressure_hermite_bounds import _PreparationCache
 
 
 def _indices(model,nodes):
@@ -26,6 +27,8 @@ class NormalS3SkinPath:
     normal_exact: tuple[Fraction,Fraction,Fraction]
     full_size: int
     features: tuple[tuple[str,int],...]
+    _preparation: _PreparationCache=field(default_factory=_PreparationCache,
+        init=False,compare=False,repr=False)
 
     def require_motion(self,value):
         raw = np.asarray(value)
@@ -86,7 +89,8 @@ class NormalS3SkinPath:
             for i,skin in enumerate(skins)),dt,active=active,gap_tolerance_m=gap_tolerance_m,
             maximum_time_panels=manager.settings.maximum_gap_triangles,
             maximum_spatial_cells=manager.settings.maximum_gap_triangles,
-            maximum_depth=manager.settings.maximum_swept_subdivisions,cancel=cancel)
+            maximum_depth=manager.settings.maximum_swept_subdivisions,cancel=cancel,
+            _preparation_cache=self._preparation)
 
     def overlap_sweep(self,manager,start,end,v0,v1,dt,*,cancel=None,event_gap_tolerance_m=None):
         skins=self.skins(manager,start,end,v0,v1)
@@ -97,7 +101,8 @@ class NormalS3SkinPath:
             maximum_time_panels=manager.settings.maximum_gap_triangles,
             maximum_spatial_cells=manager.settings.maximum_gap_triangles,
             maximum_depth=manager.settings.maximum_swept_subdivisions,cancel=cancel,
-            exclude_open_endpoint_approach_tolerance_m=event_gap_tolerance_m)
+            exclude_open_endpoint_approach_tolerance_m=event_gap_tolerance_m,
+            _preparation_cache=self._preparation)
         if not proof.success:return None,'normal S3 matched physical path '+proof.status+': '+proof.detail
         return (float('inf') if proof.status=='no_overlap' else proof.lower_gap_m),None
 
@@ -113,7 +118,8 @@ class NormalS3SkinPath:
             gap_tolerance_m=manager.gap_tolerance,
             maximum_time_panels=manager.settings.maximum_gap_triangles,
             maximum_spatial_cells=manager.settings.maximum_gap_triangles,
-            maximum_depth=manager.settings.maximum_swept_subdivisions,cancel=cancel)
+            maximum_depth=manager.settings.maximum_swept_subdivisions,cancel=cancel,
+            _preparation_cache=self._preparation)
         if not proof.success:return None,'normal S3 matched endpoint '+proof.status+': '+proof.detail
         lower=float('inf') if proof.status=='no_overlap' else proof.lower_gap_m
         return replace(result,minimum_gap=lower,gap_tolerance_met=lower>=-manager.gap_tolerance),None

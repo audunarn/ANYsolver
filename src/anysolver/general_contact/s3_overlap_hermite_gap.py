@@ -11,7 +11,7 @@ from fractions import Fraction
 from math import inf
 import numpy as np
 from .s3_pressure_hermite_bounds import (
-    _ROOT,_prepare_overlap,_factor,_blend,_multiply,_upper_float)
+    _ROOT,_prepare_overlap,_PreparationCache,_factor,_blend,_multiply,_upper_float)
 from .shell_pair_hermite_sweep import _limit,_split,_lower_float
 
 
@@ -78,7 +78,7 @@ def _endpoints(face):
 def s3_overlap_hermite_gap_bounds(reference_source,reference_target,source_faces,
         a0,a1,b0,b1,av0,av1,bv0,bv1,dt,*,gap_tolerance_m,
         maximum_time_panels=128,maximum_spatial_cells=1024,maximum_depth=14,
-        exclude_open_endpoint_approach_tolerance_m=None,cancel=None):
+        exclude_open_endpoint_approach_tolerance_m=None,cancel=None,_preparation_cache=None):
     """Certify gap budget over every represented path overlap, failing closed.
 
 Original polarity is checked before pruning, even for remote invalid faces.
@@ -108,7 +108,10 @@ history, multiplier unknown, force, or reference measure is changed.
         lower=(_lower_float(completed) if success and completed!=inf else None)
         return S3OverlapHermiteGapBounds(success,status,lower,visited_time,visited_space,detail)
     if cancel is not None and cancel():return result(False,'cancelled')
-    faces=_prepare_overlap(reference_source,reference_target,source_faces,
+    if _preparation_cache is not None and type(_preparation_cache) is not _PreparationCache:
+        raise ValueError('invalid S3 preparation cache')
+    prepare=_prepare_overlap if _preparation_cache is None else _preparation_cache.get
+    faces=prepare(reference_source,reference_target,source_faces,
         a0,a1,b0,b1,av0,av1,bv0,bv1,duration,len(raw))
     # Keep whole-path openness halfplanes when temporal panels are split.
     pending_faces=[]
