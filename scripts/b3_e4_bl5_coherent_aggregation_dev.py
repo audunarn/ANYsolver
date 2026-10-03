@@ -18,8 +18,17 @@ from test_stiffened_shell_l1_assembly_experimental import _bl5_joint_mesh_defini
 LOADS={"fy":(0.,100.,0.,0.,0.,0.),"mx":(0.,0.,0.,10.,0.,0.),"mz":(0.,0.,0.,0.,0.,10.)}
 
 
-def model(shell_edges, transverse_edges, halfcells, c_lambda):
-    span=max(1,math.ceil(c_lambda*halfcells/shell_edges))
+def model(shell_edges, transverse_edges, halfcells, c_lambda, *, basis="p0"):
+    if basis not in ("p0", "discontinuous_p1"):
+        raise ValueError("explicit coherent development basis required")
+    if basis == "discontinuous_p1":
+        if c_lambda != 2:
+            raise ValueError("affine candidate has one complete two-trace resolution rule")
+        # Whole members prevent an affine mode on one constant-director
+        # half-cell. All five channels share this support/basis rule.
+        span=2*math.ceil(max(1.,halfcells/shell_edges))
+    else:
+        span=max(1,math.ceil(c_lambda*halfcells/shell_edges))
     if halfcells%span:
         raise ValueError("uniform coherent rule cannot infer a partial support")
     base=_bl5_joint_mesh_definition(shell_edges,halfcells,1)
@@ -31,7 +40,7 @@ def model(shell_edges, transverse_edges, halfcells, c_lambda):
     aspect=max((1./shell_edges)/(.2/transverse_edges),(.2/transverse_edges)/(1./shell_edges))
     if aspect>4.:raise ValueError("development bond mesh exceeds registered aspect bound")
     shell=replace(base.shell,node_ids=tuple(range(1,len(xyz)+1)),coordinates_m=xyz,q4_elements=cells)
-    line=replace(base.lines[0],multiplier_span=span)
+    line=replace(base.lines[0],multiplier_span=span,basis=basis)
     fixed=tuple(stiffened_shell.FixedCoordinate("shell",1+j*row,axis)
                 for j in range(transverse_edges+1) for axis in range(6))
     fixed+=tuple(stiffened_shell.FixedCoordinate("beam",101,axis) for axis in range(5))
@@ -46,11 +55,15 @@ def model(shell_edges, transverse_edges, halfcells, c_lambda):
         raise ValueError("coherent development policy requires uniform projected traces")
     if span*hb[0]<c_lambda*hs[0]-1e-13:
         raise ValueError("physical support does not cover the declared shell resolution")
-    return definition,dict(c_lambda=c_lambda,span_halfcells=span,shape_aspect=aspect,
+    policy=dict(c_lambda=c_lambda,span_halfcells=span,shape_aspect=aspect,
         shell_trace_segments=shell_edges,beam_halfcells=halfcells,
         support_membership=[list(range(a,a+span)) for a in range(0,halfcells,span)],
         support_endpoints_m=[float(x) for x in beam_x[::span]],
         shell_spacing_m=float(hs[0]),beam_spacing_m=float(hb[0]))
+    if basis != "p0":
+        policy.update(basis=basis, density_basis=("1", "2*(x-center)/support_width"),
+                      qualification="EXPERIMENTAL_NOT_QUALIFIED")
+    return definition,policy
 
 
 def physical_transfer(owner,result):

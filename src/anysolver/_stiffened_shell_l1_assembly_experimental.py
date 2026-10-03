@@ -65,8 +65,10 @@ class ExperimentalL1Line:
 class ExperimentalBL5Line:
     """Separate five-row director bond for experimental mixed analyses.
 
-    P0 ``multiplier_span`` counts whole consecutive native half-cells per
+    ``multiplier_span`` counts whole consecutive native half-cells per
     support. It must divide the trace; no final partial support is inferred.
+    ``discontinuous_p1`` adds one affine density mode on each physical support,
+    shared by all five channels. Those supports must contain complete members.
     Choosing that count does not qualify an interface-resolution policy.
     """
 
@@ -92,7 +94,7 @@ class ExperimentalBL5Line:
                 not 1 <= self.multiplier_span <= n or
                 n % self.multiplier_span or
                 type(self.basis) is not str or
-                self.basis not in ("p0", "continuous_p1",
+                self.basis not in ("p0", "discontinuous_p1", "continuous_p1",
                                    "continuous_p1_coarse") or
                 (self.basis in ("continuous_p1", "continuous_p1_coarse") and
                  self.multiplier_span != 1) or
@@ -102,6 +104,13 @@ class ExperimentalBL5Line:
                     not isinstance(v, (int, float, np.integer, np.floating)) or
                     not np.isfinite(v) for v in self.expected_beam_arm)):
             raise ValueError("ordered even-edge experimental BL5 line required")
+        if self.basis == "discontinuous_p1" and (
+                self.multiplier_span < 2 or self.multiplier_span % 2 or
+                any(left[1] != 0 or right != (left[0], 1)
+                    for left, right in zip(self.beam_halfcells[::2],
+                                           self.beam_halfcells[1::2]))):
+            raise ValueError(
+                "BL5 discontinuous-P1 supports require complete native members")
         if (self.basis == "continuous_p1" and
                 n > len(self.shell_nodes)-1):
             # This beam-node basis has dependent pitch rows on tested
@@ -114,6 +123,8 @@ class ExperimentalBL5Line:
 
     @property
     def multiplier_space(self):
+        if self.basis == "discontinuous_p1":
+            return f"BL5_P1_discontinuous_span_{self.multiplier_span}"
         if self.basis == "continuous_p1_coarse":
             return "BL5_P1_coarse_trace"
         if self.basis == "continuous_p1":
@@ -133,8 +144,15 @@ class ExperimentalBL5Line:
 def _sample_rows(line: ExperimentalL1Line | ExperimentalBL5Line,
                  shell_edge: int, shell_alpha: float,
                  beam_edge: int, beam_alpha: float,
-                 channel: int):
+                 channel: int, support_alpha: float | None = None):
     if type(line) is ExperimentalBL5Line:
+        if line.basis == "discontinuous_p1":
+            if (support_alpha is None or not np.isfinite(support_alpha) or
+                    not 0. <= support_alpha <= 1.):
+                raise ValueError("physical BL5 support coordinate required")
+            supports = len(line.beam_halfcells)//line.multiplier_span
+            base = 2*(channel*supports+beam_edge//line.multiplier_span)
+            return ((base, 1.), (base+1, 2.*support_alpha-1.))
         if line.basis == "continuous_p1_coarse":
             shell_edges = len(line.shell_nodes)-1
             beam_edges = len(line.beam_halfcells)
@@ -165,6 +183,8 @@ def _sample_rows(line: ExperimentalL1Line | ExperimentalBL5Line,
 def _row_count(line: ExperimentalL1Line):
     n = len(line.beam_halfcells)
     if type(line) is ExperimentalBL5Line:
+        if line.basis == "discontinuous_p1":
+            return 10*n//line.multiplier_span
         if line.basis == "continuous_p1_coarse":
             return 5*(min(n, len(line.shell_nodes)-1)+1)
         if line.basis == "continuous_p1":
@@ -228,7 +248,14 @@ def _bl5_segments(line, shell_index, shell_xyz, beam_nodes, beam_parts,
                            (shell_stations[shell_edge+1]-shell_stations[shell_edge]))
             beam_alpha = ((station-beam_stations[beam_edge]) /
                           (beam_stations[beam_edge+1]-beam_stations[beam_edge]))
-            yield shell_edge, beam_edge, shell_alpha, beam_alpha, .5*(right-left)
+            support_alpha = None
+            if line.basis == "discontinuous_p1":
+                start = (beam_edge//line.multiplier_span)*line.multiplier_span
+                end = start+line.multiplier_span
+                support_alpha = ((station-beam_stations[start]) /
+                                 (beam_stations[end]-beam_stations[start]))
+            yield (shell_edge, beam_edge, shell_alpha, beam_alpha,
+                   .5*(right-left), support_alpha)
 
 
 def compile_lines(lines, *, shell_ids, shell_xyz, shell_cells,
@@ -280,11 +307,11 @@ def compile_lines(lines, *, shell_ids, shell_xyz, shell_cells,
         else:
             segments = ((edge, edge, float(alpha), float(alpha),
                          .5*float(np.linalg.norm(shell_xyz[shell_index[line.shell_nodes[edge+1]]]-
-                                                  shell_xyz[shell_index[line.shell_nodes[edge]]])))
+                                                  shell_xyz[shell_index[line.shell_nodes[edge]]])), None)
                         for edge in range(len(line.beam_halfcells))
                         for alpha in abscissae)
         seen_stations = set()
-        for shell_edge, beam_edge, shell_alpha, beam_alpha, weight in segments:
+        for shell_edge, beam_edge, shell_alpha, beam_alpha, weight, support_alpha in segments:
             element_index, cell = line.beam_halfcells[beam_edge]
             if element_index >= len(beam_parts):
                 raise ValueError(f"{label} line references unknown native beam half-cell")
@@ -333,7 +360,7 @@ def compile_lines(lines, *, shell_ids, shell_xyz, shell_cells,
             for channel in range(len(local.gap)):
                 for row, coefficient in _sample_rows(
                         line, shell_edge, float(shell_alpha),
-                        beam_edge, float(beam_alpha), channel):
+                        beam_edge, float(beam_alpha), channel, support_alpha):
                     jacobian = weight*coefficient*local.gap_jacobian[channel]
                     row_indices.extend([line_row+row]*len(global_slots))
                     columns.extend(global_slots.tolist())
