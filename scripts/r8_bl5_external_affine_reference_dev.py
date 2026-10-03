@@ -1,10 +1,11 @@
-"""One fixed-grid independent external affine BL5 reference, development only.
+"""Bounded independent external affine BL5 references, development only.
 
 The default 16x4 ASDShellQ4/32 ElasticTimoshenkoBeam model and one bounded
-32x8/64-interval Mx discriminator retain the SAME eight physical supports and
-both [1, xi] density modes in every channel. No native C or product module is
-imported. Physical rows and dependent-row normalization are retained separately.
-This is not a growing-support refinement, locking or F03 assessment.
+32x8/64-interval Mx discriminator retain the SAME eight physical supports.
+An explicit sixteen-support option on that finer grid admits Fy/Mx/Mz. Both
+[1, xi] modes apply in every channel. No native C or product module is imported.
+Physical rows and dependent-row normalization are retained separately. This is
+not a mesh campaign, locking or F03 assessment.
 """
 from __future__ import annotations
 
@@ -135,11 +136,11 @@ def coefficient_maps(rows):
 
 
 def aggregate_rows(model, reference):
-    """Independent 80 physical rows; 80 row-equivalent unique-dependent rows."""
-    nx, nb = model["nx"], model["beam_intervals"]
-    if (type(nx) is not int or type(nb) is not int or
-            (nx, model["ny"], nb, model["support_count"]) not in ((16, 4, 32, 8), (32, 8, 64, 8))):
-        raise ValueError("only the declared 16x4/32 or 32x8/64 eight-support model is admitted")
+    """Independent physical rows and row-equivalent unique-dependent rows."""
+    nx, nb, ns = model["nx"], model["beam_intervals"], model["support_count"]
+    if (type(nx) is not int or type(nb) is not int or type(ns) is not int or
+            (nx, model["ny"], nb, ns) not in ((16, 4, 32, 8), (32, 8, 64, 8), (32, 8, 64, 16))):
+        raise ValueError("only the declared eight-support grids or finer32 sixteen-support model is admitted")
     first, rb, rs = model["beam_root"], F(reference.BEAM_BOTTOM_ARM_M), F(reference.SHELL_THICKNESS_M)/2
     if (tuple(model["beam_node_ids"]) != tuple(range(first, first+nb+1)) or
             any(tuple(model["nodes"][first+i]) != (float(F(i, nb)), 0., reference.BEAM_AXIS_Z_M)
@@ -147,11 +148,11 @@ def aggregate_rows(model, reference):
             any(tuple(model["nodes"][1+i]) != (float(F(i, nx)), 0., 0.) for i in range(nx+1))):
         raise ValueError("declared uniform matching physical traces required")
     knots = sorted({F(i, nb) for i in range(nb+1)} | {F(i, nx) for i in range(nx+1)})
-    stride, hb = nb//8, F(1, nb)
+    stride, hb = nb//ns, F(1, nb)
     physical, emitted, supports, all_dependent = [], [], [], []
     exact_blocks = []
-    for index in range(8):
-        left, right = F(index, 8), F(index+1, 8)
+    for index in range(ns):
+        left, right = F(index, ns), F(index+1, ns)
         bw, bp = integrated_affine_weights(left, right, nb, first, knots)
         sw, sp = integrated_affine_weights(left, right, nx, 1, knots)
         block = [{} for _ in range(10)]  # support, channel, degree
@@ -190,8 +191,8 @@ def aggregate_rows(model, reference):
             "emitted_from_physical_E": [[float(v) for v in row] for row in e],
             "exact_E_rationals": [[str(v) for v in row] for row in e]})
         all_dependent.extend(dependent); exact_blocks.append(block)
-    if len(set(all_dependent)) != 80:
-        raise ValueError("80 distinct dependent physical coordinates required")
+    if len(set(all_dependent)) != 10*ns:
+        raise ValueError("all dependent physical coordinates must be distinct")
     for index, block in enumerate(exact_blocks):
         other = all_dependent[:10*index]+all_dependent[10*index+10:]
         if any(row.get(key, 0) for row in block for key in other):
@@ -324,7 +325,7 @@ def integrated_objective(field, model, supports, refinement, p0, frozen, service
 
 def preparation_controls(model, pairing, refinement, p0, frozen, service, reference):
     rows, supports = pairing["physical_rows"], pairing["supports"]
-    nodes, width, beam = model["nodes"], .125, set(model["beam_node_ids"])
+    nodes, width, beam = model["nodes"], 1./model["support_count"], set(model["beam_node_ids"])
     rigid = []
     for channel in range(6):
         a = tuple(.01 if channel == i else 0. for i in range(3))
@@ -425,7 +426,7 @@ def recover(raw, model, reference, pairing, case, refinement, service):
         "internal_G_wrench": service._wrench({n: g[n] for n in domain}, shifted)} for label, domain in (("shell", shell), ("beam", beam))}
     measures = density_measures(pairing["supports"], density, reference)
     checks = {"all_free_coordinate_equilibrium_scaled": max(abs(v)/scale for q in free.values() for v in q),
-        "average_five_channel_gap_scaled": max(map(abs, gaps))/.125,
+        "average_five_channel_gap_scaled": max(map(abs, gaps))/(1./model["support_count"]),
         "emitted_coordinate_gap_scaled": max(map(abs, emitted_gaps)),
         "local_recovery_residual_scaled": max(abs(v)/scale for r in recovery for v in r["residual"]),
         "independent_arm_pullback_scaled": max(abs(exerted[n][d]-independent[n][d])/scale for n in nodes for d in range(6)),
@@ -490,17 +491,19 @@ def finalize(recorder, service, output, summary, *, earlier_error):
         raise errors[0]
 
 
-def admit_case(nx, case):
-    if (type(nx) is not int or nx not in (16, 32) or case not in ("fy", "mx", "mz") or
-            (nx == 32 and case != "mx")):
-        raise ValueError("coarse16 Fy/Mx/Mz or the single finer32 Mx discriminator required")
+def admit_case(nx, case, support_count=8):
+    if (type(nx) is not int or type(support_count) is not int or
+            (nx, support_count) not in ((16, 8), (32, 8), (32, 16)) or
+            case not in ("fy", "mx", "mz") or (nx == 32 and support_count == 8 and case != "mx")):
+        raise ValueError("coarse16/eight-support Fy/Mx/Mz, finer32/eight-support Mx, "
+                         "or finer32/sixteen-support Fy/Mx/Mz required")
 
 
-def main(site, output, case, *, nx=16):
-    admit_case(nx, case)
+def main(site, output, case, *, nx=16, support_count=8):
+    admit_case(nx, case, support_count)
     output.mkdir(parents=True, exist_ok=False)
     recorder, service = None, None
-    summary = {"status": "failed", "nx": nx, "case": case, "basis": BASIS,
+    summary = {"status": "failed", "nx": nx, "case": case, "basis": BASIS, "supports": support_count,
         "classification": "Fixed-grid independent affine development only; no locking/accuracy/F03 acceptance",
         "source_sha256": sha(__file__), "helper_sources": HELPER_SHA256,
         "python": sys.version, "requested_threads": {name: os.environ.get(name) for name in
@@ -511,7 +514,7 @@ def main(site, output, case, *, nx=16):
         if any(name == "anysolver" or name.startswith("anysolver.") for name in sys.modules):
             raise ValueError("independent external runner must not import product modules")
         model = refinement.geometry(nx, reference)
-        model["support_count"] = 8  # Fixed physical endpoints i/8, not the helper's growing space.
+        model["support_count"] = support_count  # Explicit endpoints i/ns; eight remains the default.
         pairing = aggregate_rows(model, reference)
         commands = refinement.command_recipe(model, reference, pairing["emitted_rows"], case)
         expected = refinement.planned_inventory(commands)
@@ -552,7 +555,8 @@ def main(site, output, case, *, nx=16):
             if not math.isfinite(value) or value > limit:
                 raise ValueError(f"{name}={value} exceeds unchanged physical budget {limit}")
         summary.update(status="completed", physical_nodes=len(model["nodes"]), shell_elements=len(model["shell_cells"]),
-            beam_elements=len(model["beam_cells"]), rows=80, supports=8, applied_work_J=derived["work_J"]["applied"],
+            beam_elements=len(model["beam_cells"]), rows=10*support_count, supports=support_count,
+            applied_work_J=derived["work_J"]["applied"],
             checks=derived["checks"])
     except BaseException as error:
         summary["error"] = {"type": type(error).__name__, "message": str(error), "traceback": traceback.format_exc()}
@@ -567,5 +571,6 @@ if __name__ == "__main__":
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--case", required=True, choices=("fy", "mx", "mz"))
     parser.add_argument("--nx", type=int, choices=(16, 32), default=16)
+    parser.add_argument("--support-count", type=int, choices=(8, 16), default=8)
     args = parser.parse_args()
-    main(args.site, args.output_dir, args.case, nx=args.nx)
+    main(args.site, args.output_dir, args.case, nx=args.nx, support_count=args.support_count)

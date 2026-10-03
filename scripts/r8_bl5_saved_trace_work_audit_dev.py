@@ -30,7 +30,7 @@ def physical_gap(beam, shell, director, rb=-.05, rs=.0175):
 def row_action(rows, q, ids):
     offsets = {int(n): 6*i for i, n in enumerate(ids)}
     return np.array([sum(v*q[offsets[n]+d-1] for n, d, v in zip(row[::3], row[1::3], row[2::3]))
-                     for row in rows]).reshape(8, 5, 2)
+                     for row in rows]).reshape(len(rows)//10, 5, 2)
 
 
 def run(root, output):
@@ -43,19 +43,21 @@ def run(root, output):
     shell_end, physical = 6*ns, inputs['layout']['counts']['physical_dofs']
     traces = inputs['station_traces']
     assert nx in (16, 32) and len(traces) == 4*nx and physical == 6*(ns+2*nx+1)
-    assert inputs['policy']['support_endpoints_m'] == [i/8 for i in range(9)]
+    support_count = len(inputs['policy']['support_endpoints_m'])-1
+    assert (nx, support_count) in ((16, 8), (32, 8), (32, 16))
+    assert inputs['policy']['support_endpoints_m'] == [i/support_count for i in range(support_count+1)]
     with np.load(root/'native/operators.npz', allow_pickle=False) as op:
         c = sparse.csr_matrix((op['C_data'], op['C_indices'], op['C_indptr']), shape=tuple(op['C_shape']))
     result = {'scope': 'saved-state trace/work development only; no causal allocation/locking/F03 acceptance',
               'source_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               'channel_map': 'native g=(-common translation, -common Ry, common Rx); same orthogonal density map',
-              'nx': nx, 'pools': pools, 'cases': {}, 'source_files': {}}
+              'nx': nx, 'support_count': support_count, 'pools': pools, 'cases': {}, 'source_files': {}}
     for name in ('inputs.json', 'operators.npz', 'summary.json'):
         path = root/'native'/name
         result['source_files']['native/'+name] = hashlib.sha256(path.read_bytes()).hexdigest()
     assert summary['status'] == 'COMPLETED_DEVELOPMENT_ONLY'
     cases = tuple(summary['cases'])
-    assert cases and set(cases).issubset(('fy', 'mx', 'mz')) and (nx == 16 or cases == ('mx',))
+    assert cases and set(cases).issubset(('fy', 'mx', 'mz')) and (nx == 16 or support_count == 16 or cases == ('mx',))
     for case in cases:
         paths = [root/'native'/case/'raw-state.npz', root/'native'/case/'physical-transfer.json',
                  root/'external'/case/'inputs.json', root/'external'/case/'raw-inventory.json',
@@ -69,12 +71,12 @@ def run(root, output):
         external_raw = json.loads(paths[3].read_text())
         external_action = json.loads(paths[4].read_text())
         exq = np.array([external_raw['poses'][str(n)] for n in ids]).ravel()
-        moments_broken, moments_nodal, moments_external = (np.zeros((8, 5, 2)) for _ in range(3))
+        moments_broken, moments_nodal, moments_external = (np.zeros((support_count, 5, 2)) for _ in range(3))
         psi_error = np.zeros(3); psi_reference = np.zeros(3)
         station_errors, records = [], []
-        density_common = np.empty((8, 5, 2))
-        for support in range(8):
-            native = np.array([lam[2*(channel*8+support):2*(channel*8+support)+2] for channel in range(5)])
+        density_common = np.empty((support_count, 5, 2))
+        for support in range(support_count):
+            native = np.array([lam[2*(channel*support_count+support):2*(channel*support_count+support)+2] for channel in range(5)])
             density_common[support] = common_channels(native)
         for trace, action in zip(traces, transfer['station_records']):
             port = trace['beam_port']; slots = trace['full_slots']
@@ -93,7 +95,7 @@ def run(root, output):
             actual = common_channels(action['five_channel_gap'])
             station_errors.append(float(np.max(np.abs(broken-actual))))
             x, weight = action['x_m'], trace['measure_m']
-            support = min(7, int(x*8)); xi = 16*x-(2*support+1)
+            support = min(support_count-1, int(x*support_count)); xi = 2*support_count*x-(2*support+1)
             for values, target in ((broken, moments_broken), (nodal, moments_nodal), (exterior, moments_external)):
                 target[support] += weight*values[:, None]*np.array((1., xi))
             if .25 <= x <= .75:
@@ -103,7 +105,7 @@ def run(root, output):
                 'native_broken_physical_gap': broken.tolist(), 'native_common_nodal_gap': nodal.tolist(),
                 'external_common_nodal_gap': exterior.tolist(), 'cell_director': director.tolist(),
                 'native_nodal_P1_rotation': beam[3:].tolist()})
-        direct_native = (c@q).reshape(5, 8, 2).transpose(1, 0, 2)
+        direct_native = (c@q).reshape(5, support_count, 2).transpose(1, 0, 2)
         expected_broken = np.array([common_channels(v) for v in direct_native])
         independent_nodal = row_action(external_inputs['physical_rows'], q[:physical], ids)
         independent_external = row_action(external_inputs['physical_rows'], exq, ids)
@@ -113,7 +115,7 @@ def run(root, output):
         np.testing.assert_allclose(moments_external, independent_external, rtol=1e-9, atol=1e-17)
         assert max(station_errors) < 1e-15
         delta = moments_nodal-moments_broken
-        elam = np.array(external_action['row_density_multipliers']).reshape(8, 5, 2)
+        elam = np.array(external_action['row_density_multipliers']).reshape(support_count, 5, 2)
         work = float(q@load)
         contributions = np.sum(density_common*delta, axis=2)
         external_contributions = np.sum(elam*delta, axis=2)

@@ -62,3 +62,31 @@ def test_mechanical_refinement_keeps_physical_interface_fixed(nx, span):
     assert node_x[::span] == policy['support_endpoints_m']
     assert all(len(support) == span and support[0] % 2 == 0 and support[-1] % 2 == 1
                for support in policy['support_membership'])
+
+
+def test_growing_space_changes_only_supports_on_same_fine_mechanical_grid():
+    from scripts import b3_e4_bl5_coherent_aggregation_dev as coherent
+    from scripts.r8_bl5_affine_flexible_native_dev import support_model
+    fixed, _ = support_model(coherent, 32, 8)
+    growing, policy = support_model(coherent, 32, 16)
+    assert fixed.shell == growing.shell and fixed.beams == growing.beams
+    assert fixed.fixed == growing.fixed
+    assert fixed.lines[0].beam_halfcells == growing.lines[0].beam_halfcells
+    assert growing.lines[0].multiplier_span == 4
+    assert policy['support_endpoints_m'] == [i/16 for i in range(17)]
+    assert policy['support_membership'] == [list(range(i, i+4)) for i in range(0, 64, 4)]
+    assert policy['c_lambda_actual'] == 2
+    with pytest.raises(ValueError, match='declared'):
+        support_model(coherent, 16, 16)
+
+
+@pytest.mark.parametrize('count', (8, 16))
+def test_saved_row_action_keeps_support_channel_degree_order(count):
+    import numpy as np
+    from scripts.r8_bl5_saved_trace_work_audit_dev import row_action
+    ids = [71, 19]
+    q = np.arange(12, dtype=float)+1
+    rows = [[19, 4, support*100+channel*10+degree+1]
+            for support in range(count) for channel in range(5) for degree in range(2)]
+    expected = np.array([q[9]*row[2] for row in rows]).reshape(count, 5, 2)
+    np.testing.assert_array_equal(row_action(rows, q, ids), expected)

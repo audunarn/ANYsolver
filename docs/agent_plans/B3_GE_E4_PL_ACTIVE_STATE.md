@@ -48,24 +48,27 @@ Legacy P0 unchanged. Positive nominal kernel is not locking/accuracy evidence.
 
 ## Current decision and next action
 
-[Fixed-support finer comparison](development/r8-bl5-fixed-support-fine-20261003/results.md)
-retains native trace as an experimental candidate. SAMEeight supports/affine law,
-Mx10Nm: coarse16x4 to fine32x8 work difference -1.02387 to -0.01097%; interior
-Mz difference11.0894 to1.2003Nm; beam-groundFy20.4266 to2.2260N. Broken/nodal
-trace-work witness -0.84021 to -0.01856% supports finite approximation, not causal
-allocation or permission to replace retained directors. Remaining transfer error
-keeps M2 open. Two fixed-space grids are not growing-space stability/convergence.
-36focused checks passed; independent source/runtime Read scrutiny clear. Allowned
-runs terminal, source/wheel/site417modules match unchanged wheel. Prior coarse
-and new51-file raw evidence immutable; no protected history sweep.
+[Fixed-support refinement](development/r8-bl5-fixed-support-fine-20261003/results.md)
+retains native trace as experimental. SAMEeight supports/Mx10Nm: coarse16x4 to
+fine32x8 work -1.02387 to -0.01097%, interiorMz11.0894 to1.2003Nm, rootFy
+20.4266 to2.2260N. Finite approximation supported; not causal allocation or
+permission to replace retained directors, nor growing-space/convergence acceptance.
 
-Next bounded discriminator: ONE complete five-channel growing-space rule,
-span4/sixteen supports on EXISTING32x8/64halfcell grid, matched independent
-Fy/Mx/Mz. Hold geometry, sections, grounds and load measures fixed; compare exact
-transfer windows, root partitions, directors, fields and physical work against
-this span8 baseline. Better physical transfer without anomalous action patterns
-supports the registered envelope; worsening transfer calls for targeted mixed-
-operator analysis. No automatic finer grid, channel tuning, new norm or acceptance.
-Formal F03 remains unconsumed. Unrelated ready M3/M4 work may proceed; fullscope
-external/scale/platform/release obligations remain open. Development reviews do
-not confer different-family scientific acceptance.
+[Same-fine-grid growing-space comparison](development/r8-bl5-growing-affine-20261003/results.md)
+WITHHOLDS span4/sixteen supports/allfive affine channels. Mx discrepancy worsens
+onunchangedmechanics: interiorMz13.2948Nm,rootFy18.7463N,work -1.17186%,tracework
+-0.92127% vs span8 -0.01856%. Fy/Mz transfer discrepancies also retained.
+58focusedchecks pass; threeexternal,installednative3RHS/onefactor andsavedstate
+auditterminalexit0.417modulebytes matchwheel. Separate source/runtime Read scrutiny
+clear, physical controls<=2.77e-11. Raw84-file explicit evidence immutable.
+No numerical/tooling failure; neither span8 nor continuouslawfailure is accepted.
+
+Mechanics question now: consistency/uniformstability of projected affine director
+moments using actual retained half-cell fields versus continuum connection work.
+Next bounded decision is source/equation/admissiblepatch/physicaldualnorm scrutiny,
+not another loaded refinement. FullindefiniteK is not anenergy norm; substitution
+with nodalP1 rotations needs its own work justification. FormalF03 UNCONSUMED.
+IndependentreadyM4: inspect exact nativegravity/rigidfootprint dependency and
+implement a useful combined-load slice if its mechanics already suffice. Read
+worker owns no edits. No contactworker messages/mainmerge/publication. Fullscope
+external/scale/material/platform/release obligations and scientific criteria remain.

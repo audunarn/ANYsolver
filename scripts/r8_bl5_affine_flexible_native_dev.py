@@ -73,29 +73,36 @@ def exact_transfer_moments(records, bounds=(0., 1.)):
     return [[math.fsum(component) for component in row] for row in terms]
 
 
-def fixed_support_model(coherent, nx):
-    """Freeze eight physical intervals while mechanical resolution doubles.
+def support_model(coherent, nx, support_count=8):
+    """Construct either fixed-eight or one complete growing-space candidate.
 
-    This is distinct from the growing-space production-policy investigation.
+    The explicit growing space remains experimental, not a selected policy.
     Never infer support locations from an automatic resolution policy here.
     """
     from dataclasses import replace
-    require(nx in (16, 32), 'only coarse and one finer mechanical grid admitted')
+    require(type(nx) is int and type(support_count) is int and (nx, support_count) in ((16, 8), (32, 8), (32, 16)),
+            'only declared fixed-eight or fine growing-sixteen grid admitted')
     definition, policy = coherent.model(nx, nx//4, 2*nx, 2, basis='discontinuous_p1')
-    span = nx//4
+    span = 2*nx//support_count
     definition = replace(definition, lines=(replace(definition.lines[0], multiplier_span=span),))
     policy = dict(policy, span_halfcells=span,
         support_membership=[list(range(a, a+span)) for a in range(0, 2*nx, span)],
-        support_endpoints_m=[i/8 for i in range(9)],
-        fixed_support_policy='SAME_EIGHT_AFFINE_MECHANICAL_DISCRIMINATOR_V1',
-        c_lambda_actual=nx/8,
-        scope='fixed interface space, not growing-space stability or qualified production policy')
+        support_endpoints_m=[i/support_count for i in range(support_count+1)],
+        fixed_support_policy=('SAME_EIGHT_AFFINE_MECHANICAL_DISCRIMINATOR_V1' if support_count == 8
+                              else 'GROWING_COMPLETE_AFFINE_SPAN4_CANDIDATE_V1'),
+        c_lambda_actual=nx/support_count,
+        scope='explicit development space, not qualified production/stability policy')
     return definition, policy
 
 
-def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 'mx', 'mz')):
+def fixed_support_model(coherent, nx):
+    return support_model(coherent, nx, 8)
+
+
+def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 'mx', 'mz'), support_count=8):
     require(nx in (16, 32) and cases and all(c in LOADS for c in cases), 'bounded grid/load request required')
-    require(nx == 16 or tuple(cases) == ('mx',), 'the single finer discriminator is Mx only')
+    require((nx, support_count) in ((16, 8), (32, 8), (32, 16)), 'declared support/grid pairing required')
+    require(nx == 16 or support_count == 16 or tuple(cases) == ('mx',), 'the fixed-eight finer discriminator is Mx only')
     require(not any(n.split('.')[0] == 'anysolver' for n in sys.modules), 'fresh installed process required')
     site, fixtures = site.resolve(strict=True), fixtures.resolve(strict=True)
     sys.path[:0] = [str(site), str(fixtures)]
@@ -112,7 +119,7 @@ def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 
     inventory.matched = matched
     output.mkdir(parents=True, exist_ok=False)
     summary = {'status': 'FAILED', 'scope': 'bounded flexible physical development; no locking/F03/accuracy acceptance',
-               'source_sha256': sha(__file__), 'basis': 'discontinuous_p1', 'nx': nx, 'cases': {}}
+               'source_sha256': sha(__file__), 'basis': 'discontinuous_p1', 'nx': nx, 'support_count': support_count, 'cases': {}}
     try:
         _, _, service, _, reference, _ = matched.reference_services()
     except BaseException as error:
@@ -140,15 +147,15 @@ def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 
               'anysolver_import': anysolver.__file__, 'pools': pools, 'numba_threads': numba.get_num_threads(),
               'jit_disabled': bool(numba.config.DISABLE_JIT),
               'helpers': {Path(m.__file__).name: sha(m.__file__) for m in (coherent, matched, inventory)}})
-        definition, policy = fixed_support_model(coherent, nx)
+        definition, policy = support_model(coherent, nx, support_count)
         owner = stiffened_shell.create_analysis(definition=definition)
         xyz, layout = inventory.layout(owner, definition, policy, nx)
         trace = inventory.station_inventory(owner)
         ns, nb = len(owner._shell_ids), len(owner._beam_ids)
-        require(owner._C.shape == (80, 6*(ns+nb)+24*nx) and ns == (nx+1)*(nx//4+1) and nb == 2*nx+1,
+        require(owner._C.shape == (10*support_count, 6*(ns+nb)+24*nx) and ns == (nx+1)*(nx//4+1) and nb == 2*nx+1,
                 'fixed native physical/retained layout required')
-        require(policy['span_halfcells'] == nx//4 and policy['support_endpoints_m'] == [i/8 for i in range(9)],
-                'same eight complete supports required')
+        require(policy['span_halfcells'] == 2*nx//support_count and policy['support_endpoints_m'] == [i/support_count for i in range(support_count+1)],
+                'same declared complete physical supports required')
         require(np.allclose(xyz[:ns], [(i/nx, .2*j/(nx//4), 0.) for j in range(nx//4+1) for i in range(nx+1)],
                             rtol=0, atol=1e-13), 'fixed shell geometry required')
         require(np.allclose(xyz[ns:], [(i/(2*nx), 0., reference.BEAM_AXIS_Z_M) for i in range(2*nx+1)],
@@ -222,14 +229,14 @@ def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 
                     'same independent external affine candidate required')
             ext_refinement, _, _, _, ext_reference = independent.services()
             ext_model = ext_refinement.geometry(nx, ext_reference)
-            ext_model['support_count'] = 8
+            ext_model['support_count'] = support_count
             ext_pairing = independent.aggregate_rows(ext_model, ext_reference)
             expected = ext_refinement.planned_inventory(ext_refinement.command_recipe(
                 ext_model, ext_reference, ext_pairing['emitted_rows'], case))
             require(all(er[k] == json.loads(json.dumps(v)) for k, v in expected.items()),
                     'complete matching external section/frame/connectivity/row/analysis command inventory required')
             require(ei['physical_rows'] == ext_pairing['physical_rows'] and ei['supports'] == json.loads(json.dumps(ext_pairing['supports']))
-                    and ei['basis'] == ext_pairing['basis'], 'independent physical80rows/same8supports required')
+                    and ei['basis'] == ext_pairing['basis'], 'independent complete physical rows and same supports required')
             require(set(ea['checks']) == EXTERNAL_CHECKS and ea['checks'] == es['checks'],
                     'complete consistent external physical-control inventory required')
             for key, value in ea['checks'].items():
@@ -280,6 +287,7 @@ if __name__ == '__main__':
         parser.add_argument('--'+name, type=Path, required=True)
     parser.add_argument('--nx', type=int, choices=(16, 32), default=16)
     parser.add_argument('--case', choices=tuple(LOADS))
+    parser.add_argument('--support-count', type=int, choices=(8, 16), default=8)
     args = parser.parse_args()
     run(args.site, args.wheel, args.source, args.fixtures, args.external, args.output,
-        nx=args.nx, cases=(args.case,) if args.case else tuple(LOADS))
+        nx=args.nx, cases=(args.case,) if args.case else tuple(LOADS), support_count=args.support_count)

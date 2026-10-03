@@ -1831,3 +1831,17 @@ External effectiveDLLsettings/different-familyacceptance remainunmet. NextONE
 completeallchannelspan4/sixteensupport comparison onexistingfinegrid, notanother
 mesh/channel tuning. FormalF03 UNCONSUMED/fullgoalACTIVE; no main/release change.
 [Combined results, review and immutable51-file evidence](development/r8-bl5-fixed-support-fine-20261003/results.md).
+
+**3 October complete growing-space decision:** fine32x8/64half-cells unchanged,
+allfive affinechannels/span4/sixteen supports/160rows.58focusedchecks pass;
+threeexternal andinstallednative3RHS/onefactor plusauditterminal.417modulebinding,
+physicalcontrols<=2.77e-11, full identities/work verified by independentReadreview.
+WITHHOLD span4: MxwindowMz difference13.2948Nm versusfixed8 1.2003; rootFy
+18.7463N versus2.2260; work -1.17186%,tracewitness -0.92127%. Fy/Mz differences
+remain. This accepts neither span8 nor continuouslawfailure. M2/F03 stillOPEN.
+Next equation-level decision: retained affine director-moment work consistency
+and justified physical dualnorm/stability, no automaticmesh/channelcampaign.
+Advance independentreadyM4 work. FormalF03 UNCONSUMED, fullgoalACTIVE;
+no scientificcriterion/default/version/main/publication change. Explicit84-file
+archive preserves exact inputs, actions, raw states, commands, outcomes and checks.
+[Results, unresolved property, source/runtime review and evidence](development/r8-bl5-growing-affine-20261003/results.md).
