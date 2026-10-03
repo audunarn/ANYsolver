@@ -4,6 +4,7 @@ All seven physical normal nodal coordinates remain; shell rotations and in-plane
 coordinates are prescribed. Explicit development profile, not impact acceptance.
 """
 import argparse
+from dataclasses import replace
 import json
 from pathlib import Path
 import runpy
@@ -50,8 +51,8 @@ def solve(*,dt=2.5e-5,end=.003,checkpoint=None,emit=False,
     return model,result,modes
 
 
-def run(*,dt=2.5e-5,end=.003):
-    model,result,modes = solve(dt=dt,end=end)
+def run(*,dt=2.5e-5,end=.003,controls=CONTROLS):
+    model,result,modes = solve(dt=dt,end=end,controls=controls)
     q,v,a = (np.asarray(value)@modes for value in
              (result.displacements,result.velocities,result.accelerations))
     structural = modes.T@assemble_stiffness_matrix(model)[0]@modes
@@ -77,8 +78,10 @@ if __name__ == '__main__':
     parser.add_argument('--dt',type=float,default=2.5e-5)
     parser.add_argument('--end',type=float,default=.003)
     parser.add_argument('--output',type=Path)
+    parser.add_argument('--polygon-pressure-bounds',action='store_true')
     args = parser.parse_args()
-    text = json.dumps(run(dt=args.dt,end=args.end),indent=2,allow_nan=False)
+    controls=replace(CONTROLS,normal_s3_polygon_pressure_bounds_dev=True) if args.polygon_pressure_bounds else CONTROLS
+    text = json.dumps(run(dt=args.dt,end=args.end,controls=controls),indent=2,allow_nan=False)
     if args.output:
         args.output.write_text(text+'\n',encoding='utf-8')
     else:

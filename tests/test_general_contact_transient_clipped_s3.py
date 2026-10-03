@@ -208,7 +208,7 @@ def test_explicit_stiffer_penalty_clipped_reference_preflight():
     assert minimum>=-2.e-5
 
 
-def test_moving_clipped_overlap_with_explicit_enforcement_matches_coupled_reference():
+def test_moving_clipped_overlap_with_explicit_enforcement_matches_coupled_reference(*,solver_controls=demo['CONTROLS']):
     columns=8;stiffness=2.e10;_,_,mass,initial=layout(columns)
     model,definition,modes=demo['build_model'](target_xy=TARGET_XY,source_columns=columns,
         normal_stiffness=stiffness)
@@ -220,7 +220,7 @@ def test_moving_clipped_overlap_with_explicit_enforcement_matches_coupled_refere
     result=solve_transient_contact(model,definition,
         TransientConfig(2.5e-5,.003,initial_displacement=modes@initial,
             initial_velocity=modes@np.r_[np.full(len(initial)-3,-.1),np.zeros(3)]),
-        contact_settings=demo['_fixture']['SETTINGS'],solver_controls=demo['CONTROLS'])
+        contact_settings=demo['_fixture']['SETTINGS'],solver_controls=solver_controls)
     q,v,a=(np.asarray(values)@modes for values in (result.displacements,result.velocities,result.accelerations))
     K=modes.T@assemble_stiffness_matrix(model)[0]@modes
     np.testing.assert_allclose(modes.T@assemble_mass_matrix(model)[0]@modes,mass,rtol=1.e-14,atol=1.e-14)

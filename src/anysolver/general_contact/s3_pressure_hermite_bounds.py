@@ -8,6 +8,7 @@ is tested before normalization, including arbitrarily small/zero support.
 """
 from dataclasses import dataclass, replace
 from fractions import Fraction
+from heapq import heappop,heappush
 from math import inf
 import numpy as np
 from .shell_pair_hermite_sweep import (
@@ -154,6 +155,39 @@ def _admissible(opens,closed,phase):
                for i,active in enumerate(phase))
 
 
+class _SpatialPartition:
+    """Exact incremental joint bounds with the original refinement ordering.
+
+    Rational addition/subtraction changes neither the bounds nor their rounding.
+    Monotone insertion IDs reproduce the live list's stable tie order. Only
+    refinable cells need retained geometry; every cell remains in the totals.
+    """
+    def __init__(self,cells,count,maximum_depth):
+        self.totals=_aggregate(cells,count)
+        self.maximum_depth=maximum_depth
+        self.heap=[];self.serial=0
+        for cell in cells:self._offer(cell)
+
+    def _offer(self,cell):
+        if cell[3][3] and cell[2]<self.maximum_depth:
+            heappush(self.heap,(-_fraction(cell[1]),self.serial,cell))
+        self.serial+=1
+
+    def _change(self,cell,sign):
+        for local,index in enumerate(cell[0].ids):
+            for total,part in zip(self.totals,cell[3][:3]):
+                total[index][0]+=sign*part[local][0]
+                total[index][1]+=sign*part[local][1]
+
+    def pop(self):
+        if not self.heap:return None
+        cell=heappop(self.heap)[2];self._change(cell,-1)
+        return cell
+
+    def add(self,cell):
+        self._change(cell,1);self._offer(cell)
+
+
 def _prepare_overlap(reference_source,reference_target,source_faces,
         a0,a1,b0,b1,av0,av1,bv0,bv1,duration,count):
     """Original-face Cramer/normal polynomials shared by phase and strong bounds."""
@@ -243,7 +277,7 @@ class _PreparationCache:
 def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
         a0,a1,b0,b1,av0,av1,bv0,bv1,dt,*,active,gap_tolerance_m,
         maximum_time_panels=128,maximum_spatial_cells=1024,maximum_depth=14,cancel=None,
-        _preparation_cache=None):
+        _preparation_cache=None,_polygon_bounds=False):
     """Certify one pressure phase throughout all represented overlap.
 
     active names every original pressure node; unsupported modes are retained.
@@ -254,6 +288,11 @@ def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
     maximum_time_panels=_limit(maximum_time_panels,'maximum_time_panels',1)
     maximum_spatial_cells=_limit(maximum_spatial_cells,'maximum_spatial_cells',1)
     maximum_depth=_limit(maximum_depth,'maximum_depth',0)
+    if type(_polygon_bounds) is not bool:raise ValueError('polygon bounds selection must be boolean')
+    cell_builder=_cell
+    if _polygon_bounds:
+        from .s3_pressure_polygon_bounds import _polygon_cell
+        cell_builder=_polygon_cell
     for value,name,positive in ((dt,'dt',True),(gap_tolerance_m,'gap_tolerance_m',False)):
         raw=np.asarray(value)
         if raw.shape!=() or raw.dtype.kind not in 'fiu' or not np.isfinite(raw):
@@ -300,16 +339,17 @@ def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
                     factor,status=_factor(value)
                     if status is not None:return result(False,status)
                     if visited_space>=maximum_spatial_cells:return result(False,'spatial_budget_exhausted')
-                    endpoints.append((value,_ROOT,0,_cell(value,_ROOT,tolerance,factor)));visited_space+=1
+                    endpoints.append((value,_ROOT,0,cell_builder(value,_ROOT,tolerance,factor)));visited_space+=1
                 _,point_open,point_closed=_aggregate(endpoints,count)
                 if any(point_closed[i][0]>0 if active_mode else point_open[i][1]<0
                        for i,active_mode in enumerate(phase)):
                     return result(False,'pressure_phase_violation','opposite phase is certified at a panel endpoint')
             for face,factor in zip(faces,factors):
                 if visited_space>=maximum_spatial_cells:return result(False,'spatial_budget_exhausted')
-                cells.append((face,_ROOT,0,_cell(face,_ROOT,tolerance,factor)));visited_space+=1
+                cells.append((face,_ROOT,0,cell_builder(face,_ROOT,tolerance,factor)));visited_space+=1
+            partition=_SpatialPartition(cells,count,maximum_depth)
             while True:
-                supports,opens,closed=_aggregate(cells,count)
+                supports,opens,closed=partition.totals
                 if _admissible(opens,closed,phase):
                     for i in range(count):
                         minima[i]=min(minima[i],_lower_float(opens[i][0]))
@@ -317,16 +357,14 @@ def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
                         slow[i]=min(slow[i],_lower_float(supports[i][0]))
                         shigh[i]=max(shigh[i],_upper_float(supports[i][1]))
                     break
-                candidates=[i for i,cell in enumerate(cells) if cell[3][3] and cell[2]<maximum_depth]
-                if not candidates:break
-                # Largest unresolved reference cell first, stable index tie-break.
-                chosen=max(candidates,key=lambda i:_fraction(cells[i][1]))
-                face,vertices,spatial_depth,_=cells.pop(chosen)
+                chosen=partition.pop()
+                if chosen is None:break
+                face,vertices,spatial_depth,_=chosen
                 factor=_factor(face)[0]
                 for child in _children(vertices):
                     if cancel is not None and cancel():return result(False,'cancelled')
                     if visited_space>=maximum_spatial_cells:return result(False,'spatial_budget_exhausted')
-                    cells.append((face,child,spatial_depth+1,_cell(face,child,tolerance,factor)));visited_space+=1
+                    partition.add((face,child,spatial_depth+1,_cell(face,child,tolerance,factor)));visited_space+=1
             if _admissible(opens,closed,phase):continue
         if depth>=maximum_depth:
             return result(False,'pressure_phase_unresolved','joint W±tolerance*S does not certify the phase')

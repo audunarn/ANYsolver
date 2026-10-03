@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.68. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.69. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -32,17 +32,18 @@ independently accepted and released remain distinct.
 
 ## 2. Current bounded slice and next action
 
-Shared normal-S3 preparation is now source/installed tested: one exact immutable
-candidate geometry payload, with all proof decisions/controls rerun. Local24 and
-active/open restart2 outcomes pass; default allfields/234 imported hashes match.
-ABBA covered-route median10.556→9.063s (observed14.14%, two observations each).
-The refined changed-source coupled run still times out900s: strong hidden-approach
-cutbacks and later expensive weak spatial certification both contribute. No refined
-trajectory or general speed claim. [Evidence](docs/d1_review_support/C6_S3_PREPARATION_SLICE_20261003.md).
-Capture the exact stalled weak path and first hidden failure using a bounded prefix;
-then distinguish exact-aggregation cost/loose enclosure from actual phase change.
-Preserve all laws, dimensional/event tolerances and finite budgets. Accelerate
-unchanged rational decisions where demonstrated; do not repeat the full case first.
+Shared preparation retains its measured14.14% covered-route improvement and scoped
+evidence. Exact local totals/heap ordering now remove quadratic pressure-proof work.
+An explicit signed-polygon V4/V16 certificate resolves the saved weak path at the
+unchanged controls; independent geometry/moment checks, active restart and isolated
+example parity pass. V3's tighter hidden-material-point guard remains active.
+The new coupled case still times out900s:218weak proofs resolve in10.324s, while
+868strong paths/642failures consume655.090s, reaching1.79779ms of3ms. No full
+trajectory/acceptance or whole-route speed claim. [Evidence](docs/d1_review_support/C6_S3_POLYGON_PRESSURE_SLICE_20261003.md).
+A real65nm hidden pulse confirms that dropping the tighter material-point safeguard
+is a scientific policy change. User authority is pending for a distinct experiment;
+do not remove it, retry the coupled case or increase caps/tolerances meanwhile.
+Preserve the candidate/evidence and proceed with unblocked required programme rows.
 Earlier slices and failures below remain scoped history.
 
 The explicit variable-endpoint native friction helper now combines complete angular

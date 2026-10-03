@@ -80,7 +80,8 @@ class NormalS3SkinPath:
             lower.append(proof.lower_gap)
         return min(lower), None
 
-    def pressure_sweep(self,manager,start,end,v0,v1,dt,*,active,gap_tolerance_m,cancel=None):
+    def pressure_sweep(self,manager,start,end,v0,v1,dt,*,active,gap_tolerance_m,cancel=None,
+            polygon_bounds=False):
         from .s3_pressure_hermite_bounds import s3_pressure_hermite_bounds
         skins=self.skins(manager,start,end,v0,v1)
         ids=manager.law.target_face_indices[0]
@@ -90,7 +91,7 @@ class NormalS3SkinPath:
             maximum_time_panels=manager.settings.maximum_gap_triangles,
             maximum_spatial_cells=manager.settings.maximum_gap_triangles,
             maximum_depth=manager.settings.maximum_swept_subdivisions,cancel=cancel,
-            _preparation_cache=self._preparation)
+            _preparation_cache=self._preparation,_polygon_bounds=polygon_bounds)
 
     def overlap_sweep(self,manager,start,end,v0,v1,dt,*,cancel=None,event_gap_tolerance_m=None):
         skins=self.skins(manager,start,end,v0,v1)

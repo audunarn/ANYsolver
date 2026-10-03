@@ -1447,3 +1447,15 @@ outcomes plus isolated default field/234hash parity. Covered ABBA median decreas
 14.14%, with no general speed claim. Refined changed-source C1 times out900s,
 showing strong-gap cutbacks and a later costly weak proof; no completed trajectory
 or acceptance. [Preparation evidence](d1_review_support/C6_S3_PREPARATION_SLICE_20261003.md).
+
+## Signed-polygon normal S3 impact — V4 development
+
+Explicit polygon-pressure selection uses V4/V16; V3 remains default. It preserves
+strong physical/hidden-approach controls and changes only pressure certification.
+Exact local totals and temporal inner/outer polygon bounds retain original P1
+functions, area, tiny support, both-body work and physical state semantics.
+49passed scoped outcomes plus retained2test defects/selector exit4; active V16
+restart and source/installed235hash parity pass. No independent acceptance/release.
+The refined coupled case times out900s:218weak proofs pass,642strong-path failures
+dominate. No complete trajectory or impact admission. A separate guard-policy
+experiment needs explicit authority. [Evidence](d1_review_support/C6_S3_POLYGON_PRESSURE_SLICE_20261003.md).

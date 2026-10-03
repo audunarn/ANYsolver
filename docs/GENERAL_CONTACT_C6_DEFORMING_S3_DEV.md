@@ -139,3 +139,15 @@ isolated default allfields/234hash parity pass. Covered ABBA median runtime decr
 14.14%; the refined changed-source run still times out900s. Its partial trace shows
 both strong-gap cutbacks and expensive weak spatial certification. See the
 [preparation evidence](d1_review_support/C6_S3_PREPARATION_SLICE_20261003.md).
+
+## Explicit polygon-pressure V4 development
+
+Select `normal_s3_polygon_pressure_bounds_dev=True` together with
+`allow_normal_s3_skin_hermite_dev=True`, or use the example's
+`--polygon-pressure-bounds` option. This selects signed inner/outer temporal
+pressure bounds and V16 restart. V3 remains default; changing the selection or
+event controls makes continuation incompatible. V4 retains the original complete-
+path physical gap and hidden-point event safeguard. No guard removal is admitted.
+The installed covered example and active restart pass; the refined moving-clipped
+case still times out900s, with strong hidden-approach cutbacks dominating. It remains
+NONPASS/unqualified. [Current evidence](d1_review_support/C6_S3_POLYGON_PRESSURE_SLICE_20261003.md).
