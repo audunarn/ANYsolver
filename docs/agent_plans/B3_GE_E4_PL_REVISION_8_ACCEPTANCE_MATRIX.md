@@ -1569,3 +1569,15 @@ Existing physical metric, budgets and criteria remain unchanged. Retained-variab
 normalization, general unit/mesh invariance, material capacity and independent
 scientific/external acceptance remain open; no aggregate gate closes.
 [Identities and retained failures](development/r8-curved-material-arc-20261003/results.md).
+
+**3 October native retained normalization: IMPLEMENTED_NOT_QUALIFIED.**
+Explicit curved-material opt-in reuses native force/moment scaling, retains it in
+the owned definition and binds a distinct compiled identity. Three-scale SI
+physical similitude, yielded force/arc paths and exact restart pass. Default
+identity/legacy records remain unchanged; incompatible scale snapshots and invalid
+requests fail. Installed7 solver and12 consumer checks pass, all511 modules match.
+New native-scale-v3 Project record preserves the selection. The diagnostic found
+old-role dimensional mismatch but both arrangements solved the bounded case;
+no convergence/speed gain, full unit/mesh qualification, material roof capacity
+or aggregate acceptance follows. Independent/external obligations remain open.
+[Identities, interpretations and failures](development/r8-native-retained-scale-20261003/results.md).

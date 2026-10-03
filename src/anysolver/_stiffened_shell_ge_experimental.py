@@ -182,6 +182,7 @@ class LinearDefinition:
     footprint_chart_policy: str = CHART_ADMISSION_POLICY
     bl5_material_policy: str = "elastic"
     shell_reference_policy: str = "flat"
+    retained_scale_policy: str = "profile"
 
 
 @dataclass(frozen=True)
@@ -549,6 +550,11 @@ class ExperimentalGEAnalysis:
             raise ValueError("explicit admitted shell reference policy required")
         self._curved_material=definition.shell_reference_policy==CURVED_Q4_POINT_MATERIAL_REFERENCE_V1
         self._curved_reference=definition.shell_reference_policy!="flat"
+        if (type(definition.retained_scale_policy) is not str or
+                definition.retained_scale_policy not in ("profile", "native_force_moment_roles_v1") or
+                (definition.retained_scale_policy != "profile" and not self._curved_material)):
+            raise ValueError("native retained scaling requires the explicit curved material point policy")
+        self._native_retained_scale = definition.retained_scale_policy != "profile"
         if self._curved_reference and (panel.s3_elements or (panel.j2_curve is not None and not self._curved_material)
                 or definition.lines or definition.footprints or self._bl5_material or self._modal_only
                 or definition.q4_pullback_policy!=Q4_ALGORITHMIC_PULLBACK_V1):
@@ -579,7 +585,8 @@ class ExperimentalGEAnalysis:
             tuple(definition.points), tuple(definition.fixed),
             definition.lines, definition.q4_pullback_policy, definition.footprints,
             definition.modal_boundary_policy, definition.footprint_chart_policy,
-            definition.bl5_material_policy, definition.shell_reference_policy)
+            definition.bl5_material_policy, definition.shell_reference_policy,
+            definition.retained_scale_policy)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count, beam_inertias = _beam_reference(
             definition.beams)
         self._reference_modal_inertias = beam_inertias
@@ -620,7 +627,8 @@ class ExperimentalGEAnalysis:
         shell_count = 6*len(shell_ids)
         reference_length, shell_scale, beam_scale = _reference_scales(
             shell_xyz, beam_nodes, beam_parts, shell_count, beam_count,
-            footprint_retained_roles=(self._finite_elastic_footprint or self._bl5_shell_material))
+            footprint_retained_roles=(self._finite_elastic_footprint or self._bl5_shell_material
+                                      or self._native_retained_scale))
         shell_r, shell_k, shell_local_error = _assemble_shell(
             shell_model, shell_parts, shell_count, shell_scale,
             definition.q4_pullback_policy)
@@ -675,6 +683,8 @@ class ExperimentalGEAnalysis:
             identity_payload["bl5_retained_scale_policy"] = "native_force_moment_roles_v1"
         if self._curved_reference:
             identity_payload["shell_reference_policy"] = definition.shell_reference_policy
+        if self._native_retained_scale:
+            identity_payload["retained_scale_policy"] = definition.retained_scale_policy
         if self._bl5_material:
             identity_payload["bl5_material_policy"] = definition.bl5_material_policy
         if panel.j2_curve is not None:
@@ -942,6 +952,9 @@ class ExperimentalGEAnalysis:
             capabilities["curved_reference_policy"] = self._definition.shell_reference_policy
             if self._curved_material:
                 capabilities["fixed_step_max_backtracks"] = 16
+                capabilities["retained_coordinate_scale_policy"] = (
+                    "native_force_moment_roles_v1" if self._native_retained_scale else
+                    "legacy_repeated_wrench_v1")
                 capabilities["adaptive_max_backtracks"] = 12
                 capabilities["generalized_station_recovery"] = "cached_fixed_predecessor_v2; older snapshots omit last-increment records"
             if getattr(self,"_external_context",None) is None:

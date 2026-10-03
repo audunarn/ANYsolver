@@ -80,3 +80,18 @@ shell J2 updates. The physical chord metric, twelve-backtrack arc budget and
 equilibrium/compatibility checks are unchanged. Force/displacement controllers
 cannot consume an arc history. This remains experimental; bounded continuation
 and restart do not qualify material capacity or a descending branch.
+
+For new development models, opt in to native retained-coordinate normalization
+with `dataclasses.replace(definition, retained_scale_policy="native_force_moment_roles_v1")`.
+The native layout has six force coordinates and twelve moment coordinates after
+the six cell rotations. The option uses the existing role-aware scale builder;
+it changes numerical scaling, not element work or constitutive laws. It is admitted
+only with the explicit curved material point policy and has a distinct compiled
+model identity. Capabilities report the selected scale arrangement. The default
+`"profile"` preserves existing models, checkpoints and iteration behavior.
+
+Bounded checks cover physically similar panels at length factors 0.1, 1 and 10,
+with stresses, sections, inertia and material metrics transformed consistently,
+simultaneous yielding and exact restored arc continuation. These are SI physical
+similitude checks, not an arbitrary unit-metadata conversion or mesh qualification.
+Both the old and new scaling solved this small screen; no convergence gain follows.

@@ -5,9 +5,9 @@
 Revision 8 plan/goal in ../b3-ge-e4-pl-coupling remains active. Full amended
 G0–G6, F01–F13, V01–V28, B01–B18 scope and scientific criteria remain binding.
 Solver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 80c3920c; use git log for
+branch codex/stiffened-main-reconcile-20261001. Source parent for the current slice 1cb98e95; use git log for
 latest committed identity. ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer
-at b6ad370 (material arc documentation; product85ed953). Scoped local commits only; no push/main merge/publication
+at 295f667 (installed native scaling consumer). Scoped local commits only; no push/main merge/publication
 or contact-worker messages. All owned numerical runs/review terminal. Main untouched.
 
 Formal F03 UNCONSUMED; protected original script SHA256
@@ -81,12 +81,20 @@ loading directions, matched force increments, exact detailed restart, cancellati
 and stale publication pass. Installed23 solver checks and2 native ANYfem checks
 pass; all511 product modules match. [Artifacts, failures and scope](development/r8-curved-material-arc-20261003/results.md).
 
-Next decision: assess actual native retained force/moment normalization before
-general material continuation or an actual-roof capacity claim. Inspect existing
-compiled scale/identity contracts; a bounded physical-similarity comparison can
-distinguish representation/normalization defects from a genuine load-path issue.
-Repair an identified contract defect under an explicit identity rather than
-changing old snapshots. Only then choose a bounded material roof discriminator.
+Normalization decision resolved: new explicit retained_scale_policy selects the
+existing native force/moment builder and a distinct compiled identity. Defaults
+and old snapshots keep their meanings. Three-scale physical similitude and exact
+continued restart pass; installed7 solver and12 consumer checks pass, all511
+source/wheel/site modules match. New strict native-scale-v3 consumer record
+preserves the opt-in through Project persistence. The old arrangement mis-scales
+18 coordinates but also solved this small screen; no convergence gain is claimed.
+[Artifacts, ownership repair, reporting/fixture failures and scope](development/r8-native-retained-scale-20261003/results.md).
+
+Next application decision: inspect actual E04 roof section/frame and material
+assumptions, then define one bounded material continuation/restart comparison
+using the delivered native normalization. A declared development material case
+can establish implemented behavior; calibrated engineering accuracy still needs
+matched independent evidence. Do not invent calibration or hide a failed path.
 No automatic finer mesh, new globalization or external repeat. Displacement,
 spectra, external loads, fibres, curved S3 and broader attachments remain open;
 no aggregate qualification follows.
