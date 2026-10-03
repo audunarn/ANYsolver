@@ -65,15 +65,26 @@ Wheel280dfa5d...1497701fe; archive265files/658dbf62...4b6db25.
 
 ## Next discriminating action
 
-Scalar-only benefit is modest; stop extending isolated scalar shortcuts.
-Census identifies107,077right-constant and26,209left-constant Jet products versus
-149,550both-varying products. Inspect saved profile/source to choose one bounded
-acceleration of multiplication by known reference matrices in existing local
-operators. Preserve ordered products/sums, exceptional behavior, owned arrays,
-actual-update mechanics and generic fallback; no mutable constant tags, guard
-removal, tangent lagging or new framework. Use existing full formulas as oracle.
-A bounded installed complete-route screen decides retain/stop; only promising
-results advance to seven pairs. Do not extrapolate a10k nonlinear run into the
-600s budget. Continue unrelated permitted scope where dependencies allow.
-G0/F01/G5/M5 and every unfinished mandatory matrix row remain open. Full goal
-remains ACTIVE; no acceptance, scope, resource or release boundary changed.
+Reference-matrix candidate edf914d1 was reverted in78f52582:146installed
+checks and exact physical/history/checkpoint parity pass, but the three-pair
+median gain0.19% fails the prospective3% screen. No further campaign.
+[Closed candidate and design review](development/r8-ge-ad-constant-20261003/results.md).
+All jobs are terminal; retained source modules match bccd4952 wheel/site bytes.
+
+Decision sought: remove duplicate same-parent full evaluation in fixed Newton
+stepping without weakening observation or state ownership. Candidate assembly
+already supplies the current residual, tangent and material/recovery payload;
+next iteration evaluates the exact candidate again with the same predecessor.
+A bare tuple handoff is unsafe because callbacks may mutate writable arrays.
+
+Next bounded action: establish a guard-only validation boundary first. Require
+single-use invocation-local trial/parent/generation/load/origin/content binding,
+validation AFTER the next cancellation observation, existing Q4 runtime/class/
+quadrature/cache/input and native reference/cell/joint guards, and matching
+recovery records. Clear on invalidation or consumption. Initially exclude
+external/programme/adaptive/unsupported routes. Count actual assemblies honestly.
+If existing observation guards cannot be retained, stop this proposal and
+address measured element-map cost instead. No reuse code or run yet.
+
+G0/F01/G5/M5 and every incomplete mandatory row remain open. Full goal ACTIVE;
+scientific scope, resources, formal F03 and release authority unchanged.

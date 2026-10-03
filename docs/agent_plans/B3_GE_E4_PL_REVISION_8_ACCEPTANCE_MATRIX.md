@@ -1713,3 +1713,15 @@ unchanged mechanics work counts. Timing variability and failed fixtures/setup
 preserved. No10% programme,10k nonlinear or aggregate qualification claim;
 open mandatory rows, F03 UNCONSUMED and pressure/release authority unchanged.
 [Scoped result, raw samples/artifacts and review](development/r8-ge-ad-scalar-20261003/results.md).
+
+
+**3 October explicit reference-matrix development disposition:** edf914d1
+passed146installed checks and exact complete-route physical/history/checkpoint
+comparisons, but three-pair median improvement0.19% fails recorded3% triage.
+Candidate source/tests reverted in78f52582; retained librarybccd4952 and all414
+baseline source/wheel/site identities restored. Review's Sequence finding fixed
+before execution, failed performance evidence preserved; no seven-pair campaign.
+No aggregate gate, scientific tolerance or authority changed. Next targeted
+opportunity is duplicate same-parent full-candidate assembly; guard-only
+validation and writable-input/recovery binding must be established before reuse.
+[Closed candidate, raw samples and next design findings](development/r8-ge-ad-constant-20261003/results.md).
