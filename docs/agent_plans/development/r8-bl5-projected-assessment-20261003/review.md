@@ -110,3 +110,15 @@ resolution-review.md, slice-review-v1.md and physical-review-v1.md.
 No blocking development defect remains; reviewer did not implement these changes.
 This same-family input is not different-family scientific acceptance.
 Engineering accuracy, full envelope and F03 remain open.
+
+## Sparse assessment and projected-modal integration
+
+Root reviewed the modal worker's exact two-file scope and independent scalar/
+old-equation controls, and executed its33 checks serially. Root authored the
+saved-kernel caller and independently inspected input hashes and actual runs.
+A non-implementing OpenAI reviewer inspected the graph/inverse/rounding/margin,
+structural closure, stored congruence and directed Decimal logic, exact controls
+and both completed585/1017-pivot proofs. Reports v1/v2 and failed/inconclusive
+runs are retained under sparse-envelope/ in raw-manifest-v7. No blocking
+false-positive defect was identified. This is supporting same-family review,
+not different-family scientific acceptance. Broad applicability remains open.

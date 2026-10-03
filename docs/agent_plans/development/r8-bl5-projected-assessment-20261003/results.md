@@ -412,3 +412,60 @@ c5723a6a294390f2ec1d6b10e114f0f1bc1198fd4686007a33457567cd702249,
 retains26326297B of explicit owned source, raw state/failed unrefined states,
 registration, commands, reference outputs, supervision and reviews. Previous
 manifest/evidence bytes unchanged. Full programme goal ACTIVE and gates OPEN.
+
+## Sparse saved-kernel and projected-modal extension
+
+Development only, source parent19443a6. No product equation, criterion, wheel,
+default, checkpoint identity or release version changed. No new owner solve or
+external model was executed. The two saved reciprocal operator/archive bindings
+were verified before reuse; their historical dense results remain unchanged.
+
+The complete graph uses10 independent physical/retained pivots per support and
+all constraint rows. Local inverse-residual enclosures establish rank and bound
+the exact kernel. Local18-resultant inverse/lift residuals bound the stationary
+Schur of the saved binary64 K. Sparse product, graph, scaling and explicit
+lower-completion errors are included. Stored positive column scaling is only an
+invertible congruence; its metric conversion preserves the declared scaled
+physical norm. Complete native K is never treated as an SPD norm or repaired.
+
+| Saved whole-member:shell | Physical/kernel order | Final kernel error upper | Shift2*error | Scaled physical lower bound |
+|---|---:|---:|---:|---:|
+| 1:2 | 625/585 | 8.27718964e-10 | 1.65543793e-9 | 6.30611929e-11 |
+| 2:1 | 1057/1017 | 6.80029789e-9 | 1.36005958e-8 | 2.56921594e-10 |
+
+Both final proofs complete every pivot. These are conservative coercivity bounds,
+not eigenvalue estimates and not a uniform-stability or engineering-accuracy
+claim. Binary64 interval elimination remained HOLD from dependency widening.
+Fixed50-digit directed Decimal arithmetic then proved the SAME representative
+and error-derived shift; exact binary64 imports and outward elementary operations
+preserve the target. There was no tolerance relaxation. Numeric LU supplies
+ordering only: its omitted structural entries caused the first run to fail.
+Bounded symbolic elimination closure retains initial and generated cancellation
+fill. The original failure, both inconclusive cases and final results are retained.
+
+Focused verification covers64 distinct passed controls:31 graph/interval controls
+and33 projected-modal controls. Retained failures include the strict sparse-array
+compatibility failure, an initially invalid uncertain-inverse counterexample,
+a budget-message assertion mismatch and the numeric-pattern omission. Changed
+checks were rerun; no unrelated installed campaign was repeated. The modal helper
+projects<=256 modal rows before forming<=160-column Grams and preserves the old
+P0 equation/cell-count tail for up to1024cells, including rank-deficient actions.
+Old128-cell and2400/3000 dense guards remain unchanged.
+
+The two final saved jobs complete in2.257/4.693seconds, sampled peak73,449,472/
+80,998,400bytes, one numerical/unresolved thread. These are bounded diagnostic
+costs, not a speedup claim. Same-family independent source review finds no blocking
+false-positive defect. Different-family acceptance and final installed/platform/
+external qualification remain open. No formal F03 authority was consumed.
+
+Decision: use this sparse graph/error method and projected modal preparation as
+inputs to a prospective full21-case campaign. Larger operators need their explicit
+sparse resource/admission contract; no largest-case feasibility or envelope pass
+is implied. Next integrate actual ratio-derived quarters/counts, complete scalar
+registration, then run missing physical cases without replaying unchanged ones.
+Full seven ratios/three levels, mixed-system/locking/director/shear/drilling,
+physical transfer, mandatory references and M2/G0/F03 acceptance remain OPEN.
+
+[106-file raw extension](raw-manifest-v7.json), SHA
+8320998b8ac6a4a41efe0f1b45386095f049db0ebc7849daf7cee6c385696951,
+preserves943212bytes. Prior manifests and protected history remain byte-identical.

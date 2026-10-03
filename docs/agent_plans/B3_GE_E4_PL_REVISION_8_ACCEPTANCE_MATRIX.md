@@ -1,3 +1,12 @@
+**3 October sparse saved-operator assessment — IMPLEMENTED_NOT_QUALIFIED:**
+complete physical/retained graph and error-derived shifted interval proofs pass
+on unchanged625/1057 reciprocal operators;64 distinct focused controls passed.
+Numeric-fill failure and binary64 HOLD remain preserved. Directed50-digit final
+proofs retain the physical norm, all rows and fixed scientific criteria. Larger
+21-case envelope, uniform stability, physical validation, different-family review
+and formal F03/M2/G0 acceptance remain OPEN. No product or public-route change.
+[Grouped evidence and review](development/r8-bl5-projected-assessment-20261003/results.md).
+
 # B3-GE / E4-PL / B2 current acceptance matrix
 
 **3 October reciprocal projected resolution — IMPLEMENTED_NOT_QUALIFIED:**
