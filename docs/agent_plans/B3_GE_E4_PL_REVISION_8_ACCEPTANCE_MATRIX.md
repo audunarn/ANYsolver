@@ -1781,3 +1781,21 @@ and loaded spectral requests reject the initial policy. Material dependency is
 recorded editable source; no full graph/platform/G6 claim. M3/aggregate gates stay
 open; F03 UNCONSUMED, resources/scientific tolerances/release authority unchanged.
 [Product, artifacts, raw outcomes, failures and scope](development/r8-b2-loaded-point-owner-20261003/results.md).
+
+**3 October coherent affine BL5 development decision:** source7d24f906 adds a
+distinct discontinuous-P1 density basis over complete native members, with one
+support rule for all five channels.104 installed checks pass,417module binding;
+legacy/default behavior retained. Independent rational BVP/work/unit controls,
+actual-update curvature, accepted finite density/restart/continuation pass.
+Same32support continuous affine reference versus strong transfer−.180…−.209%
+(P0−2.577…−2.999%). Native8support coarse fixture versus SAMEaffine+.744…+.848%,
+versusstrong−4.583…−5.355%; partitions remain explicit. Source0f902f88 reuses
+unchanged flexible16x4/32-halfcell actual mixed-system oracle:80rows independent,
+positive physical kernel above nominal numerical uncertainty, implied native
+inertia769+/368-/0 and allFy/Mx/Mz reconstruction/work parity≤1.875e-12.
+Independent Read reviews clear after actual third-moment quadrature repair;
+failed fixtures/build attempts retained. Retain candidate for flexible physical
+transfer/locking/full-ratio checks; no norm, default space, law, F03 or aggregate
+qualification selected/closed. Formal F03 UNCONSUMED; scientific/resource/release
+authority unchanged, full goal ACTIVE.
+[Pairing, partitioned results, nominal oracle and evidence](development/r8-bl5-affine-density-20261003/results.md).

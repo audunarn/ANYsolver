@@ -10,12 +10,14 @@ and consumed authority retain meaning. Prior active note preserved byte-for-byte
 in [delivery evidence](development/r8-b2-loaded-point-owner-20261003/active-state-before-consolidation.md).
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; product af7876710ad0952050c8a03ad988a5601cda668b.
+branch codex/stiffened-main-reconcile-20261001; source0f902f88cca2f1141b9829d229c929f0239ff2ba
+(affine product2f0f9ddb, reviewed screen7d24f906; B2 owneraf787671 unchanged).
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 2ede338ba28932bb9dd3e8eb0f0a4908d37fc765. Check log for later evidence commits.
 No source job needs replacement. Previous owned numerical jobs TERMINAL.
-One bounded Read review of the next native transfer-resolution decision is active;
-it has no edits/numerical-job/Git authority. Check collaboration state on resume.
+All owned numerical jobs, Read reviews and independent-reference worker TERMINAL.
+Installed affine checks104pass; screen and flexible mixed-system oracle COMPLETE.
+No run needs replacement. No F03 execution.
 Local scoped commits only; no push/main merge/publication/contact-worker messages.
 Main and unrelated dirty work preserved.
 
@@ -61,14 +63,31 @@ This resolves the straight carrier's causal allocation, not M2 acceptance.
 passes full mixed-work/physical controls; local PL/HG sensitivity is not drilling
 independence. No new native mesh or F03 execution.
 
-Decision sought: complete transfer-aware interface resolution consistent with
-the declared BL5 law, all channels and intended physical length scales.
-Remaining uncertainty: a rule that resolves transfer without locking/unstable
-mixed modes across admitted ratios. Next bounded action: reconcile the Read
-review against the existing complete c1/c2 candidates and physical/mixed-system
-obligations; implement one justified missing control or complete rule, not another
-isolated carrier refinement/norm campaign. An unsupported proposal is parked with
-its precise obstruction while independent mandatory implementation continues.
+Decision sought: whether affine density over complete-member supports repairs
+constant P0's transfer-resolution defect without changing the BL5 continuous law.
+Development candidate7d24f906: all five channels share [1,xi], span=2*ceil(max(1,
+halfcell_count/shell_segments)), physical endpoints, exact coverage/member pairs.
+Legacy identities/numerics unchanged.34focused checks and accepted finite density/
+checkpoint/continuation control pass. New independent quintic BVP checks reference
+propagation. Review caught third-force-moment underintegration; exact analytic
+recovery and counterexample repair it, production quadrature unchanged.
+Bounded discriminator: SAME8/16/32 supports P0-versus-affine continuous references,
+then ONE existing16x4/32-halfcell native rigid-carrier model versus actual affine
+reference. No new finer carrier, channel tuning or norm campaign. Improved transfer
+with physical controls advances a candidate to missing flexible/mixed/stability
+checks, not qualification. Screen completed: independent32support affine-versus-
+strong transfer−.180…−.209% (P0−2.577…−2.999%); coarse native8support-versus-
+same-affine+.744…+.848%, versusstrong−4.583…−5.355%. Do not conflate partitions.
+Actual flexible mixed-system oracle passes:80rows independent; physical kernel
+min1.754e-5 exceeds nominal3.109e-11 uncertainty; implied native inertia769+/368-/0.
+Fy/Mx/Mz reconstruction/full-native parity≤1.875e-12, work/gap/factor reuse pass.
+[Candidate, raw artifacts, failures and reviewed disposition](development/r8-bl5-affine-density-20261003/results.md).
+Retain affine pairing as next development candidate; do not replace default P0
+or select a qualified policy. Next required action is matched flexible physical
+transfer/locking assessment and the remaining ratio envelope, using valid saved
+reference geometry/actions and the new density's own justified norm. Positive
+kernel is not locking/accuracy acceptance. No finer rigid carrier or auxiliary
+norm sweep follows automatically. All mandatory M2 scientific rows remain open.
 
 F01 OPEN: historical corotational physical-work failure retained. Forward nonlinear
 routes explicitly use Q4_ALGORITHMIC_PULLBACK_V1. Scoped F05/F08/F09 accepted;
