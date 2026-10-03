@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.71. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.72. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -24,7 +24,7 @@ Publication, merging, release and historical-default changes are separate action
 | D4 friction/continuation | Fixed-material and planar material-anchor S3 owners use shared static equilibrium/pressure/history/restart; facet crossing, internal-seam generalized tangent and solved seam/restart checks pass in development | Friction integration/step refinement, partial overlap/history transfer, physical rims, finite rotation/warped surfaces, swept beam/native surfaces, nonlinear materials and arc length |
 | D5 impact | Q4/S3 planes, B2/B3 fixed/translating planes and explicit guided Q4/free isotropic sphere share Newmark driver/state/restart; new shell work/path/energy/restart checks and isolated installed example pass | Broader shell/free-body admission, general geometry, finite rotation, caps/pairs, anisotropic inertia, nonlinear materials and acceptance |
 | D6 native dynamics | Dedicated retained-inertia/SO(3) midpoint owner, state codec and installed development route | Broader geometry/sections, spatial accuracy and C7 acceptance |
-| Applications | ANYfem persisted Q4/Q4 and Q4/S3 development solves, selected ordinary nodal force, independent reaction/KKT checks and active fresh-owner restart verified in installed packages; ANYstructure intent/public mapping and early rejection | Source/model-bound accepted-profile admission, full routing, result fields/export/visualization and C9 acceptance |
+| Applications | ANYfem persisted shell/path/force development solves and restart; opt-in associated fields, CSV export and guarded saved-model/mesh/result headless contours verified in installed packages; ANYstructure intent/public mapping and early rejection | Source/model-bound accepted-profile admission, normal routing, physical skin/traction and broader postprocessing, C9 acceptance |
 
 Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md),
 [restart note](GENERAL_CONTACT_RESTART.md) and linked guides. Implemented, tested,
@@ -54,6 +54,20 @@ or speed claim. Supporting source scrutiny is not independent acceptance.
 [Guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_MIXED_FORCE_DEV.md).
 Previous18N path evidence and fixture/harness failures remain at its linked guide.
 
+ANYfem successor5259cd43 adds explicit include_fields=True through the existing
+artifact/CSV/contour infrastructure: displacement, reference numerical pressure
+coefficients, weak normalized gaps, reference supports and integrated forces.
+Target values remain unavailable where unreported. Actual saved/reloaded project,
+mesh and result correspondence is guarded; shifted solver reference coordinates,
+changed mesh/lineage and missing associations reject. Default summary-only calls
+are preserved. Source45affected outcomes pass,8focused review corrections pass;
+installed22outcomes plus4saved-graph outcomes pass6.322s/201027584B and
+3.585s/197885952B.313/312loaded module hashes match source, actual JIT0/pools1.
+No physical-pressure recovery, skin contour or source/model acceptance certificate.
+Four initial test defects and collection correction retained; source scrutiny
+resolved an imperfection-frame error and missing-ID omission before final wheel.
+[Field guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_RESULT_FIELDS_DEV.md).
+
 The impact question remains pending user authority. Explicit V4/V16 signed-polygon
 pressure certification resolves218encountered paths in10.324s, but the refined
 case timed out900s at1.79779ms/3ms. Strong hidden-point checks consumed655.090s
@@ -65,9 +79,10 @@ caps/tolerances or infer approval. V3/V15 default and old evidence remain intact
 Next: use the user decision if it arrives. A separately named policy experiment
 requires that authority. Meanwhile continue genuine remaining application or
 mechanics rows; production admission must follow solver capability status. The
-next application boundary is accepted-profile source/model binding and actual
-result fields/export/visualization; the guided fixed-target force case does not
-admit general nonlinear or deformable-target application analysis. Preserve
+next application boundary is accepted-profile source/model admission and normal
+routing, followed by physical-skin/current-traction and broader postprocessing.
+The guided fixed-target force case does not admit general nonlinear or
+deformable-target application analysis. Preserve
 the explicit native grazing-friction NONPASS and no-retry restrictions: the missing
 closed alpha_q=-G_q/G_alpha plus mixed-work bound is unresolved; caps/history/errors
 are unchanged. Full programme and independent/package/resource gates remain.

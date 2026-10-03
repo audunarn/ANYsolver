@@ -3,7 +3,7 @@
 Full C0–C9 ACTIVE/incomplete. Authoritative solver root:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
 branch codex/contact-main-reconcile-20261001; numerical source04535859.
-HEAD binds this checkpoint; goal2026-09-30.4 / plan2026-10-03.71 govern.
+HEAD binds this checkpoint; goal2026-09-30.4 / plan2026-10-03.72 govern.
 Protected original must not be accessed. No other human-chat messages, publication,
 merge/default changes or consumed-authority replay. Local checkpoints authorized.
 All owned runs/reviewer terminal. Prior restrictions/history:
@@ -11,28 +11,31 @@ docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART93.md→92�
 
 NEW unblocked D8 outcome: ANYfem isolated root
 C:/ANYworkspaceWork/ANYfem-contact-intent; branch codex/anyfem-contact-intent;
-HEADff3a8a54b8ed234bdcc52745f3ea4b6ed064bd79, clean after commit.
-Mapped helper now supports selected dead nodal loads as well as explicit paths.
-Real persisted/meshed two-Q4/S3 press/open/recontact passes144N reaction;0.1N
-guided fixed-target ordinary force matches independent analytic Q1 mortar/KKT
-reference with supplied rest structural stiffness:reaction0.0931952663N,
-physical gap−3.938462um within50um,residual2.88e−11N,complementarity6.38e−12.
-Both-body wrench and fresh-owner serialized active force restart pass. Conflict
-loads reject before owner. Explicit existing projected_matching replaces fixture
-whole_face selection after remote-corner extrapolation/backtracking NONPASS;
-mechanics/loading/tolerance/defaults unchanged, original failure retained.
-V2 mesher policy/soft-target metadata strict; soft target not an admission gate.
-Current-identity V1 schema compatible, obsolete contracts reject. Source13new
-checks pass; stale default-test fixture corrected, prior failures retained.
-Installed24outcomes pass142.514s/219332608B, within180s/953MiB; actual JIT0/pools1,
-298loaded module hashes match both intended sources. Old Q4/Q4 cycle/restart/
-cancellation also pass. Normal application admission remainsfalse.
-Guide/evidence: ANYfem docs/GENERAL_CONTACT_MIXED_FORCE_DEV.md and
-docs/contact_mixed_force_evidence_20261003/{source.json,raw.zip}(91records).
-Prior18N path evidence/import/cache/cancellation failures remain linked through
-docs/GENERAL_CONTACT_DEVELOPMENT_SOLVE.md and its original66-record packet.
-No engineering acceptance/release/speed claim. Supporting source-only scrutiny
-resolved a V2 shape finding; it is not independent engineering acceptance.
+HEAD5259cd43604de9e3fc72f5346aab6aa420ef3530, clean after commit.
+Mapped explicit paths/selected dead nodal loads and active fresh-owner restart
+pass for named Q4/Q4 and Q4/S3 developer fixtures. Mixed press144N; guided0.1N
+force agrees with independent Q1/KKT using rest structural stiffness, reaction
+0.0931952663N/gap−3.938462um within50um. Whole-face remote-corner/backtracking
+NONPASS retained; explicit existing projected_matching passes unchanged mechanics.
+Strict V2/current-identity V1 schema handling preserves soft target and obsolete
+contract rejection. Prior24installed checks/298hashes and old18N route evidence:
+ANYfem docs/GENERAL_CONTACT_MIXED_FORCE_DEV.md→GENERAL_CONTACT_DEVELOPMENT_SOLVE.md;
+91/66-record packets preserve all fixture/contract/import/cancellation failures.
+
+NEW explicit include_fields=True copies nodal displacement, reference pressure
+coefficients/weak gap/support and integrated forces through existing artifact/
+CSV/headless contour. Saved/reloaded owner project/mesh/result correspondence
+passes; shifted solver reference, changed mesh/lineage and malformed associations
+reject. Target pressure stays unavailable, contour uses deformed reference mesh/
+element averaging. Default summary-only/application admissionfalse preserved.
+Source45affected plus8review-correction outcomes pass; installed22plus4saved-graph
+checks pass6.322s/201027584B and3.585s/197885952B (180s/953MiB), actual JIT0/pools1,
+313/312hash parity. ANYfem docs/GENERAL_CONTACT_RESULT_FIELDS_DEV.md and
+docs/contact_field_evidence_20261003/{source.json,raw.zip}(55records) retain one
+actual saved graph/CSV,4test defects and collector correction. Supporting source
+scrutiny fixed imperfection-frame/missing-ID errors; no independent engineering
+acceptance, release, physical-pressure recovery or full model/source admission.
+Solver numerical04535859/defaults unchanged; all owned activity terminal.
 
 PENDING async user decision remains: allow a SEPARATE experimental impact policy
 retaining full20um swept-gap/discrete-pressure-phase control but omitting V3/V4's
@@ -53,11 +56,12 @@ acceptance still required. No supportable programme delivery forecast.
 
 Next: act on pending user decision only if received. Otherwise choose a genuinely
 unblocked required row; next app boundary is accepted-profile source/model-bound
-admission plus actual result fields/export/visualization. Fixed-target guided
+admission and normal routing, then physical-skin/traction and broader quantities.
+Fixed-target guided
 force does not admit general nonlinear/deformable-target application models.
 Preserve separately
 owned dirty canonical application work; new slice touched only isolated ANYfem.
-Budget120activehours: lastgoal336569+3120=339689s(~94.36h), ~25.64h remaining.
+Budget120activehours: lastgoal339190+3120=342310s(~95.09h), ~24.91h remaining.
 Read current goal clock before a substantial slice; at120h checkpoint/request
 scope/time/method decision, never silently extend or complete. Lower tiers remain
 previously unavailable; do not reprobe unchanged failures. Goal ACTIVE.

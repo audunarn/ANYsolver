@@ -1,5 +1,32 @@
 # General-contact capability ledger
 
+## Mapped ANYfem contact fields/export/contours — 3 October
+
+ANYfem5259cd43604de9e3fc72f5346aab6aa420ef3530, solver numerical04535859
+unchanged. Explicit include_fields=True retains reported nodal reference pressure
+coefficients/weak normalized gaps/reference supports, global forces and actual
+nodal displacement with units/basis/associations. Existing artifact writer, CSV
+and headless contour APIs operate on persisted/reloaded owner project, mesh and
+result. Unsupported target quantities remain unavailable. Contours use the
+deformed reference mesh and existing element averaging; no physical-pressure
+recovery or physical-skin contour. Mesh fingerprint/geometry-owner lineage guard
+is correspondence, not full-model/source-bound scientific admission.
+
+Shifted solver reference geometry (imperfections), changed coordinates/
+connectivity/lineage and malformed/missing source associations reject. Raw
+non-success retains its partial summary without invented fields. Default
+summary-only calls and normal job rejection remain. Source45affected checks pass;
+after supporting source scrutiny,8focused refusal checks pass. Installed22checks
+pass6.322s/201027584B plus4saved-graph checks3.585s/197885952B, within180s/953MiB.
+Actual JIT0/pools1, both installed roots,313/312module-hash parity. Initial4test
+defects and collector assumption failure retained. Raw55-record packet includes
+one actual project/mesh/result artifact graph, CSV and final source/wheels.
+
+Implemented/source-tested/installed-tested: **named developer postprocessing**.
+Independently accepted/released/application-admitted: **no**. Source/model-bound
+accepted-profile routing, broader quantities/geometry/histories and C9 assessment
+remain. No speed claim. [Evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_RESULT_FIELDS_DEV.md).
+
 ## Mapped ANYfem mixed-shell and ordinary-force development — 3 October
 
 ANYfem isolated checkpointff3a8a54b8ed234bdcc52745f3ea4b6ed064bd79, solver
