@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.55. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.56. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -70,15 +70,33 @@ and changed history/swept-control rejection. Independent position/force errors a
 bitwise comparison failure is not regraded. Unchanged solver wheel is reused after
 all208 loaded module hashes and new example fields match.
 
-NEXT explicit Q4/fixed-plane plastic impact, beginning with accepted material-state
-ownership and a versioned dynamic packet. Current dynamic checkpoints omit material
-history and cannot admit plasticity by dropping the elastic guard. Reuse qualified
-Q4 three-layer seal/semantic validation and canonical JSON; restore accepted history
-before balance and avoid a second same-pose physical commit. Demonstrate actual
-yield/unloading, independent material/structural reference, rejected trials, cutback,
-cancellation/exception and yielded restart. Constitutive kernels, static schemas
-and elastic profiles remain unchanged. Native friction can resume only after a
-justified closed-strip residual/tangent bound, not another refinement campaign.
+The explicit Q4/fixed-plane DNV plastic development profile now retains accepted
+three-layer material history and its discrete return-map parent in dynamic packetV7.
+51 codec checks and10 new driver outcomes plus2 affected legacy outcomes pass.
+The independent two-coordinate plateau/Newmark reference matches actual yielding
+during contact and subsequent unloading; active yielded restart, mutation/tamper
+rejection, cancellation/exception and a forced cutback after a yielded commit pass.
+Review corrected lost historical tool-work fingerprint coverage and exported-state
+aliasing. Compact state is respected; reported stresses are explicitly inferred.
+No constitutive-kernel, static-schema or historical elastic-profile change.
+
+The bounded temporal discriminator reduces the coarse11.648% endpoint energy
+excess to0.26977%/0.46223% on half/quarter dt. It supports contact timestep/event
+phase error, but the fine trend is nonmonotonic and endpoints differ; no formal
+temporal acceptance. Both finer cases complete within180s/953MiB.
+NEXT implement/review the actual contact-stage event policy and register matched
+endpoint temporal/work checks, then close impact-induced plasticity through one
+independent case before broader D5 admission. Do not start an open-ended dt sweep.
+The current example has uncoupled membrane and normal modes and cannot supply
+those claims. Its full120-step route is approximately78s; no speed-up claim.
+Measure material-packet preparation/validation cost before optimizing it; preserve
+accepted-parent semantics and every required restart check. Do not repeat broad
+suites or expand caps. Reuse unchanged geometry/static/material evidence.
+Native friction can resume only after a justified closed-strip residual/tangent
+bound, not another refinement campaign. Full C0–C9 completion remains required.
+
+[Plastic profile guide](docs/GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md) and
+[source/package evidence](docs/d1_review_support/C6_Q4_PLASTIC_SLICE_20261003.md).
 
 [New D5 guide](docs/GENERAL_CONTACT_C6_FREE_SHELL_SPHERE_DEV.md) and
 [slice evidence](docs/d1_review_support/C6_FREE_SHELL_SPHERE_SLICE_20261003.md).

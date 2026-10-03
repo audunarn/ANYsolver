@@ -14,9 +14,10 @@ mass with a complete tensor-Bernstein curve/time gap enclosure.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass,field
 from bisect import bisect_right
 from functools import wraps
+from copy import deepcopy
 from typing import Mapping
 
 import numpy as np
@@ -65,6 +66,8 @@ from .event_subdivision import EventNeedsCutback, localize_branch_event
 
 
 _PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_PENALTY_DEV_V1"
+_Q4_PLASTIC_PROFILE = "PLANAR_Q4_FIXED_PLANE_NEWMARK_DNV_PLASTIC_DEV_V1"
+_Q4_PLASTIC_RESTART_SCHEMA = "ANYSOLVER_Q4_PLASTIC_TRANSIENT_CONTACT_DEV_CHECKPOINT_V7"
 _S3_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0"
 _S3_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_HISTORY_DEV_V1"
 _S3_DIRECTIONAL_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_RATES_DEV_V1"
@@ -168,8 +171,17 @@ class ContactTransientSolverControls:
     maximum_tool_work_subdivisions: int = 64
     allow_free_sphere_dev: bool = False
     allow_free_shell_sphere_dev: bool = False
+    allow_q4_plastic_dev: bool = False
+    save_q4_material_history_dev: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.allow_q4_plastic_dev) is not bool or type(self.save_q4_material_history_dev) is not bool:
+            raise ValueError('Q4 plastic/material-history selections must be boolean')
+        if self.save_q4_material_history_dev and not self.allow_q4_plastic_dev:
+            raise ValueError('material history requires the Q4 plastic development profile')
+        if self.allow_q4_plastic_dev and (self.allow_free_sphere_dev or self.allow_classical_beam_dev
+                or self.allow_s3_descriptor_dev):
+            raise ValueError('Q4 plastic development requires its separate fixed-plane profile')
         if type(self.allow_free_sphere_dev) is not bool:
             raise ValueError("allow_free_sphere_dev must be boolean")
         if type(self.allow_free_shell_sphere_dev) is not bool:
@@ -323,6 +335,8 @@ class TransientContactResults:
     prescribed_tool_work_j: tuple[dict[str, float], ...] = ()
     prescribed_tool_work_error_j: tuple[dict[str, float], ...] = ()
     free_rigid_bodies: tuple[dict[str, FreeRigidBodyState], ...] = ()
+    element_states: Mapping = field(default_factory=dict)
+    material_state_history: tuple[Mapping,...] = ()
 
 
 def _restart_analysis_contract(transient, controls, manager, profile,
@@ -382,6 +396,9 @@ def _restart_analysis_contract(transient, controls, manager, profile,
             for h in tool_histories]
         for name in ("tool_work_absolute_tolerance_j", "tool_work_relative_tolerance", "maximum_tool_work_subdivisions"):
             contract["controls"][name] = getattr(controls, name)
+    if controls.allow_q4_plastic_dev:
+        contract['controls'].update(allow_q4_plastic_dev=True,num_layers=3,
+            save_q4_material_history_dev=controls.save_q4_material_history_dev)
     if controls.s3_algebraic_path_dev:
         contract["controls"]["s3_algebraic_path_dev"] = True
         contract["controls"]["s3_path_position_tolerance_m"] = controls.s3_path_position_tolerance_m
@@ -398,7 +415,7 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             current_time, q, velocity, acceleration,
                             accepted_steps, external_work_j=None, path_terminal_active=None,
                             event_boundary_support=None, tool_work_j=None, tool_work_error_j=None,
-                            free_body_name=None) -> dict:
+                            free_body_name=None,material_checkpoint=None) -> dict:
     payload = {
         "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
                    else _RESTART_SCHEMA),
@@ -430,13 +447,17 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
     if free_body_name is not None:
         payload["schema"], payload["version"] = _FREE_RESTART_SCHEMA, 6
         payload["state"]["free_rigid_body_names"] = [free_body_name]
+    if material_checkpoint is not None:
+        payload['schema'],payload['version']=_Q4_PLASTIC_RESTART_SCHEMA,7
+        payload['state']['material_checkpoint']=deepcopy(material_checkpoint)
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
 
 def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                              reduced_size, t_end, *, load_history, path_pressure_dofs=0,
-                             event_subdivision=False, tool_body_names=(), free_body_name=None):
+                             event_subdivision=False, tool_body_names=(), free_body_name=None,
+                             q4_material_state=False):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -458,6 +479,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         expected_version, expected_schema = 5, _TOOL_RESTART_SCHEMA
     if free_body_name is not None:
         expected_version, expected_schema = 6, _FREE_RESTART_SCHEMA
+    if q4_material_state:
+        expected_version,expected_schema=7,_Q4_PLASTIC_RESTART_SCHEMA
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -478,6 +501,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         expected_state_keys.update(("tool_work_j", "tool_work_error_j"))
     if free_body_name is not None:
         expected_state_keys.add("free_rigid_body_names")
+    if q4_material_state:
+        expected_state_keys.add('material_checkpoint')
     if not isinstance(state, Mapping) or set(state) != expected_state_keys:
         raise ValueError("transient contact checkpoint state is malformed")
     if free_body_name is not None and state["free_rigid_body_names"] != [free_body_name]:
@@ -521,6 +546,8 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                            for v in data.values())):
                 raise ValueError("transient contact checkpoint tool work is invalid")
             values += (dict(data),)
+    if q4_material_state:
+        values+=(state['material_checkpoint'],)
     return values
 
 
@@ -860,7 +887,8 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
     elif all(type(element) is QualifiedE4PLShellElement for element in elements):
         if controls.allow_s3_descriptor_dev:
             raise ValueError("S3 descriptor opt-in requires one qualified S3 V2D element")
-        profile = FREE_SHELL_SPHERE_PROFILE if controls.allow_free_shell_sphere_dev else _PROFILE
+        profile = (_Q4_PLASTIC_PROFILE if controls.allow_q4_plastic_dev
+                   else FREE_SHELL_SPHERE_PROFILE if controls.allow_free_shell_sphere_dev else _PROFILE)
     elif (len(elements) == 1
           and type(elements[0]) is NativeParityE4PLS3V2DShellElement
           and controls.allow_s3_descriptor_dev):
@@ -869,9 +897,12 @@ def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings
         raise ValueError("transient development profile requires qualified Q4 or opted-in single S3 V2D")
     for element in model.mesh.elements.values():
         material = model.get_material(element.material_name)
-        if (type(material) is not IsotropicMaterial
-                or float(material.yield_stress) != 0.0
-                or material.hardening_curve is not None):
+        if controls.allow_q4_plastic_dev:
+            from anymaterial import DNVC208MaterialCurve
+            if type(material) is not IsotropicMaterial or type(material.hardening_curve) is not DNVC208MaterialCurve:
+                raise ValueError('Q4 plastic transient development requires exact isotropic DNV material')
+        elif (type(material) is not IsotropicMaterial
+                or float(material.yield_stress) != 0.0 or material.hardening_curve is not None):
             raise ValueError("transient development profile admits only isotropic elastic material")
     return profile
 
@@ -1109,6 +1140,7 @@ def solve_transient_contact(
         raise ValueError("transient development profile admits at most 512 free coordinates")
     descriptor_basis = None
     if profile in (_PROFILE,_BEAM_PROFILE,_BEAM_HISTORY_PROFILE,
+                   _Q4_PLASTIC_PROFILE,
                    _MULTIPLE_BEAM_PROFILE,_MULTIPLE_BEAM_HISTORY_PROFILE,_BEAM_TOOL_PROFILE,_BEAM_TOOL_HISTORY_PROFILE,
                    FREE_SPHERE_PROFILE,FREE_SPHERE_HISTORY_PROFILE,
                    FREE_SHELL_SPHERE_PROFILE,FREE_SHELL_SPHERE_HISTORY_PROFILE):
@@ -1172,6 +1204,14 @@ def solve_transient_contact(
                            rtol=0.0, atol=1.0e-12):
             raise ValueError("S3 descriptor development needs uniform rigid-normal initial velocity")
     committed_states = {}
+    material_packet = None
+    if controls.allow_q4_plastic_dev:
+        from .q4_material_checkpoint import prepare_q4_material_checkpoint,restore_q4_material_checkpoint
+
+    def sealed_material_candidate(full_displacement,candidate_states):
+        packet=prepare_q4_material_checkpoint(model,full_displacement,candidate_states,num_layers=3)
+        owned={record['element_id']:record['state'] for record in packet['element_states']}
+        return packet,owned
     # The manager's fresh-start guard checks the original configured pose.
     # The resumed pose is validated separately against its accepted gap budget.
     with contact_scope(model, definition, settings,
@@ -1224,8 +1264,12 @@ def solve_transient_contact(
                     event_subdivision=controls.s3_event_subdivision_dev,
                     tool_body_names=tuple(h.body_name for h in tool_histories),
                     free_body_name=free_body.body_name if free_body is not None else None,
+                    q4_material_state=controls.allow_q4_plastic_dev,
                 )
             current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = resumed[:7]
+            if controls.allow_q4_plastic_dev:
+                material_packet=resumed[7]
+                committed_states=restore_q4_material_checkpoint(model,u0+np.asarray(T@q).reshape(-1),material_packet,num_layers=3)
             event_boundary_support = resumed[7] if controls.s3_event_subdivision_dev else ()
             if tool_histories:
                 tool_work, tool_error = resumed[-2:]
@@ -1268,7 +1312,8 @@ def solve_transient_contact(
         check_cancel("transient contact initial evaluation")
         full0, force0, initial_tangent, trial0 = evaluate(
             q, current_time,
-            tangent=(s3_descriptor and restart_checkpoint is None),
+            tangent=((s3_descriptor and restart_checkpoint is None)
+                     or controls.allow_q4_plastic_dev),
         )
         contact0 = manager.evaluate(full0, tangent=False)[2]
         if not contact0.gap_tolerance_met:
@@ -1326,7 +1371,17 @@ def solve_transient_contact(
         check_cancel("transient contact initial acceptance")
         initial_body_state = (manager.state(current_time, full0, np.asarray(T @ vred).reshape(-1),
             np.asarray(T @ acceleration).reshape(-1), contact0) if free_body is not None else None)
-        committed_states = commit_state_candidate(committed_states, trial0)
+        if controls.allow_q4_plastic_dev:
+            if restart_checkpoint is None:
+                if any(np.any(np.asarray(state['alpha'])!=0.) for state in trial0.values()):
+                    raise ValueError('Q4 plastic development requires an initially nonplastic pose')
+                material_packet,trial0=sealed_material_candidate(full0,trial0)
+                committed_states=commit_state_candidate(committed_states,trial0)
+            else:
+                # The equilibrium observation must not commit another return map.
+                discard_active_state_candidate(committed_states)
+        else:
+            committed_states = commit_state_candidate(committed_states, trial0)
         times = [current_time]
         positions = [full0.copy()]
         velocities = [np.asarray(T @ vred).reshape(-1)]
@@ -1340,6 +1395,7 @@ def solve_transient_contact(
         external_work = [accumulated_work]
         tool_works, tool_errors = [tool_work.copy()], [tool_error.copy()]
         body_states = [{free_body.body_name: initial_body_state}] if free_body is not None else []
+        material_history=[committed_states] if controls.save_q4_material_history_dev else []
         swept_gaps = [contact0.minimum_gap]
         residuals = [float(np.linalg.norm(Mred @ acceleration + force0))]
         iterations = []
@@ -1648,7 +1704,12 @@ def solve_transient_contact(
                         next_tool_error = {name: tool_error[name]+added_error[name] for name in tool_error}
                         if not all(np.isfinite(value) for value in (*next_tool_work.values(), *next_tool_error.values())):
                             raise RuntimeError("nonfinite accumulated prescribed tool work")
+                    if controls.allow_q4_plastic_dev:
+                        next_material_packet,trial=sealed_material_candidate(full,trial)
+                        check_cancel('Q4 plastic material-state acceptance')
                     committed_states = commit_state_candidate(committed_states, trial)
+                    if controls.allow_q4_plastic_dev:
+                        material_packet=next_material_packet
                     if translations is not None:
                         tool_work, tool_error = next_tool_work, next_tool_error
                     if controls.s3_event_subdivision_dev:
@@ -1692,6 +1753,8 @@ def solve_transient_contact(
                         tool_errors.append(tool_error.copy())
                         if free_body is not None:
                             body_states.append({free_body.body_name: candidate_body_state})
+                        if controls.save_q4_material_history_dev:
+                            material_history.append(committed_states)
                         swept_gaps.append(pending_swept_gap)
                         residuals.append(pending_residual)
                         pending_swept_gap = float("inf")
@@ -1725,6 +1788,7 @@ def solve_transient_contact(
             tool_work if translations is not None else None,
             tool_error if translations is not None else None,
             free_body.body_name if free_body is not None else None,
+            material_packet,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(
@@ -1736,4 +1800,5 @@ def solve_transient_contact(
         tuple(tool_works) if translations is not None else (),
         tuple(tool_errors) if translations is not None else (),
         tuple(body_states),
+        committed_states if controls.allow_q4_plastic_dev else {},tuple(material_history),
     )

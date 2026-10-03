@@ -1127,3 +1127,20 @@ closed point replay retained. Three new +four affected legacy controls pass. Ana
 boundary-ending integral NONPASS at -1.33564e-13m closed final gap inside coordinate
 uncertainty; R/K/work gates remain unpassed. Saved local/owner/split not retried.
 No native C5 acceptance, installed or speed claim. [Evidence](d1_review_support/contact_c5_native_surface_point_20261003/variable_front_results.md).
+
+Explicit qualified Q4/fixed-plane DNV plastic Newmark development: accepted material
+history and return-map parent retained in owned dynamic packetV7; same-pose resumed
+observation does not physically commit. 51 codec and10 new driver outcomes plus2
+affected legacy outcomes pass by scoped evidence reuse. Independent proportional
+plateau affine membrane/rigid-normal reference, active yielded restart, mutation/
+tamper rejection, cancellation/exception and controlled rejection after a yielded
+commit are checked. Existing elastic/tool restart contracts remain intact.
+The fixture's modes are uncoupled; coupled impact-induced plasticity, hardening,
+plastic work balance/refinement and engineering acceptance remain open. Explicit
+opt-in only; no native material, S3/free-body or arbitrary curve admission.
+New isolated wheel reproduces numerical fields and204 loaded module hashes.
+Exploratory energy excess11.648% at coarse dt reduces to0.26977%/0.46223% in
+bounded finer-step contact-release cases; nonmonotonic, different final times,
+and no temporal qualification or engineering impact acceptance claim.
+[Guide](GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md),
+[evidence](d1_review_support/C6_Q4_PLASTIC_SLICE_20261003.md).
