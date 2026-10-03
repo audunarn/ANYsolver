@@ -1671,3 +1671,20 @@ factorization per owner. Candidate-only scale run establishes no large speedup.
 G5/M5 remain IN_PROGRESS; required nonmatching/nonlinear/plastic scale and all
 other mandatory acceptance/platform/external/release rows remain open.
 [Scoped metrics, artifact/provenance bindings and preserved evidence](development/r8-q4-reference-reuse-20261003/results.md).
+
+**3 October finite precision and physical-work development decision:** library
+1a620808 corrects near-identity Q4 subtraction only for fresh flat/all-Q4
+historical point force-control owners. Four new checkpoint kinds bind arithmetic;
+old snapshots retain exact old continuation/format.24installed tests pass,
+414source/wheel/site modules verified; independent OpenAI development review clear.
+Historical ANYfem finite .01/.02/.03/restart completes but moment2.23e-8 FAILS1e-8.
+At identical held state, old/stable rotated shell force share that defect; full
+algorithmic pullback gives6.36e-16 internal moment. Keep F01 OPEN, retain legacy
+behavior and failure; forward physical nonlinear routes explicitly select the
+existing Q4_ALGORITHMIC_PULLBACK_V1. Same ANYfem save/reopen/continue/restart passes
+with moment1.10e-10. New public headless finite example passes installed execution.
+400Q4/120B3 full-pullback point model completes two increments, equilibrium/gap/
+force/moment pass; profile352.056s/301MB. Constant Q4 correction is the next
+measured reuse target. No large nonlinear, G5/M5 or aggregate acceptance closes;
+formal F03/pressure/release authority unchanged.
+[Bounded cases, failures, artifacts, work interpretation and review](development/r8-q4-finite-arithmetic-20261003/results.md).

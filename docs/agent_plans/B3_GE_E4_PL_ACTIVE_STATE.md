@@ -8,10 +8,10 @@ Full amended G0–G6/F01–F13/V01–V28/B01–B18 scope, criteria and historica
 remain binding. Experimental implementation is not aggregate acceptance.
 
 Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; library commit5136f026.
+branch codex/stiffened-main-reconcile-20261001; library commit1a620808; earlier reference-compile commit5136f026.
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 commit4d6d4d0, clean. Scoped local commits only: no push/main merge/publication
-or contact-worker messages. All owned numerical jobs and reviews are terminal.
+or contact-worker messages. All numerical jobs are terminal; a Read-only correction-cache investigation is active.
 Main untouched. Use git log for the subsequent documentation/evidence commit.
 
 Formal F03 UNCONSUMED. Protected original script SHA256:
@@ -57,15 +57,42 @@ compatibility1.49e-14, force/moment~1e-9. Exact within-artifact restart; one
 eligible factorization per owner. Compute pools1/JIT off, up to7OSthreads.
 Candidate-only scale run; no large speedup or nonmatching/G5 qualification.
 
-Remaining uncertainty: finite sequence cost comes from constitutive/local
-evaluation, chart work, sparse scatter/preparation or factorization; the reference
-gain cannot allocate it. Next bounded discriminator: profile the existing
-24Q4/32B3 connected panel through two small accepted finite increments, with
-setup/evaluation/assembly/factorization separated. Same600s/1GiB/pools1/JIT off;
-no large nonlinear run yet. If repeated preparation dominates, derive bounded
-dependency-correct reuse; if actual mechanics dominate, retain kernels and target
-measured assembly/recovery work. A failed small route needs its physical/controller
-cause resolved before scaling. Profiling establishes no timing gain.
+Finite development slice: library1a620808 fixes near-identity Q4 rotation
+subtraction only for fresh flat/all-Q4 historical point force-control owners.
+Original force law/tangent/frames remain; ordinary callers and legacy restored
+histories retain original arithmetic. Four separate binary policies bind elastic/
+generalized-material histories with/without charts.24installed checks pass;
+414source/wheel/site modules match wheel3e6e0691...b4a824b. Independent OpenAI
+scrutiny found no implementation correctness issue (not scientific acceptance).
+
+Discriminating evidence: failed24Q4/32B3 route committed nothing; equilibrium
+1.39e-7(required1e-8). Shell arithmetic dominates, actual-update derivatives pass
+1e-6 at two steps. Stable SO3 R.T-I permits one correction to1.61e-11;
+recentering alone fails. Corrected public .01/.02/.03 path and exact restart pass.
+
+Important inherited boundary:8Q4/12B3 ANYfem historical-force sequence and restart
+complete, but current-configuration moment balance2.23e-8 FAILS1e-8. Correct
+reaction conventions verified. Same held-state shell moment: old/stable rotated
+force both1.545e-8; existing full algorithmic pullback6.36e-16. This distinguishes
+force work from a consistent tangent and is not caused by the numerical fix.
+Keep F01 OPEN. Use explicitly selected Q4_ALGORITHMIC_PULLBACK_V1 for forward
+physical nonlinear routes; retain legacy defaults and failed evidence. Same
+installed ANYfem algorithmic save/reopen/solve/checkpoint/restore/continue passes:
+.01/.02/.03, equilibrium4.22e-10, gap6.65e-18, force1.26e-11, moment1.10e-10,
+exact restart; no qualification or performance claim.
+
+Installed400Q4/120B3 full-pullback point route completes .01/.02: two
+accepted generations/three Newton iterations each, equilibrium4.88e-11,
+compatibility2.55e-18, force1.61e-14, moment3.61e-15. cProfile route352.056s,
+301MB sampled peak; profiled solve330.424s/14assemblies. No timing gain claim.
+Repeated constant Q4 correction103.378s cumulative(overlapping) is the next
+measured bottleneck. Before a10k nonlinear run, inspect dependency-correct reuse
+of that correction with qualified guards/ownership intact. Independent Read
+investigation is active; no new numerical job. Resource limits unchanged.
+[Coherent precision/work-map/profile slice and all failures](development/r8-q4-finite-arithmetic-20261003/results.md).
+New headless example: python -m scripts.experimental_stiffened_ge_finite_panel;
+installed public execution and exact restart/balance pass. No aggregate science,
+classical refinement, formal F03 or release action.
 
 ## Historical evidence and open acceptance
 
