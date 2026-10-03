@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.65. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.66. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -199,12 +199,24 @@ The conservative gap remains within20um. Source/installed232hashes and all examp
 fields match. This is development, not engineering acceptance or a speed claim.
 [Guide](docs/GENERAL_CONTACT_C6_DEFORMING_S3_DEV.md),
 [evidence](docs/d1_review_support/C6_DEFORMING_S3_DRIVER_SLICE_20261003.md).
-NEXT close non-affine weak-pressure event exclusion/localization before broader
-impact admission. Corner-pair exclusion alone does not certify every material
-point or pressure mode, and whole-target bounds can overcut outside overlap.
-Use one counterexample and this independent force oracle to select a bounded
-event solution; do not inherit the uniform-source affine sidecar or start another
-refinement campaign. Preserve separate storage reporting, all old defaults and
+The new V2/V14 normal-nodal S3 candidate now adds reference-P1 joint pressure-phase
+enclosures over represented moving overlap and shared bounded endpoint localization.
+One mapped counterexample exposes the old corner-only guard; the new proof rejects
+its hidden weak-pressure excursion. No affine force/event sidecar is substituted.
+27successful scoped outcomes(26unique), actual stage-budget failure cleanup and
+source/installed233hash/all-field parity support development disposition only.
+The named123-state route has4localized events/0cutbacks,60queries/297stages.
+25→12.5us improves q/GAP0.04874→0.01196% and v/0.1m/s0.4702→0.1183%; the strict
+per-halving energy comparison fails(7.22e-9→7.59e-9) and remains retained. Separate
+same-dt event-tolerance refinement improves energy defect to1.41e-10. No old gate
+is regraded, no temporal acceptance or speed claim is made.
+[Current event slice](docs/d1_review_support/C6_S3_PRESSURE_EVENT_SLICE_20261003.md).
+NEXT derive overlap-local strong physical-gap bounds using the same prepared
+Cramer/reference-cell geometry, then check one independently referenced moving
+clipped-overlap coupled trajectory. Current whole-target corner bounds can cause
+false cutbacks outside overlap. Keep original polarity, positive support, feature
+ownership and finite budgets; unresolved geometry fails closed. Broader impact
+admission remains open. Preserve separate storage reporting, all old defaults and
 the full C0–C9 outcome/acceptance requirements.
 No open-ended mesh/dt campaign, resource increase or weakening of scientific gates.
 The earlier uncoupled example cannot supply contact-driven-plasticity claims.

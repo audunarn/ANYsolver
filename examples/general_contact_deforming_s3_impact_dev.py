@@ -55,7 +55,9 @@ def run(*,dt=2.5e-5,end=.003):
         contact=[row.to_dict() for row in result.contact],
         swept_minimum_gaps_m=result.swept_minimum_gaps.tolist(),cutbacks=result.cutbacks,
         cutback_diagnostics=result.cutback_diagnostics,
-        localized_contact_event_times_s=result.localized_contact_event_times)
+        localized_contact_event_times_s=result.localized_contact_event_times,
+        event_endpoint_evaluations=result.event_endpoint_evaluations,
+        newmark_stage_evaluations=result.plane_event_stage_evaluations)
 
 
 if __name__ == '__main__':

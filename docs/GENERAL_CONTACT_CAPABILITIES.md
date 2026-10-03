@@ -1392,3 +1392,29 @@ General non-affine event admission, sliding/rotations, nonlinear materials,
 friction, unrestricted shell/native impact and full C0–C9 remain incomplete.
 [Guide](GENERAL_CONTACT_C6_DEFORMING_S3_DEV.md),
 [evidence](d1_review_support/C6_DEFORMING_S3_DRIVER_SLICE_20261003.md).
+
+## Deforming normal-nodal S3 pressure-event control — V2 development
+
+Current `allow_normal_s3_skin_hermite_dev=True` uses
+`NORMAL_NODAL_S3_SKIN_HERMITE_NEWMARK_EVENT_DEV_V2` and V14 checkpoints.
+The V1/V13 observations above remain historical. The new actual-skin rational
+reference-P1 proof includes moving overlap, shared-node coupling and all pressure
+phases without dropping small supports. Shared endpoint localization reequilibrates
+from one physical origin; full phase and physical-path proofs precede commit.
+Restart binds the algorithm and bounded endpoint/stage/spatial controls; old V13
+is incompatible. Original general Jet2 work, motion/material limits and older
+profile selections remain unchanged.
+
+27successful scoped outcomes(26unique) include retained-corner counterexample,
+partial/tiny/absent support, two-face factors, actual stage-cap failure cleanup,
+independent coupled dynamics, cutback/cancellation, V14 state and old V12 replay.
+Source/installed233loaded hashes and all fields match; the named123-state route
+has4events,0cuts,60endpoint queries and297Newmark stages. Temporal trajectory errors
+improve; a strict energy-halving assertion remains FAILED and is not regraded.
+Separate fixed-dt event refinement reduces defect7.22e-9→1.41e-10. No speed claim.
+
+Implemented: **yes**. Source-tested: **yes, named fixture**. Installed-tested:
+**yes**. Independently accepted: **no**. Released/application-admitted: **no**.
+Moving clipped-overlap dynamic response, overlap-local strong bounds, rotation/
+sliding, friction/material/native impact and full C0–C9 remain incomplete.
+[Current evidence](d1_review_support/C6_S3_PRESSURE_EVENT_SLICE_20261003.md).

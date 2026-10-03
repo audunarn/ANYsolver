@@ -11,7 +11,7 @@ the repository with ANYsolver installed. It uses the ordinary `TransientConfig`
 and `solve_transient_contact` with
 `ContactTransientSolverControls(allow_normal_s3_skin_hermite_dev=True)`.
 
-The profile is `NORMAL_NODAL_S3_SKIN_HERMITE_NEWMARK_DEV_V1`. Two elastic S3 V2D
+The profile is `NORMAL_NODAL_S3_SKIN_HERMITE_NEWMARK_EVENT_DEV_V2`. Two elastic S3 V2D
 surfaces interact through the existing full Jet2 projected-penalty contributor.
 The source contains two triangles and the target one larger triangle in the
 tested fixture. All seven physical normal nodal coordinates remain in the shared
@@ -33,18 +33,30 @@ sidecar used by the older uniform-source profile.
   of each represented cubic Hermite path. Original analysis reference normals
   retain polarity across successive steps. Every source face must resolve within
   finite panel/depth and penetration budgets before physical commit.
-- A hidden-approach guard watches each original corner pair certified open at
-  both endpoints. It is **not** an event exclusion certificate for all material
-  points or weak pressure modes. Exact non-affine pressure-event localization is
-  not supplied. The event-time result field is empty for this profile.
+- A separate reference-P1 pressure-phase proof bounds weighted gap and support
+  over moving projected overlap. Exact rational Bernstein and Cramer bounds keep
+  original pressure functions and reference measure on subdivision children.
+  Shared-node quantities accumulate across faces before testing joint
+  `W+tau*S >= 0` for open modes or `W-tau*S <= 0` for closed modes. No division
+  by vanishing support, deletion of small positive supports or added pressure
+  unknowns is used. Cells outside different target edges remain unresolved;
+  only one common outside edge excludes a cell.
+- Opposite endpoint phases trigger the shared bounded endpoint localizer. Every
+  proposed duration is reequilibrated from the same committed origin. Complete
+  pressure-phase and physical-path proofs are required before commit, including
+  paths whose endpoints alone conceal an interior excursion. The tested fixture
+  now reports four localized pressure events. Endpoint, Newton-stage, cell,
+  temporal-panel and depth budgets are finite and restart-bound.
 - Bounds cover complete represented faces/corners, including portions outside
   projected overlap. A tilted source and larger target can therefore cause a
   conservative cutback even when the physical overlap is open. Finite budgets
   end unresolved paths explicitly; contacts are not discarded.
-- V13 restart binds the profile, definitions, ordered pressure feature identity,
-  physical sweep budgets and hidden-approach tolerance. It stores committed
+- V14 restart binds the profile, definitions, ordered pressure feature identity,
+  physical/pressure sweep budgets and endpoint localization controls. It stores committed
   coordinates/rates, not an invented affine pressure-event state. Rejected proof,
   cancellation and exception paths use shared cleanup/cutback infrastructure.
+  Historical developmental V13 checkpoints are incompatible with this new
+  algorithm and rejected; existing V1–V12 profile selections remain unchanged.
 - General rotations/sliding, warped Q4 dynamics, unrestricted algebraic shell
   rotations, nonlinear material contact, friction and engineering impact
   acceptance remain separate programme work.
@@ -60,16 +72,27 @@ independently qualify S3 spatial mechanics.
 Local full/partial active checks cover gap, both-body virtual work, wrench and
 directional tangent. Independent nonlinear Newmark and continuous DOP853
 references cover the seven-coordinate trajectory. One 25→12.5 µs halving reduces
-displacement error on the 200 µm scale from 0.04845% to 0.01212%, velocity error on
-the 0.1 m/s scale from 0.4702% to 0.1183%, and reachable-coordinate energy defect
-from 0.07343% to 0.04507%. Conservative penetration is below 12.23 µm against the
+displacement error on the 200 µm scale from 0.04874% to 0.01196% and velocity error on
+the 0.1 m/s scale from 0.4702% to 0.1183%. Reachable-coordinate energy defects are
+7.22e-9 and 7.59e-9; the failed strict per-halving improvement assertion is retained.
+A separate prospective event-tolerance refinement at fixed 25 µs reduces that
+defect from 7.22e-9 to 1.41e-10 (gap/time tolerances 1e-10→1e-12 in SI).
+This separates trajectory and event error; it is not monotonic temporal energy
+qualification. Conservative penetration is below 12.23 µm against the
 20 µm development budget. Storage accounting is labelled separately from the
 projected contributor's `penalty_energy_j` field.
 
 Active/open restart, incompatible identity/settings, exact motion rejection, actual
-mapped hidden approach, second-face proof failure, cutback and in-proof
-cancellation have focused checks. The named installed example matches every
-result field and all 232 imported source hashes. These establish the stated
+mapped hidden approach, shared pressure-mode excursions, partial overlap, tiny
+positive/absent support, second-face proof failure, cutback and in-proof
+cancellation have focused checks. Actual stage-budget exhaustion restores model
+and owner; rejected localized endpoints report their actual query/stage work.
+The named installed example matches every result field and all 233 imported source
+hashes: 123 states, four localized events, zero cutbacks, 60 endpoint queries and
+297 Newmark stages. These establish the stated
 development observations, not full-contact scientific acceptance or a speedup.
 
-[Evidence and retained failures](d1_review_support/C6_DEFORMING_S3_DRIVER_SLICE_20261003.md)
+[Current event evidence and retained failures](d1_review_support/C6_S3_PRESSURE_EVENT_SLICE_20261003.md).
+[Historical V1 evidence](d1_review_support/C6_DEFORMING_S3_DRIVER_SLICE_20261003.md)
+remains unchanged. Substantial moving clipped-overlap dynamics still lacks an
+independently checked trajectory and is the next development question.

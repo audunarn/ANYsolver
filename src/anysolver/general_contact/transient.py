@@ -81,8 +81,8 @@ _GUIDED_SHELL_PAIR_EVENT_PROFILE = 'GUIDED_Q4_S3_SHELL_PAIR_NEWMARK_EVENT_DEV_V1
 _GUIDED_SHELL_PAIR_RESTART_SCHEMA = 'ANYSOLVER_GUIDED_SHELL_PAIR_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V11'
 _FIXED_PROJECTION_S3_EVENT_PROFILE = 'FIXED_PROJECTION_S3_TARGET_NEWMARK_EVENT_DEV_V1'
 _FIXED_PROJECTION_S3_RESTART_SCHEMA = 'ANYSOLVER_FIXED_PROJECTION_S3_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V12'
-_NORMAL_S3_SKIN_PROFILE = 'NORMAL_NODAL_S3_SKIN_HERMITE_NEWMARK_DEV_V1'
-_NORMAL_S3_SKIN_RESTART_SCHEMA = 'ANYSOLVER_NORMAL_S3_SKIN_HERMITE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V13'
+_NORMAL_S3_SKIN_PROFILE = 'NORMAL_NODAL_S3_SKIN_HERMITE_NEWMARK_EVENT_DEV_V2'
+_NORMAL_S3_SKIN_RESTART_SCHEMA = 'ANYSOLVER_NORMAL_S3_SKIN_HERMITE_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V14'
 _S3_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0"
 _S3_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_HISTORY_DEV_V1"
 _S3_DIRECTIONAL_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_RATES_DEV_V1"
@@ -476,10 +476,15 @@ def _restart_analysis_contract(transient, controls, manager, profile,
         contract['controls']['physical_sweep_maximum_depth'] = manager.settings.maximum_swept_subdivisions
     if controls.allow_normal_s3_skin_hermite_dev:
         contract['controls']['allow_normal_s3_skin_hermite_dev'] = True
-        contract['controls']['normal_s3_skin_revision'] = 'NORMAL_NODAL_ACCELERATION_PHYSICAL_HERMITE_POINT_APPROACH_V1'
+        contract['controls']['normal_s3_skin_revision'] = 'REFERENCE_P1_JOINT_PHASE_ENDPOINT_LOCALIZATION_V2'
         contract['controls']['physical_sweep_maximum_panels'] = manager.settings.maximum_gap_triangles
         contract['controls']['physical_sweep_maximum_depth'] = manager.settings.maximum_swept_subdivisions
         contract['controls']['hidden_physical_event_tolerance_m'] = controls.plane_event_gap_tolerance_m
+        for name in ('plane_event_time_tolerance_s','plane_event_gap_tolerance_m',
+                'maximum_plane_event_endpoint_evaluations','maximum_plane_event_stage_evaluations',
+                'maximum_event_localizations'):
+            contract['controls'][name]=getattr(controls,name)
+        contract['controls']['pressure_sweep_maximum_cells']=manager.settings.maximum_gap_triangles
     if controls.allow_classical_beam_dev:
         contract["controls"].update(
             allow_classical_beam_dev=True,
@@ -573,7 +578,7 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
         if fixed_projection_s3_target:
             payload['schema'],payload['version']=_FIXED_PROJECTION_S3_RESTART_SCHEMA,12
         if normal_s3_skin_hermite:
-            payload['schema'],payload['version']=_NORMAL_S3_SKIN_RESTART_SCHEMA,13
+            payload['schema'],payload['version']=_NORMAL_S3_SKIN_RESTART_SCHEMA,14
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
@@ -649,7 +654,7 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         if fixed_projection_s3_target:
             expected_version,expected_schema=12,_FIXED_PROJECTION_S3_RESTART_SCHEMA
         if normal_s3_skin_hermite:
-            expected_version,expected_schema=13,_NORMAL_S3_SKIN_RESTART_SCHEMA
+            expected_version,expected_schema=14,_NORMAL_S3_SKIN_RESTART_SCHEMA
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -1534,6 +1539,7 @@ def solve_transient_contact(
             manager.restrict_tangent_to_reduced_variations(T)
         if controls.allow_normal_s3_skin_hermite_dev:
             from .normal_s3_skin_path import prepare_normal_s3_skin_path
+            from .plane_newmark_events import localize_endpoint_event
             normal_skin_path = prepare_normal_s3_skin_path(model,manager,T)
             pressure_features = normal_skin_path.features
             manager.restrict_tangent_to_reduced_variations(T)
@@ -1681,6 +1687,8 @@ def solve_transient_contact(
                      or controls.allow_q4_plastic_dev),
         )
         contact0 = manager.evaluate(full0, tangent=False)[2]
+        normal_committed_gaps=(np.asarray(contact0.normalized_weighted_gap_m,dtype=float).copy()
+            if normal_skin_path is not None else None)
         if not contact0.gap_tolerance_met:
             raise ValueError("initial contact gap exceeds the registered tolerance")
         if (s3_descriptor and restart_checkpoint is None
@@ -1880,11 +1888,13 @@ def solve_transient_contact(
                         check_cancel('plane Newmark event stage evaluation')
                         consume_plane_stage()
                         q_h=predictor_h+beta*duration*duration*a_h
-                        _,f_h,k_h,_=evaluate(q_h,current_time+duration,tangent=True)
+                        full_h,f_h,k_h,_=evaluate(q_h,current_time+duration,tangent=True)
                         r_h=Mred@a_h+f_h
                         scale_h=max(1.,float(np.linalg.norm(Mred@a_h)),float(np.linalg.norm(f_h)))
                         if np.linalg.norm(r_h)<=controls.equilibrium_tolerance*scale_h:
-                            gaps_h=np.asarray(pressure_reference+pressure_gradient@q_h).reshape(-1)
+                            gaps_h=(np.asarray(manager.evaluate(full_h,tangent=False)[2].normalized_weighted_gap_m)
+                                if normal_skin_path is not None else
+                                np.asarray(pressure_reference+pressure_gradient@q_h).reshape(-1))
                             plane_endpoint_cache[duration]=gaps_h.copy()
                             return gaps_h
                         jac_h=(Mred+beta*duration*duration*(T.T@k_h@T)).tocsr()
@@ -1915,8 +1925,7 @@ def solve_transient_contact(
                 for iteration in range(1, controls.maximum_newton_iterations + 1):
                     check_cancel("transient contact Newton evaluation")
                     if controls.q4_plane_event_subdivision_dev or controls.allow_normal_s3_skin_hermite_dev:
-                        if controls.q4_plane_event_subdivision_dev:
-                            consume_plane_stage()
+                        consume_plane_stage()
                         candidate=predictor+beta*step*step*event_acceleration
                     full, internal, tangent, trial = evaluate(
                         candidate, current_time+step, tangent=True,
@@ -2174,6 +2183,53 @@ def solve_transient_contact(
                             arrivals=tuple(int(i) for i in np.flatnonzero((np.abs(g_end)<=tolerance)&(np.abs(g_start)>tolerance)))
                             if not event_targets:
                                 event_targets=arrivals
+                        if normal_skin_path is not None:
+                            g_start=normal_committed_gaps
+                            g_end=np.asarray(contact_result.normalized_weighted_gap_m)
+                            tolerance=controls.plane_event_gap_tolerance_m
+                            active=(g_start<-tolerance)
+                            near=np.abs(g_start)<=tolerance
+                            active[near]=g_end[near]<0.
+                            if event_targets and np.any(np.abs(g_end[list(event_targets)])>tolerance):
+                                last_event_failure='normal S3 reequilibrated endpoint exceeds pressure event tolerance'
+                                break
+                            required=tuple(int(i) for i in np.flatnonzero(
+                                ((g_start>tolerance)&(g_end<-tolerance))
+                                |((g_start<-tolerance)&(g_end>tolerance))))
+                            if required:
+                                event_localizations+=1
+                                if event_localizations>controls.maximum_event_localizations:
+                                    last_event_failure='normal S3 pressure event localization count exhausted'
+                                    break
+                                remaining_queries=controls.maximum_plane_event_endpoint_evaluations-plane_endpoint_requests
+                                if remaining_queries<2 or step<=max(controls.minimum_dt,controls.plane_event_time_tolerance_s):
+                                    last_event_failure='normal S3 pressure event duration/query budget exhausted'
+                                    break
+                                try:
+                                    boundary=localize_endpoint_event(plane_endpoint_gaps,step,active,required,
+                                        minimum_dt=controls.minimum_dt,
+                                        time_tolerance=controls.plane_event_time_tolerance_s,
+                                        gap_tolerance=tolerance,maximum_evaluations=remaining_queries,
+                                        batch_front=True,check_cancel=check_cancel)
+                                except EventNeedsCutback as exc:
+                                    last_event_failure=str(exc)
+                                    break
+                                if not boundary.duration<step:
+                                    last_event_failure='normal S3 pressure endpoint lacks complete phase certificate'
+                                    break
+                                requested_event_step=boundary.duration
+                                event_targets=boundary.support_indices
+                                break
+                            pressure_proof=normal_skin_path.pressure_sweep(manager,
+                                previous_full,full,previous_velocity,full_velocity,step,
+                                active=active,gap_tolerance_m=tolerance,
+                                cancel=lambda:check_cancel('normal S3 mortar pressure path'))
+                            if not pressure_proof.success:
+                                last_event_failure='normal S3 mortar pressure path '+pressure_proof.status+': '+pressure_proof.detail
+                                break
+                            if not event_targets:
+                                event_targets=tuple(int(i) for i in np.flatnonzero(
+                                    (np.abs(g_end)<=tolerance)&(np.abs(g_start)>tolerance)))
                         if (contact_result.gap_tolerance_met
                                 and (beam_path_admissible if controls.allow_classical_beam_dev or controls.allow_free_shell_sphere_dev or controls.allow_multiple_shell_planes_dev
                                      else swept_gap >= -manager.gap_tolerance)):
@@ -2263,6 +2319,10 @@ def solve_transient_contact(
                             localized_events.append(float(current_time+step))
                             if plane_localized_boundary:
                                 end_truncated=False
+                    if normal_skin_path is not None:
+                        normal_committed_gaps=np.asarray(contact_result.normalized_weighted_gap_m).copy()
+                        if event_targets:
+                            localized_events.append(float(current_time+step))
                     if path_adapter is not None:
                         for event_time in _accepted_path_transition_times(
                                 last_path_active, candidate_path, current_time, step):
@@ -2322,9 +2382,9 @@ def solve_transient_contact(
                     attempted_dt_s=float(step),reason=(last_event_failure
                         or 'equilibrium or physical-gap acceptance failed'),
                     plane_endpoint_requests=plane_endpoint_requests
-                        if controls.q4_plane_event_subdivision_dev else 0,
+                        if controls.q4_plane_event_subdivision_dev or controls.allow_normal_s3_skin_hermite_dev else 0,
                     plane_stage_evaluations=plane_stage_evaluations
-                        if controls.q4_plane_event_subdivision_dev else 0))
+                        if controls.q4_plane_event_subdivision_dev or controls.allow_normal_s3_skin_hermite_dev else 0))
                 event_seed = None
                 local_cutbacks += 1
                 cutbacks += 1
@@ -2364,7 +2424,7 @@ def solve_transient_contact(
         np.asarray(swept_gaps), np.asarray(residuals), cutbacks, tuple(iterations),
         np.asarray(external_work), checkpoint, tuple(path_transitions),
         tuple(localized_events), (plane_total_endpoint_requests
-            if controls.q4_plane_event_subdivision_dev else event_evaluations),
+            if controls.q4_plane_event_subdivision_dev or controls.allow_normal_s3_skin_hermite_dev else event_evaluations),
         tuple(tool_works) if translations is not None else (),
         tuple(tool_errors) if translations is not None else (),
         tuple(body_states),

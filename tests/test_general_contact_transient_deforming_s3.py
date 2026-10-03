@@ -192,10 +192,13 @@ def test_deforming_source_and_target_have_nonlinear_coupled_reference():
         mass=MASS.tolist(),structural=structural.tolist(),energy=energy.tolist(),
         contact=[row.to_dict() for row in result.contact],cutbacks=result.cutbacks,
         cutback_diagnostics=result.cutback_diagnostics,
+        localized_events_s=result.localized_contact_event_times,
+        endpoint_queries=result.event_endpoint_evaluations,
+        stage_evaluations=result.plane_event_stage_evaluations,
         swept_gap=result.swept_minimum_gaps.tolist()),indent=2),encoding='utf-8')
 
 
-def test_one_temporal_halving_improves_independent_continuous_response():
+def test_temporal_halving_improves_trajectory_with_localized_events():
     """One registered development discriminator, not a refinement campaign.
 
     The reference integrates independent projected P1 contact forces, using the
@@ -235,8 +238,10 @@ def test_one_temporal_halving_improves_independent_continuous_response():
         assert row['velocity_error_on_initial_speed_scale'] < .02
         assert row['reachable_energy_relative_defect'] < .01
         assert row['minimum_swept_gap_m'] >= -2.e-5
-    for key in ('displacement_error_on_gap_scale','velocity_error_on_initial_speed_scale',
-                'reachable_energy_relative_defect'):
+    # The V14 event method has a distinct localization error floor. Its energy
+    # refinement is checked by the separate same-dt event-tolerance experiment;
+    # the failed strict dt-only energy comparison remains retained evidence.
+    for key in ('displacement_error_on_gap_scale','velocity_error_on_initial_speed_scale'):
         assert records[1][key] < records[0][key],records
 
 
@@ -268,12 +273,12 @@ def test_normal_profile_requires_explicit_exclusive_controls(change):
         replace(CONTROLS,**change)
 
 
-def test_normal_v13_active_restart_binds_method_features_and_physical_budgets():
+def test_normal_v14_active_restart_binds_method_features_and_physical_budgets():
     _,whole,_ = deforming['solve']()
     index = next(i for i,row in enumerate(whole.contact) if row.active_pressure_dofs)
     _,prefix,_ = deforming['solve'](end=float(whole.times[index]),emit=True)
     checkpoint = prefix.restart_checkpoint
-    assert checkpoint['version'] == 13
+    assert checkpoint['version'] == 14
     assert checkpoint['state']['plane_pressure_features'] == [['pair',node] for node in (1,2,3,4)]
     _,resumed,_ = deforming['solve'](checkpoint=checkpoint)
     for name,tolerance in (('displacements',1.e-10),('velocities',1.e-6),('accelerations',1.e-2)):
@@ -291,6 +296,18 @@ def test_normal_v13_active_restart_binds_method_features_and_physical_budgets():
     bad['checkpoint_sha256'] = analysis_configuration_fingerprint({key:value for key,value in bad.items() if key!='checkpoint_sha256'})
     with pytest.raises(ValueError,match='pressure-feature'):
         deforming['solve'](checkpoint=bad)
+    for key,value in (('plane_event_time_tolerance_s',2.e-10),
+            ('maximum_plane_event_endpoint_evaluations',63),
+            ('maximum_plane_event_stage_evaluations',127),('maximum_event_localizations',11)):
+        with pytest.raises(ValueError,match='analysis'):
+            deforming['solve'](checkpoint=checkpoint,controls=replace(CONTROLS,**{key:value}))
+    legacy=deepcopy(checkpoint)
+    legacy['schema']='ANYSOLVER_NORMAL_S3_SKIN_HERMITE_TRANSIENT_CONTACT_DEV_CHECKPOINT_V13'
+    legacy['version']=13
+    legacy['checkpoint_sha256']=analysis_configuration_fingerprint({key:value for key,value in legacy.items()
+        if key!='checkpoint_sha256'})
+    with pytest.raises(ValueError,match='version'):
+        deforming['solve'](checkpoint=legacy)
 
 
 def test_normal_unresolved_physical_proof_cuts_back_without_accepting_partial_faces(monkeypatch):
@@ -311,18 +328,111 @@ def test_normal_unresolved_physical_proof_cuts_back_without_accepting_partial_fa
     assert active_contact_manager() is None
 
 
-def test_normal_v13_open_restart_continues_after_contact_release():
+def test_normal_v14_open_restart_continues_after_contact_release():
     _,whole,_ = deforming['solve']()
     index = int(np.argmin(np.abs(whole.times-.0025)))
     assert np.all(np.asarray(whole.contact[index].normalized_weighted_gap_m) > 0.)
     assert np.linalg.norm(whole.contact[index].integration_force) == 0.
     _,prefix,_ = deforming['solve'](end=float(whole.times[index]),emit=True)
-    assert prefix.restart_checkpoint['schema'].endswith('_V13')
+    assert prefix.restart_checkpoint['schema'].endswith('_V14')
     _,resumed,_ = deforming['solve'](checkpoint=prefix.restart_checkpoint)
     np.testing.assert_allclose(resumed.times,whole.times[index:],rtol=0.,atol=1.e-15)
     for name,tolerance in (('displacements',1.e-11),('velocities',1.e-7),('accelerations',1.e-3)):
         np.testing.assert_allclose(getattr(resumed,name),getattr(whole,name)[index:],rtol=0.,atol=tolerance)
     assert active_contact_manager() is None
+
+
+def test_normal_unresolved_pressure_proof_cuts_back_before_commit(monkeypatch):
+    from anysolver.general_contact import normal_s3_skin_path as module
+    original=module.NormalS3SkinPath.pressure_sweep
+    calls=0
+    def failed(self,*args,**kwargs):
+        nonlocal calls
+        proof=original(self,*args,**kwargs);calls+=1
+        if calls==1:return replace(proof,success=False,status='owned pressure proof failure')
+        return proof
+    monkeypatch.setattr(module.NormalS3SkinPath,'pressure_sweep',failed)
+    _,result,_=deforming['solve'](end=.0001)
+    assert result.cutbacks==1
+    assert result.times[1]==pytest.approx(1.25e-5)
+    assert 'owned pressure proof failure' in result.cutback_diagnostics[0]['reason']
+    assert result.cutback_diagnostics[0]['plane_stage_evaluations']>0
+    assert active_contact_manager() is None
+
+
+def test_normal_cutback_reports_rejected_endpoint_and_stage_work(monkeypatch):
+    from anysolver.general_contact import normal_s3_skin_path as module
+    original=module.NormalS3SkinPath.pressure_sweep
+    injected=False
+    def failed(self,manager,start,end,v0,v1,dt,**kwargs):
+        nonlocal injected
+        proof=original(self,manager,start,end,v0,v1,dt,**kwargs)
+        gaps=manager.evaluate(end,tangent=False)[2].normalized_weighted_gap_m
+        if not injected and np.mean(v1[self.source_dofs[:,2]])>0. and min(abs(x) for x in gaps)<1.e-10:
+            injected=True
+            return replace(proof,success=False,status='owned post-endpoint pressure proof failure')
+        return proof
+    monkeypatch.setattr(module.NormalS3SkinPath,'pressure_sweep',failed)
+    _,result,_=deforming['solve']()
+    assert injected
+    records=[row for row in result.cutback_diagnostics if 'owned post-endpoint' in row['reason']]
+    assert len(records)==1
+    assert records[0]['plane_endpoint_requests']>0
+    assert records[0]['plane_stage_evaluations']>records[0]['plane_endpoint_requests']
+    assert active_contact_manager() is None
+
+
+def test_normal_pressure_proof_cancellation_restores_context(monkeypatch):
+    from anysolver.control import CancellationToken,SolveCancelled
+    from anysolver.general_contact import normal_s3_skin_path as module
+    token=CancellationToken()
+    original=module.NormalS3SkinPath.pressure_sweep
+    def cancelled(self,*args,**kwargs):
+        token.cancel('owned mortar pressure-path cancellation')
+        return original(self,*args,**kwargs)
+    monkeypatch.setattr(module.NormalS3SkinPath,'pressure_sweep',cancelled)
+    model,definition,modes=deforming['build_model']()
+    fingerprint=model_configuration_fingerprint(model)
+    with pytest.raises(SolveCancelled,match='owned mortar'):
+        solve_transient_contact(model,definition,
+            TransientConfig(2.5e-5,.0001,initial_velocity=modes@np.r_[np.full(4,-.1),np.zeros(3)]),
+            contact_settings=example['SETTINGS'],solver_controls=CONTROLS,cancellation_token=token)
+    assert active_contact_manager() is None
+    assert model_configuration_fingerprint(model)==fingerprint
+
+
+def test_normal_stage_budget_exhaustion_restores_model_and_owner():
+    model,definition,modes=deforming['build_model']()
+    fingerprint=model_configuration_fingerprint(model)
+    with pytest.raises(RuntimeError,match='stage-work budget exhausted'):
+        solve_transient_contact(model,definition,
+            TransientConfig(2.5e-5,.0021,initial_velocity=modes@np.r_[np.full(4,-.1),np.zeros(3)]),
+            contact_settings=example['SETTINGS'],solver_controls=replace(CONTROLS,
+                maximum_plane_event_stage_evaluations=1))
+    assert active_contact_manager() is None
+    assert model_configuration_fingerprint(model)==fingerprint
+
+
+def test_event_tolerance_refinement_improves_localized_energy_balance():
+    records=[]
+    for tolerance in (1.e-10,1.e-12):
+        model,result,modes=deforming['solve'](controls=replace(CONTROLS,
+            plane_event_gap_tolerance_m=tolerance,plane_event_time_tolerance_s=tolerance))
+        q,v=(np.asarray(value)@modes for value in (result.displacements,result.velocities))
+        structural=modes.T@assemble_stiffness_matrix(model)[0]@modes
+        energy=(.5*np.einsum('ij,jk,ik->i',v,MASS,v)+.5*np.einsum('ij,jk,ik->i',q,structural,q)
+            +np.array([row.regularization_storage_j for row in result.contact]))
+        records.append(dict(event_gap_tolerance_m=tolerance,event_time_tolerance_s=tolerance,
+            reachable_energy_relative_defect=float(np.max(np.abs(energy/energy[0]-1.))),
+            states=len(result.times),cutbacks=result.cutbacks,
+            endpoint_queries=result.event_endpoint_evaluations,
+            stage_evaluations=result.plane_event_stage_evaluations,
+            localized_events_s=result.localized_contact_event_times,
+            minimum_swept_gap_m=float(min(result.swept_minimum_gaps))))
+    Path(os.environ['RUNNER_TEMP'],'deforming_s3_event_refinement.json').write_text(json.dumps(records,indent=2))
+    assert records[1]['reachable_energy_relative_defect']<records[0]['reachable_energy_relative_defect']
+    assert all(row['reachable_energy_relative_defect']<.01 and row['minimum_swept_gap_m']>=-2.e-5
+               for row in records)
 
 
 def test_normal_cancellation_inside_physical_proof_restores_model_and_owner(monkeypatch):

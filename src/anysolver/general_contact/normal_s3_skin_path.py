@@ -76,6 +76,17 @@ class NormalS3SkinPath:
             lower.append(proof.lower_gap)
         return min(lower), None
 
+    def pressure_sweep(self,manager,start,end,v0,v1,dt,*,active,gap_tolerance_m,cancel=None):
+        from .s3_pressure_hermite_bounds import s3_pressure_hermite_bounds
+        skins=self.skins(manager,start,end,v0,v1)
+        ids=manager.law.target_face_indices[0]
+        return s3_pressure_hermite_bounds(manager.reference[0],manager.reference[1][ids],
+            manager.law.source_face_indices,*tuple(skin if i in (0,1,4,5) else skin[ids]
+            for i,skin in enumerate(skins)),dt,active=active,gap_tolerance_m=gap_tolerance_m,
+            maximum_time_panels=manager.settings.maximum_gap_triangles,
+            maximum_spatial_cells=manager.settings.maximum_gap_triangles,
+            maximum_depth=manager.settings.maximum_swept_subdivisions,cancel=cancel)
+
 
 def prepare_normal_s3_skin_path(model,manager,T):
     if (type(manager) is not GeneralS3PatchManager or manager.augmented
