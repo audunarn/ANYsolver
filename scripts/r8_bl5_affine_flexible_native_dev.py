@@ -73,7 +73,7 @@ def exact_transfer_moments(records, bounds=(0., 1.)):
     return [[math.fsum(component) for component in row] for row in terms]
 
 
-def support_model(coherent, nx, support_count=8):
+def support_model(coherent, nx, support_count=8, *, basis='discontinuous_p1'):
     """Construct either fixed-eight or one complete growing-space candidate.
 
     The explicit growing space remains experimental, not a selected policy.
@@ -82,9 +82,14 @@ def support_model(coherent, nx, support_count=8):
     from dataclasses import replace
     require(type(nx) is int and type(support_count) is int and (nx, support_count) in ((16, 8), (32, 8), (32, 16)),
             'only declared fixed-eight or fine growing-sixteen grid admitted')
+    require(basis in ('discontinuous_p1', 'discontinuous_p1_cell_average'), 'explicit tested density basis required')
+    require(basis != 'discontinuous_p1_cell_average' or (nx,support_count)==(16,8),
+            'projected helper is bounded to the checked coarse fixture')
+    # Reuse the frozen geometry constructor; substitute only this explicitly
+    # identified density law before constructing any owner.
     definition, policy = coherent.model(nx, nx//4, 2*nx, 2, basis='discontinuous_p1')
     span = 2*nx//support_count
-    definition = replace(definition, lines=(replace(definition.lines[0], multiplier_span=span),))
+    definition = replace(definition, lines=(replace(definition.lines[0], multiplier_span=span,basis=basis),))
     policy = dict(policy, span_halfcells=span,
         support_membership=[list(range(a, a+span)) for a in range(0, 2*nx, span)],
         support_endpoints_m=[i/support_count for i in range(support_count+1)],
@@ -92,6 +97,9 @@ def support_model(coherent, nx, support_count=8):
                               else 'GROWING_COMPLETE_AFFINE_SPAN4_CANDIDATE_V1'),
         c_lambda_actual=nx/support_count,
         scope='explicit development space, not qualified production/stability policy')
+    if basis == 'discontinuous_p1_cell_average':
+        policy.update(basis=basis,density_basis=('1','fixed reference half-cell arclength mean of xi'),
+            fixed_support_policy='SAME_EIGHT_PROJECTED_DENSITY_MECHANICAL_DISCRIMINATOR_V1')
     return definition, policy
 
 
@@ -99,10 +107,13 @@ def fixed_support_model(coherent, nx):
     return support_model(coherent, nx, 8)
 
 
-def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 'mx', 'mz'), support_count=8):
+def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 'mx', 'mz'), support_count=8,
+        basis='discontinuous_p1', expected_wheel_sha=WHEEL_SHA):
     require(nx in (16, 32) and cases and all(c in LOADS for c in cases), 'bounded grid/load request required')
     require((nx, support_count) in ((16, 8), (32, 8), (32, 16)), 'declared support/grid pairing required')
     require(nx == 16 or support_count == 16 or tuple(cases) == ('mx',), 'the fixed-eight finer discriminator is Mx only')
+    require(basis in ('discontinuous_p1', 'discontinuous_p1_cell_average'), 'explicit tested density basis required')
+    require(basis != 'discontinuous_p1_cell_average' or (nx,support_count)==(16,8), 'projected comparison is bounded to the checked coarse fixture')
     require(not any(n.split('.')[0] == 'anysolver' for n in sys.modules), 'fresh installed process required')
     site, fixtures = site.resolve(strict=True), fixtures.resolve(strict=True)
     sys.path[:0] = [str(site), str(fixtures)]
@@ -119,7 +130,7 @@ def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 
     inventory.matched = matched
     output.mkdir(parents=True, exist_ok=False)
     summary = {'status': 'FAILED', 'scope': 'bounded flexible physical development; no locking/F03/accuracy acceptance',
-               'source_sha256': sha(__file__), 'basis': 'discontinuous_p1', 'nx': nx, 'support_count': support_count, 'cases': {}}
+               'source_sha256': sha(__file__), 'basis': basis, 'nx': nx, 'support_count': support_count, 'cases': {}}
     try:
         _, _, service, _, reference, _ = matched.reference_services()
     except BaseException as error:
@@ -129,7 +140,8 @@ def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 
     write = lambda name, value: service._atomic(output/(name+'.json'), matched.plain(value))
     owner = None
     try:
-        require(sha(wheel) == WHEEL_SHA, 'declared installed wheel required')
+        require(isinstance(expected_wheel_sha,str) and len(expected_wheel_sha)==64
+                and sha(wheel) == expected_wheel_sha, 'declared installed wheel required')
         modules = {}
         source_files = {'anysolver/'+p.relative_to(source/'src/anysolver').as_posix(): p
                         for p in (source/'src/anysolver').rglob('*.py')}
@@ -143,11 +155,11 @@ def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 
         pools = threadpool_info()
         require(pools and all(p['num_threads'] == 1 for p in pools) and numba.get_num_threads() == 1
                 and numba.config.DISABLE_JIT, 'effective one-thread/JIT-off settings required')
-        write('identity', {'wheel_sha256': WHEEL_SHA, 'wheel': str(wheel), 'module_sha256': modules,
+        write('identity', {'wheel_sha256': expected_wheel_sha, 'wheel': str(wheel), 'module_sha256': modules,
               'anysolver_import': anysolver.__file__, 'pools': pools, 'numba_threads': numba.get_num_threads(),
               'jit_disabled': bool(numba.config.DISABLE_JIT),
               'helpers': {Path(m.__file__).name: sha(m.__file__) for m in (coherent, matched, inventory)}})
-        definition, policy = support_model(coherent, nx, support_count)
+        definition, policy = support_model(coherent, nx, support_count, basis=basis)
         owner = stiffened_shell.create_analysis(definition=definition)
         xyz, layout = inventory.layout(owner, definition, policy, nx)
         trace = inventory.station_inventory(owner)
@@ -225,12 +237,13 @@ def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 
             er = json.loads((external/case/'raw-inventory.json').read_text())
             ea = json.loads((external/case/'recovered-actions.json').read_text())
             require(es['status'] == 'completed' and es['case'] == case and es['nx'] == nx
-                    and es['basis'] == 'discontinuous_p1' and es['source_sha256'] == sha(independent.__file__),
+                    and es['basis'] == basis and ea['basis'] == basis
+                    and es['source_sha256'] == sha(independent.__file__),
                     'same independent external affine candidate required')
             ext_refinement, _, _, _, ext_reference = independent.services()
             ext_model = ext_refinement.geometry(nx, ext_reference)
             ext_model['support_count'] = support_count
-            ext_pairing = independent.aggregate_rows(ext_model, ext_reference)
+            ext_pairing = independent.aggregate_rows(ext_model, ext_reference, basis=basis)
             expected = ext_refinement.planned_inventory(ext_refinement.command_recipe(
                 ext_model, ext_reference, ext_pairing['emitted_rows'], case))
             require(all(er[k] == json.loads(json.dumps(v)) for k, v in expected.items()),
@@ -265,7 +278,7 @@ def run(site, wheel, source, fixtures, external, output, *, nx=16, cases=('fy', 
                 'shell_ground_difference': ground['shell']-np.array(ea['shell_ground_wrench']),
                 'native_tip_pose': native[-1], 'external_tip_pose': other[-1],
                 'external_files': {n: sha(external/case/n) for n in ('summary.json', 'inputs.json', 'raw-inventory.json', 'recovered-actions.json')},
-                'scope': 'same-law/same-affine support, different element and retained-trace discretizations; no locking/converged1% claim'})
+                'scope': 'same declared '+basis+' support action, different element and retained-trace discretizations; no locking/converged1% claim'})
             summary['cases'][case] = {'checks': checks, 'work_J': work, 'raw_state_sha256': sha(folder/'raw-state.npz')}
         require(owner.preflight()['reference_linear_factorizations'] == 1, 'one eligible factor for selected compatible loads')
         imports = {n: str(Path(m.__file__).resolve()) for n, m in sys.modules.copy().items()
@@ -288,6 +301,9 @@ if __name__ == '__main__':
     parser.add_argument('--nx', type=int, choices=(16, 32), default=16)
     parser.add_argument('--case', choices=tuple(LOADS))
     parser.add_argument('--support-count', type=int, choices=(8, 16), default=8)
+    parser.add_argument('--basis', choices=('discontinuous_p1','discontinuous_p1_cell_average'), default='discontinuous_p1')
+    parser.add_argument('--wheel-sha', default=WHEEL_SHA)
     args = parser.parse_args()
     run(args.site, args.wheel, args.source, args.fixtures, args.external, args.output,
-        nx=args.nx, cases=(args.case,) if args.case else tuple(LOADS), support_count=args.support_count)
+        nx=args.nx, cases=(args.case,) if args.case else tuple(LOADS), support_count=args.support_count,
+        basis=args.basis, expected_wheel_sha=args.wheel_sha)

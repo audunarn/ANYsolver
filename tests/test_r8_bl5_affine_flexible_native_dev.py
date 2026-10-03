@@ -80,6 +80,24 @@ def test_growing_space_changes_only_supports_on_same_fine_mechanical_grid():
         support_model(coherent, 16, 16)
 
 
+def test_projected_comparison_owns_distinct_density_without_remeshing():
+    from scripts import b3_e4_bl5_coherent_aggregation_dev as coherent
+    from scripts.r8_bl5_affine_flexible_native_dev import support_model
+    affine,_=support_model(coherent,16,8)
+    projected,policy=support_model(coherent,16,8,basis='discontinuous_p1_cell_average')
+    assert affine.shell==projected.shell and affine.beams==projected.beams
+    assert affine.fixed==projected.fixed
+    assert affine.lines[0].beam_halfcells==projected.lines[0].beam_halfcells
+    assert projected.lines[0].basis=='discontinuous_p1_cell_average'
+    assert policy['basis']==projected.lines[0].basis
+    assert projected.lines[0].multiplier_space!=affine.lines[0].multiplier_space
+    with pytest.raises(ValueError,match='density basis'):
+        support_model(coherent,16,8,basis='invented')
+    for support_count in (8,16):
+        with pytest.raises(ValueError,match='checked coarse fixture'):
+            support_model(coherent,32,support_count,basis='discontinuous_p1_cell_average')
+
+
 @pytest.mark.parametrize('count', (8, 16))
 def test_saved_row_action_keeps_support_channel_degree_order(count):
     import numpy as np

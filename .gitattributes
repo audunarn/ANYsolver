@@ -80,3 +80,5 @@ tests/test_stiffened_shell_staged_material_history.py -text
 docs/agent_plans/development/r8-ge-footprint-gravity-20261003/** -text
 docs/agent_plans/development/r8-bl5-torsion-consistency-20261003/** -text
 docs/agent_plans/development/r8-bl5-projected-density-20261003/** -text
+docs/agent_plans/development/r8-bl5-projected-assessment-20261003/** -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/** -text

@@ -69,6 +69,9 @@ class ExperimentalBL5Line:
     support. It must divide the trace; no final partial support is inferred.
     ``discontinuous_p1`` adds one affine density mode on each physical support,
     shared by all five channels. Those supports must contain complete members.
+    ``discontinuous_p1_cell_average`` uses that affine mode's reference
+    arclength average on each native half-cell, for all five channels. Its
+    density is constant within a half-cell, including split shell segments.
     Choosing that count does not qualify an interface-resolution policy.
     """
 
@@ -95,7 +98,8 @@ class ExperimentalBL5Line:
                 n % self.multiplier_span or
                 type(self.basis) is not str or
                 self.basis not in ("p0", "discontinuous_p1", "continuous_p1",
-                                   "continuous_p1_coarse") or
+                                   "continuous_p1_coarse",
+                                   "discontinuous_p1_cell_average") or
                 (self.basis in ("continuous_p1", "continuous_p1_coarse") and
                  self.multiplier_span != 1) or
                 type(self.expected_beam_arm) is not tuple or
@@ -104,7 +108,7 @@ class ExperimentalBL5Line:
                     not isinstance(v, (int, float, np.integer, np.floating)) or
                     not np.isfinite(v) for v in self.expected_beam_arm)):
             raise ValueError("ordered even-edge experimental BL5 line required")
-        if self.basis == "discontinuous_p1" and (
+        if self.basis in ("discontinuous_p1", "discontinuous_p1_cell_average") and (
                 self.multiplier_span < 2 or self.multiplier_span % 2 or
                 any(left[1] != 0 or right != (left[0], 1)
                     for left, right in zip(self.beam_halfcells[::2],
@@ -123,6 +127,8 @@ class ExperimentalBL5Line:
 
     @property
     def multiplier_space(self):
+        if self.basis == "discontinuous_p1_cell_average":
+            return f"BL5_P1_discontinuous_cell_average_span_{self.multiplier_span}"
         if self.basis == "discontinuous_p1":
             return f"BL5_P1_discontinuous_span_{self.multiplier_span}"
         if self.basis == "continuous_p1_coarse":
@@ -146,7 +152,7 @@ def _sample_rows(line: ExperimentalL1Line | ExperimentalBL5Line,
                  beam_edge: int, beam_alpha: float,
                  channel: int, support_alpha: float | None = None):
     if type(line) is ExperimentalBL5Line:
-        if line.basis == "discontinuous_p1":
+        if line.basis in ("discontinuous_p1", "discontinuous_p1_cell_average"):
             if (support_alpha is None or not np.isfinite(support_alpha) or
                     not 0. <= support_alpha <= 1.):
                 raise ValueError("physical BL5 support coordinate required")
@@ -183,7 +189,7 @@ def _sample_rows(line: ExperimentalL1Line | ExperimentalBL5Line,
 def _row_count(line: ExperimentalL1Line):
     n = len(line.beam_halfcells)
     if type(line) is ExperimentalBL5Line:
-        if line.basis == "discontinuous_p1":
+        if line.basis in ("discontinuous_p1", "discontinuous_p1_cell_average"):
             return 10*n//line.multiplier_span
         if line.basis == "continuous_p1_coarse":
             return 5*(min(n, len(line.shell_nodes)-1)+1)
@@ -249,10 +255,17 @@ def _bl5_segments(line, shell_index, shell_xyz, beam_nodes, beam_parts,
             beam_alpha = ((station-beam_stations[beam_edge]) /
                           (beam_stations[beam_edge+1]-beam_stations[beam_edge]))
             support_alpha = None
-            if line.basis == "discontinuous_p1":
+            if line.basis in ("discontinuous_p1", "discontinuous_p1_cell_average"):
                 start = (beam_edge//line.multiplier_span)*line.multiplier_span
                 end = start+line.multiplier_span
-                support_alpha = ((station-beam_stations[start]) /
+                density_station = station
+                if line.basis == "discontinuous_p1_cell_average":
+                    # Average of an affine reference-arclength coordinate:
+                    # use native cell endpoints, never the cell index or
+                    # this shell/beam integration segment's endpoints.
+                    density_station = .5*(beam_stations[beam_edge]+
+                                          beam_stations[beam_edge+1])
+                support_alpha = ((density_station-beam_stations[start]) /
                                  (beam_stations[end]-beam_stations[start]))
             yield (shell_edge, beam_edge, shell_alpha, beam_alpha,
                    .5*(right-left), support_alpha)

@@ -31,6 +31,7 @@ HELPER_SHA256 = {
 BALANCE_LIMIT, GAP_LIMIT, DERIVATIVE_LIMIT = 1e-8, 1e-9, 1e-6
 DERIVATIVE_STEPS = (1e-4, 3e-5, 1e-5)
 BASIS = "discontinuous_p1"
+PROJECTED_BASIS = "discontinuous_p1_cell_average"
 
 
 def sha(path):
@@ -103,6 +104,48 @@ def integrated_affine_weights(left, right, intervals, first_node, union_knots):
     return terms, pieces
 
 
+def integrated_projected_weights(left, right, intervals, halfcells, first_node=0):
+    """Exact hats times fixed native reference half-cell means of xi.
+
+    This changes the whole density action, including support endpoints. It is
+    not a nodal interpolation of the native retained rotation or condensation.
+    """
+    left, right = F(left), F(right)
+    if (type(intervals) is not int or intervals < 1 or type(halfcells) is not int or
+            halfcells < 2 or type(first_node) is not int or not 0 <= left < right <= 1 or
+            (left*halfcells).denominator != 1 or (right*halfcells).denominator != 1):
+        raise ValueError("positive unit trace and whole reference half-cell supports required")
+    if (right-left)*halfcells < 2:
+        raise ValueError("projected affine support requires at least two half-cells")
+    knots = sorted({left, right} | {F(i, intervals) for i in range(intervals+1)} |
+                   {F(i, halfcells) for i in range(halfcells+1)})
+    terms, pieces = ({}, {}), []
+    for a, b in zip(knots, knots[1:]):
+        if a < left or b > right:
+            continue
+        edge = int((a+b)*halfcells/2)
+        cell_left, cell_right = F(edge, halfcells), F(edge+1, halfcells)
+        if not cell_left <= a < b <= cell_right:
+            raise ValueError("integration must split at every native half-cell")
+        xi = (cell_left+cell_right-2*left)/(right-left)-1
+        na, nb = shape_weights(a, intervals, first_node), shape_weights(b, intervals, first_node)
+        for node in set(na) | set(nb):
+            integral = (b-a)*(na.get(node, F(0))+nb.get(node, F(0)))/2
+            for degree, coefficient in enumerate((F(1), xi)):
+                terms[degree][node] = terms[degree].get(node, F(0))+integral*coefficient
+        pieces.append({"interval_m": [float(a), float(b)],
+            "shape_at_left": {n: float(v) for n, v in na.items()},
+            "shape_at_right": {n: float(v) for n, v in nb.items()},
+            "xi_halfcell_mean": float(xi), "xi_halfcell_mean_rational": str(xi)})
+    if sum(terms[0].values()) != right-left or sum(terms[1].values()) != 0:
+        raise ValueError("complete projected partition identities required")
+    expected = ((right*right-left*left)/2, ((right-left)**2-F(1, halfcells)**2)/6)
+    for degree in (0, 1):
+        if sum(F(node-first_node, intervals)*v for node, v in terms[degree].items()) != expected[degree]:
+            raise ValueError("projected density shape first-moment identity failed")
+    return terms, pieces
+
+
 def inverse_fraction(matrix):
     """Exact fixed-size 10x10 dependent-column elimination, not mechanics."""
     if len(matrix) != 10 or any(len(row) != 10 for row in matrix):
@@ -135,7 +178,9 @@ def coefficient_maps(rows):
     return [{(n, d): c for n, d, c in zip(row[::3], row[1::3], row[2::3])} for row in rows]
 
 
-def aggregate_rows(model, reference):
+def aggregate_rows(model, reference, *, basis=BASIS):
+    if basis not in (BASIS, PROJECTED_BASIS):
+        raise ValueError("explicit affine or fixed half-cell projected density required")
     """Independent physical rows and row-equivalent unique-dependent rows."""
     nx, nb, ns = model["nx"], model["beam_intervals"], model["support_count"]
     if (type(nx) is not int or type(nb) is not int or type(ns) is not int or
@@ -153,8 +198,12 @@ def aggregate_rows(model, reference):
     exact_blocks = []
     for index in range(ns):
         left, right = F(index, ns), F(index+1, ns)
-        bw, bp = integrated_affine_weights(left, right, nb, first, knots)
-        sw, sp = integrated_affine_weights(left, right, nx, 1, knots)
+        if basis == PROJECTED_BASIS:
+            bw, bp = integrated_projected_weights(left, right, nb, nb, first)
+            sw, sp = integrated_projected_weights(left, right, nx, nb, 1)
+        else:
+            bw, bp = integrated_affine_weights(left, right, nb, first, knots)
+            sw, sp = integrated_affine_weights(left, right, nx, 1, knots)
         block = [{} for _ in range(10)]  # support, channel, degree
         for weights, sign, arm in ((bw, F(1), rb), (sw, F(-1), rs)):
             for degree, nodes in enumerate(weights):
@@ -180,7 +229,7 @@ def aggregate_rows(model, reference):
             raise ValueError("exact dependent-column identity failed")
         physical.extend(flat_row(row) for row in block)
         emitted.extend(flat_row(row, key) for row, key in zip(transformed, dependent))
-        supports.append({"support_id": index, "interval_m": [float(left), float(right)],
+        supports.append({"support_id": index, "basis": basis, "interval_m": [float(left), float(right)],
             "width_m": float(right-left), "row_indices": list(range(10*index, 10*index+10)),
             "beam_spacing_m": float(hb),
             "physical_row_order": "channel0..4, degree0/1 per channel",
@@ -197,7 +246,7 @@ def aggregate_rows(model, reference):
         other = all_dependent[:10*index]+all_dependent[10*index+10:]
         if any(row.get(key, 0) for row in block for key in other):
             raise ValueError("other-support selected columns must be absent")
-    return {"basis": BASIS, "physical_rows": physical, "emitted_rows": emitted, "supports": supports}
+    return {"basis": basis, "physical_rows": physical, "emitted_rows": emitted, "supports": supports}
 
 
 def row_action(rows, field):
@@ -262,6 +311,19 @@ def multiply_polynomials(a, b):
     return result
 
 
+def density_segments(support, lam):
+    """Physical coefficients on every density interval; never reinterpret modes."""
+    if support.get("basis", BASIS) == PROJECTED_BASIS:
+        for piece in support["beam_pieces"]:
+            left, right = map(F, piece["interval_m"])
+            xi = F(piece["xi_halfcell_mean_rational"])
+            yield left, right, [[F(lam[2*d])+F(lam[2*d+1])*xi, F(0)] for d in range(5)]
+    else:
+        left, right = map(F, support["interval_m"])
+        yield left, right, [[F(lam[2*d])-F(lam[2*d+1])*(left+right)/(right-left),
+                            2*F(lam[2*d+1])/(right-left)] for d in range(5)]
+
+
 def density_measures(supports, densities, reference):
     """Exact polynomial physical beam-exerted wrench measures, no nodal atoms."""
     rb = F(reference.BEAM_BOTTOM_ARM_M)
@@ -271,37 +333,35 @@ def density_measures(supports, densities, reference):
     regional = [[[] for _ in range(6)] for _ in regions]
     for support in supports:
         index = support["support_id"]
-        left, right = map(F, support["interval_m"])
         lam = densities[10*index:10*index+10]
-        coefficients = [[F(lam[2*d])-F(lam[2*d+1])*(left+right)/(right-left),
-                         2*F(lam[2*d+1])/(right-left)] for d in range(5)]
-        force = [[-v for v in c] for c in coefficients[:3]]
-        moment = [[rb*coefficients[1][k]-coefficients[3][k] for k in range(2)],
-                  [-rb*coefficients[0][k]-coefficients[4][k] for k in range(2)]+[F(0)],
-                  [F(0), *force[1]]]
-        for k in range(2):
-            moment[1][k+1] -= force[2][k]
-        wrench = force+moment
-        for d, c in enumerate(wrench):
-            for k in range(4):
-                moments[str(k)][d].append(polynomial_integral([F(0)]*k+c, left, right))
-            a, b = max(left, F(1, 4)), min(right, F(3, 4))
-            if b > a:
-                value = polynomial_integral(c, a, b)
-                for name in ("open", "closed"):
-                    windows[name][d].append(value)
-                windows["smooth_unit_peak"][d].append(polynomial_integral(
-                    multiply_polynomials(c, (9, -96, 352, -512, 256)), a, b))
-            for r, (a, b) in enumerate(regions):
-                a, b = max(left, F(a)), min(right, F(b))
+        for left, right, coefficients in density_segments(support, lam):
+            force = [[-v for v in c] for c in coefficients[:3]]
+            moment = [[rb*coefficients[1][k]-coefficients[3][k] for k in range(2)],
+                      [-rb*coefficients[0][k]-coefficients[4][k] for k in range(2)]+[F(0)],
+                      [F(0), *force[1]]]
+            for k in range(2):
+                moment[1][k+1] -= force[2][k]
+            wrench = force+moment
+            for d, c in enumerate(wrench):
+                for k in range(4):
+                    moments[str(k)][d].append(polynomial_integral([F(0)]*k+c, left, right))
+                a, b = max(left, F(1, 4)), min(right, F(3, 4))
                 if b > a:
-                    regional[r][d].append(polynomial_integral(c, a, b))
+                    value = polynomial_integral(c, a, b)
+                    for name in ("open", "closed"):
+                        windows[name][d].append(value)
+                    windows["smooth_unit_peak"][d].append(polynomial_integral(
+                        multiply_polynomials(c, (9, -96, 352, -512, 256)), a, b))
+                for r, (a, b) in enumerate(regions):
+                    a, b = max(left, F(a)), min(right, F(b))
+                    if b > a:
+                        regional[r][d].append(polynomial_integral(c, a, b))
     return {"polynomial_x_moments": {k: [math.fsum(t) for t in axes] for k, axes in moments.items()},
             "fixed_region_025_075": {name: [math.fsum(t) for t in axes] for name, axes in windows.items()} |
                 {"endpoint_atoms": [0.]*6},
             "fixed_distance_regions": [{"interval_m": list(interval), "wrench": [math.fsum(t) for t in axes]}
                                        for interval, axes in zip(regions, regional)],
-            "measure_provenance": "Continuous affine density, all five channels, physical arm and x cross F; "
+            "measure_provenance": "Declared "+supports[0].get("basis", BASIS)+" density, all five channels, physical arm and x cross F; "
                                   "about beam root. Nodal allocation is a separate transpose work map."}
 
 
@@ -315,7 +375,8 @@ def integrated_objective(field, model, supports, refinement, p0, frozen, service
             for xi, w in zip((-math.sqrt(3/5), 0., math.sqrt(3/5)), (5/9, 8/9, 5/9)):
                 x = (left+right)/2+(right-left)*xi/2
                 gap = refinement.sampled_gap(x, field, model, reference, p0, frozen, service)
-                basis = (1., 2*(x-a)/(b-a)-1.)
+                basis = (1., piece["xi_halfcell_mean"] if support.get("basis", BASIS) == PROJECTED_BASIS
+                         else 2*(x-a)/(b-a)-1.)
                 for channel in range(5):
                     for degree in range(2):
                         terms[2*channel+degree].append((right-left)*w*basis[degree]*gap[channel]/2)
@@ -441,7 +502,7 @@ def recover(raw, model, reference, pairing, case, refinement, service):
         "continuous_density_nodal_total_wrench_scaled": max(abs(a-b)/scale for a, b in zip(
             measures["polynomial_x_moments"]["0"], service._wrench({n: exerted[n] for n in beam}, shifted)))}
     root = set(model["fixes"])
-    return {"basis": BASIS, "sign_provenance": "+Cphysical.T lambda resisting; -Cphysical.T lambda exerted; "
+    return {"basis": pairing["basis"], "sign_provenance": "+Cphysical.T lambda resisting; -Cphysical.T lambda exerted; "
         "ground=(G+Cphysical.T lambda-L) on prescribed DOFs. Raw nodeReaction unused.",
         "row_density_multipliers": density, "support_records": support_records, "local_recovery": recovery,
         "full_q_node_poses": poses, "applied_nodal_L": applied, "shell_domain_nodal_G": sg, "beam_domain_nodal_G": bg,
@@ -499,11 +560,13 @@ def admit_case(nx, case, support_count=8):
                          "or finer32/sixteen-support Fy/Mx/Mz required")
 
 
-def main(site, output, case, *, nx=16, support_count=8):
+def main(site, output, case, *, nx=16, support_count=8, basis=BASIS):
     admit_case(nx, case, support_count)
+    if basis not in (BASIS, PROJECTED_BASIS) or (basis == PROJECTED_BASIS and (nx, support_count) != (16, 8)):
+        raise ValueError("projected development reference admits one matched coarse16/eight-support fixture only")
     output.mkdir(parents=True, exist_ok=False)
     recorder, service = None, None
-    summary = {"status": "failed", "nx": nx, "case": case, "basis": BASIS, "supports": support_count,
+    summary = {"status": "failed", "nx": nx, "case": case, "basis": basis, "supports": support_count,
         "classification": "Fixed-grid independent affine development only; no locking/accuracy/F03 acceptance",
         "source_sha256": sha(__file__), "helper_sources": HELPER_SHA256,
         "python": sys.version, "requested_threads": {name: os.environ.get(name) for name in
@@ -515,7 +578,7 @@ def main(site, output, case, *, nx=16, support_count=8):
             raise ValueError("independent external runner must not import product modules")
         model = refinement.geometry(nx, reference)
         model["support_count"] = support_count  # Explicit endpoints i/ns; eight remains the default.
-        pairing = aggregate_rows(model, reference)
+        pairing = aggregate_rows(model, reference, basis=basis)
         commands = refinement.command_recipe(model, reference, pairing["emitted_rows"], case)
         expected = refinement.planned_inventory(commands)
         service._atomic(output/"inputs.json", {"model": model, **pairing, "load": refinement.LOADS[case],
@@ -572,5 +635,6 @@ if __name__ == "__main__":
     parser.add_argument("--case", required=True, choices=("fy", "mx", "mz"))
     parser.add_argument("--nx", type=int, choices=(16, 32), default=16)
     parser.add_argument("--support-count", type=int, choices=(8, 16), default=8)
+    parser.add_argument("--basis", choices=(BASIS, PROJECTED_BASIS), default=BASIS)
     args = parser.parse_args()
-    main(args.site, args.output_dir, args.case, nx=args.nx, support_count=args.support_count)
+    main(args.site, args.output_dir, args.case, nx=args.nx, support_count=args.support_count, basis=args.basis)

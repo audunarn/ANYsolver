@@ -21,12 +21,13 @@ IDENTITY = 'BL5_REFERENCE_HALFCELL_AVERAGED_AFFINE_DENSITY_DEV_V1'
 sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
 
-def run(root):
+def compile_saved_projection(root):
+    """Reconstruct the fixed local work once, without constructing an owner."""
     data = json.loads((root/'native/inputs.json').read_text())
     nx = data['layout']['nx']; ns = len(data['layout']['shell_node_ids'])
     physical = data['layout']['counts']['physical_dofs']; xyz = np.array(data['xyz_m'])
     supports = len(data['policy']['support_endpoints_m'])-1; m = 2*nx//supports
-    assert nx == 32 and m in (4, 8)
+    assert (nx,supports) in ((16,8),(32,8),(32,16)) and m in (4,8)
     with np.load(root/'native/operators.npz', allow_pickle=False) as z:
         k, c = (sparse.csr_matrix((z[n+'_data'],z[n+'_indices'],z[n+'_indptr']),
             shape=tuple(z[n+'_shape'])) for n in ('K','C'))
@@ -62,6 +63,16 @@ def run(root):
                 force_integral[j]+=weight*phi;force_moment[j]+=weight*x*phi
                 gram[j]+=weight*phi*phi
     original, projected=(sparse.coo_matrix((v,(rr,cc)),shape=c.shape).tocsr() for v in vv)
+    return (data,k,c,original,projected,rigid,shell_work,beam_work,fixed,state,
+            records,force_integral,force_moment,gram)
+
+
+def run(root):
+    (data,k,c,original,projected,rigid,shell_work,beam_work,fixed,state,
+     records,force_integral,force_moment,gram)=compile_saved_projection(root)
+    nx=data['layout']['nx'];ns=len(data['layout']['shell_node_ids'])
+    physical=data['layout']['counts']['physical_dofs'];xyz=np.array(data['xyz_m'])
+    supports=len(data['policy']['support_endpoints_m'])-1;m=2*nx//supports
     difference=original-c
     parity=float(np.linalg.norm(difference.data)/max(1.,np.linalg.norm(c.data)))
     assert parity<=1e-12

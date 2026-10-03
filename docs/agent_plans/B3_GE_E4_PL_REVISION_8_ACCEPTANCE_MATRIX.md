@@ -1,5 +1,19 @@
 # B3-GE / E4-PL / B2 current acceptance matrix
 
+**3 October projected-density assessment - IMPLEMENTED_NOT_QUALIFIED:**
+Distinct optional `discontinuous_p1_cell_average` uses physical reference half-cell
+means in all five channels; defaults/legacy meanings preserved. 8distinct source,
+29distinct installed and79math/reference controls pass; harness failures retained.
+417module wheel a47e518f bound exactly. Bounded actual coarse native mixed-system
+oracle and complete common endpoint/work action pass; virgin oracle is not material
+history or a full-K SPD claim. ONE coarse16x4/eight-support matched Fy/Mx/Mz comparison
+passes physical controls with one native factorization. Mx work difference improves
+-1.02387% to+.0152484%, regionMz11.0894 to.04904Nm; remaining Fy/Mz transfer errors
+retained. Both models changed density action. Retain experimental candidate;
+WITHHOLD resolution-policy/formulation qualification. No growing-space/converged
+accuracy, mandatory external or aggregate gate acceptance. Formal F03 UNCONSUMED.
+[Evidence and disposition](development/r8-bl5-projected-assessment-20261003/results.md).
+
 **Current arc lifecycle status (supersedes historical open-public-surface notes below):**
 Public solver and installed ANYfem Project/checkpoint continuation are
 IMPLEMENTED_NOT_QUALIFIED. Capacity/E04 remains open; no executed mixed first-limit-point
