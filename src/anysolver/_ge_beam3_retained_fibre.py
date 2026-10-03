@@ -11,7 +11,7 @@ import numpy as np
 from ._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry as Reference
 from ._ge_beam3_fibre_cell import FibreCellConjugate, CellHistory
 from ._ge_beam3_fibre_section import PhysicalFibreSection
-from ._ge_beam3_mixed_ad import Jet2, constant_matrix, matmul, transpose, so3_exp, so3_log
+from ._ge_beam3_mixed_ad import Jet2, constant_matrix, matmul, matmul_constant_right, transpose, so3_exp, so3_log
 from ._ge_beam3_p5.compensated import compensated_strain
 from ._ge_beam3_p5.compensated_coordinates import validate_pair
 from ._ge_beam3_p5.algebra import HALVES
@@ -93,13 +93,13 @@ class RetainedFibreOperator:
         if max(np.linalg.norm(v) for v in angular) >= .9*np.pi:
             raise ValueError('retained fibre rotation chart requires cutback')
         variables = [Jet2.variable(value, i, 24) for i, value in enumerate(delta[:24])]
-        made_q = [matmul(so3_exp(variables[6*n+3:6*n+6]), constant_matrix(q[n], 24)) for n in range(3)]
+        made_q = [matmul_constant_right(so3_exp(variables[6*n+3:6*n+6]), q[n]) for n in range(3)]
         z = []; ell = []
         for cell, (left, right) in enumerate(HALVES):
-            made_u = matmul(so3_exp(variables[18+3*cell:21+3*cell]), constant_matrix(u[cell], 24))
+            made_u = matmul_constant_right(so3_exp(variables[18+3*cell:21+3*cell]), u[cell])
             z.extend(compensated_strain(made_u, self.reference.coordinates, x, low, variables, left, right))
             for node, sign in ((left, -1), (right, 1)):
-                frame = matmul(made_u, constant_matrix(self.reference.nodal_triads[node], 24))
+                frame = matmul_constant_right(made_u, self.reference.nodal_triads[node])
                 ell.extend(sign*v for v in so3_log(matmul(transpose(frame), made_q[node])))
         values = z+ell; k = np.array([v.value for v in values]); j = np.array([v.gradient for v in values])
         p = p+delta[24:]
