@@ -1,62 +1,71 @@
 # General contact restart — 3 October 2026
 
-Full C0–C9 ACTIVE/incomplete. Worktree
+Full C0–C9 ACTIVE/incomplete. Authoritative worktree
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001. Parent542d8184; Git HEAD identifies
-owned checkpoint. Goal2026-09-30.4 / plan2026-10-03.62 govern. No other-user-chat
-coordination, protected original-worktree access, merge, push/publication, release,
-historical-default change or consumed-authority renewal. Owned checkpoint commits
-authorized. Named D1-interior/bounded D2 acceptance and installed identity unchanged.
+branch codex/contact-main-reconcile-20261001. Parent87b17c0e; Git HEAD names current
+owned checkpoint. Goal2026-09-30.4/plan2026-10-03.63 govern. No other-user-chat
+messaging/protected-original-worktree access/merge/push/publication/release/default
+change or consumed-authority renewal. Owned local checkpoint commits authorized.
+Named D1-interior/bounded D2 acceptance and installed identity remain unchanged.
 
-History docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART85.md
-links84/83/82 and all important failures. New summary
-C6_GUIDED_SHELL_PAIR_SLICE_20261003.md in that folder; exact candidate/commands/raw
-43records in contact_c6_guided_shell_pair_20261003/{source.json,raw.zip}.
-Guide docs/GENERAL_CONTACT_C6_GUIDED_SHELL_PAIR_DEV.md. All owned work is in this
-checkpoint; workers/reviewer/processes terminal. No other-user-chat messaging.
+History docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART86.md
+links85/84 and important failures. New summary C6_NONUNIFORM_S3_COMPONENTS_20261003.md
+in that folder. Exact sources/runtime/commands/raw29records:
+contact_c6_nonuniform_s3_components_20261003/{source.json,raw.zip}. All owned
+processes and two workers/reviewer terminal; no unrelated work edited.
 
-NEW explicit allow_guided_shell_pair_dev with pressure events reuses static
-fixed-overlap mortar, shared driver and physical consistent mass. Exact planar
-Q4/S3 V2D/isotropicelastic, two selected surfaces/one penalty pair, uniform normal
-face translations/common tangent/zero rotations, positive reduced physical mass.
-Normalized-generator epsilon contract is not exact arbitrary-linear-combination
-proof; actual endpoint/rate vectors rechecked. Pressure/candidate caps unchanged;
-no positive supportdrop. Both FE bodies receive authoritative residual/tangent.
-Complete relative physical/pressure supplied-float Hermite paths gate commit.
-V11 binds stable pair/node features/profile/settings/front algorithm. Default
-callers, historical sphere and V1–V10 schemas retain contracts. Batched event front
-now also permits this explicit pair profile; no failed-increment switching.
+Prior87b17c0e implements/source/installed-tests guided finite-mass Q4/S3 paired
+impact via shared Newmark, physical mass/work/relative Hermite checks and V11
+ordered feature binding.52scoped outcomes,50/25us continuous response improvement,
+20umgapbudget,olddefaults/schema untouched. Guided face translations only; no
+unrestricted target deformation or engineering admission. Wheel/source208hash
+parity/evidence/guide live in Part85 and C6_GUIDED_SHELL_PAIR_SLICE_20261003.md.
 
-Source1Q4/target2largerS3, areas1/1.44m2,h.02m,rho1000/500,masses20/14.4kg,
-physicalgap200um,KN3e8N/m3,gapbudget20um,sourcevelocity-.1m/s. Manufactured MPC
-guides, not unrestricted deforming bodies or permanent-joint evidence. Independent
-mass/work/wrench, branch-enumeration Newmark and continuous unilateral oscillator
-call no production kernels.52scoped pass outcomes include38helper,2local,1whole,
-9state/controls/oldS3guard,2refinement/strengthened cancellation (one repeat).
-Initial missing rigid_bodies=() fixture failures retained. Actual cancellation
-ContextVar cleanup, reusable model, active restart, rehashed feature tampering and
-incompatible profile/front rejection pass. Read-only scrutiny found no concrete
-defect; same-family supporting input is not independent engineering acceptance.
+NEW source-tested components only, not new driver/installed/engineering admission:
+shell_pair_hermite_sweep.py rationalBernstein complete cubicS3/source,S3 ororiginal
+Q4target gap/polarity/cornerJacobian bound. Degree6normals/9numerators/12orientation;
+original exact deCasteljau subdivisions, finite budgets/cancellation/failure.
+Whole-face conservative all-pairs bound, not overlap-topology/event-time guarantee.
+fixed_projection_s3_events.py sidecar for general Jet2 projected-penalty manager:
+source exact common-plane/uniform normal translation, one nonuniform S3 target
+moving along source normal, strict reference projected coverage. Shared P1 support
+fixed; normalized gaps affine on this exact represented subspace. Full general
+both-body work remains authoritative; no guided-force substitution.
 
-102savedstates,2events,0cuts,21queries/148stages. Independent q/v/a errors1.68e-18m/
-3.49e-15m/s/2.08e-11m/s2; bodyF/My errors1.95e-10N/1.14e-10Nm, modalbalance1.96e-10N,
-momentum1.11e-15kgm/s; targetrecoil-.116279071m/s. Physicalmin-16.70607um within20um,
-stable independent Hermitebound agreement3.01e-18m.50/25us matched-end temporal
-qerrors.1091/.02839%,verrors.7802/.1964% on gap/speed scales;energy1.78e-8/3.51e-10.
-No third timestep/mesh sweep. Source/installed208hashes/all fields match; wheel
-SHAec15777b30f96ac9e9555d83e9e29a27e8d44c998f95fc7eedc77b5b66daeca2.
-Source5.70s/159293440B,installed5.65s/159178752B single runs/no speed claim. JIToff,
-NumBa+BLAS1,180s/953MiB. Implemented/tested, not accepted/released/application admitted.
+Review found epsilon membership unsafe: source tangent delta=2^-46 and target
+slope q gives gi=g0-delta*q²; q(t)=4*(2^19)*t*(1-t) has matching endpoints but3.906mm
+hidden midpoint gap. New rational-normal/exacttranslation/zero-rotation gate rejects
+it. Finite map/pullback/shift/gap/scale checks, checked integer conversion and
+byte-backed buffers reject overflow/NaN/int64minimum/poisoned support. skin_path
+also checks actual mapped physical endpoints/rates/sourceplane: DOF membership
+alone does not protect against reference-addition/work-map rounding. Rounding
+failures are explicit, not tolerated or fixed by dropping geometry.
 
-NEXT derive nonuniform paired-target geometry/work and conservative path ownership
-before shared-driver admission. Reuse existing general shell contributor; do not
-extend affine fixed-overlap assumptions to arbitrary deforming/sliding/rotating
-geometry. Choose shortest physically referenced both-body slice; no open-ended
-mesh/dt campaign, cap growth or scientific-gate weakening. Full forecast unsupported.
+89current scoped pass outcomes(87unique):53geometry,30pressure/work/admission,
+3sourceplane delta(2support repeats),3combined skinpath/rounding. Initial19pass/
+2fail retained: test incorrectly checked projected storage via penalty_energy;
+existing reporting preserved (regularization_storage_j,penalty_energy0). Preliminary
+47geometry/25pressure pass logs retained, not added to current counts. Read-only
+same-family review finds corrected proof sound/no remaining concrete component
+error; not engineering acceptance. JIToff,NumBa/BLAS1,180s/953MiB,actualowned imports.
 
-Native grazing friction stays NONPASS gap-1.33564e-13m,223queries/448paths/21support,
-10.364s. Missing closed alpha_q=-G_q/G_alpha and mixed elastic work bound, not
-formulation failure. No saved local/fullpatch/owner/split retry, history reset,
-zero response, cap/tolerance increase or native acceptance; all failures linked.
-Budget120activehours without reset; get_goal.timeUsedSeconds+3120 was306728s
-(~85.2h) before checkpoint. At120h save/request decision; goal ACTIVE.
+Local fixture2sourceS3 unit-square/one larger targetS3 (-2,-2),(5,-2),(-2,5), physical
+skins200umgap; supports(1/3,1/6,1/3,1/6),gap gradients(1,-1,-xbar),
+xbar=(.375,.75,.625,.25)-1/3. Full reduced R/K/storage/virtualwork agree independently,
+directional gates<=1e-5. Combined prescribed(not equilibrated) path210umsource
+translation/2umtargettilt over2.1ms gives complete min-19.333um within20um.
+
+NEXT integrate explicit nonuniform-target development profile into shared Newmark
+using exact pressure sidecar, full existing general contributor and complete skin
+path. Retain old controls/schema; bind profile/ordered pressure identity and selection
+in new restart. Use actual declared regularization storage, not penalty_energy0.
+Before whole route fix physical consistent mass/structural scope and independent
+both-body reference; then public unsupported motion/state/restart/installed checks.
+No general source deformation/rotation/sliding affine claim; those remain required.
+No open-ended mesh/dt sweep or cap growth. Full delivery forecast unsupported.
+
+Native grazing friction remains NONPASS gap-1.33564e-13m,223queries/448paths/21support,
+10.364s. Missing closed alpha_q=-G_q/G_alpha/mixedwork bound, not formulationfailure.
+No saved local/fullpatch/owner/splitretry, historyreset/zeroresponse/capgrowth/tolerance
+increase/nativeacceptance. Budget120activehours unchanged; lastgoal305438+3120=
+308558s (~85.71h). At120h save/request decision; goal remains ACTIVE.

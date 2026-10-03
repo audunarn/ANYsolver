@@ -1,0 +1,233 @@
+{
+  "parent": "87b17c0e15fa93a6e9b25049ba781e0877f9fd32",
+  "candidate_sha256": {
+    "src/anysolver/general_contact/shell_pair_hermite_sweep.py": "ded00a2dfc553ca6f8cb088a2c0c55c0c4bff78fc818f75701d23cf5509b5603",
+    "src/anysolver/general_contact/fixed_projection_s3_events.py": "38fe05f0147effaf6e280c542901f4117436e726fe59c9fcce48327e7cebdef1",
+    "tests/test_general_contact_shell_pair_hermite_sweep.py": "cf53b7c146b250038a273a432acae264d200895ff8629a8ef47884de517990e4",
+    "tests/test_general_contact_fixed_projection_s3_events.py": "78227c945431c0bd506c9fbc5dc4e3524202384c53430bb80a947aa4c1158ccc"
+  },
+  "raw_records": 29,
+  "archive_manifest": [
+    {
+      "path": "pressure_a/anysolver-portable-ci-ufs1nnto/P01/resource.json",
+      "sha256": "5619d8518f878d726bfdb7bb03be72492efd2157e77beafa610323d953829099"
+    },
+    {
+      "path": "pressure_a/anysolver-portable-ci-ufs1nnto/P01/runtime.json",
+      "sha256": "a8d9ee87d2f15a1cc1041986448955c0c5531944395c70bf6f06b1803402565b"
+    },
+    {
+      "path": "pressure_a/anysolver-portable-ci-ufs1nnto/P01/selection.json",
+      "sha256": "bcf213d02c63b3762e4e35716b38001f84de26e83d2d6437e7a5ae8afd54acd4"
+    },
+    {
+      "path": "pressure_a/contact_fixed_projection_s3_events_a_20261003.log",
+      "sha256": "1daaff30998156249394bf88a2fd19380544d1e3118752bfa98c5e5c09600313"
+    },
+    {
+      "path": "pressure_b/anysolver-portable-ci-aeqa_i0k/P01/resource.json",
+      "sha256": "238ebcb8237bc28bf26e1d4477e5b7fd1c737addf8d416626d86c6e85c8b4a9f"
+    },
+    {
+      "path": "pressure_b/anysolver-portable-ci-aeqa_i0k/P01/runtime.json",
+      "sha256": "167a94dc9315dd3647ed56a1f5d585234064e22dc45878aac9ded92b244014ba"
+    },
+    {
+      "path": "pressure_b/anysolver-portable-ci-aeqa_i0k/P01/selection.json",
+      "sha256": "d29fce07393a2b0b24d6a63a60f74f339b2a6ab3b3a83c511e8c09e3357b739d"
+    },
+    {
+      "path": "pressure_b/contact_fixed_projection_s3_events_b_20261003.log",
+      "sha256": "90456e3d2e7c566285f6672ca99dee4043dcbfbefe4e0683c671ffbb2166422a"
+    },
+    {
+      "path": "pressure_c/anysolver-portable-ci-fk3jqb0h/P01/resource.json",
+      "sha256": "324d2c1a7492e0b2c7ebd770b7bc3165c1b7447b748f899fadf97c1019526550"
+    },
+    {
+      "path": "pressure_c/anysolver-portable-ci-fk3jqb0h/P01/runtime.json",
+      "sha256": "b57346647f87390f301a1e5697f9cc51b84424866698d6472bcaad11763d5bc6"
+    },
+    {
+      "path": "pressure_c/anysolver-portable-ci-fk3jqb0h/P01/selection.json",
+      "sha256": "78a6ad7ef97bae97e3f5a60caa22f5122db9a3a6f10f9f8f08daeee14c24213e"
+    },
+    {
+      "path": "pressure_c/contact_fixed_projection_s3_events_c_20261003.log",
+      "sha256": "3db6ac7b4000365038adec3a896fb733d67c3b9acb2e17803fcbf9bbc87a54c4"
+    },
+    {
+      "path": "pressure_d/anysolver-portable-ci-n__o4m1v/P01/resource.json",
+      "sha256": "93d178bb0461e8a1e72d3baef471812cdc84d57bb6fa6360ade3729404aaa8db"
+    },
+    {
+      "path": "pressure_d/anysolver-portable-ci-n__o4m1v/P01/runtime.json",
+      "sha256": "0a4af1944c00cdd0c7c9440de752fac510405ccf3de7a6a8a0dea7c33bf27390"
+    },
+    {
+      "path": "pressure_d/anysolver-portable-ci-n__o4m1v/P01/selection.json",
+      "sha256": "d245105b0ecd52ba467bace0a15df69e2f03a8194612c568cdb8c88ff2a7bc71"
+    },
+    {
+      "path": "pressure_d/contact_fixed_projection_s3_events_d_20261003.log",
+      "sha256": "66db1b291dab9ee13b97057d13ef9102da6296b1d79b3e3c4ea1a230f4b65310"
+    },
+    {
+      "path": "pressure_e/anysolver-portable-ci-hw1rqpj_/P01/resource.json",
+      "sha256": "63de2ce45d12828e9e65343377a3f557ed0f86f8606c16f2e6af876a183dc429"
+    },
+    {
+      "path": "pressure_e/anysolver-portable-ci-hw1rqpj_/P01/runtime.json",
+      "sha256": "901aaf9b2031ec8871a00680aa6b245aed8c09ce569d578c2ec6a8a6d820131b"
+    },
+    {
+      "path": "pressure_e/anysolver-portable-ci-hw1rqpj_/P01/selection.json",
+      "sha256": "dfb045f4d251e4903bfe26cb72219f9fca62e7f077ae7c164f89184aca9f2c0e"
+    },
+    {
+      "path": "pressure_e/contact_fixed_projection_s3_events_e_20261003.log",
+      "sha256": "f5a2dd71fa2278011a11b19edadf3fdc0bd8911d8968ac40a0caab2b6ea01353"
+    },
+    {
+      "path": "geometry/anysolver-portable-ci-ewb9o9rp/P01/resource.json",
+      "sha256": "66e20de83045bda382874557c6f60d62b68d2d3176e34d3990497397d5c0e983"
+    },
+    {
+      "path": "geometry/anysolver-portable-ci-ewb9o9rp/P01/runtime.json",
+      "sha256": "61793e948fcb20e65a8daf8b03222ed1222d3382b4ff5757f6e16e32adca5016"
+    },
+    {
+      "path": "geometry/anysolver-portable-ci-ewb9o9rp/P01/selection.json",
+      "sha256": "a8d0464cd2076ed491665371646ad8cd8414bc03533c6541ce83e47f2d454e0f"
+    },
+    {
+      "path": "geometry/evidence-summary.json",
+      "sha256": "ae9ef87fa14d3c3b65509383e960e04bafd076ba33d87a7d3f747451bf80a56f"
+    },
+    {
+      "path": "geometry/runner.log",
+      "sha256": "191c53f956d6e030ebc86e836db27b118add5d5b0a25e609cbc546cfde953289"
+    },
+    {
+      "path": "geometry/shell_pair_hermite_sweep.py.snapshot",
+      "sha256": "ded00a2dfc553ca6f8cb088a2c0c55c0c4bff78fc818f75701d23cf5509b5603"
+    },
+    {
+      "path": "geometry/test_general_contact_shell_pair_hermite_sweep.py.snapshot",
+      "sha256": "cf53b7c146b250038a273a432acae264d200895ff8629a8ef47884de517990e4"
+    },
+    {
+      "path": "geometry_preliminary/runner.log",
+      "sha256": "b53dc76f579831db2ea20018095ec42a61e0e49fdeda52acbd9fe355b952dcab"
+    }
+  ],
+  "runs": [
+    {
+      "label": "pressure_a",
+      "outcomes": {
+        "passed": 19,
+        "failed": 2
+      },
+      "collected": 21,
+      "resource": {
+        "peak_sampled_bytes": 170401792,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.000578599981964,
+        "status": "terminal",
+        "child_exit_codes": [
+          1
+        ]
+      },
+      "import_count": 213
+    },
+    {
+      "label": "pressure_b",
+      "outcomes": {
+        "passed": 25
+      },
+      "collected": 25,
+      "resource": {
+        "peak_sampled_bytes": 168509440,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.081672500004061,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "import_count": 213
+    },
+    {
+      "label": "pressure_c",
+      "outcomes": {
+        "passed": 30
+      },
+      "collected": 30,
+      "resource": {
+        "peak_sampled_bytes": 166510592,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.315308100020047,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "import_count": 213
+    },
+    {
+      "label": "pressure_d",
+      "outcomes": {
+        "passed": 3
+      },
+      "collected": 3,
+      "resource": {
+        "peak_sampled_bytes": 166227968,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.1368848999845795,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "import_count": 213
+    },
+    {
+      "label": "pressure_e",
+      "outcomes": {
+        "passed": 3
+      },
+      "collected": 3,
+      "resource": {
+        "peak_sampled_bytes": 183083008,
+        "limit_mib": 953,
+        "elapsed_seconds": 7.2096769999479875,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "import_count": 216
+    },
+    {
+      "label": "geometry",
+      "outcomes": {
+        "passed": 53
+      },
+      "collected": 53,
+      "resource": {
+        "peak_sampled_bytes": 179265536,
+        "limit_mib": 953,
+        "elapsed_seconds": 5.2980886999866925,
+        "status": "terminal",
+        "child_exit_codes": [
+          0
+        ]
+      },
+      "import_count": 190
+    }
+  ],
+  "disposition": "component implementation/source-tested; no public-driver/installed/engineering admission",
+  "review": "Read-only same-family scrutiny; no geometry defect found. Pressure epsilon-affinity, derived nonfinite, int64 absolute-value overflow and reversible array ownership findings corrected; exact represented-skin path checks added before driver admission.",
+  "current_pass_outcomes": 89,
+  "current_unique_checks": 87
+}

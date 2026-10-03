@@ -1315,3 +1315,23 @@ release and application admission remain false. Broader target deformation,
 friction/material/rotation and full C6 outcomes remain required.
 [Guide](GENERAL_CONTACT_C6_GUIDED_SHELL_PAIR_DEV.md),
 [evidence](d1_review_support/C6_GUIDED_SHELL_PAIR_SLICE_20261003.md).
+
+## Nonuniform shell-target event prerequisites — source-tested components
+
+New complete rational-Bernstein cubic S3/S3 and S3/originalQ4 gap/orientation
+bounds cover physical skin paths, with explicit subdivision/cancellation/resource
+non-success. A fixed-projection S3 pressure sidecar admits exact uniform-source
+normal translation and nonuniform target normal motion while retaining the existing
+general Jet2 contributor's full both-body work. Strict source plane/motion,
+reference coverage, mapped physical endpoint/rate and pressure agreement checks
+exclude the demonstrated epsilon-admission hidden quadratic gap. Nonfinite derived
+values, integer overflow and poisoned support fail explicitly.
+
+89 scoped current pass outcomes(87unique) include53 geometry,30 pressure/work,
+3 reference-plane delta and3 combined path/rounding checks; failed initial reporting
+field tests and supporting review findings remain retained. The combined path is
+prescribed component geometry, not equilibrated impact. Implemented/source-tested;
+driver admission, installed testing, independent acceptance, release and application
+admission remain false. General source deformation/rotation/sliding and full C6
+outcomes remain required.
+[Evidence](d1_review_support/C6_NONUNIFORM_S3_COMPONENTS_20261003.md).

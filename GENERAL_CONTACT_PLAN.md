@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.62. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.63. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -162,10 +162,20 @@ This is implemented/tested development, not acceptance or general deforming-targ
 admission. Old controls/schemas/accepted-shell identity remain unchanged.
 [Guide](docs/GENERAL_CONTACT_C6_GUIDED_SHELL_PAIR_DEV.md),
 [evidence](docs/d1_review_support/C6_GUIDED_SHELL_PAIR_SLICE_20261003.md).
-NEXT derive nonuniform paired-target geometry/work and conservative path ownership
-before admitting it to the shared driver. Reuse existing general shell contributors;
-do not extend affine guided-gap assumptions to arbitrary deformation. Select the
-shortest independently checkable slice with a physical both-body reference.
+The next components now establish complete cubic S3/S3 and S3/originalQ4 physical
+gap/normal bounds and an exact fixed-projection pressure-event sidecar for a
+nonuniform S3 target. Complete general Jet2 work remains authoritative. Independent
+review's hidden quadratic-gap counterexample ruled out epsilon subspace admission;
+exact represented motion and actual mapped skin-path checks now gate this component.
+89scoped pass outcomes(87unique) include full work/support, overflow/state poisoning,
+integer motion and hidden-crossing/normal tests. This is source-tested components,
+not new driver/installed/engineering admission.
+[Evidence](docs/d1_review_support/C6_NONUNIFORM_S3_COMPONENTS_20261003.md).
+NEXT connect this exact nonuniform-target profile to shared Newmark pressure events,
+physical path, transactions and restart under explicit selection. Preserve the
+projected law's separate regularization-storage reporting and all old defaults.
+Use one physically referenced equilibrated impact before broader source deformation;
+arbitrary motion cannot inherit the fixed-projection affine event assumptions.
 No open-ended mesh/dt campaign, resource increase or weakening of scientific gates.
 The earlier uncoupled example cannot supply contact-driven-plasticity claims.
 Its prior120-step route is approximately78s; no speed-up claim.
