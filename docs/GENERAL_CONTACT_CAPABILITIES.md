@@ -1570,3 +1570,15 @@ flags changed. Supporting source scrutiny closes identified order concerns;
 shared-main promotion, cross-version numerical qualification, contact model
 admission, independent engineering acceptance and release remain separate.
 [Evidence](d1_review_support/abc_annotation_bootstrap_20261003/results.md).
+
+## Static request identity — 3 October development
+
+Public factory/verifier bind actual package bytes and guarded model/contact/
+settings/loading/controls/continuation inputs. Immutable request metadata does
+not prove execution or admission. App96d6f86 captures mapping labels and saves
+identity in real force/path/restart/artifact workflows;19source owner checks plus
+7app outcomes, installed26pass20.564s/203046912B,314module/488package-file byte
+matches. Source/model acceptance, normal routing, full runtime qualification and
+release remain open. Current D1 impact review needs stricter trial-admission path
+comparison and original baseline evidence, not an automatic flag promotion.
+[Guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_REQUEST_IDENTITY_DEV.md).

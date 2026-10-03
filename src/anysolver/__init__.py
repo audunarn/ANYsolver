@@ -263,6 +263,8 @@ _GENERAL_CONTACT_EXPORTS = frozenset({
     "TransientContactResults", "TransientContactSettings",
     "solve_transient_contact", "validate_general_contact",
     "report_general_contact_capability",
+    "ContactRequestIdentity", "ContactRequestIdentityError",
+    "identify_general_contact_request", "verify_general_contact_request",
 })
 from .fracture import (
     DeletedElementRecord,
@@ -734,6 +736,10 @@ __all__ = [
     "solve_transient_contact",
     "validate_general_contact",
     "report_general_contact_capability",
+    "ContactRequestIdentity",
+    "ContactRequestIdentityError",
+    "identify_general_contact_request",
+    "verify_general_contact_request",
     "DeletedElementRecord",
     "ElementDeletionConfig",
     "FractureConfig",

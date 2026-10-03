@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.74. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.75. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -37,6 +37,22 @@ wrong-child-import defects retained. Shared main promotion and broader interpret
 qualification remain separate. [Evidence](docs/d1_review_support/abc_annotation_bootstrap_20261003/results.md).
 Preserve normal rejection until the admission boundary closes; use genuinely
 unblocked mechanics rows alongside the admission work.
+
+Current D8 request slice: owner-generated immutable identity binds actual package
+files, guarded model/contact/settings, effective static path/dead load/name,
+controls and integrity-checked checkpoint hash. ANYfem96d6f86 verifies request
+correspondence before/after actual solve and preserves detached analysis labels
+through artifacts. Source19plus7app outcomes and installed26pass20.564s/203046912B;
+314module/488package-file byte matches, JIT0/pools1,180s/953MiB. It is metadata,
+not acceptance or proof of execution; normal jobs/capability flags remain false.
+[Guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_REQUEST_IDENTITY_DEV.md).
+
+Current-source impact review identifies changed swept orientation admission and
+lifecycle scan cadence; old acceptance cannot be silently extended. Referenced
+historical force/displacement freeze/raw records are absent here; an authorized
+archive was requested. Preserve protected-root/consumed-authority restrictions.
+Pending that prerequisite, proceed with genuine physical-skin artifact/display
+and other remaining mechanics rows. No scientific target or full scope changes.
 
 ## 1. Current technical position
 

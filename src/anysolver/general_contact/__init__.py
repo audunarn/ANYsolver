@@ -15,6 +15,10 @@ _STATIC_EXPORTS = frozenset({
     "ContactPathControl", "ContactPathNodalForce", "ContactPathProgram",
     "solve_static_contact_path",
 })
+_REQUEST_EXPORTS = frozenset({
+    "ContactRequestIdentity", "ContactRequestIdentityError",
+    "identify_general_contact_request", "verify_general_contact_request",
+})
 _TRANSIENT_EXPORTS = frozenset({
     "ContactNodalLoadHistory", "ContactTransientSolverControls",
     "TransientContactResults", "TransientContactSettings",
@@ -29,6 +33,8 @@ def __getattr__(name: str):
         module = "capability"
     elif name in _STATIC_EXPORTS:
         module = "static_path"
+    elif name in _REQUEST_EXPORTS:
+        module = "request_identity"
     elif name in _TRANSIENT_EXPORTS:
         module = "transient"
     else:
@@ -56,6 +62,10 @@ __all__ = [
     "ContactPathNodalForce",
     "ContactPathProgram",
     "solve_static_contact_path",
+    "ContactRequestIdentity",
+    "ContactRequestIdentityError",
+    "identify_general_contact_request",
+    "verify_general_contact_request",
     "ContactNodalLoadHistory",
     "ContactTransientSolverControls",
     "TransientContactResults",
