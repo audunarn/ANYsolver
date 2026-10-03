@@ -42,10 +42,12 @@ from .e4_pl_s3_v2d_element import (
     FORMULATION_ID as S3_V2D_FORMULATION_ID,
 )
 from ._b2_physical_flexibility_linear import RepresentabilityError
+from ._b2_loaded_point_trace_dev import LoadedPointMember, checked_sparse_action
 from .elements import create_shell_element
 from .fe_core import FEModel
 from .linalg import MatrixClass, factorize_cached
 
+B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV = "B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV"
 
 class ExperimentalB2Q4PanelError(RuntimeError):
     """The experimental panel cannot be prepared or used."""
@@ -86,7 +88,8 @@ def _checked_affine_projection(rows, multi, singles, values: np.ndarray) -> np.n
 
 
 def _scaled_point_kkt(reduced_k: sparse.spmatrix,
-                      reduced_c: sparse.spmatrix) -> tuple[sparse.csc_matrix, np.ndarray]:
+                      reduced_c: sparse.spmatrix,
+                      multiplier_compliance: sparse.spmatrix | None = None) -> tuple[sparse.csc_matrix, np.ndarray]:
     """Representable congruence for the elastic point-constrained KKT.
 
     A zero-energy primal coordinate is valid when a constraint anchors it;
@@ -122,10 +125,18 @@ def _scaled_point_kkt(reduced_k: sparse.spmatrix,
                 "panel factorization scaling is not representable")
         scaled_rows = reduced_c @ sparse.diags(primal_scale)
         row_max = np.asarray(abs(scaled_rows).max(axis=1).toarray()).reshape(-1)
+        if multiplier_compliance is not None:
+            diagonal_h = multiplier_compliance.diagonal()
+            if (multiplier_compliance.shape != (reduced_c.shape[0],)*2 or
+                    not np.isfinite(multiplier_compliance.data).all() or
+                    np.any(diagonal_h < 0.)):
+                raise ExperimentalB2Q4PanelError("finite nonnegative point compliance required")
+            row_max = np.maximum(row_max, np.sqrt(diagonal_h))
         multiplier_scale = 1./row_max
         factor_scale = np.r_[primal_scale, multiplier_scale]
         kkt = sparse.bmat(
-            ((reduced_k, reduced_c.T), (reduced_c, None)), format="csc")
+            ((reduced_k, reduced_c.T), (reduced_c, None if multiplier_compliance is None
+                                      else -multiplier_compliance)), format="csc")
         scaling = sparse.diags(factor_scale, format="csc")
         scaled_kkt = (scaling @ kkt @ scaling).tocsc()
     kkt.sort_indices()
@@ -207,6 +218,13 @@ class ExperimentalB2Q4PanelCapabilities:
     operations: tuple[str, ...] = ("solve_linear", "solve_linear_many", "close")
     spectral_domain: str = "unavailable without explicit physical mass"
     body_load_domain: str = "unavailable without complete physical density/mass"
+    point_trace_policy: str | None = None
+
+
+@dataclass(frozen=True)
+class ExperimentalB2LoadedPointCapabilities(ExperimentalB2Q4PanelCapabilities):
+    point_trace_policy: str = B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV
+    spectral_domain: str = "unsupported: loaded point trace inertia unverified"
 
 
 @dataclass(frozen=True, eq=False)
@@ -461,6 +479,29 @@ class B2BodyLoadedFootprintSelectedCase(ExperimentalB2Q4FootprintSelectedCase):
     equilibrated_sections: tuple[B2LoadedMemberSections, ...] = ()
 
 
+@dataclass(frozen=True)
+class B2LoadedMemberPoses:
+    member_id: str
+    stations: tuple[float, ...]
+    poses_local: tuple[tuple[float, ...], ...]
+    point_trace_policy: str = field(default=B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV, init=False)
+    production_qualified: bool = field(default=False, init=False)
+
+
+@dataclass(frozen=True)
+class B2LoadedPointPanelResult(B2BodyLoadedPanelResult):
+    loaded_member_poses: tuple[B2LoadedMemberPoses, ...] = ()
+    loaded_strain_energy: float | None = None
+    point_trace_policy: str = field(default=B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV, init=False)
+
+
+@dataclass(frozen=True)
+class B2LoadedPointPanelSelectedCase(B2BodyLoadedPanelSelectedCase):
+    loaded_member_poses: tuple[B2LoadedMemberPoses, ...] = ()
+    loaded_strain_energy: float | None = None
+    point_trace_policy: str = field(default=B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV, init=False)
+
+
 def _unique_ids(items, name):
     ids = [getattr(item, name) for item in items]
     if any(not isinstance(value, str) or not value.strip() for value in ids):
@@ -612,7 +653,8 @@ class ExperimentalB2Q4PanelAnalysis:
                  points: Sequence[Q4B2Point], *,
                  transformation: sparse.spmatrix, prescribed_offset,
                  footprints: Sequence[B2NodalRigidFootprint] = (),
-                 reference_inertia_policy: str | None = None):
+                 reference_inertia_policy: str | None = None,
+                 point_trace_policy: str | None = None):
         shells = tuple(shells)
         supplied_members = tuple(members)
         points = tuple(points)
@@ -624,6 +666,12 @@ class ExperimentalB2Q4PanelAnalysis:
                 footprints):
             raise ValueError("explicit native-S3 reference inertia policy without footprints required")
         has_s3 = any(type(shell) is S3V2DPanelShell for shell in shells)
+        if point_trace_policy is not None and (
+                type(point_trace_policy) is not str or
+                point_trace_policy != B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV or
+                self._mixed_shells or has_s3 or footprints or modal_mass):
+            raise ValueError("explicit Q4-only fixed-end loaded point trace without footprints or modes required")
+        self._point_trace_policy = point_trace_policy
         if has_s3 and footprints:
             raise ValueError("S3 mixed-panel nodal footprints are unsupported")
         admitted_shells = ((Q4PanelShell, S3V2DPanelShell) if self._mixed_shells
@@ -817,6 +865,7 @@ class ExperimentalB2Q4PanelAnalysis:
         point_reference_frames = []
         point_laws = []
         section_point_actions = {}
+        loaded_point_entries = {}
         for point_index, point in enumerate(points):
             if (point.shell_id not in shell_lookup or
                     point.member_id not in member_lookup):
@@ -827,6 +876,11 @@ class ExperimentalB2Q4PanelAnalysis:
                 member.definition, vertices, station=point.station,
                 offset_local_m=point.offset_local_m)
             point_laws.append((point.point_id, law.law_id))
+            if point_trace_policy is not None:
+                port_constraint = (law.beam_constraint_differential @
+                    np.kron(np.eye(2), member.definition.local_frame_rows().T))
+                loaded_point_entries.setdefault(point.member_id, []).append(
+                    (point_index, float(point.station), tuple(point.offset_local_m), port_constraint))
             if 0. < point.station < 1.:
                 d = np.array(point.offset_local_m, dtype=float, copy=True)
                 shift = np.eye(6)
@@ -856,12 +910,28 @@ class ExperimentalB2Q4PanelAnalysis:
         C = sparse.coo_matrix(
             (constraint_values, (constraint_rows, constraint_cols)),
             shape=(6*(len(points)+len(footprint_incidence)), total)).tocsr()
+        loaded_members = {}
+        H = None
+        if point_trace_policy is not None:
+            h_rows, h_columns, h_values = [], [], []
+            for member_id, (member, _) in member_lookup.items():
+                compiled_load = LoadedPointMember(member, loaded_point_entries.get(member_id, ()),
+                                                  body_enabled=body_map is not None)
+                loaded_members[member_id] = compiled_load
+                slots = np.array([6*index+channel for index in compiled_load.point_indices
+                                  for channel in range(6)])
+                _scatter(h_rows, h_columns, h_values, slots, compiled_load.constraint_compliance)
+            H = sparse.coo_matrix((h_values, (h_rows, h_columns)), shape=(C.shape[0],)*2).tocsr()
+            # Stored analytical zeros carry no numerical information. Remove
+            # them before congruence so underflow checks compare nonzero patterns.
+            H.eliminate_zeros()
         try:
             T = transformation.tocsr(copy=True)
             u0 = np.array(prescribed_offset, dtype=float, copy=True)
         except (AttributeError, TypeError, ValueError) as exc:
             raise ValueError("finite sparse panel affine plan required") from exc
-        if (T.shape[0] != total or T.shape[1] <= C.shape[0] or
+        minimum_columns = C.shape[0] if point_trace_policy is None else 0
+        if (T.shape[0] != total or T.shape[1] <= minimum_columns or
                 u0.shape != (total,) or not np.isfinite(T.data).all() or
                 not np.isfinite(u0).all()):
             raise ValueError("finite sparse panel affine plan required")
@@ -876,13 +946,19 @@ class ExperimentalB2Q4PanelAnalysis:
             if not _supports_all_panel_rigid_fields(T, positions, beam_positions):
                 raise ValueError("mixed reference modes require supports detecting all six rigid fields; free-free unsupported")
         reduced_c = (C @ T).tocsc()
-        _require_independent_supported_point_rows(reduced_c)
+        if point_trace_policy is None:
+            _require_independent_supported_point_rows(reduced_c)
+        elif not np.isfinite(reduced_c.data).all():
+            raise ValueError("finite supported loaded-point rows required")
+        # Loaded fixed-end compliance can anchor a multiplier row even when
+        # its free-coordinate trace vanishes. Independence is therefore a
+        # property of the complete [K, C.T; C, -H] factorization on this route.
         reduced_k = (T.T @ K @ T).tocsc()
         # Congruence scaling changes factorization coordinates only. The
         # physical displacement and multiplier are both restored after solve.
         # Without this, a valid slender B2 section can leave point gaps above
         # the physical acceptance tolerance despite a sound local operator.
-        scaled_kkt, factor_scale = _scaled_point_kkt(reduced_k, reduced_c)
+        scaled_kkt, factor_scale = _scaled_point_kkt(reduced_k, reduced_c, H)
         handle = factorize_cached(
             scaled_kkt, MatrixClass.SYMMETRIC_INDEFINITE)
         if handle.status != "ok":
@@ -902,6 +978,9 @@ class ExperimentalB2Q4PanelAnalysis:
         self._footprint_incidence = footprint_incidence
         self._members = tuple(member_lookup.items())
         self._section_point_actions = {key: tuple(value) for key, value in section_point_actions.items()}
+        self._loaded_members = loaded_members
+        self._H = H
+        self._abs_H = None if H is None else abs(H)
         self._K = K
         if body_map is not None and not np.isfinite(body_map).all():
             raise RepresentabilityError("reference body-load map is not representable")
@@ -968,6 +1047,22 @@ class ExperimentalB2Q4PanelAnalysis:
             identity.update(repr((key, tuple((i, s) for i, s, _ in actions))).encode("utf-8"))
             for _, _, pullback in actions:
                 identity.update(np.asarray(pullback, dtype="<f8").tobytes())
+        if point_trace_policy is not None:
+            identity.update(point_trace_policy.encode("ascii"))
+            for matrix in (H,):
+                identity.update(np.asarray(matrix.indptr, dtype="<i8").tobytes())
+                identity.update(np.asarray(matrix.indices, dtype="<i8").tobytes())
+                identity.update(np.asarray(matrix.data, dtype="<f8").tobytes())
+            for member_id, compiled_load in sorted(loaded_members.items()):
+                identity.update(repr((member_id, compiled_load.point_indices,
+                    compiled_load.stations, compiled_load.offsets,
+                    compiled_load.quadrature_stations)).encode("utf-8"))
+                for value in (compiled_load.maps.uniform_pose_map, compiled_load.maps.point_pose_map,
+                        compiled_load.maps.point_compliance, compiled_load.body_wrench_map,
+                        compiled_load.body_constraint_map, compiled_load.quadrature_weights,
+                        *compiled_load.port_constraints):
+                    identity.update(repr(value.shape).encode("ascii"))
+                    identity.update(np.asarray(value, dtype="<f8").tobytes())
         self._body_model_identity = identity.hexdigest()
         self._footprint_rigid_supported = (not footprints or
             (self._coordinate_modal_supports() and
@@ -1046,6 +1141,13 @@ class ExperimentalB2Q4PanelAnalysis:
         body_operations = (("body_acceleration_load",) if self._body_map is not None else ())
         body_domain = ("experimental reference-linear uniform global acceleration; typed loads give separate equilibrated section fields including interior point actions; raw vectors retain nodal constitutive recovery; loaded interior pose and finite gravity unsupported"
                        if self._body_map is not None else "unavailable without complete physical density/mass")
+        if self._point_trace_policy is not None:
+            return ExperimentalB2LoadedPointCapabilities(
+                attachment="explicit fixed-end loaded finite-vertex point trace",
+                operations=("solve_linear", "solve_linear_many", "close") + body_operations,
+                body_load_domain=("typed reference body acceleration and multiplier-dependent fixed-end bubbles; "
+                    "raw arrays are nodal loads; finite gravity unsupported" if self._body_map is not None
+                    else body_domain))
         if self.footprints:
             admitted = (self._M is not None and self._coordinate_modal_supports()
                         and not np.any(self._u0 != 0.) and self._footprint_rigid_supported)
@@ -1173,6 +1275,8 @@ class ExperimentalB2Q4PanelAnalysis:
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        if self._point_trace_policy is not None:
+            raise ValueError("loaded point trace reference modes unsupported: shape inertia unverified")
         if self._has_s3 and self._reference_inertia_policy is None:
             raise ValueError("native S3 V2D physical mass and reference modes are deferred")
         if type(request) is not B2ReferenceModesRequest:
@@ -1301,6 +1405,8 @@ class ExperimentalB2Q4PanelAnalysis:
                 solve_count=handle.solve_count if handle else 0, failure_reason=str(exc))
 
     def _panel_result(self, *args, **kwargs):
+        if self._point_trace_policy is not None:
+            return B2LoadedPointPanelResult(*args, **kwargs)
         if "body_model_identity" in kwargs:
             result_type = B2BodyLoadedFootprintResult if self.footprints else B2BodyLoadedPanelResult
             if self.footprints:
@@ -1327,9 +1433,20 @@ class ExperimentalB2Q4PanelAnalysis:
             raise ValueError("finite panel load vector required") from exc
         if applied.shape != self._u0.shape or not np.isfinite(applied).all():
             raise ValueError("finite panel load vector required")
+        acceleration = load.acceleration_m_s2 if isinstance(load, B2ReferenceBodyLoad) else None
+        body_gap = body_gap_scale = None
         try:
             rhs = np.r_[self._project(applied-self._ku0), -self._cu0]
-        except _NumericalFailure as exc:
+            if self._point_trace_policy is not None:
+                body_gap = np.zeros(len(self._cu0))
+                body_gap_scale = np.zeros(len(self._cu0))
+                for compiled_load in self._loaded_members.values():
+                    values, scales = compiled_load.body_constraint(acceleration)
+                    slots = [6*index+channel for index in compiled_load.point_indices for channel in range(6)]
+                    body_gap[slots] = values
+                    body_gap_scale[slots] = scales
+                rhs[-len(self._cu0):] -= body_gap
+        except (_NumericalFailure, RepresentabilityError) as exc:
             return self._panel_result(
                 "failed", factorization_count=self._handle.factorization_count,
                 solve_count=self._handle.solve_count, failure_reason=str(exc))
@@ -1356,6 +1473,10 @@ class ExperimentalB2Q4PanelAnalysis:
             if not np.isfinite(u).all():
                 raise _NumericalFailure("finite panel solution required")
             gap = np.asarray(self._C @ u).reshape(-1)
+            compliance_gap_scale = None
+            if self._point_trace_policy is not None:
+                compliance_gap, compliance_gap_scale = checked_sparse_action(self._H, lam)
+                gap = gap+body_gap-compliance_gap
             force = np.asarray(self._K @ u).reshape(-1)
             constraint_force = np.asarray(self._C.T @ lam).reshape(-1)
             reaction = force+constraint_force-applied
@@ -1364,6 +1485,8 @@ class ExperimentalB2Q4PanelAnalysis:
             # work unit. A 1 N floor would mask a failed micro-/nano-load;
             # a single mixed force/moment norm would depend on chosen units.
             gap_scale = np.asarray(self._abs_C @ np.abs(u)).reshape(-1)
+            if self._point_trace_policy is not None:
+                gap_scale += body_gap_scale+compliance_gap_scale
             physical_force_scale = np.asarray(
                 self._abs_K @ np.abs(u)+self._abs_Ct @ np.abs(lam)+
                 np.abs(applied)).reshape(-1)
@@ -1417,12 +1540,21 @@ class ExperimentalB2Q4PanelAnalysis:
                     np.any(np.abs(gap) > gap_tolerance) or
                     np.any(np.abs(projected) > equilibrium_tolerance)):
                 raise _NumericalFailure("panel point gap or equilibrium failed")
-        except _NumericalFailure as exc:
+        except (_NumericalFailure, RepresentabilityError) as exc:
             return self._panel_result(
                 "failed", factorization_count=self._handle.factorization_count,
                 solve_count=self._handle.solve_count, failure_reason=str(exc))
         recovered = []
         equilibrated = []
+        loaded_poses = []
+        loaded_states = {}
+        if self._point_trace_policy is not None:
+            try:
+                loaded_states = {member_id: compiled_load.bubble_state(acceleration, lam)
+                                 for member_id, compiled_load in self._loaded_members.items()}
+            except RepresentabilityError as exc:
+                return self._panel_result("failed", factorization_count=self._handle.factorization_count,
+                    solve_count=self._handle.solve_count, failure_reason=str(exc))
         for member_id, (member, slots) in self._members:
             if recovery is not None and member_id not in recovery:
                 continue
@@ -1443,13 +1575,21 @@ class ExperimentalB2Q4PanelAnalysis:
                     failure_reason="finite physical B2 recovery required")
             recovered.append((member_id, tuple(
                 tuple(map(float, row)) for row in result.resultants)))
-            if isinstance(load, B2ReferenceBodyLoad):
+            if isinstance(load, B2ReferenceBodyLoad) or self._point_trace_policy is not None:
                 try:
-                    with np.errstate(over="ignore", invalid="ignore"):
-                        uniform = (member.definition.mass.matrix_at_reference_axis()[:, :3]@
-                                   member.definition.local_frame_rows()@np.asarray(load.acceleration_m_s2))
-                        actions = tuple((station, pullback@lam[6*i:6*i+6]) for i, station, pullback in
-                                        self._section_point_actions.get(member_id, ()))
+                    if self._point_trace_policy is not None:
+                        compiled_load = self._loaded_members[member_id]
+                        uniform, point_wrenches, _ = loaded_states[member_id]
+                        actions = compiled_load.section_actions(point_wrenches)
+                        poses = compiled_load.recover_pose(local, result.stations, uniform, point_wrenches)
+                        loaded_poses.append(B2LoadedMemberPoses(member_id, tuple(map(float, result.stations)),
+                            tuple(tuple(map(float, row)) for row in poses)))
+                    else:
+                        with np.errstate(over="ignore", invalid="ignore"):
+                            uniform = (member.definition.mass.matrix_at_reference_axis()[:, :3]@
+                                       member.definition.local_frame_rows()@np.asarray(load.acceleration_m_s2))
+                            actions = tuple((station, pullback@lam[6*i:6*i+6]) for i, station, pullback in
+                                            self._section_point_actions.get(member_id, ()))
                     if (not np.isfinite(uniform).all() or
                             any(not np.isfinite(wrench).all() for _, wrench in actions)):
                         raise RepresentabilityError("physical section actions are not representable")
@@ -1474,6 +1614,16 @@ class ExperimentalB2Q4PanelAnalysis:
             extra.update(body_model_identity=load.model_identity,
                          body_acceleration_m_s2=load.acceleration_m_s2,
                          equilibrated_sections=tuple(equilibrated))
+        if self._point_trace_policy is not None:
+            try:
+                loaded_energy = fsum((energy, *(state[2] for state in loaded_states.values())))
+            except OverflowError:
+                loaded_energy = float("inf")
+            if not isfinite(loaded_energy) or loaded_energy < 0.:
+                return self._panel_result("failed", factorization_count=self._handle.factorization_count,
+                    solve_count=self._handle.solve_count, failure_reason="loaded strain energy is not representable")
+            extra.update(equilibrated_sections=tuple(equilibrated), loaded_member_poses=tuple(loaded_poses),
+                         loaded_strain_energy=loaded_energy)
         if chosen_footprints:
             try:
                 extra["footprint_wrenches"] = selected_wrenches(
@@ -1609,6 +1759,11 @@ class ExperimentalB2Q4PanelAnalysis:
                 extra.update(body_model_identity=result.body_model_identity,
                              body_acceleration_m_s2=result.body_acceleration_m_s2,
                              equilibrated_sections=result.equilibrated_sections)
+            if self._point_trace_policy is not None:
+                case_type = B2LoadedPointPanelSelectedCase
+                extra.update(equilibrated_sections=result.equilibrated_sections,
+                             loaded_member_poses=result.loaded_member_poses,
+                             loaded_strain_energy=result.loaded_strain_energy)
             completed.append(case_type(
                 case_id,
                 tuple(result.displacements[index] for index in chosen),
@@ -1631,6 +1786,11 @@ class ExperimentalB2Q4PanelAnalysis:
     def close(self) -> None:
         self._closed = True
         self._handle = None
+        if self._point_trace_policy is not None:
+            for compiled_load in self._loaded_members.values():
+                compiled_load._recovery_maps.clear()
+            self._loaded_members.clear()
+            self._H = self._abs_H = self._resolution_kkt = None
         self._resolution_kkt = None
 
 

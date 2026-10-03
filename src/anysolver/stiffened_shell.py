@@ -49,6 +49,8 @@ from ._stiffened_shell_b2_q4_panel_experimental import (
     B2ReferenceModesRequest, B2ReferenceModesResult,
     B2ReferenceBodyLoad,
     B2LoadedMemberSections, B2BodyLoadedPanelResult, B2BodyLoadedFootprintResult,
+    B2LoadedMemberPoses, B2LoadedPointPanelResult, B2LoadedPointPanelSelectedCase,
+    ExperimentalB2LoadedPointCapabilities, B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV,
     B2BodyLoadedPanelSelectedCase, B2BodyLoadedFootprintSelectedCase,
     B2FootprintReferenceModesResult, B2ModalConstraintRow,
     ExperimentalB2Q4FootprintResult, ExperimentalB2Q4FootprintSelectedCase,
@@ -123,6 +125,7 @@ class B2Q4PanelDefinition:
     transformation: object
     prescribed_offset: object
     footprints: tuple[B2NodalRigidFootprint, ...] = ()
+    point_trace_policy: str | None = None
 
 
 @dataclass(frozen=True)
@@ -193,7 +196,8 @@ def create_analysis(*, definition, resources=None):
             definition.members, definition.points,
             transformation=definition.transformation,
             prescribed_offset=definition.prescribed_offset,
-            footprints=definition.footprints)
+            footprints=definition.footprints,
+            point_trace_policy=definition.point_trace_policy)
     if type(definition) is B2MixedPanelDefinition:
         if definition.profile != B2_E4_PL_FAST_LINEAR_V1 or resources is not None:
             raise ValueError("explicit experimental B2 mixed-panel definition required")
@@ -240,6 +244,8 @@ __all__ = [
     "MassMetadata", "B2ReferenceModesRequest", "B2ReferenceModesResult",
     "B2ReferenceBodyLoad",
     "B2LoadedMemberSections", "B2BodyLoadedPanelResult", "B2BodyLoadedFootprintResult",
+    "B2LoadedMemberPoses", "B2LoadedPointPanelResult", "B2LoadedPointPanelSelectedCase",
+    "ExperimentalB2LoadedPointCapabilities", "B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV",
     "B2BodyLoadedPanelSelectedCase", "B2BodyLoadedFootprintSelectedCase",
     "B2FootprintReferenceModesResult", "B2ModalConstraintRow",
     "B2NodalRigidFootprint", "B2NodalRigidFootprintSelection",
