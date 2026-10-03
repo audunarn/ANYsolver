@@ -1387,6 +1387,7 @@ class ExperimentalGEAnalysis:
         if raw.startswith(INCREMENT_CONTROL_MAGIC):
             adaptive, raw = decode_control(raw, self._identity)
         chart = None
+        stable_q4 = False
         if self._has_physical_fibre and raw.startswith(S3_BINARY_CHECKPOINT_MAGIC):
             raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
         if raw.startswith(CHART_CHECKPOINT_MAGIC):
@@ -1404,6 +1405,7 @@ class ExperimentalGEAnalysis:
                 if ("_chart" in kind) != (chart is not None):
                     raise ValueError("numeric shell chart snapshot requires matching outer policy")
                 kind = kind.replace("_chart", "")
+                kind = kind.removesuffix("_stable_q4")
                 stable_kind = kind == "finite_native_material_stable"
                 body_stable = bool(getattr(self, "_external_context", None) is not None and
                     self._definition.shell.s3_elements and self._definition.shell.j2_curve is None)
@@ -1477,6 +1479,8 @@ class ExperimentalGEAnalysis:
             kind, generation, arrays = _decode_binary_checkpoint(
                 raw, self._identity, expected_shapes)
             kind = kind.replace("_chart", "")
+            stable_q4 = kind.endswith("_stable_q4")
+            kind = kind.removesuffix("_stable_q4")
             schema = (CHECKPOINT if kind == "linear" else
                       _BINARY_SCHEMAS[kind] if kind in ("finite_bl5", "finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS else
                       STABLE_NATIVE_SCHEMA if kind == "finite_native_material_stable" else
@@ -1572,10 +1576,10 @@ class ExperimentalGEAnalysis:
             if adaptive is not None:
                 validate_control(adaptive, value["accepted_factors"])
             driver = FinitePointDriver(self)
-            result = (driver.restore(value, adaptive_state=adaptive) if chart is None else
+            result = (driver.restore(value, adaptive_state=adaptive, stable_q4=stable_q4) if chart is None else
                       driver.restore(value, rotation_anchors=chart[1],
                                      pose_witness=chart[2], accepted_generation=chart[0],
-                                     adaptive_state=adaptive))
+                                     adaptive_state=adaptive, stable_q4=stable_q4))
             self._finite_driver = driver
             return result
         if adaptive is not None:

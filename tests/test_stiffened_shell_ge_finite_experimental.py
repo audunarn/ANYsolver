@@ -807,7 +807,14 @@ def test_generalized_beam_unload_reload_preserves_history_across_restart():
     assert reopened.beam_station_accumulated == direct.beam_station_accumulated
 
 
-def test_elastic_unload_uses_new_checkpoint_without_changing_legacy_format():
+def test_elastic_unload_uses_new_checkpoint_without_changing_legacy_format(monkeypatch):
+    # Deliberately start the historical arithmetic. Fresh flat-Q4 point solves
+    # now use a separate checkpoint-bound stable numerical policy.
+    original_init = finite_experimental.FinitePointDriver.__init__
+    def legacy_init(self, owner):
+        original_init(self, owner)
+        self._stable_q4 = False
+    monkeypatch.setattr(finite_experimental.FinitePointDriver, "__init__", legacy_init)
     analysis = ExperimentalGEAnalysis(_panel())
     assert "nonpositive finite load factors" in analysis.capabilities["excluded"]
     assert "nonmonotone loads" not in analysis.capabilities["excluded"]

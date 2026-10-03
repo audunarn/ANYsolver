@@ -419,6 +419,13 @@ class FinitePointDriver:
 
     def __init__(self, owner):
         self.owner = owner
+        self._stable_q4 = bool(owner._definition.points and owner._definition.shell.q4_elements and
+            not owner._definition.shell.s3_elements and
+            owner._definition.shell_reference_policy == "flat" and
+            owner._definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_POLICY and
+            owner._definition.shell.j2_curve is None and
+            not owner._has_physical_fibre and not owner._definition.lines and
+            not owner._definition.footprints)
         # Numerical policy is checkpoint-bound. Legacy restored histories keep
         # their original arithmetic rather than changing endpoint validation.
         self._stable_s3 = bool((owner._has_physical_fibre or owner._footprint_stable_s3) and
@@ -610,7 +617,8 @@ class FinitePointDriver:
                 force, tangent, candidate = corotational_element_response(
                     owner._shell_model, eid, element, total, True,
                     committed_state=origin, num_layers=3,
-                    tangent_mode="consistent", centered_shell_reference=True)
+                    tangent_mode="consistent", centered_shell_reference=True,
+                    stable_shell_rotation=self._stable_q4)
                 if chart_map is not None:
                     tangent = tangent@chart_map
             scatter(slots, force, tangent)
@@ -1201,6 +1209,10 @@ class FinitePointDriver:
                     _encode_anchors=False, _encode_control=False, _encode_programme=False, _encode_external=False))
         generation = len(self._accepted_factors) if anchored else self.owner._generation
         def kind(name):
+            if self._stable_q4:
+                if name not in ("finite", "finite_material"):
+                    raise RuntimeError("stable Q4 checkpoint requires point mechanics")
+                name += "_stable_q4"
             return name.replace("finite", "finite_chart", 1) if anchored else name
         arrays = (("q", state.q), ("frames", state.frames),
                   ("cells", state.cells), ("resultants", state.resultants),
@@ -1298,7 +1310,7 @@ class FinitePointDriver:
                 generation,
                 arrays + (("beam_plastic", plastic),
                           ("beam_accumulated", accumulated)))
-        if anchored or sum(value.size for _name, value in arrays) > MAX_JSON_CHECKPOINT_VALUES:
+        if self._stable_q4 or anchored or sum(value.size for _name, value in arrays) > MAX_JSON_CHECKPOINT_VALUES:
             return _encode_binary_checkpoint(
                 kind("finite"), self._checkpoint_identity(), generation, arrays)
         payload = {
@@ -1322,7 +1334,7 @@ class FinitePointDriver:
         return raw
 
     def restore(self, value, *, rotation_anchors=None, pose_witness=None,
-                accepted_generation=None, adaptive_state=None):
+                accepted_generation=None, adaptive_state=None, stable_q4=False):
         """Restore an accepted endpoint after mechanical consistency checks.
 
         V3 checks material admissibility and re-evaluation from the saved
@@ -1331,6 +1343,13 @@ class FinitePointDriver:
         an independent replay of the accepted history.
         """
         owner = self.owner
+        if self._accepted is not None:
+            raise ValueError("cannot replace a live finite driver numerical policy")
+        if type(stable_q4) is not bool or (stable_q4 and not self._stable_q4):
+            raise ValueError("stable Q4 checkpoint requires its admitted point model")
+        # Old checkpoints keep their original arithmetic during validation and
+        # continuation. This driver is private until restoration fully succeeds.
+        self._stable_q4 = stable_q4
         load_key = "pattern" if self._programme is None else "applied_dead_load"
         base_keys = {"schema", "model", "generation", "accepted_factors",
                      "q", "frames", "cells", "resultants", "multipliers",

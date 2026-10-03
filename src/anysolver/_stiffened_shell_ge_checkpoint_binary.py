@@ -30,6 +30,10 @@ MAX_HEADER_BYTES = 8192
 MAX_CHECKPOINT_BYTES = 128 * 1024 * 1024
 MAX_S3_STATE_BYTES = 128 * 1024
 SCHEMAS = {
+    "finite_stable_q4": "B3_GE_E4_PL_ELASTIC_POINT_STABLE_Q4_V1_DEV",
+    "finite_chart_stable_q4": "B3_GE_E4_PL_ANCHORED_ELASTIC_POINT_STABLE_Q4_V1_DEV",
+    "finite_material_stable_q4": "B3_GE_E4_PL_GENERALIZED_POINT_STABLE_Q4_V1_DEV",
+    "finite_chart_material_stable_q4": "B3_GE_E4_PL_ANCHORED_GENERALIZED_POINT_STABLE_Q4_V1_DEV",
     "finite_curved_points_material": "B3_GE_E4_PL_CURVED_POINT_GENERALIZED_PREDECESSOR_V2_DEV",
     "finite_chart_curved_points_material": "B3_GE_E4_PL_ANCHORED_CURVED_POINT_GENERALIZED_PREDECESSOR_V2_DEV",
     "finite_curved_points_coupled": "B3_GE_E4_PL_CURVED_POINT_COUPLED_J2_PREDECESSOR_V2_DEV",

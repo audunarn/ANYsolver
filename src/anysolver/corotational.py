@@ -239,6 +239,8 @@ def _corotational_deformation_state(
     reference: _CorotationalReference,
     element: Any,
     u_element: np.ndarray,
+    *,
+    stable_shell_rotation: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return deformational DOFs, rigid rotation, and current coordinates.
 
@@ -263,7 +265,8 @@ def _corotational_deformation_state(
         # translational pull-back from displacement differences instead.
         translation_offset = translations - translations.mean(axis=0)
         reference_arm = reference.coordinates - reference.centroid
-        rotation_difference = R_rig.T - np.eye(3)
+        rotation_difference = (_stable_shell_rotation_difference(R_rig)
+                               if stable_shell_rotation else R_rig.T - np.eye(3))
     else:
         centroid_def = deformed.mean(axis=0)
     for node in range(num_nodes):
@@ -280,6 +283,25 @@ def _corotational_deformation_state(
         R_node = rotation_matrix_from_vector(rotations[node])
         u_d[node, 3:] = rotation_vector_from_matrix(R_rig.T @ R_node)
     return u_d.reshape(-1), R_rig, deformed
+
+
+def _stable_shell_rotation_difference(rotation: np.ndarray) -> np.ndarray:
+    """Form R.T-I without subtracting nearly equal diagonal entries.
+
+    For a proper rotation A=(R-R.T)/2=sin(theta)*hat(axis), so
+    R-I=A+A@A/(1+cos(theta)). The skew entries retain small rotations and
+    their quadratic strain contribution. Away from identity use the historical
+    subtraction, avoiding the near-pi denominator. Callers already validate the
+    shell frame; this is not a projection/admission rule for arbitrary matrices.
+    """
+    cosine = .5 * (float(np.trace(rotation)) - 1.)
+    if (not np.isfinite(rotation).all() or cosine <= .5 or
+            not np.allclose(rotation.T @ rotation, np.eye(3), rtol=0.,
+                            atol=64. * np.finfo(float).eps) or
+            float(np.linalg.det(rotation)) <= 0.):
+        return rotation.T - np.eye(3)
+    skew = .5 * (rotation - rotation.T)
+    return (skew + (skew @ skew) / (1. + cosine)).T
 
 
 def _dense_block_rotation(rotation: np.ndarray, num_nodes: int) -> np.ndarray:
@@ -302,6 +324,7 @@ def corotational_element_response(
     num_layers: int = 5,
     tangent_mode: str = "rotated",
     centered_shell_reference: bool = False,
+    stable_shell_rotation: bool = False,
 ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[Any]]:
     """Corotational internal force, tangent and trial state for one element.
 
@@ -314,6 +337,10 @@ def corotational_element_response(
 
     Returns ``(None, None, None)`` for element types outside the corotational
     scope so the caller can fall back to the element's own response.
+
+    ``stable_shell_rotation`` is used by the experimental mixed point owner's
+    checkpoint-bound numerical policy. Ordinary and legacy callers retain the
+    historical arithmetic unless they explicitly request it.
     """
     if bool(getattr(element, "formulation_native_total_lagrangian", False)):
         raise ValueError(
@@ -326,6 +353,8 @@ def corotational_element_response(
 
     if type(centered_shell_reference) is not bool:
         raise ValueError("centered shell reference flag must be boolean")
+    if type(stable_shell_rotation) is not bool:
+        raise ValueError("stable shell rotation flag must be boolean")
     reference = _corotational_cache(
         model, centered_shell=centered_shell_reference).get(int(element_id))
     if reference is None or reference.category is None:
@@ -337,6 +366,7 @@ def corotational_element_response(
         reference,
         element,
         u_element,
+        stable_shell_rotation=stable_shell_rotation,
     )
 
     material = model.get_material(element.material_name)
