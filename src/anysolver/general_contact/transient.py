@@ -187,8 +187,14 @@ class ContactTransientSolverControls:
     maximum_plane_event_stage_evaluations: int = 128
     save_constraint_reactions_dev: bool = False
     allow_multiple_shell_planes_dev: bool = False
+    batch_plane_event_fronts_dev: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.batch_plane_event_fronts_dev) is not bool:
+            raise ValueError('batched plane event front selection must be boolean')
+        if self.batch_plane_event_fronts_dev and (not self.q4_plane_event_subdivision_dev
+                or not self.allow_multiple_shell_planes_dev):
+            raise ValueError('batched plane event fronts require the explicit multiple-Q4 plane event profile')
         if type(self.allow_multiple_shell_planes_dev) is not bool:
             raise ValueError('multiple-shell-plane selection must be boolean')
         if self.allow_multiple_shell_planes_dev and (not self.q4_plane_event_subdivision_dev
@@ -420,6 +426,9 @@ def _restart_analysis_contract(transient, controls, manager, profile,
         contract["controls"]["s3_one_sided_rates_dev"] = True
     if controls.save_constraint_reactions_dev:
         contract['controls']['save_constraint_reactions_dev'] = True
+    if controls.batch_plane_event_fronts_dev:
+        contract['controls']['batch_plane_event_fronts_dev'] = True
+        contract['controls']['plane_event_front_revision'] = 'SHARED_MINIMUM_ORIENTED_GAP_V1'
     if controls.allow_multiple_shell_planes_dev:
         contract['controls']['allow_multiple_shell_planes_dev'] = True
     if controls.allow_classical_beam_dev:
@@ -1943,6 +1952,7 @@ def solve_transient_contact(
                                         minimum_dt=controls.minimum_dt,
                                         time_tolerance=controls.plane_event_time_tolerance_s,
                                         gap_tolerance=tolerance,maximum_evaluations=remaining_queries,
+                                        batch_front=controls.batch_plane_event_fronts_dev,
                                         check_cancel=lambda context:check_cancel(context))
                                 except EventNeedsCutback as exc:
                                     event_evaluations+=exc.endpoint_evaluations

@@ -116,6 +116,55 @@ def test_actual_scalar_free_mass_closure_uses_only_positive_endpoint_durations()
     assert len(set(evaluated)) == len(evaluated)
 
 
+def test_batched_front_shares_evaluations_and_retains_earliest_linear_crossing():
+    roots=np.linspace(.3,.8,12)
+    calls=[]
+    def callback(h):
+        calls.append(h)
+        return roots-h
+    with pytest.raises(EventNeedsCutback,match='budget'):
+        localize(callback,active=(False,)*12,required=tuple(range(12)),maximum_evaluations=64)
+    calls.clear()
+    event=localize(callback,active=(False,)*12,required=tuple(range(12)),
+                   maximum_evaluations=64,batch_front=True)
+    assert abs(event.duration-roots[0])<=1.e-10
+    assert event.support_indices==(0,)
+    assert event.endpoint_evaluations==len(calls)<40
+    assert len(set(calls))==len(calls)
+
+
+def test_batched_front_keeps_ties_orientation_and_hidden_crossing_rejection():
+    root=.3
+    event=localize(lambda h:[root-h,h-root,.7-h],active=(False,True,False),
+                   required=(0,1,2),batch_front=True)
+    assert abs(event.duration-root)<=1.e-10
+    assert event.support_indices==(0,1)
+    with pytest.raises(EventNeedsCutback,match='no sign bracket'):
+        localize(lambda h:[(h-.2)*(h-.8),.5-h],active=(False,False),
+                 required=(0,1),batch_front=True)
+    with pytest.raises(EventNeedsCutback,match='omit'):
+        localize(lambda h:[.2-h,.6-h],active=(False,False),required=(1,),batch_front=True)
+
+
+def test_batched_front_proposal_still_requires_complete_path_check():
+    def polynomial(h):return -(h-.2)*(h-.4)*(h-.8)
+    def derivative(h):return -((h-.4)*(h-.8)+(h-.2)*(h-.8)+(h-.2)*(h-.4))
+    event=localize(lambda h:[polynomial(h),.75-h],active=(False,False),
+                   required=(0,1),batch_front=True)
+    bounds=branch_path_admissible([polynomial(0.),.75],
+        [polynomial(event.duration),.75-event.duration],
+        [derivative(0.),-1.],[derivative(event.duration),-1.],event.duration,
+        active=[False,False],gap_tolerance=1.e-10)
+    # An endpoint-family front alone may bracket a later root after reentry.
+    if event.duration>.4:assert not bounds.admissible
+    else:assert abs(event.duration-.2)<=1.e-10
+
+
+def test_batched_front_selection_is_exact_boolean():
+    with pytest.raises(ValueError,match='controls'):
+        localize(lambda h:[.3-h],batch_front=1)
+
+
 def test_independent_active_mass_spring_newmark_release():
     # m=2, k=8, g0=-.2, v0=1: a0=.8. Average acceleration
     # gives g(h)=(-.2+h+.2*h*h)/(1+h*h). Its positive root is exact.

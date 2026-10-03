@@ -1253,3 +1253,32 @@ finite rotations, descriptor/plastic multiple pairs, friction/free bodies and ge
 geometry remain outside this particular evidence and required in the programme.
 [Guide](GENERAL_CONTACT_C6_MULTIPLE_SHELL_PLANES_DEV.md),
 [evidence](d1_review_support/C6_MULTIPLE_SHELL_PLANES_SLICE_20261003.md).
+
+## Deforming Q4 / opposing planes and shared event front — development
+
+Within the explicit elastic multiple-Q4/fixed-plane Newmark profile, a four-strip
+affine-shear specimen now verifies actual structural deformation and both named
+physical-skin reactions. Independent local mass/shear/membrane force/tangent and
+pressure-hat/corner geometry match. Whole impact verifies the actual accepted
+discrete grid; contacts are sequential under its asymmetric initial velocity.
+This adds evidence to the development profile, not arbitrary deforming admission.
+
+`batch_plane_event_fronts_dev=True` requires that profile and uses a shared minimum
+oriented pressure-gap endpoint proposal. Existing bracket/path/gap/cancellation and
+resource gates remain. Default per-row path is unchanged. True selection/revision
+is restart-bound; no automatic failed-increment switch. The nonlinear endpoint
+family's hidden reentry is not certified by bisection; full represented path checks
+remain necessary. Historical stage-budget and extra simultaneity failures remain.
+
+59scoped outcomes pass: two local,50helper(46old/4new),fivecontrols,onewhole,
+oneactive split restart/changed-algorithm rejection. Independent body force/moment
+errors2.56e-10N/4.70e-11Nm, energy defect6.06e-7relative; physical lower/upper
+path minima−.50841/−2.12722um within5um budget. Whole membrane energy is tiny;
+local quartic checks do not establish nonlinear membrane impact accuracy.
+Source/isolated installed wheelSHAa34c45632767800cc83877ef705dc65ee433732b7e164bb219c96f9d9e9c21b2
+matches205imported hashes/all fields,51.00/50.74s single runs/no speed claim.
+Implemented/source/installed-tested; independently accepted/released/application
+admitted remain false. Temporal/spatial accuracy, deformable-target impact,
+finite rotations/descriptor/plastic multiple pairs/friction/free bodies stay open.
+[Guide](GENERAL_CONTACT_C6_DEFORMING_SHELL_PLANES_DEV.md),
+[evidence](d1_review_support/C6_DEFORMING_SHELL_PLANES_SLICE_20261003.md).

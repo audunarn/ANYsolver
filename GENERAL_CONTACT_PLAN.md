@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.60. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.61. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -136,13 +136,25 @@ active restart, ramp-load work/restart and installed example pass. All205 import
 hashes/numerical fields match; energy defect8.86e-9, no speed or engineering claim.
 The callback and non-simultaneous-fixture failures remain evidence. Old single-pair
 defaults and descriptor/native restrictions remain intact.
-NEXT close nonuniform/deforming Q4 structural response under opposing physical
-skin contacts. Derive the affine-shear/membrane modal work independently from the
-admitted formulation contract; verify local mass/work before a bounded impact.
-Choose pressure resolution from the independent weighted-gap/physical-corner
-discriminator before tightening the dimensional gap budget. Then extend paired
-deformable-body impact through the shared driver. No open-ended mesh/dt campaign,
-resource increase or weakening of qualification gates.
+The next D5 slice now verifies actual affine Q4 shear/membrane work and physical
+mass locally, then both opposing-skin wall reactions in a deforming elastic impact.
+Pressure resolution was chosen from the independent weighted-gap/corner preflight.
+Initial20us/halved10us runs exhausted the unchanged stage budget; explicit batched
+pressure-front localization now completes at10us without cap/tolerance changes.
+Default per-row localization remains; the new selection/revision is restart-bound.
+The extra simultaneous-contact assertion failed and is retained: this asymmetric
+fixture verifies sequential contacts; prior simultaneous evidence stays independent.
+59scoped outcomes pass, including active restart/algorithm-change rejection.
+Source/installed205hashes/fields match; independent body force/moment/work/path
+agreement and energy defect6.06e-7 resolve this discrete development slice, not
+continuous impact accuracy or engineering acceptance. No twofold speed claim.
+[Guide](docs/GENERAL_CONTACT_C6_DEFORMING_SHELL_PLANES_DEV.md),
+[evidence](docs/d1_review_support/C6_DEFORMING_SHELL_PLANES_SLICE_20261003.md).
+NEXT implement bounded paired deformable-body impact through the shared driver,
+reusing verified static shell-pair work. Fix exact formulation/geometry admission,
+both-body mass/work, represented path and restart contracts before expanding;
+first finite-target recoil/reference case then nonuniform/deformable targets.
+No open-ended mesh/dt campaign, resource increase or weakening of scientific gates.
 The earlier uncoupled example cannot supply contact-driven-plasticity claims.
 Its prior120-step route is approximately78s; no speed-up claim.
 Measure material-packet preparation/validation cost before optimizing it; preserve

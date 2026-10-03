@@ -2,60 +2,61 @@
 
 Full C0–C9 ACTIVE/incomplete. Worktree
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001. Parent71e838cf; Git HEAD identifies
-the owned checkpoint. Goal2026-09-30.4 / plan2026-10-03.60 govern. No other-user-chat
+branch codex/contact-main-reconcile-20261001. Parent13ff3156; Git HEAD identifies
+owned checkpoint. Goal2026-09-30.4 / plan2026-10-03.61 govern. No other-user-chat
 coordination, protected original-worktree access, merge, push/publication, release,
 historical-default change or consumed-authority renewal. Owned local checkpoint
-commits authorized. Named D1-interior and bounded D2 independently accepted;
-installed accepted-shell identity unchanged. All broader programme rows remain.
+commits authorized. Named D1-interior/bounded D2 independently accepted;
+installed accepted-shell identity unchanged. Remaining full programme still required.
 
-History: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART83.md
-links Part82/81 and preserved material, temporal and native failures. Current
-multiple shell-plane source hashes/raw52records:
-docs/d1_review_support/contact_c6_multiple_shell_planes_20261003/{source.json,raw.zip}.
-Summary C6_MULTIPLE_SHELL_PLANES_SLICE_20261003.md in that parent folder; guide
-docs/GENERAL_CONTACT_C6_MULTIPLE_SHELL_PLANES_DEV.md.
+History docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART84.md
+links83/82 and all important failures. Current source/commands/raw56records:
+docs/d1_review_support/contact_c6_deforming_shell_planes_20261003/{source.json,raw.zip}.
+Summary C6_DEFORMING_SHELL_PLANES_SLICE_20261003.md in that parent folder;
+guide docs/GENERAL_CONTACT_C6_DEFORMING_SHELL_PLANES_DEV.md.
 
-NEW explicit multiple-Q4/fixed-plane contributor sums full structural work with
-pair-owned fine pressure, laws, supports and dimensional gaps. Aggregate resource
-limits, duplicate-feature rejection and positive supports remain explicit. Shared
-Newmark/event transaction retains query/stage budgets; complete physical corner
-Hermite bounds apply per pair. Opt-in allow_multiple_shell_planes_dev requires
-q4_plane_event_subdivision_dev; elastic guided exact Q4 only. V10 binds stable
-pair/node features, controls, phase and load history. Old profiles stay unchanged.
+Prior13ff3156 implements simultaneous multiple-Q4/fixed-plane impact, genuine
+coupled physical mass/MPC reference, per-pair complete-Hermite gaps/shared event
+budgets and feature-bound V10 restart.24manager/5driver/2compatibility outcomes,
+source/installed205hashes/fields match. Historical profiles/defaults unchanged.
+NEW four-strip deforming Q4 specimen w=a+b*x exercises admitted MITC shear and
+von Karman membrane work locally; local Mdiag(.05,.05/12),
+U=801.282051282*b²+686.813186813*b⁴ matches full force/tangent. Opposing top/bottom
+physical skins,10um gaps,KN1e9N/m³,5um gapbudget. One-Q4 activation would already
+penetrate20um; four strips2um preflight. Actual modes adot.002m/s,bdot.05/s,
+dt10us/end1.8ms. Whole membrane energy tiny; local nonlinear work is not its
+impact accuracy. Sequential wall contacts are explicit; prior simultaneous proof stays.
 
-24 manager outcomes pass by23unchanged plus1repaired fixture rerun. Five new
-dynamic outcomes and two affected legacy outcomes pass by source-impact reuse.
-Independent two-mode physical mass/Newmark branch oracle matches simultaneous
-supports, reaction work, active split restart, load work and interior-path bounds.
-Source/isolated installed example agrees in205imported hashes/all numerical fields;
-wheel fc4f6ac0a0c6dbf3ede96b00e39ca33fed18562496f541ab348cf6797d402c73.
-82steps,three events,zero cuts,50queries/185stages; max energy defect8.86e-9 relative.
-This is discrete development evidence, not temporal/spatial or impact acceptance.
-Third constrained patch contributes real inertia; its face stays open. MPCs do
-not establish permanent attachment. Gap budgets1.5/0.9mm are fixture settings.
+Initial20us and halved10us whole runs both exhaust128stage event budget near
+1.373ms, retained as failures. Explicit batch_plane_event_fronts_dev shares vector
+endpoint evaluations through minimum oriented required gaps. Every old required
+bracket/phase/omission/both-tolerance gate stays; caller reequilibrates/checks whole
+represented path and each physical gap. No hidden/reentry family certificate.
+False default old per-row route stays; True requires multiple-Q4 event profile,
+binds algorithm revision in restart. No cap/tolerance growth or automatic switching.
+The candidate completed equations but failed extra simultaneity assertion; retained.
+Prospective fixture now tests both sequential wall reactions, unchanged mechanics.
 
-Retain initial S3 test construction failure, callback-arity source failure and
-second-gap.015m non-simultaneous fixture failure. Corrected gap.008m produces
-overlap at unchanged mechanics/tolerances/budgets. No failed result is regraded.
-Source/read scrutiny found no concrete coupled work/state defect; same-family
-review does not supply independent engineering acceptance. All owned runs/workers
-are terminal. Exact runtime settings JIT off/Numba and BLAS1,180s/953MiB.
+59scoped pass outcomes:2local,50helper(46old/4new),5smallcontrols,1whole,1active
+split restart/front-change rejection. No full-suite replay. Read scrutiny independently
+derived equations and found no source defect; same-family input is not engineering
+acceptance.190savedstates,12events,0cuts,228queries/890stages. Body force/moment
+errors2.56e-10N/4.70e-11Nm, maxenergydefect6.06e-7. Physical minima−.50841/
+−2.12722um within5um; supplied-float represented path only. Source/installed205
+hashes/all fields match; wheel a34c45632767800cc83877ef705dc65ee433732b7e164bb219c96f9d9e9c21b2.
+51.00/50.74s single examples, no speed claim. Exact JIT off/Numba+BLAS1,
+180s/953MiB; all owned processes/reviewer terminal. No engineering/release claim.
 
-NEXT D5 nonuniform/deforming elastic Q4 between opposing physical skins. First
-derive admitted affine shear/membrane structural work and actual consistent mass
-from the formulation contract; independently verify before whole-route testing.
-Choose pressure mesh from weighted-gap versus physical-corner resolution, not
-an expensive failed run or relaxed budget. Then paired deformable-body impact
-through shared transactions under its own profile. No new timestep campaign
-without a discriminating question. Remaining full-programme forecast unsupported.
+NEXT bounded paired deformable-body impact through shared Newmark transactions,
+reusing existing static shell-pair contributor. Inspect exact admission/state/path
+contracts first: finite-target recoil/independent mass and both-body work reference,
+then nonuniform target/remaining geometry. Preserve pressure and physical-gap gates;
+no new mesh/dt campaign without named uncertainty, caps or native guards unchanged.
+Full-programme delivery forecast remains unsupported.
 
-Native variable-endpoint friction closed boundary integral remains NONPASS:
-gap−1.33564e-13m,223queries/448paths/21support,10.364s. Missing grazing derivative
-bound alpha_q=−G_q/G_alpha plus mixed elastic work; not formulation failure.
-No saved local/fullpatch/owner/split retry, history reset, zero-response substitution,
-cap/tolerance growth or native acceptance. Full failure history remains linked.
-
-Budget120activehours without reset; clock get_goal.timeUsedSeconds+3120s was
-302865s (~84.13h) at this resume. Parallel workers share elapsed budget. At120h
-save checkpoint/request decision; no silent extension. Current goal ACTIVE.
+Native grazing friction remains NONPASS at gap−1.33564e-13m,223queries/448paths/
+21support,10.364s. Missing bound alpha_q=−G_q/G_alpha and mixed elastic work,
+not formulation failure. No saved local/fullpatch/owner/split retry, history reset,
+zero response, cap/tolerance growth or native acceptance; full failures linked.
+Budget120activehours without reset; get_goal.timeUsedSeconds+3120 was304385s
+(~84.55h) before final checkpoint. At120h save/request decision; goal ACTIVE.

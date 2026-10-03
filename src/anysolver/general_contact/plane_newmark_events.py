@@ -169,7 +169,7 @@ def branch_path_admissible(start_gaps, end_gaps, start_gap_rates,
 
 def localize_endpoint_event(endpoint_gaps, duration, active, required_indices,
                             *, minimum_dt, time_tolerance, gap_tolerance,
-                            maximum_evaluations, check_cancel=None):
+                            maximum_evaluations, check_cancel=None, batch_front=False):
     """Propose the earliest of explicitly required, bracketed branch crossings.
 
     The callback returns the actual equilibrated endpoint's normalized pressure
@@ -177,6 +177,12 @@ def localize_endpoint_event(endpoint_gaps, duration, active, required_indices,
     commit a candidate. A finite endpoint bracket is no certificate against
     hidden earlier crossings of a nonlinear duration family. In particular a
     required grazing/hidden excursion with no bracket requests a cutback.
+
+    The opt-in batch front brackets min(oriented required gaps) with shared
+    vector evaluations. For single-crossing endpoint families it proposes the
+    earliest crossing, independent of row count. Neither mode certifies hidden
+    excursions or reentry in an arbitrary nonlinear endpoint family. The caller
+    must still reequilibrate and check the complete represented step path.
     """
     duration = _positive(duration, 'duration')
     minimum_dt = _positive(minimum_dt, 'minimum_dt')
@@ -184,7 +190,7 @@ def localize_endpoint_event(endpoint_gaps, duration, active, required_indices,
     gap_tolerance = _positive(gap_tolerance, 'gap_tolerance')
     if (minimum_dt >= duration or time_tolerance >= duration
             or type(maximum_evaluations) is not int or maximum_evaluations < 2
-            or not callable(endpoint_gaps)
+            or not callable(endpoint_gaps) or type(batch_front) is not bool
             or (check_cancel is not None and not callable(check_cancel))):
         raise ValueError('invalid plane Newmark localization controls')
     active = np.asarray(active)
@@ -243,9 +249,13 @@ def localize_endpoint_event(endpoint_gaps, duration, active, required_indices,
     if not crossings.issubset(indices):
         fail('required_indices omit a bracketed pressure-mode crossing')
     proposals = []
-    for index in indices:
+    # A vector-valued equilibrium already supplies every row. A common bracket
+    # avoids repeating the same nonlinear solve for distinct crossing fronts.
+    searches = (None,) if batch_front else indices
+    for index in searches:
         left, right = minimum_dt, duration
-        lower, upper = start_sign[index], end_sign[index]
+        lower = float(np.min(start_sign[list(indices)])) if batch_front else start_sign[index]
+        upper = float(np.min(end_sign[list(indices)])) if batch_front else end_sign[index]
         while True:
             proposed = left if abs(lower) < abs(upper) else right
             if right-left <= time_tolerance and min(abs(lower), abs(upper)) <= gap_tolerance:
@@ -254,7 +264,8 @@ def localize_endpoint_event(endpoint_gaps, duration, active, required_indices,
             midpoint = left+.5*(right-left)
             if not left < midpoint < right:
                 fail('plane Newmark event cannot resolve time and gap tolerances')
-            value = float(orientation[index]*evaluate(midpoint)[index])
+            values = orientation*evaluate(midpoint)
+            value = float(np.min(values[list(indices)])) if batch_front else float(values[index])
             if value > 0.:
                 left, lower = midpoint, value
             else:
