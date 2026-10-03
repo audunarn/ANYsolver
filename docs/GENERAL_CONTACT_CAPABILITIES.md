@@ -1,5 +1,32 @@
 # General-contact capability ledger
 
+## Mapped ANYfem static contact development — 3 October
+
+ANYfem isolated checkpoint `847f8908361b6779faeb8611715b1e3f8bb1ae55`
+connects persisted named-face selections and exact numerical settings to the
+public static-path solver and its result artifact. Real meshed Q4/Q4 press,
+opening and recontact pass an independent 18 N uniform penalty reaction and
+opposite-body force. An active serialized checkpoint resumes in a fresh built
+owner. Cancellation propagates `SolveCancelled`; no payload is returned.
+Invalid/stale/unsupported submissions reject before the owner solve.
+
+Source cycle/preflight seven outcomes pass; fresh-owner/affected-adapter checks
+have 48 passes and one retained cancellation-expectation failure, corrected by
+one focused pass. The 46 existing mapping/storage/job-rejection checks pass.
+Final isolated installed execution: 11 passes, 138.829 s, 215433216 B peak within
+180 s / 953 MiB; effective JIT off, Numba/BLAS one thread, both installed roots
+verified and all 296 loaded module hashes matching current source. A preceding
+11-test-pass import-admission failure remains failed. Fixture and harness failures
+are retained. Supporting same-family source scrutiny corrected documentation;
+it is not engineering acceptance. Solver numerical source `04535859` is unchanged.
+
+Implemented/source-tested/installed-tested: **named development route**.
+Independently accepted/released/application-admitted: **no**. The 100 µm fixture
+gap budget does not qualify the programme's 10 µm starting budget for a 10 mm
+shell. Production admission/routing, mixed-shell and force-driven application
+workflows, visualization/export and full C9 remain open. No speed claim.
+[Guide and 66-record evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_DEVELOPMENT_SOLVE.md).
+
 ## Guided Q4 / free sphere impact — 3 October
 
 Explicit `PLANAR_GUIDED_Q4_FREE_ISOTROPIC_SPHERE_NEWMARK_DEV_V1` is implemented,
