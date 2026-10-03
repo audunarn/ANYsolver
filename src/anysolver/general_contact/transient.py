@@ -81,8 +81,8 @@ _GUIDED_SHELL_PAIR_EVENT_PROFILE = 'GUIDED_Q4_S3_SHELL_PAIR_NEWMARK_EVENT_DEV_V1
 _GUIDED_SHELL_PAIR_RESTART_SCHEMA = 'ANYSOLVER_GUIDED_SHELL_PAIR_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V11'
 _FIXED_PROJECTION_S3_EVENT_PROFILE = 'FIXED_PROJECTION_S3_TARGET_NEWMARK_EVENT_DEV_V1'
 _FIXED_PROJECTION_S3_RESTART_SCHEMA = 'ANYSOLVER_FIXED_PROJECTION_S3_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V12'
-_NORMAL_S3_SKIN_PROFILE = 'NORMAL_NODAL_S3_SKIN_HERMITE_NEWMARK_EVENT_DEV_V2'
-_NORMAL_S3_SKIN_RESTART_SCHEMA = 'ANYSOLVER_NORMAL_S3_SKIN_HERMITE_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V14'
+_NORMAL_S3_SKIN_PROFILE = 'NORMAL_NODAL_S3_MATCHED_OVERLAP_NEWMARK_EVENT_DEV_V3'
+_NORMAL_S3_SKIN_RESTART_SCHEMA = 'ANYSOLVER_NORMAL_S3_MATCHED_OVERLAP_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V15'
 _S3_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_DEV_V0"
 _S3_HISTORY_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DESCRIPTOR_HISTORY_DEV_V1"
 _S3_DIRECTIONAL_PROFILE = "PLANAR_S3_V2D_FIXED_PLANE_NEWMARK_DIRECTIONAL_RATES_DEV_V1"
@@ -476,7 +476,7 @@ def _restart_analysis_contract(transient, controls, manager, profile,
         contract['controls']['physical_sweep_maximum_depth'] = manager.settings.maximum_swept_subdivisions
     if controls.allow_normal_s3_skin_hermite_dev:
         contract['controls']['allow_normal_s3_skin_hermite_dev'] = True
-        contract['controls']['normal_s3_skin_revision'] = 'REFERENCE_P1_JOINT_PHASE_ENDPOINT_LOCALIZATION_V2'
+        contract['controls']['normal_s3_skin_revision'] = 'REFERENCE_P1_JOINT_PHASE_MATCHED_OVERLAP_ENDPOINT_LOCALIZATION_V3'
         contract['controls']['physical_sweep_maximum_panels'] = manager.settings.maximum_gap_triangles
         contract['controls']['physical_sweep_maximum_depth'] = manager.settings.maximum_swept_subdivisions
         contract['controls']['hidden_physical_event_tolerance_m'] = controls.plane_event_gap_tolerance_m
@@ -578,7 +578,7 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
         if fixed_projection_s3_target:
             payload['schema'],payload['version']=_FIXED_PROJECTION_S3_RESTART_SCHEMA,12
         if normal_s3_skin_hermite:
-            payload['schema'],payload['version']=_NORMAL_S3_SKIN_RESTART_SCHEMA,14
+            payload['schema'],payload['version']=_NORMAL_S3_SKIN_RESTART_SCHEMA,15
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
@@ -654,7 +654,7 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
         if fixed_projection_s3_target:
             expected_version,expected_schema=12,_FIXED_PROJECTION_S3_RESTART_SCHEMA
         if normal_s3_skin_hermite:
-            expected_version,expected_schema=14,_NORMAL_S3_SKIN_RESTART_SCHEMA
+            expected_version,expected_schema=15,_NORMAL_S3_SKIN_RESTART_SCHEMA
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -1497,10 +1497,13 @@ def solve_transient_contact(
         packet=prepare_q4_material_checkpoint(model,full_displacement,candidate_states,num_layers=3)
         owned={record['element_id']:record['state'] for record in packet['element_states']}
         return packet,owned
-    # The manager's fresh-start guard checks the original configured pose.
-    # The resumed pose is validated separately against its accepted gap budget.
+    # Legacy managers check the configured fresh pose. The normal-S3 driver
+    # checks that pose separately with its matched-overlap gap certificate;
+    # its static manager retains the original Cartesian guard at reference.
+    # Resumed physical poses are checked against the accepted gap budget.
     with contact_scope(model, definition, settings,
-                       initial_displacement=full_initial[:size]) as manager:
+                       initial_displacement=(np.zeros(size) if controls.allow_normal_s3_skin_hermite_dev
+                                             else full_initial[:size])) as manager:
         if controls.allow_classical_beam_dev:
             from .beam_plane import _BeamPlaneManager
             from .multiple_beam_rigid import MultipleBeamRigidManager
@@ -1687,6 +1690,14 @@ def solve_transient_contact(
                      or controls.allow_q4_plastic_dev),
         )
         contact0 = manager.evaluate(full0, tangent=False)[2]
+        if normal_skin_path is not None:
+            contact0,failure=normal_skin_path.overlap_endpoint(manager,full0,contact0,
+                cancel=lambda:check_cancel('normal S3 initial matched gap'))
+            if failure is not None:raise ValueError(failure)
+            if restart_checkpoint is None:
+                scale=max(1.,*(float(np.max(np.abs(value))) for value in manager._positions(full0)))
+                if contact0.minimum_gap<-256*np.finfo(float).eps*scale:
+                    raise ValueError(f'normal S3 initial matched penetration unresolved: {contact0.minimum_gap:.6g} m')
         normal_committed_gaps=(np.asarray(contact0.normalized_weighted_gap_m,dtype=float).copy()
             if normal_skin_path is not None else None)
         if not contact0.gap_tolerance_met:
@@ -1937,6 +1948,12 @@ def solve_transient_contact(
                                 float(np.linalg.norm(internal)))
                     if float(np.linalg.norm(residual)) <= controls.equilibrium_tolerance * scale:
                         contact_result = manager.evaluate(full, tangent=False)[2]
+                        if normal_skin_path is not None:
+                            contact_result,failure=normal_skin_path.overlap_endpoint(manager,full,contact_result,
+                                cancel=lambda:check_cancel('normal S3 candidate matched gap'))
+                            if failure is not None:
+                                last_event_failure=failure
+                                break
                         candidate_velocity = velocity_predictor + gamma * step * candidate_acceleration
                         if s3_descriptor:
                             rate_touch_targets = event_targets
@@ -1996,7 +2013,7 @@ def solve_transient_contact(
                                     previous_full,full,previous_velocity,full_velocity,step,
                                     lambda:check_cancel('guided shell pair physical path'))
                             elif normal_skin_path is not None:
-                                swept_gap, failure = normal_skin_path.sweep(manager,
+                                swept_gap, failure = normal_skin_path.overlap_sweep(manager,
                                     previous_full,full,previous_velocity,full_velocity,step,
                                     cancel=lambda:check_cancel('normal S3 skin physical path'),
                                     event_gap_tolerance_m=controls.plane_event_gap_tolerance_m)

@@ -18,20 +18,32 @@ CONTROLS = ContactTransientSolverControls(allow_normal_s3_skin_hermite_dev=True,
     save_constraint_reactions_dev=True,equilibrium_tolerance=1.e-10)
 
 
-def build_model():
-    model,definition,_ = _fixture['build_model'](target_mode='xy')
+def build_model(*,target_xy=None,source_columns=1,normal_stiffness=KN):
+    model,definition,_ = _fixture['build_model'](target_mode='xy',target_xy=target_xy,
+        source_columns=source_columns,normal_stiffness=normal_stiffness)
     model.constraint_equations.clear()
-    modes = np.zeros((42,7))
-    for i,node in enumerate(range(1,8)):
+    count=2*(source_columns+1)+3
+    modes = np.zeros((6*count,count))
+    for i,node in enumerate(range(1,count+1)):
         modes[model.mesh.dof_manager.get_node_dofs(node)[2],i] = 1.
     return model,definition,modes
 
 
 def solve(*,dt=2.5e-5,end=.003,checkpoint=None,emit=False,
-          controls=CONTROLS,cancellation_token=None,settings=None):
-    model,definition,modes = build_model()
+          controls=CONTROLS,cancellation_token=None,settings=None,target_xy=None,
+          initial_normal_coordinates=None,source_columns=1,normal_stiffness=KN):
+    model,definition,modes = build_model(target_xy=target_xy,source_columns=source_columns,
+        normal_stiffness=normal_stiffness)
+    count=modes.shape[1]
+    initial=None
+    if initial_normal_coordinates is not None:
+        values=np.asarray(initial_normal_coordinates)
+        if values.shape!=(count,) or values.dtype.kind not in 'fiu' or not np.all(np.isfinite(values)):
+            raise ValueError('initial_normal_coordinates must name every finite real normal coordinate')
+        initial=modes@values
     result = solve_transient_contact(model,definition,
-        TransientConfig(dt,end,initial_velocity=modes@np.r_[np.full(4,-.1),np.zeros(3)]),
+        TransientConfig(dt,end,initial_displacement=initial,
+                       initial_velocity=modes@np.r_[np.full(count-3,-.1),np.zeros(3)]),
         contact_settings=_fixture['SETTINGS'] if settings is None else settings,
         solver_controls=controls,restart_checkpoint=checkpoint,
         emit_restart_checkpoint=emit,cancellation_token=cancellation_token)

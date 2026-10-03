@@ -32,39 +32,52 @@ CONTROLS = ContactTransientSolverControls(allow_fixed_projection_s3_target_dev=T
     save_constraint_reactions_dev=True, equilibrium_tolerance=1.e-10)
 
 
-def build_model(*, target_mode='x'):
+def build_model(*, target_mode='x',target_xy=None,source_columns=1,normal_stiffness=KN):
     if target_mode not in ('x','xy'):
         raise ValueError('target_mode must be x or xy')
+    if isinstance(source_columns,(bool,np.bool_)) or not isinstance(source_columns,(int,np.integer)) or source_columns<1:
+        raise ValueError('source_columns must be a positive integer')
+    columns=int(source_columns)
     model = FEModel('nonuniform-S3-target-impact-dev')
     model.add_material('source', 1.e7, .3, density=1000.)
     model.add_material('target', 1.e7, .3, density=100.)
-    coordinates = ((0,0,.0202), (1,0,.0202), (1,1,.0202), (0,1,.0202),
-                   (-2,-2,0), (5,-2,0), (-2,5,0))
+    if target_xy is None:target_xy=((-2,-2),(5,-2),(-2,5))
+    points=np.asarray(target_xy)
+    if points.shape!=(3,2) or points.dtype.kind not in 'fiu' or not np.all(np.isfinite(points)):
+        raise ValueError('target_xy must be three finite real planar points')
+    source_xy=tuple((i/columns,0.) for i in range(columns+1))+tuple(
+        (i/columns,1.) for i in range(columns,-1,-1))
+    source_count=len(source_xy)
+    coordinates=tuple((x,y,.0202) for x,y in source_xy)+tuple((point[0],point[1],0.) for point in points)
     for node, point in enumerate(coordinates, 1):
         model.add_node(node, *point)
-    for eid, nodes in ((1,[1,2,3]), (2,[1,3,4]), (3,[5,6,7])):
+    faces=[]
+    for i in range(columns):
+        bl,br,tr,tl=i+1,i+2,2*columns-i+1,2*columns-i+2
+        faces.extend(([bl,br,tr],[bl,tr,tl]))
+    for eid,nodes in enumerate((*faces,list(range(source_count+1,source_count+4))),1):
         model.add_element(eid, create_shell_element(eid, nodes,
-            'source' if eid < 3 else 'target', thickness=.02,
+            'source' if eid <= 2*columns else 'target', thickness=.02,
             formulation='e4-pl-s3-v2d', reference_normal=(0.,0.,1.)))
-    model.add_boundary_condition(BoundaryCondition('normal-guides', list(range(1,8)),
+    model.add_boundary_condition(BoundaryCondition('normal-guides', list(range(1,source_count+4)),
         dict(ux=0., uy=0., rx=0., ry=0., rz=0.)))
-    normal_dofs = [model.mesh.dof_manager.get_node_dofs(node)[2] for node in range(1,8)]
-    for dof in normal_dofs[1:4]:
+    normal_dofs = [model.mesh.dof_manager.get_node_dofs(node)[2] for node in range(1,source_count+4)]
+    for dof in normal_dofs[1:source_count]:
         model.add_constraint_equation(terms=((dof,1.), (normal_dofs[0],-1.)))
     if target_mode == 'x':
-        model.add_constraint_equation(terms=((normal_dofs[6],1.), (normal_dofs[4],-1.)))
-    modes = np.zeros((42,3 if target_mode == 'x' else 4))
+        model.add_constraint_equation(terms=((normal_dofs[source_count+2],1.), (normal_dofs[source_count],-1.)))
+    modes = np.zeros((6*(source_count+3),3 if target_mode == 'x' else 4))
     for node, point in enumerate(coordinates, 1):
         dof = normal_dofs[node-1]
-        if node <= 4:
+        if node <= source_count:
             modes[dof,0] = 1.
         else:
             modes[dof,1:] = ([1., point[0]-1/3] if target_mode == 'x'
                              else [1., point[0]-1/3, point[1]-1/3])
     definition = ContactDefinition(
-        (ContactSurface('source', (1,2), side='bottom'),
-         ContactSurface('target', (3,), side='top')), (),
-        (ContactInteraction('pair', 'source', 'target', KN, 2.e-5,
+        (ContactSurface('source', tuple(range(1,2*columns+1)), side='bottom'),
+         ContactSurface('target', (2*columns+1,), side='top')), (),
+        (ContactInteraction('pair', 'source', 'target', normal_stiffness, 2.e-5,
                             normal_law='projected_penalty'),))
     return model, definition, modes
 

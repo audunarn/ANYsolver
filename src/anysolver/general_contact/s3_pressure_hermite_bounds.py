@@ -154,30 +154,9 @@ def _admissible(opens,closed,phase):
                for i,active in enumerate(phase))
 
 
-def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
-        a0,a1,b0,b1,av0,av1,bv0,bv1,dt,*,active,gap_tolerance_m,
-        maximum_time_panels=128,maximum_spatial_cells=1024,maximum_depth=14,cancel=None):
-    """Certify one pressure phase throughout all represented overlap.
-
-    active names every original pressure node; unsupported modes are retained.
-    Positive support is never removed. Success proves W+tau*S>=0 for an open
-    mode or W-tau*S<=0 for a closed mode. It does not by itself localize a change
-    of phase: the caller must reequilibrate any proposed shorter endpoint.
-    """
-    maximum_time_panels=_limit(maximum_time_panels,'maximum_time_panels',1)
-    maximum_spatial_cells=_limit(maximum_spatial_cells,'maximum_spatial_cells',1)
-    maximum_depth=_limit(maximum_depth,'maximum_depth',0)
-    for value,name,positive in ((dt,'dt',True),(gap_tolerance_m,'gap_tolerance_m',False)):
-        raw=np.asarray(value)
-        if raw.shape!=() or raw.dtype.kind not in 'fiu' or not np.isfinite(raw):
-            raise ValueError(name+' must be finite and real')
-        if float(value)<0 or (positive and float(value)==0):
-            raise ValueError(name+' has an invalid sign')
-    duration,tolerance=Fraction(float(dt)),Fraction(float(gap_tolerance_m))
-    phase=np.asarray(active)
-    if phase.ndim!=1 or not phase.size or phase.dtype.kind!='b':
-        raise ValueError('active must name every source pressure node with booleans')
-    count=len(phase)
+def _prepare_overlap(reference_source,reference_target,source_faces,
+        a0,a1,b0,b1,av0,av1,bv0,bv1,duration,count):
+    """Original-face Cramer/normal polynomials shared by phase and strong bounds."""
     data=tuple(_coordinates(value,name,n) for value,name,n in (
         (reference_source,'reference_source',count),(reference_target,'reference_target',3),
         (a0,'source start',count),(a1,'source end',count),(b0,'target start',3),(b1,'target end',3),
@@ -212,6 +191,35 @@ def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
         prepared.append(_Face(ids,area,squared,(_dot(A,Aref),target_ref,D,L,*H,*R0,*R1,*R2)))
     if represented!=set(range(count)):
         raise ValueError('every pressure node requires reference face support')
+    return tuple(prepared)
+
+
+def s3_pressure_hermite_bounds(reference_source,reference_target,source_faces,
+        a0,a1,b0,b1,av0,av1,bv0,bv1,dt,*,active,gap_tolerance_m,
+        maximum_time_panels=128,maximum_spatial_cells=1024,maximum_depth=14,cancel=None):
+    """Certify one pressure phase throughout all represented overlap.
+
+    active names every original pressure node; unsupported modes are retained.
+    Positive support is never removed. Success proves W+tau*S>=0 for an open
+    mode or W-tau*S<=0 for a closed mode. It does not by itself localize a change
+    of phase: the caller must reequilibrate any proposed shorter endpoint.
+    """
+    maximum_time_panels=_limit(maximum_time_panels,'maximum_time_panels',1)
+    maximum_spatial_cells=_limit(maximum_spatial_cells,'maximum_spatial_cells',1)
+    maximum_depth=_limit(maximum_depth,'maximum_depth',0)
+    for value,name,positive in ((dt,'dt',True),(gap_tolerance_m,'gap_tolerance_m',False)):
+        raw=np.asarray(value)
+        if raw.shape!=() or raw.dtype.kind not in 'fiu' or not np.isfinite(raw):
+            raise ValueError(name+' must be finite and real')
+        if float(value)<0 or (positive and float(value)==0):
+            raise ValueError(name+' has an invalid sign')
+    duration,tolerance=Fraction(float(dt)),Fraction(float(gap_tolerance_m))
+    phase=np.asarray(active)
+    if phase.ndim!=1 or not phase.size or phase.dtype.kind!='b':
+        raise ValueError('active must name every source pressure node with booleans')
+    count=len(phase)
+    prepared=_prepare_overlap(reference_source,reference_target,source_faces,
+        a0,a1,b0,b1,av0,av1,bv0,bv1,duration,count)
     visited_time=visited_space=0
     minima=[inf]*count;maxima=[-inf]*count
     slow=[inf]*count;shigh=[-inf]*count

@@ -273,12 +273,12 @@ def test_normal_profile_requires_explicit_exclusive_controls(change):
         replace(CONTROLS,**change)
 
 
-def test_normal_v14_active_restart_binds_method_features_and_physical_budgets():
+def test_normal_v15_active_restart_binds_method_features_and_physical_budgets():
     _,whole,_ = deforming['solve']()
     index = next(i for i,row in enumerate(whole.contact) if row.active_pressure_dofs)
     _,prefix,_ = deforming['solve'](end=float(whole.times[index]),emit=True)
     checkpoint = prefix.restart_checkpoint
-    assert checkpoint['version'] == 14
+    assert checkpoint['version'] == 15
     assert checkpoint['state']['plane_pressure_features'] == [['pair',node] for node in (1,2,3,4)]
     _,resumed,_ = deforming['solve'](checkpoint=checkpoint)
     for name,tolerance in (('displacements',1.e-10),('velocities',1.e-6),('accelerations',1.e-2)):
@@ -308,33 +308,38 @@ def test_normal_v14_active_restart_binds_method_features_and_physical_budgets():
         if key!='checkpoint_sha256'})
     with pytest.raises(ValueError,match='version'):
         deforming['solve'](checkpoint=legacy)
+    legacy['schema']='ANYSOLVER_NORMAL_S3_SKIN_HERMITE_EVENT_TRANSIENT_CONTACT_DEV_CHECKPOINT_V14'
+    legacy['version']=14
+    legacy['checkpoint_sha256']=analysis_configuration_fingerprint({key:value for key,value in legacy.items()
+        if key!='checkpoint_sha256'})
+    with pytest.raises(ValueError,match='version'):
+        deforming['solve'](checkpoint=legacy)
 
 
-def test_normal_unresolved_physical_proof_cuts_back_without_accepting_partial_faces(monkeypatch):
+def test_normal_unresolved_matched_physical_proof_cuts_back_before_commit(monkeypatch):
     from anysolver.general_contact import normal_s3_skin_path as module
-    original = module.shell_pair_hermite_lower
+    original = module.NormalS3SkinPath.overlap_sweep
     calls = 0
-    def failed(*args,**kwargs):
+    def failed(self,*args,**kwargs):
         nonlocal calls
-        proof = original(*args,**kwargs);calls += 1
-        if calls == 2:
-            return replace(proof,success=False,lower_gap=None,detail='owned second-face proof failure')
+        proof = original(self,*args,**kwargs);calls += 1
+        if calls == 1:return None,'owned matched physical proof failure'
         return proof
-    monkeypatch.setattr(module,'shell_pair_hermite_lower',failed)
+    monkeypatch.setattr(module.NormalS3SkinPath,'overlap_sweep',failed)
     _,result,_ = deforming['solve'](end=.0001)
     assert result.cutbacks == 1
     assert result.times[1] == pytest.approx(1.25e-5)
-    assert 'second-face' in result.cutback_diagnostics[0]['reason']
+    assert 'owned matched physical' in result.cutback_diagnostics[0]['reason']
     assert active_contact_manager() is None
 
 
-def test_normal_v14_open_restart_continues_after_contact_release():
+def test_normal_v15_open_restart_continues_after_contact_release():
     _,whole,_ = deforming['solve']()
     index = int(np.argmin(np.abs(whole.times-.0025)))
     assert np.all(np.asarray(whole.contact[index].normalized_weighted_gap_m) > 0.)
     assert np.linalg.norm(whole.contact[index].integration_force) == 0.
     _,prefix,_ = deforming['solve'](end=float(whole.times[index]),emit=True)
-    assert prefix.restart_checkpoint['schema'].endswith('_V14')
+    assert prefix.restart_checkpoint['schema'].endswith('_V15')
     _,resumed,_ = deforming['solve'](checkpoint=prefix.restart_checkpoint)
     np.testing.assert_allclose(resumed.times,whole.times[index:],rtol=0.,atol=1.e-15)
     for name,tolerance in (('displacements',1.e-11),('velocities',1.e-7),('accelerations',1.e-3)):
@@ -440,11 +445,11 @@ def test_normal_cancellation_inside_physical_proof_restores_model_and_owner(monk
     from anysolver.general_contact import normal_s3_skin_path as module
     model,definition,modes = build()
     fingerprint = model_configuration_fingerprint(model)
-    token = CancellationToken();original = module.shell_pair_hermite_lower
+    token = CancellationToken();original = module.s3_overlap_hermite_gap_bounds
     def cancelled(*args,**kwargs):
         token.cancel('owned deforming-skin cancellation')
         return original(*args,**kwargs)
-    monkeypatch.setattr(module,'shell_pair_hermite_lower',cancelled)
+    monkeypatch.setattr(module,'s3_overlap_hermite_gap_bounds',cancelled)
     with pytest.raises(SolveCancelled,match='owned deforming-skin'):
         solve_transient_contact(model,definition,
             TransientConfig(2.5e-5,.0001,initial_velocity=modes@np.r_[np.full(4,-.1),np.zeros(3)]),

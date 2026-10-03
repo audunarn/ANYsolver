@@ -1395,7 +1395,7 @@ friction, unrestricted shell/native impact and full C0–C9 remain incomplete.
 
 ## Deforming normal-nodal S3 pressure-event control — V2 development
 
-Current `allow_normal_s3_skin_hermite_dev=True` uses
+At the prior checkpoint `allow_normal_s3_skin_hermite_dev=True` used
 `NORMAL_NODAL_S3_SKIN_HERMITE_NEWMARK_EVENT_DEV_V2` and V14 checkpoints.
 The V1/V13 observations above remain historical. The new actual-skin rational
 reference-P1 proof includes moving overlap, shared-node coupling and all pressure
@@ -1418,3 +1418,26 @@ Implemented: **yes**. Source-tested: **yes, named fixture**. Installed-tested:
 Moving clipped-overlap dynamic response, overlap-local strong bounds, rotation/
 sliding, friction/material/native impact and full C0–C9 remain incomplete.
 [Current evidence](d1_review_support/C6_S3_PRESSURE_EVENT_SLICE_20261003.md).
+
+## Matched-overlap normal S3 impact — V3 development
+
+Current opt-in uses `NORMAL_NODAL_S3_MATCHED_OVERLAP_NEWMARK_EVENT_DEV_V3`/V15.
+Closed conservative overlap clipping replaces remote Cartesian corners in strong
+gap decisions. Original polarity, hidden approach, reference-P1 joint pressure proof,
+physical transactions and complete work remain. V13/V14 continuation is rejected;
+older selections retain their identities. Normal-only elastic/reference-parallel
+scope remains; no general finite rotation, sliding, friction or material admission.
+
+Local geometry/work, covered nonlinear response, active/open V15 restart, old V12
+and default installed234hash/all-field parity pass. All45passed/7failed scoped
+outcomes, selector exit4 and separate900s timeout are retained. Neither KN1e9
+moving-clipped production mesh met20um. Corrected independent refined reference
+confirms real active penetration; the first refined oracle omitted physical area
+scaling. Explicit KN2e10 endpoint preflight passes, but the full refined coupled
+comparison timed out with no complete trajectory/effective terminal runtime record.
+The moving-clipped row remains **NONPASS/unqualified**; no failed gate is waived.
+
+Implemented: **yes**. Source-tested: **named bounded/default fixtures only**.
+Installed-tested: **default covered example**. Independently accepted: **no**.
+Released/application-admitted: **no**. No complete-route speed claim.
+[Evidence and next action](d1_review_support/C6_S3_MATCHED_OVERLAP_SLICE_20261003.md).

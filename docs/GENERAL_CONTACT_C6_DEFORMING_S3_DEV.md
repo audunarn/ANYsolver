@@ -11,7 +11,7 @@ the repository with ANYsolver installed. It uses the ordinary `TransientConfig`
 and `solve_transient_contact` with
 `ContactTransientSolverControls(allow_normal_s3_skin_hermite_dev=True)`.
 
-The profile is `NORMAL_NODAL_S3_SKIN_HERMITE_NEWMARK_EVENT_DEV_V2`. Two elastic S3 V2D
+The profile is `NORMAL_NODAL_S3_MATCHED_OVERLAP_NEWMARK_EVENT_DEV_V3`. Two elastic S3 V2D
 surfaces interact through the existing full Jet2 projected-penalty contributor.
 The source contains two triangles and the target one larger triangle in the
 tested fixture. All seven physical normal nodal coordinates remain in the shared
@@ -47,21 +47,27 @@ sidecar used by the older uniform-source profile.
   paths whose endpoints alone conceal an interior excursion. The tested fixture
   now reports four localized pressure events. Endpoint, Newton-stage, cell,
   temporal-panel and depth budgets are finite and restart-bound.
-- Bounds cover complete represented faces/corners, including portions outside
-  projected overlap. A tilted source and larger target can therefore cause a
-  conservative cutback even when the physical overlap is open. Finite budgets
-  end unresolved paths explicitly; contacts are not discarded.
-- V14 restart binds the profile, definitions, ordered pressure feature identity,
+- Strong physical-gap bounds cover the represented matched overlap. Rational
+  clipping against upper Bernstein target-barycentric halfplanes contains every
+  possible path overlap, including point/segment closures. Source-normal separation
+  is `H*sqrt(A dot A)/(A dot B)`; reference polarity is checked before pruning.
+  Temporal subdivision tightens this enclosure within finite budgets. Empty
+  overlap is distinct from zero gap. No remote Cartesian target corner controls
+  the overlap gap. The older corner helper remains a verification comparator.
+- A separate hidden-approach predicate watches original source material points
+  open at both whole-path endpoints. Its endpoint cuts remain fixed during path
+  subdivision. A weak-mode phase proof alone cannot certify strong nonpenetration.
+- V15 restart binds the profile, definitions, ordered pressure feature identity,
   physical/pressure sweep budgets and endpoint localization controls. It stores committed
   coordinates/rates, not an invented affine pressure-event state. Rejected proof,
   cancellation and exception paths use shared cleanup/cutback infrastructure.
-  Historical developmental V13 checkpoints are incompatible with this new
+  Historical developmental V13/V14 checkpoints are incompatible with this new
   algorithm and rejected; existing V1–V12 profile selections remain unchanged.
 - General rotations/sliding, warped Q4 dynamics, unrestricted algebraic shell
   rotations, nonlinear material contact, friction and engineering impact
   acceptance remain separate programme work.
 
-## Named verification
+## Historical V2 verification
 
 The independent contact oracle solves covered-triangle projection equations,
 integrates P1 gaps analytically and differentiates them by complex step. Both
@@ -92,7 +98,36 @@ hashes: 123 states, four localized events, zero cutbacks, 60 endpoint queries an
 297 Newmark stages. These establish the stated
 development observations, not full-contact scientific acceptance or a speedup.
 
-[Current event evidence and retained failures](d1_review_support/C6_S3_PRESSURE_EVENT_SLICE_20261003.md).
+[V2 event evidence and retained failures](d1_review_support/C6_S3_PRESSURE_EVENT_SLICE_20261003.md).
 [Historical V1 evidence](d1_review_support/C6_DEFORMING_S3_DRIVER_SLICE_20261003.md)
-remains unchanged. Substantial moving clipped-overlap dynamics still lacks an
-independently checked trajectory and is the next development question.
+remains unchanged. These observations do not automatically qualify the V3 changes.
+
+## Matched-overlap V3 development
+
+The local corpus covers remote open corners, partial and absent overlap, closed
+point/segment geometry, hidden approach, crossed interiors, orientation, cancellation
+and finite budgets. Shared pressure preparation is unchanged. Fresh starts reject
+actual matched penetration even within the time-step gap budget; accepted restarts
+must meet the registered gap criterion. Endpoint and complete path proofs precede
+physical commit.
+
+Moving clipped two-body development uses a unit source split into eight strips
+(16 original S3 faces), one triangular target, 21 normal coordinates, a 100 µm
+linear initial tilt and 0.1 m/s source speed. Independent direct projected polygon
+integration preserves each original physical reference-face Jacobian. Its complex-
+step work and nonlinear Newmark reference use accepted structural stiffness as input.
+This does not independently qualify shell spatial mechanics or temporal accuracy.
+
+The coarse and refined `KN=1e9 Pa/m` production candidates both failed the unchanged
+20 µm strong-gap gate. Corrected independent refined reference confirms 20.84 µm
+penetration with three active pressure modes. A missing reference-area factor in
+the first refined oracle is retained as a reference-tool failure. One explicit
+`KN=2e10 Pa/m` candidate follows an independent 14.97 µm endpoint preflight; it changes the
+declared numerical regularization, not the physical law or any default. See the
+current slice evidence for its actual coupled disposition and remaining work.
+That coupled candidate timed out at 900 seconds (910.13 seconds including cleanup,
+209.15 MB sampled peak). No complete trajectory or effective terminal runtime
+record survived; partial stdout is not counted as a completed assessed check.
+The refined moving-clipped workflow remains NONPASS/unqualified. V3's default
+covered workflow, restart and isolated installed parity pass. These are separate
+dispositions; they do not substitute for the required refined trajectory.

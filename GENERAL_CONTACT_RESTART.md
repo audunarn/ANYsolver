@@ -2,58 +2,70 @@
 
 Full C0–C9 ACTIVE/incomplete. Authoritative worktree:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001. Parent e7b0a1d5; HEAD identifies
-the owned checkpoint. Goal2026-09-30.4 / plan2026-10-03.66 govern.
-No other-user chat messages, protected-original-worktree access, push/merge,
-publication/release/default changes or consumed-authority renewal. Owned local
-checkpoints authorized. All owned numerical processes and reviewer are terminal.
+branch codex/contact-main-reconcile-20261001; parent d0bb6a38. HEAD identifies
+the owned checkpoint. Goal2026-09-30.4 / plan2026-10-03.67 govern. Do not access
+the protected original worktree or message the other human chat. No push/merge,
+release/default change or consumed-authority renewal. Local checkpoints authorized.
+All owned numerical processes/reviewer are terminal. HistoryPart90 links89/88:
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART90.md.
 
-History docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART89.md
-links88/87/86 and retained failures. Guide docs/GENERAL_CONTACT_C6_DEFORMING_S3_DEV.md;
-current evidence docs/d1_review_support/C6_S3_PRESSURE_EVENT_SLICE_20261003.md.
-Raw51records, exact candidate/environment/commands/wheel and supporting review:
-docs/d1_review_support/contact_c6_s3_pressure_events_20261003/{source.json,raw.zip}.
-Accepted D1-interior and named bounded D2 identities/evidence unchanged.
+CURRENT DEVELOPMENT: normal-S3 opt-in V3/V15 adds matched-overlap strong Hermite
+gap bounds. Closed rational Bernstein/Cramer clipping contains the actual path
+overlap, including point/segment closures. Original polarity precedes pruning.
+Hidden-approach endpoint cuts stay fixed through subdivision. Constant endpoint
+upper bounds alone may witness penetration; outer swept vertices cannot. Full
+general Jet2 work, P1/refmeasure, mass and Newmark equations unchanged. Static
+Cartesian guard unchanged; driver validates actual fresh/restart poses. Fresh
+penetration fails even within20um stepbudget. V13/V14 are incompatible; V1–V12
+selections unchanged. Normal translations/zero rotations/tangential motion,
+parallel references/elastic positive mass remain restrictions.
 
-CURRENT implemented/source/installed-tested DEVELOPMENT, not engineering acceptance:
-allow_normal_s3_skin_hermite_dev now uses normal-nodal S3 V2/V14. Existing full
-general Jet2 work/mass/shared Newmark remains; no affine force/event substitution.
-Exact normal translations, zero rotations/tangential motion, parallel reference
-planes, fineP1, elastic positive mass. Actual skin/rate rational Cramer/Bernstein
-proof bounds reference-P1 joint W±tau*S over represented overlap, aggregates
-faces before law, retains tiny/zero support identities. Shared bounded endpoint
-localizer reequilibrates every proposal from one committed origin. Every accepted
-path requires physical and complete weak-phase proof; unresolved paths cut back.
-V14 binds algorithm/features/proof and query/stage controls; old V13 rejected.
-Old V1–V12 selections and V1 evidence remain historical, unchanged.
+Evidence: docs/d1_review_support/C6_S3_MATCHED_OVERLAP_SLICE_20261003.md;
+97raw records plus exact source/environment/wheel in
+docs/d1_review_support/contact_c6_s3_matched_overlap_20261003/{source.json,raw.zip}.
+45passed scoped outcomes/7failed outcomes, selector exit4 and distinct900s timeout
+retained. Local geometry/work, covered nonlinear dynamics, forced proof cutback,
+cancellation, V15active/open restart and old V12 pass. Same-family source scrutiny
+found no further concrete defect; not independent engineering acceptance.
 
-27successful scoped outcomes(26unique): hidden weak-mode counterexample, partial/
-tiny/absent support, two-face factors, independent nonlinear Newmark, temporal
-trajectory/event refinement, V14 active/open/tamper, rollback/cancel/cutback,
-actual stage-budget failure and older V12 continuation. Retain2failed outcomes:
-strict dt-halving energy assertion(7.2183e-9→7.5901e-9); nonexistent cancellation
-exception import(test defect, corrected). Also retain selector exit4/no tests.
-Prospective separate event-tolerance experiment at fixed25us reduces defect to
-1.4083e-10; no old claim regraded, no monotonic temporal energy acceptance.
-25→12.5us q/GAP0.04874→0.01196%,v/0.1m/s0.4702→0.1183%;gap<12.23um vs20um.
-Source/installed233hashes/allfields match,123states/4events/0cuts/60queries/297stages.
-WheelSHA58aeb1dd54004a7506952af0600299bc76c9f51942b80dd6d03e0d6027e110b5.
-Single8.37/8.26s and162119680/162283520B observations are compatibility, not speedup.
-Review's rejected-work counter defect corrected/check passed; no remaining concrete
-false-success defect identified. Same-family scrutiny is not independent acceptance.
+MOVING CLIPPED ROW NONPASS: coarse two-face KN1e9 fails at1.2ms (independent point
+penetration22.50um with all weak modes open). Nx8/16faces KN1e9 fails at1.21239032ms
+after9cuts; corrected independent reference confirms20.84um with3active modes at
+1.225ms. First refined oracle omitted physical-face Jacobian, inflating forces8x;
+correct determinant scaling and flat0.6m2 N1/N2/N8 checks pass. Preserve that failure.
+One KN2e10/Nx8/same tilt/motion/dt25us/end3ms/gap20um preflight gives14.97um endpoint
+penetration; production coupled K timed out900s (910.127s including cleanup,
+209149952B). No complete trajectory or terminal runtime.json; partial stdout is
+not an assessed outcome. K effective numerical settings cannot be claimed from
+its requested selection alone. No retry/cap/gap increase/mesh or stiffness sweep.
 
-NEXT one overlap-local strong-gap slice: current whole-target physical corner bounds
-can overcut outside overlap. Reuse prepared Cramer/reference cells; bound strong
-gap only over possible overlap without excluding crossed interiors, retain original
-polarity and finite budgets. Then independently check one moving clipped-overlap
-coupled trajectory. No new force model, open-ended refinement, cap growth or gate
-relaxation. Broader rotations/friction/material/native/apps and C0–C9 remain open;
-forecast unsupported. Accepted structural K is reference input, not spatial admission.
+Default V3 source/isolated installed allfields/234loaded hashes match:123states,
+4events/0cuts. WheelSHA3f2ab164730ff488070b62102a35fc03e8dbfa70bf6ab6811cc0d336c839c470.
+11.0195/10.6098s and162738176/162254848B are single compatibility observations,
+not savings. No impact acceptance. Prior V2 energy-halving NONPASS/event-tolerance
+refinement and accepted D1-interior/named bounded D2 evidence unchanged.
 
-Native grazing friction NONPASS unchanged: gap−1.33564e−13m,223queries/448paths/
-21support,10.364s; missing closed alpha_q=−G_q/G_alpha and mixed-work bound, not
-formulation failure. No saved-local/fullpatch/owner/splitretry, history reset/zero
-response, capgrowth/tolerance increase/nativeacceptance. Programme budget120active
-hours unchanged; lastgoal315967+3120=319087s(~88.64h). At120h checkpoint/request
-decision, not silent extension. Goal ACTIVE. Lower local/Mistral tiers unavailable;
-do not reprobe unchanged failures or message the other human task.
+NEXT bounded shared-preparation slice: saved-state profile measured tangent/work
+0.0572s, endpoint0.2757s, strong constantpath0.2743s, weak constantpath0.3371s;
+the last spends0.269s in exact polynomial preparation. These constant-pose costs
+do not explain K or guarantee moving-route savings. Strong profiled calls reject
+the saved20.84um pose; these are rejected-call costs, not successful certification.
+Reuse one immutable prepared path between strong/weak proofs only at identical
+complete reference/topology/
+pose/rates/dt identity; invalidate changes, retain every proof/budget/cancel check,
+and bound memory to one candidate. Add partial component/rejected-work counters.
+Measure parity/local cost before a newly identifiable integrated candidate.
+External profile/packaging helpers: C:/ANYworkspaceWork/contact_s3_overlap_package_20261003.
+Do not replay K or any other spent case unchanged. Preserve source_grid oracle's
+physical Jacobian and state/restart identities. Forecast remains unsupported.
+
+Native grazing friction NONPASS unchanged:−1.33564e−13m,223queries/448paths/21support,
+10.364s; missing closed alpha_q=−G_q/G_alpha and mixed-work bound, not formulation
+failure. No saved-local/fullpatch/owner/splitretry, history reset/zero response,
+capgrowth/tolerance increase/nativeacceptance. Full remaining friction/native/
+geometry/material/application and C0–C9 requirements remain active.
+
+Programme budget120activehours: lastgoal321513+3120=324633s (~90.18h). Check current
+goal.timeUsedSeconds+3120 before the next slice. At120h checkpoint/request necessary
+decision; no silent extension/completion. Lower local/Mistral tiers unavailable;
+do not reprobe unchanged failures. Task remains ACTIVE.

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.66. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.67. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -211,13 +211,27 @@ per-halving energy comparison fails(7.22e-9→7.59e-9) and remains retained. Sep
 same-dt event-tolerance refinement improves energy defect to1.41e-10. No old gate
 is regraded, no temporal acceptance or speed claim is made.
 [Current event slice](docs/d1_review_support/C6_S3_PRESSURE_EVENT_SLICE_20261003.md).
-NEXT derive overlap-local strong physical-gap bounds using the same prepared
-Cramer/reference-cell geometry, then check one independently referenced moving
-clipped-overlap coupled trajectory. Current whole-target corner bounds can cause
-false cutbacks outside overlap. Keep original polarity, positive support, feature
-ownership and finite budgets; unresolved geometry fails closed. Broader impact
-admission remains open. Preserve separate storage reporting, all old defaults and
-the full C0–C9 outcome/acceptance requirements.
+V3/V15 now implements overlap-local strong physical-gap bounds with closed rational
+Cramer/Bernstein clipping, original polarity, hidden material-point approach and
+unchanged full Jet2 work. Local geometry/work, covered dynamics, V15 restart and old
+V12 continuation pass; the isolated installed default example matches234hashes/allfields.
+These are development observations. Refined moving clipped-overlap remains NONPASS.
+Both KN1e9 production meshes exceeded20um; corrected independent Nx8 reference
+confirms20.84um with3active weak modes. Retain the independent area-Jacobian tool
+failure. One explicit KN2e10 candidate passes a14.97um endpoint preflight but its
+coupled comparison timed out900s; no full trajectory/runtime or acceptance claim.
+[Matched-overlap slice/evidence](docs/d1_review_support/C6_S3_MATCHED_OVERLAP_SLICE_20261003.md).
+
+NEXT remove measured duplicate exact geometry preparation between strong/weak
+proofs for the same complete candidate identity; retain one bounded prepared path,
+all independent decision checks and cancellations. A saved constant-path weak
+proof spends0.269/0.337s in preparation; this does not establish moving-route savings.
+Its saved pose already penetrates beyond20um, so strong calls reject rather than
+certify that path. Do not infer accepted-path cost from these measurements.
+Measure parity and local cost, and retain bounded component/rejected-work counters
+before another newly identifiable integrated candidate. Do not replay spent K,
+raise caps/gaps, change the pressure law or start another mesh/stiffness sweep.
+Full C0–C9 scope/acceptance and broader impact admission remain unchanged.
 No open-ended mesh/dt campaign, resource increase or weakening of scientific gates.
 The earlier uncoupled example cannot supply contact-driven-plasticity claims.
 Its prior120-step route is approximately78s; no speed-up claim.

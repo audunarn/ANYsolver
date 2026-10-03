@@ -4,13 +4,14 @@ No affine pressure coordinate is supplied. The full general contact contributor
 owns nonlinear gap/work; this helper admits the constrained motion and maps the
 actual supplied-float Hermite skins for conservative geometry checks.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass,replace
 from fractions import Fraction
 import numpy as np
 from scipy import sparse
 from .fixed_projection_s3_events import _calculated, _parallel
 from .s3_patch_static import GeneralS3PatchManager
 from .shell_pair_hermite_sweep import shell_pair_hermite_lower
+from .s3_overlap_hermite_gap import s3_overlap_hermite_gap_bounds
 
 
 def _indices(model,nodes):
@@ -86,6 +87,36 @@ class NormalS3SkinPath:
             maximum_time_panels=manager.settings.maximum_gap_triangles,
             maximum_spatial_cells=manager.settings.maximum_gap_triangles,
             maximum_depth=manager.settings.maximum_swept_subdivisions,cancel=cancel)
+
+    def overlap_sweep(self,manager,start,end,v0,v1,dt,*,cancel=None,event_gap_tolerance_m=None):
+        skins=self.skins(manager,start,end,v0,v1)
+        ids=manager.law.target_face_indices[0]
+        proof=s3_overlap_hermite_gap_bounds(manager.reference[0],manager.reference[1][ids],
+            manager.law.source_face_indices,*tuple(skin if i in (0,1,4,5) else skin[ids]
+            for i,skin in enumerate(skins)),dt,gap_tolerance_m=manager.gap_tolerance,
+            maximum_time_panels=manager.settings.maximum_gap_triangles,
+            maximum_spatial_cells=manager.settings.maximum_gap_triangles,
+            maximum_depth=manager.settings.maximum_swept_subdivisions,cancel=cancel,
+            exclude_open_endpoint_approach_tolerance_m=event_gap_tolerance_m)
+        if not proof.success:return None,'normal S3 matched physical path '+proof.status+': '+proof.detail
+        return (float('inf') if proof.status=='no_overlap' else proof.lower_gap_m),None
+
+    def overlap_endpoint(self,manager,full,result,*,cancel=None):
+        """Driver-owned geometry result; production force/work remains unchanged."""
+        self.require_motion(full)
+        source,target=tuple(_calculated(lambda:value) for value in manager._positions(full))
+        ids=manager.law.target_face_indices[0];target=target[ids]
+        zeros_source,zeros_target=np.zeros_like(source),np.zeros_like(target)
+        proof=s3_overlap_hermite_gap_bounds(manager.reference[0],manager.reference[1][ids],
+            manager.law.source_face_indices,source,source,target,target,
+            zeros_source,zeros_source,zeros_target,zeros_target,1.,
+            gap_tolerance_m=manager.gap_tolerance,
+            maximum_time_panels=manager.settings.maximum_gap_triangles,
+            maximum_spatial_cells=manager.settings.maximum_gap_triangles,
+            maximum_depth=manager.settings.maximum_swept_subdivisions,cancel=cancel)
+        if not proof.success:return None,'normal S3 matched endpoint '+proof.status+': '+proof.detail
+        lower=float('inf') if proof.status=='no_overlap' else proof.lower_gap_m
+        return replace(result,minimum_gap=lower,gap_tolerance_met=lower>=-manager.gap_tolerance),None
 
 
 def prepare_normal_s3_skin_path(model,manager,T):
