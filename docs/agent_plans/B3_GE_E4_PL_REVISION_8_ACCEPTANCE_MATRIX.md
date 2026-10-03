@@ -1739,3 +1739,21 @@ No broad, plastic, large-scale, memory or aggregate gate claim. G0/F01/G5/M5 and
 other mandatory rows remain open; F03 UNCONSUMED and pressure/release authority
 unchanged. Next larger-route one-pair screen is preliminary and not launched.
 [Scoped implementation, samples, work, failures and review](development/r8-same-parent-trial-20261003/results.md).
+
+**3 October larger-route and M2 causal development decisions:** one installed
+400Q4/120B3 pair for unchangedbb17ecac completes192.008→130.495s,32.04%
+PRELIMINARY; exact physical/history/preflight/checkpoint parity and bounded child
+resources. No further medium campaign or aggregate G5 acceptance.
+[Raw pair and scope](development/r8-same-parent-middle-20261003/results.md).
+
+Independent continuous Timoshenko referencea32c2cc0 uses actual saved finite P0
+means and rigid-carrier endpoint supports. Finest native-versus-same-P0 transfer
++0.0769…+0.0883%; same-P0-versus-strong transfer−2.5773…−2.9992%. Finite weak
+enforcement dominates the historical fixture discrepancy. Ten focused tests,
+including independent60-digit displacement-polynomial precision checks, pass;
+failed/repaired evidence retained. OpenAI Read review clear, not different-family
+scientific acceptance. Retain law/c2 for development, stop this causal refinement
+ticket; strong-tie transfer accuracy failure and complete physical/policy/mixed
+system/external M2 obligations remain open. No new native/F03 solve, criteria,
+law, policy or release change. Full goal ACTIVE.
+[Physical definitions, decomposition, limits and review](development/r8-bl5-p0-carrier-20261003/results.md).
