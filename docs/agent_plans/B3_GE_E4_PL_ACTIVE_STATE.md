@@ -1,18 +1,19 @@
-# B3-GE / E4-PL / B2 — active state, 3 October 2026
+# B3-GE / E4-PL / B2 â€” active state, 3 October 2026
 
 ## Authority and restart
 
 Active unbudgeted goal and Revision8 plan remain in
 C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_plans.
-Full amended G0–G6/F01–F13/V01–V28/B01–B18 scope and scientific criteria remain
+Full amended G0â€“G6/F01â€“F13/V01â€“V28/B01â€“B18 scope and scientific criteria remain
 binding. Experimental implementation is not aggregate acceptance.
 
 Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Latest slice source parent a8a75970;
+branch codex/stiffened-main-reconcile-20261001. Latest slice source parent2653b6d5;
 use git log for its committed identity. ANYfem worktree:
-C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, at295f667, unchanged.
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, atc78b55c, curved material staged schema delivered.
 Scoped local commits only: no push/main merge/publication/contact-worker messages.
-Source54171/36518, old-wheel17867, installed56540 and consumer83630 are terminal.
+All prior source/installed jobs are terminal. Current staged source40222/39660,
+prepare55585, installed61676, consumer70348 and signed-cycle72270 are terminal.
 No owned numerical job is live. Main untouched by this task.
 
 Formal F03 UNCONSUMED. Protected original script SHA256:
@@ -48,19 +49,33 @@ Recent curved-Q4/full-pose-point developments remain explicitly experimental:
   and targeted repair retained. Independent OpenAI source review found no confirmed
   defect; four requested regression consequences were added and passed.
 
-All413 solver and98 consumer modules match source/wheel/site. Current solver wheel:
-c5f28ee7190e3185f0faa57ece88958f1b7918e48a5cb0e4b7c66cd56529f097.
-Consumer937eb59f99fc72463af3daad8c7363755fb957648f81d7647591305af61d3374.
-Installed solver320.017s/199774208 sampled process-tree bytes; consumer35.150s/
-187179008bytes. Numeric pools1thread/JIT off verified. These are check costs,
-not measured speedups. No physics, tolerance, default, version or budget changed.
+Current staged force slice is delivered experimentally:
+[Grouped evidence](development/r8-curved-material-staged-20261003/results.md).
+Installed9 solver +8 consumer checks pass. Fixed/adaptive interior/boundary
+restart, nonproportional unloading, valid-digest load/predecessor corruption,
+atomic cancellation and chart transport use the existing owner. The actual
++1000/-1000/+1000N cycle completes at positions(.5,1,2,3), with both material
+histories growing and exact restarted endpoints/checkpoints. Final equilibrium
+9.402188736183358e-11; compatibility7.794056555028567e-18. No zero-force
+accepted endpoint is requested. New strict consumer material-staged-v1 wraps
+only material-v2/native-scale-v3; historical staged/curved-elastic records retain
+their admission. Root inspected the consumer worker changes and executed checks.
 
-Next bounded implementation target: evaluate the existing staged/dead-load
-contract for the explicit curved material profile, then extend only a compatible
-nodal load-program slice with fixed predecessors, physical load identity and
-restart/cancellation. Keep pressure, distributed loads and follower derivatives
-separately admitted. Do not merely remove the curved external-load guards or
-repeat roof refinement. Reuse existing owner/load services and tiered checks.
+All413 solver +98 consumer modules match source/wheel/site. Current solver wheel:
+c795a5da5476313a58463f36e84e05aecfa4930e6d338e7597bd97a40c3bcc7d.
+Consumer36ba604318ddd17b0d7f2b44130472727dd8bd57b92d70242d5ef69ab6df9adc.
+Installed173.715s/190640128 sampled bytes; consumer43.323s/202600448bytes;
+signed cycle54.177s/176152576bytes. Pools1thread/JIT off verified. Source wrong
+accessor and installed missing-fixture failures retained. Independent OpenAI
+review's misleading translation label was corrected before final wheel runs.
+No physics, criteria, default, version or budget changed; no measured speed gain.
+
+Next bounded target: inspect actual compiler/consumer prototype limits and sparse
+storage against the required practical-scale envelope, reusing existing valid
+screens. Remove only obsolete size restrictions within resource authority and
+prepare a genuine installed sparse model route. Do not substitute a point-only
+screen for the full nonmatching G5 workload, invent a new framework, relax
+mechanical guards or repeat the completed curved refinement campaigns.
 
 ## Open boundaries
 

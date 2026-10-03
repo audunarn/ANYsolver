@@ -952,6 +952,8 @@ class ExperimentalGEAnalysis:
             capabilities["curved_reference_policy"] = self._definition.shell_reference_policy
             if self._curved_material:
                 capabilities["displacement_control"] = "experimental_curved_material_point_translation_v1"
+                capabilities["staged_dead_loads"] = (
+                    "experimental curved-material point piecewise-affine nodal translation forces; forward programme position",)
                 capabilities["fixed_step_max_backtracks"] = 16
                 capabilities["retained_coordinate_scale_policy"] = (
                     "native_force_moment_roles_v1" if self._native_retained_scale else
@@ -1129,7 +1131,11 @@ class ExperimentalGEAnalysis:
         intact. The observer is ephemeral and is not stored in checkpoints.
         """
         self._require_open()
-        if self._curved_reference and (type(actions) is not tuple or any(
+        from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
+        curved_staged = self._curved_material and type(actions) is StagedDeadLoadProgramme
+        if curved_staged and displacement_control is not None:
+            raise ValueError("staged programme positions require force-control stepping")
+        if self._curved_reference and not curved_staged and (type(actions) is not tuple or any(
                 type(a) is not NodalAction or any(a.wrench[3:]) for a in actions)):
             raise ValueError("curved reference admits nodal dead translations only")
         self._require_stateful_scope()
@@ -1338,7 +1344,8 @@ class ExperimentalGEAnalysis:
             MAGIC as STAGED_MAGIC, decode_checkpoint,
         )
         if raw.startswith(STAGED_MAGIC):
-            if self._curved_reference:raise ValueError("curved reference excludes staged load checkpoints")
+            if self._curved_reference and not self._curved_material:
+                raise ValueError("curved reference excludes staged load checkpoints")
             if ((self._line_samples and not (self._finite_bl5 and
                     self._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1)) or
                     getattr(self, "_staged_context", None) is not None or

@@ -1619,3 +1619,17 @@ exact active-history continuation. All511 source/wheel/site modules match.
 The first adaptive outer-guard failure and targeted repair are retained.
 No changed physics, tolerances, budgets, scientific acceptance or aggregate gate.
 [Evidence and limits](development/r8-curved-material-displacement-20261003/results.md).
+
+**3 October curved material staged forces: IMPLEMENTED_NOT_QUALIFIED.**
+Existing immutable absolute nodal translation-force endpoints now admit the
+explicit curved-Q4 material point profile, retaining optional shell J2 and fixed
+accepted beam/shell predecessors. Installed9 solver and8 consumer checks pass:
+fixed/adaptive progress, changed direction, load/unload, true +1000/-1000/+1000N
+cycle, exact active-history restart, chart transport, atomic cancellation, one
+compile per unchanged owner, valid-digest corruption and legacy dispatch.
+Distinct consumer material-staged-v1 wraps only material-v2/native-scale-v3
+records; ordinary Project save/reopen and continued state match exactly.
+All511 source/wheel/site modules match. Source fixture and installed collection
+failures retained; review's misleading translation label corrected before final
+wheel checks. No new equations, criteria, budget, version or aggregate acceptance.
+[Evidence, reviewer scope and limitations](development/r8-curved-material-staged-20261003/results.md).

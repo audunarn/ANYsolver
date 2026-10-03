@@ -18,7 +18,7 @@ shell and beam predecessor; the mixed owner commits them atomically.
 Reference-linear, finite force control, translation displacement control and
 experimental physical arc continuation with fixed nodal translational dead forces
 are admitted. S3, physical beam fibres, line and
-footprint attachments, external/staged load wrappers,
+footprint attachments, configuration-dependent body/pressure/distributed wrappers,
 and spectra remain unsupported. The older curved elastic policy, defaults and checkpoint
 decoding contracts keep their meanings. No publication or qualification follows.
 
@@ -102,6 +102,19 @@ an arc history cannot return to displacement control. Native ANYfem definition
 save/reopen and a separate solver checkpoint preserve the continued state.
 These operations remain experimental, with the existing equilibrium and
 compatibility criteria and controller trial budgets.
+
+`StagedDeadLoadProgramme` also admits this explicit curved-material profile.
+Its immutable endpoints contain absolute nodal translation **forces** in the
+declared spatial frame. Positive programme positions interpolate between those
+endpoints; positions advance even during unloading and must include every crossed
+integer boundary. The owner compiles the force vectors once, then retains the
+programme identity, applied load, material predecessors and accepted progress in
+the existing staged checkpoint envelope. Fixed/adaptive force stepping and
+restoration keep their existing criteria. A staged descriptor is not a displacement
+control direction. The older curved-elastic policy remains fixed-action only.
+ANYfem uses a distinct strict material-staged-v1 wrapper around the existing
+material-v2 or native-scale-v3 mechanical input record; old staged records retain
+their historical accepted base schemas.
 
 For new development models, opt in to native retained-coordinate normalization
 with `dataclasses.replace(definition, retained_scale_policy="native_force_moment_roles_v1")`.
