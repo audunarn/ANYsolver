@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.83. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.84. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -14,37 +14,36 @@ capabilities, scientific targets and exclusions. Historical plans and failures
 remain evidence; frozen or consumed execution authorities are never renewed.
 Publication, merging, release and historical-default changes are separate actions.
 
-## Latest integrated slices — 4 October
+## Latest integrated slice — 4 October
 
-Local98350a45 adds classical sphere/infinite-cylinder physical ends with literal
-line/endpoint work, exact whole-curve bounds and affine regularity/ownership.
-Installed37pass31.110s/336408576B;211modules/494files match. Failures and exact
-source/environment remain in [radial evidence](docs/d1_review_support/contact_radial_endcaps_20261003/summary.json).
+Two-body B2 physical-end contact now adds one full point spring per owned
+end/interior or unique reciprocal end/end feature to the symmetric distributed
+potential. Both-body analytic projection derivatives/cross blocks, all-node end
+topology and exact affine gap/regularity/ownership checks are integrated through
+ordinary static controls. Review exposed an intermediate active line-projection
+plateau missed by endpoint checks; a separate exact path certificate closes it.
 
-The successor multiple fixed-interaction owner composes existing plane/radial/
-finite-cylinder children on shared structural coordinates. Explicit physical ends,
-duplicate-feature rejection, per-body wrenches, common regular-prefix limiting and
-child restart contracts have one new profile; no-cap identity/arithmetic remain.
-Installed27pass9.228s/326455296B;212modules/494files match,JIT0/pools1,180s/953MiB.
-Independent two-ended B3 bar response matches within2.015e-14 vs1e-6 target;
-complete work/tangents, shared-body wrench, restart and inherited routes pass.
-Seven runs/46records preserve early artifacts and review-found count corrections.
-[Guide](docs/GENERAL_CONTACT_MULTIPLE_BEAM_ENDS_DEV.md),
-[evidence](docs/d1_review_support/contact_multiple_endcaps_20261004/summary.json).
-Both slices are implemented/installed-tested development, not independent
-engineering acceptance or normal application admission. C2/D3 and C0–C9 remain open.
+Installed30checks pass6.650s/328585216B,243modules/496files match,JIT0/pools1.
+Independent two-bar response relative1.084e-15 meets1e-6; work/tangents, body
+exchange/covariance, force/displacement, active restart/changed topology/settings,
+actual exception/cancel reuse, hidden roots/junctions and inherited routes pass.
+Ten runs/63rawrecords retain initial scalar-oracle quadrature/API test defects.
+Supporting scrutiny is not independent engineering acceptance or application admission.
+[Guide](docs/GENERAL_CONTACT_BEAM_PAIR_ENDS_DEV.md),
+[evidence](docs/d1_review_support/contact_beam_pair_endcaps_20261004/summary.json).
 
-Next principal D3 question: existing beam-pair/chain validators reject physical
-caps and endpoint laws. Derive a bounded two-body endpoint contribution that
-coexists with the symmetric distributed potential. Distinguish cap–cap from
-end–interior ownership, retain both-body cross blocks and prevent phantom ends or
-duplicate directional point laws. Use one independent two-bar work/response case
-and a complete coupled directional derivative before broadening that profile.
-No new differentiation engine, solver stack or unrestricted native/impact replay.
+Next principal D3 question: extend genuine physical-end work to multi-cell B2
+curves through the existing consistent nearest-owner sparse assembly. Resolve
+endpoint nearest-target ownership, shared-material junction work and actual
+boundary terms; preserve both-body blocks, deduplication and full-path failures.
+Use one independent coupled response/work discriminator before broader admission.
+B3 endpoints, closed transitions, mesh/enforcement and independent acceptance
+remain required successors. No new solver/differentiation stack, unrestricted
+native/impact replay or full-programme speed/delivery forecast is authorized.
 
-Earlier prototype chronology, scoped speed evidence, source identities and failed
-or consumed authorities are retained in [plan82](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV82.md)
-→81→80. They are evidence, not renewed run authority.
+Earlier source identities, prototypes and failures remain in
+[plan83](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV83.md)
+→82→81. These links do not renew frozen or consumed execution authority.
 
 ## 1. Current technical position
 

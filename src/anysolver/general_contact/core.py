@@ -790,6 +790,9 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             from .beam_shell import validate_beam_shell_contact
 
             return validate_beam_shell_contact(model, definition, settings)
+        if any(surface.beam_end_caps == 'hemisphere' for surface in definition.surfaces):
+            from .beam_pair_ends import validate_beam_pair_ends
+            return validate_beam_pair_ends(model, definition, settings)
         from .beam_pair import validate_beam_pair_contact
 
         return validate_beam_pair_contact(model, definition, settings)
@@ -1271,7 +1274,10 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
 
                 manager = _BeamShellManager(model, definition, settings, initial_displacement)
         else:
-            if any(len(surface.element_ids) > 1 for surface in definition.surfaces):
+            if any(surface.beam_end_caps == 'hemisphere' for surface in definition.surfaces):
+                from .beam_pair_ends import BeamPairEndManager
+                manager = BeamPairEndManager(model, definition, settings, initial_displacement)
+            elif any(len(surface.element_ids) > 1 for surface in definition.surfaces):
                 from .beam_chain_pair import _BeamChainPairManager
 
                 manager = _BeamChainPairManager(model, definition, settings, initial_displacement)

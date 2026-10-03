@@ -1,4 +1,23 @@
 # General-contact capability ledger
+## Two-body B2 physical ends — 4 October
+
+Implemented/installed-tested development uses one B2 per side with explicit
+round radii, hemisphere point penalties and distinct line/endpoint units. One
+unique end/end spring or owned end/interior spring is composed with symmetric
+distributed work. Actual target projection response, both-body blocks and all-node
+end topology are retained. Exact rectangle gap, affine curve/ownership and line
+plateau checks reject unresolved closed paths. Restart binds topology/law/settings.
+Installed30pass6.650s/328585216B,243modules/496files match,JIT0/pools1.
+Independent two-bar response relative1.084e-15 vs1e-6, coupled work/tangents,
+body exchange/covariance, state/restart, junction/hidden-path and legacy checks pass.
+Ten runs/63records retain three initial oracle/API test defects. Source scrutiny
+found and closed the intermediate active line-clamp plateau path omission.
+Same-family scrutiny is supporting only, not independent engineering acceptance.
+B3/chains/closed transitions, finite rotation, mesh/enforcement qualification,
+native/friction/dynamics, application/release and full C2/D3 remain required.
+[Guide](GENERAL_CONTACT_BEAM_PAIR_ENDS_DEV.md),
+[evidence](d1_review_support/contact_beam_pair_endcaps_20261004/summary.json).
+
 ## Multiple fixed physical beam-end interactions — 4 October
 
 Implemented/installed-tested development PROFILE_ENDS composes existing
