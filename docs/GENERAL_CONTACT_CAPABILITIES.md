@@ -1,4 +1,21 @@
 # General-contact capability ledger
+## Optional physical shell skins and saved display — 3 October
+
+Public owner recovery uses the paired planar patch's reference skins and shared
+linearized director work maps. ANYfem434ec00 stores original face topology,
+side/formulation, explicit source/target metre coordinate fields and associations;
+the guarded scene/CSV consume saved artifacts. Independent formula/owner parity,
+drill/translation/polarity, invalid inputs/poses, actual force and fresh-model
+press/open/recontact restart pass. Final installed40pass22.104s/213024768B,
+315loaded-module and588package-file byte matches; JIT0/pools1,180s/953MiB.
+Supporting same-family source review corrected public validation and saved
+interaction/profile checks. Failures and181raw records retained; no independent
+engineering acceptance, normal application admission, finite-SO(3) reconstruction,
+current-area physical-pressure recovery, release or performance claim.
+[Guide](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_PHYSICAL_SKINS_DEV.md),
+[evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/contact_skin_evidence_20261003/summary.json).
+All scientific decisions, consumed authorities and previous acceptance scopes remain.
+
 ## Explicit physical-wrench result origin — 3 October
 
 Patch owner reports the existing global-zero moment origin without changing

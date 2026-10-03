@@ -265,6 +265,8 @@ _GENERAL_CONTACT_EXPORTS = frozenset({
     "report_general_contact_capability",
     "ContactRequestIdentity", "ContactRequestIdentityError",
     "identify_general_contact_request", "verify_general_contact_request",
+    "ContactSkinGeometryError", "ContactShellSkinFace", "ContactShellSkinGeometry",
+    "recover_general_contact_shell_skins",
 })
 from .fracture import (
     DeletedElementRecord,
@@ -740,6 +742,10 @@ __all__ = [
     "ContactRequestIdentityError",
     "identify_general_contact_request",
     "verify_general_contact_request",
+    "ContactSkinGeometryError",
+    "ContactShellSkinFace",
+    "ContactShellSkinGeometry",
+    "recover_general_contact_shell_skins",
     "DeletedElementRecord",
     "ElementDeletionConfig",
     "FractureConfig",

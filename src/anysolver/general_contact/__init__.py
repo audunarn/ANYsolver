@@ -19,6 +19,10 @@ _REQUEST_EXPORTS = frozenset({
     "ContactRequestIdentity", "ContactRequestIdentityError",
     "identify_general_contact_request", "verify_general_contact_request",
 })
+_SKIN_EXPORTS = frozenset({
+    "ContactSkinGeometryError", "ContactShellSkinFace", "ContactShellSkinGeometry",
+    "recover_general_contact_shell_skins",
+})
 _TRANSIENT_EXPORTS = frozenset({
     "ContactNodalLoadHistory", "ContactTransientSolverControls",
     "TransientContactResults", "TransientContactSettings",
@@ -35,6 +39,8 @@ def __getattr__(name: str):
         module = "static_path"
     elif name in _REQUEST_EXPORTS:
         module = "request_identity"
+    elif name in _SKIN_EXPORTS:
+        module = "skin_geometry"
     elif name in _TRANSIENT_EXPORTS:
         module = "transient"
     else:
@@ -66,6 +72,10 @@ __all__ = [
     "ContactRequestIdentityError",
     "identify_general_contact_request",
     "verify_general_contact_request",
+    "ContactSkinGeometryError",
+    "ContactShellSkinFace",
+    "ContactShellSkinGeometry",
+    "recover_general_contact_shell_skins",
     "ContactNodalLoadHistory",
     "ContactTransientSolverControls",
     "TransientContactResults",

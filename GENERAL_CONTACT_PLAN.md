@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.75. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.76. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -13,6 +13,27 @@ This plan chooses the shortest useful implementation route within that authority
 capabilities, scientific targets and exclusions. Historical plans and failures
 remain evidence; frozen or consumed execution authorities are never renewed.
 Publication, merging, release and historical-default changes are separate actions.
+
+Current D8 slice: ANYfem434ec00 persists optional owner-recovered physical shell
+skins and renders original Q4/S3 faces on them. Shared reference/linearized-director
+work maps, offsets, sides and formulation identities are preserved; numerical
+reference-pressure coefficients retain their original label. Independent coordinate
+formula, owner co-location, drill/translation/polarity, actual force fixture, saved
+artifacts/CSV/scene and press/open/recontact with fresh active restart pass. Final
+installed40pass22.104s/213024768B,315module and588package-file byte matches,
+JIT0/Numba1/BLAS1, cap180s/953MiB. Supporting review corrected public-profile
+and saved-identity checks; all initial failures are retained. This is development
+reporting/display, not finite-rotation or current-area traction recovery, normal
+application admission, engineering acceptance, release or a speed claim.
+[Guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_PHYSICAL_SKINS_DEV.md).
+
+No contact equation, enforcement/state/restart contract, numerical tolerance or
+historical default changed in this slice. No-contact exports remain lazy; unchanged
+mechanics and no-contact evidence are reused by that impact assessment. Accepted
+profile source/model admission still requires the missing authorized historical
+archive/current-source impact disposition. Do not recreate consumed authorities.
+Pending it, choose a genuine remaining mechanics row from section4 rather than
+inventing an admission certificate. Preserve the separate impact/native restrictions.
 
 
 Current reporting slice: ANYfem3d6a7bb adds both owner-reported global contact
