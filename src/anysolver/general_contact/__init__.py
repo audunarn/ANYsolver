@@ -31,7 +31,9 @@ _TRANSIENT_EXPORTS = frozenset({
 
 
 def __getattr__(name: str):
-    if name in _CORE_EXPORTS:
+    if name == "RigidCappedCylinder":
+        module = "capped_cylinder"
+    elif name in _CORE_EXPORTS:
         module = "core"
     elif name in _CAPABILITY_EXPORTS:
         module = "capability"
@@ -54,6 +56,7 @@ def __dir__():
     return sorted(set(globals()) | set(__all__))
 
 __all__ = [
+    "RigidCappedCylinder",
     "ContactCapabilityReport",
     "ContactDefinition",
     "ContactInteraction",

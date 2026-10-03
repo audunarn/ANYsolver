@@ -2,72 +2,66 @@
 
 Full C0–C9 ACTIVE/incomplete. Solver root:
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001; HEAD binds this checkpoint.
-Goal2026-09-30.4 / plan2026-10-03.76 govern. Protected original must not be accessed.
+branch codex/contact-main-reconcile-20261001; local HEAD binds this checkpoint.
+Goal2026-09-30.4 / plan2026-10-03.77 govern. Protected original must not be accessed.
 No other human-chat messages, push/merge/publication/release/default changes or
 consumed run replay. Local commits authorized. All owned runs/reviewer terminal.
-History docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART97.md
-→96→95→94→93 retains previous failures, evidence, source identities and authorities.
+History docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART98.md
+→97 retains exact previous failures/source identities and authorities.
 
-NEW D8 physical-skin slice complete in development: public ContactShellSkinFace/
-Geometry/Error and recover_general_contact_shell_skins use exact paired Q4/S3
-owner reference skins/shared nodal linearized-director work maps. Original faces,
-side/offset/formulation, no clipping diagonals. Public plus local validation and
-qualified lifecycle guards required. Explicit include_fields+include_skin_geometry
-on mapped developer solve adds four physical-position fields/topology/associations.
-Guarded scene verifies stored interaction/profile, mesh lineage, selection, corner
-ownership, descriptors and coordinates. Scale measures motion from physical skins;
-node markers/unselected geometry retain structural meaning. Pressure is still a
-numerical reference coefficient, not recovered current-area traction. No finite-SO3
-skin reconstruction or result/model certificate inferred from standalone recovery.
+NEW D2/D3 finite-cylinder slice: public immutable RigidCappedCylinder, fixed axis,
+optional prescribed translation, flat caps. One round beam selection/line law,
+concentric elastic scalar/von-Karman B2/B3; no beam endpoint caps/friction/native
+or shell admission. The existing structural owner rejects curved/nonmidpoint B3
+references. True deformed quadratic interpolation, cap/side/rim potential work,
+rational Bernstein full-curve gap and affine relative-path bounds implemented.
+Restart binds half-length and geometry revision. Whole-centreline exterior proof
+and gap_tolerance<beam_radius exclude a known moving interior-seam tangent defect;
+do not enable interior contact using smooth-branch Hessians. Initial penetration
+and unresolved resource/integration/enclosure limits explicitly fail.
 
-ANYfem root C:/ANYworkspaceWork/ANYfem-contact-intent, branch
-codex/anyfem-contact-intent, HEAD434ec00. Actual force/KKT, independent geometry
-formula, owner parity, drill/translation/polarity, saved project/mesh/result/CSV/scene,
-press/open/recontact and fresh active restart pass. Installed40pass22.104s,
-213024768B peak,315loaded modules/588package files byte-match; effective JIT0,
-Numba1/BLAS1,180s/953MiB cap. Same-family supporting source review fixed public
-profile gating and persisted interaction/profile checks; no engineering acceptance.
-Initial test/API mistakes and wrong report nesting failure retained. Guide/evidence:
-app docs/GENERAL_CONTACT_PHYSICAL_SKINS_DEV.md and
-contact_skin_evidence_20261003/{summary.json,raw.zip,review.md},181raw records.
-External bounded runner C:/ANYworkspaceWork/contact_skin_20261003/run.py;
-final installed target installed2. Private wheels solver
-b8d3bbeb4c31bd4501ba0a7a59ea40cf9db40b68d36fc4af04d8f4736d6ed9fc;
-app8355478c8a4867722e35e98d38e842d68946c12c19f8da8d7380f0b7b1b978d6.
-No force/tangent/enforcement/material/contact state/restart/tolerance/default change;
-no-contact exports remain lazy. Unaffected evidence reused by source-impact analysis.
-No speed, arbitrary-model admission or release claim. Shared main untouched.
+Source34 checks; installed37 plus1historical source-child compatibility check,
+then2additional installed-root checks pass. Actual force/displacement, moving-tool
+work, fresh active restart and altered half-length rejection covered; independent
+scalar geometry/energy, virtual work, tangent, covariance, two/narrow pockets,
+repeated grazing and clear-end through-crossing checks pass. Sphere/infinite
+cylinder compatibility retained. Final route13.877s/350388224B,237imported modules
+and490package files byte-match; effective JIT0/pools1, cap180s/953MiB. Solver wheel
+4233daa198dee7859f38c8aeb75b7b06bd22f08ff0d17f002d71748d41fb704c.
+Guide docs/GENERAL_CONTACT_CAPPED_CYLINDER_DEV.md; evidence
+docs/d1_review_support/contact_capped_cylinder_20261003/{summary.json,raw.zip,review.md},
+122raw records/23bounded runs. External runner
+C:/ANYworkspaceWork/contact_capped_cylinder_20261003/run.py; private installed target
+installed. Failures include correlation/front/grazing arithmetic, fixture mistakes,
+actuator field name and overstrict facade import test; all retained. Same-family
+supporting source scrutiny is not engineering acceptance. Mixed-panel Gauss error
+estimate is not a general integration-error certificate. Broader spatial/enforcement
+refinement, pairings, independently accepted caps and normal application admission
+remain open. Next choose a genuine remaining mechanics/refinement row, not metadata.
 
-Prior request correspondence solver7f601e29/app96d6f86 remains valid: actual files,
-guarded model, definitions/settings, effective path/dead load and continuation
-integrity are immutable request metadata. Verified before/after actual solve with
-labels detached at mapping. Not execution proof or live-bytecode authority. Details
-and installed26pass evidence in Part97 and app request identity guide. Prior ABC
-bootstrap157ec458 and wrench reporting4a87da55/3d6a7bb retain their scopes/failures.
+ANYfem root C:/ANYworkspaceWork/ANYfem-contact-intent branchcodex/anyfem-contact-intent,
+HEAD434ec0041733fa750f71a14fb8ca78e42f8eca64, clean/unchanged in this slice.
+Prior physical-skin/request/wrench/bootstrap slices and installed evidence remain
+valid within scopes recorded in Part98→97. No physical-pressure/finite-SO3 recovery
+or arbitrary-model/source acceptance inferred from reporting or validation.
 
-Application admission remains OPEN: old D1/D2 named source/profile acceptance does
-not certify arbitrary current-source models. Changed outward swept-orientation
-admission and lifecycle scan cadence need current force/weighted-displacement/path
-impact disposition. Referenced historical freeze/raw records are absent in this
-reconciler; authorized archive requested asynchronously, NO answer yet. Do not access
-protected original, reconstruct consumed authority or infer admission from validator.
-Normal jobs/capability evidence flags remain rejecting/false. Next: use that archive
-if supplied; otherwise choose a genuine remaining mechanics row in plan section4.
-Do not spend another turn recreating completed reporting checks or metadata helpers.
+PENDING accepted D1 source-impact archive: changed outward swept-orientation
+admission/lifecycle cadence require current force/weighted-displacement/path impact.
+Referenced old lifecycle/displacement freezes/raw are absent in this reconciler;
+authorized copies requested, NO answer. Do not access protected original, reconstruct
+consumed authorities or infer admission. Normal application jobs/flags still reject.
 
-PENDING impact policy question, NOT approved: omit tighter hidden-point safeguard
-while retaining20um polygon swept gap. No policy/cap/tolerance/default change or old
-full-case retry. RefinedV4/V16 timed out900s at1.79779ms/3ms;868strong/642fail
-655.090s,218weak proofs10.324s; actual65nm hidden pulse and first sign-error oracle
-retained. Native grazing friction NONPASS−1.33564e−13m,223queries/448paths/21support
-10.364s; missing closed alpha_q=-G_q/G_alpha plus mixed-work enclosure. No saved/full/
-owner/split retry, reset/zero response, cap/tolerance growth or native acceptance.
-Old Q4 finite-difference application cycle timeout180.124s has no unchanged replay.
+PENDING impact policy request to omit tighter hidden-point safeguard while retaining
+20um polygon swept budget: NO approval. No policy/cap/tolerance change or old full-case
+retry. V4/V16 NONPASS900s at1.79779ms/3ms:868strong/642fail655.090s,218weak10.324s;
+real65nm pulse and initial oracle sign mistake retained. Native grazing friction
+NONPASS−1.33564e−13m,223queries/448paths/21support10.364s, missing closed
+alpha_q=-G_q/G_alpha and mixed-work enclosure. No saved/full/owner/split retry,
+reset/zero response, cap/tolerance growth or native acceptance. Old Q4 FD appcycle
+timeout180.124s remains failed without unchanged replay.
 
-All remaining shell/beam/friction/material/continuation, impact/native dynamics,
-application/installed/scale programme requirements remain. No supportable forecast.
-Budget120active hours: latest goal350035+3120=353155s(~98.10h),~21.90h left at
-checkpoint preparation. Check actual clock before substantial work. At120h preserve
-and request scope/time/method decision; never silently extend or complete. Lower
-tiers previously unavailable; no unchanged reprobe. Goal ACTIVE.
+Budget120active hours: goal354016+3120=357136s(~99.20h) at18:39:34UTC3October;
+check actual clock before substantial work. At120h preserve/request time/scope/method
+decision; never silently extend or mark full goal complete. Lower tiers previously
+unavailable; no unchanged reprobe. All remaining D2–D8 programme rows required.
+No broad2x speed or supportable full-delivery forecast.

@@ -762,6 +762,9 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
                                         analysis_control=analysis_control)
     if any(surface.beam_radius is not None for surface in definition.surfaces):
         if definition.rigid_bodies:
+            if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind == "capped_cylinder":
+                from .capped_cylinder import validate_capped_cylinder_beam
+                return validate_capped_cylinder_beam(model, definition, settings)
             if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {
                 "sphere", "cylinder",
             }:
@@ -1287,7 +1290,10 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
             manager = WarpedQ4PlaneManager(model, definition, settings,
                                            initial_displacement)
         elif any(surface.beam_radius is not None for surface in definition.surfaces):
-            if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {
+            if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind == "capped_cylinder":
+                from .capped_cylinder import CappedCylinderBeamManager
+                manager = CappedCylinderBeamManager(model, definition, settings, initial_displacement)
+            elif len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind in {
                 "sphere", "cylinder",
             }:
                 from .beam_radial import _BeamRadialManager

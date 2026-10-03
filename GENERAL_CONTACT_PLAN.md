@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.76. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.77. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -14,27 +14,28 @@ capabilities, scientific targets and exclusions. Historical plans and failures
 remain evidence; frozen or consumed execution authorities are never renewed.
 Publication, merging, release and historical-default changes are separate actions.
 
-Current D8 slice: ANYfem434ec00 persists optional owner-recovered physical shell
-skins and renders original Q4/S3 faces on them. Shared reference/linearized-director
-work maps, offsets, sides and formulation identities are preserved; numerical
-reference-pressure coefficients retain their original label. Independent coordinate
-formula, owner co-location, drill/translation/polarity, actual force fixture, saved
-artifacts/CSV/scene and press/open/recontact with fresh active restart pass. Final
-installed40pass22.104s/213024768B,315module and588package-file byte matches,
-JIT0/Numba1/BLAS1, cap180s/953MiB. Supporting review corrected public-profile
-and saved-identity checks; all initial failures are retained. This is development
-reporting/display, not finite-rotation or current-area traction recovery, normal
-application admission, engineering acceptance, release or a speed claim.
-[Guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_PHYSICAL_SKINS_DEV.md).
+Current D2/D3 slice: an explicit finite flat-capped cylinder now owns exterior
+round B2/B3 line contact through the ordinary static force/displacement route.
+Side/cap/rim work, whole-curve rational Bernstein gap bounds, exact correlated
+inactivity and affine-path crossing control preserve the declared line potential.
+The initial interior moving-seam tangent defect is explicitly excluded by a
+whole-centreline exterior certificate and gap budget below tube radius. No cap,
+tolerance or legacy geometry schema change. Actual moving-tool work, active fresh
+restart and incompatible half-length rejection pass. Source34 checks; installed37
+checks plus1source-child compatibility and2additional installed checks pass.
+Final route13.877s/350388224B,237modules/490package files byte-match, JIT0/pools1.
+Caps and existing sphere/infinite-cylinder routes pass; all failures retained.
+[Guide/evidence](docs/GENERAL_CONTACT_CAPPED_CYLINDER_DEV.md).
 
-No contact equation, enforcement/state/restart contract, numerical tolerance or
-historical default changed in this slice. No-contact exports remain lazy; unchanged
-mechanics and no-contact evidence are reused by that impact assessment. Accepted
-profile source/model admission still requires the missing authorized historical
-archive/current-source impact disposition. Do not recreate consumed authorities.
-Pending it, choose a genuine remaining mechanics row from section4 rather than
-inventing an admission certificate. Preserve the separate impact/native restrictions.
-
+This is tested development, not engineering/application admission or release.
+Mixed-panel Gauss estimates are not a rigorous general integration-error bound;
+spatial/enforcement refinement and independent acceptance remain open. The next
+mechanics slice should address an actual remaining pairing or refinement gap,
+with a bounded independent discriminator, not duplicate reporting infrastructure.
+Optional shell skins/display from ANYfem434ec00 retain their previously tested
+scope; [previous plan](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261003_REV76.md)
+preserves its full evidence. Missing historical archive/current-source admission
+and the separate impact/native restrictions remain pending. Full C0–C9 is active.
 
 Current reporting slice: ANYfem3d6a7bb adds both owner-reported global contact
 moments with explicit origin/units through persisted artifacts and CSV. Patch

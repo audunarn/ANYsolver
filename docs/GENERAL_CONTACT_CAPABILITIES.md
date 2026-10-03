@@ -1,4 +1,27 @@
 # General-contact capability ledger
+## Exterior classical round-line capped cylinder — 3 October
+
+New public RigidCappedCylinder descriptor and exact development profile preserve
+old plane/sphere/infinite-cylinder APIs. True B2/B3 interpolation, cap/side/rim
+potential derivatives, conservative entire-curve gap and relative affine-path
+checks, prescribed-tool work and active/incompatible restart are integrated.
+Whole-centreline exterior certification excludes the known moving medial-seam
+tangent defect. Straight-midpoint B3 reference admission belongs to the existing
+structural owner. Initial penetration, unresolved panels/bounds and resource
+exhaustion reject without contact dropping or softened mechanics.
+
+Source34 checks; installed37 plus1historical source-child compatibility check,
+then2additional installed checks pass. Final route13.877s/350388224B;237imported
+solver modules/490package files byte-match; JIT0/pools1,180s/953MiB. Independent
+scalar work/geometry oracles, derivative/covariance, narrow/two pockets, grazing,
+crossing, actual static force/displacement/tool and restart cases are covered.
+Mixed-panel integration remains an adaptive estimate rather than general rigorous
+certification. Supporting same-family review is not independent acceptance.
+Status: implemented/tested development; C2/D2/D3, broader refinement, physical
+beam endpoint/junction and engineering/application admission remain open.
+[Guide](GENERAL_CONTACT_CAPPED_CYLINDER_DEV.md), [evidence](d1_review_support/contact_capped_cylinder_20261003/summary.json).
+All122raw records/23bounded runs and previous failures are retained.
+
 ## Optional physical shell skins and saved display — 3 October
 
 Public owner recovery uses the paired planar patch's reference skins and shared

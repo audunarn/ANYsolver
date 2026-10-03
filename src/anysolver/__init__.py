@@ -255,6 +255,7 @@ from .contact import (
     validate_contact_configuration,
 )
 _GENERAL_CONTACT_EXPORTS = frozenset({
+    "RigidCappedCylinder",
     "ContactCapabilityReport", "ContactDefinition", "ContactInteraction", "ContactPathControl",
     "ContactPathNodalForce", "ContactPathProgram", "ContactResults",
     "ContactSolverSettings", "ContactSurface", "ContactValidationReport",
@@ -524,6 +525,7 @@ from .sesam_fem import (
 __version__ = "0.4.7"
 
 __all__ = [
+    "RigidCappedCylinder",
     # Core classes
     "DOFManager",
     "FEMesh",
