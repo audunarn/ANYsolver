@@ -1,45 +1,48 @@
 # General contact restart — 3 October 2026
 
-Full C0–C9 ACTIVE/incomplete. Goal2026-09-30.4 / plan2026-10-03.80 govern.
+Full C0–C9 ACTIVE/incomplete. Goal2026-09-30.4 / plan2026-10-03.81 govern.
 Solver: C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001; local HEAD binds this checkpoint.
 Protected original must not be accessed. No other human-chat messages,
 push/merge/publication/release/default changes or consumed authority replay.
 Local commits authorized. No owned live runs; supporting reviewer terminal.
-[History](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART101.md)
-→100→99 retains mechanics/evidence/failures/identities/restrictions.
+[History](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART102.md)
+→101→100→99 retains mechanics/evidence/failures/identities/restrictions.
 
 ## Current integrated outcome
 
-B2/B3 exterior capped cylinder now admits explicit hemisphere physical ends and
-separate N/m endpoint stiffness. Additive distributed-line plus endpoint-point
-potential; actual B3 derivatives/all-material-node incidence prevent phantom caps.
-Exact interval affine ownership rejects active switches; atomic cylinder feature
-seams reject after reviewer counterexample. Plane caps share topology correction
-and new contract identity; uncapped keys unchanged. Small-motion elastic exterior
-scope only. No dynamic/friction/native/engineering/application admission.
+Two D3 physical-end slices committed locally. First6158f882 adds exterior finite
+capped-cylinder hemisphere endpoints: additive line-plus-point potential, actual
+B3 derivatives/all-material-node topology, exact affine ownership, and atomic
+cylinder feature-seam rejection. Installed67pass29.849s/337104896B,209modules/492files
+parity; failures retained in10runs/63records. Earlier unaligned tool-work1e-6 gate
+stays NONPASS; independent history isolates activation trapezoid error. A different
+activation-staged path/open restart passes2.579e-12 without tolerance change.
+Unevaluated swept preflight infinity now records null residual/explicit reason;
+computed nonfinite results still fail. [Guide/evidence](docs/GENERAL_CONTACT_CAPPED_CYLINDER_ENDCAPS_DEV.md).
 
-Installed67checks pass29.849s/337104896B;209modules/492files byte-match,JIT0/pools1,
-180s/953MiB. Independent scalar work/tangents/one-sided seams/wrench/covariance,
-actual force/displacement/tool, active/open fresh restart, incompatible law,
-public example and existing beam/current installed no-contact checks pass.
-Swept preflight rejects before assembly: null residual plus explicit not-evaluated
-reason replaces its infinity sentinel only; genuine nonfinite values still fail.
-Activation-staged work relative error2.579e-12 meets unchanged1e-6 gate. Old
-unaligned5.8413e-6 defect stays NONPASS; separate force history isolates activation
-trapezoid error. No general event claim.10runs/63records preserve all failures.
-[Guide](docs/GENERAL_CONTACT_CAPPED_CYLINDER_ENDCAPS_DEV.md),
-[evidence](docs/d1_review_support/contact_capped_endcaps_20261003/summary.json).
-Wheel SHA256:0dc6bc06b37b1007f8eb740544054a0f684de06ec46fb0041e2a9d73058b8f88.
-External runner C:/ANYworkspaceWork/contact_capped_endcaps_20261003/run.py,
-private installed target there; raw archive includes runner/source hashes/runtime.
+Successor plane cap owner now checks exact affine end-gap/orientation roots:
+closed crossings and closed tangent candidates reject; open changes remain valid.
+Actual B3 derivative, not chord. Cap-only ownership revision/subdivision setting
+bind restart; uncapped identity/arithmetic order preserved. Installed23pass4.613s/
+320753664B,208modules/492files parity,JIT0/pools1,180s/953MiB. Independent axial-bar
+response, active fresh restart/incompatible control, tilted B2/curved-B3 complete
+work/tangent/wrench and ownership, public --plane/cylinder examples, earlier
+plane/junction/current installed no-contact compatibility pass.7runs/31records
+retain preliminary artifacts and supporting review's missing-setting finding.
+[Guide](docs/GENERAL_CONTACT_C2_BEAM_PLANE.md),
+[evidence](docs/d1_review_support/contact_plane_endownership_20261003/summary.json).
+Current wheel SHA256:bd6dadf514ebb507625d00e57bb3b3c138f9bfe43ef5bba585e88976957057b4.
+External runner C:/ANYworkspaceWork/contact_plane_endownership_20261003/run.py,
+private target installed2. Supporting same-family scrutiny is not engineering
+acceptance; no finite-rotation structural/native/friction/impact/application admission.
 
-Previous B2-chain small-motion independent Timoshenko/P1 cases and10.810x narrow
-guided benchmark retain recorded scope; no general speed/delivery forecast.
-Mixed-panel Gauss estimates are not rigorous arbitrary integration certificates.
-Supporting same-family scrutiny is not independent engineering acceptance.
-Next genuine outstanding pairing/retained work/refinement row using a bounded
-independent discriminator; do not repeat passed checks for unchanged inputs.
+Previous B2-chain code/reference and10.810x guided speed evidence retain recorded
+scope. Mixed-panel Gauss estimates are not rigorous arbitrary integration proof.
+No general speed/delivery forecast. Next inspect missing sphere/infinite-cylinder
+beam-end work and implement through one shared shape-owned end-work/path contract,
+using bounded independent geometry/work/root checks. No repeat of unchanged passed
+suites or restricted native/impact cases. Full C0–C9 remains incomplete.
 
 ## Preserved blockers and boundaries
 
@@ -59,6 +62,6 @@ alpha_q=-G_q/G_alpha and mixed-work enclosure. No saved/full/owner/split retry,
 reset/zero-response/native acceptance or cap growth. Q4 FD appcycle180.124s timeout
 remains unchanged. Lower tiers unavailable; no unchanged reprobe.
 
-Budget120active hours: goal363213+3120=366333s (~101.76h) at21:12:52UTC3October.
+Budget120active hours: goal364510+3120=367630s (~102.12h) at21:34:28UTC3October.
 Check current clock before substantial work. At120h preserve/request time/scope/
 method decision; never silently extend or mark full goal complete. D2–D8 still required.

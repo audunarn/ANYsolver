@@ -1,4 +1,21 @@
 # General-contact capability ledger
+## Fixed-plane physical-end ownership — 3 October
+
+Exact end gap and actual B2/B3 outward derivative projections certify affine
+ownership-root gaps. Closed crossings/tangent candidates reject; open changes
+remain admissible. Cap-only ownership/subdivision restart binding prevents stale
+continuation; historical uncapped identity and limiter arithmetic are unchanged.
+Source15plus4changed and installed23checks pass4.613s/320753664B,208modules/492files
+byte-match,JIT0/pools1. Independent axial-bar response, active restart/incompatible
+control, tilted B2/curved-B3 work/tangent/wrench and ownership, public plane/cylinder
+examples and earlier plane/junction/no-contact cases pass. Seven runs/31records
+retain preliminary artifacts and reviewer-found missing subdivision binding.
+Supporting same-family scrutiny is not independent acceptance. Implemented/tested
+development only; no general finite-rotation, native, friction, dynamic, application
+admission or release. Broader endpoint/refinement and full C2/D3 remain open.
+[Guide](GENERAL_CONTACT_C2_BEAM_PLANE.md),
+[evidence](d1_review_support/contact_plane_endownership_20261003/summary.json).
+
 ## Capped-cylinder physical beam ends — 3 October
 
 Implemented/installed-tested development profile

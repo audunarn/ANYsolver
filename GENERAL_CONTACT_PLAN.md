@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.80. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.81. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -14,7 +14,30 @@ capabilities, scientific targets and exclusions. Historical plans and failures
 remain evidence; frozen or consumed execution authorities are never renewed.
 Publication, merging, release and historical-default changes are separate actions.
 
-Current D3 slice: exterior capped-cylinder B2/B3 contact now includes declared
+Current D3 plane endpoint slice closes the known finite-energy ownership hole.
+Exact represented end gap and actual B2/B3 outward derivative are affine along
+static paths. Closed ownership roots and closed tangent candidates reject;
+open changes remain admissible. Trial cutbacks are bounded. Cap-only ownership
+revision and subdivision settings bind restart; uncapped identity/arithmetic
+order are preserved. No generalized tangent, hidden zero force or tolerance change.
+
+Source15plus4changed checks and installed23checks pass. Final4.613s/320753664B,
+208modules/492files byte-match,JIT0/pools1,180s/953MiB. Independent axial-bar
+reaction, active fresh restart/incompatible subdivision, tilted B2/curved-B3
+work/tangent/wrench and ownership, public --plane/cylinder examples and old
+plane/topology/no-contact compatibility pass. Seven runs/31records retain the
+preliminary artifact and review-found contract omission. Supporting same-family
+review is not independent engineering acceptance. C2/D3 and full C0–C9 remain open.
+[Guide](docs/GENERAL_CONTACT_C2_BEAM_PLANE.md),
+[evidence](docs/d1_review_support/contact_plane_endownership_20261003/summary.json).
+
+Next bounded mechanics slice: inspect existing classical radial owners for genuine
+sphere/infinite-cylinder beam-end work. Prefer one shared end-work/path contract
+with shape-owned smooth distance maps and conservative ownership roots over
+additional independent solver stacks. Keep public laws and existing no-cap
+selection; reject unsupported branches. No native/impact restricted-case replay.
+
+Preceding D3 slice: exterior capped-cylinder B2/B3 contact now includes declared
 physical hemisphere ends with separately dimensioned N/m endpoint stiffness.
 The additive line-plus-point potential has complete endpoint work/tangent and
 both-body force/moment reporting. Actual B3 derivatives and all classical material

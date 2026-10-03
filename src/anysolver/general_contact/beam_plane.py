@@ -9,6 +9,7 @@ development profile; its two regularizations have different dimensions.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from fractions import Fraction
 
 import numpy as np
 from scipy import sparse
@@ -246,6 +247,29 @@ class _BeamPlaneManager:
         return min(_minimum_polynomial(_gap_coefficients(self._heights(cell, u)))
                    for cell in self.cells)
 
+    def _end_plane_coordinates(self,cell,local,outward,u):
+        """Exact represented end gap and actual outward derivative projection."""
+        positions=cell.reference+u[cell.dofs]
+        heights=[sum((Fraction.from_float(float(x))-Fraction.from_float(float(p)))
+            *Fraction.from_float(float(n)) for x,p,n in zip(position,self.point,self.normal))
+            for position in positions]
+        gap=heights[local]-Fraction.from_float(self.radius)
+        if len(heights)==2:derivative=heights[1]-heights[0]
+        elif local==0:derivative=(-3*heights[0]+4*heights[1]-heights[2])/2
+        else:derivative=(heights[0]-4*heights[1]+3*heights[2])/2
+        return gap,int(outward)*derivative
+
+    def _end_ownership_admissible(self,start,end):
+        for cell,local,outward in self.endpoints.values():
+            g0,q0=self._end_plane_coordinates(cell,local,outward,start)
+            g1,q1=self._end_plane_coordinates(cell,local,outward,end)
+            if min(g0,g1)>=0:continue  # The entire affine end path is open.
+            if (q0<0 and q1<0) or (q0>0 and q1>0):continue
+            if q0==q1:return False  # Closed, tangent ownership throughout.
+            root=-q0/(q1-q0)
+            if 0<=root<=1 and g0+root*(g1-g0)<0:return False
+        return True
+
     def evaluate(self, displacement: np.ndarray, *, tangent: bool = True):
         n_dof = self.model.mesh.dof_manager.total_dofs
         u = np.asarray(displacement, dtype=float).reshape(-1)
@@ -286,20 +310,12 @@ class _BeamPlaneManager:
                                         entries[key] = entries.get(key, 0.0) + float(block[row, col])
         if self.end_caps == "hemisphere":
             for node, (cell, local, outward_sign) in self.endpoints.items():
-                positions = cell.reference + u[cell.dofs]
-                if len(cell.node_ids) == 2:
-                    tangent_vector = positions[1] - positions[0]
-                elif local == 0:
-                    tangent_vector = -1.5 * positions[0] + 2.0 * positions[1] - 0.5 * positions[2]
-                else:
-                    tangent_vector = 0.5 * positions[0] - 2.0 * positions[1] + 1.5 * positions[2]
-                # The cap owns only its outward hemisphere. A tangent plane
-                # direction belongs to the distributed side line.
-                if outward_sign * float(tangent_vector @ self.normal) >= 0.0:
-                    continue
-                gap = float((positions[local] - self.point) @ self.normal - self.radius)
-                if gap >= 0.0:
-                    continue
+                exact_gap,orientation=self._end_plane_coordinates(cell,local,outward_sign,u)
+                if exact_gap>=0:continue
+                if orientation==0:
+                    raise ValueError('active beam-plane end has unresolved cap-to-side ownership')
+                if orientation>0:continue
+                gap=float(exact_gap)
                 active_endpoints += 1
                 endpoint_energy += 0.5 * self.endpoint_stiffness * gap * gap
                 dofs = cell.dofs[local]
@@ -341,27 +357,39 @@ class _BeamPlaneManager:
         return force, tangent_matrix, results
 
     def admissible_step_fraction(self, start: np.ndarray, end: np.ndarray) -> float:
-        first = self._minimum_gap(np.asarray(start, dtype=float).reshape(-1))
-        last = self._minimum_gap(np.asarray(end, dtype=float).reshape(-1))
+        start=np.asarray(start,dtype=float).reshape(-1)
+        end=np.asarray(end,dtype=float).reshape(-1)
+        first = self._minimum_gap(start)
+        last = self._minimum_gap(end)
         if first < -self.gap_tolerance:
             raise ValueError("committed beam-plane pose exceeds the gap tolerance")
-        if last >= -self.gap_tolerance:
+        if last >= -self.gap_tolerance and self._end_ownership_admissible(start,end):
             return 1.0
         self.swept_trial_cutbacks += 1
         denominator = first - last
-        fraction = (first + self.gap_tolerance) / denominator if denominator > 0.0 else 0.0
-        return max(0.0, min(1.0, 0.98 * fraction))
+        fraction=1.0
+        if last < -self.gap_tolerance:
+            # Preserve the historical no-cap arithmetic and operation order.
+            fraction=(first+self.gap_tolerance)/denominator if denominator>0. else 0.0
+            fraction=max(0.0,min(1.0,0.98*fraction))
+        for _ in range(self.settings.maximum_swept_subdivisions):
+            if self._end_ownership_admissible(start,start+fraction*(end-start)):
+                return fraction
+            fraction*=.5
+        return 0.0
 
     def swept_increment_admissible(self, start: np.ndarray, end: np.ndarray,
                                    _start_factor: float,
                                    _end_factor: float) -> bool:
         # For a fixed plane, every material centreline gap is affine along a
         # linear structural increment. Endpoint certification bounds the sweep.
-        first = self._minimum_gap(np.asarray(start, dtype=float).reshape(-1))
-        last = self._minimum_gap(np.asarray(end, dtype=float).reshape(-1))
+        start=np.asarray(start,dtype=float).reshape(-1)
+        end=np.asarray(end,dtype=float).reshape(-1)
+        first = self._minimum_gap(start)
+        last = self._minimum_gap(end)
         if first < -self.gap_tolerance:
             raise ValueError("committed beam-plane pose exceeds the gap tolerance")
-        if last < -self.gap_tolerance:
+        if last < -self.gap_tolerance or not self._end_ownership_admissible(start,end):
             self.swept_trial_cutbacks += 1
             return False
         return True
@@ -388,6 +416,8 @@ class _BeamPlaneManager:
         }
         if self.end_caps == "hemisphere":
             contract["end_topology_revision"] = "all_classical_material_node_incidence_v1"
+            contract["hemisphere_ownership_revision"] = "fixed_plane_exact_affine_ownership_v1"
+            contract["settings"]["maximum_swept_subdivisions"] = self.settings.maximum_swept_subdivisions
             contract["physical_endpoints"] = [
                 {"node": node, "element": cell.element_id, "local": local}
                 for node, (cell, local, sign) in sorted(self.endpoints.items())

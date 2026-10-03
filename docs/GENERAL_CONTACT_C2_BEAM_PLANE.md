@@ -53,9 +53,15 @@ selected cells and rejects a larger definition before assembly.
 classical-beam mesh, and only when the plane approaches that cap's outward
 half-space. A shared beam junction never receives an endpoint spring. The
 distributed side line and the endpoint are distinct integration features.
-The cap switch is nonsmooth at a tangent approach and has not been qualified
-there. The point spring is a regularized feature force, not a Hertz pressure
-model.
+An active cap-to-side switch would remove finite endpoint energy. Exact represented
+end gaps and actual B2/B3 outward derivative projections are affine along the
+declared static path. The owner checks the gap at every exact ownership root:
+a closed crossing cuts back or rejects; a crossing after opening is admissible.
+A closed tangent candidate rejects rather than silently dropping its point force.
+The bounded trial limiter uses the existing subdivision setting. Cap checkpoints
+bind that setting, physical topology and ownership revision; incompatible older
+cap contracts reject. Uncapped identities and limiter arithmetic are unchanged.
+The point spring is a regularized feature force, not a Hertz pressure model.
 
 The runnable [B3 example](../examples/general_contact_round_beam_plane.py)
 prescribes midpoint displacement and reports an interior contact interval,
@@ -78,3 +84,29 @@ kinematics, a moving plane, automatic search or measured beam-pair scale.
 The `none` cap policy supplies no end-on point force. A complete C2 delivery
 requires physical endpoint and near-parallel pair cases, mesh and enforcement
 refinement, independent review, and installed-package evidence.
+
+## 3 October endpoint ownership development evidence
+
+The [physical-end example](../examples/general_contact_beam_end_capped_cylinder.py)
+also accepts `--plane`, retaining the explicit line and endpoint regularizations.
+[Evidence](d1_review_support/contact_plane_endownership_20261003/summary.json) and
+[supporting scrutiny](d1_review_support/contact_plane_endownership_20261003/review.md)
+bind parent `6158f882` and candidate source hashes. Final installed checks pass
+23/23 in 4.613 s, peak process-tree RSS 320753664 bytes, under 180 s / 953 MiB caps.
+Effective JIT is off and numerical pools one; source/installed parity is recorded.
+
+Independent affine-root cases distinguish opening before versus after a switch;
+closed B3 tangent rejection uses its actual derivative rather than its chord.
+Common rigid transformations of B2 and curved B3 work, tangent and ownership
+decisions pass. An axial bar with distributed line and endpoint forces matches
+an independently integrated scalar equilibrium within the unchanged `1e-6`
+relative target. Fresh active restart and incompatible subdivision rejection,
+existing plane cases, junction ownership, public plane/cylinder examples and
+current installed no-contact compatibility pass.
+
+Supporting same-family review found that the new subdivision control was initially
+absent from the cap restart identity; it is now bound and checked. The preliminary
+artifact and source evidence remain retained. No failed mechanical run is regraded.
+This is installed-tested development, not engineering acceptance or normal
+application admission. It does not establish finite-rotation structural, dynamic,
+friction, general profile or mesh/enforcement convergence claims; full C2/D3 remains open.
