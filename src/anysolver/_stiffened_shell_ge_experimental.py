@@ -41,6 +41,7 @@ from ._stiffened_shell_q4_algorithmic_pullback import (
     response as q4_algorithmic_response,
 )
 from .corotational import corotational_element_response
+from ._stiffened_shell_q4_reference import elastic_reference_response
 from .elements import create_shell_element
 from .fe_core import FEModel
 from .control import cancellation_safe_point
@@ -338,10 +339,13 @@ def _assemble_shell(model, pieces, count, coordinate_scale,
             force, tangent, candidate = q4_algorithmic_response(
                 model, element, np.zeros(24), origin, 3)
         else:
-            force, tangent, candidate = corotational_element_response(
-                model, eid, element, np.zeros(24), True,
-                committed_state=origin, num_layers=3,
-                tangent_mode="consistent")
+            response = elastic_reference_response(model, eid, element, origin)
+            if response is None:
+                response = corotational_element_response(
+                    model, eid, element, np.zeros(24), True,
+                    committed_state=origin, num_layers=3,
+                    tangent_mode="consistent")
+            force, tangent, candidate = response
         if (force is None or tangent is None or candidate is None or
                 not np.isfinite(force).all() or not np.isfinite(tangent).all()):
             raise RuntimeError("finite Q4 reference operator unavailable")
