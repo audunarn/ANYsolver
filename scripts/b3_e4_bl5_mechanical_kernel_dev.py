@@ -41,9 +41,9 @@ def lower_completion_difference(a):
     return norm2(a-(np.tril(a)+np.tril(a, -1).T))
 
 
-def evaluate(output):
+def evaluate(output, *, basis="p0"):
     start = time.monotonic()
-    definition, policy = model(16, 4, 32, 2)
+    definition, policy = model(16, 4, 32, 2, basis=basis)
     owner = stiffened_shell.create_analysis(definition=definition)
     report = dict(classification='bounded mechanical development only; no F03/locking/accuracy acceptance',
                   policy=policy, source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
@@ -230,12 +230,13 @@ def evaluate(output):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--basis', choices=('p0', 'discontinuous_p1'), default='p0')
     args = parser.parse_args()
     if args.output.exists() or args.output.with_suffix('.npz').exists():
         raise FileExistsError(args.output)
     pools = threadpool_info()
     assert pools and all(p['num_threads']==1 for p in pools) and numba.config.DISABLE_JIT
-    result = evaluate(args.output)
+    result = evaluate(args.output, basis=args.basis)
     result.update(threads=pools, jit_disabled=True, imported_anysolver=anysolver.__file__)
     args.output.write_text(json.dumps(result, indent=2, allow_nan=False))
     print(json.dumps({key:result[key] for key in ('status','physical_order','kernel_positive_resolved','elapsed_seconds')}))
