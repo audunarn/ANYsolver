@@ -33,3 +33,32 @@ not exactly zero (norm7.405e-6), but backward error8.33e-19. For structural null
 vector r, `(C*r)^T*lambda=r^T*f` must be enforced; a pseudoinverse alone omits
 the rigid-mode balance. The reviewer agreed with this bounded obstruction to
 ordinary inverse-compliance interpretation, not KKT failure/SPD/qualification.
+
+## Auxiliary-norm slice review
+
+Independent OpenAI Read reviewer confirmed that projected all-moment congruence
+and the existing product Fortin transfer apply under the declared support/frame/
+arm/zero-lift scope. Scalarv3 remains unresolved under its recorded raw condition
+predicate; physical density-L2 normalization is a prospective representation
+clarification with unchanged1e4 budget and quotient, not a changed physical norm.
+The near-deficient endpoint action and scalar extremizer are independently
+derived, not selected from native beta.
+
+Complete physical review found no work-map defect: all80 columns retain forces,
+direct couples, arm work and independent DG0 spins; reference majorants and
+canonical congruence preserve cross-products. Beta.255515 near the independent
+normal-force witness.258408 identifies actual auxiliary weakness, without a
+claim of unacceptable mechanics or uniform collapse.
+
+Reviewer found three consequential preflight/provenance gaps: registration
+claims not validated; geometry/removed-support equivalence not checked; helper
+hashes omitted. The affected final review confirmed all three fixes against
+physical-v3.py/result source hashes and its successful bounded execution. Root
+then checked seven mutations; all rejected. No remaining consequential defect
+in this development slice. This does not close different-family scientific
+acceptance, F03/M2/G0 or the complete programme.
+
+Recommended next action: one complete five-channel nested40-row policy and
+actual mechanical constraint-kernel check, preserving old80 rows and physical
+gaps/transfer obligations. New constant=L0+R0; new affine=.5*(-L0+L1+R0+R1).
+No automatic loaded/refinement campaign or policy selection follows.

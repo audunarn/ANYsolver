@@ -1,99 +1,96 @@
-# B3-GE / E4-PL / B2 active state - 3 October 2026
+# B3-GE / E4-PL / B2 active state — 3 October 2026
 
 ## Restart and authority
 
-Full Revision8 goal ACTIVE and unbudgeted. Plan/goal remain under
+Full Revision8 goal ACTIVE, unbudgeted; controlling plan/goal remain under
 C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_plans.
-Amended G0-G6/F01-F13/V01-V28/B01-B18, scientific criteria and required
-complete release remain binding. Use risk-proportionate tiered development.
-The preceding active note is preserved byte-for-byte in the latest raw manifest.
+Complete amended G0–G6/F01–F13/V01–V28/B01–B18 obligations remain binding.
+Actual selected line is BL5 with explicit normal-spin release; six-row point
+law unchanged. Implementation, development evidence and acceptance stay separate.
 
-Active worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Product/evidence commit ccab1681
-(source parent d5653ec6) contains the new compiler and assessment/reference slice.
-Confirm current Git HEAD/status on resume; later checkpoint commits change no
-wheel identity. Previous product8e388e20/mechanics2ec41a29 remain accepted only
-within their recorded development scope.
-ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer remains
-2ede338ba28932bb9dd3e8eb0f0a4908d37fc765. ANYmaterial editable workspace identity
-is not final isolated package-graph verification. Preserve unrelated dirty work.
+Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001. Source parent67fa79455e79d782c3b8bfd8a5f3ae3ada989c48;
+confirm HEAD/status on resume. Product ccab1681 and installed wheel SHA
+ a47e518fe36050e1a2d5a93d9d8c9802138e46c0cc9d8c1c840cc5efdd8650d3
+are unchanged by this auxiliary-norm slice. ANYfem consumer remains
+2ede338ba28932bb9dd3e8eb0f0a4908d37fc765 in its separate experimental worktree;
+ANYmaterial editable graph is not final isolated-package qualification.
 
-All owned numerical jobs TERMINAL; compiler worker and independent Read reviewer
-complete. No pending/queued experiment. Local scoped commits only; no push/main
-merge/publication/contact-worker messages. Optional local/Mistral unavailable;
-no reprobes. OpenAI Read review is not different-family scientific acceptance.
+All owned jobs TERMINAL; compiler/reviewer complete; no queued experiment.
+Local scoped commits only: no push/main merge/publication/contact-worker messages.
+Local/Mistral unavailable, no reprobes. OpenAI Read review does not close
+required different-family scientific acceptance. No outstanding review blocker.
 
-Formal F03 UNCONSUMED. ORIGINAL-worktree dirty runner
-scripts/b3_e4_f03_c1_fy_supported_reference.py SHA256
-c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
-Never execute/substitute the differently bound reconcile runner. Pressure amendment
-awaits user. Ceiling100k rows/600s/8GiB/8numerical threads; ONE heavy numerical job.
-Small checks600s/1GiB, actual pools1/JIT off. Historical us3-modal-canary archive
-contains inherited credentials: never read/copy/print/archive/push that history.
-Use explicit safe evidence whitelists, not archive/history sweeps.
+FormalF03 UNCONSUMED; original dirty runner scripts/b3_e4_f03_c1_fy_supported_reference.py
+SHA c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481
+last verified this slice. Never execute/substitute the differently bound reconcile
+copy. Pressure amendment awaits user. Ceiling100k rows/600s/8GiB/8numerical threads,
+ONE heavy job; small checks1GiB, actual pools1/JIT off. Historical us3-modal-canary
+archive contains inherited credentials: never read/copy/print/archive/push it.
+Use explicit safe evidence whitelists. Protected histories/criteria unchanged.
 
-## Decision sought, facts and next action
+## Current decision, facts and uncertainty
 
-Select a defensible physical native connection and interface-resolution rule.
-M2/G0 remain OPEN. No candidate or aggregate foundation is qualified.
-The unmodified affine-density growing rule remains withheld: its actual native
-retained torsion patch costs16/15 energy at m4 and64/63 at m8. Fixed-support
-refinement never selected span8 or established continuous-law failure.
+Select a defensible physical connection and resolution rule; M2/G0 OPEN.
+[Grouped projected candidate evidence](development/r8-bl5-projected-assessment-20261003/results.md)
+binds the optional `discontinuous_p1_cell_average` compiler, installed checks,
+coarse matched transfer and now the auxiliary norm. Original defaults unchanged.
+The unmodified affine density had native torsion energy16/15 at m4,64/63 at m8;
+projected density fixes that patch to1.0. Quadratic trace interpolation remains.
+Coarse matched work% Fy/Mx/Mz improved to−.593604/+.015248/−.182889, but both
+native/reference density actions changed; regional errors and full physical
+convergence remain open. OpenSees is supplementary, not mandatory CalculiX.
 
-[Current complete projected assessment](development/r8-bl5-projected-assessment-20261003/results.md)
-adds OPTIONAL distinct experimental `discontinuous_p1_cell_average`, with physical
-reference-halfcell means for ALLfive channels; old defaults/identities preserved.
-8distinct source checks,29distinct installed compiler/helper controls,79 math/
-reference checks pass. Harness failures and affected repairs preserved. New wheel
-SHA a47e518fe36050e1a2d5a93d9d8c9802138e46c0cc9d8c1c840cc5efdd8650d3,
-417source/wheel/site modules agree; finite density/restart/curvature verified.
-Saved coarse supported oracle retains nodal/cell rotations, verifies negative
-local resultant blocks and full/reduced parity. Full indefinite K is NOT an SPD
-norm. Virgin oracle measures no material-history parity. Complete common C*J
-work includes endpoints; J is a virtual-field sampling, not state equivalence.
+Existing positive auxiliary trace norm is valid. Bare native yaw is K-null but
+C-active: structural balance `(C*r)^T*lambda=r^T*f` remains mandatory; do not
+quotient yaw out of the auxiliary norm or call full indefinite K an SPD norm.
 
-ONE matched coarse16x4/eight-support Fy/Mx/Mz comparison completed with all physical
-controls; installed native3RHS/onefactor. Native K unchanged EXACTLY, projected C
-matches reconstructed oracle EXACTLY, q parity<=3.81e-12. Work discrepancy% old
-unmodified -> projected: Fy-1.04649->-.593604, Mx-1.02387->+.0152484,
-Mz-.843272->-.182889. Mx regionMz11.0894->.04904Nm, rootFy20.4266->-.06651N.
-Both native AND reference density actions changed. This repairs a particular
-patch consistency and improves agreement; it does not allocate every loaded
-error or establish continuum accuracy. Fy/Mz regional/ground discrepancies and
-quadratic bending/retained-trace limits remain. Supplementary OpenSees does not
-replace mandatory CalculiX. Independent Read disposition: retain experimental
-candidate, WITHHOLD qualification/policy selection; no remaining slice defect.
+ONE coarse all-moment discriminator completed. Scalar coefficient-basis v3
+remains UNRESOLVED: Gram condition15998.61>1e4. Exact independently derived
+physical density-L2 basis normalization gives5020.31/41.65; quotient unchanged.
+This prospective representation correction preserves the original failure and
+unchanged budgets. CS²120.74766 gives only a weak sufficient floor.0454783;
+old P0 floor.43 does not apply. No growing-family floor has been selected.
 
-Next discriminating question: does the consistency correction survive genuinely
-GROWING spaces without the prior fixed-m torsion error, and does physical transfer
-converge under an appropriately justified mixed-system/stability contract?
-Reconcile the actual prospective F03 contract first. State competing explanations,
-bounded fixture and outcome/action in this note before execution. The current
-projected helper/reference run intentionally admits ONLY coarse16/eight supports;
-do not silently extend/replay it. Valid unchanged preparation may be reused.
-No automatic classical axial/S8R refinement, isolated coarsening, channel tuning
-or campaign. Keep director/shear/drilling,seven ratios,three-level convergence,
-physical norms, external/mechanics review and all release requirements open.
+Independent complete80-column physical dual agrees with actual C to3.47e-18;
+reference brackets/residuals/conditioning meet their budgets. Native auxiliary
+beta.255515, normal-force extremizer witness.258408: the trace weakness is real
+in this auxiliary coupling, not just the conservative product estimate. It is
+not evidence of failed loaded mechanics or uniform collapse. Positive yaw norm,
+arm cancellation with surviving force work and seven input-mutation rejections
+pass. Independent Read review findings were repaired and affected checks passed.
+No new mesh, loaded solve, product wheel or formalF03 execution occurred.
 
-The saved-array norm check now identifies a concrete obstruction: bare-beam
-normal-axis rigid rotation respects supports and matches the physical rigid-work
-map EXACTLY; full native K*q is EXACTLY zero, S backward8.33e-19, but C*q is
-nonzero and one density row performs -.1171875J work. This is not an admissible
-attached-system mode or KKT failure. An ordinary unconstrained inverse-compliance
-norm cannot handle arbitrary interface actions. Next derive/verify explicit
-rigid-nullspace/work-compatibility treatment in the prospective assessment;
-do not repeat this check or add stiffness/mass to evade it. No threshold/F03/
-resource change or another mesh/reference solve occurred.
+## Next bounded discriminating action
 
-## Other delivered behavior and remaining programme
+Compare ONE complete five-channel projected policy spanning FOUR shell intervals
+on the SAME saved coarse K. Pair adjacent old supports: new constant=left0+right0;
+new affine=.5*(−left0+left1+right0+right1). This is a distinct nested40-row space,
+not a representation-only change or accepted span8 rule. Independent physical
+work/scalar floor must be fixed before native norm comparison. Reuse saved
+all-column Grams by congruence and actual reduced mechanical oracle, preserving
+all nodal/cell rotations; check the enlarged constraint kernel because removing
+rows can release a mechanism. No remesh or external loaded campaign is needed.
 
-[Installed footprint gravity](development/r8-ge-footprint-gravity-20261003/results.md),
-[B2 loaded-point consumer](development/r8-b2-loaded-point-owner-20261003/results.md),
-[same-parent trial reuse](development/r8-same-parent-trial-20261003/results.md),
-[large reference-linear route](development/r8-q4-reference-reuse-20261003/results.md),
-and material/load/arc slices retain their exact recorded boundaries. The large
-linear route does not close G5; private/public arc does not establish a first
-limit point/descending branch. No timing claim arises from this new mechanics
-slice. Use the authoritative acceptance matrix for still-open foundations,
-material/attachment combinations, spectra/capacity, scale, external references,
-installed platforms, consumers and one authorized complete release.
+Question: do interior quarter-support actions cure the identified endpoint-only
+affine shell action while preserving physical work and mixed-system well-posedness?
+A correct stronger norm plus mechanical kernel permits the next matched transfer
+check; a released mechanism/work defect rejects this policy; a weak/ineligible
+bound identifies the remaining obstruction. Neither beta nor coarse agreement
+alone selects a policy. Required seven ratios/growing spaces/three levels,
+director/shear/drilling, transfer/locking and formal assessment remain open.
+No automatic axial/S8R refinement, channel tuning or declining-floor acceptance.
+
+## Other delivered work and remaining programme
+
+Use the authoritative acceptance matrix and linked grouped reports for installed
+GE footprint/gravity, B2 loaded-point/batch consumer, material history, same-parent
+reuse, large reference-linear reuse and private/public arc development. Their
+exact boundaries remain: large linear route is not G5; arc is not an accepted
+limit point/descending branch. Foundations, material/attachment combinations,
+spectra/capacity, practical scale, mandatory external comparisons, platform/
+consumer completion and one authorized complete release are still required.
+
+Predecessor and prospective notes are preserved byte-for-byte in raw-manifest-v3.
+Current raw checks: %TEMP%/r8-bl5-projected-norm-v1,v2,v3; all terminal. Immutable
+69-file extension is under the existing grouped evidence, not a new helper gate.

@@ -132,3 +132,67 @@ seven ratios/three-level convergence and full mixed-system requirements remain.
 Independent review [disposition](review.md) leaves no defect in this slice, but
 not different-family scientific acceptance. Full G0-G6/B2/external/scale/platform/
 consumer/release requirements remain open; no automatic campaign follows.
+
+## Coarse auxiliary norm and resolution decision — 3 October
+
+Source parent67fa7945. The existing positive kinematic trace norm remains valid;
+the saved bare mechanical yaw counterexample obstructs ordinary structural
+inverse compliance, not this norm. No native mechanical inverse or artificial
+stiffness/inertia was introduced.
+
+One16x4/32-halfcell/eight-support scalar assessment independently integrates all
+16 constant/projected-affine moments, including endpoints and cross-products.
+The modal P0 reference is projected by congruence. The supported Q1 inverse uses
+the variational lower Gram; the prior product Fortin bound applies to all moments
+with independent DG0 rotations, constant arms/frames and zero lift.
+
+Initial v1 failed an unnecessary fixture import; v2 completed calculation but
+failed helper-path provenance. Both failed source/log snapshots remain. Scalarv3
+is **UNRESOLVED** in its recorded coefficient basis: discrete Gram condition
+15998.61277 exceeds unchanged1e4. An independently derived physical density-L2
+normalization, diag(H,5H/16), gives discrete/reference conditions5020.306/41.6535,
+with quotient change2.36e-15. This is a prospective canonical representation
+correction, not Gram whitening or a relabeling of v3. The same scalar CS²120.747662
+gives sufficient raw floor.0455020 and safe floor.0454782821; no old P0.43 or
+growing-family floor is inherited. The weak estimate remains after normalization.
+
+The actual endpoint cancellation is verified: equal affine coefficients on all
+supports act only at the root/free endpoint, coefficient5/(8*32)=.01953125.
+The independent scalar checker[1,-3,3,-1] has zero coarse work and positive
+continuous dual. Duplicate rows are deficient, not removed. Exact rational
+moments and independently reassembled equivalent units pass.
+
+Before native values, physical-registration.json froze the canonical basis,
+scalar floor and unchanged budgets. Complete physical force/director/arm loads
+agree with the saved projected C in all80 columns to3.47e-18. Independent shell
+modal and beam equilibrated-reference majorants meet1e-3 total relative error.
+The complete native auxiliary result is beta.2555151765, canonical Gram
+conditions1299.605/85.7944, inverse residual6.36e-15 and eigen residual1.86e-14;
+every numerical predicate passes. The independent normal-force scalar-extremizer
+direction gives.2584081498. Thus the weakness reaches the actual auxiliary
+coupling, rather than only its conservative product bound. No loaded-response
+failure or uniform collapse follows. Bare yaw retains positive auxiliary
+norm.6541667, and exact arm-moment cancellation retains positive force dual.
+
+Review identified admission/provenance gaps. Final physical-v3 validates scalar/
+representation hashes, floor/modes/criteria/exact L2 scale, actual geometry and
+support endpoints/layout, and equality of removed versus fixed physical trace
+slots; output binds helper sources, unchanged wheel and imported local operators.
+Seven focused mutations are rejected. The affected run reproduces every value.
+Latest physical check1.800s/160165888B; mutation checks2.173s/156479488B. Actual
+native numerical pools1, JIT disabled; all jobs below600s/1GiB. No speedup claim.
+
+Next bounded discriminator is a distinct complete40-row nested policy over
+four-shell-interval supports: for each channel, new0=L0+R0 and
+new1=.5*(-L0+L1+R0+R1). Use exact work/Gram congruence plus the saved actual-K
+constraint-kernel oracle: removing rows enlarges the kernel. Interior quarter
+support action addresses the identified weakness; stronger beta alone cannot
+select the policy. No remesh or loaded campaign is authorized by this result.
+Full ratios/refinement/transfer/locking/director checks and M2/G0/F03 remain open.
+
+[69-file extension](raw-manifest-v3.json), SHA256
+40535b04f7d96c7502524776db503d80a41b17adb30313654598e091c01c0994,
+preserves69 explicitly whitelisted files/3607678B, prior failures, commands,
+source snapshots, exact arrays and predecessor/prospective notes. Earlier
+manifests/evidence remain unchanged. FormalF03 UNCONSUMED; no product/API/default,
+release, resource ceiling or scientific acceptance threshold changed.

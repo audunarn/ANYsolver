@@ -1895,3 +1895,17 @@ Force first moments/Gram change, quadratic bending interpolation gap and positiv
 moment-eliminated interface-kernel witness remain explicit limits, not stability
 acceptance. No loaded solve or formalassessment; F03unconsumed/M2/G0OPEN.
 [Decision, counterexamples, review and versioned raw evidence](development/r8-bl5-projected-density-20261003/results.md).
+
+**3 October projected compiler/matched/auxiliary development:** optional
+`discontinuous_p1_cell_average` preserves defaults and has installed finite
+curvature/restart coverage. One matched coarse transfer comparison improves
+agreement but changes both reference/native action. The complete80-column
+positive-norm assessment gives beta.255515 and independent normal-force
+witness.258408. Original coefficient-basis scalar conditioning failure remains;
+prospective physical density-L2 normalization retains the same quotient and
+unchanged1e4 budget. Independent review's input/provenance findings repaired;
+seven mutations rejected. No raw failure or old floor relabeled, no growing
+policy chosen, no F03 consumed. Next compare a distinct nested40-row complete
+policy plus actual mechanical kernel, not another refinement campaign.
+M2/G0 and all aggregate acceptance rows remain OPEN.
+[Grouped exact results, review and immutable evidence](development/r8-bl5-projected-assessment-20261003/results.md).
