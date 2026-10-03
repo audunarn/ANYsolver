@@ -8,7 +8,7 @@ Full amended G0–G6/F01–F13/V01–V28/B01–B18 and existing criteria remain 
 Prior longer note is preserved byte-for-byte in Git d693b3a3 at this path.
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; productbb17ecac, referencea32c2cc0.
+branch codex/stiffened-main-reconcile-20261001; product c83c5d4e (helper), prior owner bb17ecac, reference a32c2cc0.
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
 4d6d4d0 unchanged. Local scoped commits only; no push/main merge/publication
 or contact-worker messages. Main and unrelated working changes preserved.
@@ -73,3 +73,25 @@ Scoped F05/F08/F09 accepted; aggregate G0, required attachments/materials,
 spectra/capacity, external/platform/consumer and scale/release rows remain open.
 E04 first-limit-point execution and pressure amendment remain pending.
 Implementation, testing, acceptance and release remain separate statuses.
+
+Completed saved-fixture stabilization discriminator:
+[results](development/r8-bl5-stabilization-20261003/results.md). Actual shell
+decomposition and full mixed-work derivatives pass; first reproducibility failure
+preserved and corrected with compensated residual refinement. PL relative work
+slopes Fy0.6133%, Mx0.0003775%, Mz0.3426%; hourglass smaller. Local sensitivity,
+not drilling independence or physical-law acceptance. No new mesh/F03 execution.
+
+B2 fixed-end load-bubble helper c83c5d4e:
+[results](development/r8-b2-load-bubbles-20261003/results.md).32 source and32
+installed checks pass,416 source/wheel/site modules verified; owned immutable
+maps, independent BVP/work/unit/representability controls. Not public integration.
+
+Current bounded implementation: explicit opt-in Q4 loaded-point trace, preserving
+default homogeneous route. Owner must include C*u+a_body-H*lambda, all same-member
+Green cross-blocks, actual loaded recovery and separate full energy. Footprints,
+mixed/S3 and modes reject this initial new policy. Root owns facade/tests/evidence;
+worker /root/b2_body_consumer owns owner and optional local compilation helper.
+No worker numerical jobs. Independent design scrutiny /root/q4_correction_review
+complete; complete implementation review follows. Next checks discriminate offsets/
+frames, two points, affine supports, body vs raw nodal loads, units and batches.
+No new timing campaign. Full goal ACTIVE; aggregate gates/authority unchanged.

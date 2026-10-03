@@ -1757,3 +1757,13 @@ ticket; strong-tie transfer accuracy failure and complete physical/policy/mixed
 system/external M2 obligations remain open. No new native/F03 solve, criteria,
 law, policy or release change. Full goal ACTIVE.
 [Physical definitions, decomposition, limits and review](development/r8-bl5-p0-carrier-20261003/results.md).
+
+**3 October completed bounded development delta:** saved flexible-carrier
+stabilization sensitivity retains the full native KKT and passes derivative/work/
+physical reaction controls. Initial reproducibility failure retained. Local PL/HG
+slopes do not close drilling/locking/F03/M2.
+[Result and limitations](development/r8-bl5-stabilization-20261003/results.md).
+Private B2 helper c83c5d4e passes32source/32installed checks with416module bindings;
+independent BVP/Green/work/unit controls. Owner integration pending; no new public
+qualification. Full goal ACTIVE, mandatory gates and authority unchanged.
+[Helper and actual artifact](development/r8-b2-load-bubbles-20261003/results.md).
