@@ -114,7 +114,9 @@ def _lower_float(value):
 
 def shell_pair_hermite_lower(a0, a1, b0, b1, source_v0, source_v1,
                              target_v0, target_v1, dt, *, maximum_panels=128,
-                             maximum_depth=12, gap_tolerance_m=None, cancel=None):
+                             maximum_depth=12, gap_tolerance_m=None, cancel=None,
+                             reference_source=None, reference_target=None,
+                             exclude_open_endpoint_approach_tolerance_m=None):
     """Enclose min ((A_i(t)-B_j(t)) dot N_A(t))/|N_A(t)| on 0<=t<=1.
 
     A is the deforming S3 integration face; B is an S3 or the original Q4.
@@ -125,8 +127,16 @@ def shell_pair_hermite_lower(a0, a1, b0, b1, source_v0, source_v1,
     convex-hull bounds and exact midpoint de Casteljau subdivision cover every
     temporal panel, including extrema between the endpoints.
 
-    Every panel must prove positive source/initial-source dot, each original
-    target corner/initial-corner dot, and source/target-corner dot. These imply
+    The optional open-endpoint approach tolerance watches each original corner
+    pair whose two endpoint gaps are certified above that tolerance. Hidden
+    negative approach or unresolved bounds cause non-success even when other
+    corners are already touching. It is not an exclusion certificate for every
+    interpolated material point or weak-pressure mode.
+
+    Every panel must prove positive source/reference-source dot, each original
+    target corner/reference-corner dot, and source/target-corner dot. Explicit
+    reference skins retain analysis-original polarity across successive steps;
+    omission uses this path's starting skins for compatibility. These imply
     nonzero normals, original polarity and consistent source/target orientation.
     The Q4 Jacobian is affine in its two local coordinates, so positive corner
     projections imply positive projection everywhere on the original face.
@@ -174,6 +184,15 @@ def shell_pair_hermite_lower(a0, a1, b0, b1, source_v0, source_v1,
         if not np.isfinite(tolerance_float) or tolerance_float < 0:
             raise ValueError("gap_tolerance_m must be finite, real and nonnegative")
         tolerance = Fraction(tolerance_float)
+    approach_tolerance = None
+    if exclude_open_endpoint_approach_tolerance_m is not None:
+        raw = np.asarray(exclude_open_endpoint_approach_tolerance_m)
+        if raw.shape != () or raw.dtype.kind not in 'fiu':
+            raise ValueError('open-endpoint approach tolerance must be finite, real and nonnegative')
+        value = float(raw)
+        if not np.isfinite(value) or value < 0.:
+            raise ValueError('open-endpoint approach tolerance must be finite, real and nonnegative')
+        approach_tolerance = Fraction(value)
     target_shape = np.asarray(b0).shape
     if target_shape not in ((3, 3), (4, 3)):
         raise ValueError("b0 requires original S3 or Q4 corners")
@@ -184,6 +203,8 @@ def shell_pair_hermite_lower(a0, a1, b0, b1, source_v0, source_v1,
                 (target_v1, "target_v1", target_count))
     a0, a1, b0, b1, av0, av1, bv0, bv1 = tuple(
         _coordinates(value, name, count) for value, name, count in supplied)
+    original_a = a0 if reference_source is None else _coordinates(reference_source, 'reference_source', 3)
+    original_b = b0 if reference_target is None else _coordinates(reference_target, 'reference_target', target_count)
     panels = []
     visited = 0
 
@@ -198,7 +219,7 @@ def shell_pair_hermite_lower(a0, a1, b0, b1, source_v0, source_v1,
     a = _nodes(a0, a1, av0, av1, Fraction(duration))
     b = _nodes(b0, b1, bv0, bv1, Fraction(duration))
     normal = _normal(a, 0)
-    reference = tuple((axis[0],) for axis in normal)
+    reference = _normal(tuple(tuple((value,) for value in point) for point in original_a), 0)
     reference_squared = sum(axis[0]**2 for axis in reference)
     if reference_squared == 0:
         return result("orientation_invalid", "initial source normal is zero")
@@ -208,13 +229,21 @@ def shell_pair_hermite_lower(a0, a1, b0, b1, source_v0, source_v1,
     corners = range(target_count) if target_count == 4 else (0,)
     for corner in corners:
         target_normal = _normal(b, corner)
-        target_reference = tuple((axis[0],) for axis in target_normal)
+        target_reference = _normal(tuple(tuple((value,) for value in point) for point in original_b), corner)
         constraints.extend((_dot(target_normal, target_reference),
                             _dot(normal, target_normal)))
         labels.extend((f"target corner {corner} original polarity",
                        f"source/target corner {corner} orientation"))
     numerators = tuple(_dot(tuple(_sub(x, y) for x, y in zip(ai, bj)), normal)
                        for ai in a for bj in b)
+    watched = ()
+    if approach_tolerance is not None:
+        squares = tuple(sum(axis[index]**2 for axis in normal) for index in (0,-1))
+        if min(squares) > 0:
+            upper = tuple(_sqrt_interval(value)[1] for value in squares)
+            watched = tuple(i for i,p in enumerate(numerators)
+                if p[0] > approach_tolerance*upper[0]
+                and p[-1] > approach_tolerance*upper[1])
     # One flat tuple enables exact, consistent subdivision of every polynomial.
     all_polynomials = tuple(constraints)+tuple(normal)+numerators
     pending = [(Fraction(0), Fraction(1), 0, all_polynomials)]
@@ -240,7 +269,25 @@ def shell_pair_hermite_lower(a0, a1, b0, b1, source_v0, source_v1,
             pending.append((start, middle, depth+1, tuple(p[0] for p in split)))
             continue
         source_normal = polynomials[len(constraints):len(constraints)+3]
-        numerator = min(min(p) for p in polynomials[len(constraints)+3:])
+        panel_numerators = polynomials[len(constraints)+3:]
+        unresolved_approach = False
+        for index in watched:
+            p = panel_numerators[index]
+            for endpoint in (0,-1):
+                norm_upper = _sqrt_interval(sum(axis[endpoint]**2 for axis in source_normal))[1]
+                if p[endpoint] < -approach_tolerance*norm_upper:
+                    return result('hidden_approach', f'open-endpoint corner pair {index} approaches inside the path')
+            if min(p) < 0 and min(p)*reference_upper/min(checks[0]) < -approach_tolerance:
+                unresolved_approach = True
+        if unresolved_approach:
+            if depth >= maximum_depth:
+                return result('hidden_approach_unresolved', 'open-endpoint corner path remains unresolved')
+            split = tuple(_split(p) for p in polynomials)
+            middle = (start+end)/2
+            pending.append((middle,end,depth+1,tuple(p[1] for p in split)))
+            pending.append((start,middle,depth+1,tuple(p[0] for p in split)))
+            continue
+        numerator = min(min(p) for p in panel_numerators)
         if numerator < 0:
             lower = numerator*reference_upper/min(checks[0])
         else:

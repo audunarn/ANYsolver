@@ -1364,3 +1364,31 @@ General source deformation, rotation/sliding, full target two-direction fixtures
 nonlinear materials, friction and unrestricted C6 impact remain incomplete.
 [Guide](GENERAL_CONTACT_C6_NONUNIFORM_S3_DEV.md),
 [evidence](d1_review_support/C6_NONUNIFORM_S3_DRIVER_SLICE_20261003.md).
+
+## Deforming normal-nodal S3 impact — installed-tested development
+
+The target two-direction fixture above is now locally tested with independent
+full modal mass and pressure moments. Separately,
+`allow_normal_s3_skin_hermite_dev=True` admits normal-nodal motion in both elastic
+S3 V2D surfaces under `NORMAL_NODAL_S3_SKIN_HERMITE_NEWMARK_DEV_V1`. Full general
+Jet2 pressure/work/tangent, physical nodal inertia and shared acceleration-coordinate
+Newmark remain authoritative. Zero tangential motion/rotations and exactly parallel
+reference planes are required. V13 binds the distinct method, ordered features,
+physical proof budgets and approach tolerance; no affine event state is invented.
+
+Actual mapped skin/rate Bernstein bounds cover every source face before commit,
+using original reference polarity and per-corner open-endpoint approach controls.
+These controls do not establish complete weak-pressure event exclusion, and bounds
+outside actual overlap may request conservative cutback. The seven-coordinate
+fixture has independent nonlinear gap/work/tangent/wrench and discrete/continuous
+dynamics references, one temporal halving, state/cancellation/cutback controls and
+an old-profile restart regression. Source/installed232hashes/all fields match.
+Historical failure records remain retained. Accepted structural stiffness is a
+reference input; no independent spatial shell qualification is claimed.
+
+Implemented: **yes**. Source-tested: **yes, named fixture**. Installed-tested:
+**yes**. Independently accepted: **no**. Released/application-admitted: **no**.
+General non-affine event admission, sliding/rotations, nonlinear materials,
+friction, unrestricted shell/native impact and full C0–C9 remain incomplete.
+[Guide](GENERAL_CONTACT_C6_DEFORMING_S3_DEV.md),
+[evidence](d1_review_support/C6_DEFORMING_S3_DRIVER_SLICE_20261003.md).

@@ -23,9 +23,9 @@ example = runpy.run_path(str(Path(__file__).parents[1]/'examples/general_contact
 MASS, B, SUPPORT, KN, GAP = (example[key] for key in ('MASS','B','SUPPORT','KN','GAP'))
 
 
-def reference(times, structural):
+def reference(times, structural, *, mass=MASS, gradient=B):
     """Enumerate all 16 unilateral P1 pressure branches; no production contact."""
-    q = np.zeros(3); v = np.array([-.1,0.,0.]); a = np.zeros(3)
+    q = np.zeros(len(mass)); v = np.zeros_like(q); v[0] = -.1; a = np.zeros_like(q)
     rows = [(q.copy(), v.copy(), a.copy())]
     for start, end in zip(times, times[1:]):
         h = end-start; beta = .25*h*h
@@ -33,11 +33,11 @@ def reference(times, structural):
         choices = []
         for flags in itertools.product((False,True), repeat=4):
             weight = SUPPORT*np.array(flags)
-            stiffness = structural+KN*B.T@np.diag(weight)@B
-            constant = KN*B.T@(weight*GAP)
-            trial_a = np.linalg.solve(MASS+beta*stiffness, -stiffness@prediction-constant)
+            stiffness = structural+KN*gradient.T@np.diag(weight)@gradient
+            constant = KN*gradient.T@(weight*GAP)
+            trial_a = np.linalg.solve(mass+beta*stiffness, -stiffness@prediction-constant)
             trial = prediction+beta*trial_a
-            gaps = GAP+B@trial
+            gaps = GAP+gradient@trial
             if np.any(np.where(flags, gaps>1.e-13, gaps<-1.e-13)):
                 continue
             choices.append((trial,trial_a))
@@ -46,6 +46,36 @@ def reference(times, structural):
         v += .5*h*(a+trial_a); q,a = trial,trial_a
         rows.append((q.copy(),v.copy(),a.copy()))
     return np.array(rows)
+
+
+def test_full_target_normal_motion_has_two_slope_reference_and_physical_mass():
+    model,result,modes = example['solve'](target_mode='xy')
+    mass,gradient = example['MASS_XY'],example['B_XY']
+    np.testing.assert_allclose(modes.T@assemble_mass_matrix(model)[0]@modes,mass,
+                              rtol=2.e-13,atol=1.e-11)
+    structural = modes.T@assemble_stiffness_matrix(model)[0]@modes
+    expected = reference(result.times,structural,mass=mass,gradient=gradient)
+    q,v,a = (example['modal'](values,modes) for values in
+             (result.displacements,result.velocities,result.accelerations))
+    for actual,index,tolerance in ((q,0,1.e-10),(v,1,1.e-6),(a,2,1.e-2)):
+        np.testing.assert_allclose(actual,expected[:,index],rtol=0.,atol=tolerance)
+    assert np.all(np.max(np.abs(q[:,2:]),axis=0)>1.e-8)
+    momentum = v[:,:2]@np.diag(mass)[:2]
+    assert np.max(np.abs(momentum-momentum[0]))<1.e-7
+    for position,row in zip(q,result.contact):
+        force = SUPPORT*(-KN*np.minimum(GAP+gradient@position,0.))
+        # B columns carry negative coordinates: physical y/x are -B + 1/3.
+        expected_moment = np.array([force@(-gradient[:,3]+1/3),
+                                   -force@(-gradient[:,2]+1/3),0.])
+        np.testing.assert_allclose(row.integration_moment,expected_moment,atol=1.e-3)
+        np.testing.assert_allclose(np.array(row.integration_moment)+row.target_moment,0.,atol=1.e-7)
+    assert min(result.swept_minimum_gaps)>=-2.e-5
+    Path(os.environ['RUNNER_TEMP'],'nonuniform_s3_xy.json').write_text(json.dumps(dict(
+        times_s=result.times.tolist(),q=q.tolist(),v=v.tolist(),a=a.tolist(),
+        mass=mass.tolist(),structural_stiffness=structural.tolist(),
+        pressure_gradient=gradient.tolist(),contact=[row.to_dict() for row in result.contact],
+        events=result.localized_contact_event_times,cutbacks=result.cutbacks,
+        swept_gap=result.swept_minimum_gaps.tolist()),indent=2),encoding='utf-8')
 
 
 def test_declared_lumped_mass_and_retained_structural_scope():

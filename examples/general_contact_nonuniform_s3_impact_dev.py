@@ -20,6 +20,10 @@ B = np.column_stack((np.ones(4), -np.ones(4), -X_BAR))
 # The admitted S3 profile owns lumped translational mass: target nodal
 # masses m/3 at x=(-2,5,-2), giving mean-square (x-1/3)^2=98/9.
 MASS = np.diag([20., 49., 49.*98./9.])
+MASS_XY = np.zeros((4,4))
+MASS_XY[:2,:2] = np.diag([20.,49.])
+MASS_XY[2:,2:] = 49.*np.array([[98.,-49.],[-49.,98.]])/9.
+B_XY = np.column_stack((B, -(np.array([.375,.25,.625,.75])-1/3)))
 INITIAL_VELOCITY = np.array([-.1, 0., 0.])
 SETTINGS = ContactSolverSettings(pair_motion='general',
     general_s3_difference_step=1.e-5, general_s3_differentiation='jet2_s3_dev')
@@ -28,7 +32,9 @@ CONTROLS = ContactTransientSolverControls(allow_fixed_projection_s3_target_dev=T
     save_constraint_reactions_dev=True, equilibrium_tolerance=1.e-10)
 
 
-def build_model():
+def build_model(*, target_mode='x'):
+    if target_mode not in ('x','xy'):
+        raise ValueError('target_mode must be x or xy')
     model = FEModel('nonuniform-S3-target-impact-dev')
     model.add_material('source', 1.e7, .3, density=1000.)
     model.add_material('target', 1.e7, .3, density=100.)
@@ -45,14 +51,16 @@ def build_model():
     normal_dofs = [model.mesh.dof_manager.get_node_dofs(node)[2] for node in range(1,8)]
     for dof in normal_dofs[1:4]:
         model.add_constraint_equation(terms=((dof,1.), (normal_dofs[0],-1.)))
-    model.add_constraint_equation(terms=((normal_dofs[6],1.), (normal_dofs[4],-1.)))
-    modes = np.zeros((42,3))
+    if target_mode == 'x':
+        model.add_constraint_equation(terms=((normal_dofs[6],1.), (normal_dofs[4],-1.)))
+    modes = np.zeros((42,3 if target_mode == 'x' else 4))
     for node, point in enumerate(coordinates, 1):
         dof = normal_dofs[node-1]
         if node <= 4:
             modes[dof,0] = 1.
         else:
-            modes[dof,1:] = [1., point[0]-1/3]
+            modes[dof,1:] = ([1., point[0]-1/3] if target_mode == 'x'
+                             else [1., point[0]-1/3, point[1]-1/3])
     definition = ContactDefinition(
         (ContactSurface('source', (1,2), side='bottom'),
          ContactSurface('target', (3,), side='top')), (),
@@ -66,10 +74,11 @@ def modal(values, modes):
 
 
 def solve(*, dt=2.5e-5, end=.003, checkpoint=None, emit=False,
-          controls=CONTROLS, cancellation_token=None):
-    model, definition, modes = build_model()
+          controls=CONTROLS, cancellation_token=None, target_mode='x'):
+    model, definition, modes = build_model(target_mode=target_mode)
+    velocity = INITIAL_VELOCITY if target_mode == 'x' else np.r_[INITIAL_VELOCITY,0.]
     result = solve_transient_contact(model, definition,
-        TransientConfig(dt, end, initial_velocity=modes@INITIAL_VELOCITY),
+        TransientConfig(dt, end, initial_velocity=modes@velocity),
         contact_settings=SETTINGS, solver_controls=controls,
         restart_checkpoint=checkpoint, emit_restart_checkpoint=emit,
         cancellation_token=cancellation_token)

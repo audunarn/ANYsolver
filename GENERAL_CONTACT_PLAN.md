@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.64. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.65. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -184,11 +184,28 @@ is bound/rejection-tested. Source/installed231hashes/all fields match;6.25/6.26s
 single runs are compatibility observations, not speed-up or release claims.
 [Guide](docs/GENERAL_CONTACT_C6_NONUNIFORM_S3_DEV.md),
 [evidence](docs/d1_review_support/C6_NONUNIFORM_S3_DRIVER_SLICE_20261003.md).
-NEXT exercise both target normal slopes with independently derived full nodal
-mass/pressure moments on this existing profile. Then derive a bounded actual
-deforming-source event/work route: arbitrary source motion cannot inherit the
-fixed-projection affine sidecar. Preserve separate regularization storage, all
-old defaults and the complete C0–C9 acceptance requirements.
+Both target normal slopes now pass the independently derived mass/moment coupled
+reference. A separate normal-nodal S3 development profile retains actual source
+deformation, nonlinear normalized gaps and complete general both-body Jet2 work
+in shared Newmark. Actual mapped Hermite skin bounds retain original polarity;
+per-corner hidden-approach controls prevent suppression by a touching sibling.
+Acceleration-coordinate Newton corrected the retained release-step failure
+without changing the equations, tolerances or resource caps. V13 binds feature
+identity, proof budgets and corner-approach tolerance; state/cutback/cancellation
+and old V12 continuation checks pass. Independent nonlinear step and continuous
+references agree. One25→12.5us halving improves q/GAP0.04845→0.01212%,
+v/0.1m/s0.4702→0.1183% and reachable-coordinate energy defect0.07343→0.04507%.
+The conservative gap remains within20um. Source/installed232hashes and all example
+fields match. This is development, not engineering acceptance or a speed claim.
+[Guide](docs/GENERAL_CONTACT_C6_DEFORMING_S3_DEV.md),
+[evidence](docs/d1_review_support/C6_DEFORMING_S3_DRIVER_SLICE_20261003.md).
+NEXT close non-affine weak-pressure event exclusion/localization before broader
+impact admission. Corner-pair exclusion alone does not certify every material
+point or pressure mode, and whole-target bounds can overcut outside overlap.
+Use one counterexample and this independent force oracle to select a bounded
+event solution; do not inherit the uniform-source affine sidecar or start another
+refinement campaign. Preserve separate storage reporting, all old defaults and
+the full C0–C9 outcome/acceptance requirements.
 No open-ended mesh/dt campaign, resource increase or weakening of scientific gates.
 The earlier uncoupled example cannot supply contact-driven-plasticity claims.
 Its prior120-step route is approximately78s; no speed-up claim.
