@@ -49,6 +49,15 @@ It writes standalone and native Project definitions, verifies their identity,
 restores both material histories and compares two continued steps with a fresh
 solver owner. Unsupported or wrong-model snapshots fail explicitly.
 
+For the combined stress-free imperfection/material application, add
+`--imperfection-m .0001` to **both** commands and choose new output directories.
+This creates a virgin reference with a 0.1 mm downward crown change, transports
+the physical point offsets/frames once and then applies the same declared laws
+and loading. Native Project persistence stores the resulting reference definition;
+the separate run record retains its construction amplitude, operation policy and
+source/target identities. It does not transport loaded material history into the
+new reference. The supplied checkpoint must belong to that changed definition.
+
 The 16-shell/four-beam case uses eccentric, full-pose nodal point bonds. Its
 generalized beam ellipsoid is not physical fibre plasticity. Density is declared
 static bookkeeping; curved spectra are excluded. The sampled peak and descending

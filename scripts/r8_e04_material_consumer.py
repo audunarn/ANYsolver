@@ -23,13 +23,16 @@ def main():
     parser.add_argument('--seed-force',type=float,required=True)
     parser.add_argument('--radius',type=float,required=True)
     parser.add_argument('--steps',type=int,default=2)
+    parser.add_argument('--imperfection-m',type=float,default=0.,
+        help='Downward crown amplitude of the new virgin reference; must match the checkpoint.')
     parser.add_argument('--shell-proportional-limit-pa',type=float,required=True)
     parser.add_argument('--beam-resultant-limits',required=True)
     parser.add_argument('--beam-hardening-n',type=float,required=True)
     args=parser.parse_args()
     if (args.steps<1 or not np.isfinite(args.seed_force) or args.seed_force<=0. or
             not np.isfinite(args.radius) or args.radius<=0. or
-            not np.isfinite(args.shell_proportional_limit_pa) or args.shell_proportional_limit_pa<=0.):
+            not np.isfinite(args.shell_proportional_limit_pa) or args.shell_proportional_limit_pa<=0. or
+            not np.isfinite(args.imperfection_m)):
         parser.error('positive finite load, radius and shell proportional stress; positive step count required')
     try:
         limits=tuple(float(v) for v in args.beam_resultant_limits.split(','))
@@ -43,7 +46,8 @@ def main():
     from anyfem.io.project_file import save_project,load_project
     from anyfem.model.project import Project
     from anyfem.model.records import AnalysisDefinition
-    from docs.reference_cases.stiffened_shell_e04_roof import build,material_definition
+    from docs.reference_cases.stiffened_shell_e04_roof import (
+        build,material_definition,crown_reference_perturbations)
     import anysolver,anyfem,numba,threadpoolctl
     pools=threadpoolctl.threadpool_info()
     assert pools and all(p['num_threads']==1 for p in pools)
@@ -52,6 +56,11 @@ def main():
     curve=DNVC208MaterialCurve(p,1.05*p,1.1*p,.005,.01,4*p,.2)
     definition=material_definition(case,density_kg_m3=args.density,shell_curve=curve,
         beam_yield_limits=limits,beam_hardening_n=args.beam_hardening_n)
+    reference_change=None
+    if args.imperfection_m:
+        reference_change=ss.create_stress_free_point_reference(definition,
+            crown_reference_perturbations(case,args.imperfection_m))
+        definition=reference_change.definition
     node=case.loaded_shell_node+1;row=case.loaded_shell_node
     action=(ss.NodalAction('shell',node,(0.,0.,-args.seed_force,0.,0.,0.)),)
     panel=ExperimentalGEPointPanel(definition.shell,definition.beams,definition.points,
@@ -63,6 +72,10 @@ def main():
         inputs={key:(str(value) if isinstance(value,Path) else value) for key,value in vars(args).items()},
         imported_solver=str(Path(anysolver.__file__).resolve()),
         imported_consumer=str(Path(anyfem.__file__).resolve()),threadpools=pools,
+        reference_transport=(None if reference_change is None else dict(
+            policy=reference_change.policy,source_identity=reference_change.source_identity,
+            target_identity=reference_change.target_identity,
+            stress_free_scaled_max=reference_change.stress_free_scaled_max)),
         interpretation='synthetic development laws; not calibrated roof strength',
         samples=[],timings={})
     def save():

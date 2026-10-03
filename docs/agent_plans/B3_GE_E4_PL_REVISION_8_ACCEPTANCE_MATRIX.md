@@ -1594,3 +1594,14 @@ numeric fixture correction. Mixed-boolean and initial consumer failures retained
 All511 source/wheel/site product modules match; no product equations changed.
 No calibrated yield/limit-load, mesh/external capacity, aggregate acceptance or
 release claim follows. [Evidence](development/r8-e04-material-roof-20261003/results.md).
+
+**3 October combined virgin imperfection/material roof: IMPLEMENTED_NOT_QUALIFIED.**
+Explicit +0.1mm crown reference initializes with zero scaled residual; unchanged
+declared material laws carry both histories through20 installed arc increments and
+12 sampled descending points. All15 continued checkpoints from restored prefix5
+match exactly. Native ANYfem save/reopen preserves the changed reference identity;
+two further increments match a fresh public owner exactly, including detailed
+material recovery. All511 source/wheel/site modules match. This supplies a bounded
+combined application for the third demonstrator, not converged/calibrated capacity
+or aggregate G3/G4C/G4D acceptance. No F03 or external execution.
+[Evidence](development/r8-e04-imperfect-material-20261003/results.md).

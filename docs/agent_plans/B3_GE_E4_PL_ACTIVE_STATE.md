@@ -7,7 +7,7 @@ C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_plans.
 Full amended G0–G6/F01–F13/V01–V28/B01–B18 scope and scientific criteria remain
 binding. Experimental implementation is not aggregate acceptance.
 Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Current slice source parent4f9abaa9;
+branch codex/stiffened-main-reconcile-20261001. Current slice source parent243c5a62;
 use git log for its committed identity. ANYfem worktree:
 C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer, at295f667, unchanged.
 Scoped local commits only: no push/main merge/publication/contact-worker messages.
@@ -73,15 +73,24 @@ alone. Live sessions87136 and86827 completed successfully; do not relaunch them.
 
 ## Next decision and open findings
 
-Next authorised application slice: use the existing virgin-reference operation
-for one declared +0.1mm crown material roof, preserving these strengths, supports,
-physical metric and limits. The competing possibilities are coherent stress-free
-reference/history continuation versus a reference/ownership inconsistency. Check
-zero initial material/gap, active continuation and exact restart with a bounded
-route; success completes the combined imperfection/material demonstrator at its
-valid development level. Failure preserves its accepted prefix and identifies
-one affected contract. Do not automatically launch mesh/sign sweeps, increase
-budgets, change tolerances or infer calibrated capacity.
+Combined virgin imperfection/material application is now delivered experimentally:
++0.1mm roof, same100N seed/20 .003 increments/restart-after5. Zero scaled initial
+reference residual; both active histories; exact15-step restart. Installed roof
+96007 completed247.860s/170029056bytes. Native consumer63218 completed28.286s/
+177418240bytes: strict save/reopen preserves the changed identity and two more
+increments match a fresh owner exactly. The consumer CLI records reference
+construction provenance while native Project stores the resulting physical model.
+Artifacts unchanged, all511 modules match. Neither job is live; do not relaunch.
+[Evidence and limits](development/r8-e04-imperfect-material-20261003/results.md).
+
+Next implementation target: explicitly admitted curved material translation
+displacement control through the existing public solve/control types. Reuse the
+fixed-predecessor corrector; add distinct controller/snapshot compatibility and
+optional-J2 layouts instead of removing legacy BL5 guards. Verify physical work,
+force-endpoint parity, exact active-history restart and atomic cancellation on a
+bounded case before the installed/consumer boundary. Existing force/arc histories
+must not be relabelled as displacement histories. Preserve legacy decoding, budgets
+and tolerances. This fills a required operation, not another roof refinement.
 
 Physical connection/drilling/shear and full multiplier qualifications remain open.
 The independent nonlinear E04 comparison is unresolved: external finite section,
