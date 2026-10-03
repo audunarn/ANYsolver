@@ -2,60 +2,60 @@
 
 Full C0–C9 ACTIVE/incomplete. Worktree
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001;
-branch codex/contact-main-reconcile-20261001. Parent7124e166; Git HEAD identifies
-the owned checkpoint. Goal2026-09-30.4/plan2026-10-03.59 govern. No other-user-chat
-coordination, original protected worktree access, main merge, push/publication,
-release, historical default change or consumed-authority renewal. Owned local
-checkpoint commits authorized. D1-interior/named bounded D2 independently accepted;
-installed accepted shell remains unchanged; all required programme rows remain.
+branch codex/contact-main-reconcile-20261001. Parent71e838cf; Git HEAD identifies
+the owned checkpoint. Goal2026-09-30.4 / plan2026-10-03.60 govern. No other-user-chat
+coordination, protected original-worktree access, merge, push/publication, release,
+historical-default change or consumed-authority renewal. Owned local checkpoint
+commits authorized. Named D1-interior and bounded D2 independently accepted;
+installed accepted-shell identity unchanged. All broader programme rows remain.
 
-History: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART82.md
-links Part81/80/79 and preserved failed evidence. Oblique manufactured Q4 impact
-matches independent discrete work/material equations; coarse/half fields retained.
+History: docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261003_PART83.md
+links Part82/81 and preserved material, temporal and native failures. Current
+multiple shell-plane source hashes/raw52records:
+docs/d1_review_support/contact_c6_multiple_shell_planes_20261003/{source.json,raw.zip}.
+Summary C6_MULTIPLE_SHELL_PLANES_SLICE_20261003.md in that parent folder; guide
+docs/GENERAL_CONTACT_C6_MULTIPLE_SHELL_PLANES_DEV.md.
 
-NEW opt-in save_constraint_reactions_dev exports structural generalized support
-forces M*a+internal/contact−external load at saved states. Exact candidate pose/time,
-copied residual and precommit validation; no extra assembly. False preserves old
-checkpoint identity; True is restart-bound. Physical rotational moments need work
-maps; free-body centre coordinates are excluded. Eight scoped source checks pass:
-oblique balance, default parity/restart, loads, MPC, ramp/sparse output, descriptor
-equilibrium and free-shell-sphere assembly. Read review found no concrete defect.
-New contact-driven yielded restart at saved nominal.0008933632224845885s through
-.0011s matches independent discrete histories, exact parent and allowed-mode
-reaction work.44.92s/187584512bytes. No new installed/accepted/released output claim.
+NEW explicit multiple-Q4/fixed-plane contributor sums full structural work with
+pair-owned fine pressure, laws, supports and dimensional gaps. Aggregate resource
+limits, duplicate-feature rejection and positive supports remain explicit. Shared
+Newmark/event transaction retains query/stage budgets; complete physical corner
+Hermite bounds apply per pair. Opt-in allow_multiple_shell_planes_dev requires
+q4_plane_event_subdivision_dev; elastic guided exact Q4 only. V10 binds stable
+pair/node features, controls, phase and load history. Old profiles stay unchanged.
 
-Continuous no-production-call manufactured reference implements affine branches,
-Taylor/Bernstein path checks, bounded root handling and dimensionless propagation.
-Tighter exponential agreement8e-13; separately evaluated DOP8531.6e-13 on declared
-scales. Controls share event logic; analytic tests assess it separately.20previous
-pass outcomes +4affected checks retained/reused, not a new full-suite run. Review
-corrected incoming/tolerance exact-boundary phase semantics and enforces every
-grouped event residual before any switch. Frozenfiveevent case has no unloading;
-analytic no-contact unloading checked separately. Floating enclosure/propagation
-limits remain explicit. One comparator zero-reference check passes (relative=null,
-absolute/scaled errors retained). Pre-review artifact/hash retained separately.
+24 manager outcomes pass by23unchanged plus1repaired fixture rerun. Five new
+dynamic outcomes and two affected legacy outcomes pass by source-impact reuse.
+Independent two-mode physical mass/Newmark branch oracle matches simultaneous
+supports, reaction work, active split restart, load work and interior-path bounds.
+Source/isolated installed example agrees in205imported hashes/all numerical fields;
+wheel fc4f6ac0a0c6dbf3ede96b00e39ca33fed18562496f541ab348cf6797d402c73.
+82steps,three events,zero cuts,50queries/185stages; max energy defect8.86e-9 relative.
+This is discrete development evidence, not temporal/spatial or impact acceptance.
+Third constrained patch contributes real inertia; its face stays open. MPCs do
+not establish permanent attachment. Gap budgets1.5/0.9mm are fixture settings.
 
-Saved end.003s final coarse/half plastic/alpha errors4.889%/1.396%, membrane strain
-4.829%/1.379%, membrane kineticenergy10.45%/2.929% against corrected reference.
-This supports timestep error, not broad impact/material acceptance or asymptotic
-order. Dominant250J normal energy cannot verify tiny membrane work. No third full
-refinement run. Plateau alpha<.005/manufactured scales remain explicit.
-Evidence docs/d1_review_support/C6_REACTIONS_CONTINUOUS_REFERENCE_SLICE_20261003.md,
-contact_c6_reactions_reference_20261003/{source.json,raw.zip} (44records).
-Guide docs/GENERAL_CONTACT_C6_Q4_PLASTIC_DEV.md; capability ledger updated.
+Retain initial S3 test construction failure, callback-arity source failure and
+second-gap.015m non-simultaneous fixture failure. Corrected gap.008m produces
+overlap at unchanged mechanics/tolerances/budgets. No failed result is regraded.
+Source/read scrutiny found no concrete coupled work/state defect; same-family
+review does not supply independent engineering acceptance. All owned runs/workers
+are terminal. Exact runtime settings JIT off/Numba and BLAS1,180s/953MiB.
 
-NEXT D5 simultaneous shell/plane contact through composed existing plane
-contributors. Fix explicit contributor/admission/restart boundaries; concatenate
-pair-owned pressure/event data, preserve per-pair physical-gap gates and shared
-resource limits. Small coupled two-patch affine reference before broader expansion.
-Old single-pair defaults/descriptor/native guards stay intact. Stop manufactured
-dt diagnostics until a specific qualification gap requires refinement.
+NEXT D5 nonuniform/deforming elastic Q4 between opposing physical skins. First
+derive admitted affine shear/membrane structural work and actual consistent mass
+from the formulation contract; independently verify before whole-route testing.
+Choose pressure mesh from weighted-gap versus physical-corner resolution, not
+an expensive failed run or relaxed budget. Then paired deformable-body impact
+through shared transactions under its own profile. No new timestep campaign
+without a discriminating question. Remaining full-programme forecast unsupported.
 
-Native grazing friction remains NONPASS: missing closed-strip alpha_q=-G_q/G_alpha
-and mixed-work bounds; no saved local/owner/split retry, history reset, zero closed
-response replacement, tolerance/cap growth or native acceptance. Prior failures stay.
-Tiered workflow; lower tiers unavailable earlier, no unchanged probes. Owned workers
-complete, numerical processes finished; no other-chat contact. Routine180s/953MiB,
-named900s/3814MiB and stricter native restrictions intact.120active-hour budget=
-goal.timeUsedSeconds+3120,last83.0h advancing. At120h checkpoint/request decision;
-no extension. Current turn made progress; delivery forecast remains unsupported.
+Native variable-endpoint friction closed boundary integral remains NONPASS:
+gap−1.33564e-13m,223queries/448paths/21support,10.364s. Missing grazing derivative
+bound alpha_q=−G_q/G_alpha plus mixed elastic work; not formulation failure.
+No saved local/fullpatch/owner/split retry, history reset, zero-response substitution,
+cap/tolerance growth or native acceptance. Full failure history remains linked.
+
+Budget120activehours without reset; clock get_goal.timeUsedSeconds+3120s was
+302865s (~84.13h) at this resume. Parallel workers share elapsed budget. At120h
+save checkpoint/request decision; no silent extension. Current goal ACTIVE.

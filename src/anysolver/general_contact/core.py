@@ -593,6 +593,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             from .multiple_beam_rigid import validate_multiple_beam_rigid
             return validate_multiple_beam_rigid(
                 model, definition, settings, analysis_control=analysis_control)
+        if definition.rigid_bodies and all(body.kind == 'plane' for body in definition.rigid_bodies):
+            from .multiple_shell_planes import validate_multiple_shell_planes
+            return validate_multiple_shell_planes(
+                model, definition, settings, analysis_control=analysis_control)
         from .multiple_projected_pairs import validate_multiple_projected_pairs
         return validate_multiple_projected_pairs(
             model, definition, settings, analysis_control=analysis_control)
@@ -1202,6 +1206,10 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
             from .multiple_beam_rigid import MultipleBeamRigidManager
             manager = MultipleBeamRigidManager(model, definition, settings, initial_displacement,
                                               analysis_control=analysis_control)
+        elif definition.rigid_bodies and all(body.kind == 'plane' for body in definition.rigid_bodies):
+            from .multiple_shell_planes import MultipleShellPlaneManager
+            manager = MultipleShellPlaneManager(model, definition, settings, initial_displacement,
+                                                analysis_control=analysis_control)
         else:
             from .multiple_projected_pairs import MultipleProjectedPairManager
             manager = MultipleProjectedPairManager(model, definition, settings, initial_displacement,

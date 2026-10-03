@@ -1223,3 +1223,33 @@ strain4.829%/1.379%, membrane kinetic energy10.45%/2.929%. Normal-energy dominan
 does not certify small-component work. Temporal discrepancy is diagnosed; broad
 impact/material accuracy, asymptotic order and engineering acceptance remain open.
 [Evidence](d1_review_support/C6_REACTIONS_CONTINUOUS_REFERENCE_SLICE_20261003.md).
+
+## Multiple fixed-plane Q4 impact — installed-tested development
+
+`allow_multiple_shell_planes_dev=True` with Q4 plane events composes at least two
+explicit fixed-plane penalty interactions through the shared transient driver.
+Pressure support/feature identity, physical skins, law and gap tolerance remain
+pair-owned. Aggregate candidates/pressure limits fail before construction; supports
+are never dropped. Per-pair complete supplied-float Hermite bounds and shared event
+budgets gate acceptance. V10 binds stable pressure features and load/work history;
+existing single-pair/beam schemas/defaults remain unchanged. Initial scope elastic
+qualified Q4/guided/positive physical reduced mass, including nodal load histories.
+
+24manager outcomes pass through23pass/1S3-fixture setup failure plus1fixed-node
+pass.5driver outcomes pass across scoped runs;2affected old-control/restart outcomes
+also pass. Initial callback-arity and non-simultaneous-fixture failures are retained.
+The corrected three-patch fixture has genuine offdiagonal mass/MPC coupling and
+two simultaneously active pairs. Independent q/v/a errors1.67e-16m/6.84e-15m/s/
+2.29e-11m/s2, modal balance7.25e-13N; physical path bounds agree within7e-18m.
+Energy defect8.86e-9. Active and ramp-history restarts/work checks pass. This verifies
+the accepted discrete grid, not temporal/spatial or deforming-body qualification.
+
+Isolated wheelSHAfc4f6ac0a0c6dbf3ede96b00e39ca33fed18562496f541ab348cf6797d402c73
+matches all205 imported solver hashes and example fields. Source9.96s/159776768B,
+installed9.60s/159731712B, single runs/no speed claim. Source scrutiny finds no
+concrete defect; independent engineering acceptance/release/application admission
+remain open/false. Nonuniform shell deformation, opposite/nonparallel normals,
+finite rotations, descriptor/plastic multiple pairs, friction/free bodies and general
+geometry remain outside this particular evidence and required in the programme.
+[Guide](GENERAL_CONTACT_C6_MULTIPLE_SHELL_PLANES_DEV.md),
+[evidence](d1_review_support/C6_MULTIPLE_SHELL_PLANES_SLICE_20261003.md).

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-03.59. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-03.60. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -127,12 +127,22 @@ still requires formulation maps. The new output has no installed or accepted cla
 The contact-driven active/yielded restart case through separation now passes,
 including the discrete independent reference, exact accepted material parent and
 allowed-mode reaction work (44.92s/187584512bytes). Stop this manufactured dt study.
-NEXT implement the D5 simultaneous shell/plane-contact slice through composed
-existing fixed-plane contributors, explicit selection and pair-owned pressure
-support/event state. First fix the contributor/admission/restart boundaries and
-verify the coupled affine work/path model; keep old single-pair defaults and
-descriptor/native restrictions. Use a small coupled two-patch reference before
-broader geometry/material expansion; no resource/tolerance increase.
+The D5 simultaneous shell/plane slice now composes existing fixed-plane contributors
+with explicit transient selection, pair-owned pressure support/events, independent
+physical gap gates and feature-bound V10 restart.24manager checks plus5driver
+outcomes and2affected compatibility outcomes pass through scoped/impact reuse.
+The three-patch MPC model matches its genuine coupled mass/potential reference;
+active restart, ramp-load work/restart and installed example pass. All205 imported
+hashes/numerical fields match; energy defect8.86e-9, no speed or engineering claim.
+The callback and non-simultaneous-fixture failures remain evidence. Old single-pair
+defaults and descriptor/native restrictions remain intact.
+NEXT close nonuniform/deforming Q4 structural response under opposing physical
+skin contacts. Derive the affine-shear/membrane modal work independently from the
+admitted formulation contract; verify local mass/work before a bounded impact.
+Choose pressure resolution from the independent weighted-gap/physical-corner
+discriminator before tightening the dimensional gap budget. Then extend paired
+deformable-body impact through the shared driver. No open-ended mesh/dt campaign,
+resource increase or weakening of qualification gates.
 The earlier uncoupled example cannot supply contact-driven-plasticity claims.
 Its prior120-step route is approximately78s; no speed-up claim.
 Measure material-packet preparation/validation cost before optimizing it; preserve
