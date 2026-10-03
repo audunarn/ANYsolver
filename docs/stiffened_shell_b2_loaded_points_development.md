@@ -19,7 +19,12 @@ is -H. It is physical elastic compliance, not a penalty or numerical floor.
 
 Raw arrays remain nodal loads. Only B2ReferenceBodyLoad, created by the same
 owner, supplies distributed body action. A load bound to another policy/model
-is rejected. Unchanged static operators retain one factorization.
+is rejected. Unchanged static operators retain one factorization. For zero prescribed
+offsets and unique unit-selector supports, a bounded stored-equation residual
+certificate may resolve a load rejected by the conservative global roundoff
+estimate. The original tolerance and physical checks remain mandatory.
+Certification does not establish forward displacement accuracy, assembly
+accuracy, or resolution of arbitrary subcomponents sharing one load row.
 
 Results carry loaded_member_poses (axis poses in local m/rad),
 equilibrated_sections (sided physical resultants/strains) and
@@ -43,8 +48,7 @@ are detached input persistence, not accepted-state checkpointing.
 Run the public example from an installed solver (and ANYfem for roundtrip):
 
 ~~~powershell
-python examples/stiffened_shell_b2_loaded_points.py --cases 10
-  --consumer-path panel.anyfem-b2.json
+python examples/stiffened_shell_b2_loaded_points.py --cases 10 --consumer-path panel.anyfem-b2.json
 ~~~
 
 Checks use an independent six-initial-resultant boundary solve, both bending

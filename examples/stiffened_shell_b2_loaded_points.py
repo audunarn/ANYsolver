@@ -6,7 +6,6 @@ Finite-vertex point ports are not qualified welds or bonded lines. Mixed/S3,
 footprints, finite gravity and spectra are outside this policy's current scope.
 """
 import argparse
-from dataclasses import replace
 import json
 from pathlib import Path
 from anysolver import stiffened_shell as api
@@ -18,7 +17,10 @@ def main():
     parser.add_argument("--cases",type=int,choices=(1,10,100),default=10)
     parser.add_argument("--consumer-path",type=Path)
     args=parser.parse_args()
-    model=replace(definition("q4"),point_trace_policy=api.B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV)
+    base=definition("q4")
+    model=api.B2Q4PanelDefinition(base.profile,base.shell_nodes_m,base.shells,
+        base.members,base.points,base.transformation,base.prescribed_offset,
+        point_trace_policy=api.B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV)
     accelerations=tuple((f"weight-{i:03d}",(0.,0.,-9.81*(1.+i/args.cases)))
                         for i in range(args.cases))
     selection=dict(selected_dofs=(49,50),selected_points=("right-port",),

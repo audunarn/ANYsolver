@@ -319,3 +319,52 @@ def test_physical_green_allows_more_point_rows_than_free_nodal_coordinates():
     with pytest.raises(ValueError,match="affine"):
         api.create_analysis(definition=replace(d,point_trace_policy=None))
 
+
+
+def _steel_definition():
+    # Public physical SI example, not a rescaled easy-section fixture.
+    from pathlib import Path
+    import runpy
+    build=runpy.run_path(str(Path(__file__).resolve().parents[1]/
+        "examples/stiffened_shell_b2_body_acceleration.py"))["definition"]
+    d=build("q4")
+    return api.B2Q4PanelDefinition(d.profile,d.shell_nodes_m,d.shells,d.members,d.points,
+        d.transformation,d.prescribed_offset,point_trace_policy=POLICY)
+
+
+def test_physical_steel_body_work_requires_bounded_resolution_certificate(monkeypatch):
+    d=_steel_definition();a=api.create_analysis(definition=d)
+    old=api.create_analysis(definition=replace(d,point_trace_policy=None))
+    try:
+        calls=[];certificate=a._explicit_load_resolved
+        def checked(*args):
+            value=certificate(*args);calls.append(value);return value
+        monkeypatch.setattr(a,"_explicit_load_resolved",checked)
+        body=a.body_acceleration_load((0.,0.,-9.81))
+        result=a.solve_linear(body)
+        assert result.status=="completed",result.failure_reason
+        assert calls==[True] and result.loaded_strain_energy>0.
+        # Current legacy numerical guard and identity retain their meaning.
+        legacy=old.solve_linear(old.body_acceleration_load((0.,0.,-9.81)))
+        assert legacy.status=="completed",legacy.failure_reason
+        assert not hasattr(legacy,"loaded_member_poses")
+        monkeypatch.setattr(a,"_explicit_load_resolved",lambda *args:False)
+        unresolved=a.solve_linear(body)
+        assert unresolved.status=="failed" and unresolved.displacements==()
+        assert unresolved.failure_reason=="panel mixed-load resolution insufficient"
+    finally:a.close();old.close()
+
+
+def test_resolution_certificate_rejects_lost_applied_work():
+    a=api.create_analysis(definition=_steel_definition())
+    try:
+        body=a.body_acceleration_load((0.,0.,-9.81))
+        applied=np.asarray(body.load);bg=np.zeros(a._C.shape[0])
+        for member in a._loaded_members.values():
+            values,_=member.body_constraint(body.acceleration_m_s2)
+            ix=[6*i+c for i in member.point_indices for c in range(6)]
+            bg[ix]=values
+        rhs=np.r_[a._project(applied-a._ku0),-a._cu0-bg]
+        # An answer that discarded the whole nonzero load cannot be certified.
+        assert not a._explicit_load_resolved(np.zeros_like(rhs),rhs,abs(a._project(applied)))
+    finally:a.close()

@@ -1101,7 +1101,7 @@ class ExperimentalB2Q4PanelAnalysis:
             rk = self._K.tocsr()[columns][:, columns]
             rc = self._C.tocsr()[:, columns]
             self._resolution_kkt = sparse.bmat(
-                ((rk, rc.T), (rc, None)), format="csr")
+                ((rk, rc.T), (rc, None if self._point_trace_policy is None else -self._H)), format="csr")
         try:
             _, upper = _bounded_accurate_residual(
                 self._resolution_kkt[active], answer[:, None], rhs[active, None])
@@ -1518,7 +1518,7 @@ class ExperimentalB2Q4PanelAnalysis:
             certified = False
             if np.any(resolution_floor[active] >
                       1e-9*explicit_rhs[active]):
-                certified = bool(self.footprints) and self._explicit_load_resolved(
+                certified = (bool(self.footprints) or self._point_trace_policy is not None) and self._explicit_load_resolved(
                     answer, rhs, explicit_rhs)
                 if not certified:
                     raise _NumericalFailure("panel mixed-load resolution insufficient")
