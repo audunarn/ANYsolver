@@ -92,7 +92,7 @@ class _ModalFailure(RuntimeError):
 
 def _admit(owner):
     owner._require_open()
-    if owner._definition.distributing_footprints:
+    if owner._definition.distributing_footprints or owner._definition.finite_distributing_footprints:
         raise ValueError('spectral operations exclude reference-linear distributing footprints')
     if getattr(owner,"_curved_reference",False):
         raise ValueError("curved reference spectra are not admitted")

@@ -7,6 +7,7 @@ increment. Q4 shell J2 and generalized B3 yielding are experimental.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from ._stiffened_shell_distributing_pose import DistributingPoseDomainError
 from copy import copy, deepcopy
 from decimal import localcontext
 import json
@@ -369,6 +370,7 @@ class FinitePointResult:
     body_load: object | None = None
     distributed_load: object | None = None
     pressure_load: object | None = None
+    distributing_footprint_wrenches: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -485,6 +487,7 @@ class FinitePointDriver:
         self._adaptive_checkpoint = None
         self._line_trial_recovery = None
         self._point_trial_recovery = None
+        self._distributing_trial_recovery = None
         self._generalized_trial_recovery = None
 
     def _load(self, actions):
@@ -510,6 +513,10 @@ class FinitePointDriver:
                 self._programme.augmented_model_identity)
 
     def _prepare_load(self, actions, targets):
+        if self.owner._finite_distributing:
+            from ._stiffened_shell_ge_experimental import NodalAction
+            if type(actions) is not tuple or any(type(a) is not NodalAction for a in actions):
+                raise ValueError("finite distributing footprints admit nodal translation forces only")
         from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
         from ._stiffened_shell_ge_body_load import GEBodyLoad
         from ._stiffened_shell_ge_distributed_load import GEBeamDistributedLoad
@@ -607,6 +614,16 @@ class FinitePointDriver:
             columns.extend(np.tile(slots, len(slots)))
             data.extend(tangent.ravel())
 
+        def scatter_sparse(block):
+            if not np.isfinite(block.residual).all() or not np.isfinite(block.tangent.data).all():
+                raise RuntimeError("finite sparse attachment trial required")
+            for slot, value in zip(block.slots, block.residual):
+                force_terms[int(slot)].append(float(value))
+            entries = block.tangent.tocoo()
+            rows.extend(block.slots[entries.row])
+            columns.extend(block.slots[entries.col])
+            data.extend(entries.data)
+
         for (eid, element, slots, _), origin in zip(owner._shell_parts, shell_origins):
             anchors = None if state.shell_anchors is None else state.shell_anchors[slots[::6]//6]
             if len(slots) == 18 and owner._definition.shell.j2_curve is None:
@@ -647,7 +664,7 @@ class FinitePointDriver:
             if getattr(owner, "_finite_bl5", False) and not owner._bl5_material and any(
                     station.accumulated != (0., 0.) for station in response.history.stations):
                 raise ValueError("experimental finite BL5 admits elastic beam response only")
-            if getattr(owner, "_finite_elastic_footprint", False):
+            if getattr(owner, "_finite_elastic_footprint", False) or owner._finite_distributing:
                 _require_elastic_footprint_histories((response.history,), "candidate")
             if getattr(owner, "_curved_reference", False) and not getattr(owner,"_curved_material",False):
                 _require_elastic_footprint_histories((response.history,), "candidate",scope="curved Q4 points")
@@ -684,6 +701,15 @@ class FinitePointDriver:
             # coordinate-pulled joint rows cannot be summed with these rows.
             scatter(extended, trial.pose.residual,
                     trial.pose.spatial_jacobian@trial.coordinate_map)
+
+        distributing_records = []
+        if owner._finite_distributing:
+            from ._stiffened_shell_ge_distributing_finite import wrench_record
+            for adapter, start in owner._finite_distributing_bindings:
+                block = adapter.evaluate(owner, state, state.multipliers[start:start+6],
+                                         multiplier_row_start=start)
+                scatter_sparse(block)
+                distributing_records.append(wrench_record(block, adapter.reference, owner._generation+1))
 
         line_records = []
         if getattr(owner, "_finite_bl5", False):
@@ -739,6 +765,7 @@ class FinitePointDriver:
             residual[count:], owner._constraint_scale)
         self._line_trial_recovery = (state, tuple(line_records))
         self._point_trial_recovery = (state, tuple(point_records))
+        self._distributing_trial_recovery = (state, tuple(distributing_records))
         self._generalized_trial_recovery = (state,beam_origins,tuple(generalized_material))
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)
 
@@ -755,6 +782,11 @@ class FinitePointDriver:
         if self._point_trial_recovery is None or self._point_trial_recovery[0] is not state:
             raise ValueError("stale finite point recovery")
         return self._point_trial_recovery[1]
+
+    def _distributing_records(self, state, generation):
+        if self._distributing_trial_recovery is None or self._distributing_trial_recovery[0] is not state:
+            raise ValueError("stale finite distributing recovery")
+        return tuple(replace(record, generation=generation) for record in self._distributing_trial_recovery[1])
 
     def _increment_origin(self, state):
         """Detach one footprint Newton chart without publishing or moving history.
@@ -807,6 +839,8 @@ class FinitePointDriver:
     def solve(self, actions, targets, *, cancellation_token=None,
               max_iterations=12, max_backtracks=8, increment_control=None,
               on_accepted=None):
+        if self.owner._finite_distributing and increment_control is not None:
+            raise ValueError("finite distributing footprints do not yet admit adaptive control")
         if self.owner._footprint_increment_chart:
             require_rotation_triples(self.owner._fixed, len(self.owner._shell_ids))
         pending = self._adaptive_state is not None and not self._adaptive_state.completed
@@ -883,6 +917,8 @@ class FinitePointDriver:
                 any(a == b for a, b in zip((self._load_factor,)+targets,
                                             targets))):
             raise ValueError("positive finite load factors must change at each increment")
+        if owner._finite_distributing and any(b <= a for a,b in zip((self._load_factor,)+targets,targets)):
+            raise ValueError("finite distributing footprint force factors must increase monotonically")
         max_trial_halvings=16 if getattr(self.owner,'_curved_material',False) else 12
         if (type(max_iterations) is not int or not 1 <= max_iterations <= 24 or
                 type(max_backtracks) is not int or not 0 <= max_backtracks <= max_trial_halvings):
@@ -895,7 +931,7 @@ class FinitePointDriver:
                      np.arange(owner._K.shape[0],
                                owner._K.shape[0]+len(self._state.multipliers))]
         from ._stiffened_shell_same_parent_trial import FixedTrialHandoff
-        allow_handoff = (programme is None and _accepted_hook is None and
+        allow_handoff = (not owner._finite_distributing and programme is None and _accepted_hook is None and
                          self._adaptive_state is None)
         for factor in targets:
             handoff = None
@@ -977,7 +1013,7 @@ class FinitePointDriver:
                         before = (FixedTrialHandoff.begin(self, candidate, factor, pattern)
                                   if allow_handoff else None)
                         changed = evaluated(candidate)
-                    except BL5TrialDomainError:
+                    except (BL5TrialDomainError, DistributingPoseDomainError):
                         counts["rejected_trials"] += 1
                         continue
                     candidate_relative = (changed[2] if merit_applied is None else
@@ -1038,6 +1074,9 @@ class FinitePointDriver:
         next_result = _with_shell_chart(next_result, trial, owner._shell_count)
         next_result = replace(next_result, point_wrenches=self._point_records(trial),
             beam_generalized_material=self._generalized_records(trial,self._beam_origins,beam_next))
+        if owner._finite_distributing:
+            next_result = replace(next_result, distributing_footprint_wrenches=
+                self._distributing_records(trial, owner._generation+1))
         next_result = self._programme_result(next_result, programme, factor, applied_load)
         next_result = self._external_result(next_result, trial, factor)
         if getattr(owner, "_finite_bl5", False):
@@ -1206,6 +1245,9 @@ class FinitePointDriver:
                    _encode_programme=True, _encode_external=True):
         if self._accepted is None:
             raise RuntimeError("no accepted finite mixed increment")
+        if self.owner._finite_distributing and (self._state.shell_anchors is not None or
+                self._adaptive_state is not None or self._programme is not None or self._external is not None):
+            raise ValueError("finite distributing checkpoint requires plain monotone force state")
         if (self._adaptive_checkpoint is not None and _encode_anchors and
                 _encode_control and _encode_programme and _encode_external):
             return self._adaptive_checkpoint
@@ -1241,6 +1283,8 @@ class FinitePointDriver:
                   ("pattern" if self._programme is None else "applied_dead_load",
                    self._pattern if self._programme is None else self._applied_load),
                   ("accepted_factors", np.asarray(self._accepted_factors)))
+        if self.owner._finite_distributing:
+            return _encode_binary_checkpoint("finite_distributing", self._checkpoint_identity(), generation, arrays)
         if self.owner._bl5_material or (self.owner._curved_material and self._curved_material_predecessors):
             plastic, accumulated = _material_arrays(self._beam_origins)
             origin_plastic, origin_accumulated = _material_arrays(self._beam_predecessors)
@@ -1366,6 +1410,11 @@ class FinitePointDriver:
         owner = self.owner
         if self._accepted is not None:
             raise ValueError("cannot replace a live finite driver numerical policy")
+        if bool(owner._finite_distributing) != (value.get("schema") == _BINARY_SCHEMAS["finite_distributing"]):
+            raise ValueError("matching finite distributing checkpoint law required")
+        if owner._finite_distributing and (rotation_anchors is not None or adaptive_state is not None or
+                self._programme is not None or self._external is not None):
+            raise ValueError("finite distributing checkpoint excludes wrapper/chart state")
         if type(stable_q4) is not bool or (stable_q4 and not self._stable_q4):
             raise ValueError("stable Q4 checkpoint requires its admitted point model")
         # Old checkpoints keep their original arithmetic during validation and
@@ -1422,7 +1471,7 @@ class FinitePointDriver:
                               "shell_origin_q", "shell_origin_anchors", "s3_states"}
         if (set(value) != expected_keys or
                 value["schema"] not in
-                (*tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS), FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
+                (*tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS), _BINARY_SCHEMAS["finite_distributing"], FINITE_CHECKPOINT, _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"], NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA, NATIVE_SHELL_SCHEMA, FINITE_MATERIAL_CHECKPOINT,
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT) or
                 value["model"] != owner._identity or
@@ -1494,7 +1543,7 @@ class FinitePointDriver:
                 raise ValueError("material checkpoint requires yielded or reversed history")
         else:
             beam_origins = self._beam_origins
-        if owner._finite_elastic_footprint:
+        if owner._finite_elastic_footprint or owner._finite_distributing:
             _require_elastic_footprint_histories(beam_origins, "checkpoint origin")
             if native_material:
                 _require_elastic_footprint_histories(beam_accepted, "checkpoint accepted")
@@ -1655,6 +1704,9 @@ class FinitePointDriver:
             beam_generalized_material=(self._generalized_records(trial,beam_origins,
                 beam_accepted if owner._bl5_material or curved_material else beam_next)
                 if not owner._curved_material or curved_material else ()))
+        if owner._finite_distributing:
+            result = replace(result, distributing_footprint_wrenches=
+                self._distributing_records(trial, value["generation"]))
         if getattr(owner, "_finite_bl5", False):
             result = replace(result, beam_shell_line_work=self._line_trial_recovery[1])
         if native_material:

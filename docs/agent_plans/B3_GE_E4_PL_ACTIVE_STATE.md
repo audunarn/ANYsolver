@@ -1,93 +1,80 @@
 # B3-GE / E4-PL / B2 active state — 4 October 2026
 
-## Current decision and restart
+## Current result and next decision
 
-ACTIVE after user resumption. Complete amended G0–G6/F01–F13/V01–V28/B01–B18
-scope remains; implementation, testing, acceptance and release stay distinct.
-[Canonical goal](B3_GE_E4_PL_REVISION_8_GOAL.md),
-[plan](B3_GE_E4_PL_REVISION_8_PLAN.md) sections2.1–2.2 and
-[acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) govern.
-Original coupling goal/plan paths forward here. All numerical jobs terminal.
+ACTIVE. Complete amended G0–G6/F01–F13/V01–V28/B01–B18 remains binding;
+implementation, testing, acceptance and release are separate. The
+[goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md)
+and [matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) govern.
 
-Decision: retain the multi-host reference-linear distributing law. One physical
-pad/six rows works over2–128 conforming Q4 hosts/up to256nodes; old two-host
-identity/nine array bytes and checkpoints preserved. Source130/installed130,
-installed consumer42 and public solver example PASS. Matched10x4/20x8/40x16
-native/solid Mx differences4.249→2.233→0.813%; Fy3.472→1.290→0.364%.
-These are decreasing observed differences, not converged1% acceptance. Last
-native torque step1.518% (fine denominator); solid thickness remains two layers.
+Delivered: explicit experimental finite distributing record, sparse local saddle
+assembly in the existing GE owner, elastic force stepping, cached physical
+wrenches, rejection/cancellation and dedicated binary checkpoint/restore.
+Flat Cartesian multi-Q4/generalized native B3; retained variables preserved.
+Reference-only law/model identities and old checkpoints remain unchanged.
+Source191PASS (before final metadata-only descriptor adjustment); final installed
+186PASS, consumer43source/43installed and installed public restart example PASS.
+Example accepts .25/.5/1, equilibrium8.943e-10, gap1.206e-17,2355byte checkpoint.
+Supporting OpenAI review is development input, not different-family acceptance.
 
-Next implementation: add a distinct finite distributing record/checkpoint kind
-and wire the verified local saddle adapter into the existing owner/driver.
-The private pose has22 source controls; its actual-owner assembly/recovery seam
-has10 more, including global actual-update derivatives and sparse/dense solves.
-Public finite admission, atomic solve/restart and installed integration remain unmet.
-Science lane: establish what separate native-only mesh-adequacy check changes the
-physical claim. No automatic paired refinement; historical geometry donor admits
-only10x4/20x8/40x16, and80x32solid exceeds4096element map guard. Do not bypass them.
-No tolerance relaxation, line-law substitution or closed certificate restart.
+Next implementation: one finite ANYfem construction/persistence/solve/recovery/
+checkpoint-resume slice, using this explicit new record and existing consumer
+services. Preserve historical reference-linear project format; no silent upgrade.
+Current ANYfem change only fixes empty-field compatibility and rejects finite
+records from unsupported reference/modal import routes; no finite consumer yet.
+Do not broaden controllers/materials or add a framework while finishing this exit.
 
-Current bounded slice: actual spatial/chart saddle mapping and physical recovery
-now pass. Finish the coherent record/admission/schema/driver/recovery slice;
-prove rejection/cancellation and restore parity before public experimental admission.
-Preserve reference-only identities/checkpoints; report pad-curvature resources.
-No new framework, physical qualification, formalF03 or automatic refinement.
+Science question: what independent native mesh-adequacy/model-assumption check
+would change the physical torque claim? Existing three-level matched reference
+Mx differences4.249→2.233→0.813%, Fy3.472→1.290→0.364%; native final torque movement
+1.518%, fixed two-layer solid thickness. Not converged1% acceptance. No automatic
+paired refinement; old geometry donor only10x4/20x8/40x16 and80x32solid exceeds
+4096element map guard. Do not bypass guards or substitute a line/weld law.
 
-## Source, ownership and authority
+## Ownership, restart and authority
 
-Solver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; preceding HEAD999463bf plus the
-private actual-owner assembly source/tests and linked current docs/raw evidence. Exact bytes and
-candidate hashes are bound in the raw inventory. Root owns integration/serial
-jobs; workers handed back edits and supporting Read reviews found no blocker.
-No worker or numerical job is active. One implementation completion plus one science
-question; max3workers/separate files. Optional local/Mistral failures are known;
-do not re-probe. OpenAI supporting review is not different-family acceptance.
-ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer, HEAD6013db0/product9b7482b, clean.
-Scoped local commits allowed. NO push/main merge/publication/contact messages.
-FormalF03 UNCONSUMED: never execute/copy/substitute protected original runner
-b3_e4_f03_c1_fy_supported_reference.py, SHA
+ANYsolver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001. Preceding HEAD9269719e; current
+finite owner product/example/tests plus linked docs/evidence are root-owned.
+Exact staged candidate bytes will be recorded before scoped local delivery.
+ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
+branch codex/experimental-ge-panel-consumer; preceding HEAD6013db0. Three narrow
+compatibility source/test changes are root-owned. No unrelated dirty work touched.
+All numerical jobs terminal; no worker has Edit authority. Root controls serial
+jobs, integration and Git. At most3workers, one implementation exit plus one
+scientific question. No push/main merge/publication/contact-worker messages.
+Optional local/Mistral unavailable; do not re-probe. Different-family review open.
+
+FormalF03 UNCONSUMED: never execute/copy/substitute
+scripts/b3_e4_f03_c1_fy_supported_reference.py, SHA
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
 Never inspect/copy/archive us3-modal-canary (credentials); no Get-CimInstance.
-100krows/600s/8GiB/8threads/ONE numerical job; tighter registered guards and
-G5 budgets remain. Current jobs2GiB/pools1/JIToff. No authority renewed.
+100krows/600s/8GiB/8threads/ONE numerical job; tighter guards and G5 budgets stay.
+Current numerical checks600s/2GiB, effective pools1/JIT off. No authority renewed.
 
-## Evidence and remaining boundaries
+## Evidence and acceptance boundaries
 
-[Grouped product/consumer/reference evidence](development/r8-distributing-reference-linear-20261004/results.md)
-links the original public63source/63installed owner, ANYfem42source/42installed
-construction/persistence/checkpoint/resume and coarse external evidence. Reuse
-unchanged campaigns. New multi-hostwheelb7ae7ca03b92e98463a148c1ba30810a263d20bc68a81c32665d5f17c0526d9a
-and unchanged ANYfemwheel3b8e563d... bind actual installed integration.
-Raw .qualification/b3-ge-e4-pl/r8-distributing-multihost-dev-20261004-v1 retains
-historical two-host baseline, source/installed/fixture checks, example, six pinned
-CCX2.23 decks/fulloutputs/parsed results, native three levels, runtime/source
-bindings and supporting source/runtime review. Largest22479external rows,
-native sampled peak272973824B; no resource failure. Onefactor/level, negligible
-free-stub response/work; native equilibrium<=2.88e-12/gaps<=1.70e-21. External
-root errors inside decimal-print bounds, not1e-8 numerical certification.
-Reference mean/director/curl is not a welded face/full3D polar director. Fixed
-thickness, clamp and shell/solid kinematic limitations remain; no fullF04/G0/G2,
-line/multiplier selection, finite/material/spectral/platform acceptance follows.
+[Grouped evidence](development/r8-distributing-reference-linear-20261004/results.md)
+and raw .qualification/b3-ge-e4-pl/r8-distributing-finite-owner-dev-20261004-v1
+bind source191, final installed186, consumer43/43, example, exact actual imports,
+commands/resource settings and prior source snapshots. Solver wheel9a366e44b752e57b65f029a7ee54fe4c4ee7581c5bda0f85083c8c8d040f59e8;
+ANYfem wheela3a46112b927c78b7b76cb115fd26b213b5c8ab927ddd438b3bb77c436f8ef6d. Wheels/sites disposable; hashes and logs retained.
+No passed campaign is repeated without changed inputs or an unresolved finding.
 
-Private finite raw .qualification/b3-ge-e4-pl/r8-distributing-finite-pose-dev-20261004-v1:
-22PASS/v5,2.3974s whole/sampled177217536B, pools1/JIToff. Preserve v1 import
-failure, v2 invalid-host fixture failures and all repaired/prior versions.
-Supporting Read design/source/runtime review has no private-scope finding;
-different-family acceptance remains open. Numerical director/rank/orientation
-and relative-Log domains are explicit; local pad curvature can be quadratic.
-Owner-local10PASS/v4,4.9563s/sample178782208B; actual source imports/pools1/JIToff.
-Preserve v1 invalid connection-free fixture and v2 missing point-block oracle.
-Adapter owns no state, installs no driver hook and changes no public admission.
+Finite law is a reduced area-mean/director/polar pose, not a pointwise welded
+surface. Relative Log/rank/director/chart numerical domains are explicit.
+Local pad curvature can be quadratic; preflight reports its upper bound, not a
+measured G5 result. Initial scope excludes reference-linear solve, chart rebase,
+adaptive/displacement/arc, external/staged wrappers, yielding and spectra.
+These remain mandatory later obligations, not a permanent scope reduction.
 
-Earlier raw .qualification/b3-ge-e4-pl/r8-e02-distributing-area-feasibility-dev-20261004-v1
-and immutable failures remain unchanged. F5 lacks verified discontinuous-retained
-port sided forces. Scoped F05/F08/F09 and GE/B2/material/load/chart/modal/consumer
-admissions remain in the matrix.10kQ4/1kB3 point reference scale and measured warm
-reuse gains do not close full nonmatching/nonlinear/plasticG5. BL5 auxiliary21
-cases do not settle physical mixed stability; inverse/positive-part campaigns
-CLOSED_UNRESOLVED, inventory13positive/oneunresolved/sevenunassessed. No guard,
-budget/order/precision/mesh retry. Pressure amendment DECLINED. Mandatory full
-materials/topology/loads/capacity/scale/external/platform/consumer/different-family
-and authorized release obligations stay open. Goal remains active.
+Historical source/artifacts/failures stay intact, including private posev1/v2,
+owner-localv1/v2/v3, CalculiX executions and all closed certificate outcomes.
+BL5 auxiliary21 cases do not settle actual indefinite physical stability;
+inverse/positive-part campaigns CLOSED_UNRESOLVED, inventory13positive/
+oneunresolved/sevenunassessed. Pressure amendment DECLINED. No retry by guard,
+budget/order/precision/mesh substitution. F5 still lacks verified discontinuous
+retained sided forces. Scoped foundation passes are not aggregate G0 acceptance.
+Full F04/G0/G2, line envelope, materials/topology/loads/spectra/capacity, complete
+GE/B2 scale/platform/consumer/external/different-family/release remain open.
+No overall development-speed gain or release readiness is claimed.

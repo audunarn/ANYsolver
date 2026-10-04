@@ -27,6 +27,10 @@ from ._ge_beam3_native_definition import NativeBeamDefinition
 from ._ge_beam3_fibre_section import PhysicalFibreSection
 from ._ge_beam3_pose_joint import RigidPoseJoint
 from ._stiffened_shell_point_recovery import PointTransferWrench, reference_point_records
+from ._stiffened_shell_ge_distributing_finite import (
+    FiniteDistributingFootprintDefinition, PreparedFiniteDistributingAttachment,
+)
+from ._stiffened_shell_distributing_pose import FiniteDistributingPose, LAW as DISTRIBUTING_FINITE_LAW
 from ._stiffened_shell_ge_distributing_reference import (
     DistributingFootprintDefinition, DistributingFootprintSelection, DistributingFootprintWrench,
     LAW as DISTRIBUTING_REFERENCE_LAW, _compile_reference_geometry, _scatter_reference,
@@ -190,6 +194,7 @@ class LinearDefinition:
     shell_reference_policy: str = "flat"
     retained_scale_policy: str = "profile"
     distributing_footprints: tuple[DistributingFootprintDefinition, ...] = ()
+    finite_distributing_footprints: tuple[FiniteDistributingFootprintDefinition, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -544,6 +549,15 @@ class ExperimentalGEAnalysis:
         groups = tuple(DistributingFootprintDefinition(g.footprint_id, g.host_element_ids,
             g.beam_node_id, g.bounds_xy_m) for g in groups)
         self._distributing_reference = bool(groups)
+        finite_groups = definition.finite_distributing_footprints
+        if type(finite_groups) is not tuple or any(type(g) is not FiniteDistributingFootprintDefinition for g in finite_groups):
+            raise ValueError("explicit typed finite distributing footprint tuple required")
+        finite_groups = tuple(FiniteDistributingFootprintDefinition(g.footprint) for g in finite_groups)
+        self._finite_distributing = bool(finite_groups)
+        if groups and finite_groups:
+            raise ValueError("reference-only and finite distributing records cannot be mixed")
+        reference_groups = groups
+        groups = groups or tuple(g.footprint for g in finite_groups)
         if len({g.footprint_id for g in groups}) != len(groups):
             raise ValueError("duplicate distributing footprint ID")
         from ._stiffened_shell_ge_reference_modal import GE_FREE_FREE_MODAL_ONLY_V1
@@ -614,7 +628,7 @@ class ExperimentalGEAnalysis:
             definition.lines, definition.q4_pullback_policy, definition.footprints,
             definition.modal_boundary_policy, definition.footprint_chart_policy,
             definition.bl5_material_policy, definition.shell_reference_policy,
-            definition.retained_scale_policy, groups)
+            definition.retained_scale_policy, reference_groups, finite_groups)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count, beam_inertias = _beam_reference(
             definition.beams)
         self._reference_modal_inertias = beam_inertias
@@ -658,7 +672,7 @@ class ExperimentalGEAnalysis:
         reference_length, shell_scale, beam_scale = _reference_scales(
             shell_xyz, beam_nodes, beam_parts, shell_count, beam_count,
             footprint_retained_roles=(self._finite_elastic_footprint or self._bl5_shell_material
-                                      or self._native_retained_scale))
+                                      or self._native_retained_scale or self._finite_distributing))
         shell_r, shell_k, shell_local_error = _assemble_shell(
             shell_model, shell_parts, shell_count, shell_scale,
             definition.q4_pullback_policy)
@@ -729,13 +743,19 @@ class ExperimentalGEAnalysis:
             "points": [(v.shell_node, v.beam_node) for v in definition.points],
             "fixed": [(v.domain, v.node, v.component) for v in definition.fixed],
         }
-        if groups:
+        if self._distributing_reference:
             identity_payload["distributing_reference"] = dict(law=DISTRIBUTING_REFERENCE_LAW,
                 records=[(g.footprint_id, g.host_element_ids, g.beam_node_id, g.bounds_xy_m) for g in groups],
                 compiled=[g.identity for g in distributing_compiled],
                 policies=(definition.q4_pullback_policy, definition.shell_reference_policy,
                           definition.bl5_material_policy, definition.modal_boundary_policy,
                           definition.footprint_chart_policy), rows="common identity reference-spatial u/omega")
+        finite_poses = tuple(FiniteDistributingPose(g) for g in distributing_compiled) if self._finite_distributing else ()
+        if self._finite_distributing:
+            identity_payload["distributing_finite"] = dict(law=DISTRIBUTING_FINITE_LAW,
+                geometry=[g.identity for g in distributing_compiled], poses=[p.identity for p in finite_poses],
+                retained_scales="native_force_moment_roles_v1", checkpoint_kind="finite_distributing",
+                policy="flat_elastic_q4_generalized_monotone_translation_force_v1")
         if self._bl5_shell_material:
             identity_payload["bl5_retained_scale_policy"] = "native_force_moment_roles_v1"
         if self._curved_reference:
@@ -820,7 +840,7 @@ class ExperimentalGEAnalysis:
         self._C = sparse.coo_matrix((c_data, (c_row, c_col)),
                                     shape=(6*len(constraint_rows), count)).tocsr()
         self._distributing_bindings = tuple((compiled, 6*(len(constraint_rows)+i))
-                                            for i, compiled in enumerate(distributing_compiled))
+                                            for i, compiled in enumerate(distributing_compiled)) if self._distributing_reference else ()
         if groups:
             self._C = sparse.vstack((self._C, *(_scatter_reference(g, count) for g in distributing_compiled)), format="csr")
             self._C.sum_duplicates()
@@ -896,6 +916,9 @@ class ExperimentalGEAnalysis:
         self._linear_factor = None
         self._linear_factorizations = 0
         self._linear_refinements = 0
+        self._finite_distributing_bindings = tuple((
+            PreparedFiniteDistributingAttachment._from_compiled(self, compiled, pose),
+            6*(len(constraint_rows)+i)) for i,(compiled,pose) in enumerate(zip(distributing_compiled,finite_poses)))
         if self._modal_only:
             from ._stiffened_shell_ge_reference_modal import _admit
             _admit(self)
@@ -912,6 +935,10 @@ class ExperimentalGEAnalysis:
         if self._distributing_reference:
             raise ValueError(f"distributing footprints admit reference-linear nodal dead loads/checkpoints only; {operation} is unsupported")
 
+    def _require_finite_distributing_scope(self, operation):
+        if self._finite_distributing:
+            raise ValueError(f"finite distributing footprints do not yet admit {operation}")
+
     def _require_distributing_linear_checkpoint(self, raw):
         if not self._distributing_reference or raw.startswith(BINARY_CHECKPOINT_MAGIC):
             return
@@ -926,6 +953,17 @@ class ExperimentalGEAnalysis:
 
     @property
     def capabilities(self):
+        if self._finite_distributing:
+            return dict(profile=PROFILE, status="EXPERIMENTAL_NOT_QUALIFIED",
+                shell="elastic flat Cartesian full-map Q4", beam="generalized B3 with native retained coordinates",
+                beam_section_families=self._beam_families,
+                attachment=("objective finite area-mean/director/projected-polar distributing pose",),
+                distributing_footprint_law=DISTRIBUTING_FINITE_LAW,
+                analysis=("nonlinear_force",), loads=("nodal dead translation forces",),
+                checkpoints=("finite_distributing",),
+                recovery="cached evaluated exerted spatial actions at current physical origins",
+                excluded=("reference-linear solve", "chart rebase", "adaptive/displacement/arc controllers",
+                    "external/staged loads", "material yielding", "modes", "buckling", "qualified distributing footprint"))
         if self._distributing_reference:
             return dict(profile=PROFILE, status="EXPERIMENTAL_NOT_QUALIFIED",
                 shell="elastic flat Cartesian full-map Q4", beam="generalized B3 retained, virgin elastic reference response",
@@ -1084,6 +1122,11 @@ class ExperimentalGEAnalysis:
                 "constraint_norm": "reference_row_scaled_max",
                 "unsupported_modes": self._unsupported_modes,
                 "production_qualified": False}
+        if self._finite_distributing:
+            details["finite_distributing_footprints"] = tuple(adapter.descriptor()
+                for adapter,_rows in self._finite_distributing_bindings)
+            details["finite_distributing_local_curvature_nnz_upper_bound"] = sum(
+                adapter.descriptor()["maximum_local_curvature_nnz"] for adapter,_rows in self._finite_distributing_bindings)
         if self._definition.footprints:
             details["nodal_rigid_footprints"] = tuple(
                 dict(group.descriptor(), point_indices=indices)
@@ -1110,6 +1153,7 @@ class ExperimentalGEAnalysis:
     def modes(self, request, *, cancellation_token=None):
         """Supported virgin Q4/native-GE point modes with explicit physical mass."""
         self._require_distributing_reference_only("spectral operations")
+        self._require_finite_distributing_scope("spectral operations")
         if self._curved_reference:raise ValueError("curved reference spectra are not admitted")
         from ._stiffened_shell_ge_reference_modal import solve
         return solve(self, request, cancellation_token=cancellation_token)
@@ -1124,6 +1168,7 @@ class ExperimentalGEAnalysis:
     def solve_linear(self, actions: tuple[NodalAction, ...], *,
                      cancellation_token=None) -> LinearResult:
         self._require_open()
+        self._require_finite_distributing_scope("reference-linear solve; select a reference-only record instead")
         if self._distributing_reference and (type(actions) is not tuple or any(type(a) is not NodalAction for a in actions)):
             raise ValueError("distributing reference footprints require a typed tuple of nodal dead actions; load wrappers are unsupported")
         if self._curved_reference and (type(actions) is not tuple or any(
@@ -1247,6 +1292,11 @@ class ExperimentalGEAnalysis:
         """
         self._require_open()
         self._require_distributing_reference_only("finite solve and its controllers")
+        if self._finite_distributing:
+            if increment_control is not None or displacement_control is not None:
+                raise ValueError("finite distributing footprints admit force control without adaptive/displacement controllers")
+            if type(actions) is not tuple or any(type(a) is not NodalAction for a in actions):
+                raise ValueError("finite distributing footprints admit nodal translation forces only")
         from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
         curved_staged = self._curved_material and type(actions) is StagedDeadLoadProgramme
         if curved_staged and displacement_control is not None:
@@ -1316,6 +1366,7 @@ class ExperimentalGEAnalysis:
         """Issue an experimental physical shell-anchor reset at the same load."""
         self._require_open()
         self._require_distributing_reference_only("chart rebase")
+        self._require_finite_distributing_scope("chart rebase")
         if getattr(self,"_arc_snapshot",None) is not None:
             raise ValueError("arc chart rebasing is not yet admitted")
         if getattr(self,"_displacement_snapshot",None) is not None or getattr(self,"_displacement_adaptive",None) is not None:
@@ -1332,6 +1383,9 @@ class ExperimentalGEAnalysis:
     @_accepted_snapshot
     def checkpoint(self) -> bytes:
         self._require_open()
+        if self._finite_distributing and any(getattr(self, name, None) is not None for name in
+                ("_arc_snapshot", "_displacement_adaptive", "_displacement_snapshot", "_external_context")):
+            raise ValueError("finite distributing checkpoint excludes wrapper/controller state")
         if getattr(self,"_arc_snapshot",None) is not None:
             return self._arc_snapshot[0]
         if getattr(self,"_displacement_adaptive",None) is not None:
@@ -1372,6 +1426,7 @@ class ExperimentalGEAnalysis:
                             cancellation_token=None, on_accepted=None):
         self._require_open()
         self._require_distributing_reference_only("arc-length continuation")
+        self._require_finite_distributing_scope("arc-length continuation")
         self._require_stateful_scope()
         from ._stiffened_shell_arc_control import solve
         return solve(self,actions,control,steps=steps,cancellation_token=cancellation_token,
@@ -1390,6 +1445,8 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
+        if self._finite_distributing and not raw.startswith(BINARY_CHECKPOINT_MAGIC):
+            raise ValueError("finite distributing checkpoints require plain dedicated binary framing")
         self._require_distributing_linear_checkpoint(raw)
         from ._stiffened_shell_arc_checkpoint import MAGIC as ARC_MAGIC
         if raw.startswith(ARC_MAGIC):
@@ -1521,6 +1578,10 @@ class ExperimentalGEAnalysis:
             chart = (event_generation, anchors, witness)
         if raw.startswith(BINARY_CHECKPOINT_MAGIC):
             def expected_shapes(kind, generation):
+                if self._finite_distributing and kind != "finite_distributing":
+                    raise ValueError("finite distributing checkpoint requires its exact mechanics kind")
+                if kind == "finite_distributing" and not self._finite_distributing:
+                    raise ValueError("finite distributing checkpoint requires matching attachment records")
                 if self._distributing_reference and kind != "linear":
                     raise ValueError("distributing footprints require reference-linear binary checkpoints; finite kinds are unsupported")
                 if ("_chart" in kind) != (chart is not None):
@@ -1603,7 +1664,7 @@ class ExperimentalGEAnalysis:
             stable_q4 = kind.endswith("_stable_q4")
             kind = kind.removesuffix("_stable_q4")
             schema = (CHECKPOINT if kind == "linear" else
-                      _BINARY_SCHEMAS[kind] if kind in ("finite_bl5", "finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS else
+                      _BINARY_SCHEMAS[kind] if kind in ("finite_distributing", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS else
                       STABLE_NATIVE_SCHEMA if kind == "finite_native_material_stable" else
                       "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"
                       if kind == "finite_native_material" else
@@ -1612,7 +1673,7 @@ class ExperimentalGEAnalysis:
                       else FINITE_CHECKPOINT)
             value = {"schema": schema, "model": self._identity,
                      "generation": generation, **arrays}
-            if kind in ("finite", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable") + CURVED_POINT_MATERIAL_KINDS:
+            if kind in ("finite", "finite_distributing", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable") + CURVED_POINT_MATERIAL_KINDS:
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
         elif raw.startswith(NATIVE_SHELL_MAGIC):
             if (self._line_samples or not self._has_physical_fibre or
@@ -1675,7 +1736,7 @@ class ExperimentalGEAnalysis:
                     _BINARY_SCHEMAS["finite_bl5_coupled"], _BINARY_SCHEMAS["finite_chart_bl5_coupled"])):
                 raise ValueError("finite BL5 checkpoint requires binary framing")
         if (type(value) is dict and value.get("schema") in
-                (*tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS), FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
+                (*tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS), _BINARY_SCHEMAS["finite_distributing"], FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
                  _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"],
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT,

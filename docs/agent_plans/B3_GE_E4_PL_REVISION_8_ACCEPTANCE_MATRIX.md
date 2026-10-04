@@ -2186,3 +2186,17 @@ physical exerted recovery and failure ownership. Public finite admission and
 checkpoint/driver installation remain absent; no aggregate row closes. Exact
 source/runtime/failed evidence extends the existing finite-pose raw directory
 and grouped report; different-family/physical/installed acceptance remains open.
+
+F04 public finite distributing owner, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+Explicit GEFiniteDistributingFootprint record, separate finite law/model/binary
+checkpoint kind, existing sparse owner/driver, cached exerted current wrenches,
+monotone translation-force stepping and atomic restore/continue are implemented.
+Flat elastic Cartesian Q4/generalized native B3 only; disjoint points supported.
+191source (before final metadata-only descriptor delta),186final installed,
+43source/43installed consumer compatibility and installed restart example PASS.
+Consumer preserves empty-field legacy compatibility and rejects finite records
+from unsupported routes; finite consumer is the next missing exit. Local pad
+curvature upper bound is explicit, not practical-scale acceptance. Reference-only
+identities/checkpoints unchanged. Full physical/material/controller/spectral/
+topology/scale/platform/consumer/different-family and aggregateF04/G0/G2 remain
+OPEN; formalF03 UNCONSUMED. [Exact slice/evidence/limits](development/r8-distributing-reference-linear-20261004/results.md).

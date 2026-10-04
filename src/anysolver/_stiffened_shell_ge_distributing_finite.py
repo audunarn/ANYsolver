@@ -1,4 +1,4 @@
-"""Private physical-pose assembly seam; no public/driver admission.
+"""Experimental physical-pose assembly and recovery for finite area coupling.
 
 Prepare reference correspondence once from the existing GE owner. Keep its
 spatial rows and pull shell increment columns only. This adapter owns no state,
@@ -12,11 +12,85 @@ import numpy as np
 from scipy import sparse
 
 from ._ge_beam3_pose_joint import _exp_terms
+from ._ge_beam3_mixed_ad import RotationDomainError
 from ._stiffened_shell_distributing_pose import (
-    FiniteDistributingPose, DistributingPoseDomainError, _owned, _frozen_sparse,
+    LAW, FiniteDistributingPose, DistributingPoseDomainError, _owned, _frozen_sparse,
 )
+from ._stiffened_shell_distributing_footprint import DistributingFootprintDefinition
 from ._stiffened_shell_ge_distributing_reference import _compile_reference_geometry, _reference_owner
 from ._stiffened_shell_rotation_charts import physical_frames
+
+
+@dataclass(frozen=True)
+class FiniteDistributingFootprintDefinition:
+    """Explicit opt-in finite law; never upgrades a reference-only record."""
+    footprint: DistributingFootprintDefinition
+
+    def __post_init__(self):
+        if type(self.footprint) is not DistributingFootprintDefinition:
+            raise ValueError("typed reference footprint geometry required")
+        g = self.footprint
+        object.__setattr__(self, "footprint", DistributingFootprintDefinition(
+            g.footprint_id, g.host_element_ids, g.beam_node_id, g.bounds_xy_m))
+
+
+@dataclass(frozen=True)
+class FiniteDistributingFootprintWrench:
+    """Evaluated exerted spatial actions, measured at physical port origins.
+
+    The shell origin is the fixed-reference-area-weighted current position.
+    Area is a reference measure; this is not a rigid or pointwise welded patch.
+    """
+    footprint_id: str
+    model_identity: str
+    compiled_identity: str
+    host_element_ids: tuple[int, ...]
+    shell_node_ids: tuple[int, ...]
+    beam_node_id: int
+    centroid_m: np.ndarray
+    centroid_low_m: np.ndarray
+    beam_position_m: np.ndarray
+    beam_position_low_m: np.ndarray
+    area_reference_m2: float
+    shell_node_positions_m: np.ndarray
+    shell_node_position_low_m: np.ndarray
+    shell_node_actions: np.ndarray
+    shell_action: np.ndarray
+    beam_action: np.ndarray
+    gap: np.ndarray
+    generation: int
+    configuration: str
+
+    @property
+    def law(self):
+        return LAW
+
+    @property
+    def production_qualified(self):
+        return False
+
+    def __post_init__(self):
+        count = len(self.shell_node_ids)
+        for name, shape in (("centroid_m", (3,)), ("centroid_low_m", (3,)),
+                ("beam_position_m", (3,)), ("beam_position_low_m", (3,)),
+                ("shell_node_positions_m", (count,3)), ("shell_node_position_low_m", (count,3)),
+                ("shell_node_actions", (count,6)), ("shell_action", (6,)),
+                ("beam_action", (6,)), ("gap", (6,))):
+            array = np.asarray(getattr(self, name))
+            if array.shape != shape or not np.isfinite(array).all():
+                raise DistributingPoseDomainError("finite owned distributing recovery required")
+            object.__setattr__(self, name, _owned(array))
+
+
+def wrench_record(assembly, reference, generation):
+    return FiniteDistributingFootprintWrench(reference.definition.footprint_id,
+        assembly.model_identity, assembly.candidate_identity, reference.host_element_ids,
+        reference.shell_node_ids, reference.beam_node_id, assembly.centroid,
+        assembly.centroid_low, assembly.beam_position, assembly.beam_position_low,
+        reference.area_m2, assembly.shell_positions, assembly.shell_position_low,
+        assembly.shell_node_actions, assembly.shell_action, assembly.beam_action,
+        assembly.gap, generation, "current")
+
 
 
 @dataclass(frozen=True)
@@ -71,12 +145,25 @@ class PreparedFiniteDistributingAttachment:
 
     def __init__(self, owner, definition):
         _reference_owner(owner)
-        self.reference = _compile_reference_geometry(definition,
+        reference = _compile_reference_geometry(definition,
             shell_parts=owner._shell_parts, shell_index=owner._shell_index,
             shell_xyz=owner._shell_xyz, beam_index=owner._beam_index,
             beam_nodes=owner._beam_nodes, shell_count=owner._shell_count,
             global_dimension=owner._K.shape[0])
-        self.pose = FiniteDistributingPose(self.reference)
+        self._bind(owner, reference, FiniteDistributingPose(reference))
+
+    @classmethod
+    def _from_compiled(cls, owner, reference, pose):
+        """Reuse the owner's own prepared map and pose without a second search."""
+        _reference_owner(owner)
+        if pose.reference_identity != reference.identity:
+            raise ValueError("matching finite pose and reference correspondence required")
+        instance = object.__new__(cls)
+        instance._bind(owner, reference, pose)
+        return instance
+
+    def _bind(self, owner, reference, pose):
+        self.reference, self.pose = reference, pose
         self.model_identity = owner._identity
         self._owner = weakref.ref(owner)
         self._K = owner._K
@@ -88,9 +175,12 @@ class PreparedFiniteDistributingAttachment:
         self._sealed = True
 
     def descriptor(self):
+        owner = self._owner()
+        admitted = bool(owner is not None and owner._finite_distributing)
         return dict(self.pose.descriptor(), model_identity=self.model_identity,
             scatter="LOCAL_SPARSE_SADDLE_BLOCK", accepted_state_owned=False,
-            checkpoint_admission=False)
+            public_admission=admitted, owner_binding_authorized=admitted,
+            checkpoint_admission=admitted)
 
     def evaluate(self, owner, state, multipliers, *, multiplier_row_start=0):
         from ._stiffened_shell_ge_finite_experimental import _State, _position_pair
@@ -110,13 +200,16 @@ class PreparedFiniteDistributingAttachment:
         positions, low = np.array([v[0] for v in pairs]), np.array([v[1] for v in pairs])
         start = owner._shell_count+6*self._beam_node
         beam, beam_low = _position_pair(owner._beam_nodes[self.reference.beam_node_id][0], state.q[start:start+3])
-        result = self.pose.evaluate(positions, frames, beam, state.frames[self._beam_node],
-            multipliers, shell_position_low=low, beam_position_low=beam_low)
+        try:
+            result = self.pose.evaluate(positions, frames, beam, state.frames[self._beam_node],
+                multipliers, shell_position_low=low, beam_position_low=beam_low)
+        except RotationDomainError as error:
+            raise DistributingPoseDomainError("finite distributing relative rotation requires cutback") from error
         blocks = []
         for q in local_q:
             left = _exp_terms(q[3:])[1]
             if np.linalg.svd(left, compute_uv=False)[-1] <= 1e-11:
-                raise ValueError("singular distributing shell chart; owner must rebase")
+                raise DistributingPoseDomainError("singular distributing shell chart; owner must rebase")
             blocks.append(sparse.block_diag((np.eye(3), left), format="csr"))
         blocks.append(sparse.eye(6, format="csr"))
         columns = sparse.block_diag(blocks, format="csr")

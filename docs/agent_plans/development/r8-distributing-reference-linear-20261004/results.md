@@ -507,3 +507,68 @@ coordinate admission, driver, recovery and restore within the existing owner.
 Supporting final Read review closed recovery overflow and physical load/retained
 index findings. Preliminary v3 tests/results remain; corrected v4 passes all10.
 No different-family or aggregate acceptance is claimed.
+
+### Public experimental finite owner — complete installed development slice
+
+Explicit `GEFiniteDistributingFootprint` selects
+`GE_FLAT_Q4_DISTRIBUTING_DIRECTOR_PLANAR_POLAR_POSE_V1_CANDIDATE`; old reference
+records remain reference-only and cannot be mixed. The compiled reference map
+and finite pose are prepared once and reused by the existing GE driver. Actual
+spatial rows, shell chart columns and multiplier curvature assemble sparse local
+blocks; native retained coordinates remain global. No new state owner/framework.
+
+The reduced mean/director/polar pose is not a pointwise weld. Initial admission:
+flat elastic Cartesian Q4, native generalized B3, disjoint points permitted,
+monotone nodal translation-force stepping. Reference-linear solve, chart rebase,
+adaptive/displacement/arc, staged/external wrappers, yielding and spectra reject
+explicitly. These required later combinations are still open, not deleted.
+
+Evaluated current physical nodal actions/resultant wrenches are cached before
+atomic publication; no raw Log multiplier is displayed as a physical moment.
+Dedicated binary kind `finite_distributing` binds the law/model and rejects old,
+wrapper/chart/corrupt/wrong-model payloads. Normal restore does not replay history.
+Candidate domain failure discards trials; programming/ownership/memory failures
+propagate. Tests exercise cancellation after commit, rejected candidates, disjoint
+point/pad rows and both recoveries, stale generations and continuation parity.
+Local curvature can grow quadratically with pad support; preflight reports the
+sum of [6(N+1)]² upper bounds, not measured memory or G5 qualification.
+
+| Route | Result | Pytest / whole seconds | Sampled process-tree peak bytes |
+|---|---|---|---:|
+| Source-v2 |191PASS|90.55 /92.5090|204128256|
+| Final installed-v1 |186PASS|26.63 /28.5363|206303232|
+| Consumer source-v1 |43PASS|4.88 /6.9841|190767104|
+| Consumer installed-v1 |43PASS|4.80 /6.9287|189820928|
+| Installed public example |PASS|not timed as optimization /4.0292|166809600|
+
+Final source differs from source-v2 only in adapter descriptor admission metadata;
+do not attribute source191 to that final adapter hash. Installed186 binds all12
+actual final solver imports byte-for-byte; consumer16 imports additionally bind
+four amended consumer modules. All completed tests have empty stderr, effective
+numerical pools1/JIT disabled,600s/2GiB supervision. Build/install logs are also
+retained; build tool subprocess counts are not claimed as numerical qualification.
+The source-v1 55PASS and original tested bytes remain preserved. No timing gain
+or complete-platform claim follows from these development checks.
+
+Solver wheel `9a366e44b752e57b65f029a7ee54fe4c4ee7581c5bda0f85083c8c8d040f59e8`; ANYfem wheel `a3a46112b927c78b7b76cb115fd26b213b5c8ab927ddd438b3bb77c436f8ef6d`. Raw directory
+`.qualification/b3-ge-e4-pl/r8-distributing-finite-owner-dev-20261004-v1` holds
+commands, runtime/source/test/import identities, exact dependency versions,
+resource outcomes, retained source-v1, and supporting review. Installed sites and
+wheel files are disposable; hashes/size/build logs retain their identity.
+
+Public example reaches factors .25/.5/1 after a2355byte prefix checkpoint,
+equilibrium ratio8.942681437660687e-10 and gap1.2059448850772913e-17; restored
+and uninterrupted final displacements agree at its registered test tolerances.
+This is experimental lifecycle/equilibrium evidence, not finite physical accuracy.
+
+ANYfem changes are narrowly compatibility/fail-closed: a known empty finite field
+is permitted in old reference export; nonempty or malformed fields are rejected
+by reference/modal import instead of being silently omitted. The old experimental
+project format remains. A finite consumer workflow is not yet implemented.
+Supporting OpenAI review found no current slice blocker; different-family
+scientific acceptance is still unmet. Full F04/G0/G2 and remaining programme
+requirements stay open; formalF03 remains UNCONSUMED. No main merge/publication.
+
+Next: the explicit finite ANYfem construction/persistence/solve/recovery/checkpoint
+exit using existing consumer services. Independently retain the physical torque
+convergence question; no automatic external/finer-mesh campaign is launched.

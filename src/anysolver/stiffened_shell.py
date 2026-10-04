@@ -29,6 +29,11 @@ from ._b2_physical_flexibility_linear import (
 )
 from ._stiffened_shell_b2_experimental import ExperimentalB2Analysis
 from ._stiffened_shell_point_recovery import PointTransferWrench
+from ._stiffened_shell_ge_distributing_finite import (
+    FiniteDistributingFootprintDefinition as GEFiniteDistributingFootprint,
+    FiniteDistributingFootprintWrench as GEFiniteDistributingFootprintWrench,
+    LAW as GE_DISTRIBUTING_FINITE_DIRECTOR_POLAR_V1_EXPERIMENTAL,
+)
 from ._stiffened_shell_ge_distributing_reference import (
     DistributingFootprintDefinition as GEReferenceDistributingFootprint,
     DistributingFootprintSelection as GEReferenceDistributingFootprintSelection,
@@ -242,6 +247,8 @@ __all__ = [
     "ShellPanel", "PointConnection", "PointTransferWrench",
     "NodalRigidFootprint", "NodalRigidFootprintSelection", "NodalRigidFootprintWrench",
     "GEReferenceDistributingFootprint", "GEReferenceDistributingFootprintSelection",
+    "GEFiniteDistributingFootprint", "GEFiniteDistributingFootprintWrench",
+    "GE_DISTRIBUTING_FINITE_DIRECTOR_POLAR_V1_EXPERIMENTAL",
     "GEReferenceDistributingFootprintWrench", "GE_DISTRIBUTING_REFERENCE_LINEAR_V1_EXPERIMENTAL",
     "FixedCoordinate", "NodalAction", "LinearDefinition", "LinearResult",
     "StagedDeadLoadProgramme",
