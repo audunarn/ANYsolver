@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.109. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.16, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.110. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.17, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
@@ -15,11 +15,12 @@ retains the detailed chronology; current evidence remains in the
 
 ## 1. Status and diagnosis
 
-Latest local curved work`dfd884aa` proves whole-patch orientation and plane-gap
-controls in its tested scope and integrates open/full-compression reference-area
-normal work on all42retained coordinates.12installed checks pass. Mixed fronts,
-continuous path admission and the actual curved coupled owner remain the immediate
-required work; existing-owner evidence below is reused, not repeated.
+Latest curved work`78c622de` adds partial angular contact to the existing local
+kernel, preserving actual reference area and all42retained coordinates. Whole-band
+minimum/maximum/endpoint sign enclosures prevent sampled topology from hiding
+thin contact. Generic axial onset/termination remains unresolved; continuous path
+admission and the actual curved coupled owner are still required. Existing-owner
+evidence below is reused, not repeated. No acceptance or speedup claim follows.
 
 Latest coupled delivery`ce3e5495` closes the specific native material-area
 first-contact overshoot through explicit globalization in the existing owner.
@@ -314,14 +315,26 @@ reproduced and corrected without larger caps; preserve both failure traces.
 Open/fully compressed local poses are tested, not accepted engineering solves.
 Mixed fronts reject. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_work_summary.json).
 
-**Next integrated requirement:** implement curved normal contact-front segmentation
-in this same kernel. Reuse existing precise angular roots at each native axial
-station; derive moving-domain contributions from the declared penalty work and
-preserve all geometry/area/retained maps. Outer axial controls must detect thin
-unobserved active regions or return explicit unresolved/resource failure.
-Use one independent partial-area/virtual-work fixture under180s/953MiB and the
-existing64interval fixture budget; no automatic cap or tolerance increase.
-Then integrate this work with the existing retained static owner for curved
+**Partial angular segmentation installed-tested at78c622de:** same kernel, existing
+PreciseNormalAngles at curved axial stations; moving boundaries add no terms
+through the quadratic penalty potential Hessian at regular roots. Actual reference
+area/work maps stay.17installed checks retain the same.012m partial-height fixture,
+64interval cap and dimensional tolerances. Read scrutiny corrected zero-only and
+minimum-only axial safeguards: whole-band angular minimum, maximum and endpoints
+must keep their signs. Thin empty and broad-plus-thin axial pockets, plus a narrow
+angular endpoint transition, reject explicitly. The exact-zero owned-roll bound
+omits only its identically zero axis-rotation derivative; historical geometry
+bound stays. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_partial_summary.json).
+
+**Next integrated requirement:** close genuine axial fronts in this same kernel.
+Isolate roots of angular endpoint/extremum equations with formulation-owned
+derivatives and continuous bounds; do not promote zero estimators or drop narrow
+support. Partition at certified roots and retain the same complete potential work.
+Use the existing thin/broad-pocket discriminators as affected checks and one
+independent axial-front work/tangent fixture within180s/953MiB/64intervals.
+If root isolation cannot resolve the represented state, retain explicit failure;
+no cap/tolerance increase or separate solver stack. Then integrate the existing
+retained static owner for curved
 press/open/recontact, rejection and split restart, only after complete path
 orientation/side/crossing controls. No new solver stack or profile-default switch.
 Preserve prior friction/impact, free-rim, convergence and historical restrictions.

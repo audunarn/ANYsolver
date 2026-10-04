@@ -1,5 +1,22 @@
 # General-contact capability ledger
 
+## Curved partial angular normal work — 4 October
+
+Implemented/installed-tested78c622de in the existing local fixed-plane kernel.
+Actual reference area and all42retained work coordinates stay. Precise circular
+roots share scalar projection; regular moving boundaries add no potential-Hessian
+terms. Whole-band minimum/maximum/endpoint signs guard axial support/topology;
+thin empty and broad-plus-thin pockets and endpoint crossings fail explicitly.
+Generic axial fronts may exhaust64intervals; no coupled/path/restart admission.
+17installed checks75.871s/180441088B;522files/208imports match,JIT0/pools1.
+Partial reference errors5.83e-16J/6.39e-14N/1.33e-14Nm; tangent1.96e-10/1.68e-11.
+Read scrutiny corrected zero-only/minimum-only safeguards; one test-depth assertion
+failure retained and repaired against an independent polynomial. Supporting
+scrutiny only; not independently accepted/released, no gap or speedup claim.
+[Guide](GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md),
+[evidence](d1_review_support/contact_native_material_s3_20261004/curved_partial_summary.json),
+[review](d1_review_support/contact_native_material_s3_20261004/curved_partial_review.md).
+
 ## Curved native whole-patch controls / fixed-plane local work — 4 October
 
 Implemented/installed-tested dfd884aa: continuous sufficient outward-area bound,

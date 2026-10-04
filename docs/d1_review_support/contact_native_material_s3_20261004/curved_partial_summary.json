@@ -1,0 +1,175 @@
+{
+  "source_sha": "78c622de8b887065bd28cc6064931068aed1e1ac",
+  "raw_root": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate08",
+  "scope": "local curved fixed-plane partial angular penalty work; no coupled or engineering acceptance",
+  "status": {
+    "implemented": true,
+    "source_tested": true,
+    "installed_tested": true,
+    "independently_accepted": false,
+    "released": false
+  },
+  "profile": "NATIVE_RETAINED_CURVED_MATERIAL_PLANE_LOCAL_WORK_DEV_V1",
+  "numerical": "GAUSS_8_16_PRECISE_CURVED_ARCS_JET2_SPATIAL_ONCE_V3",
+  "wheel": {
+    "path": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate08\\dist2\\anysolver-0.4.7-py3-none-any.whl",
+    "sha256": "7a9f364bdc7a3f6259e96894110456be1bc52fc7cdc6be1be5cdcf4764df9f38"
+  },
+  "installed": {
+    "source_files": 522,
+    "imported_modules": 208,
+    "source_installed_errors": [],
+    "extra_installed_files": [],
+    "outcomes": {
+      "passed": 17
+    },
+    "runs": {
+      "installed_curved_partial": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 75.87105390010402,
+          "peak_bytes": 180441088
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 17
+        }
+      }
+    }
+  },
+  "runs": {
+    "build_curved_partial": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 10.487991799949668,
+      "peak_bytes": 110096384
+    },
+    "installed_curved_partial": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 75.87105390010402,
+      "peak_bytes": 180441088
+    },
+    "install_curved_partial": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 3.465789500041865,
+      "peak_bytes": 93741056
+    },
+    "partial_endpoint_delta": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 2.2307044999906793,
+      "peak_bytes": 182554624
+    },
+    "partial_first": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 41.262453700066544,
+      "peak_bytes": 185241600
+    },
+    "partial_support_delta": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.5135456999996677,
+      "peak_bytes": 182575104
+    },
+    "partial_support_repaired": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 6.4649545000866055,
+      "peak_bytes": 181563392
+    },
+    "partial_topology_guard": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 51.22206890000962,
+      "peak_bytes": 181977088
+    }
+  },
+  "metrics": {
+    "curved-partial-reference": {
+      "energy_error_j": 5.828670879282072e-16,
+      "force_error_n": 6.394884621840902e-14,
+      "moment_error_nm": 1.3267513536042928e-14,
+      "intervals": 30,
+      "evaluations": 10240,
+      "estimated_errors": [
+        6.071532165918825e-17,
+        6.5780714209040525e-15,
+        4.572916481246359e-13
+      ]
+    },
+    "curved-partial": {
+      "tangent_errors": [
+        1.9557922148995727e-10,
+        1.676268265368402e-11
+      ],
+      "work_errors_j": [
+        9.871050643539547e-10,
+        4.4109382812962394e-11
+      ],
+      "intervals": 30,
+      "evaluations": 10240,
+      "energy_j": 0.10065032451693387
+    },
+    "curved-thin-axial": {
+      "result": "explicit_non_success",
+      "reason": "curved normal integration interval budget exhausted",
+      "diagnostics": {
+        "visited": 64,
+        "accepted": 24,
+        "evaluations": 0,
+        "last_errors": null,
+        "last_rectangle": [
+          -0.42992582097649573,
+          -0.4299258142709732,
+          1.5697963267948967,
+          1.5717963267948964
+        ],
+        "last_support": "open"
+      }
+    },
+    "curved-two-pockets": {
+      "result": "explicit_non_success",
+      "reason": "curved normal integration interval budget exhausted",
+      "diagnostics": {
+        "visited": 64,
+        "accepted": 30,
+        "evaluations": 9600,
+        "last_errors": null,
+        "last_rectangle": [
+          -0.4999999989522621,
+          -0.4999999988474883,
+          1.5697963267948967,
+          1.5717963267948964
+        ],
+        "last_support": "unresolved"
+      }
+    }
+  },
+  "scrutiny": "curved_partial_review.md; same-family supporting Read only",
+  "failures": [
+    {
+      "run": "partial_support_delta",
+      "classification": "test fixture assertion",
+      "diagnosis": "independent thin left pocket is -7.2nm; initial -10nm bound was incorrect",
+      "correction": "same geometry; assert analytic polynomial equality and <-6nm; failure retained"
+    }
+  ],
+  "limits": [
+    "genuine axial onset/termination and angular topology transitions may exhaust64intervals",
+    "Gauss8/16 differences are error estimates, not rigorous integration certificates",
+    "local fixed-pose code fixtures use intentional compression, not accepted engineering gap examples",
+    "no coupled owner, continuous path, history, restart, dynamics, application or release admission"
+  ],
+  "next": "certified axial front roots in same kernel, then existing-owner curved workflow/path/restart"
+}
