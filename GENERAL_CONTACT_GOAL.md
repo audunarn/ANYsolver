@@ -1,6 +1,6 @@
 # General contact — goal
 
-**Revision:** 2026-10-05.1. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-05.1. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-10-05.2. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-05.2. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
 
@@ -106,6 +106,15 @@ convergence, broader sections/materials, friction/dynamics and independent accep
 remain required. See [guide](docs/GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md).
 Earlier “next” markers above describe historical slice boundaries now superseded
 by this result; they do not create a requirement to repeat completed work.
+
+**Multiple-facet curved coverage:** a one-target coupled solve now includes two
+connected deformable S3 facets and shared-vertex retained assembly. Actual left
+lift-off/right activation, whole-system reactions and exact saved-state restart
+are checked. Independent fixed-area nodal work and mixed tangents also pass with
+both local patches active at a declared verification pose. Failed full test batches
+remain NONPASS. No coupled simultaneous-contact, complete multifacet cycle,
+convergence, section/material or independent engineering acceptance is inferred.
+[Current evidence](docs/d1_review_support/contact_native_curved_multifacet_20261005/README.md).
 
 **Budget disposition:** the original 120-hour allocation remains consumed:
 428891+3120=432011 active seconds (120.003 hours). The user subsequently directed

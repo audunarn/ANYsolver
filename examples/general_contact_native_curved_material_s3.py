@@ -23,7 +23,7 @@ from anysolver.general_contact.s3_skin_work import S3SkinWorkAdapter
 from anysolver.general_contact import NativeS3ContactPair,create_native_contact_analysis
 
 
-def analysis(targets=(1.,0.,1.),*,normal_stiffness_Pa_per_m=1e7):
+def analysis(targets=(1.,0.,1.),*,normal_stiffness_Pa_per_m=1e7,two_facets=False):
     points=[];frames=[]
     for x in np.linspace(0.,2.,3):
         points.append((x,.2*(1-(x-1)**2),0.))
@@ -36,19 +36,29 @@ def analysis(targets=(1.,0.,1.),*,normal_stiffness_Pa_per_m=1e7):
     root=BoundaryCondition('clamped',[1],{name:0. for name in ('ux','uy','uz','rx','ry','rz')})
     program=Program(targets,DistributedPattern(LinePattern(()),()),NodalDeadForces(((3,0.,0.,-.005),)),max_iterations=24)
     shell=FEModel('curved material and deformable S3');shell.add_material('elastic',1e8,.3,density=1.)
-    for node,xy in zip((4,5,6),((-5.,-5.),(5.,-5.),(0.,10.))):shell.add_node(node,*xy,-.0551)
-    shell.add_element(21,create_shell_element(21,(4,5,6),'elastic',thickness=.05,
-        formulation='e4-pl-s3-v2d',reference_normal=(0.,0.,1.),reference_surface_offset=0.))
-    shell.add_boundary_condition(FixedSupport('edge',[4,6]))
+    if two_facets:
+        coordinates={4:(1.,-5.),5:(1.,5.),6:(-5.,0.),7:(7.,0.)}
+        facets=((21,(6,4,5),(-.9,-.1)),(22,(4,7,5),(.1,.9)))
+    else:
+        coordinates={4:(-5.,-5.),5:(5.,-5.),6:(0.,10.)}
+        facets=((21,(4,5,6),(.1,.9)),)
+    for node,xy in coordinates.items():shell.add_node(node,*xy,-.0551)
+    for eid,nodes,_ in facets:
+        shell.add_element(eid,create_shell_element(eid,nodes,'elastic',thickness=.05,
+            formulation='e4-pl-s3-v2d',reference_normal=(0.,0.,1.),reference_surface_offset=0.))
+    shell.add_boundary_condition(FixedSupport('edge',[n for n in coordinates if n!=5]))
     shell.add_boundary_condition(BoundaryCondition('moving vertex',[5],
         {name:0. for name in ('ux','uy','rx','ry','rz')}))
-    skin=S3SkinWorkAdapter.from_model(shell,7,21,'top')
-    rule=NativeRoundSurfaceRule(1,reference,.03,xi_range=(.1,.9),angle_range=(pi-.3,pi+.3),axial_order=1,angular_order=1)
-    patch=NativeMaterialS3Patch(rule,(1,2,3),normal_stiffness_Pa_per_m=normal_stiffness_Pa_per_m,
-        integration_settings=StraightNormalIntegrationSettings(1e-10,1e-8,1e-6,64,2.),
-        geometry_tolerance_m=1e-10,rim_clearance_m=1e-6)
-    pair=NativeS3ContactPair('curved material / top',NativeCurvedMaterialS3Work(patch,skin),3e-5,128)
-    return create_native_contact_analysis((definition,),(root,),program,shell,(pair,),equilibrium_tolerance=1e-10)
+    pairs=[]
+    for eid,_,interval in facets:
+        skin=S3SkinWorkAdapter.from_model(shell,7,eid,'top')
+        rule=NativeRoundSurfaceRule(1,reference,.03,xi_range=interval,angle_range=(pi-.3,pi+.3),axial_order=1,angular_order=1)
+        patch=NativeMaterialS3Patch(rule,(1,2,3),normal_stiffness_Pa_per_m=normal_stiffness_Pa_per_m,
+            integration_settings=StraightNormalIntegrationSettings(1e-10,1e-8,1e-6,64,2.),
+            geometry_tolerance_m=1e-10,rim_clearance_m=1e-6)
+        name=f'curved material / top {eid}' if two_facets else 'curved material / top'
+        pairs.append(NativeS3ContactPair(name,NativeCurvedMaterialS3Work(patch,skin),3e-5,128))
+    return create_native_contact_analysis((definition,),(root,),program,shell,tuple(pairs),equilibrium_tolerance=1e-10)
 
 
 def main():
@@ -56,13 +66,14 @@ def main():
     parser.add_argument('--through-target',type=int,choices=(1,2,3),default=1)
     parser.add_argument('--restart',type=Path)
     parser.add_argument('--checkpoint-out',type=Path)
+    parser.add_argument('--two-facets',action='store_true',help='two explicit disjoint source patches against connected S3 facets')
     args=parser.parse_args()
     raw=None if args.restart is None else args.restart.read_bytes()
     if args.through_target>1 and raw is None:
         parser.error('--restart is required for subsequent bounded stages')
     if raw is not None and json.loads(raw)['completed_targets']!=args.through_target-1:
         parser.error('restart must precede the requested target by exactly one stage')
-    run=analysis().solve(checkpoint=raw,expected_sha256=None if raw is None else sha256(raw).hexdigest(),
+    run=analysis(two_facets=args.two_facets).solve(checkpoint=raw,expected_sha256=None if raw is None else sha256(raw).hexdigest(),
         stop_after=args.through_target)
     if run.status not in ('paused','completed'):raise RuntimeError(run.failure)
     if args.checkpoint_out is not None:args.checkpoint_out.write_bytes(run.checkpoint)

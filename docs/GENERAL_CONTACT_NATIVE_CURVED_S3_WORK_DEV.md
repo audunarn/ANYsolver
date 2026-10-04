@@ -71,6 +71,22 @@ counted as a passed batch. No uninterrupted-cycle120s claim follows.
 [Exact source, wheel, fixture and resource identities](d1_review_support/contact_native_material_s3_20261004/curved_s3_summary.json),
 [supporting scrutiny](d1_review_support/contact_native_material_s3_20261004/curved_s3_review.md).
 
+## Multiple connected facets
+
+`--two-facets` constructs two connected S3 triangles sharing an edge and a free
+vertex. A single retained curved beam has two explicit source material selections,
+native xi `(-.9,-.1)` and `(.1,.9)`, assigned to the left and right facet.
+Native xi spans `[-1,1]`. The central interval and section end regions are
+deliberately unselected. Each represented patch must remain fully inside its
+own facet; this example does not implement contact across their common rim or
+union-based projection. The normal law and dimensional controls are unchanged.
+
+Both pair residuals and all native/shell blocks assemble into the same retained
+system before solving. Their common free target vertex can couple the reactions.
+The source patch selections and facet identities bind restart; a single-facet
+checkpoint is incompatible with this mode. The default one-facet model and its
+checkpoint identities remain unchanged.
+
 **Independent engineering acceptance: no. Release: no.** Broader sections,
 materials, pairings, finite overlap, convergence, friction, native dynamics and
 application admission remain required by the full programme. Same-family

@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-05.1. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-05.1, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-05.2. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-05.2, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
@@ -14,6 +14,24 @@ retains the detailed chronology; current evidence remains in the
 [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 
 ## 1. Status and diagnosis
+
+Latest integrated D3 coverage: one curved retained beam / two connected deformable
+S3 facets through the existing owner, explicit disjoint material selections and
+shared-vertex coupling. Actual one-target solve completes102.331s with left
+lift-off/right reaction and retained gap/equilibrium/wrench gates. Two unique
+installed checks pass: complete saved-state reactions/restart and independent
+both-active local work/tangent. The added energy-derivative gate passes separately;
+do not inflate that count. Failed full batches remain NONPASS due to later test
+assertions. Production core bytes remain12ae5bbc; no new wheel is needed after
+523file/218import checks. No scientific admission or speedup follows.
+[Evidence](docs/d1_review_support/contact_native_curved_multifacet_20261005/README.md).
+
+Next close a D3 section/material or enforcement-convergence requirement. The
+shared curved owner and multiple-facet maps are now checked; avoid more duplicate
+geometry/profile prototypes. Keep the known free-rim and grazing-friction blockers
+and their no-replay restrictions. Choose the next discriminator before spending
+another coupled solve; fullC0–C9 remains, including all dynamics/application work.
+
 
 Latest core source `12ae5bbc` adds complete curved native/deformable S3 work and
 the retained static owner. Actual bounded active/open/recontact restart stages,

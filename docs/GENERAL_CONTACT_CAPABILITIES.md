@@ -2288,3 +2288,19 @@ profiles and frozen evidence retain their scopes. See
 [guide](GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md),
 [raw-bound summary](d1_review_support/contact_native_material_s3_20261004/curved_s3_summary.json),
 [supporting review](d1_review_support/contact_native_material_s3_20261004/curved_s3_review.md).
+
+### Curved native / connected target facets — development, 5 October 2026
+
+Existing curved retained material owner now has a two-facet example option:
+one beam, two connected deformable S3 facets, explicit disjoint source intervals
+and shared-vertex coupling. Actual one-target solve completes with left open/right
+active; per-pair and whole-system reactions/equilibrium/gap gates and byte-exact
+saved-state restart pass. Independent analytic material energy/wrench and nodal
+virtual-work, both active local shared maps and mixed tangent checks pass. Two
+unique installed cases; all523production bytes unchanged/218imports verified.
+The completed full-solve test batches remain NONPASS after their test assertion
+failures; do not regrade them. Full containment only; middle/end source bands
+unselected. No finite overlap/rim, coupled simultaneous-contact or complete
+multifacet cycle/convergence/general native section or material acceptance/release.
+[Usage](GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md),
+[evidence/review](d1_review_support/contact_native_curved_multifacet_20261005/README.md).
