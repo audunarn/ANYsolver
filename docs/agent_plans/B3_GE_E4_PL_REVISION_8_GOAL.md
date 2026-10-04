@@ -14,8 +14,11 @@ commit, artifacts and next action. Previously delivered GE/B2 workflows,
 scoped foundations and practical-size reference solve remain intact.
 Aggregate acceptance is incomplete. Matched physical/external evidence remains
 the scientific priority: pinned DOUBLE output removes the saved reaction-print
-uncertainty, but the small Fy pitch differs 2.838825% and full-six-pose accuracy
-remains open. The attempted adaptive 1.01 continuation stopped at 1.0075; do not
+uncertainty. Actual same-law native80 Fy now differs by less than1% in each of
+six nonzero pose components (pitch-.864137%, work-.030881%); the pitch40-to80
+movement2.032% still leaves converged accuracy open. Stop this diagnostic slice;
+retain the declared law for development, without an asymptotic or qualification
+claim. The attempted adaptive 1.01 continuation stopped at 1.0075; do not
 repeat or extend it automatically. Preserve historical source/evidence and closed
 campaigns instead of restarting completed implementations.
 
@@ -81,39 +84,26 @@ preserving the old reference format. Physical torque convergence and aggregate
 acceptance remain open; use saved evidence for the next bounded decision. See the active note for
 exact source/artifact applicability, limitations and preserved authorities.
 
-Completed current discriminator: reference thickness sensitivity0.063354%Mx/
-0.031099%Fy is too small to explain native torque movement. Stop thickness
-refinement for this decision. Next use ONE unchanged-geometry unitMy comparison
-to test missing moment fidelity and reciprocal roll/pitch coupling; it cannot
-alone establish Mx convergence. All mandatory rows and authorities remain.
-My comparison is now complete with0.019364% direct compliance difference and
-reciprocal work controls. The ONE native80x32 Mx/My check now completes on
-unchanged physical law/support/artifact with old guards preserved: direct work
-movements0.66148%/0.05137%, solid differences0.22060%/0.03200%. Cross movement
-3.43084e-9 (~2.03%) remains visible. Stop this refinement slice; no asymptotic
-or full6channel claim, acceptance or automatic next refinement follows.
+Current bounded physical decision: actual80x32 native Fy now matches the
+binary solid within1% in all six nonzero poses; pitch-.864137%, work-.030881%,
+reflection residual0. Native pitch40-to80 movement2.032% leaves converged
+accuracy open. Retain the declared law for development and STOP this diagnostic
+slice. No automatic mesh/thickness/solid refinement or adaptive1.01 retry.
 
 The near-term path is now:
-0. COMPLETE experimental material implementation: explicitly selected finite
-   distributing generalized / coupled-Q4-J2 owner and predecessor checkpoints;
-   installed solver/elastic-consumer combination131PASS and yielding/restart
-   examplePASS. The1.0001 continuation proves bounded lifecycle behavior only;
-   failed1.01 and low-hardening cases remain open. Next close a ready material
-   consumer/persistence or lifecycle obligation; no automatic finer campaign.
-   The separate material consumer now completes installed90PASS, including both
-   policies, native input save/reopen and yielded checkpoint continuation.
-   Next use the saved failing1.01 state to isolate free-equation derivative /
-   cancellation / curvature; no repeated loading trajectory or relaxed budget.
-1. COMPLETE: reference-linear distributing consumer, 42 source/42 installed
-   checks and installed public example using the unchanged solver wheel.
-   Reuse this evidence; preserve reference-only admission.
-2. Close the smallest missing physically matched GE connection comparison,
-   prioritizing torque/shear and work transfer on the mandatory CalculiX route
-   under applicable E01/E02 requirements. Do not restart axial-only refinement;
-   reuse completed diagnostics and establish model equivalence before accuracy claims.
-3. Repair the actual defect or close the eligible acceptance row, then select
-   the next ready mandatory gap from the existing matrix. Keep unresolved
-   BL5/mixed-system, physical transfer and aggregate obligations visible.
+1. COMPLETE experimental native physical-fibre distributing material route and
+   consumer persistence: source7PASS plus simultaneous generalized/fibre yielding
+   and restart PASS; installed204PASS plus public coupled fibre/Q4-J2 example.
+   Same equations, retained variables, state ownership and tolerances; no G3 or
+   physical-connection qualification or reverse-plastic-flow claim follows.
+2. Reuse this installed fixture for the fixed-yielded-predecessor actual-update
+   global native tangent check, including retained variables and multiplier work.
+   Preserve smooth-branch1e-5/scaling/state criteria. Diagnose any mismatch by
+   work component; agreement closes only its scoped development check.
+3. Select the next ready mandatory gap from the existing acceptance matrix.
+   Unresolved BL5/mixed-system, converged physical transfer, external comparisons,
+   material/topology/load/stability/capacity/scale/platform and independent
+   acceptance remain visible. Do not repeat completed campaigns automatically.
 
 Use at most one implementation completion and one scientific question at a
 time. A third worker may review or take a bounded independent part of those

@@ -65,7 +65,7 @@ current-main evidence. Aggregate gate acceptance remains incomplete.
 | B2 | Physical static/batch execution, selected recovery, persistence and scoped supported/free-modal consumer routes exist. | Complete attachment, prestress, scale, external and release acceptance remain. |
 | Foundations | Scoped F05, F08 and F09 have recorded PASSED dispositions; further point/static/elastic-chart portions are accepted within their stated boundaries. | Do not relabel scoped passes as complete aggregate gates or repeat the obsolete claim that no foundation has passed. |
 | BL5 | All 21 saved auxiliary-norm cases passed their scoped predicates; actual mechanical inventory is 13 positive, one unresolved, seven unassessed. | Auxiliary beta does not settle the mixed mechanics or physical transfer. Closed inverse/positive-part certificate routes remain CLOSED_UNRESOLVED. |
-| Distributing attachment | Reference-linear multi-host law and separate finite elastic/material owner have installed evidence. Explicit fixed cyclic policies now support load/unload/zero/signed reversal and consumer persistence; prior monotone/adaptive contracts remain intact. Pinned DOUBLE output resolves saved reference reaction-print uncertainty. | Small Fy pitch still differs 2.838825%; full-six-pose physical fidelity, finite/material physical comparisons and full F04 remain open. Adaptive 1.01 stopped at 1.0075; no automatic retry or convergence claim. |
+| Distributing attachment | Reference-linear multi-host law and separate finite elastic/material owner have installed evidence. Fixed cyclic policies support load/unload/zero/signed reversal and consumer persistence. Pinned DOUBLE output resolves reaction-print uncertainty. Actual native80 Fy matches the binary solid within1% in each of six poses; pitch-.864137%, work-.030881%. | Pitch40-to80 movement2.032% leaves converged accuracy open. Stop this diagnostic slice; finite/material physical comparisons and full F04 remain open. Adaptive1.01 stopped at1.0075; no automatic retry or convergence claim. |
 | Scale and cost | A 10,000-Q4/1,000-B3 point model completed a persisted reference route. Seven paired installed runs measured 55.97% improvement on the declared 400-Q4/120-B3 warm reference workflow; other scoped gains are recorded. | No overall development-speed measurement, full G5 qualification, nonmatching/nonlinear scale claim or release date follows. |
 
 The [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) and linked
@@ -222,6 +222,18 @@ Decisions resolving the present queue:
   own authority.
 
 ### 2.2 Concrete next slice and reference feasibility
+
+**Current forward lane,4 October:** native physical-fibre and supported mixed
+generalized/fibre finite distributing cyclic materials now have installed204PASS
+and a coupled Q4J2 consumer persistence/zero/signed-restart example. Preserve
+distinct native codecs, fixed predecessor ownership and experimental admission.
+The actual80Fy comparison is complete; stop refinement while converged accuracy
+remains open. Next reuse the installed yielded fixture for actual-update global
+native tangent/work checks (including retained coordinates), then choose the
+next ready mandatory matrix row. Older completed consumer/reference actions
+below remain historical exits, not instructions to rerun their campaigns.
+No new law/tolerance/budget/qualification or automatic adaptive retry follows.
+
 
 **Resume ownership:** the integration owner takes the four pending ANYfem files
 as the starting candidate. An interrupted worker's acknowledgement is not a

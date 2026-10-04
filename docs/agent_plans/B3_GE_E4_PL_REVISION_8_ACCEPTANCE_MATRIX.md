@@ -2302,3 +2302,22 @@ Physical initial yielding is observed; reverse plastic flow is not claimed.
 Historical monotone/adaptive contracts and failed1.01 continuation unchanged.
 No aggregate G3/F04/line/external/independent/release closure.
 [Evidence](development/r8-distributing-reference-linear-20261004/results.md).
+
+
+Reference distributing Fy80,4 October: MEASURED_DEVELOPMENT_ONLY. Actual80x32
+same-law/same-operator Fy fullpose differs<1% in all6 components; pitch-.864137%,
+work-.030881%, reflectionresidual0 and existing physical controls pass.
+Native pitch40-to80 movement2.032% leaves converged criterion/independent/final
+artifact acceptance open. Stop this slice; no automatic refinement or F04/G0/line
+closure. Failed first writer and repaired exact-case execution both retained.
+[Evidence](development/r8-distributing-reference-linear-20261004/results.md).
+
+
+Finite distributing native cyclic material,4 October: IMPLEMENTED_NOT_QUALIFIED.
+Pure axial/biaxial fibres and supported mixed-family histories use separate
+origin/accepted codecs; simultaneous generalized/fibre yielding and coupled
+Q4J2, exact zero/signed restart, cancellation and corrupt checkpoint guards pass.
+Installed204PASS plus coupled public ANYfem case/Project example. Existing
+laws/defaults/codec identities remain. Full G3/F04/physical/external/independent/
+platform/scale/release acceptance stays OPEN. No reverse-plastic-flow claim.
+[Evidence](development/r8-distributing-reference-linear-20261004/results.md).

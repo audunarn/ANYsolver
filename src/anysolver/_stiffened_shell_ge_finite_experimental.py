@@ -52,6 +52,7 @@ from ._stiffened_shell_ge_experimental import (
 from ._stiffened_shell_ge_checkpoint_binary import encode as _encode_binary_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import SCHEMAS as _BINARY_SCHEMAS
 from ._stiffened_shell_ge_checkpoint_binary import CURVED_POINT_MATERIAL_KINDS, FINITE_DISTRIBUTING_MATERIAL_KINDS
+from ._stiffened_shell_ge_checkpoint_binary import FINITE_DISTRIBUTING_NATIVE_KINDS
 from ._stiffened_shell_ge_checkpoint_binary import encode_s3 as _encode_s3_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import encode_chart as _encode_chart_checkpoint
 from ._stiffened_shell_ge_checkpoint_binary import NATIVE_SHELL_SCHEMA
@@ -185,7 +186,6 @@ class BeamFibreStationRecovery:
     reference_frame: np.ndarray
     current_frame: np.ndarray
     fibres: tuple
-
 
 @dataclass(frozen=True)
 class BeamFibreEnergyRecovery:
@@ -1301,6 +1301,18 @@ class FinitePointDriver:
                   ("accepted_factors", np.asarray(self._accepted_factors)))
         if self.owner._finite_distributing and not self.owner._distributing_material:
             return _encode_binary_checkpoint("finite_distributing", self._checkpoint_identity(), generation, arrays)
+        if self.owner._distributing_native:
+            owner = self.owner
+            material = (native_history_arrays(owner._beam_parts, self._beam_predecessors, "origin") +
+                        native_history_arrays(owner._beam_parts, self._beam_origins, "accepted"))
+            if owner._distributing_shell_material:
+                plastic, alpha = _shell_material_arrays(self._shell_origins)
+                origin_plastic, origin_alpha = _shell_material_arrays(self._shell_predecessors)
+                material += (("shell_plastic", plastic), ("shell_alpha", alpha),
+                             ("shell_origin_plastic", origin_plastic),
+                             ("shell_origin_alpha", origin_alpha))
+            return _encode_binary_checkpoint(owner._distributing_checkpoint_kind,
+                self._checkpoint_identity(), generation, arrays + material)
         if self.owner._bl5_material or self.owner._distributing_material or (self.owner._curved_material and self._curved_material_predecessors):
             plastic, accumulated = _material_arrays(self._beam_origins)
             origin_plastic, origin_accumulated = _material_arrays(self._beam_predecessors)
@@ -1456,10 +1468,13 @@ class FinitePointDriver:
             raise ValueError("finite BL5 checkpoint requires its matching line policy")
         curved_material = value.get("schema") in tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS)
         curved_shell = value.get("schema") == _BINARY_SCHEMAS["finite_curved_points_coupled"]
-        distributing_material = value.get("schema") in tuple(_BINARY_SCHEMAS[k] for k in FINITE_DISTRIBUTING_MATERIAL_KINDS)
+        distributing_native = value.get("schema") in tuple(_BINARY_SCHEMAS[k] for k in FINITE_DISTRIBUTING_NATIVE_KINDS)
+        distributing_material = (not distributing_native and value.get("schema") in
+            tuple(_BINARY_SCHEMAS[k] for k in FINITE_DISTRIBUTING_MATERIAL_KINDS))
         distributing_shell = value.get("schema") in (
             _BINARY_SCHEMAS["finite_distributing_coupled"],
-            _BINARY_SCHEMAS["finite_distributing_cyclic_coupled"])
+            _BINARY_SCHEMAS["finite_distributing_cyclic_coupled"],
+            _BINARY_SCHEMAS["finite_distributing_cyclic_native_coupled"])
         if curved_material and (not owner._curved_material or
                 curved_shell != (owner._definition.shell.j2_curve is not None)):
             raise ValueError("curved material predecessor checkpoint requires its matching policy")
@@ -1471,11 +1486,12 @@ class FinitePointDriver:
             raise ValueError("stable S3 native checkpoint requires elastic S3 fibre model")
         # This driver is still private to restore until all validation passes.
         self._stable_s3 = stable_s3
-        native_material = value.get("schema") in (NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA) or native_shell
+        native_material = (value.get("schema") in (NATIVE_MATERIAL_CHECKPOINT, STABLE_NATIVE_SCHEMA) or
+            native_shell or distributing_native)
         s3_material = (value.get("schema") == FINITE_S3_MATERIAL_CHECKPOINT or
                        (native_shell and bool(owner._definition.shell.s3_elements)))
         shell_material = value.get("schema") in (
-            FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA, _BINARY_SCHEMAS["finite_bl5_coupled"], _BINARY_SCHEMAS["finite_curved_points_coupled"], _BINARY_SCHEMAS["finite_distributing_coupled"], _BINARY_SCHEMAS["finite_distributing_cyclic_coupled"])
+            FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA, _BINARY_SCHEMAS["finite_bl5_coupled"], _BINARY_SCHEMAS["finite_curved_points_coupled"], _BINARY_SCHEMAS["finite_distributing_coupled"], _BINARY_SCHEMAS["finite_distributing_cyclic_coupled"], _BINARY_SCHEMAS["finite_distributing_cyclic_native_coupled"])
         material = value.get("schema") in (
             _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"],
             FINITE_MATERIAL_CHECKPOINT, FINITE_SHELL_MATERIAL_CHECKPOINT,
@@ -1737,7 +1753,7 @@ class FinitePointDriver:
         result = _with_shell_chart(result, trial, owner._shell_count)
         result = replace(result, point_wrenches=self._point_records(trial),
             beam_generalized_material=(self._generalized_records(trial,beam_origins,
-                beam_accepted if owner._bl5_material or curved_material or distributing_material else beam_next)
+                beam_accepted if native_material or owner._bl5_material or curved_material or distributing_material else beam_next)
                 if not owner._curved_material or curved_material else ()))
         if owner._finite_distributing:
             result = replace(result, distributing_footprint_wrenches=

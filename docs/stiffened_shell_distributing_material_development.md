@@ -1,7 +1,7 @@
 # Experimental finite distributing material histories
 
 These explicitly selected development policies use the existing flat full-map
-Q4/native generalized B3 owner and finite director/projected-polar distributing
+Q4/native B3 owner and finite director/projected-polar distributing
 footprint. They are **experimental, not qualified**. They do not establish a
 welded or bonded-line model or complete programme acceptance.
 
@@ -11,6 +11,16 @@ select one of the public constants:
 
 - `GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1`
 - `GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1`
+- `GE_FINITE_DISTRIBUTING_NATIVE_CYCLIC_MATERIAL_V1`
+- `GE_FINITE_DISTRIBUTING_NATIVE_COUPLED_J2_CYCLIC_MATERIAL_V1`
+
+The first two policies retain generalized sections. The native policies require
+at least one physical-fibre section and admit supported generalized/fibre members
+in the same model. They reuse the existing local updates and retain the native
+internal coordinates. Fibre and generalized histories use separately shaped,
+model-bound predecessor/accepted arrays; the coupled policy also owns Q4 J2
+histories. These are distinct checkpoint kinds, not reinterpretations of older
+generalized checkpoints.
 
 Set the existing definition's `finite_distributing_material_policy` and its
 `cyclic_reference_actions` together. The latter is an explicit nonempty tuple
@@ -41,7 +51,7 @@ finally:
 Factors are absolute load positions. Each must be finite and must change from
 the preceding accepted factor; a virgin zero-to-zero increment is rejected.
 These policies admit fixed increments only. Adaptive, staged/external loads,
-chart rebasing, S3, physical fibres, spectra and displacement/arc control remain
+chart rebasing, S3, spectra and displacement/arc control remain
 excluded from this particular route.
 
 At factor zero, external force is exactly zero. Equilibrium and trial merit
@@ -67,6 +77,14 @@ Run it with the compatible experimental solver and consumer wheels installed:
 ```powershell
 python examples/stiffened_shell_ge_distributing_cyclic_consumer.py <output-directory>
 ```
+
+For physical fibres with shell J2, run the companion
+`examples/stiffened_shell_ge_distributing_native_material_consumer.py`. Its
+four-fibre section reproduces the reference elastic axial/biaxial properties
+without double-counting the explicit shear/torsion background. It checks initial
+yielding, native input and Project persistence, zero-load restart and signed
+continuation. This is a centered axial lifecycle example, not physical
+qualification of torque transfer or reverse plastic flow.
 
 Consumer records retain the existing material schema, with explicit cyclic
 policy and `fixed_signed_zero_nodal_translation_force_history_only` admission.

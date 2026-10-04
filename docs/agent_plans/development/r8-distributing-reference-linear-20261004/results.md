@@ -1040,3 +1040,59 @@ Prediction is not executed native80 Fy or converged1% acceptance. Solid reflecti
 residual1.07e-15rad supports cross-bending interpretation. No new numerical job,
 mesh, criterion or formalF03 authority. See cyclic raw next-mechanics-components-
 v1.json and next-mechanics-review-v1.md for SHA-bound inputs and bounded next action.
+
+
+## Executed native80 Fy component exit,4 October 2026
+
+One new10N elevated-Fy RHS on the existing80x32 geometry and original pinned
+installed b7ae7ca0 operator completes. Actual full pose now exists: all6 components
+are within1% of binary solid; pitch-.864137%, direct work-.030881%, reflection
+residual against saved native80 Mx exactly0 in binary64. Eq4.61227e-12/gap1.69407e-21;
+unloaded-stub, physical transfer and root controls pass; one factorization.
+Runtime96.21s/sample685281280B, pinned affinity1/entrypools1/JIToff.
+
+V1 reached output writing but failed ndarray serialization; no numerical result
+survived. V2 repairs the writer only and repeats the exact case. Both sources,
+runtime/error/output files remain; v1 is FAILED, not an accepted scientific run.
+No geometry/source/operator/load/tolerance/per-run-budget change was made.
+
+Decision: retain declared mean/secant-director/curl law for development and STOP
+this diagnostic slice. Do not automatically refine. Native pitch40-to80 movement
+2.032385% still leaves converged1% acceptance open; measured pair agreement is
+not an asymptotic bound, finite/material/weld/bonded-line equivalence or F04 pass.
+Supporting Read review found no correctness finding; required different-family
+acceptance and final-artifact applicability remain. No formalF03 consumption.
+Advance mandatory native-fibre material/codec integration using existing local
+operators and histories; no new coordinate kernel or constitutive law.
+Raw .qualification/b3-ge-e4-pl/r8-distributing-fy80-dev-20261004-v1 binds original
+installed419 source files, fixtures, actual results/controls/resources, failure,
+SHA-bound comparison inputs and review. Prior evidence remains immutable.
+
+
+## 4 October native physical-fibre distributing material development slice
+
+IMPLEMENTED_NOT_QUALIFIED. Two explicit native cyclic policies require physical
+fibres and allow supported mixed generalized/fibre members, with optional Q4 J2.
+Native retained variables/local laws persist; shaped generalized/fibre origins
+and accepted histories plus shell state use distinct model-bound binary kinds.
+Old policies/codecs/public reference binder remain unchanged. Fixed signed/zero
+normalization reuses owned reference actions; adaptive/chart/staged/S3/spectra
+remain excluded from this route. No equation/default/tolerance/version change.
+
+Source7PASS87.79s plus additional simultaneous generalized/fibre yielding and
+byte-exact restart PASS10.34s. Installed204PASS464.98s;
+public coupled four-fibre ANYfem example9.16s passes
+case and Project save/reopen, initial shell/fibre yielding, zero-load snapshot,
+signed continuation and byte-identical accepted-path checkpoint. Equilibrium
+1.20653671e-15, gap1.32997316e-17.
+Cancellation after recovery before publication and canonical corrupt origin,
+accepted, shell, pattern and checkpoint-kind rejection preserve accepted state.
+Elastic axial/biaxial full-area parity and physical transfer/work checks pass.
+Reverse plastic flow, converged physical torque, every material/attachment
+combination, G3/F04/aggregate acceptance and release are NOT established.
+
+Fresh solverwheel SHAf31527d54afd93d1a334dbbda545cb9affce847cfac94676fe9e8a2f6718847b; consumerwheel
+SHA626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f. Actual imports/source bytes/dependencies,
+affinity1/pools1/JIToff and2GiB/600s supervisor recorded. Different-family
+acceptance remains OPEN; supporting review and all failed checks retained.
+Raw .qualification/b3-ge-e4-pl/r8-distributing-native-material-dev-20261004-v1.

@@ -63,6 +63,7 @@ from ._stiffened_shell_ge_checkpoint_binary import (
     NATIVE_SHELL_MAGIC, NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA,
     SCHEMAS as _BINARY_SCHEMAS, CURVED_POINT_MATERIAL_KINDS,
     FINITE_DISTRIBUTING_MATERIAL_KINDS,
+    FINITE_DISTRIBUTING_NATIVE_KINDS,
 )
 from ._stiffened_shell_increment_control import (
     MAGIC as INCREMENT_CONTROL_MAGIC, decode_control, validate_control,
@@ -81,6 +82,8 @@ GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERAL
 GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1_DEV"
+GE_FINITE_DISTRIBUTING_NATIVE_CYCLIC_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_NATIVE_CYCLIC_MATERIAL_V1_DEV"
+GE_FINITE_DISTRIBUTING_NATIVE_COUPLED_J2_CYCLIC_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_NATIVE_COUPLED_J2_CYCLIC_MATERIAL_V1_DEV"
 CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_LINEAR_V1"
 FINITE_CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"
 FINITE_MATERIAL_CHECKPOINT = (
@@ -566,16 +569,24 @@ class ExperimentalGEAnalysis:
                     "elastic", GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1,
                     GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1,
                     GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1,
-                    GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1)):
+                    GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1,
+                    GE_FINITE_DISTRIBUTING_NATIVE_CYCLIC_MATERIAL_V1,
+                    GE_FINITE_DISTRIBUTING_NATIVE_COUPLED_J2_CYCLIC_MATERIAL_V1)):
             raise ValueError("explicit admitted finite distributing material policy required")
         self._distributing_material = definition.finite_distributing_material_policy != "elastic"
+        self._distributing_native = definition.finite_distributing_material_policy in (
+            GE_FINITE_DISTRIBUTING_NATIVE_CYCLIC_MATERIAL_V1,
+            GE_FINITE_DISTRIBUTING_NATIVE_COUPLED_J2_CYCLIC_MATERIAL_V1)
         self._distributing_shell_material = (
             definition.finite_distributing_material_policy in (
                 GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1,
-                GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1))
+                GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1,
+                GE_FINITE_DISTRIBUTING_NATIVE_COUPLED_J2_CYCLIC_MATERIAL_V1))
         self._distributing_cyclic = definition.finite_distributing_material_policy in (
             GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1,
-            GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1)
+            GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1,
+            GE_FINITE_DISTRIBUTING_NATIVE_CYCLIC_MATERIAL_V1,
+            GE_FINITE_DISTRIBUTING_NATIVE_COUPLED_J2_CYCLIC_MATERIAL_V1)
         if (type(definition.cyclic_reference_actions) is not tuple or
                 (not self._distributing_cyclic and definition.cyclic_reference_actions)):
             raise ValueError("reference actions require the selected cyclic material history")
@@ -588,6 +599,9 @@ class ExperimentalGEAnalysis:
         if self._distributing_cyclic:
             self._distributing_checkpoint_kind = ("finite_distributing_cyclic_coupled" if
                 self._distributing_shell_material else "finite_distributing_cyclic_material")
+        if self._distributing_native:
+            self._distributing_checkpoint_kind = ("finite_distributing_cyclic_native_coupled" if
+                self._distributing_shell_material else "finite_distributing_cyclic_native_material")
         if groups and finite_groups:
             raise ValueError("reference-only and finite distributing records cannot be mixed")
         reference_groups = groups
@@ -673,8 +687,10 @@ class ExperimentalGEAnalysis:
         self._reference_modal_mass = None
         self._has_physical_fibre = any(type(element.section) is PhysicalFibreSection
                                       for element, _, _ in beam_parts)
-        if groups and self._has_physical_fibre:
+        if groups and self._has_physical_fibre and not self._distributing_native:
             raise ValueError("distributing reference footprints exclude physical-fibre sections")
+        if self._distributing_native and not self._has_physical_fibre:
+            raise ValueError("native distributing material policy requires a physical-fibre section")
         if self._curved_reference and self._has_physical_fibre:
             raise ValueError("curved reference admits generalized elastic beam response only")
         if definition.footprints:
@@ -1020,7 +1036,8 @@ class ExperimentalGEAnalysis:
                 return dict(profile=PROFILE, status="EXPERIMENTAL_NOT_QUALIFIED",
                     shell="isotropic J2 flat Cartesian full-map Q4" if self._distributing_shell_material else
                           "elastic flat Cartesian full-map Q4",
-                    beam="generalized material B3 with native retained coordinates",
+                    beam=("physical axial/biaxial fibre and generalized material B3 with native retained coordinates"
+                        if self._distributing_native else "generalized material B3 with native retained coordinates"),
                     beam_section_families=self._beam_families,
                     attachment=("objective finite area-mean/director/projected-polar distributing pose",),
                     distributing_footprint_law=DISTRIBUTING_FINITE_LAW,
@@ -1040,8 +1057,8 @@ class ExperimentalGEAnalysis:
                     checkpoints=(self._distributing_checkpoint_kind,),
                     recovery="accepted constitutive states and evaluated spatial connection actions",
                     excluded=("reference-linear solve", "chart rebase", "displacement/arc controllers",
-                        "external/staged loads", "physical fibres", "S3", "modes", "buckling",
-                        "qualified distributing footprint"))
+                        "external/staged loads") + (() if self._distributing_native else ("physical fibres",)) +
+                        ("S3", "modes", "buckling", "qualified distributing footprint"))
             return dict(profile=PROFILE, status="EXPERIMENTAL_NOT_QUALIFIED",
                 shell="elastic flat Cartesian full-map Q4", beam="generalized B3 with native retained coordinates",
                 beam_section_families=self._beam_families,
@@ -1711,7 +1728,7 @@ class ExperimentalGEAnalysis:
                     if not self._definition.shell.s3_elements:
                         raise ValueError("stable S3 native checkpoint requires S3 elements")
                     kind = "finite_native_material"
-                if kind not in ("linear", "finite_native_material") and self._has_physical_fibre:
+                if kind not in ("linear", "finite_native_material") + FINITE_DISTRIBUTING_NATIVE_KINDS and self._has_physical_fibre:
                     raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
                 count = self._K.shape[0]
                 constraints = self._C.shape[0]
@@ -1733,6 +1750,18 @@ class ExperimentalGEAnalysis:
                         raise ValueError("native material checkpoint requires elastic-shell fibre model")
                     from ._stiffened_shell_beam_history import shapes
                     return base + shapes(self._beam_parts, "origin") + shapes(self._beam_parts, "accepted")
+                if kind in FINITE_DISTRIBUTING_NATIVE_KINDS:
+                    if not self._distributing_native or not self._has_physical_fibre:
+                        raise ValueError("native distributing checkpoint requires selected fibre policy")
+                    from ._stiffened_shell_beam_history import shapes
+                    material = base + shapes(self._beam_parts, "origin") + shapes(self._beam_parts, "accepted")
+                    if self._distributing_shell_material:
+                        shells = len(self._shell_parts)
+                        material += (("shell_plastic", (shells, 12, 3)),
+                                     ("shell_alpha", (shells, 12)),
+                                     ("shell_origin_plastic", (shells, 12, 3)),
+                                     ("shell_origin_alpha", (shells, 12)))
+                    return material
                 if kind in ("finite_material", "finite_shell_material", "finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS:
                     stations = sum(len(part[0].operator.cell.stations)
                                    for part in self._beam_parts)
@@ -1841,7 +1870,9 @@ class ExperimentalGEAnalysis:
                   STABLE_NATIVE_SCHEMA,
                  "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7")):
             if self._has_physical_fibre and value["schema"] not in (
-                    NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA, "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"):
+                    NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA, "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7") and not (
+                    self._distributing_native and
+                    value["schema"] == _BINARY_SCHEMAS[self._distributing_checkpoint_kind]):
                 raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
             if (bool(self._finite_bl5) != (value["schema"] in (
                     _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) or

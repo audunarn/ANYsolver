@@ -40,7 +40,8 @@ def _reference_owner(owner, *, allow_finite_material=False):
     finite_material = (allow_finite_material and owner._finite_distributing and
                        owner._distributing_material)
     _require(not owner._modal_only and not owner._curved_reference and
-             not owner._has_physical_fibre and not owner._bl5_material and
+             (not owner._has_physical_fibre or
+              (finite_material and owner._distributing_native)) and not owner._bl5_material and
              (definition.shell.j2_curve is None or finite_material) and not definition.shell.s3_elements and
              definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and
              not definition.lines and definition.shell_reference_policy == "flat" and
