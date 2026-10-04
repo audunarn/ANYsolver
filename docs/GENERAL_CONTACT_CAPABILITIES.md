@@ -1,4 +1,20 @@
 # General-contact capability ledger
+## Two retained native material patches / shared deformable S3 — 4 October
+
+Implemented/installed-tested development atc211d4c9: exactly two straight interior
+half-cell patches, one per native beam, one shared18-DOF elastic S3 top skin.
+All102coordinates; no separate beam condensation/double spatial conversion.
+Own-block radius/orientation paths, independent area work/full tangents, actual
+9-target cycle, support/body wrench, exception/cancel and split/changed-gap restart
+pass. Prior line checkpoint replays; mixed laws/activation subclasses reject.
+32installed outcomes135.178s331382784B;517files/217imports match,JIT0/pools1.
+Gap31.556um under50um; normalizedforce/moment1.41e-9/1.26e-9 under1e-6.
+Coarse2-target gap/merit NONPASS and nearly uniform axial angular-resolution failure
+retained. Explicit4-target solve passes; no robustness/convergence/engineering or
+application acceptance/release. Multiple shell maps, caps, curved reference,
+friction and dynamics open. [Guide](GENERAL_CONTACT_NATIVE_MATERIAL_S3_DEV.md),
+[evidence](d1_review_support/contact_native_material_s3_20261004/README.md).
+
 ## Retained native material patch / deformable S3 — 4 October
 
 Implemented/installed-tested development at46ea65f6: one strictly interior

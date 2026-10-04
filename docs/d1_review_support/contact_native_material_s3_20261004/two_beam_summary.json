@@ -1,0 +1,48 @@
+{
+  "status": "implemented and installed-tested development; not engineering accepted/released",
+  "source_candidate": "c211d4c9",
+  "wheel_sha256": "987a05acbf67b11d6a33f67e0abdb58f6a0732fac2c5df4e7d017b5369a643b2",
+  "raw_root": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate02",
+  "resource": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 135.1779583999887,
+    "peak_bytes": 331382784
+  },
+  "runtime_package": {
+    "source_files": 517,
+    "imported_modules": 217,
+    "source_installed_errors": [],
+    "import_errors": [],
+    "runtime_errors": [],
+    "jit_disabled": true,
+    "numba_threads": 1,
+    "pool_threads": [
+      1,
+      1
+    ],
+    "outcomes": {
+      "passed": 32
+    }
+  },
+  "response": {
+    "profile": "NATIVE_B3_GE_TWO_MATERIAL_PATCHES_SHARED_S3_STATIC_DEV_V1",
+    "coordinates": 102,
+    "metrics": [
+      6.4881259356257576e-12,
+      3.7807690409492687e-17,
+      5.725393249778055e-12
+    ],
+    "minimum_gap_m": -3.155578533322879e-05,
+    "normalized_force_balance": 1.4126113473855496e-09,
+    "normalized_moment_balance": 1.260423452897984e-09,
+    "beam_force_n": [
+      5.7310875689774464e-08,
+      -1.9103625229924827e-08,
+      0.008746166510390625
+    ],
+    "shell_displacement_norm_m": 6.55268518175206e-05,
+    "potential_j": 7.154405675623299e-08,
+    "checkpoint_sha256": "47c5b27493d3ac9d5ec71f41dca30374e1a063f2fef38d88d015f76b621f07c6"
+  }
+}

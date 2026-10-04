@@ -213,3 +213,4 @@ docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART36.md -text 
 docs/d1_review_support/native_finite_spin_temporal_refinement* -text -whitespace
 docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261001_REV58.md -text -whitespace
 docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART37.md -text -whitespace
+tests/data/general_contact_native_multi_line_46ea65f6.checkpoint -text

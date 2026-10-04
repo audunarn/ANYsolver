@@ -2,7 +2,7 @@
 
 Goal 2026-10-04.10 / plan 2026-10-04.103; full C0â€“C9 incomplete.
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Source candidate46ea65f6;
+branch codex/contact-main-reconcile-20261001. Source candidatec211d4c9;
 current Git HEAD binds later documentation. Goal-tool paths are stale: never
 access the protected original worktree. Main/ANYfem are separately owned.
 No other-chat messaging, push/merge/publication/release/default changes.
@@ -10,33 +10,39 @@ Local commits, focused checks and bounded internal review remain authorized.
 
 ## Latest integrated result
 
-46ea65f6 adds one strictly interior straight native material patch / deformable
-elastic S3 top skin through the existing static owner, all42native+18shell blocks.
-Moving normals/offsets and physical section couples, once-only spatial conversion,
-whole-patch radius/edge/orientation bounds, press/open/recontact, rollback and
-split/open restart pass. Supporting Read review caught reference-normal hidden
-inversion and unintended friction bridge; both fixed and reviewed. Current
-39installed checks73.466s349569024B;517package files/222imports match,JIT0/pools1.
-Private wheel d654f456679403486be46e2dc200f0657e008e43c6b8e9873ad7f60cac6d86ba,
-raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate01.
+c211d4c9 couples two strictly interior straight native round material patches
+through one deformable S3 top skin using the existing multiple owner, all102
+coordinates. Shared target response, moving normals/offsets, once-only spatial
+conversion, each body's radius/orientation path, both-body/support wrench,
+102-coordinate work/tangents, press/open/recontact, staging exception/cancel and
+split/incompatible restart pass. Prior-wheel line checkpoint replays exactly;
+mixed line/area laws and activation subclass entry explicitly reject.
+32installed checks135.178s331382784B;517files/217imports match,JIT0/pools1.
+Private wheel987a05acbf67b11d6a33f67e0abdb58f6a0732fac2c5df4e7d017b5369a643b2,
+raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate02.
 [Guide](docs/GENERAL_CONTACT_NATIVE_MATERIAL_S3_DEV.md),
 [evidence/failures](docs/d1_review_support/contact_native_material_s3_20261004/README.md).
-Gap31.093/11.439um at1e6/1e7N/m³ underunchanged50um; forcechanges2.108%,
-enforcement/spatial convergence and engineering/application admission remainopen.
-The earlier plane source is f08d3d80; its exact evidence remains historical.
+Explicit4-target solve passes, coarse2-target gap/merit fails. Nearly uniform axial
+perturbation exhausted angular resolution; nonuniform smooth work passes without
+regrading failure. Gap31.556um under50um; force/moment scales.008N/.016Nm with
+normalized1.41e-9/1.26e-9. Supporting Read scrutiny, not engineering acceptance.
+Earlier46ea65f6 single-owner39installed andf08d3d80 plane21installed remain exact
+historical evidence. No convergence/application/release admission.
 
 ## Next authorized decision / remaining requirements
 
-Extend the existing multiple-native/S3 owner toward the same material-area work.
-First inspect slot/profile/summary/path contracts; aim for two independent native
-beams coupled through one S3 skin, all retained coordinates. Do not broaden to
-multiple S3 maps, mixed line/area laws or special activation before complete
-mapping/path checks. Reuse current scalar work and shared transactions/restart.
-No new optimization campaign or unrelated prototype. Caps/interfaces/curved
-reference, friction/dynamics and acceptance remain required. Actual-tangent free
+Remove the material owner's remaining one-S3 mapping limitation through existing
+multiple owner. First correct/verify vertex-force ordering: current area result
+reshapes global shell forces as corner order, which can be wrong for a permuted
+S3 or wider model. Bind actual authoritative translation columns from the exact
+S3 work contract, use correct physical corners for moments, prove numbering
+invariance before generalizing maps. Then derive variable shell-column count and
+error scaling; check multi-facet work/sparse blocks/individual paths. No hidden
+step, tolerance or optional-controller widening. Caps/interfaces/curved reference,
+friction/dynamics, convergence and acceptance remain required. Actual-tangent free
 rim continuum admission remains unavailable; guided discrete benchmark retained.
-Current accepted source/model binding remains missing; application admissionfalse.
-[Prior state/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_NATIVE_S3.md).
+Accepted source/model binding missing; application admissionfalse.
+[Prior history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_NATIVE_TWO_S3.md).
 
 ## Restrictions / clock
 

@@ -1,6 +1,7 @@
 # Retained native material patch / deformable S3 — development
 
-Source candidate `46ea65f6`, 4 October 2026. One strictly interior straight
+Latest source `c211d4c9`, 4 October 2026; earlier single owner `46ea65f6`.
+One strictly interior straight
 B3-GE half-cell material patch now couples to one elastic S3 top physical skin
 through the existing retained native/shell static owner. All 42 native and 18
 shell coordinates remain; moving target normals and offset work are included.
@@ -12,6 +13,19 @@ about the global origin, normal storage, continuous patch gap and checkpoint.
 The experimental modules expose `NativeMaterialS3Patch`,
 `NativeRetainedMaterialS3Work` and `NativeRetainedRoundS3Analysis`; public generic
 FEModel/native insertion and application admission are unchanged.
+
+`python examples/general_contact_native_material_s3.py --two-beams` uses the
+existing public development factory with two independent native beams and one
+shared S3. Its separate profile retains all84native+18shell coordinates.
+`NativeS3ContactPair` binds each area's work and gap/path limits. Mixed line/area
+laws and the separate activation controller reject through factory/direct construction.
+
+The two-beam example declares targets .25,.5,.75,1,0,.25,.5,.75,1. The coarser
+.5,1 programme failed at the gap/merit gate. There are no hidden targets or changed
+tolerances/caps. Each pair uses its own cell rotation block, radius and path proof.
+Area summaries label the measure and return `None` for line-only active intervals.
+Old line identities/summaries remain. A checkpoint captured from the prior46ea65f6
+wheel replays exactly; cross-profile and changed-gap continuation reject.
 
 ## Work, geometry and transactions
 
@@ -63,6 +77,17 @@ half-cell material patch are admitted. Caps, interfaces, curved reference,
 multiple bodies/patch unions, friction, native dynamics and nonlinear-material
 qualification remain required programme work. No free-rim continuum admission.
 
+The extension admits exactly two material patches through one shared18-DOF S3;
+multiple shell maps remain open. Coupled gap31.556um under50um, target displacement
+norm65.527um; normalized force/moment1.41e-9/1.26e-9 under1e-6. Independent area work,
+102-coordinate/owner tangents, second-beam hidden rotation, the actual cycle,
+rollback and split/incompatible restart pass. A nearly uniform axial test pose
+exhausted angular resolution under unchanged controls. That failure is not regraded
+by the nonuniform smooth-branch pass. Robustness, convergence and acceptance remain open.
+
 39 installed checks: 73.466 s, 349569024 B peak process-family memory.
 517 package files and 222 imports match source; JIT disabled, numerical pools1.
 [Raw identities, review and retained failures](d1_review_support/contact_native_material_s3_20261004/README.md).
+
+Latest package:32checks135.178s331382784B;517files/217imports match,JIT0/pools1.
+The earlier39checks above belong to46ea65f6, not the latest source identity.
