@@ -1,6 +1,6 @@
 # General contact — goal
 
-**Revision:** 2026-10-04.10. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.103. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-10-04.11. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.104. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
 
@@ -44,10 +44,22 @@ native owners toward the required deformable-target pairing after checking the
 shell work map and complete normal path; preserve the parked grazing-friction
 restrictions. [Evidence](docs/d1_review_support/contact_native_material_plane_20261004/README.md).
 
+This ownership extension is now installed-tested atfbdd5c27: two native beams,
+three interior material patches and two physical S3 skins retain120coordinates;
+one beam/two facets retain78. Complete work/tangents, corner-order correction,
+per-pair paths/cycles, rollback and restart pass. Supplementalbe0fa6bf checks show
+local plastic work/disposal and exact nonzero-plastic prefix restart, but the
+full low-yield load path remainsNONPASS at gap/merit. No material/continuum
+acceptance follows. Existing work maps/owners were extended without another
+solver stack. [Current evidence](docs/d1_review_support/contact_native_material_s3_20261004/README.md).
+Its separate.75-peak seven-target unload/reload cycle and exact split restart now
+pass on the same private wheel; this neither regrades target1 nor establishes
+engineering acceptance.
+
 Prioritize a missing capability requirement, a necessary correctness repair or a measured end-to-end bottleneck. Reuse existing contributor, state, restart, search and test infrastructure. Add a profile/restart identity only when its mechanical or compatibility contract differs; do not create new public options for internal optimizations. Existing identities and explicit selection stay valid.
 
-**Budget disposition:** the latest checkpoint records 421136 active seconds
-(116.982 hours), leaving about 3.018 hours of the original 120 hours. Full completion
+**Budget disposition:** the latest checkpoint records 431117 active seconds
+(119.755 hours), leaving about 0.245 hours of the original 120 hours. Full completion
 within that remainder has no supportable forecast. Use it for the next bounded
 delivery and an honest handoff; this neither narrows the programme nor extends the
 clock. At exhaustion obtain the required time/scope/method decision. Planning while

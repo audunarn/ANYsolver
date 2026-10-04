@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.103. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.10, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.104. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.11, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
@@ -14,6 +14,20 @@ retains the detailed chronology; current evidence remains in the
 [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 
 ## 1. Status and diagnosis
+
+Latest bounded deliveryfbdd5c27 extends the existing retained native material
+owner to complete multiple physical S3 maps, correcting corner-force reporting
+and retaining native/shell cross blocks.36installed outcomes/35unique cases
+include exact nonzero plastic-prefix restore; full coupled low-yield loading
+still fails at unchanged gap/merit. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/README.md).
+The separate bounded.75-peak plastic unload/reload cycle completes7targets and
+exact split restart. Its full-load negative conclusion and acceptance limits stay.
+No further load/penalty tuning campaign: local work/history checks pass, leaving
+bounded coupled globalization/enforcement and convergence unresolved. A future
+change needs a derived, explicit step/cutback contract and discriminating check,
+not higher budgets or relaxed gaps. Curved sections/caps/interfaces, friction,
+dynamics and independent acceptance remain required. The original120-hour clock
+has about15minutes left at this checkpoint; do not extend it automatically.
 
 | Area | Current evidence | Still required |
 |---|---|---|

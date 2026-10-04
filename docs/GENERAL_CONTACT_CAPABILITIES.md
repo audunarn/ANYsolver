@@ -1,4 +1,35 @@
 # General-contact capability ledger
+## Retained native material patches / multiple physical S3 facets — 4 October
+
+Implemented/installed-tested development atfbdd5c27: one/two native beams,
+two to eight explicit interior straight material patches and represented elastic
+small-rotation S3 top skins, existing256-coordinate cap. Tested120-coordinate
+two-beam/three-patch/two-facet response and78-coordinate one-beam/two-facet cycle.
+Complete contact/owner derivatives, both-body/support wrench, individual path
+checks, per-pair press/open/recontact and exact open restart pass. Actual work-map
+corner order corrects the prior force-report defect; positive reference-director
+admission fails closed. Area numericalv2 rejects earlier area checkpoints; old
+line checkpoint and no-contact lazy import remain valid.
+31installed checks in two groups142.032s/188338176B and6.164s/325988352B;
+517files/223imports match,JIT0/pools1. Coupled gap31.556um under50um;
+normalized supportF/M1.40e-9/1.25e-9, owner derivative9.76e-9/1.83e-9.
+Supporting Read scrutiny only; no engineering/application admission/release.
+Uniform axial angular-resolution/coarse-load failures retained; convergence,
+caps/interfaces, curved geometry, friction and dynamics remain open.
+Supplementalbe0fa6bf tests on the same wheel verify local resultant-ellipsoid
+plastic-branch derivatives, disposable history and complete failed-prefix state.
+Three low-yield load targets accept with nonzero monotone accumulation and exact
+plastic checkpoint restore; fourth target fails at50um/gap. Higher penalty fails
+first-target gap/merit. Both remain coupled yieldingNONPASS.3installed checks+
+1changed restart delta pass;35cumulative outcomes/34unique cases. No full-load
+material admission, independent acceptance or retry/tuning authority follows.
+The separateaec4148a bounded.75-peak unload/reload lifecycle completes7targets
+with monotone plastic history, zero unload storage, exact split restart and
+normalizedsupportF/M4.67e-14/4.36e-14. Installed1pass22.184s185233408B;
+same wheel36cumulative outcomes/35unique cases. Full-loadNONPASS unchanged.
+[Guide](GENERAL_CONTACT_NATIVE_MATERIAL_S3_DEV.md),
+[evidence](d1_review_support/contact_native_material_s3_20261004/README.md).
+
 ## Two retained native material patches / shared deformable S3 — 4 October
 
 Implemented/installed-tested development atc211d4c9: exactly two straight interior
