@@ -1096,3 +1096,45 @@ SHA626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f. Actual impo
 affinity1/pools1/JIToff and2GiB/600s supervisor recorded. Different-family
 acceptance remains OPEN; supporting review and all failed checks retained.
 Raw .qualification/b3-ge-e4-pl/r8-distributing-native-material-dev-20261004-v1.
+
+
+## Native yielded derivatives and actual reverse flow - 4 October
+
+Development checks on unchanged c5f5d79e product, installed solver wheel
+f31527d54afd93d1a334dbbda545cb9affce847cfac94676fe9e8a2f6718847b.
+No product equations, tolerances, driver limits, defaults or schemas changed.
+
+Two grouped actual-update directional checks PASS18.12s. Pure fibre/Q4-J2
+and simultaneous generalized/fibre/Q4-J2 states use a fixed yielded predecessor.
+All tested shell, beam, retained and constraint groups have a finite-difference
+plateau below1e-5; maximum over all measured steps2.57528643e-7. Activity masks
+are unchanged. This one seeded direction is not every independent tangent column.
+Repeated/restored assembly matches exactly; accepted recovery performs no trial
+evaluation and preserves generation/history. Whole20.044s/sample181211136B.
+
+Actual biaxial fibre reverse flow PASS81.71s on the existing small-force mixed
+fixture, elastic Q4/generalized member and one low-yield physical-fibre member.
+All eight initially yielding station keys have opposite nonzero plastic increments
+at the -1 snapshot. Fourteen fixed load/unload/zero/reverse/reload positions complete;
+beam dissipation0.014314952754535475J, equilibrium maximum3.797728887e-9 and
+gap maximum1.395448146e-17. Negative-yielded restart/reload matches uninterrupted
+execution exactly. Source and installed histories/all14 checkpoints are byte-identical.
+Whole83.722s/sample181108736B. This is constitutive/lifecycle development evidence,
+not engineering steel, shell-J2 reverse flow, physical panel capacity or G3 acceptance.
+
+Failed tangent v2 inherited identity-path substitution (before pytest), v3 missing
+generalized-only recovery-method test patch (1PASS/1FAIL), initial xunit2 property
+warnings, all original test snapshots and logs remain. No solver defect resulted;
+v4 uses the actual predecessor identity and physical-only recovery-method patch.
+Supporting read review found no remaining defect; different-family scientific
+acceptance remains OPEN. Affinity/pools1/JIToff and existing600s/2GiB limits verified.
+No wheel rebuild/full204-case rerun: product and imported sources match prior
+artifact bytes. Raw tangent/reverse roots retain exact runner, source/test, import,
+resource, accepted-history and checkpoint identities.
+
+Next mandatory slice: active-plastic/cyclic F06/V18 chart transport on the existing
+mixed native POINT owner. Use admitted stage/rebase machinery and actual loaded
+noncommuting rotations, material/energy, reactions and durable continuation.
+Keep finite distributing chart admission excluded; do not add an optional operation.
+Converged physical transfer, BL5/F03, external/scale/platform and aggregate gates
+remain open. No automatic Fy/solid/adaptive/refinement campaign follows.

@@ -92,3 +92,12 @@ Historical monotone records keep their old token. Policy/token mismatches fail
 before execution. Installed checks and the example are development evidence;
 full material, physical-connection, platform and independent acceptance remain
 separate obligations.
+
+The native development checks now include grouped actual-update tangent
+directions from fixed yielded pure-fibre/J2 and mixed generalized/fibre/J2
+predecessors. The existing small-force biaxial constitutive fixture also completes
+14 load/unload/zero/reverse/reload positions: eight fibre stations show opposite
+plastic increments at the negative checkpoint, with exact restart continuation.
+That fixture uses elastic shells and a deliberately low-yield fibre; it does not
+demonstrate shell-plastic reversal or engineering capacity. See the
+[current evidence](agent_plans/development/r8-distributing-reference-linear-20261004/results.md).

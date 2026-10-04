@@ -2321,3 +2321,13 @@ Installed204PASS plus coupled public ANYfem case/Project example. Existing
 laws/defaults/codec identities remain. Full G3/F04/physical/external/independent/
 platform/scale/release acceptance stays OPEN. No reverse-plastic-flow claim.
 [Evidence](development/r8-distributing-reference-linear-20261004/results.md).
+
+
+Native distributing derivatives/reverse flow,4 October: IMPLEMENTED_NOT_QUALIFIED.
+Unchanged installed c5 product: two grouped smooth-branch actual-update tangent
+checks pass (max2.5753e-7), including retained/multiplier work and fixed yielded
+predecessors. Existing small-force biaxial fixture completes14positions;8same
+fibre keys reverse at the restarted -1 snapshot, positive dissipation and exact
+source/installed/restart histories pass. Elastic shell; no shell-plastic reversal
+or engineering capacity claim. Full G3/F06/physical/independent acceptance OPEN.
+[Evidence](development/r8-distributing-reference-linear-20261004/results.md).

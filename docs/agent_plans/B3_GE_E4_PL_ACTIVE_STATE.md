@@ -2,7 +2,7 @@
 
 ACTIVE. Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/
 stiffened-main-reconcile-20261001; branch codex/stiffened-main-reconcile-20261001.
-Source parent bf3243dd; current commit is determined from Git HEAD. ANYfem
+Source parent c5f5d79e; current commit is determined from Git HEAD. ANYfem
 C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer; commit from Git HEAD.
 Complete amended G0-G6/F01-F13/V01-V28/B01-B18 remains binding. No aggregate gate
 closes. [Goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md),
@@ -44,14 +44,23 @@ This is measured development evidence, not asymptotic, welded/bonded-line,
 finite/material or F04/G0 qualification. No floor or finer campaign follows.
 Failed first JSON writer and repaired exact-case execution are preserved.
 
-Next mandatory material check: the actual-update global tangent of the new
-native finite distributing route from a fixed yielded predecessor. Reuse the
-installed fixture and existing directional/physical scaling conventions; include
-beam retained variables and multiplier work, preserve state/generation and
-registered smooth-branch1e-5 criterion. Compare assembly/recovery/restart before
-any broader campaign. A mismatch requires a component/work-map diagnosis;
-agreement supplies that scoped material check only. No new framework or repeated
-Fy/solid/adaptive run. Continue ready mandatory obligations from the matrix.
+Yielded tangent exit:2 installed cases PASS18.12s, all tested shell/beam/retained/
+constraint groups <=2.5753e-7 with unchanged active masks and exact repeat/restore
+assembly. One seeded direction, not every column. No accepted recovery reevaluation.
+Actual reverse-flow exit:14 fixed positions PASS81.71s,8same biaxial fibre station
+keys reverse at restarted -1; dissipation.01431495J and exact continued path.
+Source/installed histories and14accepted checkpoints match byte-for-byte.
+Elastic shell/low-yield constitutive control; no shell-J2 reversal/capacity claim.
+Unchanged wheels reused by source/import/hash proof; failures retained.
+
+Next mandatory gap: F06/V18 active-plastic/cyclic chart transport on the existing
+mixed native POINT owner. Reuse admitted staged/rebase machinery and scientific
+.05rad/1e-5rad noncommutator floors. Confirm actual active histories, loaded
+noncommuting rotations, real rebase, material/energy/reaction invariance and
+durable continuation. Insufficient rotation, an inconsistent chart or an inactive
+branch keeps that claim open; no automatic load/budget escalation or false pass.
+Finite distributing chart remains excluded. No new API/framework or repeated
+Fy/solid/adaptive campaign; full programme and independent acceptance remain.
 
 Previous actual adaptive1.01 accepted through1.0075 then exhausted; all prefixes
 saved. Original fixed1.01 residual.00246153 unchanged. No retry, extra budget or
@@ -61,7 +70,8 @@ curvature sweep. Full material/physical/scale/platform/external acceptance remai
 
 [Grouped evidence](development/r8-distributing-reference-linear-20261004/results.md).
 Raw .qualification/b3-ge-e4-pl/r8-distributing-fy80-dev-20261004-v1 and
-r8-distributing-native-material-dev-20261004-v1 retain source snapshots, commands,
+r8-distributing-native-material-dev-20261004-v1 plus native-tangent/native-reverse
+development roots retain source snapshots, commands,
 failed checks, actual wheel/import/resource identities, outputs and reviews.
 Historical note/goal/plan/report/matrix bytes preserved. No numerical jobs remain;
 all workers terminal. Root owns scoped integration/Git/evidence. No push/main

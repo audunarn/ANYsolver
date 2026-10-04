@@ -7,9 +7,10 @@ and restart action. The canonical goal and plan now live beside that note in
 `C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001/docs/agent_plans/`.
 Older goal/plan paths forward here instead of carrying stale competing copies.
 
-The latest finite distributing cyclic slice has 226 installed solver/consumer
-checks and a completed coupled ANYfem save/reopen/zero-load restart/reversal
-example. ANYfem is at `8dbce3b`; the active note identifies the exact solver
+The latest native finite distributing slice has 204 installed solver/consumer
+checks and a coupled ANYfem save/reopen/zero-load restart/signed history example.
+Two installed yielded tangent checks and actual biaxial fibre reverse-flow/
+restart evidence now extend that scope. ANYfem is at `9faed76`; the active note identifies the exact solver
 commit, artifacts and next action. Previously delivered GE/B2 workflows,
 scoped foundations and practical-size reference solve remain intact.
 Aggregate acceptance is incomplete. Matched physical/external evidence remains
@@ -96,11 +97,13 @@ The near-term path is now:
    and restart PASS; installed204PASS plus public coupled fibre/Q4-J2 example.
    Same equations, retained variables, state ownership and tolerances; no G3 or
    physical-connection qualification or reverse-plastic-flow claim follows.
-2. Reuse this installed fixture for the fixed-yielded-predecessor actual-update
-   global native tangent check, including retained variables and multiplier work.
-   Preserve smooth-branch1e-5/scaling/state criteria. Diagnose any mismatch by
-   work component; agreement closes only its scoped development check.
-3. Select the next ready mandatory gap from the existing acceptance matrix.
+2. COMPLETE grouped fixed-yielded-predecessor actual-update tangent checks:
+  2installed PASS, maximum2.5753e-7, branch/state/recovery invariance. Existing
+   biaxial constitutive control proves actual8station reverse flow at negative
+   restart and exact14position source/installed history; elastic shells only.
+3. Next ready mandatory gap is F06/V18 active-plastic/cyclic chart transport on
+   the existing mixed native point owner. Reuse staged/rebase machinery; verify
+   actual noncommuting loaded rotations, material/energy and durable continuation.
    Unresolved BL5/mixed-system, converged physical transfer, external comparisons,
    material/topology/load/stability/capacity/scale/platform and independent
    acceptance remain visible. Do not repeat completed campaigns automatically.

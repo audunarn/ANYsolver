@@ -52,9 +52,10 @@ by this document alone.
 ## 1. What exists and what is preventing completion
 
 The canonical integration branch remains `codex/stiffened-main-reconcile-20261001`.
-Latest fixed cyclic material development has 226 installed solver/consumer checks
-and a completed coupled public persistence/restart/reversal example. ANYfem is
-at `8dbce3b` in `C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer`.
+Latest native cyclic material development has 204 installed solver/consumer checks
+and a coupled public persistence/restart/signed history example. Two installed
+yielded tangent checks and actual biaxial reverse-flow/restart extend that scope.
+ANYfem is at `9faed76` in `C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer`.
 The active note binds exact solver source, artifacts, retained failures and the
 next action. Current-main refresh is separate; historical `be41a77a` is not
 current-main evidence. Aggregate gate acceptance remains incomplete.
