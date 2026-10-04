@@ -155,3 +155,19 @@ fixed and independently checked. Numerical screens remain bound to their actual
 source revisions, rather than the final guard version. The8:1 terminalHOLD is an
 unresolved arithmetic enclosure, not a passed mechanical gate. These supporting
 same-family reviews do not satisfy different-family scientific acceptance.
+
+## Saved factor-residual slice
+
+A bounded worker implemented only two new proof helpers and their controls;
+root inspected scope/math, prepared frozen-pair drivers and executed25 scalar
+and33 final block controls plus the V1/V2/V3 saved-case screens serially.
+Failed4-control block slice and its exact source are retained. Generated-product
+ordering and the wrong-phase resource-control expectation were repaired without
+weakening input validation, allocation guards or any scientific criterion.
+Root verified the fixed18 construction, complete WF supports, directed Neumann
+predicate and unchanged original FF.T residual. A non-implementing OpenAI Read
+review checked the theorem, drivers, exact frozen factor identity, actual sources,
+runtime results and error boundaries. No positive sign follows from either
+failed sufficient inequality. Reviews/source snapshots/raw are grouped in the
+next immutable manifest extension. This is supporting same-family review,
+not different-family scientific acceptance. All formal gates remain open.

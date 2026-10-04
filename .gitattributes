@@ -116,3 +116,8 @@ tests/test_r8_bl5_projected_uniform_modal_dev.py -text
 scripts/r8_bl5_sparse_envelope_kernel_dev.py -text
 tests/test_r8_bl5_sparse_envelope_kernel_dev.py -text
 .qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/sparse-family/** -text
+scripts/r8_bl5_sparse_factor_residual_dev.py -text
+scripts/r8_bl5_sparse_factor_block_dev.py -text
+tests/test_r8_bl5_sparse_factor_residual_dev.py -text
+tests/test_r8_bl5_sparse_factor_block_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/factor-residual/** -text

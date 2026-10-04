@@ -599,3 +599,76 @@ different-family acceptance and M2/G0/F03 remain OPEN. FormalF03 UNCONSUMED.
 
 [Immutable99-file raw extension](raw-manifest-v9.json),6505022bytes,
 SHA 5af39a3e686138941bfc7ccd02cbba65f74a22c5b99de363a77f04c408ec96f8. Earlier manifests/evidence remain unchanged.
+
+## Saved8:1 factor-residual decision —4 October
+
+No owner, product, mesh, constitutive or physical-tolerance change. Two new
+bounded proof primitives address the SAME frozen incidence target,2745 rows:
+epsilon5.855229651277453e-9, requiredshift1.1710459302554907e-8 and physical
+metric75.71919020532987. The stored factor F is a backend-produced candidate,
+not an inertia certificate. The complete sparse FF.T residual is independently
+enclosed; every sign decision requires a strict directed positive margin.
+
+The scalar comparison recurrences bound the inverse of exact stored lower F,
+including signed/nonunit diagonals and the actual transpose. They give
+mu<=lambda_min(F F.T). Shift rounding, complete symbolic product support/work,
+sparse accumulation and rounded differences contribute to rho. Thus
+down(mu-rho)>0 would prove the required shifted representative. Default old
+admissions remain unchanged. Allocation, arithmetic and time refusals are HOLD;
+memory/programming errors propagate. There is no full native-K SPD assumption.
+
+| Version | Actual outcome | Interpretation |
+|---|---|---|
+| V1,inherited768MiB workspace | RESOURCE_HOLD,897634560B estimated before recurrences | No sign or residual conclusion |
+| V2,explicit2GiB workspace/process | mu1.42055816e-139,rho3.79996113e-11,negative directed margin | Scalar absolute comparison majorant is insufficient |
+| V3,same exactF,ONE fixed18 block candidate | b3.48832027e12,WFerror6.13240243e-11,eta213.917837>1 | Neumann inverse proof remains inconclusive |
+
+The2GiB V2 override is within the alreadyapproved8GiB diagnostic ceiling; V1,
+helper defaults,600s process/450s proof limits and physical criteria are preserved.
+V1/V2 factor, permutation and producer arrays are byte-identical. V2 retains
+all2745 forward/transpose endpoints,337715 symbolic product entries and20,098,816
+updates; combined workspace estimate1,935,095,040B. Sampled process-tree peak is
+114,085,888B and complete supervisor time6.498s, not an exact memory peak or gain.
+
+The reviewed local preconditioner W is exact stored block-diagonal data with
+contiguous factor-order blocks<=18, generated only by bounded local solves.
+Ghat=fl(WF) has complete product error eg. If b>=norm2(Ghat^-1),
+c>=norm2(W) and eta=up(b*eg)<1, then norm2(F^-1)<=up(b*c/down(1-eta)).
+Its reciprocal-square bound would replace only mu; original FF.T rho,epsilon,
+shift and physical metric remain unchanged. No local inverse-accuracy or
+backend-pivot assumption is used. This V3 did NOT establish that condition.
+SavedW/Ghat, fixed partition, comparison endpoints and all errors remain available.
+Symbolic WF entries212046 versus actual210170 retain cancelled support;
+1,464,135 updates and789,267,968B combined estimate are within declared budgets.
+One complete run4.1044s,82,182,144B sampled,pools1/JIToff and numerical max1.
+Even hypothetically setting the WF product error to zero while retaining the
+recorded b and c would yield a reciprocal-square bound about1.1e-32, far below
+originalrho3.8e-11. This is an algebraic diagnosis of these majorants, not a
+new certificate: higher precision alone cannot repair their remaining pessimism.
+
+Root ran25 scalar controls and33 final block controls with normal conftest.
+The first block slice failed4/32: unsorted internally generated CSR caused
+three canonical-validation failures, and a workspace control expected a later
+diagnostic after an earlier input refusal. Failed sources/logs are retained.
+Sorting only the owned generated product and correcting the control ceiling
+repaired them; input/duplicate/upper validation and work guards remain intact.
+Exact Fraction, partial-block, signed cancellation, both inverse norms,
+Neumann near-boundary, resource-before-allocation, mutation and programming/
+memory propagation checks cover the primitives. No unrelated passed campaign
+was repeated. Supporting independent OpenAI mathematical/source/runtime review
+is distinct from different-family scientific acceptance.
+
+Decision: close this bounded arithmetic-tuning ticket as unresolved. No automatic
+block-size, precision or refinement variants follow. The exact obstruction is
+an inverse comparison bound that cannot satisfy eta<1, not actual mechanical
+negativity or a failed connection law. Previously proven507/1781 work kernels
+retain their scope. Next interpret saved21-case physical actions jointly to
+separate coarse-beam Mz discretization and connection transfer; any new solve
+must distinguish an identified hypothesis. Full mixed/native-beta, physical
+accuracy/locking/shear/drilling, mandatory references and M2/G0/F03 remain OPEN.
+FormalF03 remains UNCONSUMED. Installed product is unchanged.
+
+[Immutable69-file factor-residual extension](raw-manifest-v10.json),6222692bytes,
+SHA11c78508848846ee6b51d2b2621154531ad081f34266ae8d788231185c547568.
+Earlier raw manifests and failed evidence remain unchanged. Parent/prospective
+active notes are archived byte-for-byte; the live note is compact again.

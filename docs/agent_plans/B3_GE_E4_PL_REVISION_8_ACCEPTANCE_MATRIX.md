@@ -1980,3 +1980,14 @@ manifest-schema/state-pair/failure-retention guards repaired. Next justify a spa
 verified-factor/residual method or identify actual work counterexample, not refine
 or escalate precision automatically. Full21 mixed/beta and M2/G0/F03 OPEN;
 formalF03 UNCONSUMED. [Results and reviews](development/r8-bl5-projected-assessment-20261003/results.md).
+**4 October saved8:1 factor-residual decision:** IMPLEMENTED_NOT_QUALIFIED,
+mechanical sign remains HOLD.25 scalar and33 final block controls pass; first
+4failed block controls preserved/repaired. V1 stops at workspace guard; approved
+2GiB V2 completes with mu1.42056e-139 versus rho3.79996e-11. ONE fixed18 block
+follow-up retains same exactF/shift/epsilon/metric/rho but eta213.917837>1.
+No actual negative mode or positive bound is established. Close automatic
+arithmetic tuning; next jointly interpret saved physical work/action evidence
+and distinguish coarse-beam Mz error from connection transfer. Existing positive
+507/1781 kernels remain scoped evidence. Fullmixed/native-beta/physical accuracy,
+different-family/external acceptance and M2/G0/F03 OPEN; formalF03 UNCONSUMED.
+[Grouped results/review](development/r8-bl5-projected-assessment-20261003/results.md).
