@@ -29,6 +29,45 @@ class NativeRoundSurfaceGeometry:
     area_jacobian: float
 
 
+def _oriented_measure(xi, angle, radial):
+    cross=np.cross(angle,xi)
+    jacobian=float(np.linalg.norm(cross))
+    if not np.isfinite(jacobian) or jacobian<=0 or float(cross@radial)<=0:
+        raise ValueError('native round surface singular or reversed at sample')
+    return cross,jacobian
+
+
+@dataclass(frozen=True)
+class _ReferenceRoundArea:
+    """Candidate-local preparation for an already validated reference station.
+
+    Uses the same lift, parameter derivatives and outward check as
+    surface_geometry. No current geometry or contact law is cached here.
+    """
+    frame: np.ndarray
+    derivative: np.ndarray
+    chord: np.ndarray
+    lift_derivative: np.ndarray
+    radius: float
+
+    def area_jacobian(self, angle):
+        radial=self.radius*np.array((0.,cos(angle),sin(angle)))
+        angular=self.radius*np.array((0.,-sin(angle),cos(angle)))
+        # Retain the reference lift/chord arithmetic of surface_geometry.
+        xi=self.chord+(self.lift_derivative+self.derivative@radial)
+        _,jacobian=_oriented_measure(xi,self.frame@angular,self.frame@radial)
+        return jacobian
+
+
+def _prepare_reference_area(reference, xi, radius):
+    """Prepare only after the caller validates its immutable rule identity."""
+    cell=0 if xi<0 else 1
+    chord=reference.coordinates[cell+1]-reference.coordinates[cell]
+    return _ReferenceRoundArea(_readonly(reference.frame(xi)),
+        _readonly(reference.frame_derivative(xi)),_readonly(chord),
+        _readonly(reference.derivative(xi)-chord),float(radius))
+
+
 def surface_geometry(station, positions, position_low, cell_rotations):
     """Exact within-cell parameter derivatives, including reference frame turn."""
     if type(station) is not NativeRetainedRoundStation:
@@ -52,12 +91,9 @@ def surface_geometry(station, positions, position_low, cell_rotations):
                    +np.asarray(position_low)[cell+1]-np.asarray(position_low)[cell])
     xi=current_chord+rotation@(lift_derivative+derivative@radial)
     angle=rotation@frame@angular
-    cross=np.cross(angle,xi)
-    jacobian=float(np.linalg.norm(cross))
     # Preserve the declared outward side. Taking only an absolute area would
     # conceal inversion on a thick curved surface or a deformed cell.
-    if not np.isfinite(jacobian) or jacobian<=0 or float(cross@(rotation@frame@radial))<=0:
-        raise ValueError('native round surface singular or reversed at sample')
+    cross,jacobian=_oriented_measure(xi,angle,rotation@frame@radial)
     return NativeRoundSurfaceGeometry(state,_readonly(xi),_readonly(angle),
                                       _readonly(cross/jacobian),jacobian)
 

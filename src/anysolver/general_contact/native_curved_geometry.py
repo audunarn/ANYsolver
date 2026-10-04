@@ -25,6 +25,18 @@ class CurvedPatchGeometryControl:
     search_box: np.ndarray
 
 
+def _reference_curvature_coefficients(reference):
+    """Exact binary Q2 curvature, matching the centered reference lift."""
+    F=lambda v:Fraction(float(v))
+    return tuple(F(reference.coordinates[0,j])-2*F(reference.coordinates[1,j])+
+                 F(reference.coordinates[2,j]) for j in range(3))
+
+
+def _reference_curvature_norm(reference):
+    b=_reference_curvature_coefficients(reference)
+    return float(_sqrt_bound(sum(v*v for v in b),upper=True))
+
+
 def _reference_norm_bounds(reference, cell, *, actual_roll=False):
     """Affine Q2 tangent norm and frame-derivative norm bounds.
 
@@ -80,6 +92,63 @@ def _reference_norm_bounds(reference, cell, *, actual_roll=False):
     # Transported first column error, including clipped dot products and roll.
     first_error=64*(gram+128*eps)/denominator**2+8*tangent_error
     return jmin,jmax,prime,first_error
+
+
+def _reference_second_bound(reference,cell):
+    """Second derivative of the owned smooth half-cell frame formula.
+
+    n=v/|v| for affine v has |n''|<=3*(B/jmin)^2. Twice differentiate
+    T=I+K+K²/d and the constant-roll Rodrigues rotation, then their product.
+    Root isolation separately certifies no transport clipping switch and owns
+    nodal one-sided reconstruction uncertainty; this is not a global C2 claim.
+    """
+    jmin,jmax,_,_=_reference_norm_bounds(reference,cell,actual_roll=True)
+    eps=np.finfo(float).eps
+    curvature=_reference_curvature_norm(reference)
+    B=curvature+128*eps*max(1.,jmax,curvature)
+    N1=B/jmin;N2=3*N1*N1
+    left,right=(-1.,0.) if cell==0 else (0.,1.)
+    A=_rotation_gain(reference.nodal_triads[cell])
+    k0=reference.tangent(left);k1=reference.tangent(right)
+    mismatch=float(np.linalg.norm(reference.nodal_triads[cell,:,0]-k0))+128*eps
+    tangent_error=32*eps*max(1.,jmax,B)/jmin
+    d=1+float(k0@k1)-mismatch-8*tangent_error-256*eps
+    if d<=1+np.cos(.9*np.pi):
+        raise ValueError('curved material second derivative denominator unresolved')
+    T=1+A+A*A/d
+    T1=A*N1+2*A*A*N1/d+A**3*N1/d**2
+    T2=(A*N2+2*A*A*(N2+N1*N1)/d+
+        A**3*(4*N1*N1+N2)/d**2+2*A**4*N1*N1/d**3)
+    roll=abs(float(reference._half_frame_data[cell][1]))
+    Q1=0. if roll==0. else 5*N1+2*roll
+    Q2=0. if roll==0. else 2*roll*roll+6*roll*N1+5*N2+4*N1*N1
+    value=(Q2*T+2*Q1*T1+(1+128*eps)*T2)*A
+    value*=1+8192*eps/d**3
+    if not np.isfinite(value):
+        raise ValueError('curved material second derivative bound overflow')
+    return float(value)
+
+
+def _reference_unclipped_interval(reference,cell,left,right):
+    """Exact affine-tangent test for the upper clipping branch, with margin."""
+    F=lambda v:Fraction(float(v))
+    X=[[F(v) for v in row] for row in reference.coordinates]
+    a=[(X[2][j]-X[0][j])/2 for j in range(3)]
+    b=[X[0][j]-2*X[1][j]+X[2][j] for j in range(3)]
+    if not any(b):return True  # Constant tangent: no clip branch can change.
+    m=[F(v) for v in reference.nodal_triads[cell,:,0]]
+    aa=sum(v*v for v in a);ab=sum(v*w for v,w in zip(a,b));bb=sum(v*v for v in b)
+    ma=sum(v*w for v,w in zip(m,a));mb=sum(v*w for v,w in zip(m,b))
+    lo,hi=F(left),F(right);points=[lo,hi]
+    slope=mb*ab-ma*bb
+    if slope:
+        critical=(ma*ab-mb*aa)/slope
+        if lo<critical<hi:points.append(critical)
+    for xi in points:
+        numerator=ma+xi*mb;square=aa+2*xi*ab+xi*xi*bb
+        if numerator>0 and square-numerator*numerator<=F(1024*np.finfo(float).eps)*square:
+            return False
+    return True
 
 
 def curved_patch_geometry_control(rule, positions, position_low, cell_rotations,

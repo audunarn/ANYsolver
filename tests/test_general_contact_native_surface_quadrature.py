@@ -43,6 +43,31 @@ def test_deformed_curved_surface_parameter_tangents_and_nonradial_normal():
     assert np.linalg.norm(value.outward_normal-radial)>1e-3
 
 
+def test_prepared_reference_area_matches_full_geometry_and_keeps_inversion_guard():
+    from anysolver._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry
+    from anysolver.general_contact.native_surface_quadrature import _prepare_reference_area
+    base=_reference(True);low=np.zeros((3,3));U=np.tile(np.eye(3),(2,1,1))
+    rigid=Rotation.from_rotvec((.3,-.2,.1)).as_matrix()
+    for twist in (False,True):
+        frames=base.nodal_triads.copy()
+        if twist:
+            for i,roll in enumerate((.1,.4,-.2)):
+                frames[i]=frames[i]@Rotation.from_rotvec((roll,0.,0.)).as_matrix()
+        for transform in (np.eye(3),rigid):
+            reference=CenteredCurvedBeam3ReferenceGeometry(
+                base.coordinates@transform.T+np.array((2.,-3.,.5)),transform@frames)
+            for xi in (-.95,-.4,.25,.85):
+                prepared=_prepare_reference_area(reference,xi,.03)
+                for angle in (.1,1.3,2.9,4.7,6.1):
+                    station=NativeRetainedRoundStation(7,reference,xi,.03,angle)
+                    expected=surface_geometry(station,reference.coordinates,low,U).area_jacobian
+                    assert prepared.area_jacobian(angle)==pytest.approx(expected,rel=1e-13,abs=0.)
+    with pytest.raises(ValueError,match='reversed'):
+        _prepare_reference_area(base,-.5,4.).area_jacobian(pi)
+    with pytest.raises(ValueError,match='reversed'):
+        surface_geometry(NativeRetainedRoundStation(7,base,-.5,4.,pi),base.coordinates,low,U)
+
+
 def test_surface_weighted_existing_contact_matches_cylinder_pressure_integral():
     _,pair,pose,history=_case()
     # Existing pose has center z=-.02, plane skin z=-.04: h=.02.

@@ -237,7 +237,7 @@ def test_curved_broad_contact_cannot_hide_second_thin_axial_pocket():
         gaps=[normal@(_independent_point(x,np.pi/2,radius,p,low,U,False)-origin) for x in stations]
         assert min(stations)>first_root
         assert min(gaps)<0<max(gaps)  # Broad right pocket is sampled; thin left one is not.
-    with pytest.raises((MemoryError,ValueError),match='interval budget|unresolved') as error:
+    with pytest.raises((MemoryError,ValueError),match='interval budget|unresolved|root precision exhausted') as error:
         law.evaluate(p,low,U)
     path=os.environ.get('CONTACT_APP_RESULT_RECORD')
     if path:
@@ -275,6 +275,131 @@ def test_curved_partial_scalar_field_large_tangential_origin_invariance():
     assert first.breakpoints(0.,2*np.pi)==second.breakpoints(0.,2*np.pi)
     for angle in np.linspace(0.,2*np.pi,21):
         assert first.value(angle)==second.value(angle)
+
+
+def _independent_axial_front_integral(law,p,low,U,order=48):
+    # Independent route: at each angle integrate xi only up to its exact affine
+    # plane-gap root. Angular partitions follow analytic sine equations at the
+    # cell boundaries. No production root, station, measure or work helper.
+    assert np.array_equal(U,np.tile(np.eye(3),(2,1,1)))
+    radius=law.rule.definition['radius'];lo,hi=law.rule.definition['xi_range']
+    al,ar=law.rule.definition['angle_range'];height=p[1,2];slope=p[2,2]-p[1,2]
+    points,weights=leggauss(order);energy=0.;force=np.zeros(3);moment=np.zeros(3)
+    for cell,xl,xr in ((0,lo,0.),(1,0.,hi)):
+        angles=[al,ar]
+        for xi in (xl,xr):
+            ratio=-(height+slope*xi)/radius
+            if abs(ratio)<=1:
+                root=np.arcsin(ratio)
+                for base in (root,np.pi-root):
+                    for turn in (-1,0,1):
+                        a=base+2*np.pi*turn
+                        if al<a<ar:angles.append(a)
+        angles=sorted(angles)
+        for left,right in zip(angles[:-1],angles[1:]):
+            for qa,wa in zip(points,weights):
+                angle=(left+right)/2+(right-left)*qa/2
+                stop=min(xr,(-height-radius*np.sin(angle))/slope)
+                if stop<=xl:continue
+                for qx,wx in zip(points,weights):
+                    xi=(xl+stop)/2+(stop-xl)*qx/2;J=np.sqrt(1+.16*xi*xi)
+                    gap=height+slope*xi+radius*np.sin(angle)
+                    area=radius*(J+.4*radius*np.cos(angle)/(J*J))
+                    factor=wx*wa*(stop-xl)*(right-left)/4*area
+                    point=_independent_point(xi,angle,radius,p,low,U,False)
+                    reaction=-law.stiffness*gap*law.normal*factor
+                    energy+=.5*law.stiffness*gap**2*factor
+                    force+=reaction;moment+=np.cross(point,reaction)
+    return energy,force,moment
+
+
+def test_curved_axial_front_reference_area_complete_work():
+    original,p,low,U=_case();p=original.reference.coordinates.copy()
+    p[:,2]=.02+.08*p[:,0];U[:]=np.eye(3)
+    law=NativeCurvedMaterialPlaneWork(original.rule,plane_origin_m=original.origin,
+        plane_normal=original.normal,normal_stiffness_Pa_per_m=1e4,
+        integration_settings=original.settings)
+    try:value=law.evaluate(p,low,U)
+    except Exception as failure:
+        path=os.environ.get('CONTACT_APP_RESULT_RECORD')
+        if path:
+            Path(path+'-curved-axial-front-failure.json').write_text(json.dumps(dict(
+                reason=str(failure),diagnostics=getattr(failure,'integration_diagnostics',None)),indent=2))
+        raise
+    reference=_independent_axial_front_integral(law,p,low,U)
+    assert value.axial_root_brackets and value.axial_isolation_intervals>0
+    assert value.normal_storage_j==pytest.approx(reference[0],rel=1e-9,abs=1e-10)
+    np.testing.assert_allclose(value.source_force,reference[1],rtol=1e-9,atol=1e-8)
+    np.testing.assert_allclose(value.source_moment,reference[2],rtol=1e-9,atol=1e-8)
+    direction=np.random.default_rng(409).normal(size=42)*.002;direction[24:]=0.
+    errors=[]
+    for h in (1e-5,2e-6):
+        plus=law.evaluate(*_moved(p,low,U,direction,h))
+        minus=law.evaluate(*_moved(p,low,U,direction,-h))
+        derivative=(plus.residual-minus.residual)/(2*h)
+        error=np.linalg.norm(derivative-value.tangent@direction)/np.linalg.norm(derivative)
+        errors.append(float(error));assert error<=1e-5
+        work=(plus.normal_storage_j-minus.normal_storage_j)/(2*h)
+        assert work==pytest.approx(value.residual@direction,rel=1e-5,abs=1e-9)
+    path=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if path:
+        Path(path+'-curved-axial-front.json').write_text(json.dumps(dict(
+            energy_error_j=abs(value.normal_storage_j-reference[0]),
+            force_error_n=float(np.linalg.norm(value.source_force-reference[1])),
+            moment_error_nm=float(np.linalg.norm(value.source_moment-reference[2])),
+            tangent_errors=errors,intervals=value.intervals,
+            evaluations=value.integrand_evaluations,errors=value.estimated_errors,
+            root_brackets=value.axial_root_brackets),indent=2))
+
+
+def test_curved_reference_second_bound_against_independent_planar_twist_derivatives():
+    from anysolver._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry
+    from anysolver.general_contact.native_curved_geometry import (
+        _reference_second_bound,_reference_unclipped_interval)
+    Kz=np.array(((0.,-1.,0.),(1.,0.,0.),(0.,0.,0.)))
+    Kx=np.array(((0.,0.,0.),(0.,0.,-1.),(0.,1.,0.)))
+    base=_reference(True)
+    for angles in ((0.,0.,0.),(.1,.4,-.2)):
+        frames=base.nodal_triads.copy()
+        for i,angle in enumerate(angles):frames[i]=frames[i]@Rotation.from_rotvec((angle,0.,0.)).as_matrix()
+        ref=CenteredCurvedBeam3ReferenceGeometry(base.coordinates,frames)
+        for cell,(left,right) in enumerate(((-1.,0.),(0.,1.))):
+            bound=_reference_second_bound(ref,cell);roll=angles[cell+1]-angles[cell]
+            assert _reference_unclipped_interval(ref,cell,left+.05,right-.05)
+            assert not _reference_unclipped_interval(ref,cell,left,right)
+            for xi in np.linspace(left+.001,right-.001,27):
+                J=np.sqrt(1+.16*xi*xi);beta1=-.4/(J*J);beta2=.128*xi/(J**4)
+                Rz=np.array(((1/J,.4*xi/J,0.),(-.4*xi/J,1/J,0.),(0.,0.,1.)))
+                t=xi+1 if cell==0 else xi
+                angle=angles[cell]+roll*t;c=np.cos(angle);s=np.sin(angle)
+                Rx=np.array(((1.,0.,0.),(0.,c,-s),(0.,s,c)))
+                derivative=Rz@((beta2*Kz+beta1**2*Kz@Kz)@Rx+
+                    2*beta1*roll*Kz@Rx@Kx+roll**2*Rx@Kx@Kx)
+                assert np.linalg.norm(derivative,2)<=bound
+
+
+def test_curved_exact_binary_curvature_literal_cancellation_regression():
+    from anysolver._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry
+    from anysolver.general_contact.native_curved_geometry import (
+        _reference_curvature_coefficients,_reference_curvature_norm,_reference_second_bound)
+    from anysolver.general_contact.native_curved_plane_work import (
+        _projected_center_derivative,_projected_center_second)
+    x=np.array((9007199254740991.,9007199254740994.,9007199254740996.))
+    assert x[0]-2*x[1]+x[2]==0.  # Literal defect in the discarded arithmetic.
+    coordinates=np.column_stack((x,(-1.,0.,1.),np.zeros(3)))
+    frames=[]
+    for xi in (-1.,0.,1.):
+        tangent=np.array((2.5-xi,1.,0.));tangent/=np.linalg.norm(tangent)
+        frames.append(np.column_stack((tangent,(-tangent[1],tangent[0],0.),(0.,0.,1.))))
+    ref=CenteredCurvedBeam3ReferenceGeometry(coordinates,np.array(frames))
+    assert _reference_curvature_coefficients(ref)==(-1,0,0)
+    assert _reference_curvature_norm(ref)>=1.
+    U=np.tile(np.eye(3),(2,1,1));normal=np.array((1.,0.,0.))
+    for cell,xi in ((0,-.25),(1,.25)):
+        assert _projected_center_second(ref,U,cell,normal)==-1.
+        assert _projected_center_derivative(ref,coordinates,np.zeros((3,3)),U,cell,xi,normal)==2.5-xi
+        v=2.5-xi;J2=v*v+1.;beta1=1/J2;beta2=2*v/J2**2
+        assert np.hypot(beta2,beta1**2)<=_reference_second_bound(ref,cell)
 
 
 def test_projected_gap_literal_origin_counterexample_and_resolution_guard():
