@@ -76,9 +76,10 @@ consequential defect or evidence that changes a decision. Tests, commits,
 documents and refined meshes are means, not progress targets.
 
 Current implementation exit: the explicit finite distributing owner now has
-installed solve/recovery/restart evidence; next finish its distinct ANYfem
-consumer/persistence route without changing the old reference format. Physical
-torque convergence and aggregate acceptance remain open. See the active note for
+installed solve/recovery/restart evidence; its distinct ANYfem consumer now
+also completes installed input/Project save/reopen and checkpoint resume while
+preserving the old reference format. Physical torque convergence and aggregate
+acceptance remain open; use saved evidence for the next bounded decision. See the active note for
 exact source/artifact applicability, limitations and preserved authorities.
 
 The near-term path is now:

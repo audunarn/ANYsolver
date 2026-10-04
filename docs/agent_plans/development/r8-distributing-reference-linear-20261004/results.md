@@ -572,3 +572,22 @@ requirements stay open; formalF03 remains UNCONSUMED. No main merge/publication.
 Next: the explicit finite ANYfem construction/persistence/solve/recovery/checkpoint
 exit using existing consumer services. Independently retain the physical torque
 convergence question; no automatic external/finer-mesh campaign is launched.
+
+### Finite ANYfem consumer exit — completed after the owner slice
+
+ANYfem explicit finite input/persistence route now reuses the public finite owner:
+standalone/native Project save/reopen, preflight, explicit monotone force targets,
+current selected physical recovery, cancel/accepted prefix and binary resume.
+Distinct schema/law prevents old reference upgrade. No copied mechanics/state.
+Source56 precedes final malformed-unused-field/capability guard tightening;
+exact bytes preserved. Final installed59PASS13.52s/15.4795s whole, sample187691008B;
+examplePASS4.3557s/sample175673344B, exact resumed displacement parity.
+Effective pools1/JIToff,600s/2GiB, empty stderr; no speed or true peak claim.
+Solverwheel9a366e44b752e57b65f029a7ee54fe4c4ee7581c5bda0f85083c8c8d040f59e8; finalconsumerwheele8379bed3db7d7f6f8349135a1f8e5e294528502aa738339e74d7b9c4b8692e6; ten actual imported files match source.
+ANYfem raw .qualification/stiffened-shell/r8-ge-finite-distributing-consumer-dev-20261004-v1
+retains exact commands/source/test/import/runtime identities and example outputs.
+Its docs/development/r8-ge-finite-distributing-consumer-20261004.md describes scope.
+Supporting review closed malformed-field discard; not different-family acceptance.
+Complete F04/G0/G2, physical convergence, platform/full-consumer/release remain open.
+Next bounded decision interprets saved physical torque convergence and idealization
+limits; no automatic numerical refinement or unrelated feature stream.

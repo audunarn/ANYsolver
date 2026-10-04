@@ -63,7 +63,7 @@ this planning review; the historical `be41a77a` baseline is not current-main evi
 | B2 | Physical static/batch execution, selected recovery, persistence and scoped supported/free-modal consumer routes exist. | Complete attachment, prestress, scale, external and release acceptance remain. |
 | Foundations | Scoped F05, F08 and F09 have recorded PASSED dispositions; further point/static/elastic-chart portions are accepted within their stated boundaries. | Do not relabel scoped passes as complete aggregate gates or repeat the obsolete claim that no foundation has passed. |
 | BL5 | All 21 saved auxiliary-norm cases passed their scoped predicates; actual mechanical inventory is 13 positive, one unresolved, seven unassessed. | Auxiliary beta does not settle the mixed mechanics or physical transfer. Closed inverse/positive-part certificate routes remain CLOSED_UNRESOLVED. |
-| Distributing attachment | Same reference-linear area law supports 2–128 conforming Q4 hosts/256 shell nodes with six rows; historical two-host bytes/checkpoints remain exact. 130 source/130 installed and 42 installed consumer controls pass. Fixed-pad three-level CalculiX torque/shear comparison executes. | Finite pose/owner/restart now have installed experimental evidence; finite consumer, fully converged physical fidelity and full F04 remain open. |
+| Distributing attachment | Same reference-linear area law supports 2–128 conforming Q4 hosts/256 shell nodes with six rows; historical two-host bytes/checkpoints remain exact. 130 source/130 installed and 42 installed consumer controls pass. Fixed-pad three-level CalculiX torque/shear comparison executes. | Finite pose/owner/restart now have installed experimental evidence; finite consumer now has installed development evidence; fully converged physical fidelity and full F04 remain open. |
 | Scale and cost | A 10,000-Q4/1,000-B3 point model completed a persisted reference route. Seven paired installed runs measured 55.97% improvement on the declared 400-Q4/120-B3 warm reference workflow; other scoped gains are recorded. | No overall development-speed measurement, full G5 qualification, nonmatching/nonlinear scale claim or release date follows. |
 
 The [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) and linked
@@ -158,11 +158,13 @@ Decisions resolving the present queue:
   pre-metadata-adjustment source;186 final installed controls,43 source/43
   installed consumer compatibility checks and public restart example pass.
   Reference-only identities/checkpoints remain unchanged. No physical or
-  aggregate qualification follows. Next finish the distinct finite ANYfem
-  construction/persistence/recovery/checkpoint-resume exit in existing services;
-  current consumer changes only preserve empty-field compatibility and reject
-  unsupported finite import. Keep later material/controller/spectral obligations
-  visible and avoid optional feature breadth until that exit works.
+  aggregate qualification follows. The distinct finite ANYfem consumer exit
+  is now implemented too:59final installed checks and public Project/input/
+  checkpoint-resume example pass; old reference formats remain unchanged.
+  Next resolve the physical torque convergence/model-assumption question from
+  the saved evidence before selecting a new discriminating run. Keep later
+  material/controller/spectral obligations visible; no automatic refinement
+  or optional breadth follows this completed implementation slice.
 - **Pressure assessment:** do not adopt the proposed vector-only amendment.
   Its documented shared-node masking weakens a protection of the current
   contract. This resolves the outstanding approval request as a decision to

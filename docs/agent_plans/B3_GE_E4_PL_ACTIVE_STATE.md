@@ -17,12 +17,18 @@ Source191PASS (before final metadata-only descriptor adjustment); final installe
 Example accepts .25/.5/1, equilibrium8.943e-10, gap1.206e-17,2355byte checkpoint.
 Supporting OpenAI review is development input, not different-family acceptance.
 
-Next implementation: one finite ANYfem construction/persistence/solve/recovery/
-checkpoint-resume slice, using this explicit new record and existing consumer
-services. Preserve historical reference-linear project format; no silent upgrade.
-Current ANYfem change only fixes empty-field compatibility and rejects finite
-records from unsupported reference/modal import routes; no finite consumer yet.
-Do not broaden controllers/materials or add a framework while finishing this exit.
+Finite ANYfem exit is also complete: explicit new input schema, standalone and
+native Project save/reopen, solve/selected recovery/cancel/accepted-prefix binary
+resume.56source before final strict guards;59final installed checks and installed
+consumer example PASS with exact resumed displacement parity. Old reference
+formats retained; unsupported finite/modal imports and adaptive/batch controls
+fail closed. Final consumerwheel
+e8379bed3db7d7f6f8349135a1f8e5e294528502aa738339e74d7b9c4b8692e6
+binds ten actual solver/consumer imports.
+Next priority is physical connection acceptance: interpret saved native/reference
+torque convergence and model assumptions in one bounded mechanics review, identify
+the missing criterion/equation/observable, and choose the discriminating check.
+No automatic refinement or optional feature stream follows this delivery.
 
 Science question: what independent native mesh-adequacy/model-assumption check
 would change the physical torque claim? Existing three-level matched reference
@@ -34,13 +40,13 @@ paired refinement; old geometry donor only10x4/20x8/40x16 and80x32solid exceeds
 ## Ownership, restart and authority
 
 ANYsolver: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Preceding HEAD9269719e; current
-finite owner product/example/tests plus linked docs/evidence are root-owned.
-Exact staged candidate bytes will be recorded before scoped local delivery.
+branch codex/stiffened-main-reconcile-20261001. Product HEAD8d03f522; current
+documentation records the delivered consumer. Tested product/raw staged bytes
+were verified exactly; only declared living text undergoes line-end normalization.
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer; preceding HEAD6013db0. Three narrow
-compatibility source/test changes are root-owned. No unrelated dirty work touched.
-All numerical jobs terminal; no worker has Edit authority. Root controls serial
+branch codex/experimental-ge-panel-consumer; HEAD93336c5 (preceding compatibility
+fef92e2). Product/example/tests/evidence committed; unrelated work preserved.
+All numerical jobs and supporting workers terminal. Root controls serial
 jobs, integration and Git. At most3workers, one implementation exit plus one
 scientific question. No push/main merge/publication/contact-worker messages.
 Optional local/Mistral unavailable; do not re-probe. Different-family review open.
@@ -76,5 +82,5 @@ oneunresolved/sevenunassessed. Pressure amendment DECLINED. No retry by guard,
 budget/order/precision/mesh substitution. F5 still lacks verified discontinuous
 retained sided forces. Scoped foundation passes are not aggregate G0 acceptance.
 Full F04/G0/G2, line envelope, materials/topology/loads/spectra/capacity, complete
-GE/B2 scale/platform/consumer/external/different-family/release remain open.
+GE/B2 scale/platform/full-consumer/external/different-family/release remain open.
 No overall development-speed gain or release readiness is claimed.

@@ -2200,3 +2200,13 @@ curvature upper bound is explicit, not practical-scale acceptance. Reference-onl
 identities/checkpoints unchanged. Full physical/material/controller/spectral/
 topology/scale/platform/consumer/different-family and aggregateF04/G0/G2 remain
 OPEN; formalF03 UNCONSUMED. [Exact slice/evidence/limits](development/r8-distributing-reference-linear-20261004/results.md).
+
+F04 finite distributing ANYfem consumer, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+Distinct finite input/schema/law, public owner, standalone/native Project input
+save/reopen, explicit monotone force targets, selected physical recovery,
+cancellation/accepted prefix and binary restore/continue now operate on installed
+artifacts.56source precedes final guard tightening;59final installed and public
+example PASS. Old reference formats unchanged; malformed/unsupported requests
+fail closed. Different-family/physical/full-material/full-topology/platform/
+scale/release and aggregateF04/G0/G2/G6 remain OPEN. FormalF03 UNCONSUMED.
+[Scope and exact artifact evidence](development/r8-distributing-reference-linear-20261004/results.md).
