@@ -458,7 +458,11 @@ class NativeRetainedMultiS3Analysis:
                 a.minimum_rim_clearance_m, b.minimum_rim_clearance_m))
         return all(admitted)
 
-    _swept_cancellable = _swept_admissible
+    def _swept_cancellable(self,*args,cancellation_token=None):
+        # Keep historical subclasses' dynamic dispatch and argument contracts.
+        if self._curved_mode:
+            return self._swept_admissible(*args,cancellation_token=cancellation_token)
+        return self._swept_admissible(*args)
 
     def _record(self, target, mechanical, displacement, origins, previous_sha256):
         if type(target) is not int or not 1 <= target <= len(self.program.targets):

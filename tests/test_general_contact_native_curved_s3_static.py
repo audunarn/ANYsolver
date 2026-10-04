@@ -79,3 +79,14 @@ def test_curved_s3_owner_uses_authoritative_path_increment_columns():
     work.certify_path=captured
     with pytest.raises(SolveCancelled):owner._swept_admissible(start,u,step,end,last,cancellation_token=token)
     assert calls==[1]
+
+
+def test_shared_swept_wrapper_preserves_historical_subclass_dispatch():
+    from anysolver.general_contact.native_multi_s3_static import NativeRetainedMultiS3Analysis
+    # Exact wrapper contract check; historical subclass need not accept a token.
+    class Historical:
+        _curved_mode=False
+        def _swept_admissible(self,*args):
+            assert args==(1,2,3);return 'historical override'
+    assert NativeRetainedMultiS3Analysis._swept_cancellable(Historical(),1,2,3,
+        cancellation_token=object())=='historical override'

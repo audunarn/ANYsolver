@@ -198,3 +198,43 @@ def test_curved_s3_axial_front_complete_target_work_and_independent_partition():
         moment_error_nm=float(np.linalg.norm(value.contact.beam_moment_nm-oracle[2])),
         estimated_errors=[value.contact.energy_error_j,value.contact.force_error_n,value.contact.tangent_error_n_per_m],
         intervals=value.contact.integration_intervals,evaluations=value.contact.integration_evaluations),indent=2))
+
+
+def test_curved_s3_complete_scaled_root_enclosure_with_large_tangential_lever():
+    from anysolver.general_contact.native_curved_s3_work import _S3CandidateIntegration
+    from anysolver.general_contact.native_curved_geometry import curved_patch_geometry_control
+    from anysolver.general_contact.native_curved_plane_work import _projected_gap
+    from anysolver.general_contact.native_surface_quadrature import _prepare_reference_area
+    work,p,low,U,u=_case()
+    # Algebraic enclosure stress, deliberately OUTSIDE the finite facet. This
+    # does not admit such a contact; its complete normal work must still bound.
+    p[:,:2]+=(10000.,-15000.)
+    patch=NativeMaterialS3Patch(work.contact.rule,work.contact.beam_node_ids,
+        normal_stiffness_Pa_per_m=work.contact.stiffness,
+        integration_settings=StraightNormalIntegrationSettings(1e-10,1e-8,1e-6,64,.17),
+        geometry_tolerance_m=1e-10,rim_clearance_m=1e-6)
+    changed=NativeCurvedMaterialS3Work(patch,work.shell)
+    candidate=_S3CandidateIntegration(changed,work.shell.reference_positions)
+    geometry=curved_patch_geometry_control(patch.rule,p,low,U,candidate.origin,candidate.normal)
+    left,right=.51,.510001;station=(left+right)/2;width=right-left
+    angle_width=5.3-4.
+    bound=candidate._root_work_bound(p,low,U,1,width,angle_width,geometry,
+        candidate.settings,candidate.stiffness,candidate.normal,0.,
+        interval=(left,right),station=station)
+    mapping=candidate._local_mapping(1,candidate._coordinate_count())
+    scale=candidate._coordinate_scale(candidate._coordinate_count())
+    maximum=0.
+    for xi in np.linspace(left,right,5):
+        area=_prepare_reference_area(candidate.reference,xi,candidate.radius)
+        for alpha in np.linspace(0.,2*pi,31):
+            arm=U[1]@(candidate.reference.half_cell_lift(1,xi)+candidate.radius*(
+                np.cos(alpha)*area.frame[:,1]+np.sin(alpha)*area.frame[:,2]))
+            gap=_projected_gap(p,low,1,xi,arm,candidate.origin,candidate.normal)
+            jet=candidate._gap_work_jet(gap,p,low,1,xi,arm)
+            energy=.5*candidate.stiffness*area.area_jacobian(alpha)*jet*jet
+            residual=mapping.T@energy.gradient
+            tangent=candidate._spatial_tangent(residual,mapping.T@energy.hessian@mapping)
+            observed=np.linalg.norm(scale[:,None]*tangent*scale[None,:],np.inf)
+            maximum=max(maximum,float(observed))
+            assert 2*observed*width*angle_width<=bound[2]
+    assert maximum>1e5
