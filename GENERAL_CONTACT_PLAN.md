@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.108. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.15, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.109. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.16, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
@@ -15,7 +15,13 @@ retains the detailed chronology; current evidence remains in the
 
 ## 1. Status and diagnosis
 
-Latest integrated delivery`ce3e5495` closes the specific native material-area
+Latest local curved work`dfd884aa` proves whole-patch orientation and plane-gap
+controls in its tested scope and integrates open/full-compression reference-area
+normal work on all42retained coordinates.12installed checks pass. Mixed fronts,
+continuous path admission and the actual curved coupled owner remain the immediate
+required work; existing-owner evidence below is reused, not repeated.
+
+Latest coupled delivery`ce3e5495` closes the specific native material-area
 first-contact overshoot through explicit globalization in the existing owner.
 The unchanged higher-penalty low-yield fixture completes9full-load/open/recontact
 targets with exact split restart, nonzero monotone resultant-law history and
@@ -300,12 +306,22 @@ Exact Bernstein parameter restriction and transported-frame error bounds preserv
 sub-ULP intervals.26installed checks and supporting scrutiny pass. Curved contact
 owner admission stays guarded. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_bounds_summary.json).
 
-**Next integrated requirement:** establish continuous orientation and physical
-plane-gap controls for a curved interior material patch, then fixed-pose normal
-work/tangent integration using existing Jet2/station maps and independent direct
-area work. Use the simplest admitted fixed-plane fixture first. Keep numerical
-quadrature, reference-area measure and structural work separate; no sampled
-orientation or endpoint-only path admission. One bounded discriminator under
-180s/953MiB must select a concrete work-map extension or explicit unresolved
-diagnostic. No full curved owner solve until the entire patch/path is certified.
+**Curved local normal work closed atdfd884aa:** whole-patch sufficient orientation,
+direct physical plane-gap enclosure and actual fixed-area Jet2 work retain all42
+native coordinates. Independent parabolic/twisted references and full spatial
+tangents pass in12installed checks. A real large tangential-origin defect was
+reproduced and corrected without larger caps; preserve both failure traces.
+Open/fully compressed local poses are tested, not accepted engineering solves.
+Mixed fronts reject. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_work_summary.json).
+
+**Next integrated requirement:** implement curved normal contact-front segmentation
+in this same kernel. Reuse existing precise angular roots at each native axial
+station; derive moving-domain contributions from the declared penalty work and
+preserve all geometry/area/retained maps. Outer axial controls must detect thin
+unobserved active regions or return explicit unresolved/resource failure.
+Use one independent partial-area/virtual-work fixture under180s/953MiB and the
+existing64interval fixture budget; no automatic cap or tolerance increase.
+Then integrate this work with the existing retained static owner for curved
+press/open/recontact, rejection and split restart, only after complete path
+orientation/side/crossing controls. No new solver stack or profile-default switch.
 Preserve prior friction/impact, free-rim, convergence and historical restrictions.

@@ -1,8 +1,8 @@
 # General contact restart — ACTIVE, 4 October 2026
 
-Goal2026-10-04.15 / plan2026-10-04.108; full C0–C9 incomplete.
+Goal2026-10-04.16 / plan2026-10-04.109; full C0–C9 incomplete.
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Latest source/tests5818670d; angular correctionf11f6ce7;
+branch codex/contact-main-reconcile-20261001. Latest source/testsdfd884aa; search5818670d; angularf11f6ce7;
 current Git HEAD also binds documentation. Goal-tool objective paths are stale:
 never access the protected original worktree. Main/ANYfem separately owned.
 No other-chat messaging, push/merge/publication/release/default changes.
@@ -61,9 +61,22 @@ Near-limit +/-2e-12 input failed original reference admission; retained, explici
 rejection tested; admitted +/-1e-13 and exact rational shifts pass. Supporting
 review only; no curved contact owner/gap/orientation/event/engineering admission.
 [Guide](docs/GENERAL_CONTACT_NATIVE_CURVED_BOUNDS_DEV.md).
-Next: continuous curved patch orientation/plane-gap and fixed-pose normal Jet2
-work; independent area oracle before owner expansion. One bounded slice,
-reuse infrastructure; preserve friction/impact restrictions and old failures.
+Curved local plane work now installed-testeddfd884aa: sufficient full-patch
+orientation/plane slab, actual reference area,42-coordinate work/spatial tangent.
+12checks19.314s182038528B;522files/208imports match,JIT0/pools1.
+Wheel4ed3ce907c8597e50894d39d2ca38f04de2b9ce3fb2c18e001f3904c8e3c943f;
+raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate07.
+Energy8.88e-16J,wrench8.53e-14N/1.49e-13Nm,tangent1.16e-9/1.01e-8.
+Open/full-compression local poses only; mixed fronts reject. A large tangential
+plane-origin defect reproduced in candidate06 compressed/open tests exhausted64
+intervals; exact binary projected products resolve it. Underflow/branch conflicts
+fail closed; retained test-wiring NameError repaired. Supporting Read only.
+No curved coupled owner, history/path/restart or accepted engineering gap claim.
+[Guide](docs/GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md).
+Next: precise angular segmentation at curved axial stations; guard unobserved
+thin axial support within existing64interval/180s953MiB fixture. Independent
+partial-area work/tangent fixture, then existing-owner press/open/recontact and
+split restart after full path controls. No new stack, cap increase or old retries.
 Default k1e6 full
 load and k1e7 first-target gap/merit remain NONPASS; opt-in new success does not
 regrade them. Spatial/enforcement convergence, caps/interfaces/curved geometry,
@@ -86,6 +99,6 @@ only; stricter frozen/consumed authorities remain binding.
 Original120h consumed:428891+3120=432011s=120.003h; preserve that boundary.
 Subsequent explicit “Proceed developing” authorizes further bounded development,
 without a new hard duration. Never invent an8h allocation or reset history.
-Renewed turn began at goal-tool429147s; latest snapshot434389s (5242s after that
+Renewed turn began at goal-tool429147s; latest snapshot437138s (7991s after that
 snapshot), plus subsequent checkpoint work. Goal remains active/incomplete;
 planning pauses do not reset consumed time or frozen execution restrictions.

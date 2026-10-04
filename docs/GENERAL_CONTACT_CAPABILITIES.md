@@ -1,5 +1,19 @@
 # General-contact capability ledger
 
+## Curved native whole-patch controls / fixed-plane local work — 4 October
+
+Implemented/installed-tested dfd884aa: continuous sufficient outward-area bound,
+direct oriented plane enclosure, actual fixed reference material area and complete
+42-coordinate/spatial normal work. Open/full-compression only; mixed fronts reject.
+Twisted/parabolic independent references, hidden inversion, tangent/work, rigid
+transform and arithmetic/resource failures covered.12installed checks19.314s,
+182038528B;522files/208imports match,JIT0/pools1. Energy8.88e-16J, force8.53e-14N,
+moment1.49e-13Nm; tangent1.16e-9/1.01e-8. Tangential-origin projection failure
+reproduced and fixed; original raw failures retained. Supporting scrutiny only.
+No coupled owner/path/restart, accepted gap/initial condition, engineering or
+application admission. [Guide](GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md),
+[evidence](d1_review_support/contact_native_material_s3_20261004/curved_work_summary.json).
+
 ## Curved native material current/swept search bounds — 4 October
 
 Implemented/installed-tested at5818670d: whole Q2 material patch, actual retained

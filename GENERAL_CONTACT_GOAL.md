@@ -1,6 +1,6 @@
 # General contact — goal
 
-**Revision:** 2026-10-04.15. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.106. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-10-04.16. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.106. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
 
@@ -28,6 +28,11 @@ This establishes neither release, arbitrary exact-model/application admission no
 full C0–C9 completion. Every historical failure and consumed authority remains.
 
 ## Programme outcome and current delivery choice
+
+**Current focus:** curved native material contact. Whole-patch geometry and local
+open/full-compression work are installed-tested atdfd884aa. Next close mixed-front
+integration and path controls, then the existing-owner curved workflow. This is
+required D3 progress; full C0–C9 and scientific acceptance remain incomplete.
 
 Complete every required C0–C9 capability in the [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md): shells, classical and retained-native beams, static contact, objective friction, automatic/self-contact, nonlinear and native dynamics, applications, installed packages and measured resources. Required scientific acceptance and release remain distinct. The accepted D1/D2 subsets do not complete this programme.
 
@@ -79,6 +84,14 @@ retain Q2 lift and cell rotation at fixed nodes;26installed checks. This closes
 a geometry/search prerequisite, not curved coupled contact. Next: continuous
 orientation/physical plane-gap controls and fixed-pose normal work before owner
 admission. [Guide](docs/GENERAL_CONTACT_NATIVE_CURVED_BOUNDS_DEV.md).
+
+**Curved normal-work slice (dfd884aa):** whole-patch orientation/plane controls
+and complete fixed-area retained work tested in12installed checks. Origin
+projection defect reproduced and fixed. Only open/fully compressed local poses
+admitted; curved contact fronts and actual coupled owner remain required.
+Next: shared-kernel segmentation and thin-support controls, then curved coupled
+press/open/recontact and restart. No engineering/application promotion.
+[Guide](docs/GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md).
 
 **Budget disposition:** the original 120-hour allocation remains consumed:
 428891+3120=432011 active seconds (120.003 hours). The user subsequently directed
