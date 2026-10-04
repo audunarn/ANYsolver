@@ -93,6 +93,11 @@ class NativeRetainedMaterialS3Work:
         self.target=S3SkinMaterialPoint(shell,(1/3,1/3,1/3))
         self.identity=self._fingerprint()
 
+    @property
+    def work_map(self):
+        """Geometry provenance for the shared owner; area work is already mapped."""
+        return sparse.block_diag((sparse.eye(42,format='csr'),self.shell.work_map),format='csr')
+
     def _fingerprint(self):
         s=self.shell;m=s.work_map
         return sha(dict(profile=PROFILE,contact=self.contact._fingerprint(),

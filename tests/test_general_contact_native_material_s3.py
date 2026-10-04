@@ -36,6 +36,177 @@ def test_runnable_deformable_material_patch_example(capsys):
     assert_allclose(np.asarray(result['beam_force_n'])+result['shell_force_n'],0.,atol=1e-12)
 
 
+def _two_analysis(**kwargs):
+    example=Path(__file__).resolve().parents[1]/'examples/general_contact_native_material_s3.py'
+    return runpy.run_path(str(example))['analysis'](beams=2,**kwargs)
+
+
+def test_two_material_contact_independent_work_before_structural_globalization():
+    owner=_two_analysis(targets=(.25,.5,.75,1.));n=owner.context.count
+    step=np.zeros(n)
+    for i,nodes in enumerate(owner.context.nodes):
+        for j,node in enumerate(nodes[1:]):step[6*node+2]=-.001-.0002*i-.0002*j
+        step[owner.context.nodal_count+24*i+3]=.04+.01*i
+    pose=owner.context.advance(owner.initial.mechanical,step);u=np.zeros(18)
+    result=owner._contact(pose,u)
+    def energy(mechanical,displacement):
+        return sum(_reference(p.work,mechanical.positions[owner.context.nodes[i]]+
+            mechanical.position_low[owner.context.nodes[i]],mechanical.cell_rotations[i],displacement)[0]
+            for p,i in zip(owner.pairs,owner.beam_indices))
+    assert_allclose(result.contact.potential_j,energy(pose,u),rtol=1e-10,atol=1e-14)
+    d=np.random.default_rng(490).normal(size=n+18)*.003
+    d[list(owner.context.fixed)]=0.
+    for h in (1e-5,2e-6):
+        poses=[owner.context.advance(pose,sign*h*d[:n]) for sign in (1,-1)]
+        values=[owner._contact(s,u+sign*h*d[n:]) for sign,s in zip((1,-1),poses)]
+        fd=(values[0].residual-values[1].residual)/(2*h)
+        assert np.linalg.norm(result.tangent@d-fd)/np.linalg.norm(fd)<=1e-5
+        independent=(energy(poses[0],u+h*d[n:])-energy(poses[1],u-h*d[n:]))/(2*h)
+        assert_allclose(result.residual@d,independent,rtol=1e-5,atol=1e-10)
+
+
+def test_two_native_material_patches_shared_deformable_target():
+    from anysolver.general_contact.native_multi_s3_static import MATERIAL_PROFILE
+    owner=_two_analysis(targets=(.25,.5,.75,1.));run=owner.solve()
+    assert run.status=='completed',run.failure
+    assert run.profile==MATERIAL_PROFILE and owner.context.count==84
+    a=run.accepted;n=owner.context.count
+    residual,tangent,metrics,_,contact=owner._assemble(a.mechanical,a.shell_displacement,1.,a.native_histories)
+    assert tangent.shape==(102,102) and max(metrics)<1e-10
+    assert contact.profile==MATERIAL_PROFILE and contact.contact.active_intervals is None
+    assert np.linalg.norm(a.shell_displacement)>0.
+    assert_allclose(contact.contact.beam_force_n+contact.contact.shell_force_n,0.,atol=1e-12)
+    assert_allclose(contact.contact.beam_moment_nm+contact.contact.shell_moment_nm,0.,atol=1e-12)
+    shell_r=residual[n:].reshape(3,6)
+    skin=owner.pairs[0].work.shell
+    shell_mid=skin.reference_positions-skin.physical_offset*skin.director+a.shell_displacement.reshape(3,6)[:,:3]
+    force_balance=shell_r[:,:3].sum(axis=0)
+    moment_balance=np.cross(shell_mid,shell_r[:,:3]).sum(axis=0)+shell_r[:,3:].sum(axis=0)
+    for i,nodes in enumerate(owner.context.nodes):
+        root=nodes[0];force=np.array((0.,0.,-.005 if i==0 else -.003))
+        force_balance+=residual[6*root:6*root+3]+force
+        moment_balance+=(residual[6*root+3:6*root+6]+
+            np.cross(a.mechanical.positions[root],residual[6*root:6*root+3])+
+            np.cross(a.mechanical.positions[nodes[2]],force))
+    normalized_force=float(np.linalg.norm(force_balance)/.008)
+    normalized_moment=float(np.linalg.norm(moment_balance)/.016)
+    assert normalized_force<=1e-6 and normalized_moment<=1e-6
+    expected=0.
+    for (pair,row),i in zip(contact.pairs,owner.beam_indices):
+        nodes=owner.context.nodes[i]
+        expected+=_reference(pair.work,a.mechanical.positions[nodes]+a.mechanical.position_low[nodes],
+                             a.mechanical.cell_rotations[i],a.shell_displacement)[0]
+        assert row.contact.minimum_gap_m>=-pair.gap_tolerance_m
+        assert row.tangent[:42,42:].nnz and row.tangent[42:,:42].nnz
+        assert row.contact.beam_force_n[2]>0.
+    assert_allclose(contact.contact.potential_j,expected,rtol=1e-9,atol=1e-15)
+    # Shared-target compliance couples the native solves; neither beam was
+    # independently condensed before adding contact.
+    d=np.random.default_rng(486).normal(size=102)*.001
+    d[list(owner.context.fixed)]=0.;d[n+owner.shell_fixed]=0.
+    for h in (1e-5,2e-6):
+        states=[owner.context.advance(a.mechanical,sign*h*d[:n]) for sign in (1,-1)]
+        rows=[owner._assemble(s,a.shell_displacement+sign*h*d[n:],1.,a.native_histories)[0]
+              for sign,s in zip((1,-1),states)]
+        fd=(rows[0]-rows[1])/(2*h)
+        assert np.linalg.norm(tangent@d-fd)/np.linalg.norm(fd)<=1e-5
+    split=_two_analysis(targets=(.25,.5,.75,1.)).solve(stop_after=1)
+    resumed=_two_analysis(targets=(.25,.5,.75,1.)).solve(checkpoint=split.checkpoint,
+        expected_sha256=split.checkpoint_sha256)
+    assert resumed.status=='completed' and resumed.checkpoint==run.checkpoint
+    output=os.environ.get('CONTACT_MATERIAL_MULTI_S3_RECORD')
+    if output:Path(output).write_text(json.dumps(dict(profile=run.profile,
+        coordinates=102,metrics=metrics,minimum_gap_m=contact.contact.minimum_gap_m,
+        normalized_force_balance=normalized_force,normalized_moment_balance=normalized_moment,
+        beam_force_n=contact.contact.beam_force_n.tolist(),shell_displacement_norm_m=float(np.linalg.norm(a.shell_displacement)),
+        potential_j=contact.contact.potential_j,checkpoint_sha256=run.checkpoint_sha256),indent=2))
+
+
+def test_second_material_patch_hidden_rotation_uses_its_own_retained_block():
+    owner=_two_analysis(targets=(.5,1.));n=owner.context.count
+    initial=np.zeros(n)
+    for node in owner.context.nodes[1][1:]:initial[6*node+2]=-.0003
+    index=owner.context.nodal_count+24+3
+    initial[index]=-.6
+    start=owner.context.advance(owner.initial.mechanical,initial)
+    delta=np.zeros(n+18);delta[index]=1.2
+    end=owner.context.advance(start,delta[:n]);u=np.zeros(18)
+    first=owner._contact(start,u);last=owner._contact(end,u)
+    assert all(r.contact.minimum_gap_m>0. for _,r in first.pairs)
+    assert all(r.contact.minimum_gap_m>0. for _,r in last.pairs)
+    middle=owner.context.advance(start,.5*delta[:n])
+    assert owner._contact(middle,u).pairs[1][1].contact.minimum_gap_m < -5e-5
+    assert not owner._swept_admissible(start,u,delta,end,u)
+
+
+def test_material_multi_profile_rejects_mixed_laws_and_activation_controller():
+    from anysolver.general_contact import create_native_contact_analysis,NativeS3ContactPair
+    from anysolver.general_contact.native_activation_static import NativeActivationMultiS3Analysis,NativeContactActivationSettings
+    from test_general_contact_native_retained_s3_static import _analysis as legacy
+    owner=_two_analysis(targets=(.5,1.));args=(tuple(NativeBeamDefinition(raw) for raw in owner.native._definitions),
+        tuple(owner.native.model.boundary_conditions),owner.program,owner.shell_model)
+    activation=NativeContactActivationSettings(1e-7,64)
+    with pytest.raises(ValueError,match='without activation controller'):
+        create_native_contact_analysis(*args,owner.pairs,equilibrium_tolerance=1e-10,activation_settings=activation)
+    with pytest.raises(ValueError,match='without activation controller'):
+        NativeActivationMultiS3Analysis(*args,owner.pairs,equilibrium_tolerance=1e-10,activation_settings=activation)
+    mixed=(owner.pairs[0],NativeS3ContactPair('line',legacy().contact,5e-5,128))
+    with pytest.raises(ValueError,match='mixed line and area'):
+        create_native_contact_analysis(*args,mixed,equilibrium_tolerance=1e-10)
+
+
+@pytest.mark.parametrize('cancel',(False,True))
+def test_two_material_owner_staging_and_incompatible_restart(cancel):
+    from dataclasses import replace
+    from anysolver.control import CancellationToken
+    from anysolver.general_contact import create_native_contact_analysis
+    first=_two_analysis(targets=(.25,.5,.75,1.)).solve(stop_after=1)
+    assert first.status=='paused',first.failure
+    owner=_two_analysis(targets=(.25,.5,.75,1.));checkpoint=owner._checkpoint;token=CancellationToken()
+    def staged(records):
+        raw=checkpoint(records)
+        if len(records)==2:
+            if cancel:token.cancel('two material patches after staging')
+            else:raise RuntimeError('two material patches after staging')
+        return raw
+    owner._checkpoint=staged
+    run=owner.solve(checkpoint=first.checkpoint,expected_sha256=first.checkpoint_sha256,cancellation_token=token)
+    assert run.status==('cancelled' if cancel else 'failed')
+    assert run.checkpoint==first.checkpoint and run.accepted.completed_targets==1
+    assert_allclose(run.accepted.mechanical.cell_rotations,first.accepted.mechanical.cell_rotations,rtol=0.,atol=0.)
+    assert_allclose(run.accepted.shell_displacement,first.accepted.shell_displacement,rtol=0.,atol=0.)
+    original=_two_analysis(targets=(.25,.5,.75,1.))
+    changed=create_native_contact_analysis(tuple(NativeBeamDefinition(raw) for raw in original.native._definitions),
+        tuple(original.native.model.boundary_conditions),original.program,original.shell_model,
+        (original.pairs[0],replace(original.pairs[1],gap_tolerance_m=4e-5)),equilibrium_tolerance=1e-10)
+    with pytest.raises(ValueError,match='binding'):
+        changed.solve(checkpoint=first.checkpoint,expected_sha256=first.checkpoint_sha256)
+
+
+def test_two_beam_material_example(capsys):
+    example=Path(__file__).resolve().parents[1]/'examples/general_contact_native_material_s3.py'
+    runpy.run_path(str(example))['main'](beams=2)
+    result=json.loads(capsys.readouterr().out)
+    assert result['status']=='completed' and result['completed_targets']==9
+    assert result['profile']=='NATIVE_B3_GE_TWO_MATERIAL_PATCHES_SHARED_S3_STATIC_DEV_V1'
+
+
+def test_pre_area_multiple_line_checkpoint_remains_replayable():
+    root=Path(__file__).resolve().parents[1]
+    fixture=root/'tests/data/general_contact_native_multi_line_46ea65f6.checkpoint'
+    provenance=json.loads(fixture.with_suffix('.json').read_text())
+    raw=fixture.read_bytes();assert sha256(raw).hexdigest()==provenance['checkpoint_sha256']
+    example=runpy.run_path(str(root/'examples/general_contact_native_multiple_s3_static.py'))
+    resumed=example['analysis']().solve(checkpoint=raw,
+        expected_sha256=provenance['checkpoint_sha256'],stop_after=1)
+    assert resumed.status=='paused',resumed.failure
+    assert resumed.checkpoint==raw and resumed.accepted.completed_targets==1
+    assert resumed.profile=='NATIVE_B3_GE_MULTIPLE_ELASTIC_S3_INTERIORS_STATIC_DEV_V1'
+    with pytest.raises(ValueError,match='binding'):
+        _two_analysis(targets=(.25,.5,.75,1.)).solve(checkpoint=raw,
+            expected_sha256=provenance['checkpoint_sha256'])
+
+
 def _analysis(*,force=-.005,targets=(.5,1.),stiffness=1e6,radius=.05,
               shell_z=-.0501,angles=(pi-.3,pi+.3),triangle=None,shell_E=1e8):
     native,_,inertias=make(False,clamped=True,coupled=False)

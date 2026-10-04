@@ -4,6 +4,7 @@ Frictionless static development profile: one straight half-cell patch and one
 small-rotation elastic S3. Caps, friction and dynamics remain unadmitted.
 """
 import json
+import sys
 from math import pi
 
 import numpy as np
@@ -25,18 +26,27 @@ from anysolver.general_contact.native_surface_quadrature import NativeRoundSurfa
 from anysolver.general_contact.s3_skin_work import S3SkinWorkAdapter
 
 
-def analysis():
-    points = np.array(((0., 0., 0.), (1., 0., 0.), (2., 0., 0.)))
+def analysis(*, beams=1, targets=None):
+    if type(beams) is not int or beams not in (1, 2):
+        raise ValueError('example supports one or two explicit native beams')
+    if targets is None:
+        targets=(.5,1.,0.,.5,1.) if beams==1 else (.25,.5,.75,1.,0.,.25,.5,.75,1.)
     frame = np.array(((1., 0., 0.), (0., 0., -1.), (0., 1., 0.)))
-    reference = CenteredCurvedBeam3ReferenceGeometry(points, np.tile(frame, (3, 1, 1)))
     section = EllipsoidalGeneralizedSection(np.diag((1000., 400., 350., .8, 1., 1.2)),
                                            np.eye(6), 1e6, 1.)
-    element = NativeGeneralizedStaticElement(1, (1, 2, 3), reference, section, order=4)
-    definition = NativeBeamDefinition.capture(element, np.diag((2., 2., 2., .07, .09, .11)))
-    root = BoundaryCondition('clamped', [1],
-                             {name: 0. for name in ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')})
-    program = Program((.5, 1., 0., .5, 1.), DistributedPattern(LinePattern(()), ()),
-                      NodalDeadForces(((3, 0., 0., -.005),)), max_iterations=24)
+    elements, definitions, roots, forces = [], [], [], []
+    for i in range(beams):
+        points = np.array(((0., .3*i, 0.), (1., .3*i, 0.), (2., .3*i, 0.)))
+        reference = CenteredCurvedBeam3ReferenceGeometry(points, np.tile(frame, (3, 1, 1)))
+        nodes = tuple(range(1+3*i, 4+3*i))
+        element = NativeGeneralizedStaticElement(1+i, nodes, reference, section, order=4)
+        elements.append(element)
+        definitions.append(NativeBeamDefinition.capture(element, np.diag((2., 2., 2., .07, .09, .11))))
+        roots.append(BoundaryCondition('clamped' if i==0 else 'clamped'+str(i), [nodes[0]],
+                         {name: 0. for name in ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')}))
+        forces.append((nodes[2], 0., 0., -.005 if i==0 else -.003))
+    program = Program(targets, DistributedPattern(LinePattern(()), ()),
+                      NodalDeadForces(tuple(forces)), max_iterations=24)
     shell = FEModel('native material patch and deformable S3')
     shell.add_material('elastic', 1e8, .3, density=1.)
     for node, (x, y) in zip((4, 5, 6), ((-5., -5.), (5., -5.), (0., 10.))):
@@ -47,18 +57,25 @@ def analysis():
     shell.add_boundary_condition(BoundaryCondition('moving vertex', [5],
                                  {name: 0. for name in ('ux', 'uy', 'rx', 'ry', 'rz')}))
     skin = S3SkinWorkAdapter.from_model(shell, 7, 21, 'top')
-    rule = NativeRoundSurfaceRule(1, reference, .05, xi_range=(.1, .9),
-        angle_range=(pi-.3, pi+.3), axial_order=1, angular_order=1)
-    patch = NativeMaterialS3Patch(rule, (1, 2, 3), normal_stiffness_Pa_per_m=1e6,
-        integration_settings=StraightNormalIntegrationSettings(1e-12, 1e-10, 1e-9, 64, 2.),
-        geometry_tolerance_m=1e-10, rim_clearance_m=1e-6)
-    return NativeRetainedRoundS3Analysis((definition,), (root,), program, shell,
-        NativeRetainedMaterialS3Work(patch, skin), gap_tolerance_m=5e-5,
-        equilibrium_tolerance=1e-10, maximum_swept_intervals=128)
+    works = []
+    for element in elements:
+        rule = NativeRoundSurfaceRule(element.element_id, element.operator.reference, .05, xi_range=(.1, .9),
+            angle_range=(pi-.3, pi+.3), axial_order=1, angular_order=1)
+        patch = NativeMaterialS3Patch(rule, tuple(element.node_ids), normal_stiffness_Pa_per_m=1e6,
+            integration_settings=StraightNormalIntegrationSettings(1e-12, 1e-10, 1e-9, 64, 2.),
+            geometry_tolerance_m=1e-10, rim_clearance_m=1e-6)
+        works.append(NativeRetainedMaterialS3Work(patch, skin))
+    if beams==2:
+        from anysolver.general_contact import NativeS3ContactPair, create_native_contact_analysis
+        pairs=tuple(NativeS3ContactPair('beam'+str(i),work,5e-5,128) for i,work in enumerate(works))
+        return create_native_contact_analysis(tuple(definitions),tuple(roots),program,shell,pairs,
+            equilibrium_tolerance=1e-10)
+    return NativeRetainedRoundS3Analysis(tuple(definitions),tuple(roots),program,shell,
+        works[0], gap_tolerance_m=5e-5, equilibrium_tolerance=1e-10, maximum_swept_intervals=128)
 
 
-def main():
-    run = analysis().solve()
+def main(*, beams=1):
+    run = analysis(beams=beams).solve()
     if run.status != 'completed':
         raise RuntimeError(run.failure)
     contact = run.accepted.contact.contact
@@ -75,4 +92,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(beams=2 if '--two-beams' in sys.argv else 1)

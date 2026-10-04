@@ -3,7 +3,7 @@
 All native internal unknowns and complete structural/contact blocks are retained.
 This does not widen the original single-native/single-S3 profile.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from hashlib import sha256
 from math import isfinite
 
@@ -20,6 +20,7 @@ from anysolver._ge_beam3_p5_seeded.codec import MAX_BYTES, _load
 from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 from anysolver.fe_core import FEModel
 from .native_retained_line_s3_work import NativeRetainedLineS3Work
+from .native_material_s3 import NativeRetainedMaterialS3Work
 from .native_retained_s3_static import NativeRetainedRoundS3Analysis
 from .native_retained_station import _readonly
 from .s3_skin_work import S3SkinWorkAdapter
@@ -27,18 +28,19 @@ from .native_s3_swept import native_s3_swept_admissible
 from .native_shell_static_driver import solve_native_shell
 
 PROFILE = 'NATIVE_B3_GE_MULTIPLE_ELASTIC_S3_INTERIORS_STATIC_DEV_V1'
+MATERIAL_PROFILE = 'NATIVE_B3_GE_TWO_MATERIAL_PATCHES_SHARED_S3_STATIC_DEV_V1'
 SCHEMA = 'NATIVE_B3_GE_MULTIPLE_S3_CHECKPOINT_DEV_V1'
 
 
 @dataclass(frozen=True)
 class NativeS3ContactPair:
     name: str
-    work: NativeRetainedLineS3Work
+    work: NativeRetainedLineS3Work | NativeRetainedMaterialS3Work
     gap_tolerance_m: float
     maximum_swept_intervals: int
 
     def __post_init__(self):
-        if type(self.name) is not str or not self.name or type(self.work) is not NativeRetainedLineS3Work:
+        if type(self.name) is not str or not self.name or type(self.work) not in (NativeRetainedLineS3Work,NativeRetainedMaterialS3Work):
             raise ValueError('named native/S3 pair requires exact physical work')
         if (type(self.gap_tolerance_m) not in (int, float) or not isfinite(self.gap_tolerance_m)
                 or self.gap_tolerance_m <= 0):
@@ -60,7 +62,12 @@ class NativeS3ContactPair:
 def _physical_summary(pairs):
     fields = ('potential_j', 'active_intervals', 'integration_intervals', 'integration_evaluations',
               'energy_error_j', 'force_error_n', 'tangent_error_n_per_m')
-    result = {key: sum(getattr(r.contact, key) for _, r in pairs) for key in fields}
+    area=type(pairs[0][0].work) is NativeRetainedMaterialS3Work
+    summed_fields=tuple(k for k in fields if k!='active_intervals') if area else fields
+    result = {key: sum(getattr(r.contact, key) for _, r in pairs) for key in summed_fields}
+    if area:
+        result.update(active_intervals=None,measure='fixed_reference_material_area',
+            minimum_gap_estimate_m=min(r.contact.minimum_gap_estimate_m for _,r in pairs))
     for key in ('beam_force_n', 'shell_force_n', 'beam_moment_nm', 'shell_moment_nm'):
         result[key] = sum((getattr(r.contact, key) for _, r in pairs), np.zeros(3))
     result['minimum_gap_m'] = min(r.contact.minimum_gap_m for _, r in pairs)
@@ -72,6 +79,9 @@ def _physical_summary(pairs):
         **{key: getattr(r.contact, key) for key in (*fields, 'beam_force_n', 'shell_force_n',
             'beam_moment_nm', 'shell_moment_nm', 'minimum_gap_m', 'minimum_rim_clearance_m')}}
         for p, r in pairs]
+    if area:
+        for row,(_,r) in zip(result['pairs'],pairs):
+            row.update(measure='fixed_reference_material_area',minimum_gap_estimate_m=r.contact.minimum_gap_estimate_m)
     return result
 
 
@@ -148,6 +158,16 @@ class NativeRetainedMultiS3Analysis:
                 or equilibrium_tolerance <= 0 or type(maximum_coupled_coordinates) is not int
                 or not 1 <= maximum_coupled_coordinates <= 256):
             raise ValueError('multiple native/S3 equilibrium/resource controls invalid')
+        kinds={type(p.work) for p in pairs}
+        if len(kinds)!=1:
+            raise ValueError('multiple native/S3 owner does not admit mixed line and area profiles')
+        self._material_mode=kinds=={NativeRetainedMaterialS3Work}
+        if self._material_mode:
+            if (type(self) is not NativeRetainedMultiS3Analysis or len(definitions)!=2
+                    or len(pairs)!=2 or shell_model.mesh.dof_manager.total_dofs!=18
+                    or len({p.work.shell.element_id for p in pairs})!=1):
+                raise ValueError('material-area multiple owner requires two beams and one shared S3 without activation controller')
+            self.profile=MATERIAL_PROFILE
         self.native = NativeBeamAnalysis(definitions, boundaries)
         self.context = Context(self.native.model, program)
         if (len(self.context.elements) != len(definitions)
@@ -263,7 +283,7 @@ class NativeRetainedMultiS3Analysis:
             'pairs': [p.descriptor() for p in self.pairs]})
 
     def _identity(self):
-        return sha({'profile': PROFILE, 'revision': 'uncondensed_explicit_native_s3_work_v1',
+        return sha({'profile': self.profile if self._material_mode else PROFILE, 'revision': 'uncondensed_explicit_native_s3_work_v1',
             'native': self.context.identity, 'support': sha256(self.context.support_identity).hexdigest(),
             'shell': self.shell_contract_sha, 'cached_shell': [self.shell_stiffness, self.shell_free, self.shell_fixed],
             'pairs': [p.descriptor() for p in self.pairs], 'beam_indices': self.beam_indices,
@@ -291,7 +311,8 @@ class NativeRetainedMultiS3Analysis:
             tangent += P.T@result.tangent@P
             pairs.append((p, result)); self.pair_evaluations += 1
         self.candidate_evaluations += 1
-        return NativeMultiS3WorkResult(NativeMultiS3Physical(tuple(pairs)), _readonly(residual), tangent.tocsr(), tuple(pairs))
+        return NativeMultiS3WorkResult(NativeMultiS3Physical(tuple(pairs)), _readonly(residual), tangent.tocsr(), tuple(pairs),
+            MATERIAL_PROFILE if self._material_mode else PROFILE)
 
     def _contact_admissible(self, result):
         return all(r.contact.minimum_gap_m >= -p.gap_tolerance_m for p, r in result.pairs)
@@ -302,7 +323,8 @@ class NativeRetainedMultiS3Analysis:
         residual += contact.residual
         for (p, result), i in zip(contact.pairs, self.beam_indices):
             block = result.tangent.toarray()
-            block[:42, :42] = spatial_jacobian(result.residual[:42], block[:42, :42])
+            if type(p.work) is not NativeRetainedMaterialS3Work:
+                block[:42, :42] = spatial_jacobian(result.residual[:42], block[:42, :42])
             slots = np.r_[self.context.slots[i], self.context.count+np.arange(len(displacement))]
             rows, cols = np.meshgrid(slots, slots, indexing='ij')
             np.add.at(tangent, (rows, cols), block)
@@ -317,6 +339,28 @@ class NativeRetainedMultiS3Analysis:
         admitted = []
         for (p, r0), (_, r1), i in zip(first.pairs, last.pairs, self.beam_indices):
             a, b = r0.contact, r1.contact
+            if type(p.work) is NativeRetainedMaterialS3Work:
+                nodes=self.context.nodes[i];work=p.work
+                pose=work._configuration(start.positions[nodes],start.position_low[nodes],
+                    start.cell_rotations[i],u_start)
+                translations=(end.positions[nodes]-start.positions[nodes]
+                              +end.position_low[nodes]-start.position_low[nodes])
+                angular=np.array([increment[self.context.nodal_count+24*i+3*c:
+                                            self.context.nodal_count+24*i+3*c+3] for c in (0,1)])
+                try:work.certify_orientation_path(pose,translations,angular,u_end-u_start,
+                    p.maximum_swept_intervals)
+                except ValueError as exc:
+                    if self._recoverable_trial_error(exc):return False
+                    raise
+                def geometry_query(state,u):
+                    return work.geometry_gap(state.positions[nodes],state.position_low[nodes],
+                        state.cell_rotations[i],u)
+                admitted.append(native_s3_swept_admissible(self.context,work,i,p.gap_tolerance_m,
+                    p.maximum_swept_intervals,self._recoverable_trial_error,start,u_start,increment,
+                    end,u_end,a.minimum_gap_m,b.minimum_gap_m,a.minimum_rim_clearance_m,
+                    b.minimum_rim_clearance_m,geometry_only=True,geometry_query=geometry_query,
+                    material_radius=work.contact.radius))
+                continue
             admitted.append(native_s3_swept_admissible(self.context, p.work, i, p.gap_tolerance_m,
                 p.maximum_swept_intervals, self._recoverable_trial_error, start, u_start, increment,
                 end, u_end, a.minimum_gap_m, b.minimum_gap_m,
@@ -379,9 +423,10 @@ class NativeRetainedMultiS3Analysis:
 
     def solve(self, *, checkpoint=None, expected_sha256=None, stop_after=None,
               cancellation_token=None, progress=None):
-        return solve_native_shell(self, self.schema, self.run_type, checkpoint=checkpoint,
+        result=solve_native_shell(self, self.schema, self.run_type, checkpoint=checkpoint,
             expected_sha256=expected_sha256, stop_after=stop_after,
             cancellation_token=cancellation_token, progress=progress)
+        return replace(result,profile=self.profile) if self._material_mode else result
 
 
 def create_native_contact_analysis(definitions, boundaries, program, shell_model, pairs, *,
