@@ -154,7 +154,8 @@ Decisions resolving the present queue:
   [Grouped implementation and physical evidence](development/r8-distributing-reference-linear-20261004/results.md).
   The matched reference check and supporting finite-map review now permit
   experimental owner integration of the private projected-director/thin-polar
-  candidate (22 focused source controls). This is not physical qualification.
+  candidate (22 focused source controls plus10 actual-owner saddle/recovery
+  controls). This is not physical qualification.
   Reuse the existing owner; prove actual chart/spatial work, sparse curvature,
   reactions and atomic restart before public experimental finite admission.
   Give the candidate an explicit finite law/model/checkpoint identity and

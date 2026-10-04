@@ -174,3 +174,6 @@ tests/test_r8_e02_distributing_feasibility.py -text
 src/anysolver/_stiffened_shell_distributing_pose.py -text
 tests/test_stiffened_shell_distributing_pose.py -text
 .qualification/b3-ge-e4-pl/r8-distributing-finite-pose-dev-20261004-v1/** -text -whitespace
+
+src/anysolver/_stiffened_shell_ge_distributing_finite.py -text
+tests/test_stiffened_shell_ge_distributing_finite.py -text

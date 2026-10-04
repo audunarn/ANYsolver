@@ -17,28 +17,27 @@ native/solid Mx differences4.249→2.233→0.813%; Fy3.472→1.290→0.364%.
 These are decreasing observed differences, not converged1% acceptance. Last
 native torque step1.518% (fine denominator); solid thickness remains two layers.
 
-Next implementation: integrate the reviewed private finite distributing pose/work
-candidate into the existing physical/chart/sparse owner, with an explicit finite
-law identity. Its22 focused source controls pass, including actual-update
-derivatives, shear freedom, objective work and nonzero-multiplier curvature.
-Public finite admission and installed integration remain unmet.
+Next implementation: add a distinct finite distributing record/checkpoint kind
+and wire the verified local saddle adapter into the existing owner/driver.
+The private pose has22 source controls; its actual-owner assembly/recovery seam
+has10 more, including global actual-update derivatives and sparse/dense solves.
+Public finite admission, atomic solve/restart and installed integration remain unmet.
 Science lane: establish what separate native-only mesh-adequacy check changes the
 physical claim. No automatic paired refinement; historical geometry donor admits
 only10x4/20x8/40x16, and80x32solid exceeds4096element map guard. Do not bypass them.
 No tolerance relaxation, line-law substitution or closed certificate restart.
 
-Current bounded slice: owner integration must distinguish correct spatial rows
-and actual shell-chart increment columns from an inconsistent coordinate pullback.
-Prove sparse/dense assembly, global actual-update tangent, physical recovery,
-rejection/cancellation and restore parity before public experimental admission.
+Current bounded slice: actual spatial/chart saddle mapping and physical recovery
+now pass. Finish the coherent record/admission/schema/driver/recovery slice;
+prove rejection/cancellation and restore parity before public experimental admission.
 Preserve reference-only identities/checkpoints; report pad-curvature resources.
 No new framework, physical qualification, formalF03 or automatic refinement.
 
 ## Source, ownership and authority
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; preceding HEAD638c400b plus the
-private finite pose/work source/tests and linked current docs/raw evidence. Exact bytes and
+branch codex/stiffened-main-reconcile-20261001; preceding HEAD999463bf plus the
+private actual-owner assembly source/tests and linked current docs/raw evidence. Exact bytes and
 candidate hashes are bound in the raw inventory. Root owns integration/serial
 jobs; workers handed back edits and supporting Read reviews found no blocker.
 No worker or numerical job is active. One implementation completion plus one science
@@ -78,6 +77,9 @@ failure, v2 invalid-host fixture failures and all repaired/prior versions.
 Supporting Read design/source/runtime review has no private-scope finding;
 different-family acceptance remains open. Numerical director/rank/orientation
 and relative-Log domains are explicit; local pad curvature can be quadratic.
+Owner-local10PASS/v4,4.9563s/sample178782208B; actual source imports/pools1/JIToff.
+Preserve v1 invalid connection-free fixture and v2 missing point-block oracle.
+Adapter owns no state, installs no driver hook and changes no public admission.
 
 Earlier raw .qualification/b3-ge-e4-pl/r8-e02-distributing-area-feasibility-dev-20261004-v1
 and immutable failures remain unchanged. F5 lacks verified discontinuous-retained

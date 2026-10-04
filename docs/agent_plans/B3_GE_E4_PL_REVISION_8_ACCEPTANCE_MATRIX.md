@@ -2178,3 +2178,11 @@ Supporting OpenAI source review clear. No owner/public/installed admission,
 finite physical fidelity, production footprint resource pattern, different-family
 or aggregateF04/G0/G2 acceptance. FormalF03 remains unconsumed.
 [Derived law, domain, exact evidence and owner integration boundary](development/r8-distributing-reference-linear-20261004/results.md).
+
+
+F04 private finite owner-local assembly/recovery: IMPLEMENTED_NOT_QUALIFIED.
+10 source controls bind the actual point-owner chart and sparse saddle mapping,
+physical exerted recovery and failure ownership. Public finite admission and
+checkpoint/driver installation remain absent; no aggregate row closes. Exact
+source/runtime/failed evidence extends the existing finite-pose raw directory
+and grouped report; different-family/physical/installed acceptance remains open.

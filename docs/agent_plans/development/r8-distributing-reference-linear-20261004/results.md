@@ -475,3 +475,35 @@ explicit record/admission and model/checkpoint identity, not silent reuse of the
 reference-only record. Prove bounded sparse/dense assembly, actual-update global
 tangent, finite work/reaction balance, rejection/cancellation and restore parity
 before any public experimental finite admission. No new framework or state owner.
+
+
+### Private actual-owner finite assembly/recovery seam
+
+The prepared adapter reuses actual GE numbering, compensated positions, shell
+physical frames/anchors and beam frames. Six physical constraint rows and the
+multiplier saddle block are built explicitly; only shell increment columns are
+mapped. Native retained attachment columns remain zero. Preparation occurs once;
+no owner/driver installation, accepted state, public record or checkpoint is added.
+The returned owned CSR/local slots and evaluated exerted side work are ready for
+the existing sparse assembly and publication boundary. Local quadratic pad
+curvature remains explicit in its descriptor, without a global dense array.
+
+Source10PASS/owner-v4,3.04s pytest/4.9563s whole, sampled178782208B; pools1,
+JIT disabled,600s/2GiB, actual source imports, empty stderr. Checks cover separate
+point/pad multiplier rows, sparse/dense reference solutions, three-step actual
+owner update derivatives (including multiplier columns), the combined element/
+attachment global derivative, chart-equivalent physical states, force/moment/work,
+owned buffers, stale/closed mappings and typed unrepresentable recovery without
+publication. Review caught unchecked resultant overflow; it is now fail-closed.
+
+Owner-v1 rejected an invalid connection-free fixture (1failure/8errors); owner-v2
+passed8 but its reference oracle omitted the existing point saddle blocks.
+Fixtures/oracle were corrected without changing admission or tolerances. Logs,
+prior source/tests, exact runtime inputs and the final supporting review are
+retained beside the finite-pose evidence. No public/installed/finite-solve/restart
+or scientific acceptance follows. Next add the explicit finite record/kind and
+coordinate admission, driver, recovery and restore within the existing owner.
+
+Supporting final Read review closed recovery overflow and physical load/retained
+index findings. Preliminary v3 tests/results remain; corrected v4 passes all10.
+No different-family or aggregate acceptance is claimed.
