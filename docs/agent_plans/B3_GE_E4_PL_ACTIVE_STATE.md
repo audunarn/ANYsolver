@@ -1,8 +1,8 @@
-# B3-GE / E4-PL / B2 active state - 4 October 2026
+# B3-GE / E4-PL / B2 active state - 5 October 2026
 
 ACTIVE. Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/
 stiffened-main-reconcile-20261001; branch codex/stiffened-main-reconcile-20261001.
-Source parent cab437fb; current commit from Git HEAD. ANYfem worktree
+Source parent33c01791; current commit from Git HEAD. ANYfem worktree
 C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer at9faed76 unchanged.
 Full amended G0-G6/F01-F13/V01-V28/B01-B18 binds; no aggregate gate closes.
 [Goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md),
@@ -15,7 +15,7 @@ distributing elastic/material/cyclic behavior remain. Historical source c5f5d79e
 735e42b9, af4059a9 and cab437fb bind their original installed or diagnostic evidence;
 see grouped report/matrix rather than treating old wheels as current source.
 
-Current opt-in staged zero reference:owned finite nonzero free-work endpoint,
+Prior verified opt-in staged zero reference:owned finite nonzero free-work endpoint,
 exact-zero-only normalization, explicit policy/endpoint result and checkpoint
 identity. Default V1 bytes/nonzero behavior, actual load/residual/tangent, native
 material laws, retained variables, equilibrium1e-8 and gaps1e-9 unchanged.
@@ -39,12 +39,23 @@ for this verified delivery. No job live; no benchmarks competing.
 
 ## Current decision, uncertainty and next action
 
-Next inspect native POINT material displacement control through existing driver,
-accepted-state codecs and recovery. Deliver only a proper native state extension;
-do not disable BL5/curved admission guards or reuse generalized-only serializers.
-Keep existing controls unchanged and actual update, predecessor, atomic acceptance,
-failure, cancellation and restart checks. Make the smallest bounded decision from
-that contract inspection. No new framework or general planning cycle.
+Native fixed-target translation displacement control delivered for elastic flat
+full-map Q4 POINT and generalized/fibre/mixed native members. Ordinary unrebased
+dead-translation force seed; no staged/external/chart/event/adaptive/arc admission.
+Model-derived accepted/origin histories, exact native replay and material recovery
+with atomic publication. Source4PASS33.88s; installed29PASS;
+public example + ANYfem experimental project exact prefix/reload parity pass.
+Current source parent33c01791; solverwheel86e5bc80663dafd7064f3a4333b1b9bdbe58e141fe7e49f6c3dbd6dd9bfc58f6.
+Current site .qualification/b3-ge-e4-pl/r8-native-point-displacement-dev-20261004-v1/site-v1;
+520 package/source identities, numerical affinity/pools1/JIToff verified.
+Earlier harness failures retained; supporting same-family review clean. This
+material/control slice is implemented/tested, not qualified. Generalized-only
+control elastic; fibre/mixed controls genuinely plastic. Full material scope OPEN.
+
+Next inspect native shell-J2 displacement state/recovery contracts, then choose
+the smallest bounded extension using the existing owner and histories. Preserve
+isolated replay, no partial commit, native laws/defaults, typed failures and all
+criteria. No new framework, automatic failed-curve replay or load/budget changes.
 
 Simultaneous shell-J2/fibre loaded chart remains OPEN and parked:1GPa shell stayed
 elastic; admitted200MPa shell activated5stations/maxalpha.0010034863 then exhausted

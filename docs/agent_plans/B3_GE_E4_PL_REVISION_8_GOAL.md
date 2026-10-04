@@ -324,3 +324,30 @@ Raw .qualification/b3-ge-e4-pl/r8-point-zero-reference-dev-20261004-v1; one job,
 parked. Goal ACTIVE; G0-G6 and different-family/platform/physical gates OPEN.
 Next inspect the existing native material displacement-control contract; do not
 disable guards, reuse the wrong material codec or retry the failed chart curve.
+
+
+5 October native POINT displacement development (source parent33c01791):
+Implemented fixed-target translational control through the existing sparse
+corrector for elastic flat full-map Q4 and generalized/fibre/mixed native members.
+Separate native controller/mechanical identities, model-derived accepted/origin
+histories, exact replay, physical material recovery and atomic publication.
+Ordinary unrebased dead-translation force seed only; staged/external/chart/event/
+adaptive/arc combinations fail explicitly. Legacy BL5/curved bytes and criteria
+unchanged. Source4PASS33.88s, installed29PASS332.14s;
+public example and actual ANYfem experimental case/project reopen, exact prefix
+restore and continued-checkpoint parity pass. All520 installed/source identities
+and actual affinity/pools1/JIToff verified; no release or platform claim.
+Solverwheel86e5bc80663dafd7064f3a4333b1b9bdbe58e141fe7e49f6c3dbd6dd9bfc58f6; unchanged consumerwheel626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f.
+Earlier source screens4FAIL22.31s and3FAIL/1PASS29.21s are retained harness
+failures:detached writable observers, nonexistent constant, then fresh-owner
+restore restriction. Repaired controls test mutation isolation and actual fresh
+corrupt-history rejection; no runtime guard or tolerance was weakened.
+Supporting same-family Read review clean after capability seed restriction.
+Physical yielding exercised in fibre/mixed controls; generalized-only control
+elastic, not a complete generalized-yield or material-combination qualification.
+Raw .qualification/b3-ge-e4-pl/r8-native-point-displacement-dev-20261004-v1.
+G4A subset IMPLEMENTED_NOT_QUALIFIED; no F/G aggregate closes. Coupled shell-J2/
+fibre chart, line mechanics, capacity, total energy, external/platform/scale and
+different-family acceptance remain OPEN. Goal ACTIVE. Next inspect the native
+shell-J2 displacement history seam before a bounded material-control extension;
+do not retry the parked force-chart curve or change physical laws/run budgets.

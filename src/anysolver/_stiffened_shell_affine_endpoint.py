@@ -15,6 +15,19 @@ from ._stiffened_shell_ge_finite_experimental import (
 from ._stiffened_shell_rotation_charts import owned_anchors,physical_frames
 
 
+def is_native_point_material(owner):
+    """Fixed-target generalized/fibre/mixed beam route, elastic flat full-map Q4."""
+    if getattr(owner,"_definition",None) is None:
+        return False
+    from ._stiffened_shell_q4_algorithmic_pullback import POLICY
+    definition=owner._definition
+    return bool(definition.points and definition.shell.q4_elements and
+        not definition.shell.s3_elements and definition.shell.j2_curve is None and
+        definition.shell_reference_policy=="flat" and definition.q4_pullback_policy==POLICY and
+        not definition.lines and not definition.footprints and
+        not definition.distributing_footprints and not definition.finite_distributing_footprints)
+
+
 def has_shell_material(owner):
     """Only admitted algorithmic shell histories belong in affine endpoints."""
     return owner._bl5_shell_material or (
@@ -24,7 +37,7 @@ def has_shell_material(owner):
 
 def validate_arrays(owner,a):
     """Replay decoded fixed-affine translation arrays in isolated mechanics."""
-    if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False)):
+    if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or is_native_point_material(owner)):
         raise ValueError("bounded coupled affine endpoint required")
     prepared=copy(owner);prepared._commit_lock=RLock();prepared._writing=False
     prepared._finite_driver=None;prepared._accepted=None
@@ -42,6 +55,9 @@ def validate_arrays(owner,a):
     if not np.any(a["load_direction"][owner._free]):
         raise ValueError("nonzero free displacement load direction required")
     anchors=owned_anchors(a["shell_anchors"],len(owner._shell_ids))
+    if is_native_point_material(owner) and not np.array_equal(
+            anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1))):
+        raise ValueError("native point displacement excludes rebased shell charts")
     witness=owned_anchors(a["shell_frames"],len(owner._shell_ids))
     if not np.allclose(physical_frames(q[:owner._shell_count],anchors),witness,
                        rtol=0.,atol=1e-11):
@@ -58,21 +74,35 @@ def validate_arrays(owner,a):
         if np.any(a[name]<0.):raise ValueError("nonphysical shell J2 history")
     shell_parent=(_shell_material_states(a["shell_origin_plastic"],a["shell_origin_alpha"])
                   if has_shell_material(owner) else driver._shell_origins)
-    beam_parent=_material_histories(prepared,a["beam_origin_plastic"],a["beam_origin_accumulated"])
-    # Validate accepted beam history admissibility before replay comparison.
-    _material_histories(prepared,a["beam_plastic"],a["beam_accumulated"])
+    native=is_native_point_material(owner)
+    if native:
+        from ._stiffened_shell_beam_history import histories
+        beam_parent=histories(prepared._beam_parts,a,"beam_origin")
+        histories(prepared._beam_parts,a,"beam")
+    else:
+        beam_parent=_material_histories(prepared,a["beam_origin_plastic"],a["beam_origin_accumulated"])
+        # Validate accepted beam history admissibility before replay comparison.
+        _material_histories(prepared,a["beam_plastic"],a["beam_accumulated"])
     state=_State(q,_owned(a["frames"]),_owned(a["cells"]),
                  _owned(a["resultants"]),_owned(a["multipliers"]),anchors)
     evaluation=driver._assemble(state,0.,shell_parent,beam_parent,applied_load=a["applied_load"])
     if not np.isfinite(evaluation[2]) or evaluation[2]>1e-8 or evaluation[3]>1e-9:
         raise ValueError("mechanically inconsistent displacement equilibrium")
-    bp,ba=_material_arrays(evaluation[5])
-    comparisons=[("beam_plastic",bp),("beam_accumulated",ba)]
+    if native:
+        from ._stiffened_shell_beam_history import arrays
+        comparisons=list(arrays(prepared._beam_parts,evaluation[5],"beam"))
+    else:
+        bp,ba=_material_arrays(evaluation[5])
+        comparisons=[("beam_plastic",bp),("beam_accumulated",ba)]
     if has_shell_material(owner):
         sp,sa=_shell_material_arrays(evaluation[4])
         comparisons.extend((("shell_plastic",sp),("shell_alpha",sa)))
     for name,repeated in comparisons:
         saved=a[name]
+        if native and not name.startswith("shell_"):
+            if not np.array_equal(saved,repeated):
+                raise ValueError("displacement native material replay mismatch")
+            continue
         scale=max(float(np.max(abs(saved),initial=0.)),
                   float(np.max(abs(repeated),initial=0.)),np.finfo(float).tiny)
         if np.max(abs(saved-repeated),initial=0.)>64*np.finfo(float).eps*scale:

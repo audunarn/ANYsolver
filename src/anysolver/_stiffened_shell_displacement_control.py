@@ -60,6 +60,8 @@ class DisplacementResult:
     trial_policy: str | None = None
     event_cell_evaluations: int = 0
     beam_generalized_material: tuple = ()
+    beam_fibre_material: tuple = ()
+    beam_fibre_energy: tuple = ()
 
 
 def prepare(owner,raw):
@@ -75,7 +77,13 @@ def prepare(owner,raw):
         shell_next=tuple({**candidate,"plastic_strain":a["shell_plastic"][i],
                           "alpha":a["shell_alpha"][i]}
                          for i,candidate in enumerate(shell_next))
-    beam_next=_material_histories(owner,a["beam_plastic"],a["beam_accumulated"])
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    native=is_native_point_material(owner)
+    if native:
+        from ._stiffened_shell_beam_history import histories
+        beam_next=histories(owner._beam_parts,a,"beam")
+    else:
+        beam_next=_material_histories(owner,a["beam_plastic"],a["beam_accumulated"])
     history=tuple(tuple(float(v) for v in row) for row in a["history"])
     target,amplitude=history[-1] if history else tuple(a["seed"])
     support=np.zeros(owner._K.shape[0]);support[owner._fixed]=residual[owner._fixed]
@@ -92,7 +100,11 @@ def prepare(owner,raw):
         driver._line_trial_recovery[1],driver._point_records(state),
         trial_policy=metadata.get("trial_policy"),
         event_cell_evaluations=metadata.get("event_cell_evaluations",0),
-        beam_generalized_material=driver._generalized_records(state,beam_parent,beam_next))
+        beam_generalized_material=driver._generalized_records(state,beam_parent,beam_next,include_native=native))
+    if native:
+        from ._stiffened_shell_ge_finite_experimental import _fibre_recovery
+        records,energies=_fibre_recovery(owner,state,beam_parent,beam_next)
+        result=replace(result,beam_fibre_material=records,beam_fibre_energy=energies)
     driver._state=state;driver._shell_predecessors=shell_parent
     driver._beam_predecessors=beam_parent
     driver._shell_origins=_accepted_shell_material_origins(owner,state,shell_next)
@@ -125,8 +137,13 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
           cancellation_token=None,on_accepted=None,_adaptive=None):
     from ._stiffened_shell_ge_finite_experimental import _material_arrays,_shell_material_arrays
     from ._stiffened_shell_rotation_charts import physical_frames
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    native=is_native_point_material(owner)
+    if native and (_adaptive is not None or
+            (type(control) is DisplacementControl and control.trial_policy is not None)):
+        raise ValueError("native point displacement admits fixed targets without branch event policy")
     if type(control) is not DisplacementControl or not (
-            owner._bl5_shell_material or getattr(owner,"_curved_material",False)):
+            owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native):
         raise ValueError("coupled BL5 or curved material displacement control required")
     pending=getattr(owner,"_displacement_adaptive",None)
     if _adaptive is None and pending is not None and not pending[0].state.completed:
@@ -170,8 +187,13 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         arrays.update(shell_anchors=anchors,shell_frames=physical_frames(state.q[:owner._shell_count],anchors),
             base_load=base,load_direction=direction,applied_load=base+trial.amplitude*direction,
             seed=seed,history=np.asarray(next_history))
-        arrays["beam_plastic"],arrays["beam_accumulated"]=_material_arrays(trial.evaluation[5])
-        arrays["beam_origin_plastic"],arrays["beam_origin_accumulated"]=_material_arrays(trial.beam_predecessor)
+        if native:
+            from ._stiffened_shell_beam_history import arrays as native_arrays
+            arrays.update(native_arrays(owner._beam_parts,trial.evaluation[5],"beam"))
+            arrays.update(native_arrays(owner._beam_parts,trial.beam_predecessor,"beam_origin"))
+        else:
+            arrays["beam_plastic"],arrays["beam_accumulated"]=_material_arrays(trial.evaluation[5])
+            arrays["beam_origin_plastic"],arrays["beam_origin_accumulated"]=_material_arrays(trial.beam_predecessor)
         from ._stiffened_shell_affine_endpoint import has_shell_material
         if has_shell_material(owner):
             arrays["shell_plastic"],arrays["shell_alpha"]=_shell_material_arrays(trial.evaluation[4])
@@ -194,6 +216,9 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
 
 def rebase(owner,expected_generation,*,cancellation_token=None):
     """Publish a chart event at the same accepted displacement and affine load."""
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    if is_native_point_material(owner):
+        raise ValueError("native point displacement chart rebasing is not admitted")
     if type(expected_generation) is not int or expected_generation!=owner._generation:
         raise ValueError("stale or invalid displacement rebase generation")
     snapshot=getattr(owner,"_displacement_snapshot",None)

@@ -19,6 +19,10 @@ CHART_POLICY="B3_GE_BL5_COUPLED_DISPLACEMENT_CONTROL_CHART_V2_DEV"
 
 def identities(owner):
     """Bind the controller and mechanical payload to their admitted profile."""
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    if is_native_point_material(owner):
+        return ("finite_displacement_native_point_material",
+                "B3_GE_NATIVE_POINT_MATERIAL_DISPLACEMENT_V1_DEV",None,None)
     if getattr(owner,"_curved_material",False):
         return ("finite_displacement_curved_material",
                 "B3_GE_CURVED_MATERIAL_POINT_DISPLACEMENT_V1_DEV",
@@ -44,6 +48,10 @@ def _layout(owner,steps):
         ("shell_plastic",(shells,12,3)),("shell_alpha",(shells,12)),
         ("shell_origin_plastic",(shells,12,3)),("shell_origin_alpha",(shells,12)))
     from ._stiffened_shell_affine_endpoint import has_shell_material
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    if is_native_point_material(owner):
+        from ._stiffened_shell_beam_history import shapes
+        return layout[:12]+shapes(owner._beam_parts,"beam")+shapes(owner._beam_parts,"beam_origin")
     if getattr(owner,"_curved_material",False) and not has_shell_material(owner):
         layout=tuple(item for item in layout if item[0] not in (
             "shell_plastic","shell_alpha","shell_origin_plastic","shell_origin_alpha"))
@@ -64,6 +72,8 @@ def encode_snapshot(owner, *, generation, seed_generation, seed_sha256,
             (trial_policy is None and event_cell_evaluations!=0)):
         raise ValueError("invalid displacement trial policy/work")
     kind,policy,chart_policy,event_policy=identities(owner)
+    if chart_policy is None and (chart_events or trial_policy is not None):
+        raise ValueError("native point displacement excludes chart/event policies")
     steps=len(arrays["history"])
     metadata=dict(policy=policy,model=owner._identity,generation=generation,
         seed_generation=seed_generation,seed_sha256=seed_sha256,
@@ -112,6 +122,8 @@ def decode_snapshot(owner,raw):
     if type(m) is not dict:
         raise ValueError("incompatible displacement metadata")
     chart_events=m.get("chart_events",0)
+    if chart_policy is None and (m.get("policy")!=policy or set(m)!=base_keys):
+        raise ValueError("native point displacement excludes chart/event policies")
     if (canonical!=header or m.get("model")!=owner._identity or
             not ((m.get("policy")==policy and set(m)==base_keys) or
                  (m.get("policy")==chart_policy and set(m)==base_keys|{"chart_events"}

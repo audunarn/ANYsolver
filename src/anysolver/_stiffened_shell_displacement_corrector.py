@@ -102,8 +102,16 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
     from ._stiffened_shell_branch_event_trial import POLICY as EVENT_POLICY
     if trial_policy not in (None,EVENT_POLICY):
         raise ValueError("explicit supported private displacement trial policy required")
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    native=is_native_point_material(owner)
+    if native and trial_policy is not None:
+        raise ValueError("native point displacement excludes branch event policy")
+    if native and (driver._programme is not None or
+            (driver._state.shell_anchors is not None and not np.array_equal(
+                driver._state.shell_anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1))))):
+        raise ValueError("native point displacement requires an ordinary unrebased force seed")
     if driver._accepted is None or not (
-            owner._bl5_shell_material or getattr(owner,"_curved_material",False)):
+            owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native):
         raise ValueError("accepted coupled-J2 BL5 predecessor required")
     n=owner._K.shape[0];size=n+len(driver._state.multipliers)
     nodal=owner._shell_count+6*len(owner._beam_ids)

@@ -239,3 +239,11 @@ docs/stiffened_shell_staged_zero_load_development.md -text
 docs/agent_plans/B3_GE_E4_PL_ACTIVE_STATE.md -text
 docs/agent_plans/B3_GE_E4_PL_REVISION_8_GOAL.md -text
 docs/agent_plans/B3_GE_E4_PL_REVISION_8_PLAN.md -text
+.qualification/b3-ge-e4-pl/r8-native-point-displacement-dev-20261004-v1/** -text -whitespace
+src/anysolver/_stiffened_shell_affine_endpoint.py -text
+src/anysolver/_stiffened_shell_displacement_checkpoint.py -text
+src/anysolver/_stiffened_shell_displacement_control.py -text
+src/anysolver/_stiffened_shell_displacement_corrector.py -text
+tests/test_stiffened_shell_native_point_displacement.py -text
+examples/stiffened_shell_ge_point_displacement.py -text
+docs/stiffened_shell_native_displacement_development.md -text

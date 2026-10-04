@@ -1184,6 +1184,12 @@ class ExperimentalGEAnalysis:
                 if self._footprint_increment_chart else ("nodal-footprint chart rebase and rebased checkpoint restore",))
         if self._footprint_stable_s3:
             capabilities["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
+        from ._stiffened_shell_affine_endpoint import is_native_point_material
+        if is_native_point_material(self):
+            capabilities["displacement_control"] = "experimental_native_point_material_fixed_translation_v1"
+            capabilities["displacement_control_seed"] = (
+                "ordinary unrebased nodal-dead-translation force seed; fixed targets only; "
+                "no staged/external seed, chart rebase, event policy, adaptation or arc qualification")
         if self._bl5_shell_material:
             capabilities["displacement_control"] = "experimental_nodal_translation_seeded_v1"
             if getattr(self,"_external_context",None) is None:
@@ -1425,6 +1431,9 @@ class ExperimentalGEAnalysis:
         if getattr(self,"_arc_snapshot",None) is not None:
             raise ValueError("arc history requires its dedicated continuation controller")
         if displacement_control is not None:
+            from ._stiffened_shell_affine_endpoint import is_native_point_material
+            if is_native_point_material(self) and increment_control is not None:
+                raise ValueError("native point displacement admits fixed targets only")
             if self._unsupported_modes:
                 raise ValueError(self._unsupported_modes[0])
             if increment_control is not None:
