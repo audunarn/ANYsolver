@@ -1826,3 +1826,20 @@ and fixture failures. Supporting same-family review closed compatibility and
 input guards. Pair/radial/shell cap transitions, mesh/enforcement and full
 programme qualification remain required.
 [Guide/evidence](GENERAL_CONTACT_HEMISPHERE_PLANE_DEV.md).
+
+
+## Multiple actual-hemisphere support planes — 4 October development
+
+`MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_PLANES_STATIC_DEV_V1` composes the
+explicit continuous sphere/rim cap law on shared B2/B3 coordinates. Implemented/
+tested, not independently accepted/application-admitted/released. Whole-curve
+regularity, all-child path/gap rechecks, full sparse work/tangents, true ends,
+per-body physical wrenches and complete child restart identities remain. Fixed
+planes, scalar elastic concentric von Karman, separate line/point regularizations
+and exterior gap tolerance below radius only. Counts are endpoint/target pairs.
+Installed50pass11.681s/355713024B,239loaded/502package byte matches,JIT0/pools1.
+Independent orthogonal potential/work/1e-5tangent and B3 bar1.733e-14 vs1e-6,
+force/displacement/state/restart/common-gap/body-accounting/capability rejection
+and legacy/no-contact checks pass. Fourruns/33records; supporting same-family
+scrutiny only. Predecessor/historical failed evidence unchanged.
+[Guide/evidence](GENERAL_CONTACT_MULTIPLE_HEMISPHERE_PLANES_DEV.md).

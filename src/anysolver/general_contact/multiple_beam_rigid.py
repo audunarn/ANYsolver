@@ -12,9 +12,12 @@ from .core import ContactDefinition, ContactSolverSettings, ContactValidationRep
 
 PROFILE = "MULTIPLE_EXPLICIT_ROUND_BEAM_FIXED_RIGID_STATIC_DEV_V0"
 PROFILE_ENDS = "MULTIPLE_EXPLICIT_ROUND_BEAM_FIXED_RIGID_PHYSICAL_ENDS_STATIC_DEV_V1"
+PROFILE_SUPPORT = "MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_PLANES_STATIC_DEV_V1"
 
 
-def _profile(definition):
+def _profile(definition, settings=None):
+    if settings is not None and settings.beam_end_cap_work == 'hemisphere_support_dev':
+        return PROFILE_SUPPORT
     return PROFILE_ENDS if (any(surface.beam_end_caps=='hemisphere' for surface in definition.surfaces)
         or any(body.kind=='capped_cylinder' for body in definition.rigid_bodies)) else PROFILE
 
@@ -67,8 +70,8 @@ def validate_multiple_beam_rigid(model, definition, settings=None, *, analysis_c
     try:
         _parts(model, definition, controls, analysis_control)
     except (ValueError, MemoryError, KeyError) as exc:
-        return ContactValidationReport("invalid", (str(exc),), _profile(definition))
-    return ContactValidationReport("ok", (), _profile(definition))
+        return ContactValidationReport("invalid", (str(exc),), _profile(definition, controls))
+    return ContactValidationReport("ok", (), _profile(definition, controls))
 
 
 @dataclass(frozen=True)
@@ -98,7 +101,7 @@ class MultipleBeamRigidResults:
                 "candidate_cells": sum(field["candidate_cells"] for field in fields),
                 "pairs": [{"interaction": name, "contact": field}
                           for (name, _), field in zip(self.pairs, fields)]}
-        if self.profile==PROFILE_ENDS:
+        if self.profile in {PROFILE_ENDS, PROFILE_SUPPORT}:
             result.update(line_contact_energy=sum(field['line_contact_energy'] for field in fields),
                 endpoint_contact_energy=sum(field.get('endpoint_contact_energy',0.) for field in fields),
                 active_endpoints=sum(field.get('active_endpoints',0) for field in fields),
@@ -112,6 +115,8 @@ class MultipleBeamRigidResults:
                 force+=np.asarray(field['rigid_force']);moment+=np.asarray(field['rigid_moment'])
             result['rigid_bodies']=[{'name':body,'rigid_force':bodies[body][0].tolist(),
                 'rigid_moment':bodies[body][1].tolist()} for body in sorted(bodies)]
+            if self.profile == PROFILE_SUPPORT:
+                result['beam_end_cap_work'] = 'hemisphere_support_dev'
         return result
 
 
@@ -125,11 +130,15 @@ class MultipleBeamRigidManager:
         self.settings = ContactSolverSettings() if settings is None else settings
         parts = _parts(model, definition, self.settings, analysis_control)
         self.definition = definition
-        self.profile=_profile(definition)
+        self.profile=_profile(definition, self.settings)
         self.n_dof = model.mesh.dof_manager.total_dofs
         def contributor(part):
             kind=part.rigid_bodies[0].kind
-            if kind=='plane':owner=_BeamPlaneManager
+            if kind=='plane':
+                if self.settings.beam_end_cap_work == 'hemisphere_support_dev':
+                    from .beam_hemisphere_plane import HemispherePlaneManager
+                    owner = HemispherePlaneManager
+                else:owner=_BeamPlaneManager
             elif kind=='capped_cylinder':
                 from .capped_cylinder import CappedCylinderBeamManager
                 owner=CappedCylinderBeamManager
@@ -143,7 +152,7 @@ class MultipleBeamRigidManager:
         self.pairs=tuple((name,contributor(part)) for name,part in parts)
         self.body_names=tuple(part.rigid_bodies[0].name for _,part in parts)
         self.physical_cells={cell.element_id:cell for _,manager in self.pairs for cell in manager.cells}
-        if self.profile==PROFILE_ENDS:
+        if self.profile in {PROFILE_ENDS, PROFILE_SUPPORT}:
             initial=np.zeros(self.n_dof) if initial_displacement is None else np.asarray(initial_displacement)
             if not self._regular_sweep(initial,initial):
                 raise ValueError('multiple physical-end initial curve is singular or unresolved')
@@ -159,7 +168,7 @@ class MultipleBeamRigidManager:
             self.settings.maximum_swept_subdivisions) for cell in self.physical_cells.values())
 
     def evaluate(self, displacement, *, tangent=True):
-        if self.profile==PROFILE_ENDS and not self._regular_sweep(displacement,displacement):
+        if self.profile in {PROFILE_ENDS, PROFILE_SUPPORT} and not self._regular_sweep(displacement,displacement):
             raise ValueError('multiple physical-end candidate curve is singular or unresolved')
         residual = np.zeros(self.n_dof)
         stiffness = sparse.csr_matrix((self.n_dof, self.n_dof)) if tangent else None
@@ -171,10 +180,10 @@ class MultipleBeamRigidManager:
                 stiffness = stiffness + block
             results.append((name, result))
         return residual, stiffness, MultipleBeamRigidResults(self.profile, tuple(results),
-            self.body_names if self.profile==PROFILE_ENDS else ())
+            self.body_names if self.profile in {PROFILE_ENDS, PROFILE_SUPPORT} else ())
 
     def swept_increment_admissible(self, start, end, start_factor, end_factor):
-        if self.profile==PROFILE_ENDS and not self._regular_sweep(start,end):
+        if self.profile in {PROFILE_ENDS, PROFILE_SUPPORT} and not self._regular_sweep(start,end):
             self.swept_trial_cutbacks+=1
             return False
         admitted = [manager.swept_increment_admissible(start, end, start_factor, end_factor)
@@ -185,7 +194,7 @@ class MultipleBeamRigidManager:
 
     def admissible_step_fraction(self, start, end):
         first, last = np.asarray(start), np.asarray(end)
-        if self.profile==PROFILE_ENDS:
+        if self.profile in {PROFILE_ENDS, PROFILE_SUPPORT}:
             scale=1.
             for _ in range(self.settings.maximum_swept_subdivisions+1):
                 if self._regular_sweep(first,first+scale*(last-first)):break
@@ -206,7 +215,8 @@ class MultipleBeamRigidManager:
 
     def restart_contract(self):
         return {"profile": self.profile, "composition_revision": (
-                    'explicit_physical_end_work_regular_path_v1' if self.profile==PROFILE_ENDS
+                    'explicit_hemisphere_support_planes_regular_path_v1' if self.profile==PROFILE_SUPPORT
+                    else 'explicit_physical_end_work_regular_path_v1' if self.profile==PROFILE_ENDS
                     else "explicit_beam_rigid_work_sum_v1"),
                 "pairs": [{"interaction": name, "contract": manager.restart_contract()}
                           for name, manager in self.pairs],
@@ -217,5 +227,6 @@ class MultipleBeamRigidManager:
             {"interaction": name, "line_stiffness_N_per_m2": manager.stiffness,
              "gap_tolerance_m": manager.gap_tolerance,
              **({'endpoint_stiffness_N_per_m':manager.endpoint_stiffness}
-                if self.profile==PROFILE_ENDS and getattr(manager,'end_caps','none')=='hemisphere' else {})}
+                if (self.profile==PROFILE_SUPPORT or
+                    self.profile==PROFILE_ENDS and getattr(manager,'end_caps','none')=='hemisphere') else {})}
             for name, manager in self.pairs]}

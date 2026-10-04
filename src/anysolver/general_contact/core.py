@@ -589,6 +589,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
     if settings is not None and settings.beam_end_cap_work == "hemisphere_support_dev":
+        if len(definition.interactions) > 1:
+            from .multiple_beam_rigid import validate_multiple_beam_rigid
+            return validate_multiple_beam_rigid(model, definition, settings,
+                                                analysis_control=analysis_control)
         from .beam_hemisphere_plane import validate_hemisphere_plane_contact
         return validate_hemisphere_plane_contact(model, definition, settings,
                                                  analysis_control=analysis_control)
@@ -1231,7 +1235,12 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
                                           analysis_control=analysis_control)
         if not report.valid:
             raise ValueError('unsupported hemisphere-plane contact: ' + '; '.join(report.issues))
-        manager = HemispherePlaneManager(model, definition, settings, initial_displacement)
+        if len(definition.interactions) > 1:
+            from .multiple_beam_rigid import MultipleBeamRigidManager
+            manager = MultipleBeamRigidManager(model, definition, settings, initial_displacement,
+                                               analysis_control=analysis_control)
+        else:
+            manager = HemispherePlaneManager(model, definition, settings, initial_displacement)
         token = _ACTIVE_CONTACT.set(manager)
         try:
             yield manager
