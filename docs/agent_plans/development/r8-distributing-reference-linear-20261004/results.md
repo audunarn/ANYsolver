@@ -346,3 +346,132 @@ source hashes, old baseline, installed imports/wheel hash, commands, complete
 tests/example, native results, six decks/DAT/STA/FRD/full logs, actual runtime
 settings, parsed work/reactions and supporting review. Dist/site remain local;
 wheel SHA and source/artifact checks identify the tested artifact.
+
+## Finite distributing candidate: original derivation and bounded feasibility
+
+The finite shell pose is a new candidate, not a retrospective reinterpretation
+of the reference-linear identity. The published
+[beam-to-surface work](https://arxiv.org/pdf/2210.16010) motivates objective
+surface orientation; its surface-normal/Kirchhoff–Love and regularized enforcement
+assumptions do not qualify this independent-director exact-multiplier adaptation.
+The following specific area rule is derived here.
+
+For frozen normalized material weights w and reference gradients gx,gy:
+
+\[
+r_s=\sum_a w_a x_a,\quad h=\sum_a w_a R_a e_3,\quad n=h/\|h\|,
+\quad a=\sum_a g_{xa}x_a,\quad b=\sum_a g_{ya}x_a.
+\]
+
+Let P=I−nnᵀ and T=[Pa,Pb]. On the rank-two, positive-orientation domain,
+the thin polar factor Q=T(TᵀT)^(−1/2) has an eigenvector-free expression:
+
+\[
+v=Pa+b\times n,\qquad q_1=v/\|v\|,\quad q_2=n\times q_1,
+\quad R_s=[q_1,q_2,n].
+\]
+
+Indeed minimization of squared distance between T and proper frames with third
+column n maximizes q1·(Pa+b×n). The positive orientation makes this proper thin
+polar solution unique. Under any common proper G and translation t, rs maps to
+G rs+t and Rs toG Rs. Node directors are physical Ri e3, not the geometric normal.
+Right drill rotations Ri Exp(alpha[e3]×) preserve the director and complete pose;
+a named global rz change at a tilted configuration need not be that motion.
+Normal components of a,b are projected out; geometric transverse slopes do not
+force director roll/pitch. Local nonzero gaps/deformation with the same pose
+remain intentionally admissible in this distributing functional.
+
+At the planar reference the orientation differential is
+\[
+\delta\omega_s=(\sum w\delta\theta_x,\ \sum w\delta\theta_y,
+\tfrac12\sum(g_x\delta u_y-g_y\delta u_x)).
+\]
+Use the existing physical point law ct=Rsᵀ(rb−rs)−e0,
+cr=Log(A0ᵀRsᵀRb), with e0,A0 computed once from the reference pose.
+Its reference Jacobian is the existing six-row area map, including eccentricity.
+The finite multiplier work is lambdaᵀc; raw rotational multipliers are not
+spatial display moments. Physical resisting nodal wrenches come from its full
+transpose variation. Exerted actions have the opposite sign.
+
+The private implementation uses18 macro Jet2 variables and sparse physical
+nodal pullback. It never allocates a node-count-sized third-order Hessian tensor.
+Weighted nodal director curvature contracts to each3×3 rotational block as
+w[.5(dvᵀ+vdᵀ)−(d·v)I]. The symmetric Exp-chart work Hessian is DᵀHmacroD
+plus those blocks. The derivative of spatial wrench rows additionally subtracts
+.5skew(rotational residual) in each node's block, following the existing point
+operator. Additive shell charts require the owner's actual Exp differential;
+coordinate rows must not be summed with the owner's spatial rows. Generalized
+native internal variables receive no attachment columns or independent state.
+
+Admission guards: noncancelled mean director (>64epsilon), minimum projected
+singular value>sqrt(epsilon) times max(projected maximum singular value,
+unprojected Frobenius norm), positive projected orientation beyond its gamma32
+product/summation roundoff bound, finite representable response,
+proper supplied physical frames and unchanged relative Log domain below0.9pi.
+The bound avoids both a Gram eigenvalue at machine precision and projection
+loss when both columns have large normal components. It is
+new candidate numerical admission, not a relaxed physical acceptance threshold.
+An undeformed midsurface with90degree director shear is rank deficient and
+explicitly excluded. Common large rigid rotations are unrestricted by that
+relative-shear test. No artificial inertia, penalty, stiffness or normal locking.
+
+High/low positions are retained through anchored/compensated local summation.
+Partition identities imply the anchor coefficients; differences from stored
+binary64 coefficients are roundoff only and reference parity is checked.
+CSR local curvature growth is explicit in the descriptor (at most[6(N+1)]²
+entries), not a concealed global dense block. Production footprint resource
+estimates/pattern compilation remain future integration work.
+
+Supporting OpenAI independent design review derived the same projected thin
+polar candidate and identified its90degree-shear, cancelled-director, rank and
+orientation boundaries. This does not uniquely establish the physical finite
+law or fulfill different-family acceptance. Root owns prototype and tests;
+consequence checks and supporting source review now pass. Public owner remains restricted
+to the unchanged reference-linear law until separate integration checks pass.
+
+Private source22PASS/v5, .53s pytest/2.3974s whole process, sampled177217536B,
+Windows/Python3.14, pools1/JIToff,600s/2GiB limits, actual source imports and empty
+stderr. No installed/public/owner/fullF04 acceptance is claimed. Existing
+reference/public source dependencies retain their recorded hashes and are not
+edited/retested by this private slice. Fixed-size macro AD is not a claim of
+linear nodal-curvature storage; full bounded pad curvature can be quadratic.
+
+Consequences checked: full reference Jacobian at three local grids; arbitrary
+common rotations/translation and finite force/moment balance; tilted physical
+drilling and director-couple annihilation; independent director versus surface
+slope; independent thin polar oracle/repeated positive singular values; three
+increment sizes for actual-update constraint/work/spatial-row/chart-gradient
+derivatives; nonzero multiplier Hessian and exact additive shell-chart pullback;
+normal-dominated projected gradients, representable tiny normalization, typed
+unrepresentable aggregate/gap/normalization and unchanged relative Log boundary;
+compensated nanoscale displacement under1e12 origin shifts, ownership/cancellation.
+These are scoped development controls, not the complete scientific campaign.
+
+Initialv1 import failure(duplicate descriptor key), v2 two invalid refined host
+fixtures(14PASS/2FAIL), and all source versions/logs are retained. The fixture
+repair selects only positive-area hosts; the compiler guard was not weakened.
+v3(18PASS), v4(21PASS) and v5(22PASS) bind distinct sources. Review found and
+closed normal-dominated rank/orientation, unnecessary constant-reciprocal power
+overflow, aggregate/gap typed failure and numerical SO(3) stability issues.
+The final projection uses Pn²=Pn on the small polar vector; it changes no analytic
+law. Returned frame is the actual macro-evaluated frame. No frozen Jet/point/
+reference dependencies were altered and no tangent was symmetrized.
+
+Final sourcebfeb51baf86e7eec1e2521e06fe0eb19edd4303615d52140bf4b95c0682c895b,
+tests9c9d505bd2bb4982a90296cc23156e044807bb3d5377c41e6f22fd53f583a1c0,
+runtime4df4fb2cad524f1e432d81e557170909ef8280c0dd9b8cb3dc3ef6db15c9ffed.
+Raw `.qualification/b3-ge-e4-pl/r8-distributing-finite-pose-dev-20261004-v1`
+contains commands, actual source/dependency hashes/settings, complete failed and
+passed diagnostics, failed/prior source snapshots and supporting reviews.
+Independent OpenAI source review has no remaining correctness finding in this
+private scope; different-family scientific acceptance remains unmet.
+
+Next experimental integration: reuse the existing owner/driver, physical shell
+and beam poses/high-low positions, sparse assembly and generation/state services.
+Use spatial residual rows with only actual chart increment-column pullbacks;
+capture evaluated exerted wrenches for recovery. Preserve reference-only field/
+identity/guards and old unused-option checkpoints. A finite law requires its own
+explicit record/admission and model/checkpoint identity, not silent reuse of the
+reference-only record. Prove bounded sparse/dense assembly, actual-update global
+tangent, finite work/reaction balance, rejection/cancellation and restore parity
+before any public experimental finite admission. No new framework or state owner.

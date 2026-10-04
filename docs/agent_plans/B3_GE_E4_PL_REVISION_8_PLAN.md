@@ -152,11 +152,13 @@ Decisions resolving the present queue:
   claim before authorizing another diagnostic. No isolated solid/axial refinement
   or law rejection from one difference.
   [Grouped implementation and physical evidence](development/r8-distributing-reference-linear-20261004/results.md).
-  Defer
-  finite-pose implementation until reference torque/shear transfer has a
-  physically matched check and the finite-map contract is reviewed. The
-  projected director/polar construction is a possible implementation, not a
-  selected or qualified physical law. Keep the current reference-only identity.
+  The matched reference check and supporting finite-map review now permit
+  experimental owner integration of the private projected-director/thin-polar
+  candidate (22 focused source controls). This is not physical qualification.
+  Reuse the existing owner; prove actual chart/spatial work, sparse curvature,
+  reactions and atomic restart before public experimental finite admission.
+  Give the candidate an explicit finite law/model/checkpoint identity and
+  preserve the current reference-only identity and unused-option contracts.
 - **Pressure assessment:** do not adopt the proposed vector-only amendment.
   Its documented shared-node masking weakens a protection of the current
   contract. This resolves the outstanding approval request as a decision to

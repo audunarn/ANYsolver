@@ -2165,3 +2165,16 @@ Last native torque step1.518% and fixed two-layer solid thickness prevent a
 converged1% claim. No fullF04/G0/G2/line-law/finite/material/spectral/platform
 or different-family acceptance. FormalF03 remains unconsumed; no automatic next
 refinement. [Complete slice, raw identities and next decision](development/r8-distributing-reference-linear-20261004/results.md).
+
+F04 private finite distributing pose/work, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+New candidate identity uses weighted physical director and projected material
+gradient proper polar; exact reference differential reproduces the current
+six-row mean/director/curl map within roundoff.18macro AD variables plus sparse
+nodal pullback include nonzero-multiplier curvature and spatial-row correction.
+22source controls PASS/v5: actual-update three-step derivatives, charts,
+objectivity/work/balance/drilling/shear, geometry/conditioning/overflow/ownership
+and cancellation. Review findings repaired; failures and old sources preserved.
+Supporting OpenAI source review clear. No owner/public/installed admission,
+finite physical fidelity, production footprint resource pattern, different-family
+or aggregateF04/G0/G2 acceptance. FormalF03 remains unconsumed.
+[Derived law, domain, exact evidence and owner integration boundary](development/r8-distributing-reference-linear-20261004/results.md).

@@ -17,23 +17,31 @@ native/solid Mx differences4.249→2.233→0.813%; Fy3.472→1.290→0.364%.
 These are decreasing observed differences, not converged1% acceptance. Last
 native torque step1.518% (fine denominator); solid thickness remains two layers.
 
-Next implementation decision: review an objective finite distributing pose/work
-contract whose reference derivative agrees with the current mean/director/curl
-law, before implementing finite admission. A physically matched reference check
-now exists; finite work/actual-update derivatives/shear/objectivity remain unmet.
+Next implementation: integrate the reviewed private finite distributing pose/work
+candidate into the existing physical/chart/sparse owner, with an explicit finite
+law identity. Its22 focused source controls pass, including actual-update
+derivatives, shear freedom, objective work and nonzero-multiplier curvature.
+Public finite admission and installed integration remain unmet.
 Science lane: establish what separate native-only mesh-adequacy check changes the
 physical claim. No automatic paired refinement; historical geometry donor admits
 only10x4/20x8/40x16, and80x32solid exceeds4096element map guard. Do not bypass them.
 No tolerance relaxation, line-law substitution or closed certificate restart.
 
+Current bounded slice: owner integration must distinguish correct spatial rows
+and actual shell-chart increment columns from an inconsistent coordinate pullback.
+Prove sparse/dense assembly, global actual-update tangent, physical recovery,
+rejection/cancellation and restore parity before public experimental admission.
+Preserve reference-only identities/checkpoints; report pad-curvature resources.
+No new framework, physical qualification, formalF03 or automatic refinement.
+
 ## Source, ownership and authority
 
 Solver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; preceding HEADadc98d4b plus the
-seven-file multi-host slice and linked current docs/raw evidence. Exact bytes and
+branch codex/stiffened-main-reconcile-20261001; preceding HEAD638c400b plus the
+private finite pose/work source/tests and linked current docs/raw evidence. Exact bytes and
 candidate hashes are bound in the raw inventory. Root owns integration/serial
 jobs; workers handed back edits and supporting Read reviews found no blocker.
-No worker owns an active job. One implementation completion plus one science
+No worker or numerical job is active. One implementation completion plus one science
 question; max3workers/separate files. Optional local/Mistral failures are known;
 do not re-probe. OpenAI supporting review is not different-family acceptance.
 ANYfem C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
@@ -63,6 +71,13 @@ root errors inside decimal-print bounds, not1e-8 numerical certification.
 Reference mean/director/curl is not a welded face/full3D polar director. Fixed
 thickness, clamp and shell/solid kinematic limitations remain; no fullF04/G0/G2,
 line/multiplier selection, finite/material/spectral/platform acceptance follows.
+
+Private finite raw .qualification/b3-ge-e4-pl/r8-distributing-finite-pose-dev-20261004-v1:
+22PASS/v5,2.3974s whole/sampled177217536B, pools1/JIToff. Preserve v1 import
+failure, v2 invalid-host fixture failures and all repaired/prior versions.
+Supporting Read design/source/runtime review has no private-scope finding;
+different-family acceptance remains open. Numerical director/rank/orientation
+and relative-Log domains are explicit; local pad curvature can be quadratic.
 
 Earlier raw .qualification/b3-ge-e4-pl/r8-e02-distributing-area-feasibility-dev-20261004-v1
 and immutable failures remain unchanged. F5 lacks verified discontinuous-retained
