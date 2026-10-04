@@ -166,6 +166,9 @@ examples/stiffened_shell_ge_distributing_reference.py -text
 docs/agent_plans/development/r8-distributing-reference-linear-20261004/active-before-workflow-consolidation-20261004.md -text
 scripts/r8_e02_distributing_solid_area.py -text
 scripts/r8_e02_distributing_feasibility.py -text
+scripts/r8_e02_distributing_native_adequacy.py -text
+tests/test_r8_e02_distributing_native_adequacy.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-native-adequacy-dev-20261004-v1/** -text -whitespace
 tests/test_r8_e02_distributing_solid_area.py -text
 tests/test_r8_e02_distributing_feasibility.py -text
 # Immutable external fixed-width outputs and failed logs retain their whitespace.

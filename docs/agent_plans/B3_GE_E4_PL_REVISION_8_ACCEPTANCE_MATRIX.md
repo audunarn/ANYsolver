@@ -2229,3 +2229,12 @@ final changed-control1PASS and failed serialization/recheck evidence preserved.
 Next one separately bounded native80x32 Mx/My check targets remaining adequacy;
 old donor guards remain. No convergence/full6channel/finite/aggregate pass.
 FormalF03 UNCONSUMED. [Evidence](development/r8-distributing-reference-linear-20261004/results.md).
+
+F04 native80 mesh-pair discriminator,4 October — IMPLEMENTED_NOT_QUALIFIED.
+Same physical pad/support/law and b7 installed artifact: Mx/My direct work
+movements0.66148%/0.05137%, reference differences0.22060%/0.03200%. Cross moves
+3.43084e-9 (~2.03% of small component); retain full six-pose/retained/work data.
+25 controls,1factor,95.97s/sample683655168B,600s/2GiB/observed1thread/JIToff.
+Stop this refinement slice. No asymptotic/full6channel/finite/aggregate pass;
+formalF03 UNCONSUMED. Supporting Read review is not different-family acceptance.
+[Evidence and decision](development/r8-distributing-reference-linear-20261004/results.md).

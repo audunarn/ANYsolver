@@ -88,9 +88,11 @@ refinement for this decision. Next use ONE unchanged-geometry unitMy comparison
 to test missing moment fidelity and reciprocal roll/pitch coupling; it cannot
 alone establish Mx convergence. All mandatory rows and authorities remain.
 My comparison is now complete with0.019364% direct compliance difference and
-reciprocal work controls. Next ONE separately bounded native80x32 Mx/My check
-with unchanged physical law/support/artifact and preserved old guards targets
-mesh adequacy; no asymptotic claim or automatic next refinement follows.
+reciprocal work controls. The ONE native80x32 Mx/My check now completes on
+unchanged physical law/support/artifact with old guards preserved: direct work
+movements0.66148%/0.05137%, solid differences0.22060%/0.03200%. Cross movement
+3.43084e-9 (~2.03%) remains visible. Stop this refinement slice; no asymptotic
+or full6channel claim, acceptance or automatic next refinement follows.
 
 The near-term path is now:
 1. COMPLETE: reference-linear distributing consumer, 42 source/42 installed

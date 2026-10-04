@@ -158,11 +158,13 @@ def native_cases(nx=10, ny=4):
     return _native_load_cases(nx, ny, LOADS)
 
 
-def _native_load_cases(nx, ny, loads):
+def _native_load_cases(nx, ny, loads, *, geometry_builder=None):
     """Local fixture seam; each bounded caller owns its explicit load inventory."""
     from anysolver import b3_ge, stiffened_shell as ss
     from scipy.spatial.transform import Rotation
     from scripts.r8_e02_native_rigid_tip import geometry
+    if geometry_builder is not None:
+        geometry = geometry_builder
     nodes, cells, _, _, root = geometry(nx, ny)
     # Integer grid ownership holds the material rectangle fixed at all levels.
     hosts = tuple(1+j*nx+i for j in range(ny//4,ny//2) for i in range(4*nx//5,nx))

@@ -722,3 +722,30 @@ Supporting review closed malformed-field discard; not different-family acceptanc
 Complete F04/G0/G2, physical convergence, platform/full-consumer/release remain open.
 Next bounded decision interprets saved physical torque convergence and idealization
 limits; no automatic numerical refinement or unrelated feature stream.
+
+### Native mesh-adequacy discriminator — 4 October, completed
+
+ONE separately defined native80x32 model retains the physical pad, support, law,
+native retained fields and b7 installed artifact. New constructor reproduces
+allowed40x16 exactly; historical donor still rejects80x32.25 controls pass.
+16086rows/2560Q4/128hosts/153padnodes; one factor for Mx/My. Completed95.9669s,
+sampled683655168B inside600s/2GiB, observed affinity/pools1/JIToff.419 installed
+source hashes match the old wheel; actual imports and full pose/work controls
+are recorded. No new solid model or formalF03 execution.
+
+| Work | Native80 | Native40→80 movement | Against saved solid40/nz4 |
+|---|---:|---:|---:|
+| Mx |2.038741212287032e-5 J|+0.661481558%|-0.220600051%|
+| My |3.0801461120899276e-5 J|+0.051370564%|+0.031996681%|
+
+Cross coupling1.7223962394139704e-7 moves3.43084e-9 (~2.03% of small component);
+reciprocal discrepancy-5.970503369926252e-16. Both direct work responses show
+measured mesh-pair stability, but this is neither an asymptotic bound nor full
+6channel/finite/physical qualification. Stop this refinement slice. Subsequent
+required physical directions/finite fidelity and completeF04 remain open.
+
+Raw .qualification/b3-ge-e4-pl/r8-distributing-native-adequacy-dev-20261004-v1
+retains drivers, bindings, commands, logs, full controls/outputs, prior active
+note bytes and supporting Read review. Comparison SHA
+c116c375b859bf101e8e7c99d4d34dc6a7f6adce9979f1f004ddc9b35991572a.
+Supporting OpenAI review clear; no different-family/scientific acceptance.

@@ -29,13 +29,13 @@ No missing pitch-work channel indicated. This supports My only, not nativeMx
 adequacy or full6channel/finite fidelity. Source/provenance and serializer issues
 repaired; original failed native/empty output remains rejected and preserved.
 
-Next scientific discriminator: ONE separately bounded native80x32 Mx/My on
-unchanged physical pad/support/law/b7artifact, onefactor/full6poses/work and
-absolute cross coupling. New builder must reproduce allowed40x16 exactly;
-historical donor still rejects80x32. Runtime/memory unmeasured:600s/2GiB limits.
-Significant movement threatening original1% comparison leaves adequacy open;
-small movement supports measured mesh-pair stability only. No asymptotic claim,
-automatic next mesh/solid campaign, threshold change or line-law substitute.
+The ONE native80x32 Mx/My check completes: direct work moves0.66148%/0.05137%,
+solid differences0.22060%/0.03200%, cross movement3.43084e-9 (~2.03%). Runtime
+95.97s/sample683655168B,1factor/affinity1/pools1/JIToff;25 source controls pass.
+Same pad/support/law/b7artifact, exact40x16 builder parity and old80 rejection.
+Stop this refinement slice: measured direct-work mesh-pair stability only, not
+convergence/full6channel/finite fidelity or aggregate acceptance. No automatic
+next mesh/solid campaign, changed threshold, formalF03 or line-law substitute.
 
 Ready mandatory implementation lane: finite distributing simultaneous Q4 J2/
 generalized B3 histories in the same owner, initially admitted force stepping.
@@ -44,6 +44,15 @@ accepted AND predecessor beam/shell states; preserve elastic/reference kinds.
 Existing algorithmic candidates/atomic publication are reusable. Actual yield,
 fixed-predecessor tangent, reject/cancel ownership and restart parity need direct
 evidence. This is G3/G4 implementation, not inherited point-law qualification.
+
+Current material draft adds selected policy/new predecessor binary kinds,
+prospective encoding and strict monotone restore. Generalized solve/restore
+passes. Coupled bending400/500 and centered axial80000 stall at final target;
+300 bending keeps shell elastic. These failures remain in material raw. Actual
+fixed-predecessor Newton FD3.4e-9 does not indicate a dominant tangent defect.
+One bounded correction/merit diagnostic now checks K*d+R and tiny-step residuals
+to distinguish inaccurate sparse correction from the backtracking comparison.
+No tolerance/globalization/law change is authorized by that diagnosis itself.
 
 ## Exact state, evidence and authority
 

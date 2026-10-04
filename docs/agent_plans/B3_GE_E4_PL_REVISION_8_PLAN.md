@@ -174,10 +174,12 @@ Decisions resolving the present queue:
   small agreement supports only My and leaves nativeMx adequacy open. No new
   tolerance, finer campaign, formalF03 consumption or aggregate pass follows.
   Completed My direction: direct compliance0.019364% difference and reciprocal
-  work controls pass. Next ONE new native80x32 Mx/My adequacy check, same law/
-  pad/support/b7 artifact,1factor, old donor guards intact and exact40x16 builder
-  parity. Significant movement leaves adequacy open; small movement supports
-  measured pair stability, not an asymptotic bound or aggregate acceptance.
+  work controls pass. The ONE native80x32 Mx/My check now completes on the same
+  law/pad/support/b7 artifact,1factor, old guards intact and exact40x16 builder
+  parity. Direct work movements0.66148%/0.05137%, solid differences0.22060%/
+  0.03200%; cross component moves3.43084e-9 (~2.03% of that small component).
+  Stop this refinement slice. These are measured mesh-pair results, not an
+  asymptotic bound, full6channel convergence or aggregate acceptance.
   The independent readiness review identifies the next mandatory implementation
   lane: simultaneous Q4 J2/generalized B3 histories with finite distributing
   attachments, explicit admission and a new predecessor-preserving material
