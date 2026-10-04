@@ -439,6 +439,47 @@ def test_plastic_branch_complete_owner_tangent_and_disposable_history():
         minimum_gap_m=contact.contact.minimum_gap_m),indent=2))
 
 
+def test_bounded_plastic_unload_reload_history_and_split_restart():
+    from anysolver._ge_beam3_p5_seeded.core import canonical
+    kwargs=dict(targets=(.25,.5,.75,0.,.25,.5,.75),native_yield=1e-5,stiffness=1e6)
+    owner=_analysis(**kwargs);run=owner.solve()
+    output=os.environ.get('CONTACT_MATERIAL_PLASTIC_RECORD')
+    if output:Path(output+'-cycle.json').write_text(json.dumps(dict(status=run.status,
+        failure=run.failure,completed_targets=run.accepted.completed_targets,
+        maximum_accumulated=max(_accumulated(run.accepted.native_histories))),indent=2))
+    assert run.status=='completed',run.failure
+    records=json.loads(run.checkpoint)['records'];previous=np.asarray(_accumulated(owner.initial.native_histories))
+    for row in records:
+        now=np.asarray(_accumulated(row['histories']))
+        assert np.all(now>=previous);previous=now
+        assert row['contact']['minimum_gap_m']>=-owner.gap_tolerance
+    assert max(_accumulated(records[2]['histories']))>0.
+    assert max(_accumulated(records[3]['histories']))>=max(_accumulated(records[2]['histories']))
+    prefix=_analysis(**kwargs).solve(stop_after=4)
+    assert prefix.status=='paused' and max(_accumulated(prefix.accepted.native_histories))>0.
+    resumed=_analysis(**kwargs).solve(checkpoint=prefix.checkpoint,expected_sha256=prefix.checkpoint_sha256)
+    assert resumed.status=='completed' and resumed.checkpoint==run.checkpoint
+    assert canonical(resumed.accepted.mechanical.descriptor())==canonical(run.accepted.mechanical.descriptor())
+    assert canonical(resumed.accepted.native_histories)==canonical(run.accepted.native_histories)
+    a=run.accepted;r,_,metrics,_,contact=owner._assemble(a.mechanical,a.shell_displacement,.75,a.native_histories)
+    skin=owner.contact.shell;shell_r=r[42:].reshape(3,6)
+    mids=skin.reference_positions-skin.physical_offset*skin.director+a.shell_displacement.reshape(3,6)[:,:3]
+    force=np.array((0.,0.,-.005*.75));root=owner.context.nodes[0][0];tip=owner.context.nodes[0][2]
+    balance=shell_r[:,:3].sum(axis=0)+r[6*root:6*root+3]+force
+    moment=(np.cross(mids,shell_r[:,:3]).sum(axis=0)+shell_r[:,3:].sum(axis=0)+r[6*root+3:6*root+6]+
+        np.cross(a.mechanical.positions[root],r[6*root:6*root+3])+np.cross(a.mechanical.positions[tip],force))
+    normalized_force=float(np.linalg.norm(balance)/.00375);normalized_moment=float(np.linalg.norm(moment)/.0075)
+    assert max(metrics)<1e-10 and normalized_force<=1e-6 and normalized_moment<=1e-6
+    assert_allclose(contact.contact.beam_force_n+contact.contact.shell_force_n,0.,atol=1e-12)
+    if output:Path(output+'-cycle.json').write_text(json.dumps(dict(status=run.status,
+        completed_targets=run.accepted.completed_targets,peak_load_factor=.75,
+        maximum_accumulated=max(_accumulated(run.accepted.native_histories)),
+        maximum_penetration_m=-min(row['contact']['minimum_gap_m'] for row in records),
+        storage_j=[row['contact']['potential_j'] for row in records],
+        normalized_force_balance=normalized_force,normalized_moment_balance=normalized_moment,
+        metrics=metrics,checkpoint_sha256=run.checkpoint_sha256),indent=2))
+
+
 def _reference(work,positions,rotations,u):
     """Direct area quadrature, no production geometry/AD/integration helpers."""
     k=work.contact;corners=_corners(work,u)
