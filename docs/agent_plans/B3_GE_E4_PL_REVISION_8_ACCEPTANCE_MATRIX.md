@@ -2281,3 +2281,14 @@ Scoped law/applicability and convergence adjudication plus required independent
 acceptance remain. No aggregate E02/F04/six-channel/BL5/weld/finite/material/
 release closure or automatic refinement.
 [Evidence](development/r8-distributing-reference-linear-20261004/results.md).
+
+
+Finite distributing adaptive execution,4 October: IMPLEMENTED_NOT_QUALIFIED.
+Selected elastic/generalized/coupled-Q4-J2 profiles reuse existing controller;
+91 installed checks pass including identical accepted-path checkpoint oracle,
+atomic restore/rejection and cancellation. Actual non-injected1.01 continuation
+accepts through1.0075 then exhausts; failure and all accepted prefixes retained.
+No general convergence, full material, F04/G0/G2/capacity or release closure.
+Reference full-six-pose accuracy remains open despite close direct work: small
+Fy pitch discrepancy2.838825% cannot be hidden by retrofitted normalization.
+[Evidence](development/r8-distributing-reference-linear-20261004/results.md).

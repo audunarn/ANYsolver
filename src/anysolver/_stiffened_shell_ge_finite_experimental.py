@@ -840,8 +840,6 @@ class FinitePointDriver:
     def solve(self, actions, targets, *, cancellation_token=None,
               max_iterations=12, max_backtracks=8, increment_control=None,
               on_accepted=None):
-        if self.owner._finite_distributing and increment_control is not None:
-            raise ValueError("finite distributing footprints do not yet admit adaptive control")
         if self.owner._footprint_increment_chart:
             require_rotation_triples(self.owner._fixed, len(self.owner._shell_ids))
         pending = self._adaptive_state is not None and not self._adaptive_state.completed
@@ -873,7 +871,11 @@ class FinitePointDriver:
                                      max_backtracks, 0, float(self._load_factor))
             # Bound metadata before numerical work; no model-size-dependent search.
             encode_control(self.owner._identity, control, b"resource-check")
-        pattern, programme = self._prepare_load(actions, targets[control.cursor:])
+        remaining = targets[control.cursor:]
+        if self.owner._finite_distributing and any(b <= a for a, b in zip(
+                (self._load_factor,)+remaining, remaining)):
+            raise ValueError("finite distributing footprint force factors must increase monotonically")
+        pattern, programme = self._prepare_load(actions, remaining)
         while not control.completed:
             if len(control.attempts) >= control.control.max_attempts:
                 raise AdaptiveIncrementExhausted("adaptive increment attempt limit", control, self._accepted_factors)
@@ -1247,8 +1249,8 @@ class FinitePointDriver:
         if self._accepted is None:
             raise RuntimeError("no accepted finite mixed increment")
         if self.owner._finite_distributing and (self._state.shell_anchors is not None or
-                self._adaptive_state is not None or self._programme is not None or self._external is not None):
-            raise ValueError("finite distributing checkpoint requires plain monotone force state")
+                self._programme is not None or self._external is not None):
+            raise ValueError("finite distributing checkpoint requires monotone nodal force state without chart/programme/external wrappers")
         if (self._adaptive_checkpoint is not None and _encode_anchors and
                 _encode_control and _encode_programme and _encode_external):
             return self._adaptive_checkpoint
@@ -1418,9 +1420,9 @@ class FinitePointDriver:
             raise ValueError("matching finite distributing checkpoint law required")
         if owner._finite_distributing and value.get("schema") != _BINARY_SCHEMAS[owner._distributing_checkpoint_kind]:
             raise ValueError("matching finite distributing material checkpoint policy required")
-        if owner._finite_distributing and (rotation_anchors is not None or adaptive_state is not None or
+        if owner._finite_distributing and (rotation_anchors is not None or
                 self._programme is not None or self._external is not None):
-            raise ValueError("finite distributing checkpoint excludes wrapper/chart state")
+            raise ValueError("finite distributing checkpoint excludes chart/programme/external state")
         if type(stable_q4) is not bool or (stable_q4 and not self._stable_q4):
             raise ValueError("stable Q4 checkpoint requires its admitted point model")
         # Old checkpoints keep their original arithmetic during validation and

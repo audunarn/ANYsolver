@@ -992,9 +992,12 @@ class ExperimentalGEAnalysis:
                     shell_rotation_numerics="GE_BEAM3_G3C_ISOLATED_SO3_NUMERICS_V1",
                     analysis=("nonlinear_force",), loads=("nodal dead translation forces",),
                     fixed_step_max_backtracks=16,
+                    increment_control=("fixed", "experimental_adaptive_halving"),
+                    adaptive_max_backtracks=12,
+                    adaptive_targets="strictly increasing positive force factors",
                     checkpoints=(self._distributing_checkpoint_kind,),
                     recovery="accepted constitutive states and evaluated spatial connection actions",
-                    excluded=("reference-linear solve", "chart rebase", "adaptive/displacement/arc controllers",
+                    excluded=("reference-linear solve", "chart rebase", "displacement/arc controllers",
                         "external/staged loads", "physical fibres", "S3", "modes", "buckling",
                         "qualified distributing footprint"))
             return dict(profile=PROFILE, status="EXPERIMENTAL_NOT_QUALIFIED",
@@ -1003,9 +1006,12 @@ class ExperimentalGEAnalysis:
                 attachment=("objective finite area-mean/director/projected-polar distributing pose",),
                 distributing_footprint_law=DISTRIBUTING_FINITE_LAW,
                 analysis=("nonlinear_force",), loads=("nodal dead translation forces",),
+                increment_control=("fixed", "experimental_adaptive_halving"),
+                adaptive_max_backtracks=12,
+                adaptive_targets="strictly increasing positive force factors",
                 checkpoints=("finite_distributing",),
                 recovery="cached evaluated exerted spatial actions at current physical origins",
-                excluded=("reference-linear solve", "chart rebase", "adaptive/displacement/arc controllers",
+                excluded=("reference-linear solve", "chart rebase", "displacement/arc controllers",
                     "external/staged loads", "material yielding", "modes", "buckling", "qualified distributing footprint"))
         if self._distributing_reference:
             return dict(profile=PROFILE, status="EXPERIMENTAL_NOT_QUALIFIED",
@@ -1336,8 +1342,8 @@ class ExperimentalGEAnalysis:
         self._require_open()
         self._require_distributing_reference_only("finite solve and its controllers")
         if self._finite_distributing:
-            if increment_control is not None or displacement_control is not None:
-                raise ValueError("finite distributing footprints admit force control without adaptive/displacement controllers")
+            if displacement_control is not None:
+                raise ValueError("finite distributing footprints do not yet admit displacement control")
             if type(actions) is not tuple or any(type(a) is not NodalAction for a in actions):
                 raise ValueError("finite distributing footprints admit nodal translation forces only")
         from ._stiffened_shell_staged_load_experimental import StagedDeadLoadProgramme
@@ -1488,8 +1494,8 @@ class ExperimentalGEAnalysis:
             raise RuntimeError("restore requires a fresh experimental GE analysis")
         if type(raw) is not bytes:
             raise ValueError("bounded mixed linear checkpoint required")
-        if self._finite_distributing and not raw.startswith(BINARY_CHECKPOINT_MAGIC):
-            raise ValueError("finite distributing checkpoints require plain dedicated binary framing")
+        if self._finite_distributing and not raw.startswith((BINARY_CHECKPOINT_MAGIC, INCREMENT_CONTROL_MAGIC)):
+            raise ValueError("finite distributing checkpoints require dedicated binary state or adaptive envelope")
         self._require_distributing_linear_checkpoint(raw)
         from ._stiffened_shell_arc_checkpoint import MAGIC as ARC_MAGIC
         if raw.startswith(ARC_MAGIC):
@@ -1605,6 +1611,8 @@ class ExperimentalGEAnalysis:
         adaptive = None
         if raw.startswith(INCREMENT_CONTROL_MAGIC):
             adaptive, raw = decode_control(raw, self._identity)
+            if self._finite_distributing and not raw.startswith(BINARY_CHECKPOINT_MAGIC):
+                raise ValueError("adaptive distributing checkpoint requires its dedicated binary inner state")
         chart = None
         stable_q4 = False
         if self._has_physical_fibre and raw.startswith(S3_BINARY_CHECKPOINT_MAGIC):
@@ -1800,6 +1808,14 @@ class ExperimentalGEAnalysis:
             from ._stiffened_shell_ge_finite_experimental import FinitePointDriver
             if adaptive is not None:
                 validate_control(adaptive, value["accepted_factors"])
+                if self._finite_distributing:
+                    # Generic replay also supports decreasing sequences; this
+                    # profile must admit the complete sequence before publish.
+                    origin = adaptive.attempts[0].accepted_from
+                    if any(b <= a for a, b in zip(
+                            (origin,) + adaptive.targets, adaptive.targets)):
+                        raise ValueError(
+                            "finite distributing adaptive checkpoint requires increasing force targets")
             driver = FinitePointDriver(self)
             result = (driver.restore(value, adaptive_state=adaptive, stable_q4=stable_q4) if chart is None else
                       driver.restore(value, rotation_anchors=chart[1],

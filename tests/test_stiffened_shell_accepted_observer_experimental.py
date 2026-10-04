@@ -58,15 +58,19 @@ def _committed(owner, notified, adaptive, requested_targets=TARGETS):
         assert notified.increment_attempts == ()
         assert owner._finite_driver._adaptive_state is None
     if inner.startswith(BINARY_MAGIC):
-        # The retained layered Q4 fixture uses this existing material codec.
+        # Both layered material and stable elastic point fixtures use binary
+        # framing; assert the complete array layout for the selected codec.
         def shapes(kind, generation):
-            assert kind == "finite_shell_material"
+            assert kind in ("finite_shell_material", "finite_stable_q4")
             count, members = owner._K.shape[0], len(owner._beam_parts)
             stations = sum(len(part[0].operator.cell.stations) for part in owner._beam_parts)
-            return (("q", (count,)), ("frames", (len(owner._beam_ids), 3, 3)),
+            arrays = (("q", (count,)), ("frames", (len(owner._beam_ids), 3, 3)),
                     ("cells", (members, 2, 3, 3)), ("resultants", (members, 18)),
                     ("multipliers", (owner._C.shape[0],)), ("pattern", (count,)),
-                    ("accepted_factors", (generation,)), ("beam_plastic", (stations, 6, 2)),
+                    ("accepted_factors", (generation,)))
+            if kind == "finite_stable_q4":
+                return arrays
+            return arrays + (("beam_plastic", (stations, 6, 2)),
                     ("beam_accumulated", (stations, 2)),
                     ("shell_plastic", (len(owner._shell_parts), 12, 3)),
                     ("shell_alpha", (len(owner._shell_parts), 12)))

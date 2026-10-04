@@ -17,7 +17,9 @@ MAX_METADATA_BYTES = 256 * 1024
 class AdaptiveIncrementControl:
     """Halve failed intervals and hold that step until the requested target.
 
-    Limits apply to the complete requested sequence, including restored work.
+    Limits apply to each invocation, including work in its restored accepted
+    checkpoint. Rejected attempts after the last acceptance are reported on
+    exhaustion but are not durable; retrying that prefix may repeat them.
     Defaults do not activate this optional experimental controller.
     """
     max_cutbacks: int = 6

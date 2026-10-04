@@ -936,3 +936,62 @@ obtain required independent acceptance. No automatic finer mesh. Six-channel/
 BL5/weld/rigid/finite/material response remain separate; full E02/F04 and
 independent scientific acceptance open. Binary64 is not exact solver balance.
 Material1.01 failure unchanged.
+
+
+## Optional adaptive finite distributing execution, 4 October 2026
+
+IMPLEMENTED_NOT_QUALIFIED. Existing adaptive halving now admits selected elastic,
+generalized beam-material and coupled-Q4-J2 distributing profiles. Fixed defaults,
+laws, physical tolerances,12 adaptive/16 material-fixed backtrack limits and
+checkpoint schemas remain unchanged. Controller envelope keeps the dedicated
+binary inner state; full future target monotonicity is checked before restore
+publication. Chart/staged/external/displacement/arc exclusions remain.
+
+Injected scheduling controls: all three material domains cancel, restore and
+continue to exact fixed-oracle inner checkpoint bytes. Exhaustion preserves
+accepted bytes; malformed envelopes fail atomically; observer/programming/memory
+errors propagate without cutback. Rejected attempts after the last accepted
+snapshot are nondurable; retry may repeat those attempts. This inherited limit
+is documented, not silently represented as a durable complete-run budget.
+
+Focused13PASS26.85s; affected67PASS/11FAIL exposed an outdated observer test
+codec assumption, corrected16PASS22.04s. Consolidated installed91PASS108.25s,
+whole110.53s/sample209203200B, actual affinity/pools1/JIToff. Every imported
+solver source byte matches the candidate wheel. WheelSHA256
+7b75d8f10ab9a466f5f6353da4241001f9beda6ffa5da4d28441bef297a39a0c.
+ANYfem source and prior consumer artifact unchanged; no repeated consumer campaign.
+
+One non-injected installed continuation rebuilt the current coupled quarterstep
+prefix. Target1.01 with24Newton/12backtracks/max_cutbacks4/max_attempts8 rejected
+five attempts and accepted1.005,1.00625,1.0075 before cutback exhaustion.
+Final accepted equilibrium2.91381e-12/gap8.21400e-18; both materials active.
+All seven accepted prefixes are immutable. Whole121.79s/sample167694336B,
+actual affinity/pools1/JIToff. Process exit0 reports numerical INCOMPLETE,
+not success at1.01. Changed material path is not fixed-history parity or general
+convergence benefit. Fixed1.01 failure remains; no automatic budget extension.
+
+Raw .qualification/b3-ge-e4-pl/r8-distributing-adaptive-dev-20261004-v1 binds
+source snapshot, wheel/import identities, commands, actual outputs, failures,
+all attempts, checkpoints and supporting review. Historical diagnostic fallback
+reporting defects are documented; runner is not reusable until corrected.
+Independent different-family/material/physical/capacity acceptance remains open.
+
+### Combined reference interpretation; no additional numerical execution
+
+Retain declared reference-linear mean/secant-director/curl distributing law for
+development: its reduced work/offset map is reproduced by the admitted shell
+field. Symmetric 3D shear distinguishes secant director from polar spin; local
+zero-mean-pose warping is intentionally free. This is not welded/rigid/bonded-line
+equivalence, and finite projected-director/polar evidence remains separate.
+
+Four native Mx levels and three Fy levels plus solid in-plane and thickness
+checks support direct-work mesh-pair convergence. Fine work differences are
+-0.220599% Mx/-0.395443% Fy; no asymptotic tail estimate is established.
+The small native40 Fy pitch is -8.440439020782232e-8rad versus binary solid
+-8.68704917967043e-8rad (2.838825% relative discrepancy). Do not hide it using
+an invented absolute floor or total-work norm. Symmetric flat elastic geometry
+separates membrane and bending reflection parity; Fy pitch corresponds to the
+eccentric -0.5Mx bending action. This helps interpret the saved refinement but
+does not constitute an executed native80 Fy comparison. The full six-pose
+accuracy decision remains open; further refinement requires its own specific
+question. Supporting OpenAI review does not close required scientific acceptance.
