@@ -58,8 +58,9 @@ engineering acceptance.
 
 Prioritize a missing capability requirement, a necessary correctness repair or a measured end-to-end bottleneck. Reuse existing contributor, state, restart, search and test infrastructure. Add a profile/restart identity only when its mechanical or compatibility contract differs; do not create new public options for internal optimizations. Existing identities and explicit selection stay valid.
 
-**Budget disposition:** the latest checkpoint records 431117 active seconds
-(119.755 hours), leaving about 0.245 hours of the original 120 hours. Full completion
+**Budget disposition:** the original120-hour clock is exhausted:
+428891+3120=432011 active seconds (120.003hours). A user time/scope/method
+decision is required before further development. Full completion
 within that remainder has no supportable forecast. Use it for the next bounded
 delivery and an honest handoff; this neither narrows the programme nor extends the
 clock. At exhaustion obtain the required time/scope/method decision. Planning while

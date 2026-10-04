@@ -272,3 +272,14 @@ Formal acceptance still needs prospective criteria, exact source/environment and
 retained raw evidence. At the original 120-hour exhaustion, preserve the work and
 request the needed time/scope/method decision. Full completion is not declared from
 prototype breadth, local test passes, a partial handoff or exhaustion of the clock.
+
+## Next numerical candidate - pending clock decision
+
+Trace29 identifies contact-activation overshoot after yielding already starts.
+Derive explicit area-aware first-contact fraction control within the existing
+Newton/8backtrack budget, retaining conservative material-patch/S3 path checks,
+finite activation,50um gap, work/state gates and restart algorithm identity.
+Do not increase budgets or tune load/penalty fixtures. A simple yield norm of
+18retained resultants does not represent constrained station stress.
+Full-load yielding remainsNONPASS. Original120-hour budget is exhausted;
+time/scope/method decision required before implementation.

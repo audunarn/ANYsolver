@@ -41,13 +41,15 @@ No further load/penalty tuning; old failures retained.
 
 ## Next action / open requirements
 
-Live bounded diagnostic: first two disposable Newton iterations of the failed
-yield1e-5/penalty1e7 fixture, same inputs/gates/origin. Separate material-branch
-growth from first-contact residual growth. Record the existing0..8backtracks and
-at most two additional smaller diagnostic probes; those probes never enter the
-production solve or commit state. If contact dominates, prioritize activation
-fraction control; if material dominates, derive a station-conjugate branch
-limiter. No full replay or higher production budget.
+Trace29 completed: open plastic trial atcut5; contact overshoot at
+iteration1/cut8 (.010699N contact vs.00125N load;gap-12.129um). Smaller
+diagnosticcut9 staysopen and reduces merit; never used in production.
+Next method: explicit area-aware first-contact fraction within unchanged
+8backtracks/path/gap/state gates, finite activation/no zero-gap stall.
+Actual station stress is constrained nonlinearly; no simple retained-yield
+bound. Full-loadNONPASS unchanged. Raw candidate03/trace28/trace29.
+No live process. Metadata encoding failure repaired from exact01420d7f
+README bytes plus explicitUTF8 append; source/evidence intact.
 
 Use remaining time only for a bounded required closure and coherent handoff;
 do not start another profile/packaging/diagnostic campaign to spend the balance.
@@ -71,7 +73,9 @@ Routine180s/1GB; current runner180s953MiB, native owner120s. Named900s/4GB only
 prospective; stricter frozen limits prevail.
 
 Original120 active hours: add3120s to goal-tool timeUsedSeconds.
-Last read427997+3120=431117s=119.755h, about14.7minutes left then.
+Clock exhausted:428891+3120=432011s=120.003h.
+User time/scope/method decision required before further development.
+Only minimum checkpoint repair performed after this boundary.
 Never reset/extend. At120h preserve/report achieved/missing and request the required
 time/scope/method decision. Full completion forecast unsupported; goal stays
 incomplete, not complete. Planning while paused does not restart this clock.
