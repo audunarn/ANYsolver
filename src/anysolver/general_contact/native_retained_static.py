@@ -31,9 +31,11 @@ from .native_retained_line_plane import (
     NativeRetainedRoundLinePlane,
 )
 from .native_material_plane import NativeRoundMaterialPlane, PROFILE as MATERIAL_PROFILE
+from .native_curved_plane_work import NativeCurvedMaterialPlaneWork
 
 
 PROFILE = "NATIVE_B3_GE_RETAINED_ROUND_LINE_PLANE_STATIC_DEV_V1"
+CURVED_MATERIAL_PROFILE = "NATIVE_B3_GE_RETAINED_CURVED_MATERIAL_PLANE_STATIC_DEV_V1"
 CHECKPOINT_SCHEMA = "NATIVE_RETAINED_ROUND_LINE_PLANE_STATIC_CHECKPOINT_DEV_V2"
 
 
@@ -59,12 +61,19 @@ class NativeRetainedContactRun:
         return sha256(self.checkpoint).hexdigest()
 
 
+@dataclass(frozen=True)
+class _CurvedPlaneContribution(NativeRetainedLinePlaneResult):
+    """Existing owner work contract; gap is a conservative whole-patch bound."""
+    def spatial_tangent(self):
+        return self.tangent
+
+
 class NativeRetainedRoundPlaneAnalysis:
     """Separate owner; all native internal coordinates remain in the solve."""
 
     def __init__(self, definitions: tuple[NativeBeamDefinition, ...],
                  boundaries: tuple, program: NativeNodalProgram,
-                 contact: NativeRetainedRoundLinePlane | NativeRoundMaterialPlane, *,
+                 contact: NativeRetainedRoundLinePlane | NativeRoundMaterialPlane | NativeCurvedMaterialPlaneWork, *,
                  gap_tolerance_m: float, equilibrium_tolerance: float,
                  maximum_swept_intervals: int):
         if (type(definitions) is not tuple or len(definitions) != 1
@@ -72,9 +81,10 @@ class NativeRetainedRoundPlaneAnalysis:
             raise ValueError("native contact development owner needs one exact beam definition")
         if type(program) is not NativeNodalProgram:
             raise TypeError("native contact owner needs exact retained nodal program")
-        if type(contact) not in (NativeRetainedRoundLinePlane, NativeRoundMaterialPlane):
+        if type(contact) not in (NativeRetainedRoundLinePlane, NativeRoundMaterialPlane,NativeCurvedMaterialPlaneWork):
             raise TypeError("native contact owner needs exact retained line or material plane kernel")
-        self.profile = MATERIAL_PROFILE if type(contact) is NativeRoundMaterialPlane else PROFILE
+        self.profile = (CURVED_MATERIAL_PROFILE if type(contact) is NativeCurvedMaterialPlaneWork else
+                        MATERIAL_PROFILE if type(contact) is NativeRoundMaterialPlane else PROFILE)
         if (type(gap_tolerance_m) not in (int, float)
                 or not isfinite(gap_tolerance_m) or gap_tolerance_m <= 0.0
                 or type(equilibrium_tolerance) not in (int, float)
@@ -97,6 +107,7 @@ class NativeRetainedRoundPlaneAnalysis:
         self.equilibrium_tolerance = float(equilibrium_tolerance)
         self.maximum_swept_intervals = maximum_swept_intervals
         self.program = program
+        self.curved_rejected_trials=[]
         self.identity = self._identity()
         initial = self.context.initial
         first = self._contact(initial.mechanical)
@@ -114,12 +125,15 @@ class NativeRetainedRoundPlaneAnalysis:
 
     def _identity(self) -> str:
         contact = self.contact
-        if type(contact) is NativeRoundMaterialPlane:
-            return sha(dict(profile=self.profile,native_model=self.context.identity,
+        if type(contact) in (NativeRoundMaterialPlane,NativeCurvedMaterialPlaneWork):
+            definition=dict(profile=self.profile,native_model=self.context.identity,
                 native_support_sha256=sha256(self.context.support_identity).hexdigest(),
                 contact=contact.definition(),gap_tolerance_m=self.gap_tolerance,
                 equilibrium_tolerance=self.equilibrium_tolerance,
-                maximum_swept_intervals=self.maximum_swept_intervals))
+                maximum_swept_intervals=self.maximum_swept_intervals)
+            if type(contact) is NativeCurvedMaterialPlaneWork:
+                definition['trial_policy']='whole_patch_gap_preflight_bounded_initial_fraction_v1'
+            return sha(definition)
         return sha(dict(
             profile=self.profile,
             native_model=self.context.identity,
@@ -169,6 +183,8 @@ class NativeRetainedRoundPlaneAnalysis:
             force_error_n=contact.force_error_n,
             tangent_error_n_per_m=contact.tangent_error_n_per_m,
         )
+        if type(self.contact) is NativeCurvedMaterialPlaneWork:
+            contact_summary['minimum_gap_kind']='continuous_whole_material_patch_lower_bound'
         row = dict(target=target, previous_sha256=previous_sha256,
                    mechanical=mechanical.descriptor(), histories=histories,
                    contact=contact_summary)
@@ -232,18 +248,45 @@ class NativeRetainedRoundPlaneAnalysis:
 
     def _contact(self, mechanical) -> NativeRetainedLinePlaneResult:
         nodes = self.context.nodes[0]
-        return self.contact.evaluate(
-            mechanical.positions[nodes], mechanical.position_low[nodes],
-            mechanical.cell_rotations[0],
-        )
+        try:
+            value=self.contact.evaluate(
+                mechanical.positions[nodes], mechanical.position_low[nodes],
+                mechanical.cell_rotations[0],
+            )
+        except (ValueError,MemoryError) as error:
+            if type(self.contact) is NativeCurvedMaterialPlaneWork:
+                error.contact_diagnostics=dict(category='curved_contact_evaluation_non_success',
+                    definition_sha256=self.contact.identity,reason=str(error),
+                    integration=getattr(error,'integration_diagnostics',None),
+                    positions=mechanical.positions[nodes].tolist(),
+                    position_low=mechanical.position_low[nodes].tolist(),
+                    cell_rotations=mechanical.cell_rotations[0].tolist())
+            raise
+        if type(self.contact) is NativeCurvedMaterialPlaneWork:
+            return _CurvedPlaneContribution(value.normal_storage_j,value.residual,value.tangent,
+                value.source_force,value.target_force,value.source_moment,value.target_moment,
+                value.geometry.gap_lower_m,value.intervals,value.integrand_evaluations,
+                *value.estimated_errors)
+        return value
 
     def _swept_admissible(self, start, increment, end,
-                          start_gap: float, end_gap: float) -> bool:
+                          start_gap: float, end_gap: float,*,cancellation_token=None) -> bool:
         """Bound the minimum plane gap along one native exponential update."""
         self._guard_contact()
         if min(start_gap, end_gap) < -self.gap_tolerance:
             return False
         nodes = self.context.nodes[0]
+        if type(self.contact) is NativeCurvedMaterialPlaneWork:
+            from .native_surface_s3_friction import NativeS3MaterialConfiguration
+            pose=NativeS3MaterialConfiguration(start.positions[nodes],start.position_low[nodes],
+                start.cell_rotations[0],np.zeros(0))
+            local=increment[list(self.context.slots[0])]
+            translations=np.array([local[6*i:6*i+3] for i in range(3)])
+            control=self.contact.certify_path(pose,translations,local[18:24].reshape(2,3),
+                gap_tolerance_m=self.gap_tolerance,maximum_intervals=self.maximum_swept_intervals,
+                cancellation_token=cancellation_token)
+            self.curved_last_path_control=control
+            return control.certified
         before = start.positions[nodes]+start.position_low[nodes]
         after = end.positions[nodes]+end.position_low[nodes]
         normal = self.contact.normal
@@ -301,7 +344,7 @@ class NativeRetainedRoundPlaneAnalysis:
         slots = self.context.slots[0]
         r[slots] += contact.residual
         j[np.ix_(slots, slots)] += (contact.spatial_tangent()
-            if type(self.contact) is NativeRoundMaterialPlane else
+            if type(self.contact) in (NativeRoundMaterialPlane,NativeCurvedMaterialPlaneWork) else
             spatial_jacobian(contact.residual, contact.tangent))
         scaled = r/self.context.scale
         metrics = (float(np.linalg.norm(scaled[self.context.equilibrium])),
@@ -364,23 +407,65 @@ class NativeRetainedRoundPlaneAnalysis:
                             np.finfo(float).tiny,
                         ),
                     )
+                    if type(self.contact) is NativeCurvedMaterialPlaneWork:
+                        # A proposal only: the same endpoint, whole-path and
+                        # merit gates still decide acceptance. Avoid spending
+                        # every backtrack on the unconstrained first-contact step.
+                        full=self.context.advance(trial,step*fraction)
+                        nodes=self.context.nodes[0]
+                        try:
+                            full_gap=self.contact.minimum_gap_bound(full.positions[nodes],
+                                full.position_low[nodes],full.cell_rotations[0])
+                        except ValueError as error:
+                            if ('orientation' not in str(error) and
+                                'native round surface singular or reversed at sample' not in str(error)):raise
+                        else:
+                            if full_gap < -self.gap_tolerance:
+                                room=contact.minimum_gap_m+self.gap_tolerance
+                                decrease=contact.minimum_gap_m-full_gap
+                                if room<=0 or decrease<=0:
+                                    raise RuntimeError('native curved contact has no admissible gap step')
+                                fraction*=min(1.,.8*room/decrease)
                     for cut in range(self.program.max_backtracks+1):
                         cancellation_safe_point(cancellation_token, 'native contact backtrack')
                         candidate = self.context.advance(
                             trial, step*(fraction*0.5**cut),
                         )
+                        if type(self.contact) is NativeCurvedMaterialPlaneWork:
+                            self._guard_contact()
+                            nodes=self.context.nodes[0]
+                            try:
+                                bound=self.contact.minimum_gap_bound(candidate.positions[nodes],
+                                    candidate.position_low[nodes],candidate.cell_rotations[0])
+                            except ValueError as error:
+                                if ('orientation' not in str(error) and
+                                    'native round surface singular or reversed at sample' not in str(error)):raise
+                                self.curved_rejected_trials.append(dict(target=index+1,iteration=iteration,
+                                    backtrack=cut,reason=str(error)))
+                                continue
+                            if bound < -self.gap_tolerance:
+                                self.curved_rejected_trials.append(dict(target=index+1,iteration=iteration,
+                                    backtrack=cut,reason='whole_patch_gap_bound',gap_bound_m=bound))
+                                continue
                         _, _, changed, _, candidate_contact = self._assemble(
                             candidate, parameter, origins,
                         )
-                        if (candidate_contact.minimum_gap_m >= -self.gap_tolerance
+                        path_ok=(candidate_contact.minimum_gap_m >= -self.gap_tolerance
                                 and self._swept_admissible(
                                     trial, step*(fraction*0.5**cut), candidate,
                                     contact.minimum_gap_m,
                                     candidate_contact.minimum_gap_m,
-                                )
-                                and max(changed) < max(metrics)):
+                                    cancellation_token=cancellation_token,
+                                ))
+                        if path_ok and max(changed) < max(metrics):
                             trial = candidate
                             break
+                        if type(self.contact) is NativeCurvedMaterialPlaneWork:
+                            self.curved_rejected_trials.append(dict(target=index+1,iteration=iteration,
+                                backtrack=cut,reason='coupled_merit' if path_ok else 'whole_patch_path',
+                                metrics=tuple(changed),previous_metrics=tuple(metrics),
+                                gap_bound_m=candidate_contact.minimum_gap_m,
+                                path_reason=getattr(getattr(self,'curved_last_path_control',None),'reason',None)))
                     else:
                         raise RuntimeError("native contact line-search/gap limit")
             status = "completed" if end == len(self.program.targets) else "paused"

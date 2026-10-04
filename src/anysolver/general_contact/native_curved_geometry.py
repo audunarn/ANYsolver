@@ -32,6 +32,15 @@ def _reference_curvature_coefficients(reference):
                  F(reference.coordinates[2,j]) for j in range(3))
 
 
+def _chord_difference_norm(high,low,rotation,reference,cell):
+    """Outward norm of exact represented chord minus rotated reference chord."""
+    F=lambda v:Fraction(float(v))
+    cref=[F(reference.coordinates[cell+1,j])-F(reference.coordinates[cell,j]) for j in range(3)]
+    difference=[F(high[cell+1,i])+F(low[cell+1,i])-F(high[cell,i])-F(low[cell,i])-
+        sum(F(rotation[i,j])*cref[j] for j in range(3)) for i in range(3)]
+    return float(_sqrt_bound(sum(v*v for v in difference),upper=True))
+
+
 def _reference_curvature_norm(reference):
     b=_reference_curvature_coefficients(reference)
     return float(_sqrt_bound(sum(v*v for v in b),upper=True))
@@ -129,6 +138,50 @@ def _reference_second_bound(reference,cell):
     return float(value)
 
 
+def _reference_plane_derivative_bounds(reference,cell,rotation,normal):
+    """Projected smooth-frame bounds, eligible only on an unclipped interval.
+
+    For exactly zero owned roll, the affine tangent and its derivatives lie
+    in one plane. Projecting shortest transport before taking norms retains
+    its binormal cancellation and the actual stored tangent misalignment.
+    Nonzero roll or an unresolved plane uses the existing full-frame bounds.
+    Returned bounds exclude radius and include the represented current map.
+    """
+    F=lambda v:Fraction(float(v))
+    jmin,jmax,F1,_=_reference_norm_bounds(reference,cell,actual_roll=True)
+    F2=_reference_second_bound(reference,cell)
+    q=[sum(F(rotation[i,j])*F(normal[i]) for i in range(3)) for j in range(3)]
+    qnorm=float(_sqrt_bound(sum(v*v for v in q),upper=True))
+    fallback=(qnorm*F1,qnorm*F2)
+    if float(reference._half_frame_data[cell][1])!=0.:return fallback
+    a=[(F(reference.coordinates[2,j])-F(reference.coordinates[0,j]))/2 for j in range(3)]
+    b=_reference_curvature_coefficients(reference)
+    cross=lambda u,v:[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]]
+    plane=cross(a,b);pnorm=float(_sqrt_bound(sum(v*v for v in plane)))
+    if pnorm<=0.:return fallback
+    l=[F(v) for v in reference.nodal_triads[cell,:,0]]
+    A=_rotation_gain(reference.nodal_triads[cell])
+    projected=float(_sqrt_bound(sum(v*v for v in cross(q,plane)),upper=True))
+    D=float(np.nextafter(float((F(A)*F(projected)+
+        abs(sum(v*w for v,w in zip(l,plane)))*F(qnorm))/F(pnorm)),np.inf))
+    eps=np.finfo(float).eps;curvature=_reference_curvature_norm(reference)
+    B=curvature+128*eps*max(1.,jmax,curvature);N1=B/jmin;N2=3*N1*N1
+    left,right=(-1.,0.) if cell==0 else (0.,1.)
+    k0=reference.tangent(left);k1=reference.tangent(right)
+    mismatch=float(np.linalg.norm(reference.nodal_triads[cell,:,0]-k0))+128*eps
+    tangent_error=32*eps*max(1.,jmax,B)/jmin
+    d=1+float(k0@k1)-mismatch-8*tangent_error-256*eps
+    first=A*D*N1*(1+2*A/d+A*A/d**2)
+    second=A*D*(N2+2*A*(N2+N1*N1)/d+
+        A*A*(4*N1*N1+N2)/d**2+2*A**3*N1*N1/d**3)
+    # Same denominator/normalization representation allowances as the full
+    # frame controls; cancellation never removes arithmetic uncertainty.
+    pad=8192*eps*qnorm*(1+A)**5*(1+N1+N2)*(1+jmax/jmin)/d**3
+    if not np.all(np.isfinite((first,second,pad))):return fallback
+    return tuple(min(old,float(np.nextafter(value+pad,np.inf)))
+                 for old,value in zip(fallback,(first,second)))
+
+
 def _reference_unclipped_interval(reference,cell,left,right):
     """Exact affine-tangent test for the upper clipping branch, with margin."""
     F=lambda v:Fraction(float(v))
@@ -151,6 +204,20 @@ def _reference_unclipped_interval(reference,cell,left,right):
     return True
 
 
+def _orientation_cell_lower(reference,cell,radius,gain,EU,difference,coordinate_scale,Fgain):
+    """Sufficient signed area/radius² bound for one complete material cell."""
+    jmin,jmax,prime,first_error=_reference_norm_bounds(reference,cell)
+    eps=np.finfo(float).eps
+    E=4*((gain*Fgain)**2-1)+1024*eps
+    if E>=.1 or not np.isfinite(E):
+        raise ValueError('curved material orientation frame bound unresolved')
+    error=2*E+gain*first_error
+    padding=8192*eps*max(1.,jmax,difference,radius*prime,coordinate_scale)
+    return (jmin*(1-EU-128*eps)-difference*gain-
+            (gain*jmax+difference)*error-
+            radius*gain*prime*(gain*Fgain)**2-padding)
+
+
 def curved_patch_geometry_control(rule, positions, position_low, cell_rotations,
                                   origin, normal):
     """Require positive oriented material area throughout all cells/arcs.
@@ -171,26 +238,12 @@ def curved_patch_geometry_control(rule, positions, position_low, cell_rotations,
     Fgain=_reference_radial_gain(reference)
     cell_bounds=[]
     for cell in bounds.cells:
-        jmin,jmax,prime,first_error=_reference_norm_bounds(reference,cell)
         gain=_rotation_gain(U[cell])
         eps=np.finfo(float).eps
         EU=float(np.linalg.norm(U[cell].T@U[cell]-np.eye(3)))+512*eps
-        # Bound upper and lower Gram deviations of admitted transport/roll.
-        E=4*((gain*Fgain)**2-1)+1024*eps
-        if E>=.1 or not np.isfinite(E):
-            raise ValueError('curved material orientation frame bound unresolved')
-        # For proper near rotations, |cofactor(X)-X|<=2*|X.T*X-I|.
-        error=2*E+gain*first_error
-        chord=np.array([float((Fraction(float(high[cell+1,i]))+Fraction(float(low[cell+1,i])))-
-                              (Fraction(float(high[cell,i]))+Fraction(float(low[cell,i]))))
-                        for i in range(3)])
-        ref_chord=reference.coordinates[cell+1]-reference.coordinates[cell]
-        difference=float(np.linalg.norm(chord-U[cell]@ref_chord))
-        padding=8192*eps*max(1.,jmax,difference,radius*prime,
-                            np.max(np.abs(reference.coordinates)))
-        lower=(jmin*(1-EU-128*eps)-difference*gain-
-               (gain*jmax+difference)*error-
-               radius*gain*prime*(gain*Fgain)**2-padding)
+        difference=_chord_difference_norm(high,low,U[cell],reference,cell)
+        lower=_orientation_cell_lower(reference,cell,radius,gain,EU,difference,
+            float(np.max(np.abs(reference.coordinates))),Fgain)
         if not np.isfinite(lower) or lower<=0.:
             raise ValueError('curved material whole-patch orientation unresolved')
         cell_bounds.append((cell,float(lower)))
@@ -216,3 +269,100 @@ def curved_patch_geometry_control(rule, positions, position_low, cell_rotations,
         raise ValueError('curved material plane enclosure overflow')
     return CurvedPatchGeometryControl(min(v for _,v in cell_bounds),tuple(cell_bounds),
                                      lower,upper,bounds.as_search_box())
+
+
+@dataclass(frozen=True)
+class CurvedPatchPathControl:
+    certified: bool
+    reason: str
+    intervals: int
+    orientation_lower: float | None
+    gap_lower_m: float | None
+    path_sha256: str
+
+
+def curved_patch_path_control(rule,start,translations,angular,origin,normal,*,
+                              gap_tolerance_m,maximum_intervals,cancellation_token=None):
+    """Whole material patch along the existing affine/Exp path, not pose samples.
+
+    On an interval of half-width h, d=|c-U*c_ref| is at most its midpoint
+    value+h*(|dc|+|omega|*gain*|c_ref|). Apply the same complete-cell outward
+    bound with that upper d and a path-wide Gram allowance. Plane gap variation
+    is bounded by projected nodal translation plus rotating lift/section radius.
+    Positive controls retain the declared normal/side. Unresolved controls never
+    commit a state or return an inferred collision time.
+    """
+    from anysolver.control import cancellation_safe_point
+    from anysolver._ge_beam3_p5_seeded.core import sha
+    from .native_surface_s3_friction import NativeS3MaterialConfiguration
+    from .native_surface_path import material_path_pose
+    if type(start) is not NativeS3MaterialConfiguration or start.shell_displacement.size:
+        raise TypeError('fixed-plane native path needs exact native-only configuration')
+    if (type(gap_tolerance_m) not in (int,float) or not np.isfinite(gap_tolerance_m)
+        or gap_tolerance_m<=0 or type(maximum_intervals) is not int or maximum_intervals<1):
+        raise ValueError('positive dimensional gap tolerance and finite path interval cap required')
+    move=_array(translations,(3,3),'curved path translations')
+    spin=_array(angular,(2,3),'curved path angular increments')
+    origin=_array(origin,(3,),'curved material plane origin')
+    normal=_array(normal,(3,),'curved material plane normal')
+    # Validates the same actual motion/chart as the structural path adapter.
+    end=material_path_pose(start,move,spin,np.zeros(0),1.)
+    rule.current_bounds(start.positions,start.position_low,start.cell_rotations)
+    rule.current_bounds(end.positions,end.position_low,end.cell_rotations)
+    identity=sha(dict(profile='NATIVE_CURVED_MATERIAL_AFFINE_EXP_PATH_DEV_V1',
+        rule=rule.definition,start=start,translations=move,angular=spin,
+        origin=origin,normal=normal,gap_tolerance_m=float(gap_tolerance_m),
+        maximum_intervals=maximum_intervals))
+    ref=rule.samples[0].station.reference;radius=float(rule.definition['radius'])
+    Fgain=_reference_radial_gain(ref);eps=np.finfo(float).eps;F=lambda v:Fraction(float(v))
+    norm=lambda v:float(_sqrt_bound(sum(x*x for x in v),upper=True))
+    cells=[];gap_rate=0.
+    arm=_reference_curvature_norm(ref)/8+radius*Fgain
+    scale=max(1.,float(np.max(np.abs(start.positions))),float(np.max(np.abs(start.position_low))),
+        float(np.max(np.abs(move))),float(np.max(np.abs(ref.coordinates))))
+    for cell in rule.current_bounds(start.positions,start.position_low,start.cell_rotations).cells:
+        gain=_rotation_gain(start.cell_rotations[cell])*(1+2048*eps)
+        gram=float(np.linalg.norm(start.cell_rotations[cell].T@start.cell_rotations[cell]-np.eye(3)))
+        gram+=4096*eps*(1+gain*gain)
+        dc=[F(move[cell+1,j])-F(move[cell,j]) for j in range(3)]
+        cref=[F(ref.coordinates[cell+1,j])-F(ref.coordinates[cell,j]) for j in range(3)]
+        speed=norm([F(v) for v in spin[cell]])
+        rate=norm(dc)+gain*speed*norm(cref)
+        translation=max(abs(float(sum(F(move[i,j])*F(normal[j]) for j in range(3))))
+                        for i in (cell,cell+1))
+        gap_rate=max(gap_rate,translation+gain*speed*arm*float(np.linalg.norm(normal)))
+        cells.append((cell,gain,gram,rate))
+    pad=32768*eps*scale*(1+Fgain)*max(1.,float(np.linalg.norm(normal,1)),arm)
+    pending=[(0.,1.)];visited=0;orientation=gap=np.inf
+    def result(certified,reason):
+        return CurvedPatchPathControl(certified,reason,visited,
+            float(orientation) if np.isfinite(orientation) else None,
+            float(gap) if np.isfinite(gap) else None,identity)
+    while pending:
+        cancellation_safe_point(cancellation_token,'curved material whole path')
+        if visited>=maximum_intervals:
+            return result(False,'whole patch path interval budget exhausted')
+        left,right=pending.pop();mid=(left+right)/2;half=(right-left)/2;visited+=1
+        if mid in (left,right):
+            return result(False,'whole patch path resolution exhausted')
+        pose=material_path_pose(start,move,spin,np.zeros(0),mid)
+        try:
+            geometry=curved_patch_geometry_control(rule,pose.positions,pose.position_low,
+                pose.cell_rotations,origin,normal)
+        except ValueError as error:
+            if ('orientation' not in str(error) and
+                'native round surface singular or reversed at sample' not in str(error)):raise
+            return result(False,'whole patch path orientation unresolved')
+        lower=np.inf
+        for cell,gain,gram,rate in cells:
+            difference=_chord_difference_norm(pose.positions,pose.position_low,
+                pose.cell_rotations[cell],ref,cell)+half*rate+pad
+            lower=min(lower,_orientation_cell_lower(ref,cell,radius,gain,gram,difference,scale,Fgain))
+        lower_gap=geometry.gap_lower_m-half*gap_rate-pad
+        if not np.all(np.isfinite((lower,lower_gap))):
+            raise ValueError('curved whole patch path bound overflow')
+        if lower>0 and lower_gap>=-gap_tolerance_m:
+            orientation=min(orientation,lower);gap=min(gap,lower_gap)
+            continue
+        pending.extend(((left,mid),(mid,right)))
+    return result(True,'whole patch orientation and gap bounded')

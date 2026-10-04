@@ -8,7 +8,7 @@ are error estimates, not rigorous integration error certificates.
 from dataclasses import asdict,dataclass
 from fractions import Fraction
 from decimal import Decimal, localcontext
-from math import atan2,cos,sin,fsum,isfinite,pi
+from math import atan2,cos,sin,fsum,isfinite,pi,sqrt
 import numpy as np
 from numpy.polynomial.legendre import leggauss
 
@@ -18,8 +18,8 @@ from anysolver._ge_beam3_p5_seeded.core import sha
 from .native_retained_station import _readonly
 from .native_surface_quadrature import NativeRoundSurfaceRule,_prepare_reference_area
 from .native_surface_normal import StraightNormalIntegrationSettings
-from .native_curved_geometry import (curved_patch_geometry_control,_reference_norm_bounds,
-    _reference_second_bound,_reference_unclipped_interval,
+from .native_curved_geometry import (curved_patch_geometry_control,curved_patch_path_control,_reference_norm_bounds,
+    _reference_second_bound,_reference_unclipped_interval,_reference_plane_derivative_bounds,
     _reference_curvature_coefficients,_reference_curvature_norm)
 from .native_surface_bounds import _rotation_gain,_reference_radial_gain
 from .native_normal_angles import PRECISION,PreciseNormalAngles
@@ -124,6 +124,14 @@ def _rectangle_support(rule,high,low,U,cell,left,right,al,ar,origin,normal):
     return 'unresolved'
 
 
+def _angular_rule_grazing(field,left,right):
+    with localcontext() as ctx:
+        ctx.prec=PRECISION
+        resolution=Decimal(float(64*np.finfo(float).eps))*(
+            abs(field.offset)+abs(field.cosine)+abs(field.sine))
+        return any(abs(g)<=resolution for g in _critical_gaps(field,left,right))
+
+
 def _active_angular_rule(field,left,right,points,weights,*,root_band=False):
     """Moving roots need no boundary terms through second potential variation.
 
@@ -133,9 +141,7 @@ def _active_angular_rule(field,left,right,points,weights,*,root_band=False):
     """
     with localcontext() as ctx:
         ctx.prec=PRECISION
-        scale=abs(field.offset)+abs(field.cosine)+abs(field.sine)
-        resolution=Decimal(float(64*np.finfo(float).eps))*scale
-        if any(abs(g)<=resolution for g in _critical_gaps(field,left,right)):
+        if _angular_rule_grazing(field,left,right):
             if not root_band:
                 raise ValueError('curved material angular endpoint/extremum unresolved; grazing excluded')
             # A certified simple axial-root bracket may contain an angular
@@ -194,7 +200,8 @@ def _axial_front_bands(rule,high,low,U,cell,left,right,al,ar,origin,normal,budge
     ref=rule.samples[0].station.reference;r=rule.definition['radius']
     jmin,jmax,F1,_=_reference_norm_bounds(ref,cell,actual_roll=True)
     F2=_reference_second_bound(ref,cell);gain=_rotation_gain(U[cell])
-    nn=float(np.linalg.norm(normal));radial1=r*gain*nn*F1;radial2=r*gain*nn*F2
+    nn=float(np.linalg.norm(normal));full_radial1=r*gain*nn*F1;full_radial2=r*gain*nn*F2
+    projected1,projected2=_reference_plane_derivative_bounds(ref,cell,U[cell],normal)
     center2=abs(_projected_center_second(ref,U,cell,normal))
     nodes=(-1.,0.) if cell==0 else (0.,1.)
     discrepancy=0.
@@ -205,10 +212,16 @@ def _axial_front_bands(rule,high,low,U,cell,left,right,al,ar,origin,normal,budge
     scale=max(1.,jmax,np.max(np.abs(ref.coordinates)),r)
     padding=512*np.finfo(float).eps*scale*(1+jmax/jmin)+r*gain*nn*discrepancy
     roots=[];pending=[(left,right)]
+    reasons=dict(amplitude=0,clipping=0,derivative_margin=0)
     def sample(x):return _front_sample(rule,high,low,U,cell,x,al,ar,origin,normal)
     while pending:
         if budget['visited']>=budget['limit']:
-            raise MemoryError('curved axial front interval budget exhausted')
+            error=MemoryError('curved axial front interval budget exhausted')
+            error.integration_diagnostics=dict(isolation_visited=budget['visited'],
+                unresolved_reasons=reasons,full_radial_first=full_radial1,
+                projected_radial_first=r*projected1,full_radial_second=full_radial2,
+                projected_radial_second=r*projected2,cell=cell,pending=len(pending))
+            raise error
         xl,xr=pending.pop();budget['visited']+=1
         xm=(xl+xr)/2;half=(xr-xl)/2
         if xm in (xl,xr):raise ValueError('curved axial front parameter resolution exhausted')
@@ -217,21 +230,23 @@ def _axial_front_bands(rule,high,low,U,cell,left,right,al,ar,origin,normal,budge
         chord=np.array([float(F(high[cell+1,i])+F(low[cell+1,i])-F(high[cell,i])-F(low[cell,i]))
                         for i in range(3)])
         center1=max(abs(_projected_center_derivative(ref,high,low,U,cell,x,normal)) for x in (xl,xr))
+        unclipped=_reference_unclipped_interval(ref,cell,xl,xr)
+        radial1,radial2=(r*projected1,r*projected2) if unclipped else (full_radial1,full_radial2)
         L1=center1+radial1
         amin=amplitude-radial1*half-padding
         unresolved=False;isolated=[]
         vlo=sample(xl)[1];vhi=sample(xr)[1]
-        unclipped=_reference_unclipped_interval(ref,cell,xl,xr)
         for feature in range(4):
             if abs(values[feature])>L1*half+padding:continue
             M2=center2+radial2
             if feature>=2:
-                if amin<=0:unresolved=True;break
+                if amin<=0:reasons['amplitude']+=1;unresolved=True;break
                 M2+=radial1*radial1/amin
-            if abs(values[feature])>abs(derivatives[feature])*half+.5*M2*half*half+padding:
+            if unclipped and abs(values[feature])>abs(derivatives[feature])*half+.5*M2*half*half+padding:
                 continue
             margin=abs(derivatives[feature])-M2*half-128*np.finfo(float).eps*max(1.,L1)
             if not unclipped or not np.isfinite(margin) or margin<=0:
+                reasons['clipping' if not unclipped else 'derivative_margin']+=1
                 unresolved=True;break
             if vlo[feature]>padding and vhi[feature]>padding:continue
             if vlo[feature]<-padding and vhi[feature]<-padding:continue
@@ -279,7 +294,59 @@ def _axial_front_bands(rule,high,low,U,cell,left,right,al,ar,origin,normal,budge
     return bands,padding
 
 
-def _root_band_work_bound(rule,high,low,U,cell,width,angular_width,geometry,settings,stiffness,normal,pad):
+def _negative_arc_width_bound(field,al,ar):
+    """Outward arc measure; sub-resolution endpoint/extremum roots keep full arc."""
+    with localcontext() as ctx:
+        ctx.prec=PRECISION
+        gaps=_critical_gaps(field,al,ar)
+        resolution=Decimal(float(64*np.finfo(float).eps))*(
+            abs(field.offset)+abs(field.cosine)+abs(field.sine))
+        if any(abs(g)<=resolution for g in gaps):return ar-al
+        if min(gaps)>0:return 0.
+        if max(gaps)<0:return ar-al
+        try:
+            breaks=field.breakpoints(al,ar)
+            width=sum((b-a for a,b in zip(breaks[:-1],breaks[1:]) if field.value((a+b)/2)<0),Decimal(0))
+        except (ValueError,ArithmeticError):return ar-al
+        return min(ar-al,float(np.nextafter(float(width),np.inf)))
+
+
+def _root_band_measure_bound(field,lower,al,ar):
+    # Unsplit fallback nodes can put a full Gauss weight in a tiny pocket.
+    # Cover both the true union and that approximate positive-weight measure.
+    union=_negative_arc_width_bound(lower,al,ar)
+    if not _angular_rule_grazing(field,al,ar):return union,False
+    masses=[sum(w for _,w,_ in _active_angular_rule(field,al,ar,*leggauss(order),root_band=True))
+            for order in (8,16)]
+    return max(union,*(float(np.nextafter(m,np.inf)) for m in masses)),True
+
+
+def _root_band_active_width(rule,high,low,U,cell,left,right,al,ar,origin,normal,pad):
+    """Angular union containing every possible active point in a root band.
+
+    g(x,angle)>=g(mid,angle)-h*L-pad for the complete band and declared arc.
+    Integrating the negative arcs of that lower circular field bounds the
+    union measure, including endpoint arcs and any broad existing contact.
+    A degenerate/unresolved angular enclosure retains the full arc.
+    """
+    ref=rule.samples[0].station.reference;radius=rule.definition['radius']
+    mid=(left+right)/2;t=mid+1 if cell==0 else mid
+    field=_station_field(high,low,cell,t,ref.half_cell_lift(cell,t),ref.frame(mid),
+        U[cell],radius,origin,normal)
+    F1=_reference_norm_bounds(ref,cell,actual_roll=True)[2]
+    center=max(abs(_projected_center_derivative(ref,high,low,U,cell,x,normal)) for x in (left,right))
+    projected=_reference_plane_derivative_bounds(ref,cell,U[cell],normal)[0]
+    radial=projected if _reference_unclipped_interval(ref,cell,left,right) else (
+        _rotation_gain(U[cell])*F1*float(np.linalg.norm(normal)))
+    rate=center+radius*radial
+    delta=float(np.nextafter((right-left)/2*rate+pad,np.inf))
+    with localcontext() as ctx:
+        ctx.prec=PRECISION
+        lower=PreciseNormalAngles(field.offset-Decimal(delta),0.,0.,field.cosine,field.sine)
+        return _root_band_measure_bound(field,lower,al,ar)
+
+
+def _root_band_work_bound(rule,high,low,U,cell,width,angular_width,geometry,settings,stiffness,normal,pad,*,fallback=False):
     """Bound both true and approximate work on retained root-bracket bands.
 
     No represented band is deleted. Energy/residual are Lipschitz in xi across
@@ -294,7 +361,8 @@ def _root_band_work_bound(rule,high,low,U,cell,width,angular_width,geometry,sett
     B=_reference_curvature_norm(ref)
     arm=gain*(B/8+r*fg)
     nn=float(np.linalg.norm(normal))
-    length=settings.characteristic_length_m;G=nn*max(1.,arm/length);H=2*arm*nn/length**2
+    length=settings.characteristic_length_m
+    G=nn*sqrt(1+(arm/length)**2)
     depth=max(0.,-geometry.gap_lower_m)
     area=r*fg*(jmax+r*F1)
     area_prime=r*fg*(B+r*F2)+(jmax+r*F1)*r*F1
@@ -303,15 +371,26 @@ def _root_band_work_bound(rule,high,low,U,cell,width,angular_width,geometry,sett
                     for i in range(3)])
     arm_prime=gain*(B/2+r*F1)
     gap_prime=nn*(np.linalg.norm(chord)+arm_prime)
-    Gprime=nn*max(1.,arm_prime/length)
+    Gprime=nn*sqrt(2+(arm_prime/length)**2)
     energy_lipschitz=stiffness*(depth*gap_prime*area+.5*depth**2*area_prime)
     force_lipschitz=stiffness*((gap_prime*G+depth*Gprime)*area+depth*G*area_prime)
     energy_error=angular_width*(width**2*energy_lipschitz/4+
                                  width*stiffness*depth*pad*area)
     force_error=angular_width*(width**2*force_lipschitz/4+
                                 width*stiffness*pad*G*area)
-    tangent_error=2*stiffness*area*width*angular_width*(
-        9*(G*G+depth*H)+depth*arm*nn/length**2)
+    if fallback:
+        # An unsplit approximate angular rule is not an exact negative-arc
+        # integral. Bound both its work and the true work directly instead
+        # of treating 8/16 agreement as a quadrature certificate.
+        energy_error=max(energy_error,stiffness*area*width*angular_width*depth**2)
+        force_error=max(force_error,2*stiffness*area*width*angular_width*depth*G)
+    # g has two translational weights and one rotational arm. ||g||²<=G².
+    # The 3x3 rotational Hessian has Frobenius norm<=sqrt(3)*arm*nn/L²;
+    # once-spatial .5*skew(moment) adds <=arm*nn/(sqrt(2)*L²).
+    # Their sum is <3*arm*nn/L². Nine nonzero local coordinates give
+    # ||K||_inf<=3*||K||_F. Keep twice the full positive integrand bound.
+    tangent_error=6*stiffness*area*width*angular_width*(
+        G*G+3*depth*arm*nn/length**2)
     return np.array((energy_error,force_error,tangent_error))*(1+8192*np.finfo(float).eps)
 
 
@@ -364,7 +443,22 @@ class NativeCurvedMaterialPlaneWork:
             stiffness_N_per_m3=self.stiffness,settings=asdict(self.settings),
             reference=self.reference.canonical_data(),measure='actual_fixed_reference_material_area',
             branch_admission='continuous_orientation_simple_axial_front_brackets_bounded_work',
-            numerical='GAUSS_8_16_PRECISE_CURVED_AXIAL_ARCS_JET2_SPATIAL_ONCE_V4')
+            numerical='GAUSS_8_16_PROJECTED_CURVED_AXIAL_ARCS_FALLBACK_MEASURE_JET2_SPATIAL_ONCE_V6')
+
+    @property
+    def element_id(self):
+        return self.rule.samples[0].station.element_id
+
+    @property
+    def radius(self):
+        return float(self.rule.definition['radius'])
+
+    def minimum_gap_bound(self,positions,position_low,cell_rotations):
+        """Conservative whole-patch bound for trial admission, not a gap sample."""
+        if sha(self.definition())!=self.identity:
+            raise ValueError('curved material plane definition/settings changed')
+        return curved_patch_geometry_control(self.rule,positions,position_low,cell_rotations,
+            self.origin,self.normal).gap_lower_m
 
     def evaluate(self,positions,position_low,cell_rotations):
         if sha(self.definition())!=self.identity:
@@ -387,11 +481,14 @@ class NativeCurvedMaterialPlaneWork:
                          self.origin,self.normal,budget) if segmented else ([(left,right,False,())],0.))
             for xl,xr,uncertain,features in bands:
                 if uncertain:
-                    error=_root_band_work_bound(self.rule,high,low,U,cell,xr-xl,ahi-alo,
-                        geometry,settings,self.stiffness,self.normal,pad)
+                    active_width,fallback=_root_band_active_width(self.rule,high,low,U,cell,xl,xr,alo,ahi,
+                        self.origin,self.normal,pad)
+                    error=_root_band_work_bound(self.rule,high,low,U,cell,xr-xl,active_width,
+                        geometry,settings,self.stiffness,self.normal,pad,fallback=fallback)
                     root_errors+=error
                     root_brackets.append(dict(cell=cell,lower=xl,upper=xr,features=features,
-                                              representation_gap_m=pad,error_bounds=tuple(error)))
+                        representation_gap_m=pad,active_angular_width_bound=active_width,
+                        angular_fallback=fallback,error_bounds=tuple(error)))
             prepared.append((cell,bands))
         remaining=np.asarray(limits)-root_errors
         if not np.all(np.isfinite(root_errors)) or np.any(remaining<=0):
@@ -527,3 +624,12 @@ class NativeCurvedMaterialPlaneWork:
             _readonly(force),_readonly(-force),_readonly(moment),_readonly(-moment),geometry,
             visited,accepted,evaluations,final_errors,
             tuple(root_brackets),budget['visited'])
+
+    def certify_path(self,start,translations,angular,*,gap_tolerance_m,
+                     maximum_intervals,cancellation_token=None):
+        """Disposable whole-patch control; no endpoint state is committed here."""
+        if sha(self.definition())!=self.identity:
+            raise ValueError('curved material plane definition/settings changed')
+        return curved_patch_path_control(self.rule,start,translations,angular,
+            self.origin,self.normal,gap_tolerance_m=gap_tolerance_m,
+            maximum_intervals=maximum_intervals,cancellation_token=cancellation_token)
