@@ -8,10 +8,12 @@ Plan/goal: C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_
 One live note/matrix; prospective risk-proportionate workflow, protected history.
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Public product762d6539 unchanged;
-new private distributing compiler added after diagnosticsb9fdd4e5. Verify actual
-latest HEAD and status before resumption; original installed identities retained.
-ANYfem3823eaa at C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer.
+branch codex/stiffened-main-reconcile-20261001. Latest public producta2f79a34,
+private reference bridgeb36ca416 and prior compiler922b34b7. Prior free-modal
+product762d6539/evidence preserved. Verify actual HEAD/status before resumption.
+ANYfem0edc712 at C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer;
+prior free-modal consumer3823eaa evidence preserved. Both worktrees clean after
+scoped local commits; no push/main merge/publication.
 Local scoped commits allowed; NO push/main merge/publication/contact messages.
 FormalF03 UNCONSUMED; never execute/copy/substitute protected original runner
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
@@ -116,8 +118,8 @@ Root owns scheduling/raw/Git. Current new evidence: envelope-gram/ and
 positive-part-gram/; immutable extension follows raw-manifest-v15.
 Do not rebuild completed fibres, free-mode owners or consumers.
 
-All numerical jobs/workers TERMINAL. Root reconciles scoped local source/evidence
-commits in solver and two-file consumer guard; no push/main/publication. Public
+All numerical jobs/workers TERMINAL. Scoped local source/evidence commits saved
+in solver and two-file consumer guard; no push/main/publication. Public
 slice raw r8-distributing-ge-owner-dev-20261004-v1; prior private bridge b36ca416
 and its source/test hashes/responses are preserved. No prior run to repeat.
 Owned ANYfem guard/test/doc plus attributes; existing consumer formatunchanged.
