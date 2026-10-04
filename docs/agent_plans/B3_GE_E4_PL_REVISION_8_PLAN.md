@@ -178,6 +178,13 @@ Decisions resolving the present queue:
   pad/support/b7 artifact,1factor, old donor guards intact and exact40x16 builder
   parity. Significant movement leaves adequacy open; small movement supports
   measured pair stability, not an asymptotic bound or aggregate acceptance.
+  The independent readiness review identifies the next mandatory implementation
+  lane: simultaneous Q4 J2/generalized B3 histories with finite distributing
+  attachments, explicit admission and a new predecessor-preserving material
+  checkpoint. Reuse algorithmic candidates/atomic publication; direct yielding,
+  fixed-predecessor tangents, rejection/cancellation and restart controls remain
+  required. This lane is independent of Mx mesh adequacy and adds no optional
+  framework, altered legacy default or inherited physical qualification.
 - **Pressure assessment:** do not adopt the proposed vector-only amendment.
   Its documented shared-node masking weakens a protection of the current
   contract. This resolves the outstanding approval request as a decision to

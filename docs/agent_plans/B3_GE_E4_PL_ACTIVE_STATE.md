@@ -37,10 +37,18 @@ Significant movement threatening original1% comparison leaves adequacy open;
 small movement supports measured mesh-pair stability only. No asymptotic claim,
 automatic next mesh/solid campaign, threshold change or line-law substitute.
 
+Ready mandatory implementation lane: finite distributing simultaneous Q4 J2/
+generalized B3 histories in the same owner, initially admitted force stepping.
+Use explicit material admission/identity and a dedicated checkpoint retaining
+accepted AND predecessor beam/shell states; preserve elastic/reference kinds.
+Existing algorithmic candidates/atomic publication are reusable. Actual yield,
+fixed-predecessor tangent, reject/cancel ownership and restart parity need direct
+evidence. This is G3/G4 implementation, not inherited point-law qualification.
+
 ## Exact state, evidence and authority
 
 ANYsolver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; pre-slice HEAD3f6ae11a,
+branch codex/stiffened-main-reconcile-20261001; latest diagnostic HEADc7070bf3,
 finite product8d03f522. Current changes are diagnostic helpers/tests, preserved
 raw and living records only. ANYfem C:/Github/ANYfem/.worktrees/
 experimental-ge-panel-consumer, branch codex/experimental-ge-panel-consumer,
@@ -56,7 +64,7 @@ unchanged tolerances. Prospective drivers/prior data frozen before execution.
 Latest My raw .qualification/b3-ge-e4-pl/r8-distributing-my-dev-20261004-v1
 pins final v3 jobs/comparison,23 initial controls/1final changed control,419
 actual installed source hashes and preserved failure/repair history. Numerical
-jobs terminal; bounded next-implementation Read review may still be running.
+jobs and supporting Read reviews terminal; no process needs recovery.
 
 Solver wheel9a366e44b752e57b65f029a7ee54fe4c4ee7581c5bda0f85083c8c8d040f59e8;
 finite consumer wheele8379bed3db7d7f6f8349135a1f8e5e294528502aa738339e74d7b9c4b8692e6.

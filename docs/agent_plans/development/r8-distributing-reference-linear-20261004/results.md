@@ -459,6 +459,25 @@ all source/driver versions, controls/failures/bindings, installed import hashes,
 native/complete external outputs, comparison-v3 and supporting review.
 FormalF03 remains UNCONSUMED; G0/G2/F04/full programme remain open.
 
+## Ready material implementation seam
+
+Supporting Read review /root/finite_pad_owner_contract, checked against source:
+the next ready mandatory G3/G4 slice is coupled Q4 J2/generalized B3 histories
+for the finite distributing owner. It is independent of nativeMx adequacy.
+Current admission rejects shell J2; finite driver rejects beam yielding and its
+elastic finite_distributing checkpoint omits constitutive states. Existing Q4
+algorithmic/native fixed-origin evaluations and atomic publication already
+provide the reusable candidate/state seams. The attachment owns no material.
+
+Use explicit material admission/identity and a dedicated binary kind preserving
+accepted AND predecessor beam plastic/accumulated and Q4 plastic/alpha arrays.
+Keep elastic/reference bytes and guards intact. Recovery must report actual
+constitutive state without turning on line/curved flags. Bound checkpoint storage
+before publication. Direct simultaneous yield, fixed-predecessor global tangent,
+reject/cancel generation/recovery/bytes, material restart/continue and disjoint
+point-plus-pad offsets need evidence. Existing point/BL5 controls are patterns,
+not inherited acceptance. No material code/test/run has been made by this review.
+
 ## Finite distributing candidate: original derivation and bounded feasibility
 
 The finite shell pose is a new candidate, not a retrospective reinterpretation
