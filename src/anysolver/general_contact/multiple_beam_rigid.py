@@ -39,6 +39,8 @@ def _parts(model, definition, settings, analysis_control):
         if interaction.surface not in surfaces or interaction.target not in bodies:
             raise ValueError("each beam interaction must name a declared beam and rigid body")
         source, body = surfaces[interaction.surface], bodies[interaction.target]
+        if settings.beam_end_cap_work == 'hemisphere_support_dev' and body.kind != 'plane':
+            raise ValueError('multiple hemisphere-support profile requires fixed planes')
         if source.beam_radius is None:
             raise ValueError("multiple beam-rigid profile requires explicit round radius")
         if body.kind not in {"plane", "sphere", "cylinder", "capped_cylinder"} or body.path_translation is not None:

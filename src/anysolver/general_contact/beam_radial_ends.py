@@ -76,7 +76,8 @@ class BeamRadialEndManager(_BeamRadialManager):
         lanes=_controls(positions,center,self.projector)
         scale=max(self.radius,cell.length)
         accuracy=(256*np.finfo(float).eps*scale if self._initializing else self.gap_tolerance*.1)
-        lower=curve_gap_lower(lanes,self.radius,accuracy,self.settings.maximum_swept_subdivisions)
+        lower=curve_gap_lower(lanes,getattr(self,'full_envelope_radius',self.radius),
+            accuracy,self.settings.maximum_swept_subdivisions)
         result=(lanes,lower)
         if self._geometry_cache is not None:self._geometry_cache[key]=result
         return result
@@ -171,7 +172,7 @@ class BeamRadialEndManager(_BeamRadialManager):
             return residual,K,result
         finally:self._geometry_cache=None
 
-    def _swept_admissible(self,start,end,start_factor=None,end_factor=None):
+    def _swept_full_envelope_admissible(self,start,end,start_factor=None,end_factor=None,*,resolve_gap_bounds=False):
         first_center=self.point_at(self.path_factor if start_factor is None else start_factor)
         last_center=self.point_at(self.path_factor if end_factor is None else end_factor)
         for cell in self.cells:
@@ -181,8 +182,9 @@ class BeamRadialEndManager(_BeamRadialManager):
             speed=relative_speed_upper(a,b)
             def gap(t):
                 lanes=tuple(tuple(x+_fraction(t)*(y-x) for x,y in zip(l,m)) for l,m in zip(a,b))
-                return _fraction(curve_gap_lower(lanes,self.radius,self.gap_tolerance*.1,
-                    self.settings.maximum_swept_subdivisions,admit_above=-self.gap_tolerance))
+                return _fraction(curve_gap_lower(lanes,getattr(self,'full_envelope_radius',self.radius),self.gap_tolerance*.1,
+                    self.settings.maximum_swept_subdivisions,
+                    admit_above=None if resolve_gap_bounds else -self.gap_tolerance))
             def certify(left,right,gl,gr,depth):
                 if min(gl,gr)-speed*(right-left)/2>=-_fraction(self.gap_tolerance):return True
                 if depth>=self.settings.maximum_swept_subdivisions:return False
@@ -192,6 +194,12 @@ class BeamRadialEndManager(_BeamRadialManager):
             gl,gr=gap(Fraction(0)),gap(Fraction(1))
             if gl<-_fraction(self.gap_tolerance):raise ValueError('committed radial end pose exceeds gap tolerance')
             if gr<-_fraction(self.gap_tolerance) or not certify(Fraction(0),Fraction(1),gl,gr,0):return False
+        return True
+
+    def _swept_admissible(self,start,end,start_factor=None,end_factor=None):
+        if not self._swept_full_envelope_admissible(start,end,start_factor,end_factor):return False
+        first_center=self.point_at(self.path_factor if start_factor is None else start_factor)
+        last_center=self.point_at(self.path_factor if end_factor is None else end_factor)
         for cell,local,outward in self.endpoints.values():
             a=end_controls(self._positions(cell,start),first_center,self.projector,local,outward)
             b=end_controls(self._positions(cell,end),last_center,self.projector,local,outward)

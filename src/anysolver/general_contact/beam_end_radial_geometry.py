@@ -126,7 +126,10 @@ def ownership_path_admissible(first,last,radius,maximum_depth):
 
 def curve_gap_lower(controls,radius,accuracy,maximum_depth,admit_above=None):
     """Conservative entire-curve lower bound with finite best-first refinement."""
-    R=_fraction(radius);budget=_fraction(accuracy)
+    # Exact radius sums are legitimate enclosure inputs. Casting them back
+    # through float can round down and invalidate the lower-bound guarantee.
+    R=radius if isinstance(radius,Fraction) else _fraction(radius)
+    budget=_fraction(accuracy)
     if budget<=0:raise ValueError('radial gap enclosure accuracy must be positive')
     def lower(lanes):
         return _sqrt_bound(max(Fraction(0),min(squared_controls(lanes))))-R

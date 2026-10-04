@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.89. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.90. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -16,39 +16,38 @@ Publication, merging, release and historical-default changes are separate action
 
 ## Latest integrated slice — 4 October
 
-Actual hemisphere support now acts on a deforming physical S3 interior through
-one all-coordinate Jet2 potential. Actual B2/B3 tangent, target normal/anchor,
-cross-body Hessian and offset couples pull back together; genuine material ends,
-whole-radius moving-plane envelope and exact curve regularity preserve ownership
-and bounded path admission. Target rotations, physical rims and multiple faces
-remain explicitly outside this development row. Legacy uncapped/default laws stay
-unchanged. A discovered zero-step S3 sealing defect is fixed by evaluating only
-the accepted origin and retaining the original rejection, never a failed trial.
+Actual hemisphere support now covers one fixed sphere through the existing radial
+line owner. Complete B2/B3 tangent and obstacle-centre Jet2 work retains cap couples,
+sparse blocks and both-body wrenches; cap-sphere/rim branches share one C1 potential.
+Full-radius curve/path enclosure contains both branches. Resolved spatial accuracy
+provides temporal margin without relaxing the budget; exact literal radii sum is
+preserved in bounds. Legacy line/default/owned-point behavior stays unchanged.
+Explicit cap/spring admission and an aggregate guard prevent a new selector from
+falling through to the old radial potential. Nonunique parallel rims remain open.
 
-Installed31checks pass14.242s/351694848B;217modules/504files match,JIT0/pools1.
-Independent scalar work/1e-5tangents, B3 cross work, physical offset wrenches,
-actual deforming-target contact-gradient5.871e-12 vs1e-6 and bounded linearized
-structural response4.399e-6 vs1e-3 pass. Force control, matching finer displacement
-increments under unchanged budgets, completed split restart, incompatible identity,
-actual exception/cancellation replay, failed-origin sealing/noncontinuability and
-affected ordinary S3/state/no-contact routes pass. Seven runs/51records retain
-state and fixture/build failures. Supporting review is not engineering acceptance.
-[Guide](docs/GENERAL_CONTACT_DEFORMABLE_S3_CAPS_DEV.md),
-[evidence](docs/d1_review_support/contact_deformable_s3_caps_20261004/summary.json).
+Installed49checks pass31.888s/362438656B;216modules/506files match,JIT0/pools1.
+Independent angular minimum, all-coordinate work/1e-5H, B3 midnode, covariance,
+physical wrenches, exact activation/one-sided seam, actual active crossing and
+hidden crossing rejection pass. Independent bar1.110e-15 vs1e-6, force/displacement,
+completed split restart, real exception/cancellation replay, true ends, explicit
+unsupported selection, B3 example, affected legacy sphere/cylinder/multiple-plane
+and no-contact checks pass. Seven runs/66records preserve conservative failures,
+fixture error and actual Fraction-radius cast nonpass. Source review is supporting,
+not engineering acceptance. No speedup, promotion or full-completion claim.
+[Guide](docs/GENERAL_CONTACT_HEMISPHERE_SPHERE_DEV.md),
+[evidence](docs/d1_review_support/contact_hemisphere_sphere_20261004/summary.json).
 
-Next principal D3 slice: complete the continuous actual cap geometry against a
-fixed sphere before extending curved-obstacle compositions. Derive the constrained
-hemisphere/sphere closest support and its one-sided seam derivatives, differentiate
-actual B2/B3 tangent/node work, and retain complete reference-line integration,
-true ends and conservative whole-radius curve/path bounds. Reuse the existing
-radial line/enclosure owner, not its owned-point endpoint potential or legacy
-active cap-side crossing rejection. Any changed law gets an explicit opt-in
-profile/restart identity and independent scalar/work/coupled installed checks;
-legacy arithmetic stays intact. Cylinder, beam-pair and finite-face transitions,
-mesh/enforcement and independent acceptance remain separate required boundaries.
+Next principal D3 slice: compose the new sphere and existing fixed-plane continuous
+cap contributors through the established multiple-rigid owner. Select matching
+children explicitly, use one authoritative pose/sparse sum, common bounded path
+and all-child endpoint rechecks, preserve stable per-body forces/moments and full
+restart identity. Preserve the existing all-plane profile; mixed/sphere definitions
+get a new opt-in identity. Verify actual multi-body B3 work/coupled response and
+failure/restart/installed behavior. Cylinder, beam-pair and finite-face transitions,
+mesh/enforcement and independent acceptance remain required; no legacy fallback.
 
-[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV88.md)
-→87→86 retains earlier results, restrictions and failed evidence.
+[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV89.md)
+→88→87 retains earlier results, restrictions and failed evidence.
 
 ## 1. Current technical position
 

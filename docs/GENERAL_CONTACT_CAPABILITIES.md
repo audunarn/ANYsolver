@@ -1858,3 +1858,18 @@ failed-checkpoint noncontinuability remain. Face-interior fixed-director elastic
 static profile; rims/multiple faces/friction/native/dynamics and engineering
 qualification remain. Implemented/tested, not independently accepted/released.
 [Guide/evidence](GENERAL_CONTACT_DEFORMABLE_S3_CAPS_DEV.md).
+
+
+## Actual hemisphere work against a fixed sphere — 4 October development
+
+`CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_SPHERE_STATIC_DEV_V1` differentiates actual
+B2/B3 tangents and constrained sphere/rim support on all nodes/obstacle centre.
+Installed49pass31.888s/362438656B;216modules/506files match,JIT0/pools1. Independent
+angle-minimum/virtual work/1e-5H/covariance/wrenches, one-sided seam/exact activation,
+complete active crossing and hidden-crossing rejection, independent bar1.110e-15
+vs1e-6, force/displacement, restart, real rollback and legacy/no-contact pass.
+Resolved spatial bounds and exact literal radius sum preserve conservative paths;
+old line/ownership arithmetic unchanged. Fixed-sphere scalar-elastic static row,
+not independently accepted/released. Aggregate spheres fail closed until matching
+contributors are composed; broader geometry/friction/native/dynamics remain.
+[Guide/evidence](GENERAL_CONTACT_HEMISPHERE_SPHERE_DEV.md).
