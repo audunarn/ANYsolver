@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.102. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.9, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.103. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.10, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
@@ -56,9 +56,9 @@ affine tool motion. A scoped correction now passes73installed predicates, includ
 affected response/field/enforcement, actual cycles and restart. It retains exact
 declared radii and tool coordinates; unresolved right-end sub-ULP intervals fail
 explicitly. Old checkpoint identities reject continuation. This is tested
-development, not new general admission. Next resolve the actual-tangent rim's
-mesh/regularity question in the existing classical profile; no new prototype or
-optimization campaign is needed.
+development, not new general admission. The actual-tangent free-rim regularity
+question is resolved by the counterexample below. The next integrated slice uses
+the required formulation-owned material-section map; no optimization campaign.
 See the updated moving-cylinder guide and ledger for exact scope and raw evidence.
 
 ## 2. Decided execution sequence on resumption
@@ -158,6 +158,19 @@ that declared work map before friction; retain D3 pairings and all later outcome
 Do not infer general nonlinear or rim engineering acceptance from these
 guided tests or start another optimization/mesh sweep without a discriminator.
 [Evidence](docs/d1_review_support/contact_curved_cylinder_response_20261004/summary_final.json).
+
+That slice is now installed-tested: one native interior material patch against a
+fixed plane uses the retained owner, explicit area penalty, physical section
+couples, radius-dependent path bound, cancellation and split restart. Local
+independent work/tangents, hidden rotation, covariance and rollback pass. The
+stronger penalty's quadrature failure was resolved with the same controls using
+anchored trigonometric projection; unresolved angular grazing explicitly rejects.
+21 installed checks pass with516source/package files matched. Extend existing
+native owners toward required material-surface/deformable-target pairings/workflow
+rather than starting an unrelated prototype. Check the shell work map and complete
+normal path first; parked grazing-friction work is not reusable authority. Retain
+enforcement/spatial convergence and independent acceptance as open requirements.
+[Scope/usage](docs/GENERAL_CONTACT_NATIVE_MATERIAL_PLANE_DEV.md).
 
 Use existing analytical and independently integrated references where applicable;
 no new reference engine or broad mesh sweep. One failed check permits one targeted

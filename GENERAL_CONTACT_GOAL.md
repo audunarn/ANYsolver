@@ -1,6 +1,6 @@
 # General contact — goal
 
-**Revision:** 2026-10-04.9. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.102. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-10-04.10. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.103. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
 
@@ -35,9 +35,23 @@ Work only in `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, br
 
 **Current outcome:** the existing B2/B3 fixed/prescribed-translating cylinder route now has its named33-row benchmark assessment and73installed representation-correction checks. The actual-tangent free-rim admission question is resolved negatively for the current C0 Timoshenko/vonKarman energy space: a fixed-tip bubble changes cap energy by a nonzero amount while structural cost tends to zero with cell length. Preserve the guided discrete rim benchmark; do not claim general free-rim mesh acceptance or tune stiffness to hide the defect. Move the already required swept round material-section profile ahead of attempted general rim admission. Its rotations must come from formulation-owned section coordinates and carry physical work/couples; it is a distinct declared geometry, not a silent replacement for the centreline tube. First verify its structural work/regularity contract before expanding contact or friction. Broader D3 and all C0–C9 outcomes remain required. Performance is not a new acceptance gate.
 
+The first material-section slice is installed-tested at `f08d3d80`: one straight
+native interior patch against a fixed plane, with physical section couples, retained
+coordinates, path checks, rollback and split restart. Its 21 focused checks pass;
+this establishes no general native/continuum admission. Reaction changes 2.21%
+under the tested penalty refinement, so convergence remains open. Extend existing
+native owners toward the required deformable-target pairing after checking the
+shell work map and complete normal path; preserve the parked grazing-friction
+restrictions. [Evidence](docs/d1_review_support/contact_native_material_plane_20261004/README.md).
+
 Prioritize a missing capability requirement, a necessary correctness repair or a measured end-to-end bottleneck. Reuse existing contributor, state, restart, search and test infrastructure. Add a profile/restart identity only when its mechanical or compatibility contract differs; do not create new public options for internal optimizations. Existing identities and explicit selection stay valid.
 
-**Budget disposition:** the latest checkpoint records416187active seconds(115.608hours), leaving about4.392hours of the original120hours. Full completion within that remainder has no supportable forecast. Use the remainder for the next bounded delivery and an honest handoff; this does not narrow the programme, extend the clock or permit incomplete acceptance. At exhaustion obtain the required time/scope/method decision. Planning while paused does not restart the development clock.
+**Budget disposition:** the latest checkpoint records 421136 active seconds
+(116.982 hours), leaving about 3.018 hours of the original 120 hours. Full completion
+within that remainder has no supportable forecast. Use it for the next bounded
+delivery and an honest handoff; this neither narrows the programme nor extends the
+clock. At exhaustion obtain the required time/scope/method decision. Planning while
+paused does not restart the development clock.
 
 This is a prospective workflow change. Preserve existing equations, dimensional settings, acceptance criteria, exact accepted scopes, contrary evidence and frozen/consumed authorities. The [previous goal](docs/d1_review_support/GENERAL_CONTACT_GOAL_HISTORY_20260930_REV4.md) remains historical evidence.
 

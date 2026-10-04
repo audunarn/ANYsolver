@@ -1,72 +1,63 @@
 # General contact restart — ACTIVE, 4 October 2026
 
-Goal2026-10-04.9 / plan2026-10-04.102; fullC0–C9 incomplete.
+Goal 2026-10-04.10 / plan 2026-10-04.103; full C0–C9 incomplete.
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. StartingHEAD4530993d; current Git
-HEAD and package/source hashes bind this correction. Goal-tool links are stale:
-never access the protected original worktree. Main/ANYfem separately owned.
-No other-human-chat messaging, push/merge/publication/release/default changes.
-Local commits/focused checks and bounded internal review remain authorized.
+branch codex/contact-main-reconcile-20261001. Source candidate f08d3d80;
+current Git HEAD binds later documentation. Goal-tool paths are stale: never
+access the protected original worktree. Main/ANYfem are separately owned.
+No other-chat messaging, push/merge/publication/release/default changes.
+Local commits, focused checks and bounded internal review remain authorized.
 
-## Integrated correction and evidence
+## Latest integrated result
 
-Exact literal radius sum now governs actual-hemisphere line activation/work as
-well as caps/bounds. Affine prescribed cylinder centres retain sub-ULP motion
-before local projection; sweeps/work/cache share that path. JSON includes exact
-rational metre strings alongside approximate floats. Old radius/path checkpoint
-identities reject. Legacy owned-point/sphere APIs/no-contact execution unchanged.
-Tiny Q2 left fronts resolve; reversed sub-ULP station intervals explicitly fail.
+One strictly interior straight native material-section patch / fixed plane now
+uses the retained static owner, all 42 coordinates and physical section couples.
+N/m³ area penalty remains distinct from centreline line/endpoint laws. Whole-patch
+gap/orientation bounds include radius along the actual exponential trial path.
+Independent work/tangents, fresh S3 both-body blocks, covariance, hidden rotation,
+staging exception/cancellation, incompatible definitions and split restart pass.
+21 installed checks: 27.431 s, 186310656 B peak; 516 package files / 208 imports
+verified, JIT0/pools1. Current production bytes match f08d3d80/private wheel
+7d55a3bce77b27e18a206120d14a1b150789123ac3d529e347fc5cf7c585604c,
+raw C:/ANYworkspaceWork/contact_native_material_plane_20261004/candidate01.
+[Usage](docs/GENERAL_CONTACT_NATIVE_MATERIAL_PLANE_DEV.md),
+[evidence/failures](docs/d1_review_support/contact_native_material_plane_20261004/README.md).
 
-Current private wheel SHA256
-b919d7227943be788bce9ee02ae6a0078edbeaf5c29e72281190c447d36a7c89,
-raw C:/ANYworkspaceWork/contact_radial_contract_20261004/candidate02/{dist2,installed2}.
-73installed predicates pass157.206scombined,203976704Bpeak,515source/package
-files matched,219imports verified,JIT0/pools1. Response<=0.08558%,lineL1/L2<=0.02677%,
-gap4.754→0.993um. Current production bytes unchanged after this build. New test/docs
-do not require another wheel. Correction is implemented/installed-tested, not new
-engineering/application acceptance. [Details](docs/d1_review_support/contact_radial_contract_20261004/README.md).
+At explicit penalties 1e6/1e7, gap is 30.269/11.067 um under unchanged 50 um;
+reaction changes 2.21%, so enforcement/spatial convergence remains open. The
+1e5 nonpass and two 1e7 integration failures are retained. Anchored trig projection
+resolves near-extremum derivative noise with the same 64-interval controls.
+Unresolved queried endpoint/extremum activation rejects before Gauss work;
+this does not prohibit first touch along a certified path. Same-family Read
+scrutiny only; no engineering/application admission or release.
 
-Historical named cylinder assessment remains PASS only at8be4c355,manifest559e839c…b389838:
-33fresh installed outcomes176.926s/203911168B. Frozen commands consumed, no replay.
-Axial/free plane-limit bending/fields, guided curved/rim code and actual cycle/restart
-claims retain limits. [Assessment](docs/d1_review_support/contact_curved_cylinder_response_20261004/acceptance_assessment.md).
-Keep prior source/curve/cycle/representation failures in raw
-C:/ANYworkspaceWork/contact_coupled_tool_staging_20261004; no retrospective regrading.
-The matched tool seed's284→16states/844→40iterations and15.28x/17.80x timings remain
-fixture-scoped; optimization timebox closed, no universal speed claim.
+## Next authorized decision / remaining requirements
 
-## Resolved question and next authorised slice
+Extend existing native owners toward material-surface/deformable-S3 static contact;
+verify formulation-owned shell corner work, complete cross derivatives and normal
+path before choosing the integrated slice. Reuse existing transactions/restart;
+no new performance campaign or unrelated prototype. Caps/interfaces/curved
+reference, multiple bodies, friction/dynamics and acceptance remain required.
+Actual-tangent free-rim continuum admission remains unavailable: the energetic
+bubble counterexample does not invalidate the guided discrete benchmark.
+[Prior correction/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_NATIVE_PLANE.md).
+Historical named cylinder assessment is source-bound to 8be4c355, not automatically
+current source. D1/D2 named acceptances retain their exact scope; current accepted
+source/model binding is missing and application admission remains false.
 
-Actual-tangent free-rim continuum admission is unavailable in the current C0
-Timoshenko/vonKarman energy space. A terminal B3 fixed-endpoint/rotation bubble
-has U=h*(GA*a²/6+EA*a⁴/40), while active-rim cap energy changes by a nonzero amount
-independent of h. One source check reproduces the independent formulas at3lengths:
-1passed2.232s160628736B,196imports verified. Read-only scrutiny confirms the math.
-Already-penetrating local poses, not manager initialization/sweeps/coupled solves;
-does not prove every finite rim solution diverges. Guided discrete evidence remains.
-[Derivation/results](docs/d1_review_support/contact_rim_energy_trace_20261004/README.md).
+## Restrictions / clock
 
-Decision: bring forward the required swept round material-section profile fromD4.
-Reuse existing native surface/classical structural maps; first establish formulation-
-owned orientation/variation/velocity and physical force couples/energetic trace.
-Then one integrated normal-contact slice before friction. Keep the profile distinct
-from centreline tube; no silent law swap, slope stiffness or h-dependent tuning.
-Other tangent-dependent cap branches need scrutiny; no generic admission from finite
-benchmarks. Do not open another performance campaign or arbitrary mesh sweep.
+ANYfem 434ec004 untouched. Impact V4/V16 NONPASS900s at1.79779ms/3ms, actual65nm
+pulse/old oracle sign defect: no unchanged/full replay or cap/gap-policy relaxation.
+Native grazing friction NONPASS−1.33564e-13m (223queries/448paths/21support/10.364s):
+closed event derivative/mixed-work enclosure missing; no saved/full/owner/split
+retry/reset/zero/native acceptance. Q4FD appcycle180.124s timeout: no unchanged retry.
+Optional Local/Mistral unavailable: no repeated probes. Frozen/consumed authorities
+remain consumed. All owned numerical processes terminal. Internal Read worker
+checks the next existing-owner integration boundary; no numerical authority given.
 
-## Dependencies / authority
-
-ANYfem434ec004 untouched. Accepted-D1 source/model binding missing; app admissionfalse,
-no protected recovery. ImpactV4/V16NONPASS900s at1.79779ms/3ms, actual65nm pulse/old
-oracle sign defect; no unchanged/full replay or safeguards/cap relaxation. Native
-grazing friction NONPASS−1.33564e-13m,223queries448paths21support10.364s: closed event
-derivative/mixed-work enclosure missing. No saved/full/owner/split retry/reset/zero
-or native acceptance. Q4FD appcycle180.124s timeout:no unchanged retry. Optional
-Local/Mistral unavailable:no repeated probes. Internal reviewer completed; all owned
-numerical processes terminal. No active execution authority is recreated by this note.
-
-Budget: get_goal.timeUsedSeconds +3120s offset; latest413067+3120=416187s=115.608h,
-about4.392h of original120hremain. Check before substantial work; never reset/extend.
-Routine180s/1GB(existing953MiBrunner),named900s/4GB; stricter frozen caps prevail.
-At120h preserve/report achieved/missing and request time/scope/method decision.
-No supported full-programme completion forecast; incomplete is not complete.
+Clock = get_goal.timeUsedSeconds +3120s offset. Latest418016+3120=421136s,
+116.982h; about3.018h of original120h remain. Never reset/extend. Routine180s/1GB
+(existing953MiBrunner), named900s/4GB; stricter frozen caps prevail. At120h preserve
+achieved/missing work and request time/scope/method decision. Full completion has
+no supportable forecast; incomplete is not complete.

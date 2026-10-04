@@ -1,4 +1,20 @@
 # General-contact capability ledger
+## Retained native material patch / plane — 4 October
+
+Implemented/installed-tested development atf08d3d80: one strictly interior straight
+half-cell material patch, fixed reference area and explicit N/m³ penalty. Physical
+section work/couples map to all42retained coordinates through the existing owner.
+Independent area energy/wrench, complete derivatives, fresh S3 both-body work,
+covariance, hidden rotational path rejection, balance, rollback and split restart
+pass. Anchored projection avoids near-front roundoff; unresolved queried endpoint/
+extremum activation rejects before quadrature. 21installed checks27.431s186310656B;
+516package files/208imports match,JIT0/pools1. Gap30.269→11.067um underunchanged50um
+at1e6→1e7N/m³; forcechanges2.21%, convergence remainsopen. All failures retained.
+Same-family scrutiny only; no independent engineering/application admission/release.
+No caps/interfaces/curved-reference/friction/dynamics/multi-beam scope.
+[Guide](GENERAL_CONTACT_NATIVE_MATERIAL_PLANE_DEV.md),
+[evidence](d1_review_support/contact_native_material_plane_20261004/README.md).
+
 ## Actual quadratic-beam physical ends — 4 October
 
 Implemented/installed-tested development: one B3/B3 or mixed B2/B3 cell perbody,
