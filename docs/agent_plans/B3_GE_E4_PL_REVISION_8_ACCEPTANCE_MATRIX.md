@@ -2043,3 +2043,16 @@ no actionable finding; different-family, physical/external/completeness,
 platform/scale and aggregate acceptance remain OPEN. Editable sibling graph
 is not final ecosystem qualification; M2/F03/G0 and authorities unchanged.
 [Results and review](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-free-modal-consumer-20261004/results.md).
+
+M2 auxiliary-native-beta envelope, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+Complete21 saved cases/all seven ratios/Nx16/32/64 pass unchanged independent
+scalar floors and all full-spectrum/work/numerical/reference/condition controls.
+Observed minimum beta.8128925545.17 newly missing observations, three retained
+ratio parity controls (difference<=3.33e-16), one initial result reused.
+Twenty serial jobs62.6762s, max9.754s/354430976B sampled; pools/Numba1/JIToff.
+13focused controls pass; helper schema/serialization/test failures preserved.
+Supporting complete source/runtime review clear, different-family unmet.
+Auxiliary-beta observation complete; actual mechanical2745 HOLD, uniform/mixed
+stability, regional physical accuracy and M2/F03/G0 acceptance remain OPEN.
+FormalF03 UNCONSUMED; no product/default/resource/tolerance/release change.
+[Results and immutable extension](development/r8-bl5-projected-assessment-20261003/results.md).

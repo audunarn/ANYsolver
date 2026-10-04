@@ -824,3 +824,90 @@ uniform stability and complete programme gates remain unmet.
 [Immutable57-file reference extension](raw-manifest-v12.json),8332440bytes,
 SHA2955b6d9e8cdc5484c1703c48317a60f059f698e83a0048b05995385b4a56a55.
 All earlier records, criteria and failed/HOLD evidence remain unchanged.
+
+
+## Saved native auxiliary-beta discriminator — 4 October
+
+The unresolved mechanical2745 certificate and auxiliary inf-sup are distinct.
+One saved ns16_b8 owner (nx16/ny4/256 native halfcells/four growing-rule supports)
+now has complete native-beta assessment under its unchanged independently frozen
+scalar floor. All40 generalized modes pass: beta0.8437436547601447 versus
+floor0.40628292833732604; squared spectrum[0.7119033549480062,
+0.9991911106712409], native/reference conditions57.26261/40.86883. The full
+physical work discrepancy is1.39e-17 and reconstructed installed C is exact.
+Inverse/eigen/skew residuals1.59e-13/3.35e-14/3.36e-14; total reference error
+0.0007669822 within1e-3. Bare yaw is included in the positive auxiliary norm,
+not discarded as a mechanical rigid mode. Lowest multiplier density/work/Riesz
+lift and all eigenvectors are retained; the lowest mode involves lateral force
+and its associated director action, without an admissibility/instability claim.
+
+This new assessor validates the original417-module wheel/site graph and frozen
+owner/state/scalar manifests independently of current product source. Reference
+shell Grams are reused, and the existing beam-reference preparation terminated
+at subdivision1; no native solve, FE refinement or inverse certificate replay.
+Actual H1936/15254nnz, C40x5124/3870nnz. Final wholecall3.5195s and184778752B
+sampled process-tree peak fit600s/2GiB; observed pools/Numba1, JIT off. No speedup
+claim. Original wheel1bf7dabd and all physical/model/scientific inputs unchanged.
+
+Failures are retained: v1 legacy metadata assumption refused before operator
+reconstruction; v2 completed numerics but NumPy predicate serialization failed.
+Actual-envelope schema and boolean serialization regression checks repaired
+those helper defects. All45 v2/v3 raw arrays compare exactly equal. Root's first
+serialization repair also had a missing import, caught by a failed focused test
+(11pass/1fail); it was repaired before v3. Initial8/final10/intermediate11 and
+final12focused controls pass, with all earlier logs retained. The first pytest
+run reports an atexit temporary-symlink permission warning despite successful
+exit; later checks used an owned basetemp. No global pytest settings changed.
+
+Final source ee1237916ec0b61d3655d1df4f8562a555e2530a79e0aefc4523b0c720a92f79;
+controls84323c7663356ca2f68e6c0d41848eb8543557beab9ac7e9e2873065084029f3.
+This closes only the missing auxiliary-beta observation for this fixture.
+Mechanical2745 HOLD, remaining native-beta envelope, physical regional accuracy,
+growing-space/mixed-system acceptance, mandatory CalculiX and different-family
+acceptance remain OPEN. FormalF03 UNCONSUMED. Next separately bounded action is
+the missing saved-envelope beta evaluations, not a changed norm or new meshes.
+[New-owned records and supporting review](../../../../.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/native-beta/).
+
+
+## Complete saved native-beta envelope — 4 October
+
+All21 registered ratios/levels now have positive complete native auxiliary-beta
+spectra passing their unchanged case-specific scalar floors, reference error,
+conditioning, inverse/eigen residual, variational and physical-work predicates.
+Observed beta range0.8128925545–0.9655439724; no collapse is observed on these
+three registered levels. This is not a uniform stability theorem or mixed-system
+acceptance.
+
+| Whole member:shell | Nx16 beta | Nx32 beta | Nx64 beta |
+| --- | ---: | ---: | ---: |
+| 1/8 | 0.96178663 | 0.95564417 | 0.96554397 |
+| 1/4 | 0.93160894 | 0.93563446 | 0.94108912 |
+| 1/2 | 0.82292061 | 0.81550419 | 0.81289255 |
+| 1 | 0.83794509 | 0.82107788 | 0.81329820 |
+| 2 | 0.84241058 | 0.82338417 | 0.81396620 |
+| 4 | 0.84355463 | 0.82387611 | 0.81454119 |
+| 8 | 0.84374365 | 0.82418110 | 0.81462009 |
+
+Twenty serial jobs reused original saved operators, not new FE solves. One
+completed initial case was reused;17 newly missing observations and three
+previously measured ratio cases exercised the new generic implementation.
+Those three beta differences are at most3.33e-16 against retained originals.
+The earlier phrase "20 missing" overstated novelty; the full inventory above
+is authoritative. Max total reference error.0009753524; max recorded
+work/constraint/inverse/eigen/skew discrepancy1.3623e-12. Full40–160 (and smaller
+coarse-space) eigensystems and weakest physical density/work/Riesz modes remain
+in raw files. Final source adds only a100k row guard before existing reference
+preparation;13focused controls pass. Original first-case source remains its
+actual runtime source, rather than relabeling it as the later guarded source.
+
+Owned jobs are serial; sum62.6762s, largest9.7535s/354430976B sampled tree peak,
+all600s/2GiB budgets respected. Every observed numerical pool/Numba1, JIT off.
+No optimization-gain claim. Complete-slice supporting non-implementing review
+found no blocker; it is not different-family qualification.
+
+The next decision is a justified numerical contract for the actual constrained
+mechanical2745 kernel in its physical metric, distinct from this positive
+auxiliary norm. The failed inverse-majorant ticket remains closed/unresolved;
+regional torque/accuracy, full mixed-system/locking, mandatory CalculiX and
+M2/F03/G0 acceptance remain open. No law/space selected or formalF03 consumed.
+[Full raw and review](../../../../.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/native-beta/).
