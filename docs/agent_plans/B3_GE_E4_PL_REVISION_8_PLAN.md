@@ -173,6 +173,11 @@ Decisions resolving the present queue:
   direct work; large disagreement directs a modelling/work-map investigation,
   small agreement supports only My and leaves nativeMx adequacy open. No new
   tolerance, finer campaign, formalF03 consumption or aggregate pass follows.
+  Completed My direction: direct compliance0.019364% difference and reciprocal
+  work controls pass. Next ONE new native80x32 Mx/My adequacy check, same law/
+  pad/support/b7 artifact,1factor, old donor guards intact and exact40x16 builder
+  parity. Significant movement leaves adequacy open; small movement supports
+  measured pair stability, not an asymptotic bound or aggregate acceptance.
 - **Pressure assessment:** do not adopt the proposed vector-only amendment.
   Its documented shared-node masking weakens a protection of the current
   contract. This resolves the outstanding approval request as a decision to

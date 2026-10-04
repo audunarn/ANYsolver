@@ -23,30 +23,40 @@ Six-pose output bounds and reciprocal work retained. Reference thickness shift
 does not explain nativeMx last movement1.518%. Stop thickness refinement for
 this decision; neither two thickness levels nor sub1% fine agreement qualifies.
 
-Next discriminator: ONE separately bound unitMy native/solid-nz4 comparison at
-unchanged finest geometry/map/artifact, complete6poses/direct compliance and
-theta_x(My)=theta_y(Mx) reciprocity. It tests the missing moment direction and
-nonasymptotic roll/pitch coupling. Large disagreement directs a law/work-map
-investigation; small agreement supports My only and leaves nativeMx adequacy
-open. No automatic finer campaign, law rejection, new threshold or line substitute.
+Latest My discriminator completes: direct compliance difference0.019364%,
+native/solid reciprocal errors6.785e-17/2.602e-15 (solid bound1.232e-13).
+No missing pitch-work channel indicated. This supports My only, not nativeMx
+adequacy or full6channel/finite fidelity. Source/provenance and serializer issues
+repaired; original failed native/empty output remains rejected and preserved.
+
+Next scientific discriminator: ONE separately bounded native80x32 Mx/My on
+unchanged physical pad/support/law/b7artifact, onefactor/full6poses/work and
+absolute cross coupling. New builder must reproduce allowed40x16 exactly;
+historical donor still rejects80x32. Runtime/memory unmeasured:600s/2GiB limits.
+Significant movement threatening original1% comparison leaves adequacy open;
+small movement supports measured mesh-pair stability only. No asymptotic claim,
+automatic next mesh/solid campaign, threshold change or line-law substitute.
 
 ## Exact state, evidence and authority
 
 ANYsolver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; pre-slice HEAD02cc1ed4,
+branch codex/stiffened-main-reconcile-20261001; pre-slice HEAD3f6ae11a,
 finite product8d03f522. Current changes are diagnostic helpers/tests, preserved
 raw and living records only. ANYfem C:/Github/ANYfem/.worktrees/
 experimental-ge-panel-consumer, branch codex/experimental-ge-panel-consumer,
 HEAD93336c5; no current edit. Original forwarding/unrelated dirty work preserved.
 
 [Grouped evidence and limits](development/r8-distributing-reference-linear-20261004/results.md).
-Latest raw .qualification/b3-ge-e4-pl/r8-distributing-thickness-dev-20261004-v1
+Thickness raw .qualification/b3-ge-e4-pl/r8-distributing-thickness-dev-20261004-v1
 binds final6PASS, prior65 controls, six exact legacy decks/parses, full v5 CCX
 outputs/comparison and saved analysis. Initial CRLF/tuple-list fixture failures,
 v4 CCX input failure201 and refused naming collision remain. CLOAD new-only
 .13e repair retains all coefficients; actual deck work/resultants checked at
 unchanged tolerances. Prospective drivers/prior data frozen before execution.
-All numerical jobs and supporting reviewers terminal; no process needs recovery.
+Latest My raw .qualification/b3-ge-e4-pl/r8-distributing-my-dev-20261004-v1
+pins final v3 jobs/comparison,23 initial controls/1final changed control,419
+actual installed source hashes and preserved failure/repair history. Numerical
+jobs terminal; bounded next-implementation Read review may still be running.
 
 Solver wheel9a366e44b752e57b65f029a7ee54fe4c4ee7581c5bda0f85083c8c8d040f59e8;
 finite consumer wheele8379bed3db7d7f6f8349135a1f8e5e294528502aa738339e74d7b9c4b8692e6.

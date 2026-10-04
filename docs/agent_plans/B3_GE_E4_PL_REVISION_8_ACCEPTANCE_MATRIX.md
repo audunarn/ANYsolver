@@ -2220,3 +2220,12 @@ Stop thickness refinement for this decision; native torque adequacy and missing
 moment directions remain open. Two thickness levels/sub1% differences do not
 establish convergence or close any aggregate row. FormalF03 UNCONSUMED.
 [Exact diagnostic and decision](development/r8-distributing-reference-linear-20261004/results.md).
+
+F04 independent My direction, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+Unchanged40x16 native/b7 and solidnz4: direct work difference0.019364%,
+reciprocal discrepancies6.785e-17/2.602e-15 within stated numerical/decimal
+bounds. Full poses and stub/root/transfer controls retained. Original23PASS/
+final changed-control1PASS and failed serialization/recheck evidence preserved.
+Next one separately bounded native80x32 Mx/My check targets remaining adequacy;
+old donor guards remain. No convergence/full6channel/finite/aggregate pass.
+FormalF03 UNCONSUMED. [Evidence](development/r8-distributing-reference-linear-20261004/results.md).

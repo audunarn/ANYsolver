@@ -406,6 +406,59 @@ review covers mechanics/parser/resource/provenance; different-family and formal
 scientific acceptance remain open. Scripts-only diagnostic changes do not
 invalidate the unchanged product wheel or require its campaign to be repeated.
 
+## Independent My direction on unchanged finest geometry
+
+ONE unitMy action uses the same40x16 native/b7 installed artifact and40x16/nz4
+solid map/pad/supports. It tests pitch compliance and the reciprocal roll/pitch
+channel, not mesh convergence. The new case replaces only CLOAD/identity;
+old public Mx/Fy entry points still reject My. Native retained fields and
+physical stub/root/transfer/work controls are unchanged; historical six decks,
+metadata and parsed outputs remain exact under the common parser seam.
+
+Native My work3.078564636078e-5J versus solid3.079160882813e-5J differs−0.019364%.
+Native theta_x(My)1.688087803478e-7 agrees with saved theta_y(Mx) to6.785e-17;
+solid theta_x(My)1.737409818568e-7 agrees to2.602e-15, inside propagated
+decimal bound1.23214e-13. Full6poses remain in raw comparison, including the
+small absolute cross coupling; no new relative coupling cutoff is introduced.
+Native station strains/resultants and retained resultants are zero, transfer
+wrench error zero, equilibrium3.242e-11 and gap6.458e-22. My virtual work/root
+controls pass. Root numerical error~1.1e-9 is distinct from output-print bounds.
+
+Final native/CCX/compare complete with empty stderr, effective pools1 and
+affinity1. Native1factor,24.763s/sample274767872B; CCX2.697s/sample313384960B.
+100krows/600s/2GiB guards remain. All419 installed Python files byte-match
+original b7 wheel before import; actual anysolver module paths stay in its
+site. Five historical input identities, six helpers, binary/deck and final
+drivers are pinned before execution. No new wheel or product change is needed.
+
+Focused controls23PASS precede the narrow malformed-metadata translation;
+final changed control1PASS. Initial recheck fails before tests because NumPy
+was not loaded when checking pool inventory; corrected loader/failure retained.
+First native run reaches physical controls but fails serializing an ndarray;
+its failed terminal status and empty partial JSON are preserved and rejected
+by comparison. Final serializer converts only ndarrays, rejects nonfinite
+data before creating a file, and passes nested-array controls. Source/provenance
+review also closed a missing native terminal-status check before comparison.
+No failed job becomes accepted evidence; final fresh v3 paths are independently
+checked. Supporting OpenAI review found no remaining development blocker;
+different-family/scientific acceptance remains open.
+
+Decision: no missing My work channel is indicated by this case. My alone
+does not certify Mx adequacy, full6channel fidelity, finite response or any
+aggregate row. Combined thickness/My evidence now justifies ONE separately
+bounded native80x32 Mx/My check, same physical law/geometry/supports/artifact,
+onefactor and full work/pose/reciprocity controls. Its new explicit builder
+must reproduce allowed40x16 exactly and leave old donor rejection unchanged.
+Keep600s/2GiB hard stops; runtime/memory at80x32 remain unmeasured. A remaining
+movement threatening the original1% comparison window leaves adequacy open;
+small movement permits a measured mesh-pair stability statement only, not an
+asymptotic bound. No automatic next mesh/solid campaign or tolerance change.
+
+Raw `.qualification/b3-ge-e4-pl/r8-distributing-my-dev-20261004-v1` retains
+all source/driver versions, controls/failures/bindings, installed import hashes,
+native/complete external outputs, comparison-v3 and supporting review.
+FormalF03 remains UNCONSUMED; G0/G2/F04/full programme remain open.
+
 ## Finite distributing candidate: original derivation and bounded feasibility
 
 The finite shell pose is a new candidate, not a retrospective reinterpretation

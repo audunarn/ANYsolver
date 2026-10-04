@@ -132,12 +132,12 @@ def _parse_observed(dat, stdout, expected, area):
     ub = uncertainty["displacements", "ALL"]
     rf = parsed["forces", "ROOT"]
     rfb = uncertainty["forces", "ROOT"]
-    action = area.action(LOADS[expected["case"]][:3], LOADS[expected["case"]][3:])
+    action = area.action(expected["applied_wrench"][:3], expected["applied_wrench"][3:])
     observed = area.recover(u)
     forces = np.array(list(rf.values()))
     positions = np.array([expected["physical_nodes"][n] for n in rf])
     balance = np.r_[forces.sum(axis=0), np.cross(positions, forces).sum(axis=0)]
-    wrench = np.array(LOADS[expected["case"]])
+    wrench = np.array(expected["applied_wrench"])
     applied = np.r_[wrench[:3], wrench[3:]+np.cross(PORT, wrench[:3])]
     root_bounds = np.array(list(rfb.values()))
     moment_bounds = np.array([
@@ -155,6 +155,11 @@ def _parse_observed(dat, stdout, expected, area):
 
 def native_cases(nx=10, ny=4):
     """Run one fixed physical pad through the installed public GE facade."""
+    return _native_load_cases(nx, ny, LOADS)
+
+
+def _native_load_cases(nx, ny, loads):
+    """Local fixture seam; each bounded caller owns its explicit load inventory."""
     from anysolver import b3_ge, stiffened_shell as ss
     from scipy.spatial.transform import Rotation
     from scripts.r8_e02_native_rigid_tip import geometry
@@ -179,7 +184,7 @@ def native_cases(nx=10, ny=4):
     records = {}
     try:
         ns = 6*len(nodes)
-        for name, wrench in LOADS.items():
+        for name, wrench in loads.items():
             result = owner.solve_linear((ss.NodalAction("beam",100001,wrench),))
             if result.status != "completed":
                 raise RuntimeError("native solve failed")
