@@ -389,6 +389,12 @@ def test_yielding_fixture_failure_preserves_last_accepted_state(stiffness):
     maximum_accumulated=max(_accumulated(run.accepted.native_histories))
     if stiffness==1e6:
         assert run.accepted.completed_targets==3 and maximum_accumulated>0.
+        restored=_analysis(**kwargs).solve(checkpoint=run.checkpoint,
+            expected_sha256=run.checkpoint_sha256,stop_after=3)
+        assert restored.status=='paused' and restored.checkpoint==run.checkpoint
+        assert canonical(restored.accepted.native_histories)==canonical(run.accepted.native_histories)
+        assert canonical(restored.accepted.mechanical.descriptor())==canonical(run.accepted.mechanical.descriptor())
+        assert_allclose(restored.accepted.shell_displacement,run.accepted.shell_displacement,rtol=0.,atol=0.)
         previous=np.asarray(_accumulated(owner.initial.native_histories))
         for row in json.loads(run.checkpoint)['records']:
             current=np.asarray(_accumulated(row['histories']))
