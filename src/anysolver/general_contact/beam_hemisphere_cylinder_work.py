@@ -151,7 +151,9 @@ def hemisphere_cylinder_work(positions, endpoint, outward_sign, radius,
     coeff=((-1,1) if len(x)==2 else ((-3,4,-1) if endpoint==0 else (1,-4,3)))
     coeff=tuple(outward_sign*v for v in coeff)
     xf=[[Fraction.from_float(float(v)) for v in row] for row in x]
-    of=[Fraction.from_float(float(v)) for v in O]
+    # The translating owner supplies exact affine centres. _vector above
+    # validates representability but must not round away their local offset.
+    of=[v if isinstance(v,Fraction) else Fraction.from_float(float(v)) for v in cylinder_point]
     qf=[v-c for v,c in zip(xf[endpoint],of)]
     tf=[sum(c*(row[j]-xf[endpoint][j]) for c,row in zip(coeff,xf)) for j in range(3)]
     radialf=[sum(v*a for v,a in zip(qf,row)) for row in exactP]

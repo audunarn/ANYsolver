@@ -1,9 +1,9 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.100. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.7, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.102. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.9, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
-**Branch / source-changing baseline:** `codex/contact-main-reconcile-20261001` / `adbdfa3d`; current Git HEAD binds later test/evidence additions.
+**Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
 This plan changes execution priorities and workflow prospectively. It preserves the
 [full C0–C9 programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md), all scientific
@@ -51,8 +51,14 @@ source scrutiny and fresh installed verification: 284→16 states, 844→40 iter
 in both guided fixtures. B's axial/curved/plane-limit bending and line-field gaps
 now have a prospectively assessed named benchmark PASS:33fresh installed outcomes,
 with515package files matched. General profile/model admission remains open.
-Next close one concrete admission-contract question in that existing capability;
-no further optimization campaign or unrelated prototype is needed.
+The next contract discriminator identified rounded-radius work/activation and lost
+affine tool motion. A scoped correction now passes73installed predicates, including
+affected response/field/enforcement, actual cycles and restart. It retains exact
+declared radii and tool coordinates; unresolved right-end sub-ULP intervals fail
+explicitly. Old checkpoint identities reject continuation. This is tested
+development, not new general admission. Next resolve the actual-tangent rim's
+mesh/regularity question in the existing classical profile; no new prototype or
+optimization campaign is needed.
 See the updated moving-cylinder guide and ledger for exact scope and raw evidence.
 
 ## 2. Decided execution sequence on resumption
@@ -125,12 +131,30 @@ cylinder-static benchmark assessment now passes33fresh installed outcomes,
 176.926scombined/203911168Bpeak, with independent analytical, continuum and
 transfer comparisons plus final source/raw scrutiny. This closes the literal
 benchmark evidence rows, not arbitrary cylinder/beam admission.
-Next: one bounded contract review identifies the smallest credible admission
-scope for the existing profile, or a concrete required work/geometry/structural
-guard and discriminator. Check actual interpolation/reference geometry, vonKarman
-scope, complete paths/state and representation versus dimensional gap budgets.
-Do not invent generic admission from finite benchmark agreement or open another
-prototype while that specific question is unresolved.
+The representation contract repair is implemented and installed-tested: exact
+literal radius through activation/work and exact affine centre through line/cap,
+search/sweep, work and cache. Reporting persists exact rational coordinates;
+restart binds revised numerical identities. A tiny left-end Q2 front is resolved;
+its reversed unrepresentable station interval returns explicit non-success.
+[Correction/evidence](docs/d1_review_support/contact_radial_contract_20261004/README.md).
+The admission discriminator now demonstrates an energy-space defect. For a B3
+terminal bubble with fixed endpoint/section rotations, structural energy is
+`h*(GA*a²/6+EA*a⁴/40)` while the active tangent-owned rim cap energy changes by
+a nonzero amount independent of h. Three production-work evaluations reproduce
+both independent expressions. This is a regularity counterexample, not evidence
+that every finite rim solve diverges. Guided discrete rim checks remain valid;
+unconstrained free-rim continuum admission remains unavailable. Existing plane/
+sphere rim branches need the same scrutiny when orientation affects their work.
+[Derivation and bounded discriminator](docs/d1_review_support/contact_rim_energy_trace_20261004/README.md).
+
+**Decided next action:** bring forward the required swept round material-section
+profile from D4. Reuse existing native surface and classical structural work maps;
+identify formulation-owned section orientation, its variations/velocities and
+endpoint work before adding a contact driver. No tangent-to-section substitution
+inside a historical profile, artificial slope stiffness, stiffness scaling with h,
+generic rim promotion or broad diagnostic sweep. Keep centreline-tube and material-
+surface definitions distinct. Deliver one integrated normal-contact slice using
+that declared work map before friction; retain D3 pairings and all later outcomes.
 Do not infer general nonlinear or rim engineering acceptance from these
 guided tests or start another optimization/mesh sweep without a discriminator.
 [Evidence](docs/d1_review_support/contact_curved_cylinder_response_20261004/summary_final.json).

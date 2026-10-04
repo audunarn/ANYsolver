@@ -92,16 +92,21 @@ class BeamRadialEndManager(_BeamRadialManager):
         lanes,minimum=self._geometry(cell,positions)
         if minimum<=-self.beam_radius:raise ValueError('radial end profile cannot certify centreline exterior to obstacle')
         size=3*len(cell.node_ids);points=0;maximum_error=0.;intervals=0
+        # Actual-hemisphere profiles share the exact literal radius sum with
+        # their caps/bounds. Historical owned-point routes retain their law.
+        radius=getattr(self,'full_envelope_radius',self.radius)
         # Floating roots are subdivision proposals, never inactivity certificates.
-        polynomial=_distance_polynomial(positions,self.point,self.projector.T@self.projector,self.radius)
-        cuts=radial_cuts(lanes,self.radius,_real_interval_roots(polynomial))
+        polynomial=_distance_polynomial(positions,np.asarray(self.point,dtype=float),self.projector.T@self.projector,self.radius)
+        cuts=radial_cuts(lanes,radius,_real_interval_roots(polynomial))
         def quadrature(left,right,rule):
             nonlocal points
             E=0.;f=np.zeros(size);K=np.zeros((size,size));active=0.
             for node,weight in zip(*rule):
                 s=(left+right)/2+(right-left)/2*float(node)
+                if isinstance(radius,Fraction) and s in (left,right):
+                    raise ArithmeticError('radial end quadrature station is unresolved')
                 p=_restrict(lanes,s,s)
-                if point_sign(p,self.radius)>=0:continue
+                if point_sign(p,radius)>=0:continue
                 gap,n,H=self._radial_work(p)
                 shape=cell.shape(2*s-1);gradient=np.outer(shape,n).reshape(-1)
                 measure=cell.length*(right-left)/2*float(weight)
@@ -114,8 +119,8 @@ class BeamRadialEndManager(_BeamRadialManager):
         def refine(left,right,depth):
             nonlocal maximum_error,intervals
             panel=_restrict(lanes,left,right)
-            if radial_inactive(panel,self.radius):return 0.,np.zeros(size),np.zeros((size,size)),0.
-            signs=[(q>0)-(q<0) for q in (v-_fraction(self.radius)**2 for v in squared_controls(panel)) if q]
+            if radial_inactive(panel,radius):return 0.,np.zeros(size),np.zeros((size,size)),0.
+            signs=[(q>0)-(q<0) for q in (v-_fraction(radius)**2 for v in squared_controls(panel)) if q]
             variations=sum(a!=b for a,b in zip(signs,signs[1:]))
             low=quadrature(left,right,_GAUSS_8);high=quadrature(left,right,_GAUSS_16)
             error=max(abs(low[0]-high[0])/max(abs(high[0]),1e-30),

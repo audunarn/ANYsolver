@@ -2038,3 +2038,37 @@ admission or release; broaderD3/C0–C9 remains open. Public development status 
 [Assessment](d1_review_support/contact_curved_cylinder_response_20261004/acceptance_assessment.md)
 links frozen inputs and raw results. Older-wheel reuse is tied to actual source bytes
 and fresh initialization coverage, not merely a baselineSHA. Historical failures remain.
+
+### Literal radius / affine-tool correction — installed development, 4 October 2026
+
+Actual-hemisphere sphere/cylinder owners now share the exact declared binary radius
+sum across line activation/work and physical bounds/caps. Prescribed cylinder
+coordinates retain the exact affine law before local subtraction/projection;
+work/sweeps/cache use that same law. JSON results carry approximate display floats
+plus exact rational metre strings. Radius/path restart revisions reject older
+identities; historical owned-point/sphere APIs and no-contact execution stay.
+Tiny Q2 left-end contact is integrated rather than discarded. A reversed
+sub-ULP station interval returns explicit non-success, not a successful response.
+
+73installed verification predicates pass in157.206scombined, peak203976704B;
+515package files match, JIToff/pools1. Changed32/64-cell bending/field/enforcement
+responses and actual B2/B3 press/open/recontact/restart pass. Maximum response
+error0.08558%, lineL1/L2 error0.02677%; stronger-enforcement gap4.754→0.993um.
+This is an implemented/tested correction with mathematical/code review, not new
+general engineering/application admission or release. The prior33-row assessment
+remains bound to8be4c355. All failure evidence and numerical criteria remain.
+[Scope, raw identities and limits](d1_review_support/contact_radial_contract_20261004/README.md).
+
+### Tangent-owned free rim — continuum admission withheld, 4 October 2026
+
+One bounded B3 terminal-bubble discriminator reproduces independent beam-energy
+and cylinder-rim formulas: structural cost halves with terminal-cell length while
+cap energy changes by about4.36854e-4J independent of that length. Fixed endpoint
+positions/section rotations, regular curve and the stated physical-gap margin do
+not remove the variation. Source1passed/2.232s/160628736B,196imports verified;
+this is a tested limitation, not a coupled-solution acceptance pass. Read-only
+scrutiny confirms the variational argument and its scope. Existing guided discrete
+rim benchmarks retain their exact claims. Generic unconstrained tangent-owned rim
+is not independently accepted or released; no stiffness/gap retuning. The required
+material-section surface work map is the next explicit development dependency.
+[Derivation/evidence](d1_review_support/contact_rim_energy_trace_20261004/README.md).

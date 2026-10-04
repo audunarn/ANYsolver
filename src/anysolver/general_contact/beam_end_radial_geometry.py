@@ -8,7 +8,12 @@ import heapq
 import math
 
 import numpy as np
-from .capped_cylinder import _controls,_restrict,_product,_sqrt_bound,_fraction
+from .capped_cylinder import _controls,_restrict,_product,_sqrt_bound,_fraction as _binary_fraction
+
+
+def _fraction(value):
+    """Retain exact derived radii/centres; convert only floating inputs."""
+    return value if isinstance(value,Fraction) else _binary_fraction(value)
 
 
 def squared_controls(controls):
@@ -49,11 +54,35 @@ def radial_cuts(controls,radius,proposals):
         for i,a in enumerate(terms):
             for j,b in enumerate(terms):power[i+j]+=a*b
     power[0]-=R*R
+    if not affine and isinstance(radius,Fraction):
+        # Preserve a small but nonzero activation constant. The historical
+        # floating proposal builder trims coefficients relative to the largest
+        # one, which can turn a resolvable endpoint interval into a zero root.
+        # These are still proposals: exact brackets/refinement below and the
+        # integration panel certificates remain authoritative.
+        scale=max(abs(v) for v in power)
+        if scale:
+            polynomial=np.polynomial.Polynomial([float(v/scale) for v in power]).trim()
+            proposals=tuple(sorted(set(float(root.real) for root in polynomial.roots()
+                if abs(root.imag)<=1e-10 and 0.<root.real<1.)))
     def value(s,derivative=False):
         coefficients=tuple(i*v for i,v in enumerate(power))[1:] if derivative else power
         result=Fraction(0)
         for coefficient in reversed(coefficients):result=result*_fraction(s)+coefficient
         return result
+    if not affine and isinstance(radius,Fraction):
+        q=squared_controls(controls)
+        differences=tuple(b-a for a,b in zip(q,q[1:]))
+        monotone=(all(v>=0 for v in differences) or all(v<=0 for v in differences)) and any(differences)
+        # A signed derivative Bernstein hull certifies at most one front.
+        # Newton from the nearer endpoint supplies its tiny root without the
+        # ill-conditioned companion matrix of an almost-affine quartic.
+        if monotone and value(0)*value(1)<0:
+            origin=0 if abs(value(0))<abs(value(1)) else 1
+            slope=value(origin,True)
+            if slope:
+                candidate=float(Fraction(origin)-value(origin)/slope)
+                if 0<candidate<1:proposals=(candidate,)
     cuts=(0.,*proposals,1.);resolved=[]
     for index,proposal in enumerate(proposals,1):
         left,right=(cuts[index-1]+proposal)/2,(proposal+cuts[index+1])/2

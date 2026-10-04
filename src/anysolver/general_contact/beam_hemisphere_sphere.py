@@ -53,14 +53,18 @@ class HemisphereSphereManager(BeamRadialEndManager):
         report=self.validator(model,definition,settings)
         if not report.valid:raise ValueError('unsupported hemisphere sphere: '+'; '.join(report.issues))
         # Enclose the actual sum of the two literal radii even when their
-        # ordinary floating addition rounds down. This changes bounds only;
-        # the reused line potential keeps its original arithmetic.
+        # ordinary floating addition rounds down. Caps, distributed line work
+        # and all activation/bound controls must use the same physical sum.
         self.full_envelope_radius=Fraction.from_float(definition.surfaces[0].beam_radius)+Fraction.from_float(definition.rigid_bodies[0].radius)
         super().__init__(model,definition,replace(settings,beam_end_cap_work='owned_point'),initial_displacement)
         self.settings=settings;self.profile=type(self).profile
         initial=np.zeros(model.mesh.dof_manager.total_dofs) if initial_displacement is None else np.asarray(initial_displacement)
         if not self._regular(initial,initial):raise ValueError('sphere cap requires regular physical beam curves')
         self._cap_work(initial)
+
+    def _radial_work(self,point):
+        from .beam_end_radial_geometry import radial_point_work
+        return radial_point_work(point,self.projector,self.full_envelope_radius)
 
     def _regular(self,start,end):
         return all(regular_curve_path(self._positions(cell,start),self._positions(cell,end),
@@ -125,6 +129,7 @@ class HemisphereSphereManager(BeamRadialEndManager):
             beam_end_cap_work='hemisphere_support_dev',
             full_envelope_revision='literal_radial_map_resolved_bernstein_full_radius_v1',
             full_envelope_radius_addition='exact_binary_radii_sum',
+            line_radius_work_revision='exact_literal_sum_activation_and_work_v2',
             end_topology_revision='all_classical_material_node_incidence_v1')
         result['settings']['beam_end_cap_work']='hemisphere_support_dev'
         return result

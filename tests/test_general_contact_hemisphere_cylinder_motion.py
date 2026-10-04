@@ -50,7 +50,7 @@ def test_tool_solve_work_open_recontact_and_fresh_restart(quadratic):
     np.testing.assert_allclose(result.displacements[dofs],u,rtol=1e-6,atol=1e-10)
     info=result.info['general_contact']
     assert info['profile']==PROFILE and info['active_endpoints']==1 and info['gap_tolerance_met']
-    assert info['rigid_motion_profile']=='prescribed_axis_translation_affine_static_v1'
+    assert info['rigid_motion_profile']=='exact_literal_axis_translation_affine_static_v2'
     np.testing.assert_allclose(info['rigid_force'],(-F,0.,0.),rtol=1e-6,atol=1e-10)
     assert result.steps[-1].support_reactions['root'][0]==pytest.approx(reaction,rel=1e-6,abs=1e-10)
     previous=previous_force=0.;work=0.

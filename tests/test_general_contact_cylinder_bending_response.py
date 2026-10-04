@@ -101,7 +101,7 @@ def pressure_errors(model,result,body,law,ref):
         delta=sum((shape*position[2] for shape,position in zip(shapes,positions)),Polynomial((offset,)))
         # Stable signed square: no subtraction of two order-1e14 terms.
         square=dx*dx+delta*(2*radius+delta)
-        # Also check physical radii before the rounded addition used for work.
+        # Physical radius sum now governs line work as well as gap admission.
         # Differentiating this cancellation-free polynomial finds every possible
         # minimum of distance along the represented B2/B3 centreline.
         physical_square=square+radius_roundoff*(2*radius-radius_roundoff)
@@ -110,16 +110,16 @@ def pressure_errors(model,result,body,law,ref):
         independent_minimum_gap=min(independent_minimum_gap,*[
             physical_square(t)/(np.hypot(dx(t),radius+delta(t))+radius-radius_roundoff)
             for t in extrema])
-        cuts=[0.]+sorted(float(r.real) for r in square.roots()
+        cuts=[0.]+sorted(float(r.real) for r in physical_square.roots()
             if abs(r.imag)<1e-10 and 0.<r.real<1.)+[1.]
         length=reference[-1,0]-reference[0,0]
-        actual_active+=length*sum(b-a for a,b in zip(cuts,cuts[1:]) if square((a+b)/2)<0.)
+        actual_active+=length*sum(b-a for a,b in zip(cuts,cuts[1:]) if physical_square((a+b)/2)<0.)
         if reference[0,0]<ref.front<reference[-1,0]:
             cuts=sorted(set(cuts+[(ref.front-reference[0,0])/length]))
         def fields(t):
             x=reference[0,0]+length*t
             rho=np.hypot(dx(t),radius+delta(t))
-            gap=square(t)/(rho+radius)
+            gap=physical_square(t)/(rho+radius-radius_roundoff)
             actual=-law.line_stiffness*min(gap,0.)
             expected=ref.line_stiffness*max(ref.state(x)[0]-CLEARANCE,0.)
             return actual,expected

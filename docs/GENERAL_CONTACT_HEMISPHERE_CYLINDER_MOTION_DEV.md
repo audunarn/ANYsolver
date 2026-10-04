@@ -183,3 +183,30 @@ numerical references plus final supporting scrutiny close those literal benchmar
 rows. This supplies no arbitrary-model/profile/application admission.
 [Final assessment](d1_review_support/contact_curved_cylinder_response_20261004/acceptance_assessment.md)
 binds the exact scope, reuse justification and remaining limitations.
+
+## Current numerical contract correction
+
+The existing opt-in route now retains exact declared binary radius sums and affine
+tool coordinates through geometry, activation, work and swept bounds. Moving
+results report `exact_literal_axis_translation_affine_static_v2`; restart also
+binds the revised line-radius work identity and rejects older continuation.
+Display coordinates are floats with exact rational metre fields for persistence.
+Legacy owned-point/sphere APIs are unaffected. Sub-ULP integration intervals that
+cannot resolve their stations return explicit non-success.
+
+73fresh installed verification predicates pass, including affected bending fields,
+control, actual cycles and restart. These are development checks for the correction;
+the preceding named benchmark assessment retains its original source identity.
+[Correction and evidence](d1_review_support/contact_radial_contract_20261004/README.md).
+General profile/application admission, active-rim mesh qualification and remaining
+D3/C0–C9 capabilities remain open.
+
+### Free-rim regularity restriction — 4 October 2026
+
+The actual-tangent cap's active rim is not a generically admitted continuum
+workflow for the current C0 classical beam energy space. A fixed-tip terminal
+bubble changes rim orientation at vanishing structural cost as its cell shrinks;
+guided finite-cell code/work agreement does not close that boundary. Existing
+benchmarks and development selection stay scoped. Do not infer unrestricted
+rim mesh convergence or substitute section orientation inside this profile.
+[Derivation and development disposition](d1_review_support/contact_rim_energy_trace_20261004/README.md).

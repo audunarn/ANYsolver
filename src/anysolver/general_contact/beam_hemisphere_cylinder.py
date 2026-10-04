@@ -68,7 +68,9 @@ class HemisphereCylinderManager(HemisphereSphereManager):
 
     def _geometry(self,cell,positions,point=None):
         center=self.point if point is None else point
-        key=(cell.element_id,positions.tobytes(),center.tobytes())
+        # Fractions from an affine tool path have value identity, not object
+        # array pointer identity. Fixed float centres use the same exact key.
+        key=(cell.element_id,positions.tobytes(),tuple(_fraction(v) for v in center))
         if self._geometry_cache is not None and key in self._geometry_cache:return self._geometry_cache[key]
         lanes=self._axis_controls(positions,center)
         scale=max(self.radius,cell.length)
@@ -86,7 +88,7 @@ class HemisphereCylinderManager(HemisphereSphereManager):
     def _radial_work(self,point):
         values=tuple(lane[0] for lane in point); squared=sum(v*v for v in values)
         if squared<=0:raise ValueError('cylinder line normal is unresolved')
-        rho=_sqrt_bound(squared); R=_fraction(self.radius)
+        rho=_sqrt_bound(squared); R=self.full_envelope_radius
         gap=float((squared-R*R)/(rho+R)); distance=float(rho)
         normal=np.array([float(v/rho) for v in values])
         projector=np.array([[float(v) for v in row] for row in exact_axis_projector(self.definition.rigid_bodies[0].normal)])

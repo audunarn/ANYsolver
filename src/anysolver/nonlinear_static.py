@@ -8237,6 +8237,8 @@ def solve_static_nonlinear(
                         rigid_contact_work_trapezoid=tool_work,
                         prescribed_actuator_work_trapezoid=-tool_work,
                     )
+                    if hasattr(contact_manager, "tool_position_report"):
+                        summary_payload.update(contact_manager.tool_position_report())
                 result.info["general_contact"] = summary_payload
                 return result
         from .general_contact.runtime import suspend_contact
