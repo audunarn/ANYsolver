@@ -1,13 +1,14 @@
 """Curved native material normal work against a fixed plane.
 
-Local open/fully compressed development kernel, not an analysis owner. Actual material reference area
+Local development kernel, not an analysis owner. Actual material reference area
 and retained work maps are preserved. Gauss8/16 tensor differences control
 energy, force and spatial tangent under existing dimensioned settings. They
 are error estimates, not rigorous integration error certificates.
 """
 from dataclasses import asdict,dataclass
 from fractions import Fraction
-from math import cos,sin,fsum,isfinite
+from decimal import Decimal, localcontext
+from math import atan2,cos,sin,fsum,isfinite,pi
 import numpy as np
 from numpy.polynomial.legendre import leggauss
 
@@ -17,7 +18,9 @@ from anysolver._ge_beam3_p5_seeded.core import sha
 from .native_retained_station import NativeRetainedRoundStation,_readonly
 from .native_surface_quadrature import NativeRoundSurfaceRule,surface_geometry
 from .native_surface_normal import StraightNormalIntegrationSettings
-from .native_curved_geometry import curved_patch_geometry_control
+from .native_curved_geometry import curved_patch_geometry_control,_reference_norm_bounds
+from .native_surface_bounds import _rotation_gain
+from .native_normal_angles import PRECISION,PreciseNormalAngles
 
 PROFILE='NATIVE_RETAINED_CURVED_MATERIAL_PLANE_LOCAL_WORK_DEV_V1'
 
@@ -39,6 +42,99 @@ def _projected_gap(high, low, cell, t, arm, origin, normal):
     if not isfinite(result) or (value!=0 and result==0):
         raise ValueError('curved material scalar projection unresolved')
     return result
+
+
+def _station_field(high,low,cell,t,lift,frame,rotation,radius,origin,normal):
+    """Circular gap with exact binary projection and bounded scalar precision."""
+    F=lambda v:Fraction(float(v))
+    weight=F(t)
+    base=sum(((1-weight)*(F(high[cell,i])+F(low[cell,i])-F(origin[i]))+
+              weight*(F(high[cell+1,i])+F(low[cell+1,i])-F(origin[i]))+
+              sum(F(rotation[i,j])*F(lift[j]) for j in range(3)))*F(normal[i])
+             for i in range(3))
+    def radial(column):
+        return F(radius)*sum(F(normal[i])*F(rotation[i,j])*F(frame[j,column])
+                             for i in range(3) for j in range(3))
+    with localcontext() as ctx:
+        ctx.prec=PRECISION
+        D=lambda v:Decimal(v.numerator)/Decimal(v.denominator)
+        return PreciseNormalAngles(D(base),0.,0.,D(radial(1)),D(radial(2)))
+
+
+def _critical_gaps(field,left,right):
+    phase=atan2(float(field.sine),float(field.cosine))
+    angles=[left,right]+[phase+k*pi for k in range(-2,5) if left<phase+k*pi<right]
+    return [field.value(angle) for angle in angles]
+
+
+def _rectangle_support(rule,high,low,U,cell,left,right,al,ar,origin,normal):
+    """Continuous axial Lipschitz control; quadrature zeros are insufficient.
+
+    x'=current_chord-U*reference_chord+U*r0'+U*R0'*rho.
+    The whole-cell reference derivative bounds enclose every represented angle.
+    Enclose variation of the angular minimum on the whole axial interval.
+    Both empty and nonempty rectangles require a continuous support proof:
+    one broad sampled pocket cannot hide another thin, unobserved pocket.
+    Unresolved axial fronts lead to subdivision/non-success.
+    """
+    ref=rule.samples[0].station.reference;radius=rule.definition['radius']
+    xi=(left+right)/2;t=xi+1 if cell==0 else xi
+    field=_station_field(high,low,cell,t,ref.half_cell_lift(cell,t),ref.frame(xi),
+                         U[cell],radius,origin,normal)
+    F=lambda v:Fraction(float(v))
+    chord=np.array([float(F(high[cell+1,i])+F(low[cell+1,i])-F(high[cell,i])-F(low[cell,i]))
+                    for i in range(3)])
+    _,jmax,prime,_=_reference_norm_bounds(ref,cell,actual_roll=True)
+    gain=_rotation_gain(U[cell])
+    b=ref.coordinates[0]-2*ref.coordinates[1]+ref.coordinates[2]
+    # The projected center derivative is affine. Evaluate its exact binary
+    # endpoint products; using a full tangent norm needlessly inflates it.
+    turn=U[cell]@b
+    center=max(abs(float(sum((F(chord[i])+F(turn[i])*(F(x)+(1 if cell==0 else 0)-Fraction(1,2)))*F(normal[i])
+                             for i in range(3)))) for x in (left,right))
+    bound=center+radius*gain*prime*float(np.linalg.norm(normal))
+    scale=max(1.,jmax,np.linalg.norm(chord),np.max(np.abs(ref.coordinates)),
+              abs(float(field.offset)),abs(float(field.cosine)),abs(float(field.sine)))
+    padding=8192*np.finfo(float).eps*scale
+    minimum=float(min(_critical_gaps(field,al,ar)))
+    variation=padding+bound*(right-left)/2
+    if minimum-variation>0:return 'open'
+    # Endpoints can create/disappear a second truncated arc while the angular
+    # minimum remains negative. Maximum changes can merge two negative arcs.
+    # Enclose these signs as well, rather than trusting sampled topology.
+    critical=_critical_gaps(field,al,ar)
+    endpoints=(float(field.value(al)),float(field.value(ar)))
+    maximum=float(max(critical))
+    if (minimum+variation<0 and abs(maximum)>variation
+            and all(abs(g)>variation for g in endpoints)):
+        return 'active'
+    return 'unresolved'
+
+
+def _active_angular_rule(field,left,right,points,weights):
+    """Moving roots need no boundary terms through second potential variation.
+
+    At g=0 both k*g_-²/2 and k*g_-*delta(g) vanish. Integration uses the
+    current negative arcs and the complete interior work derivatives. Decimal
+    root coordinates and scalar gaps share the existing bounded precision.
+    """
+    with localcontext() as ctx:
+        ctx.prec=PRECISION
+        scale=abs(field.offset)+abs(field.cosine)+abs(field.sine)
+        resolution=Decimal(float(64*np.finfo(float).eps))*scale
+        if any(abs(g)<=resolution for g in _critical_gaps(field,left,right)):
+            raise ValueError('curved material angular endpoint/extremum unresolved; grazing excluded')
+        breaks=field.breakpoints(left,right)
+        for lo,hi in zip(breaks[:-1],breaks[1:]):
+            mid=(lo+hi)/2;half=(hi-lo)/2
+            if field.value(mid)>=0:continue
+            for point,weight in zip(points,weights):
+                angle=mid+half*Decimal(float(point))
+                scalar=float(field.value(angle));measure=float(half*Decimal(float(weight)))
+                if (not isfinite(scalar) or scalar>=0 or measure<=0 or not isfinite(measure)
+                    or not float(lo)<float(angle)<float(hi)):
+                    raise ValueError('curved material active angular quadrature unresolved')
+                yield float(angle),measure,scalar
 
 
 @dataclass(frozen=True)
@@ -87,18 +183,15 @@ class NativeCurvedMaterialPlaneWork:
             origin_m=self.origin,normal=self.normal,
             stiffness_N_per_m3=self.stiffness,settings=asdict(self.settings),
             reference=self.reference.canonical_data(),measure='actual_fixed_reference_material_area',
-            branch_admission='continuous_whole_patch_open_or_fully_compressed',
-            numerical='GAUSS_8_16_TENSOR_EXACT_BINARY_PROJECTION_JET2_SPATIAL_ONCE_V2')
+            branch_admission='continuous_orientation_segmented_normal_arcs_axial_support_guard',
+            numerical='GAUSS_8_16_PRECISE_CURVED_ARCS_JET2_SPATIAL_ONCE_V3')
 
     def evaluate(self,positions,position_low,cell_rotations):
         if sha(self.definition())!=self.identity:
             raise ValueError('curved material plane definition/settings changed')
         geometry=curved_patch_geometry_control(self.rule,positions,position_low,
             cell_rotations,self.origin,self.normal)
-        # No sampled quadrature may silently miss a thin active region.
-        # Mixed/contact-front poses require future curved segmentation.
-        if geometry.gap_lower_m<0<=geometry.gap_upper_m:
-            raise ValueError('curved material mixed-contact segmentation unresolved')
+        segmented=geometry.gap_lower_m<0<=geometry.gap_upper_m
         high=np.asarray(positions);low=np.asarray(position_low);U=np.asarray(cell_rotations)
         settings=self.settings;radius=float(self.rule.definition['radius'])
         lo,hi=self.rule.definition['xi_range'];alo,ahi=self.rule.definition['angle_range']
@@ -108,7 +201,7 @@ class NativeCurvedMaterialPlaneWork:
         gauss=(leggauss(8),leggauss(16))
         global_residual=np.zeros(42);global_hessian=np.zeros((42,42))
         energies=[];errors=[];visited=accepted=evaluations=0
-        last_error=last_rectangle=None
+        last_error=last_rectangle=last_support=None
         scale=np.ones(42)
         for index in (3,9,15,18,21):
             scale[index:index+3]=1/settings.characteristic_length_m
@@ -123,13 +216,24 @@ class NativeCurvedMaterialPlaneWork:
                 if visited>=settings.max_intervals:
                     failure=MemoryError('curved normal integration interval budget exhausted')
                     failure.integration_diagnostics=dict(visited=visited,accepted=accepted,
-                        evaluations=evaluations,last_errors=last_error,last_rectangle=last_rectangle)
+                        evaluations=evaluations,last_errors=last_error,last_rectangle=last_rectangle,
+                        last_support=last_support)
                     raise failure
                 xl,xr,al,ar=pending.pop();visited+=1
                 xm=(xl+xr)/2;am=(al+ar)/2;dx=(xr-xl)/2;da=(ar-al)/2
                 if xm in (xl,xr) or am in (al,ar) or dx==0 or da==0:
                     raise ValueError('curved normal integration parameter resolution exhausted')
-                estimates=[]
+                support=(_rectangle_support(self.rule,high,low,U,cell,xl,xr,al,ar,
+                                             self.origin,self.normal) if segmented else 'active')
+                last_support=support
+                if support=='unresolved':
+                    last_error=None;last_rectangle=(xl,xr,al,ar)
+                    pending.extend(((xl,xm,al,ar),(xm,xr,al,ar)))
+                    continue
+                if support=='open':
+                    accepted+=1;energies.append(0.);errors.append((0.,0.,0.))
+                    continue
+                estimates=[];active_samples=0
                 for points,weights in gauss:
                     estimate=Jet2.constant(0.,9)
                     for qx,wx in zip(points,weights):
@@ -139,16 +243,21 @@ class NativeCurvedMaterialPlaneWork:
                         t=xi+1 if cell==0 else xi
                         frame=self.reference.frame(xi)
                         lift=self.reference.half_cell_lift(cell,t)
-                        for qa,wa in zip(points,weights):
-                            angle=float(am+da*qa)
+                        field=(_station_field(high,low,cell,t,lift,frame,U[cell],radius,
+                                              self.origin,self.normal) if segmented else None)
+                        angular=(_active_angular_rule(field,al,ar,points,weights) if segmented
+                                 else ((float(am+da*qa),float(da*wa),None)
+                                       for qa,wa in zip(points,weights)))
+                        for angle,angular_measure,scalar_gap in angular:
                             if not al<angle<ar:
                                 raise ValueError('curved normal integration angular station unresolved')
-                            factor=float(dx*da*wx*wa)
+                            factor=float(dx*wx*angular_measure)
                             if not isfinite(factor) or factor==0:
                                 raise ValueError('curved normal integration quadrature measure unresolved')
                             radial=radius*(cos(angle)*frame[:,1]+sin(angle)*frame[:,2])
                             arm=U[cell]@(lift+radial)
-                            gap=_projected_gap(high,low,cell,t,arm,self.origin,self.normal)
+                            gap=(_projected_gap(high,low,cell,t,arm,self.origin,self.normal)
+                                 if scalar_gap is None else scalar_gap)
                             evaluations+=1
                             if gap<0 and geometry.gap_lower_m>=0:
                                 raise ValueError('curved material gap disagrees with open enclosure')
@@ -156,6 +265,7 @@ class NativeCurvedMaterialPlaneWork:
                                 if geometry.gap_upper_m<0:
                                     raise ValueError('curved material gap disagrees with compressed enclosure')
                                 continue
+                            active_samples+=1
                             gradient=np.r_[(1-t)*self.normal,t*self.normal,np.cross(arm,self.normal)]
                             hessian=np.zeros((9,9))
                             hessian[6:9,6:9]=(np.outer(arm,self.normal)+np.outer(self.normal,arm))/2-float(self.normal@arm)*np.eye(3)
@@ -178,6 +288,8 @@ class NativeCurvedMaterialPlaneWork:
                     raise ValueError('nonfinite curved normal integration error estimate')
                 last_error=tuple(map(float,error));last_rectangle=(xl,xr,al,ar)
                 budget=np.asarray(limits)*(xr-xl)*(ar-al)/total_area
+                if segmented and active_samples==0:
+                    raise ValueError('curved material active support disagrees with angular quadrature')
                 if np.all(error<=budget):
                     integral=estimates[1];accepted+=1;errors.append(tuple(map(float,error)))
                     energies.append(integral.value)

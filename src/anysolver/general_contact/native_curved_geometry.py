@@ -25,7 +25,7 @@ class CurvedPatchGeometryControl:
     search_box: np.ndarray
 
 
-def _reference_norm_bounds(reference, cell):
+def _reference_norm_bounds(reference, cell, *, actual_roll=False):
     """Affine Q2 tangent norm and frame-derivative norm bounds.
 
     Normalized affine tangent has |n'|<=|b|/min|v|. Shortest transport
@@ -65,7 +65,15 @@ def _reference_norm_bounds(reference, cell):
     N1=B/jmin
     T=1+A+A*A/denominator
     T1=A*N1+2*A*A*N1/denominator+A**3*N1/denominator**2
-    prime=((5*N1+2*.9*np.pi)*T+(1+128*eps)*T1)*A
+    # The work support control may use the formulation-owned constant roll
+    # rate; the historical whole-patch control retains its frozen worst case.
+    roll=abs(float(reference._half_frame_data[cell][1])) if actual_roll else .9*np.pi
+    if not np.isfinite(roll) or (actual_roll and roll>=.9*np.pi):
+        raise ValueError('curved material reference roll bound unresolved')
+    # At exactly zero owned roll, its axis rotation is identically I and its
+    # derivative is zero. Only shortest transport contributes; no fitted bound.
+    roll_derivative=0. if actual_roll and roll==0. else 5*N1+2*roll
+    prime=(roll_derivative*T+(1+128*eps)*T1)*A
     prime*=1+4096*eps/denominator**2
     gram=max(float(np.linalg.norm(f.T@f-np.eye(3))) for f in nodes)
     gram+=128*eps*(1+max(float(np.linalg.norm(f))**2 for f in nodes))

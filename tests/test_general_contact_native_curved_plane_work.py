@@ -115,16 +115,166 @@ def test_curved_retained_virtual_work_and_full_spatial_tangent():
         work_errors_j=works),indent=2))
 
 
-def test_curved_open_state_and_mixed_contact_rejection():
+def test_curved_open_state_and_partial_contact():
     law,p,low,U=_case()
     p[:,2]=.06
     value=law.evaluate(p,low,U)
     assert value.geometry.gap_lower_m>0 and value.normal_storage_j==0
     np.testing.assert_array_equal(value.residual,0.)
     np.testing.assert_array_equal(value.tangent,0.)
-    p[:,2]=0.
-    with pytest.raises(ValueError,match='mixed-contact segmentation'):
+    p[:,2]=.012;U[:]=np.eye(3)
+    value=law.evaluate(p,low,U)
+    assert value.normal_storage_j>0
+    independent=_partial_reference_integral(law,p,low,U)
+    assert value.normal_storage_j==pytest.approx(independent[0],rel=1e-9,abs=1e-10)
+    np.testing.assert_allclose(value.source_force,independent[1],rtol=1e-9,atol=1e-8)
+    np.testing.assert_allclose(value.source_moment,independent[2],rtol=1e-9,atol=1e-8)
+    path=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if path:
+        Path(path+'-curved-partial-reference.json').write_text(json.dumps(dict(
+            energy_error_j=abs(value.normal_storage_j-independent[0]),
+            force_error_n=float(np.linalg.norm(value.source_force-independent[1])),
+            moment_error_nm=float(np.linalg.norm(value.source_moment-independent[2])),
+            intervals=value.intervals,evaluations=value.integrand_evaluations,
+            estimated_errors=value.estimated_errors),indent=2))
+
+
+def _partial_reference_integral(law,p,low,U):
+    # Independent partial fixture: z=h+r*sin(alpha), U=I. Its negative arc
+    # starts at pi+asin(h/r). Integrate the analytic parabola area and surface;
+    # no production station, root, integration or derivative helper.
+    assert np.array_equal(U,np.tile(np.eye(3),(2,1,1)))
+    radius=law.rule.definition['radius'];height=p[0,2]
+    left=max(law.rule.definition['angle_range'][0],np.pi+np.arcsin(height/radius))
+    right=min(law.rule.definition['angle_range'][1],2*np.pi-np.arcsin(height/radius))
+    nodes,weights=leggauss(64);lo,hi=law.rule.definition['xi_range']
+    energy=0.;force=np.zeros(3);moment=np.zeros(3)
+    for cell,xl,xr in ((0,lo,0.),(1,0.,hi)):
+        for qx,wx in zip(nodes,weights):
+            xi=(xl+xr)/2+(xr-xl)*qx/2;J=np.sqrt(1+.16*xi*xi)
+            for qa,wa in zip(nodes,weights):
+                angle=(left+right)/2+(right-left)*qa/2
+                gap=height+radius*np.sin(angle)
+                area=radius*(J+.4*radius*np.cos(angle)/(J*J))
+                factor=wx*wa*(xr-xl)*(right-left)/4*area
+                point=_independent_point(xi,angle,radius,p,low,U,False)
+                reaction=-law.stiffness*gap*law.normal*factor
+                energy+=.5*law.stiffness*gap**2*factor
+                force+=reaction;moment+=np.cross(point,reaction)
+    return energy,force,moment
+
+
+def test_curved_partial_contact_moving_front_virtual_work_and_tangent():
+    law,p,low,U=_case();p[:,2]=.012;U[:]=np.eye(3)
+    value=law.evaluate(p,low,U)
+    direction=np.random.default_rng(407).normal(size=42)
+    direction[24:]=0.;direction/=np.linalg.norm(direction)
+    errors=[];works=[]
+    for h in (1e-5,2e-6):
+        plus=law.evaluate(*_moved(p,low,U,direction,h))
+        minus=law.evaluate(*_moved(p,low,U,direction,-h))
+        derivative=(plus.residual-minus.residual)/(2*h)
+        expected=value.tangent@direction
+        error=np.linalg.norm(derivative-expected)/np.linalg.norm(expected)
+        work=abs((plus.normal_storage_j-minus.normal_storage_j)/(2*h)-value.residual@direction)
+        errors.append(float(error));works.append(float(work))
+        assert error<1e-5 and work<1e-6
+    path=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if path:
+        Path(path+'-curved-partial.json').write_text(json.dumps(dict(
+            tangent_errors=errors,work_errors_j=works,intervals=value.intervals,
+            evaluations=value.integrand_evaluations,energy_j=value.normal_storage_j),indent=2))
+
+
+def test_curved_unobserved_thin_axial_contact_never_returns_zero():
+    ref=_reference(True);radius=1e-7
+    rule=NativeRoundSurfaceRule(7,ref,radius,xi_range=(-.95,-.05),
+        angle_range=(np.pi/2-.001,np.pi/2+.001),axial_order=1,angular_order=1)
+    p=ref.coordinates.copy();p[:,1]+=-.172*p[:,0]
+    origin=np.array((0.,.2+.172**2/.8-1e-9,0.));normal=np.array((0.,-1.,0.))
+    low=np.zeros((3,3));U=np.tile(np.eye(3),(2,1,1))
+    law=NativeCurvedMaterialPlaneWork(rule,plane_origin_m=origin,plane_normal=normal,
+        normal_stiffness_Pa_per_m=1e7,integration_settings=StraightNormalIntegrationSettings(
+            1e-7,1e-6,1e-4,64,1.))
+    hidden=_independent_point(-.43,np.pi/2,radius,p,low,U,False)
+    assert normal@(hidden-origin)<-9e-10
+    # Both initial Gauss rules miss the independently located active pocket.
+    for order in (8,16):
+        for node in leggauss(order)[0]:
+            point=_independent_point(-.5+.45*node,np.pi/2,radius,p,low,U,False)
+            assert normal@(point-origin)>0
+    try:
+        value=law.evaluate(p,low,U)
+    except (MemoryError,ValueError) as failure:
+        assert 'interval budget' in str(failure) or 'unresolved' in str(failure)
+        path=os.environ.get('CONTACT_APP_RESULT_RECORD')
+        if path:
+            Path(path+'-curved-thin-axial.json').write_text(json.dumps(dict(
+                result='explicit_non_success',reason=str(failure),
+                diagnostics=getattr(failure,'integration_diagnostics',None)),indent=2))
+    else:
+        assert value.normal_storage_j>0 and np.linalg.norm(value.residual)>0
+
+
+def test_curved_broad_contact_cannot_hide_second_thin_axial_pocket():
+    ref=_reference(True);radius=1e-7
+    rule=NativeRoundSurfaceRule(7,ref,radius,xi_range=(-.95,-.05),
+        angle_range=(np.pi/2-.001,np.pi/2+.001),axial_order=1,angular_order=1)
+    first_root=-.95+1e-7;second_root=-.5
+    vertex=(first_root+second_root)/2;half=(second_root-first_root)/2
+    p=ref.coordinates.copy();p[:,1]+=.4*vertex*p[:,0]
+    origin=np.array((0.,.2+.2*vertex**2-.2*half**2,0.));normal=np.array((0.,1.,0.))
+    low=np.zeros((3,3));U=np.tile(np.eye(3),(2,1,1))
+    law=NativeCurvedMaterialPlaneWork(rule,plane_origin_m=origin,plane_normal=normal,
+        normal_stiffness_Pa_per_m=1e7,integration_settings=StraightNormalIntegrationSettings(
+            1e-7,1e-6,1e-4,64,1.))
+    hidden=_independent_point(-.95+2e-8,np.pi/2,radius,p,low,U,False)
+    gap=float(normal@(hidden-origin))
+    expected=-.2*(-.95+2e-8-first_root)*(-.95+2e-8-second_root)
+    assert gap==pytest.approx(expected,abs=1e-15) and gap<-6e-9
+    for order in (8,16):
+        stations=-.5+.45*leggauss(order)[0]
+        gaps=[normal@(_independent_point(x,np.pi/2,radius,p,low,U,False)-origin) for x in stations]
+        assert min(stations)>first_root
+        assert min(gaps)<0<max(gaps)  # Broad right pocket is sampled; thin left one is not.
+    with pytest.raises((MemoryError,ValueError),match='interval budget|unresolved') as error:
         law.evaluate(p,low,U)
+    path=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if path:
+        Path(path+'-curved-two-pockets.json').write_text(json.dumps(dict(
+            result='explicit_non_success',reason=str(error.value),
+            diagnostics=getattr(error.value,'integration_diagnostics',None)),indent=2))
+
+
+def test_curved_uniform_active_minimum_does_not_hide_angular_endpoint_crossing():
+    from anysolver.general_contact.native_curved_plane_work import _rectangle_support
+    ref=_reference(False);radius=.03;epsilon=1e-8
+    rule=NativeRoundSurfaceRule(7,ref,radius,xi_range=(1e-8,.9),
+        angle_range=(0.,np.pi),axial_order=1,angular_order=1)
+    p=ref.coordinates.copy();p[:,1]=-.03-epsilon+.02*p[:,0]
+    low=np.zeros((3,3));U=np.tile(np.eye(3),(2,1,1));normal=np.array((0.,1.,0.))
+    # Literal circular field: -.03-epsilon+.02*xi+.03*cos(alpha).
+    # Angular minimum is negative throughout, but endpoint alpha=0 crosses
+    # at xi=5e-7, before either initial Gauss rule's first station.
+    assert -.06-epsilon+.02*.9<0
+    assert -epsilon+.02*1e-8<0<-epsilon+.02*.9
+    for order in (8,16):
+        stations=(.9+1e-8)/2+(.9-1e-8)*leggauss(order)[0]/2
+        assert min(stations)>epsilon/.02
+    assert _rectangle_support(rule,p,low,U,1,1e-8,.9,0.,np.pi,np.zeros(3),normal)=='unresolved'
+
+
+def test_curved_partial_scalar_field_large_tangential_origin_invariance():
+    from anysolver.general_contact.native_curved_plane_work import _station_field
+    normal=np.array((1.,-1.,0.))/np.sqrt(2.)
+    high=np.tile((1.011,1.,0.),(3,1));low=np.zeros((3,3))
+    first=_station_field(high,low,0,.5,np.zeros(3),np.eye(3),np.eye(3),.03,
+                         np.zeros(3),normal)
+    second=_station_field(high,low,0,.5,np.zeros(3),np.eye(3),np.eye(3),.03,
+                          np.array((2.**48,2.**48,0.)),normal)
+    assert first.breakpoints(0.,2*np.pi)==second.breakpoints(0.,2*np.pi)
+    for angle in np.linspace(0.,2*np.pi,21):
+        assert first.value(angle)==second.value(angle)
 
 
 def test_projected_gap_literal_origin_counterexample_and_resolution_guard():
@@ -195,10 +345,12 @@ def test_curved_reference_derivative_interval_bound_with_twist():
     ref=CenteredCurvedBeam3ReferenceGeometry(base.coordinates,frames)
     for cell,(left,right) in enumerate(((-1.,0.),(0.,1.))):
         lower,upper,prime,_=_reference_norm_bounds(ref,cell)
+        tight_prime=_reference_norm_bounds(ref,cell,actual_roll=True)[2]
+        assert tight_prime<=prime
         for xi in np.linspace(left+1e-8,right-1e-8,199):
             derivative=ref.derivative(float(xi))
             assert lower<=np.linalg.norm(derivative)<=upper
-            assert np.linalg.norm(ref.frame_derivative(float(xi)),2)<=prime
+            assert np.linalg.norm(ref.frame_derivative(float(xi)),2)<=tight_prime
 
 
 def test_twisted_curved_material_reference_measure_and_work():
