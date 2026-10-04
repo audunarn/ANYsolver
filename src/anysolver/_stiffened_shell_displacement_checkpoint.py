@@ -22,6 +22,9 @@ def identities(owner):
     from ._stiffened_shell_affine_endpoint import is_native_point_material
     if is_native_point_material(owner):
         if owner._definition.shell.s3_elements:
+            if owner._has_physical_fibre:
+                return ("finite_displacement_native_point_fibre_elastic_s3",
+                        "B3_GE_NATIVE_POINT_FIBRE_ELASTIC_S3_DISPLACEMENT_V1_DEV",None,None)
             return ("finite_displacement_native_point_elastic_s3",
                     "B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_V1_DEV",None,None)
         if owner._definition.shell.j2_curve is not None:

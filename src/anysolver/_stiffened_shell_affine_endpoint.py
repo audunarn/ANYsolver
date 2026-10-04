@@ -23,12 +23,18 @@ def is_native_point_material(owner):
     definition=owner._definition
     return bool(definition.points and
         (definition.shell.q4_elements or definition.shell.s3_elements) and
-        (not definition.shell.s3_elements or (definition.shell.j2_curve is None and
-            not owner._has_physical_fibre)) and
+        (not definition.shell.s3_elements or definition.shell.j2_curve is None) and
         definition.shell_reference_policy=="flat" and
         definition.q4_pullback_policy==(POLICY if definition.shell.q4_elements else HISTORICAL_POLICY) and
         not definition.lines and not definition.footprints and
         not definition.distributing_footprints and not definition.finite_distributing_footprints)
+
+
+def require_native_displacement_policy(owner,driver):
+    """Never upgrade legacy S3 force-seed arithmetic during replay."""
+    if (is_native_point_material(owner) and owner._definition.shell.s3_elements and
+            driver._stable_s3 != bool(owner._has_physical_fibre)):
+        raise ValueError("native S3 displacement seed numerical policy mismatch")
 
 
 def has_shell_material(owner):

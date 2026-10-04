@@ -1187,6 +1187,8 @@ class ExperimentalGEAnalysis:
         from ._stiffened_shell_affine_endpoint import is_native_point_material
         if is_native_point_material(self):
             capabilities["displacement_control"] = (
+                "experimental_native_point_fibre_elastic_s3_fixed_translation_v1"
+                if self._definition.shell.s3_elements and self._has_physical_fibre else
                 "experimental_native_point_elastic_s3_fixed_translation_v1"
                 if self._definition.shell.s3_elements else
                 "experimental_native_point_coupled_j2_fixed_translation_v1"

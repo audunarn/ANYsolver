@@ -8,9 +8,8 @@ from test_stiffened_shell_native_point_displacement import (
 from test_stiffened_shell_ge_finite_experimental import _q4_shell_j2_panel
 
 
-@pytest.mark.parametrize('excluded', ('fibre', 'shell-j2'))
-def test_native_s3_excluded_displacement_is_atomic(request, excluded):
-    base = model('mixed') if excluded == 'fibre' else _q4_shell_j2_panel()
+def test_native_s3_shell_j2_displacement_is_atomic(request):
+    base = _q4_shell_j2_panel()
     definition = replace(base, shell=replace(base.shell,
         q4_elements=((1, 2, 5, 4),), s3_elements=((2, 3, 6), (2, 6, 5))),
         q4_pullback_policy=ss.Q4_ALGORITHMIC_PULLBACK_V1)

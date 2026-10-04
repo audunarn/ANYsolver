@@ -152,6 +152,8 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
     driver=owner._finite_driver
     if driver is None or driver._accepted is None:
         raise ValueError("displacement control requires an accepted force-controlled seed")
+    from ._stiffened_shell_affine_endpoint import require_native_displacement_policy
+    require_native_displacement_policy(owner,driver)
     if type(targets) is not tuple or not targets or any(not isinstance(v,(float,int,np.floating,np.integer)) or isinstance(v,(bool,np.bool_)) or not np.isfinite(v) for v in targets):
         raise ValueError("finite displacement targets required")
     dof=control.dof(owner);direction=driver._load(actions)

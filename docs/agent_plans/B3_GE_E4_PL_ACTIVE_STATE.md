@@ -1,93 +1,59 @@
 # Active state - 5 October 2026
 
-## Current delivery and decision
-
 Canonical worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001
-Branch: codex/stiffened-main-reconcile-20261001. Source parent51ad3eee; current S3 delivery pending local commit.
-Full Revision8 goal ACTIVE; experimental implementation is not qualification.
+Branch codex/stiffened-main-reconcile-20261001. Source parent67e13805.
+Full Revision8 goal ACTIVE. Experimental behavior is not qualification.
 
-Native flat full-map Q4-J2 POINT fixed-target translation displacement is now
-implemented and installed-tested. Existing sparse corrector, constitutive laws,
-equilibrium1e-8/gap1e-9 and defaults unchanged. Separate coupled checkpoint and
-controller identities retain accepted/origin Q4 plastic/alpha and native beam
-histories. Ordinary unrebased nodal-dead-translation seed only. No S3, staged/
-external seed, chart rebase, event/adaptive or arc admission in this route.
+## Delivered current slice
 
-Source1PASS34.63s; installed30PASS363.42s across seven modules. Public coupled
-example and ANYfem experimental case/project reopen, exact prefix restore and
-completed continuation PASS. Both shell and fibre histories evolve plastically.
-Equilibrium2.3676017756177976e-11; gap7.68693268189492e-18. All520 imported source
-hashes matched; 600s/2GiB/one numerical job/affinity1/pools1/JIToff verified.
-Solverwheel65194b0707b3dc264f7cd5531008b2dcdf7b2d9936a0e3d3cad5f27ce3de6a20;
-consumerwheel626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f.
-ANYfem remains9faed76; its current consumer unchanged. Supporting source review
-clean, same OpenAI family only; no different-family scientific acceptance.
+Native fibre/mixed beams on elastic mixed/all-S3 POINT panels now support fixed
+translation displacement. Distinct fibre-S3 checkpoint/controller identity binds
+current stable arithmetic. Ordinary unrebased nodal dead translation seed only;
+no staged/external/chart/event/adaptive/arc admission. Actual laws, sparse
+corrector, equilibrium1e-8/gap1e-9, defaults and legacy identities unchanged.
+Legacy force restore still selects its historical arithmetic. Displacement rejects
+an incompatible seed BEFORE checkpoint capture/trial, preserving its exact state.
 
-Generalized-yielding addon: both force seeds failed before displacement control
-(1FAIL4.20s and1FAIL9.77s). Exact fixtures/logs preserved outside ordinary CI.
-STOP selected generalized load/law/budget slice. No XFAIL or weakened oracle.
-Source review identifies explicit zero wrench at positive factor as a legitimate
-reference equilibrium request, but it is UNEXECUTED and resolves neither failure.
-Nonzero pattern at factor zero is rejected; do not bypass admission/restore guards.
+Source4PASS43.59s; installed19PASS215.98s plus3 framing/direct-entry negatives.
+Actual further fibre flow in mixed/all-S3 and mixed native-family controls;
+cancellation/rejection rollback and exact histories/recovery/restart/continuation.
+Both public/ANYfem experimental save/reopen and continued checkpoints exact.
+All520 imported sources matched. Main238.35s/204476416B/one numerical worker;
+actual affinity1/pools1/JIToff,600s/2GiB. Supporting same-family review clean after
+requested negatives; different-family scientific acceptance remains open.
+Solverwheela260ac44b7d6427c817754f1b48950537986c903eb383e9800d36edc3fd59474;
+unchanged consumerwheel626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f.
+ANYfem9faed76 unchanged. Prior51ad3eee Q4-J2 displacement and67e13805 generalized
+elastic-S3 displacement retain their own installed evidence and identities.
 
-## Next authorized action
+## Next action and open work
 
-Finalize the installed S3 slice after exact staged-byte checks and scoped
-local commit. Preserve the parked failures and all full-programme obligations. Do not repeat the passed campaign. Then choose the next mandatory slice
-from the current plan and dependencies; no automatic parked diagnostic reruns.
-Generalized plastic displacement, fibre/plastic S3 and coupled chart qualification stay open.
+Finalize exact-byte/source/evidence scoped local commit. Then inspect actual
+native shell-J2 S3 displacement state, predecessor and codec prerequisites before
+extending: plastic S3 is mandatory and remains unadmitted in this controller.
+Do not infer its state contract from elastic S3 or alter laws/numerical criteria.
+Use the existing material owner/force codecs; no new general framework.
 
-## Evidence and boundaries
+Parked failures stay OPEN: generalized yielding force seeds failed before
+control; S3 force unload failed; simultaneous Q4-J2/fibre loaded-chart curve
+stopped before simultaneous flow. Native80 physical Fy agreement is not converged
+accuracy. STOP those selected load/law/chart/refinement slices; no automatic retry.
 
-Raw: .qualification/b3-ge-e4-pl/r8-native-coupled-displacement-dev-20261005-v1.
-Adjudication-v1.md binds positive results and separate negative setups. Complete
-prior live note preserved byte-for-byte at that root's before-final-v1/docs/
-agent_plans/B3_GE_E4_PL_ACTIVE_STATE.md. Historical grouped report and matrix
-prefixes preserved; inspect their appended entry for current applicability.
-Prior source33c01791/9a306013 and chart cab437fb retain their own evidence only.
+## Evidence and protected execution
 
-No numerical job live: installed-v1 and both generalized-v1/v2 execution records
-terminal. No push, main merge, publication or contact-worker communication.
-Mistral/local unavailable for current task; no repeated probe. At most3workers,
-ONE numerical job, existing tighter600s/2GiB/affinity1/pools1/JIToff limits.
-FormalF03 UNCONSUMED: never execute/copy/substitute
+Raw .qualification/b3-ge-e4-pl/r8-native-fibre-s3-displacement-dev-20261005-v1;
+adjudication-v1.md and verified-inputs-v1.json. Prior live note preserved exactly
+at before-final-v1/docs/agent_plans/B3_GE_E4_PL_ACTIVE_STATE.md in that root.
+Protected report/matrix prefixes preserved. Installed exec9949 and identity
+exec45338 are terminal completed. No numerical job live.
+No push/main merge/publication/contact-worker communication. Mistral/local
+unavailable for current task; no repeated probes. Max3workers/ONE numerical job;
+existing tighter600s/2GiB/affinity1/pools1/JIToff unchanged.
+FormalF03 UNCONSUMED:never execute/copy/substitute
 scripts/b3_e4_f03_c1_fy_supported_reference.py,
 SHA c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
 Never inspect/copy/archive us3-modal-canary(credentials); no Get-CimInstance.
-Frozen G3c graph guard requires reviewed lease; no bypass/replay.
-
-Complete G0-G6/F01-F13/V01-V28/B01-B18, physical connection/stability, total
-energy, coupled loaded chart, units, external/platform/scale/consumer acceptance,
-independent reviews and coordinated release remain mandatory and incomplete.
-Native80 Fy pose agreement does not close converged physical accuracy; STOP
-finer refinement. Coupled loaded-chart failed curve STOP; no automatic retry.
-
-
-5 October 2026: native elastic mixed/all-S3 POINT displacement development
-
-Implemented/tested, not qualified: generalized native sections, elastic flat
-mixed Q4/S3 or all-S3, ordinary unrebased translation seed, fixed targets.
-Mixed Q4 retains full-map policy; all-S3 retains the existing unused historical
-Q4 setting. Separate S3 kind/controller; Q4/J2 and other legacy identities intact.
-Elastic shell candidate publication mirrors existing force publication rather
-than applying the S3 material-coordinate seal. No element/law/tolerance change.
-Source2PASS13.01s; first1PASS/1FAIL inapplicable all-S3 Q4 policy preserved.
-Installed eight modules32PASS372.39s. Two public meshes and actual ANYfem case/
-experimental project round-trip, exact prefix restore and continuation PASS.
-Supporting review requested two exclusion negatives and explicit generalized
-material recovery parity; separate same-artifact checks3PASS. All520 imported
-sources match; actual pools1/JIToff, main382.94s/216768512B/one numerical worker.
-Solverwheel5cd376ae1aa5bfa91062baf08cf1be1a125a52b15fe0081f2c70419204839ee4;
-unchanged consumerwheel626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f.
-Raw .qualification/b3-ge-e4-pl/r8-native-s3-displacement-dev-20261005-v1.
-
-Fibre-containing S3 displacement remains excluded pending explicit compatibility
-for legacy restored numerical-policy selection; plastic S3 also excluded.
-Generalized yielding displacement, staged/chart/adaptive/arc and physical/aggregate
-qualification remain open. No parked force/unload/chart/refinement replay, no
-formalF03 consumption, no different-family acceptance or release claim.
-
-Main and complementary supervisors are terminal (exec25040 completed and
-admission-v1 completed). No numerical job live. Next mandatory readiness question
-is legacy numerical-policy ownership for fibre S3 displacement; preserve old
-checkpoint arithmetic and failed unloading. Do not automatically replay it.
+Frozen G3c graph guard needs reviewed lease; no bypass/replay.
+Full G0-G6/F01-F13/V01-V28/B01-B18, scientific/physical/material/topology/load/
+stability/capacity, external/scale/platform/consumer/independent acceptance and
+coordinated release remain mandatory and incomplete. No aggregate gate closes.

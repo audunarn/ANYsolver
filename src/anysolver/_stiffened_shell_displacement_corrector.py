@@ -104,6 +104,8 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
         raise ValueError("explicit supported private displacement trial policy required")
     from ._stiffened_shell_affine_endpoint import is_native_point_material
     native=is_native_point_material(owner)
+    from ._stiffened_shell_affine_endpoint import require_native_displacement_policy
+    require_native_displacement_policy(owner,driver)
     if native and trial_policy is not None:
         raise ValueError("native point displacement excludes branch event policy")
     if native and (driver._programme is not None or
