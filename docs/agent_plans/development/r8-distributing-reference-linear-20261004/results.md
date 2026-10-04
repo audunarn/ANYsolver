@@ -192,3 +192,79 @@ sided actions, and the U1/US3 shear canary is explicitly closed at its current
 discretization. Do not replay those cases as area-law accuracy evidence. A
 beam-free common-action comparator needs independently derived midsurface-mean,
 through-thickness director and polar-yaw work maps before external execution.
+
+## Executed common-action feasibility — 4 October
+
+The missing route now exists and has executed. It is a development comparison,
+not a converged accuracy finding or F04/G0 acceptance. Both models use a1x.2m
+panel,t.02m,E210GPa/nu.3, clampedx0, padx(.8,1)/y(-.05,0), port(.9,-.025,.05).
+Native10x4Q4 has one six-row distributing pad and an unloaded free GE stub.
+Resolved80C3D20R receives the independent observable's exact transpose loads,
+without a rigid patch, invented point ties or a loaded beam idealization.
+
+For pad areaA and thicknesst, m=mean(u_mid), omega_x=−mean(uy_top−uy_bottom)/t,
+omega_y=mean(ux_top−ux_bottom)/t, omega_z=.5mean(dxuy_mid−dyux_mid).
+The port displacement is m+omega×e; centroid wrench is(F,M+e×F).
+Pitch/roll use opposite face tractions; yaw uses curl/perimeter work, and
+translation uses midsurface work. This is not a pointwise welded top face or
+3D material-polar director. Symmetric3Dshear and zero-pose warping counterexamples
+are retained. Functional agreement on the admitted Q4 trace subspace does not
+equate the shell and solid models' full deformation spaces.
+
+Independent source review found three admission gaps: world-ULP geometry
+tolerance could hide large-origin distortion, volume coverage did not prove
+shared-face continuity, and scalar coercion admitted nonreal inputs. The repaired
+helper bounds geometric residual by64eps*span, rejects unresolved worldULP/span,
+checks complete nonoverlapping coverage and matching full faces/eight actual
+nodeIDs, and accepts only finite real Python/NumPy scalars. Local6x60 tables and
+shared midsurface ownership remain bounded. No global dense mechanical operator.
+
+Focused map/deck/parser57PASS/v4; final nonzero rigid-field/root-couple parser
+consequence12PASS/v5. Nativev3 independently records actual retained station
+strain<=9.6072e-33/resultants<=2.6900e-29, rigid nodal/cell coordinates and
+negligible covectors/stub work. Root-wrench error<=2.6084e-11; centroid transfer
+error0. One factorization serves both loads. The quadratic work identity holds;
+native equilibrium<=1.022e-12/weak gap<=1.695e-21. These are reference-linear
+controls, not finite-strain validation of the unloaded stub.
+
+| Quantity | Mx1Nm | EccentricFy10N |
+|---|---:|---:|
+| Native final external pairing,J | 1.9479439072217055e-5 | 1.3535404088164468e-5 |
+| Solid final external pairing,J | 2.0343889583333332e-5 | 1.4022239458333334e-5 |
+| Native relative difference | −4.24918995% | −3.47188031% |
+| Solid pairing decimal print bound,J | 8.33333333e-12 | 1.26875e-11 |
+
+All six resolved support-wrench discrepancies are inside their decimal output
+bounds. Printed RF is insufficient for a1e-8 external balance certificate;
+rounding bounds are not solver-error bounds. Native root moments include both
+nodal moments and position×force; resolved moments use actual physical root-node
+positions. No raw logarithmic multiplier is substituted for physical moments.
+
+Windows/Python3.14, pools1/JIToff; unchanged solverwheel
+f0267b0f5803ce69c1a181bfd7aa22bde06fa1aafdb65cbd56bba4d550745b4e reused.
+CCX2.23 executable27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f
+and actual reported singleCPU bind both completed runs. Each used1671physical
+rows/80elements,600s/2GiB limits, one serial job at a time. Whole nativev3
+3.0116s/161517568B; externalMx/Fy .1216s/.1206s and sampled8257536B/9306112B.
+Sampling is not an exact peak measurement. No optimization speedup is claimed.
+
+Rawroot `.qualification/b3-ge-e4-pl/r8-e02-distributing-area-feasibility-dev-20261004-v1`
+retains inputs/commands, source/artifact hashes, actual imports, thread samples,
+complete stdout/stderr/DAT/STA/FRD, parsed observations and failures. Final native
+isv3; CCX isv2, reused unchanged after native root instrumentation. The initial
+collection failure(v1), overstrict roundoff-control failure(v2) and nativev1
+read-only SciPy buffer failure remain; they were repaired prospectively.
+The roundoff assertion now uses gamma20*sumabs, not a relaxed scientific gate.
+`.copy()` changes only the writable reporting buffer. Supporting OpenAI source
+and runtime review clears the complete slice; different-family acceptance open.
+
+Decision: feasibility is resolved; engineering discrepancy/convergence is not.
+The existing native compiler admits exactly two hosts. The fixed physical pad
+needs8/32hosts on20x8/40x16; separate two-host constraints would change the law.
+Next extend only the reference-linear local compiler/binding to a bounded
+conforming multi-host rectangle, keep exactly six rows and identical historical
+two-host payloads/checkpoints, then assess paired refinement. Do not launch an
+isolated finer-solid/axial campaign or infer formulation failure from this coarse
+difference. Shell/solid kinematics, clamp layers and reduced integration remain
+possible contributors. Mandatory external/G0/G2/complete-release gates stay open;
+formalF03 authority remains unconsumed.

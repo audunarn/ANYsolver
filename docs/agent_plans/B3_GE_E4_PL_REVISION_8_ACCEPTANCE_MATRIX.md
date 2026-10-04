@@ -1,3 +1,15 @@
+**4 October area common-action external feasibility — IMPLEMENTED_NOT_QUALIFIED:**
+Independent Cartesian C3D20 midsurface/director/curl work map, strict deck/parser
+and installed free-stub controls execute.57 focused map/deck checks plus12 final
+parser controls PASS. CalculiX2.23 pureMx and eccentricFy complete; native actual
+root/transfer/retained-state/work controls pass with one factorization. Coarse
+pairing differences−4.249%/−3.472% are not convergence or physical acceptance.
+Native two-host cap currently prevents fixed-pad paired refinement; next bounded
+multi-host reference-only compiler preserves one six-row pad. Different-family,
+convergence/physical fidelity and aggregateF04/G0/G2/external release rows OPEN.
+Failures retained; formalF03 UNCONSUMED.
+[Grouped source, executed evidence and limitations](development/r8-distributing-reference-linear-20261004/results.md).
+
 **4 October distributing GE consumer — IMPLEMENTED_NOT_QUALIFIED:**
 ANYfem9b7482b/product and6013db0/byte evidence complete the installed public
 reference-linear input/Project/recovery/checkpoint/resume workflow.42source plus

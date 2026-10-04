@@ -75,7 +75,7 @@ Do not rebuild these working routes from the September descriptions below.
 
 The principal delivery risk is now accumulation of implemented capabilities
 without closing their physical and external acceptance. More code and more
-certificate machinery alone will not resolve it. Finish the pending usable
+certificate machinery alone will not resolve it. Reuse the completed usable
 consumer slice, then spend the primary engineering effort on a matched physical
 comparison and the smallest remaining acceptance blocker it exposes.
 
@@ -141,7 +141,18 @@ Decisions resolving the present queue:
   in section 4.5; frozen certificates and predicates are not replaced or waived.
   Resume a scientific ticket only for a new discriminator that changes an
   engineering decision, not merely to obtain another positive certificate.
-- **Distributing attachment:** finish the reference-linear consumer now. Defer
+- **Distributing attachment:** the reference-linear consumer is complete. The
+  independent area map and coarse CalculiX Mx/Fy pair now execute with correct
+  work/transfer/stub controls; native compliance is4.249%/3.472% lower on this
+  coarse case, not converged accuracy. Next extend the same reference-only area
+  compiler to bounded conforming multiple Q4 hosts, preserving one physical
+  pad, exactly six rows, old two-host identities and atomic owner behavior.
+  This removes the actual obstacle to matched refinement; separate two-host
+  pads would change the law. Then execute the applicable fixed-geometry
+  three-level torque/shear assessment, including reference convergence and
+  output-resolution limits. No isolated solid/axial refinement campaign.
+  [Grouped implementation and physical evidence](development/r8-distributing-reference-linear-20261004/results.md).
+  Defer
   finite-pose implementation until reference torque/shear transfer has a
   physically matched check and the finite-map contract is reviewed. The
   projected director/polar construction is a possible implementation, not a
