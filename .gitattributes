@@ -147,3 +147,7 @@ tests/test_r8_bl5_regional_action_dev.py -text
 scripts/r8_bl5_positive_part_gram_dev.py -text
 tests/test_r8_bl5_positive_part_gram_dev.py -text
 .qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/** -text
+src/anysolver/_stiffened_shell_distributing_footprint.py -text
+tests/test_stiffened_shell_distributing_footprint.py -text
+docs/agent_plans/development/r8-distributing-reference-linear-20261004/** -text
+.qualification/b3-ge-e4-pl/r8-distributing-reference-linear-dev-20261004-v1/** -text

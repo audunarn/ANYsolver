@@ -2092,3 +2092,14 @@ clear. Both HOLDs protected; seven fine cases unrun.13positive/oneunresolved/
 sevenunassessed. No criterion/resource/product/default change, formalF03 use,
 law/space selection or aggregate acceptance. Next work leaves this factor route.
 [Exact disposition and evidence](development/r8-bl5-projected-assessment-20261003/results.md).
+
+F04 private distributing reference-linear compiler, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+Separate director/polar-yaw area law across two adjacent flat Cartesian Q4 hosts
+compiles owned model IDs/gather, centroid/offset, weights and bounded6x42 local
+constraint. No public wiring/admission or legacy law change.34 focusedsource
+checks PASS/.32s; independent overflow finding corrected before testing. Rigid
+reproduction, force/moment/work, director/shear/yaw/drill distinctions, bothhost
+orientations, analyticalintegration, immutableownership and precise negatives
+covered. No finitepose/Hessian/chart, globalstability, attachedresponse, installed,
+external or aggregateF04/G0/G2 acceptance follows. Different-family review open.
+[Exact source scope and remaining integration](development/r8-distributing-reference-linear-20261004/results.md).

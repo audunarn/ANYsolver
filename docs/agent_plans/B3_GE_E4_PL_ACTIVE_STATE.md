@@ -8,8 +8,9 @@ Plan/goal: C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_
 One live note/matrix; prospective risk-proportionate workflow, protected history.
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Product762d6539 unchanged;
-verify latest documentation/diagnostic HEAD and status before resumption.
+branch codex/stiffened-main-reconcile-20261001. Public product762d6539 unchanged;
+new private distributing compiler added after diagnosticsb9fdd4e5. Verify actual
+latest HEAD and status before resumption; original installed identities retained.
 ANYfem3823eaa at C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer.
 Local scoped commits allowed; NO push/main merge/publication/contact messages.
 FormalF03 UNCONSUMED; never execute/copy/substitute protected original runner
@@ -74,31 +75,35 @@ clear. This is resource admission, not negative mechanics; low sampled RSS does
 not override the allocation guard. No budget/guard/shift/order/precision retry.
 Both HOLDs protected; seven fine cases stay unstarted. FormalF03 unconsumed.
 
-Next delivery: a PRIVATE model-bound reference-linear distributing compiler for
-a rectangular footprint across two adjacent flat Cartesian Q4 hosts. Actual
-selected-node rigid constraints and chart/history work already exist; no repeat.
-Use the existing prototype's area-mean position, independent tangential director
-averages and polar-yaw gradient under separate experimental identity
+PRIVATE model-bound reference-linear distributing compiler is implemented/tested
+for a rectangle across two adjacent flat Cartesian Q4 hosts.34focusedcontrols
+PASS/.32s (whole2.191s/174104576B sampled), actualsourceimports/pools1/JIToff.
+Independent source overflow finding fixed before tests; final review clear within
+this scope. Owned geometry/gather/weights and bounded6x42 matrix transfer eccentric
+resultant force/moment/work while admitting tested nonrigid transverse shear.
+It uses area-mean position, independent tangential directors and polar-yaw under
 GE_FLAT_Q4_DISTRIBUTING_DIRECTOR_POLAR_REFERENCE_LINEAR_V1_EXPERIMENTAL.
-This differs from the historical position-only Procrustes candidate. Neither is
-selected/qualified for the complete programme. No public owner wiring/admission,
-finite-chart/plastic/mass claim. Own reference integration/gather/transpose work
-and eccentric lever arms; preserve native element/retained variables and legacy
-laws. New focused checks cover actual host mapping, rigid reproduction, shear/
-nonrigid freedom versus rigid coupling, drill independence, work/reactions and
-ownership/precise negatives. Existing mechanics criteria and G0 guards unchanged.
+This differs from historical position-only Procrustes; neither is selected or
+qualified for the complete programme. No public owner wiring/admission, finite-
+chart/plastic/mass/installed claim. Legacy/retained variables unchanged.
+NEXT: bind this reviewed private derivative to actual GE reference nodal
+coordinates and sparse local insertion on one two-Q4/native-beam panel. Verify
+bounded dense/sparse equilibrium, actual side wrenches and the rigid/distributing
+consequence before any experimental owner admission. Keep unsupported finite
+requests rejected; no new framework or replay of closed factor/reference tickets.
+Existing mechanics criteria and scientific boundaries remain unchanged.
 Root owns scheduling/raw/Git. Current new evidence: envelope-gram/ and
 positive-part-gram/; immutable extension follows raw-manifest-v15.
 Do not rebuild completed fibres, free-mode owners or consumers.
 
-All numerical jobs TERMINAL; factor implementation/review complete. One bounded
-Edit worker owns only new distributing helper and focused tests; root reviews
-the source, schedules checks and integrates. Max3workers.
+All numerical jobs TERMINAL; workers completed/idle. Root owns scheduling/raw/
+Git. No running experiment to interrupt or repeat. Max3workers.
 Mandatory CalculiX, full mixed/locking/shear/drilling/growing-space acceptance,
 material/topology/capacity/scale/platform/consumer/different-family acceptance,
 authorized release and clean synchronized main remain open.
 [Mechanics results/reviews](development/r8-bl5-projected-assessment-20261003/results.md),
 [solver modal results](development/r8-b2-free-reference-modes-20261004/results.md),
 [consumer results](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-free-modal-consumer-20261004/results.md),
+[private distributing result](development/r8-distributing-reference-linear-20261004/results.md),
 [authoritative matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md).
 Pre-final active note is byte-preserved in the new-owned native-beta evidence.
