@@ -2068,3 +2068,16 @@ source/evidence review is not different-family qualification. Remaining kernel
 envelope, regional transfer/locking/mixed-system and aggregate M2/F03/G0 remain
 OPEN. FormalF03 UNCONSUMED; no product/default/criterion/release change.
 [Complete result and exact evidence](development/r8-bl5-projected-assessment-20261003/results.md).
+
+M2 saved-envelope and regional work, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+Ten further saved kernels pass unchanged targets/error/floors; total13/21
+positive. Ns32_b8 producer diagonal HOLD retains its original result, no
+mechanical negativity conclusion. Seven fine cases NOT_STARTED. Eleven retained
+new results passed scalar/input/source/array/resource audit; effective pools1,
+JIToff,600s/2GiB. Focused preparer10/regional27 controls PASS. S4 sharp regional
+Mz discrepancy.75655Nm versus distinct unit-peak smooth.02765Nm; S2-.03878Nm
+sharp/-.00879Nm smooth. Weighting sensitivity does not replace physical criteria,
+prove convergence or select space. Supplemental reference is not CalculiX.
+Supporting review clear; different-family, complete mixed/locking/physical
+acceptance and aggregate M2/F03/G0 OPEN. FormalF03 UNCONSUMED; no product change.
+[Results, stopped campaign and exact evidence](development/r8-bl5-projected-assessment-20261003/results.md).

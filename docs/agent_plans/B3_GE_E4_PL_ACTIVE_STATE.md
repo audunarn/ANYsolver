@@ -46,28 +46,43 @@ mechanicalkernel2745 now has a complete Gram certificate of its ORIGINAL
 fixed shifted target and physical floor7.7328212774e-11.13source/17evidence
 controls PASS; one4.3559s/112361472B sampled run, pools1/JIToff. Supporting
 source/runtime review clear. Historical interval/inverse HOLD remains protected.
-Positive507/1781 proofs keep their scope; other envelope kernels stay open.
+Positive507/1781 proofs keep their scope. Ten more saved kernels pass the same
+target and physical floor: all five new Nx16 cases, ns32_b2 and four Nx32 cases.
+Mechanical inventory13 positive/one producer HOLD/seven untested. The middle
+stage stopped at ns32_b8; the fine stage was not started. No negativity follows
+from a negative producer diagonal at the stronger3epsilon shift. Saved result
+bindings/resources audited without numerical repetition. Focused helper10 and
+regional27 controls PASS; supporting reviews clear, scientific acceptance open.
 Inverse-majorant ticket CLOSED_UNRESOLVED, no negativity conclusion. Fixed-
 density native13.119675% vs supplementary OpenSees13.336932% diagnostic CLOSED;
-S4 regional Mz discrepancy.75655Nm and coarse1:8 work convergence remain open.
+S4 sharp regional Mz discrepancy.75655Nm remains visible; a distinct unit-peak
+smooth weight gives.02765Nm (S2 sharp-.03878Nm/smooth-.00879Nm). This demonstrates
+weighting/cancellation sensitivity, not physical accuracy, boundary localization
+or a space selection. Coarse1:8 work convergence remains open.
 BL5 released normal spin; historical six-row points unchanged. Hhalf candidate
 not selected. Auxiliary beta cannot establish physical transfer or choose space.
 
 ## Next discriminating action
 
-Decision sought: complete actual-kernel observations on the saved envelope,
-separately from regional torque/accuracy. Established: complete Gram residual
-can certify the fixed target without inverse estimates;2745 is resolved.
-Remaining uncertainty: larger-case error/work/storage feasibility, and physical
-transfer/locking, not this case's sign. Next action: use existing saved operators
-and fixed source to preflight the next unassessed registered kernel; a refused
-preflight gets a precise resource/metric finding, not automatic larger limits
-or inverse/precision/channel/mesh tuning. Reuse completed proofs. Regional
-accuracy can advance independently; no repeated classical axial campaign.
-Exact new case evidence/reviews: raw gram-margin/. FormalF03 remains unconsumed.
+Decision sought: distinguish a producer-sign restriction from inability to prove
+the ORIGINAL ns32_b8 target. Established: the complete Gram theorem admits any
+finite real F, including singular F; negative pivots at3epsilon need not imply
+failure at2epsilon. ONE reviewed prospective positive-part producer construction
+F=L sqrt(max(D,0)) may reuse the saved A0/error and SAME shift/order. This is a
+diagnostic factor, never a repair to the mechanical operator or a claimed exact
+LDL/spectral positive part. Original HOLD lacks L, so a separately recorded one
+backend call must retain complete L/D/permutations before admission, match the
+recorded permutations, and include all discarded work in the complete residual.
+Unchanged rho/margin/floor are the sole gate.600s/2GiB/1thread/JIToff, one attempt;
+no shift/order/precision/budget/mesh tuning or automatic campaign. If proved,
+record original-target progress; otherwise name the obstruction and advance
+independent obligations. Fine stage stays unstarted pending that decision.
+Root owns scheduling/raw/Git; bounded worker owns only additive helper/tests.
+Exact current evidence/reviews: raw envelope-gram/. FormalF03 unconsumed.
 Do not rebuild completed fibres, free-mode owners or consumers.
 
-All numerical jobs TERMINAL; workers idle. Root owns scheduling/Git, max3workers.
+All numerical jobs TERMINAL. Additive factor-helper implementation is active;
+source review and controls precede any new numerical action. Max3workers.
 Mandatory CalculiX, full mixed/locking/shear/drilling/growing-space acceptance,
 material/topology/capacity/scale/platform/consumer/different-family acceptance,
 authorized release and clean synchronized main remain open.

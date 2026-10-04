@@ -954,3 +954,51 @@ mixed-system acceptance, mandatory external references and different-family
 acceptance remain open. Auxiliary-beta and physical transfer stay distinct.
 No law/space selection, aggregate M2/G0 acceptance or formalF03 consumption.
 [Raw, design, controls and reviews](../../../../.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/).
+
+### Saved envelope and regional work — 4 October 2026
+
+An additive preparer reuses the frozen local/graph/scaling/error operators and
+binds the original417-module installed wheel/site rather than today's unrelated
+modal source changes. The fresh ns32_b2/kernel2801 case passes its original
+sigma=2.6184588318972087e-9 target with rho1.3658149792939142e-11,
+directed margin1.2955712661556655e-9 and physical floor4.9512194426684955e-11.
+Its fixed producer shift is sigma+epsilon, prescribed before factor values.
+Ten focused controls pass; complete candidate evidence survives helper errors.
+
+The finite remaining inventory then ran in inspected stages. Nx16's five new
+cases and Nx32's first four all passed. Nx32's final ns32_b8 case stopped with
+PRODUCER_DIAGONAL HOLD at tau4.0792678012037096e-8; no Gram proof or physical
+floor was returned. Original epsilon1.3597559337345696e-8 and sigma
+2.7195118674691396e-8 remain unchanged. This is not a negative-mode conclusion.
+The fine seven-case stage was not started. Together with earlier proofs there
+are13 positive kernels, one producer HOLD and seven unassessed kernels.
+
+Root audited11 new retained results, source/input/array identities, original
+epsilon/shift/metric, terminal commands and effective settings without rerunning
+certificates. Every job used600s/2GiB/one numerical thread/JIT off. Whole case
+times were1.4367–10.8944s, sampled tree peaks below130MB. Symbolic proof guards
+remain binding; observed RSS is not a replacement for their workspace estimates.
+The original failed producer and all stage-prefix evidence are preserved.
+
+Separately27 focused controls and one saved-data-only computation compared
+sharp and unit-peak smooth regional action over x=.25–.75. The smooth polynomial
+is256(x-.25)^2(x-.75)^2; it is a different observable, not a refined sharp cut.
+
+| Space | Native sharp Mz | Reference sharp Mz | Difference | Native smooth Mz | Reference smooth Mz | Difference |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| S4 | -.91609425 | -1.67264685 | .75655259 | 1.21669721 | 1.18904715 | .02765006 |
+| S2 | 19.48893822 | 19.52771703 | -.03877881 | 12.76090684 | 12.76970046 | -.00879362 |
+
+Recovered intrinsic couple differences are at floating-point noise; these
+observables are dominated by x*Fy leverage. Exact polynomial integration is of
+the saved discrete representation. Smooth/sharp sensitivity alone cannot locate
+the error, prove convergence, select S2 or replace frozen physical tolerances.
+The sharply different S4/S2 transfer distributions and historical coarse work
+convergence remain unresolved. Supplemental OpenSees does not satisfy mandatory
+CalculiX comparisons. No solve, new mesh or external model was executed here.
+
+Supporting independent source/evidence review found no blocker within these
+development claims. Different-family scientific acceptance remains open. No
+product equation, wheel, default, tolerance, law/space choice, aggregate M2/G0
+acceptance or formalF03 authority changed.
+[Raw inputs, stages, audits and reviews](../../../../.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/).
