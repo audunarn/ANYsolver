@@ -41,6 +41,98 @@ def _two_analysis(**kwargs):
     return runpy.run_path(str(example))['analysis'](beams=2,**kwargs)
 
 
+def test_multiple_material_facets_complete_work_and_retained_response():
+    from anysolver.general_contact.native_multi_s3_static import MATERIAL_MULTIPATCH_PROFILE
+    owner=_two_analysis(facets=2,targets=(.25,.5,.75,1.));n=owner.context.count
+    assert n==84 and owner.shell_stiffness.shape==(36,36) and len(owner.pairs)==3
+    step=np.zeros(n)
+    for i,nodes in enumerate(owner.context.nodes):
+        for j,node in enumerate(nodes[1:]):
+            step[6*node+2]=-.001-.0002*i-.0002*j
+            if i==0:step[6*node+1]=-.0012-.0002*j
+    pose=owner.context.advance(owner.initial.mechanical,step);u=np.zeros(36)
+    value=owner._contact(pose,u)
+    def energy(mechanical,displacement):
+        return sum(_reference(p.work,mechanical.positions[owner.context.nodes[i]]+
+            mechanical.position_low[owner.context.nodes[i]],mechanical.cell_rotations[i],displacement)[0]
+            for p,i in zip(owner.pairs,owner.beam_indices))
+    assert value.tangent.shape==(120,120) and value.profile==MATERIAL_MULTIPATCH_PROFILE
+    assert_allclose(value.contact.potential_j,energy(pose,u),rtol=1e-10,atol=1e-13)
+    assert_allclose(value.contact.beam_force_n+value.contact.shell_force_n,0.,atol=1e-11)
+    assert_allclose(value.contact.beam_moment_nm+value.contact.shell_moment_nm,0.,atol=1e-11)
+    d=np.random.default_rng(510).normal(size=n+36)*.003;d[list(owner.context.fixed)]=0.
+    errors=[]
+    for h in (1e-5,2e-6):
+        states=[owner.context.advance(pose,sign*h*d[:n]) for sign in (1,-1)]
+        rows=[owner._contact(s,u+sign*h*d[n:]) for sign,s in zip((1,-1),states)]
+        fd=(rows[0].residual-rows[1].residual)/(2*h)
+        error=float(np.linalg.norm(value.tangent@d-fd)/np.linalg.norm(fd));assert error<=1e-5;errors.append(error)
+        virtual=(energy(states[0],u+h*d[n:])-energy(states[1],u-h*d[n:]))/(2*h)
+        assert_allclose(value.residual@d,virtual,rtol=1e-5,atol=1e-10)
+    run=owner.solve();assert run.status=='completed',run.failure
+    assert run.profile==MATERIAL_MULTIPATCH_PROFILE
+    a=run.accepted
+    r,j,metrics,_,contact=owner._assemble(a.mechanical,a.shell_displacement,1.,a.native_histories)
+    assert max(metrics)<1e-10 and all(row.contact.minimum_gap_m>=-p.gap_tolerance_m for p,row in contact.pairs)
+    assert np.all(np.abs(a.shell_displacement[owner.shell_free])>0.)
+    assert_allclose(contact.contact.beam_force_n+contact.contact.shell_force_n,0.,atol=1e-12)
+    assert_allclose(contact.contact.beam_moment_nm+contact.contact.shell_moment_nm,0.,atol=1e-12)
+    shell_r=r[n:].reshape(6,6)
+    mids=np.vstack([pair.work.shell.reference_positions-pair.work.shell.physical_offset*pair.work.shell.director
+        for pair in (owner.pairs[0],owner.pairs[1])])+a.shell_displacement.reshape(6,6)[:,:3]
+    force_balance=shell_r[:,:3].sum(axis=0)
+    moment_balance=np.cross(mids,shell_r[:,:3]).sum(axis=0)+shell_r[:,3:].sum(axis=0)
+    for i,nodes in enumerate(owner.context.nodes):
+        root=nodes[0];force=np.array((0.,-.003 if i==0 else 0.,-.005 if i==0 else -.003))
+        force_balance+=r[6*root:6*root+3]+force
+        moment_balance+=(r[6*root+3:6*root+6]+np.cross(a.mechanical.positions[root],r[6*root:6*root+3])+
+            np.cross(a.mechanical.positions[nodes[2]],force))
+    normalized_force=float(np.linalg.norm(force_balance)/.009)
+    normalized_moment=float(np.linalg.norm(moment_balance)/.018)
+    assert normalized_force<=1e-6 and normalized_moment<=1e-6
+    direction=np.random.default_rng(513).normal(size=n+36)*.001
+    direction[list(owner.context.fixed)]=0.;direction[n+owner.shell_fixed]=0.
+    owner_errors=[]
+    for h in (1e-5,2e-6):
+        states=[owner.context.advance(a.mechanical,sign*h*direction[:n]) for sign in (1,-1)]
+        rows=[owner._assemble(s,a.shell_displacement+sign*h*direction[n:],1.,a.native_histories)[0]
+            for sign,s in zip((1,-1),states)]
+        fd=(rows[0]-rows[1])/(2*h)
+        error=float(np.linalg.norm(j@direction-fd)/np.linalg.norm(fd))
+        assert error<=1e-5;owner_errors.append(error)
+    output=os.environ.get('CONTACT_MATERIAL_FACETS_S3_RECORD')
+    if output:Path(output).write_text(json.dumps(dict(profile=run.profile,coordinates=120,
+        metrics=metrics,contact_tangent_errors=errors,owner_tangent_errors=owner_errors,
+        normalized_force_balance=normalized_force,normalized_moment_balance=normalized_moment,
+        minimum_gap_m=contact.contact.minimum_gap_m,
+        shell_displacement_norm=float(np.linalg.norm(a.shell_displacement)),
+        pair_forces=[row.contact.beam_force_n.tolist() for _,row in contact.pairs],
+        checkpoint_sha256=run.checkpoint_sha256),indent=2))
+
+
+def test_one_native_two_material_facets_open_checkpoint_and_recontact():
+    example=Path(__file__).resolve().parents[1]/'examples/general_contact_native_material_s3.py'
+    maker=runpy.run_path(str(example))['analysis']
+    owner=maker(beams=1,facets=2);run=owner.solve()
+    assert run.status=='completed',run.failure
+    assert owner.context.count==42 and owner.shell_stiffness.shape==(36,36)
+    assert run.accepted.completed_targets==9
+    records=json.loads(run.checkpoint)['records']
+    assert records[3]['contact']['potential_j']>0.
+    assert records[4]['contact']['potential_j']==0.
+    assert records[8]['contact']['potential_j']>0.
+    for record in (records[3],records[8]):
+        assert len(record['contact']['pairs'])==2
+        assert all(pair['potential_j']>0. for pair in record['contact']['pairs'])
+    assert all(pair['minimum_gap_m']>0. and pair['potential_j']==0.
+        for pair in records[4]['contact']['pairs'])
+    opened=maker(beams=1,facets=2).solve(stop_after=5)
+    assert opened.status=='paused' and opened.accepted.contact.contact.potential_j==0.
+    continued=maker(beams=1,facets=2).solve(checkpoint=opened.checkpoint,
+        expected_sha256=opened.checkpoint_sha256)
+    assert continued.status=='completed' and continued.checkpoint==run.checkpoint
+
+
 def test_two_material_contact_independent_work_before_structural_globalization():
     owner=_two_analysis(targets=(.25,.5,.75,1.));n=owner.context.count
     step=np.zeros(n)
@@ -208,7 +300,8 @@ def test_pre_area_multiple_line_checkpoint_remains_replayable():
 
 
 def _analysis(*,force=-.005,targets=(.5,1.),stiffness=1e6,radius=.05,
-              shell_z=-.0501,angles=(pi-.3,pi+.3),triangle=None,shell_E=1e8):
+              shell_z=-.0501,angles=(pi-.3,pi+.3),triangle=None,shell_E=1e8,
+              shell_node_order=(4,5,6),director_polarity=1):
     native,_,inertias=make(False,clamped=True,coupled=False)
     element=native.mesh.elements[1]
     definition=NativeBeamDefinition.capture(element,inertias[1])
@@ -218,8 +311,8 @@ def _analysis(*,force=-.005,targets=(.5,1.),stiffness=1e6,radius=.05,
     shell.add_material('elastic',shell_E,.3,density=1.)
     triangle=((-5.,-5.),(5.,-5.),(0.,10.)) if triangle is None else triangle
     for node,(x,y) in zip((4,5,6),triangle):shell.add_node(node,x,y,shell_z-.025)
-    shell.add_element(21,create_shell_element(21,(4,5,6),'elastic',thickness=.05,
-        formulation='e4-pl-s3-v2d',reference_normal=(0,0,1),reference_surface_offset=0.))
+    shell.add_element(21,create_shell_element(21,shell_node_order,'elastic',thickness=.05,
+        formulation='e4-pl-s3-v2d',reference_normal=(0,0,1),reference_surface_offset=0.,director_polarity=director_polarity))
     shell.add_boundary_condition(FixedSupport('edge',[4,6]))
     shell.add_boundary_condition(BoundaryCondition('moving vertex',[5],
         {name:0. for name in ('ux','uy','rx','ry','rz')}))
@@ -236,9 +329,31 @@ def _analysis(*,force=-.005,targets=(.5,1.),stiffness=1e6,radius=.05,
 
 def _corners(work,u):
     # Independent linear physical-skin map on this fixture's known node order.
-    values=np.asarray(u).reshape(3,6)
+    values=np.asarray(u).reshape(-1,6)[[node-4 for node in work.shell.node_ids]]
     return work.shell.reference_positions+values[:,:3]+work.shell.physical_offset*np.cross(
         values[:,3:],work.shell.director)
+
+
+def test_cyclic_shell_corner_order_preserves_work_and_physical_wrench():
+    normal=_analysis();permuted=_analysis(shell_node_order=(5,6,4))
+    step=np.zeros(42);step[8]=-.001;step[14]=-.002;step[normal.context.nodal_count+3]=.02
+    pose=normal.context.advance(normal.initial.mechanical,step)
+    u=np.sin(np.arange(18)+.4)*1e-5
+    results=[o._contact(pose,u) for o in (normal,permuted)]
+    a,b=results
+    assert_allclose(a.residual,b.residual,rtol=1e-10,atol=1e-11)
+    assert_allclose(a.tangent.toarray(),b.tangent.toarray(),rtol=1e-9,atol=1e-8)
+    assert_allclose(b.contact.shell_vertex_force_n,a.contact.shell_vertex_force_n[[1,2,0]],rtol=1e-10,atol=1e-11)
+    assert_allclose(a.contact.shell_moment_nm,b.contact.shell_moment_nm,rtol=1e-10,atol=1e-11)
+    assert_allclose(a.contact.beam_moment_nm+a.contact.shell_moment_nm,0.,atol=1e-11)
+    assert_allclose(b.contact.beam_moment_nm+b.contact.shell_moment_nm,0.,atol=1e-11)
+    ref=_reference(permuted.contact,pose.positions,pose.cell_rotations[0],u)
+    assert_allclose(b.contact.beam_moment_nm,ref[4:7],rtol=1e-9,atol=1e-11)
+
+
+def test_material_skin_rejects_unadmitted_negative_director_polarity():
+    with pytest.raises(ValueError,match='positive director/reference orientation'):
+        _analysis(director_polarity=-1)
 
 
 def _reference(work,positions,rotations,u):

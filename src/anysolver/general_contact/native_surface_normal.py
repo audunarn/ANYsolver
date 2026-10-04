@@ -224,7 +224,9 @@ def integrate_straight_normal(rule, target, configuration,
     stiffness = float(normal_stiffness_Pa_per_m)
     if not isfinite(stiffness) or stiffness <= 0.:
         raise ValueError('normal penalty stiffness must be finite and positive')
-    if target.adapter.side != 'top' or target.adapter.work_map.shape != (9, 18):
+    shape=target.adapter.work_map.shape
+    extended_columns=(compensated_projection and shape[0]==9 and shape[1]>=18 and shape[1]%6==0)
+    if target.adapter.side != 'top' or (shape != (9,18) and not extended_columns):
         raise ValueError('straight normal integration requires one 18-DOF top S3 skin')
     # Shared exact-reference, current orientation and continuous target ownership
     # admission. The returned gap is not replaced by angular sampling.
@@ -235,7 +237,7 @@ def integrate_straight_normal(rule, target, configuration,
              ((0, max(lo, -1.), min(hi, 0.)), (1, max(lo, 0.), min(hi, 1.))) if r > l]
     data = [_cell_data(rule, target, configuration, corners, *cell, stiffness,
                        compensated_projection=compensated_projection) for cell in cells]
-    return _integrate_material_normal_data(data, 60, settings)
+    return _integrate_material_normal_data(data,42+target.adapter.work_map.shape[1],settings)
 
 
 def _integrate_material_normal_data(data, count, settings):
@@ -261,7 +263,7 @@ def _integrate_material_normal_data(data, count, settings):
     visited = accepted = evaluations = 0
     last_error=last_interval=None
     scale=np.ones(count)
-    for first in (3,9,15,18,21,45,51,57):
+    for first in (3,9,15,18,21,*range(45,count,6)):
         if first+3 <= count:
             scale[first:first+3]=1./settings.characteristic_length_m
     for integrand, mapping, breaks in data:

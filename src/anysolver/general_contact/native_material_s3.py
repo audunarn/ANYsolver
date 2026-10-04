@@ -1,7 +1,7 @@
 """Straight interior retained material patch / small-rotation physical S3 skin.
 
 Fixed reference-area normal penalty; no line-law substitution, caps, friction or
-native dynamics. All 42 native and 18 authoritative shell work columns remain.
+native dynamics. All 42 native and authoritative shell work columns remain.
 """
 from dataclasses import dataclass
 from math import isfinite
@@ -17,6 +17,45 @@ from .s3_friction_point import S3SkinMaterialPoint
 from .s3_skin_work import S3SkinWorkAdapter
 
 PROFILE='NATIVE_B3_GE_RETAINED_MATERIAL_PATCH_S3_STATIC_DEV_V1'
+
+
+def _skin_translation_dofs(shell):
+    """Recover vertex order from the exact six-coordinate S3 work contract.
+
+    Translation columns, rather than material node labels or corner coordinates,
+    determine authoritative force order. Verify the complete offset rotation map.
+    """
+    mapping=shell.work_map
+    if (not sparse.isspmatrix_csr(mapping) or mapping.shape[0]!=9
+            or mapping.shape[1]%6 or mapping.shape[1]<18):
+        raise ValueError('material S3 requires the authoritative six-coordinate shell work map')
+    columns=[]
+    for row in range(9):
+        begin,end=mapping.indptr[row:row+2]
+        indices=mapping.indices[begin:end];values=mapping.data[begin:end]
+        positions=np.flatnonzero(indices%6<3)
+        if (len(positions)!=1 or values[positions[0]]!=1.
+                or indices[positions[0]]%6!=row%3):
+            raise ValueError('material S3 translation columns are not authoritative')
+        columns.append(int(indices[positions[0]]))
+    dofs=np.array(columns,dtype=int).reshape(3,3)
+    bases=dofs[:,0]
+    if len(set(bases))!=3 or not np.array_equal(dofs,bases[:,None]+np.arange(3)):
+        raise ValueError('material S3 vertex translation blocks are ambiguous')
+    rows=[];cols=[];data=[]
+    for vertex,base in enumerate(bases):
+        for component in range(3):
+            rows.append(3*vertex+component);cols.append(int(base+component));data.append(1.)
+        for rotation in range(3):
+            variation=shell.physical_offset*np.cross(np.eye(3)[rotation],shell.director)
+            for component,value in enumerate(variation):
+                if value:
+                    rows.append(3*vertex+component);cols.append(int(base+3+rotation));data.append(float(value))
+    expected=sparse.coo_matrix((data,(rows,cols)),shape=mapping.shape).tocsr()
+    if (mapping-expected).nnz:
+        raise ValueError('material S3 offset rotation map is not authoritative')
+    dofs.setflags(write=False)
+    return dofs
 
 
 class NativeMaterialS3Patch:
@@ -49,7 +88,7 @@ class NativeMaterialS3Patch:
             radius_m=self.radius,cell=self.cell,normal_stiffness_Pa_per_m=self.stiffness,
             integration=asdict(self.settings),geometry_tolerance_m=self.geometry_tolerance,
             rim_clearance_m=self.rim_clearance,measure='fixed_reference_material_area',
-            numerical_revision='anchored_projection_radius_reference_orientation_v1',
+            numerical_revision='anchored_projection_radius_reference_full_shell_work_v2',
             wrench_origin_m=(0.,0.,0.))
 
     def _fingerprint(self):return sha(self.definition())
@@ -87,8 +126,15 @@ class NativeRetainedMaterialS3Work:
     def __init__(self,contact,shell):
         if type(contact) is not NativeMaterialS3Patch or type(shell) is not S3SkinWorkAdapter:
             raise TypeError('exact material patch and physical S3 skin required')
-        if shell.side!='top' or shell.work_map.shape!=(9,18):
-            raise ValueError('material patch requires one 18-DOF top S3 skin')
+        if shell.side!='top':
+            raise ValueError('material patch requires a top S3 skin')
+        _skin_translation_dofs(shell)
+        reference=shell.reference_positions
+        normal=np.cross(reference[1]-reference[0],reference[2]-reference[0])
+        area=float(np.linalg.norm(normal))
+        if (not np.isfinite(area) or area<=contact.geometry_tolerance**2
+                or float(normal@shell.director)<=256.*np.finfo(float).eps*area):
+            raise ValueError('material S3 top skin requires positive director/reference orientation')
         self.contact=contact;self.shell=shell
         self.target=S3SkinMaterialPoint(shell,(1/3,1/3,1/3))
         self.identity=self._fingerprint()
@@ -97,6 +143,10 @@ class NativeRetainedMaterialS3Work:
     def work_map(self):
         """Geometry provenance for the shared owner; area work is already mapped."""
         return sparse.block_diag((sparse.eye(42,format='csr'),self.shell.work_map),format='csr')
+
+    @property
+    def shell_translation_dofs(self):
+        return _skin_translation_dofs(self.shell)
 
     def _fingerprint(self):
         s=self.shell;m=s.work_map
@@ -144,7 +194,7 @@ class NativeRetainedMaterialS3Work:
             compensated_projection=True)
         residual=integral.residual
         beam_forces=np.array([-residual[6*i:6*i+3] for i in range(3)])
-        shell_forces=-residual[42:].reshape(3,6)[:,:3]
+        shell_forces=-residual[42:][self.shell_translation_dofs]
         beam_moment=sum((np.cross(pose.positions[i],beam_forces[i])
             +np.cross(pose.position_low[i],beam_forces[i]) for i in range(3)),start=np.zeros(3))
         beam_moment-=residual[18:24].reshape(2,3).sum(axis=0)

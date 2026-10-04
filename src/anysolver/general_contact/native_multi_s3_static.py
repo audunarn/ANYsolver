@@ -29,6 +29,7 @@ from .native_shell_static_driver import solve_native_shell
 
 PROFILE = 'NATIVE_B3_GE_MULTIPLE_ELASTIC_S3_INTERIORS_STATIC_DEV_V1'
 MATERIAL_PROFILE = 'NATIVE_B3_GE_TWO_MATERIAL_PATCHES_SHARED_S3_STATIC_DEV_V1'
+MATERIAL_MULTIPATCH_PROFILE = 'NATIVE_B3_GE_MULTIPLE_MATERIAL_PATCHES_S3_STATIC_DEV_V1'
 SCHEMA = 'NATIVE_B3_GE_MULTIPLE_S3_CHECKPOINT_DEV_V1'
 
 
@@ -163,11 +164,11 @@ class NativeRetainedMultiS3Analysis:
             raise ValueError('multiple native/S3 owner does not admit mixed line and area profiles')
         self._material_mode=kinds=={NativeRetainedMaterialS3Work}
         if self._material_mode:
-            if (type(self) is not NativeRetainedMultiS3Analysis or len(definitions)!=2
-                    or len(pairs)!=2 or shell_model.mesh.dof_manager.total_dofs!=18
-                    or len({p.work.shell.element_id for p in pairs})!=1):
-                raise ValueError('material-area multiple owner requires two beams and one shared S3 without activation controller')
-            self.profile=MATERIAL_PROFILE
+            if type(self) is not NativeRetainedMultiS3Analysis:
+                raise ValueError('material-area multiple owner requires the exact owner without activation controller')
+            self.profile=(MATERIAL_PROFILE if len(definitions)==2 and len(pairs)==2
+                and shell_model.mesh.dof_manager.total_dofs==18
+                and len({p.work.shell.element_id for p in pairs})==1 else MATERIAL_MULTIPATCH_PROFILE)
         self.native = NativeBeamAnalysis(definitions, boundaries)
         self.context = Context(self.native.model, program)
         if (len(self.context.elements) != len(definitions)
@@ -312,7 +313,7 @@ class NativeRetainedMultiS3Analysis:
             pairs.append((p, result)); self.pair_evaluations += 1
         self.candidate_evaluations += 1
         return NativeMultiS3WorkResult(NativeMultiS3Physical(tuple(pairs)), _readonly(residual), tangent.tocsr(), tuple(pairs),
-            MATERIAL_PROFILE if self._material_mode else PROFILE)
+            self.profile if self._material_mode else PROFILE)
 
     def _contact_admissible(self, result):
         return all(r.contact.minimum_gap_m >= -p.gap_tolerance_m for p, r in result.pairs)

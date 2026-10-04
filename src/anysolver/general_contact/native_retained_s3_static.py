@@ -72,6 +72,8 @@ class NativeRetainedRoundS3Analysis:
         if type(shell_model) is not FEModel or type(contact) not in (NativeRetainedLineS3Work,NativeRetainedMaterialS3Work):
             raise TypeError("native/S3 owner needs exact S3 model and contact work")
         self.profile=MATERIAL_PROFILE if type(contact) is NativeRetainedMaterialS3Work else PROFILE
+        if type(contact) is NativeRetainedMaterialS3Work and shell_model.mesh.dof_manager.total_dofs!=18:
+            raise ValueError('single material-area owner requires one 18-DOF S3')
         if (type(gap_tolerance_m) not in (int, float)
                 or not isfinite(gap_tolerance_m) or gap_tolerance_m <= 0.0
                 or type(equilibrium_tolerance) not in (int, float)
