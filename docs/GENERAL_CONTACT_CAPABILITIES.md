@@ -1,4 +1,20 @@
 # General-contact capability ledger
+## Retained native material patch / deformable S3 — 4 October
+
+Implemented/installed-tested development at46ea65f6: one strictly interior
+straight half-cell material patch, fixed reference area and explicit N/m³ penalty,
+one elastic small-rotation S3 top skin. All42native+18shell authoritative blocks,
+moving target normals, offsets, physical section couples and once-only spatial
+conversion remain. Press/open/recontact, both-body work/owner tangent, finite native
+section rotation, hidden gap/edge/reference inversion, friction isolation,
+exception/cancellation and split/open restart pass. 39installed checks73.466s,
+349569024B;517package files/222imports match,JIT0/pools1. Gaps31.093→11.439um
+at1e6→1e7N/m³ underunchanged50um; reactionchanges2.108%, convergence open.
+Supporting Read scrutiny only; no engineering/application admission/release.
+No caps/interfaces/curved-reference/multiple-body/friction/dynamics scope.
+[Guide](GENERAL_CONTACT_NATIVE_MATERIAL_S3_DEV.md),
+[evidence/failures](d1_review_support/contact_native_material_s3_20261004/README.md).
+
 ## Retained native material patch / plane — 4 October
 
 Implemented/installed-tested development atf08d3d80: one strictly interior straight
