@@ -1,5 +1,24 @@
 # General-contact capability ledger
 
+## Curved simple axial-front normal work — 4 October
+
+Implemented/installed-tested8b3671c9 in the existing local fixed-plane kernel.
+Four endpoint/extremum equations isolate simple roots with continuous owned
+first/second derivative bounds; retained uncertainty bands enter complete-work
+error budgets. Sin-squared axial change preserves work/Jacobian. Exact binary
+curvature protects the reviewer’s large-coordinate cancellation counterexample.
+Actual reference geometry is prepared once per axial station, with parity and
+signed outward checks. Degenerate/clipping/precision/resource failures remain.
+27installed checks58.273s183021568B;522files/209imports match,JIT0/pools1.
+Independent E/F/M errors3.109e-15J/9.379e-13N/2.747e-13Nm; tangent5.00e-10/1.79e-9.
+60intervals40296evaluations, unchanged64cap and dimensional tolerances.
+One instrumented evaluation51.586→11.135s: local profile only, no whole-solve claim.
+Supporting same-family Read scrutiny, not independent acceptance/release.
+No coupled owner/path/history/restart/friction/dynamics/application admission.
+[Guide](GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md),
+[evidence](d1_review_support/contact_native_material_s3_20261004/curved_axial_front_summary.json),
+[review](d1_review_support/contact_native_material_s3_20261004/curved_axial_front_review.md).
+
 ## Curved partial angular normal work — 4 October
 
 Implemented/installed-tested78c622de in the existing local fixed-plane kernel.

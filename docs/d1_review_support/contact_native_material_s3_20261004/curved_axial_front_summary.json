@@ -1,0 +1,290 @@
+{
+  "source_sha": "8b3671c9d2be9df29874fb2e6ec9eb37c4d5d051",
+  "raw_root": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate09",
+  "scope": "local curved fixed-plane penalty work with guarded simple axial/angular fronts; no coupled acceptance",
+  "status": {
+    "implemented": true,
+    "source_tested": true,
+    "installed_tested": true,
+    "independently_accepted": false,
+    "released": false
+  },
+  "profile": "NATIVE_RETAINED_CURVED_MATERIAL_PLANE_LOCAL_WORK_DEV_V1",
+  "numerical": "GAUSS_8_16_PRECISE_CURVED_AXIAL_ARCS_JET2_SPATIAL_ONCE_V4",
+  "wheel": {
+    "path": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate09\\dist\\anysolver-0.4.7-py3-none-any.whl",
+    "sha256": "278b749cee59a300f109fa278783cad9f6741e178696efa66edd6282d660ed1b"
+  },
+  "installed": {
+    "source_files": 522,
+    "imported_modules": 209,
+    "source_installed_errors": [],
+    "extra_installed_files": [],
+    "outcomes": {
+      "passed": 27
+    },
+    "runs": {
+      "installed_curved_axial_front": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 58.273463399964385,
+          "peak_bytes": 183021568
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 27
+        }
+      }
+    }
+  },
+  "runs": {
+    "axial_front_bracket_tightened": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.353515399969183,
+      "peak_bytes": 185724928
+    },
+    "axial_front_first": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 3.737682099919766,
+      "peak_bytes": 187224064
+    },
+    "axial_front_prepared_area": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 58.198594599962234,
+      "peak_bytes": 187625472
+    },
+    "axial_front_trace_corrected": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.3960541000124067,
+      "peak_bytes": 186118144
+    },
+    "axial_front_variable_change": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 167.79828520002775,
+      "peak_bytes": 183017472
+    },
+    "axial_front_work_variation": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 43.43151249992661,
+      "peak_bytes": 186306560
+    },
+    "axial_prepared_profile_and_rejection": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 13.448368399986066,
+      "peak_bytes": 181428224
+    },
+    "axial_profile_corrected": {
+      "status": "completed",
+      "returncode": 2,
+      "elapsed_s": 0.8727426999248564,
+      "peak_bytes": 60940288
+    },
+    "axial_profile_corrected_import": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 55.276982599985786,
+      "peak_bytes": 181932032
+    },
+    "build_axial_front": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 10.743189299944788,
+      "peak_bytes": 110223360
+    },
+    "curvature_area_checks": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 3.666111800004728,
+      "peak_bytes": 186548224
+    },
+    "installed_curved_axial_front": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 58.273463399964385,
+      "peak_bytes": 183021568
+    },
+    "install_axial_front": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 4.296848300029524,
+      "peak_bytes": 102199296
+    }
+  },
+  "metrics": {
+    "curved-axial-front": {
+      "energy_error_j": 3.1086244689504383e-15,
+      "force_error_n": 9.379164112033322e-13,
+      "moment_error_nm": 2.74673035569117e-13,
+      "tangent_errors": [
+        4.999923032800734e-10,
+        1.7900390878827727e-09
+      ],
+      "intervals": 60,
+      "evaluations": 40296,
+      "errors": [
+        2.2187955372633407e-11,
+        9.002393528896694e-10,
+        8.936568036396311e-07
+      ],
+      "root_brackets": [
+        {
+          "cell": 0,
+          "lower": -0.6250000000031792,
+          "upper": -0.6249999999968208,
+          "features": [
+            3
+          ],
+          "representation_gap_m": 2.5432663057933263e-13,
+          "error_bounds": [
+            2.2533534070556915e-21,
+            3.0037131654993374e-20,
+            2.1535441826044965e-07
+          ]
+        },
+        {
+          "cell": 0,
+          "lower": -0.3245009990513272,
+          "upper": -0.3245009990449688,
+          "features": [
+            0
+          ],
+          "representation_gap_m": 2.5432663057933263e-13,
+          "error_bounds": [
+            2.2532790151964833e-21,
+            3.003613513737515e-20,
+            2.153506580561917e-07
+          ]
+        },
+        {
+          "cell": 0,
+          "lower": -0.07577418272302018,
+          "upper": -0.0757741827166619,
+          "features": [
+            1
+          ],
+          "representation_gap_m": 2.5432663057933263e-13,
+          "error_bounds": [
+            2.253223222105264e-21,
+            3.003538775997968e-20,
+            2.1534783790299826e-07
+          ]
+        },
+        {
+          "cell": 1,
+          "lower": 0.12499999999682083,
+          "upper": 0.12500000000317912,
+          "features": [
+            2
+          ],
+          "representation_gap_m": 2.5432954169084744e-13,
+          "error_bounds": [
+            2.253235337786493e-21,
+            3.003554667443622e-20,
+            2.153483079285305e-07
+          ]
+        }
+      ]
+    },
+    "curved-partial-reference": {
+      "energy_error_j": 5.551115123125783e-16,
+      "force_error_n": 5.684341886080802e-14,
+      "moment_error_nm": 1.6125774456909663e-14,
+      "intervals": 20,
+      "evaluations": 8960,
+      "estimated_errors": [
+        1.9203423573532774e-12,
+        4.494830722900911e-10,
+        3.3739552001126744e-07
+      ]
+    },
+    "curved-partial": {
+      "tangent_errors": [
+        1.9780995236706092e-10,
+        1.6119805134978365e-11
+      ],
+      "work_errors_j": [
+        9.84329284747787e-10,
+        4.7578607720311084e-11
+      ],
+      "intervals": 20,
+      "evaluations": 8960,
+      "energy_j": 0.1006503245169339
+    },
+    "curved-two-pockets": {
+      "result": "explicit_non_success",
+      "reason": "curved axial front root precision exhausted",
+      "diagnostics": null
+    }
+  },
+  "scrutiny": "curved_axial_front_review.md; same-family supporting Read only",
+  "performance": {
+    "scope": "one cProfile-instrumented evaluation, not balanced whole-solve timing",
+    "before_s": 51.586,
+    "after_s": 11.135,
+    "before_reference_geometry_s": 34.885,
+    "after_reference_area_s": 1.56,
+    "integrand_evaluations": 40296,
+    "evidence": [
+      "axial_profile_corrected_import/profile.txt",
+      "axial_prepared_profile_and_rejection/profile.txt"
+    ],
+    "claim": "repeated reference geometry removed; no general or complete-solve speedup claim"
+  },
+  "failures": [
+    {
+      "run": "axial_front_first",
+      "diagnosis": "LEFT/RIGHT trace incorrectly requested away from interface; corrected"
+    },
+    {
+      "run": "axial_front_trace_corrected",
+      "diagnosis": "full work norm exceeds energy budget; fixture perturbed middle inconsistent with affine independent oracle"
+    },
+    {
+      "run": "axial_front_bracket_tightened",
+      "diagnosis": "root-band full norm too coarse; midpoint Lipschitz energy/force errors used, full tangent charge retained"
+    },
+    {
+      "run": "axial_front_work_variation",
+      "diagnosis": "64 intervals exhausted at square-root contact-width onset; sin-squared variable change with actual Jacobian added"
+    },
+    {
+      "run": "axial_front_variable_change",
+      "diagnosis": "exploratory pass, source changed while running; cannot bind current-source validation; affected checks rerun on stable source"
+    },
+    {
+      "run": "axial_profile_corrected",
+      "diagnosis": "private profiling fixture missing tests import path; repaired before numerical execution"
+    },
+    {
+      "run": "axial_front_prepared_area",
+      "diagnosis": "19 passed; hidden pocket rejected correctly but old regex excluded new root-precision exhaustion; assertion extended, no mechanics change; rerun and installed check pass"
+    },
+    {
+      "run": "review",
+      "diagnosis": "ordinary curvature subtraction loses -1 in large literal coordinates; exact binary coefficients/projections fixed and independent literal regression retained"
+    }
+  ],
+  "limits": [
+    "simple roots only; tangent/degenerate roots, clipping-adjacent unresolved intervals and root uncertainty may reject",
+    "isolation and integration share existing64 interval cap and unchanged dimensional error limits",
+    "Gauss8/16 differences remain estimates, not rigorous quadrature certificates",
+    "intentional fixed-pose compression fixtures do not meet an engineering initial-condition/gap contract",
+    "no coupled owner, continuous path, history, restart, friction, dynamics, application or release admission"
+  ],
+  "next": "whole material-patch orientation/side/gap control along actual native update, then existing retained-owner curved cycle/rollback/restart"
+}

@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.110. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.17, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.111. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.18, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
@@ -15,12 +15,21 @@ retains the detailed chronology; current evidence remains in the
 
 ## 1. Status and diagnosis
 
-Latest curved work`78c622de` adds partial angular contact to the existing local
-kernel, preserving actual reference area and all42retained coordinates. Whole-band
-minimum/maximum/endpoint sign enclosures prevent sampled topology from hiding
-thin contact. Generic axial onset/termination remains unresolved; continuous path
-admission and the actual curved coupled owner are still required. Existing-owner
-evidence below is reused, not repeated. No acceptance or speedup claim follows.
+Latest curved work`8b3671c9` closes guarded simple axial fronts in the existing
+fixed-plane local kernel, preserving actual reference area/all42retained work
+coordinates. Continuous root isolation, retained bracket work/error accounting,
+exact binary curvature and the sin-squared integration variable pass independent
+work/tangent controls.27installed checks58.273s183021568B;522files/209imports match.
+[Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_axial_front_summary.json).
+
+The measured bottleneck was repeated reference-surface geometry:34.885/51.586s in
+one instrumented evaluation. Preparing it once per axial station reduces that
+same evaluation to11.135s with unchanged40296integrand evaluations and mechanical
+results. This is a local profile, not balanced complete-solve performance. Stop
+local optimization here and close whole-patch path/side/gap control, then integrate
+the existing retained owner for curved press/open/recontact, rollback and restart.
+Degenerate/clipping/precision cases still reject; no guard/default/cap relaxation
+or extra solver stack. Supporting scrutiny is not independent acceptance.
 
 Latest coupled delivery`ce3e5495` closes the specific native material-area
 first-contact overshoot through explicit globalization in the existing owner.
@@ -326,15 +335,16 @@ angular endpoint transition, reject explicitly. The exact-zero owned-roll bound
 omits only its identically zero axis-rotation derivative; historical geometry
 bound stays. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_partial_summary.json).
 
-**Next integrated requirement:** close genuine axial fronts in this same kernel.
-Isolate roots of angular endpoint/extremum equations with formulation-owned
-derivatives and continuous bounds; do not promote zero estimators or drop narrow
-support. Partition at certified roots and retain the same complete potential work.
-Use the existing thin/broad-pocket discriminators as affected checks and one
-independent axial-front work/tangent fixture within180s/953MiB/64intervals.
-If root isolation cannot resolve the represented state, retain explicit failure;
-no cap/tolerance increase or separate solver stack. Then integrate the existing
-retained static owner for curved
-press/open/recontact, rejection and split restart, only after complete path
-orientation/side/crossing controls. No new solver stack or profile-default switch.
+**Simple axial-front slice installed-tested at8b3671c9:** endpoint/extremum root
+isolation, retained uncertainty-band work, exact curvature and variable-change
+integration close the independent local fixture within180s/953MiB/64intervals.
+Unresolved/grazing cases remain explicit failures. Stop local optimization here.
+
+**Next integrated requirement:** whole curved material-patch orientation/side/gap
+control along the actual native affine/Exp update, including internal rotations
+at fixed nodes. Current sample orientation tests alone are insufficient. Reuse
+owned geometry/derivative bounds and one hidden between-point/path counterexample.
+Then integrate the existing retained static owner for curved press/open/recontact,
+rejection and split restart. No new solver stack, cap/tolerance increase or
+profile-default switch.
 Preserve prior friction/impact, free-rim, convergence and historical restrictions.

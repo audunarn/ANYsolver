@@ -1,7 +1,8 @@
 # Curved native material plane work — development
 
-Current source78c622de adds guarded partial angular contact to the local kernel
-introduced atdfd884aa. It owns no analysis, constitutive history, restart or dynamics. Existing
+Current source8b3671c9 adds guarded simple axial fronts and reuses actual reference
+area preparation in the local kernel introduced atdfd884aa. It owns no analysis,
+constitutive history, restart or dynamics. Existing
 native owners and straight material profiles retain their guards.
 
 It uses the actual formulation-owned material surface:
@@ -36,7 +37,7 @@ are not accepted engineering analyses or relaxation of dimensional gap gates.
 
 [Evidence](d1_review_support/contact_native_material_s3_20261004/curved_work_summary.json),
 [supporting scrutiny](d1_review_support/contact_native_material_s3_20261004/curved_work_review.md).
-## Partial angular contact
+## Historical partial angular contact — 78c622de
 
 Existing PreciseNormalAngles segments negative circular arcs at each native axial
 station. Its50-digit roots, coordinates and scalar values use the same exact
@@ -69,3 +70,38 @@ evidence retained. Supporting same-family scrutiny is not independent acceptance
 Next: certified genuine axial fronts in the same kernel and full path controls, then
 integration with the existing retained static owner. Friction/dynamics, continuum
 convergence, independent acceptance and application admission remain required.
+
+## Simple axial fronts and prepared reference area — 8b3671c9
+
+Four scalar endpoint/circular-extremum equations now isolate simple axial roots.
+Continuous first/second derivative bounds, amplitude positivity and unclipped
+transport controls guard isolation; representation uncertainty is retained in
+root brackets. Root bands keep their work and consume the same energy/force/
+tangent error budgets. Isolation and integration share64intervals. A sin-squared
+axial variable change regularizes square-root contact-width onset with its actual
+Jacobian; no contact law, dimensional tolerance or resource limit is changed.
+Degenerate roots and unresolved clipping/precision/resource cases fail explicitly.
+
+Actual reference frame/derivative/lift preparation is reused once per axial
+station. The same material-area formula and signed outward check stay, verified
+against full geometry for twisted and rigidly transformed references. Independent
+literal curvature and analytic second-derivative controls protect the cancellation
+fix identified by supporting Read scrutiny.
+
+27fresh installed checks pass58.273s/183021568B;522files/209imports match,
+JIT0/pools1. The independent affine-gap/curved-area fixture has four retained
+root brackets,60visited intervals and40296integrand evaluations. Errors:
+3.109e-15J,9.379e-13N,2.747e-13Nm; full directional tangent5.00e-10/1.79e-9.
+A previously hidden thin pocket now returns positive work; the broad-plus-thin
+counterexample still rejects explicitly at root precision exhaustion.
+
+One cProfile-instrumented evaluation takes51.586s before preparation reuse and
+11.135s after. Reference geometry cost drops34.885s to1.560s reference-area cost.
+This is a local single-fixture profile, not balanced complete-solve performance
+or a general speedup claim. Full-route measurement remains required.
+
+[Evidence](d1_review_support/contact_native_material_s3_20261004/curved_axial_front_summary.json),
+[supporting scrutiny](d1_review_support/contact_native_material_s3_20261004/curved_axial_front_review.md).
+Next: whole material-patch orientation/side/gap control along the actual native
+update, then the existing retained-owner curved cycle, rollback and split restart.
+No new solver stack or silent expansion of historical guards/defaults.
