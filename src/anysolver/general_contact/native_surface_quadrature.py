@@ -115,6 +115,17 @@ class NativeRoundSurfaceRule:
             raise ValueError('native surface quadrature samples changed')
         return tuple(surface_geometry(s.station,positions,position_low,cell_rotations) for s in self.samples)
 
+    def current_bounds(self, positions, position_low, cell_rotations):
+        """Whole-patch current search box; not a gap or swept certificate."""
+        from .native_surface_bounds import native_round_patch_bounds
+        return native_round_patch_bounds(self, positions, position_low, cell_rotations)
+
+    def swept_bounds(self, positions, position_low, cell_rotations, translations, angular):
+        """Whole affine/Exp material path search box; no event/gap certificate."""
+        from .native_surface_bounds import native_round_patch_swept_bounds
+        return native_round_patch_swept_bounds(self, positions, position_low,
+                                              cell_rotations, translations, angular)
+
     def certify_orientation_path(self,start,translations,angular,shell_increment,*,maximum_intervals=256):
         """Positive signed surface area throughout the actual exponential path.
 
