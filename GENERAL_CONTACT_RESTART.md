@@ -1,38 +1,46 @@
 # General contact restart — 4 October 2026
 
-Full C0–C9 ACTIVE/incomplete. Goal2026-09-30.4 / plan2026-10-04.92 govern.
+Full C0–C9 ACTIVE/incomplete. Goal2026-09-30.4 / plan2026-10-04.93 govern.
 Solver C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001; local HEAD binds this checkpoint.
 Protected original must not be accessed. No other human-chat communication,
 push/merge/publication/release/default changes or consumed authority replay.
 Local commits authorized. No owned live processes; worker terminal.
-[History](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PART113.md)
-→112→111 retains earlier identities, failures, authorities and evidence.
+[History](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PART114.md)
+→113→112 retains earlier identities, failures, authorities and evidence.
 
 ## Current result and next action
 
-Multiple independent classical beam/S3 actual-cap pairs now compose, with
-optional fixed plane/sphere children, complete sparse work/skin couples, per-body
-wrenches, every-child path/budgets and full effective-settings restart. Single
-S3/pure-rigid/default profiles preserved. Installed50pass34.436s/357175296B,
-225modules/507files match,JIT0/pools1,180s/953MiB. Work/1e-5H, actual two-deforming
-skins/contact-gradient8.358e-12 vs1e-6 and bounded linearized response8.798e-6
-vs1e-3/gap1e-5m, force/displacement/restart/rollback, shared target/true junction,
-optional rigid driver and legacy/no-contact pass. Reference's moving-normal cross
-terms and open-root/sphere-tip domain explicit. Initial fixture/API failures
-and review counterexample retained; supporting review not acceptance/release.
-[Guide/evidence](docs/GENERAL_CONTACT_MULTIPLE_BEAM_S3_CAPS_DEV.md):7runs/46records.
-Private target C:/ANYworkspaceWork/contact_multiple_beam_s3_caps_20261004/installed;
-wheel4ec5851f9f2288e9d460cd5d8788f1265062a50395a6feac9cdfcd4deb08434d.
+Separate native multiple-S3 owner now retains one/two native beams and complete
+native/internal/global-shell cross work, per-pair path/gap/resource checks,
+all-beam rotation limits and atomic state/restart. Old single-owner identities and
+guards remain. Consumed combined CSR map binds identity and exact skin pullback.
+A positive-gap near-end stationary-point partition defect was fixed: geometric
+extrema remain for minimum gaps; resolved stationary partitions/legacy diagnostics
+remain and activation intervals still fail when unresolved.
+Supporting source review closed the map/oracle/path findings, not engineering
+acceptance. Installed29pass60.473s/332218368B,206modules/510files match,JIT0/pools1,
+180s/953MiB. Independent curve work, fixed-exterior internal motion, full spatial
+1e-5 tangent (1.36e-9/1.53e-9), actual two skins/shared target, reactions/wrenches,
+hidden second-beam path, cancel/later-child failure and split/incompatible restart.
+[Guide/evidence](docs/GENERAL_CONTACT_NATIVE_MULTIPLE_S3_DEV.md):17runs/87rawrecords.
+Private target C:/ANYworkspaceWork/contact_native_multi_s3_20261004/installed2;
+wheelf89bba5f77c01e2b6f8c4d9c95876b52dfef5eaade697a74983979fb3af88148.
 
-Next D3 action: separate native retained/multiple-S3 work and static owner. Current
-native_retained_s3_static.py binds exactly one native beam,42local retained work
-coordinates and one S3; leave those guards intact. Sum complete local native/
-shell work, retain internal coupling and per-patch geometry/swept checks, then
-coupled static solve/state/restart for two physical skins. Check internal motion
-at fixed exterior nodes and an independent work/coupled response discriminator.
-No guard-only widening or independent-element condensation before contact. Broader
-native beam count/sections, rims and qualification remain. No lower-tier reprobe.
+Retain source01 near-end geometry failure;source03 explicit1000N/m2 gap nonpass;
+source05/06 invalid native-step/fixed-root fixture failures;source08/09 stronger
+40000N/m2 one/two-target merit failures. Correct valid.8rad second-cell hidden
+path passes. Four equal increments at10000/40000 give gaps-0.0005350910/-0.0002688940m
+versus developmental1mm. No qualification gap/enforcement-convergence claim.
+
+Next D3 question: close native dimensional qualification gap with explicit
+stronger enforcement and bounded continuation. Use existing coupled scalar work,
+spatial tangent, state/path cases; derive one candidate from measured response
+and retained thickness/radius gap target. Distinguish path resolution from penalty
+accuracy, repair actual merit/path discrepancy if needed. No blind sweep/budget
+increase, guard-only widening or pre-contact internal condensation. Native section,
+spatial/enforcement acceptance and actual beam/shell boundaries remain open. Do
+not replay saved native grazing friction or impact cases; no lower-tier reprobe.
 
 ## Blockers and budget
 
@@ -48,7 +56,7 @@ mixed-work enclosure missing. No saved/full/owner/split retry/reset/zero/native
 acceptance. Q4 FD appcycle180.124s timeout retained. Unchanged lower-tier optional
 worker unavailability: no reprobe. No universal speedup/delivery forecast claim.
 
-120active-hour clock: at03:16:38UTC4October, goal385039+3120=388159s (~107.822h).
+120active-hour clock: at04:13:44UTC4October, goal388466+3120=391586s (~108.774h).
 Check current clock before substantial work; no reset. At120h preserve/report and
 request time/scope/method decision; no silent extension/full-goal completion.
 Full D2–D8 and qualification/package/application/resource boundaries remain.

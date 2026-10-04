@@ -338,10 +338,17 @@ class NativeRetainedRoundLineS3Interior:
             linear = -3.0*gaps[0]+4.0*gaps[1]-gaps[2]
             constant = gaps[0]
             stations = [0.0, 1.0]
+            extrema = [0.0, 1.0]
             if quadratic != 0.0:
                 turning = -linear/(2.0*quadratic)
                 if 0.0 < turning < 1.0:
-                    stations.append(float(turning))
+                    extrema.append(float(turning))
+                    # Preserve the legacy optional interior partition and
+                    # checkpoint diagnostics where the interval is resolved.
+                    # A stationary point is not an activation boundary, so
+                    # an artificial near-end partition need not be integrated.
+                    if min(turning, 1.0-turning) > 64.0*np.finfo(float).eps:
+                        stations.append(float(turning))
                 roots = np.roots((quadratic, linear, constant))
             elif linear != 0.0:
                 roots = (-constant/linear,)
@@ -354,8 +361,11 @@ class NativeRetainedRoundLineS3Interior:
                 if 0.0 < station < 1.0:
                     stations.append(station)
             stations = sorted(set(stations))
+            # Turning points determine the geometric minimum but do not change
+            # the active branch. Retain all extrema even when the optional
+            # integration partition would be unresolved at a cell end.
             minimum_gap = min(minimum_gap, *(float((quadratic*t+linear)*t
-                                                 +constant) for t in stations))
+                                                 +constant) for t in extrema))
             for left, right in zip(stations[:-1], stations[1:]):
                 if right-left <= 64.0*np.finfo(float).eps:
                     raise ValueError("native line-S3 activation interval is unresolved")

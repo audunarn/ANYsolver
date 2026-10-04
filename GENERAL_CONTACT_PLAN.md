@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.92. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.93. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -16,34 +16,36 @@ Publication, merging, release and historical-default changes are separate action
 
 ## Latest integrated slice — 4 October
 
-Multiple independent actual-cap beam/S3 pairs now compose on one authoritative
-pose, with optional fixed plane/sphere children. Full sparse cross-body work,
-physical skin offset couples, per-feature/body wrenches, all-child path/common
-prefix, duplicate/resource guards and global/effective-child restart settings
-preserve each existing law. These are whole-beam/face-interior pairs, not patch
-unions or physical rims. Existing single-S3/pure-rigid/default profiles remain.
-Installed50pass34.436s/357175296B;225modules/507files match,JIT0/pools1.
-Independent combined work/1e-5H, actual two-deforming-target contact-gradient
-8.358e-12 vs1e-6 and bounded linearized response8.798e-6 vs1e-3, gap1e-5m,
-force/displacement/restart, real rollback, shared-S3/junction, optional rigid
-summary/checkpoint and legacy/no-contact pass. Reference includes cross motion;
-its branch scope is checked. Initial fixture/API failures retained. Supporting
-review findings corrected; not independent engineering acceptance/release.
-[Guide/evidence](docs/GENERAL_CONTACT_MULTIPLE_BEAM_S3_CAPS_DEV.md).
+A separate retained-native owner now composes one/two native beams and multiple
+elastic physical S3 interiors through full native/internal/global-shell work.
+Per-pair sweep/gap/resource limits, all-beam cell updates, exact consumed-map
+identity and atomic state/restart preserve old single-owner guards. No independent
+native-element condensation precedes contact. Installed29pass60.473s/332218368B;
+206modules/510files match,JIT0/pools1,180s/953MiB. Independent curve work, actual two
+skins/shared-target coupled solves, reactions/contact wrenches,1e-5 spatial tangent
+(errors1.36e-9/1.53e-9), internal motion at fixed exterior nodes, hidden second-beam
+path, cancellation/later-child failure and deterministic/incompatible restart pass.
+[Guide/evidence](docs/GENERAL_CONTACT_NATIVE_MULTIPLE_S3_DEV.md).
 
-Next principal D3 slice: extend the separate retained-native/S3 analysis boundary
-to multiple shell patches. Existing owner binds one native beam and one S3 with
-42 local retained work coordinates and per-face geometry/path contracts; its
-accepted guards must remain intact. Implement a separate composed retained work
-map and owner with complete native/internal/shell cross blocks, per-patch sweep
-and physical state/restart. First check two-skin internal motion at fixed exterior
-nodes, shared work and a coupled loaded example under unchanged budgets. Do not
-condense native internal blocks before contact or merely remove old guards.
-Broader beam numbers/sections and native qualification remain explicit next rows.
-Cylinder/pair/face transitions and full C0–C9 remain required.
+Explicit1000N/m2 penalty/gap failures and stronger40000N/m2 one/two-load-step merit
+failures remain. The same four increments at10000/40000 reduce gap0.5351→0.2689mm,
+within the developmental1mm control; this is not qualification gap/enforcement
+convergence. Supporting source review fixes are closed; no engineering acceptance,
+release, speedup or full-programme forecast follows from this development subset.
 
-[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV91.md)
-→90→89 retains earlier identities, failures, restrictions and evidence.
+Next principal D3 question: reach the native dimensional qualification gap under
+stronger explicitly declared enforcement without losing bounded nonlinear
+continuation. Use current coupled work/reference/state cases as discriminators;
+separate load-path resolution from penalty accuracy. Derive one stronger candidate
+from measured response and the retained thickness/radius gap target, with a
+prospective bounded path/control experiment; no blind penalty/step sweep or budget
+increase. If path/merit fails, repair that actual discrepancy before expanding
+native cap/friction/dynamic profiles. Spatial/section/material acceptance, curved
+native beam–beam boundaries and physical beam/shell endpoints/rims remain open.
+Cylinder support and full C0–C9 remain required.
+
+[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV92.md)
+→91→90 retains earlier identities, failures, restrictions and evidence.
 
 ## 1. Current technical position
 

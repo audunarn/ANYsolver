@@ -1,0 +1,270 @@
+{
+  "scope": "installed code-development verification; no engineering acceptance/release",
+  "source_parent": "f59efb58ad2728a3396d424c0e63c511a85fd649",
+  "final_run": "installed02",
+  "wheel_sha256": "f89bba5f77c01e2b6f8c4d9c95876b52dfef5eaade697a74983979fb3af88148",
+  "runs": {
+    "build01": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 9.028176299994811,
+      "peak_bytes": 109772800
+    },
+    "build02": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 10.438188799947966,
+      "peak_bytes": 109772800
+    },
+    "install01": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 3.295698900008574,
+      "peak_bytes": 78925824
+    },
+    "install02": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 3.3255083999829367,
+      "peak_bytes": 84660224
+    },
+    "installed01": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 61.58417380001629,
+      "peak_bytes": 332931072
+    },
+    "installed02": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 60.47322769998573,
+      "peak_bytes": 332218368
+    },
+    "source01": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.933862300007604,
+      "peak_bytes": 185929728
+    },
+    "source02": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 2.9604769999859855,
+      "peak_bytes": 183275520
+    },
+    "source03": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 38.52263469999889,
+      "peak_bytes": 303955968
+    },
+    "source04": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 22.6412237000186,
+      "peak_bytes": 240517120
+    },
+    "source05": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 30.253595200018026,
+      "peak_bytes": 246648832
+    },
+    "source06": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 2.68523100001039,
+      "peak_bytes": 184188928
+    },
+    "source07": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 2.679883900040295,
+      "peak_bytes": 184094720
+    },
+    "source08": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 16.119652700028382,
+      "peak_bytes": 265543680
+    },
+    "source09": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 8.008360599982552,
+      "peak_bytes": 240594944
+    },
+    "source10": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 10.868721100036055,
+      "peak_bytes": 224321536
+    },
+    "source11": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 14.590171299991198,
+      "peak_bytes": 244596736
+    }
+  },
+  "imported_modules": 206,
+  "import_errors": [],
+  "module_byte_mismatches": [],
+  "package_python_files": 510,
+  "package_byte_mismatches": [],
+  "raw_records": 87,
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "runtime": {
+    "effective_pools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ],
+    "numba_threads": 1,
+    "jit_disabled": true,
+    "errors": [],
+    "collected": 29,
+    "failed": 0,
+    "outcomes": {
+      "passed": 29
+    }
+  },
+  "sensitivity": {
+    "targets": [
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "line_stiffness_n_per_m2": [
+      10000.0,
+      40000.0
+    ],
+    "minimum_gap_m": [
+      -0.0005350910344623094,
+      -0.00026889397815879623
+    ],
+    "shell_displacement_m": [
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.027448380582826178,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.029262662475118054,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.027484171917902672,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.029561671010976353,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    ]
+  },
+  "responses": {
+    "native_1_beams_response": {
+      "status": "completed",
+      "metrics": [
+        4.461552939901245e-14,
+        5.027050976272723e-15,
+        2.378824312174478e-14
+      ],
+      "directional_tangent_error": 1.3597315413397981e-09,
+      "minimum_gap_m": -0.0005350910324306013
+    },
+    "native_2_beams_response": {
+      "status": "completed",
+      "metrics": [
+        5.3315729240003704e-14,
+        2.880313590544996e-15,
+        2.8412447392758052e-14
+      ],
+      "directional_tangent_error": 1.5299687546401956e-09,
+      "minimum_gap_m": -0.0005350959134687583
+    }
+  }
+}
