@@ -232,10 +232,12 @@ def test_opt_in_policy_is_frozen_and_static_and_legacy_routes_unchanged():
     assert api.Q4_DIRECTOR_MASS_POLICY == Q4_MASS_POLICY
     definition, _ = _definition()
     with pytest.raises(FrozenInstanceError): definition.inertia_policy = "changed"
-    values = {name: value for name, value in definition.__dict__.items() if name != "inertia_policy"}
+    values = {name: value for name, value in definition.__dict__.items()
+              if name not in ("inertia_policy", "boundary_policy")}
     static = api.create_analysis(definition=api.B2MixedPanelDefinition(**values))
     q4, _ = _definition("q4")
-    q4_values = {name: value for name, value in q4.__dict__.items() if name != "inertia_policy"}
+    q4_values = {name: value for name, value in q4.__dict__.items()
+                 if name not in ("inertia_policy", "boundary_policy")}
     legacy = api.create_analysis(definition=api.B2Q4PanelDefinition(**q4_values))
     try:
         assert static._M is None and "modes" not in static.capabilities.operations

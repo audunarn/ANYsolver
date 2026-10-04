@@ -47,6 +47,7 @@ from ._stiffened_shell_b2_q4_panel_experimental import (
     S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1,
     ExperimentalB2Q4PanelResponseEnvelope,
     B2ReferenceModesRequest, B2ReferenceModesResult,
+    B2FreeReferenceModesResult, B2_FREE_FREE_MODAL_ONLY_V1,
     B2ReferenceBodyLoad,
     B2LoadedMemberSections, B2BodyLoadedPanelResult, B2BodyLoadedFootprintResult,
     B2LoadedMemberPoses, B2LoadedPointPanelResult, B2LoadedPointPanelSelectedCase,
@@ -148,10 +149,12 @@ class B2MixedPanelDefinition:
 
 @dataclass(frozen=True)
 class B2MixedReferenceModalDefinition:
-    """Virgin supported reference modes with explicitly declared discrete inertia.
+    """Virgin reference modes with explicitly declared discrete inertia.
 
     Q4 facets retain director mass; native S3 facets use translational lumped
     mass and omit all rotary inertia. This does not qualify continuum dynamics.
+    Default boundary behavior requires supports. B2_FREE_FREE_MODAL_ONLY_V1
+    explicitly admits an identity transformation and disables static operations.
     """
 
     profile: str
@@ -163,6 +166,7 @@ class B2MixedReferenceModalDefinition:
     prescribed_offset: object
     footprints: tuple[B2NodalRigidFootprint, ...] = ()
     inertia_policy: str = S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1
+    boundary_policy: str | None = None
 
 
 def create_analysis(*, definition, resources=None):
@@ -219,7 +223,8 @@ def create_analysis(*, definition, resources=None):
             transformation=definition.transformation,
             prescribed_offset=definition.prescribed_offset,
             footprints=definition.footprints,
-            reference_inertia_policy=definition.inertia_policy)
+            reference_inertia_policy=definition.inertia_policy,
+            reference_boundary_policy=definition.boundary_policy)
     raise ValueError("unsupported stiffened-shell definition/profile")
 
 
@@ -238,6 +243,7 @@ __all__ = [
     "B2LinearDefinition", "B2Q4PointDefinition", "B2Q4PanelDefinition",
     "B2MixedPanelDefinition", "S3V2DPanelShell", "ExperimentalB2MixedPanelCapabilities",
     "B2MixedReferenceModalDefinition", "ExperimentalB2MixedReferenceModalCapabilities",
+    "B2FreeReferenceModesResult", "B2_FREE_FREE_MODAL_ONLY_V1",
     "S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1",
     "Q4_DIRECTOR_MASS_POLICY",
     "PhysicalB2Member", "LinearSection", "Q4PanelShell", "Q4B2Point",

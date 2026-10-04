@@ -307,11 +307,15 @@ class ExperimentalB2MixedReferenceModalCapabilities(ExperimentalB2MixedPanelCapa
     shell_mass_policies: tuple[tuple[str, str], ...] = ()
     s3_rotary_inertia: str = "omitted by S3 facet contributions; shared nodes may retain Q4 director inertia"
     beam_mass_policy: str = "declared physical B2 sectional inertia through the station trace"
+    boundary_policy: str | None = None
+
+
+B2_FREE_FREE_MODAL_ONLY_V1 = "B2_FREE_FREE_MODAL_ONLY_V1"
 
 
 @dataclass(frozen=True)
 class B2ReferenceModesRequest:
-    """Supported elastic reference modes; no prestress or rigid-mode request."""
+    """Elastic finite reference pairs; boundary policy belongs to the definition."""
 
     count: int = 3
     shift_hz: float = 1.
@@ -337,6 +341,30 @@ class B2ReferenceModesResult:
     factorization_count: int = 0
     solve_count: int = 0
     failure_reason: str | None = None
+    production_qualified: bool = False
+
+
+@dataclass(frozen=True)
+class B2FreeReferenceModesResult:
+    """Six verified physical rigid fields and selected finite flexible pairs.
+
+    This does not certify complete nullity or an eigenvalue error bound.
+    All returned numerical collections own immutable scalar tuples.
+    """
+
+    status: str
+    flexible: B2ReferenceModesResult
+    rigid_origin_m: tuple[float, ...] = ()
+    canonical_rigid_modes: tuple[tuple[float, ...], ...] = ()
+    rigid_modes: tuple[tuple[float, ...], ...] = ()
+    rigid_multiplier_modes: tuple[tuple[float, ...], ...] = ()
+    rigid_kinetic_gram: tuple[tuple[float, ...], ...] = ()
+    rigid_equation_residuals: tuple[float, ...] = ()
+    rigid_constraint_residuals: tuple[float, ...] = ()
+    rigid_flexible_mass_overlap: float = 0.
+    spectral_shift_rad2_s2: float = 0.
+    failure_reason: str | None = None
+    policy: str = B2_FREE_FREE_MODAL_ONLY_V1
     production_qualified: bool = False
 
 
@@ -654,12 +682,20 @@ class ExperimentalB2Q4PanelAnalysis:
                  transformation: sparse.spmatrix, prescribed_offset,
                  footprints: Sequence[B2NodalRigidFootprint] = (),
                  reference_inertia_policy: str | None = None,
+                 reference_boundary_policy: str | None = None,
                  point_trace_policy: str | None = None):
         shells = tuple(shells)
         supplied_members = tuple(members)
         points = tuple(points)
         footprints = tuple(footprints)
         modal_mass = reference_inertia_policy is not None
+        if reference_boundary_policy is not None and (
+                type(reference_boundary_policy) is not str or
+                reference_boundary_policy != B2_FREE_FREE_MODAL_ONLY_V1 or
+                not modal_mass):
+            raise ValueError("explicit mixed free-free modal-only boundary policy required")
+        self._modal_only = reference_boundary_policy is not None
+        self._reference_boundary_policy = reference_boundary_policy
         if modal_mass and (not self._mixed_shells or
                 type(reference_inertia_policy) is not str or
                 reference_inertia_policy != S3_V2D_TRANSLATIONAL_LUMPED_SECTION_AREAL_MASS_V1 or
@@ -943,7 +979,11 @@ class ExperimentalB2Q4PanelAnalysis:
             if (np.any(np.diff(selector.tocsc().indptr) != 1) or
                     np.any(np.diff(selector.indptr) > 1)):
                 raise ValueError("mixed reference modes require coordinate supports without MPCs")
-            if not _supports_all_panel_rigid_fields(T, positions, beam_positions):
+            if self._modal_only:
+                delta = (T-sparse.eye(total, format="csr")) if T.shape == (total, total) else None
+                if delta is None or np.any(delta.data != 0.):
+                    raise ValueError("free-free modal-only policy requires identity transformation without supports")
+            elif not _supports_all_panel_rigid_fields(T, positions, beam_positions):
                 raise ValueError("mixed reference modes require supports detecting all six rigid fields; free-free unsupported")
         reduced_c = (C @ T).tocsc()
         if point_trace_policy is None:
@@ -958,12 +998,17 @@ class ExperimentalB2Q4PanelAnalysis:
         # physical displacement and multiplier are both restored after solve.
         # Without this, a valid slender B2 section can leave point gaps above
         # the physical acceptance tolerance despite a sound local operator.
-        scaled_kkt, factor_scale = _scaled_point_kkt(reduced_k, reduced_c, H)
-        handle = factorize_cached(
-            scaled_kkt, MatrixClass.SYMMETRIC_INDEFINITE)
-        if handle.status != "ok":
-            raise ExperimentalB2Q4PanelError(
-                "panel factorization failed: " + str(handle.failure_reason))
+        handle = factor_scale = None
+        if not self._modal_only:
+            scaled_kkt, factor_scale = _scaled_point_kkt(reduced_k, reduced_c, H)
+            handle = factorize_cached(
+                scaled_kkt, MatrixClass.SYMMETRIC_INDEFINITE)
+            if handle.status != "ok":
+                raise ExperimentalB2Q4PanelError(
+                    "panel factorization failed: " + str(handle.failure_reason))
+        self._modal_positions = (np.array(
+            [positions[i] for i in shell_ids]+[beam_positions[i] for i in beam_ids],
+            dtype=float, copy=True) if self._modal_only else None)
         self.shell_node_ids = shell_ids
         self.beam_node_ids = beam_ids
         self.point_ids = tuple(point.point_id for point in points)
@@ -1028,6 +1073,8 @@ class ExperimentalB2Q4PanelAnalysis:
         # One compilation-time binding covers the numerical model and physical
         # member data used by body action/recovery. Never hash the model per case.
         identity = sha256(b"B2_REFERENCE_BODY_LOAD_BINDING_V1_DEV")
+        if self._modal_only:
+            identity.update(reference_boundary_policy.encode("ascii"))
         identity.update(repr((shell_ids, beam_ids, tuple((i, tuple(positions[i])) for i in shell_ids), self._shell_formulations,
                               tuple(point_laws), reference_inertia_policy)).encode("utf-8"))
         for matrix in (K, C, T):
@@ -1138,6 +1185,11 @@ class ExperimentalB2Q4PanelAnalysis:
 
     @property
     def capabilities(self) -> ExperimentalB2Q4PanelCapabilities:
+        if self._modal_only:
+            return ExperimentalB2Q4PanelCapabilities(
+                operations=("modes", "close"),
+                body_load_domain="unsupported by free-free modal-only policy",
+                spectral_domain="experimental connected free-free reference descriptor; six verified physical rigid fields and selected finite flexible pairs; completeness unqualified")
         body_operations = (("body_acceleration_load",) if self._body_map is not None else ())
         body_domain = ("experimental reference-linear uniform global acceleration; typed loads give separate equilibrated section fields including interior point actions; raw vectors retain nodal constitutive recovery; loaded interior pose and finite gravity unsupported"
                        if self._body_map is not None else "unavailable without complete physical density/mass")
@@ -1179,6 +1231,8 @@ class ExperimentalB2Q4PanelAnalysis:
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        if self._modal_only:
+            raise ValueError("free-free modal-only policy does not admit body loads")
         if self._body_map is None:
             raise ValueError("complete physical density/mass required for reference body load")
         raw = np.asarray(acceleration_m_s2, dtype=object)
@@ -1265,13 +1319,14 @@ class ExperimentalB2Q4PanelAnalysis:
             constraint_multiplier_modes=multipliers, constraint_rows=tuple(provenance))
 
     def modes(self, request: B2ReferenceModesRequest, *,
-              cancellation: CancellationToken | None = None) -> B2ReferenceModesResult:
+              cancellation: CancellationToken | None = None
+              ) -> B2ReferenceModesResult | B2FreeReferenceModesResult:
         """Sparse descriptor modes with physical inertia and massless multipliers.
 
         Reuse compiled K/C/T and mass, never a global nullspace or dense inverse.
         A shifted general inverse-product is not Euclidean symmetric, so use
-        eigs rather than eigsh. The static route still requires supported KKT;
-        free-free and loaded/prestressed modes are outside this initial route.
+        eigs rather than eigsh. Explicit free-free owners project verified rigid
+        fields in the physical mass metric; loaded/prestressed modes remain out.
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
@@ -1293,7 +1348,7 @@ class ExperimentalB2Q4PanelAnalysis:
             raise ValueError("CancellationToken required")
         n = self._T.shape[1]
         rows = self._C.shape[0]
-        if request.count >= min(n-rows, n+rows-1):
+        if request.count >= min(n-rows-(6 if self._modal_only else 0), n+rows-1):
             raise ValueError("reference mode count exceeds supported sparse spectrum")
         with np.errstate(over="ignore", under="ignore", invalid="ignore"):
             sigma = -float(np.square(2.*np.pi*np.float64(request.shift_hz)))
@@ -1305,6 +1360,26 @@ class ExperimentalB2Q4PanelAnalysis:
                 cancellation.checkpoint(stage)
 
         handle = None
+        rigid = None
+        overlap = 0.
+
+        def finish(*args, **kwargs):
+            flexible = self._reference_modes_result(*args, **kwargs)
+            if not self._modal_only:
+                return flexible
+            data = {}
+            if flexible.status == "ok":
+                data = dict(rigid_origin_m=rigid["origin"],
+                    canonical_rigid_modes=tuple(tuple(map(float, x)) for x in rigid["canonical"].T),
+                    rigid_modes=tuple(tuple(map(float, x)) for x in rigid["normalized"].T),
+                    rigid_multiplier_modes=tuple((0.,)*rows for _ in range(6)),
+                    rigid_kinetic_gram=tuple(tuple(map(float, x)) for x in rigid["gram"]),
+                    rigid_equation_residuals=rigid["equations"],
+                    rigid_constraint_residuals=rigid["gaps"],
+                    rigid_flexible_mass_overlap=overlap)
+            return B2FreeReferenceModesResult(flexible.status, flexible,
+                spectral_shift_rad2_s2=sigma, failure_reason=flexible.failure_reason, **data)
+
         try:
             safe_point("reference modes before factorization")
             k = (self._T.T@self._K@self._T).tocsc()
@@ -1325,6 +1400,14 @@ class ExperimentalB2Q4PanelAnalysis:
                     not np.array_equal(b.indices, bs.indices) or
                     np.any((b.data != 0.) & (bs.data == 0.))):
                 raise _NumericalFailure("reference modal mass scaling is not representable")
+            if self._modal_only:
+                rigid = _free_b2_rigid_space(self, scale, bs, safe_point)
+
+            def project(vector):
+                if not self._modal_only:
+                    return vector
+                return vector-rigid["scaled"]@(rigid["scaled"].T@(bs@vector))
+
             handle = factorize_cached(shifted, MatrixClass.GENERAL)
             safe_point("reference modes after factorization")
             if handle.status != "ok":
@@ -1333,7 +1416,7 @@ class ExperimentalB2Q4PanelAnalysis:
             def action(vector):
                 safe_point("reference modal iteration")
                 try:
-                    answer = handle.solve(bs@vector)
+                    answer = np.asarray(handle.solve(bs@project(vector)), dtype=float)
                 except RuntimeError as exc:
                     # These are explicit numerical failures of the shared
                     # backend. Unclassified/programming errors still propagate.
@@ -1341,8 +1424,10 @@ class ExperimentalB2Q4PanelAnalysis:
                             str(exc).startswith("Cannot solve with failed factorization:")):
                         raise _NumericalFailure("reference modal sparse solve failed: "+str(exc)) from exc
                     raise
+                if not np.isfinite(answer).all():
+                    raise _NumericalFailure("finite reference modal inverse action required")
                 safe_point("reference modal iteration completed")
-                return answer
+                return project(answer)
 
             operator = LinearOperator(a.shape, matvec=action, dtype=float)
             values, vectors = eigs(operator, k=request.count, which="LM",
@@ -1357,6 +1442,11 @@ class ExperimentalB2Q4PanelAnalysis:
                         np.linalg.norm(y.imag) > 1e-9*np.linalg.norm(y.real)):
                     raise _NumericalFailure("nonphysical or unresolved finite modal pair")
                 lam = sigma+1./mu.real
+                if self._modal_only:
+                    # Resolution screen, not a certified eigenvalue error bound.
+                    screen = 64*np.finfo(float).eps*a.shape[0]*(abs(sigma)+abs(1./mu.real))
+                    if not np.isfinite(screen) or lam <= screen:
+                        raise _NumericalFailure("extra mechanism or unresolved near-zero flexible pair")
                 x = scale*y.real
                 mass_norm = float(x@b@x)
                 if not np.isfinite(lam) or lam <= 0. or not np.isfinite(mass_norm) or mass_norm <= 0.:
@@ -1389,20 +1479,27 @@ class ExperimentalB2Q4PanelAnalysis:
             if (not np.isfinite(modal_gram).all() or
                     np.max(abs(modal_gram-np.eye(request.count))) > 1e-7):
                 raise _NumericalFailure("modal physical-mass orthogonality failed")
+            if self._modal_only:
+                overlap = float(np.max(abs(rigid["normalized"].T@self._M@primal)))
+                if not np.isfinite(overlap) or overlap > 1e-7:
+                    raise _NumericalFailure("rigid/flexible physical-mass overlap failed")
             safe_point("reference modes before publication")
-            return self._reference_modes_result(
+            return finish(
                 "ok", tuple(mode[0] for mode in recovered),
                 tuple(mode[1] for mode in recovered), tuple(mode[2] for mode in recovered),
                 tuple(mode[3] for mode in recovered), tuple(mode[4] for mode in recovered),
                 handle.factorization_count, handle.solve_count)
         except SolveCancelled as exc:
-            return self._reference_modes_result(
+            return finish(
                 "cancelled", factorization_count=handle.factorization_count if handle else 0,
                 solve_count=handle.solve_count if handle else 0, failure_reason=str(exc))
         except (ArpackError, _NumericalFailure) as exc:
-            return self._reference_modes_result(
+            return finish(
                 "failed", factorization_count=handle.factorization_count if handle else 0,
                 solve_count=handle.solve_count if handle else 0, failure_reason=str(exc))
+        finally:
+            # Do not retain a numerical factor through an exception traceback.
+            handle = None
 
     def _panel_result(self, *args, **kwargs):
         if self._point_trace_policy is not None:
@@ -1422,6 +1519,8 @@ class ExperimentalB2Q4PanelAnalysis:
                      ) -> ExperimentalB2Q4PanelResult:
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        if self._modal_only:
+            raise ValueError("free-free modal-only policy does not admit static solves")
         chosen_footprints = checked_selection(selected_footprints, self.footprints)
         recovery = _checked_recovery(
             recover_members, {member_id for member_id, _ in self._members})
@@ -1664,6 +1763,8 @@ class ExperimentalB2Q4PanelAnalysis:
         """
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
+        if self._modal_only:
+            raise ValueError("free-free modal-only policy does not admit static solves")
         chosen_footprints = checked_selection(selected_footprints, self.footprints)
         try:
             chosen = tuple(selected_dofs)
@@ -1820,6 +1921,48 @@ def _modal_scaled_residual(residual, bound, row_scale):
     return float(numerator/denominator)
 
 
+def _free_b2_rigid_space(owner, scale, scaled_mass, safe_point):
+    """Common physical velocities, with only a bounded six-by-six Gram solve."""
+    origin = owner._modal_positions[:len(owner.shell_node_ids)].mean(axis=0)
+    canonical = np.zeros((owner._K.shape[0], 6))
+    for i, position in enumerate(owner._modal_positions):
+        slots = slice(6*i, 6*i+3)
+        canonical[slots, :3] = np.eye(3)
+        for j in range(3):
+            canonical[slots, 3+j] = np.cross(np.eye(3)[j], position-origin)
+        canonical[6*i+3:6*i+6, 3:] = np.eye(3)
+    n = owner._K.shape[0]
+    equations, gaps = [], []
+    for column in canonical.T:
+        safe_point("reference modes rigid field")
+        equation = _modal_scaled_residual(owner._K@column,
+            abs(owner._K)@abs(column), scale[:n])
+        gap = _modal_scaled_residual(owner._C@column,
+            abs(owner._C)@abs(column), scale[n:])
+        if equation > 1e-8 or gap > 1e-9:
+            raise _NumericalFailure("canonical free-free rigid field violates physical K or point C")
+        equations.append(equation); gaps.append(gap)
+    gram = canonical.T@owner._M@canonical
+    if (not np.isfinite(gram).all() or
+            np.max(abs(gram-gram.T)) > 1e-10*np.max(abs(gram))):
+        raise _NumericalFailure("canonical rigid kinetic Gram symmetry unresolved")
+    try:
+        lower = np.linalg.cholesky(gram)
+        normalized = canonical@np.linalg.solve(lower.T, np.eye(6))
+    except np.linalg.LinAlgError as exc:
+        raise _NumericalFailure("six physical rigid fields require positive kinetic Gram") from exc
+    if (not np.isfinite(normalized).all() or
+            np.max(abs(normalized.T@owner._M@normalized-np.eye(6))) > 1e-7):
+        raise _NumericalFailure("rigid kinetic normalization unresolved")
+    scaled = np.vstack((normalized, np.zeros((owner._C.shape[0], 6))))/scale[:, None]
+    if (not np.isfinite(scaled).all() or
+            np.max(abs(scaled.T@scaled_mass@scaled-np.eye(6))) > 1e-7):
+        raise _NumericalFailure("rigid congruence reconstruction unresolved")
+    return dict(origin=tuple(map(float, origin)), canonical=canonical,
+        normalized=normalized, scaled=scaled, gram=gram,
+        equations=tuple(equations), gaps=tuple(gaps))
+
+
 class ExperimentalB2MixedPanelAnalysis(ExperimentalB2Q4PanelAnalysis):
     """Explicit mixed-shell admission using the existing static sparse owner."""
 
@@ -1835,12 +1978,15 @@ class ExperimentalB2MixedPanelAnalysis(ExperimentalB2Q4PanelAnalysis):
                   S3_V2D_FORMULATION_ID else Q4_MASS_POLICY)
                   for shell_id, formulation in self._shell_formulations)}
                  if self._reference_inertia_policy is not None else {})
+        if self._reference_inertia_policy is not None:
+            extra["boundary_policy"] = self._reference_boundary_policy
         return capability_type(
             point_law_id=tuple(dict.fromkeys(law for _, law in self._point_laws)),
             attachment=existing.attachment,
             operations=existing.operations,
             body_load_domain=existing.body_load_domain,
-            spectral_domain=("experimental virgin supported finite descriptor pairs; heterogeneous Q4 director and native S3 lumped translation inertia; S3 rotary inertia omitted; completeness unqualified; prestress unsupported"
+            spectral_domain=(existing.spectral_domain if self._modal_only else
+                             "experimental virgin supported finite descriptor pairs; heterogeneous Q4 director and native S3 lumped translation inertia; S3 rotary inertia omitted; completeness unqualified; prestress unsupported"
                              if self._reference_inertia_policy is not None else
                              "native S3 V2D physical mass and modes deferred" if self._has_s3
                              else existing.spectral_domain),

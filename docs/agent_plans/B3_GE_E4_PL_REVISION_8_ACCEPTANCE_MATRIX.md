@@ -2017,3 +2017,16 @@ commands/recovery unchanged,31initial/32final source controls pass. Supporting
 independent review has no restricted-comparison blocker. Native8:1 kernel/beta,
 convergence/regional accuracy, mandatory CalculiX/different-family and M2/G0/F03
 remain OPEN; formal authority UNCONSUMED. [Evidence](development/r8-bl5-projected-assessment-20261003/results.md).
+
+M4/F07/F12/G4B B2 free-reference development, 4 October: explicit
+B2_FREE_FREE_MODAL_ONLY_V1 on the existing mixed modal facade verifies six
+physical rigid fields and selected finite pairs in bounded Q4/mixed/all-S3
+controls. Physical mass and massless descriptor variables retained; static
+operations rejected for this opt-in. Historical supported/default routes
+unchanged. Source52 supported +44 free/footprint PASS; installed96 PASS.
+Initial19PASS/1 test-exception failure preserved and corrected without product
+behavior change. Wheel dea651b918e92871ffc017c6a435dd1f265d22e86f9a307d00d12ebd4abfa27b.
+Supporting review is not different-family qualification. Completeness/nullity,
+repeated-space/physical/external accuracy, consumer/scale/platform and aggregate
+F07/F12/G4B acceptance remain OPEN. M2/F03/G0 unaffected and formalF03 unconsumed.
+[Complete slice](development/r8-b2-free-reference-modes-20261004/results.md).
