@@ -51,6 +51,26 @@ are checked. First coupled contact passes; installed artifact and restart stages
 are recorded in the linked current ledger. Failed interval-budget, loose-bound
 and initial gap-fraction candidates remain in raw candidate10 evidence.
 
+The example defaults to the first bounded target. Continue its unchanged
+three-target definition through actual saved checkpoints:
+
+```powershell
+python examples/general_contact_native_curved_material_s3.py --checkpoint-out active.checkpoint
+python examples/general_contact_native_curved_material_s3.py --through-target 2 --restart active.checkpoint --checkpoint-out open.checkpoint
+python examples/general_contact_native_curved_material_s3.py --through-target 3 --restart open.checkpoint --checkpoint-out recontact.checkpoint
+```
+
+These commands use the package selected by the environment; the development
+checks bind their imports explicitly to the recorded installed wheel. Each
+subsequent stage requires the immediately preceding checkpoint. Local checks,
+first contact, installed CLI recontact and staged exception/cancellation total
+19 passes in five bounded jobs. All523source files/227imports match; JIT0/pools1.
+The combined opening batch exceeded120s and remains NONPASS. Its real opening
+checkpoint was validated by the completed recontact run, not retrospectively
+counted as a passed batch. No uninterrupted-cycle120s claim follows.
+[Exact source, wheel, fixture and resource identities](d1_review_support/contact_native_material_s3_20261004/curved_s3_summary.json),
+[supporting scrutiny](d1_review_support/contact_native_material_s3_20261004/curved_s3_review.md).
+
 **Independent engineering acceptance: no. Release: no.** Broader sections,
 materials, pairings, finite overlap, convergence, friction, native dynamics and
 application admission remain required by the full programme. Same-family

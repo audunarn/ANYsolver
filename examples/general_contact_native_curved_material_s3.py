@@ -1,5 +1,8 @@
 """Curved retained B3-GE / deformable S3 interior: static development example."""
 import json
+import argparse
+from hashlib import sha256
+from pathlib import Path
 from math import pi
 import numpy as np
 from anysolver import create_shell_element
@@ -48,9 +51,25 @@ def analysis(targets=(1.,0.,1.),*,normal_stiffness_Pa_per_m=1e7):
     return create_native_contact_analysis((definition,),(root,),program,shell,(pair,),equilibrium_tolerance=1e-10)
 
 
-if __name__=='__main__':
-    run=analysis().solve()
-    if run.status!='completed':raise RuntimeError(run.failure)
-    print(json.dumps(dict(status=run.status,profile=run.profile,
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--through-target',type=int,choices=(1,2,3),default=1)
+    parser.add_argument('--restart',type=Path)
+    parser.add_argument('--checkpoint-out',type=Path)
+    args=parser.parse_args()
+    raw=None if args.restart is None else args.restart.read_bytes()
+    if args.through_target>1 and raw is None:
+        parser.error('--restart is required for subsequent bounded stages')
+    if raw is not None and json.loads(raw)['completed_targets']!=args.through_target-1:
+        parser.error('restart must precede the requested target by exactly one stage')
+    run=analysis().solve(checkpoint=raw,expected_sha256=None if raw is None else sha256(raw).hexdigest(),
+        stop_after=args.through_target)
+    if run.status not in ('paused','completed'):raise RuntimeError(run.failure)
+    if args.checkpoint_out is not None:args.checkpoint_out.write_bytes(run.checkpoint)
+    print(json.dumps(dict(status=run.status,profile=run.profile,completed_targets=run.accepted.completed_targets,
         qualification='development only; not independently accepted or released',
-        targets=json.loads(run.checkpoint)['records'],checkpoint_sha256=run.checkpoint_sha256),indent=2))
+        targets=[dict(target=row['target'],contact=row['contact']) for row in json.loads(run.checkpoint)['records']],
+        checkpoint_sha256=run.checkpoint_sha256),indent=2))
+
+
+if __name__=='__main__':main()

@@ -2271,3 +2271,20 @@ rim benchmarks retain their exact claims. Generic unconstrained tangent-owned ri
 is not independently accepted or released; no stiffness/gap retuning. The required
 material-section surface work map is the next explicit development dependency.
 [Derivation/evidence](d1_review_support/contact_rim_energy_trace_20261004/README.md).
+
+### Curved retained native / deformable S3 — installed development, 5 October 2026
+
+`NATIVE_B3_GE_CURVED_MATERIAL_PATCHES_S3_STATIC_DEV_V1`, core12ae5bbc:
+full represented curved material patch containment, moving S3 normal and offsets,
+complete both-body work/tangent, retained internal coordinates and whole-path
+orientation/gap/rim controls. Actual active/open/recontact checkpoint stages,
+staged exception/cancellation and incompatible-law rejection pass.19installed
+checks,523files/227imports matched,JIT0/pools1; peak192237568B. The combined
+opening batch exhausted120s and remains NONPASS, excluded from pass counts.
+Same-family supporting scrutiny only. Implemented/tested; not independently
+accepted or released. Finite overlap/rims, broader sections/materials, convergence,
+native friction/dynamics and applications remain open. Historical straight/line
+profiles and frozen evidence retain their scopes. See
+[guide](GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md),
+[raw-bound summary](d1_review_support/contact_native_material_s3_20261004/curved_s3_summary.json),
+[supporting review](d1_review_support/contact_native_material_s3_20261004/curved_s3_review.md).

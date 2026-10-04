@@ -1,6 +1,6 @@
 # General contact — goal
 
-**Revision:** 2026-10-04.19. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.112. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-10-05.1. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-05.1. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
 
@@ -97,6 +97,15 @@ admitted; curved contact fronts and actual coupled owner remain required.
 Next: shared-kernel segmentation and thin-support controls, then curved coupled
 press/open/recontact and restart. No engineering/application promotion.
 [Guide](docs/GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md).
+
+**Latest curved coupled slice (`12ae5bbc`):** complete retained native / deformable
+S3 material work, bounded active/open/recontact checkpoint stages and precommit
+rollback now pass19installed checks. Full represented patch containment, explicit
+elastic fixture and dimensional controls remain the scope. Finite overlap,
+convergence, broader sections/materials, friction/dynamics and independent acceptance
+remain required. See [guide](docs/GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md).
+Earlier “next” markers above describe historical slice boundaries now superseded
+by this result; they do not create a requirement to repeat completed work.
 
 **Budget disposition:** the original 120-hour allocation remains consumed:
 428891+3120=432011 active seconds (120.003 hours). The user subsequently directed

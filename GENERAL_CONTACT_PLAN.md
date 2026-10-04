@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.112. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.19, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-05.1. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-05.1, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
@@ -14,6 +14,30 @@ retains the detailed chronology; current evidence remains in the
 [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 
 ## 1. Status and diagnosis
+
+Latest core source `12ae5bbc` adds complete curved native/deformable S3 work and
+the retained static owner. Actual bounded active/open/recontact restart stages,
+both-body work, partial-front mixed tangents, offset couples, cancellation and
+precommit exception rollback are installed-tested. Nineteen checks pass in five
+jobs (48.98/102.58/112.44/61.27/60.87s), peak192237568B. All523source files and
+227 imported modules match the installed wheel; JIT0/effective pools1.
+The combined opening batch exhausted120s and stays NONPASS, outside these counts.
+Full patch containment, one elastic fixture and explicit law1e7N/m³/30um gap are
+the development boundary. No finite-overlap, convergence, independent engineering
+acceptance, application admission or balanced speedup claim follows.
+[Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_s3_summary.json),
+[guide](docs/GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md).
+
+**Prospective worker-policy transition:** current global AGENTS.md makes Mistral
+the default available worker for complete bounded subsystem implementations,
+refactoring, numerical debugging, tests, adapters and independent mechanics review.
+Astra owns contracts, physics assumptions, integration and final acceptance.
+Existing optional-worker unavailability remains cached; do not repeatedly reprobe
+without a changed availability state. Same-family supporting review does not
+replace an independent engineering assessment. Scientific criteria, ownership,
+resource limits and consumed authorities are unchanged.
+
+The following fixed-plane evidence remains historical and valid only in its scope.
 
 Latest source`14fedcbe` integrates curved material normal contact into the existing
 retained static owner with whole-patch affine/Exp path admission. One elastic beam
@@ -352,11 +376,12 @@ Unresolved/grazing cases remain explicit failures. Stop local optimization here.
 **Completed integrated requirement:** installed verification of the bounded curved
 fixed-plane workflow and affected historical owner contracts, with a recoverable
 source/evidence checkpoint. Independent engineering acceptance remains open.
-**Next D3 slice:** extend the existing curved physical work adapter toward a finite
-S3 target through the existing paired/multiple-body owner. Start with full represented
-patch containment and complete both-body work; finite overlap and projection changes
-need their own controls. Keep actual reference area, retained internal coordinates,
-both-body derivatives and common transactional origin. Do not import the plane
-profile's evidence as deformable-target admission. Fix one consequential work/path
-discrepancy before adding further pairings; avoid another local optimization campaign.
-Preserve prior friction/impact, free-rim, convergence and historical restrictions.
+**Completed next D3 slice:** full represented curved material patch against a
+finite deformable S3 skin, complete both-body derivatives and retained coordinate
+assembly, actual active/open/recontact split restart and atomic rollback are now
+installed-tested. Full containment remains a deliberate boundary, not clipped
+overlap admission. Next close a required D3 pairing/section or convergence gap
+through this shared owner with one bounded discriminating case. Preserve actual
+reference area, authoritative increments and physical commit gates. Do not start
+another local optimization campaign or replay consumed failures. Independent
+engineering acceptance, finite overlap and the rest of C0–C9 remain open.

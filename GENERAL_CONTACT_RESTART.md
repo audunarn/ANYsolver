@@ -2,69 +2,61 @@
 
 ## Authority and ownership
 
-Goal ACTIVE/incomplete, revision2026-10-04.19; plan2026-10-04.112. Work only in
+Goal ACTIVE/incomplete, goal/plan revision2026-10-05.1. Work only in
 `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch
-`codex/contact-main-reconcile-20261001`. Source14fedcbe; current Git HEAD also
-contains its evidence checkpoint. Never access the protected original
-ANYsolver-general-contact worktree, even though goal-tool metadata names it.
-Main/ANYfem/other chats separately owned; no other-chat messages, publication,
-merge, release or defaults change. No live owned numerical process; reviewer done.
-Optional Local/Mistral unavailable, do not reprobe. Apply current AGENTS/tiered
-workflow and adopted risk-proportionate philosophy.
+`codex/contact-main-reconcile-20261001`. Core12ae5bbc; following checkpoint owns
+the example CLI, restart tests/fixtures and evidence/docs. Never access protected
+original ANYsolver-general-contact despite goal-tool metadata. Main/ANYfem/other
+chats separately owned; no other-chat messaging, publication, merge, release or
+default changes. No live owned numeric process; supporting reviewer finished.
 
-## Completed current slice
+Current global AGENTS prefers available Mistral for complete bounded subsystem
+implementation/numerics/adapters/review. Astra retains contracts/integration and
+final acceptance. Optional Local/Mistral unavailable in current cached state;
+do not reprobe without changed availability. Apply risk-proportionate/tiered checks.
 
-Curved material normal work now composes the existing retained static owner under
-NATIVE_B3_GE_RETAINED_CURVED_MATERIAL_PLANE_STATIC_DEV_V1. All42coordinates,
-actual fixed reference area and once-spatial tangent remain. Whole-patch affine/
-Exp orientation/gap bounds reject endpoint-safe hidden inversion and crossing.
-One elastic beam/fixed plane presses, opens and recontacts. Authentic split
-restart reproduces the full checkpoint exactly; staged exception/cancellation
-preserve the accepted prefix; incompatible stiffness rejects.
+## Completed slice
 
-38installed checks pass in two batches93.583/93.572s, peak185892864B.522source
-files/220imports match; JIT0/effective pools1. Coupled wrench errors2.083e-13/
-1.950e-13; directional tangents1.159e-7/4.743e-9. Conservative gap−14.359um meets
-30um; independent sampled/analytic-angle check−14.358um. Explicit1e7N/m³ law;
-the1e6 gap-limited prototype remains NONPASS. No penalty-convergence/engineering
-acceptance or whole-route speedup claim. Same-family Read scrutiny is supporting,
-not independent acceptance. Wheel
-dfa3964a5cd87c7c409885d6f39f5e3d7907350f01ad5c7bef2c6a927bef9f9c.
+Curved native / deformable S3 has complete both-body work, retained42coordinates,
+actual reference area, physical offsets and once-spatial native tangent. Full
+represented patch containment and whole affine/left-Exp orientation/gap/rim proof
+remain required. Exact high/low arithmetic and authoritative path increments
+prevent reproduced cancellation defects. Finite overlap/rims are unadmitted.
 
-[Guide/example](docs/GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md),
-[evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_static_summary.json),
-[supporting review](docs/d1_review_support/contact_native_material_s3_20261004/curved_static_review.md).
-Raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate10 retains
-12nonpasses, including installedV6 reference regression and test defects. V7
-uses resolved interior root-band representatives with complete whole-band work
-budgets, or accounted fallback quadrature mass. It keeps64integration/128path
-limits and all dimensional gates. V6/V7 frozen fixtures remain separate.
+Actual active/open/recontact staged restart, precommit exception/cancellation and
+incompatible law checks pass.19installed outcomes across five bounded jobs;
+523source files/227imports match,JIT0/pools1; peak192237568B. Wheel
+ded36dc7c512e51f4c8277178656eefad7323745c33adf5806a8cfbdfeee4057.
+The combined opening batch exhausted120.078s and stays NONPASS; isolated state
+checks pass under the unchanged120s cap. No uninterrupted cycle runtime claim,
+balanced speedup, convergence, independent engineering acceptance or release.
+Active/open frozen checkpoints hashcb6a4292/c5f199ef (full hashes in summary).
 
-## Next authorised integrated action
+[Guide](docs/GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md),
+[summary](docs/d1_review_support/contact_native_material_s3_20261004/curved_s3_summary.json),
+[supporting review](docs/d1_review_support/contact_native_material_s3_20261004/curved_s3_review.md).
+Raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate10 and11
+retain failed candidates and resource nonpasses.19installed passes exclude them.
 
-Extend the existing curved work adapter toward a finite S3 target through the
-existing paired/multiple-body owner. Begin with full represented patch containment
-and complete both-body work/retained mappings, before finite overlap/projection
-changes. Plane evidence does not admit deformable targets. Reuse state/search/
-restart machinery; one consequential discrepancy gets one bounded discriminator.
-Stop local optimization; do not add another solver stack or relax guards/budgets.
-All required C0–C9 outcomes and independent acceptance remain open as recorded.
+## Next bounded action and restrictions
 
-## Preserved restrictions and clock
+Continue a required D3 pairing/section or convergence gap through the shared
+owner; one consequential uncertainty, bounded discriminator, no local optimization
+campaign or repeated packaging of unaffected helpers. Finite clipped overlap,
+convergence and general native material/section admission remain open. FullC0–C9
+remains required. No sole-author or same-family acceptance claim.
 
-[Prior restart/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PRE_CURVED_STATIC.md)
-retains original ownership, failure and authority details. ANYfem434ec004 untouched;
-accepted source/model binding absent, appfalse. Actual-tangent free-rim continuum
-admission negative; guided benchmark intact. ImpactV4/V16 NONPASS900s at1.79779ms/
-3ms,65nm hidden pulse/old oracle sign: no unchanged/full replay or cap/gap-policy
-relaxation. Native grazing friction NONPASS−1.33564e-13m: closed derivative/mixed
-enclosure missing; no saved/full/owner/split retry/reset/zero/native acceptance.
+[Previous restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261005_PRE_CURVED_S3.md)
+retains historical authority/failure detail. ANYfem434ec004 untouched; accepted
+source/model binding absent, appfalse. Actual-tangent free-rim continuum admission
+negative; guided benchmark retained. ImpactV4/V16 NONPASS900s at1.79779ms/3ms,
+65nm hidden pulse/old oracle sign: no unchanged/full replay/cap or gap-policy
+relaxation. Native grazing friction NONPASS−1.33564e-13m: missing closed derivative/
+mixed enclosure; no saved/full/owner/split retry/reset/zero/native acceptance.
 Q4FD appcycle180.124s: no unchanged retry. Historical gap/merit/enforcement and
-penalty-convergence failures retain their dispositions.
+penalty-convergence nonpasses retain dispositions.
 
-Routine180s1GB; private runner180s953MiB; native owner120s. Named900s4GB prospective
-only; stricter frozen/consumed authorities remain binding. Original120h consumed:
-428891+3120=432011s=120.003h. Later explicit resumption permits bounded further
-work without replacement hard duration; never invent8h/reset history. Renewed
-snapshot429147s; latest goal tool447443s, plus checkpoint work. Goal active;
-pauses never renew consumed execution authorities.
+Routine180s1GB; private180s953MiB; native owner120s. Named900s4GB prospective
+only; stricter frozen/consumed authorities remain. Original120h consumed432011s;
+later explicit resumption permits bounded further work without a replacement hard
+duration or history reset. Goal remains active; pauses never renew consumed runs.
