@@ -7,7 +7,7 @@ Reference area is fixed; no friction, history transfer or swept admission is
 introduced here.
 """
 from dataclasses import dataclass
-from fractions import Fraction
+from decimal import Decimal, localcontext
 from math import acos, atan2, cos, fsum, hypot, isfinite, pi, sin
 
 import numpy as np
@@ -17,6 +17,7 @@ from anysolver._ge_beam3_generalized_static_boundary import spatial_jacobian
 from anysolver._ge_beam3_mixed_ad import (
     Jet2, constant_matrix, dot, matmul, so3_exp, sqrt,
 )
+from .native_normal_angles import PRECISION, PreciseNormalAngles
 from .native_retained_station import _readonly
 from .native_surface_extrema import straight_patch_s3_gap
 from .native_surface_quadrature import NativeRoundSurfaceRule
@@ -149,16 +150,8 @@ def _material_cell_normal_data(rule, configuration, cell, left, right,
     if not isfinite(reference_measure) or reference_measure <= 0.:
         raise ValueError('normal integration requires positive finite reference area measure')
     alo, ahi = rule.definition['angle_range']
-    anchor = alo+(ahi-alo)/2.
-    anchored_gap=(Fraction(offset.value)+Fraction(cos(anchor))*Fraction(cosine.value)
-                  +Fraction(sin(anchor))*Fraction(sine.value)) if compensated_projection else None
-    def anchored_scalar(angle):
-        half_delta=(angle-anchor)/2.
-        half_sum=anchor+half_delta
-        delta_cos=-2.*sin(half_sum)*sin(half_delta)
-        delta_sin=2.*cos(half_sum)*sin(half_delta)
-        return (anchored_gap+Fraction(delta_cos)*Fraction(cosine.value)
-                +Fraction(delta_sin)*Fraction(sine.value))
+    precise = (PreciseNormalAngles(offset.value, slope.value, width, cosine.value, sine.value)
+               if compensated_projection else None)
     if compensated_projection:
         # This development profile excludes unresolved angular grazing. A
         # rounded acos ratio can omit a tiny active pocket which both Gauss
@@ -169,8 +162,7 @@ def _material_cell_normal_data(rule, configuration, cell, left, right,
         resolution=32.*np.finfo(float).eps*(abs(offset.value)+abs(width*slope.value)
                                              +abs(cosine.value)+abs(sine.value))
         for angle in critical:
-            first=anchored_scalar(angle)
-            for gap in (first,first+Fraction(width)*Fraction(slope.value)):
+            for gap in precise.endpoint_values(angle):
                 if abs(float(gap))<=resolution:
                     raise ValueError('material plane angular endpoint/extremum gap unresolved; grazing excluded')
 
@@ -178,14 +170,12 @@ def _material_cell_normal_data(rule, configuration, cell, left, right,
         first = offset+cos(angle)*cosine+sin(angle)*sine
         last = first+width*slope
         if compensated_projection:
-            # Recover the base gap from the declared binary coefficients before
-            # cancellation. Derivatives still differentiate the same smooth
-            # projection; old S3 paths retain their numerical convention.
-            # Trigonometric differences avoid losing the small variation of a
-            # gap near an angular extremum to rounding of cos(angle) itself.
-            exact=anchored_scalar(angle)
-            first=Jet2(float(exact),first.gradient,first.hessian)
-            last=Jet2(float(exact+Fraction(width)*Fraction(slope.value)),last.gradient,last.hessian)
+            # Scalar values and partition roots use the same circular field.
+            # Jet2 differentiates that field on the current smooth branch;
+            # legacy uncompensated paths keep their numerical convention.
+            first_value, last_value = precise.endpoint_values(angle)
+            first=Jet2(first_value,first.gradient,first.hessian)
+            last=Jet2(last_value,last.gradient,last.hessian)
         if first.value >= 0. and last.value >= 0.:
             energy = Jet2.constant(0., size)
         elif first.value <= 0. and last.value <= 0.:
@@ -200,8 +190,9 @@ def _material_cell_normal_data(rule, configuration, cell, left, right,
             raise ValueError('nonfinite straight normal integrand')
         return energy
 
-    breaks = _breakpoints(offset.value, offset.value+width*slope.value,
-                          cosine.value, sine.value, alo, ahi)
+    breaks = (precise.breakpoints(alo, ahi) if compensated_projection else
+              _breakpoints(offset.value, offset.value+width*slope.value,
+                           cosine.value, sine.value, alo, ahi))
     return integrand, mapping, breaks
 
 
@@ -241,6 +232,14 @@ def integrate_straight_normal(rule, target, configuration,
 
 
 def _integrate_material_normal_data(data, count, settings):
+    if any(isinstance(item[2][0], Decimal) for item in data):
+        with localcontext() as ctx:
+            ctx.prec = PRECISION
+            return _integrate_material_normal_data_impl(data, count, settings)
+    return _integrate_material_normal_data_impl(data, count, settings)
+
+
+def _integrate_material_normal_data_impl(data, count, settings):
     """Bounded shared angular integration and one spatial-chart conversion."""
     initial_intervals = sum(len(item[2])-1 for item in data)
     def exhausted(visited=0,accepted=0,evaluations=0,last_error=None,last_interval=None):
@@ -274,18 +273,24 @@ def _integrate_material_normal_data(data, count, settings):
             if visited >= settings.max_intervals:
                 raise exhausted(visited,accepted,evaluations,last_error,last_interval)
             left, right = pending.pop()
-            half = (right-left)/2.
+            half = (right-left)/2
             middle = left+half
             if middle == left or middle == right:
                 raise ValueError('straight normal integration angular resolution exhausted')
+            if float(half) == 0.:
+                raise ValueError('straight normal integration angular measure unresolved')
             estimates = []
             for points, weights in gauss:
                 estimate = Jet2.constant(0., size)
                 for point, weight in zip(points, weights):
-                    angle = middle+half*float(point)
+                    factor = float(half)*float(weight)
+                    if factor == 0.:
+                        raise ValueError('straight normal integration quadrature measure unresolved')
+                    angle = (middle+half*Decimal(float(point)) if isinstance(half, Decimal)
+                             else middle+half*float(point))
                     if not left < angle < right:
                         raise ValueError('straight normal integration angular resolution exhausted')
-                    estimate = estimate+(half*float(weight))*integrand(angle)
+                    estimate = estimate+factor*integrand(angle)
                     evaluations += 1
                 estimates.append(estimate)
             visited += 1
@@ -297,8 +302,8 @@ def _integrate_material_normal_data(data, count, settings):
                               float(np.max(np.abs(scale[:,None]*mapped_tangent*scale[None,:])))))
             if not np.all(np.isfinite(error)):
                 raise ValueError('nonfinite straight normal integration error estimate')
-            last_error=error.tolist();last_interval=(left,right)
-            if np.all(error <= tolerances*((right-left)/total_width)):
+            last_error=error.tolist();last_interval=(float(left),float(right))
+            if np.all(error <= tolerances*float((right-left)/total_width)):
                 local = local+estimates[1]
                 errors.append(error)
                 accepted += 1

@@ -1,0 +1,7 @@
+{
+  "source": "ce3e5495",
+  "wheel_sha256": "59b5372d70281a38118ad0182e87bec67cb973cc34c1b5cee6385e8a51f18e49",
+  "checkpoint_sha256": "397eb93ae151e138304e488b483bbdee56a028f1912ab63fdb6f88b4d727a603",
+  "completed_targets": 0,
+  "scope": "empty checkpoint compatibility fixture, no physical increment or qualification replay"
+}

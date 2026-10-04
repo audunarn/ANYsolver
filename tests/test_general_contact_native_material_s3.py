@@ -133,11 +133,12 @@ def test_one_native_two_material_facets_open_checkpoint_and_recontact():
     assert continued.status=='completed' and continued.checkpoint==run.checkpoint
 
 
-def test_two_material_contact_independent_work_before_structural_globalization():
+@pytest.mark.parametrize("uniform",(False,True))
+def test_two_material_contact_independent_work_before_structural_globalization(uniform):
     owner=_two_analysis(targets=(.25,.5,.75,1.));n=owner.context.count
     step=np.zeros(n)
     for i,nodes in enumerate(owner.context.nodes):
-        for j,node in enumerate(nodes[1:]):step[6*node+2]=-.001-.0002*i-.0002*j
+        for j,node in enumerate(nodes[1:]):step[6*node+2]=-.001-.0002*i-(0. if uniform else .0002*j)
         step[owner.context.nodal_count+24*i+3]=.04+.01*i
     pose=owner.context.advance(owner.initial.mechanical,step);u=np.zeros(18)
     result=owner._contact(pose,u)
@@ -148,13 +149,23 @@ def test_two_material_contact_independent_work_before_structural_globalization()
     assert_allclose(result.contact.potential_j,energy(pose,u),rtol=1e-10,atol=1e-14)
     d=np.random.default_rng(490).normal(size=n+18)*.003
     d[list(owner.context.fixed)]=0.
+    checks=[]
     for h in (1e-5,2e-6):
         poses=[owner.context.advance(pose,sign*h*d[:n]) for sign in (1,-1)]
         values=[owner._contact(s,u+sign*h*d[n:]) for sign,s in zip((1,-1),poses)]
         fd=(values[0].residual-values[1].residual)/(2*h)
-        assert np.linalg.norm(result.tangent@d-fd)/np.linalg.norm(fd)<=1e-5
+        error=float(np.linalg.norm(result.tangent@d-fd)/np.linalg.norm(fd))
+        assert error<=1e-5
         independent=(energy(poses[0],u+h*d[n:])-energy(poses[1],u-h*d[n:]))/(2*h)
         assert_allclose(result.residual@d,independent,rtol=1e-5,atol=1e-10)
+        checks.append(dict(h=h,directional_error=error,
+            virtual_work_error=float(abs(result.residual@d-independent)),
+            intervals=[value.contact.integration_intervals for value in values]))
+    output=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if output:Path(output+f'-uniform-{uniform}.json').write_text(json.dumps(dict(
+        geometry='historical uniform pose' if uniform else 'nonuniform control',
+        energy_error=float(abs(result.contact.potential_j-energy(pose,u))),
+        checks=checks),indent=2))
 
 
 def test_two_native_material_patches_shared_deformable_target():

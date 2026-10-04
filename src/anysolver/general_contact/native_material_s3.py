@@ -88,7 +88,7 @@ class NativeMaterialS3Patch:
             radius_m=self.radius,cell=self.cell,normal_stiffness_Pa_per_m=self.stiffness,
             integration=asdict(self.settings),geometry_tolerance_m=self.geometry_tolerance,
             rim_clearance_m=self.rim_clearance,measure='fixed_reference_material_area',
-            numerical_revision='anchored_projection_radius_reference_full_shell_work_v2',
+            numerical_revision='precise_angular_projection_radius_reference_full_shell_work_v3',
             wrench_origin_m=(0.,0.,0.))
 
     def _fingerprint(self):return sha(self.definition())

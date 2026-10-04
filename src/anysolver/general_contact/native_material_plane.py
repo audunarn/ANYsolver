@@ -65,7 +65,7 @@ class NativeRoundMaterialPlane:
             plane_origin_m=self.origin,plane_normal=self.normal,
             normal_stiffness_Pa_per_m=self.stiffness,
             integration_settings=asdict(self.integration_settings),
-            numerical_gap_revision='anchored_trigonometric_projection_grazing_guard_v1',
+            numerical_gap_revision='precise_angular_projection_partition_grazing_guard_v2',
             measure='fixed_reference_material_area',wrench_origin_m=(0.,0.,0.))
 
     def _configuration(self, positions, position_low, cell_rotations):

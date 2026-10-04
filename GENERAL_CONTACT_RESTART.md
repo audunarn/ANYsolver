@@ -42,11 +42,14 @@ first_target2 passed. [Evidence](docs/d1_review_support/contact_native_material_
 
 ## Next action and preserved failures
 
-Next bounded discriminator: existing nearly uniform axial angular-resolution
-exhaustion, branch predicates versus derivative error estimator. Reuse retained
-pose and independent direct-area reference, one local check180s/953MiB with
-unchanged64interval cap; no full-solver replay or new diagnostic campaign.
-Choose one corrective action or explicit unresolved admission. Default k1e6 full
+Angular discriminator completed: all8historical perturbed uniform-pose fields
+reproduce branch-value arithmetic jitter. One precise-gap/partition candidate
+passes the same virtual-work and derivative gates without larger caps. Production
+uses bounded50-digit scalar angles, existing Jet2 derivatives and positive interval
+measures; old area/plane numerical identities reject. Source checks pass; supporting
+Read review identified weighted-factor underflow, now explicit non-success with
+an isolated constant-integral regression. Completing installed integrated checks.
+Default k1e6 full
 load and k1e7 first-target gap/merit remain NONPASS; opt-in new success does not
 regrade them. Spatial/enforcement convergence, caps/interfaces/curved geometry,
 friction, native C7 dynamics/coupled impact, independent acceptance and application
