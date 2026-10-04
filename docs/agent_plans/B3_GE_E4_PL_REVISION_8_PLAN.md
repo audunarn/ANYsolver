@@ -50,7 +50,7 @@ by this document alone.
 
 ## 1. What exists and what is preventing completion
 
-Reviewed solver HEAD `3d5578fb`, branch `codex/stiffened-main-reconcile-20261001`,
+Reviewed preceding solver HEAD `adc98d4b`, branch `codex/stiffened-main-reconcile-20261001`,
 in the canonical worktree above. ANYfem is at `6013db0` (product `9b7482b`) in
 `C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer`. The four-file
 consumer slice now has 42 source/42 installed checks and an installed example;
@@ -63,7 +63,7 @@ this planning review; the historical `be41a77a` baseline is not current-main evi
 | B2 | Physical static/batch execution, selected recovery, persistence and scoped supported/free-modal consumer routes exist. | Complete attachment, prestress, scale, external and release acceptance remain. |
 | Foundations | Scoped F05, F08 and F09 have recorded PASSED dispositions; further point/static/elastic-chart portions are accepted within their stated boundaries. | Do not relabel scoped passes as complete aggregate gates or repeat the obsolete claim that no foundation has passed. |
 | BL5 | All 21 saved auxiliary-norm cases passed their scoped predicates; actual mechanical inventory is 13 positive, one unresolved, seven unassessed. | Auxiliary beta does not settle the mixed mechanics or physical transfer. Closed inverse/positive-part certificate routes remain CLOSED_UNRESOLVED. |
-| Distributing attachment | Public reference-linear two-Q4-host owner and installed ANYfem construction/save-reopen/recovery/checkpoint/resume workflow pass focused checks and examples. | Finite pose, physical fidelity and full F04 remain open. |
+| Distributing attachment | Same reference-linear area law supports 2–128 conforming Q4 hosts/256 shell nodes with six rows; historical two-host bytes/checkpoints remain exact. 130 source/130 installed and 42 installed consumer controls pass. Fixed-pad three-level CalculiX torque/shear comparison executes. | Finite pose, fully converged physical fidelity and full F04 remain open. |
 | Scale and cost | A 10,000-Q4/1,000-B3 point model completed a persisted reference route. Seven paired installed runs measured 55.97% improvement on the declared 400-Q4/120-B3 warm reference workflow; other scoped gains are recorded. | No overall development-speed measurement, full G5 qualification, nonmatching/nonlinear scale claim or release date follows. |
 
 The [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) and linked
@@ -141,16 +141,16 @@ Decisions resolving the present queue:
   in section 4.5; frozen certificates and predicates are not replaced or waived.
   Resume a scientific ticket only for a new discriminator that changes an
   engineering decision, not merely to obtain another positive certificate.
-- **Distributing attachment:** the reference-linear consumer is complete. The
-  independent area map and coarse CalculiX Mx/Fy pair now execute with correct
-  work/transfer/stub controls; native compliance is4.249%/3.472% lower on this
-  coarse case, not converged accuracy. Next extend the same reference-only area
-  compiler to bounded conforming multiple Q4 hosts, preserving one physical
-  pad, exactly six rows, old two-host identities and atomic owner behavior.
-  This removes the actual obstacle to matched refinement; separate two-host
-  pads would change the law. Then execute the applicable fixed-geometry
-  three-level torque/shear assessment, including reference convergence and
-  output-resolution limits. No isolated solid/axial refinement campaign.
+- **Distributing attachment:** the consumer and multi-host reference compiler
+  are complete within their experimental admission. Matched10x4/20x8/40x16
+  torque work differences decrease4.249→2.233→0.813%; shear3.472→1.290→0.364%.
+  Retain this law for further assessment: no defect or persistent discrepancy
+  is established by this batch. Do not declare the1% converged criterion passed:
+  native torque still changes1.518% on the last doubling, while solid thickness
+  stays at two layers and shell/solid kinematic assumptions differ. Next identify
+  which remaining convergence/model assumption affects the required physical
+  claim before authorizing another diagnostic. No isolated solid/axial refinement
+  or law rejection from one difference.
   [Grouped implementation and physical evidence](development/r8-distributing-reference-linear-20261004/results.md).
   Defer
   finite-pose implementation until reference torque/shear transfer has a

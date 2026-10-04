@@ -98,14 +98,15 @@ class BoundDistributingReference:
                  owner._shell_parts is self._shell_parts_ref,
                  "stale distributing reference model/state binding")
         _reference_owner(owner)
+        shell_count = len(self.compiled.shell_node_ids)
         for node, slots, position in zip(self.compiled.shell_node_ids,
-                self.compiled.gather_slots[:36].reshape(6, 6), self.compiled.shell_positions_m):
+                self.compiled.gather_slots[:6*shell_count].reshape(shell_count, 6), self.compiled.shell_positions_m):
             index = owner._shell_index.get(node)
             _require(index is not None and 6*index == int(slots[0]) and
                      np.array_equal(owner._shell_xyz[index], position), "stale local shell mapping")
         beam = self.compiled.beam_node_id
         index = owner._beam_index.get(beam)
-        _require(index is not None and owner._shell_count+6*index == int(self.compiled.gather_slots[36]) and
+        _require(index is not None and owner._shell_count+6*index == int(self.compiled.gather_slots[-6]) and
                  beam in owner._beam_nodes and
                  np.array_equal(owner._beam_nodes[beam][0], self.compiled.beam_position_m) and
                  np.array_equal(owner._beam_nodes[beam][1], np.eye(3)), "stale physical beam mapping")
@@ -129,8 +130,8 @@ class BoundDistributingReference:
 
     def side_actions(self, owner, multipliers):
         self._check(owner)
-        local = self.compiled.transpose_work(multipliers).reshape(7, 6)
-        shell = local[:6]
+        local = self.compiled.transpose_work(multipliers).reshape(-1, 6)
+        shell = local[:-1]
         with np.errstate(over="ignore", invalid="ignore"):
             force = shell[:, :3].sum(axis=0)
             moment = (np.cross(self.compiled.shell_positions_m-self.compiled.centroid_m,
@@ -138,7 +139,7 @@ class BoundDistributingReference:
         _require(np.isfinite(force).all() and np.isfinite(moment).all(),
                  "representable common reference-spatial side wrench required")
         return ReferenceTransfer(self.model_identity, self.identity, self.compiled.shell_node_ids,
-            self.compiled.beam_node_id, shell, local[6], force, moment,
+            self.compiled.beam_node_id, shell, local[-1], force, moment,
             self.compiled.centroid_m, self.compiled.eccentricity_m)
 
 
@@ -151,11 +152,10 @@ def _compile_reference_geometry(definition, *, shell_parts, shell_index, shell_x
     for eid, element, _slots, _origin in shell_parts:
         if eid in wanted:
             hosts.append(CartesianQ4Host(eid, tuple(element.node_ids)))
-            if len(hosts) == 2:
+            if len(hosts) == len(wanted):
                 break
-    _require(len(hosts) == 2, "selected actual GE shell element IDs required")
+    _require(len(hosts) == len(wanted), "selected actual GE shell element IDs required")
     selected_ids = set().union(*(set(h.node_ids) for h in hosts))
-    _require(len(selected_ids) == 6, "two-host six-node reference inventory required")
     nodes = tuple(FlatQ4Node(node, tuple(shell_xyz[shell_index[node]]),
                             6*shell_index[node]) for node in sorted(selected_ids))
     _require(definition.beam_node_id in beam_index, "existing physical native beam node required")
@@ -182,7 +182,7 @@ def _scatter_reference(compiled, count):
 
 
 def bind_reference(owner, definition):
-    """Select two actual shell cells once and bind the existing nodal compiler."""
+    """Select bounded actual shell cells once and bind the reference compiler."""
     from ._stiffened_shell_ge_experimental import _require_independent_supported_rows
     _reference_owner(owner)
     count = owner._K.shape[0]
@@ -194,7 +194,7 @@ def bind_reference(owner, definition):
     row_scale = np.asarray(np.abs(matrix)@owner._coordinate_scale).ravel()
     _require(np.isfinite(row_scale).all() and np.all(row_scale > 0.), "finite positive candidate row scales required")
     # All other columns are identically zero. Audit the identical supported row
-    # rank on its 42-coordinate local incidence, avoiding a global dense array.
+    # rank on its bounded local incidence, avoiding a global dense array.
     local_free = np.flatnonzero(np.isin(compiled.gather_slots, owner._free))
     _require_independent_supported_rows(sparse.csr_matrix(compiled.constraint_matrix), local_free,
         owner._coordinate_scale[compiled.gather_slots], row_scale,
@@ -257,7 +257,7 @@ class DistributingFootprintWrench:
 
     def __post_init__(self):
         for name, shape in (("centroid_m", (3,)), ("beam_position_m", (3,)),
-                            ("eccentricity_m", (3,)), ("shell_node_actions", (6, 6)),
+                            ("eccentricity_m", (3,)), ("shell_node_actions", (len(self.shell_node_ids), 6)),
                             ("shell_action", (6,)), ("beam_action", (6,)), ("gap", (6,))):
             values = np.asarray(getattr(self, name))
             _require(values.shape == shape and values.dtype.kind in "fiu" and np.isfinite(values).all(),
@@ -270,8 +270,8 @@ class DistributingFootprintWrench:
 def _reference_records(owner, q, multipliers, generation):
     records = []
     for compiled, start in owner._distributing_bindings:
-        local = -compiled.transpose_work(multipliers[start:start+6]).reshape(7, 6)
-        shell = local[:6]
+        local = -compiled.transpose_work(multipliers[start:start+6]).reshape(-1, 6)
+        shell = local[:-1]
         with np.errstate(over="ignore", invalid="ignore"):
             force = shell[:, :3].sum(axis=0)
             moment = (np.cross(compiled.shell_positions_m-compiled.centroid_m,
@@ -279,7 +279,7 @@ def _reference_records(owner, q, multipliers, generation):
         records.append(DistributingFootprintWrench(compiled.definition.footprint_id, owner._identity,
             compiled.identity, compiled.host_element_ids, compiled.shell_node_ids, compiled.beam_node_id,
             compiled.centroid_m, compiled.beam_position_m, compiled.eccentricity_m, compiled.area_m2,
-            shell, np.r_[force, moment], local[6], compiled.gap(compiled.gather(q)), generation))
+            shell, np.r_[force, moment], local[-1], compiled.gap(compiled.gather(q)), generation))
     return tuple(records)
 
 

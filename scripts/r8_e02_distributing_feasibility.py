@@ -1,7 +1,8 @@
 """Small common-action area comparison, not a qualification adjudicator.
 
 The resolved-solid secant-director observable is a distributing idealization;
-it is not a welded face. Only the existing 10x4 Cartesian geometry is used.
+it is not a welded face. The fixed physical pad uses paired 10x4, 20x8 and
+40x16 Cartesian geometries; through-thickness resolution stays fixed.
 Build/parse never launch a solver. Native execution requires the fixed installed
 artifact and retains the free GE stub, checking its actual fields and work.
 """
@@ -31,11 +32,11 @@ def _hash(value):
         separators=(",", ":"), allow_nan=False).encode("ascii")).hexdigest()
 
 
-def build_case(name):
+def build_case(name, nx=10, ny=4):
     """No rigid-body equations from the geometry donor enter this new deck."""
     if name not in LOADS:
         raise ValueError("fixed Mx or eccentric Fy feasibility case required")
-    _, donor = build_deck(10, 4, 1, "Mx")
+    _, donor = build_deck(nx, ny, 1, "Mx")
     nodes, elements = donor["physical_nodes"], donor["elements"]
     area = compile_area_map(nodes, elements, BOUNDS, .02, PORT)
     action = area.action(LOADS[name][:3], LOADS[name][3:])
@@ -57,9 +58,11 @@ def build_case(name):
     deck.extend(("*NODE PRINT,NSET=ALL", "U", "*NODE PRINT,NSET=ROOT", "RF", "*END STEP"))
     text = "\n".join(deck)+"\n"
     metadata = dict(schema="R8_E02_DISTRIBUTING_FEASIBILITY_V1",
-        scope="single coarse common-action screen; no refinement or acceptance",
+        scope=("single coarse common-action screen; no refinement or acceptance"
+               if (nx, ny) == (10, 4) else
+               "paired in-plane refinement; thickness fixed; no acceptance"),
         case=name, ccx_version=CCX_VERSION, executable_sha256=CCX_SHA256,
-        nx=10, ny=4, nz=2, E_Pa=210e9, nu=.3, thickness_m=.02,
+        nx=nx, ny=ny, nz=2, E_Pa=210e9, nu=.3, thickness_m=.02,
         bounds_xy_m=BOUNDS, port_m=PORT, applied_wrench=LOADS[name],
         physical_nodes=nodes, elements=elements, root_nodes=root,
         area_map_identity=area.identity,
@@ -74,7 +77,7 @@ def parse_result(dat, stdout, metadata):
     physical-accuracy estimates. No balance/accuracy acceptance is inferred.
     """
     try:
-        _, expected, area = build_case(metadata["case"])
+        _, expected, area = build_case(metadata["case"], metadata["nx"], metadata["ny"])
         if _hash(expected) != _hash(metadata):
             raise ReferenceParseError("changed reference metadata")
     except (KeyError, TypeError, ValueError) as exc:
@@ -139,19 +142,16 @@ def parse_result(dat, stdout, metadata):
         precision_scope="printed-decimal resolution, no 1e-8 certification")
 
 
-def native_cases():
-    """Run the matching two-host pad through the installed public GE facade."""
+def native_cases(nx=10, ny=4):
+    """Run one fixed physical pad through the installed public GE facade."""
     from anysolver import b3_ge, stiffened_shell as ss
     from scipy.spatial.transform import Rotation
     from scripts.r8_e02_native_rigid_tip import geometry
-    nodes, cells, _, _, root = geometry(10, 4)
-    # Two Q4 cells over the physical rectangle; IDs are explicit, one-based.
-    hosts = tuple(i+1 for i, cell in enumerate(cells)
-        if min(nodes[n][0] for n in cell) >= .8 and
-        min(nodes[n][1] for n in cell) >= -.05000000000000001 and
-        max(nodes[n][1] for n in cell) <= 0.)
-    if len(hosts) != 2:
-        raise ValueError("fixed two-host geometry mismatch")
+    nodes, cells, _, _, root = geometry(nx, ny)
+    # Integer grid ownership holds the material rectangle fixed at all levels.
+    hosts = tuple(1+j*nx+i for j in range(ny//4,ny//2) for i in range(4*nx//5,nx))
+    if len(hosts) != nx*ny//20:
+        raise ValueError("fixed physical-pad host inventory mismatch")
     e, g = 210e9, 210e9/2.6
     section = b3_ge.EllipsoidalGeneralizedSection(np.diag((e*.0004, g*.0004*5/6,
         g*.0004*5/6, g*2.249e-8, e*1.3333333333333335e-8,
@@ -220,7 +220,7 @@ def native_cases():
                 port_rotation_rad=port[3:].tolist(), external_final_pairing_J=pairing,
                 root_force_N=root_force.tolist(),root_moment_Nm=root_moment.tolist(),
                 transfer=asdict(transfer), controls=checks)
-        return dict(scope="coarse reference-linear common-action only", hosts=hosts,
+        return dict(scope="reference-linear common-action, acceptance separate", nx=nx,ny=ny,hosts=hosts,
             shell_nodes=nodes, cells=cells, root=root, port_m=PORT, bounds_xy_m=BOUNDS,
             factors=owner.preflight()["reference_linear_factorizations"], results=records)
     finally:

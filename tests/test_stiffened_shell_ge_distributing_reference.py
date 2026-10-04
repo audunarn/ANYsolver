@@ -51,6 +51,34 @@ def _selection():
     return DistributingFootprintDefinition("two-host-area", (2, 3), 102, (1., 3., -.5, .5))
 
 
+def _multi_definition():
+    """One 12-Q4 supported panel; the fixed pad spans eight actual hosts."""
+    base = _definition()
+    cells = tuple((row*7+i+1, row*7+i+2, (row+1)*7+i+2, (row+1)*7+i+1)
+                  for row in range(2) for i in range(6))
+    shell = replace(base.shell, node_ids=tuple(range(1, 22)),
+        coordinates_m=tuple((i/2, -.5+row/2, 0.) for row in range(3) for i in range(7)),
+        q4_elements=cells)
+    return replace(base, shell=shell, points=(PointConnection(12, 102),),
+                   fixed=tuple(FixedCoordinate("shell", n, axis)
+                               for n in (1, 8, 15) for axis in range(6)))
+
+
+def _multi_selection():
+    return DistributingFootprintDefinition("eight-host-area", (3, 4, 5, 6, 9, 10, 11, 12),
+                                          102, (1., 3., -.5, .5))
+
+
+@pytest.fixture(scope="module")
+def multi_bound():
+    owner = ExperimentalGEAnalysis(_multi_definition())
+    try:
+        bound = bind_reference(owner, _multi_selection())
+        yield owner, bound, bound.constraint_matrix(owner)
+    finally:
+        owner.close()
+
+
 def _load(owner):
     load = np.zeros(owner._K.shape[0])
     load[6*owner._shell_index[2]+2] = -100.
@@ -174,6 +202,61 @@ def test_actual_mapping_sparse_scatter_preserves_owner_and_all_retained_blocks(r
     full = np.arange(90.)/90.
     np.testing.assert_allclose(bound.gap(owner, full), C@full, rtol=0., atol=1e-15)
     assert np.count_nonzero(load) == 4
+
+
+def test_multi_host_binding_scatter_owns_only_physical_selected_columns(multi_bound):
+    owner, bound, matrix = multi_bound
+    compiled = bound.compiled
+    assert len(compiled.host_element_ids) == 8 and len(compiled.shell_node_ids) == 15
+    assert compiled.constraint_matrix.shape == (6, 96)
+    assert matrix.shape == (6, 168) and matrix.has_canonical_format
+    assert sparse.isspmatrix_csr(matrix) and np.all(matrix.data != 0.)
+    assert not set(compiled.gather_slots).intersection(owner._fixed)
+    physical = owner._shell_count+6*len(owner._beam_ids)
+    assert matrix[:, physical:].nnz == 0
+    np.testing.assert_array_equal(matrix[:, compiled.gather_slots].toarray(), compiled.constraint_matrix)
+    outside = np.setdiff1d(np.arange(matrix.shape[1]), compiled.gather_slots)
+    assert matrix[:, outside].nnz == 0
+    full = np.sin(np.arange(matrix.shape[1])+.3)
+    np.testing.assert_allclose(bound.gap(owner, full), matrix@full, rtol=0., atol=2e-15)
+    assert owner._generation == 0 and owner._accepted is None and owner._linear_factor is None
+
+
+@pytest.mark.parametrize("axis", range(6))
+def test_multi_host_bound_recovery_preserves_six_side_work_channels(multi_bound, axis):
+    owner, bound, matrix = multi_bound
+    multiplier = np.eye(6)[axis]
+    transfer = bound.side_actions(owner, multiplier)
+    assert transfer.shell_covectors.shape == (15, 6)
+    np.testing.assert_array_equal(transfer.beam_covector, multiplier)
+    np.testing.assert_allclose(transfer.shell_force, -multiplier[:3], rtol=0., atol=2e-14)
+    np.testing.assert_allclose(transfer.shell_moment_about_centroid,
+        -multiplier[3:]-np.cross(bound.compiled.eccentricity_m, multiplier[:3]), rtol=0., atol=2e-14)
+    q = np.sin(np.arange(owner._K.shape[0])+.2)
+    local = bound.compiled.gather(q).reshape(-1, 6)
+    work = np.sum(transfer.shell_covectors*local[:-1])+transfer.beam_covector@local[-1]
+    assert work == pytest.approx(multiplier@(matrix@q), abs=2e-14)
+    np.testing.assert_array_equal(transfer.shell_covectors[:, 5], np.zeros(15))
+
+
+def test_multi_host_binding_checks_last_shell_and_beam_offsets(multi_bound):
+    owner, bound, _ = multi_bound
+    shell = bound.compiled.shell_node_ids[-1]
+    original = owner._shell_index[shell]
+    try:
+        owner._shell_index[shell] = original+1
+        with pytest.raises(ValueError, match="stale local shell"):
+            bound.gap(owner, np.zeros(owner._K.shape[0]))
+    finally:
+        owner._shell_index[shell] = original
+    beam = bound.compiled.beam_node_id
+    original = owner._beam_index[beam]
+    try:
+        owner._beam_index[beam] = original+1
+        with pytest.raises(ValueError, match="stale physical beam"):
+            bound.side_actions(owner, np.zeros(6))
+    finally:
+        owner._beam_index[beam] = original
 
 
 def test_reference_point_coordinate_pullback_matches_actual_identity_frame_joint(reference_bundle):

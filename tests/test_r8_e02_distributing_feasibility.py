@@ -45,6 +45,19 @@ def test_deck_has_common_action_without_rigid_patch_or_extra_port_nodes(cases, n
         np.array(LOADS[name][3:])+np.cross(PORT, LOADS[name][:3]), atol=2e-12, rtol=0)
 
 
+@pytest.mark.parametrize("nx,ny", ((20,8),(40,16)))
+def test_reference_refinement_keeps_physical_area_wrench_and_complete_trace(nx,ny):
+    deck, metadata, area = build_case("Mx",nx,ny)
+    assert metadata["nx"]==nx and metadata["ny"]==ny
+    assert len(metadata["elements"])==2*nx*ny
+    np.testing.assert_allclose(area.centroid_m,(.9,-.025,0.),atol=1e-16,rtol=0)
+    assert area.area_m2 == pytest.approx(.01,abs=1e-17)
+    assert "*RIGID BODY" not in deck
+    action = area.action((0.,10.,0.),(0.,0.,0.))
+    np.testing.assert_allclose(action.resultant()[0],(0.,10.,0.),atol=2e-12,rtol=0)
+    np.testing.assert_allclose(action.resultant()[1],(-.5,0.,9.),atol=2e-12,rtol=0)
+
+
 def test_parser_metadata_roundtrip_and_no_acceptance_inference(cases):
     _, metadata, _ = cases["Mx"]
     dat, stdout = _synthetic(metadata)

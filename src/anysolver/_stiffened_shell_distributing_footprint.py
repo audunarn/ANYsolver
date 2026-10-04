@@ -17,6 +17,8 @@ import numpy as np
 
 LAW = "GE_FLAT_Q4_DISTRIBUTING_DIRECTOR_POLAR_REFERENCE_LINEAR_V1_EXPERIMENTAL"
 IDENTITY_AXES = ((1., 0., 0.), (0., 1., 0.), (0., 0., 1.))
+MAX_HOSTS = 128
+MAX_SHELL_NODES = 256
 
 
 def _require(condition, message):
@@ -115,7 +117,7 @@ class PhysicalBeamNodePort:
 @dataclass(frozen=True)
 class DistributingFootprintDefinition:
     footprint_id: str
-    host_element_ids: tuple[int, int]
+    host_element_ids: tuple[int, ...]
     beam_node_id: int
     bounds_xy_m: tuple[float, float, float, float]  # xmin,xmax,ymin,ymax
 
@@ -123,7 +125,8 @@ class DistributingFootprintDefinition:
         _identifier(self.footprint_id)
         _node_id(self.beam_node_id)
         ids = tuple(self.host_element_ids)
-        _require(len(ids) == 2 and len(set(ids)) == 2, "exactly two distinct host element IDs required")
+        _require(2 <= len(ids) <= MAX_HOSTS and len(set(ids)) == len(ids),
+                 "two to 128 distinct host element IDs required")
         for value in ids:
             _node_id(value)
         bounds = _numbers(self.bounds_xy_m, 4)
@@ -153,7 +156,9 @@ class CompiledDistributingFootprint:
     def __post_init__(self):
         _require(type(self.definition) is DistributingFootprintDefinition, "typed compiled definition required")
         node_ids, host_ids = tuple(self.shell_node_ids), tuple(self.host_element_ids)
-        _require(len(node_ids) == len(set(node_ids)) == 6 and len(host_ids) == len(set(host_ids)) == 2,
+        count = len(node_ids)
+        _require(6 <= count <= MAX_SHELL_NODES and count == len(set(node_ids)) and
+                 2 <= len(host_ids) <= MAX_HOSTS and len(host_ids) == len(set(host_ids)),
                  "complete distinct compiled model IDs required")
         for value in node_ids+host_ids+(self.beam_node_id,):
             _node_id(value)
@@ -161,9 +166,9 @@ class CompiledDistributingFootprint:
                  self.beam_node_id == self.definition.beam_node_id, "compiled model binding differs")
         object.__setattr__(self, "shell_node_ids", node_ids)
         object.__setattr__(self, "host_element_ids", host_ids)
-        shapes = dict(shell_positions_m=(6, 3), beam_position_m=(3,), centroid_m=(3,),
-                      eccentricity_m=(3,), area_mean=(6,), planar_gradients=(2, 6),
-                      shell_trace=(6, 36), constraint_matrix=(6, 42))
+        shapes = dict(shell_positions_m=(count, 3), beam_position_m=(3,), centroid_m=(3,),
+                      eccentricity_m=(3,), area_mean=(count,), planar_gradients=(2, count),
+                      shell_trace=(6, 6*count), constraint_matrix=(6, 6*(count+1)))
         for name, shape in shapes.items():
             array = np.asarray(getattr(self, name))
             _require(array.shape == shape and array.dtype.kind in "fiu" and np.isfinite(array).all(),
@@ -172,10 +177,10 @@ class CompiledDistributingFootprint:
             _require(np.isfinite(owned).all(), "representable compiled local map required")
             object.__setattr__(self, name, owned)
         slots = np.asarray(self.gather_slots)
-        _require(slots.shape == (42,) and slots.dtype.kind in "iu" and
+        _require(slots.shape == (6*(count+1),) and slots.dtype.kind in "iu" and
                  np.all(slots >= 0) and np.all(slots <= np.iinfo(np.int64).max) and
-                 len(set(slots.tolist())) == 42, "distinct explicit compiled physical gather required")
-        for block in slots.reshape(7, 6):
+                 len(set(slots.tolist())) == 6*(count+1), "distinct explicit compiled physical gather required")
+        for block in slots.reshape(count+1, 6):
             _offset(int(block[0]))
             _require(np.array_equal(block, int(block[0])+np.arange(6)), "physical six-coordinate gather block required")
         object.__setattr__(self, "gather_slots", _readonly(slots, np.int64))
@@ -189,11 +194,11 @@ class CompiledDistributingFootprint:
         array = np.asarray(physical_coordinates)
         _require(array.ndim == 1 and array.dtype.kind in "fiu" and
                  len(array) > int(self.gather_slots.max()), "complete physical nodal gather input required")
-        return _readonly(_vector(array[self.gather_slots], 42))
+        return _readonly(_vector(array[self.gather_slots], len(self.gather_slots)))
 
     def gap(self, local_coordinates):
         with np.errstate(over="ignore", invalid="ignore"):
-            result = self.constraint_matrix @ _vector(local_coordinates, 42)
+            result = self.constraint_matrix @ _vector(local_coordinates, len(self.gather_slots))
         _require(np.isfinite(result).all(), "representable local gap required")
         return _readonly(result)
 
@@ -235,8 +240,32 @@ def _one_dimensional(left, right, low, high):
     return (first, second), (-interval/width, interval/width)
 
 
+def _rectangular_hosts(geometry):
+    """Bounded exact tensor-grid coverage and actual shared-edge identities."""
+    xs = sorted({value for _, bounds, _ in geometry for value in bounds[:2]})
+    ys = sorted({value for _, bounds, _ in geometry for value in bounds[2:]})
+    xi, yi = {v: i for i, v in enumerate(xs)}, {v: i for i, v in enumerate(ys)}
+    tiles = {}
+    for ids, (x0, x1, y0, y1), _ in geometry:
+        _require(xi[x1] == xi[x0]+1 and yi[y1] == yi[y0]+1,
+                 "conforming Cartesian host edges required; coarse/fine traces unsupported")
+        key = xi[x0], yi[y0]
+        _require(key not in tiles, "overlapping Cartesian host coverage")
+        tiles[key] = ids
+    _require(len(tiles) == (len(xs)-1)*(len(ys)-1),
+             "complete rectangular Cartesian host grid required; holes/disconnected hosts unsupported")
+    for (ix, iy), ids in tiles.items():
+        right, top = tiles.get((ix+1, iy)), tiles.get((ix, iy+1))
+        if right is not None:
+            _require({ids[1], ids[2]} == {right[0], right[3]},
+                     "conforming shared host edge-node identities required")
+        if top is not None:
+            _require({ids[2], ids[3]} == {top[0], top[1]},
+                     "conforming shared host edge-node identities required")
+
+
 def compile_footprint(definition, nodes, hosts, beam_port):
-    """Compile only two adjacent Cartesian Q4 hosts and one physical beam node.
+    """Compile 2..128 conforming rectangular Q4 hosts and one physical beam node.
 
     Integrals use exact rational arithmetic on stored reference coordinates,
     then one binary64 conversion. This is a derivative/work contract for the
@@ -245,37 +274,36 @@ def compile_footprint(definition, nodes, hosts, beam_port):
     _require(type(definition) is DistributingFootprintDefinition and type(beam_port) is PhysicalBeamNodePort,
              "typed distributing definition and physical beam nodal port required")
     nodes, hosts = tuple(nodes), tuple(hosts)
-    _require(len(nodes) == 6 and all(type(n) is FlatQ4Node for n in nodes), "exact six-node local shell inventory required")
-    _require(len(hosts) == 2 and all(type(h) is CartesianQ4Host for h in hosts), "exact two-host local inventory required")
-    _require(len({n.node_id for n in nodes}) == 6 and len({n.q_offset for n in nodes}) == 6,
+    count = len(nodes)
+    _require(6 <= count <= MAX_SHELL_NODES and all(type(n) is FlatQ4Node for n in nodes),
+             "bounded complete local shell inventory required (6..256 nodes)")
+    _require(len(hosts) == len(definition.host_element_ids) and
+             all(type(h) is CartesianQ4Host for h in hosts), "exact declared host local inventory required")
+    _require(len({n.node_id for n in nodes}) == count and len({n.q_offset for n in nodes}) == count,
              "duplicate/overlapping shell node mapping")
-    _require(len({n.coordinates_m for n in nodes}) == 6, "ambiguous coincident shell node identities")
+    _require(len({n.coordinates_m for n in nodes}) == count, "ambiguous coincident shell node identities")
     _require({h.element_id for h in hosts} == set(definition.host_element_ids), "declared host element mapping differs")
-    _require(len({h.element_id for h in hosts}) == 2, "duplicate host element identity")
+    _require(len({h.element_id for h in hosts}) == len(hosts), "duplicate host element identity")
     _require(beam_port.node_id == definition.beam_node_id and
              beam_port.q_offset not in {n.q_offset for n in nodes}, "physical beam node/coordinate mapping differs or overlaps")
     by_id = {n.node_id: n for n in nodes}
-    _require(set(by_id) == set(hosts[0].node_ids) | set(hosts[1].node_ids), "complete and only selected host vertices required")
+    _require(set(by_id) == set().union(*(set(h.node_ids) for h in hosts)),
+             "complete and only selected host vertices required")
     geometry = [_host(h, by_id) for h in hosts]
-    _require(geometry[0][2] == geometry[1][2], "common flat XY shell reference plane required")
-    shared = set(hosts[0].node_ids) & set(hosts[1].node_ids)
-    _require(len(shared) == 2, "two Q4 hosts must share one complete edge")
-    a, b = geometry[0][1], geometry[1][1]
-    horizontal = (a[2:] == b[2:] and (a[1] == b[0] or b[1] == a[0]))
-    vertical = (a[:2] == b[:2] and (a[3] == b[2] or b[3] == a[2]))
-    _require(horizontal or vertical, "adjacent nonoverlapping Cartesian hosts required")
+    _require(all(g[2] == geometry[0][2] for g in geometry), "common flat XY shell reference plane required")
+    _rectangular_hosts(geometry)
     bounds = tuple(map(F, definition.bounds_xy_m))
     area = (bounds[1]-bounds[0])*(bounds[3]-bounds[2])
     ordered_nodes = tuple(sorted(nodes, key=lambda n: n.q_offset))
     index = {n.node_id: i for i, n in enumerate(ordered_nodes)}
-    mean = [F(0)]*6
-    gradients = [[F(0)]*6 for _ in range(2)]
+    mean = [F(0)]*count
+    gradients = [[F(0)]*count for _ in range(2)]
     covered = F(0)
     for ids, host_bounds, _ in geometry:
         x0, x1, y0, y1 = host_bounds
         left, right = max(x0, bounds[0]), min(x1, bounds[1])
         low, high = max(y0, bounds[2]), min(y1, bounds[3])
-        _require(right > left and high > low, "footprint must cross both hosts with positive area")
+        _require(right > left and high > low, "footprint must cross every selected host with positive area")
         ix, dx = _one_dimensional(left, right, x0, x1)
         iy, dy = _one_dimensional(low, high, y0, y1)
         covered += (right-left)*(high-low)
@@ -289,7 +317,7 @@ def compile_footprint(definition, nodes, hosts, beam_port):
     positions = [n.coordinates_m for n in ordered_nodes]
     for axis in range(2):
         for coordinate in range(2):
-            _require(sum(gradients[axis][i]*F(positions[i][coordinate]) for i in range(6)) == int(axis == coordinate),
+            _require(sum(gradients[axis][i]*F(positions[i][coordinate]) for i in range(count)) == int(axis == coordinate),
                      "exact Cartesian linear-field reproduction failure")
     centroid = ((bounds[0]+bounds[1])/2, (bounds[2]+bounds[3])/2, geometry[0][2])
     eccentric = tuple(F(value)-center for value, center in zip(beam_port.coordinates_m, centroid))
@@ -303,7 +331,7 @@ def compile_footprint(definition, nodes, hosts, beam_port):
     _require(all(value == 0 or converted != 0 for value, converted in zip(mean, m)) and
              all(value == 0 or converted != 0 for row, converted_row in zip(gradients, g) for value, converted in zip(row, converted_row)),
              "reference weight/gradient underflow is unsupported")
-    trace = np.zeros((6, 36))
+    trace = np.zeros((6, 6*count))
     for axis in range(3):
         trace[axis, axis::6] = m
     trace[3, 3::6], trace[4, 4::6] = m, m

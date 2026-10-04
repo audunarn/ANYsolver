@@ -268,3 +268,81 @@ isolated finer-solid/axial campaign or infer formulation failure from this coars
 difference. Shell/solid kinematics, clamp layers and reduced integration remain
 possible contributors. Mandatory external/G0/G2/complete-release gates stay open;
 formalF03 authority remains unconsumed.
+
+## Multi-host integration and matched in-plane comparison — 4 October 2026
+
+The same reference-linear compiler admits2–128 conforming Cartesian Q4
+hosts/up to256 shell nodes. Exact rectangular tile coverage and shared-edge node
+identity reject holes, overlap, hanging/nonconforming interfaces and degeneracy.
+One exact rational area integral and normalization assemble a6×6(N+1) local
+constraint; retained beam columns stay absent. Sparse scattering, both recovery
+paths and lifecycle reuse the existing owner. No equations, public API, law ID,
+package version, legacy defaults or checkpoint schema changed. Literal old
+compiled IDda9c58fe046a51ece66b20ec902f911ed173e8ea56a4c8c50e251e79df667d21
+and nine historical array hashes preserve the two-host contract.
+
+Source130PASS; installed130PASS; unchanged installed ANYfem consumer42PASS;
+installed public solver example completes. Fixed-pad fixture14PASS/v1 and
+14PASS/v2 after the helper's refined-scope metadata correction. Multi-host
+owner tests cover sparse assembly/work/recovery, fresh restore/resume/factor
+reuse, rejection before state mutation and bounded ownership/geometry negatives.
+Supporting OpenAI source review found no correctness blocker; different-family
+scientific acceptance remains unmet. Final helper prose/refined-scope metadata
+changes do not alter product bytes or default10x4 deck/metadata.
+
+New solverwheelb7ae7ca03b92e98463a148c1ba30810a263d20bc68a81c32665d5f17c0526d9a
+binds actual installed imports. Reused ANYfemwheel3b8e563dd5e8cf0ecfe42f4cc9f5a8f34d46780d50dd1b0f217c510259e5cc8f
+has unchanged code; it was not rebuilt. Windows/Python3.14, effective pools1,
+JIT-off,600s/2GiB limits, serial jobs. No development-speed or optimization gain
+is claimed from these checks.
+
+### Same physical pad, geometry, action and supports
+
+Paired shell10x4/20x8/40x16 and solid80/320/1280 C3D20R elements retain the
+1×.2m panel,t.02m,E210GPa,nu.3, clampedx0, pad(.8,1,-.05,0), port(.9,-.025,.05).
+The single pad spans2/8/32 actual native hosts and always six rows. Solid donor
+geometry supplies no rigid patch/beam or equations. Native GE stub actual strain,
+resultants, coordinates and work are checked; it contributes no physical
+compliance within the controls. Mx1Nm/Fy10N actions use the same independently
+derived midsurface-mean/top-bottom-director/curl work. Neither map is a pointwise
+welded face or full3D material-polar director; symmetric3D shear/warping limits
+remain explicit in earlier map controls.
+
+| Mesh | Native Mx work J | Solid Mx work J | Difference | Native Fy work J | Solid Fy work J | Difference |
+|---|---:|---:|---:|---:|---:|---:|
+|10x4|1.947943907222e-5|2.034388958333e-5|−4.2492%|1.353540408816e-5|1.402223945833e-5|−3.4719%|
+|20x8|1.994608257117e-5|2.040162677083e-5|−2.2329%|1.386514743216e-5|1.404635697917e-5|−1.2901%|
+|40x16|2.025343935671e-5|2.041954955729e-5|−0.8135%|1.400311251612e-5|1.405433680078e-5|−0.3645%|
+
+All six pinned CalculiX2.23 runs complete and report oneCPU. Largest external
+system22479physical rows/1280elements remains below the100k ceiling; sampled
+peak135389184B. Native whole-process3.139/7.533/24.916s, sampled peaks
+161034240/182202368/272973824B, onefactorization per level for both loads.
+Effective pools1; finite equilibrium ratios<=2.88e-12 and constraints<=1.70e-21.
+External root errors lie inside six-component decimal-print bounds; these are
+output-rounding controls, not a1e-8 numerical certification. No exact peak claim.
+The unchanged coarse outputs reproduce earlier pairings; raw earlier failures
+and evidence are retained without reclassification.
+
+### Decision and limits
+
+Retain the multi-host reference-only candidate. The paired differences decrease;
+this batch gives no evidence of a persistent transfer-law discrepancy. It does
+not uniquely allocate errors to shell, solid, clamp or connection. Fine agreement
+below1% is not converged1% acceptance: the last native Mx work increment is1.518%
+of the fine value (Fy0.985%), while solid increments are0.0878%/0.0568%.
+Solid thickness remains two layers; in-plane stability does not establish
+through-thickness or reduced-integration/kinematic convergence. No new formal
+multiplier assessment, line-law selection, finite footprint admission or aggregate
+F04/G0/G2 acceptance follows. FormalF03 remains unconsumed.
+
+Next decision: assess which remaining discretization/kinematic assumption affects
+the required physical claim and what bounded discriminator changes acceptance.
+No automatic finer solid/axial campaign is queued. Preserve the distinction from
+historical rigid-pad/Q6/F5 and BL5 line evidence; neither law is substituted.
+
+Raw `.qualification/b3-ge-e4-pl/r8-distributing-multihost-dev-20261004-v1` binds
+source hashes, old baseline, installed imports/wheel hash, commands, complete
+tests/example, native results, six decks/DAT/STA/FRD/full logs, actual runtime
+settings, parsed work/reactions and supporting review. Dist/site remain local;
+wheel SHA and source/artifact checks identify the tested artifact.

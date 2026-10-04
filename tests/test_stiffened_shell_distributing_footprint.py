@@ -1,5 +1,6 @@
-"""Private two-Q4 distributing derivative/work controls; no solver campaign."""
+"""Bounded Q4 distributing derivative/work controls; no solver campaign."""
 from dataclasses import replace
+from hashlib import sha256
 
 import numpy as np
 import pytest
@@ -21,6 +22,33 @@ def fixture():
 
 def compiled():
     return footprint.compile_footprint(*fixture())
+
+
+def test_literal_historical_two_host_identity_and_array_bytes():
+    # Installed historical baseline frozen before this extension. No runtime
+    # evidence-file dependency and no regenerated expected production values.
+    c = compiled()
+    assert c.identity == "da9c58fe046a51ece66b20ec902f911ed173e8ea56a4c8c50e251e79df667d21"
+    assert c.area_m2 == .5
+    expected = {
+        "shell_positions_m": ((6, 3), "float64", "c7bfb7ab6b2fb6ba422b8743cbab2746e2dd473b775ef75ae678deac6c8b21c7"),
+        "beam_position_m": ((3,), "float64", "5ce5d036867014a3dcf577c6d6f279252df230030be20026f1c0a9f6ea86d42a"),
+        "centroid_m": ((3,), "float64", "0de1d739840a889ceab625181a5cd6096c41a8a5b6be42544b96ea2d4a623871"),
+        "eccentricity_m": ((3,), "float64", "7726e2faaec98a16e62bf1f2be38b012398ed248ec4cd07e274ecd2118402d29"),
+        "area_mean": ((6,), "float64", "f4b60cc7708dbd309eafb7a4a0aee15db62ca3fce90c704bdb5d63fb7970cb34"),
+        "planar_gradients": ((2, 6), "float64", "3ca45774061dcbe4ff10aaeb656ef3b3acca52d5704330db6199bbd3275f0b08"),
+        "shell_trace": ((6, 36), "float64", "5bbd934624632d08a5d70d643a039ac5b9e4ffa14b319c5b5909f59a138f951d"),
+        "constraint_matrix": ((6, 42), "float64", "2348cdfad3135c1abd77ea045a007704d31ec7504e77a73d596d4311688071da"),
+        "gather_slots": ((42,), "int64", "9eb9d21600526db7daaff8e22251b571faa3eb4c2515d5f45afba0e9fe77c14d"),
+    }
+    for name, (shape, dtype, digest) in expected.items():
+        array = getattr(c, name)
+        assert array.shape == shape and str(array.dtype) == dtype
+        assert sha256(array.tobytes()).hexdigest() == digest, name
+    np.testing.assert_array_equal(c.area_mean, (.0625, .375, .0625, .0625, .375, .0625))
+    np.testing.assert_array_equal(c.planar_gradients,
+                                  ((-.25, 0., .25, -.25, 0., .25),
+                                   (-.125, -.75, -.125, .125, .75, .125)))
 
 
 def test_two_actual_hosts_integrate_frozen_partition_and_linear_fields():
@@ -251,3 +279,126 @@ def test_finite_inputs_with_unrepresentable_gap_or_work_results_reject():
                                             replace(beam, coordinates_m=(4., .3, .5)))
     with pytest.raises(ValueError, match="representable local work"):
         eccentric.transpose_work([0., maximum, 0., 0., 0., 0.])
+
+
+def _rectangular_fixture(nx, ny, bounds=(.125, 1.875, .0625, .9375)):
+    positions = tuple((2*i/nx, j/ny, 0.) for j in range(ny+1) for i in range(nx+1))
+    nodes = tuple(footprint.FlatQ4Node(i+1, point, 6*i) for i, point in enumerate(positions))
+    hosts = tuple(footprint.CartesianQ4Host(21+j*nx+i,
+        (j*(nx+1)+i+1, j*(nx+1)+i+2, (j+1)*(nx+1)+i+2, (j+1)*(nx+1)+i+1))
+        for j in range(ny) for i in range(nx))
+    beam = footprint.PhysicalBeamNodePort(1001, (1.3, .3, .5), 6*len(nodes), footprint.IDENTITY_AXES)
+    definition = footprint.DistributingFootprintDefinition("fixed-pad", tuple(h.element_id for h in hosts),
+                                                          beam.node_id, bounds)
+    return definition, nodes, hosts, beam
+
+
+@pytest.fixture(scope="module", params=((2, 1), (4, 2), (8, 4)), ids=("2-host", "8-host", "32-host"))
+def refined_pad(request):
+    return footprint.compile_footprint(*_rectangular_fixture(*request.param))
+
+
+@pytest.mark.parametrize("bilinear", (False, True))
+def test_one_fixed_physical_pad_reproduces_affine_and_bilinear_trace(refined_pad, bilinear):
+    c = refined_pad
+    x, y = c.shell_positions_m[:, :2].T
+    b = int(bilinear)
+    shell = np.column_stack((.4+.2*x-.3*y+b*.7*x*y,
+                             -.2+.9*x+.1*y-b*.4*x*y,
+                             1.-.5*x+.3*y+b*.2*x*y,
+                             .7+.5*x-.2*y+b*.3*x*y,
+                             -.3+.4*x+.6*y-b*.2*x*y,
+                             np.full(len(x), 99.)))
+    # Independent exact rectangular polynomial integrals: each x*y mean is
+    # xbar*ybar. Physical directors remain independent of transverse slope.
+    cx, cy = 1., .5
+    expected = np.array((.4+.2*cx-.3*cy+b*.7*cx*cy,
+                         -.2+.9*cx+.1*cy-b*.4*cx*cy,
+                         1.-.5*cx+.3*cy+b*.2*cx*cy,
+                         .7+.5*cx-.2*cy+b*.3*cx*cy,
+                         -.3+.4*cx+.6*cy-b*.2*cx*cy,
+                         .6-b*(.2*cy+.35*cx)))
+    np.testing.assert_allclose(c.shell_trace@shell.ravel(), expected, atol=2e-15, rtol=0)
+    np.testing.assert_array_equal(c.centroid_m, (cx, cy, 0.))
+    assert c.area_m2 == 1.75*.875
+    port = np.r_[expected[:3]+np.cross(expected[3:], c.eccentricity_m), expected[3:]]
+    np.testing.assert_allclose(c.gap(np.r_[shell.ravel(), port]), np.zeros(6), atol=2e-15, rtol=0)
+    np.testing.assert_array_equal(c.shell_trace[:, 5::6], np.zeros((6, len(x))))
+
+
+@pytest.mark.parametrize("axis", range(6))
+def test_refined_fixed_pad_preserves_six_rigid_fields(refined_pad, axis):
+    c = refined_pad
+    t, omega = np.zeros(3), np.zeros(3)
+    (t if axis < 3 else omega)[axis % 3] = 1.
+    shell = np.column_stack((t+np.cross(omega, c.shell_positions_m),
+                             np.tile(omega, (len(c.shell_node_ids), 1))))
+    beam = np.r_[t+np.cross(omega, c.beam_position_m), omega]
+    np.testing.assert_allclose(c.gap(np.r_[shell.ravel(), beam]), np.zeros(6), atol=2e-15, rtol=0)
+
+
+@pytest.mark.parametrize("axis", range(6))
+def test_refined_fixed_pad_preserves_all_action_work_and_wrenches(refined_pad, axis):
+    c = refined_pad
+    multiplier = np.eye(6)[axis]
+    local = c.transpose_work(multiplier).reshape(-1, 6)
+    xyz = np.vstack((c.shell_positions_m, c.beam_position_m))
+    np.testing.assert_allclose(local[:, :3].sum(axis=0), np.zeros(3), atol=2e-14, rtol=0)
+    np.testing.assert_allclose((np.cross(xyz, local[:, :3])+local[:, 3:]).sum(axis=0),
+                               np.zeros(3), atol=2e-14, rtol=0)
+    np.testing.assert_array_equal(local[-1], multiplier)
+    q = np.sin(np.arange(len(c.gather_slots))+.2)
+    assert q@local.ravel() == pytest.approx(multiplier@c.gap(q), abs=2e-14)
+    np.testing.assert_array_equal(c.gather(q), q)
+
+
+def _selected_inventory(definition, nodes, hosts, beam):
+    selected = set().union(*(set(h.node_ids) for h in hosts))
+    return (replace(definition, host_element_ids=tuple(h.element_id for h in hosts)),
+            tuple(n for n in nodes if n.node_id in selected), tuple(hosts), beam)
+
+
+@pytest.mark.parametrize("defect", ("hole", "overlap", "disconnected", "coarse_fine", "coincident", "plane", "unused"))
+def test_multi_host_geometry_and_positive_selected_coverage_fail_closed(defect):
+    nx, ny = (3, 3) if defect == "hole" else (3, 1) if defect == "disconnected" else (2, 2)
+    inputs = _rectangular_fixture(nx, ny, (0., 2., 0., 1.))
+    definition, nodes, hosts, beam = inputs
+    if defect == "hole":
+        hosts = hosts[:4]+hosts[5:]
+    elif defect == "disconnected":
+        hosts = (hosts[0], hosts[2])
+    elif defect == "overlap":
+        hosts += (replace(hosts[0], element_id=99),)
+    elif defect == "coarse_fine":
+        hosts = (footprint.CartesianQ4Host(99, (1, 2, 8, 7)), hosts[1], hosts[3])
+    elif defect in ("coincident", "plane"):
+        renamed = {n: n+200 for n in hosts[0].node_ids}
+        extra = tuple(replace(n, node_id=renamed[n.node_id], q_offset=6*(len(nodes)+i))
+                      for i, n in enumerate(n for n in nodes if n.node_id in renamed))
+        if defect == "plane":
+            extra = tuple(replace(n, coordinates_m=(n.coordinates_m[0], n.coordinates_m[1], .1)) for n in extra)
+        nodes += extra
+        hosts = (replace(hosts[0], node_ids=tuple(renamed[n] for n in hosts[0].node_ids)),)+hosts[1:]
+        beam = replace(beam, q_offset=6*len(nodes))
+    else:
+        definition = replace(definition, bounds_xy_m=(1., 2., 0., 1.))
+    message = {"hole": "complete rectangular", "disconnected": "complete rectangular",
+               "overlap": "overlapping Cartesian", "coarse_fine": "coarse/fine",
+               "coincident": "coincident", "plane": "common flat XY", "unused": "every selected host"}[defect]
+    with pytest.raises(ValueError, match=message):
+        footprint.compile_footprint(*_selected_inventory(definition, nodes, hosts, beam))
+
+
+def test_bounded_host_and_unique_node_counts():
+    for ids in ((21,), tuple(range(1, 130))):
+        with pytest.raises(ValueError, match="two to 128 distinct"):
+            footprint.DistributingFootprintDefinition("too-many", ids, 1001, (0., 2., 0., 1.))
+    with pytest.raises(ValueError, match="256"):
+        footprint.compile_footprint(*_rectangular_fixture(128, 1, (0., 2., 0., 1.)))
+    c = footprint.compile_footprint(*_rectangular_fixture(16, 8, (0., 2., 0., 1.)))
+    assert len(c.host_element_ids) == 128 and len(c.shell_node_ids) == 153
+    assert c.constraint_matrix.shape == (6, 6*154)
+    assert c.area_mean.sum() == 1.
+    for array in (c.constraint_matrix, c.gather_slots, c.shell_trace):
+        with pytest.raises(ValueError):
+            array.setflags(write=True)

@@ -170,3 +170,4 @@ tests/test_r8_e02_distributing_solid_area.py -text
 tests/test_r8_e02_distributing_feasibility.py -text
 # Immutable external fixed-width outputs and failed logs retain their whitespace.
 .qualification/b3-ge-e4-pl/r8-e02-distributing-area-feasibility-dev-20261004-v1/** -text -whitespace
+.qualification/b3-ge-e4-pl/r8-distributing-multihost-dev-20261004-v1/** -text -whitespace

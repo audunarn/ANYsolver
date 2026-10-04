@@ -2149,3 +2149,19 @@ focused sourceconsumer+installedsolver controlPASS). Full ANYfem construction/
 persistence, finite physical law, mass/spectra/physical references/scale and
 different-family/aggregateF04/G0/G2 acceptance remain OPEN.
 [Source/artifact bindings, evidence and limits](development/r8-distributing-reference-linear-20261004/results.md).
+
+F04 multi-host reference-linear distributing extension, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+One unchanged area-mean/director/curl law and six rows span2–128 conforming
+Cartesian Q4 hosts/up to256 shell nodes. Exact historical two-host compiled ID
+and nine array-byte controls pass. Dynamic sparse binding/recovery, eight-host
+public solve/checkpoint/restore/resume, ownership/coverage/degeneracy/cap negatives
+pass:130source/130installed; unchanged ANYfem consumer42installed and public
+solver example pass on newwheelb7ae7ca03b92e98463a148c1ba30810a263d20bc68a81c32665d5f17c0526d9a.
+Paired fixed-pad10x4/20x8/40x16 external CalculiX comparisons execute serially;
+torque work difference4.249→2.233→0.813%, shear3.472→1.290→0.364%.
+Both-model work, eccentric root/interface wrench and unloaded native-stub controls
+remain valid in their scope; printed reaction bounds are not solver-error bounds.
+Last native torque step1.518% and fixed two-layer solid thickness prevent a
+converged1% claim. No fullF04/G0/G2/line-law/finite/material/spectral/platform
+or different-family acceptance. FormalF03 remains unconsumed; no automatic next
+refinement. [Complete slice, raw identities and next decision](development/r8-distributing-reference-linear-20261004/results.md).

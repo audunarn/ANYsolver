@@ -15,7 +15,9 @@ from anysolver.control import CancellationToken, SolveCancelled
 from anysolver._stiffened_shell_ge_checkpoint_binary import MAGIC, CHART_MAGIC, S3_MAGIC, encode
 from anysolver._stiffened_shell_ge_experimental import CHECKPOINT, FINITE_CHECKPOINT
 from anysolver._stiffened_shell_ge_distributing_reference import bind_reference
-from test_stiffened_shell_ge_distributing_reference import _definition, _selection, _load, _solve, _relative
+from test_stiffened_shell_ge_distributing_reference import (
+    _definition, _selection, _load, _solve, _relative, _multi_definition, _multi_selection,
+)
 
 
 def _actions():
@@ -262,3 +264,56 @@ def test_physical_fibre_admission_is_explicitly_excluded(prepared):
     definition = replace(prepared["definition"], beams=fibre_definition().beams)
     with pytest.raises(ValueError, match="physical-fibre"):
         api.create_analysis(definition=definition)
+
+
+@pytest.fixture(scope="module")
+def multi_public():
+    definition = replace(_multi_definition(), points=(), distributing_footprints=(_multi_selection(),))
+    owner = api.create_analysis(definition=definition)
+    try:
+        actions = (api.NodalAction("beam", 103, (0., 20., -10., 1., 0., 3.)),)
+        first = owner.solve_linear(actions)
+        yield definition, owner, actions, first
+    finally:
+        owner.close()
+
+
+def test_public_multi_host_sparse_solve_dynamic_recovery_and_checkpoint_resume(multi_public):
+    definition, owner, actions, first = multi_public
+    compiled, start = owner._distributing_bindings[0]
+    assert start == 0 and owner._C.shape == (6, 168) and sparse.isspmatrix_csr(owner._C)
+    assert owner._C.has_canonical_format and owner.preflight()["reference_linear_factorizations"] == 1
+    assert owner._C[:, owner._shell_count+6*len(owner._beam_ids):].nnz == 0
+    record, = owner.recover(selection=api.GEReferenceDistributingFootprintSelection(("eight-host-area",)))
+    assert record.shell_node_actions.shape == (15, 6) and len(record.host_element_ids) == 8
+    assert record.configuration == "reference_linear" and not record.production_qualified
+    np.testing.assert_array_equal(record.beam_action, -first.multipliers)
+    np.testing.assert_allclose(record.shell_action[:3], first.multipliers[:3], atol=1e-12, rtol=0)
+    np.testing.assert_allclose(record.shell_action[3:], first.multipliers[3:]+
+                               np.cross(record.eccentricity_m, first.multipliers[:3]), atol=1e-12, rtol=0)
+    virtual = np.sin(np.arange(owner._K.shape[0])+.2)
+    local = compiled.gather(virtual).reshape(-1, 6)
+    work = np.sum(record.shell_node_actions*local[:-1])+record.beam_action@local[-1]
+    assert work == pytest.approx(-first.multipliers@(owner._C@virtual), abs=1e-10)
+    np.testing.assert_array_equal(record.shell_node_actions[:, 5], np.zeros(15))
+    checkpoint = owner.checkpoint()
+    fresh = api.create_analysis(definition=definition)
+    try:
+        assert fresh._identity == owner._identity
+        restored = fresh.restore(checkpoint)
+        assert fresh.checkpoint() == checkpoint
+        np.testing.assert_array_equal(_q(restored), _q(first))
+        restored_record, = fresh.recover(selection=api.GEReferenceDistributingFootprintSelection(("eight-host-area",)))
+        np.testing.assert_array_equal(restored_record.shell_node_actions, record.shell_node_actions)
+        resumed = fresh.solve_linear(actions)
+        assert resumed.generation == restored.generation+1
+        assert fresh.preflight()["reference_linear_factorizations"] == 1
+        np.testing.assert_array_equal(_q(resumed), _q(restored))
+    finally:
+        fresh.close()
+    before = owner.checkpoint()
+    with pytest.raises(ValueError, match="distributing"):
+        owner.solve(actions)
+    with pytest.raises(ValueError, match="distributing"):
+        owner.modes(api.GEReferenceModesRequest())
+    assert owner.checkpoint() == before and owner._finite_driver is None

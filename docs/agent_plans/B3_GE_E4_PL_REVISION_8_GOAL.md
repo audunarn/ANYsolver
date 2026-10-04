@@ -7,14 +7,16 @@ and restart action. The canonical goal and plan now live beside that note in
 `C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001/docs/agent_plans/`.
 Older goal/plan paths forward here instead of carrying stale competing copies.
 
-Reviewed solver product `a2f79a34` and workflow checkpoint `a7754b22`; ANYfem HEAD `6013db0` with the completed
+Reviewed preceding solver checkpoint `adc98d4b` plus the multi-host implementation/evidence slice; ANYfem HEAD `6013db0` with the completed
 reference-distributing consumer product `9b7482b`. Substantial installed GE/B2 implementation, scoped foundation
 passes, measured route improvements and a practical-size reference solve exist.
 Aggregate acceptance is incomplete. The reference-distributing ANYfem workflow
 now passes source/installed checks and its public example; the primary scientific priority is
 matched physical/external evidence. The first common-action CalculiX torque/shear
-pair is executed; the coarse discrepancy remains open, and matched refinement
-needs the same reference-only physical pad compiled over multiple hosts.
+pair and matched three-level, fixed-physical-pad comparison are executed.
+The multi-host law preserves old identities and passes installed integration.
+Torque/shear work differences decrease to0.813%/0.364%; native torque refinement
+and fixed solid thickness prevent a converged physical acceptance claim.
 Do not restart completed implementations or
 the closed certificate campaigns. No numerical job is active.
 
