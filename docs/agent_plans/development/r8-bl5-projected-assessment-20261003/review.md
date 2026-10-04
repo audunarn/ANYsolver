@@ -192,3 +192,23 @@ the completed control. Hypothetical nonfinite serialization is not promised a
 paired JSON record; NPZ/logs and the original exception remain fallback evidence.
 These supporting same-family reviews do not satisfy scientific different-family
 acceptance, physical accuracy, uniform stability or any aggregate gate.
+
+## Same-geometry supplementary reference slice
+
+One worker owns the new fixed-tuple reference caller/tests only; root reviews,
+runs focused controls and two serial independent-body processes, and compares
+physical states/actions with the bound original/child native arrays. Supporting
+non-implementing review found and resolved misleading native-channel metadata
+and comparison admission gaps. Runtime87a76f7 source remains archived; final
+37003c52 changes only labels/docstring, with unchanged executable rows/commands/
+recovery.31 initial/32 final controls and an actual director sign counterexample
+pass. No numerical cases were repeated for this metadata correction.
+
+The final review independently checks18 artifact identities/DLL, actual terminal
+passes, frozen source matching and corrected nonempty inventory/finite predicate
+guards. Work and common-field agreement corroborate the density contrast, but
+regional S4 transfer discrepancy remains. Source/runtime/algebra review is
+supporting same-family evidence; no scientific different-family acceptance,
+kernel positivity, uniform stability, policy selection or mandatory CalculiX
+completion follows. Failed root scope-audit diagnostics are retained separately
+from the successful numerical cases.

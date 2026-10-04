@@ -759,3 +759,68 @@ Product/site/wheel417-module correspondence is unchanged.
 Exact new source, paired arrays, commands, runtime logs and reviews are grouped
 under density-control/ and [raw manifestV11](raw-manifest-v11.json), extending
 V10 without changing earlier raw records or the unconsumed formal authority.
+
+## Same-geometry independent density comparison
+
+The single prospective reference pair is complete; no mesh/channel sweep follows.
+Both supplementary OpenSees3.8 cases use64x16 ASDShellQ4,16 classic beam
+intervals,1122 physical nodes,107 fixed coordinates and sole tipMz10Nm. Geometry,
+sections, offsets, frames and five-channel physical release law match the native
+control. Only complete projected density rows change S4/H4→S2/H8, including all
+original halfcell means/endpoints. Beam/shell body discretizations and retained
+traces remain different; this is not an identical operator or a CalculiX result.
+
+| Observable | Native S4 | Reference S4 | Native S2 | Reference S2 |
+|---|---:|---:|---:|---:|
+| Applied work J |1.74815435183e-5|1.74344933917e-5|1.97750652472e-5|1.97597199670e-5|
+| Regional attachment-root Mz Nm |-.916094|-1.672647|19.488938|19.527717|
+| Integrated beam-side Fy N |-14.957611|-15.077127|-8.632084|-8.512620|
+
+Density coarsening changes work **+13.119675% native/+13.336932% reference**.
+Native/reference work differences are+.269868% and+.077659%; common shell
+translation L2 differences.05535%/.04228%, rotation L2.42724%/.30852%. The
+regional Mz change is+20.4050/+21.2004Nm. Independent bodies corroborate the
+large density-dependent transfer contrast. They do not validate every regional
+quantity: S4 regional Mz differs by.75655Nm,7.5655% of applied10Nm, and its
+near-zero response must not be normalized to claim converged accuracy.
+
+Decision: retain the declared candidate for development, but withhold space/
+policy/engineering acceptance. Density sensitivity is independently supported;
+the evidence does not support attributing the joint refinement trend solely to
+native beam discretization or an assembly implementation defect. This bounded
+physical ticket is closed. No automatic finer shell/beam, channel, inverse or
+precision variants. The exact8:1 kernel enclosure/native-beta and regional/
+converged physical accuracy remain separate open obligations. Focus the next
+mechanics review on those obstructions, while ready independent milestones
+continue under Revision8. M2/G0/F03 stay OPEN and formal authority UNCONSUMED.
+
+All physical/virtual-work/inventory/objectivity/actual-update gates pass with
+unchanged1e-8/1e-9/1e-6 budgets. Largest physical discrepancy1.05383e-10. The
+exact same DLL25ba42e1 runs under verified Python3.12, requested pools1 and
+actual one-processor affinity; supervisor numerical/unresolved max1. Complete
+case times.9153/.9073s and sampled131.53/139.97MB fit600s/2GiB. These observations
+do not independently qualify internal OpenSees pools or establish a speedup.
+
+Root ran31 initial and32 repaired source controls. Review found the permutation
+label incorrectly implied native director-channel identification: external rx/ry
+and native director ex/ey need a permutation/sign change. Corrected metadata
+now explicitly labels external channels; physical rows, elimination, commands
+and recovery are unchanged. An exact AST executable-prefix/return-data comparison
+and new sign counterexample support reuse of both original numerical cases.
+Raw original metadata/source remain intact; final source37003c52 is not claimed
+as their runtime. Initial root audit refusals on a changed docstring and a later
+producer revision are retained; the final check binds the actual archived
+native producer92acf885. That source checks native E/nu/thickness/sections,
+which must not be invented as absent metadata fields.
+
+Read-only comparison additionally pins its field helper before import, validates
+complete nonempty boolean inventories against actual raw commands, and checks
+all15 finite physical measures and terminal successful supervisors. Independent
+non-implementing supporting review resolved metadata/admission findings, checked
+18 artifact hashes and actual DLL, and found no blocker for this restricted
+conclusion. Different-family scientific acceptance, mandatory external cases,
+uniform stability and complete programme gates remain unmet.
+
+[Immutable57-file reference extension](raw-manifest-v12.json),8332440bytes,
+SHA2955b6d9e8cdc5484c1703c48317a60f059f698e83a0048b05995385b4a56a55.
+All earlier records, criteria and failed/HOLD evidence remain unchanged.

@@ -2005,3 +2005,15 @@ accuracy or positivity. Supporting independent runtime review has no blocker;
 different-family/mandatory references, mixed/native-beta, accuracy/convergence
 and M2/G0/F03 remain OPEN. Formal authority UNCONSUMED; no product/default change.
 [Complete results, limitations and manifest](development/r8-bl5-projected-assessment-20261003/results.md).
+
+**4 October independent fixed-density contrast — IMPLEMENTED_NOT_QUALIFIED.**
+Two supplementary same-geometry OpenSees ASDShellQ4/classic-beam Mz cases pass
+unchanged physical gates (max1.054e-10); density contrast13.336932% corroborates
+native13.119675%. Matched work differences+.269868%/+.077659%, but S4 regional
+attachment Mz differs.75655Nm. Close this bounded physical discriminator without
+policy/accuracy/stability acceptance or automatic refinement. Misleading native-
+row metadata corrected; exact original runtime/source retained, physical rows/
+commands/recovery unchanged,31initial/32final source controls pass. Supporting
+independent review has no restricted-comparison blocker. Native8:1 kernel/beta,
+convergence/regional accuracy, mandatory CalculiX/different-family and M2/G0/F03
+remain OPEN; formal authority UNCONSUMED. [Evidence](development/r8-bl5-projected-assessment-20261003/results.md).
