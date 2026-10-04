@@ -82,6 +82,12 @@ preserving the old reference format. Physical torque convergence and aggregate
 acceptance remain open; use saved evidence for the next bounded decision. See the active note for
 exact source/artifact applicability, limitations and preserved authorities.
 
+Completed current discriminator: reference thickness sensitivity0.063354%Mx/
+0.031099%Fy is too small to explain native torque movement. Stop thickness
+refinement for this decision. Next use ONE unchanged-geometry unitMy comparison
+to test missing moment fidelity and reciprocal roll/pitch coupling; it cannot
+alone establish Mx convergence. All mandatory rows and authorities remain.
+
 The near-term path is now:
 1. COMPLETE: reference-linear distributing consumer, 42 source/42 installed
    checks and installed public example using the unchanged solver wheel.

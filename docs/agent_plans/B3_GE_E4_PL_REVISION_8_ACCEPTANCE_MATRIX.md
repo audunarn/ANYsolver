@@ -2210,3 +2210,13 @@ example PASS. Old reference formats unchanged; malformed/unsupported requests
 fail closed. Different-family/physical/full-material/full-topology/platform/
 scale/release and aggregateF04/G0/G2/G6 remain OPEN. FormalF03 UNCONSUMED.
 [Scope and exact artifact evidence](development/r8-distributing-reference-linear-20261004/results.md).
+
+F04 reference-thickness diagnostic, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+Fixed40x16/nz4 Mx/Fy execute and parse; reference work movements0.063354%/
+0.031099%, native differences0.876285%/0.395449%. Saved centroid-force
+decomposition and six-pose decimal bounds retained. Input-format failure and
+test-fixture failures preserved/repaired without changing old decks or criteria.
+Stop thickness refinement for this decision; native torque adequacy and missing
+moment directions remain open. Two thickness levels/sub1% differences do not
+establish convergence or close any aggregate row. FormalF03 UNCONSUMED.
+[Exact diagnostic and decision](development/r8-distributing-reference-linear-20261004/results.md).

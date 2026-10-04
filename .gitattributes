@@ -184,3 +184,6 @@ tests/test_stiffened_shell_ge_distributing_finite_public.py -text
 examples/stiffened_shell_ge_distributing_finite.py -text
 docs/agent_plans/development/r8-distributing-reference-linear-20261004/active-before-public-finite-owner-20261004.md -text
 .qualification/b3-ge-e4-pl/r8-distributing-finite-owner-dev-20261004-v1/** -text -whitespace
+scripts/r8_e02_distributing_thickness.py -text
+tests/test_r8_e02_distributing_thickness.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-thickness-dev-20261004-v1/** -text -whitespace

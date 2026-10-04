@@ -165,6 +165,14 @@ Decisions resolving the present queue:
   the saved evidence before selecting a new discriminating run. Keep later
   material/controller/spectral obligations visible; no automatic refinement
   or optional breadth follows this completed implementation slice.
+  Completed orthogonal thickness check: fixed40x16/nz4 changes solid Mx/Fy
+  work0.063354%/0.031099%; it does not explain native torque movement1.518%.
+  Stop thickness refinement for this decision. Next ONE separately bound unitMy
+  comparison at unchanged finest geometry/map probes the independent moment
+  direction and reciprocal roll/pitch coupling. Inspect complete six poses and
+  direct work; large disagreement directs a modelling/work-map investigation,
+  small agreement supports only My and leaves nativeMx adequacy open. No new
+  tolerance, finer campaign, formalF03 consumption or aggregate pass follows.
 - **Pressure assessment:** do not adopt the proposed vector-only amendment.
   Its documented shared-node masking weakens a protection of the current
   contract. This resolves the outstanding approval request as a decision to

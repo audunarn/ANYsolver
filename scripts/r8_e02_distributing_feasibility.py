@@ -38,6 +38,16 @@ def build_case(name, nx=10, ny=4):
         raise ValueError("fixed Mx or eccentric Fy feasibility case required")
     _, donor = build_deck(nx, ny, 1, "Mx")
     nodes, elements = donor["physical_nodes"], donor["elements"]
+    return _build_geometry_case(name, nodes, elements, donor["root_nodes"], nx, ny, 2,
+        "R8_E02_DISTRIBUTING_FEASIBILITY_V1",
+        "single coarse common-action screen; no refinement or acceptance"
+        if (nx, ny) == (10, 4) else "paired in-plane refinement; thickness fixed; no acceptance")
+
+
+def _build_geometry_case(name, nodes, elements, root, nx, ny, nz, schema, scope):
+    """Common deck syntax; each caller owns its separately bounded geometry."""
+    if name not in LOADS:
+        raise ValueError("fixed Mx or eccentric Fy feasibility case required")
     area = compile_area_map(nodes, elements, BOUNDS, .02, PORT)
     action = area.action(LOADS[name][:3], LOADS[name][3:])
     deck = ["*HEADING", "R8 distributing common-action feasibility only", "*NODE"]
@@ -47,7 +57,6 @@ def build_case(name, nx=10, ny=4):
     for e, ids in elements.items():
         deck.extend((str(e)+","+",".join(map(str, ids[:15])),
                      ",".join(map(str, ids[15:]))))
-    root = donor["root_nodes"]
     deck.extend(_nset("ALL", sorted(nodes)))
     deck.extend(_nset("ROOT", root))
     deck.extend(("*MATERIAL,NAME=ELASTIC", "*ELASTIC", "210000000000.,0.3",
@@ -57,12 +66,9 @@ def build_case(name, nx=10, ny=4):
                 for j, v in enumerate(f, 1) if v)
     deck.extend(("*NODE PRINT,NSET=ALL", "U", "*NODE PRINT,NSET=ROOT", "RF", "*END STEP"))
     text = "\n".join(deck)+"\n"
-    metadata = dict(schema="R8_E02_DISTRIBUTING_FEASIBILITY_V1",
-        scope=("single coarse common-action screen; no refinement or acceptance"
-               if (nx, ny) == (10, 4) else
-               "paired in-plane refinement; thickness fixed; no acceptance"),
+    metadata = dict(schema=schema, scope=scope,
         case=name, ccx_version=CCX_VERSION, executable_sha256=CCX_SHA256,
-        nx=nx, ny=ny, nz=2, E_Pa=210e9, nu=.3, thickness_m=.02,
+        nx=nx, ny=ny, nz=nz, E_Pa=210e9, nu=.3, thickness_m=.02,
         bounds_xy_m=BOUNDS, port_m=PORT, applied_wrench=LOADS[name],
         physical_nodes=nodes, elements=elements, root_nodes=root,
         area_map_identity=area.identity,
@@ -82,6 +88,11 @@ def parse_result(dat, stdout, metadata):
             raise ReferenceParseError("changed reference metadata")
     except (KeyError, TypeError, ValueError) as exc:
         raise ReferenceParseError("invalid reference metadata") from exc
+    return _parse_observed(dat, stdout, expected, area)
+
+
+def _parse_observed(dat, stdout, expected, area):
+    """Shared output checks after the caller reconstructs its exact case."""
     if re.search(r"\b(?:warnings?|errors?|fatal|failed|failure|nan|infinity)\b", dat+"\n"+stdout, re.I):
         raise ReferenceParseError("solver diagnostic or nonfinite output")
     if len(re.findall(r"^\s*Job finished\s*$", stdout, re.M)) != 1:

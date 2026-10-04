@@ -347,6 +347,65 @@ tests/example, native results, six decks/DAT/STA/FRD/full logs, actual runtime
 settings, parsed work/reactions and supporting review. Dist/site remain local;
 wheel SHA and source/artifact checks identify the tested artifact.
 
+## Orthogonal thickness sensitivity and saved-action decomposition
+
+One fixed40x16/nz4 solid pair tests whether unresolved thickness discretization
+could explain the native torque movement. Geometry, material, full x0 clamp,
+physical pad/port and the reduced mean/director/curl work remain unchanged.
+The new bounded builder uses2560C3D20R cells/38859physical rows; it neither
+extends nor changes the historical nz2 geometry donors or4096cell map guard.
+
+| Observable | Saved nz2 | New nz4 | Reference movement | Native40x16 difference against nz4 |
+|---|---:|---:|---:|---:|
+|Mx work J|2.041954955729e-5|2.043248619792e-5|+0.063354%|−0.876285%|
+|Fy work J|1.405433680078e-5|1.405870758464e-5|+0.031099%|−0.395449%|
+
+All final external/parse/saved-analysis jobs complete. Mx/Fy elapsed2.714/2.655s,
+sampled process-tree peaks313257984/313315328B, reported oneCPU and affinity1;
+600s/2GiB guards retained. Parsed root errors fall within their printed-decimal
+bounds and root displacement is zero. Output-resolution bounds do not certify
+solve error, physical accuracy or the programme's1e-8 balance criterion.
+
+Saved Mx/Fy responses also permit an exact linear combination of the admitted
+actions, without another solve or assumed compliance-block decoupling. Port
+Fy10N contributes−.5Nm about the centroid, so q_centroid=q_Fy+.5q_Mx.
+Its work is10 times the resulting mean-y displacement. Native/solid-nz2
+centroid-force work differences decrease3.02947→0.75255→0.10835%; against
+solid-nz4 the fine difference is0.12103%, and reference thickness movement
+is0.012691%. Cross-work reciprocity discrepancies fall inside propagated
+six-pose decimal bounds for all saved solid cases. Native saved values satisfy
+reciprocity within binary64 roundoff; this is not a numerical-error certificate.
+The full6poses, derived action, input hashes and propagated bounds are retained.
+
+Decision: stop thickness refinement for this decision. The observed reference
+shift is too small to account for the native last-step1.518% torque movement.
+Retain the law as experimental; native torque adequacy and the untested moment
+directions remain the next uncertainty. Two thickness levels do not prove
+reference convergence; sub1% fine agreement does not close F04/G0/G2 or grant
+finite-load fidelity. No extra threshold, asymptotic extrapolation, drilling
+tuning, line-law substitution or formalF03 execution follows.
+
+Failure/repair history is preserved: initial helper controls65PASS/1FAIL
+(historical executed CRLF versus canonical generator LF), then5PASS/1FAIL
+(tuple/list serialized values), then corrected remaining parity1PASS. Six
+historical decks, canonical hashes, executed-byte hashes, metadata and parsed
+values remain exact. First external Mx v4 exits201 at input: a22character
+near-zero CLOAD coefficient exceeds CalculiX's20character numeric field.
+It supplies no mechanics result. New-case-only .13e formatting retains every
+nonzero coefficient; final6PASS verifies decoded deck force/moment/work with
+unchanged2e-12/2e-17 controls. Legacy decks are untouched. A prospective driver
+pinning gap was corrected before execution; a refused output-name collision
+is also retained. Final v5 pins old comparison, four helpers, executable,
+actual decks and both drivers before launch and parse. No earlier failure is
+overwritten or described as passed.
+
+Raw `.qualification/b3-ge-e4-pl/r8-distributing-thickness-dev-20261004-v1`
+holds commands/drivers/bindings, all source versions and failures, two complete
+external outputs, parsed comparison-v5 and saved analysis-v1. Supporting OpenAI
+review covers mechanics/parser/resource/provenance; different-family and formal
+scientific acceptance remain open. Scripts-only diagnostic changes do not
+invalidate the unchanged product wheel or require its campaign to be repeated.
+
 ## Finite distributing candidate: original derivation and bounded feasibility
 
 The finite shell pose is a new candidate, not a retrospective reinterpretation
