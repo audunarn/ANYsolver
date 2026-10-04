@@ -2,91 +2,75 @@
 
 ACTIVE. Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/
 stiffened-main-reconcile-20261001; branch codex/stiffened-main-reconcile-20261001.
-Source parent 735e42b9; current commit is determined from Git HEAD. ANYfem
-C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer; commit from Git HEAD.
-Complete amended G0-G6/F01-F13/V01-V28/B01-B18 remains binding. No aggregate gate
+Source parent af4059a9; current commit from Git HEAD. ANYfem worktree
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer at9faed76, unchanged.
+Full amended G0-G6/F01-F13/V01-V28/B01-B18 remains binding; no aggregate gate
 closes. [Goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md),
 [matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md).
 
-## Delivered behavior
+## Delivered behavior and exact reusable product
 
-Persistent multi-Q4/S3/native-B3 point owner and separate physical B2 routes
-remain. Selected multi-Q4 finite distributing elastic/material owner has physical
-recovery, fixed predecessors and atomic restart. Fixed cyclic generalized and
-coupled-J2 policies retain their prior installed226PASS/16-step consumer evidence.
-New explicit native cyclic policies require physical fibres, admit supported
-mixed generalized/fibre members and optional Q4J2, and use distinct binary
-origin/accepted codecs. Native retained variables, laws, defaults, nonzero norm,
-1e-8 equilibrium/1e-9 compatibility and iteration/backtrack limits unchanged.
-Zero force is exactly zero; normalization uses owned unit reference actions.
-Adaptive/chart/staged/S3/spectral extensions are excluded from this new route.
-
-New source7PASS87.79s plus simultaneous generalized/fibre yielding, zero restart
-and continuation PASS10.34s. Fresh installed204PASS464.58s plus coupled four-fibre
-ANYfem case/Project save/reopen and zero/signed restart example9.156s. Whole
-476.189s/sample236797952B, affinity/pools1/JIToff. Initial shellalpha.0016574/
-fibreaccumulated.007 observed; no reverse plastic flow claim. Exact-path final
-checkpoint and physical arrays match. Elastic axial/biaxial parity, canonical
-tampering and cancellation after recovery before publication pass. Supporting
-review clear; different-family scientific acceptance remains OPEN.
+Persistent multi-Q4/S3/native-B3 point owner, material histories, separate physical
+B2 batches/consumers and finite distributing elastic/material/cyclic routes remain.
+Product c5f5d79e:204installed solver/consumer controls and ANYfem save/reopen/
+zero/signed native distributing histories. Native retained variables/laws/defaults
+and typed origin/accepted codecs unchanged. ANYfem9faed76; selected domains only.
 Solverwheel f31527d54afd93d1a334dbbda545cb9affce847cfac94676fe9e8a2f6718847b;
 consumerwheel626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f.
-[Usage](../../stiffened_shell_distributing_material_development.md).
+Site .qualification/b3-ge-e4-pl/r8-distributing-native-material-dev-20261004-v1/site-v1.
+All520 product files/hashes checked before reuse; no rebuild for diagnostic edits.
 
-## Current decision, uncertainty and next action
+735e42b9:2installed fixed-yielded-predecessor tangent cases PASS18.12s; max2.5753e-7
+by row group. Fourteen-position biaxial fibre reversal PASS81.71s;8same station
+keys reverse at restarted-1, positiveD.01431495J, exact source/installed histories.
+af4059a9:loaded native-fibre POINT chart installed1PASS149.48s. Control/reset/
+chart-restored share12positions; same-cell flow/noncommutation at1.125 in both
+cells/all3branches, physical .05rad/1e-5rad floors. Exact reset history/gen4->5,
+typed1e-9 material/paired-energy/reaction/restart parity; stale/cancel guards.
+Elastic Q4/generalized member only. Stronger same-cell assertions verified from
+byte-bound retained states; no duplicate mechanics. Full F06/G3 remains OPEN.
 
-Retain the declared reference-linear mean/secant-director/curl law for development
-and STOP this diagnostic slice. Actual80x32 Fy on the ORIGINAL pinned b7ae7ca0
-operator, unchanged80fixture and binary solid output, differs<1% in all six
-nonzero pose components: pitch-.864137%, work-.030881%; exact native reflection
-residual0. Native pitch40-to80 movement2.032% still leaves converged accuracy OPEN.
-This is measured development evidence, not asymptotic, welded/bonded-line,
-finite/material or F04/G0 qualification. No floor or finer campaign follows.
-Failed first JSON writer and repaired exact-case execution are preserved.
+Actual native80 Fy versus original pinned binary solid: all6nonzero poses<1%,
+pitch-.864137%, work-.030881%, exact reflection0. Pitch40->80movement2.032%
+leaves converged accuracy OPEN. STOP physical diagnostic slice; no automatic
+refinement/curvature/load-budget campaign. Earlier adaptive1.01 stopped1.0075,
+original fixed1.01residual.00246153 preserved. Not physical/F04/G0 qualification.
 
-Yielded tangent exit:2 installed cases PASS18.12s, all tested shell/beam/retained/
-constraint groups <=2.5753e-7 with unchanged active masks and exact repeat/restore
-assembly. One seeded direction, not every column. No accepted recovery reevaluation.
-Actual reverse-flow exit:14 fixed positions PASS81.71s,8same biaxial fibre station
-keys reverse at restarted -1; dissipation.01431495J and exact continued path.
-Source/installed histories and14accepted checkpoints match byte-for-byte.
-Elastic shell/low-yield constitutive control; no shell-J2 reversal/capacity claim.
-Unchanged wheels reused by source/import/hash proof; failures retained.
+## Current decision, facts, uncertainty and next action
 
-F06 native-fibre POINT exit: installed1PASS149.48s; control/reset/chart-restored
-share12acceptedpositions through direction change/quarter-unload/reload. Elastic
-Q4/generalized member; yielding biaxial fibres. Actual activity at reset1 and
-same-cell noncommuting plastic activity at1.125 in both cells/all3branches; cells
-rotate.09738rad/commutator.00039934rad, above.05/1e-5floors. Rebase generation4->5,
-exact same-event histories and registered typed-unit1e-9 successor material/paired
-energy/reaction parity pass. Equilibriummax6.725e-9/gap2.495e-14. Whole151.758s/
-181776384B, affinity/pools1/JIToff. Executed v2 plus stronger v3 assertions checked
-on byte-bound retained states/cross-cell controls; no duplicate mechanics run.
+Simultaneous shell-J2/fibre loaded POINT chart remains OPEN. Two bounded controls
+now retained:1GPa shell completed prefix1 but stayed elastic; existing200MPa
+shell control activated5shell stations (maxalpha.0010034863) yet exhausted
+4cutbacks at .3828125 before fibre flow/reset. Same load/path/budgets. Failure
+details, accepted balances, actual predecessor work and checkpoints retained.
+Known-failing coupled fixture kept under raw/test-v3.py; ordinary prior fibre
+regression restored byte-for-byte, not XFAILed or silently weakened.
 
-Next mandatory gap: simultaneous shell-J2/native-fibre loaded POINT chart transport.
-Reuse this staged geometry/force path and existing admitted native predecessor/
-chart machinery. Prospectively require actual SAME-substep shell+fibre activity,
-noncommuting physical coverage and invariant material/energy/reaction/restart.
-Elastic-shell result cannot establish that claim. Keep nonzero unload/reload:
-point zero-load norm remains unresolved, no relaxed acceptance or zero trial.
-No automatic amplitude/budget campaign; finite distributing chart stays excluded.
-Full F06/G3/physical/different-family/scale/platform/total-energy acceptance remains.
+One saved-prefix derivative check passes: h1e-4/1e-5/1e-6, actual chart/spatial
+updates, separate shell/beam/retained/constraint groups, fixed predecessors and
+unchanged masks/checkpoint. Maxerror3.20491e-6<1e-5. Whole3.219s/167825408B,
+affinity/pools1/JIToff. One direction, not all columns/stability/limit-point proof.
+Initial unstaged-reader harness failure retained. No product defect identified;
+STOP curve/load/budget slice, do not infer a physical limit or formulation failure.
 
-Previous actual adaptive1.01 accepted through1.0075 then exhausted; all prefixes
-saved. Original fixed1.01 residual.00246153 unchanged. No retry, extra budget or
-curvature sweep. Full material/physical/scale/platform/external acceptance remains.
+Next bounded development decision: select the smallest explicit physical zero-load
+normalization contract for point stepping. Inspect existing staged/cyclic scales,
+freeze force/moment/retained roles, preserve nonzero/default/legacy restart,
+keep1e-8 equilibrium and1e-9 gaps, reject false equilibrium and unsupported scope.
+Only after contract/review implement the narrow owner change and meaningful
+zero/unload/restart/unit controls. No invented residual floor, new globalization,
+coupled-chart retry, or silent qualification change. Coupled chart, total energy,
+physical/different-family/platform/scale acceptance remains OPEN.
 
-## Evidence, ownership and boundaries
+## Evidence, ownership and protected boundaries
 
 [Grouped evidence](development/r8-distributing-reference-linear-20261004/results.md).
-Raw .qualification/b3-ge-e4-pl/r8-distributing-fy80-dev-20261004-v1 and
-r8-distributing-native-material-dev-20261004-v1 plus native-tangent/native-reverse
-and r8-native-plastic-chart-dev-20261004-v1
-development roots retain source snapshots, commands,
-failed checks, actual wheel/import/resource identities, outputs and reviews.
-Historical note/goal/plan/report/matrix bytes preserved. No numerical jobs remain;
-all workers terminal. Root owns scoped integration/Git/evidence. No push/main
-merge/publication or contact-worker communication. Goal ACTIVE.
+Raw .qualification/b3-ge-e4-pl/r8-native-coupled-chart-dev-20261004-v1 binds this
+negative exit/diagnosis. Prior native-material/tangent/reverse/plastic-chart and
+Fy80 roots remain immutable for their original claims. Archived active/goal/plan/
+report/matrix preserve history. Root owns integration/Git/evidence; no live jobs.
+No push/main merge/publication or contact-worker communication. Goal ACTIVE.
+Supporting same-family review cannot close different-family scientific acceptance.
 
 FormalF03 UNCONSUMED: never execute/copy/substitute
 scripts/b3_e4_f03_c1_fy_supported_reference.py, SHA
@@ -95,6 +79,6 @@ Never inspect/copy/archive us3-modal-canary (credentials); no Get-CimInstance.
 At most3workers/ONE numerical job/100krows/600s/8GiB/8threads; tighter effective
 600s/2GiB/affinity1/pools1/JIToff. Optional local/Mistral unavailable; no reprobe.
 Frozen G3c graph guard requires reviewed runner lease; no bypass/replay.
-BL5 actualinventory13positive/1unresolved/7unassessed; auxiliary21 is not mixed
-mechanical stability. Inverse/positive-part CLOSED_UNRESOLVED; pressure amendment
-DECLINED. F5 lacks retained-sided reference forces. Full G0-G6 obligations remain.
+BL5inventory13positive/1unresolved/7unassessed; auxiliary21 not mixed stability.
+Inverse/positive-part CLOSED_UNRESOLVED; pressure amendment DECLINED. F5 lacks
+retained-sided reference forces. Full G0-G6 obligations and scientific criteria stay.

@@ -1178,3 +1178,46 @@ Different-family scientific acceptance and aggregate F06/G3 remain OPEN.
 Next ready material transport gap is simultaneous shell-J2/native-fibre loaded
 chart behavior using this existing point-owner machinery; preserve partial-support,
 curved/line/topology, total-energy and all external/scale/platform obligations.
+
+
+## Coupled loaded point chart controls: bounded negative exit, 4 October
+
+Product remains c5f5d79e/installed solver f31527d54afd93d1a334dbbda545cb9affce847cfac94676fe9e8a2f6718847b,
+consumer 9faed76/wheel626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f.
+Parent af4059a9. All520 product source files and both artifact hashes were checked;
+no source product change or wheel rebuild. Raw root:
+`.qualification/b3-ge-e4-pl/r8-native-coupled-chart-dev-20261004-v1`.
+
+V1 DNVC208(1/1.05/1.1GPa,.005/.01plasticstrain,4GPa,.2) completed .125/.5/.75/1
+but shell alpha stayed zero. FAIL29.77s, whole31.880s/179920896B. This is missing
+simultaneous coverage, not a chart or constitutive defect. V2 used the exact
+already-admitted 200/220/230MPa,.005/.01,1GPa,.2 control, not fitted to stresses.
+Same geometry/supports/forces/FY250MPa-H210GPa fibres/20Newton/12backtracks/
+4cutbacks/64attempts. It accepted .125/.3125/.359375/.3828125 then exhausted
+cutbacks after finite mixed backtrack budget exhaustion. FAIL75.36s,
+whole77.614s/187371520B. Five shell integration stations active at the last
+accepted prefix; maximum alpha .0010034863. Fibre accumulated states remained
+zero. No reset or simultaneous loaded transport was reached. Accepted snapshots,
+actual predecessors, plane-stress plastic work, physical balance, failure details
+and controller-bearing checkpoints are retained in failed-states-v1/v2.
+
+One saved-prefix actual-update derivative discriminator reused precisely the
+V2 checkpoint and predecessor, with no solve/new loads. Three steps1e-4/1e-5/1e-6,
+separate shell/beam/retained/constraint groups, fixed origin histories, same
+chart/spatial updates and checkpoint byte identity. All masks unchanged, five
+active shell stations/zero active beam histories. Maxrelative error3.20491e-6;
+adjacent steps pass1e-5. Whole3.219s/167825408B, pools/affinity1/JIToff.
+This is one seeded direction at one state, not a matrix certificate, a stability
+test, or a limit-point conclusion. The first diagnostic checkpoint reader failed
+because it expected the unstaged format; its logs remain, and the corrected
+probe reads actual driver predecessor histories directly. It changes no product.
+
+Decision: STOP the curve/load/budget slice. Full coupled loaded-chart obligation
+remains OPEN. No observed mismatch justifies an operator rewrite. Restore the
+prior passing ordinary fibre-only regression byte-for-byte; retain test-v3.py
+as an explicitly invoked failed development fixture. No XFAIL or hidden pass.
+Next bounded development decision: explicit physical normalization at zero load
+for the point route, preserving legacy nonzero/default/checkpoint contracts.
+No artificial residual floor or relaxation of1e-8 equilibrium/1e-9 compatibility.
+Supporting review is bound separately below; different-family acceptance remains
+OPEN. Full G0-G6/material/physical/release obligations and formal F03 unchanged.

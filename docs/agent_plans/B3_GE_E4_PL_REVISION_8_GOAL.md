@@ -286,3 +286,14 @@ resolves DAT balance precision on saved Mx/Fy models; no product/default change.
 Next adjudicate the scoped secant-director/curl law and saved convergence, then
 obtain required independent acceptance. No automatic finer model is justified.
 Full scientific, lifecycle and release duties unchanged; see active state/results.
+
+4 October coupled-chart exit: two bounded controls did not reach simultaneous
+shell-J2/fibre transport (inactive shell, then active shell but cutback exhausted
+at .3828125). A fixed saved-prefix actual-update directional check passes all
+four row groups without active-branch/history changes; no limit-point or general
+tangent claim. Preserve both failures and stop that curve/load/budget slice.
+Next bounded action is the smallest explicitly selected physical zero-load
+normalization contract for point stepping, with unchanged acceptance limits,
+nonzero legacy behavior and restart identity. No implementation is accepted by
+this choice; coupled loaded-chart/full F06/G3 remains open. Reuse the active note
+and matrix instead of launching a replacement campaign or planning framework.
