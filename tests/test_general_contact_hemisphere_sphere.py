@@ -229,7 +229,9 @@ def test_coupled_bar_force_displacement_restart_and_explicit_scope():
     second=replace(definition.rigid_bodies[0],name='other',point=(1.,0.,0.))
     multi=replace(definition,rigid_bodies=(*definition.rigid_bodies,second),interactions=(
         *definition.interactions,replace(definition.interactions[0],name='other pair',target='other')))
-    assert not validate_general_contact(model,multi,settings).valid
+    from anysolver.general_contact.multiple_beam_rigid import PROFILE_SUPPORT_ANALYTIC, MultipleBeamRigidManager
+    assert validate_general_contact(model,multi,settings).profile==PROFILE_SUPPORT_ANALYTIC
+    assert all(isinstance(child,HemisphereSphereManager) for _,child in MultipleBeamRigidManager(model,multi,settings).pairs)
     record=os.environ.get('CONTACT_APP_RESULT_RECORD')
     if record:Path(record).write_text(json.dumps({'displacement_m':result.displacements[dof],
         'independent_displacement_m':-g0-delta,'relative_error':error,

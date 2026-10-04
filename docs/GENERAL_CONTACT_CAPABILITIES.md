@@ -1873,3 +1873,17 @@ old line/ownership arithmetic unchanged. Fixed-sphere scalar-elastic static row,
 not independently accepted/released. Aggregate spheres fail closed until matching
 contributors are composed; broader geometry/friction/native/dynamics remain.
 [Guide/evidence](GENERAL_CONTACT_HEMISPHERE_SPHERE_DEV.md).
+
+
+## Multiple actual hemisphere fixed planes/spheres — 4 October development
+
+`MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_PLANES_SPHERES_STATIC_DEV_V1`
+composes matching plane/sphere owners on shared B2/B3 coordinates. Complete
+work/sparse tangents, per-body wrench, true ends, common path and full restart
+retain inherited mechanics. Installed49pass17.766s/355430400B;216modules/506files
+match,JIT0/pools1. Independent scalar work/1e-5H/wrench and actual mixed/two-sphere
+bar2.015e-14 vs1e-6, force/displacement, restart, real child rollback, junction and
+legacy/no-contact pass. Supporting junction finding fixed. Implemented/tested,
+not independently accepted/released; no cylinder fallback or broader kinematics.
+Supersedes the preceding aggregate-sphere admission restriction through matching
+contributors only. [Guide/evidence](GENERAL_CONTACT_MULTIPLE_HEMISPHERE_ANALYTIC_DEV.md).
