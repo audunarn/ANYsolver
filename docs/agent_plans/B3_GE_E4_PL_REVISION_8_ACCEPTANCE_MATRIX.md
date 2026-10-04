@@ -2114,3 +2114,16 @@ law distinction, immutable/stale/closed/reordered mappings covered. Independent
 supporting source review clear. No public wiring, finite/chart/material/mass,
 installed/physical accuracy, global stability or aggregateF04/G0/G2 acceptance.
 [Bounded integration evidence and next boundary](development/r8-distributing-reference-linear-20261004/results.md).
+
+F04 public reference-linear distributing owner, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+Existing facade/owner now compile explicit area records, append independent rows
+after points, recover immutable physical exerted actions, and reuse existing
+factor/atomic cancellation/JSON-binary checkpoint services.63 source+63 installed
+controls PASS; installed headless construction/solve/recovery/restart/repeated
+load example completes with one factor. Empty-option legacy identity/checkpoint
+controls pass; finite/material/modal/load wrappers and incompatible restores fail
+closed. ANYfem point-modal conversion rejects rather than strips this law (one
+focused sourceconsumer+installedsolver controlPASS). Full ANYfem construction/
+persistence, finite physical law, mass/spectra/physical references/scale and
+different-family/aggregateF04/G0/G2 acceptance remain OPEN.
+[Source/artifact bindings, evidence and limits](development/r8-distributing-reference-linear-20261004/results.md).

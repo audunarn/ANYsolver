@@ -28,6 +28,8 @@ MAX_COMPILED_VALUES = 1_000_000
 def _admission_error(owner):
     """Keep the new footprint intersection narrower than either parent route."""
     definition = owner._definition
+    if definition.distributing_footprints:
+        return 'GE body loads exclude reference-linear distributing footprints'
     if definition.lines or owner._line_samples:
         return 'GE body load admits point owners only; lines unsupported'
     if not definition.footprints:

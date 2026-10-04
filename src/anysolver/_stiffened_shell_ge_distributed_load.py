@@ -22,6 +22,8 @@ MAX_ACTIONS=16384
 
 def admits_owner(owner):
     """Attachment scope shared by public capabilities and load compilation."""
+    if owner._definition.distributing_footprints:
+        return False
     if owner._definition.footprints:
         return False
     if owner._line_samples:

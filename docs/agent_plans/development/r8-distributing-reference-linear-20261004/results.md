@@ -98,3 +98,64 @@ tests SHA02c11ffeb4cd5c25097f85bceb32558fdc8009abb35543633c787e80610dd608.
 Next product boundary is explicit experimental reference-linear owner admission
 and lifecycle/recovery integration; finite pose/Hessian/chart transport, other
 geometry/materials, physical references and complete footprint acceptance stay open.
+
+## Public experimental reference-linear owner
+
+The existing `stiffened_shell.create_analysis` owner now admits the appended
+`LinearDefinition.distributing_footprints` option and public
+`GEReferenceDistributingFootprint`, `GEReferenceDistributingFootprintSelection`
+and `GEReferenceDistributingFootprintWrench` types. No alternate solver is added.
+Empty options preserve legacy identity payloads/capabilities/checkpoints. Selected
+records are compiled once into six-row blocks after point rows, with explicit
+multiplier slices, combined supported audits and the existing sparse factor cache.
+All native retained variables remain. Accepted recovery reports exerted `-C.T lambda`
+actions, shell moments about the area centroid and beam moments about its node.
+
+Reference-linear nodal dead loads, accepted-prefix cancellation, selected physical
+recovery and JSON/binary checkpoint/restore/resume are implemented and tested.
+Finite/controller/chart operations, material updates, modes and external load
+wrappers reject before work. Direct load compilation and modal admission also
+reject mixed point/distributing models. Checkpoints bind the new law/geometry/
+mapping identity; nonlinear kinds, corrupt bytes and retained-coordinate loads
+are rejected. Supporting source review found missing public export entries and
+inconsistent deep-JSON validation; both were corrected before the first run.
+
+Source and installed suites each pass63 controls (6.05s/5.91s pytest; whole8.086s/
+7.798s; sampled tree193679360B/193331200B). Actual declared imports and eight
+source files match the artifact. Pools1/JIT off and empty test stderr verified.
+The suite includes the earlier independent reference-KKT comparison, unchanged
+historical identity oracle and legacy checkpoint/cancellation/factor controls.
+Supporting independent OpenAI review is clear; different-family scientific
+acceptance remains open. No old frozen checkpoint campaign was repeated.
+
+Wheel `anysolver-0.4.7-py3-none-any.whl`,2225629B,
+SHAf0267b0f5803ce69c1a181bfd7aa22bde06fa1aafdb65cbd56bba4d550745b4e.
+Build/install succeeded with no download/dependency installation; build stderr
+contains normal build phases and already excluded reports/scripts messages.
+The source/import inventory binds NumPy2.4.6, SciPy1.17.1, pytest9.0.3,
+ANYmaterial0.2.0, ANYmesher0.5.0 and ANYfileio0.3.2. Earlier wheels retain their
+own evidence scope. No version/default/publishing/main change follows.
+
+[Runnable public example](../../../../examples/stiffened_shell_ge_distributing_reference.py)
+completed against the wheel: area2m2, centroid(2,0,0),24 retained coordinates,
+constraint max5.8884e-21/equilibrium7.8581e-13,2064-byte checkpoint, onefactor
+for repeated unchanged nodal solves. Shell exerted centroid action
+(0,20,0,-2,0,23) and beam nodal action(0,-20,0,0,0,-23) include the eccentric
+lever arm. These are this fixture's outputs, not external agreement.
+
+ANYfem's point-modal `from_definition` converter now fails closed for the new
+attachment instead of stripping it. One focused predicate PASS/.13s with the
+installed solver and actual source consumer; the probe explicitly verifies the
+new field so the conditional branch cannot skip. This is not installed new
+ANYfem verification or a distributing consumer workflow; that route remains open.
+Before committing, canonical LF normalization avoids a misleading whole-file
+consumer diff. Original tested bytes are retained as consumer-source-v1.py;
+byte comparison proves only newline representation changed. The changed-byte
+consumer-v2 predicate passed/.11s (whole2.229s/sample175415296B), unchanged
+installed solver. Consumer source SHA22788c4353ef24316ad692c9097852e52f737e0d522949d2a7ea4aebe446ab60;
+the earlier mixed-ending identity and successful run remain retained.
+[Raw commands/imports/resources/review](../../../../.qualification/b3-ge-e4-pl/r8-distributing-ge-owner-dev-20261004-v1/).
+Public implementation remains EXPERIMENTAL_NOT_QUALIFIED: two adjacent Cartesian
+XY Q4 hosts, generalized native reference response, identity selected beam triad,
+and nodal dead loads only. Other geometry/material/finite/load/mass/spectral,
+external/scale and aggregateF04/G0/G2 requirements remain mandatory.

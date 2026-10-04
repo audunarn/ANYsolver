@@ -101,6 +101,8 @@ class GEShellPressureLoad:
 
     def compile(self, owner):
         owner._require_open()
+        if owner._definition.distributing_footprints:
+            raise ValueError('pressure loads exclude reference-linear distributing footprints')
         if self.model_identity != owner._identity:
             raise ValueError('pressure load belongs to a different model')
         if owner._line_samples or owner._definition.lines or owner._definition.footprints or not owner._definition.points:

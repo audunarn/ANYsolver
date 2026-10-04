@@ -95,9 +95,20 @@ pools1/JIToff/empty stderr. Native retained equations, physical side/support
 wrenches/work and distinct admissible nonrigid compliance checked. Independent
 source review clear. No original owner state/C or public definition mutated.
 Bundled-runtime startup missingpsutil retained; no child/tests started there.
-NEXT: explicit experimental reference-linear owner admission and lifecycle/
-recovery wiring against the proven local map, followed by meaningful installed
-boundary checks. Finite pose/Hessian/chart/material/mass, arbitrary hosts,
+DELIVERED PUBLIC: existing owner admits the explicit reference-linear record with
+own slices/physical -C.Tlambda recovery/model identity and existing factor/atomic
+checkpoint services.63source+63installed PASS; installed headless panel solves,
+recovers, restarts and repeats with onefactor. Wheel f0267b0f5803ce69c1a181bfd7aa22bde06fa1aafdb65cbd56bba4d550745b4e,
+r8-distributing-ge-owner-dev-20261004-v1/dist andsite. Actual8imports/sourcehashes,
+pools1/JIToff/commands/resource outcomes retained. Source/installed6.05s/5.91s;
+whole8.086s/7.798s; peak193679360B/193331200B. Historical identity oracle, rowprefix,
+cancellation, binary/JSON restore and direct load/modal/finite negatives pass.
+Supporting independent review clear; export/deepJSON findings fixed before tests.
+ANYfem point-modal converter nowrejects this law instead of strippingit; one
+sourceconsumer+installedsolver predicatePASS (.13s), not full consumer support.
+NEXT: native consumer construction/save/reopen for this explicitly reference-only
+law, reusing existing ANYfem records/project adapters and physical results. No
+new consumer mechanics or implicit finite admission. Finite pose/Hessian/chart/material/mass, arbitrary hosts,
 physical references and full footprint acceptance stayopen. No closed factor
 ticket replay, new framework or weakened scientific threshold.
 Existing mechanics criteria and scientific boundaries remain unchanged.
@@ -105,9 +116,12 @@ Root owns scheduling/raw/Git. Current new evidence: envelope-gram/ and
 positive-part-gram/; immutable extension follows raw-manifest-v15.
 Do not rebuild completed fibres, free-mode owners or consumers.
 
-All numerical jobs/workers TERMINAL. Private GE bridge source/test hashes and
-responses retained in r8-distributing-ge-reference-dev-20261004-v1. Root owns
-scheduling/raw/Git. No experiment to interrupt or repeat. Max3workers.
+All numerical jobs/workers TERMINAL. Root reconciles scoped local source/evidence
+commits in solver and two-file consumer guard; no push/main/publication. Public
+slice raw r8-distributing-ge-owner-dev-20261004-v1; prior private bridge b36ca416
+and its source/test hashes/responses are preserved. No prior run to repeat.
+Owned ANYfem guard/test/doc plus attributes; existing consumer formatunchanged.
+Root owns scheduling/raw/Git; max3workers.
 Mandatory CalculiX, full mixed/locking/shear/drilling/growing-space acceptance,
 material/topology/capacity/scale/platform/consumer/different-family acceptance,
 authorized release and clean synchronized main remain open.

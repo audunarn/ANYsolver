@@ -1,10 +1,11 @@
 """Private GE binding of the distributing reference-linear derivative/work map.
 
-This module neither replaces the owner's attachment operator nor solves or
-publishes state. Common reference-spatial covectors are not arbitrary raw Log
-coordinate moments. No finite operator, public admission or accuracy claim.
+The standalone binder does not replace an owner's operator or publish state.
+The same compiler also supplies explicitly admitted reference-linear owner rows.
+Common reference-spatial covectors are not arbitrary raw Log coordinate moments.
+No finite operator or mechanical accuracy qualification is provided.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from hashlib import sha256
 import json
 import weakref
@@ -12,9 +13,6 @@ import weakref
 import numpy as np
 from scipy import sparse
 
-from ._stiffened_shell_ge_experimental import (
-    ExperimentalGEAnalysis, Q4_ALGORITHMIC_PULLBACK_V1, _require_independent_supported_rows,
-)
 from ._stiffened_shell_distributing_footprint import (
     CartesianQ4Host, CompiledDistributingFootprint, DistributingFootprintDefinition,
     FlatQ4Node, IDENTITY_AXES, LAW, PhysicalBeamNodePort, compile_footprint,
@@ -32,6 +30,7 @@ def _owned(values):
 
 
 def _reference_owner(owner):
+    from ._stiffened_shell_ge_experimental import ExperimentalGEAnalysis, Q4_ALGORITHMIC_PULLBACK_V1
     _require(type(owner) is ExperimentalGEAnalysis, "actual experimental GE owner required")
     owner._require_open()
     definition = owner._definition
@@ -88,6 +87,7 @@ class BoundDistributingReference:
             object.__setattr__(self, name, _owned(getattr(self, name)))
 
     def _check(self, owner):
+        from ._stiffened_shell_ge_experimental import ExperimentalGEAnalysis
         _require(type(owner) is ExperimentalGEAnalysis and self._owner_ref() is owner,
                  "distributing map belongs to another GE owner")
         owner._require_open()
@@ -142,13 +142,13 @@ class BoundDistributingReference:
             self.compiled.centroid_m, self.compiled.eccentricity_m)
 
 
-def bind_reference(owner, definition):
-    """Select two actual shell cells once and bind the existing nodal compiler."""
-    _reference_owner(owner)
+def _compile_reference_geometry(definition, *, shell_parts, shell_index, shell_xyz,
+                                beam_index, beam_nodes, shell_count, global_dimension):
+    """Compile prepared reference maps without consulting owner state or admission."""
     _require(type(definition) is DistributingFootprintDefinition, "typed distributing definition required")
     wanted = set(definition.host_element_ids)
     hosts = []
-    for eid, element, _slots, _origin in owner._shell_parts:
+    for eid, element, _slots, _origin in shell_parts:
         if eid in wanted:
             hosts.append(CartesianQ4Host(eid, tuple(element.node_ids)))
             if len(hosts) == 2:
@@ -156,17 +156,20 @@ def bind_reference(owner, definition):
     _require(len(hosts) == 2, "selected actual GE shell element IDs required")
     selected_ids = set().union(*(set(h.node_ids) for h in hosts))
     _require(len(selected_ids) == 6, "two-host six-node reference inventory required")
-    nodes = tuple(FlatQ4Node(node, tuple(owner._shell_xyz[owner._shell_index[node]]),
-                            6*owner._shell_index[node]) for node in sorted(selected_ids))
-    _require(definition.beam_node_id in owner._beam_index, "existing physical native beam node required")
-    position, axes = owner._beam_nodes[definition.beam_node_id]
+    nodes = tuple(FlatQ4Node(node, tuple(shell_xyz[shell_index[node]]),
+                            6*shell_index[node]) for node in sorted(selected_ids))
+    _require(definition.beam_node_id in beam_index, "existing physical native beam node required")
+    position, axes = beam_nodes[definition.beam_node_id]
     _require(np.array_equal(axes, np.eye(3)), "identity physical beam reference triad required")
     beam = PhysicalBeamNodePort(definition.beam_node_id, tuple(position),
-        owner._shell_count+6*owner._beam_index[definition.beam_node_id], IDENTITY_AXES)
+        shell_count+6*beam_index[definition.beam_node_id], IDENTITY_AXES)
     compiled = compile_footprint(definition, nodes, tuple(hosts), beam)
-    count = owner._K.shape[0]
-    _require(owner._K.shape == (count, count) and np.max(compiled.gather_slots) < count,
+    _require(np.max(compiled.gather_slots) < global_dimension,
              "complete actual GE global coordinate mapping required")
+    return compiled
+
+
+def _scatter_reference(compiled, count):
     rows, columns = np.nonzero(compiled.constraint_matrix)
     matrix = sparse.coo_matrix((compiled.constraint_matrix[rows, columns],
                                (rows, compiled.gather_slots[columns])), shape=(6, count)).tocsr()
@@ -175,6 +178,19 @@ def bind_reference(owner, definition):
     matrix.sort_indices()
     _require(matrix.has_canonical_format and np.isfinite(matrix.data).all(),
              "finite canonical sparse reference scatter required")
+    return matrix
+
+
+def bind_reference(owner, definition):
+    """Select two actual shell cells once and bind the existing nodal compiler."""
+    from ._stiffened_shell_ge_experimental import _require_independent_supported_rows
+    _reference_owner(owner)
+    count = owner._K.shape[0]
+    _require(owner._K.shape == (count, count), "square actual GE operator required")
+    compiled = _compile_reference_geometry(definition, shell_parts=owner._shell_parts,
+        shell_index=owner._shell_index, shell_xyz=owner._shell_xyz, beam_index=owner._beam_index,
+        beam_nodes=owner._beam_nodes, shell_count=owner._shell_count, global_dimension=count)
+    matrix = _scatter_reference(compiled, count)
     row_scale = np.asarray(np.abs(matrix)@owner._coordinate_scale).ravel()
     _require(np.isfinite(row_scale).all() and np.all(row_scale > 0.), "finite positive candidate row scales required")
     # All other columns are identically zero. Audit the identical supported row
@@ -196,3 +212,79 @@ def bind_reference(owner, definition):
 def _definition_policy(owner):
     return (owner._definition.q4_pullback_policy, owner._definition.shell_reference_policy,
             owner._definition.bl5_material_policy, owner._definition.modal_boundary_policy)
+
+
+@dataclass(frozen=True)
+class DistributingFootprintSelection:
+    footprint_ids: tuple[str, ...]
+
+    def __post_init__(self):
+        try:
+            ids = tuple(self.footprint_ids)
+        except TypeError as error:
+            raise ValueError("explicit distributing footprint IDs required") from error
+        _require(ids and all(type(v) is str and v and v == v.strip() for v in ids) and
+                 len(set(ids)) == len(ids), "distinct explicit distributing footprint IDs required")
+        object.__setattr__(self, "footprint_ids", ids)
+
+
+@dataclass(frozen=True, eq=False)
+class DistributingFootprintWrench:
+    """Physical exerted actions (-C.T lambda) in common reference-spatial rows.
+
+    Shell nodal moments use original nodal origins; the shell resultant is about
+    the area centroid, and the beam moment is about its actual nodal origin.
+    Yaw is transferred through planar force couples, with no shell rz action.
+    """
+    footprint_id: str
+    model_identity: str
+    compiled_identity: str
+    host_element_ids: tuple[int, ...]
+    shell_node_ids: tuple[int, ...]
+    beam_node_id: int
+    centroid_m: np.ndarray
+    beam_position_m: np.ndarray
+    eccentricity_m: np.ndarray
+    area_m2: float
+    shell_node_actions: np.ndarray
+    shell_action: np.ndarray
+    beam_action: np.ndarray
+    gap: np.ndarray
+    generation: int
+    configuration: str = field(default="reference_linear", init=False)
+    law: str = field(default=LAW, init=False)
+    production_qualified: bool = field(default=False, init=False)
+
+    def __post_init__(self):
+        for name, shape in (("centroid_m", (3,)), ("beam_position_m", (3,)),
+                            ("eccentricity_m", (3,)), ("shell_node_actions", (6, 6)),
+                            ("shell_action", (6,)), ("beam_action", (6,)), ("gap", (6,))):
+            values = np.asarray(getattr(self, name))
+            _require(values.shape == shape and values.dtype.kind in "fiu" and np.isfinite(values).all(),
+                     "finite real distributing recovery arrays required")
+            object.__setattr__(self, name, _owned(values))
+        object.__setattr__(self, "host_element_ids", tuple(self.host_element_ids))
+        object.__setattr__(self, "shell_node_ids", tuple(self.shell_node_ids))
+
+
+def _reference_records(owner, q, multipliers, generation):
+    records = []
+    for compiled, start in owner._distributing_bindings:
+        local = -compiled.transpose_work(multipliers[start:start+6]).reshape(7, 6)
+        shell = local[:6]
+        with np.errstate(over="ignore", invalid="ignore"):
+            force = shell[:, :3].sum(axis=0)
+            moment = (np.cross(compiled.shell_positions_m-compiled.centroid_m,
+                               shell[:, :3])+shell[:, 3:]).sum(axis=0)
+        records.append(DistributingFootprintWrench(compiled.definition.footprint_id, owner._identity,
+            compiled.identity, compiled.host_element_ids, compiled.shell_node_ids, compiled.beam_node_id,
+            compiled.centroid_m, compiled.beam_position_m, compiled.eccentricity_m, compiled.area_m2,
+            shell, np.r_[force, moment], local[6], compiled.gap(compiled.gather(q)), generation))
+    return tuple(records)
+
+
+def _selected_records(result, selection):
+    _require(type(selection) is DistributingFootprintSelection, "typed distributing footprint selection required")
+    records = {record.footprint_id: record for record in result.distributing_footprint_wrenches}
+    _require(all(name in records for name in selection.footprint_ids), "unknown distributing footprint recovery ID")
+    return tuple(records[name] for name in selection.footprint_ids)

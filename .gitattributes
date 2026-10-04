@@ -154,3 +154,12 @@ docs/agent_plans/development/r8-distributing-reference-linear-20261004/** -text
 src/anysolver/_stiffened_shell_ge_distributing_reference.py -text
 tests/test_stiffened_shell_ge_distributing_reference.py -text
 .qualification/b3-ge-e4-pl/r8-distributing-ge-reference-dev-20261004-v1/** -text
+src/anysolver/_stiffened_shell_ge_experimental.py -text
+src/anysolver/stiffened_shell.py -text
+src/anysolver/_stiffened_shell_ge_body_load.py -text
+src/anysolver/_stiffened_shell_ge_distributed_load.py -text
+src/anysolver/_stiffened_shell_ge_pressure_load.py -text
+src/anysolver/_stiffened_shell_ge_reference_modal.py -text
+tests/test_stiffened_shell_ge_distributing_owner.py -text
+examples/stiffened_shell_ge_distributing_reference.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-ge-owner-dev-20261004-v1/** -text
