@@ -231,15 +231,16 @@ def test_second_material_patch_hidden_rotation_uses_its_own_retained_block():
     assert not owner._swept_admissible(start,u,delta,end,u)
 
 
-def test_material_multi_profile_rejects_mixed_laws_and_activation_controller():
+def test_material_multi_profile_explicit_activation_and_rejects_mixed_or_legacy_controller():
     from anysolver.general_contact import create_native_contact_analysis,NativeS3ContactPair
     from anysolver.general_contact.native_activation_static import NativeActivationMultiS3Analysis,NativeContactActivationSettings
     from test_general_contact_native_retained_s3_static import _analysis as legacy
     owner=_two_analysis(targets=(.5,1.));args=(tuple(NativeBeamDefinition(raw) for raw in owner.native._definitions),
         tuple(owner.native.model.boundary_conditions),owner.program,owner.shell_model)
     activation=NativeContactActivationSettings(1e-7,64)
-    with pytest.raises(ValueError,match='without activation controller'):
-        create_native_contact_analysis(*args,owner.pairs,equilibrium_tolerance=1e-10,activation_settings=activation)
+    limited=create_native_contact_analysis(*args,owner.pairs,equilibrium_tolerance=1e-10,activation_settings=activation)
+    assert type(limited) is type(owner) and limited.activation_settings is activation
+    assert limited.identity!=owner.identity
     with pytest.raises(ValueError,match='without activation controller'):
         NativeActivationMultiS3Analysis(*args,owner.pairs,equilibrium_tolerance=1e-10,activation_settings=activation)
     mixed=(owner.pairs[0],NativeS3ContactPair('line',legacy().contact,5e-5,128))
@@ -301,7 +302,7 @@ def test_pre_area_multiple_line_checkpoint_remains_replayable():
 
 def _analysis(*,force=-.005,targets=(.5,1.),stiffness=1e6,radius=.05,
               shell_z=-.0501,angles=(pi-.3,pi+.3),triangle=None,shell_E=1e8,
-              shell_node_order=(4,5,6),director_polarity=1,native_yield=1e6):
+              shell_node_order=(4,5,6),director_polarity=1,native_yield=1e6,activation_settings=None):
     native,_,inertias=make(False,clamped=True,coupled=False)
     element=native.mesh.elements[1]
     if native_yield!=1e6:
@@ -330,7 +331,7 @@ def _analysis(*,force=-.005,targets=(.5,1.),stiffness=1e6,radius=.05,
         geometry_tolerance_m=1e-10,rim_clearance_m=1e-6)
     return NativeRetainedRoundS3Analysis((definition,),tuple(native.boundary_conditions),program,
         shell,NativeRetainedMaterialS3Work(patch,skin),gap_tolerance_m=1e-3*radius,
-        equilibrium_tolerance=1e-10,maximum_swept_intervals=128)
+        equilibrium_tolerance=1e-10,maximum_swept_intervals=128,activation_settings=activation_settings)
 
 
 def _corners(work,u):

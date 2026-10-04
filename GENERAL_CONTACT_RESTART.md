@@ -1,6 +1,6 @@
 # General contact restart — ACTIVE, 4 October 2026
 
-Goal2026-10-04.11 / plan2026-10-04.104; full C0–C9 incomplete.
+Goal2026-10-04.12 / plan2026-10-04.105; full C0–C9 incomplete.
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001. Productionfbdd5c27; testsaec4148a
 include earlierbe0fa6bf state checks. Current Git HEAD binds later documentation.
@@ -51,7 +51,7 @@ bound. Full-loadNONPASS unchanged. Raw candidate03/trace28/trace29.
 No live process. Metadata encoding failure repaired from exact01420d7f
 README bytes plus explicitUTF8 append; source/evidence intact.
 
-Use remaining time only for a bounded required closure and coherent handoff;
+Use the renewed authority for a bounded required closure and coherent handoff;
 do not start another profile/packaging/diagnostic campaign to spend the balance.
 Coupled yielding needs a derived explicit globalization/step contract; consistent
 local work alone does not fix its gap/merit nonpasses. Uniform axial angular-
@@ -72,10 +72,10 @@ Optional Local/Mistral unavailable; no reprobes. Frozen/consumed authority uncha
 Routine180s/1GB; current runner180s953MiB, native owner120s. Named900s/4GB only
 prospective; stricter frozen limits prevail.
 
-Original120 active hours: add3120s to goal-tool timeUsedSeconds.
-Clock exhausted:428891+3120=432011s=120.003h.
-User time/scope/method decision required before further development.
-Only minimum checkpoint repair performed after this boundary.
-Never reset/extend. At120h preserve/report achieved/missing and request the required
-time/scope/method decision. Full completion forecast unsupported; goal stays
-incomplete, not complete. Planning while paused does not restart this clock.
+Original 120 active hours: add3120s to historical goal-tool timeUsedSeconds.
+Consumed boundary:428891+3120=432011s=120.003h; preserve this record.
+Subsequent explicit “Proceed developing” authorizes further bounded development.
+No new hard duration specified; do not invent one or reset consumed authorities.
+Current slice: material-area first-contact fraction and focused actual-path,
+first-target and restart/state checks; checkpoint outcome before expanding scope.
+Full programme remains incomplete; full completion forecast unsupported.

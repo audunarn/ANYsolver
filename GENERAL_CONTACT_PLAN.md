@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.104. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Revision:** 2026-10-04.105. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.11, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
@@ -26,8 +26,8 @@ No further load/penalty tuning campaign: local work/history checks pass, leaving
 bounded coupled globalization/enforcement and convergence unresolved. A future
 change needs a derived, explicit step/cutback contract and discriminating check,
 not higher budgets or relaxed gaps. Curved sections/caps/interfaces, friction,
-dynamics and independent acceptance remain required. The original120-hour clock
-has about15minutes left at this checkpoint; do not extend it automatically.
+dynamics and independent acceptance remain required. The original 120-hour allocation is consumed. Explicit user resumption authorizes
+further bounded development; no replacement duration has been specified.
 
 | Area | Current evidence | Still required |
 |---|---|---|
@@ -213,7 +213,7 @@ This milestone remains incomplete until its required independent assessment clos
 | Application admission | Keep false without accepted source/model evidence. Do not reconstruct consumed evidence or access the protected original |
 | Timed-out Q4 application cycle | No unchanged rerun; require a concrete changed cause and valid bounded authority |
 | Optional workers | No repeated unavailable-provider probes. Use an available worker only for independent bounded work that shortens the selected delivery; never message the other human chat |
-| Remaining budget | Follow the living checkpoint's accumulated120haccounting; no forecast that full C0–C9 fits. No extension or scope reduction is implied |
+| Remaining budget | Preserve the consumed 120-hour allocation and subsequent explicit resumption. Checkpoint bounded slices; no new duration or full C0–C9 forecast is implied |
 
 These choices remove requests for discretionary direction. Missing external evidence
 or authority remains a dependency; a planning decision cannot supply it.
@@ -273,7 +273,7 @@ retained raw evidence. At the original 120-hour exhaustion, preserve the work an
 request the needed time/scope/method decision. Full completion is not declared from
 prototype breadth, local test passes, a partial handoff or exhaustion of the clock.
 
-## Next numerical candidate - pending clock decision
+## Authorized next numerical candidate — bounded activation slice
 
 Trace29 identifies contact-activation overshoot after yielding already starts.
 Derive explicit area-aware first-contact fraction control within the existing
@@ -281,5 +281,9 @@ Newton/8backtrack budget, retaining conservative material-patch/S3 path checks,
 finite activation,50um gap, work/state gates and restart algorithm identity.
 Do not increase budgets or tune load/penalty fixtures. A simple yield norm of
 18retained resultants does not represent constrained station stress.
-Full-load yielding remainsNONPASS. Original120-hour budget is exhausted;
-time/scope/method decision required before implementation.
+Full-load yielding remains NONPASS. The subsequent explicit user instruction
+“Proceed developing” authorizes this slice beyond the consumed original allocation.
+Implement an opt-in material-area limiter using actual geometry and conservative
+prefix checks, preserve default and legacy identities, and test the unchanged
+first-target discriminator plus state/restart isolation. Stop for a checkpoint
+after this integrated slice; do not add load/penalty tuning or raise numerical caps.

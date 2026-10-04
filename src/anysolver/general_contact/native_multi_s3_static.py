@@ -145,7 +145,7 @@ class NativeRetainedMultiS3Analysis:
     _recoverable_trial_error = staticmethod(NativeRetainedRoundS3Analysis._recoverable_trial_error)
 
     def __init__(self, definitions, boundaries, program, shell_model, pairs, *,
-                 equilibrium_tolerance, maximum_pairs=8, maximum_coupled_coordinates=256):
+                 equilibrium_tolerance, maximum_pairs=8, maximum_coupled_coordinates=256, activation_settings=None):
         if (type(definitions) is not tuple or not 1 <= len(definitions) <= 2
                 or any(type(d) is not NativeBeamDefinition for d in definitions)
                 or type(program) is not Program or type(shell_model) is not FEModel):
@@ -169,6 +169,16 @@ class NativeRetainedMultiS3Analysis:
             self.profile=(MATERIAL_PROFILE if len(definitions)==2 and len(pairs)==2
                 and shell_model.mesh.dof_manager.total_dofs==18
                 and len({p.work.shell.element_id for p in pairs})==1 else MATERIAL_MULTIPATCH_PROFILE)
+        if activation_settings is not None:
+            if not self._material_mode:
+                raise ValueError('base multiple activation settings require the material-area owner')
+            from .native_material_activation import validate_settings
+            validate_settings(activation_settings, tuple(p.work for p in pairs),
+                              tuple(p.gap_tolerance_m for p in pairs))
+        # The historical line subclass owns its own settings and hook.
+        if self._material_mode or type(self) is NativeRetainedMultiS3Analysis:
+            self.activation_settings = activation_settings
+            self.activation_total_queries = 0
         self.native = NativeBeamAnalysis(definitions, boundaries)
         self.context = Context(self.native.model, program)
         if (len(self.context.elements) != len(definitions)
@@ -284,12 +294,16 @@ class NativeRetainedMultiS3Analysis:
             'pairs': [p.descriptor() for p in self.pairs]})
 
     def _identity(self):
-        return sha({'profile': self.profile if self._material_mode else PROFILE, 'revision': 'uncondensed_explicit_native_s3_work_v1',
+        descriptor = {'profile': self.profile if self._material_mode else PROFILE, 'revision': 'uncondensed_explicit_native_s3_work_v1',
             'native': self.context.identity, 'support': sha256(self.context.support_identity).hexdigest(),
             'shell': self.shell_contract_sha, 'cached_shell': [self.shell_stiffness, self.shell_free, self.shell_fixed],
             'pairs': [p.descriptor() for p in self.pairs], 'beam_indices': self.beam_indices,
             'native_slots': self.context.slots, 'equilibrium_tolerance': self.equilibrium_tolerance,
-            'maximum_pairs': self.maximum_pairs, 'maximum_coupled_coordinates': self.maximum_coupled_coordinates})
+            'maximum_pairs': self.maximum_pairs, 'maximum_coupled_coordinates': self.maximum_coupled_coordinates}
+        if self._material_mode and self.activation_settings is not None:
+            from .native_material_activation import REVISION
+            descriptor['activation'] = (REVISION, self.activation_settings)
+        return sha(descriptor)
 
     def _guard(self):
         self.context.guard(); self.native._guard()
@@ -334,6 +348,12 @@ class NativeRetainedMultiS3Analysis:
             float(np.linalg.norm(scaled[self.context.compatibility])),
             float(np.linalg.norm(residual[n+self.shell_free])))
         return residual, tangent, metrics, responses, contact
+
+    def _activation_fraction(self, start, u_start, step, fraction, contact, cancellation_token):
+        if self.activation_settings is None:
+            return fraction
+        from .native_material_activation import activation_fraction
+        return activation_fraction(self, start, u_start, step, fraction, contact, cancellation_token)
 
     def _swept_admissible(self, start, u_start, increment, end, u_end, *_):
         first = self._contact(start, u_start); last = self._contact(end, u_end)
@@ -440,9 +460,13 @@ def create_native_contact_analysis(definitions, boundaries, program, shell_model
     owner = NativeRetainedMultiS3Analysis
     extra = {}
     if activation_settings is not None:
-        from .native_activation_static import NativeActivationMultiS3Analysis
-        owner = NativeActivationMultiS3Analysis
-        extra['activation_settings'] = activation_settings
+        if (type(pairs) is tuple and pairs
+                and all(type(p.work) is NativeRetainedMaterialS3Work for p in pairs)):
+            extra['activation_settings'] = activation_settings
+        else:
+            from .native_activation_static import NativeActivationMultiS3Analysis
+            owner = NativeActivationMultiS3Analysis
+            extra['activation_settings'] = activation_settings
     return owner(definitions, boundaries, program, shell_model, pairs,
         equilibrium_tolerance=equilibrium_tolerance, maximum_pairs=maximum_pairs,
         maximum_coupled_coordinates=maximum_coupled_coordinates, **extra)

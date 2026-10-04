@@ -1,6 +1,6 @@
 # General contact — goal
 
-**Revision:** 2026-10-04.11. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.104. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-10-04.12. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.105. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
 
@@ -58,13 +58,13 @@ engineering acceptance.
 
 Prioritize a missing capability requirement, a necessary correctness repair or a measured end-to-end bottleneck. Reuse existing contributor, state, restart, search and test infrastructure. Add a profile/restart identity only when its mechanical or compatibility contract differs; do not create new public options for internal optimizations. Existing identities and explicit selection stay valid.
 
-**Budget disposition:** the original120-hour clock is exhausted:
-428891+3120=432011 active seconds (120.003hours). A user time/scope/method
-decision is required before further development. Full completion
-within that remainder has no supportable forecast. Use it for the next bounded
-delivery and an honest handoff; this neither narrows the programme nor extends the
-clock. At exhaustion obtain the required time/scope/method decision. Planning while
-paused does not restart the development clock.
+**Budget disposition:** the original 120-hour allocation remains consumed:
+428891+3120=432011 active seconds (120.003 hours). The user subsequently directed
+“Proceed developing”, authorizing further development beyond that boundary.
+No new duration was specified; do not invent an eight-hour allocation or reset
+historical accounting. Resume with the bounded material-area activation slice
+and checkpoint its outcome. Full C0–C9 scope, scientific gates and consumed
+execution restrictions remain intact; a completion forecast is unsupported.
 
 This is a prospective workflow change. Preserve existing equations, dimensional settings, acceptance criteria, exact accepted scopes, contrary evidence and frozen/consumed authorities. The [previous goal](docs/d1_review_support/GENERAL_CONTACT_GOAL_HISTORY_20260930_REV4.md) remains historical evidence.
 
@@ -126,12 +126,12 @@ The lead may not change numerical targets, retrospectively alter registered crit
 
 ## Budget and progress control
 
-- **Budget:** five active days from development resumption at 08:04:33 UTC on 29 September 2026, interpreted as 120 hours of elapsed active task time. Count implementation, reasoning, checks, owned runs and review after that resumption; exclude user-requested pauses. Parallel workers share the same elapsed budget. Record the start and accumulated time; do not count only solver runtime or silently extend the budget. The preceding planning review did not start this clock.
+- **Original budget (consumed; subsequent explicit resumption above):** five active days from development resumption at 08:04:33 UTC on 29 September 2026, interpreted as 120 hours of elapsed active task time. Count implementation, reasoning, checks, owned runs and review after that resumption; exclude user-requested pauses. Parallel workers share the same elapsed budget. Record the start and accumulated time; do not count only solver runtime or silently extend the budget. The preceding planning review did not start this clock.
 - **Resources:** routine checks retain 180 s / 1 GB. A named registered integrated development, reference or claim-bearing run may use up to 15 min / 4 GB. For development, a short entry giving question, command/input identity, cap and expected decision suffices; it is not a formal acceptance dossier. Apply caps to the process tree. Existing stricter/frozen authorities prevail; exceeding the new ceiling requires a user decision.
 - **One delivery candidate.** Short reversible alternatives are permitted to answer a concrete question. Select, integrate or discard them after the bounded comparison; do not maintain parallel diagnostic branches indefinitely.
 - **Decision trigger:** after two consecutive slices without a gate advance, integrated improvement or evidence changing the next action, stop that investigation. Choose a permitted alternative immediately. Escalate only the decision outside delegated authority, then work on genuinely useful unblocked rows. Do not run more screens on the blocked question while awaiting that decision.
 - **At 60% of the budget:** require an executed integrated workflow, a supported pressure-stability disposition and a credible list of remaining runs that fits the remaining budget. If those are missing, give the user a concrete recovery choice with recommendation, costs and scope consequences. Do not manufacture progress by counting easy checks.
-- **At budget exhaustion:** preserve the candidate and evidence, report achieved and missing requirements, and request the necessary scope/time/method decision. Do not silently extend work or mark the goal complete.
+- **At original budget exhaustion (completed):** preserve the candidate and evidence, report achieved and missing requirements, and request the necessary scope/time/method decision. Do not silently extend work or mark the goal complete.
 - **Checkpoint:** at least once per active day and at a pause or material change of direction. Keep the living note near one page: actual integrated outcome, closed/open rows, principal blocker, next action and budget used. Link archived history rather than reproducing it.
 
 Use early scrutiny for consequential mechanics assumptions. Review the final acceptance specification before claim-bearing runs and the evidence package afterward. These reviews do not block unrelated authorized development or require repeated review of unaffected work. Routine experiments need focused checks, not formal registration. Freeze actual acceptance inputs, criteria and identities prospectively; retain failures and rerun only affected work for a corrected candidate or a predeclared repetition.

@@ -64,7 +64,7 @@ class NativeRetainedRoundS3Analysis:
                  native_boundaries: tuple, program: NativeNodalProgram,
                  shell_model: FEModel, contact: NativeRetainedLineS3Work, *,
                  gap_tolerance_m: float, equilibrium_tolerance: float,
-                 maximum_swept_intervals: int):
+                 maximum_swept_intervals: int, activation_settings=None):
         if (type(definitions) is not tuple or len(definitions) != 1
                 or type(definitions[0]) is not NativeBeamDefinition
                 or type(program) is not NativeNodalProgram):
@@ -81,6 +81,13 @@ class NativeRetainedRoundS3Analysis:
                 or type(maximum_swept_intervals) is not int
                 or maximum_swept_intervals < 1):
             raise ValueError("native/S3 owner needs positive finite solver controls")
+        if activation_settings is not None:
+            if type(contact) is not NativeRetainedMaterialS3Work:
+                raise ValueError('single activation settings require the material-area owner')
+            from .native_material_activation import validate_settings
+            validate_settings(activation_settings, (contact,), (gap_tolerance_m,))
+        self.activation_settings = activation_settings
+        self.activation_total_queries = 0
         self.native = NativeBeamAnalysis(definitions, native_boundaries)
         self.context = NativeNodalContext(self.native.model, program)
         if (len(self.context.elements) != 1
@@ -116,7 +123,7 @@ class NativeRetainedRoundS3Analysis:
         )
 
     def _identity(self) -> str:
-        return sha(dict(
+        descriptor = dict(
             profile=self.profile,
             native_model=self.context.identity,
             native_support_sha256=sha256(self.context.support_identity).hexdigest(),
@@ -125,7 +132,11 @@ class NativeRetainedRoundS3Analysis:
             gap_tolerance_m=self.gap_tolerance,
             equilibrium_tolerance=self.equilibrium_tolerance,
             maximum_swept_intervals=self.maximum_swept_intervals,
-        ))
+        )
+        if self.activation_settings is not None:
+            from .native_material_activation import REVISION
+            descriptor['activation'] = (REVISION, self.activation_settings)
+        return sha(descriptor)
 
     def _shell_contract(self):
         model = self.shell_model
@@ -482,6 +493,12 @@ class NativeRetainedRoundS3Analysis:
             "S3 material skin is degenerate",
             "S3 material skin is inverted",
         ))
+
+    def _activation_fraction(self, start, u_start, step, fraction, contact, cancellation_token):
+        if self.activation_settings is None:
+            return fraction
+        from .native_material_activation import activation_fraction
+        return activation_fraction(self, start, u_start, step, fraction, contact, cancellation_token)
 
     def _swept_admissible(self, start, u_start, increment, end, u_end,
                           start_gap, end_gap, start_rim, end_rim):
