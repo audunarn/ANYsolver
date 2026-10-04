@@ -2081,3 +2081,14 @@ prove convergence or select space. Supplemental reference is not CalculiX.
 Supporting review clear; different-family, complete mixed/locking/physical
 acceptance and aggregate M2/F03/G0 OPEN. FormalF03 UNCONSUMED; no product change.
 [Results, stopped campaign and exact evidence](development/r8-bl5-projected-assessment-20261003/results.md).
+
+M2 fixed positive-part producer, 4 October — CLOSED_UNRESOLVED method.
+ONE reviewed saved-kernel attempt retains full L/D/F, original shifts/error/G and
+byte-identical D/permutations.19controls PASS after retained5failed/13passed
+SciPy ownership seam. The unchanged workspace guard refuses2147504896B versus
+2147483648B during partial symbolic preflight; no fullrho/margin/floor or sign
+result.1.0034s/114720768B sampled, pools1/JIToff. Supporting source/evidence review
+clear. Both HOLDs protected; seven fine cases unrun.13positive/oneunresolved/
+sevenunassessed. No criterion/resource/product/default change, formalF03 use,
+law/space selection or aggregate acceptance. Next work leaves this factor route.
+[Exact disposition and evidence](development/r8-bl5-projected-assessment-20261003/results.md).

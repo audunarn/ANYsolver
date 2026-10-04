@@ -48,7 +48,7 @@ controls PASS; one4.3559s/112361472B sampled run, pools1/JIToff. Supporting
 source/runtime review clear. Historical interval/inverse HOLD remains protected.
 Positive507/1781 proofs keep their scope. Ten more saved kernels pass the same
 target and physical floor: all five new Nx16 cases, ns32_b2 and four Nx32 cases.
-Mechanical inventory13 positive/one producer HOLD/seven untested. The middle
+Mechanical inventory13 positive/one unresolved/seven untested. The middle
 stage stopped at ns32_b8; the fine stage was not started. No negativity follows
 from a negative producer diagonal at the stronger3epsilon shift. Saved result
 bindings/resources audited without numerical repetition. Focused helper10 and
@@ -64,25 +64,36 @@ not selected. Auxiliary beta cannot establish physical transfer or choose space.
 
 ## Next discriminating action
 
-Decision sought: distinguish a producer-sign restriction from inability to prove
-the ORIGINAL ns32_b8 target. Established: the complete Gram theorem admits any
-finite real F, including singular F; negative pivots at3epsilon need not imply
-failure at2epsilon. ONE reviewed prospective positive-part producer construction
-F=L sqrt(max(D,0)) may reuse the saved A0/error and SAME shift/order. This is a
-diagnostic factor, never a repair to the mechanical operator or a claimed exact
-LDL/spectral positive part. Original HOLD lacks L, so a separately recorded one
-backend call must retain complete L/D/permutations before admission, match the
-recorded permutations, and include all discarded work in the complete residual.
-Unchanged rho/margin/floor are the sole gate.600s/2GiB/1thread/JIToff, one attempt;
-no shift/order/precision/budget/mesh tuning or automatic campaign. If proved,
-record original-target progress; otherwise name the obstruction and advance
-independent obligations. Fine stage stays unstarted pending that decision.
-Root owns scheduling/raw/Git; bounded worker owns only additive helper/tests.
-Exact current evidence/reviews: raw envelope-gram/. FormalF03 unconsumed.
+The ONE positive-part producer attempt is CLOSED_UNRESOLVED. Complete L/D/F,
+byte-identical original D/permutations, target/error/shifts/G were retained.
+Unchanged workspace preflight refused2147504896B versus2147483648B during
+partial symbolic enumeration; fullrho/margin were NOT computed.1.0034s/
+114720768B sampled, pools1/JIToff;19controls PASS after preserved5failed/13passed
+SciPy owned sparse-array conversion defect. Supporting complete-slice review
+clear. This is resource admission, not negative mechanics; low sampled RSS does
+not override the allocation guard. No budget/guard/shift/order/precision retry.
+Both HOLDs protected; seven fine cases stay unstarted. FormalF03 unconsumed.
+
+Next delivery: a PRIVATE model-bound reference-linear distributing compiler for
+a rectangular footprint across two adjacent flat Cartesian Q4 hosts. Actual
+selected-node rigid constraints and chart/history work already exist; no repeat.
+Use the existing prototype's area-mean position, independent tangential director
+averages and polar-yaw gradient under separate experimental identity
+GE_FLAT_Q4_DISTRIBUTING_DIRECTOR_POLAR_REFERENCE_LINEAR_V1_EXPERIMENTAL.
+This differs from the historical position-only Procrustes candidate. Neither is
+selected/qualified for the complete programme. No public owner wiring/admission,
+finite-chart/plastic/mass claim. Own reference integration/gather/transpose work
+and eccentric lever arms; preserve native element/retained variables and legacy
+laws. New focused checks cover actual host mapping, rigid reproduction, shear/
+nonrigid freedom versus rigid coupling, drill independence, work/reactions and
+ownership/precise negatives. Existing mechanics criteria and G0 guards unchanged.
+Root owns scheduling/raw/Git. Current new evidence: envelope-gram/ and
+positive-part-gram/; immutable extension follows raw-manifest-v15.
 Do not rebuild completed fibres, free-mode owners or consumers.
 
-All numerical jobs TERMINAL. Additive factor-helper implementation is active;
-source review and controls precede any new numerical action. Max3workers.
+All numerical jobs TERMINAL; factor implementation/review complete. One bounded
+Edit worker owns only new distributing helper and focused tests; root reviews
+the source, schedules checks and integrates. Max3workers.
 Mandatory CalculiX, full mixed/locking/shear/drilling/growing-space acceptance,
 material/topology/capacity/scale/platform/consumer/different-family acceptance,
 authorized release and clean synchronized main remain open.

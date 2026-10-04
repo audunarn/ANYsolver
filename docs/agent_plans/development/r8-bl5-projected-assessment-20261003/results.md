@@ -1002,3 +1002,36 @@ development claims. Different-family scientific acceptance remains open. No
 product equation, wheel, default, tolerance, law/space choice, aggregate M2/G0
 acceptance or formalF03 authority changed.
 [Raw inputs, stages, audits and reviews](../../../../.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/).
+
+### One positive-part producer correction — closed unresolved
+
+The reviewed theorem permits singular real Gram candidates, so one prospective
+method correction removed the producer's unnecessary all-positive-D restriction.
+It reused saved ns32_b8 A0/error/metric/shifts and required byte-matching producer
+permutations. Exactly one backend call retained complete L and unclipped D before
+constructing F=L sqrt(max(D,0)). This is neither a physical matrix repair nor an
+assertion of exact LDL or spectral positive-part structure. Full Gram residual
+and the original physical floor remain the only possible acceptance gate.
+
+The initial controls caught a SciPy sparse-array/matrix ownership seam (5failed,
+13passed); draft sources and failed logs are retained. Explicit owned CSR-matrix
+conversion plus its regression yielded19 passed in.50s. Supporting preexecution
+review cleared the final exact sources/driver/bindings, not the expected result.
+
+The single case completed1.0034s, sampled tree peak114720768B, pools1/JIToff,
+but the unchanged proof workspace guard returned RESOURCE_REFUSAL before rho
+or margin was computed: estimated2147504896B exceeded2147483648B during partial
+symbolic enumeration. Partial167036 updates/80589 entries are not complete
+product totals. The physical floor remains null; no negativity conclusion.
+The complete saved producer has6257 coordinates,370745 L entries and two
+negative D entries; their signs do not establish actual-target inertia.
+
+Original producer D/permutations replay byte-identically. All source/input,
+array/resource and target bindings pass root and independent retained-evidence
+inspection. Complete L/D/F NPZ SHA874ab68f844dd3d123ff8a610e1c50e95531306dd060bc8633e5d7525e1ccb0d.
+The authoritative nested proof status is resource HOLD (compact top-level stdout
+hold_kind is null). Both original and new HOLD remain protected. This bounded
+factor route is CLOSED_UNRESOLVED; no guard, budget, shift, ordering, precision
+or refinement retry follows. Seven fine cases remain unrun. Mechanical inventory
+stays13 positive/one unresolved/seven unassessed; all aggregate boundaries stay.
+[Complete attempt and reviews](../../../../.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/).
