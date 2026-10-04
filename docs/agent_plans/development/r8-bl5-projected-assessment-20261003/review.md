@@ -171,3 +171,24 @@ runtime results and error boundaries. No positive sign follows from either
 failed sufficient inequality. Reviews/source snapshots/raw are grouped in the
 next immutable manifest extension. This is supporting same-family review,
 not different-family scientific acceptance. All formal gates remain open.
+
+## Fixed beam/shell density-control slice
+
+Bounded worker ownership covers only the new fixed embedding/flat-J helper and
+its controls. Root inspected both files, independently prepared actual reference
+rows and signed lever/wrench recovery, and ran31 source controls, ONE saved-K
+coarse solve and a zero-solve work decomposition. A non-implementing supporting
+OpenAI Read reviewer verified complete source/site/wheel417-module bindings,
+six frozen input hashes,17 saved operator/state array identities, row embedding,
+retained-variable recovery, successful terminal logs and resource observations.
+The V1 missing saved-loader dependency binding was repaired before the case;
+case entry additionally pins the successful prepared pair and terminal status.
+V1 remains evidence for its original source, and V2 reviews the actual final
+runtime. Parent rank/norm/kernel claims do not transfer to the coarse child.
+
+The review distinguishes an integrated regional attachment wrench from a section
+moment and density sensitivity from law accuracy. No blocking defect found in
+the completed control. Hypothetical nonfinite serialization is not promised a
+paired JSON record; NPZ/logs and the original exception remain fallback evidence.
+These supporting same-family reviews do not satisfy scientific different-family
+acceptance, physical accuracy, uniform stability or any aggregate gate.

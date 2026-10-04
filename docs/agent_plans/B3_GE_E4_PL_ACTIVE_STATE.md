@@ -1,84 +1,83 @@
-# B3-GE / E4-PL / B2 active state —4 October2026
+# B3-GE / E4-PL / B2 active state — 4 October 2026
 
-## Authority and restart
+## Authority and identities
 
-Full Revision8 goal ACTIVE, unbudgeted. Plan/goal live in historical
+Full Revision8 goal ACTIVE, unbudgeted. Plan/goal in historical
 C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_plans.
-Complete amendedG0–G6/F01–F13/V01–V28/B01–B18 remains binding. Development is
-not acceptance/release. BL5 explicitly releases normalspin; historical six-row
-points unchanged. Do not rebuild delivered GE/B2/consumer/material/load/arc routes.
+Complete amended G0–G6/F01–F13/V01–V28/B01–B18 stays binding; experimental
+implementation/testing is not acceptance/release. BL5 releases normal spin;
+historical six-row points unchanged. Preserve existing GE/B2/consumer routes.
 
 Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; slice parent3f43e9eb. Verify HEAD
-and status on resume. Local scoped commits only; NO push/main merge/publication/
-contact-worker messages. Installed unreleased0.4.7 wheel SHA
-1bf7dabd8771e76ed09825fb66a89e3e48d513dbb0321989c41701096a679632
-binds417 modules; product unchanged, prior51 installed controls remain scoped.
-ANYfem2ede338b separate. ANYmaterial editable graph is not isolated qualification.
+branch codex/stiffened-main-reconcile-20261001. Density slice parent4e41c121;
+verify actual HEAD/status on resume. Local scoped commits allowed; NO push,
+main merge, publication or contact-worker messages. Installed unreleased0.4.7
+wheel1bf7dabd8771e76ed09825fb66a89e3e48d513dbb0321989c41701096a679632
+binds417 modules; product unchanged. Prior51 scoped installed controls remain
+valid for unchanged inputs. ANYfem2ede338b separate; editable ANYmaterial graph
+is not isolated final qualification.
 
-FormalF03 UNCONSUMED. Protected original runner SHA
-c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481;
-never execute/copy/substitute it. Limits100krows/600s/8GiB/8threads, ONE numerical
-job. Current explicit proof/process2GiB override is within that ceiling, pools1/
-JIToff. No G5 budget change. NEVER inspect/copy historical us3-modal-canary
-(credentials); exact newly-owned evidence whitelists only. No Get-CimInstance
-reprobes. Local/Mistral unavailable; OpenAI supporting reviews do not satisfy
-required different-family acceptance. Pressure amendment remains pending.
+FormalF03 UNCONSUMED. Never execute/copy/substitute original protected runner
+c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
+Ceiling100krows/600s/8GiB/8threads, ONE numerical job. Current2GiB process
+limit within ceiling, pools1/JIToff; G5 budget unchanged. NEVER inspect/copy
+us3-modal-canary(credentials); whitelist newly-owned evidence only. No
+Get-CimInstance or optional-worker reprobes. Local/Mistral unavailable;
+supporting OpenAI review is not different-family scientific acceptance.
+Pressure amendment remains pending.
 
-## Decision, established facts and remaining uncertainty
+## Decision and established behavior
 
-Retain experimental projected five-channel Hhalf=4max(1,Nhalf/Nshell) candidate.
-All21 scalar preparations and physical screens at Nx16/32/64 and whole-member
-ratios1/8..8 exist; halfcell ratios are twice these. Original failures retained.
-Maximum physical checks4.156e-12. Coarse1:8 Mz lastlevel work change10.682% remains
-unconverged; do not infer1% engineering accuracy or select multiplier policy.
+Retain experimental Hhalf=4max(1,Nhalf/Nshell) candidate, not a selected policy.
+21 scalar preparations/installed physical screens at Nx16/32/64 and seven whole-
+member ratios exist; halfcell ratios are twice those. Maxphysical4.156e-12.
+The coarse1:8 last-level Mzwork change10.682% remains unconverged. Saved work
+kernels507/1781 have scoped positive bounds;8:1 kernel2745 remains HOLD.
+Arithmetic-tuning ticket CLOSED_UNRESOLVED: scalar mu1.42e-139<rho3.8e-11,
+fixed18 block eta213.918>1. No actual negative mode or formulation failure.
+No automatic precision/block/mesh variants. Failed evidence remains preserved.
 
-Exact constrained work kernels507/1781 have scoped positive bounds; saved8:1
-kernel2745 remainsHOLD. Original interval50/100 and incidence error histories
-are immutable. New factor-residual V1 stops at resource guard; explicit2GiB V2
-completes with mu1.42056e-139 versus originalrho3.79996e-11. ONE fixed18 block-left
-V3 keeps identicalF/permutation/epsilon/required2epsilon/metric/rho, but eta213.918
-fails the Neumann predicate. Even zero product error with its current inverse
-majorants would not beat rho. This establishes no actual negative work mode.
+ONE fixed Ns64/nativeh16 density-only control is complete: same K/full6924
+roles, geometry/material/load/ground, all-five S4/H4→S2/H8 exact subspace.
+Analytic reference/embedded C errors2.22e-16;31 source controls pass. ONE
+6837-row coarse solve, factor1/corrections2, maxphysical2.52e-12. Work+13.1197%;
+regional attachment-root Mz19.48894 vs-.91609Nm over[.25,.75], not a section
+moment; total transfer unchanged. Zero-solve work identity error3.21e-16:
+parent lateral action on child fine gaps supplies about99.8% of signed change.
+This is density sensitivity, not an energy partition, law accuracy or positivity.
+Supporting non-implementing source/runtime/algebra reviews have no blocker.
 
-25 scalar and33 repaired block controls pass. First4failed block controls and
-source preserved; generated CSR ordering and wrong-phase test expectation fixed.
-Supporting independent mathematical/source/runtime reviews have no correctness
-blocker. All numerical jobs TERMINAL; maximum completecase6.498s/114.09MB sampled,
-pools1/max1. No measured speedup, product change or scientific gate acceptance.
+[Grouped results/reviews](development/r8-bl5-projected-assessment-20261003/results.md)
+and [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) keep bindings.
+New density-control raw40files/612917B, manifestV11 SHA
+c7223ba94c6ab964b977aaa39d783d616ab3c7f16f157125be5799fe882d4f01.
+Earlier manifests/evidence unchanged; parent/prospective active notes archived
+byte-for-byte. All completed density-control/algebra jobs TERMINAL, max1;
+case2.0935s/195.75MB sampled, not measured savings. Numerical activity is idle.
 
-[Grouped results/review](development/r8-bl5-projected-assessment-20261003/results.md)
-and [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) retain exact
-bindings. Raw v10 under factor-residual/:69files/6222692B, manifest SHA
-11c78508848846ee6b51d2b2621154531ad081f34266ae8d788231185c547568.
-Historical parent/prospective live notes preserved byte-for-byte there.
+## Next discriminating action and ownership
 
-## Next action and ownership
+Connection density materially changes lateral transfer; pure beam refinement
+cannot alone explain the joint trend. Do not tune a channel or select S2/H8.
+[Matched-reference Read](development/r8-bl5-projected-assessment-20261003/reference-next-decision-read-v1.md)
+finds no completed exact Ns64/h16 S4/S2 external pair. Closest Ns16/h16/S4
+matches beam/density/physical laws but has coarser shell. Existing generic
+ASDShellQ4/classic-beam rational work/recovery services can supply the missing
+same-geometry pair; classic bodies differ from native retained operators.
 
-Arithmetic-tuning ticket CLOSED_UNRESOLVED. No automatic block-size/precision/
-mesh variants. Jointly interpret saved21 physical actions to distinguish coarse-
-beam Mz discretization from connection transfer; reuse data before any solve.
-The bounded Read report is complete:
-[Physical next decision](development/r8-bl5-projected-assessment-20261003/physical-next-decision-read-v1.md).
-Root verified source halfcell-mean density, row inventory and six saved aggregate
-work/count identities. Other workers idle; ALL jobs terminal. No duplicated read.
+Root prospectively chooses ONE two-case supplementary Mz comparison at fixed
+Ns64/h16, changing only S4→S2 density, not another refinement campaign.
+If work/region/lateral-field contrast agrees, density sensitivity receives
+independent support; differing contrast exposes a body/transfer reference
+obstruction requiring separation. Neither closes stability/converged accuracy
+or mandatory CalculiX. All physical geometry/sections/offsets/supports/measures
+and source/DLL identities must be checked before root launches serial cases.
 
-Current question: beam resolution versus connection-density sensitivity. Existing
-fixedh8/S2 and h16/S4 diagonal comparisons change shell alone with Mzwork about
-0.49% and0.75%/0.22%, much less than the joint10.68% change. No causal proof or
-coarse1:8 reference accuracy follows. Next ONE connection-only control keeps
-savedns64_b1_8 K, full6924 physical/retained roles, geometry/load/ground fixed and
-coarsens S4→S2 in allfive channels using an exact affine-density row embedding.
-Verify the embedding/work independently before solving. This is a bounded
-experimental control outside the registered candidateH4 rule, not a new policy
-or formalF03 assessment. Existing goal permits such development choices; all
-criteria/history/resource limits remain intact. Large work/region-action change
-identifies connection-space sensitivity; small change favors beam discretization
-as the remaining explanation. Neither outcome fills the missing kernel proof.
-
-Choose one hypothesis-led physical discriminator from that report after source/
-geometry/load/support checks. Unrelated material/load/spectral/consumer work may
-advance without filling the missing kernel proof by inference. Full21 mixed/native-
-beta, physical accuracy/locking/director/shear/drilling and M2/G0/F03 remain OPEN.
-Mandatory CalculiX, practical scale/platform/consumer/different-family acceptance
-and final authorized publication/clean synchronized main remain required.
+Worker nested_external_runner owns only NEW scripts/r8_bl5_density_reference_dev.py
+and its test file; source/preparation only, NO numerical/Git/nested worker action.
+Root owns review, tests, drivers, serial cases and integration; reviewer
+nested_owner_review is idle after completed density review. At most3 workers.
+F03/M2/G0, fullmixed/native-beta, accuracy/locking/shear/drilling, mandatory
+external, practical scale/platform/consumer/independent and release remain OPEN.
+No new qualification package or general planning cycle. Continue unrelated
+ready obligations without inferring missing foundation acceptance.

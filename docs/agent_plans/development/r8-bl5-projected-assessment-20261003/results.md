@@ -693,3 +693,69 @@ a small change favors coarse beam discretization. No solver run has occurred.
 This changes neither the retained candidate rule nor qualification criteria;
 no automatic mesh/inverse/precision campaign follows. [Read-only report and its
 limitations](physical-next-decision-read-v1.md).
+
+## Fixed beam/shell connection-density decision
+
+The prospective control above is now complete. This is a development diagnostic,
+not a replacement H4 policy or formal F03 execution. Exact saved Ns64/h16 K,
+all6924 physical/retained coordinates, supports, Mz10Nm load, geometry and material
+remain unchanged. Removing20 of40 interface rows uses the same complete five-
+channel density space: S4/H4 to its nested S2/H8 subspace. No element remeshing,
+constitutive evaluation or owner rebuild occurred.
+
+The independently derived flat21-variable work rows reconstruct the original
+fine C and the direct coarse C with relative discrepancies2.22045e-16.
+Rational native-halfcell averaging and dual work are exercised in all channels;
+the selected supported20-column exact minor proves row rank20 only. Independent
+cross-product recovery reproduces saved parent regional/polynomial actions
+exactly and agrees with signed C.T and actual retained-variable rigid work maps.
+31 focused source controls pass, including nonzero arm/lift, actual Rodrigues
+derivatives, ownership and invalid inputs. No unrelated passed suite was repeated.
+
+ONE general sparse6837-row/350865-nnz KKT solve uses one factorization and the
+existing two compensated residual corrections. Maximum physical discrepancy is
+2.52157e-12; weak scaled gap1.38966e-22. Work rises from1.74815435182988e-5 to
+1.9775065247236978e-5J (**+13.119675%**). Shared scaled physical nodal change is
+3.818135%. The integrated attachment wrench Mz about the beam root over
+x=[.25,.75] changes from-.916094 to+19.488938Nm; integrated beam-side Fy changes
+from-14.957611 to-8.632084N. This regional wrench is not a beam section moment.
+Full connection Mz remains-10Nm on the beam and+10Nm on the shell; compensating
+transfer outside the region preserves the same global balance.
+
+Saved-array algebra, with zero additional solves, independently reconstructs
+the2.2935217289381777e-6J work difference. For parent p and coarse child q:
+
+    Wq-Wp = q.T K p - p.T K q + lambda_p.T Cf q
+             - lambda_q.T Cc p - q.T r_p + p.T r_q.
+
+The actual cross-skew and residual terms are retained; no full-K SPD or symmetry
+assumption is used. Scaled identity error3.21250e-16. The signed lateral-
+translation action is2.2888923935242343e-6J, about99.8% of this difference, with
+small signed contributions from the remaining four channels. This identifies
+the action excited by this load; it does not license single-channel tuning.
+The128 sampled linearized local gaps remain nonzero for both solutions despite
+tiny weak constraints; these samples/RMS are not a global continuous trace norm.
+Translation and director channels have different units. The signed action is
+defined modulo the coarse range, not a unique partition into removed modes or
+independent channel energies. None changes the declared connection semantics.
+
+Decision: connection-density resolution materially affects lateral transfer at
+fixed beam and shell. Pure beam-resolution error is insufficient as an explanation
+of the complete existing trend, although beam error is not excluded. Do not select
+S2/H8, refine automatically, or infer accuracy from smaller gaps or larger work.
+The next physical comparison must match the lateral force/lever action and the
+declared line idealization; reuse applicable saved references before creating a
+new external model. The unresolved8:1 kernel enclosure, native-beta, uniform
+stability, engineering accuracy, mandatory CalculiX and M2/G0/F03 remain OPEN.
+
+Preparation0.5725s/80.44MB sampled; case2.0935s/195.75MB; saved algebra.4377s/
+53.06MB. These are supervisor observations, not a speedup claim or exact peak.
+All jobs terminate successfully, pools1/JIToff/max1, inside600s/2GiB (algebra1GiB).
+Supporting independent OpenAI complete-slice review found no blocking defect;
+different-family scientific acceptance remains unmet. V1 admission findings,
+their repaired source identities, V2 review and the algebra delta are retained.
+Product/site/wheel417-module correspondence is unchanged.
+
+Exact new source, paired arrays, commands, runtime logs and reviews are grouped
+under density-control/ and [raw manifestV11](raw-manifest-v11.json), extending
+V10 without changing earlier raw records or the unconsumed formal authority.

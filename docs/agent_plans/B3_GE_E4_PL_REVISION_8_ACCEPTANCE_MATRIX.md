@@ -1991,3 +1991,17 @@ and distinguish coarse-beam Mz error from connection transfer. Existing positive
 507/1781 kernels remain scoped evidence. Fullmixed/native-beta/physical accuracy,
 different-family/external acceptance and M2/G0/F03 OPEN; formalF03 UNCONSUMED.
 [Grouped results/review](development/r8-bl5-projected-assessment-20261003/results.md).
+
+**4 October fixed beam/shell density control — IMPLEMENTED_NOT_QUALIFIED.**
+Same saved Ns64/h16 K,6924 roles, load/supports/material/geometry; complete
+five-channel S4/H4→S2/H8 exact nested embedding.31 source controls pass;
+independent reconstruction discrepancies2.22e-16. ONE coarse solve passes all
+physical controls (max2.52e-12), one factorization/two corrections. Work+13.1197%,
+regional attachment-root Mz19.48894 versus-.91609Nm, unchanged total transfer.
+Zero-solve work identity attributes about99.8% of signed difference to the
+removed fine lateral action; no channel tuning or law selection follows.
+Material density sensitivity is established at this fixed operator, not physical
+accuracy or positivity. Supporting independent runtime review has no blocker;
+different-family/mandatory references, mixed/native-beta, accuracy/convergence
+and M2/G0/F03 remain OPEN. Formal authority UNCONSUMED; no product/default change.
+[Complete results, limitations and manifest](development/r8-bl5-projected-assessment-20261003/results.md).
