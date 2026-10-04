@@ -58,10 +58,23 @@ Historical parent/prospective live notes preserved byte-for-byte there.
 Arithmetic-tuning ticket CLOSED_UNRESOLVED. No automatic block-size/precision/
 mesh variants. Jointly interpret saved21 physical actions to distinguish coarse-
 beam Mz discretization from connection transfer; reuse data before any solve.
-A bounded Read worker nested_external_runner examines existing aggregate and
-necessary1:8 records; no code/tests/solvers/Git authority. Its report destination:
-TEMP/r8-bl5-factor-residual-v1/physical-next-decision-read-v1.md. Check whether
-complete before resuming/duplicating. Other workers idle; no numerical job live.
+The bounded Read report is complete:
+[Physical next decision](development/r8-bl5-projected-assessment-20261003/physical-next-decision-read-v1.md).
+Root verified source halfcell-mean density, row inventory and six saved aggregate
+work/count identities. Other workers idle; ALL jobs terminal. No duplicated read.
+
+Current question: beam resolution versus connection-density sensitivity. Existing
+fixedh8/S2 and h16/S4 diagonal comparisons change shell alone with Mzwork about
+0.49% and0.75%/0.22%, much less than the joint10.68% change. No causal proof or
+coarse1:8 reference accuracy follows. Next ONE connection-only control keeps
+savedns64_b1_8 K, full6924 physical/retained roles, geometry/load/ground fixed and
+coarsens S4→S2 in allfive channels using an exact affine-density row embedding.
+Verify the embedding/work independently before solving. This is a bounded
+experimental control outside the registered candidateH4 rule, not a new policy
+or formalF03 assessment. Existing goal permits such development choices; all
+criteria/history/resource limits remain intact. Large work/region-action change
+identifies connection-space sensitivity; small change favors beam discretization
+as the remaining explanation. Neither outcome fills the missing kernel proof.
 
 Choose one hypothesis-led physical discriminator from that report after source/
 geometry/load/support checks. Unrelated material/load/spectral/consumer work may

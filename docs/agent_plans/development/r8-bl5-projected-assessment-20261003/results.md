@@ -672,3 +672,24 @@ FormalF03 remains UNCONSUMED. Installed product is unchanged.
 SHA11c78508848846ee6b51d2b2621154531ad081f34266ae8d788231185c547568.
 Earlier raw manifests and failed evidence remain unchanged. Parent/prospective
 active notes are archived byte-for-byte; the live note is compact again.
+
+## Physical decision from saved actions
+
+A bounded Read-only report compares the three whole1:8 records and existing
+fixed-halfcell/support diagonals. Root checked actual aggregate counts/works,
+channel-major support-row inventory and the source reference-halfcell mean rule.
+Whole1:8 changes members2→4→8 and density supports1→2→4; its halfcell ratio is1:4.
+At fixedh8/S2,shell16→32 changes Mzwork about+.486%; at fixedh16/S4,shell16→32→64
+changes+.746%/+.221%. Shell-only sensitivity is much smaller than joint10.682%,
+but this does not separate beam and density or establish convergence.
+
+Ground/totalMz and its Fy first moment duplicate torque balance. Exact regional
+moments and force distributions remain distinct physical observables; released
+normalspin makes Mz a bending/lever-transfer probe, not direct z-spin torque.
+The next ONE control holds savedns64_b1_8 beam/shellK/loads/ground fixed and uses
+an independently verified exact S4→S2 density-subspace embedding in allfive
+channels. A material work/region-action change identifies density sensitivity;
+a small change favors coarse beam discretization. No solver run has occurred.
+This changes neither the retained candidate rule nor qualification criteria;
+no automatic mesh/inverse/precision campaign follows. [Read-only report and its
+limitations](physical-next-decision-read-v1.md).
