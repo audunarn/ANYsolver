@@ -2331,3 +2331,14 @@ fibre keys reverse at the restarted -1 snapshot, positive dissipation and exact
 source/installed/restart histories pass. Elastic shell; no shell-plastic reversal
 or engineering capacity claim. Full G3/F06/physical/independent acceptance OPEN.
 [Evidence](development/r8-distributing-reference-linear-20261004/results.md).
+
+
+F06/V18 loaded native-fibre plastic/cyclic POINT transport,4 October:
+IMPLEMENTED_NOT_QUALIFIED. Installed1PASS;3branches share12acceptedpositions.
+Reset at active predecessor1, matching-cell flow/noncommutation at1.125,
+physical .05rad/1e-5rad floors, exact chart-event history/generation+1,
+paired native energy/reaction/material restart parity and stale/cancel guards pass.
+Pure assertion tightening verified from byte-bound saved states/counterexamples;
+no mechanics rerun. Elastic Q4/generalized member; no shell-J2/zero-load/
+capacity/global-energy or full F06/G3 acceptance. Independent family remains OPEN.
+[Evidence](development/r8-distributing-reference-linear-20261004/results.md).

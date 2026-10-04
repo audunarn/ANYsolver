@@ -1138,3 +1138,43 @@ noncommuting rotations, material/energy, reactions and durable continuation.
 Keep finite distributing chart admission excluded; do not add an optional operation.
 Converged physical transfer, BL5/F03, external/scale/platform and aggregate gates
 remain open. No automatic Fy/solid/adaptive/refinement campaign follows.
+
+
+## Loaded native-fibre plastic chart transport - 4 October
+
+Existing POINT owner, elastic full-map Q4 and mixed elastic-generalized/physical
+biaxial-fibre members. Same large-elastic geometry/supports and1MN beam bending,
+then independent shell3/6 +/-375kN couple. Four-stage nonzero quarter-unload/
+reload path; FY250MPa/H210GPa fibre law is an explicit constitutive control.
+No shell-J2, reverse plastic flow, zero-load, capacity or global total-energy claim.
+
+Installed1PASS149.48s on unchanged product wheel f31527d54afd93d1a334dbbda545cb9affce847cfac94676fe9e8a2f6718847b
+and exact520 source/import identities. Whole151.758s/sample181776384B,
+affinity/pools1/JIToff, unchanged600s/2GiB and20Newton/12backtrack/Adaptive(4,64).
+Control/reset/chart-restored branches retain same12acceptedpositions, without
+cutback: .125/.5/.75/1/1.125/1.5/1.75/2/2.5/3/3.5/4. Actual flow at reset1,
+physical work balances/gaps, nonnegative native paired dissipation, cancellation/
+stale-generation prefix preservation, exact same-event histories and durable
+material/reaction/energy successor parity at registered typed-unit1e-9 pass.
+
+Review identified a possible cross-cell false positive in the executed initial
+coverage assertion. Original test-v2/XML retained. Stronger test-v3 matches
+noncommutating rotation and actual plastic increments to the SAME fibre cell
+and asserts chart generation+1. verify-saved-v1 validates exact retained byte-
+bound numerical states, rejects cross-cell/wrong-member counterexamples and
+passes matching positive control. No duplicate numerical campaign follows a
+pure assertion strengthening. Both fibre cells are active/noncommuting at1.125
+in every branch; cell commutators8.59425317e-5/1.46998243e-4rad. Actual generation
+increment1. Control physical coverage: shell rotation.1230535644/commutator
+.00064815997, fibre nodes.1035606403/.00047949745, fibre cells.09738150734/
+.00039934079. All exceed unchanged.05rad/1e-5rad floors. Saved31snapshots plus
+input/coverage retain every material origin, frame, reaction, force and checkpoint.
+
+The zero endpoint was excluded BEFORE execution: point owner uses actual applied
+load normalization and nonzero residual with zero applied load has infinite
+ratio. This remaining point zero-load boundary is not a chart failure, relaxation
+or a qualified unsupported-domain exclusion. No numerical zero trial was run.
+Different-family scientific acceptance and aggregate F06/G3 remain OPEN.
+Next ready material transport gap is simultaneous shell-J2/native-fibre loaded
+chart behavior using this existing point-owner machinery; preserve partial-support,
+curved/line/topology, total-energy and all external/scale/platform obligations.

@@ -101,9 +101,14 @@ The near-term path is now:
   2installed PASS, maximum2.5753e-7, branch/state/recovery invariance. Existing
    biaxial constitutive control proves actual8station reverse flow at negative
    restart and exact14position source/installed history; elastic shells only.
-3. Next ready mandatory gap is F06/V18 active-plastic/cyclic chart transport on
-   the existing mixed native point owner. Reuse staged/rebase machinery; verify
-   actual noncommuting loaded rotations, material/energy and durable continuation.
+3. COMPLETE scoped F06/V18 native-fibre plastic/cyclic POINT chart transport:
+   3branches/12positions, matching-cell active noncommutation and generation4->5;
+   exact event history and typed-unit material/paired-energy/restart parity pass.
+   Elastic shell only; executed v2 and stronger v3 saved-state checks are distinct.
+4. Next ready mandatory gap is simultaneous shell-J2/native-fibre loaded chart
+   transport on that existing point owner. Require actual same-substep activity,
+   noncommuting physical coverage and durable history; no inference from the
+   elastic-shell case. Point zero-load norm remains unresolved; no relaxed check.
    Unresolved BL5/mixed-system, converged physical transfer, external comparisons,
    material/topology/load/stability/capacity/scale/platform and independent
    acceptance remain visible. Do not repeat completed campaigns automatically.

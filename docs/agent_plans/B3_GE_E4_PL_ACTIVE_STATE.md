@@ -2,7 +2,7 @@
 
 ACTIVE. Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/
 stiffened-main-reconcile-20261001; branch codex/stiffened-main-reconcile-20261001.
-Source parent c5f5d79e; current commit is determined from Git HEAD. ANYfem
+Source parent 735e42b9; current commit is determined from Git HEAD. ANYfem
 C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer; commit from Git HEAD.
 Complete amended G0-G6/F01-F13/V01-V28/B01-B18 remains binding. No aggregate gate
 closes. [Goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md),
@@ -53,14 +53,24 @@ Source/installed histories and14accepted checkpoints match byte-for-byte.
 Elastic shell/low-yield constitutive control; no shell-J2 reversal/capacity claim.
 Unchanged wheels reused by source/import/hash proof; failures retained.
 
-Next mandatory gap: F06/V18 active-plastic/cyclic chart transport on the existing
-mixed native POINT owner. Reuse admitted staged/rebase machinery and scientific
-.05rad/1e-5rad noncommutator floors. Confirm actual active histories, loaded
-noncommuting rotations, real rebase, material/energy/reaction invariance and
-durable continuation. Insufficient rotation, an inconsistent chart or an inactive
-branch keeps that claim open; no automatic load/budget escalation or false pass.
-Finite distributing chart remains excluded. No new API/framework or repeated
-Fy/solid/adaptive campaign; full programme and independent acceptance remain.
+F06 native-fibre POINT exit: installed1PASS149.48s; control/reset/chart-restored
+share12acceptedpositions through direction change/quarter-unload/reload. Elastic
+Q4/generalized member; yielding biaxial fibres. Actual activity at reset1 and
+same-cell noncommuting plastic activity at1.125 in both cells/all3branches; cells
+rotate.09738rad/commutator.00039934rad, above.05/1e-5floors. Rebase generation4->5,
+exact same-event histories and registered typed-unit1e-9 successor material/paired
+energy/reaction parity pass. Equilibriummax6.725e-9/gap2.495e-14. Whole151.758s/
+181776384B, affinity/pools1/JIToff. Executed v2 plus stronger v3 assertions checked
+on byte-bound retained states/cross-cell controls; no duplicate mechanics run.
+
+Next mandatory gap: simultaneous shell-J2/native-fibre loaded POINT chart transport.
+Reuse this staged geometry/force path and existing admitted native predecessor/
+chart machinery. Prospectively require actual SAME-substep shell+fibre activity,
+noncommuting physical coverage and invariant material/energy/reaction/restart.
+Elastic-shell result cannot establish that claim. Keep nonzero unload/reload:
+point zero-load norm remains unresolved, no relaxed acceptance or zero trial.
+No automatic amplitude/budget campaign; finite distributing chart stays excluded.
+Full F06/G3/physical/different-family/scale/platform/total-energy acceptance remains.
 
 Previous actual adaptive1.01 accepted through1.0075 then exhausted; all prefixes
 saved. Original fixed1.01 residual.00246153 unchanged. No retry, extra budget or
@@ -71,6 +81,7 @@ curvature sweep. Full material/physical/scale/platform/external acceptance remai
 [Grouped evidence](development/r8-distributing-reference-linear-20261004/results.md).
 Raw .qualification/b3-ge-e4-pl/r8-distributing-fy80-dev-20261004-v1 and
 r8-distributing-native-material-dev-20261004-v1 plus native-tangent/native-reverse
+and r8-native-plastic-chart-dev-20261004-v1
 development roots retain source snapshots, commands,
 failed checks, actual wheel/import/resource identities, outputs and reviews.
 Historical note/goal/plan/report/matrix bytes preserved. No numerical jobs remain;

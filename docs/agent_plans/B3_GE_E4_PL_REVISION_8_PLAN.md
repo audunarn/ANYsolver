@@ -831,3 +831,10 @@ resolves DAT balance precision on saved Mx/Fy models; no product/default change.
 Next adjudicate the scoped secant-director/curl law and saved convergence, then
 obtain required independent acceptance. No automatic finer model is justified.
 Full scientific, lifecycle and release duties unchanged; see active state/results.
+4 October forward material exit: loaded native-fibre plastic/cyclic POINT chart
+transport now has installed and byte-bound same-cell saved-state evidence.
+Three branches share12positions; exact reset history and typed-unit paired-energy/
+reaction/restart parity pass. Elastic Q4/generalized member only. Next simultaneous
+shell-J2/fibre same-substep loaded chart obligation reuses the existing machinery;
+do not add another attachment operation or repeat unchanged numerical campaigns.
+Point zero-load normalization, total energy and aggregate F06/G3 remain OPEN.
