@@ -79,6 +79,8 @@ BL5_GENERALIZED_MATERIAL_V1 = "BL5_GENERALIZED_MATERIAL_V1_DEV"
 BL5_COUPLED_J2_MATERIAL_V1 = "BL5_COUPLED_J2_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1_DEV"
+GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1_DEV"
+GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1_DEV"
 CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_LINEAR_V1"
 FINITE_CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"
 FINITE_MATERIAL_CHECKPOINT = (
@@ -199,6 +201,7 @@ class LinearDefinition:
     distributing_footprints: tuple[DistributingFootprintDefinition, ...] = ()
     finite_distributing_footprints: tuple[FiniteDistributingFootprintDefinition, ...] = ()
     finite_distributing_material_policy: str = "elastic"
+    cyclic_reference_actions: tuple[NodalAction, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -561,15 +564,30 @@ class ExperimentalGEAnalysis:
         if (type(definition.finite_distributing_material_policy) is not str or
                 definition.finite_distributing_material_policy not in (
                     "elastic", GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1,
-                    GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1)):
+                    GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1,
+                    GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1,
+                    GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1)):
             raise ValueError("explicit admitted finite distributing material policy required")
         self._distributing_material = definition.finite_distributing_material_policy != "elastic"
         self._distributing_shell_material = (
-            definition.finite_distributing_material_policy == GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1)
+            definition.finite_distributing_material_policy in (
+                GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1,
+                GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1))
+        self._distributing_cyclic = definition.finite_distributing_material_policy in (
+            GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1,
+            GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1)
+        if (type(definition.cyclic_reference_actions) is not tuple or
+                (not self._distributing_cyclic and definition.cyclic_reference_actions)):
+            raise ValueError("reference actions require the selected cyclic material history")
+        if self._distributing_cyclic and not definition.cyclic_reference_actions:
+            raise ValueError("cyclic history requires explicit reference actions")
         if self._distributing_material and not self._finite_distributing:
             raise ValueError("finite distributing material policy requires finite attachment records")
         self._distributing_checkpoint_kind = ("finite_distributing_coupled" if self._distributing_shell_material else
             "finite_distributing_material" if self._distributing_material else "finite_distributing")
+        if self._distributing_cyclic:
+            self._distributing_checkpoint_kind = ("finite_distributing_cyclic_coupled" if
+                self._distributing_shell_material else "finite_distributing_cyclic_material")
         if groups and finite_groups:
             raise ValueError("reference-only and finite distributing records cannot be mixed")
         reference_groups = groups
@@ -648,7 +666,7 @@ class ExperimentalGEAnalysis:
             definition.modal_boundary_policy, definition.footprint_chart_policy,
             definition.bl5_material_policy, definition.shell_reference_policy,
             definition.retained_scale_policy, reference_groups, finite_groups,
-            definition.finite_distributing_material_policy)
+            definition.finite_distributing_material_policy, definition.cyclic_reference_actions)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count, beam_inertias = _beam_reference(
             definition.beams)
         self._reference_modal_inertias = beam_inertias
@@ -720,6 +738,14 @@ class ExperimentalGEAnalysis:
         self._shell_parts = tuple(shell_parts)
         self._beam_parts = tuple(beam_parts)
         self._definition = definition
+        self._cyclic_reference_pattern = None
+        if self._distributing_cyclic:
+            from ._stiffened_shell_ge_finite_experimental import _nodal_translation_pattern
+            pattern = _nodal_translation_pattern(self, definition.cyclic_reference_actions)
+            self._cyclic_reference_pattern = pattern
+            self._definition = replace(definition, cyclic_reference_actions=tuple(
+                NodalAction(action.domain, action.node, tuple(float(v) for v in action.wrench))
+                for action in definition.cyclic_reference_actions))
         distributing_compiled = []
         used_shell, used_hosts, used_beam = set(), set(), set()
         for group in groups:
@@ -782,6 +808,11 @@ class ExperimentalGEAnalysis:
                     shell_rotation_numerics="GE_BEAM3_G3C_ISOLATED_SO3_NUMERICS_V1",
                     checkpoint_kind=self._distributing_checkpoint_kind,
                     histories="accepted_and_fixed_predecessor_v1")
+                if self._distributing_cyclic:
+                    identity_payload["distributing_finite_material"]["force_history"] = dict(
+                        admission="finite_signed_changed_factors_fixed_v1",
+                        zero_load_norm="immutable_unit_factor_reference_pattern_v1",
+                        reference_pattern=self._cyclic_reference_pattern.tolist())
         if self._bl5_shell_material:
             identity_payload["bl5_retained_scale_policy"] = "native_force_moment_roles_v1"
         if self._curved_reference:
@@ -909,6 +940,11 @@ class ExperimentalGEAnalysis:
             fixed.add(start+6*index[support.node]+support.component)
         self._fixed = np.array(sorted(fixed), dtype=int)
         self._free = np.setdiff1d(np.arange(count), self._fixed)
+        if self._distributing_cyclic:
+            with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+                reference_work = self._cyclic_reference_pattern[self._free]*self._coordinate_scale[self._free]
+            if not np.isfinite(reference_work).all() or not np.any(reference_work):
+                raise ValueError("cyclic history requires representable nonzero free-coordinate reference actions")
         if (not len(self._fixed) and not self._modal_only) or not len(self._free):
             raise ValueError("physical supports and free coordinates required")
         # This exact five-row layout cannot restrain all six rigid motions
@@ -992,9 +1028,15 @@ class ExperimentalGEAnalysis:
                     shell_rotation_numerics="GE_BEAM3_G3C_ISOLATED_SO3_NUMERICS_V1",
                     analysis=("nonlinear_force",), loads=("nodal dead translation forces",),
                     fixed_step_max_backtracks=16,
-                    increment_control=("fixed", "experimental_adaptive_halving"),
-                    adaptive_max_backtracks=12,
-                    adaptive_targets="strictly increasing positive force factors",
+                    increment_control=(("fixed",) if self._distributing_cyclic else
+                        ("fixed", "experimental_adaptive_halving")),
+                    adaptive_max_backtracks=None if self._distributing_cyclic else 12,
+                    adaptive_targets=("not admitted for cyclic history" if self._distributing_cyclic else
+                        "strictly increasing positive force factors"),
+                    force_history=("finite signed changed fixed-step factors" if self._distributing_cyclic else
+                        "strictly increasing positive force factors"),
+                    zero_load_normalization=("immutable unit-factor reference pattern" if self._distributing_cyclic else
+                        "actual applied force"),
                     checkpoints=(self._distributing_checkpoint_kind,),
                     recovery="accepted constitutive states and evaluated spatial connection actions",
                     excluded=("reference-linear solve", "chart rebase", "displacement/arc controllers",
@@ -1342,6 +1384,8 @@ class ExperimentalGEAnalysis:
         self._require_open()
         self._require_distributing_reference_only("finite solve and its controllers")
         if self._finite_distributing:
+            if self._distributing_cyclic and increment_control is not None:
+                raise ValueError("cyclic distributing material histories admit fixed increments only")
             if displacement_control is not None:
                 raise ValueError("finite distributing footprints do not yet admit displacement control")
             if type(actions) is not tuple or any(type(a) is not NodalAction for a in actions):
@@ -1610,6 +1654,8 @@ class ExperimentalGEAnalysis:
                     is not None else "pattern")
         adaptive = None
         if raw.startswith(INCREMENT_CONTROL_MAGIC):
+            if self._distributing_cyclic:
+                raise ValueError("cyclic distributing material checkpoints exclude adaptive envelopes")
             adaptive, raw = decode_control(raw, self._identity)
             if self._finite_distributing and not raw.startswith(BINARY_CHECKPOINT_MAGIC):
                 raise ValueError("adaptive distributing checkpoint requires its dedicated binary inner state")
@@ -1695,7 +1741,7 @@ class ExperimentalGEAnalysis:
                     if kind in ("finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS:
                         material += (("beam_origin_plastic", (stations, 6, 2)),
                                      ("beam_origin_accumulated", (stations, 2)))
-                    if kind in ("finite_bl5_coupled", "finite_curved_points_coupled", "finite_distributing_coupled"):
+                    if kind in ("finite_bl5_coupled", "finite_curved_points_coupled", "finite_distributing_coupled", "finite_distributing_cyclic_coupled"):
                         shells = len(self._shell_parts)
                         material += (("shell_plastic", (shells, 12, 3)),
                                      ("shell_alpha", (shells, 12)),

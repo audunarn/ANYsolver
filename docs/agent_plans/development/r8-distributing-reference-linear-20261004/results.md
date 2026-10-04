@@ -995,3 +995,48 @@ eccentric -0.5Mx bending action. This helps interpret the saved refinement but
 does not constitute an executed native80 Fy comparison. The full six-pose
 accuracy decision remains open; further refinement requires its own specific
 question. Supporting OpenAI review does not close required scientific acceptance.
+
+
+## Fixed cyclic distributing material workflow, 4 October 2026
+
+IMPLEMENTED_NOT_QUALIFIED. Explicit generalized/coupled-Q4-J2 cyclic policies
+admit finite signed changed fixed-step factors, including unload to zero. The
+definition owns explicit reference actions, compiled once and identity-bound.
+Zero external force remains exactly zero; its norm uses the model-owned unit
+pattern only. Nonzero normalization,1e-8 equilibrium/1e-9 compatibility, local
+laws and24Newton/16backtrack ceilings remain. Historical monotone/default/adaptive
+contracts are unchanged. Cyclic adaptive/chart/staged/external routes reject.
+
+Actual16-factor histories pass for both material families. Tests check active
+initial plasticity, monotone accumulated states, beam station incremental
+dissipation, resultant reversal, zero-state exact restart, cancellation at-.5,
+same-path resumed byte parity, mutable input isolation and canonically re-encoded
+pattern tampering rejected before publication. Force reversal inside an expanded
+isotropic yield surface does not prove reverse plastic flow; none is claimed.
+
+ANYfem owns/persists actions through existing material input and Project routes.
+New cyclic admission token matches selected policy; old records remain monotone.
+Factory validates fixed-only and immutable-zero-norm semantics. Installed226PASS
+199.83s; example19.85s; whole222.28s/sample232914944B. Effective affinity/pools1,
+JIToff; all imported package bytes match the two isolated wheel sources. Public
+coupled16-step save/reopen/zero-restart example has exact final continuation bytes,
+eq1.33704438e-10/gap7.54718882e-18 and active states in both domains.
+Solverwheel6cf4650208ac3660e1c919b9a136a974b1dc22cb3666cbb45a3d9124168e3316.
+Consumerwheel6831ab5d375642ba57ed07748c5a847a566705ea80c0bdf7ca8bd3b736be1f10.
+
+Supporting OpenAI findings are closed; different-family scientific acceptance
+and aggregate material/attachment/line/G0/G2/G3/capacity/release remain open.
+Previous1.01 exhaustion and2.838825% small-Fy-pitch discrepancy remain. No automatic
+continuation/refinement, formalF03 consumption, publication or main merge.
+Raw .qualification/b3-ge-e4-pl/r8-distributing-cyclic-dev-20261004-v1 preserves
+failed checks, actual artifacts/imports/resources, full logs, public outputs,
+source bindings and review. Historical report/matrix/note bytes are retained.
+
+
+Saved physical component decision,4 October: supporting Read review and JSON-only
+decomposition retain the declared law for development. Native40 Fy pitch differs
+2.838825%; native80 Mx predicts0.864137% but cross-pitch40-to80 moves2.032385%.
+Prediction is not executed native80 Fy or converged1% acceptance. Solid reflection
+residual1.07e-15rad supports cross-bending interpretation. No new numerical job,
+mesh, criterion or formalF03 authority. See cyclic raw next-mechanics-components-
+v1.json and next-mechanics-review-v1.md for SHA-bound inputs and bounded next action.

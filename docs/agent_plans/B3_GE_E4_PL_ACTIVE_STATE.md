@@ -2,77 +2,78 @@
 
 ACTIVE. Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/
 stiffened-main-reconcile-20261001; branch codex/stiffened-main-reconcile-20261001.
-Source parent70ab0597; current commit is determined from Git HEAD. Complete
-amended G0-G6/F01-F13/V01-V28/B01-B18 remains binding. No aggregate gate closes.
-[Goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md),
+Source parent f9f45f01; current commit is determined from Git HEAD. ANYfem
+C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer at8dbce3b, clean.
+Complete amended G0-G6/F01-F13/V01-V28/B01-B18 remains binding. No aggregate gate
+closes. [Goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md),
 [matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md).
 
 ## Delivered behavior
 
 Persistent multi-Q4/S3/native-B3 point owner and separate physical B2 routes
-remain. Selected multi-Q4 finite distributing elastic/generalized/coupled-J2
-profiles have physical recovery, fixed accepted predecessors and atomic binary
-restart. Material consumer source ANYfem aaccbaa is unchanged in this slice.
+remain. Selected multi-Q4 finite distributing elastic/material owner has physical
+recovery, fixed predecessors and atomic restart. Optional adaptive halving retains
+fixed defaults/budgets; nondurable rejected attempts after acceptance may repeat.
+Current explicitly selected cyclic generalized/coupled-J2 profiles own reference
+actions, support fixed load/unload/zero/signed reversal and separate binary kinds.
+Actual zero force stays zero; normalization uses the immutable model-owned unit
+pattern. Nonzero norm/laws/1e-8 equilibrium/1e-9 compatibility are unchanged.
+Monotone/default identities persist. Cyclic adaptive/chart/staged/external routes
+reject. Consumer policy/admission pairing and input/Project persistence are exact.
 
-Existing isolated SO3 evaluation repairs selected material Q4 value accuracy;
-policy is model-bound. Previous47 installed checks/public example remain valid.
-Current optional adaptive halving reuses existing controller, without changing
-fixed defaults, laws, tolerances, schemas or trial limits. Full decreasing future
-targets reject before restore publication. Snapshot inner state remains dedicated
-binary. Chart/staged/external/displacement/arc combinations remain excluded.
+Source57PASS111.34s; current installed226PASS199.83s plus public coupled16-step
+ANYfem example19.85s. Whole222.28s/sample232914944B; affinity/pools1/JIToff.
+Initial yielding is active in both domains; reverse plastic flow is not claimed.
+Zero-load restore and resumed final checkpoint exactly match the accepted-path
+oracle. Tests include cancellation at-.5, canonical pattern tampering, ownership
+and stale admission. Supporting OpenAI findings closed; required different-family
+scientific acceptance remains open. Solverwheel
+6cf4650208ac3660e1c919b9a136a974b1dc22cb3666cbb45a3d9124168e3316;
+consumerwheel6831ab5d375642ba57ed07748c5a847a566705ea80c0bdf7ca8bd3b736be1f10.
+[Usage](../../stiffened_shell_distributing_material_development.md).
 
-Current91 installed checks passed108.25s, whole110.53s/sample209203200B. Actual
-affinity/pools1/JIToff; imported bytes match wheel/source. Scheduling injections
-produce exact fixed-oracle accepted inner bytes across all three profiles.
-Rejected attempts after the latest acceptance are not durable; retry can repeat
-them. This inherited budget limitation is explicit. Supporting source review
-findings resolved; different-family scientific acceptance remains open.
-Solverwheel7b75d8f10ab9a466f5f6353da4241001f9beda6ffa5da4d28441bef297a39a0c.
-Prior material consumerwheel716ac11f89336ec2a84b54b580ea1367ff6ce456d797497118e87b1b596bca49.
+## Current decision and next action
 
-## Current decisions and next action
+Scientific priority is the declared reference-linear distributing law's physical
+comparison. Pinned CCX2.23 DOUBLE removes saved reaction-print uncertainty:
+balances2.64164e-10/2.05791e-11 and direct-work differences0.220599%/0.395443%.
+Small native40 Fy pitch differs2.838825%; full-six-pose accuracy remains open.
+Retain reference mean/secant-director/curl semantics; no welded/rigid/bonded-line
+or finite/material physical equivalence follows. No asymptotic bound claimed.
+Read review and saved-only decomposition identify a comparable physical
+cross-bending component: solid reflection residual1.07e-15rad. Native80 Mx
+predicts Fy pitch difference0.864137%, but cross-pitch40-to80 moves2.032385%.
+This is NOT executed native80 Fy or converged acceptance. Keep the declared law
+for experimental development; frozen1% remains open. Next bounded discriminator,
+if needed: ONE actual Fy RHS on the existing80 fixture, same law/supports/loads,
+to test full-pose and reflection/work coverage. A mismatch triggers work-map
+diagnosis; agreement supplies actual component convergence, not an asymptotic
+bound. No invented floor, total-work substitute, newmesh or automatic campaign.
 
-One actual installed adaptive1.01 continuation accepted1.005,1.00625,1.0075
-before cutback exhaustion (five rejected/eight total attempts). Final accepted
-equilibrium2.91381e-12/gap8.21400e-18, both materials yielding. All seven prefixes
-saved. Whole121.79s/sample167694336B; actual affinity/pools1/JIToff. Requested1.01
-remains incomplete. Original fixed1.01 failure/residual0.00246153 is unchanged;
-adapted history is not a fixed-path oracle or general improvement claim.
-Stop this bounded run; no automatic retries, budget increase or curvature sweep.
-Next development should advance a separately admitted missing workflow rather
-than repeat this incomplete trajectory. Relevant future diagnostics must identify
-the precise unresolved derivative/curvature question first.
+Previous actual adaptive1.01 accepted through1.0075 then exhausted; all7prefixes
+saved. Original fixed1.01 residual0.00246153 is unchanged. No automatic retry,
+extra budget or curvature sweep. Continue unrelated ready mandatory workflow
+slices alongside the physical decision, without repeating completed campaigns.
 
-Pinned CCX2.23 DOUBLE output resolved saved40x16/nz4 reaction-print precision:
-scaled balances2.64164e-10/2.05791e-11, identical DATs. Reference-linear mean/
-secant-director/curl law is retained for development, not welded/rigid equivalence.
-Fine Mx/Fy direct-work differences0.220599%/0.395443%; no asymptotic bound claimed.
-Small native40 Fy pitch differs2.838825%; full six-pose accuracy remains open.
-Symmetry connects this bending component to eccentric Mx, but does not create
-an unexecuted fine-Fy result. No automatic reference refinement or F04 closure.
-
-## Evidence and ownership
+## Evidence, ownership and boundaries
 
 [Grouped evidence](development/r8-distributing-reference-linear-20261004/results.md).
-Latest raw .qualification/b3-ge-e4-pl/r8-distributing-adaptive-dev-20261004-v1:
-source snapshots, wheel/import hashes, failed checks, installed outputs,
-actual attempts/prefixes and supporting review. Prior note bytes preserved in
-active-before-v1.bin. Material/output records retain their historical identities.
-No numerical jobs remain; all review workers terminal. Source/Git owned by root.
-No push/main merge/publication/contact-worker communication. ANYfem worktree
-C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer remains unchanged.
-
-## Preserved boundaries
+Latest raw .qualification/b3-ge-e4-pl/r8-distributing-cyclic-dev-20261004-v1:
+source bindings, wheel/import/resource identities, failed checks, installed logs,
+public outputs and review. Historical note/goal/plan/report/matrix bytes saved.
+No numerical jobs remain; all review workers terminal. Saved-output physical
+decision is in next-mechanics-review-v1.md; source/Git owned by root. No push/main merge/publication or
+contact-worker communication. Consumer commit is local and verified.
 
 FormalF03 UNCONSUMED: never execute/copy/substitute
 scripts/b3_e4_f03_c1_fy_supported_reference.py, SHA
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
 Never inspect/copy/archive us3-modal-canary (credentials); no Get-CimInstance.
-At most3 workers/ONE numerical job/100krows/600s/8GiB/8threads. Effective tighter
+At most3workers/ONE numerical job/100krows/600s/8GiB/8threads; tighter effective
 600s/2GiB/affinity1/pools1/JIToff. Optional local/Mistral unavailable; no reprobe.
 Frozen G3c graph guard requires reviewed runner lease; no bypass/replay.
-BL5 actual inventory13positive/1unresolved/7unassessed; auxiliary21 is not
-mechanical stability. Inverse/positive-part certificates CLOSED_UNRESOLVED;
-pressure amendment DECLINED. F5 lacks retained-sided reference forces.
-Full material/attachment/load/spectral/capacity/scale/installed-platform/consumer/
-external/independent/release obligations remain open. No completed-goal claim.
+BL5 actualinventory13positive/1unresolved/7unassessed; auxiliary21 is not mixed
+mechanical stability. Inverse/positive-part CLOSED_UNRESOLVED; pressure amendment
+DECLINED. F5 lacks retained-sided reference forces. Full material/attachment/
+load/spectral/capacity/scale/platform/consumer/external/independent/release
+obligations remain open. Goal ACTIVE; no completed-goal claim.

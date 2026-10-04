@@ -7,18 +7,17 @@ and restart action. The canonical goal and plan now live beside that note in
 `C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001/docs/agent_plans/`.
 Older goal/plan paths forward here instead of carrying stale competing copies.
 
-Reviewed preceding solver checkpoint `adc98d4b` plus the multi-host implementation/evidence slice; ANYfem HEAD `6013db0` with the completed
-reference-distributing consumer product `9b7482b`. Substantial installed GE/B2 implementation, scoped foundation
-passes, measured route improvements and a practical-size reference solve exist.
-Aggregate acceptance is incomplete. The reference-distributing ANYfem workflow
-now passes source/installed checks and its public example; the primary scientific priority is
-matched physical/external evidence. The first common-action CalculiX torque/shear
-pair and matched three-level, fixed-physical-pad comparison are executed.
-The multi-host law preserves old identities and passes installed integration.
-Torque/shear work differences decrease to0.813%/0.364%; native torque refinement
-and fixed solid thickness prevent a converged physical acceptance claim.
-Do not restart completed implementations or
-the closed certificate campaigns. No numerical job is active.
+The latest finite distributing cyclic slice has 226 installed solver/consumer
+checks and a completed coupled ANYfem save/reopen/zero-load restart/reversal
+example. ANYfem is at `8dbce3b`; the active note identifies the exact solver
+commit, artifacts and next action. Previously delivered GE/B2 workflows,
+scoped foundations and practical-size reference solve remain intact.
+Aggregate acceptance is incomplete. Matched physical/external evidence remains
+the scientific priority: pinned DOUBLE output removes the saved reaction-print
+uncertainty, but the small Fy pitch differs 2.838825% and full-six-pose accuracy
+remains open. The attempted adaptive 1.01 continuation stopped at 1.0075; do not
+repeat or extend it automatically. Preserve historical source/evidence and closed
+campaigns instead of restarting completed implementations.
 
 Use this goal together with the [Revision 8 plan](B3_GE_E4_PL_REVISION_8_PLAN.md).
 The complete programme remains the final scope, with only the explicit

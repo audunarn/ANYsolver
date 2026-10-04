@@ -33,6 +33,8 @@ SCHEMAS = {
     "finite_distributing": "B3_GE_E4_PL_FINITE_DISTRIBUTING_DIRECTOR_POLAR_V1_DEV",
     "finite_distributing_material": "B3_GE_E4_PL_FINITE_DISTRIBUTING_GENERALIZED_PREDECESSOR_V1_DEV",
     "finite_distributing_coupled": "B3_GE_E4_PL_FINITE_DISTRIBUTING_COUPLED_J2_PREDECESSOR_V1_DEV",
+    "finite_distributing_cyclic_material": "B3_GE_E4_PL_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_PREDECESSOR_V1_DEV",
+    "finite_distributing_cyclic_coupled": "B3_GE_E4_PL_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_PREDECESSOR_V1_DEV",
     "finite_stable_q4": "B3_GE_E4_PL_ELASTIC_POINT_STABLE_Q4_V1_DEV",
     "finite_chart_stable_q4": "B3_GE_E4_PL_ANCHORED_ELASTIC_POINT_STABLE_Q4_V1_DEV",
     "finite_material_stable_q4": "B3_GE_E4_PL_GENERALIZED_POINT_STABLE_Q4_V1_DEV",
@@ -66,7 +68,8 @@ SCHEMAS = {
 }
 
 CURVED_POINT_MATERIAL_KINDS = ("finite_curved_points_material", "finite_curved_points_coupled")
-FINITE_DISTRIBUTING_MATERIAL_KINDS = ("finite_distributing_material", "finite_distributing_coupled")
+FINITE_DISTRIBUTING_MATERIAL_KINDS = ("finite_distributing_material", "finite_distributing_coupled",
+    "finite_distributing_cyclic_material", "finite_distributing_cyclic_coupled")
 
 
 def encode(kind: str, model: str, generation: int,

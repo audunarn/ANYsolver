@@ -416,6 +416,23 @@ class _RotationStepTooLarge(ValueError):
     """Candidate update lies outside the admitted local rotation chart."""
 
 
+def _nodal_translation_pattern(owner, actions):
+    """Compile the existing nodal force contract without creating trial state."""
+    load = np.zeros(owner._K.shape[0])
+    for action in actions:
+        if type(action) is not NodalAction or action.domain not in ("shell", "beam"):
+            raise ValueError("declared shell or beam nodal action required")
+        index = owner._shell_index if action.domain == "shell" else owner._beam_index
+        if action.node not in index:
+            raise ValueError("action references unknown physical node")
+        wrench = _owned(action.wrench, (6,))
+        if np.any(wrench[3:] != 0.):
+            raise ValueError("finite experimental path admits translation forces only")
+        offset = 0 if action.domain == "shell" else owner._shell_count
+        load[offset+6*index[action.node]:offset+6*index[action.node]+6] += wrench
+    return _owned(load)
+
+
 class FinitePointDriver:
     """Finite updates with globally retained native B3 coordinates."""
 
@@ -491,20 +508,7 @@ class FinitePointDriver:
         self._generalized_trial_recovery = None
 
     def _load(self, actions):
-        owner = self.owner
-        load = np.zeros(owner._K.shape[0])
-        for action in actions:
-            if type(action) is not NodalAction or action.domain not in ("shell", "beam"):
-                raise ValueError("declared shell or beam nodal action required")
-            index = owner._shell_index if action.domain == "shell" else owner._beam_index
-            if action.node not in index:
-                raise ValueError("action references unknown physical node")
-            wrench = _owned(action.wrench, (6,))
-            if np.any(wrench[3:] != 0.):
-                raise ValueError("finite experimental path admits translation forces only")
-            offset = 0 if action.domain == "shell" else owner._shell_count
-            load[offset+6*index[action.node]:offset+6*index[action.node]+6] += wrench
-        return _owned(load)
+        return _nodal_translation_pattern(self.owner, actions)
 
     def _checkpoint_identity(self):
         if self._external is not None:
@@ -559,6 +563,8 @@ class FinitePointDriver:
         if self._programme is not None:
             raise ValueError("finite programme and legacy pattern modes cannot be mixed")
         pattern = self._load(actions)
+        if self.owner._distributing_cyclic and not np.array_equal(pattern, self.owner._cyclic_reference_pattern):
+            raise ValueError("cyclic force pattern must match its model-bound reference actions")
         if self._pattern is not None and not np.array_equal(self._pattern, pattern):
             raise ValueError("finite load pattern changed after first increment")
         return pattern, None
@@ -759,8 +765,13 @@ class FinitePointDriver:
             (data, (rows, columns)), shape=(size, size)).tocsc()
         if not np.isfinite(residual).all() or not np.isfinite(matrix.data).all():
             raise RuntimeError("finite global mixed trial required")
+        # At zero load the selected cyclic policy uses its owned unit-factor
+        # pattern for normalization only; external force stays exactly zero.
+        norm_load = applied_load
+        if owner._distributing_cyclic and factor == 0.:
+            norm_load = owner._cyclic_reference_pattern
         relative = _linear_equilibrium(
-            residual[owner._free], applied_load[owner._free],
+            residual[owner._free], norm_load[owner._free],
             owner._coordinate_scale[owner._free])
         constraint = _scaled_constraint_gap(
             residual[count:], owner._constraint_scale)
@@ -840,6 +851,8 @@ class FinitePointDriver:
     def solve(self, actions, targets, *, cancellation_token=None,
               max_iterations=12, max_backtracks=8, increment_control=None,
               on_accepted=None):
+        if self.owner._distributing_cyclic and increment_control is not None:
+            raise ValueError("cyclic distributing material histories admit fixed increments only")
         if self.owner._footprint_increment_chart:
             require_rotation_triples(self.owner._fixed, len(self.owner._shell_ids))
         pending = self._adaptive_state is not None and not self._adaptive_state.completed
@@ -915,12 +928,12 @@ class FinitePointDriver:
         if (type(targets) is not tuple or not targets or
                 any(not isinstance(v, (int, float, np.integer, np.floating))
                     or isinstance(v, (bool, np.bool_)) or
-                    not np.isfinite(v) or v <= 0.
+                    not np.isfinite(v) or (not owner._distributing_cyclic and v <= 0.)
                     for v in targets) or
                 any(a == b for a, b in zip((self._load_factor,)+targets,
                                             targets))):
             raise ValueError("positive finite load factors must change at each increment")
-        if owner._finite_distributing and any(b <= a for a,b in zip((self._load_factor,)+targets,targets)):
+        if owner._finite_distributing and not owner._distributing_cyclic and any(b <= a for a,b in zip((self._load_factor,)+targets,targets)):
             raise ValueError("finite distributing footprint force factors must increase monotonically")
         max_trial_halvings=16 if (owner._curved_material or owner._distributing_material) else 12
         if (type(max_iterations) is not int or not 1 <= max_iterations <= 24 or
@@ -1250,7 +1263,7 @@ class FinitePointDriver:
             raise RuntimeError("no accepted finite mixed increment")
         if self.owner._finite_distributing and (self._state.shell_anchors is not None or
                 self._programme is not None or self._external is not None):
-            raise ValueError("finite distributing checkpoint requires monotone nodal force state without chart/programme/external wrappers")
+            raise ValueError("finite distributing checkpoint requires nodal force state without chart/programme/external wrappers")
         if (self._adaptive_checkpoint is not None and _encode_anchors and
                 _encode_control and _encode_programme and _encode_external):
             return self._adaptive_checkpoint
@@ -1420,6 +1433,8 @@ class FinitePointDriver:
             raise ValueError("matching finite distributing checkpoint law required")
         if owner._finite_distributing and value.get("schema") != _BINARY_SCHEMAS[owner._distributing_checkpoint_kind]:
             raise ValueError("matching finite distributing material checkpoint policy required")
+        if owner._distributing_cyclic and adaptive_state is not None:
+            raise ValueError("cyclic distributing material checkpoints exclude adaptive state")
         if owner._finite_distributing and (rotation_anchors is not None or
                 self._programme is not None or self._external is not None):
             raise ValueError("finite distributing checkpoint excludes chart/programme/external state")
@@ -1442,7 +1457,9 @@ class FinitePointDriver:
         curved_material = value.get("schema") in tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS)
         curved_shell = value.get("schema") == _BINARY_SCHEMAS["finite_curved_points_coupled"]
         distributing_material = value.get("schema") in tuple(_BINARY_SCHEMAS[k] for k in FINITE_DISTRIBUTING_MATERIAL_KINDS)
-        distributing_shell = value.get("schema") == _BINARY_SCHEMAS["finite_distributing_coupled"]
+        distributing_shell = value.get("schema") in (
+            _BINARY_SCHEMAS["finite_distributing_coupled"],
+            _BINARY_SCHEMAS["finite_distributing_cyclic_coupled"])
         if curved_material and (not owner._curved_material or
                 curved_shell != (owner._definition.shell.j2_curve is not None)):
             raise ValueError("curved material predecessor checkpoint requires its matching policy")
@@ -1458,7 +1475,7 @@ class FinitePointDriver:
         s3_material = (value.get("schema") == FINITE_S3_MATERIAL_CHECKPOINT or
                        (native_shell and bool(owner._definition.shell.s3_elements)))
         shell_material = value.get("schema") in (
-            FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA, _BINARY_SCHEMAS["finite_bl5_coupled"], _BINARY_SCHEMAS["finite_curved_points_coupled"], _BINARY_SCHEMAS["finite_distributing_coupled"])
+            FINITE_SHELL_MATERIAL_CHECKPOINT, FINITE_S3_MATERIAL_CHECKPOINT, NATIVE_SHELL_SCHEMA, _BINARY_SCHEMAS["finite_bl5_coupled"], _BINARY_SCHEMAS["finite_curved_points_coupled"], _BINARY_SCHEMAS["finite_distributing_coupled"], _BINARY_SCHEMAS["finite_distributing_cyclic_coupled"])
         material = value.get("schema") in (
             _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"],
             FINITE_MATERIAL_CHECKPOINT, FINITE_SHELL_MATERIAL_CHECKPOINT,
@@ -1492,7 +1509,7 @@ class FinitePointDriver:
                                     and owner._definition.shell.s3_elements)):
             raise ValueError("incompatible experimental finite checkpoint")
         factors = value["accepted_factors"]
-        if owner._finite_distributing and (type(factors) is not list or
+        if owner._finite_distributing and not owner._distributing_cyclic and (type(factors) is not list or
                 any(type(v) is not float or not np.isfinite(v) for v in factors) or
                 any(b <= a for a, b in zip((0.,) + tuple(factors), factors))):
             raise ValueError("finite distributing checkpoint requires monotone positive force history")
@@ -1501,10 +1518,12 @@ class FinitePointDriver:
                                    for v in factors) or
                 (not material and not native_material and not getattr(owner,"_finite_bl5",False) and (factors[0] <= 0. or
                     any(b <= a for a, b in zip(factors, factors[1:])))) or
-                ((material or native_material or getattr(owner,"_finite_bl5",False)) and (factors[0] <= 0. or
+                ((material or native_material or getattr(owner,"_finite_bl5",False)) and not owner._distributing_cyclic and (factors[0] <= 0. or
                     any(b <= 0. or b == a for a, b in
                         zip(factors, factors[1:]))))):
             raise ValueError("invalid accepted finite load history")
+        if owner._distributing_cyclic and any(a == b for a, b in zip((0.,) + tuple(factors), factors)):
+            raise ValueError("cyclic checkpoint force factors must change at each increment")
         q = _owned(value["q"], (owner._K.shape[0],))
         if rotation_anchors is not None:
             rotation_anchors = owned_anchors(rotation_anchors, len(owner._shell_ids))
@@ -1528,6 +1547,8 @@ class FinitePointDriver:
         resultants = _owned(value["resultants"], self._state.resultants.shape)
         multipliers = _owned(value["multipliers"], self._state.multipliers.shape)
         pattern = _owned(value[load_key], (owner._K.shape[0],))
+        if owner._distributing_cyclic and not np.array_equal(pattern, owner._cyclic_reference_pattern):
+            raise ValueError("cyclic checkpoint force pattern disagrees with model-bound reference actions")
         if self._external is not None and hasattr(self._external, 'evaluate_at'):
             self._external.validate_targets(0., tuple(factors))
             if np.any(pattern):

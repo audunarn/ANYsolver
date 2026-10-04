@@ -2,8 +2,9 @@
 
 **Status 4 October 2026: planning update adopted; explicitly resumed by the user.**
 This is the current Revision 8 development basis. The user delegated pending
-planning decisions; those decisions are recorded below. This edit authorizes
-no numerical run, product edit, formal F03 execution, merge or publication.
+planning decisions; those decisions are recorded below. Development authority
+comes from the user's explicit resumption. This document does not consume formal
+F03 authority or authorize main merge or publication.
 The companion [goal](B3_GE_E4_PL_REVISION_8_GOAL.md) defines the objective,
 decision rights and completion conditions. These two documents in
 `C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001/docs/agent_plans/`
@@ -50,12 +51,13 @@ by this document alone.
 
 ## 1. What exists and what is preventing completion
 
-Reviewed preceding solver HEAD `9269719e`, branch `codex/stiffened-main-reconcile-20261001`,
-in the canonical worktree above. ANYfem is at `6013db0` (product `9b7482b`) in
-`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer`. The four-file
-consumer slice now has 42 source/42 installed checks and an installed example;
-its exact evidence is linked by the active note. No numerical job is running. Main was not refreshed in
-this planning review; the historical `be41a77a` baseline is not current-main evidence.
+The canonical integration branch remains `codex/stiffened-main-reconcile-20261001`.
+Latest fixed cyclic material development has 226 installed solver/consumer checks
+and a completed coupled public persistence/restart/reversal example. ANYfem is
+at `8dbce3b` in `C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer`.
+The active note binds exact solver source, artifacts, retained failures and the
+next action. Current-main refresh is separate; historical `be41a77a` is not
+current-main evidence. Aggregate gate acceptance remains incomplete.
 
 | Area | Established current state | Remaining boundary |
 |---|---|---|
@@ -63,7 +65,7 @@ this planning review; the historical `be41a77a` baseline is not current-main evi
 | B2 | Physical static/batch execution, selected recovery, persistence and scoped supported/free-modal consumer routes exist. | Complete attachment, prestress, scale, external and release acceptance remain. |
 | Foundations | Scoped F05, F08 and F09 have recorded PASSED dispositions; further point/static/elastic-chart portions are accepted within their stated boundaries. | Do not relabel scoped passes as complete aggregate gates or repeat the obsolete claim that no foundation has passed. |
 | BL5 | All 21 saved auxiliary-norm cases passed their scoped predicates; actual mechanical inventory is 13 positive, one unresolved, seven unassessed. | Auxiliary beta does not settle the mixed mechanics or physical transfer. Closed inverse/positive-part certificate routes remain CLOSED_UNRESOLVED. |
-| Distributing attachment | Same reference-linear area law supports 2–128 conforming Q4 hosts/256 shell nodes with six rows; historical two-host bytes/checkpoints remain exact. 130 source/130 installed and 42 installed consumer controls pass. Fixed-pad three-level CalculiX torque/shear comparison executes. | Finite pose/owner/restart now have installed experimental evidence; finite consumer now has installed development evidence; fully converged physical fidelity and full F04 remain open. |
+| Distributing attachment | Reference-linear multi-host law and separate finite elastic/material owner have installed evidence. Explicit fixed cyclic policies now support load/unload/zero/signed reversal and consumer persistence; prior monotone/adaptive contracts remain intact. Pinned DOUBLE output resolves saved reference reaction-print uncertainty. | Small Fy pitch still differs 2.838825%; full-six-pose physical fidelity, finite/material physical comparisons and full F04 remain open. Adaptive 1.01 stopped at 1.0075; no automatic retry or convergence claim. |
 | Scale and cost | A 10,000-Q4/1,000-B3 point model completed a persisted reference route. Seven paired installed runs measured 55.97% improvement on the declared 400-Q4/120-B3 warm reference workflow; other scoped gains are recorded. | No overall development-speed measurement, full G5 qualification, nonmatching/nonlinear scale claim or release date follows. |
 
 The [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) and linked

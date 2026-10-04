@@ -2292,3 +2292,13 @@ No general convergence, full material, F04/G0/G2/capacity or release closure.
 Reference full-six-pose accuracy remains open despite close direct work: small
 Fy pitch discrepancy2.838825% cannot be hidden by retrofitted normalization.
 [Evidence](development/r8-distributing-reference-linear-20261004/results.md).
+
+
+Finite distributing cyclic material,4 October: IMPLEMENTED_NOT_QUALIFIED.
+Separate generalized/coupled policies own reference actions and zero normalization;
+fixed load/unload/zero/signed reversal, cancellation and exact-path restart pass.
+Installed solver/consumer226PASS plus16-step coupled Project/public example.
+Physical initial yielding is observed; reverse plastic flow is not claimed.
+Historical monotone/adaptive contracts and failed1.01 continuation unchanged.
+No aggregate G3/F04/line/external/independent/release closure.
+[Evidence](development/r8-distributing-reference-linear-20261004/results.md).

@@ -215,3 +215,6 @@ src/anysolver/_stiffened_shell_increment_control.py -text
 tests/test_stiffened_shell_accepted_observer_experimental.py -text
 tests/test_stiffened_shell_distributing_adaptive.py -text
 .qualification/b3-ge-e4-pl/r8-distributing-adaptive-dev-20261004-v1/** -text -whitespace
+tests/test_stiffened_shell_distributing_cyclic.py -text
+docs/stiffened_shell_distributing_material_development.md -text
+.qualification/b3-ge-e4-pl/r8-distributing-cyclic-dev-20261004-v1/** -text -whitespace
