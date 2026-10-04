@@ -1,0 +1,8 @@
+..............                                                           [100%]
+============================= slowest 5 durations =============================
+0.59s call     tests/test_general_contact_hemisphere_cylinder_static.py::test_actual_candidate_interruption_rolls_back_and_replays_fresh[False]
+0.57s call     tests/test_general_contact_hemisphere_cylinder_static.py::test_actual_candidate_interruption_rolls_back_and_replays_fresh[True]
+0.44s call     tests/test_general_contact_hemisphere_cylinder_static.py::test_fresh_split_restart_and_incompatible_cap_settings[True]
+0.35s call     tests/test_general_contact_hemisphere_cylinder_static.py::test_public_axial_equilibrium_reaction_work_and_gap[force-True]
+0.29s call     tests/test_general_contact_hemisphere_cylinder_static.py::test_fresh_split_restart_and_incompatible_cap_settings[False]
+14 passed in 4.63s

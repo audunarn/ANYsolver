@@ -45,15 +45,19 @@ class HemisphereSphereResults(_EndRadialResults):
 
 
 class HemisphereSphereManager(BeamRadialEndManager):
+    profile=PROFILE
+    validator=staticmethod(validate_hemisphere_sphere_contact)
+    results_type=HemisphereSphereResults
+
     def __init__(self,model,definition,settings,initial_displacement=None):
-        report=validate_hemisphere_sphere_contact(model,definition,settings)
+        report=self.validator(model,definition,settings)
         if not report.valid:raise ValueError('unsupported hemisphere sphere: '+'; '.join(report.issues))
         # Enclose the actual sum of the two literal radii even when their
         # ordinary floating addition rounds down. This changes bounds only;
         # the reused line potential keeps its original arithmetic.
         self.full_envelope_radius=Fraction.from_float(definition.surfaces[0].beam_radius)+Fraction.from_float(definition.rigid_bodies[0].radius)
         super().__init__(model,definition,replace(settings,beam_end_cap_work='owned_point'),initial_displacement)
-        self.settings=settings;self.profile=PROFILE
+        self.settings=settings;self.profile=type(self).profile
         initial=np.zeros(model.mesh.dof_manager.total_dofs) if initial_displacement is None else np.asarray(initial_displacement)
         if not self._regular(initial,initial):raise ValueError('sphere cap requires regular physical beam curves')
         self._cap_work(initial)
@@ -99,7 +103,7 @@ class HemisphereSphereManager(BeamRadialEndManager):
                     'skin_point':None if state.skin_point is None else state.skin_point.tolist(),
                     'rigid_point':None if state.rigid_point is None else state.rigid_point.tolist()})
             if tangent and values:K=K+sparse.coo_matrix((values,(rows,cols)),shape=K.shape).tocsr()
-            result=HemisphereSphereResults(**{**asdict(line),'profile':PROFILE,'beam_force':tuple(F),
+            result=self.results_type(**{**asdict(line),'profile':self.profile,'beam_force':tuple(F),
                 'rigid_force':tuple(-F),'beam_moment':tuple(M),'rigid_moment':tuple(-M)},
                 endpoint_contact_energy=float(energy),candidate_endpoints=len(fields),active_endpoints=active,
                 endpoint_stiffness=self.endpoint_stiffness,endpoint_fields=tuple(fields),

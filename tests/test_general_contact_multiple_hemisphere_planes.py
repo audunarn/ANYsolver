@@ -149,8 +149,13 @@ def test_one_child_gap_gate_common_fraction_and_duplicate_resource_rejection():
     duplicate=replace(definition,interactions=definition.interactions+(replace(definition.interactions[0],name='duplicate'),))
     assert not validate_general_contact(model,duplicate,settings).valid
     assert not validate_general_contact(model,definition,replace(settings,maximum_candidate_pairs=1)).valid
-    unsupported=replace(definition,rigid_bodies=(replace(definition.rigid_bodies[0],kind='cylinder',normal=(0.,0.,1.),radius=.01),definition.rigid_bodies[1]))
-    assert not validate_general_contact(model,unsupported,settings).valid
+    from anysolver.general_contact.multiple_beam_rigid import PROFILE_SUPPORT_CYLINDER
+    cylinder=replace(definition.rigid_bodies[0],kind='cylinder',normal=(0.,0.,1.),radius=.01)
+    cylinder_definition=replace(definition,rigid_bodies=(cylinder,definition.rigid_bodies[1]))
+    assert validate_general_contact(model,cylinder_definition,settings).profile==PROFILE_SUPPORT_CYLINDER
+    assert validate_general_contact(model,cylinder_definition,settings).valid
+    moving=replace(definition,rigid_bodies=(replace(cylinder,path_translation=(.001,0.,0.)),definition.rigid_bodies[1]))
+    assert not validate_general_contact(model,moving,settings).valid
     for altered in (replace(settings,beam_chain_tangent='consistent_dev'),
                     replace(settings,beam_shell_geometry='jet2_deformable_s3_dev'),
                     replace(settings,augmentation_acceleration='active_secant')):

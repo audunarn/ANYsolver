@@ -85,6 +85,9 @@ class BeamRadialEndManager(_BeamRadialManager):
     def _minimum_gap(self,u):
         return min(self._geometry(cell,self._positions(cell,u))[1] for cell in self.cells)
 
+    def _radial_work(self,point):
+        return radial_point_work(point,self.projector,self.radius)
+
     def _integrate_cell(self,cell,positions):
         lanes,minimum=self._geometry(cell,positions)
         if minimum<=-self.beam_radius:raise ValueError('radial end profile cannot certify centreline exterior to obstacle')
@@ -99,7 +102,7 @@ class BeamRadialEndManager(_BeamRadialManager):
                 s=(left+right)/2+(right-left)/2*float(node)
                 p=_restrict(lanes,s,s)
                 if point_sign(p,self.radius)>=0:continue
-                gap,n,H=radial_point_work(p,self.projector,self.radius)
+                gap,n,H=self._radial_work(p)
                 shape=cell.shape(2*s-1);gradient=np.outer(shape,n).reshape(-1)
                 measure=cell.length*(right-left)/2*float(weight)
                 E+=.5*self.stiffness*gap*gap*measure

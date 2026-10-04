@@ -220,9 +220,12 @@ def test_coupled_bar_force_displacement_restart_and_explicit_scope():
     assert prescribed.status=='completed'
     report=report_general_contact_capability(model,definition,settings)
     assert report.implemented and not report.admitted_for_application
-    for body in (replace(definition.rigid_bodies[0],path_translation=(.01,0.,0.)),
-                 replace(definition.rigid_bodies[0],kind='cylinder',normal=(0.,0.,1.))):
+    for body in (replace(definition.rigid_bodies[0],path_translation=(.01,0.,0.)),):
         assert not validate_general_contact(model,replace(definition,rigid_bodies=(body,)),settings).valid
+    cylinder=replace(definition,rigid_bodies=(replace(definition.rigid_bodies[0],kind='cylinder',normal=(0.,0.,1.)),))
+    # New public cylinder profile is distinct; the old sphere owner still rejects it.
+    with pytest.raises(ValueError,match='sphere'):
+        HemisphereSphereManager(model,cylinder,settings)
     for bad in (replace(definition,surfaces=(replace(definition.surfaces[0],beam_end_caps='none'),)),
                 replace(definition,interactions=(replace(definition.interactions[0],endpoint_stiffness=None),))):
         assert not validate_general_contact(model,bad,settings).valid

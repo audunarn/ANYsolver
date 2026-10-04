@@ -1,48 +1,46 @@
 # General contact restart — 4 October 2026
 
-Full C0–C9 ACTIVE/incomplete. Goal2026-09-30.4 / plan2026-10-04.94 govern.
+Full C0-C9 ACTIVE/incomplete. Goal2026-09-30.4 / plan2026-10-04.95 govern.
 Solver C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001; local HEAD binds this checkpoint.
 Protected original must not be accessed. No other human-chat communication,
 push/merge/publication/release/default changes or consumed authority replay.
-Local commits authorized. No owned live processes; workers terminal.
-[History](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PART115.md)
-->114->113 retains earlier identities, failures, authorities and evidence.
+Local commits authorized. No owned live processes; cylinder worker terminal.
+[History](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PART116.md)
+->115->114 retains earlier identities, failures, authorities and evidence.
 
 ## Current result and next action
 
-Explicit native multiple-S3 activation Newton now reaches50um physical gap for
-one/two curved native beams with actual both-skin deformation and retained coupled
-work. Strong fixture law1.2e6N/m2; algorithmic activation1e-7/1e-6m for one/two beams,
-64controller queries, original24Newton/8cuts/128sweep caps. Whole formerly-open
-prefixes, including open endpoints, require conservative certification. Geometry-
-only query/projected-normal rate changes are explicit opt-in; legacy defaults stay.
-New settings/profile/schema/v2controller revision bind restart; no physicalsubsteps.
-Installed28pass139.665s/354353152B plus independent hidden-prefix follow-up1pass
-3.105s/185548800B;207modules/511files match,JIT0/pools1. Actual independent minimum
-gaps49.2952/49.2958um meet50; one coupled tangent direction at3h values<=2.651e-6
-vs1e-5; equilibrium<=5.53e-13vs1e-8; support/wrench/energy/history/rollback/split
-restart and inherited legacy routes pass. Explicit2xpenalty reduces gap49.2952 to
-34.8663um; half-target spacing preserves final response. These are development
-sensitivity checks, not spatial/enforcement or independent engineering acceptance.
-[Guide/evidence](docs/GENERAL_CONTACT_NATIVE_ENFORCEMENT_DEV.md);
-raw C:/ANYworkspaceWork/contact_native_enforcement_20261004, private target installed,
-wheelbbdfb2346fe932002662308f1f198df6643a4111985fc035b5b8a39eb897bc23.
-Supporting source scrutiny fixed prefix/query/identity findings; densepath oracle
-corrected/rerun. No owned live processes or pending workers.
+Actual hemisphere B2/B3 fixed infinite-cylinder support is implemented/installed-
+tested, including curved rim station and all tangent-node work, exact literal-axis
+line/control projection, rational root representation checks and conservative
+full-radius affine path enclosure. Explicit new single/multiple profiles and
+geometry/root/path identities; old plane/sphere/default line routes unchanged.
+Active ambiguity/unresolved sign/bounds fail. Existing aggregate composes fixed
+plane/sphere/cylinder children; no guard widening of capped/moving/native profiles.
+Independent circle minimization/line polynomial integration check gaps/work and
+1e-5 directional Hessians; curved B3 cap midnode/cross blocks, actual B2/B3 force/
+displacement within1e-6 and1e-5m gap, body wrenches, cancel/exception fresh replay,
+split/incompatible restart and public example pass. Source54+14+4cases pass.
+Installed139pass plus2 obsolete cylinder-rejection expectations; corrected2 plus
+installed lazy no-contact1pass. Unchanged139 reused (142installedcases across
+2runs54.672s/201551872B and3.672s/324493312B);243modules/513files match,JIT0/pools1.
+[Guide/evidence](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_DEV.md), raw root
+C:/ANYworkspaceWork/contact_hemisphere_cylinder_20261004, private target installed,
+wheel f2308eb56cad3d4d6aa4531a55cbdc376de4201c92e6c750216dc0098de489ba.
+Source review found projector/root-completeness issues; new exact controls and
+independent oracle checks address them. No independent engineering acceptance.
+Source01 zero-tangent cancellation, source06 test attribute and installed01 obsolete
+guard failures remain. Production unchanged after source04; tests corrected only.
+No native/beam-pair/friction/dynamic/moving-cylinder admission or performance claim.
 
-Retain source01/02 fixed-target failures;source03 activation120s/24iteration failure;
-source05 preflight (no solver launch);source06/07 hiddenpulse64query failures;
-source08 two-beam1e-7 Newton NONPASS;source10 wrong testattribute. Two-beam1e-6
-success has distinct explicit setting. No tolerance/resource/default change or
-historical result regrade. Prior native1mm/1000/40000 and physicalcaps failures
-remain linked in history. No universal speedup or full-programme forecast.
-
-Next: native spatial/section/material/enforcement acceptance and required physical
-beam/beam-shell boundaries remain. Select a bounded reusable boundary or rigid-
-cylinder integrated slice from current adapters after source/ownership inspection;
-no guard widening or blind refinement. D2/D4/D5/D7/D8 and full C0-C9 still required.
-No saved grazing-friction/impact replay or unchanged lower-tier availability probe.
+Earlier native50um and all inherited failed-query/strong-law/iteration evidence
+remain [linked](docs/GENERAL_CONTACT_NATIVE_ENFORCEMENT_DEV.md). No replay.
+Next: inspect a narrow native/beam-pair or beam-shell physical-boundary/prescribed-
+analytic-tool work slice from current adapters; retain work/derivative/path safety
+before changing admission. Spatial/section/material/enforcement acceptance remains,
+plus full D2 automatic/search, D4 friction, D5/D7 impact and D8 application work.
+No guard widening, blind refinement or optional unavailable-worker reprobe.
 
 ## Blockers and budget
 
@@ -58,7 +56,7 @@ mixed-work enclosure missing. No saved/full/owner/split retry/reset/zero/native
 acceptance. Q4 FD appcycle180.124s timeout retained. Unchanged lower-tier optional
 worker unavailability: no reprobe. No universal speedup/delivery forecast claim.
 
-120active-hour clock: at05:02:22UTC4October, goal391383+3120=394503s (~109.584h).
+120active-hour clock: at05:50:49UTC4October, goal394290+3120=397410s (~110.392h).
 Check current clock before substantial work; no reset. At120h preserve/report and
 request time/scope/method decision; no silent extension/full-goal completion.
-Full D2–D8 and qualification/package/application/resource boundaries remain.
+Full D2-D8 and qualification/package/application/resource boundaries remain.

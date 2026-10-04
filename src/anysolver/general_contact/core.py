@@ -603,6 +603,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
             from .multiple_beam_rigid import validate_multiple_beam_rigid
             return validate_multiple_beam_rigid(model, definition, settings,
                                                 analysis_control=analysis_control)
+        if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind == 'cylinder':
+            from .beam_hemisphere_cylinder import validate_hemisphere_cylinder_contact
+            return validate_hemisphere_cylinder_contact(model, definition, settings,
+                                                       analysis_control=analysis_control)
         if len(definition.rigid_bodies) == 1 and definition.rigid_bodies[0].kind == 'sphere':
             from .beam_hemisphere_sphere import validate_hemisphere_sphere_contact
             return validate_hemisphere_sphere_contact(model, definition, settings,
@@ -1261,6 +1265,9 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
             from .multiple_beam_rigid import MultipleBeamRigidManager
             manager = MultipleBeamRigidManager(model, definition, settings, initial_displacement,
                                                analysis_control=analysis_control)
+        elif definition.rigid_bodies[0].kind == 'cylinder':
+            from .beam_hemisphere_cylinder import HemisphereCylinderManager
+            manager = HemisphereCylinderManager(model, definition, settings, initial_displacement)
         elif definition.rigid_bodies[0].kind == 'sphere':
             from .beam_hemisphere_sphere import HemisphereSphereManager
             manager = HemisphereSphereManager(model, definition, settings, initial_displacement)

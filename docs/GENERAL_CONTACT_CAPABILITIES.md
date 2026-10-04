@@ -1923,3 +1923,25 @@ enforcement convergence. Supporting source scrutiny closed; not independently
 accepted or released. All prior multiple-S3 material/geometry/section, physical
 boundary and native beam-beam/friction/dynamic restrictions remain.
 [Guide/evidence](GENERAL_CONTACT_NATIVE_ENFORCEMENT_DEV.md).
+
+
+## Actual hemisphere fixed-cylinder and mixed analytic work — 4 October development
+
+`CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1` and
+`MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_ANALYTIC_CYLINDERS_STATIC_DEV_V1`
+retain actual cap sphere/rim work, implicit moving-station Hessian, all B2/B3
+translations and genuine ends. Exact literal-axis line/control projection,
+finite rational stationary-root checks and full-radius affine-path enclosure;
+active ambiguity/sign/bound exhaustion fails. Old plane/sphere identities and
+literal default line routes stay. Implemented/installed-tested, not independently
+accepted/released or application admitted. Installed139pass plus2 obsolete guards;
+corrected2 plus installed lazy no-contact1pass, unaffected139 reused (142cases).
+54.672s/201551872B and3.672s/324493312B;243modules/513files match,JIT0/pools1.
+Independent circle/line work, 1e-5 directionalH, curved B3 rim/midnode cross work,
+actual B2/B3 force/displacement within1e-6/gap1e-5, mixed plane/sphere/cylinder solves,
+wrenches, real rollback/cancel and split/incompatible restart pass. Review found
+projector/axial contamination and root-representative risks; exact controls and
+independent checks resolve this development candidate. Retained failures/source
+review are supporting evidence, not independent engineering acceptance. No moving/
+free/capped obstacle, native, beam-pair, friction or dynamic admission.
+[Guide/evidence](GENERAL_CONTACT_HEMISPHERE_CYLINDER_DEV.md).

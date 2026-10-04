@@ -13,13 +13,15 @@ from .core import ContactDefinition, ContactSolverSettings, ContactValidationRep
 PROFILE = "MULTIPLE_EXPLICIT_ROUND_BEAM_FIXED_RIGID_STATIC_DEV_V0"
 PROFILE_ENDS = "MULTIPLE_EXPLICIT_ROUND_BEAM_FIXED_RIGID_PHYSICAL_ENDS_STATIC_DEV_V1"
 PROFILE_SUPPORT = "MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_PLANES_STATIC_DEV_V1"
+PROFILE_SUPPORT_CYLINDER = "MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_ANALYTIC_CYLINDERS_STATIC_DEV_V1"
 PROFILE_SUPPORT_ANALYTIC = "MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_SUPPORT_PLANES_SPHERES_STATIC_DEV_V1"
-_SUPPORT_PROFILES = {PROFILE_SUPPORT, PROFILE_SUPPORT_ANALYTIC}
+_SUPPORT_PROFILES = {PROFILE_SUPPORT, PROFILE_SUPPORT_ANALYTIC, PROFILE_SUPPORT_CYLINDER}
 _END_PROFILES = {PROFILE_ENDS, *_SUPPORT_PROFILES}
 
 
 def _profile(definition, settings=None):
     if settings is not None and settings.beam_end_cap_work == 'hemisphere_support_dev':
+        if any(body.kind=='cylinder' for body in definition.rigid_bodies):return PROFILE_SUPPORT_CYLINDER
         return (PROFILE_SUPPORT if all(body.kind=='plane' for body in definition.rigid_bodies)
                 else PROFILE_SUPPORT_ANALYTIC)
     return PROFILE_ENDS if (any(surface.beam_end_caps=='hemisphere' for surface in definition.surfaces)
@@ -43,8 +45,8 @@ def _parts(model, definition, settings, analysis_control):
         if interaction.surface not in surfaces or interaction.target not in bodies:
             raise ValueError("each beam interaction must name a declared beam and rigid body")
         source, body = surfaces[interaction.surface], bodies[interaction.target]
-        if settings.beam_end_cap_work == 'hemisphere_support_dev' and body.kind not in {'plane','sphere'}:
-            raise ValueError('multiple hemisphere-support profile requires fixed planes or spheres')
+        if settings.beam_end_cap_work == 'hemisphere_support_dev' and body.kind not in {'plane','sphere','cylinder'}:
+            raise ValueError('multiple hemisphere-support profile requires fixed planes, spheres or infinite cylinders')
         if source.beam_radius is None:
             raise ValueError("multiple beam-rigid profile requires explicit round radius")
         if body.kind not in {"plane", "sphere", "cylinder", "capped_cylinder"} or body.path_translation is not None:
@@ -148,6 +150,9 @@ class MultipleBeamRigidManager:
             elif kind=='capped_cylinder':
                 from .capped_cylinder import CappedCylinderBeamManager
                 owner=CappedCylinderBeamManager
+            elif kind=='cylinder' and self.settings.beam_end_cap_work=='hemisphere_support_dev':
+                from .beam_hemisphere_cylinder import HemisphereCylinderManager
+                owner=HemisphereCylinderManager
             elif kind=='sphere' and self.settings.beam_end_cap_work=='hemisphere_support_dev':
                 from .beam_hemisphere_sphere import HemisphereSphereManager
                 owner=HemisphereSphereManager
@@ -224,7 +229,8 @@ class MultipleBeamRigidManager:
 
     def restart_contract(self):
         return {"profile": self.profile, "composition_revision": (
-                    'explicit_hemisphere_support_planes_spheres_regular_path_v1' if self.profile==PROFILE_SUPPORT_ANALYTIC
+                    'explicit_hemisphere_support_planes_spheres_cylinders_regular_path_v1' if self.profile==PROFILE_SUPPORT_CYLINDER
+                    else 'explicit_hemisphere_support_planes_spheres_regular_path_v1' if self.profile==PROFILE_SUPPORT_ANALYTIC
                     else 'explicit_hemisphere_support_planes_regular_path_v1' if self.profile==PROFILE_SUPPORT
                     else 'explicit_physical_end_work_regular_path_v1' if self.profile==PROFILE_ENDS
                     else "explicit_beam_rigid_work_sum_v1"),

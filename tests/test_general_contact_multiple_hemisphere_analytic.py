@@ -168,8 +168,13 @@ def test_common_gap_fraction_and_admission_limits_preserve_old_plane_identity():
     duplicate=replace(definition,interactions=(*definition.interactions,replace(definition.interactions[0],name='alias')))
     assert not validate_general_contact(model,duplicate,settings).valid
     assert not validate_general_contact(model,definition,replace(settings,maximum_candidate_pairs=1)).valid
-    for body in (replace(definition.rigid_bodies[1],kind='cylinder',normal=(0.,0.,1.)),
-                 replace(definition.rigid_bodies[1],path_translation=(.001,0.,0.))):
+    from anysolver.general_contact.multiple_beam_rigid import PROFILE_SUPPORT_CYLINDER
+    cylinder=replace(definition.rigid_bodies[1],kind='cylinder',normal=(0.,0.,1.))
+    cylinder_definition=replace(definition,rigid_bodies=(definition.rigid_bodies[0],cylinder))
+    assert validate_general_contact(model,cylinder_definition,settings).profile==PROFILE_SUPPORT_CYLINDER
+    assert validate_general_contact(model,cylinder_definition,settings).valid
+    for body in (replace(definition.rigid_bodies[1],path_translation=(.001,0.,0.)),
+                 replace(cylinder,path_translation=(.001,0.,0.))):
         assert not validate_general_contact(model,replace(definition,rigid_bodies=(definition.rigid_bodies[0],body)),settings).valid
     assert not validate_general_contact(model,definition,settings,analysis_control='arc').valid
     old_model,old_definition,old_settings,_=plane_bars()

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.94. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.95. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -16,41 +16,40 @@ Publication, merging, release and historical-default changes are separate action
 
 ## Latest integrated slice — 4 October
 
-The explicit native activation-Newton owner now reaches the fixture's50um physical
-gap with one/two curved native beams, complete retained/internal/S3 cross work,
-actual deformable skins, atomic history and restart. Line penalty1.2e6N/m2 is
-explicitly derived from the earlier measured gap response. Activation budgets
-1e-7/1e-6m for one/two beams limit Newton trial prefixes, including open-endpoint
-hidden paths; all controller queries share64cap. Original24Newton/8cuts/128sweep
-limits, physical law, force targets and legacy default route remain. Conservative
-geometry-only gap queries and projected normal rates avoid unused derivative work.
-Corrected controller revision binds distinct restart identity.
+Actual B2/B3 hemisphere endpoints now contact a fixed infinite cylinder through
+an explicit development profile. Sphere/rim geometry retains all tangent-node
+work; the moving rim station uses the implicit Jet2 Hessian. Exact literal-axis
+projection protects line/cap/search geometry at large axial offsets; rational
+one-root checks protect the quartic stationary representatives. Active ambiguity
+and unresolved sign/bounds fail explicitly. Full-radius envelopes conservatively
+bound affine static paths, with original finite resources.
 
-Installed28pass139.665s/354353152B plus specific independent-path follow-up1pass
-3.105s;207modules/511files match,JIT0/pools1. Independent represented-curve minimum
-gaps49.2952/49.2958um meet50um. Complete work/reactions, one tangent direction at
-three h values (max2.651e-6 vs1e-5), cancellation/later-child failure/query exhaustion,
-split/incompatible restart and legacy paths pass. Penalty doubling reduces one-beam
-gap49.2952 to34.8663um; half-force-step path preserves final response. Supporting
-source review corrections closed; not engineering acceptance or release.
-[Guide/evidence](docs/GENERAL_CONTACT_NATIVE_ENFORCEMENT_DEV.md).
+The existing multiple-rigid owner now composes cylinder/plane/sphere children;
+old plane/sphere identities and default literal line routes stay unchanged.
+Actual B2/B3 force/displacement, independent line/cap work, curved rim midnode
+couples, both-body wrench, cancellation/exception replay and split/incompatible
+restart pass. Fresh wheel139pass plus2 obsolete rejection expectations; those2
+corrected expectations and installed lazy no-contact1pass in a focused follow-up.
+Unchanged139 results reused. Installed142 cases across two runs54.672s/201551872B
+and3.672s/324493312B;243modules/513files match,JIT0/pools1. Supporting source
+scrutiny and independent numerical oracles are not engineering acceptance/release.
+[Guide/evidence](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_DEV.md).
 
-Retain fixed-target stronger-law failures, source03 activation iteration/deadline
-failure, hidden-path64query failures, two-beam1e-7 activation Newton NONPASS and
-preflight/test-fixture errors. Two-beam1e-6 success has different explicit algorithmic
-settings; no old result is regraded. No universal speedup or programme forecast.
+Keep source01 exact-tangent cancellation, source06 wrong test attribute and
+installed01 obsolete cylinder-rejection failures; no tolerance/resource/default
+change or historical regrade. The preceding stronger native50um work remains
+[linked](docs/GENERAL_CONTACT_NATIVE_ENFORCEMENT_DEV.md), including its failures.
+No universal speedup or full delivery forecast is established.
 
-Next principal D3 gap: native spatial/section/material and enforcement acceptance
-beyond this represented-curve fixture, plus actual beam-beam and beam-shell physical
-boundaries. Prefer a bounded integrated physical-boundary/rigid-cylinder slice where
-existing force adapters can be reused; do not widen native section/size guards or
-claim mesh convergence from two penalties. D2 automatic/search, D4 friction, D5/D7
-impact and D8 application evidence dependencies remain. Review actual candidate
-ownership/geometry before choosing the next slice; preserved failed impact/native
-grazing cases remain forbidden to replay. Full C0-C9 stays active/incomplete.
+Next principal D3 gap: actual native/beam-pair or beam-shell physical boundaries,
+plus spatial/section/material/enforcement acceptance. Inspect a narrowly owned
+reusable boundary or prescribed analytic-tool work map before selecting the next
+integrated slice; do not merely widen guards. Full D2 automatic/search, D4 friction,
+D5/D7 impact and D8 application dependencies remain. Failed impact/native-grazing
+cases and source-bound D1 missing evidence restrictions remain unchanged.
 
-[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV93.md)
-->92->91 retains earlier identities, failures, restrictions and evidence.
+[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV94.md)
+->93->92 retains earlier identities, failures, restrictions and evidence.
 
 ## 1. Current technical position
 
