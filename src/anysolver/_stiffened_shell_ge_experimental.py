@@ -62,6 +62,7 @@ from ._stiffened_shell_ge_checkpoint_binary import (
     CHART_MAGIC as CHART_CHECKPOINT_MAGIC, decode_chart as _decode_chart_checkpoint,
     NATIVE_SHELL_MAGIC, NATIVE_SHELL_SCHEMA, STABLE_NATIVE_SCHEMA,
     SCHEMAS as _BINARY_SCHEMAS, CURVED_POINT_MATERIAL_KINDS,
+    FINITE_DISTRIBUTING_MATERIAL_KINDS,
 )
 from ._stiffened_shell_increment_control import (
     MAGIC as INCREMENT_CONTROL_MAGIC, decode_control, validate_control,
@@ -76,6 +77,8 @@ from ._stiffened_shell_l1_assembly_experimental import (
 PROFILE = "B3_GE_E4_PL_STIFFENED_SHELL_V1"
 BL5_GENERALIZED_MATERIAL_V1 = "BL5_GENERALIZED_MATERIAL_V1_DEV"
 BL5_COUPLED_J2_MATERIAL_V1 = "BL5_COUPLED_J2_MATERIAL_V1_DEV"
+GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1_DEV"
+GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1_DEV"
 CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_LINEAR_V1"
 FINITE_CHECKPOINT = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_FINITE_V1"
 FINITE_MATERIAL_CHECKPOINT = (
@@ -195,6 +198,7 @@ class LinearDefinition:
     retained_scale_policy: str = "profile"
     distributing_footprints: tuple[DistributingFootprintDefinition, ...] = ()
     finite_distributing_footprints: tuple[FiniteDistributingFootprintDefinition, ...] = ()
+    finite_distributing_material_policy: str = "elastic"
 
 
 @dataclass(frozen=True)
@@ -554,6 +558,18 @@ class ExperimentalGEAnalysis:
             raise ValueError("explicit typed finite distributing footprint tuple required")
         finite_groups = tuple(FiniteDistributingFootprintDefinition(g.footprint) for g in finite_groups)
         self._finite_distributing = bool(finite_groups)
+        if (type(definition.finite_distributing_material_policy) is not str or
+                definition.finite_distributing_material_policy not in (
+                    "elastic", GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1,
+                    GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1)):
+            raise ValueError("explicit admitted finite distributing material policy required")
+        self._distributing_material = definition.finite_distributing_material_policy != "elastic"
+        self._distributing_shell_material = (
+            definition.finite_distributing_material_policy == GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1)
+        if self._distributing_material and not self._finite_distributing:
+            raise ValueError("finite distributing material policy requires finite attachment records")
+        self._distributing_checkpoint_kind = ("finite_distributing_coupled" if self._distributing_shell_material else
+            "finite_distributing_material" if self._distributing_material else "finite_distributing")
         if groups and finite_groups:
             raise ValueError("reference-only and finite distributing records cannot be mixed")
         reference_groups = groups
@@ -578,7 +594,10 @@ class ExperimentalGEAnalysis:
         panel = definition.shell
         if type(panel) is not ShellPanel:
             raise ValueError("owned Q4 panel required")
-        if groups and (not panel.q4_elements or panel.s3_elements or panel.j2_curve is not None or
+        if self._distributing_material and (panel.j2_curve is not None) != self._distributing_shell_material:
+            raise ValueError("finite distributing coupled material policy requires matching shell J2")
+        if groups and (not panel.q4_elements or panel.s3_elements or
+                (panel.j2_curve is not None and not self._distributing_shell_material) or
                 definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1 or
                 definition.shell_reference_policy != "flat" or definition.bl5_material_policy != "elastic" or
                 definition.modal_boundary_policy != "supported" or definition.lines or definition.footprints or
@@ -628,7 +647,8 @@ class ExperimentalGEAnalysis:
             definition.lines, definition.q4_pullback_policy, definition.footprints,
             definition.modal_boundary_policy, definition.footprint_chart_policy,
             definition.bl5_material_policy, definition.shell_reference_policy,
-            definition.retained_scale_policy, reference_groups, finite_groups)
+            definition.retained_scale_policy, reference_groups, finite_groups,
+            definition.finite_distributing_material_policy)
         beam_ids, beam_index, beam_nodes, beam_parts, beam_count, beam_inertias = _beam_reference(
             definition.beams)
         self._reference_modal_inertias = beam_inertias
@@ -756,6 +776,11 @@ class ExperimentalGEAnalysis:
                 geometry=[g.identity for g in distributing_compiled], poses=[p.identity for p in finite_poses],
                 retained_scales="native_force_moment_roles_v1", checkpoint_kind="finite_distributing",
                 policy="flat_elastic_q4_generalized_monotone_translation_force_v1")
+            if self._distributing_material:
+                identity_payload["distributing_finite_material"] = dict(
+                    policy=definition.finite_distributing_material_policy,
+                    checkpoint_kind=self._distributing_checkpoint_kind,
+                    histories="accepted_and_fixed_predecessor_v1")
         if self._bl5_shell_material:
             identity_payload["bl5_retained_scale_policy"] = "native_force_moment_roles_v1"
         if self._curved_reference:
@@ -954,6 +979,22 @@ class ExperimentalGEAnalysis:
     @property
     def capabilities(self):
         if self._finite_distributing:
+            if self._distributing_material:
+                return dict(profile=PROFILE, status="EXPERIMENTAL_NOT_QUALIFIED",
+                    shell="isotropic J2 flat Cartesian full-map Q4" if self._distributing_shell_material else
+                          "elastic flat Cartesian full-map Q4",
+                    beam="generalized material B3 with native retained coordinates",
+                    beam_section_families=self._beam_families,
+                    attachment=("objective finite area-mean/director/projected-polar distributing pose",),
+                    distributing_footprint_law=DISTRIBUTING_FINITE_LAW,
+                    material_policy=self._definition.finite_distributing_material_policy,
+                    analysis=("nonlinear_force",), loads=("nodal dead translation forces",),
+                    fixed_step_max_backtracks=16,
+                    checkpoints=(self._distributing_checkpoint_kind,),
+                    recovery="accepted constitutive states and evaluated spatial connection actions",
+                    excluded=("reference-linear solve", "chart rebase", "adaptive/displacement/arc controllers",
+                        "external/staged loads", "physical fibres", "S3", "modes", "buckling",
+                        "qualified distributing footprint"))
             return dict(profile=PROFILE, status="EXPERIMENTAL_NOT_QUALIFIED",
                 shell="elastic flat Cartesian full-map Q4", beam="generalized B3 with native retained coordinates",
                 beam_section_families=self._beam_families,
@@ -1578,9 +1619,9 @@ class ExperimentalGEAnalysis:
             chart = (event_generation, anchors, witness)
         if raw.startswith(BINARY_CHECKPOINT_MAGIC):
             def expected_shapes(kind, generation):
-                if self._finite_distributing and kind != "finite_distributing":
+                if self._finite_distributing and kind != self._distributing_checkpoint_kind:
                     raise ValueError("finite distributing checkpoint requires its exact mechanics kind")
-                if kind == "finite_distributing" and not self._finite_distributing:
+                if kind in ("finite_distributing",) + FINITE_DISTRIBUTING_MATERIAL_KINDS and not self._finite_distributing:
                     raise ValueError("finite distributing checkpoint requires matching attachment records")
                 if self._distributing_reference and kind != "linear":
                     raise ValueError("distributing footprints require reference-linear binary checkpoints; finite kinds are unsupported")
@@ -1636,15 +1677,15 @@ class ExperimentalGEAnalysis:
                         raise ValueError("native material checkpoint requires elastic-shell fibre model")
                     from ._stiffened_shell_beam_history import shapes
                     return base + shapes(self._beam_parts, "origin") + shapes(self._beam_parts, "accepted")
-                if kind in ("finite_material", "finite_shell_material", "finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS:
+                if kind in ("finite_material", "finite_shell_material", "finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS:
                     stations = sum(len(part[0].operator.cell.stations)
                                    for part in self._beam_parts)
                     material = base + (("beam_plastic", (stations, 6, 2)),
                                        ("beam_accumulated", (stations, 2)))
-                    if kind in ("finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS:
+                    if kind in ("finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS:
                         material += (("beam_origin_plastic", (stations, 6, 2)),
                                      ("beam_origin_accumulated", (stations, 2)))
-                    if kind in ("finite_bl5_coupled", "finite_curved_points_coupled"):
+                    if kind in ("finite_bl5_coupled", "finite_curved_points_coupled", "finite_distributing_coupled"):
                         shells = len(self._shell_parts)
                         material += (("shell_plastic", (shells, 12, 3)),
                                      ("shell_alpha", (shells, 12)),
@@ -1664,7 +1705,7 @@ class ExperimentalGEAnalysis:
             stable_q4 = kind.endswith("_stable_q4")
             kind = kind.removesuffix("_stable_q4")
             schema = (CHECKPOINT if kind == "linear" else
-                      _BINARY_SCHEMAS[kind] if kind in ("finite_distributing", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS else
+                      _BINARY_SCHEMAS[kind] if kind in ("finite_distributing", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled") + CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS else
                       STABLE_NATIVE_SCHEMA if kind == "finite_native_material_stable" else
                       "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_MATERIAL_V7"
                       if kind == "finite_native_material" else
@@ -1673,7 +1714,7 @@ class ExperimentalGEAnalysis:
                       else FINITE_CHECKPOINT)
             value = {"schema": schema, "model": self._identity,
                      "generation": generation, **arrays}
-            if kind in ("finite", "finite_distributing", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable") + CURVED_POINT_MATERIAL_KINDS:
+            if kind in ("finite", "finite_distributing", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled", "finite_material", "finite_shell_material", "finite_native_material", "finite_native_material_stable") + CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS:
                 value["accepted_factors"] = arrays["accepted_factors"].tolist()
         elif raw.startswith(NATIVE_SHELL_MAGIC):
             if (self._line_samples or not self._has_physical_fibre or
@@ -1736,7 +1777,7 @@ class ExperimentalGEAnalysis:
                     _BINARY_SCHEMAS["finite_bl5_coupled"], _BINARY_SCHEMAS["finite_chart_bl5_coupled"])):
                 raise ValueError("finite BL5 checkpoint requires binary framing")
         if (type(value) is dict and value.get("schema") in
-                (*tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS), _BINARY_SCHEMAS["finite_distributing"], FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
+                (*tuple(_BINARY_SCHEMAS[k] for k in CURVED_POINT_MATERIAL_KINDS + FINITE_DISTRIBUTING_MATERIAL_KINDS), _BINARY_SCHEMAS["finite_distributing"], FINITE_CHECKPOINT, FINITE_MATERIAL_CHECKPOINT,
                  _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"],
                  FINITE_SHELL_MATERIAL_CHECKPOINT,
                  FINITE_S3_MATERIAL_CHECKPOINT,

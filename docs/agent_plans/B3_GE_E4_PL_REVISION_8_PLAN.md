@@ -187,6 +187,15 @@ Decisions resolving the present queue:
   fixed-predecessor tangents, rejection/cancellation and restart controls remain
   required. This lane is independent of Mx mesh adequacy and adds no optional
   framework, altered legacy default or inherited physical qualification.
+  This lane now has explicit material policies, dedicated accepted/predecessor
+  checkpoint kinds, simultaneous yielded recovery, atomic fault/cancel controls
+  and byte-identical restarted1.0001 continuation. Installed integration131PASS
+  and public examplePASS; consumer field recognition rejects material export
+  until its separate contract is implemented. The same fixture's1.01 target
+  remains failed; saved-state free FD is inconclusive at the registered limit.
+  No tolerance/budget/globalization change or material/connection qualification
+  follows. Next close an actual material consumer/lifecycle gap with existing
+  services rather than add optional mechanics or repeat physical refinement.
 - **Pressure assessment:** do not adopt the proposed vector-only amendment.
   Its documented shared-node masking weakens a protection of the current
   contract. This resolves the outstanding approval request as a decision to

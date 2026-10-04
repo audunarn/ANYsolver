@@ -193,3 +193,7 @@ tests/test_r8_e02_distributing_thickness.py -text
 scripts/r8_e02_distributing_my.py -text
 tests/test_r8_e02_distributing_my.py -text
 .qualification/b3-ge-e4-pl/r8-distributing-my-dev-20261004-v1/** -text -whitespace
+src/anysolver/_stiffened_shell_ge_finite_experimental.py -text
+tests/test_stiffened_shell_ge_distributing_material.py -text
+examples/stiffened_shell_ge_distributing_material.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-material-dev-20261004-v1/** -text -whitespace

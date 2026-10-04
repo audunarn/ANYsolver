@@ -155,7 +155,7 @@ class PreparedFiniteDistributingAttachment:
     @classmethod
     def _from_compiled(cls, owner, reference, pose):
         """Reuse the owner's own prepared map and pose without a second search."""
-        _reference_owner(owner)
+        _reference_owner(owner, allow_finite_material=True)
         if pose.reference_identity != reference.identity:
             raise ValueError("matching finite pose and reference correspondence required")
         instance = object.__new__(cls)

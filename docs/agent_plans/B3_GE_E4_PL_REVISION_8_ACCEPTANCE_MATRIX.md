@@ -2238,3 +2238,16 @@ movements0.66148%/0.05137%, reference differences0.22060%/0.03200%. Cross moves
 Stop this refinement slice. No asymptotic/full6channel/finite/aggregate pass;
 formalF03 UNCONSUMED. Supporting Read review is not different-family acceptance.
 [Evidence and decision](development/r8-distributing-reference-linear-20261004/results.md).
+
+G3 finite distributing selected material lifecycle, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+Explicit generalized / coupled-Q4-J2 admission, accepted/predecessor checkpoint
+kinds, simultaneous yield, physical material recovery, atomic fault/cancel and
+byte-identical restarted1.0001 continuation. Final installed solver/elastic
+ANYfem compatibility131PASS plus public examplePASS; actual imports/source
+identities bound. Consumer still rejects material intent rather than dropping it.
+Same fixture1.01 fails; free-equation FD does not satisfy1e-5, conditioning /
+curvature / tangent adequacy unresolved. Smaller fixture is lifecycle evidence,
+not substituted capacity or qualification. Low-hardening failures preserved.
+Full combination/reversal/chart/consumer/physical/capacity and aggregate gates
+remain open. No criteria/globalization change, speed claim or formalF03 use.
+[Exact scope, artifacts, failures and reviews](development/r8-distributing-reference-linear-20261004/results.md).

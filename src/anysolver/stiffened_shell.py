@@ -82,6 +82,7 @@ from ._stiffened_shell_ge_experimental import (
     NodalAction, PointConnection, ShellPanel,
     NodalRigidFootprint, NodalRigidFootprintSelection, NodalRigidFootprintWrench,
     Q4_ALGORITHMIC_PULLBACK_V1, BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1,
+    GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1, GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1,
 )
 
 
@@ -243,6 +244,7 @@ __all__ = [
     "AdaptiveIncrementControl", "IncrementAttempt", "FiniteIncrementFailure",
     "AdaptiveIncrementExhausted",
     "Q4_ALGORITHMIC_PULLBACK_V1", "BL5_GENERALIZED_MATERIAL_V1", "BL5_COUPLED_J2_MATERIAL_V1",
+    "GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1", "GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1",
     "B3_GE_E4_PL_STIFFENED_SHELL_V1", "B2_E4_PL_FAST_LINEAR_V1",
     "ShellPanel", "PointConnection", "PointTransferWrench",
     "NodalRigidFootprint", "NodalRigidFootprintSelection", "NodalRigidFootprintWrench",

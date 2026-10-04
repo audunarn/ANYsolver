@@ -95,6 +95,12 @@ movements0.66148%/0.05137%, solid differences0.22060%/0.03200%. Cross movement
 or full6channel claim, acceptance or automatic next refinement follows.
 
 The near-term path is now:
+0. COMPLETE experimental material implementation: explicitly selected finite
+   distributing generalized / coupled-Q4-J2 owner and predecessor checkpoints;
+   installed solver/elastic-consumer combination131PASS and yielding/restart
+   examplePASS. The1.0001 continuation proves bounded lifecycle behavior only;
+   failed1.01 and low-hardening cases remain open. Next close a ready material
+   consumer/persistence or lifecycle obligation; no automatic finer campaign.
 1. COMPLETE: reference-linear distributing consumer, 42 source/42 installed
    checks and installed public example using the unchanged solver wheel.
    Reuse this evidence; preserve reference-only admission.

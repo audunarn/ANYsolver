@@ -29,14 +29,19 @@ def _owned(values):
     return np.frombuffer(array.tobytes(), dtype=array.dtype).reshape(array.shape)
 
 
-def _reference_owner(owner):
+def _reference_owner(owner, *, allow_finite_material=False):
     from ._stiffened_shell_ge_experimental import ExperimentalGEAnalysis, Q4_ALGORITHMIC_PULLBACK_V1
     _require(type(owner) is ExperimentalGEAnalysis, "actual experimental GE owner required")
     owner._require_open()
     definition = owner._definition
+    # The correspondence compiler is geometric. Its reference-linear public
+    # binding remains elastic; only the selected finite material owner may reuse
+    # the same immutable geometry through its private compiled attachment seam.
+    finite_material = (allow_finite_material and owner._finite_distributing and
+                       owner._distributing_material)
     _require(not owner._modal_only and not owner._curved_reference and
              not owner._has_physical_fibre and not owner._bl5_material and
-             definition.shell.j2_curve is None and not definition.shell.s3_elements and
+             (definition.shell.j2_curve is None or finite_material) and not definition.shell.s3_elements and
              definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and
              not definition.lines and definition.shell_reference_policy == "flat" and
              definition.bl5_material_policy == "elastic" and definition.modal_boundary_policy == "supported",

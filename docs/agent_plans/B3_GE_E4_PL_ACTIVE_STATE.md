@@ -1,99 +1,82 @@
 # B3-GE / E4-PL / B2 active state — 4 October 2026
 
-## Decision and delivered behavior
-
 ACTIVE. Complete amended G0–G6/F01–F13/V01–V28/B01–B18 remains binding.
-[Goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md)
-and [matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) govern. Implementation,
-testing, acceptance and release remain distinct.
+[Goal](B3_GE_E4_PL_REVISION_8_GOAL.md), [plan](B3_GE_E4_PL_REVISION_8_PLAN.md),
+[matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) govern. Implementation,
+testing, acceptance and release remain distinct. No aggregate gate is closed.
 
-Delivered experimental finite distributing GE owner: flat Cartesian multi-Q4/
-generalized native B3, retained variables, sparse local saddle, monotone force
-stepping, cached physical wrenches, atomic reject/cancel/checkpoint/restore/
-continue. Explicit new law/model/binary identity; old reference identities stay.
-Source191 precedes metadata-only delta; final installed186 and public example
-PASS. Distinct ANYfem finite schema/public workflow/input and Project save-reopen/
-selected recovery/checkpoint resume: final installed59/example PASS. No rebuild
-or repeat campaign is needed for unchanged product. Full domain remains open.
+## Delivered behavior and current decision
 
-Current scientific result: one fixed40x16/nz4 solid Mx/Fy pair completes. Work
-changes0.063354%/0.031099% relative to saved nz2, fine native differences
-0.876285%/0.395449%. Saved centroid-force work comparison against nz4 is0.12103%.
-Six-pose output bounds and reciprocal work retained. Reference thickness shift
-does not explain nativeMx last movement1.518%. Stop thickness refinement for
-this decision; neither two thickness levels nor sub1% fine agreement qualifies.
+Finite distributing GE owner reuses the sparse multi-Q4/native generalized B3
+owner, retained variables, physical recovery and atomic accepted-state boundary.
+New explicit generalized / coupled-Q4-J2 policies add simultaneous yielding,
+fixed accepted predecessors and dedicated binary schemas. Old elastic/reference
+defaults and checkpoint identities remain. Material capability is experimental.
 
-Latest My discriminator completes: direct compliance difference0.019364%,
-native/solid reciprocal errors6.785e-17/2.602e-15 (solid bound1.232e-13).
-No missing pitch-work channel indicated. This supports My only, not nativeMx
-adequacy or full6channel/finite fidelity. Source/provenance and serializer issues
-repaired; original failed native/empty output remains rejected and preserved.
+Final installed solver/ANYfem combination: **131 PASS** plus public material
+example PASS. Example quartersteps to1 and explicit1.0001 continuation yield
+both domains; uninterrupted/restored checkpoints are byte-identical. Equilibrium
+3.5308564e-13, gap7.58995e-18; accepted-prefix checkpoint6707B. Actual imported
+files and installed package bytes match source. Complete route141.90s,
+sampled211599360B, affinity/pools1/JIToff under600s/2GiB. No speed claim.
+Consumer remains elastic: it recognizes the appended definition field but
+rejects selected/malformed material policies rather than discarding them.
+Its old schemas and Project save/reopen remain exercised.
 
-The ONE native80x32 Mx/My check completes: direct work moves0.66148%/0.05137%,
-solid differences0.22060%/0.03200%, cross movement3.43084e-9 (~2.03%). Runtime
-95.97s/sample683655168B,1factor/affinity1/pools1/JIToff;25 source controls pass.
-Same pad/support/law/b7artifact, exact40x16 builder parity and old80 rejection.
-Stop this refinement slice: measured direct-work mesh-pair stability only, not
-convergence/full6channel/finite fidelity or aggregate acceptance. No automatic
-next mesh/solid campaign, changed threshold, formalF03 or line-law substitute.
+**Remaining material uncertainty:** the same coupled fixture's1.01 continuation
+fails at generation4, relative residual0.00246153 after23 solves/192 rejected
+trials. Exact accepted prefix and failing unaccepted state/correction are saved.
+Free-equation directional FD does not meet1e-5; conditioning, curvature and
+tangent adequacy remain unresolved. Tiny descent beyond16 halvings is not
+practical convergence. No budget/tolerance/globalization amendment follows.
+The1.0001 lifecycle fixture is separate and does not replace this failure.
+Earlier low-hardening axial and eccentric bending failures also remain.
 
-Ready mandatory implementation lane: finite distributing simultaneous Q4 J2/
-generalized B3 histories in the same owner, initially admitted force stepping.
-Use explicit material admission/identity and a dedicated checkpoint retaining
-accepted AND predecessor beam/shell states; preserve elastic/reference kinds.
-Existing algorithmic candidates/atomic publication are reusable. Actual yield,
-fixed-predecessor tangent, reject/cancel ownership and restart parity need direct
-evidence. This is G3/G4 implementation, not inherited point-law qualification.
+Current scientific decision: stop the completed native80x32 Mx/My refinement
+slice. Direct work movements0.66148%/0.05137%, saved-solid differences0.22060%/
+0.03200%; small cross term moves~2.03%. Measured mesh-pair stability only:
+not asymptotic/full-six-channel/finite fidelity or F04 acceptance.
 
-Current material draft adds selected policy/new predecessor binary kinds,
-prospective encoding and strict monotone restore. Generalized solve/restore
-passes. Coupled bending400/500 and centered axial80000 stall at final target;
-300 bending keeps shell elastic. These failures remain in material raw. Actual
-fixed-predecessor Newton FD3.4e-9 does not indicate a dominant tangent defect.
-One bounded correction/merit diagnostic now checks K*d+R and tiny-step residuals
-to distinguish inaccurate sparse correction from the backtracking comparison.
-No tolerance/globalization/law change is authorized by that diagnosis itself.
+**Next mandatory exit:** preserve this reviewed material slice, then complete
+the explicit material consumer/persistence contract or a directly ready missing
+material lifecycle obligation. Do not reopen the stopped Mx/My refinement or
+broaden unsupported mechanics. Any next diagnostic must distinguish the stated
+free-equation tangent/conditioning issue from nonlinear correction curvature
+using the saved failing state, not repeat the entire failed trajectory.
 
-## Exact state, evidence and authority
+## Exact state and evidence
 
-ANYsolver C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; latest diagnostic HEADc7070bf3,
-finite product8d03f522. Current changes are diagnostic helpers/tests, preserved
-raw and living records only. ANYfem C:/Github/ANYfem/.worktrees/
-experimental-ge-panel-consumer, branch codex/experimental-ge-panel-consumer,
-HEAD93336c5; no current edit. Original forwarding/unrelated dirty work preserved.
+Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001. Diagnostic HEAD6269f184 precedes
+this material delivery; actual Git status/HEAD decides the restart identity.
+ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
+branch codex/experimental-ge-panel-consumer, HEAD93336c5 precedes compatibility
+delivery. Original forwarding/main/unrelated dirty work is preserved.
 
 [Grouped evidence and limits](development/r8-distributing-reference-linear-20261004/results.md).
-Thickness raw .qualification/b3-ge-e4-pl/r8-distributing-thickness-dev-20261004-v1
-binds final6PASS, prior65 controls, six exact legacy decks/parses, full v5 CCX
-outputs/comparison and saved analysis. Initial CRLF/tuple-list fixture failures,
-v4 CCX input failure201 and refused naming collision remain. CLOAD new-only
-.13e repair retains all coefficients; actual deck work/resultants checked at
-unchanged tolerances. Prospective drivers/prior data frozen before execution.
-Latest My raw .qualification/b3-ge-e4-pl/r8-distributing-my-dev-20261004-v1
-pins final v3 jobs/comparison,23 initial controls/1final changed control,419
-actual installed source hashes and preserved failure/repair history. Numerical
-jobs and supporting Read reviews terminal; no process needs recovery.
+Material raw: .qualification/b3-ge-e4-pl/r8-distributing-material-dev-20261004-v1.
+Final installed runtime-v15, source/consumer snapshots, drivers, logs, failed
+v7/v9, replay-v10 and supporting reviews are preserved. Site/wheels are local
+artifacts; hashes and all imported package-source identities are recorded.
+Solver wheel2f182820379c18029e93e143a689902dfdab56afb398aef490510a16bde43c3d;
+consumer wheeldc822ff5cb33e350b03ab9baa932758fd7fbde507191fe38d9be61732dda0ad3.
+All numerical jobs and supporting Read reviews terminal; no process to recover.
+Supporting OpenAI reviews are not different-family scientific acceptance.
 
-Solver wheel9a366e44b752e57b65f029a7ee54fe4c4ee7581c5bda0f85083c8c8d040f59e8;
-finite consumer wheele8379bed3db7d7f6f8349135a1f8e5e294528502aa738339e74d7b9c4b8692e6.
-Earlier consumer a3a46112 is compatibility evidence only. Installed identities
-and scope remain tied to their original artifacts. Supporting OpenAI reviews
-are development input, not different-family scientific acceptance.
+## Preserved authority and blockers
 
 FormalF03 UNCONSUMED: never execute/copy/substitute
 scripts/b3_e4_f03_c1_fy_supported_reference.py, SHA
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
 Never inspect/copy/archive us3-modal-canary (credentials); no Get-CimInstance.
-At most3workers; ONE numerical job,100krows/600s/8GiB/8threads, tighter current
-600s/2GiB/affinity1/pools1/JIT-off. Existing4096cell map/old donor guards stay.
+At most3 workers; ONE numerical job,100krows/600s/8GiB/8threads. Current tighter
+600s/2GiB/affinity1/pools1/JIToff. Existing4096cell map/old donor guards stay.
 Root owns jobs/Git. No push/main merge/publication/contact-worker messages.
 Optional local/Mistral unavailable; do not reprobe. No authority renewed.
 
-F04/G0/G2/full physical/material/topology/load/spectral/capacity/scale/platform/
-full-consumer/external/different-family/release obligations remain open. BL5
-actual mixed inventory13positive/1unresolved/7unassessed; auxiliary21 is not
-physical stability. Inverse/positive-part certificates CLOSED_UNRESOLVED;
-pressure amendment DECLINED; no retries/bypasses. F5 lacks retained-sided forces.
-Saved predecessor of this note is byte-preserved in latest raw. No unmeasured
-speed, completed gate or release-date claim.
+F04/G0/G2/full material/topology/load/spectral/capacity/scale/platform/consumer/
+external/different-family/release obligations remain open. BL5 mixed inventory
+13positive/1unresolved/7unassessed; auxiliary21 is not physical stability.
+Inverse/positive-part certificates CLOSED_UNRESOLVED; pressure amendment
+DECLINED, no retries/bypasses. F5 lacks retained-sided forces. Previous note
+bytes are retained in material raw. No release date or completed-goal claim.

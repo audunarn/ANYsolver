@@ -749,3 +749,65 @@ retains drivers, bindings, commands, logs, full controls/outputs, prior active
 note bytes and supporting Read review. Comparison SHA
 c116c375b859bf101e8e7c99d4d34dc6a7f6adce9979f1f004ddc9b35991572a.
 Supporting OpenAI review clear; no different-family/scientific acceptance.
+
+### Explicit finite distributing material lifecycle — installed development exit
+
+Two appended, explicitly selected policies preserve elastic defaults:
+`GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1_DEV` and
+`GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1_DEV`. The latter requires the
+existing Q4 J2 update; both retain native generalized section histories and
+actual retained variables. No element/constitutive equation or integration
+tolerance changes. New binary kinds retain accepted **and fixed predecessor**
+histories. Mechanical restore checks precede publication; prospective encoding,
+faults and cancellation preserve all participating accepted domains atomically.
+Strict positive/monotone factors reject forged material checkpoints.
+
+Centered axial lifecycle fixture: three Q4, one native B3, two-host reduced pad,
+shell thickness0.07m, beam/reference surfacez0; shell canonical DNV curve
+200/220/230MPa at0.005/0.01, ultimate1GPa at0.2; generalized yield1e6,
+hardening1e11. Beam Fx16MN and quartersteps to1 produce active plasticity in
+both domains. This is a declared lifecycle fixture, not connection fidelity
+or a calibrated physical section law. Continue to1.0001: equilibrium
+3.530856446583774e-13, gap7.589948819396164e-18, shell alpha0.001660566180442885,
+beam accumulated0.000150016. Uninterrupted/restored checkpoints byte-identical;
+accepted-prefix checkpoint6707B. New example uses only public APIs.
+
+Final installed solver/consumer integration **131PASS132.52s** plus examplePASS;
+whole supervised route141.9034s/sample211599360B. Actual affinity/pools1/JIToff,
+600s/2GiB, empty stderr, all installed package bytes match source and all actual
+solver/consumer imports come from the isolated site. New fixed-predecessor
+tangent, owned recovery, corruption, failure, cancellation and restart tests
+are exercised alongside old finite/reference, curved-material and BL5 controls.
+ANYfem keeps its existing elastic formats, recognizes the appended definition
+field and rejects selected/malformed policies, including modal export. It does
+not silently discard material intent or advertise a material consumer yet.
+
+Artifacts: solverwheel
+`2f182820379c18029e93e143a689902dfdab56afb398aef490510a16bde43c3d`,
+consumerwheel`dc822ff5cb33e350b03ab9baa932758fd7fbde507191fe38d9be61732dda0ad3`.
+Raw `.qualification/b3-ge-e4-pl/r8-distributing-material-dev-20261004-v1`
+retains final snapshots, runtime/import/wheel identities, drivers and logs.
+Source-v12 had17PASS before injected-message assertions were tightened; final
+installed run exercises tightened assertions. Earlier17PASS/3FAIL v7 preserved.
+
+**Failures and scientific limits:** eccentric400/500N and low-hardening axial
+histories remain failed;300N bending did not yield the shell. Increasing the
+selected maximum to16 halvings did not solve the low-hardening case. It is an
+explicit bounded allowance, not a measured convergence improvement; default8
+and old elastic maximum12 remain unchanged. The steel-like fixture's1.01
+continuation also fails at generation4 (23 solves,237 evaluations,192 rejected
+trials, ratio0.0024615293). Exact accepted prefix and unaccepted base/correction
+are preserved in v9. Sparse correction error1.49e-11 and whole-row FD hide
+the important scale distinction: free-equation FD errors0.0008118/0.0003194/
+0.003351 exceed1e-5. Tangent adequacy, conditioning and nonlinear curvature
+remain unresolved. Saved-state replayv10 finds tiny descent beyond16 halvings
+and a successful independent1.0001 increment; neither qualifies1.01 or justifies
+further budget/globalization changes. Mixed correction maximum0.1605 combines
+translation/rotation and is not a displacement measure.
+
+Supporting Read reviews found and closed monotone restore and consumer selector
+discard defects; final changes have no remaining reported implementation
+finding. Supporting OpenAI reviews do not meet different-family scientific
+acceptance. Full material histories, physical finite connection, chart rebase,
+S3/fibres, topology/loads/spectra/capacity/scale/platform/complete consumer,
+F04/G0/G2 and release remain open. FormalF03 unconsumed. No speedup claim.
