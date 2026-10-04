@@ -107,7 +107,8 @@ def prepare(owner,raw):
         result=replace(result,beam_fibre_material=records,beam_fibre_energy=energies)
     driver._state=state;driver._shell_predecessors=shell_parent
     driver._beam_predecessors=beam_parent
-    driver._shell_origins=_accepted_shell_material_origins(owner,state,shell_next)
+    driver._shell_origins=(_accepted_shell_material_origins(owner,state,shell_next)
+                           if owner._definition.shell.j2_curve is not None else shell_next)
     driver._beam_origins=beam_next;driver._accepted=result
     driver._displacement_applied_load=a["applied_load"]
     return metadata,a,driver,result

@@ -40,7 +40,16 @@ Recovery includes generalized station records, physical-fibre station stresses
 and last-increment fibre energies. These are not cumulative global energy or
 engineering capacity results. Selected fibre recovery is not added by this change.
 
-This route excludes S3, other attachments, staged/external or
+Elastic mixed Q4/S3 and all-S3 panels with generalized native sections select
+`B3_GE_E4_PL_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_MECHANICS_V1_DEV` and
+`B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_V1_DEV`. Mixed panels use full-map
+Q4; all-S3 definitions retain the default unused Q4 policy. Elastic S3 trial
+states are retained through the existing model-bound force-publication rule.
+Fibre-containing S3 displacement seeds remain excluded pending explicit legacy
+numerical-policy compatibility. Plastic S3 shells are not admitted by this route.
+See `examples/stiffened_shell_native_s3_displacement.py` for both elastic meshes.
+
+This route excludes plastic/fibre-containing S3, other attachments, staged/external or
 rebased seeds, adaptive targets, branch-event trials, displacement chart rebasing
 and arc-length qualification. Those requests remain explicit errors. This slice
 does not resolve the saved simultaneous shell-J2/fibre force-chart failure or

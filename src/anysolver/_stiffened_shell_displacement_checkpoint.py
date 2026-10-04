@@ -21,6 +21,9 @@ def identities(owner):
     """Bind the controller and mechanical payload to their admitted profile."""
     from ._stiffened_shell_affine_endpoint import is_native_point_material
     if is_native_point_material(owner):
+        if owner._definition.shell.s3_elements:
+            return ("finite_displacement_native_point_elastic_s3",
+                    "B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_V1_DEV",None,None)
         if owner._definition.shell.j2_curve is not None:
             return ("finite_displacement_native_point_coupled",
                     "B3_GE_NATIVE_POINT_COUPLED_J2_DISPLACEMENT_V1_DEV",None,None)

@@ -16,14 +16,17 @@ from ._stiffened_shell_rotation_charts import owned_anchors,physical_frames
 
 
 def is_native_point_material(owner):
-    """Fixed-target generalized/fibre/mixed beam route, flat full-map Q4."""
+    """Fixed-target native point route: full-map Q4, or elastic mixed/Q4-S3."""
     if getattr(owner,"_definition",None) is None:
         return False
-    from ._stiffened_shell_q4_algorithmic_pullback import POLICY
+    from ._stiffened_shell_q4_algorithmic_pullback import POLICY,HISTORICAL_POLICY
     definition=owner._definition
-    return bool(definition.points and definition.shell.q4_elements and
-        not definition.shell.s3_elements and
-        definition.shell_reference_policy=="flat" and definition.q4_pullback_policy==POLICY and
+    return bool(definition.points and
+        (definition.shell.q4_elements or definition.shell.s3_elements) and
+        (not definition.shell.s3_elements or (definition.shell.j2_curve is None and
+            not owner._has_physical_fibre)) and
+        definition.shell_reference_policy=="flat" and
+        definition.q4_pullback_policy==(POLICY if definition.shell.q4_elements else HISTORICAL_POLICY) and
         not definition.lines and not definition.footprints and
         not definition.distributing_footprints and not definition.finite_distributing_footprints)
 
