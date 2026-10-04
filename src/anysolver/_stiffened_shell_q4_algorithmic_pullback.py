@@ -19,7 +19,7 @@ def local_coordinates(model, element, displacement, *, rotation_anchors=None):
 
 
 def response(model, element, displacement, origin, layers, *, rotation_anchors=None,
-             prepared_correction=None):
+             prepared_correction=None, stable_rotation=False):
     """Differentiate the unchanged local update from one accepted predecessor."""
     material = model.get_material(element.material_name)
     curve = material.hardening_curve
@@ -31,7 +31,8 @@ def response(model, element, displacement, origin, layers, *, rotation_anchors=N
     reference = np.array([model.mesh.nodes[node].coords() for node in element.node_ids])
     u = np.asarray(displacement, dtype=float)
     local, differential, second = deformation(reference, u, stable_translation=True,
-                                              rotation_anchors=rotation_anchors)
+                                              rotation_anchors=rotation_anchors,
+                                              stable_rotation=stable_rotation)
     if prepared_correction is None:
         force, tangent, candidate = element.compute_nonlinear_response(
             model.mesh, material, local, origin, layers, True)
@@ -44,5 +45,6 @@ def response(model, element, displacement, origin, layers, *, rotation_anchors=N
             not np.isfinite(force).all() or not np.isfinite(tangent).all() or
             candidate is None):
         raise ValueError("finite Q4 algorithmic trial required")
-    residual, spatial_tangent = spatial_response(u, force, tangent, differential, second)
+    residual, spatial_tangent = spatial_response(u, force, tangent, differential, second,
+                                                 stable_rotation=stable_rotation)
     return residual, spatial_tangent, candidate

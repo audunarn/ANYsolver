@@ -98,10 +98,16 @@ def rotation_jets(reference, current):
             [2*(a*d-w*b), 2*(b*d+w*a), w*w-a*a-b*b+d*d]]
 
 
-def deformation(reference, displacement, *, stable_translation=False, rotation_anchors=None):
+def deformation(reference, displacement, *, stable_translation=False, rotation_anchors=None,
+                stable_rotation=False):
     """Value, differential and Hessian of all corotated nodal coordinates."""
     ref = np.asarray(reference, dtype=float)
     u = np.asarray(displacement, dtype=float)
+    if type(stable_rotation) is not bool:
+        raise ValueError('typed shell rotation numerical selection required')
+    exponential, logarithm = so3_exp, so3_log
+    if stable_rotation:
+        from ._ge_beam3_g3c_so3_numerics import so3_exp as exponential, so3_log as logarithm
     if u.shape != (6*len(ref),) or not np.isfinite(u).all():
         raise ValueError('finite complete shell coordinates required')
     n = len(u)
@@ -136,10 +142,10 @@ def deformation(reference, displacement, *, stable_translation=False, rotation_a
             values.extend(local[j]+rotated_reference[j] for j in range(3))
         else:
             values.extend(local[j]-refc[i, j] for j in range(3))
-        physical = so3_exp(jets[i][3:])
+        physical = exponential(jets[i][3:])
         if rotation_anchors is not None:
             physical = matmul(physical, constant_matrix(rotation_anchors[i], n))
-        values.extend(so3_log(matmul(rt, physical)))
+        values.extend(logarithm(matmul(rt, physical)))
     return (np.array([v.value for v in values]),
             np.array([v.gradient for v in values]),
             np.array([v.hessian for v in values]))

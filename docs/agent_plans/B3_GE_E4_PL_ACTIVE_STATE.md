@@ -26,28 +26,34 @@ reject material intent; new schema explicitly persists it. All actual imports
 and installed package bytes match source; supporting review clear. No physics
 qualification or convergence claim follows.
 
-**Remaining material uncertainty:** the same coupled fixture's1.01 continuation
-fails at generation4, relative residual0.00246153 after23 solves/192 rejected
-trials. Exact accepted prefix and failing unaccepted state/correction are saved.
-Free-equation directional FD does not meet1e-5; conditioning, curvature and
-tangent adequacy remain unresolved. Tiny descent beyond16 halvings is not
-practical convergence. No budget/tolerance/globalization amendment follows.
-The1.0001 lifecycle fixture is separate and does not replace this failure.
-Earlier low-hardening axial and eccentric bending failures also remain.
+**Current repair:** selected finite material Q4 map and spatial chart reuse
+existing isolated SO(3) evaluation. Saved-state value error falls from~4e-14
+to~5e-19; free-equation directional FD5.11e-6 at1e-7. Policy is bound to
+capabilities/model identity; old experimental material checkpoints explicitly
+reject. Historical/elastic dispatch, shared/kernel sources, laws/tolerances,
+budgets and schema remain. Final installed47PASS62.08s plus public example;
+whole71.90s/sample226627584B, actual imports/source bytes bound, supporting
+review findings closed. v23 retains96PASS/8FAIL: frozen graph guards lacked
+required reviewed lease; no authority acquired/replayed or bypass permitted.
+
+**Remaining material uncertainty:**1.01 still fails at generation4, residual
+0.00246153 after23 solves/192 rejected trials despite improved numerical values.
+No instability or convergence qualification follows. The single-direction
+FD is not a full tangent plateau/attachment/material qualification. Original
+accepted prefix/unaccepted state and all failures remain. Independent1.0001
+lifecycle fixture does not substitute for1.01. No further budget/globalization
+change or automatic FD sweep. Reversal/chart/full material obligations open.
 
 Current scientific decision: stop the completed native80x32 Mx/My refinement
 slice. Direct work movements0.66148%/0.05137%, saved-solid differences0.22060%/
 0.03200%; small cross term moves~2.03%. Measured mesh-pair stability only:
 not asymptotic/full-six-channel/finite fidelity or F04 acceptance.
 
-**Next mandatory exit:** distinguish the failed continuation's free-equation
-derivative discrepancy from cancellation/curvature. Use the saved failing state
-and separate shell, beam and attachment work contributions; avoid full-row
-norm masking and repeat trajectory construction. An identified representation
-defect directs a bounded repair; precision-limited differences direct an
-independent derivative oracle; valid derivatives leave the nonlinear stepping
-limitation explicit. No budget/globalization/tolerance changes or automatic
-refinement. Complete physical/material/reversal/chart obligations stay open.
+**Next mandatory exit:** reconcile existing matched CalculiX torque/shear,
+thickness and native80 evidence against the registered E02 geometry/work and
+convergence contract; name the precise remaining physical acceptance gap before
+any new run. No automatic finer mesh, new reference, controller breadth or
+repeated failed trajectory. Complete physical/material/reversal/chart duties stay.
 
 ## Exact state and evidence
 
@@ -60,10 +66,11 @@ delivery. Original forwarding/main/unrelated dirty work is preserved.
 
 [Grouped evidence and limits](development/r8-distributing-reference-linear-20261004/results.md).
 Material raw: .qualification/b3-ge-e4-pl/r8-distributing-material-dev-20261004-v1.
-Final installed runtime-v15, source/consumer snapshots, drivers, logs, failed
+Final installed runtime-v24 and earlier v15, source/consumer snapshots, drivers, logs, failed
 v7/v9, replay-v10 and supporting reviews are preserved. Site/wheels are local
 artifacts; hashes and all imported package-source identities are recorded.
-Solver wheel2f182820379c18029e93e143a689902dfdab56afb398aef490510a16bde43c3d;
+Current solverwheel8fda6f648aeee95f3ecd54d3f3e60e10a3e697df3aa4f1ac4b4bbe51d02516b9;
+prior solverwheel2f182820379c18029e93e143a689902dfdab56afb398aef490510a16bde43c3d;
 compatibility consumer wheeldc822ff5cb33e350b03ab9baa932758fd7fbde507191fe38d9be61732dda0ad3.
 New material consumer raw .qualification/stiffened-shell/
 r8-ge-distributing-material-consumer-dev-20261004-v1 in ANYfem worktree;

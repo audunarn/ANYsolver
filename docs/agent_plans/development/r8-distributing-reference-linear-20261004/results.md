@@ -838,3 +838,53 @@ shell/beam/attachment free-equation directional errors from subtraction
 precision and nonlinear curvature. No failed-trajectory reconstruction or
 budget/tolerance/globalization change is implied. Physical connection,
 reversal/chart/full-domain/scale/platform/aggregate/release obligations remain.
+
+
+### Material Q4 numerical evaluation — saved-state discriminator and scoped repair
+
+v16 separates shell/beam/attachment at the retained failed1.01 state. Beam
+free-row derivative best6.23e-9; shell best2.19e-4. Attachment predicted norm
+9.1e-9 makes its large relative quotients uninformative. Reconstruction agrees
+with actual sparse assembly. v18 local material derivative reaches4.01e-6,
+while affine-map FD loses accuracy at small h. v17 failed because the diagnostic
+used prepared correction withNone; retained as a dispatch failure, not mechanics.
+
+One existing h=1e-6, v19: direct/factored/60-digit final arithmetic all retain
+~3.2347e-4 error. Final force subtraction is not the principal remedy. Independent
+60-digit Procrustes/Rodrigues/matrix-log value oracle v20 agrees with directional
+kinematic derivatives at~1e-17 but finds3.1–4.8e-14 value differences. Reusing
+existing isolated SO(3) evaluation v21 reduces these to4–5e-19; shell free-row
+FD reaches5.11e-6 at1e-7. This is a bounded directional check, not a plateau or
+full assembled/material/attachment tangent qualification.
+
+Product reuses that existing isolated evaluator only for the explicit finite
+material footprint Q4 map and matching spatial chart. Historical/default,
+elastic, shared arithmetic and frozen kernel sources remain unchanged. Numerical
+policy is included in selected capabilities AND model identity. Pre-patch material
+checkpoints reject explicitly; same-version snapshot/restart remains byte-identical.
+No checkpoint schema, element equation, constitutive tolerance, physical criterion,
+Newton budget or globalization change. Supporting review's identity and chart-test
+findings closed; different-family scientific acceptance stays open.
+
+Changed source v22 still rejects the retained1.01 target at23 solves/192 rejected
+trials and residual0.0024615293. The old prefix/base and every failed run remain;
+this is not instability proof, improved convergence or a substituted successful
+history. Do not increase trial budgets to conceal it.
+
+Final numerical-identity artifact v24:47installed checks PASS62.08s plus public
+simultaneous-yield/resume examplePASS; complete71.8969s/sample226627584B under
+600s/2GiB/affinity/pools1/JIToff. Actual imports and all package-source bytes bound.
+Example equilibrium3.48940e-13/gap7.87280e-18, checkpoint6707B. Solverwheel
+8fda6f648aeee95f3ecd54d3f3e60e10a3e697df3aa4f1ac4b4bbe51d02516b9 uses unchanged
+consumerwheel716ac11f89336ec2a84b54b580ea1367ff6ce456d797497118e87b1b596bca49.
+v23 broader product/historical checks96PASS;8frozen graph guard tests FAILED
+because their required reviewed runner lease was absent. No lease acquired,
+authority replayed or guard bypassed; raw failure and invocation disposition
+preserved. Final identity change repeats only impacted material/consumer checks.
+Build setup also retained one incorrect historical consumer-wheel path assertion.
+
+Next scientific action: reconcile already executed torque/shear, thickness and
+native80 evidence against the existing E02 physical/geometry/work contract and
+review the precise remaining acceptance gap. Do not start another automatic
+refinement, broaden controller scope or repeat this diagnostic campaign. Full
+material history/reversal/chart/physical/aggregate/release requirements remain.

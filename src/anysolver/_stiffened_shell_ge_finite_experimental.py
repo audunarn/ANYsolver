@@ -638,7 +638,8 @@ class FinitePointDriver:
                 force, tangent, candidate = q4_algorithmic_response(
                     owner._shell_model, element, state.q[slots], origin, 3,
                     rotation_anchors=anchors,
-                    prepared_correction=self._q4_corrections.get(eid))
+                    prepared_correction=self._q4_corrections.get(eid),
+                    stable_rotation=owner._distributing_material)
             else:
                 total, chart_map = (state.q[slots], None) if anchors is None else total_coordinates(state.q[slots], anchors)
                 force, tangent, candidate = corotational_element_response(

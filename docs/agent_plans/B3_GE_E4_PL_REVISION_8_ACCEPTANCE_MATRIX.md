@@ -2261,3 +2261,12 @@ formats still reject selected material intent. Same fixture1.01 failure and
 free-equation derivative uncertainty remain; no criteria or budget change.
 Full physical/material/chart/reversal/scale/platform/consumer/release remains.
 [Scope and evidence](development/r8-distributing-reference-linear-20261004/results.md).
+
+
+G3 material Q4 numerical evaluation,4 October — IMPLEMENTED_NOT_QUALIFIED.
+Scoped existing stable SO(3) map/chart and model-policy binding; old material
+snapshot rejection, final47installed checks and public lifecycle example pass.
+Saved-state free-direction FD5.11e-6 is not full tangent qualification;1.01
+still rejects. v23 frozen graph guards8FAIL(no required lease); no authority
+replayed, failures retained. Physical/material/chart/aggregate gates remain open.
+[Evidence/limitations](development/r8-distributing-reference-linear-20261004/results.md).

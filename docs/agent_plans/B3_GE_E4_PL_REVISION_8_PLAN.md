@@ -805,3 +805,12 @@ Historical literature suggestions in the original draft are optional background.
 No citation substitutes for deriving the implemented coordinate/work map and
 verifying the claimed capability. Forensic commit/file counts are omitted from
 mandatory review because they do not decide engineering acceptance or progress.
+
+
+4 October material numerical exit: existing isolated SO(3) evaluation is now
+selected only by finite material footprint Q4, bound to model identity. Final
+47installed checks/public example pass; historical defaults/shared kernel remain.
+Saved-state directional FD improves, but fixed1.01 still fails. Stop automatic
+FD sweeps/budget expansion; next reconcile saved torque/shear/thickness/native80
+physical evidence against E02 and choose the exact missing acceptance action.
+Full scientific, lifecycle and release duties unchanged; see active state/results.

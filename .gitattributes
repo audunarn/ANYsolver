@@ -197,3 +197,13 @@ src/anysolver/_stiffened_shell_ge_finite_experimental.py -text
 tests/test_stiffened_shell_ge_distributing_material.py -text
 examples/stiffened_shell_ge_distributing_material.py -text
 .qualification/b3-ge-e4-pl/r8-distributing-material-dev-20261004-v1/** -text -whitespace
+
+src/anysolver/_ge_beam3_variational_shell.py -text
+
+src/anysolver/_stiffened_shell_algorithmic_pullback.py -text
+
+src/anysolver/_stiffened_shell_q4_algorithmic_pullback.py -text
+
+tests/test_stiffened_shell_material_rotation_numerics.py -text
+
+tests/data/stiffened_shell_material_pre_stable_rotation.bin -text

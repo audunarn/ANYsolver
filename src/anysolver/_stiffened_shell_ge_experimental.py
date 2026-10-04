@@ -779,6 +779,7 @@ class ExperimentalGEAnalysis:
             if self._distributing_material:
                 identity_payload["distributing_finite_material"] = dict(
                     policy=definition.finite_distributing_material_policy,
+                    shell_rotation_numerics="GE_BEAM3_G3C_ISOLATED_SO3_NUMERICS_V1",
                     checkpoint_kind=self._distributing_checkpoint_kind,
                     histories="accepted_and_fixed_predecessor_v1")
         if self._bl5_shell_material:
@@ -988,6 +989,7 @@ class ExperimentalGEAnalysis:
                     attachment=("objective finite area-mean/director/projected-polar distributing pose",),
                     distributing_footprint_law=DISTRIBUTING_FINITE_LAW,
                     material_policy=self._definition.finite_distributing_material_policy,
+                    shell_rotation_numerics="GE_BEAM3_G3C_ISOLATED_SO3_NUMERICS_V1",
                     analysis=("nonlinear_force",), loads=("nodal dead translation forces",),
                     fixed_step_max_backtracks=16,
                     checkpoints=(self._distributing_checkpoint_kind,),

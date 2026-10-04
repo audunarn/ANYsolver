@@ -278,3 +278,12 @@ then leave a usable restart point. Do not create a new task unless requested.
 This planning update resolves the current document-level and scheduling decisions.
 It creates no new blanket plan-review gate. Scientific candidate review and
 acceptance remain required at the stated boundaries.
+
+
+4 October material numerical exit: existing isolated SO(3) evaluation is now
+selected only by finite material footprint Q4, bound to model identity. Final
+47installed checks/public example pass; historical defaults/shared kernel remain.
+Saved-state directional FD improves, but fixed1.01 still fails. Stop automatic
+FD sweeps/budget expansion; next reconcile saved torque/shear/thickness/native80
+physical evidence against E02 and choose the exact missing acceptance action.
+Full scientific, lifecycle and release duties unchanged; see active state/results.
