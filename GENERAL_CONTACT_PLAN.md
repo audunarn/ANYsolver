@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.95. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.96. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -16,40 +16,45 @@ Publication, merging, release and historical-default changes are separate action
 
 ## Latest integrated slice — 4 October
 
-Actual B2/B3 hemisphere endpoints now contact a fixed infinite cylinder through
-an explicit development profile. Sphere/rim geometry retains all tangent-node
-work; the moving rim station uses the implicit Jet2 Hessian. Exact literal-axis
-projection protects line/cap/search geometry at large axial offsets; rational
-one-root checks protect the quartic stationary representatives. Active ambiguity
-and unresolved sign/bounds fail explicitly. Full-radius envelopes conservatively
-bound affine static paths, with original finite resources.
+The new explicit translating-cylinder cap profile reuses the exact literal-axis
+B2/B3 sphere/rim kernel and existing prescribed-tool force/work/state owner.
+Force continuation only; fixed-cylinder profile/identity stays, displacement
+control/multiple moving/free/rotating obstacles remain unadmitted. Both line and
+actual tangent-cap work follow the same updated axis point, with complete reactions,
+conservative coupled affine path checks and restart-bound motion identity.
 
-The existing multiple-rigid owner now composes cylinder/plane/sphere children;
-old plane/sphere identities and default literal line routes stay unchanged.
-Actual B2/B3 force/displacement, independent line/cap work, curved rim midnode
-couples, both-body wrench, cancellation/exception replay and split/incompatible
-restart pass. Fresh wheel139pass plus2 obsolete rejection expectations; those2
-corrected expectations and installed lazy no-contact1pass in a focused follow-up.
-Unchanged139 results reused. Installed142 cases across two runs54.672s/201551872B
-and3.672s/324493312B;243modules/513files match,JIT0/pools1. Supporting source
-scrutiny and independent numerical oracles are not engineering acceptance/release.
-[Guide/evidence](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_DEV.md).
+Installed26pass across bounded groups139.169s/198733824B and110.420s/338456576B;
+219modules/514files match,JIT0/pools1. Independent B2/B3 axial/line balance errors
+<=6.506e-18m, represented gap0.100um within10um, separate storage and independent
+actuator work, curved-rim tool work, common motion/hidden crossing, active/open
+restart, incompatible motion/fixed-profile rejection and real interruption replay
+pass. Public example, affected fixed/mixed and lazy no-contact routes pass.
+[Guide/evidence](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_MOTION_DEV.md).
+Supporting code verification is not independent engineering acceptance/release.
 
-Keep source01 exact-tangent cancellation, source06 wrong test attribute and
-installed01 obsolete cylinder-rejection failures; no tolerance/resource/default
-change or historical regrade. The preceding stronger native50um work remains
-[linked](docs/GENERAL_CONTACT_NATIVE_ENFORCEMENT_DEV.md), including its failures.
-No universal speedup or full delivery forecast is established.
+Retain source01 combined-batch180.068s timeout after five success prefixes; the
+remaining cancellation case passed alone. Artifact checks split only at coherent
+case boundaries with the same caps; no tolerance/law/iteration/default change.
 
-Next principal D3 gap: actual native/beam-pair or beam-shell physical boundaries,
-plus spatial/section/material/enforcement acceptance. Inspect a narrowly owned
-reusable boundary or prescribed analytic-tool work map before selecting the next
-integrated slice; do not merely widen guards. Full D2 automatic/search, D4 friction,
-D5/D7 impact and D8 application dependencies remain. Failed impact/native-grazing
-cases and source-bound D1 missing evidence restrictions remain unchanged.
+**Next measured question:** four tool targets produce284accepted states through
+conservative pre-equilibrium load cutbacks. Discriminate fixed-pose stage checks
+from local kernel cost. Inspect a contact-consistent coupled load predictor/staging
+hook; a proposal must certify the actual coupled path and meet the same gap,
+geometry, equilibrium, transaction and restart gates before physical commit.
+Use the same mechanics/tolerances to measure benefit. Do not skip crossing checks,
+enlarge gap budgets, add physical substeps or change defaults. If this bounded
+candidate cannot close, retain the current conservative profile and progress an
+actual beam-pair/native/beam-shell boundary rather than tune indefinitely.
 
-[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV94.md)
-->93->92 retains earlier identities, failures, restrictions and evidence.
+The preceding fixed-cylinder and mixed analytic slice remains
+[linked](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_DEV.md), as does the stronger
+[native50um work](docs/GENERAL_CONTACT_NATIVE_ENFORCEMENT_DEV.md) and their failed
+evidence. D3 spatial/section/material/enforcement acceptance, D2 automatic/search,
+D4 friction, D5/D7 impact and D8 application dependencies remain. No impact/native-
+grazing replay, source-bound D1 reconstruction or full delivery forecast.
+
+[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV95.md)
+->94->93 retains earlier identities, failures, restrictions and evidence.
 
 ## 1. Current technical position
 

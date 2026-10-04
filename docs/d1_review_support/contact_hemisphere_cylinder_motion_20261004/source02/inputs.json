@@ -1,0 +1,35 @@
+{
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-X",
+    "utf8",
+    "-c",
+    "import pytest, sys, os, json, hashlib\nfrom pathlib import Path\nrc=pytest.main(sys.argv[1:])\nrows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()}\n      for n,m in list(sys.modules.items()) if (n=='anyfem' or n.startswith('anyfem.') or n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\nerrors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['CONTACT_APP_EXPECTED_ROOT' if n.startswith('anyfem') else 'CONTACT_SOLVER_EXPECTED_ROOT']))]\nPath(os.environ['CONTACT_APP_RECORD']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-p",
+    "scripts.development_test_runtime",
+    "--durations=5",
+    "--basetemp=C:\\ANYworkspaceWork\\contact_hemisphere_cylinder_motion_20261004\\source02/temp",
+    "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001/tests/test_general_contact_hemisphere_cylinder_motion.py::test_actual_tool_interruption_replays_fresh[True]"
+  ],
+  "source_sha": "59a8fa34c337405afc0f02b329bedb5ae04a57c9",
+  "files": {
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_hemisphere_cylinder_motion.py": "26632272fe071a1d27c7f9afcbf8e5327b3135d5e1d86ee59fde3068784e2e99",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_hemisphere_cylinder_motion.py": "2e7448da1efe7e7905754a16739fb67f670163c1649e174e5deff557068a4049",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_hemisphere_cylinder_work.py": "3e75f77ee6ccb2c7ee94bc6072a207b39bebd07939247f0c20db90f3018ae361",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_hemisphere_cylinder.py": "0737d1597dda049bf9e0f8dc6e9cddd92db5855cea99060a74c1ecd98e5a9fe8",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_hemisphere_cylinder_work.py": "3272d544a962540397ea24cd62aa9c92bb1d6205fdf02d07c5a1f2fa9b39e788",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_hemisphere_cylinder_static.py": "66331aa0d6278a16349babae3607963246465ada6e90db9dd1ca03911e82e41b",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_multiple_hemisphere_cylinders.py": "4776d5e5736b76c85f644e3943c8c07e3ab0aaeb6b45978dc5bbc2c8ae0e1053",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_hemisphere_cylinder.py": "016a50d2debdd42dbc1ef24bc0fda8560a9495cb6b5a032548d6377a83e7bad8",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_hemisphere_sphere.py": "a405a83aa6ed2d661358c2d694ef7d0eb2cb0c85b9d402a733af0f30a044a823",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_radial_ends.py": "10937e34f8e589585c12694151d23a0aeb505173803c9bb19a8101fed58771c3",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\multiple_beam_rigid.py": "463cce838f2e1bbef3e7a809643a52e19d29fe2c18b13fbc76e0fe82950c2797",
+    "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\core.py": "33eb8ee8f23c27a8840bbf6fc9ba4b2c3fa52844e0dec492c67627546f63b169"
+  },
+  "timeout_s": 180,
+  "memory_limit_mib": 953,
+  "scope": "actual cylinder hemisphere code development; no acceptance"
+}

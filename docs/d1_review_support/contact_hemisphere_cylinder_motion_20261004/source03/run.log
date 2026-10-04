@@ -1,0 +1,7 @@
+...                                                                      [100%]
+============================= slowest 5 durations =============================
+40.91s call     tests/test_general_contact_hemisphere_cylinder_motion.py::test_open_restart_to_actual_contact_and_public_example
+0.02s call     tests/test_general_contact_hemisphere_cylinder_motion.py::test_common_motion_hidden_crossing_and_explicit_owner_contract
+
+(3 durations < 0.005s hidden.  Use -vv to show these durations.)
+3 passed in 42.56s

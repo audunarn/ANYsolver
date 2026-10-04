@@ -1945,3 +1945,20 @@ independent checks resolve this development candidate. Retained failures/source
 review are supporting evidence, not independent engineering acceptance. No moving/
 free/capped obstacle, native, beam-pair, friction or dynamic admission.
 [Guide/evidence](GENERAL_CONTACT_HEMISPHERE_CYLINDER_DEV.md).
+
+
+## Prescribed actual-hemisphere cylinder translation — 4 October development
+
+`CLASSICAL_B2_B3_HEMISPHERE_TRANSLATING_CYLINDER_STATIC_DEV_V1` reuses actual
+B2/B3 fixed-cylinder cap/line work and the existing prescribed-tool owner. Fixed
+axis/radius, force continuation only; motion and new kinematic revision bind
+restart. Fixed profile guards/identity retained. Installed26pass in groups139.169s/
+198733824B and110.420s/338456576B;219modules/514files match,JIT0/pools1. Independent
+B2/B3 response error<=6.506e-18m and gap0.100um within10um, work/storage measured
+5.842e-6 defect, curved rim body work, common motion/hidden crossing, actual open/
+active restart, incompatibility and real cancel/exception replay pass. Source01
+combined timeout180.068s retained; remaining check passed alone under same cap.
+284accepted states for four tool targets is a measured cost limitation. Installed-
+tested, not independently accepted/released/application-admitted. No displacement
+control, multiple moving obstacles, free/rotating body, friction or dynamics.
+[Guide/evidence](GENERAL_CONTACT_HEMISPHERE_CYLINDER_MOTION_DEV.md).

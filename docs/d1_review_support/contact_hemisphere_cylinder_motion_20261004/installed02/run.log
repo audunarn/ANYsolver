@@ -1,0 +1,8 @@
+........................                                                 [100%]
+============================= slowest 5 durations =============================
+40.94s call     tests/test_general_contact_hemisphere_cylinder_motion.py::test_open_restart_to_actual_contact_and_public_example
+30.11s call     tests/test_general_contact_hemisphere_cylinder_motion.py::test_actual_tool_interruption_replays_fresh[True]
+28.44s call     tests/test_general_contact_hemisphere_cylinder_motion.py::test_actual_tool_interruption_replays_fresh[False]
+1.33s call     tests/test_general_contact_multiple_hemisphere_cylinders.py::test_complete_mixed_static_equilibrium_work_and_restart[cylinder]
+1.25s call     tests/test_general_contact_capped_cylinder.py::test_actual_import_root_preserves_lazy_no_contact_solve
+24 passed in 109.55s (0:01:49)

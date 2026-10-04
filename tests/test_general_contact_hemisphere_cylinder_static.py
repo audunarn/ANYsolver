@@ -317,7 +317,9 @@ def test_explicit_profile_fixed_descriptor_and_no_application_admission():
     assert not capability.tested and not capability.independently_accepted and not capability.released
     assert validate_general_contact(model, definition, replace(settings, beam_end_cap_work="owned_point")).profile == LEGACY_PROFILE
     moving = replace(definition, rigid_bodies=(replace(definition.rigid_bodies[0], path_translation=(0.001, 0., 0.)),))
-    assert not validate_general_contact(model, moving, settings).valid
+    from anysolver.general_contact.beam_hemisphere_cylinder_motion import PROFILE as MOVING_PROFILE
+    assert validate_general_contact(model, moving, settings).profile == MOVING_PROFILE
+    assert validate_general_contact(model, moving, settings).valid
     with pytest.raises(ValueError, match="fixed infinite cylinder|unsupported"):
         HemisphereCylinderManager(model, moving, settings)
     with pytest.raises(FrozenInstanceError):
