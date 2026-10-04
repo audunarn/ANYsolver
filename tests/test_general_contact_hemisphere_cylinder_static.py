@@ -8,6 +8,8 @@ stationary-point equation, or beam stiffness implementation is used by them.
 from dataclasses import FrozenInstanceError, replace
 import json
 import math
+import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -243,6 +245,18 @@ def test_public_axial_equilibrium_reaction_work_and_gap(quadratic, control):
     assert_allclose(info["beam_force"][0], beam_force, rtol=2e-6, atol=2e-9)
     assert_allclose(result.steps[-1].support_reactions["root"][0], reaction, rtol=2e-6, atol=2e-9)
     assert_allclose(np.asarray(info["beam_force"]) + info["rigid_force"], 0, atol=2e-12)
+    actual_reaction=np.asarray(result.steps[-1].support_reactions["root"])
+    actual_applied=.2*result.load_factor
+    actual_force=np.asarray(info["beam_force"])+actual_reaction[:3]+(-actual_applied,0.,0.)
+    assert np.linalg.norm(actual_force)/actual_applied<=1e-6
+    assert np.linalg.norm(np.asarray(info["beam_moment"])+actual_reaction[3:])/(actual_applied*.2)<=1e-6
+    record=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if record:Path(record).with_name('axial_'+('B3' if quadratic else 'B2')+'_'+control+'.json').write_text(
+        json.dumps(dict(actual_u=result.displacements[axial_dofs].tolist(),reference_u=expected.tolist(),
+            applied_force=actual_applied,reference_applied_force=press,
+            reference_reaction=reaction,reference_contact_force=beam_force,
+            actual_reaction=actual_reaction.tolist(),force_balance=actual_force.tolist(),info=info),
+            indent=2),encoding='utf-8')
 
 
 @pytest.mark.parametrize("quadratic", [False, True])

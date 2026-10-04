@@ -190,6 +190,8 @@ def solve_case(quadratic,cells,line_stiffness=LINE,endpoint_stiffness=ENDPOINT,i
             key:pressure[key] for key in ('relative_l1','relative_l2')}
         assert pressure['actual_active_length']==pytest.approx(info['active_line_length'],rel=1e-6,abs=1e-12)
         assert pressure['independent_minimum_line_gap_m']>=-1e-5
+        assert pressure['relative_l1_estimated_integration_error']<=.002
+        assert pressure['relative_l2_estimated_integration_error']<=.002
         # The active tip sphere's minimum equals the line endpoint minimum in
         # this verified branch; reported outward direction must contain it.
         tip_positions=np.asarray(pressure['positions'][-1])

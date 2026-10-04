@@ -66,6 +66,7 @@ def test_spatial_and_enforcement_against_independent_continuum(quadratic):
         assert tip==pytest.approx(expected['tip'],rel=1e-3,abs=1e-12)
         assert reaction==pytest.approx(expected['reaction'],rel=1e-3,abs=1e-12)
         assert contact==pytest.approx(expected['contact_force'],rel=1e-3,abs=1e-12)
+        assert abs(reaction+contact-P)/P<=1e-6
         independent_gap=float('inf'); independent_energy=0.; independent_line_force=0.
         for element in model.mesh.elements.values():
             positions=np.array([model.mesh.nodes[n].coords()+result.displacements[
