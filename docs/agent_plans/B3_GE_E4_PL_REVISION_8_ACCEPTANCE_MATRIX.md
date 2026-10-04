@@ -2270,3 +2270,14 @@ Saved-state free-direction FD5.11e-6 is not full tangent qualification;1.01
 still rejects. v23 frozen graph guards8FAIL(no required lease); no authority
 replayed, failures retained. Physical/material/chart/aggregate gates remain open.
 [Evidence/limitations](development/r8-distributing-reference-linear-20261004/results.md).
+
+E02 reference-linear distributing Mx/Fy output precision,4 October:
+IMPLEMENTED_NOT_QUALIFIED. OUTPUT-only DOUBLE U/RF on saved40x16/nz4 models
+passes prospective scaled1e-8 balance at2.64164e-10/2.05791e-11. DAT bytes match,
+every binary value inside its print bound. Native/reference work differences
+-0.220599%/-0.395443%; source37PASS, supporting review finding closed.
+Raw executed references/failures retained. Output-resolution gap removed only.
+Scoped law/applicability and convergence adjudication plus required independent
+acceptance remain. No aggregate E02/F04/six-channel/BL5/weld/finite/material/
+release closure or automatic refinement.
+[Evidence](development/r8-distributing-reference-linear-20261004/results.md).

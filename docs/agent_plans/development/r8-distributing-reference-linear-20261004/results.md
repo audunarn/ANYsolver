@@ -888,3 +888,51 @@ native80 evidence against the existing E02 physical/geometry/work contract and
 review the precise remaining acceptance gap. Do not start another automatic
 refinement, broaden controller scope or repeat this diagnostic campaign. Full
 material history/reversal/chart/physical/aggregate/release requirements remain.
+
+## E02 output-precision exit, 4 October 2026
+
+Saved Mx/Fy work agreement was inside1%; printed RF could not demonstrate1e-8
+balance. One unchanged10x4/nz2 smoke confirmed binary64 U/RF from pinned
+CCX2.23 x64. A strict bounded reader validates count-framed payloads, physical
+node/element identities, he20 ordering, finite values, components and time.
+Midside coordinate reconstruction is admitted only within8binary64 ulps of
+model coordinate scale; original deck positions define reaction moment arms.
+Binary payloads are never scanned for ASCII delimiters. This is an evidence
+reader, not a public interchange importer or mechanics adjudicator. Interpretation
+is consistent with the [upstream FRD writer](https://raw.githubusercontent.com/Dhondtguido/CalculiX/master/src/frd.c)
+and [vector writer](https://raw.githubusercontent.com/Dhondtguido/CalculiX/master/src/frdvector.c);
+actual pinned executable/files, rather than upstream HEAD, bind the run.
+
+Two saved40x16/nz4 decks received append-only DOUBLE output requests. Removing
+inserted bytes restores exact saved decks: no mesh/material/load/support/law or
+tolerance change. Prospective scales1m and Mx1N/Fy10N, max(force/F,moment/(F*L))
+screen1e-8. Every binary U/RF lies inside its DAT half-ulp bound; both DAT files
+are byte-identical to saved runs. Actual rounded CLOAD wrench is also recorded.
+
+| Quantity | Mx | Eccentric Fy |
+|---|---:|---:|
+| Binary64 solid external pairing,J | 2.043248597478489e-5 | 1.4058706728580519e-5 |
+| Saved native/reference work difference | -0.220598962% | -0.395443290% |
+| Scaled force/moment balance max | 2.641642971e-10 | 2.057909906e-11 |
+| External elapsed,s | 2.5362018 | 2.5074600 |
+| Sampled process-tree bytes | 313409536 | 313413632 |
+
+Each12953nodes/38859physical rows/2560C3D20R elements; one serial job at a time,
+600s/2GiB, affinity1, CCX reports1CPU. Fy sampled2numeric/unresolved starts
+(ccx.exe+msvcrt.dll), so exact single-thread execution is not claimed;8 ceiling
+met. Short coarse job undersamples peak memory. No timing gain or new wheel.
+Product34f0a513 installed artifacts remain unchanged.
+
+Affected source37PASS1.38s. Supporting OpenAI Read review found and closed DAT
+order coupling; valid/reordered comparisons and out-of-bound controls pass.
+Initial unpacking/test, startup-hash and parse-path failures retained. Raw:
+.qualification/b3-ge-e4-pl/r8-e02-double-output-dev-20261004-v1; executed decks,
+logs/binary outputs, bindings, comparisons and reviews. Historical report bytes
+are preserved; this ASCII section is appended without rewriting legacy encoding.
+
+Output-resolution obstruction resolved for these models. Next adjudicate scoped
+reference-linear mean/secant-director/curl law and existing convergence, then
+obtain required independent acceptance. No automatic finer mesh. Six-channel/
+BL5/weld/rigid/finite/material response remain separate; full E02/F04 and
+independent scientific acceptance open. Binary64 is not exact solver balance.
+Material1.01 failure unchanged.

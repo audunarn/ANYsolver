@@ -49,20 +49,28 @@ slice. Direct work movements0.66148%/0.05137%, saved-solid differences0.22060%/
 0.03200%; small cross term moves~2.03%. Measured mesh-pair stability only:
 not asymptotic/full-six-channel/finite fidelity or F04 acceptance.
 
-**Next mandatory exit:** reconcile existing matched CalculiX torque/shear,
-thickness and native80 evidence against the registered E02 geometry/work and
-convergence contract; name the precise remaining physical acceptance gap before
-any new run. No automatic finer mesh, new reference, controller breadth or
-repeated failed trajectory. Complete physical/material/reversal/chart duties stay.
+**Physical precision exit resolved:** pinned CCX2.23 DOUBLE nodal U/RF confirms
+raw balance on unchanged saved40x16/nz4 Mx/Fy decks. Scaled max errors
+2.64164e-10/2.05791e-11 pass the prospective1e-8 development screen. All binary
+values lie inside DAT print bounds; original DAT files are byte-identical.
+Native/reference work differences remain-0.220599%/-0.395443%; meshes, physical
+law, supports, loads and tolerances unchanged. No physical gate is closed.
+
+**Next mandatory exit:** adjudicate the scoped reference-linear secant-director/
+curl work law and existing convergence evidence, then obtain required independent
+acceptance. The output-resolution blocker is removed; no new refinement is
+justified by it. Native six-channel/BL5/weld/finite/material equivalence is not
+inferred. Material1.01 failure stays separate and unrepaired. No automatic
+controller breadth, failed-trajectory retry or new reference.
 
 ## Exact state and evidence
 
 Solver worktree: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Diagnostic HEAD6269f184 precedes
-this material delivery; actual Git status/HEAD decides the restart identity.
+branch codex/stiffened-main-reconcile-20261001. Product HEAD34f0a513; subsequent
+output-reader/evidence commit is determined from actual Git status/HEAD.
 ANYfem: C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer,
-branch codex/experimental-ge-panel-consumer, HEAD93336c5 precedes compatibility
-delivery. Original forwarding/main/unrelated dirty work is preserved.
+branch codex/experimental-ge-panel-consumer, HEADaaccbaa, clean and unchanged
+in this output slice. Original forwarding/main/unrelated dirty work is preserved.
 
 [Grouped evidence and limits](development/r8-distributing-reference-linear-20261004/results.md).
 Material raw: .qualification/b3-ge-e4-pl/r8-distributing-material-dev-20261004-v1.
@@ -95,3 +103,12 @@ external/different-family/release obligations remain open. BL5 mixed inventory
 Inverse/positive-part certificates CLOSED_UNRESOLVED; pressure amendment
 DECLINED, no retries/bypasses. F5 lacks retained-sided forces. Previous note
 bytes are retained in material raw. No release date or completed-goal claim.
+
+Output raw: .qualification/b3-ge-e4-pl/r8-e02-double-output-dev-20261004-v1.
+Reader/affected-source37PASS1.38s; supporting review order finding corrected.
+Coarse/fine execution and both failed startup/parser attempts retained. No new
+product wheel: final solver/consumer artifacts retain prior installed scope.
+Fine Mx/Fy2.5362s/2.5075s, sampled313409536/313413632B. Actual affinity1;
+CCX reports1CPU. Fy sampled2numeric/unresolved starts(ccx.exe+msvcrt.dll),
+so exact single-thread execution is not claimed; below8 ceiling. All jobs
+terminal; no owned process to recover. Different-family acceptance remains open.

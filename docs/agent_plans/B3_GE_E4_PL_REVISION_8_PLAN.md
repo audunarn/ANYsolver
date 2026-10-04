@@ -811,6 +811,8 @@ mandatory review because they do not decide engineering acceptance or progress.
 selected only by finite material footprint Q4, bound to model identity. Final
 47installed checks/public example pass; historical defaults/shared kernel remain.
 Saved-state directional FD improves, but fixed1.01 still fails. Stop automatic
-FD sweeps/budget expansion; next reconcile saved torque/shear/thickness/native80
-physical evidence against E02 and choose the exact missing acceptance action.
+FD sweeps/budget expansion. The subsequent output-only DOUBLE reference pair
+resolves DAT balance precision on saved Mx/Fy models; no product/default change.
+Next adjudicate the scoped secant-director/curl law and saved convergence, then
+obtain required independent acceptance. No automatic finer model is justified.
 Full scientific, lifecycle and release duties unchanged; see active state/results.
