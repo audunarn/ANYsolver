@@ -1,4 +1,22 @@
 # General-contact capability ledger
+
+## Native material-area first-contact globalization — 4 October
+
+Implemented/installed-tested at`ce3e5495`, explicit/off by default. Existing
+retained one/multiple physical-S3 owners use complete material-radius and own-cell
+path bounds; unchanged physical law,8backtracks,24Newton and50um fixture gap.
+Numerical algorithm/settings bind restart without changing default/legacy line
+identities. The unchanged higher-penalty low-yield fixture completes9targets,
+full load/open/recontact, monotone nonzero resultant-ellipsoid history and exact
+split restart; gap19.203um, supportF/M6.93e-9/6.49e-9, plastic-increment
+owner tangent3.38e-8/2.15e-9. Three material patches/two deformable S3 facets,
+staged rollback/cancellation, hidden radius/rim crossing and query limits pass.
+15installed checks in97.281s/43.246s groups, peak333393920B;518files/216imports
+match,JIT0/pools1. Supporting Read scrutiny only. Historical default full-load,
+uniform-resolution and broader convergence failures retain their exact status.
+No engineering material/application admission, release or general speedup claim.
+[Scope and evidence](d1_review_support/contact_native_material_s3_20261004/activation_summary.json).
+
 ## Retained native material patches / multiple physical S3 facets — 4 October
 
 Implemented/installed-tested development atfbdd5c27: one/two native beams,

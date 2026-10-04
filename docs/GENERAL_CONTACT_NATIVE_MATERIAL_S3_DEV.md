@@ -1,6 +1,25 @@
 # Retained native material patch / deformable S3 — development
 
-Latest source `fbdd5c27`, 4 October 2026. One/two native beams now act through
+Latest globalization source `ce3e5495` adds explicit material-aware first approach
+within the existing owner; it changes disposable Newton paths, not contact work.
+The default remains unchanged. To select it, pass
+`activation_settings=NativeContactActivationSettings(1e-6,256)` to the single
+`NativeRetainedRoundS3Analysis` constructor or multiple
+`create_native_contact_analysis` factory. The settings are exported from
+`anysolver.general_contact`. Gap is in metres; choose it explicitly inside every
+physical gap tolerance and above geometry tolerance. The1um fixture setting is
+not an application default. Checkpoint identity binds algorithm and settings.
+
+The higher-penalty low-yield fixture completes full-load press/open/recontact and
+exact split restart, with19.203um maximum penetration under50um. The native
+associated six-resultant ellipsoid law yields; no fibre/J2 claim is made. Complete
+plastic-increment derivatives, state rejection/cancellation and hidden-path checks
+pass.15 installed checks,518files/216imports verified, JIT0/pools1. Historical
+default full-load failures stay NONPASS. This closes the specific first-approach
+overshoot; convergence, generality and independent engineering acceptance remain
+open. [Current evidence](d1_review_support/contact_native_material_s3_20261004/activation_summary.json).
+
+Historical geometry source `fbdd5c27`, 4 October 2026. One/two native beams now act through
 multiple physical S3 maps in the existing owner (two to eight explicit pairs,
 256-coordinate cap). Each represented S3 has its complete authoritative shell
 columns; retained native coordinates and cross blocks are not condensed away.

@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.105. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Revision:** 2026-10-04.106. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.11, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
@@ -15,19 +15,22 @@ retains the detailed chronology; current evidence remains in the
 
 ## 1. Status and diagnosis
 
-Latest bounded deliveryfbdd5c27 extends the existing retained native material
-owner to complete multiple physical S3 maps, correcting corner-force reporting
-and retaining native/shell cross blocks.36installed outcomes/35unique cases
-include exact nonzero plastic-prefix restore; full coupled low-yield loading
-still fails at unchanged gap/merit. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/README.md).
-The separate bounded.75-peak plastic unload/reload cycle completes7targets and
-exact split restart. Its full-load negative conclusion and acceptance limits stay.
-No further load/penalty tuning campaign: local work/history checks pass, leaving
-bounded coupled globalization/enforcement and convergence unresolved. A future
-change needs a derived, explicit step/cutback contract and discriminating check,
-not higher budgets or relaxed gaps. Curved sections/caps/interfaces, friction,
-dynamics and independent acceptance remain required. The original 120-hour allocation is consumed. Explicit user resumption authorizes
-further bounded development; no replacement duration has been specified.
+Latest integrated delivery`ce3e5495` closes the specific native material-area
+first-contact overshoot through explicit globalization in the existing owner.
+The unchanged higher-penalty low-yield fixture completes9full-load/open/recontact
+targets with exact split restart, nonzero monotone resultant-law history and
+19.203um maximum penetration under50um. Complete plastic-increment tangent and
+support wrench meet existing development gates. Three patches/two deformable
+facets and staged cancellation/restart pass.15installed checks,518package files
+and216imports verified. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/activation_summary.json).
+
+Default historical gap/merit failures stay NONPASS; no fixture load/penalty tuning,
+scientific admission or general speed comparison follows. Geometry sourcefbdd5c27
+and unaffected evidence remain valid. Spatial/enforcement convergence, angular
+robustness, curved sections/caps/interfaces, friction, native dynamics, independent
+acceptance and applications remain required. The original120-hour allocation is
+consumed; subsequent explicit user resumption authorizes bounded further work,
+with no replacement hard duration specified.
 
 | Area | Current evidence | Still required |
 |---|---|---|
@@ -273,17 +276,21 @@ retained raw evidence. At the original 120-hour exhaustion, preserve the work an
 request the needed time/scope/method decision. Full completion is not declared from
 prototype breadth, local test passes, a partial handoff or exhaustion of the clock.
 
-## Authorized next numerical candidate — bounded activation slice
+## Closed activation slice / next required decision
 
-Trace29 identifies contact-activation overshoot after yielding already starts.
-Derive explicit area-aware first-contact fraction control within the existing
-Newton/8backtrack budget, retaining conservative material-patch/S3 path checks,
-finite activation,50um gap, work/state gates and restart algorithm identity.
-Do not increase budgets or tune load/penalty fixtures. A simple yield norm of
-18retained resultants does not represent constrained station stress.
-Full-load yielding remains NONPASS. The subsequent explicit user instruction
-“Proceed developing” authorizes this slice beyond the consumed original allocation.
-Implement an opt-in material-area limiter using actual geometry and conservative
-prefix checks, preserve default and legacy identities, and test the unchanged
-first-target discriminator plus state/restart isolation. Stop for a checkpoint
-after this integrated slice; do not add load/penalty tuning or raise numerical caps.
+The explicit material-area controller now uses actual geometry and complete
+radius/orientation/rim prefix checks, within unchanged Newton/8backtrack/gap/state
+limits. Its settings/revision bind restart; default and legacy identities stay.
+This is an implemented/tested algorithmic candidate, not acceptance or a repair
+of historical evidence. Endpoints select fractions; certificates admit paths.
+Independent engineering review remains required before capability promotion.
+
+Next bounded question: why did the existing nearly uniform axial material pose
+exhaust angular derivative resolution? Distinguish unstable branch/endpoint
+predicates from the integration error estimator using the retained failed pose
+and the existing independent direct-area reference. Use one local discriminator
+under180s/953MiB and unchanged64integration intervals; no full-solver replay,
+expanded cap or new reference-tool campaign. A result must select one targeted
+correction or an explicit unresolved-admission diagnostic. Do not tune the old
+load/penalty fixtures or open a parallel optimization campaign. Review exact
+geometry and source impacts before any subsequent curve/cap admission.

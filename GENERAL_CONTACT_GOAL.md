@@ -1,6 +1,6 @@
 # General contact — goal
 
-**Revision:** 2026-10-04.12. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.105. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-10-04.13. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.106. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
 
@@ -49,7 +49,7 @@ three interior material patches and two physical S3 skins retain120coordinates;
 one beam/two facets retain78. Complete work/tangents, corner-order correction,
 per-pair paths/cycles, rollback and restart pass. Supplementalbe0fa6bf checks show
 local plastic work/disposal and exact nonzero-plastic prefix restart, but the
-full low-yield load path remainsNONPASS at gap/merit. No material/continuum
+historical default low-yield load path remainsNONPASS at gap/merit. No material/continuum
 acceptance follows. Existing work maps/owners were extended without another
 solver stack. [Current evidence](docs/d1_review_support/contact_native_material_s3_20261004/README.md).
 Its separate.75-peak seven-target unload/reload cycle and exact split restart now
@@ -58,12 +58,21 @@ engineering acceptance.
 
 Prioritize a missing capability requirement, a necessary correctness repair or a measured end-to-end bottleneck. Reuse existing contributor, state, restart, search and test infrastructure. Add a profile/restart identity only when its mechanical or compatibility contract differs; do not create new public options for internal optimizations. Existing identities and explicit selection stay valid.
 
+**Latest gate advance (`ce3e5495`):** explicit material-area first-contact
+fraction control resolves the bounded higher-penalty yielding overshoot. Full-load
+press/open/recontact, complete plastic-increment derivatives, exact split restart,
+multiple physical facets and staged rollback pass;15installed checks verify the
+candidate. Historical default failures remain NONPASS. This is code/workflow
+verification, not engineering/material/application admission. Convergence,
+angular robustness, curved geometry, friction/dynamics and full C0–C9 remain open.
+[Current evidence](docs/d1_review_support/contact_native_material_s3_20261004/activation_summary.json).
+
 **Budget disposition:** the original 120-hour allocation remains consumed:
 428891+3120=432011 active seconds (120.003 hours). The user subsequently directed
 “Proceed developing”, authorizing further development beyond that boundary.
 No new duration was specified; do not invent an eight-hour allocation or reset
-historical accounting. Resume with the bounded material-area activation slice
-and checkpoint its outcome. Full C0–C9 scope, scientific gates and consumed
+historical accounting. The bounded material-area activation slice is completed and checkpointed.
+Continue with the next bounded requirement in the plan. Full C0–C9 scope, scientific gates and consumed
 execution restrictions remain intact; a completion forecast is unsupported.
 
 This is a prospective workflow change. Preserve existing equations, dimensional settings, acceptance criteria, exact accepted scopes, contrary evidence and frozen/consumed authorities. The [previous goal](docs/d1_review_support/GENERAL_CONTACT_GOAL_HISTORY_20260930_REV4.md) remains historical evidence.

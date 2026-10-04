@@ -1,6 +1,44 @@
 # Native material patch / deformable S3 development evidence
 
-## Latest multiple-facet extension
+## Latest opt-in material-area activation — ce3e5495
+
+The unchanged higher-penalty low-yield fixture now completes all nine targets
+.25/.5/.75/1/0/.25/.5/.75/1 with the explicit activation setting below. This is a
+new algorithmic candidate; both historical default failures remain NONPASS.
+First target:21 geometry queries, gap7.116um, nonzero accumulation9.045e-5.
+Full cycle:48 queries, peak penetration19.203um under50um, maximum resultant-law
+accumulation4.11144e-4, zero unload storage and exact open/split restart.
+Support force/moment errors6.93e-9/6.49e-9; full plastic-increment owner tangent
+errors3.38e-8/2.15e-9 under1e-5. This is the six-resultant associated ellipsoid
+law, not fibre/J2 plasticity or general material acceptance.
+
+The material-aware limiter queries actual full patches and certifies the prefix
+with radius/internal rotation, physical normals/offsets, orientation and rim
+bounds. Endpoints only select a proposal. Both physical commit and eight-cut
+merit/gap checks remain unchanged. Query cap256, activation gap1um inside the
+50um physical budget; unsupported/unresolved paths fail. Settings/revision bind
+restart; default and historical line descriptors remain unchanged. No automatic
+algorithm switch, increased Newton/backtrack limit or fixture load/penalty tuning.
+
+Installed wheel59b5372d70281a38118ad0182e87bec67cb973cc34c1b5cee6385e8a51f18e49:
+10 changed checks97.281s191135744B;5 affected compatibility/example checks
+43.246s333393920B. All518package files/216imports match; JIT0/pools1, no runtime,
+import or hash errors. Three patches/two deformable facets press/open/recontact,
+exact continuation and staged cancellation pass. Limiter-level hidden radius-spin
+and finite-edge crossings, own second-native block, query exhaustion, cancellation,
+complete state preservation and incompatible settings checkpoints pass.
+
+Raw `C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate04` includes
+source checks, input hashes, resource/runtime/import logs and private wheel.
+`first_target` failed runner preflight (wrong relative test root), with no
+numerical process launched; repaired `first_target2` and subsequent groups pass.
+Supporting Read review found no concrete source error; requested tests now pass.
+No engineering/application/release promotion, spatial/enforcement convergence
+or universal speedup follows. The failed default is not a converged timing baseline.
+[Summary](activation_summary.json), [package checks](package_activation_verification.json),
+[supporting review](activation_review.md).
+
+## Historical multiple-facet extension
 
 Candidate `fbdd5c27`; private wheel SHA256
 `db29c3e1c28a53f1d6e4cf5f56727f2216c8c953adf7fc77be46392b2bfdd360`.

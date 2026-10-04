@@ -1,81 +1,73 @@
 # General contact restart — ACTIVE, 4 October 2026
 
-Goal2026-10-04.12 / plan2026-10-04.105; full C0–C9 incomplete.
+Goal2026-10-04.13 / plan2026-10-04.106; full C0–C9 incomplete.
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Productionfbdd5c27; testsaec4148a
-include earlierbe0fa6bf state checks. Current Git HEAD binds later documentation.
-Goal-tool paths are stale: never access the protected original worktree.
-Main/ANYfem separately owned. No other-chat messaging, push/merge/publication/
-release/default changes. Local commits, focused checks and bounded internal
-Read review remain authorized. No active numerical process/worker at checkpoint.
+branch codex/contact-main-reconcile-20261001. Source/testsce3e5495;
+current Git HEAD also binds documentation. Goal-tool objective paths are stale:
+never access the protected original worktree. Main/ANYfem separately owned.
+No other-chat messaging, push/merge/publication/release/default changes.
+Local commits, focused checks and bounded supporting internal Read review allowed.
+No active numerical process or worker at this checkpoint.
 
-## Latest integrated delivery
+## Completed integrated slice
 
-Existing retained owner now supports complete multiple physical S3 maps:
-two native beams/three interior material patches/two S3 skins retain120coordinates;
-one beam/two facets retain78. Moving normals/offsets, once-only spatial conversion,
-own-body radius/orientation paths, full work/tangents, global wrench, per-pair
-press/open/recontact and exact open restart pass. Actual translation columns fix
-the corner-force report defect. Positive reference director/face orientation
-fails closed. Area numericalv2 rejects prior area checkpoints; prior line
-checkpoint replays. No friction/activation bridge widening.
+Explicit material-area activation setting NativeContactActivationSettings(1e-6,256)
+uses actual patches and complete radius/own-cell rotation, normal/offset, source/
+reference orientation and physical-rim prefix certificates. Endpoints only select
+fractions. Newton24/backtracks8, physical gap50um, merit and physical transaction
+stay. Settings/revision bind restart; default and legacy line identity stays.
+No automatic algorithm switch, material-history commit in a Newton trial, or
+load/penalty tuning. Physical geometry remains interior straight/untwisted native
+material patches and elastic small-rotation positive-director S3 top skins.
 
-Private wheel db29c3e1c28a53f1d6e4cf5f56727f2216c8c953adf7fc77be46392b2bfdd360;
-raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate03.
-36installed outcomes/35unique cases (one changed restart repeat), five bounded
-groups. Main24checks142.032s188338176B; compatibility7checks6.164s325988352B.
-All517files/223imports match; JIT0/pools1, no runtime/import/hash errors.
-120-coordinate gap31.556um under50um; supportF/M1.40e-9/1.25e-9;
-owner directional errors9.76e-9/1.83e-9. Supporting Read only, no engineering,
-application or release acceptance. [Guide](docs/GENERAL_CONTACT_NATIVE_MATERIAL_S3_DEV.md),
-[evidence/failures](docs/d1_review_support/contact_native_material_s3_20261004/README.md).
+Unchanged high-penalty low-yield fixture completes9full-load/open/recontact targets,
+nonzero monotone resultant-ellipsoid history, zero unload storage and exact split
+restart. Peak penetration19.203um under50um; normalized supportF/M6.93e-9/6.49e-9,
+complete plastic-increment tangent errors3.38e-8/2.15e-9. First target21queries;
+whole cycle48. Three patches/two deformable facets also complete their cycle;
+staged recontact cancellation preserves full mechanical/shell/history/checkpoint.
+Hidden radius-spin/finite-edge paths, own second-native block, query exhaustion,
+cancellation and incompatible settings restart pass. Supporting Read review only;
+no independent engineering/material/application admission or release.
 
-Resultant-ellipsoid yielding: local60-coordinate plastic-branch derivative/history
-disposal pass. Explicit .25,.5,.75,0,.25,.5,.75 cycle completes7targets with monotone
-nonzero history, zero unload storage and exact split restart; gap41.425um under50um,
-supportF/M4.67e-14/4.36e-14. Installed22.184s185233408B, same production wheel.
-Full target1 at penalty1e6 still NONPASS after3 accepted targets (gap/merit);
-penalty1e7 NONPASS first target. Complete mechanical/shell/plastic accepted prefix
-and exact plastic checkpoint restore verified. No full-load material admission.
-No further load/penalty tuning; old failures retained.
+Private wheel59b5372d70281a38118ad0182e87bec67cb973cc34c1b5cee6385e8a51f18e49,
+raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate04.
+10installed activation checks97.281s191135744B;5affected compatibility/example
+checks43.246s333393920B. All518package files/216imports match,JIT0/pools1,
+no runtime/import/hash errors. Original example and old line checkpoint pass.
+Runner first_target failed before launch on wrong relative test root; repaired
+first_target2 passed. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/activation_summary.json),
+[guide](docs/GENERAL_CONTACT_NATIVE_MATERIAL_S3_DEV.md),
+[supporting review](docs/d1_review_support/contact_native_material_s3_20261004/activation_review.md).
 
-## Next action / open requirements
+## Next action and preserved failures
 
-Trace29 completed: open plastic trial atcut5; contact overshoot at
-iteration1/cut8 (.010699N contact vs.00125N load;gap-12.129um). Smaller
-diagnosticcut9 staysopen and reduces merit; never used in production.
-Next method: explicit area-aware first-contact fraction within unchanged
-8backtracks/path/gap/state gates, finite activation/no zero-gap stall.
-Actual station stress is constrained nonlinearly; no simple retained-yield
-bound. Full-loadNONPASS unchanged. Raw candidate03/trace28/trace29.
-No live process. Metadata encoding failure repaired from exact01420d7f
-README bytes plus explicitUTF8 append; source/evidence intact.
+Next bounded discriminator: existing nearly uniform axial angular-resolution
+exhaustion, branch predicates versus derivative error estimator. Reuse retained
+pose and independent direct-area reference, one local check180s/953MiB with
+unchanged64interval cap; no full-solver replay or new diagnostic campaign.
+Choose one corrective action or explicit unresolved admission. Default k1e6 full
+load and k1e7 first-target gap/merit remain NONPASS; opt-in new success does not
+regrade them. Spatial/enforcement convergence, caps/interfaces/curved geometry,
+friction, native C7 dynamics/coupled impact, independent acceptance and application
+source/model binding remain open. No general speedup or completion forecast.
 
-Use the renewed authority for a bounded required closure and coherent handoff;
-do not start another profile/packaging/diagnostic campaign to spend the balance.
-Coupled yielding needs a derived explicit globalization/step contract; consistent
-local work alone does not fix its gap/merit nonpasses. Uniform axial angular-
-resolution and coarse2-target gap/merit nonpasses remain. Convergence, caps/
-interfaces, curved geometry, friction, native dynamics, acceptance and applications
-remain required. Accepted D1/D2 source/model binding missing; applicationfalse.
-Actual-tangent free-rim continuum admission remains negative; guided discrete
-benchmark preserved. [Prior history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_NATIVE_TWO_S3.md).
+[Prior integrated state and restrictions](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PRE_AREA_ACTIVATION.md).
+ANYfem434ec004 untouched; accepted D1/D2 source/model binding missing, applicationfalse.
+Actual-tangent free-rim continuum admission stays negative; guided benchmark intact.
+ImpactV4/V16 NONPASS900s at1.79779ms/3ms,65nm pulse/old oracle sign defect:
+no unchanged/full replay or cap/gap-policy relaxation. Native grazing friction
+NONPASS−1.33564e-13m: closed event derivative/mixed-work enclosure missing; no
+saved/full/owner/split retry/reset/zero/native acceptance. Q4FD appcycle180.124s:
+no unchanged retry. Optional Local/Mistral unavailable; no reprobes.
+Routine180s/1GB; runner180s953MiB, native owner120s. Named900s/4GB prospective
+only; stricter frozen/consumed authorities remain binding.
 
-## Binding restrictions / clock
+## Authority and clock
 
-ANYfem434ec004 untouched. ImpactV4/V16 NONPASS900s at1.79779ms/3ms, actual65nm
-pulse/old oracle sign defect: no unchanged/full replay or cap/gap-policy relaxation.
-Native grazing friction NONPASS−1.33564e-13m (223queries/448paths/21support/10.364s):
-closed event derivative/mixed-work enclosure missing; no saved/full/owner/split
-retry/reset/zero/native acceptance. Q4FD appcycle180.124s timeout: no unchanged retry.
-Optional Local/Mistral unavailable; no reprobes. Frozen/consumed authority unchanged.
-Routine180s/1GB; current runner180s953MiB, native owner120s. Named900s/4GB only
-prospective; stricter frozen limits prevail.
-
-Original 120 active hours: add3120s to historical goal-tool timeUsedSeconds.
-Consumed boundary:428891+3120=432011s=120.003h; preserve this record.
-Subsequent explicit “Proceed developing” authorizes further bounded development.
-No new hard duration specified; do not invent one or reset consumed authorities.
-Current slice: material-area first-contact fraction and focused actual-path,
-first-target and restart/state checks; checkpoint outcome before expanding scope.
-Full programme remains incomplete; full completion forecast unsupported.
+Original120h consumed:428891+3120=432011s=120.003h; preserve that boundary.
+Subsequent explicit “Proceed developing” authorizes further bounded development,
+without a new hard duration. Never invent an8h allocation or reset history.
+Renewed turn began at goal-tool429147s; latest snapshot430540s (1393s after that
+snapshot), plus subsequent checkpoint work. Goal remains active/incomplete;
+planning pauses do not reset consumed time or frozen execution restrictions.
