@@ -217,3 +217,5 @@ tests/data/general_contact_native_multi_line_46ea65f6.checkpoint -text
 
 tests/data/general_contact_material_s3_ce3e5495.checkpoint -text
 tests/data/general_contact_material_plane_ce3e5495.checkpoint -text
+
+tests/data/general_contact_native_fibre_s3_plastic_*.checkpoint -text
