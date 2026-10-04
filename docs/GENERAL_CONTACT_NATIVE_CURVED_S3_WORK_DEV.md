@@ -87,6 +87,30 @@ The source patch selections and facet identities bind restart; a single-facet
 checkpoint is incompatible with this mode. The default one-facet model and its
 checkpoint identities remain unchanged.
 
+## Physical-fibre section development profile
+
+`--physical-fibres` selects the separate physical-fibre retained section family
+through the same native material-patch/S3 owner. All 24 internal coordinates per
+beam remain coupled. Actual fibre return maps and fibre histories are used;
+there is no generalized-history conversion or elastic shortcut. The example's
+four elastic fibres and explicitly declared background reproduce the existing
+generalized elastic section. The circular contact surface remains separately
+declared; it is not inferred from fibre area or inertia.
+
+This development profile requires spatial nodal dead forces and explicit
+material-area pairs. Distributed loads and the generalized activation controller
+are rejected. Physical-fibre and generalized checkpoints are incompatible.
+Captured loads, reference support geometry, coordinate maps and probe ownership
+are guarded. Only this elastic fixture has been exercised; plastic contact,
+convergence and complete cycle qualification remain open.
+
+The existing native fibre context expires 120 seconds after construction,
+including idle time. Neither solve nor replay renews that allowance. An expired
+owner raises an explicit resource preflight error before candidate evaluation;
+it does not return a mechanical failure result. Use a fresh identically defined
+owner for a separately authorized continuation stage. This does not authorize
+replaying a consumed run or increasing any execution budget.
+
 **Independent engineering acceptance: no. Release: no.** Broader sections,
 materials, pairings, finite overlap, convergence, friction, native dynamics and
 application admission remain required by the full programme. Same-family

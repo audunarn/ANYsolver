@@ -28,6 +28,8 @@ def solve_native_shell(owner, schema, run_type, *, checkpoint=None,
     if accepted.completed_targets > end:
         raise ValueError("native/S3 accepted target cannot rewind")
     try:
+        begin=getattr(owner,'_begin_candidate_context',None)
+        if begin is not None:begin(cancellation_token)
         for index in range(accepted.completed_targets, end):
             cancellation_safe_point(cancellation_token, 'native/S3 target')
             parameter = owner.program.targets[index]

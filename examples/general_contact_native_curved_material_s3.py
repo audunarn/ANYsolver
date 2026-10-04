@@ -23,15 +23,24 @@ from anysolver.general_contact.s3_skin_work import S3SkinWorkAdapter
 from anysolver.general_contact import NativeS3ContactPair,create_native_contact_analysis
 
 
-def analysis(targets=(1.,0.,1.),*,normal_stiffness_Pa_per_m=1e7,two_facets=False):
+def analysis(targets=(1.,0.,1.),*,normal_stiffness_Pa_per_m=1e7,two_facets=False,physical_fibres=False):
     points=[];frames=[]
     for x in np.linspace(0.,2.,3):
         points.append((x,.2*(1-(x-1)**2),0.))
         tangent=np.array((1.,.4*(1-x),0.));tangent/=np.linalg.norm(tangent)
         second=np.array((0.,0.,1.));frames.append(np.column_stack((tangent,second,np.cross(tangent,second))))
     reference=CenteredCurvedBeam3ReferenceGeometry(np.array(points),np.array(frames))
-    section=EllipsoidalGeneralizedSection(np.diag((1000.,400.,350.,.8,1.,1.2)),np.eye(6),1e6,1.)
-    element=NativeGeneralizedStaticElement(1,(1,2,3),reference,section,order=4)
+    if physical_fibres:
+        from anysolver._ge_beam3_fibre_section import Fibre,FlowCurve,PhysicalFibreSection
+        from anysolver._ge_beam3_native_fibre_static_element import NativeFibreStaticElement
+        curve=FlowCurve((0.,),(1e6,),1.)
+        fibres=tuple(Fibre(str(i),y,z,.00025,1e6,curve) for i,(y,z) in enumerate(
+            ((.03,0.),(-.03,0.),(0.,.03),(0.,-.03))))
+        section=PhysicalFibreSection(fibres,np.diag(np.sqrt((0.,400.,350.,.8,.55,.75))))
+        element=NativeFibreStaticElement(1,(1,2,3),reference,section,order=4)
+    else:
+        section=EllipsoidalGeneralizedSection(np.diag((1000.,400.,350.,.8,1.,1.2)),np.eye(6),1e6,1.)
+        element=NativeGeneralizedStaticElement(1,(1,2,3),reference,section,order=4)
     definition=NativeBeamDefinition.capture(element,np.diag((2.,2.,2.,.07,.09,.11)))
     root=BoundaryCondition('clamped',[1],{name:0. for name in ('ux','uy','uz','rx','ry','rz')})
     program=Program(targets,DistributedPattern(LinePattern(()),()),NodalDeadForces(((3,0.,0.,-.005),)),max_iterations=24)
@@ -67,13 +76,14 @@ def main():
     parser.add_argument('--restart',type=Path)
     parser.add_argument('--checkpoint-out',type=Path)
     parser.add_argument('--two-facets',action='store_true',help='two explicit disjoint source patches against connected S3 facets')
+    parser.add_argument('--physical-fibres',action='store_true',help='declared axial/biaxial physical-fibre section and elastic background')
     args=parser.parse_args()
     raw=None if args.restart is None else args.restart.read_bytes()
     if args.through_target>1 and raw is None:
         parser.error('--restart is required for subsequent bounded stages')
     if raw is not None and json.loads(raw)['completed_targets']!=args.through_target-1:
         parser.error('restart must precede the requested target by exactly one stage')
-    run=analysis(two_facets=args.two_facets).solve(checkpoint=raw,expected_sha256=None if raw is None else sha256(raw).hexdigest(),
+    run=analysis(two_facets=args.two_facets,physical_fibres=args.physical_fibres).solve(checkpoint=raw,expected_sha256=None if raw is None else sha256(raw).hexdigest(),
         stop_after=args.through_target)
     if run.status not in ('paused','completed'):raise RuntimeError(run.failure)
     if args.checkpoint_out is not None:args.checkpoint_out.write_bytes(run.checkpoint)

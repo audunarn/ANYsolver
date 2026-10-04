@@ -15,6 +15,19 @@ retains the detailed chronology; current evidence remains in the
 
 ## 1. Status and diagnosis
 
+Current D3 section-family slice adds physical-fibre retained work to the existing
+curved material/S3 owner. Independent sectional elasticity and full local spatial
+derivatives pass; actual first-contact equilibrium and family-bound restart pass
+in105.6784s. Captured-cache/probe guards and documented120s instance expiry close
+supporting-review findings without resetting resource authority. Installed guarded
+candidate verification passes14checks;524files/219imports match,JIT0/pools1.
+Coupled installed route105.9044s/181051392B. This is an elastic fixture, not
+plastic/contact acceptance or a full section/material qualification.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/README.md).
+Next use the actual fibre history machinery for one bounded plastic-history
+discriminator under the established constitutive contract; choose its observable
+and budget before a coupled run. Do not add another geometry owner.
+
 Latest integrated D3 coverage: one curved retained beam / two connected deformable
 S3 facets through the existing owner, explicit disjoint material selections and
 shared-vertex coupling. Actual one-target solve completes102.331s with left

@@ -4,6 +4,7 @@ All native internal unknowns and complete structural/contact blocks are retained
 This does not widen the original single-native/single-S3 profile.
 """
 from dataclasses import dataclass, replace
+from contextlib import nullcontext
 from hashlib import sha256
 from math import isfinite
 
@@ -32,6 +33,8 @@ PROFILE = 'NATIVE_B3_GE_MULTIPLE_ELASTIC_S3_INTERIORS_STATIC_DEV_V1'
 MATERIAL_PROFILE = 'NATIVE_B3_GE_TWO_MATERIAL_PATCHES_SHARED_S3_STATIC_DEV_V1'
 MATERIAL_MULTIPATCH_PROFILE = 'NATIVE_B3_GE_MULTIPLE_MATERIAL_PATCHES_S3_STATIC_DEV_V1'
 CURVED_MATERIAL_PROFILE = 'NATIVE_B3_GE_CURVED_MATERIAL_PATCHES_S3_STATIC_DEV_V1'
+FIBRE_MATERIAL_PROFILE = 'NATIVE_B3_GE_PHYSICAL_FIBRE_MATERIAL_PATCHES_S3_STATIC_DEV_V1'
+FIBRE_CURVED_MATERIAL_PROFILE = 'NATIVE_B3_GE_PHYSICAL_FIBRE_CURVED_MATERIAL_PATCHES_S3_STATIC_DEV_V1'
 SCHEMA = 'NATIVE_B3_GE_MULTIPLE_S3_CHECKPOINT_DEV_V1'
 
 
@@ -201,10 +204,19 @@ class NativeRetainedMultiS3Analysis:
             self.activation_settings = activation_settings
             self.activation_total_queries = 0
         self.native = NativeBeamAnalysis(definitions, boundaries)
-        self.context = Context(self.native.model, program)
+        self._fibre_mode=self.native._family=='PHYSICAL_FIBRE_NODAL'
+        if self._fibre_mode:
+            from .native_fibre_context import NativeFibreContactContext,NativeRetainedFibreElement
+            if not self._material_mode or activation_settings is not None:
+                raise ValueError('physical-fibre contact requires explicit material-area pairs without generalized activation controller')
+            self.context=NativeFibreContactContext(self.native,program)
+            self.profile=FIBRE_CURVED_MATERIAL_PROFILE if self._curved_mode else FIBRE_MATERIAL_PROFILE
+        else:
+            self.context = Context(self.native.model, program)
+        expected=NativeRetainedFibreElement if self._fibre_mode else NativeGeneralizedStaticElement
         if (len(self.context.elements) != len(definitions)
-                or any(type(e) is not NativeGeneralizedStaticElement for _, e in self.context.elements)):
-            raise ValueError('multiple native/S3 owner requires exact retained generalized elements')
+                or any(type(e) is not expected for _, e in self.context.elements)):
+            raise ValueError('multiple native/S3 owner requires exact retained family elements')
         self.shell_model, self.program = shell_model, program
         self.pairs = tuple(sorted(pairs, key=lambda p: p.name))
         self.equilibrium_tolerance = float(equilibrium_tolerance)
@@ -520,10 +532,15 @@ class NativeRetainedMultiS3Analysis:
 
     def solve(self, *, checkpoint=None, expected_sha256=None, stop_after=None,
               cancellation_token=None, progress=None):
-        result=solve_native_shell(self, self.schema, self.run_type, checkpoint=checkpoint,
-            expected_sha256=expected_sha256, stop_after=stop_after,
-            cancellation_token=cancellation_token, progress=progress)
+        operation=self.context.operation(cancellation_token) if self._fibre_mode else nullcontext()
+        with operation:
+            result=solve_native_shell(self, self.schema, self.run_type, checkpoint=checkpoint,
+                expected_sha256=expected_sha256, stop_after=stop_after,
+                cancellation_token=cancellation_token, progress=progress)
         return replace(result,profile=self.profile) if self._material_mode else result
+
+    def _begin_candidate_context(self,cancellation_token):
+        if self._fibre_mode:self.context.activate_cancellation(cancellation_token)
 
 
 def create_native_contact_analysis(definitions, boundaries, program, shell_model, pairs, *,

@@ -8,6 +8,14 @@ On resumption, this goal prevails over conflicting future instructions in the 28
 
 ## Current milestone and next delivery
 
+Current progress extends the existing retained native/S3 owner to the physical-fibre
+section family, preserving all internal unknowns and real fibre histories. Local
+elastic sectional/spatial work and actual coupled first contact/restart have passed
+development checks. Final guarded installed verification passes14checks. Plastic/contact
+history qualification remains required; this does not establish native
+engineering acceptance. See the current
+[slice evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/README.md).
+
 The completed bounded D2 slice is a planar Q4/S3 partial-overlap workflow using
 the explicitly selected projected finite-penalty law: active prescribed-source
 pressure, moving overlap, opening/recontact, physical reactions/work, gap checks

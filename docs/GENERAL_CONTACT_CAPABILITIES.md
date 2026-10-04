@@ -2304,3 +2304,18 @@ unselected. No finite overlap/rim, coupled simultaneous-contact or complete
 multifacet cycle/convergence/general native section or material acceptance/release.
 [Usage](GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md),
 [evidence/review](d1_review_support/contact_native_curved_multifacet_20261005/README.md).
+
+### Physical-fibre retained native / S3 — installed development, 5 October 2026
+
+The existing curved material-patch owner now composes the physical-fibre retained
+family with actual return/history machinery and all24internal coordinates. Exact
+family admission, both-body work and once-spatial structural tangent remain.
+The elastic four-fibre fixture reproduces independently derived section stiffness
+and the existing generalized coupled response. Installed final first contact and
+family-bound byte-exact restart pass105.9044s/181051392B;13local checks pass.
+All524production files/219imports match,JIT0/pools1. Consumed caches/probes and
+clock mutation are guarded; the existing120s construction lifetime is documented.
+Distributed loads and generalized activation are explicitly unsupported here.
+Implemented/tested, not independently accepted/released. Plastic history/contact,
+full cycle, convergence and broader section/material admission remain open.
+[Evidence](d1_review_support/contact_native_fibre_s3_20261005/README.md).
