@@ -1140,6 +1140,11 @@ class ExperimentalGEAnalysis:
                 "staged_dead_loads": (() if self._line_samples and not (
                     self._finite_bl5 and self._definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1) else
                     ("experimental immutable piecewise-affine translation forces; forward programme position",)),
+                "zero_load_normalization": (() if not self._definition.points or self._definition.lines or
+                    self._definition.footprints or self._definition.distributing_footprints or
+                    self._definition.finite_distributing_footprints or
+                    self._definition.shell_reference_policy != "flat" else
+                    ("experimental staged opt-in zero_load_reference_endpoint; exact-zero loads only; frozen physical endpoint/free work; separate checkpoint identity; not qualified",)),
                 "experimental_line_spaces": tuple(
                     line.multiplier_space for line in self._definition.lines),
                 "q4_force_map": self._definition.q4_pullback_policy,

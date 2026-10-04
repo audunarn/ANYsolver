@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from ._stiffened_shell_ge_experimental import NodalAction
 
 POLICY = "B3_GE_E4_PL_STAGED_TRANSLATION_DEAD_LOAD_V1_DEV"
+ZERO_REFERENCE_POLICY = "B3_GE_E4_PL_STAGED_ZERO_REFERENCE_V1_DEV"
 MAGIC = b"ANYSGE_STAGE1\0"
 MAX_STAGES = 64
 MAX_ACTIONS_PER_STAGE = 4096
@@ -107,6 +108,7 @@ class StagedDeadLoadProgramme:
     """
     model_identity: str
     endpoints: tuple[tuple[NodalAction, ...], ...]
+    zero_load_reference_endpoint: int | None = None
     identity: str = field(init=False)
     _serialized: bytes = field(init=False, repr=False, compare=False)
 
@@ -127,6 +129,12 @@ class StagedDeadLoadProgramme:
             endpoints.append(normalized)
         object.__setattr__(self, "model_identity", model_identity)
         object.__setattr__(self, "endpoints", tuple(endpoints))
+        reference = self.zero_load_reference_endpoint
+        if reference is not None:
+            if type(reference) is not int or not 1 <= reference <= len(endpoints):
+                raise ValueError("zero-load reference must identify an existing endpoint")
+            if not any(v != 0. for action in endpoints[reference-1] for v in action.wrench):
+                raise ValueError("zero-load reference endpoint must be nonzero")
         core = self._core_payload()
         identity = sha256(_canonical(core)).hexdigest()
         object.__setattr__(self, "identity", identity)
@@ -140,14 +148,21 @@ class StagedDeadLoadProgramme:
         return len(self.endpoints)
 
     @property
+    def policy(self):
+        return POLICY if self.zero_load_reference_endpoint is None else ZERO_REFERENCE_POLICY
+
+    @property
     def augmented_model_identity(self):
-        return sha256(_canonical(dict(policy=POLICY, model_identity=self.model_identity,
+        return sha256(_canonical(dict(policy=self.policy, model_identity=self.model_identity,
                                       programme_identity=self.identity))).hexdigest()
 
     def _core_payload(self):
-        return dict(policy=POLICY, model_identity=self.model_identity,
+        value = dict(policy=self.policy, model_identity=self.model_identity,
                     endpoints=[[dict(domain=a.domain, node=a.node, wrench=list(a.wrench))
                                 for a in row] for row in self.endpoints])
+        if self.zero_load_reference_endpoint is not None:
+            value["zero_load_reference_endpoint"] = self.zero_load_reference_endpoint
+        return value
 
     def to_payload(self):
         return {**self._core_payload(), "identity": self.identity}
@@ -158,8 +173,13 @@ class StagedDeadLoadProgramme:
     @classmethod
     def from_payload(cls, value):
         from ._stiffened_shell_ge_experimental import NodalAction
-        if (type(value) is not dict or set(value) != {"policy", "model_identity", "endpoints", "identity"}
-            or value["policy"] != POLICY or type(value["endpoints"]) is not list
+        if type(value) is not dict:
+            raise ValueError("invalid staged-load descriptor fields/policy")
+        required = {"policy", "model_identity", "endpoints", "identity"}
+        if value.get("policy") == ZERO_REFERENCE_POLICY:
+            required.add("zero_load_reference_endpoint")
+        if (set(value) != required or value.get("policy") not in (POLICY, ZERO_REFERENCE_POLICY)
+            or type(value["endpoints"]) is not list
             or not 1 <= len(value["endpoints"]) <= MAX_STAGES):
             raise ValueError("invalid staged-load descriptor fields/policy")
         rows = value["endpoints"]
@@ -176,7 +196,8 @@ class StagedDeadLoadProgramme:
                     raise ValueError("invalid staged-load action types")
                 actions.append(NodalAction(action["domain"], action["node"], action["wrench"]))
             normalized.append(tuple(actions))
-        programme = cls(value["model_identity"], tuple(normalized))
+        programme = cls(value["model_identity"], tuple(normalized),
+                        zero_load_reference_endpoint=value.get("zero_load_reference_endpoint"))
         if (_identity(value["identity"]) != programme.identity or
             _canonical(value) != programme.serialize()):
             raise ValueError("staged-load descriptor identity/canonical representation mismatch")
@@ -196,6 +217,14 @@ class StagedDeadLoadProgramme:
             raise ValueError("staged-load programme belongs to a different model")
         if not callable(load):
             raise TypeError("staged-load compiler requires the owner load callable")
+        if self.zero_load_reference_endpoint is not None:
+            definition = getattr(owner, "_definition", None)
+            from ._stiffened_shell_ge_experimental import PROFILE
+            if (definition is None or definition.profile != PROFILE or
+                not definition.points or definition.lines or definition.footprints or
+                definition.distributing_footprints or definition.finite_distributing_footprints or
+                definition.shell_reference_policy != "flat"):
+                raise ValueError("zero-load reference policy requires the admitted flat point GE owner")
         shape = getattr(getattr(owner, "_K", None), "shape", None)
         if (type(shape) is not tuple or len(shape) != 2 or shape[0] != shape[1] or
             not isinstance(shape[0], (int, np.integer)) or shape[0] <= 0 or
@@ -209,6 +238,14 @@ class StagedDeadLoadProgramme:
                 raise ValueError("staged-load compiler returned invalid vectors")
             # Snapshot before the next call: loaders may reuse a work buffer.
             vectors.append(np.frombuffer(made.tobytes(), dtype=np.float64))
+        if self.zero_load_reference_endpoint is not None:
+            reference = vectors[self.zero_load_reference_endpoint][owner._free]
+            scales = np.asarray(owner._coordinate_scale)[owner._free]
+            with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+                weighted = reference*scales
+            if (not np.isfinite(weighted).all() or
+                np.any((reference != 0.) & (weighted == 0.)) or not np.any(weighted != 0.)):
+                raise ValueError("representable nonzero free work required at the reference endpoint")
         return CompiledStagedDeadLoadProgramme(self, tuple(vectors))
 
 
@@ -232,6 +269,9 @@ class CompiledStagedDeadLoadProgramme:
             owned.append(np.frombuffer(made.tobytes(), dtype=np.float64))
         if np.any(owned[0] != 0.):
             raise ValueError("implicit staged initial force must be zero")
+        reference = self.programme.zero_load_reference_endpoint
+        if reference is not None and not np.any(owned[reference] != 0.):
+            raise ValueError("compiled zero-load reference endpoint must be nonzero")
         object.__setattr__(self, "vectors", tuple(owned))
 
     @property
@@ -253,6 +293,17 @@ class CompiledStagedDeadLoadProgramme:
     @property
     def stage_count(self):
         return self.programme.stage_count
+
+    def equilibrium_load(self, applied):
+        """Normalization only: exact zero loads use the selected physical endpoint.
+
+        All nonzero loads retain their actual-load metric, including tiny loads.
+        This does not replace the applied force or alter a residual/tangent.
+        """
+        reference = self.programme.zero_load_reference_endpoint
+        if reference is not None and not np.any(applied != 0.):
+            return self.vectors[reference]
+        return applied
 
     def progress_at(self, position):
         _, cursor, fraction = _progress(self.stage_count, position)
@@ -302,7 +353,7 @@ def encode_checkpoint(compiled, position, inner):
     position, cursor, fraction = _progress(compiled.stage_count, position)
     if type(inner) is not bytes or not inner or len(inner) > MAX_CHECKPOINT_BYTES:
         raise ValueError("bounded staged inner checkpoint bytes required")
-    header = _canonical(dict(policy=POLICY, programme=compiled.programme.to_payload(),
+    header = _canonical(dict(policy=compiled.programme.policy, programme=compiled.programme.to_payload(),
         position=position, cursor=cursor, fraction=fraction, inner_sha256=sha256(inner).hexdigest()))
     size = len(MAGIC)+4+len(header)+len(inner)+32
     if len(header) > MAX_METADATA_BYTES or size > MAX_CHECKPOINT_BYTES:
@@ -324,11 +375,13 @@ def decode_checkpoint(raw):
     header_raw = raw[start:start+size]
     header = _json(header_raw)
     if (type(header) is not dict or set(header) != {"policy", "programme", "position", "cursor", "fraction", "inner_sha256"}
-        or header["policy"] != POLICY or type(header["position"]) is not float
+        or header["policy"] not in (POLICY, ZERO_REFERENCE_POLICY) or type(header["position"]) is not float
         or type(header["fraction"]) is not float or type(header["cursor"]) is not int
         or _canonical(header) != header_raw):
         raise ValueError("invalid staged checkpoint fields/types/canonical metadata")
     programme = StagedDeadLoadProgramme.from_payload(header["programme"])
+    if header["policy"] != programme.policy:
+        raise ValueError("staged checkpoint normalization policy mismatch")
     position, cursor, fraction = _progress(programme.stage_count, header["position"])
     if (header["cursor"] != cursor or header["fraction"] != fraction or
         _canonical({**header, "position": position, "cursor": cursor, "fraction": fraction}) != header_raw):

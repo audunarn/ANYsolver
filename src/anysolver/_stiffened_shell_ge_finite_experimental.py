@@ -367,6 +367,9 @@ class FinitePointResult:
     load_stage_fraction: float | None = None
     load_programme_complete: bool | None = None
     applied_dead_load: np.ndarray | None = None
+    load_equilibrium_reference_endpoint: int | None = None
+    load_equilibrium_reference_policy: str | None = None
+    load_equilibrium_reference_used: bool = False
     body_load: object | None = None
     distributed_load: object | None = None
     pressure_load: object | None = None
@@ -578,14 +581,20 @@ class FinitePointDriver:
             load_position=float(position), load_stage_cursor=cursor,
             load_stage_fraction=fraction,
             load_programme_complete=cursor == len(programme.programme.endpoints),
-            applied_dead_load=_owned(applied))
+            applied_dead_load=_owned(applied),
+            load_equilibrium_reference_endpoint=programme.programme.zero_load_reference_endpoint,
+            load_equilibrium_reference_policy=(programme.programme.policy if
+                programme.programme.zero_load_reference_endpoint is not None else None),
+            load_equilibrium_reference_used=(programme.programme.zero_load_reference_endpoint is not None
+                and not np.any(applied != 0.)))
 
     def _assemble(self, state, factor, shell_origins, beam_origins, *, pattern=None,
-                  applied_load=None):
+                  applied_load=None, load_programme=None):
         owner = self.owner
+        programme = self._programme if load_programme is None else load_programme
         load_pattern = self._pattern if pattern is None else pattern
-        if applied_load is None and self._programme is not None:
-            applied_load = self._programme.load_at(factor)
+        if applied_load is None and programme is not None:
+            applied_load = programme.load_at(factor)
         if applied_load is None and load_pattern is None:
             raise RuntimeError("finite load pattern has not been supplied")
         applied_load = factor*load_pattern if applied_load is None else applied_load
@@ -770,6 +779,8 @@ class FinitePointDriver:
         norm_load = applied_load
         if owner._distributing_cyclic and factor == 0.:
             norm_load = owner._cyclic_reference_pattern
+        elif programme is not None:
+            norm_load = programme.equilibrium_load(applied_load)
         relative = _linear_equilibrium(
             residual[owner._free], norm_load[owner._free],
             owner._coordinate_scale[owner._free])
@@ -961,7 +972,8 @@ class FinitePointDriver:
                 return self._assemble(state, factor, self._shell_origins,
                                       self._beam_origins, pattern=pattern,
                                       **({} if programme is None else
-                                         {"applied_load": applied_load}))
+                                         {"applied_load": applied_load,
+                                          "load_programme": programme}))
             def attempt(status, iteration, relative, gap, failure=None):
                 return IncrementAttempt(float(factor), accepted_from, float(factor),
                     status, iteration, **counts, equilibrium_ratio=float(relative),

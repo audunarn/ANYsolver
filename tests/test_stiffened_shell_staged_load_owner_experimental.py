@@ -28,6 +28,32 @@ def _programme(owner):
                                      (_actions(), _actions(5., 10.), _actions(5., 5.)))
 
 
+def _numeric_checkpoint(owner, raw):
+    """Inspect/re-encode the selected codec with dimensions from this model.
+
+    Stable Q4 snapshots are binary; the historical JSON path remains supported.
+    Do not infer layout from untrusted snapshot metadata for corruption tests.
+    """
+    from anysolver import _stiffened_shell_ge_checkpoint_binary as binary
+    if not raw.startswith(binary.MAGIC):
+        return json.loads(raw), lambda value:json.dumps(value,sort_keys=True,
+            separators=(',',':')).encode('ascii')
+    count, members = owner._K.shape[0], len(owner._beam_parts)
+    key = 'pattern' if owner._finite_driver._programme is None else 'applied_dead_load'
+    shapes = (('q',(count,)),('frames',(len(owner._beam_ids),3,3)),
+        ('cells',(members,2,3,3)),('resultants',(members,18)),
+        ('multipliers',(owner._C.shape[0],)),(key,(count,)),
+        ('accepted_factors',(owner._generation,)))
+    identity = owner._finite_driver._checkpoint_identity()
+    kind,generation,arrays = binary.decode(raw,identity,lambda _kind,_gen:shapes)
+    assert kind in ('finite','finite_stable_q4')
+    value = dict(model=identity,**{name:row.tolist() for name,row in arrays.items()})
+    def encode(value):
+        return binary.encode(kind,identity,generation,tuple(
+            (name,np.asarray(value[name],dtype=float)) for name,_shape in shapes))
+    return value,encode
+
+
 def _compare(a, b):
     assert a.accepted_factors == b.accepted_factors
     assert a.load_position == b.load_position
@@ -86,7 +112,7 @@ def test_single_stage_matches_legacy_and_keeps_legacy_checkpoint_contract(reques
                  "multipliers", "support_reactions"):
         np.testing.assert_array_equal(getattr(a, name), getattr(b, name))
     assert b.load_position is None and b.applied_dead_load is None
-    payload = json.loads(legacy.checkpoint())
+    payload,_encode = _numeric_checkpoint(legacy,legacy.checkpoint())
     assert payload["model"] == legacy._identity and "pattern" in payload
     assert "applied_dead_load" not in payload
     with pytest.raises(ValueError, match="programme changed"):
@@ -163,10 +189,10 @@ def test_stripped_tampered_and_changed_future_checkpoint_are_atomic(request):
     descriptor, position, inner = decode_checkpoint(frozen)
     compiled = descriptor.compile(owner, owner._finite_driver._load)
     assert position == 1.5
-    numeric = json.loads(inner)
+    numeric,reencode = _numeric_checkpoint(owner,inner)
     assert "applied_dead_load" in numeric and "pattern" not in numeric
     numeric["applied_dead_load"][owner._shell_count+6*owner._beam_index[105]+1] += 1.
-    altered = json.dumps(numeric, sort_keys=True, separators=(",", ":")).encode("ascii")
+    altered = reencode(numeric)
     changed = ss.StagedDeadLoadProgramme(owner._identity,
         (_actions(), _actions(6., 10.), _actions(5., 5.)))
     bad = (inner, frozen[:-1]+bytes([frozen[-1]^1]),

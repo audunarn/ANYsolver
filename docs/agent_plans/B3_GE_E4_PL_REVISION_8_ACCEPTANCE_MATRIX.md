@@ -2353,3 +2353,30 @@ or a limit point. Both failures and candidate fixtures retained; ordinary prior
 fibre regression restored exactly. No curve/load/budget campaign follows.
 Point zero-load physical normalization/compatibility remains OPEN.
 [Evidence](development/r8-distributing-reference-linear-20261004/results.md).
+
+
+4 October point zero-reference development delivery (source parent cab437fb):
+Opt-in B3_GE_E4_PL_STAGED_ZERO_REFERENCE_V1_DEV freezes a declared nonzero
+free-work endpoint only for an exactly zero complete applied vector. Default V1
+bytes/nonzero behavior, actual loads, material laws and 1e-8/1e-9 checks remain.
+Installed solver wheel dd5fcc44985b0b34f79011bab8f96fafe8c219f92af93dc22740db4687c1d344
+and unchanged ANYfem9faed76 wheel626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f
+bind 520 checked installed/source files. Five-module campaign:91PASS248.56s.
+Public mixed generalized/fibre point example:plastic load/zero-unload/reload,
+exact restart; zero equilibrium5.381928125419593e-10 and gap7.798304297352494e-18.
+The campaign subsequently failed its consumer filename suffix; preserved as
+failed integration execution, not relabelled PASS. Repaired consumer uses the
+retained checkpoint without replaying loading:experimental case/project save/
+reopen, exact zero restore and reload PASS5.19s. Earlier2binary/JSON test failures
+reproduced on prior installed artifact; test helpers repaired without weakened
+negatives,8PASS29.68s. Source/baseline harness failures retained as failures.
+Algebraic work-dual unit/tiny-load controls and one low-yield physical-fibre
+lifecycle example do not establish full equivalent-unit, engineering capacity,
+simultaneous shell-J2/fibre chart, line, spectrum or aggregate acceptance.
+Supporting same-family review findings on first prepared programme and paired
+dissipation history resolved; no remaining actionable finding for this slice.
+Raw .qualification/b3-ge-e4-pl/r8-point-zero-reference-dev-20261004-v1; one job,
+600s/2GiB, actual numerical affinity/pools1/JIToff. Coupled-chart failure remains
+parked. Goal ACTIVE; G0-G6 and different-family/platform/physical gates OPEN.
+Next inspect the existing native material displacement-control contract; do not
+disable guards, reuse the wrong material codec or retry the failed chart curve.
