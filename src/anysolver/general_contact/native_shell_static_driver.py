@@ -67,6 +67,12 @@ def solve_native_shell(owner, schema, run_type, *, checkpoint=None,
                     max(float(np.linalg.norm(value)) for value in angular),
                     np.finfo(float).tiny,
                 ))
+                activation = getattr(owner, '_activation_fraction', None)
+                if activation is not None:
+                    angular_bound = fraction
+                    fraction = activation(trial, u, step, fraction, contact, cancellation_token)
+                    if not np.isfinite(fraction) or not 0. < fraction <= angular_bound:
+                        raise RuntimeError('native/S3 activation fraction unresolved')
                 rejected = dict(geometry=0, gap=0, swept=0, merit=0)
                 last_rejection = ""
                 for cut in range(owner.program.max_backtracks+1):

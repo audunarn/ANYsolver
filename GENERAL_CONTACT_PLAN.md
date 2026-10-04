@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.93. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.94. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -16,36 +16,41 @@ Publication, merging, release and historical-default changes are separate action
 
 ## Latest integrated slice — 4 October
 
-A separate retained-native owner now composes one/two native beams and multiple
-elastic physical S3 interiors through full native/internal/global-shell work.
-Per-pair sweep/gap/resource limits, all-beam cell updates, exact consumed-map
-identity and atomic state/restart preserve old single-owner guards. No independent
-native-element condensation precedes contact. Installed29pass60.473s/332218368B;
-206modules/510files match,JIT0/pools1,180s/953MiB. Independent curve work, actual two
-skins/shared-target coupled solves, reactions/contact wrenches,1e-5 spatial tangent
-(errors1.36e-9/1.53e-9), internal motion at fixed exterior nodes, hidden second-beam
-path, cancellation/later-child failure and deterministic/incompatible restart pass.
-[Guide/evidence](docs/GENERAL_CONTACT_NATIVE_MULTIPLE_S3_DEV.md).
+The explicit native activation-Newton owner now reaches the fixture's50um physical
+gap with one/two curved native beams, complete retained/internal/S3 cross work,
+actual deformable skins, atomic history and restart. Line penalty1.2e6N/m2 is
+explicitly derived from the earlier measured gap response. Activation budgets
+1e-7/1e-6m for one/two beams limit Newton trial prefixes, including open-endpoint
+hidden paths; all controller queries share64cap. Original24Newton/8cuts/128sweep
+limits, physical law, force targets and legacy default route remain. Conservative
+geometry-only gap queries and projected normal rates avoid unused derivative work.
+Corrected controller revision binds distinct restart identity.
 
-Explicit1000N/m2 penalty/gap failures and stronger40000N/m2 one/two-load-step merit
-failures remain. The same four increments at10000/40000 reduce gap0.5351→0.2689mm,
-within the developmental1mm control; this is not qualification gap/enforcement
-convergence. Supporting source review fixes are closed; no engineering acceptance,
-release, speedup or full-programme forecast follows from this development subset.
+Installed28pass139.665s/354353152B plus specific independent-path follow-up1pass
+3.105s;207modules/511files match,JIT0/pools1. Independent represented-curve minimum
+gaps49.2952/49.2958um meet50um. Complete work/reactions, one tangent direction at
+three h values (max2.651e-6 vs1e-5), cancellation/later-child failure/query exhaustion,
+split/incompatible restart and legacy paths pass. Penalty doubling reduces one-beam
+gap49.2952 to34.8663um; half-force-step path preserves final response. Supporting
+source review corrections closed; not engineering acceptance or release.
+[Guide/evidence](docs/GENERAL_CONTACT_NATIVE_ENFORCEMENT_DEV.md).
 
-Next principal D3 question: reach the native dimensional qualification gap under
-stronger explicitly declared enforcement without losing bounded nonlinear
-continuation. Use current coupled work/reference/state cases as discriminators;
-separate load-path resolution from penalty accuracy. Derive one stronger candidate
-from measured response and the retained thickness/radius gap target, with a
-prospective bounded path/control experiment; no blind penalty/step sweep or budget
-increase. If path/merit fails, repair that actual discrepancy before expanding
-native cap/friction/dynamic profiles. Spatial/section/material acceptance, curved
-native beam–beam boundaries and physical beam/shell endpoints/rims remain open.
-Cylinder support and full C0–C9 remain required.
+Retain fixed-target stronger-law failures, source03 activation iteration/deadline
+failure, hidden-path64query failures, two-beam1e-7 activation Newton NONPASS and
+preflight/test-fixture errors. Two-beam1e-6 success has different explicit algorithmic
+settings; no old result is regraded. No universal speedup or programme forecast.
 
-[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV92.md)
-→91→90 retains earlier identities, failures, restrictions and evidence.
+Next principal D3 gap: native spatial/section/material and enforcement acceptance
+beyond this represented-curve fixture, plus actual beam-beam and beam-shell physical
+boundaries. Prefer a bounded integrated physical-boundary/rigid-cylinder slice where
+existing force adapters can be reused; do not widen native section/size guards or
+claim mesh convergence from two penalties. D2 automatic/search, D4 friction, D5/D7
+impact and D8 application evidence dependencies remain. Review actual candidate
+ownership/geometry before choosing the next slice; preserved failed impact/native
+grazing cases remain forbidden to replay. Full C0-C9 stays active/incomplete.
+
+[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV93.md)
+->92->91 retains earlier identities, failures, restrictions and evidence.
 
 ## 1. Current technical position
 

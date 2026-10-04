@@ -222,9 +222,9 @@ class NativeRetainedRoundLineS3Interior:
             maximum_integration_intervals=self.maximum_integration_intervals,
         ))
 
-    def evaluate(self, positions: np.ndarray, position_low: np.ndarray,
+    def _geometry_state(self, positions: np.ndarray, position_low: np.ndarray,
                  cell_rotations: np.ndarray,
-                 shell_physical_vertices: np.ndarray) -> NativeRetainedLineS3Result:
+                 shell_physical_vertices: np.ndarray):
         if self._fingerprint() != self.identity:
             raise ValueError("native line-S3 definition changed")
         shell = np.asarray(shell_physical_vertices, dtype=float)
@@ -256,6 +256,30 @@ class NativeRetainedRoundLineS3Interior:
                     minimum_rim = min(minimum_rim, inward)
         if minimum_rim-roundoff < self.radius+self.rim_clearance:
             raise ValueError("native line-S3 curve approaches unadmitted physical rim")
+
+        return states, curves, shell, normal, roundoff, minimum_rim
+
+    def geometry_gap(self, positions, position_low, cell_rotations, shell_physical_vertices):
+        """Physical quadratic gap/rim without constructing contact derivatives."""
+        _, curves, shell, normal, _, rim = self._geometry_state(
+            positions, position_low, cell_rotations, shell_physical_vertices)
+        minimum = float('inf')
+        for curve in curves:
+            gaps = np.array([float(normal@(point-shell[0])-self.radius) for point in curve])
+            quadratic = 2.0*(gaps[0]-2.0*gaps[1]+gaps[2])
+            linear = -3.0*gaps[0]+4.0*gaps[1]-gaps[2]
+            stations = [0.0, 1.0]
+            if quadratic != 0.0:
+                turning = -linear/(2.0*quadratic)
+                if 0.0 < turning < 1.0: stations.append(float(turning))
+            minimum = min(minimum, *(float((quadratic*t+linear)*t+gaps[0]) for t in stations))
+        return minimum, rim
+
+    def evaluate(self, positions: np.ndarray, position_low: np.ndarray,
+                 cell_rotations: np.ndarray,
+                 shell_physical_vertices: np.ndarray) -> NativeRetainedLineS3Result:
+        states, curves, shell, normal, roundoff, minimum_rim = self._geometry_state(
+            positions, position_low, cell_rotations, shell_physical_vertices)
 
         variables = tuple(_Jet.variable(value, index, 27)
                           for index, value in enumerate(np.r_[

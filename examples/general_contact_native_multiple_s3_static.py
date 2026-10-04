@@ -21,7 +21,8 @@ from anysolver.general_contact.overlap import reference_shell_face
 from anysolver.general_contact.s3_skin_work import S3SkinWorkAdapter
 
 
-def analysis(*, beams=1, iterations=24, targets=(.5, 1.), line_stiffness_n_per_m2=10000.):
+def analysis(*, beams=1, iterations=24, targets=(.5, 1.), line_stiffness_n_per_m2=10000.,
+             gap_tolerance_m=.001, activation_settings=None):
     definitions, roots, forces = [], [], []
     axes = ('ux', 'uy', 'uz', 'rx', 'ry', 'rz')
     section = EllipsoidalGeneralizedSection(
@@ -65,9 +66,18 @@ def analysis(*, beams=1, iterations=24, targets=(.5, 1.), line_stiffness_n_per_m
                 geometry_tolerance_m=1e-10, energy_tolerance_j=1e-10,
                 force_tolerance_n=1e-9, tangent_tolerance_n_per_m=1e-7,
                 maximum_integration_intervals=100)
-            pairs.append(NativeS3ContactPair(f'beam{i}-skin{eid}', NativeRetainedLineS3Work(kernel, skin), .001, 128))
+            pairs.append(NativeS3ContactPair(f'beam{i}-skin{eid}', NativeRetainedLineS3Work(kernel, skin), gap_tolerance_m, 128))
     return create_native_contact_analysis(tuple(definitions), tuple(roots), program, shell,
-                                         tuple(pairs), equilibrium_tolerance=1e-8)
+                                         tuple(pairs), equilibrium_tolerance=1e-8,
+                                         activation_settings=activation_settings)
+
+
+def tight_gap_analysis(*, beams=1):
+    """Explicit stronger line law and activation controls; development only."""
+    from anysolver.general_contact import NativeContactActivationSettings
+    return analysis(beams=beams, targets=(.25,.5,.75,1.),
+        line_stiffness_n_per_m2=1.2e6, gap_tolerance_m=5e-5,
+        activation_settings=NativeContactActivationSettings(1e-7 if beams==1 else 1e-6,64))
 
 
 def main():

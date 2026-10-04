@@ -1903,3 +1903,23 @@ skin/junction and mixed driver pass. Initial fixture/API failures retained;
 supporting review resolved. Implemented/tested, not independently accepted or
 released. Not target-patch unions, rims, native or friction/dynamic admission.
 [Guide/evidence](GENERAL_CONTACT_MULTIPLE_BEAM_S3_CAPS_DEV.md).
+
+
+## Retained native multiple-S3 activation Newton — 4 October development
+
+`NATIVE_B3_GE_MULTIPLE_S3_ACTIVATION_NEWTON_STATIC_DEV_V1` adds explicitly selected
+activation controls to complete retained native/S3 work. No law/default change or
+automatic fallback. Installed28pass139.665s/354353152B plus independent-path
+follow-up1pass3.105s;207modules/511files match,JIT0/pools1. One/two curved beams,
+actual both-skin deformation, independent scalar energy/minimum gaps49.2952/
+49.2958um within50um, wrench/reactions, one tangent direction at three h values
+(max2.651e-6 vs1e-5), physical rollback/cancel/failure/restart and legacy paths pass.
+Controller queries include endpoints/prefix certification; regular physical sweeps
+retain their own bounds. Corrected revision binds draft-incompatible restart.
+Explicit one-beam1e-7/two-beam1e-6 activation budgets;64queries/24Newton/8cuts/128
+interval caps unchanged. Earlier two-beam1e-7 Newton NONPASS and hidden-pulse64
+resource NONPASS retained. Two-setting penalty/path sensitivity is not spatial/
+enforcement convergence. Supporting source scrutiny closed; not independently
+accepted or released. All prior multiple-S3 material/geometry/section, physical
+boundary and native beam-beam/friction/dynamic restrictions remain.
+[Guide/evidence](GENERAL_CONTACT_NATIVE_ENFORCEMENT_DEV.md).

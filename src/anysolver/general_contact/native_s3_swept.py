@@ -8,7 +8,8 @@ import numpy as np
 
 def native_s3_swept_admissible(context, work, beam_index, gap_tolerance,
         maximum_intervals, recoverable_error, start, u_start, increment, end,
-        u_end, start_gap, end_gap, start_rim, end_rim):
+        u_end, start_gap, end_gap, start_rim, end_rim, *,
+        geometry_only=False, projected_gap=False, geometry_query=None):
     if min(start_gap, end_gap) < -gap_tolerance:
         return False
     first = work.shell.current_positions(u_start)
@@ -43,6 +44,22 @@ def native_s3_swept_admissible(context, work, beam_index, gap_tolerance,
                  for points, base in ((before, first[0]), (after, last[0]))
                  for point in points)+lift
     lipschitz = beam_speed+shell_speed+normal_speed*radius
+    if projected_gap:
+        # g=n.(r-centroid)-R is identical to the vertex-anchor gap. The
+        # centroid reduces the radius multiplying dn/dt. For unit normals,
+        # |n(t)-n(0)| <= min(2, sup|dn/dt|) on this unit path interval.
+        center0=np.mean(first,axis=0); center1=np.mean(last,axis=0)
+        excursion=min(2.,float(normal_speed))
+        relative_velocity=(after-before)-(center1-center0)
+        translation=max(abs(float(normal0@v))+excursion*float(np.linalg.norm(v))
+                        for v in relative_velocity)
+        cell_angular=[increment[context.nodal_count+24*beam_index+3*c:
+                               context.nodal_count+24*beam_index+3*c+3] for c in (0,1)]
+        rotation=max(float(np.linalg.norm(np.cross(normal0,v)))
+                     +excursion*float(np.linalg.norm(v)) for v in cell_angular)*lift
+        centered_radius=max(float(np.linalg.norm(point-base))
+            for points,base in ((before,center0),(after,center1)) for point in points)+lift
+        lipschitz=translation+rotation+normal_speed*centered_radius
     rim_speed = 0.0
     for index in range(3):
         j = (index+1) % 3
@@ -91,14 +108,21 @@ def native_s3_swept_admissible(context, work, beam_index, gap_tolerance,
         try:
             state = context.advance(start, t*increment[:context.count])
             u = u_start+t*(u_end-u_start)
-            middle_contact = work.evaluate(state.positions[nodes], state.position_low[nodes],
-                    state.cell_rotations[beam_index], u).contact
+            if geometry_only:
+                if geometry_query is not None:
+                    gap,rim=geometry_query(state,u)
+                else:
+                    gap,rim=work.contact.geometry_gap(state.positions[nodes],state.position_low[nodes],
+                        state.cell_rotations[beam_index],work.shell.current_positions(u))
+            else:
+                middle_contact = work.evaluate(state.positions[nodes], state.position_low[nodes],
+                        state.cell_rotations[beam_index], u).contact
+                gap=middle_contact.minimum_gap_m; rim=middle_contact.minimum_rim_clearance_m
         except (ValueError, MemoryError) as exc:
             if recoverable_error(exc):
                 return False
             raise
-        gap = middle_contact.minimum_gap_m
-        rim = middle_contact.minimum_rim_clearance_m-rim_required
+        rim -= rim_required
         if gap < -gap_tolerance:
             return False
         stack.extend(((left, t, lower_left, gap, rim_left, rim),

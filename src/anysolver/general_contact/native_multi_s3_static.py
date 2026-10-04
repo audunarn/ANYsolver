@@ -127,6 +127,8 @@ class NativeRetainedMultiS3Analysis:
     all shell elements must be represented. Rims/patch unions remain unsupported.
     """
     profile = PROFILE
+    schema = SCHEMA
+    run_type = NativeMultiS3Run
     _assemble_structural = NativeRetainedRoundS3Analysis._assemble_structural
     _step = NativeRetainedRoundS3Analysis._step
     _recoverable_trial_error = staticmethod(NativeRetainedRoundS3Analysis._recoverable_trial_error)
@@ -344,7 +346,7 @@ class NativeRetainedMultiS3Analysis:
         self._guard()
         if type(records) is not tuple or len(records) > len(self.program.targets):
             raise ValueError('multiple native/S3 checkpoint extent')
-        body = {'schema': SCHEMA, 'profile': PROFILE, 'identity': self.identity,
+        body = {'schema': self.schema, 'profile': self.profile, 'identity': self.identity,
                 'completed_targets': len(records), 'records': records}
         raw = canonical({**body, 'checkpoint_sha256': sha(body)})
         if len(raw) > MAX_BYTES: raise MemoryError('multiple native/S3 checkpoint byte limit')
@@ -358,12 +360,12 @@ class NativeRetainedMultiS3Analysis:
         if type(value) is not dict or set(value) != {'schema', 'profile', 'identity', 'completed_targets', 'records', 'checkpoint_sha256'}:
             raise ValueError('multiple native/S3 checkpoint schema')
         body = {k: v for k, v in value.items() if k != 'checkpoint_sha256'}
-        if value['schema'] != SCHEMA or value['profile'] != PROFILE or value['identity'] != self.identity or sha(body) != value['checkpoint_sha256']:
+        if value['schema'] != self.schema or value['profile'] != self.profile or value['identity'] != self.identity or sha(body) != value['checkpoint_sha256']:
             raise ValueError('multiple native/S3 checkpoint definition/settings binding')
         count = value['completed_targets']
         if type(count) is not int or not 0 <= count <= len(self.program.targets) or type(value['records']) is not list or len(value['records']) != count:
             raise ValueError('multiple native/S3 checkpoint target extent')
-        accepted = self.initial; records = (); previous = sha({'schema': SCHEMA, 'identity': self.identity})
+        accepted = self.initial; records = (); previous = sha({'schema': self.schema, 'identity': self.identity})
         for index, row in enumerate(value['records'], 1):
             if (type(row) is not dict or set(row) != {'target', 'previous_sha256', 'mechanical', 'histories', 'shell_displacement', 'contact'}
                     or row['target'] != index or row['previous_sha256'] != previous):
@@ -377,17 +379,24 @@ class NativeRetainedMultiS3Analysis:
 
     def solve(self, *, checkpoint=None, expected_sha256=None, stop_after=None,
               cancellation_token=None, progress=None):
-        return solve_native_shell(self, SCHEMA, NativeMultiS3Run, checkpoint=checkpoint,
+        return solve_native_shell(self, self.schema, self.run_type, checkpoint=checkpoint,
             expected_sha256=expected_sha256, stop_after=stop_after,
             cancellation_token=cancellation_token, progress=progress)
 
 
 def create_native_contact_analysis(definitions, boundaries, program, shell_model, pairs, *,
-        equilibrium_tolerance, maximum_pairs=8, maximum_coupled_coordinates=256):
+        equilibrium_tolerance, maximum_pairs=8, maximum_coupled_coordinates=256,
+        activation_settings=None):
     """Create the explicit retained multiple-S3 development owner.
 
     Native definitions stay under NativeBeamAnalysis, not generic FEModel.
     """
-    return NativeRetainedMultiS3Analysis(definitions, boundaries, program, shell_model, pairs,
+    owner = NativeRetainedMultiS3Analysis
+    extra = {}
+    if activation_settings is not None:
+        from .native_activation_static import NativeActivationMultiS3Analysis
+        owner = NativeActivationMultiS3Analysis
+        extra['activation_settings'] = activation_settings
+    return owner(definitions, boundaries, program, shell_model, pairs,
         equilibrium_tolerance=equilibrium_tolerance, maximum_pairs=maximum_pairs,
-        maximum_coupled_coordinates=maximum_coupled_coordinates)
+        maximum_coupled_coordinates=maximum_coupled_coordinates, **extra)

@@ -48,6 +48,8 @@ def __getattr__(name: str):
         module = "transient"
     elif name in _NATIVE_EXPORTS:
         module = "native_multi_s3_static"
+    elif name == 'NativeContactActivationSettings':
+        module = 'native_activation_static'
     else:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     value = getattr(import_module(f".{module}", __name__), name)
@@ -60,6 +62,7 @@ def __dir__():
 
 __all__ = [
     "NativeS3ContactPair", "create_native_contact_analysis",
+    "NativeContactActivationSettings",
     "RigidCappedCylinder",
     "ContactCapabilityReport",
     "ContactDefinition",
