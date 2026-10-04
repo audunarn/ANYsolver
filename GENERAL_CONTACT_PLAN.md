@@ -1,9 +1,9 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.97. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Revision:** 2026-10-04.98. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.5, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
-**Branch / committed baseline:** `codex/contact-main-reconcile-20261001` / `06dc18faa95dc4136da5671765ddfc329025e653`.
+**Branch / last coherent integration:** `codex/contact-main-reconcile-20261001` / `4697599d`.
 
 This plan changes execution priorities and workflow prospectively. It preserves the
 [full C0–C9 programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md), all scientific
@@ -33,9 +33,9 @@ verification, not mesh/enforcement qualification or engineering acceptance.
 [Fixed guide](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_DEV.md),
 [moving guide](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_MOTION_DEV.md).
 
-Four requested tool targets produce 284 accepted states. Source inspection points
-to fixed-structure/new-tool preflight cutbacks before equilibrium; the proposed
-correction is untested. Installed group times (139.169 s and 110.420 s) contain
+The earlier conservative route produced 284 accepted states for four requested
+tool targets. The opt-in correction now produces 16 in the matched fixtures;
+its scoped timings are recorded below. Earlier installed group times (139.169 s and 110.420 s) contain
 multiple solves and are not single-route timing baselines. No reliable universal
 2x speedup or full completion forecast follows. The prior native inertia batch's
 6.86x local improvement / 27.46% short-route reduction retains only that scope.
@@ -56,12 +56,12 @@ See the updated moving-cylinder guide and ledger for exact scope and raw evidenc
 
 ## 2. Decided execution sequence on resumption
 
-### A. One bounded tool-staging correction — at most 90 active minutes
+### A. Completed bounded tool-staging correction — timebox closed
 
-Keep the existing untested `hemisphere_coupled_tool_dev` draft explicit and off by
-default. Inspect it before use; its runner currently names a nonexistent test.
-Implement only the necessary contributor hook and constrained Newton seed through
-the shared driver. Do not add a second solver or generalize unrelated managers.
+The installed-tested `hemisphere_coupled_tool_dev` candidate remains explicit and
+off by default. Its contributor hook and constrained Newton seed use the shared
+driver. The historical attempt conditions below remain binding for its behavior;
+the completed timebox does not authorize a further optimization campaign.
 
 - Only an already active committed origin may propose one disposable correction
   at the new prescribed-tool factor. First approach retains existing event handling.
@@ -107,6 +107,16 @@ impact assessment. Prioritize:
 3. The exact admitted path/control/material restrictions and a runnable example
    that agrees with those restrictions. Preserve all rejected/unresolved geometries.
 
+The guided curved B3 interior response now agrees with independent shear/axial
+virtual work and polynomial line quadrature at every accepted fixed/moving state.
+Independent gap and complete wrench checks pass. A cylinder-initialization repair
+stops only after an exact nonnegative full-curve bound proves nonpenetration;
+negative/unresolved curves retain the same accuracy/depth and rejection threshold.
+The fixture barely exercises the cubic structural term and keeps both caps open.
+Active-rim coupled response and pressure/active-length resolution remain the next
+specific gaps; do not claim general nonlinear or rim acceptance from this result.
+[Evidence](docs/d1_review_support/contact_curved_cylinder_response_20261004/summary_final.json).
+
 Use existing analytical and independently integrated references where applicable;
 no new reference engine or broad mesh sweep. One failed check permits one targeted
 experiment tied to a competing explanation, then a disposition. A formal claim
@@ -127,14 +137,14 @@ This milestone remains incomplete until its required independent assessment clos
 
 | Issue | Decision |
 |---|---|
-| Coupled-tool draft | One 90-minute bounded attempt under A; no default promotion without evidence |
+| Coupled-tool candidate | Bounded attempt completed and retained; no further optimization campaign or default promotion |
 | New shape/profile expansion | Defer until this integrated candidate is dispositioned; correctness/dependency repairs remain allowed |
 | Impact hidden-point cost | Keep the safeguards. Do not pursue the proposed relaxation or replay V4/V16; the real 65 nm pulse remains contrary evidence |
 | Native grazing friction | Park restricted retries. Missing closed event derivative and mixed-work enclosure remain a mathematical dependency; no reset/zero workaround |
 | Application admission | Keep false without accepted source/model evidence. Do not reconstruct consumed evidence or access the protected original |
 | Timed-out Q4 application cycle | No unchanged rerun; require a concrete changed cause and valid bounded authority |
 | Optional workers | No repeated unavailable-provider probes. Use an available worker only for independent bounded work that shortens the selected delivery; never message the other human chat |
-| Remaining budget | Approximately 9.040 active hours at pause; no forecast that full C0–C9 fits. No extension or scope reduction is implied |
+| Remaining budget | Approximately 7.795 active hours at the latest checkpoint; no forecast that full C0–C9 fits. No extension or scope reduction is implied |
 
 These choices remove requests for discretionary direction. Missing external evidence
 or authority remains a dependency; a planning decision cannot supply it.

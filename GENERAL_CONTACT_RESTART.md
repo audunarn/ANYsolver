@@ -1,9 +1,9 @@
 # General contact restart — ACTIVE, 4 October 2026
 
-Goal2026-10-04.5 / plan2026-10-04.97 govern; full C0–C9 incomplete.
+Goal2026-10-04.5 / plan2026-10-04.98 govern; full C0–C9 incomplete.
 Worktree `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`,
 branch `codex/contact-main-reconcile-20261001`. Committed source baseline for this
-slice: `06dc18faa95dc4136da5671765ddfc329025e653`; current candidate is bound by
+slice: `4697599d`; current candidate is bound by
 installed wheel and source hashes below. Local commit may advance HEAD without
 changing those source bytes. No other owned numerical/worker activity remains.
 
@@ -69,8 +69,20 @@ Q4 FD appcycle180.124s timeout stays; no unchanged retry. Optional lower-tier wo
 remain unavailable without new evidence; no repeated probes. Supporting same-family
 source review alone is not independent engineering acceptance.
 
-Last goal reading399200+3120=402320active seconds (~111.756h), remaining~8.244h
+Last goal reading400819+3120=403939active seconds (~112.205h), remaining~7.795h
 of the original120h. Check current clock before substantial work; no reset/extension.
 Routine180s/1GB, named900s/4GB, stricter frozen authorities prevail. At120h preserve,
 report achieved/missing scope and request time/scope/method decision. Full programme
 completion within the remainder has no supported forecast; incomplete is not complete.
+
+Curved B3 slice complete: guided fixed/moving interior response agrees with independent
+shear/axial work and polynomial line quadrature at all accepted states; open vertices/
+caps, independent gap-1.317um<=10um and full wrench pass. Initialization now stops at
+an exact nonnegative full-curve certificate; negative/unresolved bounds retain original
+accuracy/depth/rejection.15distinct installed checks pass14.207s/186695680B;5changed
+tests repeat12.341s/183529472B.515files match;JIT0/pools1. Wheel in rawroot/dist2,
+SHA256f6a1b3dc3318d4e8ec5faea8c4b26c933a61970c0e2cbe422440b19df185dfab.
+[Evidence/limits](docs/d1_review_support/contact_curved_cylinder_response_20261004/review.md)
+retains curved01 enclosure failure, curved02 gap-test defect, supporting review and
+weak cubic-force scope. Next specific boundary: active-rim coupled response/reference
+and pressure/active-length adequacy. No engineering acceptance or new prototype.

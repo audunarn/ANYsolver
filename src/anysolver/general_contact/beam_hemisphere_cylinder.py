@@ -73,7 +73,12 @@ class HemisphereCylinderManager(HemisphereSphereManager):
         lanes=self._axis_controls(positions,center)
         scale=max(self.radius,cell.length)
         accuracy=256*np.finfo(float).eps*scale if self._initializing else self.gap_tolerance*.1
-        lower=curve_gap_lower(lanes,getattr(self,'full_envelope_radius',self.radius),accuracy,self.settings.maximum_swept_subdivisions)
+        # Initialization needs a nonpenetration certificate, not a roundoff-
+        # resolved minimum of an already open interior closest approach.
+        # Only a conservative nonnegative bound may stop refinement early;
+        # unresolved or penetrating curves retain the original accuracy/budget.
+        lower=curve_gap_lower(lanes,getattr(self,'full_envelope_radius',self.radius),accuracy,
+            self.settings.maximum_swept_subdivisions,admit_above=0. if self._initializing else None)
         result=lanes,lower
         if self._geometry_cache is not None:self._geometry_cache[key]=result
         return result

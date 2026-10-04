@@ -120,3 +120,25 @@ Retain source01 dispatch failure, source03 runner-selector failure, source04 bou
 fixture defect and source09–11 budget/backtrack test defects. Corrected source
 scrutiny and analytic references support code verification; independent engineering
 acceptance, normal application admission, release and full C0–C9 remain incomplete.
+
+## Guided curved-interior response — 4 October 2026
+
+Fixed and translating cylinder cases now verify a genuinely curved B3 interior
+contact solution. Only mid-node UY is free; all curve vertices and both physical
+hemisphere caps remain open. Independently derived shear/axial scalar virtual work
+and direct polynomial line integration agree at every accepted state. Final
+displacement is about-63.963um, independent minimum gap-1.317um within10um, and
+force/moment balance defects are <=2.4e-12N/5.1e-13Nm. The reported conservative
+gap-1.535um lies within its declared1um enclosure accuracy. Fixed/moving routes
+use4/11states and20/67Newtoniterations. This fixture weakly exercises the cubic
+structural force; it is curved contact/shear evidence, not general nonlinear proof.
+
+Initialization can now stop when an exact conservative full-curve bound certifies
+nonnegative gap. It retains the original accuracy, depth and rejection threshold
+for negative/unresolved bounds. Penetration between clear vertices still fails.
+Installed15 affected checks pass;5changed tests repeat after adding per-state
+reference checks.515package files match source; effective JIToff/pools1.
+Private wheel SHA256 `f6a1b3dc3318d4e8ec5faea8c4b26c933a61970c0e2cbe422440b19df185dfab`.
+[Summary and supporting assessment](d1_review_support/contact_curved_cylinder_response_20261004/review.md).
+Active-rim coupled response, pressure/active-length adequacy and independent
+engineering acceptance remain open. Prior acceptance scopes and failures remain.

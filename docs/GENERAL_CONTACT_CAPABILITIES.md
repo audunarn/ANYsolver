@@ -1985,3 +1985,17 @@ results, not complete D3 engineering acceptance. Installed combined31pass/105.99
 336527360B;515files and219loadedmodules match,JIT0/pools1. Historical/default profiles
 stay valid. Normal application admission/release remain false; other required
 programme rows open. [Guide/evidence](GENERAL_CONTACT_HEMISPHERE_CYLINDER_MOTION_DEV.md).
+
+### 4 October 2026 — guided curved B3 cylinder response
+
+Existing fixed/translating cylinder profiles now have installed-tested curved
+interior response with open vertices and physical caps. Independent shear/axial
+virtual work and polynomial line integration agree at every accepted state;
+gap-1.317um meets10um, force/moment defects<=2.4e-12N/5.1e-13Nm. Initialization
+stops only after a conservative nonnegative full-curve certificate; penetrating
+and hidden-interior initial conditions fail.15distinct installed checks pass;
+5changed checks repeat after reference-history extension,515package files match.
+The cubic structural term is weakly exercised. Active-rim coupled response,
+pressure/active-length resolution and independent engineering acceptance remain
+open. No normal application admission/release or full D3/C0–C9 completion.
+[Evidence and scope](d1_review_support/contact_curved_cylinder_response_20261004/review.md).
