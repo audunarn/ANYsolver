@@ -1,0 +1,431 @@
+{
+  "scope": "D3 explicit multiple deformable fixed-director S3 interiors and optional fixed plane/sphere contributors with actual B2/B3 caps; development/code verification only",
+  "source_parent": "6168937154ebdc00eae128aad6a803afded9831c",
+  "source_files": {
+    "src/anysolver/general_contact/multiple_beam_s3_caps.py": "68f58c5d1889575ab93c0a78ad4ab860c8c2972e3f582b57dbc78c23efb960f9",
+    "src/anysolver/general_contact/core.py": "387e9e1c0ae41f3c55cfb0dfcf189079e191bda42d77644a7c7fd3db9c2b903f",
+    "tests/test_general_contact_multiple_beam_s3_caps.py": "1a43beabe7833199f43237ae1d6edb8d624478557e8b85e730777d0e3ac99db3",
+    "examples/general_contact_multiple_beam_s3_caps.py": "dc78b1eaa72124205766a6778891cbe02aa3d13276d994855030409245b6de95"
+  },
+  "wheels": {
+    "dist\\anysolver-0.4.7-py3-none-any.whl": "4ec5851f9f2288e9d460cd5d8788f1265062a50395a6feac9cdfcd4deb08434d"
+  },
+  "runs": {
+    "build": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 9.13875680003548,
+        "peak_bytes": 109150208
+      },
+      "outcomes": null
+    },
+    "install": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.3001470000017434,
+        "peak_bytes": 84750336
+      },
+      "outcomes": null
+    },
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 34.435932599997614,
+        "peak_bytes": 357175296
+      },
+      "outcomes": {
+        "passed": 50
+      }
+    },
+    "installed_response": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 7.735904200002551,
+        "peak_bytes": 183803904
+      },
+      "outcomes": {
+        "passed": 1
+      }
+    },
+    "source01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 8.77306109998608,
+        "peak_bytes": 187088896
+      },
+      "outcomes": {
+        "passed": 5,
+        "failed": 4
+      }
+    },
+    "source02": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 15.43642300000647,
+        "peak_bytes": 187334656
+      },
+      "outcomes": {
+        "passed": 9
+      }
+    },
+    "source03_additions": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 10.588189999980386,
+        "peak_bytes": 185933824
+      },
+      "outcomes": {
+        "passed": 4
+      }
+    }
+  },
+  "installed_modules_matching": 225,
+  "installed_package_files_matching": 507,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "independent_response": {
+    "scope": "two fixed-director S3 interiors, bounded linearized reference",
+    "actual_m": [
+      -0.0010231300079500403,
+      -0.0029212494763623427,
+      -0.0010239592594068498,
+      -0.0029177643901098305
+    ],
+    "reference_m": [
+      -0.0010231386076930411,
+      -0.0029212753173436866,
+      -0.001023967880111044,
+      -0.0029177901908964735
+    ],
+    "response_relative_error": 8.797923587149655e-06,
+    "contact_gradient_relative_error": 8.357768171135347e-12,
+    "minimum_gap_m": -3.820034074307477e-07,
+    "gap_tolerance_m": 1e-05,
+    "contact": {
+      "profile": "MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_DEFORMABLE_S3_FIXED_RIGID_STATIC_DEV_V1",
+      "beam_end_cap_work": "hemisphere_support_dev",
+      "minimum_gap": -3.820034074307477e-07,
+      "gap_tolerance_met": true,
+      "algorithmic_contact_potential": 1.4636133259349753e-10,
+      "line_contact_energy": 9.033349050436517e-13,
+      "endpoint_contact_energy": 1.4545799768845388e-10,
+      "active_line_length": 0.00037261555290707404,
+      "integration_points": 6,
+      "maximum_integration_relative_error": 0.0,
+      "active_endpoints": 2,
+      "candidate_endpoints": 4,
+      "candidate_pairs": 2,
+      "pairs": [
+        {
+          "interaction": "y_pair",
+          "contact": {
+            "profile": "JET2_B2_B3_HEMISPHERE_SUPPORT_DEFORMABLE_FIXED_DIRECTOR_S3_STATIC_DEV_V1",
+            "minimum_gap": -3.807747261663774e-07,
+            "line_contact_energy": 4.497414109072409e-13,
+            "algorithmic_contact_potential": 7.29444374548135e-11,
+            "active_line_length": 0.00018611350986227904,
+            "active_intervals": 1,
+            "integration_points": 3,
+            "integration_relative_error": 0.0,
+            "minimum_rim_clearance": 0.352836888837592,
+            "beam_force": [
+              0.0,
+              0.00038431791043661674,
+              -3.737830378511266e-07
+            ],
+            "shell_force": [
+              0.0,
+              -0.00038431791043661674,
+              3.7378303785112656e-07
+            ],
+            "beam_moment": [
+              -7.3119846291433464e-06,
+              1.8689130512865408e-07,
+              0.000192158735395649
+            ],
+            "shell_moment": [
+              7.311984629143327e-06,
+              -1.8689130512865414e-07,
+              -0.00019215873539564905
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 100000.0,
+            "pair_identity": "y_pair",
+            "physical_features": {
+              "beam": {
+                "surface": "tube",
+                "element_id": 1
+              },
+              "shell": {
+                "surface": "y_skin",
+                "element_id": 3
+              }
+            },
+            "moment_origin_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "integration_rule": "three_gauss_points_per_exact_active_interval",
+            "integration_error_semantics": "polynomial_truncation_only",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_contact_energy": 7.249469604390627e-11,
+            "endpoint_stiffness_N_per_m": 1000.0,
+            "active_endpoints": 1,
+            "candidate_endpoints": 2,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": 0.001022603845695524,
+                "active": false,
+                "branch": "rim",
+                "skin_point": [
+                  -2.0459145177629987e-05,
+                  -0.009999974300677393,
+                  0.020059767761786387
+                ]
+              },
+              {
+                "node": 2,
+                "element": 1,
+                "gap": -3.807747261673397e-07,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.5,
+                  -0.011023954529771852,
+                  0.019036595868750335
+                ]
+              }
+            ],
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_moving_skin_plane_gap",
+            "line_integration_rule": "three_gauss_points_per_exact_active_interval",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end"
+          }
+        },
+        {
+          "interaction": "z_pair",
+          "contact": {
+            "profile": "JET2_B2_B3_HEMISPHERE_SUPPORT_DEFORMABLE_FIXED_DIRECTOR_S3_STATIC_DEV_V1",
+            "minimum_gap": -3.820034074307477e-07,
+            "line_contact_energy": 4.5359349413641087e-13,
+            "algorithmic_contact_potential": 7.341689513868403e-11,
+            "active_line_length": 0.000186502043044795,
+            "active_intervals": 1,
+            "integration_points": 3,
+            "integration_relative_error": 0.0,
+            "minimum_rim_clearance": 0.35428440829606633,
+            "beam_force": [
+              0.0,
+              3.7544428519221153e-07,
+              0.00038556544543370857
+            ],
+            "shell_force": [
+              0.0,
+              -3.7544428519221153e-07,
+              -0.0003855654454337086
+            ],
+            "beam_moment": [
+              -4.0194638448487775e-07,
+              -0.0001927825012631405,
+              1.877219269555906e-07
+            ],
+            "shell_moment": [
+              4.019463844849103e-07,
+              0.00019278250126314052,
+              -1.877219269555906e-07
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 100000.0,
+            "pair_identity": "z_pair",
+            "physical_features": {
+              "beam": {
+                "surface": "tube",
+                "element_id": 1
+              },
+              "shell": {
+                "surface": "z_skin",
+                "element_id": 2
+              }
+            },
+            "moment_origin_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "integration_rule": "three_gauss_points_per_exact_active_interval",
+            "integration_error_semantics": "polynomial_truncation_only",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_contact_energy": 7.296330164454762e-11,
+            "endpoint_stiffness_N_per_m": 1000.0,
+            "active_endpoints": 1,
+            "candidate_endpoints": 2,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": 0.0010237655757123515,
+                "active": false,
+                "branch": "rim",
+                "skin_point": [
+                  -2.0482403350631627e-05,
+                  -9.695567770867003e-06,
+                  0.010050025676677031
+                ]
+              },
+              {
+                "node": 2,
+                "element": 1,
+                "gap": -3.8200340743126267e-07,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.5,
+                  -0.0010336967530449011,
+                  0.009026874732990199
+                ]
+              }
+            ],
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_moving_skin_plane_gap",
+            "line_integration_rule": "three_gauss_points_per_exact_active_interval",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end"
+          }
+        }
+      ],
+      "work_convention": "sum_of_explicit_pair_work_same_authoritative_coordinates",
+      "moment_origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "moment_units": "N*m",
+      "beam_features": [
+        {
+          "element": 1,
+          "force": [
+            0.0,
+            0.00038469335472180897,
+            0.00038519166239585746
+          ],
+          "moment": [
+            -7.713931013628224e-06,
+            -0.00019259560995801183,
+            0.0001923464573226046
+          ]
+        }
+      ],
+      "shell_features": [
+        {
+          "element": 2,
+          "force": [
+            0.0,
+            -3.7544428519221153e-07,
+            -0.0003855654454337086
+          ],
+          "moment": [
+            4.019463844849103e-07,
+            0.00019278250126314052,
+            -1.877219269555906e-07
+          ]
+        },
+        {
+          "element": 3,
+          "force": [
+            0.0,
+            -0.00038431791043661674,
+            3.7378303785112656e-07
+          ],
+          "moment": [
+            7.311984629143327e-06,
+            -1.8689130512865414e-07,
+            -0.00019215873539564905
+          ]
+        }
+      ],
+      "rigid_bodies": []
+    }
+  },
+  "directional_tangent_target": 1e-05,
+  "contact_gradient_target": 1e-06,
+  "linearized_response_target": 0.001,
+  "raw_records": 46,
+  "raw_sha256": "938ceea6552f7b860854f848a823549da1049114e4f9cb5834990ec0cff74428",
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "versions": {
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "numba": "0.65.1",
+      "ANYmaterial": "0.2.0",
+      "ANYgeometry": "0.4.3"
+    }
+  },
+  "review_disposition": "supporting same-family review identified plane endpoint-count spelling and omitted effective rigid geometry restart settings; both fixed before source01. Independent four-coordinate reference scrutinized and restricted to verified open roots/inward sphere tips. Real heterogeneous driver and shared-S3/junction checks added. No independent engineering acceptance.",
+  "preserved_failures": [
+    "source01 5pass/4fail: decoupled oracle omitted moving-normal cross motion; incorrect callback API and capability-property name. Fixture/API corrections documented; raw evidence retained",
+    "review counterexample demonstrates fixture oracle is not valid with active root caps; explicit actual/reference domain and production branch checks added",
+    "quantitative installed response output would be overwritten by later leaf tests; isolated output-name correction and one focused installed replay retain actual four-coordinate result",
+    "all predecessor numerical nonpasses, consumed authorities and frozen acceptance boundaries unchanged"
+  ],
+  "unchanged": [
+    "single-pair S3/plane/sphere equations, work maps, path bounds and true ends",
+    "old all-plane and multiple-rigid profiles/restart",
+    "legacy owned-point settings and defaults",
+    "no-contact and historical sphere APIs",
+    "physical commit/material state ownership",
+    "ANYfem and normal application admission false",
+    "engineering criteria and frozen execution/resource restrictions"
+  ],
+  "limits": [
+    "explicit one-cell classical scalar-elastic B2/B3 selections and fixed-director physical S3 face interiors, ordinary force/displacement",
+    "multiple independent whole-beam/one-face pairs, not a patch union or partial-face clipping",
+    "optional fixed planes/spheres with effective child settings recorded; no moving tools or cylinder fallback",
+    "distinct line N/m2 and endpoint N/m laws/budgets retained",
+    "fixture-specific independent contact reference including moving-normal cross motion; structural response reference explicitly linearized",
+    "no rim/native/material-surface friction/transient or general profile admission",
+    "mesh/enforcement qualification and full C0-C9 remain"
+  ]
+}

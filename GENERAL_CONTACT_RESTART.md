@@ -1,34 +1,38 @@
 # General contact restart — 4 October 2026
 
-Full C0–C9 ACTIVE/incomplete. Goal2026-09-30.4 / plan2026-10-04.91 govern.
+Full C0–C9 ACTIVE/incomplete. Goal2026-09-30.4 / plan2026-10-04.92 govern.
 Solver C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001; local HEAD binds this checkpoint.
 Protected original must not be accessed. No other human-chat communication,
 push/merge/publication/release/default changes or consumed authority replay.
 Local commits authorized. No owned live processes; worker terminal.
-[History](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PART112.md)
-→111→110 retains earlier identities, failures, authorities and evidence.
+[History](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PART113.md)
+→112→111 retains earlier identities, failures, authorities and evidence.
 
 ## Current result and next action
 
-Mixed/multiple fixed plane/sphere actual B2/B3 cap contributors now compose on
-one pose, full sparse work, stable body wrench and complete child restart/path
-checks. Existing all-plane and legacy owned-point profiles unchanged.
-Installed49pass17.766s/355430400B,216modules/506files match,JIT0/pools1.
-Independent combined scalar work/1e-5H/wrench, actual mixed/two-sphere bar2.015e-14
-vs1e-6/gap1e-5, force/displacement/active restart, real second-child rollback,
-actual endpoint/midnode junction and legacy/no-contact pass.
-[Guide/evidence](docs/GENERAL_CONTACT_MULTIPLE_HEMISPHERE_ANALYTIC_DEV.md):5runs/40records,
-supporting review junction finding corrected; not independent acceptance/release.
-Private target C:/ANYworkspaceWork/contact_multiple_hemisphere_analytic_20261004/installed;
-wheel d526f22ddb9db8ca44862bcb040e4f5f49d57278fe03fe10e1f0546744384bd1.
+Multiple independent classical beam/S3 actual-cap pairs now compose, with
+optional fixed plane/sphere children, complete sparse work/skin couples, per-body
+wrenches, every-child path/budgets and full effective-settings restart. Single
+S3/pure-rigid/default profiles preserved. Installed50pass34.436s/357175296B,
+225modules/507files match,JIT0/pools1,180s/953MiB. Work/1e-5H, actual two-deforming
+skins/contact-gradient8.358e-12 vs1e-6 and bounded linearized response8.798e-6
+vs1e-3/gap1e-5m, force/displacement/restart/rollback, shared target/true junction,
+optional rigid driver and legacy/no-contact pass. Reference's moving-normal cross
+terms and open-root/sphere-tip domain explicit. Initial fixture/API failures
+and review counterexample retained; supporting review not acceptance/release.
+[Guide/evidence](docs/GENERAL_CONTACT_MULTIPLE_BEAM_S3_CAPS_DEV.md):7runs/46records.
+Private target C:/ANYworkspaceWork/contact_multiple_beam_s3_caps_20261004/installed;
+wheel4ec5851f9f2288e9d460cd5d8788f1265062a50395a6feac9cdfcd4deb08434d.
 
-Next D3 action: compose existing actual-cap deformable-S3 contributors for
-explicit multiple patches and optional fixed plane/sphere contact. Matching
-work maps/full sparse cross-body sum, all-child path/common fraction, duplicate/
-resource checks, shared-beam/two-target independent work and coupled rollback/
-restart. Retain fixed-director/interior-face admission; physical rims and native
-multiple-shell ownership remain open. No unchanged lower-tier reprobe.
+Next D3 action: separate native retained/multiple-S3 work and static owner. Current
+native_retained_s3_static.py binds exactly one native beam,42local retained work
+coordinates and one S3; leave those guards intact. Sum complete local native/
+shell work, retain internal coupling and per-patch geometry/swept checks, then
+coupled static solve/state/restart for two physical skins. Check internal motion
+at fixed exterior nodes and an independent work/coupled response discriminator.
+No guard-only widening or independent-element condensation before contact. Broader
+native beam count/sections, rims and qualification remain. No lower-tier reprobe.
 
 ## Blockers and budget
 
@@ -44,7 +48,7 @@ mixed-work enclosure missing. No saved/full/owner/split retry/reset/zero/native
 acceptance. Q4 FD appcycle180.124s timeout retained. Unchanged lower-tier optional
 worker unavailability: no reprobe. No universal speedup/delivery forecast claim.
 
-120active-hour clock: at02:53:56UTC4October, goal383666+3120=386786s (~107.441h).
+120active-hour clock: at03:16:38UTC4October, goal385039+3120=388159s (~107.822h).
 Check current clock before substantial work; no reset. At120h preserve/report and
 request time/scope/method decision; no silent extension/full-goal completion.
 Full D2–D8 and qualification/package/application/resource boundaries remain.

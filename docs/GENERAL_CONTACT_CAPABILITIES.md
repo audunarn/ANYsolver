@@ -1887,3 +1887,18 @@ legacy/no-contact pass. Supporting junction finding fixed. Implemented/tested,
 not independently accepted/released; no cylinder fallback or broader kinematics.
 Supersedes the preceding aggregate-sphere admission restriction through matching
 contributors only. [Guide/evidence](GENERAL_CONTACT_MULTIPLE_HEMISPHERE_ANALYTIC_DEV.md).
+
+
+## Multiple actual-cap deformable S3 and fixed-rigid contact — 4 October development
+
+`MULTIPLE_EXPLICIT_B2_B3_HEMISPHERE_DEFORMABLE_S3_FIXED_RIGID_STATIC_DEV_V1`
+composes multiple independent face-interior pairs on shared B2/B3/S3 coordinates,
+optionally fixed plane/sphere children. Complete sparse work, physical offset
+couples, per-feature wrenches and per-child path/settings/restart remain. Installed
+50pass34.436s/357175296B;225modules/507files match,JIT0/pools1. Independent work/
+1e-5H; actual both-target deformation/contact-gradient8.358e-12 vs1e-6 and bounded
+linearized response8.798e-6 vs1e-3/gap1e-5, controls/restart/real rollback, shared
+skin/junction and mixed driver pass. Initial fixture/API failures retained;
+supporting review resolved. Implemented/tested, not independently accepted or
+released. Not target-patch unions, rims, native or friction/dynamic admission.
+[Guide/evidence](GENERAL_CONTACT_MULTIPLE_BEAM_S3_CAPS_DEV.md).

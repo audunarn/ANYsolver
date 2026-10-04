@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.91. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.92. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -16,29 +16,34 @@ Publication, merging, release and historical-default changes are separate action
 
 ## Latest integrated slice — 4 October
 
-Multiple fixed plane/sphere contact now composes the actual B2/B3 hemisphere
-contributors on one structural pose. Complete sparse work, stable body wrenches,
-all-child regularity/path/common-fraction checks and full restart identity retain
-single-pair equations and old all-plane/default profiles. No cylinder fallback.
-Installed49checks pass17.766s/355430400B,216modules/506files match,JIT0/pools1.
-Independent combined scalar work/1e-5H/per-body wrench, actual mixed/two-sphere bar
-response2.015e-14 vs1e-6/gap1e-5, force/displacement/restart, actual child rollback,
-true shared-midnode junction, example and affected legacy/no-contact checks pass.
-Supporting review finding corrected; not independent acceptance or release.
-[Guide/evidence](docs/GENERAL_CONTACT_MULTIPLE_HEMISPHERE_ANALYTIC_DEV.md).
+Multiple independent actual-cap beam/S3 pairs now compose on one authoritative
+pose, with optional fixed plane/sphere children. Full sparse cross-body work,
+physical skin offset couples, per-feature/body wrenches, all-child path/common
+prefix, duplicate/resource guards and global/effective-child restart settings
+preserve each existing law. These are whole-beam/face-interior pairs, not patch
+unions or physical rims. Existing single-S3/pure-rigid/default profiles remain.
+Installed50pass34.436s/357175296B;225modules/507files match,JIT0/pools1.
+Independent combined work/1e-5H, actual two-deforming-target contact-gradient
+8.358e-12 vs1e-6 and bounded linearized response8.798e-6 vs1e-3, gap1e-5m,
+force/displacement/restart, real rollback, shared-S3/junction, optional rigid
+summary/checkpoint and legacy/no-contact pass. Reference includes cross motion;
+its branch scope is checked. Initial fixture/API failures retained. Supporting
+review findings corrected; not independent engineering acceptance/release.
+[Guide/evidence](docs/GENERAL_CONTACT_MULTIPLE_BEAM_S3_CAPS_DEV.md).
 
-Next principal D3 slice: remove the single-S3-patch limitation by composing
-existing deformable-S3 actual-cap contributors for explicit multiple patches,
-with optional fixed plane/sphere contributors. Use matching physical work maps,
-complete cross-body sparse sums, all-child path checks and restart/state identity.
-First discriminate shared-beam/two-deforming-target virtual work and a coupled
-fixture; duplicate physical pairs and patch boundaries must fail closed. Do not
-pretend this admits physical rim contact or native/multiple-shell ownership.
-This reuses verified local work rather than deriving another contact law.
-Cylinder/pair/face transitions and mesh/enforcement acceptance remain required.
+Next principal D3 slice: extend the separate retained-native/S3 analysis boundary
+to multiple shell patches. Existing owner binds one native beam and one S3 with
+42 local retained work coordinates and per-face geometry/path contracts; its
+accepted guards must remain intact. Implement a separate composed retained work
+map and owner with complete native/internal/shell cross blocks, per-patch sweep
+and physical state/restart. First check two-skin internal motion at fixed exterior
+nodes, shared work and a coupled loaded example under unchanged budgets. Do not
+condense native internal blocks before contact or merely remove old guards.
+Broader beam numbers/sections and native qualification remain explicit next rows.
+Cylinder/pair/face transitions and full C0–C9 remain required.
 
-[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV90.md)
-→89→88 retains earlier identities, failures, restrictions and evidence.
+[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV91.md)
+→90→89 retains earlier identities, failures, restrictions and evidence.
 
 ## 1. Current technical position
 

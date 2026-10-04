@@ -589,6 +589,11 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
     if settings is not None and settings.beam_end_cap_work == "hemisphere_support_dev":
+        if (len(definition.interactions) > 1
+                and any(s.beam_radius is None for s in definition.surfaces)):
+            from .multiple_beam_s3_caps import validate_multiple_beam_s3_caps
+            return validate_multiple_beam_s3_caps(model, definition, settings,
+                                                 analysis_control=analysis_control)
         if (not definition.rigid_bodies and len(definition.surfaces) == 2
                 and sum(s.beam_radius is not None for s in definition.surfaces) == 1):
             from .deformable_beam_s3_caps import validate_deformable_beam_s3_caps
@@ -1244,7 +1249,12 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
                                           analysis_control=analysis_control)
         if not report.valid:
             raise ValueError('unsupported hemisphere-plane contact: ' + '; '.join(report.issues))
-        if not definition.rigid_bodies:
+        if (len(definition.interactions) > 1
+                and any(s.beam_radius is None for s in definition.surfaces)):
+            from .multiple_beam_s3_caps import MultipleBeamS3CapManager
+            manager = MultipleBeamS3CapManager(model, definition, settings, initial_displacement,
+                                               analysis_control=analysis_control)
+        elif not definition.rigid_bodies:
             from .deformable_beam_s3_caps import DeformableBeamS3CapManager
             manager = DeformableBeamS3CapManager(model, definition, settings, initial_displacement)
         elif len(definition.interactions) > 1:
