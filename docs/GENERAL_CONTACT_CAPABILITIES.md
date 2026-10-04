@@ -1,5 +1,18 @@
 # General-contact capability ledger
 
+## Curved native material current/swept search bounds — 4 October
+
+Implemented/installed-tested at5818670d: whole Q2 material patch, actual retained
+cell lift/rotation, both half-cell traces and declared arc. Exact rational
+Bernstein restriction plus frame-error/radius padding; affine/Exp sweep uses
+the whole rotated lift/section circumsphere. Actual angular limit<0.9*pi stays.
+26installed checks3.876s180490240B;520files/204imports match,JIT0/pools1.
+Hidden interior rotation, fixed nodes, ANYgeometry refit, twisted frames, low
+coordinates and near-limit/rejection controls pass. Supporting review only;
+no gap/orientation/event or curved owner/engineering admission.
+[Guide](GENERAL_CONTACT_NATIVE_CURVED_BOUNDS_DEV.md),
+[evidence](d1_review_support/contact_native_material_s3_20261004/curved_bounds_summary.json).
+
 ## Precise angular partition correction — 4 October
 
 Source f11f6ce7 resolves the reconstructed nearly uniform axial integration failure

@@ -1,6 +1,6 @@
 # General contact — goal
 
-**Revision:** 2026-10-04.14. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.106. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-10-04.15. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.106. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
 
@@ -73,6 +73,12 @@ and explicit underflow rejection.38fresh installed checks,519files/220imports.
 Supporting scrutiny only; historical failures retain source identity. Next required
 slice: curved native material geometry/work, full-patch bounds before owner admission.
 [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/angular_summary.json).
+
+**Curved search slice (5818670d):** full material current/affine-Exp boxes now
+retain Q2 lift and cell rotation at fixed nodes;26installed checks. This closes
+a geometry/search prerequisite, not curved coupled contact. Next: continuous
+orientation/physical plane-gap controls and fixed-pose normal work before owner
+admission. [Guide](docs/GENERAL_CONTACT_NATIVE_CURVED_BOUNDS_DEV.md).
 
 **Budget disposition:** the original 120-hour allocation remains consumed:
 428891+3120=432011 active seconds (120.003 hours). The user subsequently directed

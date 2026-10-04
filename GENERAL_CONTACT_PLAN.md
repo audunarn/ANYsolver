@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.107. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.14, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.108. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.15, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
@@ -293,12 +293,19 @@ source-local zero-slope defect retained. Supporting scrutiny found weight underf
 fixed with explicit rejection and a regression.
 [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/angular_summary.json).
 
-**Next integrated requirement:** extend the formulation-owned round material map
-and normal work to curved native reference geometry. First establish physical
-station/retained-coordinate work and conservative represented-patch bounds with an
-independent geometry/work fixture. Keep owner admission guarded until the whole
-curved patch/path is certified; a sampled map does not establish crossing/search
-completeness. Reuse station, contributor and derivative infrastructure. One bounded
-slice must choose a concrete extension or explicit unsupported diagnostic; no broad
-sweep, penalty tuning or new solver stack. Preserve frozen friction/impact and
-free-rim restrictions.
+**Curved geometry/search slice closed at5818670d:** formulation-owned station work
+and existing area controls reused; full current/swept Q2 material boxes now include
+retained lift/rotation at fixed external nodes, reference twist and both traces.
+Exact Bernstein parameter restriction and transported-frame error bounds preserve
+sub-ULP intervals.26installed checks and supporting scrutiny pass. Curved contact
+owner admission stays guarded. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_bounds_summary.json).
+
+**Next integrated requirement:** establish continuous orientation and physical
+plane-gap controls for a curved interior material patch, then fixed-pose normal
+work/tangent integration using existing Jet2/station maps and independent direct
+area work. Use the simplest admitted fixed-plane fixture first. Keep numerical
+quadrature, reference-area measure and structural work separate; no sampled
+orientation or endpoint-only path admission. One bounded discriminator under
+180s/953MiB must select a concrete work-map extension or explicit unresolved
+diagnostic. No full curved owner solve until the entire patch/path is certified.
+Preserve prior friction/impact, free-rim, convergence and historical restrictions.

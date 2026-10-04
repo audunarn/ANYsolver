@@ -1,0 +1,51 @@
+{
+  "source": "5818670d",
+  "status": "implemented and installed-tested current/swept search bounds; no curved mechanical admission",
+  "wheel_sha256": "8ed86019ab115713b2098f0b975af6987fae2627dee5fa54021684ff2b8d1cae",
+  "raw_evidence": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate06",
+  "package": {
+    "source_files": 520,
+    "imported_modules": 204,
+    "source_installed_errors": [],
+    "extra_installed_files": [],
+    "outcomes": {
+      "passed": 26
+    },
+    "runs": {
+      "installed_bounds": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 3.8755821000086144,
+          "peak_bytes": 180490240
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 26
+        }
+      }
+    }
+  },
+  "scopes": [
+    "whole declared material arc and both reference half-cell traces",
+    "Q2 reference lift/current retained cell rotation at fixed external nodes",
+    "affine translations/Exp rotations with unchanged angular limit below0.9*pi"
+  ],
+  "controls": "180s/953MiB,JIT disabled,Numba/pools1; no physical gate changes",
+  "failures": [
+    {
+      "path": "C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate05/curved_near_turn/run.log",
+      "outcome": "2cases rejected by original reference shortest-transport admission before bounds;1exact-restriction control passed",
+      "disposition": "unsupported near-branch distorted frame fixture retained; owner tolerance unchanged; rejection controls now pass"
+    }
+  ],
+  "impact_reuse": "f11f6ce7 angular/lifecycle evidence retained: normal law, derivative/state/identity/owner code unchanged. Only lazy additive current_bounds/swept_bounds methods in surface rule; no existing evaluation/default route changed.",
+  "next": "continuous whole-curved-patch orientation/gap and fixed-pose normal work before curved owner admission"
+}

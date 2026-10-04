@@ -1,8 +1,8 @@
 # General contact restart — ACTIVE, 4 October 2026
 
-Goal2026-10-04.14 / plan2026-10-04.107; full C0–C9 incomplete.
+Goal2026-10-04.15 / plan2026-10-04.108; full C0–C9 incomplete.
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Source/testsf11f6ce7;
+branch codex/contact-main-reconcile-20261001. Latest source/tests5818670d; angular correctionf11f6ce7;
 current Git HEAD also binds documentation. Goal-tool objective paths are stale:
 never access the protected original worktree. Main/ANYfem separately owned.
 No other-chat messaging, push/merge/publication/release/default changes.
@@ -52,8 +52,18 @@ Uniform tangent1.64e-10/4.89e-10,energy3.12e-17J;yielding9cycle exact restart,
 gap19.203um,plastic tangent3.38e-8/2.21e-9. Old area/plane checkpoints reject;
 old line replay passes. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/angular_summary.json).
 Supporting scrutiny only; no independent acceptance or speedup claim.
-Next: curved native material station/work and full-patch bounds before owner
-admission; one bounded slice reusing infrastructure, no penalty tuning/broad sweep.
+Curved material search bounds now installed-tested5818670d: whole Q2 patch,
+reference twist/both traces/retained lift at fixed nodes; affine/Exp swept
+circumsphere catches hidden interior rotation.26checks3.876s180490240B,
+520files/204imports match,JIT0/pools1; wheel8ed86019ab115713b2098f0b975af6987fae2627dee5fa54021684ff2b8d1cae.
+Raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate06.
+Near-limit +/-2e-12 input failed original reference admission; retained, explicit
+rejection tested; admitted +/-1e-13 and exact rational shifts pass. Supporting
+review only; no curved contact owner/gap/orientation/event/engineering admission.
+[Guide](docs/GENERAL_CONTACT_NATIVE_CURVED_BOUNDS_DEV.md).
+Next: continuous curved patch orientation/plane-gap and fixed-pose normal Jet2
+work; independent area oracle before owner expansion. One bounded slice,
+reuse infrastructure; preserve friction/impact restrictions and old failures.
 Default k1e6 full
 load and k1e7 first-target gap/merit remain NONPASS; opt-in new success does not
 regrade them. Spatial/enforcement convergence, caps/interfaces/curved geometry,
@@ -76,6 +86,6 @@ only; stricter frozen/consumed authorities remain binding.
 Original120h consumed:428891+3120=432011s=120.003h; preserve that boundary.
 Subsequent explicit “Proceed developing” authorizes further bounded development,
 without a new hard duration. Never invent an8h allocation or reset history.
-Renewed turn began at goal-tool429147s; latest snapshot430540s (1393s after that
+Renewed turn began at goal-tool429147s; latest snapshot434389s (5242s after that
 snapshot), plus subsequent checkpoint work. Goal remains active/incomplete;
 planning pauses do not reset consumed time or frozen execution restrictions.
