@@ -1275,8 +1275,12 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
                 manager = _BeamShellManager(model, definition, settings, initial_displacement)
         else:
             if any(surface.beam_end_caps == 'hemisphere' for surface in definition.surfaces):
-                from .beam_pair_ends import BeamPairEndManager
-                manager = BeamPairEndManager(model, definition, settings, initial_displacement)
+                if any(len(surface.element_ids)>1 for surface in definition.surfaces):
+                    from .beam_chain_ends import BeamChainEndManager
+                    manager = BeamChainEndManager(model, definition, settings, initial_displacement)
+                else:
+                    from .beam_pair_ends import BeamPairEndManager
+                    manager = BeamPairEndManager(model, definition, settings, initial_displacement)
             elif any(len(surface.element_ids) > 1 for surface in definition.surfaces):
                 from .beam_chain_pair import _BeamChainPairManager
 

@@ -1,4 +1,25 @@
 # General-contact capability ledger
+## Physical ends of B2 chains — 4 October
+
+Implemented/installed-tested development: up to16cells/side within existing
+candidate caps; explicit consistent_dev tangent, round hemisphere point geometry
+and distinct line/endpoint units. Existing symmetric nearest-curve line work and
+moving-owner cross blocks remain. Genuine caps use all classical material-node
+incidence. One reciprocal cap/cap spring, end/interior or equivalent selected
+shared-junction work assembles both-body blocks. Unsupported cuts/closed ties reject.
+Common exact affine intervals bind all endpoint branches and reciprocal partners;
+gap/curve/line safeguards retain bounded cutback. Restart binds topology/law/controls.
+Installed42pass31.572s/336089088B;215modules/498files match,JIT0/pools1.
+Independent P1 two-bar2/2,4/3,8/8 reference max9.266e-15 vs1e-6. Complete
+work/tangents, moving-owner/cap combination, junction/covariance, force/displacement,
+state/restart, reciprocal cutback and inherited routes pass. Ten runs/70records
+retain the swept-reciprocity omission before correction and a confounded tie test.
+Same-family source scrutiny is supporting, not independent engineering acceptance.
+B3 curves, generalized closed transitions, mesh/enforcement, native/friction/dynamics,
+normal application/release and full C2/D3/C0–C9 remain required.
+[Guide](GENERAL_CONTACT_BEAM_CHAIN_ENDS_DEV.md),
+[evidence](d1_review_support/contact_chain_endcaps_20261004/summary.json).
+
 ## Two-body B2 physical ends — 4 October
 
 Implemented/installed-tested development uses one B2 per side with explicit

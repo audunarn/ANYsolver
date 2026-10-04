@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.84. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.85. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -16,34 +16,36 @@ Publication, merging, release and historical-default changes are separate action
 
 ## Latest integrated slice — 4 October
 
-Two-body B2 physical-end contact now adds one full point spring per owned
-end/interior or unique reciprocal end/end feature to the symmetric distributed
-potential. Both-body analytic projection derivatives/cross blocks, all-node end
-topology and exact affine gap/regularity/ownership checks are integrated through
-ordinary static controls. Review exposed an intermediate active line-projection
-plateau missed by endpoint checks; a separate exact path certificate closes it.
+Classical multi-cell B2 physical ends now compose with the existing consistent
+nearest-curve sparse line assembly, retaining moving-owner cross blocks. Exact
+closest-feature comparison and all-material-node topology admit one reciprocal
+cap/cap spring, end/interior or equivalent shared-junction point work. Nonphysical
+cuts and unresolved closed partners reject. Review found a nonreciprocal activation
+missed by separate endpoint paths; a common all-end interval proof closes it.
 
-Installed30checks pass6.650s/328585216B,243modules/496files match,JIT0/pools1.
-Independent two-bar response relative1.084e-15 meets1e-6; work/tangents, body
-exchange/covariance, force/displacement, active restart/changed topology/settings,
-actual exception/cancel reuse, hidden roots/junctions and inherited routes pass.
-Ten runs/63rawrecords retain initial scalar-oracle quadrature/API test defects.
-Supporting scrutiny is not independent engineering acceptance or application admission.
-[Guide](docs/GENERAL_CONTACT_BEAM_PAIR_ENDS_DEV.md),
-[evidence](docs/d1_review_support/contact_beam_pair_endcaps_20261004/summary.json).
+Installed42checks pass31.572s/336089088B,215modules/498files match,JIT0/pools1.
+Independent P1 two-bar response on2/2,4/3,8/8 meshes agrees within9.266e-15 vs1e-6.
+Full work/tangents, moving interfaces plus cap work, junctions, covariance,
+force/displacement, restart/changed definitions, actual exception/cancel and bounded
+reciprocal cutback pass. Ten runs/70rawrecords retain the actual swept-admission
+failure and a confounded tie test. Supporting same-family scrutiny is not independent
+engineering acceptance, general beam qualification or normal application admission.
+[Guide](docs/GENERAL_CONTACT_BEAM_CHAIN_ENDS_DEV.md),
+[evidence](docs/d1_review_support/contact_chain_endcaps_20261004/summary.json).
 
-Next principal D3 question: extend genuine physical-end work to multi-cell B2
-curves through the existing consistent nearest-owner sparse assembly. Resolve
-endpoint nearest-target ownership, shared-material junction work and actual
-boundary terms; preserve both-body blocks, deduplication and full-path failures.
-Use one independent coupled response/work discriminator before broader admission.
-B3 endpoints, closed transitions, mesh/enforcement and independent acceptance
-remain required successors. No new solver/differentiation stack, unrestricted
-native/impact replay or full-programme speed/delivery forecast is authorized.
+Next principal D3 question: extend physical-end work to the actual quadratic B3
+source and target curves. Reuse existing curve projection/bounds and work adapters;
+derive the reduced target projection Hessian including curvature and genuine end
+tangents. Preserve both-body maps, full-curve/swept bounds and multiple-minimum
+failure rules. One independent curved work/response discriminator precedes broader
+admission. Closed cap/side/partner transitions, mesh/enforcement and independent
+acceptance remain required; no replacement of full C2/D3 by easier axial cases.
+No new solver/differentiation stack, frozen native/impact replay, general speedup
+or full-programme completion forecast is authorized.
 
-Earlier source identities, prototypes and failures remain in
-[plan83](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV83.md)
-→82→81. These links do not renew frozen or consumed execution authority.
+Earlier identities, prototypes and failures remain in
+[plan84](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV84.md)
+→83→82. These links do not renew frozen or consumed execution authority.
 
 ## 1. Current technical position
 

@@ -29,6 +29,9 @@ def _line_definition(definition):
 
 
 def validate_beam_pair_ends(model, definition, settings=None):
+    if len(definition.surfaces)==2 and any(len(s.element_ids)>1 for s in definition.surfaces):
+        from .beam_chain_ends import validate_beam_chain_ends
+        return validate_beam_chain_ends(model,definition,settings)
     from anysolver.elements import BeamElement
     if tuple(map(len, (definition.surfaces, definition.rigid_bodies,
                        definition.interactions))) != (2, 0, 1):
@@ -66,6 +69,8 @@ class _EndPairResults(_BeamPairResults):
 
 class BeamPairEndManager(_BeamPairManager):
     def __init__(self, model, definition, settings=None, initial_displacement=None):
+        if any(len(s.element_ids)>1 for s in definition.surfaces):
+            raise ValueError('multi-cell physical ends require the chain analysis contributor')
         controls = ContactSolverSettings() if settings is None else settings
         report = validate_beam_pair_ends(model, definition, controls)
         if not report.valid:
