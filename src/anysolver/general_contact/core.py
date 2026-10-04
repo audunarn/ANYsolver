@@ -235,7 +235,7 @@ class ContactSolverSettings:
     beam_end_cap_work: str = "owned_point"
 
     def __post_init__(self) -> None:
-        if self.beam_end_cap_work not in {"owned_point", "hemisphere_support_dev"}:
+        if self.beam_end_cap_work not in {"owned_point", "hemisphere_support_dev", "hemisphere_coupled_tool_dev"}:
             raise ValueError("unsupported beam_end_cap_work")
         if self.beam_chain_tangent not in {"finite_difference", "consistent_dev"}:
             raise ValueError("unsupported beam_chain_tangent")
@@ -588,6 +588,10 @@ def validate_general_contact(model: FEModel, definition: ContactDefinition,
         return ContactValidationReport("invalid", ("ContactDefinition required",))
     if settings is not None and type(settings) is not ContactSolverSettings:
         return ContactValidationReport("invalid", ("ContactSolverSettings required",))
+    if settings is not None and settings.beam_end_cap_work == 'hemisphere_coupled_tool_dev':
+        from .beam_hemisphere_coupled_tool import validate_coupled_hemisphere_tool
+        return validate_coupled_hemisphere_tool(model, definition, settings,
+                                                analysis_control=analysis_control)
     if settings is not None and settings.beam_end_cap_work == "hemisphere_support_dev":
         if (len(definition.interactions) > 1
                 and any(s.beam_radius is None for s in definition.surfaces)):
@@ -1251,6 +1255,19 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
                    *, allow_augmented: bool = False,
                    analysis_control: str = "force") -> Iterator[object]:
     settings = ContactSolverSettings() if settings is None else settings
+    if settings.beam_end_cap_work == 'hemisphere_coupled_tool_dev':
+        from .beam_hemisphere_coupled_tool import CoupledHemisphereToolManager
+        report = validate_general_contact(model, definition, settings,
+                                          analysis_control=analysis_control)
+        if not report.valid:
+            raise ValueError('unsupported coupled tool contact: ' + '; '.join(report.issues))
+        manager = CoupledHemisphereToolManager(model, definition, settings, initial_displacement)
+        token = _ACTIVE_CONTACT.set(manager)
+        try:
+            yield manager
+        finally:
+            _ACTIVE_CONTACT.reset(token)
+        return
     if settings.beam_end_cap_work == "hemisphere_support_dev":
         from .beam_hemisphere_plane import HemispherePlaneManager
         report = validate_general_contact(model, definition, settings,

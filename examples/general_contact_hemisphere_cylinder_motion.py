@@ -6,7 +6,7 @@ from anysolver.elements import QuadraticBeamElement
 from anysolver.fe_core import FEModel
 
 
-def run():
+def run(*, coupled_load_seed=False):
     model=FEModel('hemisphere_translating_cylinder_B3_bar')
     model.add_material('elastic',1000.,.3,density=1.)
     for node,x in enumerate((.112,.212,.312),1):model.add_node(node,x,0.,0.)
@@ -19,7 +19,7 @@ def run():
     definition=ContactDefinition((ContactSurface('tube',(1,),beam_radius=.01,beam_end_caps='hemisphere'),),
         (RigidContactBody('cylinder','cylinder',(0.,0.,0.),normal=(0.,0.,1.),radius=.1,path_translation=(.004,0.,0.)),),
         (ContactInteraction('pair','tube','cylinder',None,1e-5,line_stiffness=1e4,endpoint_stiffness=1e5),))
-    settings=ContactSolverSettings(pair_motion='general',beam_end_cap_work='hemisphere_support_dev',
+    settings=ContactSolverSettings(pair_motion='general',beam_end_cap_work=('hemisphere_coupled_tool_dev' if coupled_load_seed else 'hemisphere_support_dev'),
         line_integration_relative_tolerance=1e-7,maximum_line_subdivisions=14,maximum_swept_subdivisions=16)
     load=LoadCase('prescribed tool only')
     result=solve_static_nonlinear(model,load,contact=definition,contact_settings=settings,

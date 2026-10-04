@@ -1,204 +1,195 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.96. **Status:** D1-interior and the named bounded D2
-partial-shell handoff independently accepted; remaining C0–C9 programme active.
-**Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
-**Branch:** codex/contact-main-reconcile-20261001.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision2026-09-30.4, and
-ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1 revision2026-09-24.2.
+**Revision:** 2026-10-04.97. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.5, and the adopted risk-proportionate philosophy.
+**Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
+**Branch / committed baseline:** `codex/contact-main-reconcile-20261001` / `06dc18faa95dc4136da5671765ddfc329025e653`.
 
-The goal owns outcomes, acceptance boundaries, resources and delegated choices.
-This plan chooses the shortest useful implementation route within that authority.
-[Full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md) retains required
-capabilities, scientific targets and exclusions. Historical plans and failures
-remain evidence; frozen or consumed execution authorities are never renewed.
-Publication, merging, release and historical-default changes are separate actions.
+This plan changes execution priorities and workflow prospectively. It preserves the
+[full C0–C9 programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md), all scientific
+criteria, exact qualification boundaries and historical failures. No consumed run
+authority is renewed. No merge, publication, release or default change is authorized.
+[Previous plan](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV96.md)
+retains the detailed chronology; current evidence remains in the
+[capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
 
-## Latest integrated slice — 4 October
+## 1. Status and diagnosis
 
-The new explicit translating-cylinder cap profile reuses the exact literal-axis
-B2/B3 sphere/rim kernel and existing prescribed-tool force/work/state owner.
-Force continuation only; fixed-cylinder profile/identity stays, displacement
-control/multiple moving/free/rotating obstacles remain unadmitted. Both line and
-actual tangent-cap work follow the same updated axis point, with complete reactions,
-conservative coupled affine path checks and restart-bound motion identity.
-
-Installed26pass across bounded groups139.169s/198733824B and110.420s/338456576B;
-219modules/514files match,JIT0/pools1. Independent B2/B3 axial/line balance errors
-<=6.506e-18m, represented gap0.100um within10um, separate storage and independent
-actuator work, curved-rim tool work, common motion/hidden crossing, active/open
-restart, incompatible motion/fixed-profile rejection and real interruption replay
-pass. Public example, affected fixed/mixed and lazy no-contact routes pass.
-[Guide/evidence](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_MOTION_DEV.md).
-Supporting code verification is not independent engineering acceptance/release.
-
-Retain source01 combined-batch180.068s timeout after five success prefixes; the
-remaining cancellation case passed alone. Artifact checks split only at coherent
-case boundaries with the same caps; no tolerance/law/iteration/default change.
-
-**Next measured question:** four tool targets produce284accepted states through
-conservative pre-equilibrium load cutbacks. Discriminate fixed-pose stage checks
-from local kernel cost. Inspect a contact-consistent coupled load predictor/staging
-hook; a proposal must certify the actual coupled path and meet the same gap,
-geometry, equilibrium, transaction and restart gates before physical commit.
-Use the same mechanics/tolerances to measure benefit. Do not skip crossing checks,
-enlarge gap budgets, add physical substeps or change defaults. If this bounded
-candidate cannot close, retain the current conservative profile and progress an
-actual beam-pair/native/beam-shell boundary rather than tune indefinitely.
-
-The preceding fixed-cylinder and mixed analytic slice remains
-[linked](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_DEV.md), as does the stronger
-[native50um work](docs/GENERAL_CONTACT_NATIVE_ENFORCEMENT_DEV.md) and their failed
-evidence. D3 spatial/section/material/enforcement acceptance, D2 automatic/search,
-D4 friction, D5/D7 impact and D8 application dependencies remain. No impact/native-
-grazing replay, source-bound D1 reconstruction or full delivery forecast.
-
-[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV95.md)
-->94->93 retains earlier identities, failures, restrictions and evidence.
-
-## 1. Current technical position
-
-| Area | Actual disposition | Remaining boundary |
+| Area | Current evidence | Still required |
 |---|---|---|
-| D1 shell static | Named interior workflow independently accepted with installed0b2ac9be | Arbitrary model/application admission and release remain separate |
-| D2 partial shells | Named finite-penalty foundation/press/open/recontact/restart handoff accepted | Remaining geometry, search, finite rotation and self-contact |
-| D3 classical/native static | Restricted round-beam, retained-native and deformable-S3 prototypes integrated and reviewed | Full required pairings, endpoints, mesh/enforcement and section-family acceptance |
-| D4 friction/continuation | Fixed-material and planar material-anchor S3 owners use shared static equilibrium/pressure/history/restart; facet crossing, internal-seam generalized tangent and solved seam/restart checks pass in development | Friction integration/step refinement, partial overlap/history transfer, physical rims, finite rotation/warped surfaces, swept beam/native surfaces, nonlinear materials and arc length |
-| D5 impact | Q4/S3 planes, B2/B3 fixed/translating planes and explicit guided Q4/free isotropic sphere share Newmark driver/state/restart; new shell work/path/energy/restart checks and isolated installed example pass | Broader shell/free-body admission, general geometry, finite rotation, caps/pairs, anisotropic inertia, nonlinear materials and acceptance |
-| D6 native dynamics | Dedicated retained-inertia/SO(3) midpoint owner, state codec and installed development route | Broader geometry/sections, spatial accuracy and C7 acceptance |
-| Applications | ANYfem persisted shell/path/force development solves and restart; opt-in associated fields and explicitly referenced physical moments, CSV export and guarded saved-model/mesh/result headless contours verified in installed packages; ANYstructure intent/public mapping and early rejection | Source/model-bound accepted-profile admission, normal routing, physical skin/traction and broader postprocessing, C9 acceptance |
+| D1 | Named interior shell handoff independently accepted at its historical identities | Source-impact/model binding before broader application admission; release separate |
+| D2 | Named finite-penalty partial-shell handoff independently accepted | Remaining shell combinations/rotation/warping, boundaries, automatic/self-contact and search completeness |
+| D3 | Restricted classical/native static owners; actual B2/B3 cylinder caps and prescribed translation installed-tested | Required pairings, native/section coverage, spatial/enforcement convergence and independent acceptance |
+| D4 | Shell friction/history and native components tested in bounded development scopes | Complete objective surface/history integration, beam/native friction, nonlinear materials, arc length and acceptance |
+| D5 | Shared Newmark shell/classical/tool/free-sphere development workflows | Broader geometry/inertia/materials, complete event/work/momentum evidence and acceptance |
+| D6–D7 | Retained-native midpoint dynamics prototype and related components | Contact-free C7 qualification, common-stage shell/native impact and C8 acceptance |
+| D8 | ANYfem persistence/solve/restart/fields/export/contour development adapters; ANYstructure intent mapping | Accepted source/model admission, full application workflows and C9 resource/package acceptance |
 
-Exact evidence and limitations are in the [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md),
-[restart note](GENERAL_CONTACT_RESTART.md) and linked guides. Implemented, tested,
-independently accepted and released remain distinct.
+The latest fixed-cylinder route verified 142 installed cases across two runs; the
+translating-cylinder route verified 26. Independent axial/line references agree to
+6.506e-18 m in the moving fixture; gap is about 0.1 micrometre within its explicit
+10 micrometre development tolerance. These results establish bounded code/workflow
+verification, not mesh/enforcement qualification or engineering acceptance.
+[Fixed guide](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_DEV.md),
+[moving guide](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_MOTION_DEV.md).
 
-## 2. Preceding integrated application slices
+Four requested tool targets produce 284 accepted states. Source inspection points
+to fixed-structure/new-tool preflight cutbacks before equilibrium; the proposed
+correction is untested. Installed group times (139.169 s and 110.420 s) contain
+multiple solves and are not single-route timing baselines. No reliable universal
+2x speedup or full completion forecast follows. The prior native inertia batch's
+6.86x local improvement / 27.46% short-route reduction retains only that scope.
 
-The permitted D8 slice now joins persisted Q4/S3 selections and exact settings
-to both a prescribed press/open/recontact path (independent144N reaction) and
-ordinary selected dead nodal load. The0.1N guided fixed-target force case agrees
-with an independently assembled analytic Q1 mass/enumerated KKT reference using
-admitted rest structural stiffness: reaction0.0931952663N, gap−3.938462um,
-residual2.88e−11N and relative complementarity6.38e−12. Physical50um gap budget
-unchanged. Active restart resumes in a fresh built owner. The first whole-face
-profile fails backtracking due to remote-corner extrapolation; that failure stays
-failed. Explicit existing projected_matching certifies represented matching points
-and the actual trial path. No equation, tolerance or production default changes.
-Strict V2 mesher-record compatibility includes policy/soft-target shape checks;
-soft-target failure is not a new admission condition. Obsolete identities reject.
+**Workflow diagnosis:** many installed-tested profiles have accumulated while
+acceptance and generality remain open. Further profile expansion and repeated
+per-helper packaging would increase maintenance without closing those gaps.
+Finish an existing integrated capability; measure progress by closed requirements
+and usable scope, not profile count, test count or plan revisions.
 
-ANYfem checkpointff3a8a54; solver numerical04535859 unchanged. Source13mixed/force
-checks pass, affected legacy/path checks pass after one stale-fixture correction;
-all failures retained. Isolated installed24outcomes pass, including prior Q4/Q4
-cycle/restart/cancellation:142.514s/219332608B within180s/953MiB,298module hashes
-match source, actual JIT off/pools1. No engineering/application admission, release
-or speed claim. Supporting source scrutiny is not independent acceptance.
-[Guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_MIXED_FORCE_DEV.md).
-Previous18N path evidence and fixture/harness failures remain at its linked guide.
+**Current disposition:** A is retained after matched response/work/path/state checks,
+source scrutiny and fresh installed verification: 284→16 states, 844→40 iterations
+in both guided fixtures. B adds sampled fixed-cylinder continuum response/enforcement
+evidence, not curved/pressure/general qualification. C verifies one combined wheel
+(31 outcomes, 515 source files matched). Continue with the remaining curved coupled
+response/reference boundary; no further optimization campaign is needed for A.
+See the updated moving-cylinder guide and ledger for exact scope and raw evidence.
 
-ANYfem successor5259cd43 adds explicit include_fields=True through the existing
-artifact/CSV/contour infrastructure: displacement, reference numerical pressure
-coefficients, weak normalized gaps, reference supports and integrated forces.
-Target values remain unavailable where unreported. Actual saved/reloaded project,
-mesh and result correspondence is guarded; shifted solver reference coordinates,
-changed mesh/lineage and missing associations reject. Default summary-only calls
-are preserved. Source45affected outcomes pass,8focused review corrections pass;
-installed22outcomes plus4saved-graph outcomes pass6.322s/201027584B and
-3.585s/197885952B.313/312loaded module hashes match source, actual JIT0/pools1.
-No physical-pressure recovery, skin contour or source/model acceptance certificate.
-Four initial test defects and collection correction retained; source scrutiny
-resolved an imperfection-frame error and missing-ID omission before final wheel.
-[Field guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_RESULT_FIELDS_DEV.md).
+## 2. Decided execution sequence on resumption
 
-The impact question remains pending user authority. Explicit V4/V16 signed-polygon
-pressure certification resolves218encountered paths in10.324s, but the refined
-case timed out900s at1.79779ms/3ms. Strong hidden-point checks consumed655.090s
-with642failures. A real65nm hidden pulse explains why omitting that safeguard
-changes scientific policy. Do not remove it, retry the coupled case, increase
-caps/tolerances or infer approval. V3/V15 default and old evidence remain intact.
-[Impact evidence](docs/d1_review_support/C6_S3_POLYGON_PRESSURE_SLICE_20261003.md).
+### A. One bounded tool-staging correction — at most 90 active minutes
 
-Next: use the user decision if it arrives. A separately named policy experiment
-requires that authority. Meanwhile continue genuine remaining application or
-mechanics rows; production admission must follow solver capability status. The
-next application boundary is accepted-profile source/model admission and normal
-routing, followed by physical-skin/current-traction and broader postprocessing.
-The guided fixed-target force case does not admit general nonlinear or
-deformable-target application analysis. Preserve
-the explicit native grazing-friction NONPASS and no-retry restrictions: the missing
-closed alpha_q=-G_q/G_alpha plus mixed-work bound is unresolved; caps/history/errors
-are unchanged. Full programme and independent/package/resource gates remain.
+Keep the existing untested `hemisphere_coupled_tool_dev` draft explicit and off by
+default. Inspect it before use; its runner currently names a nonexistent test.
+Implement only the necessary contributor hook and constrained Newton seed through
+the shared driver. Do not add a second solver or generalize unrelated managers.
 
-The preceding plan's detailed prototype chronology is archived in
-[Part93](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261003_PART93.md);
-all failed/frozen/consumed authorities and explicit restrictions survive archival.
-Historical NEXT/run commands are not renewed execution authority. The living
-restart note links retained raw evidence and the exact remaining boundaries.
+- Only an already active committed origin may propose one disposable correction
+  at the new prescribed-tool factor. First approach retains existing event handling.
+- Use the complete structural/contact constrained residual and tangent, including
+  the actual external-load derivative. Count the correction inside the existing
+  Newton budget. Do not reuse an inappropriate fixed-multiplier tangent.
+- Discard trial material state and restore tool factor on every rejection,
+  cancellation or exception. Certify the complete old-origin/new-seed path and
+  retain all final equilibrium, independent-gap, work and restart gates.
+- Singular/nonfinite/uncertifiable proposals cut back explicitly. No skipped
+  crossing checks, hidden physical substeps, changed tolerances or automatic
+  algorithm switching inside a failed increment.
 
-## 3. Preserve mechanics and state
+Run focused changed-behaviour checks and the existing B2/B3 integrated mechanics,
+including hidden crossing, inactive origin, rollback and split restart. Compare
+matched complete routes, states/cutbacks, evaluations, elapsed time and memory;
+use balanced repetitions only if needed to resolve timing uncertainty. Reuse
+unaffected geometry evidence. No wheel is needed merely to time a source candidate.
 
-- Keep physical skins/offsets, actual Q4/S3 geometry, both-body work, mortar support
-  coupling and the admitted pressure law/enforcement selection for each profile.
-- Keep beam tube versus swept material-surface profiles distinct. Native internal
-  coordinates, velocities and complete cross blocks remain authoritative; no
-  condensation of physical inertia or invented inertia on algebraic traces.
-- Keep committed physical, algorithmic and disposable candidate states separate.
-  Commit only after complete acceptance; rejection/cancellation/exception rollback
-  remains atomic. Restart binds definitions, settings, histories and relevant source.
-- Preserve explicit dimensional regularization and independent gap checks. Invalid
-  geometry, unsupported combinations and exhausted limits return non-success.
-- Never hide mechanisms with springs, damping or mass, drop contacts, weaken
-  mechanics under resource pressure or silently switch enforcement inside failure.
-- Historical sphere APIs, element defaults, no-contact behaviour and independently
-  owned permanent attachments remain intact.
+**Exit:** retain the correction only with preserved mechanics/state safeguards and
+clear end-to-end benefit worth its complexity. At 90 minutes, or a second failed
+discriminator, stop. Keep failed evidence and the known working conservative route;
+park the unverified draft recoverably. No further kernel optimization campaign.
+The timebox is inside the existing programme budget, not an extension or a test cap.
 
-## 4. Remaining programme
+### B. Close the existing D3 cylinder capability's evidence gaps
 
-| Delivery | Required outcome |
+Use B2 and B3 against fixed and prescribed-translating infinite cylinders as the
+next coherent delivery candidate. This is a bounded required-programme subset;
+beam pairs, native endpoints and the rest of D3 remain open.
+
+In the existing ledger, map only the missing claim-bearing checks to existing
+references and evidence. Reuse current work/tangent/state evidence after source
+impact assessment. Prioritize:
+
+1. Structural/curve resolution and independent response accuracy, including curved
+   B3 interior/rim and genuine ends; axial manufactured agreement alone is insufficient.
+2. Separately controlled integration and line/endpoint enforcement sensitivity,
+   physical gap and force/moment/work balance. Freeze the qualification gap budget
+   prospectively; the moving example's 10 micrometre development setting is not
+   automatically a qualification setting. Preserve the programme's starting budget
+   and any stricter registered criterion.
+3. The exact admitted path/control/material restrictions and a runnable example
+   that agrees with those restrictions. Preserve all rejected/unresolved geometries.
+
+Use existing analytical and independently integrated references where applicable;
+no new reference engine or broad mesh sweep. One failed check permits one targeted
+experiment tied to a competing explanation, then a disposition. A formal claim
+needs frozen inputs/scales/references and genuinely independent assessment. If its
+missing dependency or cost cannot fit the remaining budget, record the specific
+gap and hand off a tested candidate; do not invent acceptance or open a new prototype.
+
+### C. One integration and handoff boundary
+
+Build and verify one fresh installed artifact after a coherent candidate stabilizes
+or when an actual packaging/API risk requires it. Check the example, capability and
+restart identity, import bytes/environment, affected compatibility and required
+no-contact gates. Reuse unaffected evidence explicitly. Consolidate the ledger,
+short guide and restart note; no additional report series for routine helpers.
+This milestone remains incomplete until its required independent assessment closes.
+
+## 3. Pending decisions resolved
+
+| Issue | Decision |
 |---|---|
-| D2 | Remaining Q4/S3 shell combinations, finite rotation, warped geometry, physical boundaries, rigid shapes, swept/search completeness, automatic/self-contact |
-| D3 | Classical and retained-native static contact, required pairings, endpoints, curved interiors, multiple shell patches and internal work |
-| D4 | Objective transactional Coulomb friction, swept round surfaces, admitted nonlinear materials and contact-aware arc length |
-| D5 | Shared shell/classical Newmark impact, tools/free rigid bodies, events, work/momentum accounting and restart |
-| D6 | Native contact-free finite-velocity dynamics, physical internal inertia, gyroscopic work, SO(3) midpoint and algebraic consistency |
-| D7 | Native/coupled impact at a common shell/native stage, friction, torque, momentum and restart |
-| D8 | ANYfem/ANYstructure persistence/routing/results/exports, installed workflows, documentation and scale measurements |
+| Coupled-tool draft | One 90-minute bounded attempt under A; no default promotion without evidence |
+| New shape/profile expansion | Defer until this integrated candidate is dispositioned; correctness/dependency repairs remain allowed |
+| Impact hidden-point cost | Keep the safeguards. Do not pursue the proposed relaxation or replay V4/V16; the real 65 nm pulse remains contrary evidence |
+| Native grazing friction | Park restricted retries. Missing closed event derivative and mixed-work enclosure remain a mathematical dependency; no reset/zero workaround |
+| Application admission | Keep false without accepted source/model evidence. Do not reconstruct consumed evidence or access the protected original |
+| Timed-out Q4 application cycle | No unchanged rerun; require a concrete changed cause and valid bounded authority |
+| Optional workers | No repeated unavailable-provider probes. Use an available worker only for independent bounded work that shortens the selected delivery; never message the other human chat |
+| Remaining budget | Approximately 9.040 active hours at pause; no forecast that full C0–C9 fits. No extension or scope reduction is implied |
 
-## 5. Development and acceptance discipline
+These choices remove requests for discretionary direction. Missing external evidence
+or authority remains a dependency; a planning decision cannot supply it.
 
-Use one living note and ledger, integrated bounded slices, focused changed-behaviour
-checks and saved evidence before another solve. Up to two authorized workers have
-fixed ownership; a kernel author cannot be its sole independent assessor. Reuse
-unaffected evidence by impact analysis. After two slices without a gate advance,
-integrated improvement or decision-changing result, choose a permitted alternative.
+## 4. Faster development workflow
 
-Shared testing main1a0ae901 is reconciled without contact-kernel changes.
-[Three focused source compatibility checks](docs/d1_review_support/contact_testing_reconciliation_20261001/results.md)
-pass. Future ordinary development uses scripts/run_portable_ci.py --development
-with explicit selectors, one affected integrated route and explicit task timeout,
-memory and JIT controls. Its600s default never enlarges a stricter task cap.
-Build/check one installed artifact per coherent integration; reuse unaffected
-evidence through impact analysis. Scientific/compiled/release gates remain.
-The programme goal is active under the user's resumed development authority;
-testing reconciliation did not independently renew any frozen execution authority.
+- **One owner and candidate.** Lead owns shared drivers, mechanics integration and
+  final disposition. At most two bounded workers when useful; no overlapping writes,
+  duplicate investigation or full-history delegation. Independent review must match
+  the claim; same-family agreement alone does not establish scientific independence.
+- **Three verification levels.** During editing, select changed-behaviour source checks
+  through `scripts/run_portable_ci.py --development`. At slice integration, run one
+  affected end-to-end route plus necessary compatibility/state checks. At a coherent
+  acceptance/package boundary, run the required frozen/installed gates. Do not replay
+  passed unaffected checks simply to create a fresh count. A runner's 600 s default
+  cannot enlarge the task's stricter cap.
+- **Reuse implementation.** Extend existing work maps, contributor/transaction/restart
+  owners, parameterized fixtures and capability records. Add a profile or schema only
+  for a real admission/identity change. Avoid a cross-programme refactor as a prerequisite.
+- **One record.** Update the ledger's current disposition and a near-one-page restart
+  note at meaningful boundaries. Keep raw logs once, link them, and preserve hashes/
+  provenance where required. Do not duplicate bulky evidence or revise the whole plan
+  after every test. Archive history only when needed to keep the living record usable.
+- **Report decisions.** State the requirement closed, actual changed scope, measured
+  route cost if relevant, and the next blocker. Test counts supplement those facts.
 
-Optimize measured production bottlenecks only. The NumPy inertia batch gives6.86x
-local prepared-kernel improvement and27.46% complete short-route reduction; neither
-is a universal runtime claim. No reliable twofold whole-programme improvement has
-been established. Keep the5% named no-contact regression budget and explicit memory
-admission; dense real interactions need not have subquadratic cost.
+The planning review itself launched no development. The user subsequently resumed
+implementation; each new slice still requires its bounded question and valid authority.
 
-Claim-bearing acceptance freezes actual inputs/scales/tolerances/references,
-retains exact source/environment/raw evidence, obtains independent assessment and
-checks the installed artifact/example. Keep all registered gates:1e-5 smooth tangent,
-1e-6 equilibrium/wrench,0.1% analytical response,2% representative integrated response,
-integration-error allocation, dimensional penetration, friction sign, impact energy
-and deterministic restart. Generalized/one-sided checks apply at branch changes;
-small residuals or conservation alone do not establish acceptance.
+## 5. Preserved programme, mechanics and limits
 
-The original120active-hour budget continues without reset. Routine checks180s/1GB;
-named integrated/reference/acceptance cases900s/4GB, with stricter frozen limits
-prevailing. At72active hours reassess the remaining measured route and forecast;
-at exhaustion preserve work and request the needed decision. See the goal for the
-exact authority. [Previous full plan](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261001_REV58.md)
-retains all chronological findings and historical numerical dispositions.
+After the current candidate, select the highest-value unblocked required delivery:
+D2 shell geometry/search; D3 classical/retained-native static; D4 friction/materials/
+arc length; D5 shell/classical impact; D6 native contact-free dynamics; D7 common-stage
+native/coupled impact; D8 applications/packages/resources. Dependencies govern order:
+C7 qualification precedes native impact acceptance; apps consume actual solver status.
+All outcomes in the full programme remain required.
+
+Retain physical shell skins/directors/offsets and Q4/S3 mappings; tube and swept beam
+surfaces remain distinct. Retain native internal coordinates/inertia and complete
+cross blocks, both-body work, mortar support coupling and admitted enforcement laws.
+Separate committed physical, algorithmic and disposable states; commit only after
+all gates. Restart identity and atomic rollback remain binding. No hidden stiffness,
+damping, mass, lost contact, weakened geometry or discarded positive support.
+
+Retain 1e-5 smooth tangent, 1e-6 equilibrium/wrench, applicable 1e-8 monolithic force
+complementarity, 0.1% analytical response, 2% representative response, integration
+error allocation, registered dimensional gap, friction-sign, impact-energy and
+restart criteria. Use generalized/one-sided checks at branches. Preserve all stricter
+case gates, named 5% no-contact regression requirements and resource admission.
+
+Routine runs remain 180 s / 1 GB; named integrated/reference/acceptance runs at most
+900 s / 4 GB, with stricter frozen limits prevailing and process-tree enforcement.
+A development run needs a short question/input/cap/decision record, not a dossier.
+Formal acceptance still needs prospective criteria, exact source/environment and
+retained raw evidence. At the original 120-hour exhaustion, preserve the work and
+request the needed time/scope/method decision. Full completion is not declared from
+prototype breadth, local test passes, a partial handoff or exhaustion of the clock.

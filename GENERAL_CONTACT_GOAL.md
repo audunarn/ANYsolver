@@ -1,8 +1,8 @@
 # General contact — goal
 
-**Revision:** 2026-09-30.4. **Status:** D1-interior and the named bounded D2 finite-penalty partial-shell handoff independently accepted; remaining D2–D8 active. Original programme clock resumed29September2026 at08:04:33UTC. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md). **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-10-04.5. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.97. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
-This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's instruction; this status does not establish numerical acceptance.
+This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
 
 On resumption, this goal prevails over conflicting future instructions in the 28 September Review-adjusted Delivery Plan, the [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md), the [D1 gap map](docs/GENERAL_CONTACT_D1_ACCEPTANCE_GAP_MAP.md) and the [living note](GENERAL_CONTACT_RESTART.md). Preserve their unaffected requirements and historical dispositions. Frozen or consumed case registrations and execution authorities are not renewed.
 
@@ -27,15 +27,19 @@ bind the exact controls, materials, geometry, finite qualification and limitatio
 This establishes neither release, arbitrary exact-model/application admission nor
 full C0–C9 completion. Every historical failure and consumed authority remains.
 
-**D2 next outcome:** extend the named partial target-boundary delivery through
-explicit multiple-pair ownership and the remaining shell/rigid/search capabilities.
-Select one authorized method using the shortest bounded discriminating experiment,
-with early scrutiny of its equations/work/derivatives. Prospective method-specific
-criteria accompany the inherited response, work, integration and dimensional-gap
-gates. Do not apply exact-complementarity or exact-pairing stability claims to a
-finite penalty method, or hide numerical penetration/regularization dependence.
-The existing exact D1 law, evidence and defaults remain intact. Later D3–D8 and the
-original120active-hour budget/resources continue without reset.
+## Programme outcome and current delivery choice
+
+Complete every required C0–C9 capability in the [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md): shells, classical and retained-native beams, static contact, objective friction, automatic/self-contact, nonlinear and native dynamics, applications, installed packages and measured resources. Required scientific acceptance and release remain distinct. The accepted D1/D2 subsets do not complete this programme.
+
+Work only in `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch `codex/contact-main-reconcile-20261001`; the current committed baseline is `06dc18faa95dc4136da5671765ddfc329025e653`. Preserve the untested coupled-tool draft. The protected original worktree is not an evidence-recovery route. Main and other tasks remain separately owned; do not communicate with the other chat.
+
+**Next outcome on explicit resumption:** bring the existing B2/B3 fixed/prescribed-translating cylinder workflow closer to a claim-bearing D3 delivery by closing its actual mesh/enforcement/reference gaps. First allow one tightly bounded correction of the observed 284-state/four-target staging cost. The plan limits this attempt; performance is not a new acceptance gate. If it fails its bounds or safeguards, retain the verified conservative solver and proceed with capability closure. Do not open another geometry or friction prototype to avoid a difficult acceptance question.
+
+Prioritize a missing capability requirement, a necessary correctness repair or a measured end-to-end bottleneck. Reuse existing contributor, state, restart, search and test infrastructure. Add a profile/restart identity only when its mechanical or compatibility contract differs; do not create new public options for internal optimizations. Existing identities and explicit selection stay valid.
+
+**Budget disposition:** the pause checkpoint records 399456 active seconds (110.960 hours), leaving approximately 9.040 of the original 120 hours. Full completion within that remainder has no supportable forecast. Use the remainder for the next bounded delivery and an honest handoff; this does not narrow the programme, extend the clock or permit incomplete acceptance. At exhaustion obtain the required time/scope/method decision. Planning while paused does not restart the development clock.
+
+This is a prospective workflow change. Preserve existing equations, dimensional settings, acceptance criteria, exact accepted scopes, contrary evidence and frozen/consumed authorities. The [previous goal](docs/d1_review_support/GENERAL_CONTACT_GOAL_HISTORY_20260930_REV4.md) remains historical evidence.
 
 ## Accepted D1 outcome and preserved contract
 
@@ -78,7 +82,7 @@ A three-mesh result supports the specified profile and tested family; it is not 
 
 Independent assessment needs a check matched to the claim: an analytical solution, separately derived formulation/work map, genuinely different solution route or compatible external reference. It must address contrary evidence and numerical adequacy. Two implementations sharing the kernel, or a second AI reviewer alone, do not establish scientific independence or human approval.
 
-Completion requires all six D1 rows in the plan, the usable installed handoff and a closed independent assessment. Keep **implemented**, **locally tested**, **independently accepted** and **released** distinct. A useful negative result or an exhausted budget does not complete this delivery.
+D1 acceptance remains bound to its linked handoff and assessment. Each subsequent delivery requires its own applicable capability rows, usable installed handoff and closed independent assessment; full completion requires all programme rows. Keep **implemented**, **locally tested**, **independently accepted** and **released** distinct. A useful negative result or an exhausted budget does not complete this delivery.
 
 ## Delegated decisions
 
@@ -107,6 +111,10 @@ Use early scrutiny for consequential mechanics assumptions. Review the final acc
 
 ## Later deliveries
 
-Until D1 is accepted, park ANYfem/C9 expansion, new pressure laws/stabilization or physical-subscale research, and unrelated beam/friction/transient expansion. Keep existing branches and evidence recoverable. Performance work is allowed only under the delivery rule above.
+The named D1 handoff is accepted; its former pre-D1 implementation freeze is historical. Follow the plan's current priority while retaining all D2–D8 outcomes. Extend an existing integrated capability before starting another prototype unless a dependency or measured blocker makes that choice ineffective. Record that choice in the living note; no new plan revision or permission is needed for routine decisions within this authority.
 
-D2 begins with partial-overlap and boundary contact. The lead may select pressure agglomeration, dual mortar with boundary modification, or a finite penalty-regularized weak-gap law as described in the plan, including changing the pressure space near cut fronts. Their formulation-specific acceptance must be defined prospectively; they are not presumed valid. D3–D8 remain required. At each transition update this goal and the plan for the next delivery without resetting the programme or requiring a new chat. Any further scope or acceptance change still needs its proper authority.
+D2 method selection remains delegated: pressure agglomeration, dual mortar with boundary modification, or a finite penalty-regularized weak-gap law may be developed with prospective method-specific acceptance. None changes the accepted D1 equations or regrades old failures. Native inertia, friction transport, gap/path certification and coupled work retain their formulation-specific requirements.
+
+Use focused development checks, one affected integrated route, and one installed verification per coherent claim-bearing delivery. Repeat checks when their implementation, inputs or assumptions change or a concrete concern remains. Freeze acceptance inputs before formal execution; routine helper edits do not require a new dossier or wheel. Keep source-tested, installed-tested, independently accepted and released status explicit.
+
+Pending choices are resolved in the plan: retain impact hidden-point safeguards; park restricted native grazing retries; keep normal application admission disabled without the required source/model evidence; do not replay the timed-out application fixture unchanged. These are deferred dependencies, not waived requirements. No publication, merge or release is authorized.

@@ -6531,7 +6531,7 @@ def _solve_static_nonlinear_under_lease(
 
     last_contact_equilibrium_tangent = None
 
-    def newton_increment(q_start, path_factor, reference, line_search_mode,
+    def _newton_increment(q_start, path_factor, reference, line_search_mode,
                          *, swept_origin_q=None, augmentation=0):
         """Solve one load increment with plain, decrease, or Armijo Newton."""
         nonlocal total_iterations, last_contact_equilibrium_tangent
@@ -6545,41 +6545,61 @@ def _solve_static_nonlinear_under_lease(
         from .general_contact.runtime import active_contact_manager
 
         contact_manager = active_contact_manager()
+        origin_u = (None if contact_manager is None else full_displacement(
+            q_start if swept_origin_q is None else swept_origin_q, lam
+        ))
+        coupled_seed_pending = False
         if (contact_manager is not None
                 and hasattr(contact_manager, "swept_increment_admissible")
                 and not contact_manager.swept_increment_admissible(
-                    full_displacement(
-                        q_start if swept_origin_q is None else swept_origin_q, lam
-                    ), u, lam, path_factor,
+                    origin_u, u, lam, path_factor,
                 )):
-            return (
-                False, q_start, committed_states, float("inf"), 0,
-                "contact_gap_exceeded", None,
+            active_origin_query = getattr(
+                contact_manager, "coupled_load_seed_active_origin", None
             )
-        F_int, K_T, trial_states = assemble_force_system(
-            path_factor,
-            model,
-            u,
-            committed_states,
-            num_layers,
-            kinematics=kinematics,
-            corotational_tangent=resolved_corotational_tangent,
-            deleted_element_ids=tuple(deleted_element_ids),
-            residual_stiffness_fraction=(
-                fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
-            ),
-        )
-        internal_guard(model, context="nonlinear static force tangent assembly")
-        F_ext_red, K_ext_red, _stage_factors, _active_stage = (
-            reduced_external_load_at(
+            coupled_seed_pending = bool(
+                active_origin_query is not None
+                and active_origin_query(origin_u, lam)
+            )
+            if (not coupled_seed_pending
+                    or not contact_manager.coupled_load_seed_pose_admissible(
+                        u, path_factor,
+                    )):
+                return (
+                    False, q_start, committed_states, float("inf"), 0,
+                    "contact_gap_exceeded", None,
+                )
+        try:
+            F_int, K_T, trial_states = assemble_force_system(
                 path_factor,
+                model,
                 u,
-                tangent=True,
+                committed_states,
+                num_layers,
+                kinematics=kinematics,
+                corotational_tangent=resolved_corotational_tangent,
+                deleted_element_ids=tuple(deleted_element_ids),
+                residual_stiffness_fraction=(
+                    fracture_config.residual_stiffness_fraction if fracture_config is not None else 1.0
+                ),
             )
-        )
-        external_load_guard(context="nonlinear static force external load")
-        residual = F_ext_red - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
-        residual_norm = float(np.linalg.norm(residual))
+            internal_guard(model, context="nonlinear static force tangent assembly")
+            F_ext_red, K_ext_red, _stage_factors, _active_stage = (
+                reduced_external_load_at(
+                    path_factor,
+                    u,
+                    tangent=True,
+                )
+            )
+            external_load_guard(context="nonlinear static force external load")
+            residual = F_ext_red - np.asarray(T.T @ F_int, dtype=float).reshape(-1)
+            residual_norm = float(np.linalg.norm(residual))
+        finally:
+            if coupled_seed_pending:
+                _discard_nonlinear_state_candidate(committed_states)
+                contact_manager.set_path_factor(lam)
+        if coupled_seed_pending:
+            contact_manager.set_path_factor(path_factor)
 
         for iteration in range(1, max_iterations + 1):
             cancellation_checkpoint(
@@ -6602,7 +6622,7 @@ def _solve_static_nonlinear_under_lease(
                     context="nonlinear static status callback",
                 )
             total_iterations += 1
-            if residual_norm <= tolerance * reference:
+            if residual_norm <= tolerance * reference and not coupled_seed_pending:
                 from .general_contact.runtime import active_contact_manager
 
                 contact_manager = active_contact_manager()
@@ -6718,7 +6738,22 @@ def _solve_static_nonlinear_under_lease(
             from .general_contact.runtime import active_contact_manager
 
             contact_manager = active_contact_manager()
-            if contact_manager is not None:
+            coupled_seed_iteration = coupled_seed_pending
+            if coupled_seed_pending:
+                # This correction uses the same complete constrained Newton
+                # system and iteration budget as ordinary equilibrium. Its path
+                # starts at the committed tool pose, never the invalid preflight.
+                candidate_u = full_displacement(q_trial + dq, path_factor)
+                if not contact_manager.swept_increment_admissible(
+                    origin_u, candidate_u, lam, path_factor,
+                ):
+                    return (
+                        False, q_start, committed_states, residual_norm, iteration,
+                        "contact_gap_exceeded", None,
+                    )
+                coupled_seed_pending = False
+                record_nonlinear_solver_event("coupled_load_seed")
+            elif contact_manager is not None:
                 candidate_u = full_displacement(q_trial + dq, path_factor)
                 fraction = contact_manager.admissible_step_fraction(u, candidate_u)
                 if fraction <= 1.0e-12:
@@ -6831,6 +6866,13 @@ def _solve_static_nonlinear_under_lease(
                 )
                 q_candidate = q_trial + scale * dq
                 u = full_displacement(q_candidate, path_factor)
+                if (coupled_seed_iteration
+                        and not contact_manager.swept_increment_admissible(
+                            origin_u, u, lam, path_factor,
+                        )):
+                    record_nonlinear_solver_event("backtrack")
+                    scale *= settings.line_search_reduction
+                    continue
                 with_tangent = trial == 0
                 try:
                     F_c, K_c, states_c = assemble_force_system(
@@ -6998,6 +7040,24 @@ def _solve_static_nonlinear_under_lease(
             "maximum_iterations_reached",
             None,
         )
+
+    def newton_increment(*args, **kwargs):
+        # Only the opt-in contributor owns disposable load seeds. Restore its
+        # physical-origin pose on every rejected increment or exception, not
+        # just on an exception during the initial force evaluation.
+        from .general_contact.runtime import active_contact_manager
+        manager = active_contact_manager()
+        if manager is None or not hasattr(manager, "coupled_load_seed_active_origin"):
+            return _newton_increment(*args, **kwargs)
+        converged = False
+        try:
+            result = _newton_increment(*args, **kwargs)
+            converged = bool(result[0])
+            return result
+        finally:
+            if not converged:
+                _discard_nonlinear_state_candidate(committed_states)
+                manager.set_path_factor(lam)
 
     force_displacement_history: List[Dict[str, Any]] = (
         copy.deepcopy(restored_static_path["force_displacement_history"])
@@ -7287,11 +7347,18 @@ def _solve_static_nonlinear_under_lease(
                 contact_tool_work_increment = 0.0
                 if (contact_manager is not None
                         and hasattr(contact_manager, "tool_work_increment")):
-                    contact_tool_work_increment = contact_manager.tool_work_increment(
-                        full_displacement(q, lam),
-                        full_displacement(q_new, lam_trial),
-                        lam, lam_trial,
-                    )
+                    try:
+                        contact_tool_work_increment = contact_manager.tool_work_increment(
+                            full_displacement(q, lam),
+                            full_displacement(q_new, lam_trial),
+                            lam, lam_trial,
+                        )
+                    except BaseException:
+                        if hasattr(contact_manager, "coupled_load_seed_active_origin"):
+                            _discard_nonlinear_state_candidate(committed_states)
+                            contact_manager.set_path_factor(lam)
+                        raise
+
                 q = q_new
                 lam = lam_trial
                 committed_states = _commit_nonlinear_state_candidate(

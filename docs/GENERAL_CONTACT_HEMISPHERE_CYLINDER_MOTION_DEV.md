@@ -65,3 +65,58 @@ retains the source01 timeout, separate remaining-cancellation check and source/
 installed input identities. Raw root:
 `C:/ANYworkspaceWork/contact_hemisphere_cylinder_motion_20261004`.
 No independent engineering acceptance, application admission or release is claimed.
+
+
+## Opt-in coupled load seed — 4 October 2026
+
+Select `beam_end_cap_work="hemisphere_coupled_tool_dev"` for the same supported
+single translating cylinder, elastic concentric B2/B3 and force-continuation scope.
+The existing example accepts `run(coupled_load_seed=True)`; its default stays on
+the previous conservative algorithm. The new profile/restart identity is
+`CLASSICAL_B2_B3_HEMISPHERE_COUPLED_TRANSLATING_CYLINDER_STATIC_DEV_V1`.
+
+An already active physical origin can propose one complete constrained Newton
+correction when the new-tool/fixed-structure preflight fails. The temporary force
+pose must certify the exterior domain of both radii. The correction counts inside
+the existing Newton budget. Every full and backtracked seed path is certified from
+the committed structural/tool origin; final gap, equilibrium and work gates remain.
+Rejected proposals cut back. Cancellation, exceptions and precommit tool-work
+failure discard trial state and restore the committed tool factor. First approach
+uses the existing event policy. No mechanical law or gap budget is changed.
+
+Matched balanced source runs reduce the four-target guided fixtures from 284 to
+16 accepted states and 844 to 40 Newton iterations. B2 median solve time changes
+11.5243 to 0.7540 s (15.28x), B3 19.3231 to 1.0854 s (17.80x). These are fixture
+measurements; B2 baseline runs span 9.47–13.57 s. General nonlinear line contact
+may reject a one-correction seed and retain bounded cutbacks. No universal speed
+or twofold shell-route improvement is inferred. Two named 16-B2 no-contact routes
+measure median changes +2.24% axial / +0.50% bending, within their 5% budget.
+
+The combined fresh installed artifact verifies 31 outcomes in 105.996 s with
+336,527,360 B peak process-tree memory, JIT disabled and numerical pools one.
+All 515 package Python files and 219 loaded solver modules match candidate bytes.
+Wheel SHA256: `4d6e2040299124059a92138e915fd5a1f70e71ebe65d09ea6bd225d0b12a0dde`.
+Checks include response/work, inactive and active origins, exterior radius order,
+complete hidden crossing, rejected full/backtracked seeds under decrease/Armijo,
+iteration budget, singular/nonfinite systems, cancellation/exception replay,
+precommit failure, open/active restart, incompatible algorithms and the public
+example. Source/default compatibility and installed lazy no-contact checks pass.
+
+The same integration adds fixed-cylinder spatial/enforcement evidence using an
+independently derived axial continuum bar with distributed unilateral line contact.
+B2/B3 meshes 1/2/4 and line strengths 1e9/4e9/16e9 N/m² agree within 5.55e-6 relative
+response error against the 0.1% target. Distributed contact carries nearly half the
+0.02 N applied load. Independent polynomial gap/quadrature checks pass; penetration
+falls approximately 4.488 to 2.246 to 1.123 micrometres, within the registered
+10 micrometre budget. This checks the shared **fixed** cylinder mechanics, not the
+moving algorithm, spatial convergence order or resolved pressure/active length.
+Curved coupled response and broader section/material/profile acceptance remain.
+
+[Summary and source review](d1_review_support/contact_coupled_tool_staging_20261004/summary.json)
+bind source hashes, resource/runtime records, measurements and remaining scope.
+Raw evidence: `C:/ANYworkspaceWork/contact_coupled_tool_staging_20261004`;
+prospective continuum decision: `C:/ANYworkspaceWork/contact_cylinder_convergence_20261004/decision.md`.
+Retain source01 dispatch failure, source03 runner-selector failure, source04 boundary
+fixture defect and source09–11 budget/backtrack test defects. Corrected source
+scrutiny and analytic references support code verification; independent engineering
+acceptance, normal application admission, release and full C0–C9 remain incomplete.

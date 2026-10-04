@@ -1,0 +1,1370 @@
+{
+  "scope": "installed-tested development; not full engineering acceptance/release",
+  "baseline": "06dc18faa95dc4136da5671765ddfc329025e653",
+  "profile": "CLASSICAL_B2_B3_HEMISPHERE_COUPLED_TRANSLATING_CYLINDER_STATIC_DEV_V1",
+  "installed_test_resource": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 105.9960384000442,
+    "peak_bytes": 336527360
+  },
+  "installed_outcomes": 31,
+  "source_package_python_files": 515,
+  "imported_solver_modules": 219,
+  "import_hash_errors": [],
+  "wheel_sha256": "4d6e2040299124059a92138e915fd5a1f70e71ebe65d09ea6bd225d0b12a0dde",
+  "paired_routes": {
+    "paired02_paired_B2": {
+      "baseline_median_s": 11.524288249987876,
+      "candidate_median_s": 0.7540182000084314,
+      "ratio": 15.283833002782972,
+      "raw": [
+        {
+          "coupled": false,
+          "elapsed_s": 9.473716899985448,
+          "states": 284,
+          "newton_iterations": 844
+        },
+        {
+          "coupled": true,
+          "elapsed_s": 0.7590546000283211,
+          "states": 16,
+          "newton_iterations": 40
+        },
+        {
+          "coupled": true,
+          "elapsed_s": 0.7489817999885418,
+          "states": 16,
+          "newton_iterations": 40
+        },
+        {
+          "coupled": false,
+          "elapsed_s": 13.574859599990305,
+          "states": 284,
+          "newton_iterations": 844
+        }
+      ]
+    },
+    "paired02_paired_B3": {
+      "baseline_median_s": 19.323109549994115,
+      "candidate_median_s": 1.0854357999924105,
+      "ratio": 17.802167157310663,
+      "raw": [
+        {
+          "coupled": false,
+          "elapsed_s": 19.25450430001365,
+          "states": 284,
+          "newton_iterations": 844
+        },
+        {
+          "coupled": true,
+          "elapsed_s": 1.0861312000197358,
+          "states": 16,
+          "newton_iterations": 40
+        },
+        {
+          "coupled": true,
+          "elapsed_s": 1.084740399965085,
+          "states": 16,
+          "newton_iterations": 40
+        },
+        {
+          "coupled": false,
+          "elapsed_s": 19.39171479997458,
+          "states": 284,
+          "newton_iterations": 844
+        }
+      ]
+    },
+    "installed01_paired_B2": {
+      "baseline_median_s": 13.399666650017025,
+      "candidate_median_s": 0.7287356999877375,
+      "ratio": 18.387553471364864,
+      "raw": [
+        {
+          "coupled": false,
+          "elapsed_s": 13.179810800007544,
+          "states": 284,
+          "newton_iterations": 844
+        },
+        {
+          "coupled": true,
+          "elapsed_s": 0.7377967999782413,
+          "states": 16,
+          "newton_iterations": 40
+        },
+        {
+          "coupled": true,
+          "elapsed_s": 0.7196745999972336,
+          "states": 16,
+          "newton_iterations": 40
+        },
+        {
+          "coupled": false,
+          "elapsed_s": 13.619522500026505,
+          "states": 284,
+          "newton_iterations": 844
+        }
+      ]
+    },
+    "installed01_paired_B3": {
+      "baseline_median_s": 20.851927599986084,
+      "candidate_median_s": 1.5083775999955833,
+      "ratio": 13.824076676852759,
+      "raw": [
+        {
+          "coupled": false,
+          "elapsed_s": 19.35159209999256,
+          "states": 284,
+          "newton_iterations": 844
+        },
+        {
+          "coupled": true,
+          "elapsed_s": 1.505069500009995,
+          "states": 16,
+          "newton_iterations": 40
+        },
+        {
+          "coupled": true,
+          "elapsed_s": 1.5116856999811716,
+          "states": 16,
+          "newton_iterations": 40
+        },
+        {
+          "coupled": false,
+          "elapsed_s": 22.35226309997961,
+          "states": 284,
+          "newton_iterations": 844
+        }
+      ]
+    }
+  },
+  "no_contact": {
+    "rows": [
+      {
+        "case": "B2_16_axial_static_6increments",
+        "baseline_median_s": 0.015575700002955273,
+        "current_median_s": 0.015924349980195984,
+        "ratio": 1.0223842252466702,
+        "baseline_range_s": [
+          0.015288399998098612,
+          0.015870700008235872
+        ],
+        "current_range_s": [
+          0.015405999962240458,
+          0.01654649997362867
+        ]
+      },
+      {
+        "case": "B2_16_bending_static_6increments",
+        "baseline_median_s": 0.020286449987906963,
+        "current_median_s": 0.02038840000750497,
+        "ratio": 1.0050255229307632,
+        "baseline_range_s": [
+          0.019984699960332364,
+          0.02131580002605915
+        ],
+        "current_range_s": [
+          0.020060600014403462,
+          0.02191859995946288
+        ]
+      }
+    ],
+    "processes": [
+      {
+        "index": 1,
+        "baseline": true,
+        "elapsed_s": 4.23726500000339
+      },
+      {
+        "index": 2,
+        "baseline": false,
+        "elapsed_s": 3.056299999996554
+      },
+      {
+        "index": 3,
+        "baseline": false,
+        "elapsed_s": 2.1883867999422364
+      },
+      {
+        "index": 4,
+        "baseline": true,
+        "elapsed_s": 2.8323830000008456
+      }
+    ],
+    "peak_bytes": 151240704,
+    "elapsed_s": 12.46648780000396,
+    "baseline_module_sha256": "2dcd349dda53bc6e80efd0c62b5099e5cca661d7df35b8799c6d0aba032813cf"
+  },
+  "source_inputs": {
+    "command": [
+      "C:\\Python\\Python314\\python.exe",
+      "-X",
+      "utf8",
+      "-c",
+      "import pytest, sys, os, json, hashlib\nfrom pathlib import Path\nrc=pytest.main(sys.argv[1:])\nrows={n:{'path':str(Path(m.__file__).resolve()),'sha256':hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()}\n      for n,m in list(sys.modules.items()) if (n=='anyfem' or n.startswith('anyfem.') or n=='anysolver' or n.startswith('anysolver.')) and getattr(m,'__file__',None)}\nerrors=[n for n,r in rows.items() if not Path(r['path']).is_relative_to(Path(os.environ['CONTACT_APP_EXPECTED_ROOT' if n.startswith('anyfem') else 'CONTACT_SOLVER_EXPECTED_ROOT']))]\nPath(os.environ['CONTACT_APP_RECORD']).write_text(json.dumps({'modules':rows,'errors':errors},indent=2))\nraise SystemExit(rc or bool(errors))\n",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-p",
+      "scripts.development_test_runtime",
+      "--durations=5",
+      "--basetemp=C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004\\installed01/temp",
+      "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001/tests/test_general_contact_coupled_tool_staging.py",
+      "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001/tests/test_general_contact_cylinder_convergence.py",
+      "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001/tests/test_general_contact_hemisphere_cylinder_static.py::test_public_axial_equilibrium_reaction_work_and_gap",
+      "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001/tests/test_general_contact_hemisphere_cylinder_motion.py::test_common_motion_hidden_crossing_and_explicit_owner_contract",
+      "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001/tests/test_general_contact_capped_cylinder.py::test_actual_import_root_preserves_lazy_no_contact_solve",
+      "-o",
+      "pythonpath="
+    ],
+    "source_sha": "06dc18faa95dc4136da5671765ddfc329025e653",
+    "files": {
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_coupled_tool_staging.py": "60286473f29c65739ec2180992f60ef39f1a9d45ed93350accf437365e4fde3f",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_cylinder_convergence.py": "49e83f6cdc58957c6f53b5bc98993dee6e5cd350d66800c2ebe27b4da5f318bb",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_hemisphere_cylinder_static.py": "66331aa0d6278a16349babae3607963246465ada6e90db9dd1ca03911e82e41b",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_hemisphere_cylinder_motion.py": "5cc22628c57842b427bd9e57bd3c1d12ad9d2a8ec8af442095885a7aebdc7507",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_capped_cylinder.py": "db67a591ef844c9e88ddcefa68593de8555bb3753274fdb296bda493423f5d44",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_hemisphere_coupled_tool.py": "6b654df40bc8f9b7e123a4632b50efc23ab3e88b717df0671a2c9d5d0531621e",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\nonlinear_static.py": "891e21937b0456d3bd29380bde91afb53b7e539e8df2aa0fddcb260301942a0f",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_hemisphere_cylinder_motion.py": "2e7448da1efe7e7905754a16739fb67f670163c1649e174e5deff557068a4049",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_hemisphere_cylinder_motion.py": "025cbdfd919975a50d379ffb50121f204ad0eccc9fae0680ea3a22fcc659b590",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_hemisphere_cylinder_work.py": "3e75f77ee6ccb2c7ee94bc6072a207b39bebd07939247f0c20db90f3018ae361",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_hemisphere_cylinder.py": "0737d1597dda049bf9e0f8dc6e9cddd92db5855cea99060a74c1ecd98e5a9fe8",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_hemisphere_cylinder_work.py": "3272d544a962540397ea24cd62aa9c92bb1d6205fdf02d07c5a1f2fa9b39e788",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\tests\\test_general_contact_multiple_hemisphere_cylinders.py": "4776d5e5736b76c85f644e3943c8c07e3ab0aaeb6b45978dc5bbc2c8ae0e1053",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_hemisphere_cylinder.py": "016a50d2debdd42dbc1ef24bc0fda8560a9495cb6b5a032548d6377a83e7bad8",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_hemisphere_sphere.py": "a405a83aa6ed2d661358c2d694ef7d0eb2cb0c85b9d402a733af0f30a044a823",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\beam_radial_ends.py": "10937e34f8e589585c12694151d23a0aeb505173803c9bb19a8101fed58771c3",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\multiple_beam_rigid.py": "463cce838f2e1bbef3e7a809643a52e19d29fe2c18b13fbc76e0fe82950c2797",
+      "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\src\\anysolver\\general_contact\\core.py": "41640dceaaf543746f624c0c7dd0dcb7cce250a5a2d9088361159ca3f60746b7"
+    },
+    "timeout_s": 180,
+    "memory_limit_mib": 953,
+    "scope": "actual cylinder hemisphere code development; no acceptance"
+  },
+  "restrictions": [
+    "force control; one prescribed translating infinite cylinder",
+    "concentric isotropic elastic von Karman classical B2/B3",
+    "unchanged fixed-radius tube and true hemisphere work",
+    "no new friction/native/free/rotating/capped-body admission"
+  ],
+  "remaining": [
+    "full spatial/section/material/mechanical acceptance outside named axial fixture",
+    "resolved pressure/active-length and curved coupled response",
+    "full D2-D8 programme and source/model application admission"
+  ],
+  "effective_runtime": {
+    "jit_disabled": true,
+    "numba_threads": 1,
+    "effective_pools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "openmp",
+        "internal_api": "openmp",
+        "num_threads": 1,
+        "prefix": "vcomp",
+        "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+        "version": null
+      }
+    ],
+    "errors": [],
+    "failed": 0,
+    "pytest_exit_code": 0
+  },
+  "continuum": {
+    "continuum_B2": {
+      "rows": [
+        {
+          "cells": 1,
+          "line_stiffness": 1000000000.0,
+          "reference": {
+            "tip": -0.0020044995026994856,
+            "gap": -4.499502699483894e-06,
+            "reaction": 0.010022423757054977,
+            "line_force": 0.009973076740245647,
+            "contact_force": 0.009977576242945131,
+            "line_energy": 1.4943254471235714e-08,
+            "cap_energy": 1.0122762271331425e-11,
+            "active_length": 4.440249350401502e-06
+          },
+          "tip": -0.002004488451494392,
+          "reaction": 0.01002236839117712,
+          "contact_force": 0.009977631608839901,
+          "info": {
+            "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+            "obstacle_kind": "cylinder",
+            "minimum_gap": -4.488451494399567e-06,
+            "line_contact_energy": 1.4921323102798773e-08,
+            "algorithmic_contact_potential": 1.4931396201207562e-08,
+            "active_line_length": 4.4439126365968216e-06,
+            "active_line_cells": 1,
+            "active_intervals": 1,
+            "integration_points": 24,
+            "maximum_integration_relative_error": 6.652337250692262e-16,
+            "candidate_cells": 1,
+            "beam_force": [
+              0.009977631608839901,
+              0.0,
+              0.0
+            ],
+            "rigid_force": [
+              -0.009977631608839901,
+              -0.0,
+              -0.0
+            ],
+            "beam_moment": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rigid_moment": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 1000000000.0,
+            "endpoint_contact_energy": 1.0073098408788854e-11,
+            "candidate_endpoints": 2,
+            "active_endpoints": 1,
+            "endpoint_stiffness_N_per_m": 1.0,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": -4.488451494399567e-06,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.09999551154850561,
+                  0.0,
+                  0.0
+                ],
+                "rigid_point": [
+                  0.1,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "node": 2,
+                "element": 1,
+                "gap": 0.212,
+                "active": false,
+                "branch": "parallel_rim",
+                "skin_point": null,
+                "rigid_point": null
+              }
+            ],
+            "minimum_gap_kind": "conservative_full_curve_lower_bound",
+            "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+            "moment_origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "moment_units": "N*m",
+            "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+            "gap_tolerance": 1e-05,
+            "maximum_candidate_pairs": 100000,
+            "swept_trial_cutbacks": 6
+          },
+          "states": 4,
+          "independent_gap": -4.488451494394363e-06,
+          "independent_line_energy": 1.492132310279757e-08,
+          "independent_line_force": 0.009973143157346707
+        },
+        {
+          "cells": 2,
+          "line_stiffness": 1000000000.0,
+          "reference": {
+            "tip": -0.0020044995026994856,
+            "gap": -4.499502699483894e-06,
+            "reaction": 0.010022423757054977,
+            "line_force": 0.009973076740245647,
+            "contact_force": 0.009977576242945131,
+            "line_energy": 1.4943254471235714e-08,
+            "cap_energy": 1.0122762271331425e-11,
+            "active_length": 4.440249350401502e-06
+          },
+          "tip": -0.0020044884516583063,
+          "reaction": 0.010022368391999405,
+          "contact_force": 0.009977631608030852,
+          "info": {
+            "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+            "obstacle_kind": "cylinder",
+            "minimum_gap": -4.488451658310119e-06,
+            "line_contact_energy": 1.4921323646244223e-08,
+            "algorithmic_contact_potential": 1.4931396745388716e-08,
+            "active_line_length": 4.4439124738792225e-06,
+            "active_line_cells": 1,
+            "active_intervals": 1,
+            "integration_points": 24,
+            "maximum_integration_relative_error": 6.959261720752589e-16,
+            "candidate_cells": 2,
+            "beam_force": [
+              0.009977631608030852,
+              0.0,
+              0.0
+            ],
+            "rigid_force": [
+              -0.009977631608030852,
+              -0.0,
+              -0.0
+            ],
+            "beam_moment": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rigid_moment": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 1000000000.0,
+            "endpoint_contact_energy": 1.0073099144493429e-11,
+            "candidate_endpoints": 2,
+            "active_endpoints": 1,
+            "endpoint_stiffness_N_per_m": 1.0,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": -4.488451658310119e-06,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.0999955115483417,
+                  0.0,
+                  0.0
+                ],
+                "rigid_point": [
+                  0.1,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "node": 3,
+                "element": 2,
+                "gap": 0.212,
+                "active": false,
+                "branch": "parallel_rim",
+                "skin_point": null,
+                "rigid_point": null
+              }
+            ],
+            "minimum_gap_kind": "conservative_full_curve_lower_bound",
+            "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+            "moment_origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "moment_units": "N*m",
+            "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+            "gap_tolerance": 1e-05,
+            "maximum_candidate_pairs": 100000,
+            "swept_trial_cutbacks": 6
+          },
+          "states": 4,
+          "independent_gap": -4.488451658304915e-06,
+          "independent_line_energy": 1.49213236462516e-08,
+          "independent_line_force": 0.009973143156374173
+        },
+        {
+          "cells": 4,
+          "line_stiffness": 1000000000.0,
+          "reference": {
+            "tip": -0.0020044995026994856,
+            "gap": -4.499502699483894e-06,
+            "reaction": 0.010022423757054977,
+            "line_force": 0.009973076740245647,
+            "contact_force": 0.009977576242945131,
+            "line_energy": 1.4943254471235714e-08,
+            "cap_energy": 1.0122762271331425e-11,
+            "active_length": 4.440249350401502e-06
+          },
+          "tip": -0.002004488451986109,
+          "reaction": 0.010022368393643843,
+          "contact_force": 0.009977631606351324,
+          "info": {
+            "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+            "obstacle_kind": "cylinder",
+            "minimum_gap": -4.488451986117345e-06,
+            "line_contact_energy": 1.492132473299707e-08,
+            "algorithmic_contact_potential": 1.493139783361291e-08,
+            "active_line_length": 4.443912148430425e-06,
+            "active_line_cells": 1,
+            "active_intervals": 1,
+            "integration_points": 24,
+            "maximum_integration_relative_error": 6.652336523904993e-16,
+            "candidate_cells": 4,
+            "beam_force": [
+              0.009977631606351324,
+              0.0,
+              0.0
+            ],
+            "rigid_force": [
+              -0.009977631606351324,
+              -0.0,
+              -0.0
+            ],
+            "beam_moment": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rigid_moment": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 1000000000.0,
+            "endpoint_contact_energy": 1.007310061584037e-11,
+            "candidate_endpoints": 2,
+            "active_endpoints": 1,
+            "endpoint_stiffness_N_per_m": 1.0,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": -4.488451986117345e-06,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.0999955115480139,
+                  0.0,
+                  0.0
+                ],
+                "rigid_point": [
+                  0.1,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "node": 5,
+                "element": 4,
+                "gap": 0.212,
+                "active": false,
+                "branch": "parallel_rim",
+                "skin_point": null,
+                "rigid_point": null
+              }
+            ],
+            "minimum_gap_kind": "conservative_full_curve_lower_bound",
+            "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+            "moment_origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "moment_units": "N*m",
+            "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+            "gap_tolerance": 1e-05,
+            "maximum_candidate_pairs": 100000,
+            "swept_trial_cutbacks": 6
+          },
+          "states": 4,
+          "independent_gap": -4.488451986112141e-06,
+          "independent_line_energy": 1.492132473300125e-08,
+          "independent_line_force": 0.009973143154367328
+        },
+        {
+          "cells": 4,
+          "line_stiffness": 4000000000.0,
+          "reference": {
+            "tip": -0.0020022512632114488,
+            "gap": -2.2512632114468743e-06,
+            "reaction": 0.010011219363062818,
+            "line_force": 0.009986529373726086,
+            "contact_force": 0.009988780636937533,
+            "line_energy": 7.48672349929324e-09,
+            "cap_energy": 2.5340930236070467e-12,
+            "active_length": 2.2216313735214435e-06
+          },
+          "tip": -0.0020022457227725117,
+          "reaction": 0.010011191605942731,
+          "contact_force": 0.00998880839396693,
+          "info": {
+            "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+            "obstacle_kind": "cylinder",
+            "minimum_gap": -2.2457227725116574e-06,
+            "line_contact_energy": 7.475683736588058e-09,
+            "algorithmic_contact_potential": 7.478205371973548e-09,
+            "active_line_length": 2.2234629299431306e-06,
+            "active_line_cells": 1,
+            "active_intervals": 1,
+            "integration_points": 24,
+            "maximum_integration_relative_error": 6.6389695580987e-16,
+            "candidate_cells": 4,
+            "beam_force": [
+              0.00998880839396693,
+              0.0,
+              0.0
+            ],
+            "rigid_force": [
+              -0.00998880839396693,
+              -0.0,
+              -0.0
+            ],
+            "beam_moment": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rigid_moment": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 4000000000.0,
+            "endpoint_contact_energy": 2.5216353854887228e-12,
+            "candidate_endpoints": 2,
+            "active_endpoints": 1,
+            "endpoint_stiffness_N_per_m": 1.0,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": -2.2457227725116574e-06,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.0999977542772275,
+                  0.0,
+                  0.0
+                ],
+                "rigid_point": [
+                  0.1,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "node": 5,
+                "element": 4,
+                "gap": 0.212,
+                "active": false,
+                "branch": "parallel_rim",
+                "skin_point": null,
+                "rigid_point": null
+              }
+            ],
+            "minimum_gap_kind": "conservative_full_curve_lower_bound",
+            "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+            "moment_origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "moment_units": "N*m",
+            "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+            "gap_tolerance": 1e-05,
+            "maximum_candidate_pairs": 100000,
+            "swept_trial_cutbacks": 6
+          },
+          "states": 4,
+          "independent_gap": -2.2457227725064532e-06,
+          "independent_line_energy": 7.47568373657242e-09,
+          "independent_line_force": 0.009986562671182005
+        },
+        {
+          "cells": 4,
+          "line_stiffness": 16000000000.0,
+          "reference": {
+            "tip": -0.002001126009757166,
+            "gap": -1.1260097571643407e-06,
+            "reaction": 0.01000561155356694,
+            "line_force": 0.009993262436675929,
+            "contact_force": 0.009994388446433094,
+            "line_energy": 3.747141493925281e-09,
+            "cap_energy": 6.339489866146488e-13,
+            "active_length": 1.1111925523532698e-06
+          },
+          "tip": -0.0020011232357599025,
+          "reaction": 0.010005597656117303,
+          "contact_force": 0.009994402343934373,
+          "info": {
+            "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+            "obstacle_kind": "cylinder",
+            "minimum_gap": -1.1232357599085668e-06,
+            "line_contact_energy": 3.741602817665582e-09,
+            "algorithmic_contact_potential": 3.742233646951751e-09,
+            "active_line_length": 1.1121083686200302e-06,
+            "active_line_cells": 1,
+            "active_intervals": 1,
+            "integration_points": 24,
+            "maximum_integration_relative_error": 4.421530840460039e-16,
+            "candidate_cells": 4,
+            "beam_force": [
+              0.009994402343934373,
+              0.0,
+              0.0
+            ],
+            "rigid_force": [
+              -0.009994402343934373,
+              -0.0,
+              -0.0
+            ],
+            "beam_moment": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rigid_moment": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 16000000000.0,
+            "endpoint_contact_energy": 6.308292861686878e-13,
+            "candidate_endpoints": 2,
+            "active_endpoints": 1,
+            "endpoint_stiffness_N_per_m": 1.0,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": -1.1232357599085668e-06,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.0999988767642401,
+                  0.0,
+                  0.0
+                ],
+                "rigid_point": [
+                  0.1,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "node": 5,
+                "element": 4,
+                "gap": 0.212,
+                "active": false,
+                "branch": "parallel_rim",
+                "skin_point": null,
+                "rigid_point": null
+              }
+            ],
+            "minimum_gap_kind": "conservative_full_curve_lower_bound",
+            "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+            "moment_origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "moment_units": "N*m",
+            "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+            "gap_tolerance": 1e-05,
+            "maximum_candidate_pairs": 100000,
+            "swept_trial_cutbacks": 7
+          },
+          "states": 4,
+          "independent_gap": -1.1232357599033627e-06,
+          "independent_line_energy": 3.741602817649988e-09,
+          "independent_line_force": 0.009993279108157378
+        }
+      ],
+      "max_relative_response_error": 5.549032492613293e-06,
+      "max_normalized_equilibrium_error": 4.517046459096008e-12,
+      "scope": "fixed cylinder axial continuum; sampled response accuracy, no convergence-order or resolved pressure claim"
+    },
+    "continuum_B3": {
+      "rows": [
+        {
+          "cells": 1,
+          "line_stiffness": 1000000000.0,
+          "reference": {
+            "tip": -0.0020044995026994856,
+            "gap": -4.499502699483894e-06,
+            "reaction": 0.010022423757054977,
+            "line_force": 0.009973076740245647,
+            "contact_force": 0.009977576242945131,
+            "line_energy": 1.4943254471235714e-08,
+            "cap_energy": 1.0122762271331425e-11,
+            "active_length": 4.440249350401502e-06
+          },
+          "tip": -0.002004488451986103,
+          "reaction": 0.010022368393643814,
+          "contact_force": 0.009977631606346361,
+          "info": {
+            "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+            "obstacle_kind": "cylinder",
+            "minimum_gap": -4.488451986103467e-06,
+            "line_contact_energy": 1.4921324732931405e-08,
+            "algorithmic_contact_potential": 1.4931397833547184e-08,
+            "active_line_length": 4.443912148449182e-06,
+            "active_line_cells": 1,
+            "active_intervals": 1,
+            "integration_points": 24,
+            "maximum_integration_relative_error": 6.652336523934268e-16,
+            "candidate_cells": 1,
+            "beam_force": [
+              0.009977631606346361,
+              0.0,
+              0.0
+            ],
+            "rigid_force": [
+              -0.009977631606346361,
+              -0.0,
+              -0.0
+            ],
+            "beam_moment": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rigid_moment": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 1000000000.0,
+            "endpoint_contact_energy": 1.007310061577808e-11,
+            "candidate_endpoints": 2,
+            "active_endpoints": 1,
+            "endpoint_stiffness_N_per_m": 1.0,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": -4.488451986103467e-06,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.09999551154801391,
+                  0.0,
+                  0.0
+                ],
+                "rigid_point": [
+                  0.1,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "node": 3,
+                "element": 1,
+                "gap": 0.212,
+                "active": false,
+                "branch": "parallel_rim",
+                "skin_point": null,
+                "rigid_point": null
+              }
+            ],
+            "minimum_gap_kind": "conservative_full_curve_lower_bound",
+            "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+            "moment_origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "moment_units": "N*m",
+            "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+            "gap_tolerance": 1e-05,
+            "maximum_candidate_pairs": 100000,
+            "swept_trial_cutbacks": 6
+          },
+          "states": 4,
+          "independent_gap": -4.488451986098263e-06,
+          "independent_line_energy": 1.4921324732927087e-08,
+          "independent_line_force": 0.009973143154358915
+        },
+        {
+          "cells": 2,
+          "line_stiffness": 1000000000.0,
+          "reference": {
+            "tip": -0.0020044995026994856,
+            "gap": -4.499502699483894e-06,
+            "reaction": 0.010022423757054977,
+            "line_force": 0.009973076740245647,
+            "contact_force": 0.009977576242945131,
+            "line_energy": 1.4943254471235714e-08,
+            "cap_energy": 1.0122762271331425e-11,
+            "active_length": 4.440249350401502e-06
+          },
+          "tip": -0.002004488452641691,
+          "reaction": 0.010022368396932602,
+          "contact_force": 0.00997763160303507,
+          "info": {
+            "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+            "obstacle_kind": "cylinder",
+            "minimum_gap": -4.488452641690163e-06,
+            "line_contact_energy": 1.492132690637998e-08,
+            "algorithmic_contact_potential": 1.493140000993833e-08,
+            "active_line_length": 4.443911497622173e-06,
+            "active_line_cells": 1,
+            "active_intervals": 1,
+            "integration_points": 24,
+            "maximum_integration_relative_error": 4.434890369967547e-16,
+            "candidate_cells": 2,
+            "beam_force": [
+              0.00997763160303507,
+              0.0,
+              0.0
+            ],
+            "rigid_force": [
+              -0.00997763160303507,
+              -0.0,
+              -0.0
+            ],
+            "beam_moment": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rigid_moment": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 1000000000.0,
+            "endpoint_contact_energy": 1.0073103558347702e-11,
+            "candidate_endpoints": 2,
+            "active_endpoints": 1,
+            "endpoint_stiffness_N_per_m": 1.0,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": -4.488452641690163e-06,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.09999551154735832,
+                  0.0,
+                  0.0
+                ],
+                "rigid_point": [
+                  0.1,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "node": 5,
+                "element": 2,
+                "gap": 0.212,
+                "active": false,
+                "branch": "parallel_rim",
+                "skin_point": null,
+                "rigid_point": null
+              }
+            ],
+            "minimum_gap_kind": "conservative_full_curve_lower_bound",
+            "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+            "moment_origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "moment_units": "N*m",
+            "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+            "gap_tolerance": 1e-05,
+            "maximum_candidate_pairs": 100000,
+            "swept_trial_cutbacks": 6
+          },
+          "states": 4,
+          "independent_gap": -4.488452641684959e-06,
+          "independent_line_energy": 1.492132690640481e-08,
+          "independent_line_force": 0.009973143150404267
+        },
+        {
+          "cells": 4,
+          "line_stiffness": 1000000000.0,
+          "reference": {
+            "tip": -0.0020044995026994856,
+            "gap": -4.499502699483894e-06,
+            "reaction": 0.010022423757054977,
+            "line_force": 0.009973076740245647,
+            "contact_force": 0.009977576242945131,
+            "line_energy": 1.4943254471235714e-08,
+            "cap_energy": 1.0122762271331425e-11,
+            "active_length": 4.440249350401502e-06
+          },
+          "tip": -0.0020044884539527972,
+          "reaction": 0.010022368403509823,
+          "contact_force": 0.009977631596448195,
+          "info": {
+            "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+            "obstacle_kind": "cylinder",
+            "minimum_gap": -4.488453952794166e-06,
+            "line_contact_energy": 1.492133125302723e-08,
+            "algorithmic_contact_potential": 1.4931404362470405e-08,
+            "active_line_length": 4.443910196096692e-06,
+            "active_line_cells": 1,
+            "active_intervals": 1,
+            "integration_points": 24,
+            "maximum_integration_relative_error": 6.652333617097683e-16,
+            "candidate_cells": 4,
+            "beam_force": [
+              0.009977631596448195,
+              0.0,
+              0.0
+            ],
+            "rigid_force": [
+              -0.009977631596448195,
+              -0.0,
+              -0.0
+            ],
+            "beam_moment": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rigid_moment": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 1000000000.0,
+            "endpoint_contact_energy": 1.0073109443176788e-11,
+            "candidate_endpoints": 2,
+            "active_endpoints": 1,
+            "endpoint_stiffness_N_per_m": 1.0,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": -4.488453952794166e-06,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.09999551154604722,
+                  0.0,
+                  0.0
+                ],
+                "rigid_point": [
+                  0.1,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "node": 9,
+                "element": 4,
+                "gap": 0.212,
+                "active": false,
+                "branch": "parallel_rim",
+                "skin_point": null,
+                "rigid_point": null
+              }
+            ],
+            "minimum_gap_kind": "conservative_full_curve_lower_bound",
+            "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+            "moment_origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "moment_units": "N*m",
+            "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+            "gap_tolerance": 1e-05,
+            "maximum_candidate_pairs": 100000,
+            "swept_trial_cutbacks": 6
+          },
+          "states": 4,
+          "independent_gap": -4.488453952788962e-06,
+          "independent_line_energy": 1.492133125300755e-08,
+          "independent_line_force": 0.009973143142489763
+        },
+        {
+          "cells": 4,
+          "line_stiffness": 4000000000.0,
+          "reference": {
+            "tip": -0.0020022512632114488,
+            "gap": -2.2512632114468743e-06,
+            "reaction": 0.010011219363062818,
+            "line_force": 0.009986529373726086,
+            "contact_force": 0.009988780636937533,
+            "line_energy": 7.48672349929324e-09,
+            "cap_energy": 2.5340930236070467e-12,
+            "active_length": 2.2216313735214435e-06
+          },
+          "tip": -0.002002245723265881,
+          "reaction": 0.010011191608417732,
+          "contact_force": 0.009988808391595314,
+          "info": {
+            "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+            "obstacle_kind": "cylinder",
+            "minimum_gap": -2.2457232658808918e-06,
+            "line_contact_energy": 7.475685376773304e-09,
+            "algorithmic_contact_potential": 7.478207013266763e-09,
+            "active_line_length": 2.2234624408409475e-06,
+            "active_line_cells": 1,
+            "active_intervals": 1,
+            "integration_points": 24,
+            "maximum_integration_relative_error": 6.638968101491129e-16,
+            "candidate_cells": 4,
+            "beam_force": [
+              0.009988808391595314,
+              0.0,
+              0.0
+            ],
+            "rigid_force": [
+              -0.009988808391595314,
+              -0.0,
+              -0.0
+            ],
+            "beam_moment": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rigid_moment": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 4000000000.0,
+            "endpoint_contact_energy": 2.521636493459369e-12,
+            "candidate_endpoints": 2,
+            "active_endpoints": 1,
+            "endpoint_stiffness_N_per_m": 1.0,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": -2.2457232658808918e-06,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.09999775427673413,
+                  0.0,
+                  0.0
+                ],
+                "rigid_point": [
+                  0.1,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "node": 9,
+                "element": 4,
+                "gap": 0.212,
+                "active": false,
+                "branch": "parallel_rim",
+                "skin_point": null,
+                "rigid_point": null
+              }
+            ],
+            "minimum_gap_kind": "conservative_full_curve_lower_bound",
+            "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+            "moment_origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "moment_units": "N*m",
+            "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+            "gap_tolerance": 1e-05,
+            "maximum_candidate_pairs": 100000,
+            "swept_trial_cutbacks": 6
+          },
+          "states": 4,
+          "independent_gap": -2.2457232658756876e-06,
+          "independent_line_energy": 7.475685376794594e-09,
+          "independent_line_force": 0.009986562668344667
+        },
+        {
+          "cells": 4,
+          "line_stiffness": 16000000000.0,
+          "reference": {
+            "tip": -0.002001126009757166,
+            "gap": -1.1260097571643407e-06,
+            "reaction": 0.01000561155356694,
+            "line_force": 0.009993262436675929,
+            "contact_force": 0.009994388446433094,
+            "line_energy": 3.747141493925281e-09,
+            "cap_energy": 6.339489866146488e-13,
+            "active_length": 1.1111925523532698e-06
+          },
+          "tip": -0.0020011232358834513,
+          "reaction": 0.010005597656737088,
+          "contact_force": 0.009994402343125073,
+          "info": {
+            "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+            "obstacle_kind": "cylinder",
+            "minimum_gap": -1.123235883448634e-06,
+            "line_contact_energy": 3.741603228836719e-09,
+            "algorithmic_contact_potential": 3.742234058261652e-09,
+            "active_line_length": 1.1121082462018348e-06,
+            "active_line_cells": 1,
+            "active_intervals": 1,
+            "integration_points": 24,
+            "maximum_integration_relative_error": 8.843060709141005e-16,
+            "candidate_cells": 4,
+            "beam_force": [
+              0.009994402343125073,
+              0.0,
+              0.0
+            ],
+            "rigid_force": [
+              -0.009994402343125073,
+              -0.0,
+              -0.0
+            ],
+            "beam_moment": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rigid_moment": [
+              -0.0,
+              -0.0,
+              -0.0
+            ],
+            "gap_tolerance_met": true,
+            "normal_law": "penalty",
+            "line_stiffness_N_per_m2": 16000000000.0,
+            "endpoint_contact_energy": 6.308294249333166e-13,
+            "candidate_endpoints": 2,
+            "active_endpoints": 1,
+            "endpoint_stiffness_N_per_m": 1.0,
+            "endpoint_fields": [
+              {
+                "node": 1,
+                "element": 1,
+                "gap": -1.123235883448634e-06,
+                "active": true,
+                "branch": "sphere",
+                "skin_point": [
+                  0.09999887676411656,
+                  0.0,
+                  0.0
+                ],
+                "rigid_point": [
+                  0.1,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "node": 9,
+                "element": 4,
+                "gap": 0.212,
+                "active": false,
+                "branch": "parallel_rim",
+                "skin_point": null,
+                "rigid_point": null
+              }
+            ],
+            "minimum_gap_kind": "conservative_full_curve_lower_bound",
+            "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+            "moment_origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "moment_units": "N*m",
+            "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+            "beam_end_cap_work": "hemisphere_support_dev",
+            "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+            "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+            "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+            "gap_tolerance": 1e-05,
+            "maximum_candidate_pairs": 100000,
+            "swept_trial_cutbacks": 7
+          },
+          "states": 4,
+          "independent_gap": -1.1232358834434297e-06,
+          "independent_line_energy": 3.741603228862641e-09,
+          "independent_line_force": 0.009993279107259166
+        }
+      ],
+      "max_relative_response_error": 5.548782578301825e-06,
+      "max_normalized_equilibrium_error": 6.891882897708257e-12,
+      "scope": "fixed cylinder axial continuum; sampled response accuracy, no convergence-order or resolved pressure claim"
+    }
+  }
+}

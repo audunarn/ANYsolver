@@ -1962,3 +1962,26 @@ combined timeout180.068s retained; remaining check passed alone under same cap.
 tested, not independently accepted/released/application-admitted. No displacement
 control, multiple moving obstacles, free/rotating body, friction or dynamics.
 [Guide/evidence](GENERAL_CONTACT_HEMISPHERE_CYLINDER_MOTION_DEV.md).
+
+
+## Coupled translating-cylinder seed and fixed-cylinder continuum — 4 October 2026
+
+`CLASSICAL_B2_B3_HEMISPHERE_COUPLED_TRANSLATING_CYLINDER_STATIC_DEV_V1` is implemented
+and installed-tested, explicitly selected by `beam_end_cap_work="hemisphere_coupled_tool_dev"`.
+It retains actual B2/B3 cap/line work and force-control/one prescribed cylinder
+scope; new algorithm/restart identity, no automatic switch or default promotion.
+Committed-origin path certification includes backtracked seeds. Initial exterior
+geometry, iteration budgets, rejected/cancelled/exception trials and precommit
+work failure are checked. Matched guided routes reduce 284 states/844 iterations
+to 16/40; source medians improve 15.28x B2 and 17.80x B3 in those fixtures only.
+Named no-contact source medians remain inside the 5% budget. No general speed claim.
+
+A separate fixed-cylinder axial continuum reference covers meshes 1/2/4 B2/B3,
+distributed-contact force balance, independent physical gaps/direct quadrature and
+stronger line enforcement. Sampled response errors <=5.55e-6 relative; normalized
+wrench/equilibrium errors <=6.90e-12. Pressure/active-length resolution, convergence
+order and curved coupled response remain open. These are code/spatial development
+results, not complete D3 engineering acceptance. Installed combined31pass/105.996s/
+336527360B;515files and219loadedmodules match,JIT0/pools1. Historical/default profiles
+stay valid. Normal application admission/release remain false; other required
+programme rows open. [Guide/evidence](GENERAL_CONTACT_HEMISPHERE_CYLINDER_MOTION_DEV.md).
