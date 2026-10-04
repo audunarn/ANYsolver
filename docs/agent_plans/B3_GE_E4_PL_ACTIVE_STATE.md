@@ -41,8 +41,12 @@ different-family scientific acceptance stays open. Original417-module wheel
 1bf7dabd is bound to its own site/immutable saved owners, not today's source.
 No FE solve/new mesh/scalar preparation or product equation changed.
 
-Auxiliary H is positive; complete native K is NOT assumed SPD. Actual8:1
-mechanicalkernel2745 HOLD remains. Positive507/1781 proofs keep their scope.
+Auxiliary H is positive; complete native K is NOT assumed SPD. Saved8:1
+mechanicalkernel2745 now has a complete Gram certificate of its ORIGINAL
+fixed shifted target and physical floor7.7328212774e-11.13source/17evidence
+controls PASS; one4.3559s/112361472B sampled run, pools1/JIToff. Supporting
+source/runtime review clear. Historical interval/inverse HOLD remains protected.
+Positive507/1781 proofs keep their scope; other envelope kernels stay open.
 Inverse-majorant ticket CLOSED_UNRESOLVED, no negativity conclusion. Fixed-
 density native13.119675% vs supplementary OpenSees13.336932% diagnostic CLOSED;
 S4 regional Mz discrepancy.75655Nm and coarse1:8 work convergence remain open.
@@ -51,14 +55,16 @@ not selected. Auxiliary beta cannot establish physical transfer or choose space.
 
 ## Next discriminating action
 
-Decision sought: a defensible assessment of the actual constrained mechanical
-kernel in its registered physical metric, keeping original error/floor criteria.
-First inspect the precise numerical contract and distinguish required sign/
-margin/completeness from the failed inverse-majorant proof technique. A bounded
-empirical replacement needs a prospective mathematical contract and independent
-review; no automatic inverse, precision, block, channel or mesh campaign.
-No new numerical run until its competing hypotheses and outcome-dependent
-next actions are recorded. Regional transfer/accuracy remains a separate task.
+Decision sought: complete actual-kernel observations on the saved envelope,
+separately from regional torque/accuracy. Established: complete Gram residual
+can certify the fixed target without inverse estimates;2745 is resolved.
+Remaining uncertainty: larger-case error/work/storage feasibility, and physical
+transfer/locking, not this case's sign. Next action: use existing saved operators
+and fixed source to preflight the next unassessed registered kernel; a refused
+preflight gets a precise resource/metric finding, not automatic larger limits
+or inverse/precision/channel/mesh tuning. Reuse completed proofs. Regional
+accuracy can advance independently; no repeated classical axial campaign.
+Exact new case evidence/reviews: raw gram-margin/. FormalF03 remains unconsumed.
 Do not rebuild completed fibres, free-mode owners or consumers.
 
 All numerical jobs TERMINAL; workers idle. Root owns scheduling/Git, max3workers.

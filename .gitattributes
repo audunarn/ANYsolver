@@ -136,3 +136,6 @@ docs/agent_plans/development/r8-b2-free-reference-modes-20261004/** -text
 scripts/r8_bl5_projected_native_beta_dev.py -text
 tests/test_r8_bl5_projected_native_beta_dev.py -text
 .qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/native-beta/** -text
+scripts/r8_bl5_sparse_gram_margin_dev.py -text
+tests/test_r8_bl5_sparse_gram_margin_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/** -text

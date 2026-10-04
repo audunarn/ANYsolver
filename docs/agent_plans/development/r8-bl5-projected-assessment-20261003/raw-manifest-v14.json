@@ -1,0 +1,136 @@
+{
+  "identity": "BL5_FIXED_SHIFT_GRAM_KERNEL_DEVELOPMENT_RAW_V14",
+  "source_parent": "6ec57d8c",
+  "previous_manifest": "raw-manifest-v13.json",
+  "previous_manifest_sha256": "ea13e9a7b8c589a72094fa51496cff62c1de79e979b93bf3b809613fb62e7dd6",
+  "formal_f03_authority_consumed": false,
+  "qualification_claim": false,
+  "files": [
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/audit.py",
+      "sha256": "043a32650100d1e15109adfa64ce01296e8078d6972e8c39c63063fdaa420d86",
+      "bytes": 3097
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/design.md",
+      "sha256": "415744d07b1557fc4c47d306da2b384e1c687231087f9666e5c9e5433396314b",
+      "bytes": 2059
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/gram-v1.json",
+      "sha256": "8bf48fd0420a67d2655658255e43759acc403a543f198efc61ae037a9623b4b3",
+      "bytes": 38960
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/gram-v1.npz",
+      "sha256": "a54ead4e029e4b6987a1210e0b018c8b8654daff0f6a34fa5daed814df4c0d1f",
+      "bytes": 1297748
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/helper-v1.py",
+      "sha256": "8e087dae9e42d8d9f6e9a9de68594c7f457434570f85ae02ba73ae3bc1aeefbf",
+      "bytes": 5084
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/ns16_b8-v1/execution.json",
+      "sha256": "952edace45642b4ad05f4639749239e820f249c4b938133e8e12f8f6eefb0804",
+      "bytes": 959
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/ns16_b8-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/ns16_b8-v1/stdout.log",
+      "sha256": "b3f6af6057232658b2560f445a7c85df244a8607c07763bded81cc263d70319d",
+      "bytes": 156
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/ns16_b8-v1/thread-samples.json",
+      "sha256": "dea0f0107313d6c1b5745c5ee9d84bd8a306c64ef2f01a322fcbef11089ac386",
+      "bytes": 41028
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/prepare.py",
+      "sha256": "f2ae9ecba0bbae647c39cfba715d894fbc80a524b50af78040942acc6a13fc2b",
+      "bytes": 4351
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/probe-v1-draft.py",
+      "sha256": "8bd64d4d1321782a54d4dd300cd627ec5cc4f1cbd76f48cb60eda6261e7a77c7",
+      "bytes": 7900
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/probe-v1.py",
+      "sha256": "4b92d6399e3b0ab5140ee4214bd86fbbbb6ce1a6674840a26483b143532eb051",
+      "bytes": 7904
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/review-after-run.md",
+      "sha256": "ff8cd0ce77186c0a6c5c82e2f21deadc01d4912b9d5776e8bc604744f9626338",
+      "bytes": 1720
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/review-before-run.md",
+      "sha256": "1ff38e4f58374d2777f6f5fab568ea25a3ac5af866d4c93f2da4d76d52b01d03",
+      "bytes": 1884
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/root-audit.json",
+      "sha256": "d4d7811b550638e49ed9dfda1eaf386424321ed3b6631d79ac744aa1a6cb464f",
+      "bytes": 1773
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/run-v1-test-snapshot.py",
+      "sha256": "1adf92bc4d3f8eac9d5b1ca2a031ae3a1021f290138eff57a62244625aa89733",
+      "bytes": 1219
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/run-v1.py",
+      "sha256": "a2606cdbbd4d7fd3e4049e986fac84d51b4d473e96fb4a7befbf0194c9514808",
+      "bytes": 1404
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/supervisor-v1.py",
+      "sha256": "ad9947c9268774a980041112004364d4daba6ce884fe339fab9f0d90b265d3ec",
+      "bytes": 7424
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/test-v1/execution.json",
+      "sha256": "81a8880dacab8c69d11e9dafb9034bac09be8acb7831f73e099dcd063fa9a426",
+      "bytes": 1166
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/test-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/test-v1/stdout.log",
+      "sha256": "a73cc577c0b141de324072ac2e33696969d90a26d55f1050adb6706c2d6cfd14",
+      "bytes": 101
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/test-v1/thread-samples.json",
+      "sha256": "fae045af10ebf8d9d585980d3aa57d2addecf74b8ebd8d1814bb91b1b103adf4",
+      "bytes": 8427
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/tests-v1.py",
+      "sha256": "f6c466e12be4933e5cb316ff973110a8b964a612e208353f91b398513eb297e8",
+      "bytes": 3799
+    },
+    {
+      "path": "scripts/r8_bl5_sparse_gram_margin_dev.py",
+      "sha256": "8e087dae9e42d8d9f6e9a9de68594c7f457434570f85ae02ba73ae3bc1aeefbf",
+      "bytes": 5084
+    },
+    {
+      "path": "tests/test_r8_bl5_sparse_gram_margin_dev.py",
+      "sha256": "f6c466e12be4933e5cb316ff973110a8b964a612e208353f91b398513eb297e8",
+      "bytes": 3799
+    }
+  ],
+  "scope": "Single saved2745 kernel; unchanged target/error/physical floor; original HOLD retained."
+}

@@ -2056,3 +2056,15 @@ Auxiliary-beta observation complete; actual mechanical2745 HOLD, uniform/mixed
 stability, regional physical accuracy and M2/F03/G0 acceptance remain OPEN.
 FormalF03 UNCONSUMED; no product/default/resource/tolerance/release change.
 [Results and immutable extension](development/r8-bl5-projected-assessment-20261003/results.md).
+
+M2 saved ns16_b8 mechanical kernel, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+ONE extra-shift complete Gram residual certificate establishes the original
+2745-coordinate fixed shifted target, preserving epsilon/sigma/G and physical
+lower bound7.732821277406244e-11. Directed margin3.80550786874870e-11 is positive.
+Earlier inverse/interval HOLD records remain protected; inverse ticket stays
+closed/unresolved as a method. Source13 controls and17 root evidence checks PASS;
+one supervised4.3559s/112361472B sampled run, actual pools1/JIToff. Supporting
+source/evidence review is not different-family qualification. Remaining kernel
+envelope, regional transfer/locking/mixed-system and aggregate M2/F03/G0 remain
+OPEN. FormalF03 UNCONSUMED; no product/default/criterion/release change.
+[Complete result and exact evidence](development/r8-bl5-projected-assessment-20261003/results.md).

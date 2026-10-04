@@ -911,3 +911,46 @@ auxiliary norm. The failed inverse-majorant ticket remains closed/unresolved;
 regional torque/accuracy, full mixed-system/locking, mandatory CalculiX and
 M2/F03/G0 acceptance remain open. No law/space selected or formalF03 consumed.
 [Full raw and review](../../../../.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/native-beta/).
+
+## Saved 2745-coordinate mechanical kernel resolved — 4 October
+
+One extra-shift Gram residual certificate establishes the original fixed
+shifted target for ns16_b8. Earlier interval/inverse-majorant HOLD records remain
+unchanged; this new evidence resolves their proof limitation for this case.
+No mechanical equations, constraints, mesh, graph, physical norm, error budget
+or original positive physical floor changed. The complete native mixed matrix
+is still not asserted SPD.
+
+The proof uses the complete residual R=P A0 P.T-tauI-FF.T and FF.T>=0, rather
+than an inverse estimate. The one producer shift was frozen from the saved
+residual before execution. Directed bounds establish A0-sigmaI>=dI:
+
+| Quantity | Value |
+| --- | ---: |
+| Original epsilon | 5.855229651277453e-9 |
+| Original target sigma | 1.1710459302554907e-8 |
+| Frozen producer tau | 1.178645852521753e-8 |
+| Complete residual upper rho | 3.79441439751358e-11 |
+| Directed extra-shift margin d | 3.80550786874870e-11 |
+| Original physical lower bound (sigma-epsilon)/G | 7.732821277406244e-11 |
+
+The conditional IEEE sparse-arithmetic contract includes all cancellation fill,
+diagonal subtraction, product accumulation and difference errors. Symbolic
+product337715 entries/20098816 updates; conservative workspace estimate
+1935095040B fits the explicit2GiB proof ceiling. The one supervised run completed
+in4.3559s (helper/driver3.8296s), sampled process-tree peak112361472B; both actual
+OpenBLAS pools1, JIT off. No speedup claim or exact peak-memory claim.
+
+Thirteen focused controls PASS in0.51s. Root's17 scalar/provenance predicates
+PASS without rerunning the numerical case. Preexecution independent supporting
+source review found no blocker; initial generated-driver key error was caught
+and its draft preserved before any case ran. Source helper8e087dae..., driver
+4b92d639..., exact saved arrays a54ead4e... bind the new result. The reviewed
+launch wrapper adds only a driver-hash guard. No product/wheel rebuild needed.
+
+This establishes positivity only for the saved2745 case, alongside earlier
+507/1781 proofs. Remaining envelope kernels, regional torque accuracy, locking,
+mixed-system acceptance, mandatory external references and different-family
+acceptance remain open. Auxiliary-beta and physical transfer stay distinct.
+No law/space selection, aggregate M2/G0 acceptance or formalF03 consumption.
+[Raw, design, controls and reviews](../../../../.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/).
