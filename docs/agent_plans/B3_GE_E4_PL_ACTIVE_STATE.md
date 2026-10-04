@@ -7,7 +7,8 @@ and all final requirements remain mandatory and incomplete.
 
 Root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
 branch codex/stiffened-main-reconcile-20261001; source parent c06326e0.
-ANYfem experimental consumer remains9faed76 unchanged. Scoped local commit pending.
+ANYfem experimental consumer remains9faed76 unchanged. Product/evidence committed
+as36418e7804ca6f719c9e6b50499be92b028c20eb; scoped122file proof passed.
 
 ## Delivered behavior
 
@@ -33,7 +34,7 @@ control; zero/50N-equivalent displacement converged but S3 inactive; nominal
 Dormant binding/rejection coverage does not replace active mixed evidence.
 S3/fibre simultaneous flow unproven. Other parked generalized-seed, S3 unload,
 coupled loaded-chart and native80 convergence failures remain OPEN unchanged.
-NEXT: finish scoped source/evidence local commit, then assess the actual failed
+NEXT: assess the actual failed
 mixed corrector detail and same-predecessor directional derivative in ONE bounded
 discriminator before choosing repair or an engineering load programme. No blind
 load/curve/budget sweep. Reuse completed all-S3/consumer workflow.
