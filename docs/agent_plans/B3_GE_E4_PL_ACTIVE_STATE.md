@@ -86,18 +86,28 @@ GE_FLAT_Q4_DISTRIBUTING_DIRECTOR_POLAR_REFERENCE_LINEAR_V1_EXPERIMENTAL.
 This differs from historical position-only Procrustes; neither is selected or
 qualified for the complete programme. No public owner wiring/admission, finite-
 chart/plastic/mass/installed claim. Legacy/retained variables unchanged.
-NEXT: bind this reviewed private derivative to actual GE reference nodal
-coordinates and sparse local insertion on one two-Q4/native-beam panel. Verify
-bounded dense/sparse equilibrium, actual side wrenches and the rigid/distributing
-consequence before any experimental owner admission. Keep unsupported finite
-requests rejected; no new framework or replay of closed factor/reference tickets.
+DELIVERED: thin private adapter binds this derivative to actual GE reference IDs,
+geometry and sparse numbering. ThreeQ4/oneB3 panel retains all24 native internals;
+clamped edge is outside pad. Same actual K/supports/loads give sparse/dense q
+differences2.002e-12/9.061e-13 for distributing/rigid, equilibrium below8e-13,
+constraints below6e-21. Eleven sourcechecksPASS/.98s; whole2.765s/179613696B,
+pools1/JIToff/empty stderr. Native retained equations, physical side/support
+wrenches/work and distinct admissible nonrigid compliance checked. Independent
+source review clear. No original owner state/C or public definition mutated.
+Bundled-runtime startup missingpsutil retained; no child/tests started there.
+NEXT: explicit experimental reference-linear owner admission and lifecycle/
+recovery wiring against the proven local map, followed by meaningful installed
+boundary checks. Finite pose/Hessian/chart/material/mass, arbitrary hosts,
+physical references and full footprint acceptance stayopen. No closed factor
+ticket replay, new framework or weakened scientific threshold.
 Existing mechanics criteria and scientific boundaries remain unchanged.
 Root owns scheduling/raw/Git. Current new evidence: envelope-gram/ and
 positive-part-gram/; immutable extension follows raw-manifest-v15.
 Do not rebuild completed fibres, free-mode owners or consumers.
 
-All numerical jobs TERMINAL; workers completed/idle. Root owns scheduling/raw/
-Git. No running experiment to interrupt or repeat. Max3workers.
+All numerical jobs/workers TERMINAL. Private GE bridge source/test hashes and
+responses retained in r8-distributing-ge-reference-dev-20261004-v1. Root owns
+scheduling/raw/Git. No experiment to interrupt or repeat. Max3workers.
 Mandatory CalculiX, full mixed/locking/shear/drilling/growing-space acceptance,
 material/topology/capacity/scale/platform/consumer/different-family acceptance,
 authorized release and clean synchronized main remain open.

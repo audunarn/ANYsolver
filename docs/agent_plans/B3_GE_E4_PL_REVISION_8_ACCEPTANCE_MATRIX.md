@@ -2103,3 +2103,14 @@ orientations, analyticalintegration, immutableownership and precise negatives
 covered. No finitepose/Hessian/chart, globalstability, attachedresponse, installed,
 external or aggregateF04/G0/G2 acceptance follows. Different-family review open.
 [Exact source scope and remaining integration](development/r8-distributing-reference-linear-20261004/results.md).
+
+F04 actual GE reference-linear distributing bridge, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+Actual model/geometry/gather binding and independent sparse six-row insertion
+tested on threeQ4/oneB3 with all24 native internal variables. Same K/supports/loads
+as full-vertex rigid control; sparse/dense q differences2.002e-12/9.061e-13,
+scaled equilibrium7.858e-13/1.438e-13, accepted constraints below6e-21. Eleven
+source controls PASS; retained equations, side/support force/moment/work, physical
+law distinction, immutable/stale/closed/reordered mappings covered. Independent
+supporting source review clear. No public wiring, finite/chart/material/mass,
+installed/physical accuracy, global stability or aggregateF04/G0/G2 acceptance.
+[Bounded integration evidence and next boundary](development/r8-distributing-reference-linear-20261004/results.md).
