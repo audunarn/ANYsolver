@@ -44,3 +44,38 @@ No tolerance or resource cap changed. The independent cubic force is only about
 structural evidence. It does not establish active-rim coupled response, unrestricted
 beam motion, resolved pressure/active length, convergence order, independent
 engineering acceptance, normal application admission, release or full C0–C9.
+
+## Subsequent active-rim slice
+
+The separate prospectively bounded translating-tool fixture now activates the
+left physical hemisphere rim and distributed line contact. Its independent planar
+cap potential includes endpoint-tangent variations. Eligibility is explicit:
+coplanar XY geometry, axis Z, and perpendicular radial magnitude above beam radius.
+Other domains fail in the oracle; the physical-circle reference independently
+checks both cap gaps/branches. Committed snapshots check signed UY at every state.
+
+Ten accepted states yield q=-1.807316781433e-4m, within2.9e-17m of scalar reference.
+Independent cap gap-4.897565um and curve gap-5.895691um meet10um. Separate line/cap
+energies and all nodal force/moment contributions match. Equilibrium defects are
+<=3.8e-16N/8.3e-17Nm. Contact tangent relative errors over3e-7/1e-7/3e-8m are
+4.41e-7/4.87e-8/7.93e-9, all below1e-5. Direct quartic activation roots agree with
+reported reference-measure active lengths within1e-6 in all three curved fixtures.
+
+Installed8 affected checks pass19.556s/184885248B after domain/snapshot checks;
+the3modified response checks pass19.538s/184000512B after independent-width checks.
+The wheel/source is unchanged from the previous slice, so no rebuild or unrelated
+repeat was needed.515package files/217loaded modules match;JIT0/pools1.
+[Final rim/width evidence](summary_rim.json) preserves input hashes and raw paths.
+
+Read-only supporting review found the initial formula's missing domain restriction;
+guards/tests correct it. It found no fixture mechanics defect. Source inspection
+confirms the subsequently added tangent/wrench checks. No review alone establishes
+engineering acceptance. The earlier open-cap fixture remains weak evidence for
+isolated nonlinear structural terms; this rim case is also a guided code fixture.
+
+Without new solves, saved fixed B2/B3 continuum records show reference-measure
+active-length differences0.0824–0.0825%. Meshes1/2/4 barely change that discrepancy.
+This descriptive comparison adds no retrospective acceptance threshold and does
+not establish convergence order or resolved pointwise pressure. The guided curved
+interior/rim code-response gap is closed; claim-specific pressure/spatial adequacy,
+frozen candidate assessment, engineering acceptance and broader D3 remain open.

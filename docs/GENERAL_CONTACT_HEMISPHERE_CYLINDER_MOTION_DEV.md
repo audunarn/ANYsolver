@@ -142,3 +142,16 @@ Private wheel SHA256 `f6a1b3dc3318d4e8ec5faea8c4b26c933a61970c0e2cbe422440b19df1
 [Summary and supporting assessment](d1_review_support/contact_curved_cylinder_response_20261004/review.md).
 Active-rim coupled response, pressure/active-length adequacy and independent
 engineering acceptance remain open. Prior acceptance scopes and failures remain.
+
+The subsequent guided translating-tool case closes **active-rim coupled code
+response**: all10accepted signed-coordinate states match independent planar cap
+and line virtual work. Physical rim/curve gaps-4.898/-5.896um meet10um. Separate
+energies and complete force/moment mappings pass; directional tangent errors over
+three perturbations are4.41e-7/4.87e-8/7.93e-9. Direct quartic roots check active
+width in all curved fixtures. The planar reference explicitly rejects other
+geometries.8installed affected checks and3later modified response checks pass;
+source/wheel unchanged,515files match. This closes the named code-response gap,
+not general rim/pressure engineering qualification.
+Saved fixed-continuum lengths differ by0.0824–0.0825%; this adds descriptive
+accuracy evidence without a new acceptance threshold or convergence-order claim.
+[Assessment and remaining scope](d1_review_support/contact_curved_cylinder_response_20261004/review.md).

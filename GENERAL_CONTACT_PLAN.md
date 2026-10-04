@@ -112,9 +112,14 @@ virtual work and polynomial line quadrature at every accepted fixed/moving state
 Independent gap and complete wrench checks pass. A cylinder-initialization repair
 stops only after an exact nonnegative full-curve bound proves nonpenetration;
 negative/unresolved curves retain the same accuracy/depth and rejection threshold.
-The fixture barely exercises the cubic structural term and keeps both caps open.
-Active-rim coupled response and pressure/active-length resolution remain the next
-specific gaps; do not claim general nonlinear or rim acceptance from this result.
+The initial fixture barely exercises the cubic structural term and keeps both caps
+open. A subsequent guided active-rim fixture now verifies coupled cap/line response,
+complete wrench and1e-5directional tangents. Quartic roots verify represented active
+width; saved continuum lengths differ0.0824–0.0825%, without convergence-order claim.
+Next disposition: identify the exact integrated-response claim and any necessary
+pressure/spatial evidence, then freeze one coherent candidate for independent
+assessment. Do not infer general nonlinear or rim engineering acceptance from these
+guided tests or start another optimization/mesh sweep without a discriminator.
 [Evidence](docs/d1_review_support/contact_curved_cylinder_response_20261004/summary_final.json).
 
 Use existing analytical and independently integrated references where applicable;

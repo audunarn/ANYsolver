@@ -1999,3 +1999,12 @@ The cubic structural term is weakly exercised. Active-rim coupled response,
 pressure/active-length resolution and independent engineering acceptance remain
 open. No normal application admission/release or full D3/C0–C9 completion.
 [Evidence and scope](d1_review_support/contact_curved_cylinder_response_20261004/review.md).
+
+The subsequent guided B3 moving-tool case closes active-rim **coupled code
+response**, including tangent-dependent cap work. Ten accepted states match
+independent cap/line virtual work; independent rim/curve gaps-4.898/-5.896um meet
+10um; force/moment and smooth tangent checks pass. Direct quartic roots verify
+curved active widths.8affected installed checks and3modified width checks pass,
+same515-file-matched wheel. Saved continuum active-length error0.0824–0.0825%
+is descriptive only. Pressure-field adequacy/convergence, frozen candidate
+engineering assessment, broader D3/application admission/release remain open.

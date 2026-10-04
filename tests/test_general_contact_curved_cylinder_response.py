@@ -75,11 +75,21 @@ def independent_gap(positions, point):
     return min(gaps), gaps
 
 
+def independent_active_length(positions, point):
+    lanes=[Polynomial((positions[0,j]-point[j],
+        4*positions[1,j]-3*positions[0,j]-positions[2,j],
+        2*positions[0,j]-4*positions[1,j]+2*positions[2,j])) for j in (0,1)]
+    signed_square=sum((lane*lane for lane in lanes),Polynomial((-RADIUS**2,)))
+    cuts=[0.]+sorted(float(x.real) for x in signed_square.roots()
+        if abs(x.imag)<1e-10 and 0.<x.real<1.)+[1.]
+    return L*sum(b-a for a,b in zip(cuts,cuts[1:]) if signed_square((a+b)/2)<0.)
+
+
 @pytest.mark.parametrize('moving', (False, True))
 def test_guided_curved_response_and_wrench(moving):
     model, definition, settings, load = fixture(moving)
     result = solve_static_nonlinear(model, load, contact=definition, contact_settings=settings,
-        num_steps=4, max_iterations=20, tolerance=1e-10)
+        num_steps=4, max_iterations=20, tolerance=1e-10, record_increment_snapshots=True)
     assert result.status == 'completed', result.failure_reason
     q, point, (positions, energy, gradients) = reference(1., moving)
     actual = result.displacements[model.mesh.dof_manager.get_node_dofs(2)[1]]
@@ -91,6 +101,8 @@ def test_guided_curved_response_and_wrench(moving):
     np.testing.assert_allclose(info['beam_moment'], -np.cross(positions, gradients).sum(axis=0),
         rtol=1e-6, atol=1e-10)
     actual_positions = positions.copy(); actual_positions[1,1] = actual
+    active_length=independent_active_length(actual_positions,point)
+    assert info['active_line_length']==pytest.approx(active_length,rel=1e-6,abs=1e-12)
     (gap, location), extrema = independent_gap(actual_positions, point)
     assert 0. < location < 1. and -1e-5 <= gap < 0.
     assert all(np.linalg.norm(p[:2]-point[:2])-RADIUS > 0. for p in actual_positions)
@@ -110,13 +122,13 @@ def test_guided_curved_response_and_wrench(moving):
     assert np.linalg.norm(force)/FORCE <= 1e-6
     assert np.linalg.norm(moment)/(FORCE*L) <= 1e-6
     history_checks = []
-    for row in result.info['force_displacement_history']:
-        expected_q, _, _ = reference(row['load_factor'], moving)
-        # Exactly one free coordinate, negative under the declared load;
-        # the public full displacement norm therefore equals -q.
-        actual_q = -row['displacement_norm']
+    assert len(result.snapshots)==len(result.info['force_displacement_history'])
+    for snapshot in result.snapshots:
+        factor=snapshot.load_factor
+        expected_q, _, _ = reference(factor, moving)
+        actual_q = snapshot.displacements[model.mesh.dof_manager.get_node_dofs(2)[1]]
         assert actual_q == pytest.approx(expected_q, rel=1e-6, abs=1e-11)
-        history_checks.append(dict(factor=row['load_factor'], q=actual_q, reference_q=expected_q))
+        history_checks.append(dict(factor=factor, q=actual_q, reference_q=expected_q))
     record = os.environ.get('CONTACT_APP_RESULT_RECORD')
     if record:
         Path(record).with_name('curved_'+('moving' if moving else 'fixed')+'.json').write_text(
@@ -124,7 +136,8 @@ def test_guided_curved_response_and_wrench(moving):
                 extremal_gaps=extrema, cap_gaps=cap_gaps, force_balance=force.tolist(),
                 moment_balance=moment.tolist(), info=info,
                 states=len(result.info['force_displacement_history']),
-                iterations=result.info['total_newton_iterations'], history_checks=history_checks),
+                iterations=result.info['total_newton_iterations'], history_checks=history_checks,
+                independent_active_length=active_length),
                 indent=2), encoding='utf-8')
 
 
@@ -166,3 +179,117 @@ def test_initial_penetration_never_becomes_admitted_by_open_certificate(hidden):
     # Unresolved roundoff classification is explicit failure, never admission.
     with pytest.raises((ValueError,MemoryError), match='penetration|enclosure budget'):
         HemisphereCylinderManager(model, definition, settings, initial)
+
+
+def planar_cap_potential_gradient(positions, point, stiffness):
+    """Independent 2D exact-circle solution, with analytic complex variations.
+
+    The axis is Z, the curve lies in its XY plane, and the perpendicular
+    radial magnitude exceeds the beam radius in the rim branch. In this
+    domain the nearest point has zero Z and points opposite the perpendicular
+    radial component. Other rim domains fail explicitly. No production map.
+    """
+    if np.any(positions[:,2]!=point[2]):
+        raise ValueError('planar cap oracle requires coplanar XY geometry')
+    def gap(values, end, sign):
+        tangent = (4*(values[1]-values[0])-(values[2]-values[0]) if end==0 else
+            (values[0]-values[2])-4*(values[1]-values[2]))
+        direction = sign*tangent/np.sqrt(np.dot(tangent,tangent))
+        radial = values[end]-point
+        component = np.dot(radial,direction)
+        radial_squared = np.dot(radial,radial)
+        if component.real <= 0.:
+            return np.sqrt(radial_squared)-.01-.1, 'sphere'
+        perpendicular = np.sqrt(radial_squared-component*component)
+        if perpendicular.real<=.01:
+            raise ValueError('planar cap oracle rim requires perpendicular radius above beam radius')
+        return np.sqrt(component*component+(perpendicular-.01)**2)-.1, 'rim'
+    forces = np.zeros_like(positions)
+    energy = 0.; fields = []
+    for end, sign in ((0,-1),(2,1)):
+        g, branch = gap(positions,end,sign)
+        fields.append(dict(gap=float(g),branch=branch))
+        if g >= 0.: continue
+        energy += .5*stiffness*g*g
+        for i in range(3):
+            for j in (0,1):
+                trial = positions.astype(complex); trial[i,j] += 1e-30j
+                derivative = gap(trial,end,sign)[0].imag/1e-30
+                forces[i,j] += stiffness*g*derivative
+    return energy, forces, fields
+
+
+def test_moving_curved_active_rim_coupled_response():
+    model, definition, settings, load = fixture(True)
+    definition = replace(definition, rigid_bodies=(replace(definition.rigid_bodies[0],
+        point=(.11205,-.111,0.),path_translation=(0.,.001005,0.)),))
+    result = solve_static_nonlinear(model,load,contact=definition,contact_settings=settings,
+        num_steps=4,max_iterations=20,tolerance=1e-10,record_increment_snapshots=True)
+    assert result.status == 'completed', result.failure_reason
+    checks = []
+    def evaluate(q,factor):
+        point = np.array((.11205,-.111+.001005*factor,0.))
+        positions = np.array(((.112,0.,0.),(.212,q,0.),(.312,0.,0.)))
+        line, line_gradient = _line_reference(positions,RADIUS,point,np.array((0.,0.,1.)),LINE,L)
+        cap, cap_gradient, fields = planar_cap_potential_gradient(positions,point,1e5)
+        return positions,point,line,cap,line_gradient+cap_gradient,fields
+    for snapshot in result.snapshots:
+        factor=snapshot.load_factor
+        balance=lambda q:SHEAR*q+CUBIC*q**3+evaluate(q,factor)[4][1,1]+FORCE*factor
+        q=brentq(balance,-2*FORCE*factor/SHEAR,0.,xtol=1e-16)
+        actual_q=snapshot.displacements[model.mesh.dof_manager.get_node_dofs(2)[1]]
+        assert actual_q == pytest.approx(q,rel=1e-6,abs=1e-11)
+        checks.append(dict(factor=factor,q=actual_q,reference_q=q))
+    positions,point,line,cap,gradient,fields=evaluate(checks[-1]['q'],1.)
+    info=result.info['general_contact']
+    assert fields[0]['branch']=='rim' and fields[0]['gap']<0<fields[1]['gap']
+    assert info['active_endpoints']==1 and info['endpoint_fields'][0]['branch']=='rim'
+    assert info['active_line_length']>0.
+    assert info['line_contact_energy']==pytest.approx(line,rel=1e-4,abs=1e-14)
+    assert info['endpoint_contact_energy']==pytest.approx(cap,rel=1e-6,abs=1e-14)
+    np.testing.assert_allclose(info['beam_force'],-gradient.sum(axis=0),rtol=1e-6,atol=1e-10)
+    np.testing.assert_allclose(info['beam_moment'],-np.cross(positions,gradient).sum(axis=0),
+        rtol=1e-6,atol=1e-10)
+    (curve_gap,_),_=independent_gap(positions,point)
+    active_length=independent_active_length(positions,point)
+    assert info['active_line_length']==pytest.approx(active_length,rel=1e-6,abs=1e-12)
+    independent_caps=[_reference(positions,end,sign,.01,point,np.array((0.,0.,1.)),.1)
+        for end,sign in ((0,-1),(2,1))]
+    for field,physical in zip(fields,independent_caps):
+        assert field['gap']==pytest.approx(physical[0],abs=1e-12)
+        assert field['branch']==physical[2]
+    assert min(curve_gap,*(field['gap'] for field in fields))>=-1e-5
+    assert info['gap_tolerance_met']
+    force=np.array((0.,-FORCE,0.))+np.asarray(info['beam_force'])
+    moment=np.cross(positions[1],(0.,-FORCE,0.))+np.asarray(info['beam_moment'])
+    for name,node in (('left',1),('mid_guide',2),('right',3)):
+        reaction=np.asarray(result.steps[-1].support_reactions[name])
+        force+=reaction[:3]
+        moment+=reaction[3:]+np.cross(positions[node-1],reaction[:3])
+    assert np.linalg.norm(force)/FORCE<=1e-6
+    assert np.linalg.norm(moment)/(FORCE*L)<=1e-6
+    from anysolver.general_contact.beam_hemisphere_coupled_tool import CoupledHemisphereToolManager
+    manager=CoupledHemisphereToolManager(model,definition,settings)
+    manager.set_path_factor(1.)
+    _,tangent,_=manager.evaluate(result.displacements)
+    dof=model.mesh.dof_manager.get_node_dofs(2)[1]
+    errors=[]
+    for h in (3e-7,1e-7,3e-8):
+        numerical=(evaluate(checks[-1]['q']+h,1.)[4][1,1]-
+            evaluate(checks[-1]['q']-h,1.)[4][1,1])/(2*h)
+        errors.append(abs(tangent[dof,dof]-numerical)/max(abs(numerical),1e-12))
+    assert max(errors)<=1e-5,errors
+    record=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if record:Path(record).with_name('curved_rim.json').write_text(json.dumps(dict(
+        info=info,history_checks=checks,independent_fields=fields,curve_gap=curve_gap,
+        line_energy=line,cap_energy=cap,contact_tangent_errors=errors,
+        force_balance=force.tolist(),moment_balance=moment.tolist(),
+        independent_active_length=active_length),indent=2),encoding='utf-8')
+
+
+@pytest.mark.parametrize('outside', ('spatial','small_perpendicular'))
+def test_planar_cap_oracle_rejects_unrepresented_domain(outside):
+    positions=np.array(((-.005,.004,0.),(.095,.004,0.),(.195,.004,0.)))
+    if outside=='spatial': positions[1,2]=.001
+    with pytest.raises(ValueError,match='planar cap oracle'):
+        planar_cap_potential_gradient(positions,np.zeros(3),1e5)

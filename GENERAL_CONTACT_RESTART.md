@@ -2,87 +2,78 @@
 
 Goal2026-10-04.5 / plan2026-10-04.98 govern; full C0–C9 incomplete.
 Worktree `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`,
-branch `codex/contact-main-reconcile-20261001`. Committed source baseline for this
-slice: `4697599d`; current candidate is bound by
-installed wheel and source hashes below. Local commit may advance HEAD without
-changing those source bytes. No other owned numerical/worker activity remains.
+branch `codex/contact-main-reconcile-20261001`. Source-changing checkpoint
+`adbdfa3d`; subsequent tests/docs may advance HEAD without changing package bytes.
+No owned numerical/worker activity remains. Main/ANYfem are separately owned;
+protected original must not be accessed. No other-human-chat coordination,
+push/merge/publication/release/default changes or consumed authority replay.
+Local commit authorization remains. Prior details are retained by commits4697599d/
+adbdfa3d and [previous checkpoint](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PART118.md).
 
-Protected original must not be accessed. Main/ANYfem are separately owned.
-No communication with the other human chat, push/merge/publication/release/default
-changes or consumed authority replay. Existing local commit authorization remains.
-[Previous checkpoint](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PART118.md)
-->117 retains paused draft, history, exact prior identities and restrictions.
+## Completed integrated slices
 
-## Integrated outcome
+- Opt-in hemisphere_coupled_tool_dev: one constrained Newton seed from an already
+  active origin, both-radius exterior and complete full/backtracked path checks,
+  unchanged Newton budget/laws/gates. Rejection/cancellation/exception/precommit
+  failure restores tool factor and discards candidates. First approach unchanged.
+  Matched B2/B3:284→16states,844→40iterations; medians11.5243→.7540s and
+  19.3231→1.0854s only those fixtures. Named no-contact medians+2.24%/+0.50%<5%.
+- Fixed cylinder continuum: B2/B3 meshes1/2/4, stronger line enforcement and
+  independent polynomial gap/quadrature. Relative response<=5.55e-6;
+  equilibrium<=6.90e-12; gap4.488→2.246→1.123um within10um. Not convergence-order
+  or pointwise-pressure qualification. Saved active lengths differ0.0824–0.0825%
+  from continuum, barely changing with mesh. This adds no new retrospective gate.
+- Guided curved B3: fixed/translating interior and moving active-rim coupled code
+  response agree with independent scalar shear/axial and line/cap virtual work at
+  every signed committed state. Independent gap1.317um (interior),4.898/5.896um
+  (rim/curve) meets10um. Complete wrench and independent active-width checks pass.
+  Rim contact tangent errors4.41e-7/4.87e-8/7.93e-9<1e-5. Planar oracle is guarded
+  to coplanar XY/perpendicular radial magnitude above beam radius; circle oracle
+  independently checks final cap geometry. Cubic structural term weakly exercised.
+- Cylinder initialization now terminates only when exact conservative full-curve
+  lower bound certifies nonnegative gap. Negative/unresolved bounds retain original
+  roundoff accuracy, depth16 and rejection threshold. Hidden penetration still fails.
 
-The opt-in `hemisphere_coupled_tool_dev` profile now performs one complete
-constrained Newton seed from an already active committed origin after fixed-pose
-preflight failure. It certifies both-radius exterior geometry before disposable
-assembly and the full physical-origin/candidate path, including backtracked seeds.
-It counts inside the original Newton budget. Failed/cancelled/exception candidates
-and precommit tool-work failure discard trial state/restore the old tool factor.
-First approach, physical laws, final gates and previous default profile remain.
+Latest private wheel rawroot/dist2 SHA256
+`f6a1b3dc3318d4e8ec5faea8c4b26c933a61970c0e2cbe422440b19df185dfab`.
+515package files/217–219loadedmodules match;JIToff,Numba/pools1. Initial15affected
+installed checks pass14.207s/186695680B. Final8reference/snapshot/domain checks
+pass19.556s/184885248B;3modified width checks pass19.538s/184000512B. Source unchanged
+for test-only extensions, no rebuild/unrelated repeats. Previous combined31pass
+and fixed/default state evidence reused after impact assessment. Supporting
+read-only reviewer found no fixture/source defect; reference-domain guards and
+signed snapshots resolve its actionable findings. This is not engineering acceptance.
 
-Matched four-target B2/B3 fixtures:284→16accepted states,844→40Newton iterations;
-source medians11.5243→.7540s B2,19.3231→1.0854s B3 (15.28x/17.80x only those routes).
-Independent response/gap/work pass. No-contact named16B2 axial/bending medians
-+2.24%/+0.50%, within5%budget. Source scrutiny exposed and resolved dispatch,
-rollback and radius-order gaps; test/runner failures are retained.
-
-Fixed-cylinder continuum verification: axial bar with nearly half of.02N carried
-by distributed line contact; independent hyperbolic reference and polynomial gap/
-quadrature checks. B2/B3 meshes1/2/4 and stronger line penalties yield relative
-response errors<=5.55e-6, equilibrium<=6.90e-12; penetration4.488→2.246→1.123um
-within10um. This is fixed/shared-law accuracy evidence, not convergence order,
-resolved pressure/active length, moving-algorithm or curved coupled qualification.
-
-Installed31pass/105.996s/336527360B;515package files/219loadedmodules match,JIT0/pools1.
-Wheel SHA256 `4d6e2040299124059a92138e915fd5a1f70e71ebe65d09ea6bd225d0b12a0dde`.
 [Guide](docs/GENERAL_CONTACT_HEMISPHERE_CYLINDER_MOTION_DEV.md),
-[summary/review](docs/d1_review_support/contact_coupled_tool_staging_20261004/summary.json).
-Raw once: `C:/ANYworkspaceWork/contact_coupled_tool_staging_20261004`;
-continuum prospective decision: `C:/ANYworkspaceWork/contact_cylinder_convergence_20261004/decision.md`.
-The existing example uses `run(coupled_load_seed=True)` explicitly. No engineering
-acceptance, release or normal application admission promotion is made.
+[curved assessment](docs/d1_review_support/contact_curved_cylinder_response_20261004/review.md),
+[final rim/width summary](docs/d1_review_support/contact_curved_cylinder_response_20261004/summary_rim.json).
+Raw once `C:/ANYworkspaceWork/contact_coupled_tool_staging_20261004`;
+prospective decisions/analysis `C:/ANYworkspaceWork/contact_curved_cylinder_response_20261004`.
+Preserve source01 dispatch/source03 runner/source04 boundary/source09–11 test failures,
+curved01 open-initial enclosure exhaustion and curved02 exact-gap test defect.
 
-## Next action and stopping rules
+## Next decision
 
-A is retained within its90minute timebox; stop further optimization. Continue the
-existing D3 cylinder candidate's curved coupled response/reference boundary and
-pressure/active-length adequacy if required for its specific claim. Reuse existing
-physical-circle/line oracles and admitted structural evidence; do not launch a new
-geometry or friction prototype to avoid that gap. Keep finite-rotation/von-Karman
-and native/section admission separate. One discrepancy permits one discriminating
-corrective experiment, not an automatic expensive refinement. Update the ledger
-at the next meaningful disposition; one wheel per coherent integration.
+The named curved interior/rim code-response gap is closed. Stop optimization and
+profile expansion. Identify the exact integrated-response D3 claim and any needed
+pressure/spatial evidence, then freeze one coherent claim-bearing candidate for
+independent assessment. Do not infer general rim/nonlinear/pressure acceptance from
+these guided fixtures. One discrepancy permits one discriminator, not an automatic
+mesh or budget increase. Broader beams/native/sections and required C0–C9 remain.
 
 ## Retained dependencies and budget
 
-ANYfem HEAD434ec0041733fa750f71a14fb8ca78e42f8eca64 unchanged. Missing accepted-D1
-source/model evidence stays missing; no reconstruction/protected access; normal
-application admission false. Impact hidden-point relaxation remains unapproved:
-V4/V16 NONPASS900s at1.79779ms/3ms, real65nm hidden pulse and old oracle sign defect;
-no full replay or relaxed caps/tolerance/policy. Native grazing friction NONPASS
-−1.33564e-13m/223queries448paths21support10.364s; closed event derivative and mixed-
-work enclosure missing. No saved/full/owner/split retry/reset/zero/native acceptance.
-Q4 FD appcycle180.124s timeout stays; no unchanged retry. Optional lower-tier workers
-remain unavailable without new evidence; no repeated probes. Supporting same-family
-source review alone is not independent engineering acceptance.
+ANYfem HEAD434ec0041733fa750f71a14fb8ca78e42f8eca64 unchanged. Accepted-D1 source/model
+binding remains missing; no reconstruction/protected access; normal app admissionfalse.
+Impact hidden-point relaxation unapproved:V4/V16 NONPASS900s at1.79779ms/3ms,
+real65nm hidden pulse/old oracle sign defect; no full replay or relaxed policy/caps.
+Native grazing friction NONPASS−1.33564e-13m/223queries448paths21support10.364s;
+closed event derivative/mixed-work enclosure missing. No saved/full/owner/split
+retry/reset/zero/native acceptance. Q4 FD appcycle180.124s timeout:no unchanged retry.
+Optional Local/Mistral remain unavailable without new evidence; no repeated probes.
 
-Last goal reading400819+3120=403939active seconds (~112.205h), remaining~7.795h
-of the original120h. Check current clock before substantial work; no reset/extension.
-Routine180s/1GB, named900s/4GB, stricter frozen authorities prevail. At120h preserve,
-report achieved/missing scope and request time/scope/method decision. Full programme
-completion within the remainder has no supported forecast; incomplete is not complete.
-
-Curved B3 slice complete: guided fixed/moving interior response agrees with independent
-shear/axial work and polynomial line quadrature at all accepted states; open vertices/
-caps, independent gap-1.317um<=10um and full wrench pass. Initialization now stops at
-an exact nonnegative full-curve certificate; negative/unresolved bounds retain original
-accuracy/depth/rejection.15distinct installed checks pass14.207s/186695680B;5changed
-tests repeat12.341s/183529472B.515files match;JIT0/pools1. Wheel in rawroot/dist2,
-SHA256f6a1b3dc3318d4e8ec5faea8c4b26c933a61970c0e2cbe422440b19df185dfab.
-[Evidence/limits](docs/d1_review_support/contact_curved_cylinder_response_20261004/review.md)
-retains curved01 enclosure failure, curved02 gap-test defect, supporting review and
-weak cubic-force scope. Next specific boundary: active-rim coupled response/reference
-and pressure/active-length adequacy. No engineering acceptance or new prototype.
+Last goal reading401736+3120=404856active seconds (112.46h), remaining7.54h of the
+original120h. Check before substantial work; no reset/extension. Routine180s/1GB,
+named900s/4GB, stricter frozen limits prevail. At120h preserve/report achieved and
+missing scope, then request time/scope/method decision. Full completion has no
+supported forecast; incomplete is not complete.
