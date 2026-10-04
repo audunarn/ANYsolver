@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.99. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.6, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.100. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.7, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch / source-changing baseline:** `codex/contact-main-reconcile-20261001` / `adbdfa3d`; current Git HEAD binds later test/evidence additions.
 
@@ -48,10 +48,11 @@ and usable scope, not profile count, test count or plan revisions.
 
 **Current disposition:** A is retained after matched response/work/path/state checks,
 source scrutiny and fresh installed verification: 284→16 states, 844→40 iterations
-in both guided fixtures. B adds sampled fixed-cylinder continuum response/enforcement
-evidence, not curved/pressure/general qualification. C verifies one combined wheel
-(31 outcomes, 515 source files matched). Continue with the remaining curved coupled
-response/reference boundary; no further optimization campaign is needed for A.
+in both guided fixtures. B's axial/curved/plane-limit bending and line-field gaps
+now have a prospectively assessed named benchmark PASS:33fresh installed outcomes,
+with515package files matched. General profile/model admission remains open.
+Next close one concrete admission-contract question in that existing capability;
+no further optimization campaign or unrelated prototype is needed.
 See the updated moving-cylinder guide and ledger for exact scope and raw evidence.
 
 ## 2. Decided execution sequence on resumption
@@ -119,9 +120,17 @@ width; saved continuum lengths differ0.0824–0.0825%, without convergence-order
 Free-bending B2/B3 response, line-field resolution, stronger enforcement and actual
 fixed-body press/open/recontact with open-state restart now pass in bounded
 development fixtures. The reference is a declared large-radius plane limit with
-tip work and independent80-digit transfer controls. Next disposition: freeze one
-named cylinder-static benchmark candidate for independent assessment. This closes
-specific evidence gaps; it does not admit arbitrary cylinder/beam models.
+tip work and independent80-digit transfer controls. The frozen8be4c355named
+cylinder-static benchmark assessment now passes33fresh installed outcomes,
+176.926scombined/203911168Bpeak, with independent analytical, continuum and
+transfer comparisons plus final source/raw scrutiny. This closes the literal
+benchmark evidence rows, not arbitrary cylinder/beam admission.
+Next: one bounded contract review identifies the smallest credible admission
+scope for the existing profile, or a concrete required work/geometry/structural
+guard and discriminator. Check actual interpolation/reference geometry, vonKarman
+scope, complete paths/state and representation versus dimensional gap budgets.
+Do not invent generic admission from finite benchmark agreement or open another
+prototype while that specific question is unresolved.
 Do not infer general nonlinear or rim engineering acceptance from these
 guided tests or start another optimization/mesh sweep without a discriminator.
 [Evidence](docs/d1_review_support/contact_curved_cylinder_response_20261004/summary_final.json).
@@ -153,7 +162,7 @@ This milestone remains incomplete until its required independent assessment clos
 | Application admission | Keep false without accepted source/model evidence. Do not reconstruct consumed evidence or access the protected original |
 | Timed-out Q4 application cycle | No unchanged rerun; require a concrete changed cause and valid bounded authority |
 | Optional workers | No repeated unavailable-provider probes. Use an available worker only for independent bounded work that shortens the selected delivery; never message the other human chat |
-| Remaining budget | Approximately 7.795 active hours at the latest checkpoint; no forecast that full C0–C9 fits. No extension or scope reduction is implied |
+| Remaining budget | Follow the living checkpoint's accumulated120haccounting; no forecast that full C0–C9 fits. No extension or scope reduction is implied |
 
 These choices remove requests for discretionary direction. Missing external evidence
 or authority remains a dependency; a planning decision cannot supply it.

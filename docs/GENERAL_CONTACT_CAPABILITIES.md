@@ -2024,3 +2024,17 @@ per-state-force and exact-radius reporting issues; historical failures are retai
 Development evidence only; formal claim assessment/generalD3 admission/release open.
 [Scope/review](d1_review_support/contact_curved_cylinder_response_20261004/review.md),
 [raw identities/results](d1_review_support/contact_curved_cylinder_response_20261004/summary_bending.json).
+
+### Named cylinder-static benchmark assessment — PASS, 4 October 2026
+
+Candidate8be4c355/manifest559e839c…b389838:33fresh installed outcomes pass in
+176.926scombined, peak203911168B;515package files/20inputs/3reuse identities match,
+JIToff/pools1. Independent continuum/virtual-work/80digit transfer comparisons,
+source scrutiny and final raw assessment close the named axial, plane-limit bending,
+line-density/enforcement, curved/rim code-work and fixed-cycle/restart benchmark rows.
+Width1e-6checks represented recovery versus owner, not continuum-front accuracy.
+This is **assessed named benchmark evidence**, not general-profile/application
+admission or release; broaderD3/C0–C9 remains open. Public development status stays.
+[Assessment](d1_review_support/contact_curved_cylinder_response_20261004/acceptance_assessment.md)
+links frozen inputs and raw results. Older-wheel reuse is tied to actual source bytes
+and fresh initialization coverage, not merely a baselineSHA. Historical failures remain.

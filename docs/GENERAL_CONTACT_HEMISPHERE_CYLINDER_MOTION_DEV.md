@@ -175,3 +175,11 @@ that profile. No cycle-work or general pressure/finite-rotation acceptance follo
 [Evidence, review and precise limits](d1_review_support/contact_curved_cylinder_response_20261004/summary_bending.json).
 Production/wheel bytes are unchanged; affected tests ran against the same private
 installed artifact. No release or normal application admission is established.
+
+The subsequent prospectively frozen **named benchmark assessment passes**:
+33installed outcomes,176.926scombined, maximum203911168B; all515package files,
+transitive inputs, raw identities and effective runtime match. Mathematical and
+numerical references plus final supporting scrutiny close those literal benchmark
+rows. This supplies no arbitrary-model/profile/application admission.
+[Final assessment](d1_review_support/contact_curved_cylinder_response_20261004/acceptance_assessment.md)
+binds the exact scope, reuse justification and remaining limitations.
