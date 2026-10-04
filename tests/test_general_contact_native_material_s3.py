@@ -301,9 +301,15 @@ def test_pre_area_multiple_line_checkpoint_remains_replayable():
 
 def _analysis(*,force=-.005,targets=(.5,1.),stiffness=1e6,radius=.05,
               shell_z=-.0501,angles=(pi-.3,pi+.3),triangle=None,shell_E=1e8,
-              shell_node_order=(4,5,6),director_polarity=1):
+              shell_node_order=(4,5,6),director_polarity=1,native_yield=1e6):
     native,_,inertias=make(False,clamped=True,coupled=False)
     element=native.mesh.elements[1]
+    if native_yield!=1e6:
+        from anysolver._ge_beam3_generalized_ellipsoid_section import EllipsoidalGeneralizedSection
+        from anysolver._ge_beam3_native_generalized_element import NativeGeneralizedStaticElement
+        law=EllipsoidalGeneralizedSection(element.section.elastic,element.section.metric,native_yield,
+            element.section.hardening)
+        element=NativeGeneralizedStaticElement(1,(1,2,3),element.operator.reference,law,order=4)
     definition=NativeBeamDefinition.capture(element,inertias[1])
     program=Program(targets,DistributedPattern(LinePattern(()),()),
         NodalDeadForces(((3,0.,0.,force),)),max_iterations=24)
@@ -354,6 +360,77 @@ def test_cyclic_shell_corner_order_preserves_work_and_physical_wrench():
 def test_material_skin_rejects_unadmitted_negative_director_polarity():
     with pytest.raises(ValueError,match='positive director/reference orientation'):
         _analysis(director_polarity=-1)
+
+
+def _accumulated(history):
+    from anysolver._ge_beam3_p5_seeded.core import canonical
+    def values(value):
+        if isinstance(value,dict):
+            if 'accumulated' in value:return [sum(value['accumulated'])]
+            return [x for child in value.values() for x in values(child)]
+        if isinstance(value,list):return [x for child in value for x in values(child)]
+        return []
+    return values(json.loads(canonical(history)))
+
+
+@pytest.mark.parametrize('stiffness',(1e6,1e7))
+def test_yielding_fixture_failure_preserves_last_accepted_state(stiffness):
+    from anysolver._ge_beam3_p5_seeded.core import canonical
+    kwargs=dict(targets=(.25,.5,.75,1.),native_yield=1e-5,stiffness=stiffness)
+    owner=_analysis(**kwargs);run=owner.solve()
+    assert run.status=='failed' and 'line-search/gap limit' in run.failure
+    prefix=_analysis(**kwargs).solve(stop_after=run.accepted.completed_targets)
+    assert prefix.status=='paused' and prefix.checkpoint==run.checkpoint
+    assert canonical(prefix.accepted.native_histories)==canonical(run.accepted.native_histories)
+    assert canonical(prefix.accepted.mechanical.descriptor())==canonical(run.accepted.mechanical.descriptor())
+    assert_allclose(prefix.accepted.mechanical.positions,run.accepted.mechanical.positions,rtol=0.,atol=0.)
+    assert_allclose(prefix.accepted.shell_displacement,run.accepted.shell_displacement,rtol=0.,atol=0.)
+    assert max(_accumulated(owner.initial.native_histories))==0.
+    maximum_accumulated=max(_accumulated(run.accepted.native_histories))
+    if stiffness==1e6:
+        assert run.accepted.completed_targets==3 and maximum_accumulated>0.
+        previous=np.asarray(_accumulated(owner.initial.native_histories))
+        for row in json.loads(run.checkpoint)['records']:
+            current=np.asarray(_accumulated(row['histories']))
+            assert np.all(current>=previous);previous=current
+    assert run.accepted.contact.contact.minimum_gap_m>=-owner.gap_tolerance
+    output=os.environ.get('CONTACT_MATERIAL_PLASTIC_RECORD')
+    if output:Path(output+'-'+str(int(stiffness))+'.json').write_text(json.dumps(dict(
+        disposition='coupled yielding NONPASS; failed-trial state preservation checked',
+        status=run.status,failure=run.failure,completed_targets=run.accepted.completed_targets,
+        maximum_accumulated=maximum_accumulated,
+        minimum_gap_m=run.accepted.contact.contact.minimum_gap_m,
+        checkpoint_sha256=run.checkpoint_sha256),indent=2))
+
+
+def test_plastic_branch_complete_owner_tangent_and_disposable_history():
+    from anysolver._ge_beam3_p5_seeded.core import canonical
+    owner=_analysis(native_yield=1e-5,shell_z=-.05001)
+    origins=owner.initial.native_histories;captured=canonical(origins)
+    step=np.zeros(42);step[8]=-2e-5;step[14]=-3e-5
+    step[owner.context.nodal_count+6:]=.0002
+    pose=owner.context.advance(owner.initial.mechanical,step);u=np.zeros(18)
+    residual,tangent,_,responses,contact=owner._assemble(pose,u,1.,origins)
+    trial=tuple(row.history for row in responses)
+    assert max(_accumulated(trial))>0. and min(_accumulated(trial))>=0.
+    assert captured==canonical(origins)==canonical(owner.initial.native_histories)
+    assert contact.contact.potential_j>0. and contact.contact.minimum_gap_m>=-owner.gap_tolerance
+    d=np.random.default_rng(527).normal(size=60)*.001;d[list(owner.context.fixed)]=0.
+    d[42+owner.shell_fixed]=0.;errors=[]
+    for h in (1e-5,2e-6):
+        states=[owner.context.advance(pose,sign*h*d[:42]) for sign in (1,-1)]
+        rows=[owner._assemble(s,u+sign*h*d[42:],1.,origins)[0]
+            for sign,s in zip((1,-1),states)]
+        fd=(rows[0]-rows[1])/(2*h)
+        error=float(np.linalg.norm(tangent@d-fd)/np.linalg.norm(fd));assert error<=1e-5;errors.append(error)
+    assert canonical(origins)==captured
+    after=owner._assemble(owner.initial.mechanical,u,0.,origins)
+    assert max(_accumulated(tuple(row.history for row in after[3])))==0.
+    output=os.environ.get('CONTACT_MATERIAL_PLASTIC_RECORD')
+    if output:Path(output+'-local.json').write_text(json.dumps(dict(
+        disposition='local nonequilibrated plastic-branch code check; no coupled acceptance',
+        maximum_accumulated=max(_accumulated(trial)),owner_tangent_errors=errors,
+        minimum_gap_m=contact.contact.minimum_gap_m),indent=2))
 
 
 def _reference(work,positions,rotations,u):
