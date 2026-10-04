@@ -7,6 +7,7 @@ Reference area is fixed; no friction, history transfer or swept admission is
 introduced here.
 """
 from dataclasses import dataclass
+from fractions import Fraction
 from math import acos, atan2, cos, fsum, hypot, isfinite, pi, sin
 
 import numpy as np
@@ -102,6 +103,21 @@ def _cell_data(rule, target, configuration, corners, cell, left, right, stiffnes
     raw_normal = _cross(*edges)
     length = sqrt(dot(raw_normal, raw_normal))
     normal = [v/length for v in raw_normal]
+    count = 42+target.adapter.work_map.shape[1]
+    mapping = np.zeros((18, count))
+    mapping[:3, 6*cell:6*cell+3] = np.eye(3)
+    mapping[3:6, 6*(cell+1):6*(cell+1)+3] = np.eye(3)
+    mapping[6:9, 18+3*cell:21+3*cell] = np.eye(3)
+    mapping[9:, 42:] = target.adapter.work_map.toarray()
+    return _material_cell_normal_data(rule, configuration, cell, left, right,
+        stiffness, q[:9], normal, corners[0], q[9:12], mapping)
+
+
+def _material_cell_normal_data(rule, configuration, cell, left, right,
+                               stiffness, q, normal, origin, origin_variations, mapping,
+                               *, compensated_projection=False):
+    """Shared physical section map; callers supply the target's work columns."""
+    size = q[0].gradient.size
     reference = rule.samples[0].station.reference
     frame = configuration.cell_rotations[cell] @ reference.nodal_triads[0]
     rotated = matmul(so3_exp(q[6:9]), constant_matrix(frame, size))
@@ -116,12 +132,12 @@ def _cell_data(rule, target, configuration, corners, cell, left, right, stiffnes
                        (1-t)*float(configuration.position_low[cell, i]),
                        t*float(configuration.positions[cell+1, i]),
                        t*float(configuration.position_low[cell+1, i]),
-                       -float(corners[0, i])))
+                       -float(origin[i])))
         difference = fsum((float(configuration.positions[cell+1, i]),
                            float(configuration.position_low[cell+1, i]),
                            -float(configuration.positions[cell, i]),
                            -float(configuration.position_low[cell, i])))
-        base.append(offset+(1-t)*q[i]+t*q[3+i]-q[9+i])
+        base.append(offset+(1-t)*q[i]+t*q[3+i]-origin_variations[i])
         chord.append(difference+q[3+i]-q[i])
     offset = dot(normal, base)
     slope = dot(normal, chord)
@@ -130,10 +146,44 @@ def _cell_data(rule, target, configuration, corners, cell, left, right, stiffnes
         reference.coordinates[cell+1]-reference.coordinates[cell]))
     if not isfinite(reference_measure) or reference_measure <= 0.:
         raise ValueError('normal integration requires positive finite reference area measure')
+    alo, ahi = rule.definition['angle_range']
+    anchor = alo+(ahi-alo)/2.
+    anchored_gap=(Fraction(offset.value)+Fraction(cos(anchor))*Fraction(cosine.value)
+                  +Fraction(sin(anchor))*Fraction(sine.value)) if compensated_projection else None
+    def anchored_scalar(angle):
+        half_delta=(angle-anchor)/2.
+        half_sum=anchor+half_delta
+        delta_cos=-2.*sin(half_sum)*sin(half_delta)
+        delta_sin=2.*cos(half_sum)*sin(half_delta)
+        return (anchored_gap+Fraction(delta_cos)*Fraction(cosine.value)
+                +Fraction(delta_sin)*Fraction(sine.value))
+    if compensated_projection:
+        # This development profile excludes unresolved angular grazing. A
+        # rounded acos ratio can omit a tiny active pocket which both Gauss
+        # rules miss. Reject ambiguous endpoints/extrema before quadrature;
+        # never interpret a zero estimator as proof of an inactive interval.
+        phase=atan2(sine.value,cosine.value)
+        critical=[alo,ahi]+[phase+k*pi for k in range(-2,5) if alo<phase+k*pi<ahi]
+        resolution=32.*np.finfo(float).eps*(abs(offset.value)+abs(width*slope.value)
+                                             +abs(cosine.value)+abs(sine.value))
+        for angle in critical:
+            first=anchored_scalar(angle)
+            for gap in (first,first+Fraction(width)*Fraction(slope.value)):
+                if abs(float(gap))<=resolution:
+                    raise ValueError('material plane angular endpoint/extremum gap unresolved; grazing excluded')
 
     def integrand(angle):
         first = offset+cos(angle)*cosine+sin(angle)*sine
         last = first+width*slope
+        if compensated_projection:
+            # Recover the base gap from the declared binary coefficients before
+            # cancellation. Derivatives still differentiate the same smooth
+            # projection; old S3 paths retain their numerical convention.
+            # Trigonometric differences avoid losing the small variation of a
+            # gap near an angular extremum to rounding of cos(angle) itself.
+            exact=anchored_scalar(angle)
+            first=Jet2(float(exact),first.gradient,first.hessian)
+            last=Jet2(float(exact+Fraction(width)*Fraction(slope.value)),last.gradient,last.hessian)
         if first.value >= 0. and last.value >= 0.:
             energy = Jet2.constant(0., size)
         elif first.value <= 0. and last.value <= 0.:
@@ -148,13 +198,6 @@ def _cell_data(rule, target, configuration, corners, cell, left, right, stiffnes
             raise ValueError('nonfinite straight normal integrand')
         return energy
 
-    count = 42+target.adapter.work_map.shape[1]
-    mapping = np.zeros((18, count))
-    mapping[:3, 6*cell:6*cell+3] = np.eye(3)
-    mapping[3:6, 6*(cell+1):6*(cell+1)+3] = np.eye(3)
-    mapping[6:9, 18+3*cell:21+3*cell] = np.eye(3)
-    mapping[9:, 42:] = target.adapter.work_map.toarray()
-    alo, ahi = rule.definition['angle_range']
     breaks = _breakpoints(offset.value, offset.value+width*slope.value,
                           cosine.value, sine.value, alo, ahi)
     return integrand, mapping, breaks
@@ -188,28 +231,42 @@ def integrate_straight_normal(rule, target, configuration,
     cells = [(c, l, r) for c, l, r in
              ((0, max(lo, -1.), min(hi, 0.)), (1, max(lo, 0.), min(hi, 1.))) if r > l]
     data = [_cell_data(rule, target, configuration, corners, *cell, stiffness) for cell in cells]
+    return _integrate_material_normal_data(data, 60, settings)
+
+
+def _integrate_material_normal_data(data, count, settings):
+    """Bounded shared angular integration and one spatial-chart conversion."""
     initial_intervals = sum(len(item[2])-1 for item in data)
-    if initial_intervals > settings.max_intervals:
-        raise MemoryError('straight normal integration interval budget exhausted')
+    def exhausted(visited=0,accepted=0,evaluations=0,last_error=None,last_interval=None):
+        error=MemoryError('straight normal integration interval budget exhausted')
+        error.integration_diagnostics=dict(initial_intervals=initial_intervals,
+            maximum_intervals=settings.max_intervals,visited_intervals=visited,
+            accepted_intervals=accepted,integrand_evaluations=evaluations,
+            last_estimated_error=last_error,last_interval=last_interval)
+        return error
+    if initial_intervals > settings.max_intervals:raise exhausted()
     gauss = (leggauss(8), leggauss(16))
     total_width = sum(item[2][-1]-item[2][0] for item in data)
     tolerances = np.array((settings.energy_absolute_tolerance,
                            settings.force_absolute_tolerance,
                            settings.tangent_absolute_tolerance))
-    residual = np.zeros(60)
-    hessian = np.zeros((60, 60))
+    residual = np.zeros(count)
+    hessian = np.zeros((count, count))
     energies = []
     errors = []
     visited = accepted = evaluations = 0
-    scale=np.ones(60)
+    last_error=last_interval=None
+    scale=np.ones(count)
     for first in (3,9,15,18,21,45,51,57):
-        scale[first:first+3]=1./settings.characteristic_length_m
+        if first+3 <= count:
+            scale[first:first+3]=1./settings.characteristic_length_m
     for integrand, mapping, breaks in data:
-        local = Jet2.constant(0., 18)
+        size = mapping.shape[0]
+        local = Jet2.constant(0., size)
         pending = list(zip(breaks[:-1], breaks[1:]))
         while pending:
             if visited >= settings.max_intervals:
-                raise MemoryError('straight normal integration interval budget exhausted')
+                raise exhausted(visited,accepted,evaluations,last_error,last_interval)
             left, right = pending.pop()
             half = (right-left)/2.
             middle = left+half
@@ -217,7 +274,7 @@ def integrate_straight_normal(rule, target, configuration,
                 raise ValueError('straight normal integration angular resolution exhausted')
             estimates = []
             for points, weights in gauss:
-                estimate = Jet2.constant(0., 18)
+                estimate = Jet2.constant(0., size)
                 for point, weight in zip(points, weights):
                     angle = middle+half*float(point)
                     if not left < angle < right:
@@ -234,6 +291,7 @@ def integrate_straight_normal(rule, target, configuration,
                               float(np.max(np.abs(scale[:,None]*mapped_tangent*scale[None,:])))))
             if not np.all(np.isfinite(error)):
                 raise ValueError('nonfinite straight normal integration error estimate')
+            last_error=error.tolist();last_interval=(left,right)
             if np.all(error <= tolerances*((right-left)/total_width)):
                 local = local+estimates[1]
                 errors.append(error)

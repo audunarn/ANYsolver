@@ -1,7 +1,8 @@
 """Internal coupled retained-coordinate native beam/plane static development owner.
 
-One generalized native B3-GE beam and one fixed round-centreline plane kernel
-are admitted. No public native workflow profile or restart is claimed.
+One generalized native B3-GE beam with a fixed plane line kernel or an explicitly
+selected interior material-area kernel. Restricted development checkpoints do
+not establish public native engineering admission.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from hashlib import sha256
 from math import isfinite
 
 import numpy as np
+from anysolver.control import SolveCancelled, cancellation_safe_point
 
 from anysolver._ge_beam3_generalized_static_boundary import spatial_jacobian
 from anysolver._ge_beam3_native_analysis import NativeBeamAnalysis
@@ -28,6 +30,7 @@ from .native_retained_line_plane import (
     NativeRetainedLinePlaneResult,
     NativeRetainedRoundLinePlane,
 )
+from .native_material_plane import NativeRoundMaterialPlane, PROFILE as MATERIAL_PROFILE
 
 
 PROFILE = "NATIVE_B3_GE_RETAINED_ROUND_LINE_PLANE_STATIC_DEV_V1"
@@ -49,6 +52,7 @@ class NativeRetainedContactRun:
     failure: str | None
     checkpoint: bytes
     profile: str = PROFILE
+    diagnostics: dict | None = None
 
     @property
     def checkpoint_sha256(self) -> str:
@@ -60,7 +64,7 @@ class NativeRetainedRoundPlaneAnalysis:
 
     def __init__(self, definitions: tuple[NativeBeamDefinition, ...],
                  boundaries: tuple, program: NativeNodalProgram,
-                 contact: NativeRetainedRoundLinePlane, *,
+                 contact: NativeRetainedRoundLinePlane | NativeRoundMaterialPlane, *,
                  gap_tolerance_m: float, equilibrium_tolerance: float,
                  maximum_swept_intervals: int):
         if (type(definitions) is not tuple or len(definitions) != 1
@@ -68,8 +72,9 @@ class NativeRetainedRoundPlaneAnalysis:
             raise ValueError("native contact development owner needs one exact beam definition")
         if type(program) is not NativeNodalProgram:
             raise TypeError("native contact owner needs exact retained nodal program")
-        if type(contact) is not NativeRetainedRoundLinePlane:
-            raise TypeError("native contact owner needs exact retained line/plane kernel")
+        if type(contact) not in (NativeRetainedRoundLinePlane, NativeRoundMaterialPlane):
+            raise TypeError("native contact owner needs exact retained line or material plane kernel")
+        self.profile = MATERIAL_PROFILE if type(contact) is NativeRoundMaterialPlane else PROFILE
         if (type(gap_tolerance_m) not in (int, float)
                 or not isfinite(gap_tolerance_m) or gap_tolerance_m <= 0.0
                 or type(equilibrium_tolerance) not in (int, float)
@@ -109,8 +114,14 @@ class NativeRetainedRoundPlaneAnalysis:
 
     def _identity(self) -> str:
         contact = self.contact
+        if type(contact) is NativeRoundMaterialPlane:
+            return sha(dict(profile=self.profile,native_model=self.context.identity,
+                native_support_sha256=sha256(self.context.support_identity).hexdigest(),
+                contact=contact.definition(),gap_tolerance_m=self.gap_tolerance,
+                equilibrium_tolerance=self.equilibrium_tolerance,
+                maximum_swept_intervals=self.maximum_swept_intervals))
         return sha(dict(
-            profile=PROFILE,
+            profile=self.profile,
             native_model=self.context.identity,
             native_support_sha256=sha256(self.context.support_identity).hexdigest(),
             contact=dict(element=contact.element_id,
@@ -169,7 +180,7 @@ class NativeRetainedRoundPlaneAnalysis:
         self._guard_contact()
         if type(records) is not tuple or len(records) > len(self.program.targets):
             raise ValueError("native contact checkpoint record extent")
-        body = dict(schema=CHECKPOINT_SCHEMA, profile=PROFILE,
+        body = dict(schema=CHECKPOINT_SCHEMA, profile=self.profile,
                     identity=self.identity, completed_targets=len(records),
                     records=records)
         raw = canonical({**body, "checkpoint_sha256": sha(body)})
@@ -190,7 +201,7 @@ class NativeRetainedRoundPlaneAnalysis:
             raise ValueError("native contact checkpoint schema")
         body = {key: item for key, item in value.items()
                 if key != "checkpoint_sha256"}
-        if (value["schema"] != CHECKPOINT_SCHEMA or value["profile"] != PROFILE
+        if (value["schema"] != CHECKPOINT_SCHEMA or value["profile"] != self.profile
                 or value["identity"] != self.identity
                 or value["checkpoint_sha256"] != sha(body)):
             raise ValueError("native contact checkpoint definition/settings binding")
@@ -241,9 +252,22 @@ class NativeRetainedRoundPlaneAnalysis:
         rotation_lipschitz = max(
             float(np.linalg.norm(increment[cell_first+3*cell:
                                            cell_first+3*cell+3])
-                  * np.linalg.norm(self.contact.reference.half_cell_lift(cell, 0.5)))
+                  * (np.linalg.norm(self.contact.reference.half_cell_lift(cell, 0.5))
+                     + (self.contact.radius if type(self.contact) is NativeRoundMaterialPlane else 0.)))
             for cell in (0, 1)
         )
+        if type(self.contact) is NativeRoundMaterialPlane:
+            from .native_surface_s3_friction import NativeS3MaterialConfiguration
+            pose=NativeS3MaterialConfiguration(start.positions[nodes],start.position_low[nodes],
+                                               start.cell_rotations[0],np.zeros(0))
+            local=increment[np.asarray(self.context.slots[0],dtype=int)]
+            translations=np.array([local[6*i:6*i+3] for i in range(3)])
+            try:
+                self.contact.rule.certify_orientation_path(pose,translations,local[18:24].reshape(2,3),
+                    np.zeros(0),maximum_intervals=self.maximum_swept_intervals)
+            except ValueError as exc:
+                if 'requires subdivision' not in str(exc):raise
+                return False
         lipschitz = translation_lipschitz+rotation_lipschitz
         roundoff = 256.0*np.finfo(float).eps*max(
             1.0, float(np.max(np.abs(before))), float(np.max(np.abs(after))),
@@ -258,7 +282,8 @@ class NativeRetainedRoundPlaneAnalysis:
                 return False
             middle = 0.5*(left+right)
             state = self.context.advance(start, middle*increment)
-            gap = self._contact(state).minimum_gap_m
+            gap = (self.contact.minimum_gap(state.positions[nodes],state.position_low[nodes],state.cell_rotations[0])
+                   if type(self.contact) is NativeRoundMaterialPlane else self._contact(state).minimum_gap_m)
             if gap < -self.gap_tolerance:
                 return False
             if gap-0.5*(right-left)*lipschitz-roundoff >= -self.gap_tolerance:
@@ -275,9 +300,9 @@ class NativeRetainedRoundPlaneAnalysis:
         contact = self._contact(mechanical)
         slots = self.context.slots[0]
         r[slots] += contact.residual
-        j[np.ix_(slots, slots)] += spatial_jacobian(
-            contact.residual, contact.tangent,
-        )
+        j[np.ix_(slots, slots)] += (contact.spatial_tangent()
+            if type(self.contact) is NativeRoundMaterialPlane else
+            spatial_jacobian(contact.residual, contact.tangent))
         scaled = r/self.context.scale
         metrics = (float(np.linalg.norm(scaled[self.context.equilibrium])),
                    float(np.linalg.norm(scaled[self.context.compatibility])))
@@ -285,7 +310,8 @@ class NativeRetainedRoundPlaneAnalysis:
 
     def solve(self, *, checkpoint: bytes | None = None,
               expected_sha256: str | None = None,
-              stop_after: int | None = None) -> NativeRetainedContactRun:
+              stop_after: int | None = None,
+              cancellation_token=None) -> NativeRetainedContactRun:
         end = len(self.program.targets) if stop_after is None else stop_after
         if type(end) is not int or not 0 <= end <= len(self.program.targets):
             raise ValueError("native contact bounded stop target")
@@ -300,11 +326,13 @@ class NativeRetainedRoundPlaneAnalysis:
         if accepted.completed_targets > end:
             raise ValueError("native contact accepted target cannot rewind")
         try:
+            cancellation_safe_point(cancellation_token, 'native contact continuation')
             for index in range(accepted.completed_targets, end):
                 parameter = self.program.targets[index]
                 trial = accepted.mechanical
                 origins = accepted.histories
                 for iteration in range(self.program.max_iterations+1):
+                    cancellation_safe_point(cancellation_token, 'native contact equilibrium')
                     r, j, metrics, responses, contact = self._assemble(
                         trial, parameter, origins,
                     )
@@ -320,6 +348,7 @@ class NativeRetainedRoundPlaneAnalysis:
                         )
                         next_records = (*records, record)
                         staged = self._checkpoint(next_records)
+                        cancellation_safe_point(cancellation_token, 'native contact atomic commit')
                         accepted, records, capsule = proposed, next_records, staged
                         break
                     if iteration == self.program.max_iterations:
@@ -336,6 +365,7 @@ class NativeRetainedRoundPlaneAnalysis:
                         ),
                     )
                     for cut in range(self.program.max_backtracks+1):
+                        cancellation_safe_point(cancellation_token, 'native contact backtrack')
                         candidate = self.context.advance(
                             trial, step*(fraction*0.5**cut),
                         )
@@ -354,8 +384,10 @@ class NativeRetainedRoundPlaneAnalysis:
                     else:
                         raise RuntimeError("native contact line-search/gap limit")
             status = "completed" if end == len(self.program.targets) else "paused"
-            return NativeRetainedContactRun(status, accepted, None, capsule)
+            return NativeRetainedContactRun(status, accepted, None, capsule, self.profile)
         except Exception as exc:
             return NativeRetainedContactRun(
-                "failed", accepted, type(exc).__name__+": "+str(exc), capsule,
+                "cancelled" if isinstance(exc,SolveCancelled) else "failed",
+                accepted, type(exc).__name__+": "+str(exc), capsule, self.profile,
+                getattr(exc,'contact_diagnostics',None),
             )
