@@ -1805,3 +1805,24 @@ matches. Source/model acceptance, normal routing, full runtime qualification and
 release remain open. Current D1 impact review needs stricter trial-admission path
 comparison and original baseline evidence, not an automatic flag promotion.
 [Guide/evidence](C:/ANYworkspaceWork/ANYfem-contact-intent/docs/GENERAL_CONTACT_REQUEST_IDENTITY_DEV.md).
+
+
+## Actual hemisphere support against a fixed plane — 4 October development
+
+Explicit `beam_end_cap_work="hemisphere_support_dev"` selects
+`CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_PLANE_STATIC_DEV_V1`. Implemented/tested,
+not independently accepted, application-admitted or released. Actual B2/B3 end
+axis, genuine material-node incidence and exact positive-height support gap
+carry spherical/rim derivatives, complete node work/couples and sparse tangent.
+Fixed-plane full-curve/path envelopes and regularity admit the continuous closed
+seam; legacy owned-point rejection remains. Scalar elastic concentric von Karman,
+fixed plane and explicit line/point regularizations with gap tolerance below
+radius only; no spin/friction/material-surface integration or dynamics admission.
+Installed35pass5.181s/343699456B,237loaded/502package byte matches,JIT0/pools1.
+Independent scalar support/work,1e-5tangent, skin wrench, ordinary static controls,
+reactions/bar, split restart, exception/cancel, invariance, collapse/crossing and
+legacy/no-contact checks pass. Nine runs/54records preserve 0.0125J legacy jump
+and fixture failures. Supporting same-family review closed compatibility and
+input guards. Pair/radial/shell cap transitions, mesh/enforcement and full
+programme qualification remain required.
+[Guide/evidence](GENERAL_CONTACT_HEMISPHERE_PLANE_DEV.md).
