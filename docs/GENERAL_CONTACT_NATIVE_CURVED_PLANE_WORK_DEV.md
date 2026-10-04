@@ -1,9 +1,10 @@
 # Curved native material plane work — development
 
-Current source8b3671c9 adds guarded simple axial fronts and reuses actual reference
-area preparation in the local kernel introduced atdfd884aa. It owns no analysis,
-constitutive history, restart or dynamics. Existing
-native owners and straight material profiles retain their guards.
+Historical local source8b3671c9 adds guarded simple axial fronts and reuses actual
+reference area preparation in the kernel introduced atdfd884aa. Current14fedcbe
+explicitly composes that work with the existing retained static owner under a
+distinct development profile. Historical straight/line identities remain valid.
+The local kernel owns no independent solver, history or dynamics.
 
 It uses the actual formulation-owned material surface:
 x=(1-t)pL+t*pR+Uc*(reference half-cell lift+R0(xi)*rho(alpha)).
@@ -102,6 +103,56 @@ or a general speedup claim. Full-route measurement remains required.
 
 [Evidence](d1_review_support/contact_native_material_s3_20261004/curved_axial_front_summary.json),
 [supporting scrutiny](d1_review_support/contact_native_material_s3_20261004/curved_axial_front_review.md).
-Next: whole material-patch orientation/side/gap control along the actual native
-update, then the existing retained-owner curved cycle, rollback and split restart.
-No new solver stack or silent expansion of historical guards/defaults.
+## Current bounded static workflow — 14fedcbe
+
+`NativeRetainedRoundPlaneAnalysis` explicitly accepts the curved material kernel
+under `NATIVE_B3_GE_RETAINED_CURVED_MATERIAL_PLANE_STATIC_DEV_V1`. It retains the
+existing structural solve, committed-origin material trials, cancellation and
+strict checkpoint replay. No second tangent conversion or solver stack is added.
+
+Whole-patch signed orientation and fixed-plane gap are bounded over the actual
+affine translation/left spatial Exp update, including internal rotations at fixed
+nodes. Safe endpoints alone do not admit a path. Independent hidden inversion
+and gap-pulse examples reject; bounded subdivision, chart/resource admission and
+cancellation fail explicitly. These are sufficient controls, not collision times.
+
+The example's second director is +z; its lower material skin is the arc around pi.
+Its .03m radius, .005N tip load and explicitly selected1e7N/m³ law meet the30um
+gap budget. The earlier1e6 prototype hit the gap limit and remains NONPASS. This
+is not penalty convergence or a recommendation for other models. The conservative
+gap bound covers a circumscribed tube and may reject a safe partial material patch.
+
+Zero-owned-roll projected frame bounds retain physical plane cancellation, with
+full-frame fallback otherwise and explicit unclipped eligibility. Uncertain axial
+brackets retain work/error accounting. A resolved midpoint/quarter representative
+avoids unnecessary angular grazing; arbitrary interior selection uses the safe
+width²/2 axial variation bound. When fallback is necessary, the budget covers true
+active-union and both approximate positive-weight masses. It never silently loses
+a tiny pocket at a Gauss node. Adaptive representative changes are approximation
+branches; exact differentiation across them is not established by smooth checks.
+
+Three targets press/open/recontact; unloading returns zero contact work and force.
+Authentic split restart preserves the exact full checkpoint. Injected cancellation
+and exception leave the accepted prefix unchanged. Source whole-cycle62.794s/
+165023744B and restart/controls86.157s/173039616B fit120s/953MiB. These are new-route
+cost observations, not balanced speedup measurements.38fresh installed checks pass
+in93.583/93.572s batches, peak185892864B;522source files/220imports match,JIT0/pools1.
+Coupled wrench errors2.083e-13/1.950e-13; directional tangents1.159e-7/4.743e-9.
+Source and installed evidence remain distinct in the linked summary.
+
+Runnable development entry:
+
+```powershell
+python examples/general_contact_native_curved_material_plane.py
+```
+
+Use the source environment or put the verified installed package on PYTHONPATH.
+The script prints each accepted target's reactions, storage, conservative gap,
+error estimates, exact profile and checkpoint identity. It uses private native
+development contracts; this is not a released general-contact API.
+
+[Current evidence](d1_review_support/contact_native_material_s3_20261004/curved_static_summary.json),
+[supporting scrutiny](d1_review_support/contact_native_material_s3_20261004/curved_static_review.md).
+One elastic native beam/fixed plane is tested. Native material plasticity,
+deformable/finite targets, arbitrary projections, end caps, friction, dynamics,
+engineering acceptance and release remain outside this delivery's evidence.

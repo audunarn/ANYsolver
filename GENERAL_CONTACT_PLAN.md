@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.111. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.18, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.112. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.19, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
@@ -15,21 +15,30 @@ retains the detailed chronology; current evidence remains in the
 
 ## 1. Status and diagnosis
 
-Latest curved work`8b3671c9` closes guarded simple axial fronts in the existing
-fixed-plane local kernel, preserving actual reference area/all42retained work
-coordinates. Continuous root isolation, retained bracket work/error accounting,
-exact binary curvature and the sin-squared integration variable pass independent
-work/tangent controls.27installed checks58.273s183021568B;522files/209imports match.
-[Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_axial_front_summary.json).
+Latest source`14fedcbe` integrates curved material normal contact into the existing
+retained static owner with whole-patch affine/Exp path admission. One elastic beam
+and fixed plane now press, open and recontact within the30um gap limit; authentic
+split restart reproduces the full checkpoint exactly. Precommit cancellation and
+exception preserve the accepted prefix. The explicit development law uses1e7N/m³;
+the earlier1e6N/m³ gap-limited prototype remains NONPASS. No penalty-convergence
+or broader material/engineering acceptance follows.38installed checks pass;
+522source files/220imports match,JIT0/pools1. Two complete test batches take
+93.583/93.572s, peak185892864B; source whole-cycle62.794s. These are measured new
+route costs, not balanced speedup claims.
+[Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_static_summary.json).
 
 The measured bottleneck was repeated reference-surface geometry:34.885/51.586s in
 one instrumented evaluation. Preparing it once per axial station reduces that
 same evaluation to11.135s with unchanged40296integrand evaluations and mechanical
 results. This is a local profile, not balanced complete-solve performance. Stop
-local optimization here and close whole-patch path/side/gap control, then integrate
-the existing retained owner for curved press/open/recontact, rollback and restart.
-Degenerate/clipping/precision cases still reject; no guard/default/cap relaxation
-or extra solver stack. Supporting scrutiny is not independent acceptance.
+local optimization here. The required path/owner cycle is now implemented and
+installed-tested; proceed to the next paired-body slice.
+Projected derivative bounds and a resolved interior representative of uncertain
+root brackets preserve whole-band work budgets. Fallback positive quadrature
+measure is accounted for; unresolved cases still reject. An installedV6 reference
+regression is preserved, with its correctedV7 candidate explicitly identified.
+No guard/default/cap relaxation or extra solver stack. Supporting scrutiny is not
+independent acceptance. [Current guide](docs/GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md).
 
 Latest coupled delivery`ce3e5495` closes the specific native material-area
 first-contact overshoot through explicit globalization in the existing owner.
@@ -340,11 +349,14 @@ isolation, retained uncertainty-band work, exact curvature and variable-change
 integration close the independent local fixture within180s/953MiB/64intervals.
 Unresolved/grazing cases remain explicit failures. Stop local optimization here.
 
-**Next integrated requirement:** whole curved material-patch orientation/side/gap
-control along the actual native affine/Exp update, including internal rotations
-at fixed nodes. Current sample orientation tests alone are insufficient. Reuse
-owned geometry/derivative bounds and one hidden between-point/path counterexample.
-Then integrate the existing retained static owner for curved press/open/recontact,
-rejection and split restart. No new solver stack, cap/tolerance increase or
-profile-default switch.
+**Completed integrated requirement:** installed verification of the bounded curved
+fixed-plane workflow and affected historical owner contracts, with a recoverable
+source/evidence checkpoint. Independent engineering acceptance remains open.
+**Next D3 slice:** extend the existing curved physical work adapter toward a finite
+S3 target through the existing paired/multiple-body owner. Start with full represented
+patch containment and complete both-body work; finite overlap and projection changes
+need their own controls. Keep actual reference area, retained internal coordinates,
+both-body derivatives and common transactional origin. Do not import the plane
+profile's evidence as deformable-target admission. Fix one consequential work/path
+discrepancy before adding further pairings; avoid another local optimization campaign.
 Preserve prior friction/impact, free-rim, convergence and historical restrictions.

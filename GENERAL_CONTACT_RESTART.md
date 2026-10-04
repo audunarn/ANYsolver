@@ -1,64 +1,70 @@
-# General contact restart — ACTIVE, 4 October 2026
+# General contact — active restart point
 
-Goal2026-10-04.18 / plan2026-10-04.111; full C0–C9 incomplete.
-ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001; source/tests8b3671c9.
-Goal-tool paths stale: never access protected original worktree. Main/ANYfem
-separately owned. No other-chat messaging, push/merge/publication/release/default
-changes. Local commits, focused checks and bounded supporting internal Read review
-allowed. No live owned process at checkpoint; reviewer completed. Optional Local/
-Mistral unavailable, do not reprobe. Follow repository tiered/risk-proportionate rules.
+## Authority and ownership
 
-## Current result / next action
+Goal ACTIVE/incomplete, revision2026-10-04.19; plan2026-10-04.112. Work only in
+`C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch
+`codex/contact-main-reconcile-20261001`. Source14fedcbe; current Git HEAD also
+contains its evidence checkpoint. Never access the protected original
+ANYsolver-general-contact worktree, even though goal-tool metadata names it.
+Main/ANYfem/other chats separately owned; no other-chat messages, publication,
+merge, release or defaults change. No live owned numerical process; reviewer done.
+Optional Local/Mistral unavailable, do not reprobe. Apply current AGENTS/tiered
+workflow and adopted risk-proportionate philosophy.
 
-Local curved fixed-plane kernel now isolates simple axial fronts using four
-endpoint/extremum equations, continuous owned derivative bounds and retained root
-brackets with complete-work error accounting. Actual reference area/all42retained
-coordinates and once-only spatial tangent stay. Sin-squared axial change resolves
-square-root onset; exact binary curvature fixes the literal cancellation defect.
-Reference geometry prepared once per axial station removes the profiled bottleneck.
-Same64interval cap and dimensional limits; unresolved/degenerate cases reject.
+## Completed current slice
 
-27installed checks58.273s183021568B;522files/209imports match,JIT0/pools1.
-Independent E/F/M errors3.109e-15J/9.379e-13N/2.747e-13Nm; tangent5.00e-10/1.79e-9.
-60intervals40296evals, four root brackets. One instrumented evaluation51.586→11.135s;
-local profile only, no whole-solve/engineering speedup. Supporting same-family Read,
-not independent acceptance. Intentional fixed-pose compression is not a qualified
-initial-condition/gap analysis. No curved owner/path/history/restart/dynamics yet.
-Wheel278b749cee59a300f109fa278783cad9f6741e178696efa66edd6282d660ed1b,
-raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate09.
-[Evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_axial_front_summary.json),
-[guide](docs/GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md).
+Curved material normal work now composes the existing retained static owner under
+NATIVE_B3_GE_RETAINED_CURVED_MATERIAL_PLANE_STATIC_DEV_V1. All42coordinates,
+actual fixed reference area and once-spatial tangent remain. Whole-patch affine/
+Exp orientation/gap bounds reject endpoint-safe hidden inversion and crossing.
+One elastic beam/fixed plane presses, opens and recontacts. Authentic split
+restart reproduces the full checkpoint exactly; staged exception/cancellation
+preserve the accepted prefix; incompatible stiffness rejects.
 
-Next bounded integrated action: whole material-patch orientation/side/gap bounds
-along actual affine/Exp native update, including internal rotations at fixed nodes.
-Existing rule orientation tests cover material samples only, insufficient for the
-whole curved patch. Use current/swept geometry and owned derivative bounds; do not
-replace the path with samples. Then explicitly compose the curved kernel with the
-existing retained static owner for press/open/recontact, rejected trials and split
-restart. Keep old exact-type guards/profiles valid; no new solver stack. A whole-
-path discrepancy gets one discriminating counterexample before owner expansion.
+38installed checks pass in two batches93.583/93.572s, peak185892864B.522source
+files/220imports match; JIT0/effective pools1. Coupled wrench errors2.083e-13/
+1.950e-13; directional tangents1.159e-7/4.743e-9. Conservative gap−14.359um meets
+30um; independent sampled/analytic-angle check−14.358um. Explicit1e7N/m³ law;
+the1e6 gap-limited prototype remains NONPASS. No penalty-convergence/engineering
+acceptance or whole-route speedup claim. Same-family Read scrutiny is supporting,
+not independent acceptance. Wheel
+dfa3964a5cd87c7c409885d6f39f5e3d7907350f01ad5c7bef2c6a927bef9f9c.
 
-## Preserved history / restrictions
+[Guide/example](docs/GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md),
+[evidence](docs/d1_review_support/contact_native_material_s3_20261004/curved_static_summary.json),
+[supporting review](docs/d1_review_support/contact_native_material_s3_20261004/curved_static_review.md).
+Raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate10 retains
+12nonpasses, including installedV6 reference regression and test defects. V7
+uses resolved interior root-band representatives with complete whole-band work
+budgets, or accounted fallback quadrature mass. It keeps64integration/128path
+limits and all dimensional gates. V6/V7 frozen fixtures remain separate.
 
-[Prior checkpoint](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PRE_AXIAL_FRONT.md)
-and linked history retain all failed runs. This slice retains trace misuse, coarse
-root-band error,64interval exhaustion, test-regex mismatch and exploratory source-
-change-during-run; final checks use stable installed source. Thin pocket now returns
-positive work; broad-plus-thin remains explicit root-precision non-success.
-ANYfem434ec004 untouched; accepted source/model binding absent, appfalse. Actual-
-tangent free-rim continuum admission negative; guided benchmark intact. ImpactV4/
-V16 NONPASS900s at1.79779ms/3ms,65nm hidden pulse/old oracle sign defect: no unchanged/
-full replay or cap/gap-policy relaxation. Native grazing friction NONPASS−1.33564e-13m:
-closed derivative/mixed-work enclosure missing; no saved/full/owner/split retry/reset/
-zero/native acceptance. Q4FD appcycle180.124s: no unchanged retry. Other historical
-gap/merit/enforcement/continuum failures remain NONPASS. Full programme scope stays.
+## Next authorised integrated action
+
+Extend the existing curved work adapter toward a finite S3 target through the
+existing paired/multiple-body owner. Begin with full represented patch containment
+and complete both-body work/retained mappings, before finite overlap/projection
+changes. Plane evidence does not admit deformable targets. Reuse state/search/
+restart machinery; one consequential discrepancy gets one bounded discriminator.
+Stop local optimization; do not add another solver stack or relax guards/budgets.
+All required C0–C9 outcomes and independent acceptance remain open as recorded.
+
+## Preserved restrictions and clock
+
+[Prior restart/history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261004_PRE_CURVED_STATIC.md)
+retains original ownership, failure and authority details. ANYfem434ec004 untouched;
+accepted source/model binding absent, appfalse. Actual-tangent free-rim continuum
+admission negative; guided benchmark intact. ImpactV4/V16 NONPASS900s at1.79779ms/
+3ms,65nm hidden pulse/old oracle sign: no unchanged/full replay or cap/gap-policy
+relaxation. Native grazing friction NONPASS−1.33564e-13m: closed derivative/mixed
+enclosure missing; no saved/full/owner/split retry/reset/zero/native acceptance.
+Q4FD appcycle180.124s: no unchanged retry. Historical gap/merit/enforcement and
+penalty-convergence failures retain their dispositions.
+
 Routine180s1GB; private runner180s953MiB; native owner120s. Named900s4GB prospective
-only; stricter frozen/consumed authorities remain binding.
-
-## Clock / authority
-
-Original120h consumed:428891+3120=432011s=120.003h. Later explicit resumption allows
-bounded further work without replacement hard duration; never invent8h/reset history.
-Renewed snapshot429147s; latest tool441710s (12563s later), plus checkpoint work.
-Goal active/incomplete; pauses never renew consumed execution authorities.
+only; stricter frozen/consumed authorities remain binding. Original120h consumed:
+428891+3120=432011s=120.003h. Later explicit resumption permits bounded further
+work without replacement hard duration; never invent8h/reset history. Renewed
+snapshot429147s; latest goal tool447443s, plus checkpoint work. Goal active;
+pauses never renew consumed execution authorities.

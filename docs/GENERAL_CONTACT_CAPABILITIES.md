@@ -1,5 +1,25 @@
 # General-contact capability ledger
 
+## Curved native material static owner — 4 October
+
+Implemented/installed-tested14fedcbe: one elastic B3-GE beam's interior material skin
+against a fixed plane, retaining42coordinates and actual fixed reference area.
+Whole-patch affine/Exp orientation/gap controls reject independent endpoint-safe
+hidden inversion and crossing. Press/open/recontact, complete coupled wrench/
+tangent, accepted-prefix safety and exact split restart pass within unchanged
+dimensional/resource gates. Explicit1e7N/m³ law;1e6 gap-limited prototype remains
+NONPASS.38installed checks pass;522source files/220imports match,JIT0/pools1.
+Test batches93.583/93.572s, peak185892864B. Failed installedV6
+reference regression is retained separately. Historical line/straight identities
+remain, without changing defaults or native dynamics guards.
+
+**Independently accepted: no. Released: no.** Same-family supporting scrutiny
+does not satisfy independent engineering acceptance. No penalty-convergence,
+deformable-target, nonlinear-material, friction/dynamic/application or whole-route
+speedup claim. [Guide](GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md),
+[evidence](d1_review_support/contact_native_material_s3_20261004/curved_static_summary.json),
+[review](d1_review_support/contact_native_material_s3_20261004/curved_static_review.md).
+
 ## Curved simple axial-front normal work — 4 October
 
 Implemented/installed-tested8b3671c9 in the existing local fixed-plane kernel.

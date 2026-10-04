@@ -1,0 +1,53 @@
+{
+  "source_sha": "14fedcbefe1862f8bf730ebaea93955bc739fb2b",
+  "source_files": 522,
+  "imported_modules": 220,
+  "source_installed_errors": [],
+  "extra_installed_files": [],
+  "outcomes": {
+    "passed": 38
+  },
+  "runs": {
+    "installed_curved_work_v7": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 93.58270400005858,
+        "peak_bytes": 183717888
+      },
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "runtime_errors": [],
+      "import_errors": [],
+      "outcomes": {
+        "passed": 35
+      }
+    },
+    "installed_curved_restart_compatibility_v7": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 93.57165599998552,
+        "peak_bytes": 185892864
+      },
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "runtime_errors": [],
+      "import_errors": [],
+      "outcomes": {
+        "passed": 3
+      }
+    }
+  },
+  "wheel_sha256": "dfa3964a5cd87c7c409885d6f39f5e3d7907350f01ad5c7bef2c6a927bef9f9c",
+  "frozen_fixture_sha256": "3a75bff0d2bc0201e867c4d98011e4db8edfad0b1d288590404e886d68d8a96f",
+  "example_sha256": "2ef29a00e4b0ba3af17f9cf23a45dcb045dad75cc1893f7e421e13d422601095"
+}

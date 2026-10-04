@@ -1,6 +1,6 @@
 # General contact — goal
 
-**Revision:** 2026-10-04.18. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.111. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
+**Revision:** 2026-10-04.19. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-04.112. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
 
@@ -29,12 +29,15 @@ full C0–C9 completion. Every historical failure and consumed authority remains
 
 ## Programme outcome and current delivery choice
 
-**Current focus:** curved native material contact. Local simple axial-front work
-at8b3671c9 is installed-tested with unchanged reference-area mechanics and error/
-resource limits. Prepared reference geometry removes the measured local bottleneck;
-no complete-solve speedup or engineering acceptance follows. Next close whole-patch
-path/side/gap controls, then the existing-owner curved cycle/rollback/restart.
-This is required D3 progress; full C0–C9 and scientific acceptance remain incomplete.
+**Current focus:** curved native material contact. Source14fedcbe now has the
+whole-patch affine/Exp controls and existing-owner elastic press/open/recontact,
+rollback and exact split restart. Explicit1e7N/m³ regularization meets this fixture's
+unchanged30um gap budget; the previous1e6 prototype and installedV6 regression
+retain their failures.38installed checks and source/import identity verification
+pass; extend the existing
+paired owner toward a finite/deformable S3 target with complete retained/both-body
+work. No complete-solve speedup, general penalty convergence or independent
+engineering acceptance follows. Full C0–C9 remains required and incomplete.
 
 Complete every required C0–C9 capability in the [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md): shells, classical and retained-native beams, static contact, objective friction, automatic/self-contact, nonlinear and native dynamics, applications, installed packages and measured resources. Required scientific acceptance and release remain distinct. The accepted D1/D2 subsets do not complete this programme.
 
