@@ -321,6 +321,26 @@ def _root_band_measure_bound(field,lower,al,ar):
     return max(union,*(float(np.nextafter(m,np.inf)) for m in masses)),True
 
 
+def _root_band_station(rule,high,low,U,cell,left,right,al,ar,origin,normal):
+    """Prefer a resolved interior angular rule inside the retained bracket.
+
+    The root band remains integrated and budgeted. Its representative station
+    need not coincide with an unresolved angular grazing extremum.
+    """
+    ref=rule.samples[0].station.reference;radius=rule.definition['radius']
+    middle=None
+    for fraction in (.5,.25,.75):
+        xi=float(left+(right-left)*fraction)
+        if not left<xi<right:continue
+        t=xi+1 if cell==0 else xi
+        field=_station_field(high,low,cell,t,ref.half_cell_lift(cell,t),ref.frame(xi),
+                             U[cell],radius,origin,normal)
+        if not _angular_rule_grazing(field,al,ar):return xi,field
+        if fraction==.5:middle=(xi,field)
+    if middle is None:raise ValueError('curved axial root-band parameter resolution exhausted')
+    return middle
+
+
 def _root_band_active_width(rule,high,low,U,cell,left,right,al,ar,origin,normal,pad):
     """Angular union containing every possible active point in a root band.
 
@@ -330,27 +350,26 @@ def _root_band_active_width(rule,high,low,U,cell,left,right,al,ar,origin,normal,
     A degenerate/unresolved angular enclosure retains the full arc.
     """
     ref=rule.samples[0].station.reference;radius=rule.definition['radius']
-    mid=(left+right)/2;t=mid+1 if cell==0 else mid
-    field=_station_field(high,low,cell,t,ref.half_cell_lift(cell,t),ref.frame(mid),
-        U[cell],radius,origin,normal)
+    station,field=_root_band_station(rule,high,low,U,cell,left,right,al,ar,origin,normal)
     F1=_reference_norm_bounds(ref,cell,actual_roll=True)[2]
     center=max(abs(_projected_center_derivative(ref,high,low,U,cell,x,normal)) for x in (left,right))
     projected=_reference_plane_derivative_bounds(ref,cell,U[cell],normal)[0]
     radial=projected if _reference_unclipped_interval(ref,cell,left,right) else (
         _rotation_gain(U[cell])*F1*float(np.linalg.norm(normal)))
     rate=center+radius*radial
-    delta=float(np.nextafter((right-left)/2*rate+pad,np.inf))
+    delta=float(np.nextafter(max(station-left,right-station)*rate+pad,np.inf))
     with localcontext() as ctx:
         ctx.prec=PRECISION
         lower=PreciseNormalAngles(field.offset-Decimal(delta),0.,0.,field.cosine,field.sine)
-        return _root_band_measure_bound(field,lower,al,ar)
+        measure,fallback=_root_band_measure_bound(field,lower,al,ar)
+        return measure,fallback,station
 
 
 def _root_band_work_bound(rule,high,low,U,cell,width,angular_width,geometry,settings,stiffness,normal,pad,*,fallback=False):
     """Bound both true and approximate work on retained root-bracket bands.
 
     No represented band is deleted. Energy/residual are Lipschitz in xi across
-    activation, so midpoint integration has a width² variation bound, plus
+    activation, so interior-station integration has a width² variation bound, plus
     representation allowances and separately measured angular error. Tangent
     keeps twice the full positive-weight integrand norm; large bounds reject.
     """
@@ -374,9 +393,9 @@ def _root_band_work_bound(rule,high,low,U,cell,width,angular_width,geometry,sett
     Gprime=nn*sqrt(2+(arm_prime/length)**2)
     energy_lipschitz=stiffness*(depth*gap_prime*area+.5*depth**2*area_prime)
     force_lipschitz=stiffness*((gap_prime*G+depth*Gprime)*area+depth*G*area_prime)
-    energy_error=angular_width*(width**2*energy_lipschitz/4+
+    energy_error=angular_width*(width**2*energy_lipschitz/2+
                                  width*stiffness*depth*pad*area)
-    force_error=angular_width*(width**2*force_lipschitz/4+
+    force_error=angular_width*(width**2*force_lipschitz/2+
                                 width*stiffness*pad*G*area)
     if fallback:
         # An unsplit approximate angular rule is not an exact negative-arc
@@ -443,7 +462,7 @@ class NativeCurvedMaterialPlaneWork:
             stiffness_N_per_m3=self.stiffness,settings=asdict(self.settings),
             reference=self.reference.canonical_data(),measure='actual_fixed_reference_material_area',
             branch_admission='continuous_orientation_simple_axial_front_brackets_bounded_work',
-            numerical='GAUSS_8_16_PROJECTED_CURVED_AXIAL_ARCS_FALLBACK_MEASURE_JET2_SPATIAL_ONCE_V6')
+            numerical='GAUSS_8_16_PROJECTED_CURVED_AXIAL_ARCS_RESOLVED_BAND_JET2_SPATIAL_ONCE_V7')
 
     @property
     def element_id(self):
@@ -474,21 +493,22 @@ class NativeCurvedMaterialPlaneWork:
                 settings.tangent_absolute_tolerance)
         gauss=(leggauss(8),leggauss(16))
         budget=dict(visited=0,limit=settings.max_intervals)
-        prepared=[];root_errors=np.zeros(3);root_brackets=[]
+        prepared=[];root_errors=np.zeros(3);root_brackets=[];root_stations={}
         for cell,left,right in ((0,max(lo,-1.),min(hi,0.)),(1,max(lo,0.),min(hi,1.))):
             if right<=left:continue
             bands,pad=(_axial_front_bands(self.rule,high,low,U,cell,left,right,alo,ahi,
                          self.origin,self.normal,budget) if segmented else ([(left,right,False,())],0.))
             for xl,xr,uncertain,features in bands:
                 if uncertain:
-                    active_width,fallback=_root_band_active_width(self.rule,high,low,U,cell,xl,xr,alo,ahi,
+                    active_width,fallback,station=_root_band_active_width(self.rule,high,low,U,cell,xl,xr,alo,ahi,
                         self.origin,self.normal,pad)
                     error=_root_band_work_bound(self.rule,high,low,U,cell,xr-xl,active_width,
                         geometry,settings,self.stiffness,self.normal,pad,fallback=fallback)
                     root_errors+=error
+                    root_stations[cell,xl,xr]=station
                     root_brackets.append(dict(cell=cell,lower=xl,upper=xr,features=features,
                         representation_gap_m=pad,active_angular_width_bound=active_width,
-                        angular_fallback=fallback,error_bounds=tuple(error)))
+                        angular_fallback=fallback,representative_xi=station,error_bounds=tuple(error)))
             prepared.append((cell,bands))
         remaining=np.asarray(limits)-root_errors
         if not np.all(np.isfinite(root_errors)) or np.any(remaining<=0):
@@ -546,7 +566,7 @@ class NativeCurvedMaterialPlaneWork:
                             xi=float(xl+(xr-xl)*sin(theta)**2)
                             axial_measure=float((xr-xl)*pi/4*sin(2*theta)*wx)
                         else:
-                            xi=xm if root_band else float(xm+dx*qx)
+                            xi=root_stations[cell,xl,xr] if root_band else float(xm+dx*qx)
                             axial_measure=float(dx*wx)
                         if not xl<xi<xr:
                             raise ValueError('curved normal integration axial station unresolved')

@@ -53,6 +53,14 @@ def test_projected_bounds_nonzero_roll_fallback_and_clipping_ownership():
     assert _reference_unclipped_interval(ref,0,-.8,-.2)
 
 
+def test_root_band_without_interior_float_reports_parameter_resolution():
+    from anysolver.general_contact.native_curved_plane_work import _root_band_station
+    law=_law();p=law.reference.coordinates;U=np.tile(np.eye(3),(2,1,1))
+    with pytest.raises(ValueError,match='root-band parameter resolution exhausted'):
+        _root_band_station(law.rule,p,np.zeros((3,3)),U,1,.5,np.nextafter(.5,np.inf),
+                           .2,5.8,law.origin,law.normal)
+
+
 def _law(origin=(0.,0.,0.),normal=(0.,0.,1.),radius=.005):
     reference=_reference(True)
     rule=NativeRoundSurfaceRule(7,reference,radius,xi_range=(-.9,.8),

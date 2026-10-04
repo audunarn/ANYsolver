@@ -14,8 +14,37 @@ def _analysis(targets=(1.,),iterations=24,stiffness=1e7):
 
 
 def test_example_binds_verified_cycle_definition():
-    reference=Path(__file__).parent/'data/general_contact_native_curved_plane_v6.checkpoint'
+    reference=Path(__file__).parent/'data/general_contact_native_curved_plane_v7.checkpoint'
     assert analysis().identity==json.loads(reference.read_bytes())['identity']
+
+
+def test_frozen_curved_cycle_independent_physical_skin_gaps():
+    # Analytic parabola and this fixture's (+z, tangent cross +z) section frame.
+    # No production station, projection, bounds, area or contact evaluator.
+    reference=Path(__file__).parent/'data/general_contact_native_curved_plane_v7.checkpoint'
+    gaps=[]
+    for record in json.loads(reference.read_bytes())['records']:
+        mechanical=record['mechanical']
+        p=np.array(mechanical['positions'])+np.array(mechanical['position_low'])
+        U=np.array(mechanical['cell_rotations'])[0,1]
+        minimum=np.inf
+        for xi in np.linspace(.1,.9,401):
+            tangent=np.array((1.,-.4*xi,0.));tangent/=np.linalg.norm(tangent)
+            third=np.cross(tangent,(0.,0.,1.))
+            center=(1-xi)*p[1]+xi*p[2]+U@np.array((0.,.2*xi*(1-xi),0.))
+            cosine=.03*U[2,2];sine=.03*float(U[2]@third)
+            phase=np.arctan2(sine,cosine)
+            angles=[np.pi-.3,np.pi+.3]+[phase+np.pi+2*k*np.pi for k in (-1,0,1)
+                if np.pi-.3<phase+np.pi+2*k*np.pi<np.pi+.3]
+            minimum=min(minimum,*(center[2]+.0301+cosine*np.cos(a)+sine*np.sin(a) for a in angles))
+        assert minimum>=-3e-5
+        assert record['contact']['minimum_gap_m']<=minimum+1e-12
+        gaps.append(float(minimum))
+    assert gaps[0]<0 and gaps[1]>0 and gaps[2]<0
+    path=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if path:Path(path+'-curved-independent-gaps.json').write_text(json.dumps(dict(
+        sampled_axial_station_count=401,exact_angular_extrema=True,gap_estimates_m=gaps,
+        whole_gap_certificate=False),indent=2))
 
 
 def test_curved_material_coupled_retained_response_and_complete_work():
@@ -80,7 +109,7 @@ def test_curved_material_press_open_recontact():
 
 def test_curved_material_authentic_split_restart_and_atomic_failure():
     from anysolver.control import CancellationToken
-    reference=Path(__file__).parent/'data/general_contact_native_curved_plane_v6.checkpoint'
+    reference=Path(__file__).parent/'data/general_contact_native_curved_plane_v7.checkpoint'
     full=reference.read_bytes()
     owner=_analysis((1.,0.,1.));prefix=owner.solve(stop_after=1)
     assert prefix.status=='paused',prefix.failure
