@@ -2319,3 +2319,16 @@ Distributed loads and generalized activation are explicitly unsupported here.
 Implemented/tested, not independently accepted/released. Plastic history/contact,
 full cycle, convergence and broader section/material admission remain open.
 [Evidence](d1_review_support/contact_native_fibre_s3_20261005/README.md).
+
+### Physical-fibre plastic history / S3 — installed development, 5 October 2026
+
+Explicit Y2Pa/H1e5Pa material through the same retained owner now presses,
+unloads/opens and recontacts with real committed physical-fibre history. Rational
+return/sectional recovery and local spatial tangent checks pass. Five installed
+cases cover positive contact, nonvirgin exception/cancellation rollback, invented
+history rejection and exact complete staged-chain replay. Coupled stages
+105.6947/44.4019/100.6586s; unchanged120s/953MiB bounds, no kernel/wheel change.
+This is development-tested, not independently accepted/released. Oracle uses
+production station strains; coupled independent reference, convergence and full
+material/work reporting remain required. No uninterrupted-cycle/speedup claim.
+[Evidence](d1_review_support/contact_native_fibre_s3_20261005/plastic_history.md).

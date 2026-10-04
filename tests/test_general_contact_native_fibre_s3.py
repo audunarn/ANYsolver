@@ -9,6 +9,88 @@ from anysolver.general_contact.native_multi_s3_static import FIBRE_CURVED_MATERI
 from test_general_contact_native_curved_s3_static import _analysis
 
 
+def _independent_material_history(owner,mechanical,origins):
+    from types import SimpleNamespace
+    from test_ge_beam3_fibre_section import oracle,close_exact,exact_pair
+    yielded=0;dissipation=0.;proposed=[]
+    for index,(_,element) in enumerate(owner.context.elements):
+        rows=element.operator.recover(mechanical.cell_rotations[index],mechanical.resultants[index],
+            origin=origins[index],check=owner.context._backend.check)
+        section=element.section
+        for row,origin in zip(rows,origins[index].stations):
+            expected,tangent,potential,fibres=oracle(section,SimpleNamespace(
+                strain=row['strain'],strain_low=row['strain_low'],origin=origin))
+            for actual,wanted,history,fibre in zip(row['fibres'],fibres,row['history'].rows,section.fibres):
+                for pair,key in ((actual.stress,'stress'),(actual.algorithmic_modulus,'modulus'),
+                                 (actual.plastic_increment,'delta'),(history[:2],'z'),(history[2:],'p')):
+                    close_exact(exact_pair(pair),wanted[key])
+                yielded+=int(wanted['delta']!=0)
+                dissipation+=row['measure']*fibre.area*fibre.curve.flow_stress[0]*float(abs(wanted['delta']))
+            proposed.append(row['history'])
+            # Compare complete section resultants, including the additive background.
+            from test_ge_beam3_fibre_section import exact_array
+            actual=exact_array(row['resultants'],row['resultants_low'])
+            for got,wanted in zip(actual,expected):close_exact(got,wanted)
+    return dict(yielded=yielded,dissipation_j=dissipation),tuple(proposed)
+
+
+def test_plastic_fibre_candidates_use_committed_origin_and_independent_return():
+    owner=_analysis(physical_fibres=True,plastic_fibres=True)
+    fields=json.loads((Path(__file__).parent/'data/general_contact_native_curved_s3_v2_active.checkpoint').read_bytes())['records'][0]
+    context=owner.context;mechanical=context.make(fields['mechanical'])
+    origins=owner.initial.native_histories;before=canonical(origins)
+    residual,tangent,_,responses,_=context.assemble(mechanical,1.,origins)
+    report,proposed=_independent_material_history(owner,mechanical,origins)
+    assert report['yielded']>0 and report['dissipation_j']>0.
+    assert canonical(origins)==before
+    assert tuple(proposed)==responses[0].history.stations
+    direction=np.random.default_rng(610).normal(size=context.count)*1e-4
+    direction[context._backend.layout.fixed]=0.
+    errors=[]
+    for h in (1e-5,2e-6):
+        values=[context.assemble(context.advance(mechanical,sign*h*direction),1.,origins)[0] for sign in (1,-1)]
+        derivative=(values[0]-values[1])/(2*h)
+        error=float(np.linalg.norm(tangent@direction-derivative)/np.linalg.norm(derivative));errors.append(error)
+        assert error<=1e-5
+    # A discarded candidate cannot become the origin of the next material trial.
+    small=mechanical.descriptor();small['resultants']=mechanical.resultants*.1
+    small=context.make(small)
+    reduced=context.assemble(small,1.,origins)[3][0].history
+    repeated=context.assemble(mechanical,1.,origins)[3][0].history
+    assert repeated==responses[0].history and canonical(origins)==before
+    assert reduced!=repeated
+    path=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if path:Path(path+'-plastic-local.json').write_text(json.dumps(dict(**report,directional_errors=errors),indent=2))
+
+
+def test_plastic_fibre_first_contact_commits_real_history_and_bound_restart():
+    owner=_analysis(physical_fibres=True,plastic_fibres=True)
+    before=canonical(owner.initial.native_histories)
+    run=owner.solve(stop_after=1)
+    path=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if path:
+        Path(path+'-plastic-active.checkpoint').write_bytes(run.checkpoint)
+        Path(path+'-plastic-active.json').write_text(json.dumps(dict(status=run.status,failure=run.failure,
+            completed=run.accepted.completed_targets,candidates=owner.candidate_evaluations,
+            trial_failures=owner.curved_trial_failures),indent=2))
+    assert run.status=='paused',run.failure
+    assert run.accepted.completed_targets==1 and run.accepted.contact.contact.minimum_gap_m>=-3e-5
+    contact=run.accepted.contact.contact
+    assert contact.potential_j>0. and np.linalg.norm(contact.beam_force_n)>0.
+    np.testing.assert_allclose(contact.beam_force_n+contact.shell_force_n,0.,atol=1e-10)
+    np.testing.assert_allclose(contact.beam_moment_nm+contact.shell_moment_nm,0.,atol=1e-10)
+    report,proposed=_independent_material_history(owner,run.accepted.mechanical,owner.initial.native_histories)
+    assert report['yielded']>0 and report['dissipation_j']>0.
+    assert tuple(proposed)==run.accepted.native_histories[0].stations
+    assert canonical(owner.initial.native_histories)==before
+    restored,records=_analysis(physical_fibres=True,plastic_fibres=True)._restore(run.checkpoint,run.checkpoint_sha256)
+    assert restored.native_histories==run.accepted.native_histories
+    assert owner._checkpoint(records)==run.checkpoint
+    with pytest.raises(ValueError,match='binding'):
+        _analysis(physical_fibres=True)._restore(run.checkpoint,run.checkpoint_sha256)
+    if path:Path(path+'-plastic-history.json').write_text(json.dumps(report,indent=2))
+
+
 def test_fibre_contact_context_complete_spatial_work_and_elastic_section_reference():
     fibre=_analysis(targets=(1.,),physical_fibres=True);general=_analysis(targets=(1.,))
     context=fibre.context;n=context.count

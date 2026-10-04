@@ -15,6 +15,19 @@ retains the detailed chronology; current evidence remains in the
 
 ## 1. Status and diagnosis
 
+Latest D3 material/history slice: explicit physical fibres Y2Pa/H1e5Pa through
+the same owner now press, unload/open and recontact with actual committed history.
+Independent rational returns and local spatial derivatives pass; five installed
+cases include nonvirgin rollback, invented-history rejection and complete staged
+chain replay. Coupled stages105.6947/44.4019/100.6586s, within unchanged120s bounds.
+No production kernel or wheel changed. This closes development workflow coverage,
+not convergence or independent native/material engineering acceptance.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/plastic_history.md).
+Next expose committed native material recovery/work summaries through the existing
+result owner, preserving material dissipation, stored material energy and contact
+regularization storage as distinct quantities. Reuse the actual plastic fixtures;
+do not replay their expensive solves unless inputs or mechanics change.
+
 Current D3 section-family slice adds physical-fibre retained work to the existing
 curved material/S3 owner. Independent sectional elasticity and full local spatial
 derivatives pass; actual first-contact equilibrium and family-bound restart pass
@@ -24,9 +37,8 @@ candidate verification passes14checks;524files/219imports match,JIT0/pools1.
 Coupled installed route105.9044s/181051392B. This is an elastic fixture, not
 plastic/contact acceptance or a full section/material qualification.
 [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/README.md).
-Next use the actual fibre history machinery for one bounded plastic-history
-discriminator under the established constitutive contract; choose its observable
-and budget before a coupled run. Do not add another geometry owner.
+The following records the preceding elastic-family coverage. Do not add another
+geometry owner to extend material scope.
 
 Latest integrated D3 coverage: one curved retained beam / two connected deformable
 S3 facets through the existing owner, explicit disjoint material selections and

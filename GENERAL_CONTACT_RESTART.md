@@ -2,60 +2,62 @@
 
 ## Authority and ownership
 
-FullC0–C9 ACTIVE/incomplete; current goal/plan2026-10-05.2. Only authoritative
-checkout C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Never access protected original
-ANYsolver-general-contact despite stale goal-tool paths. Main/ANYfem/other chats
-separately owned; no other-chat messages, publication/merge/release/default change.
-Expanded Mistral policy adopted prospectively; cached Local/Mistral unavailable,
-no reprobe without changed availability. Same-family review is supporting scrutiny,
-not independent engineering acceptance. No owned live process remains.
+FullC0–C9 ACTIVE/incomplete; goal/plan2026-10-05.2. Only authoritative checkout
+C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
+codex/contact-main-reconcile-20261001. Production coree8d2cf63; current slice changes
+example/tests/fixtures/docs only. Never access protected original ANYsolver-general-contact
+or infer authority from stale goal-tool paths. Main/ANYfem/other chats separately
+owned; no other-chat messages, publication/merge/release/default changes.
+Expanded Mistral policy active; cached Local/Mistral unavailable, no reprobe without
+changed availability. Same-family scrutiny is not independent engineering acceptance.
+No live owned process; final supporting review finished, no consequential finding.
 
-## Completed integrated slice
+## Completed current slice
 
-Physical-fibre retained native section now composes the existing curved material/S3
-owner through actual fibre return/history machinery. All24internal coordinates
-remain; full spatial tangent corrected once, complete native/shell work retained.
-Four-fibre elastic fixture has independently derived sectional stiffness equivalent
-to existing generalized fixture. Local directional errors4.981e-10/6.316e-9.
-Source first-contact solve/restart passes105.6784s. Supporting review identified
-unbound force/reference/probe caches and unclear deadline. Cache/initial/program
-bindings and exact ownership guards added. Existing120s construction-to-expiry
-lifetime documented/tested; no timer reset. Expiry is explicit resource preflight
-exception, not a returned mechanical failure. Distributed loads and generalized
-activation remain unsupported for this new family profile.
+Explicit physical-fibre Y2Pa/H1e5Pa fixture uses the same retained curved/S3 owner,
+round geometry/load/1e7N/m³ law/30um gap and integration/path controls. Existing
+elastic response peak5.73643Pa predicted yielding. Rational section oracle checks
+real recovered strain/stress/moduli/history/resultants independently of the
+production return map. It does not solve the cell/coupled problem independently.
+Local plastic tangent errors1.002e-8/4.486e-8; discarded candidates retain origins.
+Actual firstcontact105.6947s/181829632B,12yielded entries. Installed saved-state
+positive force/work, invented-history rejection and nonvirgin exception/cancel
+rollback:3checks15.1431s. Installed unloading44.4019s/182288384B opens contact and
+includes6reverse-yielded entries. Installed recontact100.6586s/182091776B includes
+10yielded entries and complete three-record byte-exact replay. Five installed
+cases across3bounded jobs, not an uninterrupted-cycle qualification.
+Targetgaps−15.0131um,+92.3421um,−15.0043um; normalforces0.00540210N,0,0.00540207N.
 
-Final installed first contact/restart passes105.9044s/181051392B,37candidate/pair
-evaluations, retaining one rejected axial-front trial.13installed local checks
-pass;3historical shared-driver regressions pass.524sourcefiles/219imports match,
-JIT0/pools1. WheelSHA813b08560894ae4b68f84b8e4eb55c91da845c91bca5ae9ff9a093d273c3f6a1.
-Final activecheckpointSHA bfd2b7680230ee24bce1ba9532171869ed376c1f7c3d177f4f2c2d44275e2f88.
-Raw C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate01.
-Two NONPASS batches retained: support-byte serialization; expiry-test whole-state
-serialization. Final source guards and installed verification are passed separately.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/README.md),
+Raw C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate02.
+Wheel813b08560894ae4b68f84b8e4eb55c91da845c91bca5ae9ff9a093d273c3f6a1 unchanged;
+524production files byte-identical, installed import/runtime records JIT0/pools1.
+FinalcheckpointSHA fddc268042fbe95123271ba9222b520828efe3acd7c1c8b49e73b6545fbe1659.
+Committed active/open fixtures bind material/state. First-contact test lacked
+positive-force assertion initially; corrected and real completed state verified
+installed without another unchanged full solve. No failed batch or historical
+failure regraded. [Evidence/resources/review](docs/d1_review_support/contact_native_fibre_s3_20261005/plastic_history.md),
 [usage](docs/GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md).
 
 ## Next bounded action
 
-Close required D3 plastic-history/contact scope through this same owner. Establish
-one independent constitutive/history discriminator and observable before running
-another coupled solve; no new geometry prototype or stiffness/gap retuning.
-Elastic parity is not plastic/contact qualification. Full cycle, section/material
-admission, convergence, native friction/dynamics, applications and acceptance remain.
-Reuse unchanged evidence by impact; preserve exact family/checkpoint binding.
+Expose actual committed native material recovery/reporting through the existing
+owner. Keep plastic dissipation, stored material energy and contact regularization
+storage separate; do not rename incremental potential as physical work. Reuse
+active/open fixtures and independent rational reference; no new geometry owner
+or unchanged expensive cycle. Material/section convergence, independent native
+acceptance, further pairings, friction/dynamics and applications remain required.
+Native context still expires120s after construction including idle; no clock reset.
 
-## Retained restrictions
+## Preserved restrictions
 
-[Prior restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261005_PRE_FIBRE.md)
-retains multipatch evidence and historical dispositions. Routine180s1GB;
-private180s953MiB; native120s; named900s4GB prospective only. No frozen/consumed
-authority renewal. Original120h consumed432011s; subsequent explicit resumption
-authorizes bounded work without a new hard duration/accounting reset.
-ANYfem434ec004 untouched/appfalse. Actual-tangent free-rim continuum admission
-negative; guided benchmark retained. ImpactV4/V16 NONPASS900s/1.79779ms of3ms,
-65nm hidden pulse/oldoracle sign: no unchanged/full replay or cap/gap relaxation.
-Native grazing friction NONPASS−1.33564e-13m, missing closed derivative/mixed
-enclosure: no saved/full/owner/split retry/reset/zero/native acceptance.
-Q4FD appcycle180.124s: no unchanged retry. Existing penalty-convergence and
-other scientific failures retain dispositions. Full goal remains ACTIVE.
+[Previous restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261005_PRE_PLASTIC.md)
+retains elastic-family and earlier evidence/authority. Routine180s1GB/private180s953MiB/
+native120s; named900s4GB prospective only. No frozen/consumed authority renewed.
+Original120h consumed432011s; explicit subsequent resumption permits bounded work
+without new duration/accounting reset. ANYfem434ec004 untouched/appfalse.
+Actual-tangent free-rim continuum negative, guided benchmark retained.
+ImpactV4/V16 NONPASS900s at1.79779ms/3ms,65nm hiddenpulse/oldoracle sign: no
+unchanged/full replay or cap/gap relaxation. Native grazing friction NONPASS
+−1.33564e-13m, missing closed derivative/mixed enclosure: no saved/full/owner/split
+retry/reset/zero/native acceptance. Q4FDappcycle180.124s: no unchanged retry.
+Other scientific/enforcement/penalty-convergence failures retain dispositions.

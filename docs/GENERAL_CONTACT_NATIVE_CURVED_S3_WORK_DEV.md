@@ -101,8 +101,17 @@ This development profile requires spatial nodal dead forces and explicit
 material-area pairs. Distributed loads and the generalized activation controller
 are rejected. Physical-fibre and generalized checkpoints are incompatible.
 Captured loads, reference support geometry, coordinate maps and probe ownership
-are guarded. Only this elastic fixture has been exercised; plastic contact,
-convergence and complete cycle qualification remain open.
+are guarded. The elastic fixture and a separately selected plastic-history fixture
+have development checks; convergence and engineering qualification remain open.
+
+`--plastic-fibres` selects explicit Y=2Pa/H=1e5Pa linear hardening with the same
+geometry, loads and contact controls. It implies `--physical-fibres`. Its
+checkpoints are incompatible with the elastic example. Actual first contact,
+plastic history, nonvirgin rollback, unloading/opening and recontact have passed; see
+[plastic evidence](d1_review_support/contact_native_fibre_s3_20261005/plastic_history.md).
+This toy material is a constitutive/transaction discriminator, not an engineering
+material recommendation. Stage the same CLI commands above with `--plastic-fibres`
+at every stage and the immediately preceding checkpoint.
 
 The existing native fibre context expires 120 seconds after construction,
 including idle time. Neither solve nor replay renews that allowance. An expired

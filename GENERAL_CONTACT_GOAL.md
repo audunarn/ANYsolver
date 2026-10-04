@@ -8,6 +8,13 @@ On resumption, this goal prevails over conflicting future instructions in the 28
 
 ## Current milestone and next delivery
 
+The same retained owner now has actual plastic-fibre press/open/recontact history,
+nonvirgin rollback and exact staged complete-chain replay in installed development
+checks. Independent rational returns validate local constitutive histories, not
+an independent coupled solution. Material recovery/reporting, convergence and
+independent engineering acceptance remain required; fullC0–C9 remains incomplete.
+[Plastic-history evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/plastic_history.md).
+
 Current progress extends the existing retained native/S3 owner to the physical-fibre
 section family, preserving all internal unknowns and real fibre histories. Local
 elastic sectional/spatial work and actual coupled first contact/restart have passed
