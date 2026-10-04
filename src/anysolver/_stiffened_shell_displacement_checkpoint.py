@@ -7,7 +7,7 @@ an authentic earlier accepted endpoint identified by its checkpoint digest.
 import json
 from hashlib import sha256
 import numpy as np
-from ._stiffened_shell_ge_checkpoint_binary import encode,decode,MAX_CHECKPOINT_BYTES
+from ._stiffened_shell_ge_checkpoint_binary import encode,decode,encode_s3,decode_s3,MAX_CHECKPOINT_BYTES
 
 MAGIC=b"ANYSSDC1"
 KIND="finite_displacement_bl5_coupled"
@@ -22,6 +22,9 @@ def identities(owner):
     from ._stiffened_shell_affine_endpoint import is_native_point_material
     if is_native_point_material(owner):
         if owner._definition.shell.s3_elements:
+            if owner._definition.shell.j2_curve is not None:
+                return ("finite_displacement_native_point_plastic_s3",
+                        "B3_GE_NATIVE_POINT_SHELL_J2_S3_DISPLACEMENT_V1_DEV",None,None)
             if owner._has_physical_fibre:
                 return ("finite_displacement_native_point_fibre_elastic_s3",
                         "B3_GE_NATIVE_POINT_FIBRE_ELASTIC_S3_DISPLACEMENT_V1_DEV",None,None)
@@ -43,7 +46,10 @@ def identities(owner):
 
 
 def _layout(owner,steps):
-    n=owner._K.shape[0];members=len(owner._beam_parts);shells=len(owner._shell_parts)
+    from ._stiffened_shell_affine_endpoint import has_native_s3_material
+    n=owner._K.shape[0];members=len(owner._beam_parts)
+    shells=(len(owner._definition.shell.q4_elements) if has_native_s3_material(owner)
+            else len(owner._shell_parts))
     stations=sum(len(part[0].operator.cell.stations) for part in owner._beam_parts)
     layout=(("q",(n,)),("frames",(len(owner._beam_ids),3,3)),
         ("cells",(members,2,3,3)),("resultants",(members,18)),
@@ -61,7 +67,11 @@ def _layout(owner,steps):
     if is_native_point_material(owner):
         from ._stiffened_shell_beam_history import shapes
         native=layout[:12]+shapes(owner._beam_parts,"beam")+shapes(owner._beam_parts,"beam_origin")
-        return native+(layout[-4:] if has_shell_material(owner) else ())
+        result=native+(layout[-4:] if has_shell_material(owner) else ())
+        if has_native_s3_material(owner):
+            result += (("shell_origin_q",(owner._shell_count,)),
+                       ("shell_origin_anchors",(len(owner._shell_ids),3,3)))
+        return result
     if getattr(owner,"_curved_material",False) and not has_shell_material(owner):
         layout=tuple(item for item in layout if item[0] not in (
             "shell_plastic","shell_alpha","shell_origin_plastic","shell_origin_alpha"))
@@ -94,10 +104,16 @@ def encode_snapshot(owner, *, generation, seed_generation, seed_sha256,
         metadata.update(policy=event_policy,trial_policy=trial_policy,
                         chart_events=chart_events,event_cell_evaluations=event_cell_evaluations)
     header=_canonical(metadata)
-    if len(header)>1024 or set(arrays)!={name for name,_ in _layout(owner,steps)}:
+    from ._stiffened_shell_affine_endpoint import has_native_s3_material
+    s3_material=has_native_s3_material(owner)
+    expected={name for name,_ in _layout(owner,steps)}
+    if s3_material:expected.add("s3_states")
+    if len(header)>1024 or set(arrays)!=expected:
         raise ValueError("invalid displacement snapshot fields")
-    inner=encode(kind,owner._identity,generation,
-                 tuple((name,arrays[name]) for name,_ in _layout(owner,steps)))
+    numeric=tuple((name,arrays[name]) for name,_ in _layout(owner,steps))
+    inner=(encode_s3(owner._identity,generation,numeric,arrays["s3_states"],
+                    native_material=True,displacement=True) if s3_material else
+           encode(kind,owner._identity,generation,numeric))
     content=MAGIC+len(header).to_bytes(4,"little")+header+inner
     if len(content)+32>MAX_CHECKPOINT_BYTES:
         raise ValueError("displacement snapshot exceeds resource limit")
@@ -160,7 +176,18 @@ def decode_snapshot(owner,raw):
         if decoded_kind!=kind or generation!=m["generation"]:
             raise ValueError("displacement mechanical identity mismatch")
         return _layout(owner,m["steps"])
-    _,_,a=decode(raw[start+length:-32],owner._identity,shapes)
+    from ._stiffened_shell_affine_endpoint import has_native_s3_material
+    if has_native_s3_material(owner):
+        def s3_shapes(generation):
+            if generation != m["generation"]:
+                raise ValueError("displacement mechanical identity mismatch")
+            return _layout(owner,m["steps"])
+        _,a,states=decode_s3(raw[start+length:-32],owner._identity,s3_shapes,
+                            2*len(owner._definition.shell.s3_elements),
+                            native_material=True,displacement=True)
+        a["s3_states"]=states
+    else:
+        _,_,a=decode(raw[start+length:-32],owner._identity,shapes)
     if np.any(np.diff(np.r_[a["seed"][0],a["history"][:,0]])==0.):
         raise ValueError("displacement history targets must change")
     target,amplitude=a["history"][-1]

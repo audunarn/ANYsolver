@@ -330,6 +330,52 @@ def _accepted_shell_material_origins(owner, trial, candidates):
     return tuple(origins)
 
 
+def _restore_native_s3_histories(owner, q, rotation_anchors, value):
+    """Restore coordinate-bound accepted/predecessor S3 states without publishing."""
+    q4_count = len(owner._definition.shell.q4_elements)
+    origin_q = _owned(value["shell_origin_q"], (owner._shell_count,))
+    origin_anchors = owned_anchors(value["shell_origin_anchors"], len(owner._shell_ids))
+    fixed = np.asarray(owner._fixed)
+    if np.any(origin_q[fixed[fixed < owner._shell_count]] != 0.):
+        raise ValueError("invalid shell predecessor support coordinates")
+    blobs = value["s3_states"]
+    s3_count = len(owner._definition.shell.s3_elements)
+    if type(blobs) is not tuple or len(blobs) != 2*s3_count:
+        raise ValueError("complete accepted and predecessor S3 states required")
+    states = []
+    material = owner._shell_model.get_material("shell")
+    for coordinates, anchors, family in ((q, rotation_anchors, blobs[:s3_count]),
+                                         (origin_q, origin_anchors, blobs[s3_count:])):
+        made = []
+        for (_eid, element, slots, _), blob in zip(owner._shell_parts[q4_count:], family):
+            local_anchors = None if anchors is None else anchors[slots[::6]//6]
+            local_q = s3_local_coordinates(owner._shell_model, element, coordinates[slots],
+                                          rotation_anchors=local_anchors)
+            restored = element.deserialize_nonlinear_state(owner._shell_model.mesh,
+                material, blob, 3, expected_committed_total_u=local_q)
+            _require_s3_material_state(restored, local_q, accepted=True)
+            made.append(restored)
+        states.append(tuple(made))
+    return states[0], states[1], origin_q, origin_anchors
+
+
+def _require_native_s3_replay(owner, trial, accepted, candidates):
+    """Require exact accepted S3 serialization after same-predecessor replay."""
+    if len(accepted) != len(owner._shell_parts):
+        raise ValueError("complete accepted shell material states required")
+    q4_count = len(owner._definition.shell.q4_elements)
+    repeated = _accepted_shell_material_origins(owner, trial, candidates)
+    material = owner._shell_model.get_material("shell")
+    for (_eid, element, _slots, _), saved_state, repeated_state in zip(
+            owner._shell_parts[q4_count:], accepted[q4_count:], repeated[q4_count:]):
+        saved_bytes = element.serialize_nonlinear_state(
+            owner._shell_model.mesh, material, saved_state, 3)
+        repeated_bytes = element.serialize_nonlinear_state(
+            owner._shell_model.mesh, material, repeated_state, 3)
+        if saved_bytes != repeated_bytes:
+            raise ValueError("native S3 checkpoint response disagrees with accepted update")
+
+
 @dataclass(frozen=True)
 class FinitePointResult:
     """Experimental finite result with dimensionless work/row-scaled errors."""
@@ -1653,30 +1699,10 @@ class FinitePointDriver:
             origin_alpha = _owned(value["shell_origin_alpha"], (q4_count, 12))
             if np.any(origin_alpha < 0.):
                 raise ValueError("nonphysical shell J2 predecessor")
-            origin_q = _owned(value["shell_origin_q"], (owner._shell_count,))
-            origin_anchors = owned_anchors(value["shell_origin_anchors"], len(owner._shell_ids))
-            if np.any(origin_q[np.asarray(owner._fixed)[np.asarray(owner._fixed) < owner._shell_count]] != 0.):
-                raise ValueError("invalid shell predecessor support coordinates")
-            blobs = value["s3_states"]
-            s3_count = len(owner._definition.shell.s3_elements)
-            if type(blobs) is not tuple or len(blobs) != 2*s3_count:
-                raise ValueError("complete accepted and predecessor S3 states required")
-            states = []
-            material_def = owner._shell_model.get_material("shell")
-            for coordinates, anchors, family in ((q, rotation_anchors, blobs[:s3_count]),
-                                                 (origin_q, origin_anchors, blobs[s3_count:])):
-                made = []
-                for (_eid, element, slots, _), blob in zip(owner._shell_parts[q4_count:], family):
-                    local_anchors = None if anchors is None else anchors[slots[::6]//6]
-                    local_q = s3_local_coordinates(owner._shell_model, element, coordinates[slots],
-                                                  rotation_anchors=local_anchors)
-                    restored = element.deserialize_nonlinear_state(owner._shell_model.mesh,
-                        material_def, blob, 3, expected_committed_total_u=local_q)
-                    _require_s3_material_state(restored, local_q, accepted=True)
-                    made.append(restored)
-                states.append(tuple(made))
-            shell_accepted += states[0]
-            shell_origins = _shell_material_states(origin_plastic, origin_alpha) + states[1]
+            accepted_s3, predecessor_s3, origin_q, origin_anchors = _restore_native_s3_histories(
+                owner, q, rotation_anchors, value)
+            shell_accepted += accepted_s3
+            shell_origins = _shell_material_states(origin_plastic, origin_alpha) + predecessor_s3
         beam_nodal = q[owner._shell_count:
                        owner._shell_count+self._beam_nodal].reshape(-1, 6)
         if (np.any(q[owner._fixed] != 0.) or
@@ -1702,17 +1728,7 @@ class FinitePointDriver:
         if native_material and beam_next != beam_accepted:
             raise ValueError("native material checkpoint update disagrees with accepted history")
         if native_shell and s3_material:
-            repeated_origins = _accepted_shell_material_origins(owner, trial, shell_next)
-            material_def = owner._shell_model.get_material("shell")
-            for (_eid, element, _slots, _), saved_state, repeated_state in zip(
-                    owner._shell_parts[q4_count:], shell_accepted[q4_count:],
-                    repeated_origins[q4_count:]):
-                saved_bytes = element.serialize_nonlinear_state(
-                    owner._shell_model.mesh, material_def, saved_state, 3)
-                repeated_bytes = element.serialize_nonlinear_state(
-                    owner._shell_model.mesh, material_def, repeated_state, 3)
-                if saved_bytes != repeated_bytes:
-                    raise ValueError("native S3 checkpoint response disagrees with accepted update")
+            _require_native_s3_replay(owner, trial, shell_accepted, shell_next)
         if material:
             next_plastic, next_accumulated = _material_arrays(beam_next)
             for saved, repeated in ((plastic, next_plastic),

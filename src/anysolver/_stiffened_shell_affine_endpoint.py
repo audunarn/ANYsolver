@@ -16,14 +16,13 @@ from ._stiffened_shell_rotation_charts import owned_anchors,physical_frames
 
 
 def is_native_point_material(owner):
-    """Fixed-target native point route: full-map Q4, or elastic mixed/Q4-S3."""
+    """Fixed-target native point route with admitted Q4/S3 material histories."""
     if getattr(owner,"_definition",None) is None:
         return False
     from ._stiffened_shell_q4_algorithmic_pullback import POLICY,HISTORICAL_POLICY
     definition=owner._definition
     return bool(definition.points and
         (definition.shell.q4_elements or definition.shell.s3_elements) and
-        (not definition.shell.s3_elements or definition.shell.j2_curve is None) and
         definition.shell_reference_policy=="flat" and
         definition.q4_pullback_policy==(POLICY if definition.shell.q4_elements else HISTORICAL_POLICY) and
         not definition.lines and not definition.footprints and
@@ -33,8 +32,14 @@ def is_native_point_material(owner):
 def require_native_displacement_policy(owner,driver):
     """Never upgrade legacy S3 force-seed arithmetic during replay."""
     if (is_native_point_material(owner) and owner._definition.shell.s3_elements and
-            driver._stable_s3 != bool(owner._has_physical_fibre)):
+            driver._stable_s3 != bool(owner._has_physical_fibre and
+                                      owner._definition.shell.j2_curve is None)):
         raise ValueError("native S3 displacement seed numerical policy mismatch")
+
+
+def has_native_s3_material(owner):
+    return bool(is_native_point_material(owner) and owner._definition.shell.s3_elements
+                and owner._definition.shell.j2_curve is not None)
 
 
 def has_shell_material(owner):
@@ -84,6 +89,19 @@ def validate_arrays(owner,a):
         if np.any(a[name]<0.):raise ValueError("nonphysical shell J2 history")
     shell_parent=(_shell_material_states(a["shell_origin_plastic"],a["shell_origin_alpha"])
                   if has_shell_material(owner) else driver._shell_origins)
+    s3_material=has_native_s3_material(owner)
+    if s3_material:
+        predecessor_anchors=owned_anchors(a["shell_origin_anchors"],len(owner._shell_ids))
+        if not np.array_equal(predecessor_anchors,
+                              np.tile(np.eye(3),(len(owner._shell_ids),1,1))):
+            raise ValueError("native point displacement excludes rebased predecessor charts")
+        from ._stiffened_shell_ge_finite_experimental import _restore_native_s3_histories
+        accepted_s3, predecessor_s3, origin_q, origin_anchors = _restore_native_s3_histories(
+            prepared, q, anchors, a)
+        shell_parent += predecessor_s3
+        driver._snapshot_s3_accepted = accepted_s3
+        driver._shell_predecessor_q = origin_q
+        driver._shell_predecessor_anchors = origin_anchors
     native=is_native_point_material(owner)
     if native:
         from ._stiffened_shell_beam_history import histories
@@ -105,8 +123,13 @@ def validate_arrays(owner,a):
         bp,ba=_material_arrays(evaluation[5])
         comparisons=[("beam_plastic",bp),("beam_accumulated",ba)]
     if has_shell_material(owner):
-        sp,sa=_shell_material_arrays(evaluation[4])
+        q4_count = len(owner._definition.shell.q4_elements)
+        sp,sa=_shell_material_arrays(evaluation[4][:q4_count] if s3_material else evaluation[4])
         comparisons.extend((("shell_plastic",sp),("shell_alpha",sa)))
+        if s3_material:
+            from ._stiffened_shell_ge_finite_experimental import _require_native_s3_replay
+            saved = _shell_material_states(a["shell_plastic"],a["shell_alpha"]) + accepted_s3
+            _require_native_s3_replay(prepared, state, saved, evaluation[4])
     for name,repeated in comparisons:
         saved=a[name]
         if native and not name.startswith("shell_"):

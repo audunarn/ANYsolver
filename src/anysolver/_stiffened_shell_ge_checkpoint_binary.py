@@ -24,6 +24,8 @@ CHART_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_OWNED_CHART_V6"
 CHART_S3_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_ANCHORED_S3_J2_V6"
 NATIVE_SHELL_MAGIC = b"ANYSGECP8\0"
 NATIVE_SHELL_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_NATIVE_SHELL_J2_V8"
+NATIVE_SHELL_DISPLACEMENT_MAGIC = b"ANYSGECDS1\0"
+NATIVE_SHELL_DISPLACEMENT_SCHEMA = "B3_GE_E4_PL_NATIVE_POINT_SHELL_J2_S3_DISPLACEMENT_MECHANICS_V1_DEV"
 CHART_NATIVE_SHELL_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_ANCHORED_NATIVE_SHELL_J2_V8"
 STABLE_NATIVE_SCHEMA = "B3_GE_E4_PL_STIFFENED_SHELL_EXPERIMENTAL_STABLE_S3_NATIVE_MATERIAL_V9"
 MAX_HEADER_BYTES = 8192
@@ -179,12 +181,16 @@ def decode(raw: bytes, model: str, expected_shapes) -> tuple[str, int, dict]:
 def encode_s3(model: str, generation: int,
               arrays: tuple[tuple[str, np.ndarray], ...],
               states: tuple[bytes, ...], *, anchored: bool = False,
-              native_material: bool = False) -> bytes:
+              native_material: bool = False, displacement: bool = False) -> bytes:
     """Pack fixed numeric state and bounded native S3 model-bound blobs.
 
     V1–V4 framing and decoding are unaffected. Native S3 deserialization and
     mechanical endpoint checks remain the mixed owner's responsibility.
     """
+    if (type(displacement) is not bool or (displacement and
+            (native_material is not True or anchored is not False or
+             type(states) is not tuple or len(states)<2 or len(states)%2))):
+        raise ValueError("unanchored paired native S3 displacement checkpoint required")
     if (type(model) is not str or type(generation) is not int or
             generation < 1 or type(arrays) is not tuple or
             type(states) is not tuple or (not states and not native_material) or
@@ -218,6 +224,9 @@ def encode_s3(model: str, generation: int,
     schema = ((CHART_NATIVE_SHELL_SCHEMA if anchored else NATIVE_SHELL_SCHEMA)
               if native_material else (CHART_S3_SCHEMA if anchored else S3_SCHEMA))
     magic = NATIVE_SHELL_MAGIC if native_material else S3_MAGIC
+    if displacement:
+        magic=NATIVE_SHELL_DISPLACEMENT_MAGIC
+        schema=NATIVE_SHELL_DISPLACEMENT_SCHEMA
     metadata = {"schema": schema, "model": model,
                 "generation": generation, "arrays": shapes,
                 "s3_states": len(states)}
@@ -236,11 +245,19 @@ def encode_s3(model: str, generation: int,
 
 def decode_s3(raw: bytes, model: str, expected_shapes,
               expected_s3_states: int, *, anchored: bool = False,
-              native_material: bool = False) -> tuple[int, dict, tuple[bytes, ...]]:
+              native_material: bool = False, displacement: bool = False) -> tuple[int, dict, tuple[bytes, ...]]:
     """Decode V5 only after digest, compiled shapes, and blob counts agree."""
+    if (type(displacement) is not bool or (displacement and
+            (native_material is not True or anchored is not False or
+             type(expected_s3_states) is not int or expected_s3_states<2 or
+             expected_s3_states%2))):
+        raise ValueError("unanchored paired native S3 displacement checkpoint required")
     magic = NATIVE_SHELL_MAGIC if native_material else S3_MAGIC
     schema = ((CHART_NATIVE_SHELL_SCHEMA if anchored else NATIVE_SHELL_SCHEMA)
               if native_material else (CHART_S3_SCHEMA if anchored else S3_SCHEMA))
+    if displacement:
+        magic=NATIVE_SHELL_DISPLACEMENT_MAGIC
+        schema=NATIVE_SHELL_DISPLACEMENT_SCHEMA
     if (type(native_material) is not bool or type(anchored) is not bool or
             type(raw) is not bytes or not raw.startswith(magic) or
             len(raw) > MAX_CHECKPOINT_BYTES or

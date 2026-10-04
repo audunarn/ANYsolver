@@ -62,6 +62,7 @@ class DisplacementResult:
     beam_generalized_material: tuple = ()
     beam_fibre_material: tuple = ()
     beam_fibre_energy: tuple = ()
+    shell_s3_material: tuple = ()
 
 
 def prepare(owner,raw):
@@ -72,11 +73,14 @@ def prepare(owner,raw):
     from ._stiffened_shell_ge_finite_experimental import _material_histories
     # Replay validates both versions; saved accepted histories remain authoritative.
     # Installing tolerance-close replay values would permit repeated restore drift.
-    from ._stiffened_shell_affine_endpoint import has_shell_material
+    from ._stiffened_shell_affine_endpoint import has_shell_material,has_native_s3_material
+    s3_material=has_native_s3_material(owner)
+    q4_count=len(owner._definition.shell.q4_elements)
     if has_shell_material(owner):
-        shell_next=tuple({**candidate,"plastic_strain":a["shell_plastic"][i],
+        q4_next=tuple({**candidate,"plastic_strain":a["shell_plastic"][i],
                           "alpha":a["shell_alpha"][i]}
-                         for i,candidate in enumerate(shell_next))
+                         for i,candidate in enumerate(shell_next[:q4_count] if s3_material else shell_next))
+        shell_next=q4_next+driver._snapshot_s3_accepted if s3_material else q4_next
     from ._stiffened_shell_affine_endpoint import is_native_point_material
     native=is_native_point_material(owner)
     if native:
@@ -95,7 +99,9 @@ def prepare(owner,raw):
         _owned(display.ravel()),_owned(driver._beam_positions(state)),
         state.frames,state.cells,state.resultants,state.multipliers,_owned(support),
         a["applied_load"],relative,gap,a["shell_frames"],local,a["shell_anchors"],
-        (_shell_q4_recovery(owner._shell_parts,shell_next) if has_shell_material(owner) else ()),_material_observables(beam_next),
+        (_shell_q4_recovery(owner._shell_parts[:q4_count],shell_next[:q4_count])
+         if s3_material else _shell_q4_recovery(owner._shell_parts,shell_next)
+         if has_shell_material(owner) else ()),_material_observables(beam_next),
         (tuple(tuple(float(v) for v in item["alpha"]) for item in shell_next) if has_shell_material(owner) else ()),
         driver._line_trial_recovery[1],driver._point_records(state),
         trial_policy=metadata.get("trial_policy"),
@@ -105,9 +111,14 @@ def prepare(owner,raw):
         from ._stiffened_shell_ge_finite_experimental import _fibre_recovery
         records,energies=_fibre_recovery(owner,state,beam_parent,beam_next)
         result=replace(result,beam_fibre_material=records,beam_fibre_energy=energies)
+    if s3_material:
+        from ._stiffened_shell_ge_finite_experimental import _shell_s3_recovery
+        result=replace(result,shell_s3_material=_shell_s3_recovery(
+            owner._shell_parts[q4_count:],shell_next[q4_count:]))
     driver._state=state;driver._shell_predecessors=shell_parent
     driver._beam_predecessors=beam_parent
-    driver._shell_origins=(_accepted_shell_material_origins(owner,state,shell_next)
+    driver._shell_origins=(shell_next if s3_material else
+                          _accepted_shell_material_origins(owner,state,shell_next)
                            if owner._definition.shell.j2_curve is not None else shell_next)
     driver._beam_origins=beam_next;driver._accepted=result
     driver._displacement_applied_load=a["applied_load"]
@@ -197,10 +208,27 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
         else:
             arrays["beam_plastic"],arrays["beam_accumulated"]=_material_arrays(trial.evaluation[5])
             arrays["beam_origin_plastic"],arrays["beam_origin_accumulated"]=_material_arrays(trial.beam_predecessor)
-        from ._stiffened_shell_affine_endpoint import has_shell_material
+        from ._stiffened_shell_affine_endpoint import has_shell_material,has_native_s3_material
         if has_shell_material(owner):
-            arrays["shell_plastic"],arrays["shell_alpha"]=_shell_material_arrays(trial.evaluation[4])
-            arrays["shell_origin_plastic"],arrays["shell_origin_alpha"]=_shell_material_arrays(trial.shell_predecessor)
+            q4_count=len(owner._definition.shell.q4_elements)
+            s3_material=has_native_s3_material(owner)
+            arrays["shell_plastic"],arrays["shell_alpha"]=_shell_material_arrays(
+                trial.evaluation[4][:q4_count] if s3_material else trial.evaluation[4])
+            arrays["shell_origin_plastic"],arrays["shell_origin_alpha"]=_shell_material_arrays(
+                trial.shell_predecessor[:q4_count] if s3_material else trial.shell_predecessor)
+            if s3_material:
+                from ._stiffened_shell_ge_finite_experimental import _accepted_shell_material_origins
+                accepted_shell=_accepted_shell_material_origins(owner,state,trial.evaluation[4])
+                material=owner._shell_model.get_material("shell")
+                arrays["s3_states"]=tuple(element.serialize_nonlinear_state(
+                    owner._shell_model.mesh,material,origin,3)
+                    for origins in (accepted_shell,trial.shell_predecessor)
+                    for (_eid,element,_slots,_),origin in zip(
+                        owner._shell_parts[q4_count:],origins[q4_count:]))
+                arrays["shell_origin_q"]=trial.predecessor_state.q[:owner._shell_count]
+                arrays["shell_origin_anchors"]=(np.tile(np.eye(3),(len(owner._shell_ids),1,1))
+                    if trial.predecessor_state.shell_anchors is None else
+                    trial.predecessor_state.shell_anchors)
         next_metadata=dict(metadata,event_cell_evaluations=
                            metadata["event_cell_evaluations"]+trial.event_cell_evaluations)
         raw=encode_snapshot(owner,generation=generation+1,**next_metadata,arrays=arrays)
