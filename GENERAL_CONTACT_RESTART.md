@@ -35,7 +35,12 @@ scrutiny only; no engineering/application admission or release.
 
 Extend existing native owners toward material-surface/deformable-S3 static contact;
 verify formulation-owned shell corner work, complete cross derivatives and normal
-path before choosing the integrated slice. Reuse existing transactions/restart;
+path before choosing the integrated slice. Read review selects
+NativeRetainedRoundS3Analysis: add radius to swept/edge lever bounds, avoid double
+spatial conversion, opt new area work into anchored scalar/domain and bind identity.
+First discriminator: fixed beam nodes / pure cell rotation against a finite S3 facet.
+[Exact boundary](docs/d1_review_support/contact_native_material_plane_20261004/next_owner_boundary.md).
+Reuse existing transactions/restart;
 no new performance campaign or unrelated prototype. Caps/interfaces/curved
 reference, multiple bodies, friction/dynamics and acceptance remain required.
 Actual-tangent free-rim continuum admission remains unavailable: the energetic
@@ -53,8 +58,7 @@ Native grazing friction NONPASS−1.33564e-13m (223queries/448paths/21support/10
 closed event derivative/mixed-work enclosure missing; no saved/full/owner/split
 retry/reset/zero/native acceptance. Q4FD appcycle180.124s timeout: no unchanged retry.
 Optional Local/Mistral unavailable: no repeated probes. Frozen/consumed authorities
-remain consumed. All owned numerical processes terminal. Internal Read worker
-checks the next existing-owner integration boundary; no numerical authority given.
+remain consumed. All owned numerical processes and internal workers terminal.
 
 Clock = get_goal.timeUsedSeconds +3120s offset. Latest418016+3120=421136s,
 116.982h; about3.018h of original120h remain. Never reset/extend. Routine180s/1GB
