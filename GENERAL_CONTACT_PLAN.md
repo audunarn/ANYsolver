@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.88. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.89. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -16,42 +16,39 @@ Publication, merging, release and historical-default changes are separate action
 
 ## Latest integrated slice — 4 October
 
-The continuous actual-hemisphere fixed-plane cap law now composes through the
-existing multiple-rigid contributor. All children retain the same pose, actual
-B2/B3 curve, full cap/node work and local sparse tangent; common regularity and
-all-child endpoint rechecks preserve bounded swept admission. Stable body IDs
-retain per-body forces/moments and full child restart contracts. Legacy mixed
-obstacle laws/profile identities remain unchanged; the new selector rejects
-nonplanes, incompatible settings, duplicate features and aggregate resource limits.
+Actual hemisphere support now acts on a deforming physical S3 interior through
+one all-coordinate Jet2 potential. Actual B2/B3 tangent, target normal/anchor,
+cross-body Hessian and offset couples pull back together; genuine material ends,
+whole-radius moving-plane envelope and exact curve regularity preserve ownership
+and bounded path admission. Target rotations, physical rims and multiple faces
+remain explicitly outside this development row. Legacy uncapped/default laws stay
+unchanged. A discovered zero-step S3 sealing defect is fixed by evaluating only
+the accepted origin and retaining the original rejection, never a failed trial.
 
-Installed50checks pass11.681s/355713024B;239modules/502packagefiles match,JIT0/pools1.
-Independent orthogonal-plane potential/virtual work/1e-5tangent, B3 midnode/cap,
-body wrenches, closed seam sweeps/common gap gate, actual two-ended bar1e-6
-(responseerror1.733e-14), force/displacement, active restart, second-child actual
-exception/cancel replay, true junction topology, shared-body grouping, examples,
-legacy mixed-obstacle/single-plane and no-contact checks pass. Four runs/33records;
-predecessor legacy0.0125J seam jump and historical failures remain untouched.
-Supporting same-family source scrutiny is not engineering acceptance.
-[Guide](docs/GENERAL_CONTACT_MULTIPLE_HEMISPHERE_PLANES_DEV.md),
-[evidence](docs/d1_review_support/contact_multiple_hemisphere_planes_20261004/summary.json).
+Installed31checks pass14.242s/351694848B;217modules/504files match,JIT0/pools1.
+Independent scalar work/1e-5tangents, B3 cross work, physical offset wrenches,
+actual deforming-target contact-gradient5.871e-12 vs1e-6 and bounded linearized
+structural response4.399e-6 vs1e-3 pass. Force control, matching finer displacement
+increments under unchanged budgets, completed split restart, incompatible identity,
+actual exception/cancellation replay, failed-origin sealing/noncontinuability and
+affected ordinary S3/state/no-contact routes pass. Seven runs/51records retain
+state and fixture/build failures. Supporting review is not engineering acceptance.
+[Guide](docs/GENERAL_CONTACT_DEFORMABLE_S3_CAPS_DEV.md),
+[evidence](docs/d1_review_support/contact_deformable_s3_caps_20261004/summary.json).
 
-Next principal D3 slice: beam–shell physical-end work through the existing
-all-coordinate Jet2 deformable-S3 line kernel and S3SkinWorkAdapter. Differentiate
-actual B3 endpoint tangents, target normal/skin motion and complete cross-body
-blocks in one local potential. Reuse full-curve line-plane temporal envelopes
-(which contain hemisphere geometry) plus actual tangent/curve regularity and
-radius-covering physical-face clearance. Do not scatter a fixed-normal endpoint
-force to a deforming triangle. Keep the actual skin/offset work map and legacy
-uncapped row. Initially bound the face-interior/exterior profile explicitly;
-physical rims/corners/multiple faces still require their own complete work.
-[Source-backed route](docs/d1_review_support/contact_multiple_hemisphere_planes_20261004/beam_shell_next.md).
-Beam-pair/radial transitions, multi-cell quadratic/native, mesh/enforcement and
-independent acceptance remain required. No replacement of C2/D3/full programme
-by fixed-plane or axial fixtures, new numerical stack or restricted impact replay.
+Next principal D3 slice: complete the continuous actual cap geometry against a
+fixed sphere before extending curved-obstacle compositions. Derive the constrained
+hemisphere/sphere closest support and its one-sided seam derivatives, differentiate
+actual B2/B3 tangent/node work, and retain complete reference-line integration,
+true ends and conservative whole-radius curve/path bounds. Reuse the existing
+radial line/enclosure owner, not its owned-point endpoint potential or legacy
+active cap-side crossing rejection. Any changed law gets an explicit opt-in
+profile/restart identity and independent scalar/work/coupled installed checks;
+legacy arithmetic stays intact. Cylinder, beam-pair and finite-face transitions,
+mesh/enforcement and independent acceptance remain separate required boundaries.
 
-Earlier identities/prototypes/failures remain in
-[plan87](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV87.md)
-→86→85. Frozen/consumed authorities are not renewed.
+[Previous revision](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV88.md)
+→87→86 retains earlier results, restrictions and failed evidence.
 
 ## 1. Current technical position
 

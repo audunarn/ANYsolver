@@ -1843,3 +1843,18 @@ force/displacement/state/restart/common-gap/body-accounting/capability rejection
 and legacy/no-contact checks pass. Fourruns/33records; supporting same-family
 scrutiny only. Predecessor/historical failed evidence unchanged.
 [Guide/evidence](GENERAL_CONTACT_MULTIPLE_HEMISPHERE_PLANES_DEV.md).
+
+
+## Actual hemisphere work on a deforming S3 interior — 4 October development
+
+`JET2_B2_B3_HEMISPHERE_SUPPORT_DEFORMABLE_FIXED_DIRECTOR_S3_STATIC_DEV_V1`
+adds actual B2/B3 tangent cap support through the existing physical S3 skin work
+map: moving normal/anchor, complete cross-body Hessian and offset couples.
+Installed31checks pass14.242s/351694848B;217modules/504files match,JIT0/pools1.
+Independent scalar work/tangent and coupled contact-gradient5.871e-12 vs1e-6;
+bounded linearized response4.399e-6 vs1e-3; force/displacement, completed restart,
+rollback and failed-origin state sealing pass. Coarse displacement rejection and
+failed-checkpoint noncontinuability remain. Face-interior fixed-director elastic
+static profile; rims/multiple faces/friction/native/dynamics and engineering
+qualification remain. Implemented/tested, not independently accepted/released.
+[Guide/evidence](GENERAL_CONTACT_DEFORMABLE_S3_CAPS_DEV.md).

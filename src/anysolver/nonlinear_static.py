@@ -4279,8 +4279,13 @@ def _solve_static_displacement_control(
                 )
 
     u_final = np.asarray(T @ q + u0, dtype=float).reshape(-1)
-    if (augmented_contact_manager is not None and not steps
-            and not committed_states):
+    if (not steps and not committed_states and (
+            augmented_contact_manager is not None
+            or any(_qualified_s3_committed_state_validator(element) is not None
+                   for element in model.mesh.elements.values()))):
+        # A rejected first trial has no committed candidate. Recover the
+        # accepted origin through the normal structural owner before sealing;
+        # do not substitute the failed trial or mask its failure status.
         _initial_force, _initial_tangent, reference_states = (
             _assemble_nonlinear_system(
                 model, u_final, committed_states, num_layers,
