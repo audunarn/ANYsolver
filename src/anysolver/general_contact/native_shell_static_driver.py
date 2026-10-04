@@ -52,6 +52,7 @@ def solve_native_shell(owner, schema, run_type, *, checkpoint=None,
                     cancellation_safe_point(cancellation_token, 'native/S3 commit')
                     next_records = (*records, record)
                     staged = owner._checkpoint(next_records)
+                    cancellation_safe_point(cancellation_token, 'native/S3 atomic commit')
                     accepted, records, capsule = proposed, next_records, staged
                     if progress is not None:
                         progress(accepted.completed_targets, accepted)

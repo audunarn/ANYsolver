@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from hashlib import sha256
 from math import isfinite
 
@@ -28,6 +28,7 @@ from .native_retained_line_s3_work import (
 )
 from .native_retained_station import _readonly
 from .s3_skin_work import S3SkinWorkAdapter
+from .native_material_s3 import NativeRetainedMaterialS3Work, PROFILE as MATERIAL_PROFILE
 
 
 PROFILE = "NATIVE_B3_GE_ELASTIC_S3_INTERIOR_STATIC_DEV_V1"
@@ -68,8 +69,9 @@ class NativeRetainedRoundS3Analysis:
                 or type(definitions[0]) is not NativeBeamDefinition
                 or type(program) is not NativeNodalProgram):
             raise TypeError("native/S3 owner needs one exact native beam and program")
-        if type(shell_model) is not FEModel or type(contact) is not NativeRetainedLineS3Work:
+        if type(shell_model) is not FEModel or type(contact) not in (NativeRetainedLineS3Work,NativeRetainedMaterialS3Work):
             raise TypeError("native/S3 owner needs exact S3 model and contact work")
+        self.profile=MATERIAL_PROFILE if type(contact) is NativeRetainedMaterialS3Work else PROFILE
         if (type(gap_tolerance_m) not in (int, float)
                 or not isfinite(gap_tolerance_m) or gap_tolerance_m <= 0.0
                 or type(equilibrium_tolerance) not in (int, float)
@@ -113,7 +115,7 @@ class NativeRetainedRoundS3Analysis:
 
     def _identity(self) -> str:
         return sha(dict(
-            profile=PROFILE,
+            profile=self.profile,
             native_model=self.context.identity,
             native_support_sha256=sha256(self.context.support_identity).hexdigest(),
             shell_contract=self.shell_contract_sha,
@@ -236,6 +238,9 @@ class NativeRetainedRoundS3Analysis:
             force_error_n=physical.force_error_n,
             tangent_error_n_per_m=physical.tangent_error_n_per_m,
         )
+        if type(self.contact) is NativeRetainedMaterialS3Work:
+            summary.update(measure='fixed_reference_material_area',
+                minimum_gap_estimate_m=physical.minimum_gap_estimate_m)
         row = dict(
             target=target, previous_sha256=previous_sha256,
             mechanical=mechanical.descriptor(),
@@ -251,7 +256,7 @@ class NativeRetainedRoundS3Analysis:
         self._guard()
         if type(records) is not tuple or len(records) > len(self.program.targets):
             raise ValueError("native/S3 checkpoint record extent")
-        body = dict(schema=CHECKPOINT_SCHEMA, profile=PROFILE,
+        body = dict(schema=CHECKPOINT_SCHEMA, profile=self.profile,
                     identity=self.identity, completed_targets=len(records),
                     records=records)
         raw = canonical({**body, "checkpoint_sha256": sha(body)})
@@ -272,7 +277,7 @@ class NativeRetainedRoundS3Analysis:
         body = {key: item for key, item in value.items()
                 if key != "checkpoint_sha256"}
         if (value["schema"] != CHECKPOINT_SCHEMA
-                or value["profile"] != PROFILE
+                or value["profile"] != self.profile
                 or value["identity"] != self.identity
                 or value["checkpoint_sha256"] != sha(body)):
             raise ValueError("native/S3 checkpoint definition/settings binding")
@@ -354,7 +359,8 @@ class NativeRetainedRoundS3Analysis:
             mechanical, displacement, parameter, origins)
         contact = self._contact(mechanical, displacement)
         block = contact.tangent.toarray()
-        block[:42, :42] = spatial_jacobian(contact.residual[:42], block[:42, :42])
+        if type(self.contact) is not NativeRetainedMaterialS3Work:
+            block[:42, :42] = spatial_jacobian(contact.residual[:42], block[:42, :42])
         metrics = self._add_spatial_contact(residual, tangent, contact.residual, block)
         return residual, tangent, metrics, responses, contact
 
@@ -380,6 +386,8 @@ class NativeRetainedRoundS3Analysis:
         no rejected Newton iterate can advance the transaction's physical state.
         """
         from anysolver.control import cancellation_safe_point
+        if type(self.contact) is NativeRetainedMaterialS3Work:
+            raise ValueError('normal material-patch owner does not admit the existing friction transaction')
         from .native_surface_transaction import NativeS3MaterialTransaction
 
         if type(transaction) is not NativeS3MaterialTransaction or transaction.contributor.owner is not self:
@@ -457,6 +465,7 @@ class NativeRetainedRoundS3Analysis:
             return message.startswith((
                 "native line-S3 integration interval budget exhausted",
                 "native line-S3 parameter resolution exhausted",
+                "straight normal integration interval budget exhausted",
             ))
         return type(exc) is ValueError and message.startswith((
             "native line-S3 curve approaches unadmitted physical rim",
@@ -464,18 +473,46 @@ class NativeRetainedRoundS3Analysis:
             "native line-S3 activation interval is unresolved",
             "native line-S3 activation is ambiguous",
             "retained generalized step requires cutback",
+            "native material S3 patch approaches unadmitted physical rim",
+            "native material S3 has unresolved target geometry",
+            "native/S3 material history path requires subdivision",
+            "material plane angular endpoint/extremum gap unresolved",
+            "S3 material skin is degenerate",
+            "S3 material skin is inverted",
         ))
 
     def _swept_admissible(self, start, u_start, increment, end, u_end,
                           start_gap, end_gap, start_rim, end_rim):
         from .native_s3_swept import native_s3_swept_admissible
+        if type(self.contact) is NativeRetainedMaterialS3Work:
+            nodes=self.context.nodes[0]
+            pose=self.contact._configuration(start.positions[nodes],start.position_low[nodes],
+                start.cell_rotations[0],u_start)
+            translations=(end.positions[nodes]-start.positions[nodes]
+                          +end.position_low[nodes]-start.position_low[nodes])
+            angular=np.array([increment[self.context.nodal_count+3*c:
+                                        self.context.nodal_count+3*c+3] for c in (0,1)])
+            try:self.contact.certify_orientation_path(pose,translations,angular,u_end-u_start,
+                self.maximum_swept_intervals)
+            except ValueError as exc:
+                if self._recoverable_trial_error(exc):return False
+                raise
+            def geometry_query(state,u):
+                return self.contact.geometry_gap(state.positions[nodes],state.position_low[nodes],
+                    state.cell_rotations[0],u)
+            return native_s3_swept_admissible(self.context,self.contact,0,self.gap_tolerance,
+                self.maximum_swept_intervals,self._recoverable_trial_error,start,u_start,
+                increment,end,u_end,start_gap,end_gap,start_rim,end_rim,
+                geometry_only=True,geometry_query=geometry_query,material_radius=self.contact.contact.radius)
         return native_s3_swept_admissible(self.context, self.contact, 0,
             self.gap_tolerance, self.maximum_swept_intervals, self._recoverable_trial_error,
             start, u_start, increment, end, u_end, start_gap, end_gap, start_rim, end_rim)
 
     def solve(self, *, checkpoint: bytes | None = None,
               expected_sha256: str | None = None,
-              stop_after: int | None = None) -> NativeRetainedS3Run:
+              stop_after: int | None = None,cancellation_token=None) -> NativeRetainedS3Run:
         from .native_shell_static_driver import solve_native_shell
-        return solve_native_shell(self, CHECKPOINT_SCHEMA, NativeRetainedS3Run,
-            checkpoint=checkpoint, expected_sha256=expected_sha256, stop_after=stop_after)
+        result=solve_native_shell(self, CHECKPOINT_SCHEMA, NativeRetainedS3Run,
+            checkpoint=checkpoint, expected_sha256=expected_sha256, stop_after=stop_after,
+            cancellation_token=cancellation_token)
+        return replace(result,profile=self.profile) if type(self.contact) is NativeRetainedMaterialS3Work else result

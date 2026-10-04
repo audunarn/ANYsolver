@@ -11,6 +11,7 @@ import numpy as np
 from anysolver._ge_beam3_p5_seeded.core import sha
 from anysolver.corotational import _rotation_right_jacobian
 from .native_retained_s3_static import NativeRetainedRoundS3Analysis
+from .native_retained_line_s3_work import NativeRetainedLineS3Work
 from .native_retained_station import _readonly
 from .native_surface_s3_friction import NativeS3MaterialConfiguration, NativeS3MaterialPointFriction
 from .native_surface_patch import NativeS3MaterialSurfacePatch
@@ -33,6 +34,8 @@ class NativeS3MaterialContributor:
     def __init__(self, owner, pair):
         if type(owner) is not NativeRetainedRoundS3Analysis or type(pair) not in (NativeS3MaterialPointFriction,NativeS3MaterialSurfacePatch):
             raise TypeError('exact retained native/S3 owner and material pair required')
+        if type(owner.contact) is not NativeRetainedLineS3Work:
+            raise ValueError('normal material-patch owner does not admit the existing friction transaction')
         owner._guard()
         element_id, element = owner.context.elements[0]
         if (pair.source.element_id != element_id or

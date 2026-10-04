@@ -94,7 +94,8 @@ def _breakpoints(left_offset, right_offset, a, b, lower, upper):
     return sorted(points)
 
 
-def _cell_data(rule, target, configuration, corners, cell, left, right, stiffness):
+def _cell_data(rule, target, configuration, corners, cell, left, right, stiffness,
+               *, compensated_projection=False):
     """Eighteen local chart coordinates; no full-system AD arrays."""
     size = 18
     q = [Jet2.variable(0., i, size) for i in range(size)]
@@ -110,7 +111,8 @@ def _cell_data(rule, target, configuration, corners, cell, left, right, stiffnes
     mapping[6:9, 18+3*cell:21+3*cell] = np.eye(3)
     mapping[9:, 42:] = target.adapter.work_map.toarray()
     return _material_cell_normal_data(rule, configuration, cell, left, right,
-        stiffness, q[:9], normal, corners[0], q[9:12], mapping)
+        stiffness, q[:9], normal, corners[0], q[9:12], mapping,
+        compensated_projection=compensated_projection)
 
 
 def _material_cell_normal_data(rule, configuration, cell, left, right,
@@ -204,7 +206,8 @@ def _material_cell_normal_data(rule, configuration, cell, left, right,
 
 
 def integrate_straight_normal(rule, target, configuration,
-                              normal_stiffness_Pa_per_m, settings):
+                              normal_stiffness_Pa_per_m, settings,
+                              *, compensated_projection=False):
     """Integrate reference-area penalty work and its complete spatial tangent.
 
     Each accepted angular interval consumes its width-proportional share of
@@ -230,7 +233,8 @@ def integrate_straight_normal(rule, target, configuration,
     lo, hi = rule.definition['xi_range']
     cells = [(c, l, r) for c, l, r in
              ((0, max(lo, -1.), min(hi, 0.)), (1, max(lo, 0.), min(hi, 1.))) if r > l]
-    data = [_cell_data(rule, target, configuration, corners, *cell, stiffness) for cell in cells]
+    data = [_cell_data(rule, target, configuration, corners, *cell, stiffness,
+                       compensated_projection=compensated_projection) for cell in cells]
     return _integrate_material_normal_data(data, 60, settings)
 
 
