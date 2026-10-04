@@ -1,4 +1,25 @@
 # General-contact capability ledger
+## Actual quadratic-beam physical ends — 4 October
+
+Implemented/installed-tested development: one B3/B3 or mixed B2/B3 cell perbody,
+scalar elastic vonKarman, actual Q2 curve/endpoint tangent and both-body reduced
+projection Hessian. Genuine all-node ends add one reciprocal cap/cap or owned
+end/interior spring with separate N/m versus N/m² law. Complete exact tensor gap,
+affine swept speed, strict convex endpoint/ownership and common reciprocity
+certificates fail closed under fixed limits. Restart binds geometry/topology/law.
+Installed21pass27.588s/335622144B;220modules/500files match,JIT0/pools1. Independent
+scalar curved work/full tangents and P2-bar8.409e-16 vs1e-6; force/displacement,
+active/open restart, changed definitions, actual exception/cancel, covariance,
+mid-node/through-crossing and legacy/no-contact checks pass. Whole gap checked
+at1e-5/1e-7m with10000cells/depth25. Nine runs/59records retain original AABB failures,
+abandoned bound experiment and crossing fixture defect. Rounded clamp activation
+and conversion underflow are corrected/rejected; same-family source scrutiny only.
+No independent engineering acceptance/application admission/release. Closed
+transitions/nonconvex projections, multi-cell quadratic/beam-shell/native work,
+mesh/enforcement/friction/dynamics/full C0–C9 remain required.
+[Guide](GENERAL_CONTACT_BEAM_CURVE_ENDS_DEV.md),
+[evidence](d1_review_support/contact_curve_endcaps_20261004/summary.json).
+
 ## Physical ends of B2 chains — 4 October
 
 Implemented/installed-tested development: up to16cells/side within existing

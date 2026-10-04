@@ -32,6 +32,11 @@ def validate_beam_pair_ends(model, definition, settings=None):
     if len(definition.surfaces)==2 and any(len(s.element_ids)>1 for s in definition.surfaces):
         from .beam_chain_ends import validate_beam_chain_ends
         return validate_beam_chain_ends(model,definition,settings)
+    from anysolver.elements import QuadraticBeamElement
+    if any(type(model.mesh.elements.get(element)) is QuadraticBeamElement
+           for s in definition.surfaces for element in s.element_ids):
+        from .beam_curve_ends import validate_curve_beam_ends
+        return validate_curve_beam_ends(model, definition, settings)
     from anysolver.elements import BeamElement
     if tuple(map(len, (definition.surfaces, definition.rigid_bodies,
                        definition.interactions))) != (2, 0, 1):

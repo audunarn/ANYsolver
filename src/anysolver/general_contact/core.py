@@ -1279,8 +1279,14 @@ def contact_scope(model: FEModel, definition: ContactDefinition,
                     from .beam_chain_ends import BeamChainEndManager
                     manager = BeamChainEndManager(model, definition, settings, initial_displacement)
                 else:
-                    from .beam_pair_ends import BeamPairEndManager
-                    manager = BeamPairEndManager(model, definition, settings, initial_displacement)
+                    from anysolver.elements import QuadraticBeamElement
+                    if any(type(model.mesh.elements.get(element)) is QuadraticBeamElement
+                           for surface in definition.surfaces for element in surface.element_ids):
+                        from .beam_curve_ends import BeamCurveEndManager
+                        manager = BeamCurveEndManager(model, definition, settings, initial_displacement)
+                    else:
+                        from .beam_pair_ends import BeamPairEndManager
+                        manager = BeamPairEndManager(model, definition, settings, initial_displacement)
             elif any(len(surface.element_ids) > 1 for surface in definition.surfaces):
                 from .beam_chain_pair import _BeamChainPairManager
 

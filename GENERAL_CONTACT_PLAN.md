@@ -1,6 +1,6 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.85. **Status:** D1-interior and the named bounded D2
+**Revision:** 2026-10-04.86. **Status:** D1-interior and the named bounded D2
 partial-shell handoff independently accepted; remaining C0–C9 programme active.
 **Worktree:** C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 **Branch:** codex/contact-main-reconcile-20261001.
@@ -16,36 +16,39 @@ Publication, merging, release and historical-default changes are separate action
 
 ## Latest integrated slice — 4 October
 
-Classical multi-cell B2 physical ends now compose with the existing consistent
-nearest-curve sparse line assembly, retaining moving-owner cross blocks. Exact
-closest-feature comparison and all-material-node topology admit one reciprocal
-cap/cap spring, end/interior or equivalent shared-junction point work. Nonphysical
-cuts and unresolved closed partners reject. Review found a nonreciprocal activation
-missed by separate endpoint paths; a common all-end interval proof closes it.
+Actual classical B3 and mixed B2/B3 physical-end work now reuses the existing
+quadratic curve reduced Hessian and symmetric line potential. Genuine ends use
+all material-node incidence. One reciprocal cap/cap or owned end/interior spring
+retains both-body maps, actual end tangents and mixed embeddings. Exact tensor
+full-curve and affine path bounds plus strict endpoint projection/ownership and
+common reciprocal intervals replace orientation-sensitive AABB admission in this
+new profile. Legacy uncapped work/geometry remains unchanged.
 
-Installed42checks pass31.572s/336089088B,215modules/498files match,JIT0/pools1.
-Independent P1 two-bar response on2/2,4/3,8/8 meshes agrees within9.266e-15 vs1e-6.
-Full work/tangents, moving interfaces plus cap work, junctions, covariance,
-force/displacement, restart/changed definitions, actual exception/cancel and bounded
-reciprocal cutback pass. Ten runs/70rawrecords retain the actual swept-admission
-failure and a confounded tie test. Supporting same-family scrutiny is not independent
-engineering acceptance, general beam qualification or normal application admission.
-[Guide](docs/GENERAL_CONTACT_BEAM_CHAIN_ENDS_DEV.md),
-[evidence](docs/d1_review_support/contact_chain_endcaps_20261004/summary.json).
+Installed21checks pass27.588s/335622144B;220modules/500packagefiles match,JIT0/pools1.
+Independent curved point energy/work and complete1e-5directional tangents pass;
+independent P2 two-bar response agrees within8.409e-16 vs1e-6. Force/displacement,
+active/open restart, changed definitions, actual exception/cancel, covariance,
+true end topology and retained B2/B3/no-contact routes pass. Full gap is checked
+at1e-5/1e-7m under unchanged10000cells/depth25 caps. Nine runs/59records preserve
+all failures. Review's rounded cap activation could drop a finite spring tangent;
+exact clamp gap and explicit underflow/interior-roundoff rejection close it.
+Same-family supporting scrutiny is not independent engineering acceptance.
+[Guide](docs/GENERAL_CONTACT_BEAM_CURVE_ENDS_DEV.md),
+[evidence](docs/d1_review_support/contact_curve_endcaps_20261004/summary.json).
 
-Next principal D3 question: extend physical-end work to the actual quadratic B3
-source and target curves. Reuse existing curve projection/bounds and work adapters;
-derive the reduced target projection Hessian including curvature and genuine end
-tangents. Preserve both-body maps, full-curve/swept bounds and multiple-minimum
-failure rules. One independent curved work/response discriminator precedes broader
-admission. Closed cap/side/partner transitions, mesh/enforcement and independent
-acceptance remain required; no replacement of full C2/D3 by easier axial cases.
-No new solver/differentiation stack, frozen native/impact replay, general speedup
-or full-programme completion forecast is authorized.
+Next principal D3 question: closed cap/side and partner transitions under the
+declared physical round envelope. First use one bounded energy/force-limit
+discriminator to decide whether a generalized derivative can extend the existing
+point-plus-line law or a separately identified physical cap-surface work map is
+required. Do not hide a discontinuity with empirical weights or silently change
+the existing development profiles. Reuse existing geometry/work infrastructure.
+Beam–shell end/boundary work, multi-cell quadratic curves, native retained work,
+mesh/enforcement and independent acceptance remain required. No replacement of
+full C2/D3 by axial fixtures, new numerical stack or restricted native/impact replay.
 
-Earlier identities, prototypes and failures remain in
-[plan84](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV84.md)
-→83→82. These links do not renew frozen or consumed execution authority.
+Earlier identities/prototypes/failures remain in
+[plan85](docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261004_REV85.md)
+→84→83. Frozen/consumed authorities are not renewed.
 
 ## 1. Current technical position
 
