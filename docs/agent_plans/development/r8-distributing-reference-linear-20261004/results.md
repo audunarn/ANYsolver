@@ -811,3 +811,30 @@ finding. Supporting OpenAI reviews do not meet different-family scientific
 acceptance. Full material histories, physical finite connection, chart rebase,
 S3/fibres, topology/loads/spectra/capacity/scale/platform/complete consumer,
 F04/G0/G2 and release remain open. FormalF03 unconsumed. No speedup claim.
+
+### Explicit material ANYfem consumer — next mandatory lifecycle exit
+
+Distinct `ExperimentalGEFiniteDistributingMaterialPanel` persists the explicit
+generalized/coupled material policy in its own schema. It reuses canonical
+material/beam parsing and existing input-only geometry framing, public solver
+creation, Project dispatch and checkpoint ownership. No mechanics copied.
+Old elastic schemas continue to reject material selection. Both new policies
+have input ownership, save/reopen, solve, yielded cancel/prefix/recovery and
+restart checks. Incorrect capability/policy/checkpoint/limit/preflight closes
+the created owner. No constructor compiles an analysis.
+
+Final installed consumer90PASS41.00s,42.9745s complete/sample212729856B under
+600s/2GiB, actual affinity/pools1/JIToff. Runnable public example is included.
+Installed bytes and all actual imports are checked. New consumerwheel
+716ac11f89336ec2a84b54b580ea1367ff6ce456d797497118e87b1b596bca49 uses unchanged
+material solverwheel2f182820379c18029e93e143a689902dfdab56afb398aef490510a16bde43c3d.
+ANYfem raw `.qualification/stiffened-shell/r8-ge-distributing-material-consumer-dev-20261004-v1`
+retains final source, drivers, runtime identities, logs and supporting review;
+source86 preceded cleanup/limit tightening. No unrelated passed solver campaign
+was repeated. Supporting OpenAI review clear; scientific independence remains open.
+
+Next bounded correctness question uses the saved failing1.01 state to separate
+shell/beam/attachment free-equation directional errors from subtraction
+precision and nonlinear curvature. No failed-trajectory reconstruction or
+budget/tolerance/globalization change is implied. Physical connection,
+reversal/chart/full-domain/scale/platform/aggregate/release obligations remain.

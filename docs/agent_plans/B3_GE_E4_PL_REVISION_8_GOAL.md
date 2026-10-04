@@ -101,6 +101,10 @@ The near-term path is now:
    examplePASS. The1.0001 continuation proves bounded lifecycle behavior only;
    failed1.01 and low-hardening cases remain open. Next close a ready material
    consumer/persistence or lifecycle obligation; no automatic finer campaign.
+   The separate material consumer now completes installed90PASS, including both
+   policies, native input save/reopen and yielded checkpoint continuation.
+   Next use the saved failing1.01 state to isolate free-equation derivative /
+   cancellation / curvature; no repeated loading trajectory or relaxed budget.
 1. COMPLETE: reference-linear distributing consumer, 42 source/42 installed
    checks and installed public example using the unchanged solver wheel.
    Reuse this evidence; preserve reference-only admission.

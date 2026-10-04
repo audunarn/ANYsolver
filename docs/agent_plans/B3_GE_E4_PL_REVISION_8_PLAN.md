@@ -196,6 +196,12 @@ Decisions resolving the present queue:
   No tolerance/budget/globalization change or material/connection qualification
   follows. Next close an actual material consumer/lifecycle gap with existing
   services rather than add optional mechanics or repeat physical refinement.
+  Material consumer/persistence is now delivered separately: installed90PASS
+  includes both policies, strict schema/ownership, Project save/reopen,
+  yielded cancellation/recovery and resumed checkpoint parity. Old elastic
+  formats remain unchanged and reject selected material intent. Next isolate
+  free-equation derivatives by shell/beam/attachment contribution at the saved
+  failing1.01 state; preserve numerical/scientific criteria and authority.
 - **Pressure assessment:** do not adopt the proposed vector-only amendment.
   Its documented shared-node masking weakens a protection of the current
   contract. This resolves the outstanding approval request as a decision to

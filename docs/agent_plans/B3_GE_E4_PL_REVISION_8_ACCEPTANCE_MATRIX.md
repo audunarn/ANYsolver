@@ -2251,3 +2251,13 @@ not substituted capacity or qualification. Low-hardening failures preserved.
 Full combination/reversal/chart/consumer/physical/capacity and aggregate gates
 remain open. No criteria/globalization change, speed claim or formalF03 use.
 [Exact scope, artifacts, failures and reviews](development/r8-distributing-reference-linear-20261004/results.md).
+
+G3 explicit finite distributing material consumer,4 October — IMPLEMENTED_NOT_QUALIFIED.
+Distinct required policy/schema; owned canonical curves/native beams and
+input-only framing; standalone/native Project roundtrip; both policy solves,
+yielded cancel/recovery and binary resumed1.0001 parity. Final installed90PASS,
+actual artifact/import/source identity and failure cleanup checked. Old elastic
+formats still reject selected material intent. Same fixture1.01 failure and
+free-equation derivative uncertainty remain; no criteria or budget change.
+Full physical/material/chart/reversal/scale/platform/consumer/release remains.
+[Scope and evidence](development/r8-distributing-reference-linear-20261004/results.md).

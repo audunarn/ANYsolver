@@ -19,9 +19,12 @@ both domains; uninterrupted/restored checkpoints are byte-identical. Equilibrium
 3.5308564e-13, gap7.58995e-18; accepted-prefix checkpoint6707B. Actual imported
 files and installed package bytes match source. Complete route141.90s,
 sampled211599360B, affinity/pools1/JIToff under600s/2GiB. No speed claim.
-Consumer remains elastic: it recognizes the appended definition field but
-rejects selected/malformed material policies rather than discarding them.
-Its old schemas and Project save/reopen remain exercised.
+The distinct material consumer now completes installed input/Project save-reopen,
+both policy solves, yielded cancellation, selected physical recovery and binary
+resume:90PASS41.00s/42.97s whole/sample212729856B. Old elastic schemas still
+reject material intent; new schema explicitly persists it. All actual imports
+and installed package bytes match source; supporting review clear. No physics
+qualification or convergence claim follows.
 
 **Remaining material uncertainty:** the same coupled fixture's1.01 continuation
 fails at generation4, relative residual0.00246153 after23 solves/192 rejected
@@ -37,12 +40,14 @@ slice. Direct work movements0.66148%/0.05137%, saved-solid differences0.22060%/
 0.03200%; small cross term moves~2.03%. Measured mesh-pair stability only:
 not asymptotic/full-six-channel/finite fidelity or F04 acceptance.
 
-**Next mandatory exit:** preserve this reviewed material slice, then complete
-the explicit material consumer/persistence contract or a directly ready missing
-material lifecycle obligation. Do not reopen the stopped Mx/My refinement or
-broaden unsupported mechanics. Any next diagnostic must distinguish the stated
-free-equation tangent/conditioning issue from nonlinear correction curvature
-using the saved failing state, not repeat the entire failed trajectory.
+**Next mandatory exit:** distinguish the failed continuation's free-equation
+derivative discrepancy from cancellation/curvature. Use the saved failing state
+and separate shell, beam and attachment work contributions; avoid full-row
+norm masking and repeat trajectory construction. An identified representation
+defect directs a bounded repair; precision-limited differences direct an
+independent derivative oracle; valid derivatives leave the nonlinear stepping
+limitation explicit. No budget/globalization/tolerance changes or automatic
+refinement. Complete physical/material/reversal/chart obligations stay open.
 
 ## Exact state and evidence
 
@@ -59,7 +64,10 @@ Final installed runtime-v15, source/consumer snapshots, drivers, logs, failed
 v7/v9, replay-v10 and supporting reviews are preserved. Site/wheels are local
 artifacts; hashes and all imported package-source identities are recorded.
 Solver wheel2f182820379c18029e93e143a689902dfdab56afb398aef490510a16bde43c3d;
-consumer wheeldc822ff5cb33e350b03ab9baa932758fd7fbde507191fe38d9be61732dda0ad3.
+compatibility consumer wheeldc822ff5cb33e350b03ab9baa932758fd7fbde507191fe38d9be61732dda0ad3.
+New material consumer raw .qualification/stiffened-shell/
+r8-ge-distributing-material-consumer-dev-20261004-v1 in ANYfem worktree;
+finalwheel716ac11f89336ec2a84b54b580ea1367ff6ce456d797497118e87b1b596bca49.
 All numerical jobs and supporting Read reviews terminal; no process to recover.
 Supporting OpenAI reviews are not different-family scientific acceptance.
 
