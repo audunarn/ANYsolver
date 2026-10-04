@@ -1,10 +1,14 @@
 # B3-GE / E4-PL stiffened shells: Revision 8 development plan
 
-**Status, 29 September 2026:** active forward execution basis following the
-user's explicit resumption. The original planning review alone did not resume
-implementation.
+**Status 4 October 2026: planning update adopted; explicitly resumed by the user.**
+This is the current Revision 8 development basis. The user delegated pending
+planning decisions; those decisions are recorded below. This edit authorizes
+no numerical run, product edit, formal F03 execution, merge or publication.
 The companion [goal](B3_GE_E4_PL_REVISION_8_GOAL.md) defines the objective,
-decision rights and completion conditions.
+decision rights and completion conditions. These two documents in
+`C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001/docs/agent_plans/`
+are canonical. The older worktree paths are forwarding references, so the
+existing goal link reaches this basis without maintaining competing copies.
 
 This is a development plan, not mechanics qualification. Review it against the
 live worktree before relying on source-specific statements; later evidence does
@@ -21,8 +25,8 @@ Use these authorities without copying their history into new plans:
   F01–F13, V01–V28, B01–B18, quantitative tolerances, required engineering
   applications, external comparisons, scale and final delivery.
 - [Active state](B3_GE_E4_PL_ACTIVE_STATE.md): actual delivered behavior,
-  failures, evidence and next actions. Its Revision 7 scheduling is superseded
-  by this plan only on resumption.
+  failures, exact paused source ownership and next action. Scheduling in this
+  update supersedes earlier next-action lists; historical outcomes remain valid.
 - ANYopenSoft/governance/ECOSYSTEM_PHILOSOPHY.md:
   ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 - Historical registrations and execution records: immutable for their original
@@ -46,54 +50,34 @@ by this document alone.
 
 ## 1. What exists and what is preventing completion
 
-Repository reference for this review: integration commit 5ba6a77a, following
-the Q4 precision fix at 55e79c19 and bounded E01 external-reference work, on
-codex/b3-ge-e4-pl-integration in
-C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling.
-The historical main baseline is be41a77a, version 0.4.7; it is not a claim
-that remote main remains there. Verify changed inputs when resuming.
-The current worktree also contains uncommitted E01 diagnostics and an unrelated
-dirty F03 script. They are provisional work, not accepted evidence or permission
-to run the F03 script. Preserve their ownership and reconcile them on resumption.
+Reviewed solver HEAD `3d5578fb`, branch `codex/stiffened-main-reconcile-20261001`,
+in the canonical worktree above. ANYfem is at `6013db0` (product `9b7482b`) in
+`C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer`. The four-file
+consumer slice now has 42 source/42 installed checks and an installed example;
+its exact evidence is linked by the active note. No numerical job is running. Main was not refreshed in
+this planning review; the historical `be41a77a` baseline is not current-main evidence.
 
-Existing experimental behavior includes:
-- Multi-Q4/S3 native B3 point models, sparse assembly, finite stepping,
-  recovery, atomic state, cancellation, checkpoint/restore and continuation.
-- Several Q4/S3 J2 and generalized-beam material histories, with bounded
-  derivative and lifecycle evidence.
-- Separate physical B2 batching, selected recovery and factorization reuse.
-- An experimental ANYfem construction/save/reopen consumer and scoped installed
-  solver/consumer verification.
+| Area | Established current state | Remaining boundary |
+|---|---|---|
+| GE owner and consumers | Multi-Q4/S3 point workflows, admitted material histories, loads, chart/restart, scoped displacement/arc and modal implementations have installed development evidence. | Each combination retains its own admission; physical accuracy, capacity and aggregate acceptance are incomplete. |
+| B2 | Physical static/batch execution, selected recovery, persistence and scoped supported/free-modal consumer routes exist. | Complete attachment, prestress, scale, external and release acceptance remain. |
+| Foundations | Scoped F05, F08 and F09 have recorded PASSED dispositions; further point/static/elastic-chart portions are accepted within their stated boundaries. | Do not relabel scoped passes as complete aggregate gates or repeat the obsolete claim that no foundation has passed. |
+| BL5 | All 21 saved auxiliary-norm cases passed their scoped predicates; actual mechanical inventory is 13 positive, one unresolved, seven unassessed. | Auxiliary beta does not settle the mixed mechanics or physical transfer. Closed inverse/positive-part certificate routes remain CLOSED_UNRESOLVED. |
+| Distributing attachment | Public reference-linear two-Q4-host owner and installed ANYfem construction/save-reopen/recovery/checkpoint/resume workflow pass focused checks and examples. | Finite pose, physical fidelity and full F04 remain open. |
+| Scale and cost | A 10,000-Q4/1,000-B3 point model completed a persisted reference route. Seven paired installed runs measured 55.97% improvement on the declared 400-Q4/120-B3 warm reference workflow; other scoped gains are recorded. | No overall development-speed measurement, full G5 qualification, nonmatching/nonlinear scale claim or release date follows. |
 
-These are starting assets, not reasons to rebuild the owner or declarations
-that entire material families are qualified. The native S3 finite-rotation
-scope, attachment combinations, physical fibres, spectra and practical scale
-still need their own evidence. None of F01–F13 is fully accepted in the current
-record, and aggregate G0/G1 acceptance is incomplete.
+The [acceptance matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) and linked
+reports bind these claims. In particular, see the
+[scale/reuse result](development/r8-q4-reference-reuse-20261003/results.md),
+[BL5 disposition](development/r8-bl5-projected-assessment-20261003/results.md) and
+[distributing implementation](development/r8-distributing-reference-linear-20261004/results.md).
+Do not rebuild these working routes from the September descriptions below.
 
-Three useful recent findings change the next action:
-1. The low-load Q4 cancellation fix passed 49 source and 5 installed checks.
-   The 20 kPa mixed-shell path then accepted 5 N increments through 40 N but
-   failed at 45 N. This is a separate unresolved material/driver case.
-2. On the saved 2:1 field, corrected common-action L1 shell/native work is
-   0.101298630920 / 0.031510722569 J. The 0.1 m finite patch gives
-   0.038308332396 / 0.031510722569 J. These are signed virtual-work pairings,
-   not energy or compliance reductions. The laws are distinguishable.
-   The earlier 0.66% torque and 0.067% shear tip differences on another
-   fixture cannot establish law equivalence or physical correctness.
-3. Executed OpenSeesPy E01 point-link comparisons agree on primary axial tip
-   quantities within 1% in the tested x-only sequence, but secondary rotations
-   differ. Shell-only and same-action development screens localize much of the
-   roll difference to different shell operators; removing the native drilling
-   action leaves that roll finding. These screens do not qualify the point law
-   or E01. The 2/4/8 sequence has one shell cell across the panel: next compare
-   full two-direction refinement and the complete declared observable set.
-
-The main process correction is to stop making every capability wait for one
-line-law investigation. Modelling choices can be declared, but their claimed
-engineering fidelity still needs evidence. Numerical qualification over an
-explicit envelope does not require a universal theorem. Neither document
-volume nor counts of commits, tests or meshes measure delivered progress.
+The principal delivery risk is now accumulation of implemented capabilities
+without closing their physical and external acceptance. More code and more
+certificate machinery alone will not resolve it. Finish the pending usable
+consumer slice, then spend the primary engineering effort on a matched physical
+comparison and the smallest remaining acceptance blocker it exposes.
 
 ## 2. Milestones and accountable outcomes
 
@@ -132,6 +116,98 @@ subset with approval. It may not delete mandatory final scope, defer a defect
 that invalidates the subset, or call a collection of passing fixtures a general
 supported domain. A milestone narrowed repeatedly without usable delivery is
 a stall, not progress.
+
+### 2.1 Current delivery order and decisions — 4 October
+
+Use at most two active deliverables: one implementation completion and one
+physical-acceptance question. The third worker may review or take a bounded,
+independently owned task inside either deliverable; it must not open a third
+feature stream. Finish or explicitly park a deliverable before opening another.
+Keep tightly coupled edits with one owner and serialize numerical jobs under
+the existing restriction. Worker headcount is a ceiling, not a staffing target.
+
+| Order | Decision and useful exit |
+|---|---|
+| 1 — completed | ANYfem reference-distributing consumer is locally delivered:42 source/42 installed checks, supporting source/runtime review and installed save-reopen/recovery/checkpoint/resume example. Reuse that evidence without adding another attachment/API or rerunning an unchanged campaign. |
+| 2 — physical acceptance | Reuse the existing E01/E02 inventory and build the smallest missing, physically matched eccentric GE connection comparison on the mandatory CalculiX route. Prioritize physical torque/shear and work transfer; another axial-only refinement does not answer the connection question. Use offset signs and registered observables/refinement requirements where applicable. First resolve geometry, frames, supports, load measures and connector semantics; an unmatched model is not an accuracy oracle. Share reference infrastructure with B2 only where the idealizations agree. |
+| 3 — act on the result | A source/work-map defect gets a targeted repair; a physical mismatch gets a documented modelling decision within existing scope; a passed comparison closes only its eligible row. If execution or equivalence is obstructed, name the missing executable/output/equation and move the implementation lane to the highest-priority ready mandatory gap. Do not replace CalculiX acceptance with supplemental OpenSees results. |
+| 4 — finish remaining M4/M5 | Prioritize a usable completion of an existing mandatory operation over new optional profile combinations. Promote the next item from the existing matrix by prerequisite readiness, acceptance impact and effort; no new backlog document. Keep bonded-line, footprints, materials, spectra/capacity, scale and complete consumers visible until accepted. |
+
+Decisions resolving the present queue:
+- **BL5:** retain the current experimental physical law and unresolved records.
+  The closed inverse-majorant and positive-part certificate campaigns stay
+  closed. Do not extend their shifts, orderings, precision, meshes or budgets.
+  Numerical mixed-system assessment remains the permitted prospective method
+  in section 4.5; frozen certificates and predicates are not replaced or waived.
+  Resume a scientific ticket only for a new discriminator that changes an
+  engineering decision, not merely to obtain another positive certificate.
+- **Distributing attachment:** finish the reference-linear consumer now. Defer
+  finite-pose implementation until reference torque/shear transfer has a
+  physically matched check and the finite-map contract is reviewed. The
+  projected director/polar construction is a possible implementation, not a
+  selected or qualified physical law. Keep the current reference-only identity.
+- **Pressure assessment:** do not adopt the proposed vector-only amendment.
+  Its documented shared-node masking weakens a protection of the current
+  contract. This resolves the outstanding approval request as a decision to
+  retain the current assessment; affected nonconvergence remains explicit and
+  G4A remains open. A future response-resolution or assessment design needs its
+  own scientific justification. No more blind precision substitutions follow.
+  Preserve the [proposal and counterfactual evidence](development/r8-ge-pressure-work-20261002/pressure-assessment-amendment-proposal.md).
+- **Forward nonlinear Q4 examples:** explicitly select the already implemented
+  algorithmic pullback where required for demonstrated physical balance. Keep
+  legacy defaults/checkpoints and their recorded failures intact.
+- **Reviews and delivery:** supporting available-model review may unblock
+  development, but does not satisfy an unmet independent-family or external
+  acceptance requirement. Record that gap once; do not repeatedly probe known
+  unavailable workers. After explicit resumption, the sequence needs no further
+  routine design approval. Formal F03, main merge and publication retain their
+  own authority.
+
+### 2.2 Concrete next slice and reference feasibility
+
+**Resume ownership:** the integration owner takes the four pending ANYfem files
+as the starting candidate. An interrupted worker's acknowledgement is not a
+prerequisite. Inspect the actual diff and retained findings, complete the
+necessary review of the candidate and fix only consequential defects. Reuse
+preliminary findings when their inputs match; do not describe them as a finished
+review. Tests and installed-example checks remain required before delivery.
+
+**Consumer exit:** a recorded installed run must complete input construction,
+standalone and native Project save/reopen, solve, physical selected recovery,
+checkpoint/resume and unsupported-request rejection. The complete slice then
+gets normal review and a scoped recoverable commit when ready. A new optional
+operation, law or generic persistence layer is outside this slice. Stop adding
+consumer functionality once that exit is met and switch the primary effort to
+the physical question. Keep aggregate qualification explicitly open.
+This exit was met on 4 October by the committed consumer; it is not a new
+requirement to execute the same checks on every resumption.
+
+**Reference exit:** before a refinement campaign, reuse existing decks, runner
+and parser, and execute one small development comparison that can recover the
+required support wrench, connection-side force/moment and representable work.
+Use a physically defined connection, fixed offsets, matching loads/supports
+and explicit scalar/field measures. First establish that its outputs actually
+distinguish the disputed torque/shear transfer; a finer mesh cannot repair a
+missing conjugate action. Only then advance the applicable registered ratios,
+refinements and physical thresholds. This feasibility comparison is not formal
+F03 and cannot confer external accuracy acceptance by itself.
+
+On resumption, check external executable/runner availability once if it is
+unknown. If unavailable, or if the output/work mapping cannot yet be made
+equivalent, record the precise blocker and one bounded remedy in the existing
+note. Park that comparison while completing a ready mandatory implementation
+or acceptance item. Do not wait through repeated availability probes, generate
+another unexecuted deck campaign, or substitute a different solver's evidence
+for the mandatory CalculiX row. No download, resource increase or scientific
+amendment is authorized by this scheduling decision.
+
+**Completion accounting:** after each completed slice update only its affected
+rows in the existing matrix: scope, current status, evidence and smallest unmet
+requirement. Preserve dated failures and dispositions. A requirement with no
+actionable next check gets a named blocker, not another generic investigation.
+Select the next ready item by whether it closes a mandatory row or repairs a
+shared defect, then by implementation effort and reusable evidence. Acceptance
+closure and working behavior outrank additional optional combinations.
 
 ## 3. M1: consolidate the working GE panel
 
@@ -197,6 +273,11 @@ same-action check. Record the obstructing observable and seek focused mechanics
 review if still unresolved. Do not start a fourth refinement merely because
 the third is inconclusive. Keep M1 acceptance open and advance unaffected M2,
 M3 or M4 work rather than restarting the owner.
+
+These are acceptance requirements, not an instruction to replay an existing
+three-level campaign. Reuse the latest exact applicable result and its terminal
+decision before considering further execution. The October priority is the
+missing matched external acceptance, not automatic refinement of an old screen.
 
 Compare a six-row nodal chain and an explicitly distinct BL5 nodal variant if
 useful for the intended lateral response. A difference above 1% is a sensitivity
@@ -293,8 +374,10 @@ termination transfer needs a separately qualified footprint or point law.
 
 Option B remains an authorized alternative development route: a physically
 declared finite-width/finite-length distributing attachment, with a distinct
-identity and intended local freedom. The current 0.1 m box patch is a prototype;
-its dimensions are not automatically the engineering connection dimensions.
+identity and intended local freedom. The historical 0.1 m box patch and the
+current two-host director/polar reference-linear area law are distinct
+candidates; their dimensions and semantics are not interchangeable. The latter
+already has a public experimental owner and pending consumer; reuse it.
 
 It needs its own first/second variations, endpoint/overlap treatment, torque/shear
 and physical reference checks before claiming nonlinear use. Earlier
@@ -308,8 +391,10 @@ A timeout permits a work-priority change; it does not select or accept a law.
 
 ### 4.4 One design slice, then a decision
 
-Initial allowance: two effort days within M2 for the law/metric screen and
-decision, not the entire acceptance envelope.
+The following is the original two-effort-day law/metric sequence, retained for
+its mechanical requirements. Completed steps are not a new execution queue.
+Current scheduling and closed-ticket decisions in section 2.1 take precedence;
+the allowance does not restart on a planning update or new filename.
 
 1. Reuse the corrected saved-mode screen and add its two review guards:
    reconstructed L1 total equals saved mean-row work; native work agrees at
@@ -430,12 +515,14 @@ deck is unavailable. All four programme external cases remain mandatory for M5.
 ## 5. M3: physical B2 in parallel
 
 Reuse the physical flexibility operator and existing session services.
-Complete a declared F09 physical/unit/conditioning range with independent
+Preserve the scoped F09 PASSED disposition and its admitted range. Extend only
+missing required coverage, using independent
 force-method or physical oracles, including coupled sections, both bending
 planes, reversal, fixed-magnitude mixed loads and small response components.
 The old public B2 equation and its recorded differences retain their meaning.
 
-Complete:
+Reuse completed batches, consumers and lifecycle evidence; complete only the
+unmet portions of:
 - F10/F11 reference-linear point work, offsets, reactions and affine/KKT parity.
 - F13 owned inputs, dependency invalidation, failure status and cancellation.
 - 1/10/100 compatible RHS, one eligible factorization and bounded selected
@@ -443,6 +530,8 @@ Complete:
 - B01–B08/B13/B17 and the B2 E01 comparison for the admitted static domain.
 
 Mass, prestress/buckling, line/footprint additions and remaining B rows are M4/M5.
+Supported/free-modal and footprint developments already exist; their open
+physical and aggregate claims do not mean their implementations should be rebuilt.
 This defers new capabilities, not regression checks for legacy behavior affected
 by shared edits. No unused GE history or native retained-state overhead.
 Measured speed claims require the programme's paired installed-artifact evidence.
@@ -509,6 +598,22 @@ already delivered behavior is reported promptly even when repair is authorized.
 
 ## 8. Development and evidence discipline
 
+- Use the adopted tiered testing regime. During edits, run the smallest tests
+  that expose the changed failure modes. At a coherent solver/consumer boundary,
+  build once and run the affected installed workflow plus relevant legacy
+  controls. Reserve broad platform/CI campaigns for the required integration,
+  acceptance or release boundary; do not repeat passed campaigns without a
+  changed dependency or unresolved finding.
+- Finish complete-slice source review before the routine artifact build when
+  practical. Consumer-only work reuses the verified unchanged solver wheel.
+  A new solver artifact gets its own honest identity and impact-based checks;
+  source-only passes are never reported as installed verification.
+- Prefer the existing runner and ordinary pytest invocation. Add a runner only
+  for a missing resource, numerical or provenance requirement. One slice log
+  can contain commands, inputs, outcomes and failures; do not generate a new
+  adjudicator, archive, helper review, module-wide hash walk or wheel for each
+  small edit. Exact inventories remain required where already frozen or at
+  the artifact boundary that needs them. Preserve historical evidence in place.
 - Before a substantial diagnostic batch, add a brief question, alternatives,
   bounded discriminator and resulting actions to the existing note. Routine
   reads, repairs and focused checks need no six-field mini-registration.
@@ -532,10 +637,25 @@ already delivered behavior is reported promptly even when repair is authorized.
 - Keep one short active note (target <=150 lines), one authoritative acceptance
   matrix, and links to immutable evidence. Preserve historical checkpoints
   byte-for-byte; do not add a new header to a protected historical file.
+  The active note contains current decision, working behavior, blockers and
+  next action, not copied campaign history. Keep a compact current index in the
+  existing matrix; old dated dispositions remain historical, not competing
+  current instructions. Record exact source hashes once where they are needed.
+- On restart read the active note, sections 2.1–2.2 and only the plan/matrix
+  sections governing the next action. Check applicable repository guidance and
+  policy as required, but do not reread the full historical evidence inventory.
+  Expand a linked record only for an identity, authority, criterion or finding
+  that matters to the current decision. A plan refresh is needed only when
+  priorities, dependencies or decisions change; it is not a recurring work gate.
 - Compile unchanged geometry, maps and patterns once; copy mutable trial state.
   Factor unchanged eligible linear systems once; invalidate factors on changed
   operators. Use focused tests during work and consolidated installed checks
   at meaningful integration/acceptance points. Optimize measured costs.
+- Do not start a new optimization campaign merely because a hotspot exists.
+  Prioritize it when it blocks the next mandatory workload or materially
+  shortens a repeatedly executed route. Preserve the registered paired-run
+  rules for any speed claim; no claim of faster development follows from test
+  counts, shorter notes, agent activity or unmeasured time saved.
 - At most three workers and one heavy numerical job at a time. Diagnostic
   ceilings remain 100,000 rows, 600 seconds per run, eight numerical threads and
   8 GiB process-tree memory, with actual process settings checked. G5 budgets
@@ -564,24 +684,26 @@ cases, lifecycle requirements and release/authority boundaries remain binding.
 
 ## 10. Immediate use and resumption
 
-**This review edits only the Revision 8 plan and goal.** It launches no workers,
-tests, experiments, builds or product changes; it creates or resumes no task goal.
+**Planning update only; implementation remains paused.** This review updates
+the current plan/goal, forwarding references and active planning state. It
+launches no development workers, tests, experiments, builds or product changes
+and does not resume the goal.
 
 On explicit resumption:
-1. Verify relevant current worktree/process ownership and source identities.
-   Reconcile only changes affecting the next action, including the uncommitted
-   E01 work; do not re-audit all history or take over the unrelated F03 script.
-2. Link these documents from the living note and update the one acceptance
-   matrix with M1–M5 dependencies and known deferrals. Leave the historical
-   complete programme and evidence unchanged.
-3. Integration owner: consolidate the already working M1 panel/consumer, then
-   identify its smallest missing acceptance item. Use the bounded material
-   ticket only where it affects the claimed scope. Complete the E01
-   two-direction discriminator and make its stated decision.
-4. When independently owned work is useful and permitted, advance the BL5
-   design/metric decision and B2 physical admission/batch route without waiting
-   for an unrelated E01 result. Do not launch formal F03 until its prerequisites
-   and exact authority match. Schedule numerical work under the common ceiling.
+1. Read the short active state; verify only relevant HEADs, four pending ANYfem
+   files, current owner/process state and the pinned solver artifact. Do not
+   re-audit all history or touch the protected F03 runner.
+2. Reuse the completed consumer slice and its exact source/installed/example
+   evidence. Verify only changed inputs affecting the next action; no repeat
+   of the same consumer or preceding solver campaign is required.
+3. Carry out section 2.1's physical-acceptance priority. Use existing case and
+   acceptance records; identify the exact missing comparison before numerical
+   execution. Reuse already completed E01/BL5/B2/foundation work.
+4. Keep one implementation completion and one scientific decision in flight,
+   with a third worker only for useful bounded work within those deliverables.
+   Serialize owned numerical
+   jobs under current limits. Formal F03 stays unconsumed until ready under its
+   exact recorded contract; closed diagnostic authorities remain closed.
 5. Continue without ritual approval between authorized slices. Report completed
    behavior, acceptance remaining and any actual decision needed from the user.
 

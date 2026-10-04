@@ -1,18 +1,19 @@
 # B3-GE / E4-PL stiffened shells: Revision 8 goal
 
-**Status, 29 September 2026:** active development. The user explicitly resumed
-implementation after approving this planning basis. The original document
-review did not itself authorize a run; subsequent user resumption did. The
-living [active state](B3_GE_E4_PL_ACTIVE_STATE.md) holds current source identity,
-delivered behavior and remaining decisions.
+**Status 4 October 2026: ACTIVE after explicit user resumption.** The preceding
+planning update resolved delegated workflow decisions. The living
+[active state](B3_GE_E4_PL_ACTIVE_STATE.md) records exact source, pending files
+and restart action. The canonical goal and plan now live beside that note in
+`C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001/docs/agent_plans/`.
+Older goal/plan paths forward here instead of carrying stale competing copies.
 
-At reviewed integration source `5ba6a77a`, the M1/M3 experimental routes
-operate but are not acceptance-complete. E01 has an executed point-link screen.
-Shell-only and same-action diagnostics explain part of its rotational
-discrepancy; full two-direction mesh convergence is still untested. The E01
-scripts and active note contain uncommitted work. A separate dirty F03 script
-belongs to another investigation. Reconcile ownership on resumption; do not treat
-these files as accepted results or launch the F03 script by implication.
+Reviewed solver HEAD `3d5578fb`; ANYfem HEAD `6013db0` with the completed
+reference-distributing consumer product `9b7482b`. Substantial installed GE/B2 implementation, scoped foundation
+passes, measured route improvements and a practical-size reference solve exist.
+Aggregate acceptance is incomplete. The reference-distributing ANYfem workflow
+now passes source/installed checks and its public example; the primary scientific priority is
+matched physical/external evidence. Do not restart completed implementations or
+the closed certificate campaigns. No numerical job is active.
 
 Use this goal together with the [Revision 8 plan](B3_GE_E4_PL_REVISION_8_PLAN.md).
 The complete programme remains the final scope, with only the explicit
@@ -69,11 +70,24 @@ Progress is a working behavior, a closed acceptance obligation, a repaired
 consequential defect or evidence that changes a decision. Tests, commits,
 documents and refined meshes are means, not progress targets.
 
-The near-term critical path is one consolidated M1 installed/consumer route,
-one bounded E01 two-direction comparison followed by its decision, and one
-mechanically defensible M2 law/space decision. Run the independent B2 admission
-and batch route when its ownership and numerical resources permit. These are
-priorities, not new gates or independent execution authority.
+The near-term path is now:
+1. COMPLETE: reference-linear distributing consumer, 42 source/42 installed
+   checks and installed public example using the unchanged solver wheel.
+   Reuse this evidence; preserve reference-only admission.
+2. Close the smallest missing physically matched GE connection comparison,
+   prioritizing torque/shear and work transfer on the mandatory CalculiX route
+   under applicable E01/E02 requirements. Do not restart axial-only refinement;
+   reuse completed diagnostics and establish model equivalence before accuracy claims.
+3. Repair the actual defect or close the eligible acceptance row, then select
+   the next ready mandatory gap from the existing matrix. Keep unresolved
+   BL5/mixed-system, physical transfer and aggregate obligations visible.
+
+Use at most one implementation completion and one scientific question at a
+time. A third worker may review or take a bounded independent part of those
+deliverables. Plan sections 2.1–2.2 record the current decisions, concrete exits
+and outcome rules; these priorities do not authorize formal F03 or
+repeat closed runs. Implementation progress must increasingly produce accepted
+engineering claims rather than further unverified breadth.
 
 ## 3. Autonomous decision rights
 
@@ -133,9 +147,10 @@ capability remains unaccepted.
 
 ## 5. Pace, course correction and escalation
 
-Initial estimates are M1 five effort days; M2 eight; M3 eight, concurrent where
-useful. The low-yield ticket has one effort day within M1; the initial BL5
-design/metric decision has two within M2. Estimate M4/M5 from delivered results.
+The original estimates (M1 five effort days; M2 eight; M3 eight) and bounded
+ticket allowances are historical planning estimates, not fresh budgets on
+resumption. They do not support a release date. Estimate remaining work from
+the actual unresolved acceptance items after the next completed slice.
 
 An effort day is roughly eight cumulative working hours assigned to that
 workstream, summed across its workers. Record a coarse effort estimate, not a
@@ -154,6 +169,13 @@ The owner normally makes that decision under section 3 and reports it. Ask the
 user only if a protected boundary must change. Do not silently reset the budget
 by renaming the same investigation. An unresolved finding is not a scientific
 failure conclusion, and effort expiry never produces a technical pass.
+
+Apply this now: closed inverse-majorant/positive-part investigations stay
+closed; finish the already written consumer before opening finite distributing
+development. Prioritize a matched physical comparison over another optional
+profile or certificate helper. Each substantial experiment must distinguish
+competing explanations and have a stated action for each outcome; if neither
+outcome changes development or acceptance, do not run it.
 
 Default when a question remains unresolved: retain its evidence and precise
 missing equation/reference, withhold the affected claim and move to useful
@@ -182,19 +204,43 @@ authorities are not replayed. The precise formal execution and constituent
 cases/retry handling must match the recorded unconsumed authorization before
 launch. A further authority-bound execution needs applicable authorization.
 
+The 4 October delegated decisions are adopted in plan section 2.1:
+- Finish the reference-distributing consumer, then prioritize physical/external
+  acceptance; defer its finite extension pending the reference transfer check.
+- Retain the current experimental BL5 law and all unresolved scientific claims;
+  do not reopen closed proof campaigns or choose a space from beta alone.
+- Do not adopt the proposed pressure vector-only acceptance amendment because
+  its shared-node masking weakens the existing protection. Current criteria
+  and explicit failed outcomes remain; this is no longer awaiting approval.
+- Use existing algorithmic Q4 pullback explicitly for forward nonlinear
+  physical-balance examples without changing legacy defaults/checkpoints.
+- Use tiered, impact-based checks and one artifact verification per coherent
+  boundary; no per-helper qualification packages or repeated unavailable-worker
+  probes. Mandatory independent, platform and release checks remain binding.
+- The integration owner takes over paused source directly; an interrupted
+  worker handoff is not a completion gate. Review actual files and preserve
+  relevant preliminary findings, then verify the complete candidate.
+- Start the external route with one small executable/output/work-mapping
+  feasibility comparison before the required campaign. A missing route is a
+  precise parked blocker, not a reason for repeated probes or idle development.
+- After each slice, update only affected acceptance rows and pick the next
+  ready mandatory closure or shared-defect repair. Do not add another optional
+  operation once the current slice's installed workflow is complete.
+
 ## 7. Resume and pause instructions
 
-On explicit resumption, read the canonical policy, this goal, the Revision 8
-plan and current active state. Verify only relevant source/process/ownership
-changes. In the existing note record the policy revision, current milestone,
-first useful action and unchanged boundaries. Follow plan section 10; do not
-repeat completed campaigns or rebuild the delivered owner.
+On explicit resumption, read applicable repository guidance and the canonical
+policy as required, the current active state and plan sections 2.1–2.2. Read
+further goal/plan/matrix sections only as needed for the current action's
+scope, criteria and authority. Verify relevant source/process/ownership changes.
+Record the current milestone and first useful action in the existing note.
+Follow plan section 10; do not repeat completed campaigns or rebuild the owner.
 
 Use one short living note and one acceptance matrix. Preserve historical
 checkpoints and evidence. On pause, launch no new work, finish or stop owned
 activity as directed, record exact results/process state and next action,
 then leave a usable restart point. Do not create a new task unless requested.
 
-This planning review resolves the original draft's document-level findings.
+This planning update resolves the current document-level and scheduling decisions.
 It creates no new blanket plan-review gate. Scientific candidate review and
 acceptance remain required at the stated boundaries.

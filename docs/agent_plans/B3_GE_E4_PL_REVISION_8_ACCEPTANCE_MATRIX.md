@@ -1,3 +1,13 @@
+**4 October distributing GE consumer — IMPLEMENTED_NOT_QUALIFIED:**
+ANYfem9b7482b/product and6013db0/byte evidence complete the installed public
+reference-linear input/Project/recovery/checkpoint/resume workflow.42source plus
+42installed controls PASS; actual imports and unchanged solverf0267b0f... match.
+Separate consumerwheel3b8e563d... retained. Installed example24retained/6rows,
+onefactor, exact resumed coordinates; complete supporting source/runtime review
+clear. Reference-only scope, physical/different-family/finite/scale/external and
+aggregateF04/G0/G2/G6 obligations stay OPEN. No release or formalF03 execution.
+[Complete scope/artifact/results](development/r8-distributing-reference-linear-20261004/results.md).
+
 **3 October sparse saved-operator assessment — IMPLEMENTED_NOT_QUALIFIED:**
 complete physical/retained graph and error-derived shifted interval proofs pass
 on unchanged625/1057 reciprocal operators;64 distinct focused controls passed.

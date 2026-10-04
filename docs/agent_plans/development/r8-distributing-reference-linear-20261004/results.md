@@ -159,3 +159,36 @@ Public implementation remains EXPERIMENTAL_NOT_QUALIFIED: two adjacent Cartesian
 XY Q4 hosts, generalized native reference response, identity selected beam triad,
 and nodal dead loads only. Other geometry/material/finite/load/mass/spectral,
 external/scale and aggregateF04/G0/G2 requirements remain mandatory.
+
+## ANYfem installed workflow completion — 4 October
+
+ANYfem product9b7482b and evidence6013db0 complete the separate strict
+reference-distributing consumer. Empty point tuples remain empty; owned input
+construction, standalone/native Project save/reopen, selected physical recovery,
+checkpoint/resume, factor reuse, cancellation and unsupported-control rejection
+are directly exercised. Source and installed suites each42PASS/4.78s;
+whole7.069s/6.791s, peaks222838784B/189267968B. Actual pools1/JIToff and source/
+wheel/site imports match. Supporting complete source/runtime review is clear,
+not different-family scientific acceptance.
+
+Consumer wheelSHA3b8e563dd5e8cf0ecfe42f4cc9f5a8f34d46780d50dd1b0f217c510259e5cc8f;
+unchanged solverf0267b0f... reused without repeating its passed campaign. Installed
+example has24retained/6constraints/onefactor, generations1/2/2/3, zero resumed
+coordinate difference, equilibrium7.8581e-13/constraint2.9442e-21. It labels exerted
+moments at the correct centroid/beam origins. Different-family, external physical
+accuracy, finite law/material/spectral/scale and aggregateF04/G0/G2/G6 remain open.
+[Consumer scope and exact evidence](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-ge-distributing-consumer-20261004.md).
+
+The precommit byte check stopped on Git configuration newline normalization;
+the commit occurred before inspection. Complete postcommit check proves37/39
+file blobs byte-exact (all tested product/evidence), with only .gitattributes/
+.gitignore newline-only changes. Original worktree inventory and complete
+verification remain retained; no tested-source rewrite or replacement run.
+
+Next physical question: no inspected existing CalculiX case is equivalent to
+the new area law. Rigid-tip C3D20R reference has complete REF/ROT wrench/work
+outputs but rigidifies the entire patch. Folded-web shared-node output lacks
+sided actions, and the U1/US3 shear canary is explicitly closed at its current
+discretization. Do not replay those cases as area-law accuracy evidence. A
+beam-free common-action comparator needs independently derived midsurface-mean,
+through-thickness director and polar-yaw work maps before external execution.
