@@ -1,7 +1,7 @@
 # Experimental native point displacement control
 
 The existing `DisplacementControl` now supports fixed translational targets for
-elastic flat full-map Q4 panels with native generalized, physical-fibre or mixed
+elastic or isotropic-J2 flat full-map Q4 panels with native generalized, physical-fibre or mixed
 beam families and point connections. It requires an ordinary, unrebased
 force-controlled seed with nodal dead translation forces.
 
@@ -29,11 +29,18 @@ Restore checks physical state and equilibrium, replays the last material update
 from its predecessor and requires exact native history agreement before publishing
 the saved accepted histories. Existing BL5 and curved identities remain unchanged.
 
+Shell-J2 point models select separate coupled identities:
+`B3_GE_E4_PL_NATIVE_POINT_COUPLED_J2_DISPLACEMENT_MECHANICS_V1_DEV` and
+`B3_GE_NATIVE_POINT_COUPLED_J2_DISPLACEMENT_V1_DEV`. They additionally preserve
+accepted and predecessor Q4 plastic strains and accumulated strains. Restore
+retains the existing shell replay criterion and reports actual layer stresses.
+The elastic native identities and payload layout retain their meaning.
+
 Recovery includes generalized station records, physical-fibre station stresses
 and last-increment fibre energies. These are not cumulative global energy or
 engineering capacity results. Selected fibre recovery is not added by this change.
 
-This initial route excludes shell J2, S3, other attachments, staged/external or
+This route excludes S3, other attachments, staged/external or
 rebased seeds, adaptive targets, branch-event trials, displacement chart rebasing
 and arc-length qualification. Those requests remain explicit errors. This slice
 does not resolve the saved simultaneous shell-J2/fibre force-chart failure or
@@ -47,3 +54,7 @@ python examples/stiffened_shell_ge_point_displacement.py --output <new-directory
 
 It shares the adjacent zero-unload example's explicit model definition and
 diagnostic low-yield fibre, and exercises unload/reload targets with exact restart.
+`examples/stiffened_shell_native_coupled_displacement.py` exercises the existing
+two-stiffener Q4-J2/fibre model under the same fixed-target contract, including
+further plastic flow in both domains and exact restart. Its low-strength laws
+remain lifecycle controls, not engineering design or capacity qualification.

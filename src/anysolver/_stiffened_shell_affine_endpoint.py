@@ -16,13 +16,13 @@ from ._stiffened_shell_rotation_charts import owned_anchors,physical_frames
 
 
 def is_native_point_material(owner):
-    """Fixed-target generalized/fibre/mixed beam route, elastic flat full-map Q4."""
+    """Fixed-target generalized/fibre/mixed beam route, flat full-map Q4."""
     if getattr(owner,"_definition",None) is None:
         return False
     from ._stiffened_shell_q4_algorithmic_pullback import POLICY
     definition=owner._definition
     return bool(definition.points and definition.shell.q4_elements and
-        not definition.shell.s3_elements and definition.shell.j2_curve is None and
+        not definition.shell.s3_elements and
         definition.shell_reference_policy=="flat" and definition.q4_pullback_policy==POLICY and
         not definition.lines and not definition.footprints and
         not definition.distributing_footprints and not definition.finite_distributing_footprints)
@@ -30,7 +30,8 @@ def is_native_point_material(owner):
 
 def has_shell_material(owner):
     """Only admitted algorithmic shell histories belong in affine endpoints."""
-    return owner._bl5_shell_material or (
+    return owner._bl5_shell_material or (is_native_point_material(owner) and
+        owner._definition.shell.j2_curve is not None) or (
         getattr(owner, "_curved_material", False)
         and owner._definition.shell.j2_curve is not None)
 

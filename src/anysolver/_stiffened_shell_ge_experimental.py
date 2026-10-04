@@ -1186,7 +1186,10 @@ class ExperimentalGEAnalysis:
             capabilities["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         from ._stiffened_shell_affine_endpoint import is_native_point_material
         if is_native_point_material(self):
-            capabilities["displacement_control"] = "experimental_native_point_material_fixed_translation_v1"
+            capabilities["displacement_control"] = (
+                "experimental_native_point_coupled_j2_fixed_translation_v1"
+                if self._definition.shell.j2_curve is not None else
+                "experimental_native_point_material_fixed_translation_v1")
             capabilities["displacement_control_seed"] = (
                 "ordinary unrebased nodal-dead-translation force seed; fixed targets only; "
                 "no staged/external seed, chart rebase, event policy, adaptation or arc qualification")

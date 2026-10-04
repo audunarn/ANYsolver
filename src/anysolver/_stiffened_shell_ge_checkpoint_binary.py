@@ -50,6 +50,7 @@ SCHEMAS = {
     "finite_arc_bl5_coupled": "B3_GE_E4_PL_BL5_COUPLED_PHYSICAL_ARC_MECHANICS_V1_DEV",
     "finite_displacement_bl5_coupled": "B3_GE_E4_PL_BL5_COUPLED_DISPLACEMENT_MECHANICS_V1",
     "finite_displacement_native_point_material": "B3_GE_E4_PL_NATIVE_POINT_MATERIAL_DISPLACEMENT_MECHANICS_V1_DEV",
+    "finite_displacement_native_point_coupled": "B3_GE_E4_PL_NATIVE_POINT_COUPLED_J2_DISPLACEMENT_MECHANICS_V1_DEV",
     "finite_displacement_curved_material": "B3_GE_E4_PL_CURVED_MATERIAL_POINT_DISPLACEMENT_MECHANICS_V1_DEV",
     "finite_bl5_coupled": "B3_GE_E4_PL_STIFFENED_SHELL_BL5_COUPLED_J2_MATERIAL_V1",
     "finite_chart_bl5_coupled": "B3_GE_E4_PL_STIFFENED_SHELL_ANCHORED_BL5_COUPLED_J2_MATERIAL_V1",

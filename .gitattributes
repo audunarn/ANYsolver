@@ -247,3 +247,7 @@ src/anysolver/_stiffened_shell_displacement_corrector.py -text
 tests/test_stiffened_shell_native_point_displacement.py -text
 examples/stiffened_shell_ge_point_displacement.py -text
 docs/stiffened_shell_native_displacement_development.md -text
+
+tests/test_stiffened_shell_native_coupled_displacement.py -text
+examples/stiffened_shell_native_coupled_displacement.py -text
+.qualification/b3-ge-e4-pl/r8-native-coupled-displacement-dev-20261005-v1/** -text -whitespace

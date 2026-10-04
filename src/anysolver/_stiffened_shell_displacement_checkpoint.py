@@ -21,6 +21,9 @@ def identities(owner):
     """Bind the controller and mechanical payload to their admitted profile."""
     from ._stiffened_shell_affine_endpoint import is_native_point_material
     if is_native_point_material(owner):
+        if owner._definition.shell.j2_curve is not None:
+            return ("finite_displacement_native_point_coupled",
+                    "B3_GE_NATIVE_POINT_COUPLED_J2_DISPLACEMENT_V1_DEV",None,None)
         return ("finite_displacement_native_point_material",
                 "B3_GE_NATIVE_POINT_MATERIAL_DISPLACEMENT_V1_DEV",None,None)
     if getattr(owner,"_curved_material",False):
@@ -51,7 +54,8 @@ def _layout(owner,steps):
     from ._stiffened_shell_affine_endpoint import is_native_point_material
     if is_native_point_material(owner):
         from ._stiffened_shell_beam_history import shapes
-        return layout[:12]+shapes(owner._beam_parts,"beam")+shapes(owner._beam_parts,"beam_origin")
+        native=layout[:12]+shapes(owner._beam_parts,"beam")+shapes(owner._beam_parts,"beam_origin")
+        return native+(layout[-4:] if has_shell_material(owner) else ())
     if getattr(owner,"_curved_material",False) and not has_shell_material(owner):
         layout=tuple(item for item in layout if item[0] not in (
             "shell_plastic","shell_alpha","shell_origin_plastic","shell_origin_alpha"))
