@@ -1,0 +1,136 @@
+{
+  "source": "f11f6ce7",
+  "status": "implemented and installed-tested development; not independently accepted or released",
+  "wheel_sha256": "0e8772a1d87b0ff3fabce6daf68c5393b8dae09534c79f254e13047c65247e00",
+  "raw_evidence": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate05",
+  "package": {
+    "source_files": 519,
+    "imported_modules": 220,
+    "source_installed_errors": [],
+    "extra_installed_files": [],
+    "outcomes": {
+      "passed": 38
+    },
+    "runs": {
+      "installed_geometry": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 47.66859489993658,
+          "peak_bytes": 189325312
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 26
+        }
+      },
+      "installed_lifecycle": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 114.09786810004152,
+          "peak_bytes": 328114176
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 12
+        }
+      }
+    }
+  },
+  "cycle": {
+    "status": "completed",
+    "failure": null,
+    "completed_targets": 9,
+    "queries": 48,
+    "checkpoint_sha256": "3342911350a303a097ef64bc73b49619318918f67835dd1a9fc43eacf9c4d9a5",
+    "maximum_accumulated": 0.00041114447887579715,
+    "maximum_penetration_m": 1.920333817743428e-05,
+    "normalized_force_balance": 6.928162904550698e-09,
+    "normalized_moment_balance": 6.494756468750264e-09,
+    "metrics": [
+      3.0615499591278414e-11,
+      2.0181030876667855e-17,
+      1.8041693573139783e-11
+    ],
+    "owner_plastic_tangent_errors": [
+      3.3824131753174965e-08,
+      2.2119582109360946e-09
+    ],
+    "storage_j": [
+      2.691073144087267e-09,
+      8.78116533963992e-09,
+      1.7757382230777912e-08,
+      2.9378321383921988e-08,
+      0.0,
+      3.924178283047261e-09,
+      1.0728310420382728e-08,
+      1.9319491920206152e-08,
+      2.9378321546678227e-08
+    ]
+  },
+  "uniform": {
+    "geometry": "historical uniform pose",
+    "energy_error": 3.122502256758253e-17,
+    "checks": [
+      {
+        "h": 1e-05,
+        "directional_error": 1.6446263534232102e-10,
+        "virtual_work_error": 8.310289956181549e-12,
+        "intervals": [
+          12,
+          12
+        ]
+      },
+      {
+        "h": 2e-06,
+        "directional_error": 4.885668997162007e-10,
+        "virtual_work_error": 1.0311196341206141e-13,
+        "intervals": [
+          12,
+          12
+        ]
+      }
+    ]
+  },
+  "nonuniform": {
+    "geometry": "nonuniform control",
+    "energy_error": 3.469446951953614e-17,
+    "checks": [
+      {
+        "h": 1e-05,
+        "directional_error": 1.2517094221438775e-10,
+        "virtual_work_error": 6.9253491830068015e-12,
+        "intervals": [
+          12,
+          12
+        ]
+      },
+      {
+        "h": 2e-06,
+        "directional_error": 5.020790179610857e-10,
+        "virtual_work_error": 1.7333690038867644e-11,
+        "intervals": [
+          12,
+          12
+        ]
+      }
+    ]
+  },
+  "preserved_failure": "All eight old uniform perturbations exhausted resolution; original and discriminator logs retained.",
+  "unchanged_controls": "Jet2, Gauss8/16 estimates, dimensional error gates,64intervals per pair, physical law/reference measure;180s/953MiB runner,native owner120s."
+}

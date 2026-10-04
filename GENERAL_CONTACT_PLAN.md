@@ -1,7 +1,7 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.106. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.11, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.107. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.14, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
 **Branch:** `codex/contact-main-reconcile-20261001`; current Git HEAD and linked package hashes bind subsequent changes. Historical assessed baseline remains8be4c355.
 
@@ -26,8 +26,8 @@ and216imports verified. [Evidence](docs/d1_review_support/contact_native_materia
 
 Default historical gap/merit failures stay NONPASS; no fixture load/penalty tuning,
 scientific admission or general speed comparison follows. Geometry sourcefbdd5c27
-and unaffected evidence remain valid. Spatial/enforcement convergence, angular
-robustness, curved sections/caps/interfaces, friction, native dynamics, independent
+and unaffected evidence remain valid. Spatial/enforcement convergence, broader angular
+admission, curved sections/caps/interfaces, friction, native dynamics, independent
 acceptance and applications remain required. The original120-hour allocation is
 consumed; subsequent explicit user resumption authorizes bounded further work,
 with no replacement hard duration specified.
@@ -285,12 +285,20 @@ This is an implemented/tested algorithmic candidate, not acceptance or a repair
 of historical evidence. Endpoints select fractions; certificates admit paths.
 Independent engineering review remains required before capability promotion.
 
-Next bounded question: why did the existing nearly uniform axial material pose
-exhaust angular derivative resolution? Distinguish unstable branch/endpoint
-predicates from the integration error estimator using the retained failed pose
-and the existing independent direct-area reference. Use one local discriminator
-under180s/953MiB and unchanged64integration intervals; no full-solver replay,
-expanded cap or new reference-tool campaign. A result must select one targeted
-correction or an explicit unresolved-admission diagnostic. Do not tune the old
-load/penalty fixtures or open a parallel optimization campaign. Review exact
-geometry and source impacts before any subsequent curve/cap admission.
+The angular question is closed for the tested straight profile atf11f6ce7:
+all8historical perturbations reproduce scalar cancellation; one precise partition
+correction passes independent work/tangents and38installed checks under unchanged
+integration/resource limits. Old numerical identities reject; original failure and
+source-local zero-slope defect retained. Supporting scrutiny found weight underflow,
+fixed with explicit rejection and a regression.
+[Evidence](docs/d1_review_support/contact_native_material_s3_20261004/angular_summary.json).
+
+**Next integrated requirement:** extend the formulation-owned round material map
+and normal work to curved native reference geometry. First establish physical
+station/retained-coordinate work and conservative represented-patch bounds with an
+independent geometry/work fixture. Keep owner admission guarded until the whole
+curved patch/path is certified; a sampled map does not establish crossing/search
+completeness. Reuse station, contributor and derivative infrastructure. One bounded
+slice must choose a concrete extension or explicit unsupported diagnostic; no broad
+sweep, penalty tuning or new solver stack. Preserve frozen friction/impact and
+free-rim restrictions.

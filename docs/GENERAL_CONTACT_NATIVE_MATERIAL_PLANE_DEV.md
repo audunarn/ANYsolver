@@ -1,5 +1,24 @@
 # Retained native material patch / plane — development
 
+## Precise angular partition correction — 4 October
+
+Source f11f6ce7 resolves the reconstructed nearly uniform axial integration failure
+in the tested straight native material profile. Bounded50-digit scalar gaps, roots
+and quadrature coordinates preserve tiny positive arcs; existing Jet2 derivatives,
+Gauss8/16 dimensional controls and64interval cap remain. Unresolved root separation,
+grazing and zero quadrature measures reject explicitly. Plane/material-S3 numerical
+identities change; historical native line checkpoints replay. Old failure retained.
+
+38fresh installed checks pass:26geometry checks47.669s/189325312B and12lifecycle
+checks114.098s/328114176B.519source files/220imports match; JIT disabled,pools1.
+Uniform tangent errors1.64e-10/4.89e-10, independent energy error3.12e-17J.
+Yielding9-target split restart remains exact, gap19.203um, supportF/M6.93e-9/6.49e-9;
+complete plastic tangent3.38e-8/2.21e-9. Supporting scrutiny, not independent
+acceptance, release or measured speedup. Convergence, curved geometry, friction,
+dynamics and application admission remain open.
+[Evidence](d1_review_support/contact_native_material_s3_20261004/angular_summary.json),
+[review](d1_review_support/contact_native_material_s3_20261004/angular_review.md).
+
 An explicitly selected straight B3-GE interior half-cell material patch now uses
 the existing retained static owner. It preserves all 42 structural coordinates;
 physical cell rotations move the declared round section and carry contact couples.
@@ -21,8 +40,8 @@ Local nine-coordinate Jet2 blocks map to all 42 retained coordinates; one spatia
 chart conversion is applied after assembly. Algebraic nodal rotation traces and
 resultants are not assigned contact position work or fictitious inertia.
 
-The scalar projection uses anchored trigonometric differences near angular
-extrema. Numerically unresolved queried activation poses at an extremum or
+The material scalar projection now uses bounded50-digit gap/partition arithmetic
+near angular extrema. Numerically unresolved queried activation poses at an extremum or
 material arc boundary fail before quadrature; the arithmetic eligibility band is
 bound into restart identity. This does not prohibit first touch along a certified
 trial path or claim the absence of grazing throughout that path.

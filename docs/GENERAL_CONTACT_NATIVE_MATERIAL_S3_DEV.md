@@ -1,5 +1,24 @@
 # Retained native material patch / deformable S3 — development
 
+## Precise angular partition correction — 4 October
+
+Source f11f6ce7 resolves the reconstructed nearly uniform axial integration failure
+in the tested straight native material profile. Bounded50-digit scalar gaps, roots
+and quadrature coordinates preserve tiny positive arcs; existing Jet2 derivatives,
+Gauss8/16 dimensional controls and64interval cap remain. Unresolved root separation,
+grazing and zero quadrature measures reject explicitly. Plane/material-S3 numerical
+identities change; historical native line checkpoints replay. Old failure retained.
+
+38fresh installed checks pass:26geometry checks47.669s/189325312B and12lifecycle
+checks114.098s/328114176B.519source files/220imports match; JIT disabled,pools1.
+Uniform tangent errors1.64e-10/4.89e-10, independent energy error3.12e-17J.
+Yielding9-target split restart remains exact, gap19.203um, supportF/M6.93e-9/6.49e-9;
+complete plastic tangent3.38e-8/2.21e-9. Supporting scrutiny, not independent
+acceptance, release or measured speedup. Convergence, curved geometry, friction,
+dynamics and application admission remain open.
+[Evidence](d1_review_support/contact_native_material_s3_20261004/angular_summary.json),
+[review](d1_review_support/contact_native_material_s3_20261004/angular_review.md).
+
 Latest globalization source `ce3e5495` adds explicit material-aware first approach
 within the existing owner; it changes disposable Newton paths, not contact work.
 The default remains unchanged. To select it, pass

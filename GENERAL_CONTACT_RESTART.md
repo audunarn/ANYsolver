@@ -1,8 +1,8 @@
 # General contact restart — ACTIVE, 4 October 2026
 
-Goal2026-10-04.13 / plan2026-10-04.106; full C0–C9 incomplete.
+Goal2026-10-04.14 / plan2026-10-04.107; full C0–C9 incomplete.
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Source/testsce3e5495;
+branch codex/contact-main-reconcile-20261001. Source/testsf11f6ce7;
 current Git HEAD also binds documentation. Goal-tool objective paths are stale:
 never access the protected original worktree. Main/ANYfem separately owned.
 No other-chat messaging, push/merge/publication/release/default changes.
@@ -42,13 +42,18 @@ first_target2 passed. [Evidence](docs/d1_review_support/contact_native_material_
 
 ## Next action and preserved failures
 
-Angular discriminator completed: all8historical perturbed uniform-pose fields
-reproduce branch-value arithmetic jitter. One precise-gap/partition candidate
-passes the same virtual-work and derivative gates without larger caps. Production
-uses bounded50-digit scalar angles, existing Jet2 derivatives and positive interval
-measures; old area/plane numerical identities reject. Source checks pass; supporting
-Read review identified weighted-factor underflow, now explicit non-success with
-an isolated constant-integral regression. Completing installed integrated checks.
+Angular correction f11f6ce7 complete:50-digit scalar gap/partition resolves8old
+uniform perturbations; Jet2/error gates and64interval cap unchanged. Zero-slope
+duplication fixed; reviewer underflow counterexample fails closed with regression.
+38installed checks pass (26:47.669s189325312B;12:114.098s328114176B);519files/220imports
+match,JIT0/pools1. Wheel0e8772a1d87b0ff3fabce6daf68c5393b8dae09534c79f254e13047c65247e00;
+raw C:/ANYworkspaceWork/contact_native_material_s3_20261004/candidate05.
+Uniform tangent1.64e-10/4.89e-10,energy3.12e-17J;yielding9cycle exact restart,
+gap19.203um,plastic tangent3.38e-8/2.21e-9. Old area/plane checkpoints reject;
+old line replay passes. [Evidence](docs/d1_review_support/contact_native_material_s3_20261004/angular_summary.json).
+Supporting scrutiny only; no independent acceptance or speedup claim.
+Next: curved native material station/work and full-patch bounds before owner
+admission; one bounded slice reusing infrastructure, no penalty tuning/broad sweep.
 Default k1e6 full
 load and k1e7 first-target gap/merit remain NONPASS; opt-in new success does not
 regrade them. Spatial/enforcement convergence, caps/interfaces/curved geometry,
