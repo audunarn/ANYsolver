@@ -21,6 +21,7 @@ from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 from anysolver.fe_core import FEModel
 from .native_retained_line_s3_work import NativeRetainedLineS3Work
 from .native_material_s3 import NativeRetainedMaterialS3Work
+from .native_curved_s3_work import NativeCurvedMaterialS3Work
 from .native_retained_s3_static import NativeRetainedRoundS3Analysis
 from .native_retained_station import _readonly
 from .s3_skin_work import S3SkinWorkAdapter
@@ -30,18 +31,19 @@ from .native_shell_static_driver import solve_native_shell
 PROFILE = 'NATIVE_B3_GE_MULTIPLE_ELASTIC_S3_INTERIORS_STATIC_DEV_V1'
 MATERIAL_PROFILE = 'NATIVE_B3_GE_TWO_MATERIAL_PATCHES_SHARED_S3_STATIC_DEV_V1'
 MATERIAL_MULTIPATCH_PROFILE = 'NATIVE_B3_GE_MULTIPLE_MATERIAL_PATCHES_S3_STATIC_DEV_V1'
+CURVED_MATERIAL_PROFILE = 'NATIVE_B3_GE_CURVED_MATERIAL_PATCHES_S3_STATIC_DEV_V1'
 SCHEMA = 'NATIVE_B3_GE_MULTIPLE_S3_CHECKPOINT_DEV_V1'
 
 
 @dataclass(frozen=True)
 class NativeS3ContactPair:
     name: str
-    work: NativeRetainedLineS3Work | NativeRetainedMaterialS3Work
+    work: NativeRetainedLineS3Work | NativeRetainedMaterialS3Work | NativeCurvedMaterialS3Work
     gap_tolerance_m: float
     maximum_swept_intervals: int
 
     def __post_init__(self):
-        if type(self.name) is not str or not self.name or type(self.work) not in (NativeRetainedLineS3Work,NativeRetainedMaterialS3Work):
+        if type(self.name) is not str or not self.name or type(self.work) not in (NativeRetainedLineS3Work,NativeRetainedMaterialS3Work,NativeCurvedMaterialS3Work):
             raise ValueError('named native/S3 pair requires exact physical work')
         if (type(self.gap_tolerance_m) not in (int, float) or not isfinite(self.gap_tolerance_m)
                 or self.gap_tolerance_m <= 0):
@@ -63,12 +65,13 @@ class NativeS3ContactPair:
 def _physical_summary(pairs):
     fields = ('potential_j', 'active_intervals', 'integration_intervals', 'integration_evaluations',
               'energy_error_j', 'force_error_n', 'tangent_error_n_per_m')
-    area=type(pairs[0][0].work) is NativeRetainedMaterialS3Work
+    area=type(pairs[0][0].work) in (NativeRetainedMaterialS3Work,NativeCurvedMaterialS3Work)
     summed_fields=tuple(k for k in fields if k!='active_intervals') if area else fields
     result = {key: sum(getattr(r.contact, key) for _, r in pairs) for key in summed_fields}
     if area:
         result.update(active_intervals=None,measure='fixed_reference_material_area',
-            minimum_gap_estimate_m=min(r.contact.minimum_gap_estimate_m for _,r in pairs))
+            minimum_gap_estimate_m=(None if any(r.contact.minimum_gap_estimate_m is None for _,r in pairs)
+                                    else min(r.contact.minimum_gap_estimate_m for _,r in pairs)))
     for key in ('beam_force_n', 'shell_force_n', 'beam_moment_nm', 'shell_moment_nm'):
         result[key] = sum((getattr(r.contact, key) for _, r in pairs), np.zeros(3))
     result['minimum_gap_m'] = min(r.contact.minimum_gap_m for _, r in pairs)
@@ -142,7 +145,19 @@ class NativeRetainedMultiS3Analysis:
     run_type = NativeMultiS3Run
     _assemble_structural = NativeRetainedRoundS3Analysis._assemble_structural
     _step = NativeRetainedRoundS3Analysis._step
-    _recoverable_trial_error = staticmethod(NativeRetainedRoundS3Analysis._recoverable_trial_error)
+    @staticmethod
+    def _recoverable_trial_error(exc):
+        if NativeRetainedRoundS3Analysis._recoverable_trial_error(exc):return True
+        if type(exc) is MemoryError:
+            return str(exc).startswith(('curved normal integration interval budget exhausted',
+                                        'curved axial front interval budget exhausted'))
+        return type(exc) is ValueError and str(exc).startswith((
+            'curved material S3 patch approaches unadmitted physical rim',
+            'curved material S3 has unresolved target geometry',
+            'curved material whole-patch orientation unresolved',
+            'curved axial front bracket work uncertainty exceeds integration budget',
+            'curved normal integration combined error budget exhausted',
+            'curved normal integration parameter resolution exhausted'))
 
     def __init__(self, definitions, boundaries, program, shell_model, pairs, *,
                  equilibrium_tolerance, maximum_pairs=8, maximum_coupled_coordinates=256, activation_settings=None):
@@ -150,8 +165,10 @@ class NativeRetainedMultiS3Analysis:
                 or any(type(d) is not NativeBeamDefinition for d in definitions)
                 or type(program) is not Program or type(shell_model) is not FEModel):
             raise TypeError('multiple native/S3 owner requires one/two exact native definitions, program and shell model')
+        curved_pairs=(type(pairs) is tuple and pairs and
+                      all(type(p) is NativeS3ContactPair and type(p.work) is NativeCurvedMaterialS3Work for p in pairs))
         if (type(maximum_pairs) is not int or not 1 <= maximum_pairs <= 8
-                or type(pairs) is not tuple or not 2 <= len(pairs) <= maximum_pairs
+                or type(pairs) is not tuple or not (1 if curved_pairs else 2) <= len(pairs) <= maximum_pairs
                 or any(type(p) is not NativeS3ContactPair for p in pairs)
                 or len({p.name for p in pairs}) != len(pairs)):
             raise ValueError('multiple native/S3 owner requires two to eight unique explicit pairs within resource cap')
@@ -162,14 +179,18 @@ class NativeRetainedMultiS3Analysis:
         kinds={type(p.work) for p in pairs}
         if len(kinds)!=1:
             raise ValueError('multiple native/S3 owner does not admit mixed line and area profiles')
-        self._material_mode=kinds=={NativeRetainedMaterialS3Work}
+        self._curved_mode=kinds=={NativeCurvedMaterialS3Work}
+        self._material_mode=kinds in ({NativeRetainedMaterialS3Work},{NativeCurvedMaterialS3Work})
         if self._material_mode:
             if type(self) is not NativeRetainedMultiS3Analysis:
                 raise ValueError('material-area multiple owner requires the exact owner without activation controller')
             self.profile=(MATERIAL_PROFILE if len(definitions)==2 and len(pairs)==2
                 and shell_model.mesh.dof_manager.total_dofs==18
                 and len({p.work.shell.element_id for p in pairs})==1 else MATERIAL_MULTIPATCH_PROFILE)
+            if self._curved_mode:self.profile=CURVED_MATERIAL_PROFILE
         if activation_settings is not None:
+            if self._curved_mode:
+                raise ValueError('curved S3 candidate does not admit the straight material activation controller')
             if not self._material_mode:
                 raise ValueError('base multiple activation settings require the material-area owner')
             from .native_material_activation import validate_settings
@@ -222,6 +243,7 @@ class NativeRetainedMultiS3Analysis:
         self.shell_contract_sha = self._shell_contract_sha()
         self.identity = self._identity()
         self.candidate_evaluations = self.pair_evaluations = 0
+        self.curved_trial_failures=[]
         initial = self.context.initial
         u = np.zeros(n_shell)
         first = self._contact(initial.mechanical, u)
@@ -300,6 +322,8 @@ class NativeRetainedMultiS3Analysis:
             'pairs': [p.descriptor() for p in self.pairs], 'beam_indices': self.beam_indices,
             'native_slots': self.context.slots, 'equilibrium_tolerance': self.equilibrium_tolerance,
             'maximum_pairs': self.maximum_pairs, 'maximum_coupled_coordinates': self.maximum_coupled_coordinates}
+        if self._curved_mode:
+            descriptor['trial_policy']='authoritative_increment_bounded_gap_fraction_preflight_complete_curved_path_v2'
         if self._material_mode and self.activation_settings is not None:
             from .native_material_activation import REVISION
             descriptor['activation'] = (REVISION, self.activation_settings)
@@ -317,8 +341,14 @@ class NativeRetainedMultiS3Analysis:
         residual = np.zeros(total); tangent = sparse.csr_matrix((total, total)); pairs = []
         for p, i in zip(self.pairs, self.beam_indices):
             nodes = self.context.nodes[i]
-            result = p.work.evaluate(mechanical.positions[nodes], mechanical.position_low[nodes],
-                                     mechanical.cell_rotations[i], displacement)
+            try:
+                result = p.work.evaluate(mechanical.positions[nodes], mechanical.position_low[nodes],
+                                         mechanical.cell_rotations[i], displacement)
+            except (ValueError,MemoryError) as exc:
+                if self._curved_mode:
+                    self.curved_trial_failures.append(dict(pair=p.name,error=type(exc).__name__+': '+str(exc),
+                        integration=getattr(exc,'integration_diagnostics',None)))
+                raise
             slots = np.r_[self.context.slots[i], self.context.count+np.arange(len(displacement))]
             np.add.at(residual, slots, result.residual)
             P = sparse.coo_matrix((np.ones(len(slots)), (np.arange(len(slots)), slots)),
@@ -332,13 +362,22 @@ class NativeRetainedMultiS3Analysis:
     def _contact_admissible(self, result):
         return all(r.contact.minimum_gap_m >= -p.gap_tolerance_m for p, r in result.pairs)
 
+    def _candidate_geometry_admissible(self,mechanical,displacement):
+        if not self._curved_mode:return True
+        for p,i in zip(self.pairs,self.beam_indices):
+            nodes=self.context.nodes[i]
+            gap,_=p.work.geometry_gap(mechanical.positions[nodes],mechanical.position_low[nodes],
+                                      mechanical.cell_rotations[i],displacement)
+            if gap < -p.gap_tolerance_m:return False
+        return True
+
     def _assemble(self, mechanical, displacement, parameter, origins):
         residual, tangent, responses = self._assemble_structural(mechanical, displacement, parameter, origins)
         contact = self._contact(mechanical, displacement)
         residual += contact.residual
         for (p, result), i in zip(contact.pairs, self.beam_indices):
             block = result.tangent.toarray()
-            if type(p.work) is not NativeRetainedMaterialS3Work:
+            if type(p.work) not in (NativeRetainedMaterialS3Work,NativeCurvedMaterialS3Work):
                 block[:42, :42] = spatial_jacobian(result.residual[:42], block[:42, :42])
             slots = np.r_[self.context.slots[i], self.context.count+np.arange(len(displacement))]
             rows, cols = np.meshgrid(slots, slots, indexing='ij')
@@ -350,16 +389,47 @@ class NativeRetainedMultiS3Analysis:
         return residual, tangent, metrics, responses, contact
 
     def _activation_fraction(self, start, u_start, step, fraction, contact, cancellation_token):
+        if self._curved_mode:
+            from anysolver.control import cancellation_safe_point
+            cancellation_safe_point(cancellation_token,'curved S3 initial gap fraction')
+            end=self.context.advance(start,step[:self.context.count]*fraction)
+            u_end=u_start+step[self.context.count:]*fraction
+            factor=1.
+            for (p,result),i in zip(contact.pairs,self.beam_indices):
+                nodes=self.context.nodes[i]
+                try:
+                    gap,_=p.work.geometry_gap(end.positions[nodes],end.position_low[nodes],end.cell_rotations[i],u_end)
+                except ValueError as exc:
+                    if self._recoverable_trial_error(exc):return fraction
+                    raise
+                if gap < -p.gap_tolerance_m:
+                    room=result.contact.minimum_gap_m+p.gap_tolerance_m
+                    decrease=result.contact.minimum_gap_m-gap
+                    if room<=0 or decrease<=0:
+                        raise RuntimeError('curved S3 has no admissible gap step')
+                    factor=min(factor,.8*room/decrease)
+            return fraction*factor
         if self.activation_settings is None:
             return fraction
         from .native_material_activation import activation_fraction
         return activation_fraction(self, start, u_start, step, fraction, contact, cancellation_token)
 
-    def _swept_admissible(self, start, u_start, increment, end, u_end, *_):
+    def _swept_admissible(self, start, u_start, increment, end, u_end, *_, cancellation_token=None):
         first = self._contact(start, u_start); last = self._contact(end, u_end)
         admitted = []
         for (p, r0), (_, r1), i in zip(first.pairs, last.pairs, self.beam_indices):
             a, b = r0.contact, r1.contact
+            if type(p.work) is NativeCurvedMaterialS3Work:
+                nodes=self.context.nodes[i];work=p.work
+                pose=work._configuration(start.positions[nodes],start.position_low[nodes],start.cell_rotations[i],u_start)
+                translations=np.array([increment[6*index:6*index+3] for index in nodes])
+                angular=np.array([increment[self.context.nodal_count+24*i+3*c:
+                                            self.context.nodal_count+24*i+3*c+3] for c in (0,1)])
+                control=work.certify_path(pose,translations,angular,increment[self.context.count:],
+                    gap_tolerance_m=p.gap_tolerance_m,maximum_intervals=p.maximum_swept_intervals,
+                    cancellation_token=cancellation_token)
+                admitted.append(control.certified)
+                continue
             if type(p.work) is NativeRetainedMaterialS3Work:
                 nodes=self.context.nodes[i];work=p.work
                 pose=work._configuration(start.positions[nodes],start.position_low[nodes],
@@ -387,6 +457,8 @@ class NativeRetainedMultiS3Analysis:
                 end, u_end, a.minimum_gap_m, b.minimum_gap_m,
                 a.minimum_rim_clearance_m, b.minimum_rim_clearance_m))
         return all(admitted)
+
+    _swept_cancellable = _swept_admissible
 
     def _record(self, target, mechanical, displacement, origins, previous_sha256):
         if type(target) is not int or not 1 <= target <= len(self.program.targets):
@@ -460,6 +532,8 @@ def create_native_contact_analysis(definitions, boundaries, program, shell_model
     owner = NativeRetainedMultiS3Analysis
     extra = {}
     if activation_settings is not None:
+        if type(pairs) is tuple and any(type(p.work) is NativeCurvedMaterialS3Work for p in pairs):
+            raise ValueError('curved S3 candidate does not admit the straight material activation controller')
         if (type(pairs) is tuple and pairs
                 and all(type(p.work) is NativeRetainedMaterialS3Work for p in pairs)):
             extra['activation_settings'] = activation_settings

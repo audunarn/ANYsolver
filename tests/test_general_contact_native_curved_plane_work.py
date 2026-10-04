@@ -285,7 +285,8 @@ def _independent_axial_front_integral(law,p,low,U,order=48):
     radius=law.rule.definition['radius'];lo,hi=law.rule.definition['xi_range']
     al,ar=law.rule.definition['angle_range'];height=p[1,2];slope=p[2,2]-p[1,2]
     points,weights=leggauss(order);energy=0.;force=np.zeros(3);moment=np.zeros(3)
-    for cell,xl,xr in ((0,lo,0.),(1,0.,hi)):
+    for cell,xl,xr in ((0,max(lo,-1.),min(hi,0.)),(1,max(lo,0.),min(hi,1.))):
+        if xr<=xl:continue
         angles=[al,ar]
         for xi in (xl,xr):
             ratio=-(height+slope*xi)/radius

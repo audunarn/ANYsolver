@@ -83,6 +83,11 @@ def solve_native_shell(owner, schema, run_type, *, checkpoint=None,
                     )
                     candidate_u = u+increment[owner.context.count:]
                     try:
+                        preflight=getattr(owner,'_candidate_geometry_admissible',None)
+                        if preflight is not None and not preflight(candidate,candidate_u):
+                            rejected['gap']+=1
+                            last_rejection='whole contact geometry preflight'
+                            continue
                         candidate_contact = owner._contact(candidate, candidate_u)
                     except (ValueError, MemoryError) as exc:
                         if owner._recoverable_trial_error(exc):
@@ -95,12 +100,15 @@ def solve_native_shell(owner, schema, run_type, *, checkpoint=None,
                         last_rejection = ("gap "
                                           f"{candidate_contact.contact.minimum_gap_m} m")
                         continue
-                    if not owner._swept_admissible(
+                    swept=getattr(owner,'_swept_cancellable',owner._swept_admissible)
+                    swept_kwargs=({'cancellation_token':cancellation_token}
+                                  if hasattr(owner,'_swept_cancellable') else {})
+                    if not swept(
                             trial, u, increment, candidate, candidate_u,
                             contact.contact.minimum_gap_m,
                             candidate_contact.contact.minimum_gap_m,
                             contact.contact.minimum_rim_clearance_m,
-                            candidate_contact.contact.minimum_rim_clearance_m):
+                            candidate_contact.contact.minimum_rim_clearance_m,**swept_kwargs):
                         rejected["swept"] += 1
                         last_rejection = "swept path not certified"
                         continue

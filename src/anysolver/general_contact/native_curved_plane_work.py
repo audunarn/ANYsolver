@@ -502,8 +502,9 @@ class NativeCurvedMaterialPlaneWork:
                 if uncertain:
                     active_width,fallback,station=_root_band_active_width(self.rule,high,low,U,cell,xl,xr,alo,ahi,
                         self.origin,self.normal,pad)
-                    error=_root_band_work_bound(self.rule,high,low,U,cell,xr-xl,active_width,
-                        geometry,settings,self.stiffness,self.normal,pad,fallback=fallback)
+                    error=self._root_work_bound(high,low,U,cell,xr-xl,active_width,
+                        geometry,settings,self.stiffness,self.normal,pad,fallback=fallback,
+                        interval=(xl,xr),station=station)
                     root_errors+=error
                     root_stations[cell,xl,xr]=station
                     root_brackets.append(dict(cell=cell,lower=xl,upper=xr,features=features,
@@ -515,17 +516,13 @@ class NativeCurvedMaterialPlaneWork:
             failure=ValueError('curved axial front bracket work uncertainty exceeds integration budget')
             failure.integration_diagnostics=dict(root_brackets=root_brackets,error_bounds=tuple(root_errors))
             raise failure
-        global_residual=np.zeros(42);global_hessian=np.zeros((42,42))
+        count=self._coordinate_count()
+        global_residual=np.zeros(count);global_hessian=np.zeros((count,count))
         energies=[];errors=[tuple(root_errors)];visited=budget['visited'];accepted=evaluations=0
         last_error=last_rectangle=last_support=None
-        scale=np.ones(42)
-        for index in (3,9,15,18,21):
-            scale[index:index+3]=1/settings.characteristic_length_m
+        scale=self._coordinate_scale(count)
         for cell,bands in prepared:
-            mapping=np.zeros((9,42))
-            mapping[:3,6*cell:6*cell+3]=np.eye(3)
-            mapping[3:6,6*(cell+1):6*(cell+1)+3]=np.eye(3)
-            mapping[6:9,18+3*cell:21+3*cell]=np.eye(3)
+            mapping=self._local_mapping(cell,count)
             pending=[(xl,xr,alo,ahi,uncertain) for xl,xr,uncertain,_ in bands]
             while pending:
                 if visited>=settings.max_intervals:
@@ -556,7 +553,7 @@ class NativeCurvedMaterialPlaneWork:
                     continue
                 estimates=[];active_samples=0
                 for points,weights in gauss:
-                    estimate=Jet2.constant(0.,9)
+                    estimate=Jet2.constant(0.,mapping.shape[0])
                     for qx,wx in zip(points,weights):
                         if segmented and not root_band:
                             # Circular onset gives a square-root angular width.
@@ -597,10 +594,7 @@ class NativeCurvedMaterialPlaneWork:
                                     raise ValueError('curved material gap disagrees with compressed enclosure')
                                 continue
                             active_samples+=1
-                            gradient=np.r_[(1-t)*self.normal,t*self.normal,np.cross(arm,self.normal)]
-                            hessian=np.zeros((9,9))
-                            hessian[6:9,6:9]=(np.outer(arm,self.normal)+np.outer(self.normal,arm))/2-float(self.normal@arm)*np.eye(3)
-                            value=Jet2(gap,gradient,hessian)
+                            value=self._gap_work_jet(gap,high,low,cell,t,arm)
                             area=reference_area.area_jacobian(angle)
                             coefficient=factor*area*.5*self.stiffness
                             if not isfinite(coefficient) or coefficient==0:
@@ -609,7 +603,7 @@ class NativeCurvedMaterialPlaneWork:
                     estimates.append(estimate)
                 difference=estimates[1]-estimates[0]
                 residual=mapping.T@difference.gradient
-                tangent=spatial_jacobian(residual,mapping.T@difference.hessian@mapping)
+                tangent=self._spatial_tangent(residual,mapping.T@difference.hessian@mapping)
                 error=np.array((abs(difference.value),np.linalg.norm(scale*residual,np.inf),
                     np.linalg.norm(scale[:,None]*tangent*scale[None,:],np.inf)))
                 if not np.all(np.isfinite(error)):
@@ -629,7 +623,7 @@ class NativeCurvedMaterialPlaneWork:
                         pending.extend(((xl,xm,al,ar,False),(xm,xr,al,ar,False)))
                     else:
                         pending.extend(((xl,xr,al,am,False),(xl,xr,am,ar,False)))
-        tangent=spatial_jacobian(global_residual,global_hessian)
+        tangent=self._spatial_tangent(global_residual,global_hessian)
         energy=fsum(energies)
         final_errors=tuple(fsum(e[i] for e in errors) for i in range(3))
         if np.any(np.asarray(final_errors)>np.asarray(limits)):
@@ -644,6 +638,36 @@ class NativeCurvedMaterialPlaneWork:
             _readonly(force),_readonly(-force),_readonly(moment),_readonly(-moment),geometry,
             visited,accepted,evaluations,final_errors,
             tuple(root_brackets),budget['visited'])
+
+    def _coordinate_count(self):
+        return 42
+
+    def _coordinate_scale(self,count):
+        scale=np.ones(count)
+        for index in (3,9,15,18,21):
+            scale[index:index+3]=1/self.settings.characteristic_length_m
+        return scale
+
+    def _local_mapping(self,cell,count):
+        mapping=np.zeros((9,count))
+        mapping[:3,6*cell:6*cell+3]=np.eye(3)
+        mapping[3:6,6*(cell+1):6*(cell+1)+3]=np.eye(3)
+        mapping[6:9,18+3*cell:21+3*cell]=np.eye(3)
+        return mapping
+
+    def _gap_work_jet(self,gap,high,low,cell,t,arm):
+        gradient=np.r_[(1-t)*self.normal,t*self.normal,np.cross(arm,self.normal)]
+        hessian=np.zeros((9,9))
+        hessian[6:9,6:9]=(np.outer(arm,self.normal)+np.outer(self.normal,arm))/2-float(self.normal@arm)*np.eye(3)
+        return Jet2(gap,gradient,hessian)
+
+    def _spatial_tangent(self,residual,hessian):
+        return spatial_jacobian(residual,hessian)
+
+    def _root_work_bound(self,high,low,U,cell,width,angular_width,geometry,
+                         settings,stiffness,normal,pad,*,fallback=False,interval=None,station=None):
+        return _root_band_work_bound(self.rule,high,low,U,cell,width,angular_width,
+            geometry,settings,stiffness,normal,pad,fallback=fallback)
 
     def certify_path(self,start,translations,angular,*,gap_tolerance_m,
                      maximum_intervals,cancellation_token=None):

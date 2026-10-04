@@ -282,7 +282,8 @@ class CurvedPatchPathControl:
 
 
 def curved_patch_path_control(rule,start,translations,angular,origin,normal,*,
-                              gap_tolerance_m,maximum_intervals,cancellation_token=None):
+                              gap_tolerance_m,maximum_intervals,cancellation_token=None,
+                              orientation_only=False):
     """Whole material patch along the existing affine/Exp path, not pose samples.
 
     On an interval of half-width h, d=|c-U*c_ref| is at most its midpoint
@@ -298,6 +299,8 @@ def curved_patch_path_control(rule,start,translations,angular,origin,normal,*,
     from .native_surface_path import material_path_pose
     if type(start) is not NativeS3MaterialConfiguration or start.shell_displacement.size:
         raise TypeError('fixed-plane native path needs exact native-only configuration')
+    if type(orientation_only) is not bool:
+        raise TypeError('orientation-only control must be explicit boolean')
     if (type(gap_tolerance_m) not in (int,float) or not np.isfinite(gap_tolerance_m)
         or gap_tolerance_m<=0 or type(maximum_intervals) is not int or maximum_intervals<1):
         raise ValueError('positive dimensional gap tolerance and finite path interval cap required')
@@ -313,6 +316,8 @@ def curved_patch_path_control(rule,start,translations,angular,origin,normal,*,
         rule=rule.definition,start=start,translations=move,angular=spin,
         origin=origin,normal=normal,gap_tolerance_m=float(gap_tolerance_m),
         maximum_intervals=maximum_intervals))
+    if orientation_only:
+        identity=sha(dict(base=identity,admission='whole_native_orientation_only_v1'))
     ref=rule.samples[0].station.reference;radius=float(rule.definition['radius'])
     Fgain=_reference_radial_gain(ref);eps=np.finfo(float).eps;F=lambda v:Fraction(float(v))
     norm=lambda v:float(_sqrt_bound(sum(x*x for x in v),upper=True))
@@ -361,8 +366,9 @@ def curved_patch_path_control(rule,start,translations,angular,origin,normal,*,
         lower_gap=geometry.gap_lower_m-half*gap_rate-pad
         if not np.all(np.isfinite((lower,lower_gap))):
             raise ValueError('curved whole patch path bound overflow')
-        if lower>0 and lower_gap>=-gap_tolerance_m:
+        if lower>0 and (orientation_only or lower_gap>=-gap_tolerance_m):
             orientation=min(orientation,lower);gap=min(gap,lower_gap)
             continue
         pending.extend(((left,mid),(mid,right)))
-    return result(True,'whole patch orientation and gap bounded')
+    return result(True,'whole native orientation bounded; gap not admitted' if orientation_only
+                  else 'whole patch orientation and gap bounded')
