@@ -155,3 +155,23 @@ not general rim/pressure engineering qualification.
 Saved fixed-continuum lengths differ by0.0824–0.0825%; this adds descriptive
 accuracy evidence without a new acceptance threshold or convergence-order claim.
 [Assessment and remaining scope](d1_review_support/contact_curved_cylinder_response_20261004/review.md).
+
+## Free bending and committed fixed-cylinder cycle
+
+32/64-cellB2/B3 cantilevers now match an independent unilateral Timoshenko
+foundation with explicit tip work within0.1% for displacement/reaction. At64cells,
+line-reaction-densityL1/L2 errors are<=0.0264%; stronger line/endpoint enforcement
+reduces independently checked penetration from about4.754 to0.994um within10um.
+This is small-motion **plane-limit** evidence using a1e7m-radius cylinder, not an
+exact arbitrary-cylinder continuum benchmark. Geometry roundoff, linear-reference
+scope, distributed-load approximation and numerical integration estimates are
+reported separately. Original zero-tip reference behavior remains preserved.
+
+Actual fixed-body press/open/recontact and fresh open-state restart pass forB2/B3
+through one immutable public staged-load programme. Every accepted contact force,
+displacement and reaction is independently checked. Prescribed tool translation
+with a staged programme remains explicitly rejected; this test does not expand
+that profile. No cycle-work or general pressure/finite-rotation acceptance follows.
+[Evidence, review and precise limits](d1_review_support/contact_curved_cylinder_response_20261004/summary_bending.json).
+Production/wheel bytes are unchanged; affected tests ran against the same private
+installed artifact. No release or normal application admission is established.

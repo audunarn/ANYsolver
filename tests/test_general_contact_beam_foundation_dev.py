@@ -60,12 +60,17 @@ def test_reference_decimal_transfer_resolution(line_stiffness):
     This checks the numerical transfer/root result for these two inputs only.
     It does not certify expm or arbitrary active intervals generally.
     """
-    ref = reference(line_stiffness)
+    decimal_transfer_control(reference(line_stiffness))
+
+
+def decimal_transfer_control(ref):
+    """Independent 80-digit transfer with optional declared endpoint work."""
     with localcontext() as ctx:
         ctx.prec = 80
         zero, one = Decimal(0), Decimal(1)
         d = Decimal.from_float
-        L, c, D, S, q, k = map(d, (LENGTH, CLEARANCE, BENDING, SHEAR, LOAD, line_stiffness))
+        L, c, D, S, q, k = map(d, (ref.length,ref.clearance,ref.bending,ref.shear,ref.load,ref.line_stiffness))
+        endpoint = d(ref.endpoint_stiffness)*L**3/D
         sigma, beta, qbar = D/(S*L*L), k*L**4/D, q*L**4/(D*c)
         a = d(float(ref.front))/L
 
@@ -100,17 +105,29 @@ def test_reference_decimal_transfer_resolution(line_stiffness):
 
         open_map, active_map = exponential(False, a), exponential(True, one-a)
         H = multiply(active_map, open_map)
-        det = H[2][2]*H[3][3]-H[2][3]*H[3][2]
-        m = (-H[2][4]*H[3][3]+H[2][3]*H[3][4])/det
-        Q = (-H[2][2]*H[3][4]+H[2][4]*H[3][2])/det
+        if endpoint == zero:
+            det = H[2][2]*H[3][3]-H[2][3]*H[3][2]
+            m = (-H[2][4]*H[3][3]+H[2][3]*H[3][4])/det
+            Q = (-H[2][2]*H[3][4]+H[2][4]*H[3][2])/det
+        else:
+            tip_row = [H[3][j]+endpoint*H[0][j] for j in range(5)]
+            det = H[2][2]*tip_row[3]-H[2][3]*tip_row[2]
+            m = (-H[2][4]*tip_row[3]+H[2][3]*(tip_row[4]-endpoint))/det
+            Q = (-H[2][2]*(tip_row[4]-endpoint)+H[2][4]*tip_row[2])/det
         seed = [zero, zero, m, Q, one]
         at_front = [sum((row[j]*seed[j] for j in range(5)), zero) for row in open_map]
         at_end = [sum((row[j]*at_front[j] for j in range(5)), zero) for row in active_map]
         reaction = q*L-Q*D*c/L**3
         assert abs(at_front[0]-one) < Decimal('1e-10')
-        assert max(abs(at_end[2]), abs(at_end[3])) < Decimal('1e-60')
+        end_residual=max(abs(at_end[2]),abs(at_end[3]+endpoint*(at_end[0]-one)))
+        assert end_residual < Decimal('1e-60')
         assert abs(float(reaction)-ref.reaction)/float(reaction) < 1.e-9
-        assert abs(float(at_end[0]*c)-ref.state(LENGTH)[0])/float(at_end[0]*c) < 1.e-10
+        tip_error=abs(float(at_end[0]*c)-ref.state(ref.length)[0])/float(at_end[0]*c)
+        assert tip_error < 1.e-10
+        return dict(front_residual_decimal=str(abs(at_front[0]-one)),
+            endpoint_residual_decimal=str(end_residual),reaction=float(reaction),
+            reference_reaction=ref.reaction,tip=float(at_end[0]*c),
+            reference_tip=float(ref.state(ref.length)[0]),tip_relative_error=tip_error)
 
 
 @pytest.mark.parametrize("cells,line_stiffness", [(16, 1.e4), (32, 1.e4),

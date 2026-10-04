@@ -79,3 +79,47 @@ This descriptive comparison adds no retrospective acceptance threshold and does
 not establish convergence order or resolved pointwise pressure. The guided curved
 interior/rim code-response gap is closed; claim-specific pressure/spatial adequacy,
 frozen candidate assessment, engineering acceptance and broader D3 remain open.
+
+## Free bending, line fields and actual fixed-body cycle
+
+The next discriminator frees axial/transverse/bending coordinates in clamped
+B2/B3 cantilevers. It compares 32/64 cells with a separately derived Timoshenko
+unilateral foundation and physical tip spring. Endpoint natural work is
+M(L)=0, Q(L)+ke(w(L)-c)=0; an independent80-digit Taylor transfer checks the
+SciPy matrix-exponential boundary/front arithmetic. The original zero-ke operations
+are preserved and two changed controls pass. This is a single-active-interval
+reference, not an outward-certified matrix exponential or arbitrary contact front.
+
+The cylinder radius1e7m is a declared plane-limit approximation: nominal geometric
+height difference<=12.5nm, literal clearance offset-0.0596nm and radius-addition
+offset-0.2235nm. The comparison includes structural/curve/distributed-load
+resolution and von Karman versus linear-continuum differences; it does not isolate
+their orders. Free-tip displacement and total reaction errors are<=0.1% for all
+four mesh cases. B2 reaction error improves0.0855→0.0198%; B3 improves0.0131→0.00291%.
+The active physical endpoint is independently checked on the tip sphere branch;
+the continuum spring would not represent a tangent-dependent active rim.
+
+At64cells, separately recovered reference-measure line-reaction density inN/m has
+L1/L2 errors<=0.0264% for baseline and tenfold line/endpoint regularization. Exact
+polynomial activation/minimum stations and stable radius-adjusted gap checks use
+saved translations, without rerunning the mechanics. Independent gap improves
+about4.754→0.994um, inside10um. Quadrature error estimates are recorded separately
+by units; they are not certificates. The original mixed-unit reporting sum is
+retained in raw bending_pressure01; recovery01–03 correct only reporting and
+independent gap checks. Actual solver fields and failed evidence are unchanged.
+
+One immutable three-stage fixed-cylinder programme now performs physical press,
+opening and recontact forB2/B3, comparing every committed displacement, contact
+force and root reaction with independent axial matrices and line/sphere work.
+Fresh JSON restart at the open factor2 state reproduces factor3 recontact.
+No integrated cycle-work claim is made. The initial cycle01 fixture requested
+the explicitly excluded moving-tool/load-program combination and failed before
+numerical work. The corrected fixed-body test preserves and tests that guard.
+
+Supporting read-only review found the missing per-state force assertion and a
+tiny squared-radius algebra error; both are corrected and focused checks pass.
+This review is not the sole scientific independence claim. Existing production
+source/wheel remains unchanged; all515package Python files match. Raw resource,
+runtime, input identities, spatial/field/cycle results and retained failures are
+in[summary_bending.json](summary_bending.json). These are development results;
+claim-bearing assessment and broaderD3/general-cylinder admission remain open.

@@ -2008,3 +2008,19 @@ curved active widths.8affected installed checks and3modified width checks pass,
 same515-file-matched wheel. Saved continuum active-length error0.0824–0.0825%
 is descriptive only. Pressure-field adequacy/convergence, frozen candidate
 engineering assessment, broader D3/application admission/release remain open.
+
+### Free-bending and fixed-body cycle discriminator — 4 October 2026
+
+Existing fixed-cylinder profile is installed-tested against an independently derived
+single-front Timoshenko foundation with tip spring, controlled by80-digit transfer.
+32/64B2/B3 response errors<=0.1%;64-cell recovered line-densityL1/L2<=0.0264%.
+Independent physical gaps improve4.754→0.994um with tenfold regularization, inside10um.
+This is a declared large-radius plane-limit small-motion benchmark, not arbitrary
+cylinder continuum or general pressure/finite-rotation acceptance. Fixed-body
+staged press/open/recontact and fresh open-state restart compare every accepted
+force/displacement/reaction. Moving-tool/load-program remains rejected. Same
+production/wheel bytes;515package files match. Supporting review corrections close
+per-state-force and exact-radius reporting issues; historical failures are retained.
+Development evidence only; formal claim assessment/generalD3 admission/release open.
+[Scope/review](d1_review_support/contact_curved_cylinder_response_20261004/review.md),
+[raw identities/results](d1_review_support/contact_curved_cylinder_response_20261004/summary_bending.json).

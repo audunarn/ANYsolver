@@ -1,9 +1,9 @@
 # General contact — current delivery plan
 
-**Revision:** 2026-10-04.98. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
-**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.5, and the adopted risk-proportionate philosophy.
+**Revision:** 2026-10-04.99. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
+**Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-04.6, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
-**Branch / last coherent integration:** `codex/contact-main-reconcile-20261001` / `4697599d`.
+**Branch / source-changing baseline:** `codex/contact-main-reconcile-20261001` / `adbdfa3d`; current Git HEAD binds later test/evidence additions.
 
 This plan changes execution priorities and workflow prospectively. It preserves the
 [full C0–C9 programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md), all scientific
@@ -116,9 +116,13 @@ The initial fixture barely exercises the cubic structural term and keeps both ca
 open. A subsequent guided active-rim fixture now verifies coupled cap/line response,
 complete wrench and1e-5directional tangents. Quartic roots verify represented active
 width; saved continuum lengths differ0.0824–0.0825%, without convergence-order claim.
-Next disposition: identify the exact integrated-response claim and any necessary
-pressure/spatial evidence, then freeze one coherent candidate for independent
-assessment. Do not infer general nonlinear or rim engineering acceptance from these
+Free-bending B2/B3 response, line-field resolution, stronger enforcement and actual
+fixed-body press/open/recontact with open-state restart now pass in bounded
+development fixtures. The reference is a declared large-radius plane limit with
+tip work and independent80-digit transfer controls. Next disposition: freeze one
+named cylinder-static benchmark candidate for independent assessment. This closes
+specific evidence gaps; it does not admit arbitrary cylinder/beam models.
+Do not infer general nonlinear or rim engineering acceptance from these
 guided tests or start another optimization/mesh sweep without a discriminator.
 [Evidence](docs/d1_review_support/contact_curved_cylinder_response_20261004/summary_final.json).
 

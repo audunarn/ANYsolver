@@ -4,14 +4,137 @@ import json, os, time
 from pathlib import Path
 import numpy as np
 import pytest
-from anysolver import solve_static_nonlinear, validate_general_contact
+from anysolver import (LoadCase, NonlinearLoadProgram, NonlinearLoadStage,
+    solve_static_nonlinear, validate_general_contact)
 from anysolver.general_contact.beam_hemisphere_coupled_tool import CoupledHemisphereToolManager, PROFILE
+from anysolver.general_contact.beam_hemisphere_cylinder import (
+    HemisphereCylinderManager, PROFILE as FIXED_PROFILE)
 from test_general_contact_hemisphere_cylinder_motion import fixture, reference
+from test_general_contact_hemisphere_cylinder_static import _line_reference
 
 
 def coupled_fixture(quadratic=False, **kwargs):
     model, definition, settings, load = fixture(quadratic, **kwargs)
     return model, definition, replace(settings, beam_end_cap_work='hemisphere_coupled_tool_dev'), load
+
+
+def cyclic_program():
+    stages=[]
+    for name,force in (('press',-.02),('open',.04),('recontact',-.04)):
+        load=LoadCase(name)
+        load.add_nodal_load(1,forces=(force,0.,0.))
+        stages.append(NonlinearLoadStage(name,load))
+    return NonlinearLoadProgram(tuple(stages))
+
+
+def cyclic_reference(quadratic,factor):
+    """Independent axial equilibrium and physical sphere/line work.
+
+    This guided collinear fixture keeps the genuine left hemisphere on its
+    sphere branch. It is code verification, not a spatial continuum reference.
+    """
+    x=np.array((.112,.212,.312) if quadratic else (.112,.312))
+    n=len(x); length=.2
+    K=(np.array(((7.,-8.,1.),(-8.,16.,-8.),(1.,-8.,7.)))/(3*length)
+       if quadratic else np.array(((1.,-1.),(-1.,1.)))/length)
+    factors=np.clip(factor-np.arange(3),0.,1.)
+    applied=float(np.dot((-.02,.04,-.04),factors))
+    point=np.zeros(3)
+    def evaluate(free):
+        u=np.r_[free,0.]
+        positions=np.column_stack((x+u,np.zeros((n,2))))
+        energy,gradient=_line_reference(positions,.11,point,np.array((0.,0.,1.)),1e4,length)
+        gap=x[0]+u[0]-point[0]-.11
+        gradient[0,0]+=1e5*min(gap,0.)
+        external=np.r_[applied,np.zeros(n-1)]
+        residual=K@u+gradient[:,0]-external
+        return residual,u,-gradient[:,0].sum(),gap,energy+.5e5*min(gap,0.)**2
+    # The axial guide and sphere spring give this independent initial estimate;
+    # full polynomial line quadrature still enters the converged residual.
+    free_tip=applied*length
+    clearance=-.002
+    tip=(applied+1e5*clearance)/(1/length+1e5) if free_tip<clearance else free_tip
+    from scipy.optimize import root
+    solved=root(lambda v:evaluate(v)[0][:-1],np.linspace(tip,0.,n)[:-1],tol=1e-10)
+    residual,u,force,gap,storage=evaluate(solved.x)
+    assert np.linalg.norm(residual[:-1])<1e-10
+    assert np.all(np.diff(x+u)>0.)
+    return u,force,gap,float(residual[-1]),storage,applied
+
+
+@pytest.mark.parametrize('quadratic',(False,True))
+def test_fixed_staged_press_open_recontact_and_open_restart(quadratic):
+    """Physical committed cycle through one immutable public load programme."""
+    model,definition,settings,_=fixture(quadratic,motion=(0.,0.,0.))
+    definition=replace(definition,rigid_bodies=(replace(definition.rigid_bodies[0],path_translation=None),))
+    program=cyclic_program()
+    common=dict(load_program=program,contact=definition,contact_settings=settings,
+        max_iterations=20,tolerance=1e-10,emit_restart_checkpoint=True,
+        record_increment_snapshots=True)
+    result=solve_static_nonlinear(model,num_steps=6,**common)
+    assert result.status=='completed',result.failure_reason
+    assert result.load_factor==pytest.approx(3.)
+    dofs=[model.mesh.dof_manager.get_node_dofs(n)[0] for n in sorted(model.mesh.nodes)]
+    history=result.info['force_displacement_history']
+    assert len(result.snapshots)==len(history)
+    recovery=HemisphereCylinderManager(model,definition,settings)
+    rows=[]
+    for snapshot,step in zip(result.snapshots,history):
+        factor=snapshot.load_factor
+        u,force,gap,reaction,storage,applied=cyclic_reference(quadratic,factor)
+        np.testing.assert_allclose(snapshot.displacements[dofs],u,rtol=1e-6,atol=1e-10)
+        assert step['support_reactions']['root'][0]==pytest.approx(reaction,rel=1e-6,abs=1e-10)
+        assert gap>=-1e-5
+        _,_,fields=recovery.evaluate(snapshot.displacements)
+        actual_force=float(fields.beam_force[0])
+        assert actual_force==pytest.approx(force,rel=1e-6,abs=1e-10)
+        actual_reaction=step['support_reactions']['root'][0]
+        assert abs(actual_force+actual_reaction+applied)<1e-10
+        rows.append(dict(factor=factor,u=snapshot.displacements[dofs].tolist(),
+            reference_u=u.tolist(),contact_force_N=force,actual_contact_force_N=actual_force,
+            active_endpoints=fields.active_endpoints,active_line_length=fields.active_line_length,gap_m=gap,
+            reaction_N=reaction,applied_N=applied,storage_J=storage))
+    for factor,active in ((1.,True),(2.,False),(3.,True)):
+        row=next(r for r in rows if abs(r['factor']-factor)<1e-12)
+        assert (row['actual_contact_force_N']>1e-8)==active
+        assert (row['active_endpoints']>0)==active
+        if not active:assert row['active_line_length']==0.
+    info=result.info['general_contact']
+    assert info['profile']==FIXED_PROFILE and info['gap_tolerance_met']
+    np.testing.assert_allclose(info['rigid_force'],(-rows[-1]['contact_force_N'],0.,0.),
+        rtol=1e-6,atol=1e-10)
+    # The checkpoint is open after a previously active physical increment.
+    prefix_model,_,_,_=fixture(quadratic)
+    prefix=solve_static_nonlinear(prefix_model,num_steps=4,max_load_factor=2.,**common)
+    assert prefix.status=='completed',prefix.failure_reason
+    assert prefix.load_factor==pytest.approx(2.)
+    assert prefix.info['general_contact']['active_endpoints']==0
+    assert prefix.info['general_contact']['active_line_length']==0.
+    assert prefix.info['general_contact']['line_contact_energy']==0.
+    checkpoint=json.loads(json.dumps(prefix.to_restart_checkpoint(),allow_nan=False))
+    fresh,_,_,_=fixture(quadratic)
+    resumed=solve_static_nonlinear(fresh,num_steps=2,**common,restart_checkpoint=checkpoint)
+    assert resumed.status=='completed',resumed.failure_reason
+    assert resumed.load_factor==pytest.approx(3.)
+    np.testing.assert_allclose(resumed.displacements,result.displacements,rtol=1e-6,atol=1e-10)
+    np.testing.assert_allclose(resumed.info['general_contact']['rigid_force'],info['rigid_force'],
+        rtol=1e-6,atol=1e-10)
+    for snapshot in resumed.snapshots:
+        u,*_=cyclic_reference(quadratic,snapshot.load_factor)
+        np.testing.assert_allclose(snapshot.displacements[dofs],u,rtol=1e-6,atol=1e-10)
+    record=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if record:
+        Path(record).with_name('fixed_cycle_B'+('3' if quadratic else '2')+'.json').write_text(
+            json.dumps(dict(states=rows,contact=info,history=history,
+                prefix_contact=prefix.info['general_contact'],
+                resumed_contact=resumed.info['general_contact']),indent=2),encoding='utf-8')
+
+
+def test_translating_tool_rejects_staged_load_program():
+    model,definition,settings,_=coupled_fixture()
+    with pytest.raises(ValueError,match='without a load program'):
+        solve_static_nonlinear(model,load_program=cyclic_program(),contact=definition,
+            contact_settings=settings,num_steps=6)
 
 
 def test_active_origin_restores_factor_and_hidden_crossing():
