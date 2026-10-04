@@ -1,71 +1,72 @@
 # B3-GE / E4-PL / B2 active state — 4 October 2026
 
-## Goal, authority and exact state
+## Objective and authority
 
-Full Revision8 goal ACTIVE/unbudgeted. Historical plan/goal:
+Full Revision8 goal ACTIVE/unbudgeted; complete amended G0–G6/F01–F13/
+V01–V28/B01–B18 remain binding. Experimental implementation, testing,
+acceptance and release are separate. Original plan/goal are in
 C:/Github/ANYsolver/.perf2-worktrees/b3-ge-e4-pl-coupling/docs/agent_plans.
-Complete amended G0–G6/F01–F13/V01–V28/B01–B18 binding. Experimental behavior
-and tests are not acceptance or release. Prospective risk-proportionate workflow,
-one live note/acceptance matrix; preserve frozen criteria/history/failures.
+Use the prospective risk-proportionate process and one acceptance matrix.
 
-Active worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Slice parent111aab68; verify
-actual HEAD/status. Local scoped commits allowed; NO push, main merge,
-publication or contact-worker messages. ANYfem2ede338b separate; editable
-ANYmaterial graph is not final isolated qualification. Pressure amendment pending.
-
-Formal F03 UNCONSUMED. Never execute/copy/substitute protected original runner
+Worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001; solver product762d6539.
+ANYfem consumer3823eaa at C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer.
+Local scoped commits allowed; NO push/main merge/publication/contact messages.
+FormalF03 UNCONSUMED; never execute/copy/substitute its protected original runner
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
-Ceiling100krows/600s/8GiB/8threads/ONE numerical job, G5 budgets unchanged.
-Focused slice used180s/2GiB/one thread/JIT off. NEVER inspect/copy
-us3-modal-canary(credentials); whitelist only new-owned evidence. No
-Get-CimInstance/optional-worker reprobes. Local/Mistral unavailable; supporting
-OpenAI review does not satisfy different-family scientific acceptance.
+Pressure amendment pending. Ceiling100krows/600s/8GiB/8threads/ONE numerical job;
+G5 budgets unchanged. Never inspect/copy us3-modal-canary(credentials).
+No Get-CimInstance or optional-worker reprobes. Local/Mistral unavailable;
+supporting OpenAI reviews do not satisfy different-family acceptance.
 
-## Established result and unresolved mechanics
+## Delivered behavior
 
-Prior connection state/evidence preserved byte-for-byte in
-[pre-slice note](development/r8-b2-free-reference-modes-20261004/active-state-before.md)
-and [density results](development/r8-bl5-projected-assessment-20261003/results.md).
-BL5 normal spin released; historical six-row points unchanged. Hhalf candidate
-not selected. All21 installed envelope screens retained. Coarse1:8 work remains
-unconverged;8:1 kernel2745 HOLD. Arithmetic ticket CLOSED_UNRESOLVED; no actual
-negative-mode or formulation-failure conclusion. Physical-density ticket CLOSED:
-fixed-native contrast13.119675%, independent same-geometry contrast13.336932%;
-regional S4 Mz discrepancy.75655Nm remains. No automatic mesh/channel/precision/
-inverse campaign. M2/F03/G0: actual8:1 kernel/beta, growing-space stability and
-regional/physical accuracy OPEN. Do not infer acceptance from matched work.
+Explicit B2_FREE_FREE_MODAL_ONLY_V1 verifies six physical rigid fields and
+selected finite flexible modes on bounded Q4/mixed/all-S3 models, retaining
+physical mass and massless descriptor variables. Default supported/static
+routes unchanged; opt-in free policy admits modes/close only. Solver source
+52supported+44free/footprint and installed96 PASS. ANYfem now persists that
+explicit policy through standalone and native Project records, preserving old
+supported payload bytes and rejecting unsupported/result-contract mismatches.
+Consumer final source51, installed185 and preceding-solver57 PASS; three
+installed supported/mixed-free/all-S3-free save/reopen examples complete.
+Supporting complete-slice review has no actionable finding. These checks do
+not certify nullity/completeness, physical/external modal accuracy or full G4B.
 
-New independently ready M4/F07/F12/G4B behavior delivered: explicit
-B2_FREE_FREE_MODAL_ONLY_V1 on the existing mixed modal definition. Six checked
-physical rigid fields plus selected finite flexible pairs for bounded Q4,
-mixed/all-S3 points; physical mass and massless descriptor variables unchanged.
-Default supported/static behavior preserved. New policy admits modes/close only.
-Source52 supported +44 free/footprint PASS, installed96 PASS; one initial test
-exception-expectation failure retained/corrected. Frame/reversal/unit controls,
-actual physical equation/gap/mass checks, cancellation and extra mechanism
-checks pass. Complete-slice supporting source/oracle review has no actionable
-finding; different-family qualification remains OPEN.
+Solver wheel dea651b918e92871ffc017c6a435dd1f265d22e86f9a307d00d12ebd4abfa27b
+at TEMP/r8-b2-free-reference-modes-v3/dist and site. Consumer wheel
+66739dbee7f9d6f5171dbb6371a41c71249d5ef52ac496456eac9dbd0ecd737e at
+TEMP/r8-b2-free-modal-consumer-v1/dist and site. Imports/site/source bindings,
+limitations, failures and reviews are in the linked results; no rebuild needed
+without changed product inputs. All numerical jobs TERMINAL; pools/Numba1,
+JIToff; no performance gain claimed. Editable sibling graph is not final
+isolated qualification.
 
-Unreleased0.4.7 wheel dea651b918e92871ffc017c6a435dd1f265d22e86f9a307d00d12ebd4abfa27b,
-TEMP/r8-b2-free-reference-modes-v3/dist and site. Two changed modules match
-source/wheel/site;236 observed ANYsolver imports all site. Pools/Numba1/JIToff.
-All numerical jobs TERMINAL; installed11.684s/195440640B sampled, no savings claim.
-[Slice results/review](development/r8-b2-free-reference-modes-20261004/results.md)
-and [authoritative matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md) hold records.
-Old installed claims retain their original source bindings, not this wheel.
+[Solver results](development/r8-b2-free-reference-modes-20261004/results.md),
+[consumer results](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-free-modal-consumer-20261004/results.md),
+[authoritative matrix](B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md).
+Pre-consumer active note is preserved byte-for-byte beside solver results.
 
-## Next authorised end-to-end action
+## Current decision and next action
 
-Extend the existing ANYfem B2 modal consumer/persistence route to expose the new
-explicit free policy and structured rigid/flexible result, preserving historical
-supported records and experimental status. Current B2 consumer rejects free-free;
-GE free-free already delivered and must not be rebuilt. Read its relevant contract
-and actual clean/dirty state first, then implement one bounded installed public
-round-trip/solve slice. No replacement API/general framework. Reuse the new
-solver wheel; no rebuild absent product changes. No new qualification claim.
+Decision sought: a defensible native BL5 interface-resolution/stability choice.
+Historical six-row points unchanged. Hhalf candidate remains experimental.
+All21 envelope physical screens retained; coarse1:8 Mz work unconverged;
+actual8:1 kernel2745 HOLD, while507/1781 positive proofs retain their scope.
+Closed inverse-majorant diagnosis established neither negativity nor positivity.
+Fixed-density native13.119675% versus supplementary OpenSees13.336932% confirms
+resolution sensitivity; S4 regional Mz discrepancy.75655Nm remains. Neither
+matched work nor rank selects a law/space. No automatic arithmetic, channel,
+mesh or precision campaign.
 
-Workers idle; root owns integration/Git/numerical jobs. Max3workers/ONE numerical
-job. Mandatory CalculiX, practical scale/platform/consumer/different-family
-acceptance and authorised publication/clean synchronised main remain required.
-No unrelated passed campaigns or protected authority are repeated.
+Next bounded action: supporting read-only review of the exact remaining
+native-beta/kernel equation and applicable contract, distinguishing the required
+criterion from a failed proof technique. Then choose ONE outcome-dependent
+check or explicitly retain the obstruction; record its question before a run.
+No protected F03 execution or criteria amendment is implied. In parallel,
+inspect a genuinely missing ready programme operation instead of rebuilding
+completed fibres, GE free-free or consumer routes. Root owns integration and
+numerical scheduling; max3workers. Mandatory CalculiX, regional accuracy,
+growing-space stability, full scale/platform/material/consumer/different-family
+acceptance and authorized release/clean synchronized main remain open.
+[Mechanics evidence](development/r8-bl5-projected-assessment-20261003/results.md).

@@ -2030,3 +2030,16 @@ Supporting review is not different-family qualification. Completeness/nullity,
 repeated-space/physical/external accuracy, consumer/scale/platform and aggregate
 F07/F12/G4B acceptance remain OPEN. M2/F03/G0 unaffected and formalF03 unconsumed.
 [Complete slice](development/r8-b2-free-reference-modes-20261004/results.md).
+
+M4/B17 consumer integration, 4 October — IMPLEMENTED_NOT_QUALIFIED.
+ANYfem3823eaa persists explicit B2 free-reference modes through standalone and
+native Project records; existing supported payloads remain byte-identical.
+Final source51 and coherent installed185 PASS; preceding installed solver57
+PASS and three supported/mixed-free/all-S3-free Project examples complete.
+Explicit policy/result admission preserves failed/cancelled status and closes
+owners. Wheel66739dbee7f9d6f5171dbb6371a41c71249d5ef52ac496456eac9dbd0ecd737e
+uses solver dea651b9 unchanged. Complete supporting source/evidence review has
+no actionable finding; different-family, physical/external/completeness,
+platform/scale and aggregate acceptance remain OPEN. Editable sibling graph
+is not final ecosystem qualification; M2/F03/G0 and authorities unchanged.
+[Results and review](C:/Github/ANYfem/.worktrees/experimental-ge-panel-consumer/docs/development/r8-b2-free-modal-consumer-20261004/results.md).
