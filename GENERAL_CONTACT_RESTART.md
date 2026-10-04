@@ -41,6 +41,14 @@ No further load/penalty tuning; old failures retained.
 
 ## Next action / open requirements
 
+Live bounded diagnostic: first two disposable Newton iterations of the failed
+yield1e-5/penalty1e7 fixture, same inputs/gates/origin. Separate material-branch
+growth from first-contact residual growth. Record the existing0..8backtracks and
+at most two additional smaller diagnostic probes; those probes never enter the
+production solve or commit state. If contact dominates, prioritize activation
+fraction control; if material dominates, derive a station-conjugate branch
+limiter. No full replay or higher production budget.
+
 Use remaining time only for a bounded required closure and coherent handoff;
 do not start another profile/packaging/diagnostic campaign to spend the balance.
 Coupled yielding needs a derived explicit globalization/step contract; consistent

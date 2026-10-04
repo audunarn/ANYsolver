@@ -1,0 +1,140 @@
+{
+  "status": "disposable diagnostic; full-load NONPASS unchanged",
+  "source": "01420d7f",
+  "raw_root": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate03\\trace29",
+  "resource": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 4.506988299894147,
+    "peak_bytes": 182824960
+  },
+  "selected": [
+    {
+      "iteration": 0,
+      "metrics": [
+        0.00125,
+        0.0,
+        0.0
+      ],
+      "gap_m": 9.999999943156174e-05,
+      "contact_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fraction": 1.0,
+      "cut": 5,
+      "diagnostic_outside_backtracking_cap": false,
+      "candidate_metrics": [
+        0.0012109375000724733,
+        4.392350796300709e-05,
+        0.0
+      ],
+      "candidate_gap_m": 1.8976867984493717e-05,
+      "candidate_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "candidate_plastic_max": 7.441763829147632e-05,
+      "material_branches": [
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC"
+      ],
+      "gap_admitted": true,
+      "swept_admitted": true,
+      "merit_decreases": true
+    },
+    {
+      "iteration": 1,
+      "metrics": [
+        0.0012109375000724733,
+        4.392350796300709e-05,
+        0.0
+      ],
+      "gap_m": 1.8976867984493717e-05,
+      "contact_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fraction": 1.0,
+      "cut": 8,
+      "diagnostic_outside_backtracking_cap": false,
+      "candidate_metrics": [
+        0.008109321331313212,
+        4.3751988788687615e-05,
+        0.0055532558625098725
+      ],
+      "candidate_gap_m": -1.2129405479836819e-05,
+      "candidate_force_n": [
+        0.0,
+        0.0,
+        0.010699041064950877
+      ],
+      "candidate_plastic_max": 8.470694437171142e-05,
+      "material_branches": [
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC"
+      ],
+      "gap_admitted": true,
+      "swept_admitted": true,
+      "merit_decreases": false
+    },
+    {
+      "iteration": 1,
+      "metrics": [
+        0.0012109375000724733,
+        4.392350796300709e-05,
+        0.0
+      ],
+      "gap_m": 1.8976867984493717e-05,
+      "contact_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fraction": 1.0,
+      "cut": 9,
+      "diagnostic_outside_backtracking_cap": true,
+      "candidate_metrics": [
+        0.0012085723877664609,
+        4.3837735064224265e-05,
+        0.0
+      ],
+      "candidate_gap_m": 3.4237296245298587e-06,
+      "candidate_force_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "candidate_plastic_max": 7.95624431083365e-05,
+      "material_branches": [
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC",
+        "PLASTIC"
+      ],
+      "gap_admitted": true,
+      "swept_admitted": true,
+      "merit_decreases": true
+    }
+  ],
+  "decision": "derive area-aware first-contact fraction within existing eight backtracks; no cap/gap/load tuning"
+}
