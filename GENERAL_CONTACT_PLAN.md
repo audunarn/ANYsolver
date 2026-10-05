@@ -30,14 +30,15 @@ independent gap and material/storage outputs with dimensional scales. State the
 hypothesis and stopping decision before a new solve; do not renew the historical
 failed convergence campaign or infer convergence from a gap/residual alone.
 
-**Latest discriminator disposition:** source coarse preflight passes; installed
-2e7 Pa/m fails before any accepted target because axial-front tangent uncertainty
-exceeds the unchanged integration budget. No successive-response comparison is
-available. Do not repeat unchanged2e7 or launch4e7. Supporting review identifies
-a rigorous declared-arc mapped-gradient enclosure as a candidate correction;
-verify its complete native/shell maps, cancellation rounding and whole-band
-axial allowance before another coupled run. No tolerance, resource or model
-change is authorized by this failure. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/enforcement_sensitivity.md).
+**Latest discriminator disposition:** the declared-arc enclosure is integrated
+conditionally to preserve exact passing checkpoint diagnostics. Ten installed
+local/replay checks pass;525 source files match. The corrected2e7 coupled solve
+still rejects tangent uncertainty1.569736e-6 against1e-6, with zero accepted
+targets. Stop stiffness escalation. Next verify a PSD leading-integral difference
+bound while retaining the full non-PSD remainder, positive quadrature-mass and
+rounding controls. This new mathematical candidate needs focused noncommuting
+PSD and grazing-fallback checks before another coupled run. No unchanged retry,
+tolerance/resource relaxation or convergence claim. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/arc_enclosure.md).
 
 Latest D3 material/history slice: explicit physical fibres Y2Pa/H1e5Pa through
 the same owner now press, unload/open and recontact with actual committed history.

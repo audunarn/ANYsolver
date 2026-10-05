@@ -2356,3 +2356,14 @@ claim is supported. Force/energy uncertainty is negligible relative to its gates
 complete mapped-gradient enclosure over the declared arc is the next bounded
 candidate, subject to local verification. No unchanged retry or4e7 run.
 [Evidence](d1_review_support/contact_native_fibre_s3_20261005/enforcement_sensitivity.md).
+
+
+### Conditional curved/S3 arc enclosure — installed development, 5 October 2026
+
+Narrow declared-arc complete mapped-gradient bound reduces conservative
+root-band uncertainty only on originally rejecting evaluations. Existing passing
+checkpoint diagnostics remain unchanged. Ten installed local/work/derivative
+and active/open replay controls pass17.014s;525files/221imports match.
+Corrected2e7 coupled enforcement remains NONPASS47.185s, no accepted target.
+No engineering acceptance, enforcement convergence or speedup is established.
+[Evidence](d1_review_support/contact_native_fibre_s3_20261005/arc_enclosure.md).

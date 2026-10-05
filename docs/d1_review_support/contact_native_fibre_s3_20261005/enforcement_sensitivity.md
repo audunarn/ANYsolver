@@ -1,4 +1,4 @@
-# Physical-fibre curved/S3 enforcement discriminator — NONPASS
+# Physical-fibre curved/S3 enforcement discriminator â€” NONPASS
 
 Prospective question: do the unchanged plastic fixture's integrated forces,
 moments, tip and target displacements change by at most 2% from 1e7 to 2e7 Pa/m,
@@ -41,7 +41,7 @@ arc, and whether a rigorous restricted-arc bound materially resolves the issue.
 Any proposed bound needs an independent enclosure check and local work/tangent
 controls before another coupled solve. Otherwise address projection precision
 or the verified uncertainty derivation; do not relax the tolerance or law.
-Full C0–C9 and independent native/material acceptance remain incomplete.
+Full C0â€“C9 and independent native/material acceptance remain incomplete.
 
 ## Supporting review of the proposed correction
 
@@ -55,6 +55,6 @@ the minimum with previous valid bounds. Wider arcs need suitable trigonometric
 extrema bounds or the existing whole-circle fallback. Do not infer an arc from
 the active-width union measure. Test asymmetric arcs, endpoints/interior,
 complete-circle fallback, cancellation and all moving-normal/offset columns.
-The scalar counterexample G=1+cos(alpha), alpha=pi±.3 gives whole-circle bound2
+The scalar counterexample G=1+cos(alpha), alpha=piÂ±.3 gives whole-circle bound2
 versus exact arc maximum1-cos(.3), illustrating the conservatism only.
 This is same-family supporting scrutiny, not independent engineering acceptance.

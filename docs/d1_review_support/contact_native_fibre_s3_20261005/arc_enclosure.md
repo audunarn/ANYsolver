@@ -1,4 +1,4 @@
-# Conditional declared-arc root enclosure — development candidate
+# Conditional declared-arc root enclosure â€” development candidate
 
 The full mapped gap gradient is affine in cos/sin at each axial station. Its
 norm is now bounded on the declared material arc using the reviewed midpoint
@@ -42,7 +42,7 @@ leading integrals. If both scaled leading matrices A,B satisfy0<=A,B<=M I,
 then -M I<=A-B<=M I, so ||A-B||2<=M, not2M. Complete mapped coordinates and
 positive diagonal scaling preserve PSD by congruence. The non-PSD gap-Hessian
 and once-spatial remainder still needs the sum bound. The candidate is therefore
-sqrt(active)*k*area*width*angular_width*(g²+2depth*h), retaining rounding.
+sqrt(active)*k*area*width*angular_width*(gÂ²+2depth*h), retaining rounding.
 
 Before adopting, verify the common area/gradient/measure bound covers every true
 axial point and the accepted positive16-point quadrature, including grazing
