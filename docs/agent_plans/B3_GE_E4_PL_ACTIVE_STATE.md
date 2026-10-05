@@ -47,19 +47,34 @@ Independent author-external DEV review clear; no scientific acceptance follows.
 
 ## Decision and next action
 
-Retain BL5 and its existing experimental P0 representation; no law/resolution
-selection from gaps, rank or tip response. Current obstruction to a response
-comparison is different strong/weak enforcement and reduced body/primal spaces.
-Next bounded discriminator: same102node resolved continuum with five-channel
-P0 material face-pair work at the EXACT native8Gauss/four length supports.
-Build an independent weak C3D20 KKT oracle; check free-row rank, restraint of
-all bar rigid motions, physical transpose/dual work and both domain wrenches.
-Keep full body operators and supports. This removes the enforcement confound;
-it does not equate arbitrary broken primal fields or qualify accuracy.
-No new external execution/refinement/F03 follows automatically. Any later CCX
-deck needs separate authority, legal elimination pivots and physical density
-recovery from the original rows. Advance the same owner from useful artifacts.
-No jobs currently remain; previous owners released numerical/file ownership.
+Retain BL5 and experimental P0 for development; no law/resolution acceptance.
+Weak continuum discriminator COMPLETE: same102node/8C3D20 K,39root supports,
+1N tipFz, exact native8Gauss/four supports and20 material face-pair weak rows.
+Nine unique DEV controls covered by V1six/V2one/V3two passes; failures retained.
+Strong reconstruction matches saved CCX displacement/internal actions <=4.20e-10
+relative. Weak equilibrium3.2805e-10,gap1.8525e-22,wrench3.8228e-10; physical
+work/both-body checks pass. Root validates56 raw hashes,424source/wheel/site
+modules,242loaded roots and runtime settings; independent non-author DEV review
+has no remaining implementation blocker. No numerical job remains running.
+Exact inventory: TWO strong computations (V2 reporting TypeError unpublished,
+V3 validated),ONE weak solve,ZERO native/external reruns. V1 failed strict
+2e-13 helper stays failed; prospective correction uses original1e-8 physical
+gate and actual transpose/rigid-field identities, no C repair or physics change.
+Raw: r8-bl5-weak-continuum-dev-20261006-v1/handoff.json,integration-binding.json,
+independent-review.md; grouped source definition in reference_cases.
+
+Interpretation: strong tip4.79122e-7m -> weak5.08578e-7m (~6.15%); saved native
+1.27752e-6m is still ~2.51 times weak. Enforcement alone is insufficient to
+explain this diagnostic difference. On this quadratic continuum trace only,
+quarter integrals are exact linear pullbacks of strong station gaps; strong
+kernel is contained in weak kernel. This does not map arbitrary native broken
+director sides or establish physical accuracy/convergence/stability.
+Next same-owner20min READ decision: inspect actual body/section/trace contracts
+and saved fields to choose the smallest body-reduction/trace discriminator.
+No edits, new solves, external/native rerun, F03 or automatic refinement in that
+assignment. Numerical scope must be adopted explicitly after its findings.
+Matched slice integrated at27fc6564; weak slice awaits root local integration.
+Any later external deck needs separate authority and physical density recovery.
 
 Complete G0-G6/F01-F13/V01-V28/B01-B18 and named programme applications remain
 mandatory. Matrix B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md separates tested

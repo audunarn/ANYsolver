@@ -3042,3 +3042,19 @@ Next action is same-support weak continuum work, not automatic finer refinement.
 No F01-F13/E01/F03/aggregate gate closure or release. Required independent review
 remains governed by programme/specific registrations; different families preferred
 by global AGENTS, no new blanket family gate. Historical dispositions unchanged.
+
+### 6 October - weak continuum discriminator completed
+
+IMPLEMENTED_NOT_QUALIFIED: same102node/8C3D20 body,39 root supports,+1N tipFz
+and exact native8Gauss/four support P0 material rows. Nine distinct controls
+covered by V1six/V2one/V3two; failed helper/reporting evidence preserved. Root
+verifies56 raw hashes/424 source-wheel-site modules/242 loaded roots; independent
+non-author DEV review clear. TWO strong computations (one reporting failure),
+ONE weak solve,ZERO native/external reruns. Strong saved reconstruction <=4.20e-10;
+weak equation3.2805e-10,gap1.8525e-22,wrench3.8228e-10; original work gates pass.
+Prospective helper interpretation keeps original1e-8 physical criterion, no
+operator repair. Strong-to-weak response changes ~6.15%; native is ~2.51 times
+weak. Enforcement alone does not explain difference; body/primal/broken-trace
+and convergence remain open. No physical accuracy, multiplier selection, F03
+consumption, scientific gate closure or release. Raw weak-continuum-dev-20261006-v1
+handoff.json/integration-binding.json/independent-review.md bind DEV applicability.
