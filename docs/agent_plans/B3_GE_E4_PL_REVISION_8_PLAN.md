@@ -1265,3 +1265,20 @@ question is whether backward acceptance becomes bounded forward recovery or
 reports loss of local coordinate. Do not extend/refine on an unresolved outcome.
 A correct safeguard does not establish a physical limit point/descending branch.
 G4D and full acceptance remainOPEN; no publication/main changes/authority renewal.
+## 5 October - physical guard and next reference slice
+Bounded public32-step screen: no guard event. Exact saved-predecessor trial:
+V2 rejects backward radius.003, recovers positive progress at.0015, unchanged
+accepted checkpoint. Development evidence only; G4D remainsOPEN.
+Next: implement restricted J2 membrane/elasticGE reference feasibility with
+matched fixed-rotation axial work. OpenSees supplemental; mandatory CalculiX
+and rotating-port/capacity requirements unchanged. See exact results and
+contracts in development/r8-distributing-reference-linear-20261004/results.md.
+
+
+### 5 October - supplemental nonlinear material evidence
+Restricted native/OpenSees load/unload/reload comparison executed with actual
+plastic shell records; detailed outcomes and retained failures are in the grouped
+[results](development/r8-distributing-reference-linear-20261004/results.md).
+Mandatory CalculiX row, connection/capacity and aggregate acceptance remain OPEN.
+Next: justified restricted CalculiX representation and actual material-output
+comparison, without reopening closed connection/refinement campaigns.

@@ -1637,3 +1637,73 @@ question is whether backward acceptance becomes bounded forward recovery or
 reports loss of local coordinate. Do not extend/refine on an unresolved outcome.
 A correct safeguard does not establish a physical limit point/descending branch.
 G4D and full acceptance remainOPEN; no publication/main changes/authority renewal.
+## 5 October - prospective native V2 physical discriminator
+The prescribed32-step public run completed within179.714s/159449088B/max1.
+All accepted chosen-coordinate increments forward; no guard event by step32.
+Status NO_GUARD_EVENT_WITHIN_BOUNDED_STEPS, not a safeguard pass. SavedV1 rows
+locate first backward step34; preserved step33 predecessor is available.
+Public solve intentionally rejects switching an arc history to ordinary control;
+do not erase history or invent a V2 migration. One explicitly trial-only V2
+predicate experiment from mechanically restored V1 step33 isolates the changed
+acceptance equation without rerunning the first32steps. No candidate published.
+At requestedradius.003 the converged candidate was rejected for no oriented
+progress; cutbackradius.0015 produced +1.809655976e-7m chosen progress,
+amplitude19.5509008518, equilibrium3.074871814e-10, gap2.447586107e-18,
+patherror1.879283766e-15. Exact accepted predecessor remained byte-identical.
+Selection3.655s/164483072B/max1. This validates the local physical trial guard,
+not public migration, monotone branch, three-step descending sequence or G4D.
+Raw decision-progress-screen/prefix-v1, scripts, results and resources remain
+under r8-native-turning-dev-20261005-v1. No automatic extension/refinement.
+
+Next useful independent-reference slice: symmetric flat membrane J2 response
+with two straight elastic eccentric GE edge members, all physical rotations
+fixed at reference and homogeneous axial field. Restricted finite pose law
+then equals affine translation compatibility exactly; verify native axial
+half-cell work and external plane-stress/hardening conventions before scoring.
+OpenAI fallback owns the complete new harness/tests/case doc; Mistral cached
+unavailable, no repeated probe. OpenSees feasibility is SUPPLEMENTAL. Mandatory
+CalculiX comparison, finite rotating ports, roof/G4D and all full gates remain
+open. Official CCX2.23 T3D2 expands a B31/solid with hinges: axial EA must be
+verified independently, not assumed from label. CPS4 plane-stress section and
+restricted work/moment recovery require explicit demonstrated contracts.
+
+## 5 October - restricted nonlinear material comparison (supplemental)
+
+New three-file native/OpenSees harness completes the same eight-factor load,
+unload and reload history with two Q4 shells, two native generalized elastic
+beams and six eccentric full-pose point bonds in the fixed-rotation axial
+subspace. Both actual shell material inventories show plastic activity;
+native alpha max5.837207683067348e-6, external inferred alpha
+max5.837207672861592e-6 (inferred, not a direct external history oracle).
+Maximum axial strain difference1.869983473759074e-13; maximum actual stress
+component difference.01574974600225687Pa. Endpoint virtual work is not
+cumulative plastic energy. Native equilibrium residual max5.172751116e-11N,
+external1.149214768e-8N; work residuals5.247538515e-16J/1.163990779e-13J.
+
+Source focused8PASS1.45s. Installed solver ec4bd257 wheel bd170f6c, actual
+ANYmaterial sibling source dependency explicitly recorded. Native6.164s/162MB,
+external.297s/41MB, comparison.157s/13MB, all terminal; observed numerical
+pools1, affinity1, sampled numerical/unresolved max1. Native JIT off measured;
+external Numba not imported. Source/runtime/import/binary hashes retained.
+Supporting OpenAI review is not different-family scientific acceptance.
+
+Preserve two failures: combined Python3.12 lacked compatible SciPy; first split
+native call requested25iterations against existing24maximum. Runtime separation
+and admissible24iteration call repair harness only, no product/physics changes.
+Raw evidence: .qualification/b3-ge-e4-pl/
+r8-restricted-nonlinear-reference-dev-20261005-v1.
+
+This is supplemental material/axial-work evidence, not mandatory CalculiX
+acceptance, physical torque/connection qualification, support-moment comparison,
+roof capacity or G4D. Next mandatory nonlinear external comparison must use
+CalculiX with an independently justified restricted axial representation, actual
+plane-stress plastic outputs and correctly interpreted omitted moment channels.
+No automatic arch refinement or previous closed campaign replay.
+
+Final comparator repair requires matching nonempty originating native/external
+script identities and matching fixture signatures when present. Preserved v3
+originating source hashes agree; comparator-v4 completes without rerunning
+physical solves. Final source9PASS1.52s; supervisor2.414s/170MB/max1.
+Executed v3 script bytes are retained for exact source correspondence. Root diff
+review confirms final changes only fixture/provenance/comparison checks, no
+physical solve or material changes. Supporting review findings resolved.
