@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from hashlib import sha256
-from math import isfinite
+from fractions import Fraction
+from math import isfinite, sqrt
 
 import numpy as np
 
@@ -27,6 +28,44 @@ from .native_retained_whole_pair import (
     NativeRetainedWholeCurvePair,
     NativeRetainedWholePairResult,
 )
+
+
+def _directed_fraction(value, upward):
+    result = float(value)
+    if not isfinite(result):
+        raise ValueError('native swept bound arithmetic is unresolved')
+    if (Fraction(result) < value if upward else Fraction(result) > value):
+        result = float(np.nextafter(result, np.inf if upward else -np.inf))
+    return result
+
+
+def _outward_norm(values):
+    squared = sum((Fraction(float(value))**2 for value in values), Fraction(0))
+    result = sqrt(_directed_fraction(squared, True))
+    if Fraction(result)**2 < squared:
+        result = float(np.nextafter(result, np.inf))
+    return result
+
+
+def _swept_distance_chord_lower(g0, g1, width, speed, acceleration, radius, roundoff):
+    """Lower gap for the complete moving material-pair distance envelope.
+
+    On a positive distance floor, every fixed pair has norm second derivative
+    <= V**2/d0+A. Its endpoint distances exceed both global endpoint lowers.
+    The chord remainder <= h**2*(V**2/d0+A)/8 therefore holds after taking
+    the infimum over material pairs, including changes of nearest feature.
+    Scalar arithmetic encloses the exact supplied binary64 values outward.
+    """
+    values = (g0, g1, width, speed, acceleration, radius, roundoff)
+    if (not all(isfinite(value) for value in values)
+            or min(width, speed, acceleration, roundoff) < 0 or radius <= 0):
+        raise ValueError('native swept bound requires finite physical data')
+    gap, h, v, a, rho, error = map(Fraction, (min(g0, g1), width, speed,
+                                           acceleration, radius, roundoff))
+    distance_floor = rho+gap-h*v/2-error
+    if distance_floor <= 0:
+        return -np.inf
+    return _directed_fraction(gap-h*h*(v*v/distance_floor+a)/8-error, False)
 
 
 PROFILE = "NATIVE_B3_GE_SELECTED_CELL_PAIR_STATIC_DEV_V1"
@@ -113,6 +152,9 @@ class NativeRetainedRoundPairAnalysis:
             if gap_step_control:
                 raise ValueError('gap step control requires the physical-fibre whole-pair profile')
             if (type(contact) is NativeRetainedWholeCurvePair
+                    and contact.certify_curved_ownership):
+                raise ValueError('curved ownership requires the physical-fibre pair profile')
+            if (type(contact) is NativeRetainedWholeCurvePair
                     and contact.certify_open_intervals):
                 raise ValueError('chord open certificates require the physical-fibre pair profile')
             self.context = NativeNodalContext(self.native.model, program)
@@ -174,6 +216,12 @@ class NativeRetainedRoundPairAnalysis:
         # Preserve the historical false/default checkpoint identity exactly.
         if self.gap_step_control:
             values['gap_step_control']='SAFEGUARDED_CERTIFIED_GAP_SECANT_GEOMETRY_PATH_DEV_V2'
+            if (type(self.contact) is NativeRetainedWholeCurvePair
+                    and self.contact.certify_curved_ownership):
+                values['gap_step_control']='SAFEGUARDED_RESOLVED_PHYSICAL_GAP_SECANT_DEV_V3'
+        if self._uses_physical_gap():
+            # Bind every curved owner, including owners without secant control.
+            values['swept_gap_policy']='RETAINED_EXP_PATH_DISTANCE_CHORD_DEV_V14'
         return sha(values)
 
     def _guard(self) -> None:
@@ -299,7 +347,7 @@ class NativeRetainedRoundPairAnalysis:
         NativeRetainedCellPairResult | NativeRetainedWholePairResult
     ):
         a, b = self.indices
-        return self.contact.evaluate(
+        result = self.contact.evaluate(
             mechanical.positions[self.context.nodes[a]],
             mechanical.position_low[self.context.nodes[a]],
             mechanical.cell_rotations[a],
@@ -307,6 +355,38 @@ class NativeRetainedRoundPairAnalysis:
             mechanical.position_low[self.context.nodes[b]],
             mechanical.cell_rotations[b],
         )
+        if self._uses_physical_gap():
+            result = replace(result, conservative_lower_gap_m=self._physical_gap(mechanical))
+        return result
+
+    def _endpoint_contact(self, mechanical):
+        """Prefilter physical penetration before contact Jet/integration work."""
+        if self._uses_physical_gap():
+            lower = self._physical_gap(mechanical)
+            if lower < -self.gap_tolerance:
+                return None, lower
+        contact = self._contact(mechanical)
+        return contact, contact.conservative_lower_gap_m
+
+    def _uses_physical_gap(self):
+        return (type(self.contact) is NativeRetainedWholeCurvePair
+                and self.contact.certify_curved_ownership)
+
+    def _physical_gap(self, mechanical):
+        self._guard()
+        self.context._safe_point()
+        a, b = self.indices
+        value = self.contact.physical_gap_lower(
+            mechanical.positions[self.context.nodes[a]],
+            mechanical.position_low[self.context.nodes[a]],
+            mechanical.cell_rotations[a],
+            mechanical.positions[self.context.nodes[b]],
+            mechanical.position_low[self.context.nodes[b]],
+            mechanical.cell_rotations[b],
+        )
+        self._guard()
+        self.context._safe_point()
+        return value
 
     def _recoverable_trial_contact_error(self, exc: Exception) -> bool:
         """Only geometric/resource non-admission may trigger a path cutback."""
@@ -355,6 +435,8 @@ class NativeRetainedRoundPairAnalysis:
         return residual, tangent, metrics, responses, contact
 
     def _swept_gap(self, mechanical):
+        if self._uses_physical_gap():
+            return self._physical_gap(mechanical)
         if not self.gap_step_control:
             return self._contact(mechanical).conservative_lower_gap_m
         self._guard()
@@ -376,8 +458,16 @@ class NativeRetainedRoundPairAnalysis:
         self._guard()
         if min(start_gap, end_gap) < -self.gap_tolerance:
             return False
-        speed = 0.0
+        curved = self._uses_physical_gap()
+        if curved:
+            self.context._safe_point()
+            speed, acceleration = self._swept_motion_bounds(start, increment)
+        else:
+            speed = 0.0
+            acceleration = 0.0
         for index in self.indices:
+            if curved:
+                break
             nodes = self.context.nodes[index]
             before = start.positions[nodes]+start.position_low[nodes]
             after = end.positions[nodes]+end.position_low[nodes]
@@ -394,10 +484,14 @@ class NativeRetainedRoundPairAnalysis:
         roundoff = 256.0*np.finfo(float).eps*max(
             1.0, float(np.max(np.abs(start.positions))),
             float(np.max(np.abs(end.positions))), self.contact.radius,
+            speed if curved else 0.0,
         )
         stack = [(0.0, 1.0, start_gap, end_gap)]
         visited = 0
         while stack:
+            if curved:
+                self._guard()
+                self.context._safe_point()
             left, right, left_gap, right_gap = stack.pop()
             visited += 1
             if visited > self.maximum_swept_intervals:
@@ -405,8 +499,13 @@ class NativeRetainedRoundPairAnalysis:
             # Every path point is within half this interval of one endpoint.
             # Both stored gaps are conservative lower bounds, so this proves
             # safety without constructing another contact candidate.
-            if (min(left_gap, right_gap)
-                    -0.5*(right-left)*speed-roundoff >= -self.gap_tolerance):
+            lower = min(left_gap, right_gap)-0.5*(right-left)*speed-roundoff
+            if curved:
+                first_order = Fraction(min(left_gap, right_gap))-Fraction(right-left)*Fraction(speed)/2-Fraction(roundoff)
+                lower = max(_directed_fraction(first_order, False),
+                            _swept_distance_chord_lower(left_gap, right_gap,
+                                right-left, speed, acceleration, self.contact.radius, roundoff))
+            if lower >= -self.gap_tolerance:
                 continue
             middle = 0.5*(left+right)
             state = self.context.advance(start, middle*increment)
@@ -418,11 +517,49 @@ class NativeRetainedRoundPairAnalysis:
                 raise
             if gap < -self.gap_tolerance:
                 return False
-            if gap-0.5*(right-left)*speed-roundoff >= -self.gap_tolerance:
+            midpoint_lower = gap-0.5*(right-left)*speed-roundoff
+            if curved:
+                midpoint_lower = _directed_fraction(Fraction(gap)-Fraction(right-left)*Fraction(speed)/2-Fraction(roundoff), False)
+            if midpoint_lower >= -self.gap_tolerance:
                 continue
             stack.extend(((left, middle, left_gap, gap),
                           (middle, right, gap, right_gap)))
         return True
+
+    def _swept_motion_bounds(self, start, increment):
+        """Uniform relative Q2 point speed/acceleration on layout.advance.
+
+        Nodal increments translate affinely; cell arms rotate by exp(t*w)R.
+        The Q2 arm multiplier 4*s*(1-s) is in [0,1]. Nodal frame and retained
+        resultant increments do not move the physical centerline.
+        """
+        increment = np.asarray(increment)
+        if increment.shape != (self.context.count,) or not np.all(np.isfinite(increment)):
+            raise ValueError('native swept increment requires finite retained coordinates')
+        speeds, accelerations = [], []
+        eps = Fraction(float(np.finfo(float).eps))
+        for index in self.indices:
+            nodes = self.context.nodes[index]
+            translation = max(_outward_norm(increment[6*node:6*node+3]) for node in nodes)
+            reference = self.context.elements[index][1].operator.reference
+            first = self.context.nodal_count+24*index
+            velocity, acceleration = [], []
+            for cell in (0, 1):
+                lift = reference.half_cell_lift(cell, .5)
+                frame = start.cell_rotations[index, cell]
+                arm = [sum((Fraction(float(frame[i, j]))*Fraction(float(lift[j]))
+                            for j in range(3)), Fraction(0)) for i in range(3)]
+                # Matrix/exp evaluation uncertainty is charged before any
+                # geometric cancellation, including nearly aligned arms.
+                arm_norm = _outward_norm([_directed_fraction(x, x >= 0) for x in arm])
+                arm_norm = Fraction(arm_norm)*(1+128*eps)
+                omega = Fraction(_outward_norm(increment[first+3*cell:first+3*cell+3]))
+                velocity.append(omega*arm_norm)
+                acceleration.append(omega*omega*arm_norm)
+            speeds.append(Fraction(translation)+max(velocity))
+            accelerations.append(max(acceleration))
+        return (_directed_fraction(sum(speeds), True),
+                _directed_fraction(sum(accelerations), True))
 
     def solve(self, *, checkpoint: bytes | None = None,
               expected_sha256: str | None = None,
@@ -503,7 +640,15 @@ class NativeRetainedRoundPairAnalysis:
                         increment = step*trial_fraction
                         candidate = self.context.advance(trial, increment)
                         try:
-                            candidate_contact = self._contact(candidate)
+                            candidate_contact, candidate_gap = self._endpoint_contact(candidate)
+                            if candidate_contact is None:
+                                rejected["gap"] += 1
+                                last_rejection = f"resolved physical gap lower bound {candidate_gap} m"
+                                trial_fraction = (_gap_limited_fraction(
+                                    trial_fraction, contact.conservative_lower_gap_m,
+                                    candidate_gap, self.gap_tolerance,
+                                ) if self.gap_step_control else .5*trial_fraction)
+                                continue
                         except (ValueError, MemoryError) as exc:
                             if self._recoverable_trial_contact_error(exc):
                                 rejected["geometry"] += 1

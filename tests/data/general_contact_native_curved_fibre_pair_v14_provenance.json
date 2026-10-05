@@ -1,0 +1,23 @@
+{
+  "scope": "One accepted development state; no native engineering acceptance or release",
+  "baseline_head": "da2518f6990a9a30421c516adb6b1c2159970289",
+  "wheel_sha256": "7cc2482e0f2e6039a76c7ec5e30b5993240788b5608288ee59ac77a293480168",
+  "checkpoint_sha256": "a1d72a795421b1d7351d9bcbcfb06faa55c7fe1a3a732a204bd92c27de879086",
+  "inputs": {
+    "physical_fibres": true,
+    "plastic_fibres": true,
+    "separation_m": 0.101,
+    "nodal_force_n": -0.05,
+    "targets": [0.05],
+    "reference_rise_m": 0.005,
+    "line_stiffness_n_per_m2": 4000.0,
+    "gap_tolerance_m": 0.00005,
+    "gap_step_control": true,
+    "certify_curved_ownership": true
+  },
+  "raw_evidence": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate22/installed_actual_curved_coupled",
+  "result": "PASS with independent plastic-history, gap/wrench, immutable-origin and exact-restart checks",
+  "elapsed_s": 91.59855630004313,
+  "peak_bytes": 200663040,
+  "remaining": "Normal/spatial/section convergence and native engineering acceptance; full C0-C9"
+}

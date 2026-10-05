@@ -10,11 +10,13 @@ from anysolver.general_contact.native_retained_pair_static import FIBRE_WHOLE_PR
 from test_general_contact_native_fibre_s3 import _independent_material_history
 
 
-def _owner(*,plastic=True,targets=(.05,),force=-.05,separation=.101,line_stiffness=100.,gap_step_control=False):
+def _owner(*,plastic=True,targets=(.05,),force=-.05,separation=.101,line_stiffness=100.,gap_step_control=False,
+           reference_rise_m=0.,certify_curved_ownership=False):
     builder=runpy.run_path(str(Path(__file__).parents[1]/'examples/general_contact_native_retained_whole_pair.py'))['analysis']
     return builder(physical_fibres=True,plastic_fibres=plastic,targets=targets,force=force,
         separation=separation,gap_tolerance_m=5e-5,line_stiffness_n_per_m2=line_stiffness,
-        gap_step_control=gap_step_control)
+        gap_step_control=gap_step_control,reference_rise_m=reference_rise_m,
+        certify_curved_ownership=certify_curved_ownership)
 
 
 def test_fibre_pair_context_step_complete_constrained_rank_one_reference():
@@ -277,7 +279,7 @@ def test_fibre_pair_event_normal_enforcement_refinement(monkeypatch):
     assert max(errors.values())<=.02
 
 
-def _check_coupled_commit_and_restart(owner):
+def _check_coupled_commit_and_restart(owner,*,restart_factory=None):
     origins=owner.initial.histories;before=canonical(origins)
     run=owner.solve();output=os.environ.get('CONTACT_APP_RESULT_RECORD')
     record=dict(status=run.status,failure=run.failure,completed=run.accepted.completed_targets,
@@ -294,8 +296,10 @@ def _check_coupled_commit_and_restart(owner):
     material,proposed=_pair_independent_history(owner,run.accepted,run.checkpoint)
     assert material['yielded']>0. and proposed==tuple(station for cell in run.accepted.histories for station in cell.stations)
     assert canonical(origins)==before
-    restored,records=_owner(targets=owner.program.targets,line_stiffness=owner.contact.stiffness,
-        gap_step_control=owner.gap_step_control)._restore(run.checkpoint,run.checkpoint_sha256)
+    resumed=(restart_factory() if restart_factory is not None else
+        _owner(targets=owner.program.targets,line_stiffness=owner.contact.stiffness,
+            gap_step_control=owner.gap_step_control))
+    restored,records=resumed._restore(run.checkpoint,run.checkpoint_sha256)
     assert restored.histories==run.accepted.histories and owner._checkpoint(records)==run.checkpoint
     assert owner.context._token is None and not owner.context._lock.locked()
     if output:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from heapq import heappush, heappop
 from math import isfinite
 
 import numpy as np
@@ -14,6 +15,73 @@ from .beam_curve_pair import (
     _source_interval_target_gap_lower,
     closest_on_b3,
 )
+
+
+@dataclass(frozen=True)
+class NativePhysicalGapCertificate:
+    lower_gap_m: float
+    upper_gap_m: float
+    visited_cells: int
+
+
+def resolved_physical_gap_lower(searches, accuracy):
+    """Bound the global physical gap independently of ownership scan leaves.
+
+    Every heap cell covers a complete target and one source interval. Its
+    guarded Q2-to-chord lower is valid on that whole rectangle. Feasible
+    source/target station pairs provide upper bounds, never gap certificates.
+    Best-first subdivision resolves the global lower/upper bracket to the
+    requested dimensional accuracy; exhausted existing budgets fail closed.
+    """
+    if not searches or not np.isfinite(accuracy) or accuracy <= 0.0:
+        raise ValueError("native physical gap resolution must be positive finite")
+    budget = min(search.maximum_cells for search in searches)
+    if accuracy <= 4.0*max(search.roundoff for search in searches):
+        raise MemoryError("native physical gap tolerance is below spatial evaluation floor")
+    heap, serial, visited = [], 0, 0
+    upper = float('inf')
+
+    def add(search, target, left, right, depth, inherited=-float('inf')):
+        nonlocal upper, serial, visited
+        visited += 1
+        if visited > budget:
+            raise MemoryError("native physical gap search cell budget exhausted")
+        lower = max(inherited, _source_interval_target_gap_lower(
+            search.source, left, right, target, search.radius,
+        )-search.roundoff)
+        for station in (left, .5*(left+right), right):
+            projection = closest_on_b3(_curve(search.source, station)[0], target)
+            # A feasible station pair, with existing spatial evaluation guard.
+            upper = min(upper, projection.distance-search.radius+search.roundoff)
+        if not np.isfinite(lower) or not np.isfinite(upper):
+            raise MemoryError("native physical gap bound is nonfinite")
+        serial += 1
+        heappush(heap, (lower, serial, search, target, left, right, depth))
+
+    for search in searches:
+        for target in search.targets:
+            add(search, target, 0., 1., 0)
+    while heap:
+        lower = heap[0][0]
+        if lower > upper:
+            raise MemoryError("native physical gap bound ordering unresolved")
+        if upper-lower <= accuracy:
+            return NativePhysicalGapCertificate(lower, upper, visited)
+        lower, _, search, target, left, right, depth = heappop(heap)
+        if lower >= upper:
+            continue
+        if depth >= search.maximum_depth:
+            raise MemoryError("native physical gap search depth budget exhausted")
+        middle = .5*(left+right)
+        if middle == left or middle == right:
+            raise MemoryError("native physical gap parameter resolution exhausted")
+        add(search, target, left, middle, depth+1, lower)
+        add(search, target, middle, right, depth+1, lower)
+        # Rectangles removed here are proved no lower than a feasible global
+        # upper; they cannot contain an unaccounted smaller physical gap.
+        while heap and heap[0][0] >= upper:
+            heappop(heap)
+    return NativePhysicalGapCertificate(upper, upper, visited)
 
 
 def _owned(value: np.ndarray) -> np.ndarray:

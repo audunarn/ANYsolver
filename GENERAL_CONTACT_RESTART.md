@@ -1,75 +1,67 @@
-# General contact restart — 5 October 2026
+# General contact - restart (5 October 2026)
 
-## ACTIVE — native physical-fibre pair now completes
+## Scope and source
 
-User authorized development. Authoritative checkout:
-`C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch
-`codex/contact-main-reconcile-20261001`. Baseline5a56024d; current Git HEAD and
-[exact inputs/evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair_event_control_summary.json)
-bind this slice. Full C0–C9 remains incomplete: [goal](GENERAL_CONTACT_GOAL.md),
-[plan](GENERAL_CONTACT_PLAN.md), [programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md).
+Authoritative worktree: `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
+Branch `codex/contact-main-reconcile-20261001`; baseline HEAD
+`da2518f6990a9a30421c516adb6b1c2159970289`. Current dirty changes belong to this task.
+Full C0-C9 development remains authorized and incomplete; no push/merge/release.
+[Goal](GENERAL_CONTACT_GOAL.md) / [plan](GENERAL_CONTACT_PLAN.md) /
+[capabilities](docs/GENERAL_CONTACT_CAPABILITIES.md).
 
-## Implemented and verified development outcome
+Global AGENTS.md reread after replacement; SHA256
+4233b732fa295b1e5862cc643a9c78413a47ec2c14c2976f84d35f9c43c96a1a.
+Prospectively use early concrete worker checkpoints, explicit handoff status and
+same-owner continuation from useful artifacts. Preserve completed work/evidence;
+cached Mistral/local unavailability remains. Both internal workers are held.
+No other-chat messages. No owned numerical process is active (94609 completed).
 
-- Explicit k4000 native pair with all84coordinates now solves target1 in51.787574s
-  /200830976B using opt-in `gap_step_control` V2. Gap19.609961um <50um. Pytest
-  failed afterward on a nonexistent accepted.origins test field; raw failure
-  preserved. Harness repaired; accepted-state/material/exact-restart verification
-  passes6.050572s without repeating the solve.30yieldedstations, positive
-  dissipation, normalized force balance8.67e-17 and moment balance0.
-- Same-mechanics k8000 comparison passes81.973390s/200704000B including independent
-  plastic returns/restart. Force0.109499%, moment0.027066%, tipA0.080005%,
-  tipB0.062473% changes <2%; penetration13.784964um. Fixed-discretization
-  enforcement sensitivity only; no spatial/native engineering acceptance.
-- Final installed28geometry/event/cancellation/restart controls pass11.162513s.
-  Candidate16 wheel a096989ad6c5d9a633443e2d4c183e95814af5590815da01898398c5ab1604d4:
-  all527Python files byte-match; imports/runtime clean, JIT0/pools1.
-- Safeguarded gap fraction preserves actual endpoint/swept/merit/commit gates.
-  Scalar path query validates every physical cell, then accepts guarded complete-
-  source chord certificate only if it proves the requested minimum; else full
-  union scans. Full mechanical evaluation remains required at candidates/commit.
-  Default dyadic route and identity unchanged; enabled V2 binds restart.
-- Supporting same-family read review found no blocker; Mistral remains cached
-  unavailable. Different-family scientific acceptance remains unmet.
+## Completed development slice
 
-[Concise evidence and retained failures](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair_event_control.md).
-Raw candidate15/16: `C:/ANYworkspaceWork/contact_native_fibre_s3_20261005`.
-No live owned numerical jobs/workers. Local commit authorized; no push/merge/release.
+Installed actual-curved physical-fibre native beam pair passes91.598556s,
+peak200663040B, under unchanged120s/953MiB. One target0.05; independent plastic
+returns/history30yielded, dissipation1.613306054e-7J; gap-19.432268um<=50um;
+wrench/immutable origin/exact restart/context cleanup checks pass.
+V12 fixes saved support/quadrature counterexample. V13 resolves physical gap;
+V14 actual exponential-path curvature certificate preserves hidden-collision,
+finite-limit/cancellation/mutation/refusal and restart behavior. Source4+4 new
+query/swept controls pass with JIT disabled, numerical pools1, errors[].
 
-## Next useful slice
+Wheel7cc2482e0f2e6039a76c7ec5e30b5993240788b5608288ee59ac77a293480168:
+528Python files byte-match source, no extras/errors. Full installed runtime/import
+errors[]; JIT0/Numba1/pools1. Accepted development checkpoint SHA256
+ a1d72a795421b1d7351d9bcbcfb06faa55c7fe1a3a732a204bd92c27de879086
+is portable at tests/data/general_contact_native_curved_fibre_pair_v14.checkpoint;
+response JSON is alongside it. Native engineering acceptance is still unmet.
 
-Close required curved native beam-pair admission through the existing owner.
-The retained failed active-curved geometry fixture in candidate15/
-source_geometry_gap_controls_curved/run.log has an unresolved mechanical target
-owner near a shared junction. Use that saved fixture and an independent nearest-
-feature/root discriminator first; fix compatible partition/certificate behavior
-with one-sided work/tangent checks before a new coupled curved case. Do not add
-another owner/profile merely to bypass a failed geometric contract.
+[Evidence and retained failures](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_development.md) /
+[derivation](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_switch_derivation.md).
+Raw source/installed evidence: C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/
+candidate17 through candidate22. Source worker handoffs are candidate21/22.
+V13 full run TIMEOUT120.162s, no accepted checkpoint;335 scalar queries34.236s
+versus completed V14's14queries2.141s. Censored/different trial paths; do not
+claim twofold whole-route speed. All earlier aliasing/reserve/fixture/timeouts
+remain NONPASS. Saved old-bound error1.197nm disproved the proposed large gap
+error; do not claim false rejection or secant distortion from that pose.
 
-Reuse the completed k4000/k8000 states and earlier native/S3 history/multibeam
-results by impact analysis. Do not repeat expensive solves for reporting or
-automatically increase refinement levels. Spatial resolution, broader sections/
-materials, friction/self-contact, native dynamics/impact and applications remain.
+## Next authorized work
 
-## Binding ownership and authority
+Checkpoint this slice locally. Then assess explicit curved k4000/k8000 normal
+regularization sensitivity against the frozen base response, unchanged mechanics
+and retained2% integrated-response criterion. No unmodified coupled replay.
+Use the saved state for unaffected restart/material checks. Spatial/section
+breadth, native acceptance, friction/automatic/self-contact, dynamics and
+application/full-programme completion remain. Choose subsequent scope from the
+capability ledger; do not create another duplicate prototype or broad audit.
 
-Protected original general-contact checkout must not be accessed. Main,
-applications and common-main integration/shared testing files are separately
-owned; this slice edits none of them. No other-chat messages without appropriate
-explicit authorization. Current user AGENTS instructions replace older versions.
-Cached Mistral/local unavailability is retained; no repeated probes absent change.
+## Binding limits and ownership
 
-Native owner120s FROM CONSTRUCTION including idle, never reset; raw120s/953MiB.
-Routine180s/1GB; named900s/4GB only prospectively. Original120h authority consumed
-432011s; continuation/delegation renews no frozen authority. Preserve all frozen,
-consumed, failed and independent evidence. k100 timeouts, resumed k4000-default
-120.101516s timeout and event-only V1 120.164395s timeout remain NONPASS; no
-unchanged replay or historical regrade. Justified explicit numerical enforcement
-refinement is permitted; no physical stiffness/default/gap/budget rescue.
-User-interrupted earlier73.343s run remains interruption, not mechanics failure.
-Native grazing-friction, hidden-pulse impact, Q4 application and earlier response
-failures retain their restrictions. Capability ledger historical invalid UTF8:
-append ASCII bytes only. No native/friction/dynamics/application/full-programme
-acceptance or release claim.
-
-[Prior checkpoint/authority history](docs/d1_review_support/contact_native_fibre_s3_20261005/restart_before_event_control_checkpoint_20261005.md).
+Never access the protected original general-contact checkout. Main, applications
+and shared-main/common testing files remain separately owned. Native owner120s
+FROM CONSTRUCTION including idle, never reset; raw120s/953MiB/JIT0/pools1,
+one numerical job. Routine180s/1GB; private180s/953MiB; named900s/4GB only
+prospectively. Original120h authority consumed432011s; continuation/delegation
+renews none. No cap/gap/tolerance/physical-stiffness rescue or historical regrade.
+Supporting same-family review is not different-family engineering acceptance.
+Capability ledger has historical invalid UTF8: append ASCII bytes only.
+[Prior restart history](docs/d1_review_support/contact_native_fibre_s3_20261005/restart_curved_development_history_20261005.md).

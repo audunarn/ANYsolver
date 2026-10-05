@@ -8,6 +8,7 @@ an admitted public native contact capability or engineering qualification.
 from __future__ import annotations
 
 import json
+import argparse
 
 import numpy as np
 
@@ -35,10 +36,27 @@ from anysolver.general_contact.native_retained_whole_pair import (
 
 def analysis(*,physical_fibres=False,plastic_fibres=False,separation=0.13,force=-0.05,
              targets=(0.0,0.1,0.2,0.3),line_stiffness_n_per_m2=100.0,
-             gap_tolerance_m=1e-3,gap_step_control=False) -> NativeRetainedRoundPairAnalysis:
+             gap_tolerance_m=1e-3,gap_step_control=False,reference_rise_m=0.0,
+             certify_curved_ownership=False) -> NativeRetainedRoundPairAnalysis:
     if plastic_fibres and not physical_fibres:
         raise ValueError('plastic fibre pair requires the physical-fibre section family')
+    if (isinstance(reference_rise_m, (bool, np.bool_))
+            or not np.isfinite(reference_rise_m)):
+        raise ValueError('reference rise must be a finite dimensional length')
     def reference(y: float) -> CenteredCurvedBeam3ReferenceGeometry:
+        # Preserve the historical straight fixture and its restart identity.
+        if reference_rise_m != 0.0:
+            x = np.array((0.0, 1.0, 2.0))
+            slope = 2.0*reference_rise_m*(1.0-x)
+            frames = []
+            for value in slope:
+                tangent = np.array((1.0, value, 0.0))/np.hypot(1.0, value)
+                normal = np.array((-tangent[1], tangent[0], 0.0))
+                frames.append(np.column_stack((tangent, normal, (0.0, 0.0, 1.0))))
+            return CenteredCurvedBeam3ReferenceGeometry(
+                np.column_stack((x, y+reference_rise_m*(1.0-(x-1.0)**2), np.zeros(3))),
+                np.array(frames),
+            )
         return CenteredCurvedBeam3ReferenceGeometry(
             np.array(((0.0, y, 0.0), (1.0, y, 0.0), (2.0, y, 0.0))),
             np.tile(np.eye(3), (3, 1, 1)),
@@ -91,6 +109,7 @@ def analysis(*,physical_fibres=False,plastic_fibres=False,separation=0.13,force=
         tangent_tolerance_n_per_m=1e-6,
         maximum_integration_intervals=1000,
         certify_open_intervals=physical_fibres,
+        certify_curved_ownership=certify_curved_ownership,
     )
     return NativeRetainedRoundPairAnalysis(
         definitions, boundaries, program, contact,
@@ -101,13 +120,25 @@ def analysis(*,physical_fibres=False,plastic_fibres=False,separation=0.13,force=
 
 
 def main() -> None:
-    prefix = analysis().solve(stop_after=3)
-    if prefix.status != "paused":
-        raise RuntimeError(prefix.failure)
-    resumed = analysis().solve(
-        checkpoint=prefix.checkpoint,
-        expected_sha256=prefix.checkpoint_sha256,
-    )
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--curved-fibre-pair',action='store_true',
+        help='opt-in actual-curved plastic pair development candidate')
+    args=parser.parse_args()
+    gap_tolerance=5e-5 if args.curved_fibre_pair else 1e-3
+    if args.curved_fibre_pair:
+        resumed=analysis(physical_fibres=True,plastic_fibres=True,
+            separation=.101,force=-.05,targets=(.05,),
+            line_stiffness_n_per_m2=4000.,gap_tolerance_m=gap_tolerance,
+            gap_step_control=True,reference_rise_m=.005,
+            certify_curved_ownership=True).solve()
+    else:
+        prefix = analysis().solve(stop_after=3)
+        if prefix.status != "paused":
+            raise RuntimeError(prefix.failure)
+        resumed = analysis().solve(
+            checkpoint=prefix.checkpoint,
+            expected_sha256=prefix.checkpoint_sha256,
+        )
     if resumed.status != "completed":
         raise RuntimeError(resumed.failure)
     result = resumed.accepted.contact
@@ -116,7 +147,8 @@ def main() -> None:
         "completed_targets": resumed.accepted.completed_targets,
         "potential_j": result.potential_j,
         "conservative_lower_gap_m": result.conservative_lower_gap_m,
-        "declared_gap_tolerance_m": 1e-3,
+        "declared_gap_tolerance_m": gap_tolerance,
+        "curved_fibre_pair_development_candidate": args.curved_fibre_pair,
         "force_on_first_beam_n": result.beam_a_force_n.tolist(),
         "force_on_second_beam_n": result.beam_b_force_n.tolist(),
         "moment_on_first_beam_about_origin_nm": result.beam_a_moment_nm.tolist(),

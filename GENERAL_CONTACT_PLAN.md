@@ -1,5 +1,21 @@
 # General contact — current delivery plan
 
+**Current curved-pair result, 5 October 2026.** The installed actual-curved native physical-fibre beam-pair case passes in 91.599 s within the unchanged 120 s limit, including independent plastic-history returns, gap/wrench gates and exact restart. V12 fixes the saved quadrature counterexample; V13 resolves the scalar gap cheaply; V14 certifies the actual swept path using its curvature bound. Intermediate gap queries fall from 335 in the timed-out V13 run to 14 in the completed V14 run (34.24 to 2.14 s); no twofold complete-route claim follows from censored comparisons. Development-tested only: native engineering acceptance, spatial/section breadth and full C0–C9 remain open. Next assess curved normal-enforcement sensitivity against this frozen accepted development state, then choose the remaining programme slice by the capability ledger. No cap, tolerance or physical-law rescue. [Restart](GENERAL_CONTACT_RESTART.md) / [curved evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_development.md). This entry supersedes conflicting historical next-action text.
+
+### Current bounded development slice
+
+The saved-pose discriminator showed real penetration and only1.197nm old-bound
+error. Preserve that contrary result; neither false rejection nor large secant
+distortion was established. The measured obstruction was repeated swept queries.
+The complete resolved scalar query plus actual-path curvature certificate now
+close the bounded coupled case. Reuse its checkpoint/material/restart evidence.
+Next compare explicit k4000/k8000 normal regularization on the same curved
+mechanics against the retained 2% integrated-response target, without changing
+physical stiffness, loading or gap criteria. If the existing resource limit is
+exhausted, preserve the candidate and diagnose one specific discrepancy rather
+than increase the limit. Spatial/section qualification and broader programme
+dependencies remain separate; this is not native engineering acceptance.
+
 **Current development result, 5 October 2026.** Opt-in native physical-fibre beam-pair solve now completes at k4000; independent material/restart verification passes from its saved state. k8000 sensitivity case passes within unchanged limits; all integrated response changes <0.11%, penetration19.61→13.78um. Installed28focused controls pass. This is development evidence, not independent native acceptance. Next resolve curved pair ownership and spatial coverage; fullC0–C9 and all retained gates remain. [Restart](GENERAL_CONTACT_RESTART.md) / [evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair_event_control.md).
 
 ### Latest native pair cost/continuation checkpoint - 5 October 2026
