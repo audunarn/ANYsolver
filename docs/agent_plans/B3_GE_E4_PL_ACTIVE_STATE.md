@@ -7,7 +7,8 @@ worker communication. Replacement AGENTS applies prospectively.
 ## Current delivered slice
 Canonical C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
 branch codex/stiffened-main-reconcile-20261001; delivered commit888be00b,
-source parent8c827d1a.
+source parent8c827d1a. Test repair/diagnostic commitc4169681 follows;
+product mapping, old fixtures and strict checkpoint guards are unchanged.
 Mixed conservative buckling: separate GEMixedBucklingRequest/result; matching
 points, elastic Q4/S3/mixed shells, generalized/fibre/mixed native families.
 S3 uses actual stable arithmetic/anchors and coordinate material/prestress split;
@@ -75,7 +76,20 @@ pass. No communication with contact task; preserve its dirty work.
 
 ## Execution / ownership
 Bounded S3 diagnosis/test repair completed by /root/mixed_buckling_finish; no
-numerical jobs active. Root owns integration/review; source and tests stay
+numerical jobs active. Same owner now has a bounded Read-only, code-ready
+portable-binding proposal (error contract/versioning/counterexamples); no product
+adoption or extra run authority. Independent external review found no existing
+raw closes full E01/E04. /root/test_campaign_sweep completed the source-only E01
+material-frame/adjoint work-map feasibility tool (three NEW files): 15PASS and
+two original hash-bound saved fields, whole job0.846s/61MB/pool1. Initial three
+oracle cancellation failures preserved; binary-exact synthetic fixture repaired
+without changing1e-17 assertion. Nodal yaw differs from recovered polar spin;
+independent director cannot be replaced by surface normal under transverse shear.
+Root math/source review supports these distinct linear-law conclusions; no
+production adoption, external accuracy score or scientific gate closure. No
+external run; closed campaigns stay closed. Full E01 requires matched physical
+sampling/work maps before another solver case. No numerical job currently active.
+Root owns integration/review; source and tests stay
 in the existing stiffened subsystem. Check worker status before launching checks. Mistral/local cached
 unavailable; OpenAI fallback does not supply required different-family acceptance.
 ONE numerical job,max3workers,600s/2GiB process tree,affinity1/pools1/JIToff.
