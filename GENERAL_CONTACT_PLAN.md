@@ -1,5 +1,21 @@
 # General contact — current delivery plan
 
+### Latest native pair cost/continuation checkpoint - 5 October 2026
+
+V6_GLOBAL_CHORD and exact-pose/next-Newton reuse installed; 14focused controls
+plus1reuse-cancellation control pass, all527Python files byte-match wheel.
+First-Newton diagnostic43.331->13.124s (~3.3x), not whole-route speed evidence.
+Single-jump and staged same-final-force routes both TIMEOUT120s, no persisted
+accepted prefix. Ten-call trace and independent last-trial gap show real
+penetration; neither law/gap nor clocks changed. Stop further blind full runs.
+Next independent small-motion tip-loaded relative-pair foundation discriminator
+using existing Timoshenko reference to distinguish enforcement feasibility from
+nonlinear path/globalization. No cap/tolerance/stiffness rescue or regrade.
+Mistral cached unavailable; supporting same-family review only. No live owned
+jobs; fullC0-C9/native engineering acceptance incomplete.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair_cost.md).
+
+
 ### Latest native beam-pair checkpoint - 5 October 2026
 
 Physical-fibre whole-curve owner, retained work/history and precommit cancellation

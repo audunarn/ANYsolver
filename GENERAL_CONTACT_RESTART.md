@@ -1,114 +1,55 @@
 # General contact restart - 5 October 2026
 
-Full C0-C9 ACTIVE/incomplete. Authoritative checkout:
-C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001, parent47dc4070 plus current
-anchored-policy/lifecycle delta. Never access protected original checkout;
-main/applications separately owned. No other-chat messaging/push/merge/release/
-historical-default changes. Local commits authorized. No live owned jobs.
+## Authority and ownership
 
-## Current disposition
+Full C0-C9 goal ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md), [plan](GENERAL_CONTACT_PLAN.md), [programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md).
+Authoritative worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
+branch codex/contact-main-reconcile-20261001. Parent71212782; current Git HEAD
+and source hashes bind this slice. Do not access protected original general-contact
+checkout or edit separately owned main/application work. No other-chat messages,
+push/merge/release/default changes. Local commits authorized. Mistral cached
+unavailable; no repeat probes without changed availability. Supporting same-family
+review is not independent engineering acceptance.
 
-Installed anchored whole-band root policy passes7 local identity/work checks,
-saved actual opening-pose independent residual/tangent/virtual-work checks,
-fresh virgin-material first target and opening/recontact plus3exact fixture
-replays.526production files match wheel51f988cf3be490af2498fc8a4009e51316a637a99ba3bebc513a9192deb0da30.
-Opening6.310s/180432896B;recontact8.369s/180125696B. All material-origin,
-monotone history,prefix,gap,wrench and cache/lock checks pass. Supporting source
-review same-family only. No native engineering acceptance or balanced speedup.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/anchored_lifecycle.md)
-[Identities](docs/d1_review_support/contact_native_fibre_s3_20261005/anchored_lifecycle_summary.json).
+## Current technical state
 
-Explicit integration_budget_policy='certified_active',
-root_tangent_enclosure_policy='anchored'. Defaults unchanged. New checkpoint
-identities; no rebind of componentwise history. First target coordinates-only
-seed from previous accepted8e7 with virgin material origins; response parity
-allows reuse of unaffected8e7-vs4e7 enforcement evidence. Stop doubling/replays.
+Physical-fibre whole-curve pair owner retains84coordinates, both-body work,
+transactional material origins, family-specific profile/schema and cancellation
+before atomic commit. Opt-in V6_GLOBAL_CHORD computes one complete-source/two-
+target gap certificate and carries it into leaves; local refinement remains.
+Default generalized V4 geometry, fingerprints and uncached route remain unchanged.
+Fibre-only exact candidate/contact reuse and next-Newton evaluation reuse stay
+inside one target and committed origin; guards and commit reconstruction remain.
+Installed candidate15 wheel96aa9e3b57f353d75011542dad5ec2e45c19ec53ef90f37d19d7f7da3c25a36e:
+all527Python files match. Controls14+1pass; straight/curved active pockets,
+complete tangent/material trials and reuse/cancellation checked.
 
-## Next work
+## Failure, cost and next decision
 
-Choose and implement one bounded native multi-body/section or spatial-accuracy
-requirement, using current source/plan and existing focused evidence. Do not
-repeat completed fine lifecycle/coarse solves merely to recreate evidence.
-Mistral/Local cached unavailable: no reprobe absent changed availability.
-Native120s953MiB from construction including idle, never reset. Routine180s1GB;
-private180s953MiB;named900s4GB prospective only. All frozen/consumed restrictions
-remain. No cap/tolerance/stiffness increase to rescue resource failure.
+Profiled first Newton43.331->13.124s (~3.3x), not a complete-route claim.
+Single jump120.114s and staged(.005,.01,.02,.03,.04,.05)120.137s both TIMEOUT.
+Same final0.0025N, radius0.05m,1mm clearance,100N/m2 line law,50um gap budget;
+no persisted accepted prefix and no coupled completion claimed.
+Ten-call discriminator18.156s shows ownership rejection/real gap cutbacks;
+independent last-trial finite-segment gap-175.766888um agrees lower to5.1e-12m.
+Next reuse/extend independent Timoshenko finite-foundation reference for a
+small-motion tip-loaded relative pair. Assess normal regularization/gap feasibility
+versus nonlinear path/globalization before another coupled campaign. Reference
+scope cannot qualify nonlinear native mechanics. No blind optimization campaign.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair_cost.md)
+and [exact summary](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair_cost_summary.json).
+Raw candidate12-15 under C:/ANYworkspaceWork/contact_native_fibre_s3_20261005.
+No live owned numerical jobs. Committed earlier beam/S3 evidence remains valid
+in its scope and must not be replayed just for reporting.
 
-## Retained failures/restrictions
+## Binding restrictions
 
-Componentwise fine opening timeout120.154642s without accepted target2;
-larger-h1e-5 anchored virtual-work NONPASS retained. Smaller-h errors improve
-quadratically and pass unchanged thresholds; no retroactive relabelling.
-Old4e7timeouts,4e7certified-active tip2.293585% NONPASS, spectral8e7rootuncertainty
-NONPASS retained. Original120h consumed432011s; later resumption does not reset.
-Native grazing friction missing closed/mixed derivatives: no owner/full/split
-retry, clock reset, zeroing or admission. Impact900s hidden pulse, Q4 app timeout,
-free-rim negative result and application nonadmission preserved. No unchanged
-retries, relaxed gaps/caps or broadened claims. Full beam/friction/dynamics/
-application/scale/independent engineering acceptance obligations remain.
-[Prior state and full linked history](docs/d1_review_support/contact_native_fibre_s3_20261005/restart_pre_anchored_lifecycle.md).
-
-
-## Latest completed two-beam slice
-
-Two curved physical-fibre beams share one actual deformable S3 patch, separate
-clamps/loads and histories, all84 native coordinates retained. Installed actual
-first target passes76.167s/183566336B. Local tangent/work, legacy single-beam
-identity, independent gap, complete reaction wrench, exact restart and CLI
-material recovery pass. One rejected grazing trial retained; no settings changed.
-Core wheel unchanged/all526files match. Source example now exposes explicit
---two-beams, --targets, --normal-stiffness and numerical-policy flags.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/two_beam.md)
-[Identities](docs/d1_review_support/contact_native_fibre_s3_20261005/two_beam_summary.json).
-New byte-preserved first-target fixture SHAa8211bce3cf3468fa2c4f10328b031b635f88bb240f9fee0bdb98b09653282da.
-Do not replay this full solve for reporting. Next multiple physical-fibre shell
-patches or native spatial accuracy; retain all earlier no-replay/resource gates.
-Mistral cached unavailable; lead owns connected implementation, supporting
-same-family review only. No live jobs; fullC0-C9/native acceptance incomplete.
-
-
-## Latest four-pair result and next action
-
-Two curved physical-fibre beams / two connected S3 facets pass local installed
-work controls18.648s and actual first-target history/equilibrium/restart78.662s/
-184262656B, with no trial failures. Both beams plastic/contact active on right
-facets; left facets open. Saved gap/full-wrench/CLI energy checks4.846s pass;
-no full solve replay. Scientific settings and120s953MiB cap unchanged.
-Fixture SHA38263a956e22496693d968c8c3b6a59f91120c94d4a9e412c4624919814bb28b.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/two_beam_two_patch.md)
-[Exact summary](docs/d1_review_support/contact_native_fibre_s3_20261005/two_beam_two_patch_summary.json).
-Supporting same-family delta review found no consequential defect. No native
-engineering acceptance or simultaneous four-pair pressure/convergence claim.
-Next physical-fibre native beam-beam static integration through existing
-native_retained_pair_static.py and native_fibre_context.py; preserve old profiles,
-complete retained blocks, transactional histories and explicit new restart binding.
-Read exact existing driver/work/context symbols and provide bounded ownership
-before implementation. Cached Mistral unavailable; no repeated probes. No live
-owned jobs, fullC0-C9 remains active. All earlier resource/no-replay gates retained.
-
-Prospective native beam-beam fibre integration: existing whole-curve owner now
-composes NativeFibreContactContext; distinct profile/schema, no generic model
-insertion or condensation. Shared retained Newton step preserves generalized
-math/default identities. Physical solve owns operation lock, committed-origin
-histories and cancellation after replay. Three source step/binding/rollback
-controls pass7.619s. Next complete actual-update local tangent and independent
-material returns, then installed/legacy checks before one coupled first target.
-Native120s953MiB from construction, no reset. New fixture explicit50um gap (1e-3
-radius),100N/m2 line law,0.101m separation,0.0025N tip load. No altered historical
-case/enforcement criteria. Question: consistent family work/transactions versus
-specific adapter defect; failed local gate gets targeted diagnosis before solve.
-
-
-### Latest native beam-pair checkpoint - 5 October 2026
-
-Physical-fibre whole-curve owner, retained work/history and precommit cancellation
-implemented. Explicit V5_CHORD_OPEN option preserves historical generalized V4
-geometry/restart behavior. Final candidate14 installed controls11pass33.643s;
-all527Python files match wheel. Local tangent <=6.47e-8; independent plastic
-returns/history controls pass. Prototype full first target TIMEOUT120.152s,
-no accepted target; retain without unchanged replay. Supporting same-family
-review findings resolved; native engineering acceptance remains incomplete.
-Next profile bounded first-Newton endpoint/swept costs, then one measured fix;
-no cap/tolerance/stiffness increases. No live owned jobs; cached Mistral unavailable.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair.md).
+Native owner120s from construction including idle, never reset; raw owner120s/
+953MiB. Routine180s1GB/private180s953MiB; named900s4GB only prospectively.
+Original120h consumed432011s; resumption/delegation renews no frozen authority.
+No unchanged full/partial retries, cap/tolerance/stiffness rescue or history regrade.
+Preserve native grazing-friction nonadmission, impact900s hidden-pulse failure,
+Q4 app timeout, old enforcement-response failures and all scientific gates.
+No accepted native dynamics/friction/application/full programme claim. Capability
+ledger has historical invalid UTF8: append ASCII bytes only.
+[Complete prior restart history](docs/d1_review_support/contact_native_fibre_s3_20261005/restart_before_pair_cost_checkpoint_20261005.md).

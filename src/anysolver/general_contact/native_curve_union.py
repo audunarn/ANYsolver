@@ -138,6 +138,14 @@ class NativeTwoCellUnionSearch:
         leaves: list[NativeUnionInterval] = []
         visited = 0
         sampled = float("inf")
+        # A complete-source lower bound applies to every source subinterval.
+        # Computing it once avoids subdividing clear, long near-parallel cells
+        # solely because their tangential reach exceeds the normal clearance.
+        global_lower = (min(
+            _source_interval_target_gap_lower(
+                self.source, 0.0, 1.0, target, self.radius,
+            ) for target in self.targets
+        ) if self.certify_open_intervals else -float('inf'))
         while pending:
             left, right, depth = pending.pop()
             visited += 1
@@ -150,7 +158,7 @@ class NativeTwoCellUnionSearch:
             controls = _bezier_controls(self.source, left, right)
             reach = max(float(np.linalg.norm(control-point))
                         for control in controls)
-            lower = nearest.gap_m-reach-self.roundoff
+            lower = max(nearest.gap_m-reach-self.roundoff, global_lower)
             upper = nearest.gap_m+reach+self.roundoff
             separation = abs(nearest.distances_m[0]-nearest.distances_m[1])
             owner_certified = (separation > 2.0*reach

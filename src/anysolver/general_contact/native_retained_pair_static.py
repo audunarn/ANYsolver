@@ -309,12 +309,15 @@ class NativeRetainedRoundPairAnalysis:
             ))
         )
 
-    def _assemble(self, mechanical, parameter, origins):
+    def _assemble(self, mechanical, parameter, origins, *, prepared_contact=None):
         self._guard()
+        if prepared_contact is not None and prepared_contact[0] is not mechanical:
+            raise ValueError('native pair prepared contact requires the exact candidate pose')
         residual, tangent, _, responses, _ = self.context.assemble(
             mechanical, parameter, origins,
         )
-        contact = self._contact(mechanical)
+        contact = (self._contact(mechanical) if prepared_contact is None
+                   else prepared_contact[1])
         slots = self.context.slots[self.indices[0]]+self.context.slots[self.indices[1]]
         np.add.at(residual, slots, contact.residual)
         block = contact.tangent.copy()
@@ -414,10 +417,16 @@ class NativeRetainedRoundPairAnalysis:
                 parameter = self.program.targets[index]
                 trial = accepted.mechanical
                 origins = accepted.histories
+                prepared_evaluation = None
                 for iteration in range(self.program.max_iterations+1):
-                    residual, tangent, metrics, responses, contact = self._assemble(
-                        trial, parameter, origins,
-                    )
+                    if prepared_evaluation is None:
+                        residual, tangent, metrics, responses, contact = self._assemble(
+                            trial, parameter, origins,
+                        )
+                    else:
+                        self._guard()
+                        residual, tangent, metrics, responses, contact = prepared_evaluation
+                        prepared_evaluation = None
                     step, correction = self.context.step(trial, residual, tangent)
                     if max(*metrics, correction) <= self.equilibrium_tolerance:
                         if contact.conservative_lower_gap_m < -self.gap_tolerance:
@@ -479,11 +488,13 @@ class NativeRetainedRoundPairAnalysis:
                             rejected["swept"] += 1
                             last_rejection = "swept gap not certified"
                             continue
-                        _, _, changed, _, _ = self._assemble(
-                            candidate, parameter, origins,
-                        )
+                        fibre = self.native._family == 'PHYSICAL_FIBRE_NODAL'
+                        evaluated = self._assemble(candidate, parameter, origins,
+                            prepared_contact=(candidate,candidate_contact) if fibre else None)
+                        changed = evaluated[2]
                         if max(changed) < max(metrics):
                             trial = candidate
+                            if fibre:prepared_evaluation = evaluated
                             break
                         rejected["merit"] += 1
                         last_rejection = f"merit {max(changed)} >= {max(metrics)}"

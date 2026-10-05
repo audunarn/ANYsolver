@@ -646,7 +646,7 @@ class NativeRetainedWholeCurvePair:
 
     def _fingerprint(self) -> str:
         return sha(dict(
-            profile=("NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V5_CHORD_OPEN"
+            profile=("NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V6_GLOBAL_CHORD"
                      if self.certify_open_intervals else "NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V4"),
             cells_a=[(cell.element_id, cell.cell,
                       cell.reference.canonical_data()) for cell in self.cells_a],

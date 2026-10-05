@@ -52,13 +52,17 @@ def test_shared_junction_switch_and_conservative_contact_support():
             assert _covering(scan, station).status != "open"
 
 
-def test_open_and_narrow_contact_pocket_are_not_dropped():
-    clear = _search(target_y=0.3).scan()
+@pytest.mark.parametrize('certify_open_intervals',(False,True))
+def test_open_and_narrow_contact_pocket_are_not_dropped(certify_open_intervals):
+    clear_search = _search(target_y=0.3)
+    clear_search.certify_open_intervals=certify_open_intervals
+    clear = clear_search.scan()
     assert all(item.status == "open" for item in clear.intervals)
     source = np.array(((0.0, 0.3, 0.0),
                        (0.5, 0.09, 0.0),
                        (1.0, 0.3, 0.0)))
     search = _search(source, target_y=0.0)
+    search.certify_open_intervals=certify_open_intervals
     scan = search.scan()
     assert search.nearest(0.5).gap_m < 0.0
     assert _covering(scan, 0.5).status != "open"
@@ -105,6 +109,15 @@ def test_curved_open_interval_bound_against_exact_quadratic_ordinate():
         # has its interval minimum at an endpoint, independently of search.
         exact=min(.1001+.0004*s*(1-s)-.1 for s in (interval.left,interval.right))
         assert 0.<interval.lower_gap_m<=exact
+
+
+def test_global_chord_bound_preserves_active_parallel_gap():
+    search=_search();search.certify_open_intervals=True
+    scan=search.scan()
+    assert -0.0200000001<=scan.conservative_lower_gap_m<=-.02
+    assert scan.unresolved_intervals>0
+    for station in np.linspace(0.,1.,101):
+        assert _covering(scan,station).status!='open'
 
 
 def test_remote_equal_minima_and_resource_exhaustion_fail_explicitly():
