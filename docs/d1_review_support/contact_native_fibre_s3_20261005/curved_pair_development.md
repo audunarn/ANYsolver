@@ -223,3 +223,39 @@ unblock-and-deliver assignment. A frozen4k geometry may only supply a disposable
 trial; initial physical history remains virgin, and incompatible4k checkpoints
 remain rejected. One saved-state discriminator precedes any changed route.
 Scientific convergence/native acceptance/fullC0-C9 remain open.
+
+## Explicit disposable trial / installed enforcement comparison
+
+Candidate24 saved virgin8k Newton discriminator PASS25.792962s/198017024B:
+metrics1.551439e-3 to1.869813e-4 (8.30x); swept/endgap pass, virginoriginbytes
+unchanged. This is one trial, not equilibrium. Explicit immutable model-bound
+initial_trial is now implemented in the existing owner: mechanical unknowns only,
+actual supported exponential path, endpoint/swept admission, optional identity
+binding, no histories/checkpoint import or default change. Same-author repairs
+follow supporting independent-source review (same family, not acceptance).
+
+Source3controls pass across retained original2PASS and corrected immutable
+fixture1PASS7.056330s; the test first tried to enable writeability on correctly
+bytes-backed immutable arrays and failed. That fixture failure remains. Installed
+4controls PASS21.803474s/195784704B, including old default frozen identity,
+model/support/shape/nonfinite/path refusal, caller copy/digest mutation, restart
+identity, cancellation and rollback. No broad unaffected mechanics replay.
+
+Changed candidate25 installed seeded8k full comparison PASS74.679980s,
+peak200192000B. Independent30yielded histories and dissipation1.613301231e-7J;
+gap-13.602236um<=50um, complete wrench and exact restart pass. Successive
+4k/8k response changes: force0.105925%, moment0.028367%, tipA0.080180%,
+tipB0.062519%, all<=2%. This establishes only fixed-discretization numerical
+normal-enforcement sensitivity, not spatial/section convergence or independent
+engineering acceptance. Cold8k TIMEOUT remains NONPASS; selected initialization
+changes the algorithmic route, so no universal2x speedup claim follows.
+
+Private wheel b9b5aadc8def43e7408d4e86c465a89b71e5f009967e701fce12690efcbf2c2a
+has528Python files byte-matching source, no extras/errors. Successful controls and
+coupled run both runtime/import errors[], JIT disabled, Numba1, pools[1,1].
+Checkpoint4b3766ad9dfc1dfecd46bda9b321b0aa9f842223b6e5115fb7083f936f39d7d5
+preserved at tests/data/general_contact_native_curved_fibre_pair_seeded_k8_v1.checkpoint;
+response and comparison provenance alongside, exact bytes protected. Source worker
+candidate24/worker_handoff.md; build/install/private run raw in candidate25.
+Next actual curved pair opening/recontact and split-restart/history coverage,
+reusing the now demonstrated normal law/virgin trial route; do not keep doubling.

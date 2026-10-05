@@ -14,13 +14,16 @@ from test_general_contact_native_fibre_pair_static import (
 )
 
 
-def _curved_owner(line_stiffness=4000.):
+def _curved_owner(line_stiffness=4000.,initial_trial=None):
     return _owner(line_stiffness=line_stiffness,gap_step_control=True,
-        reference_rise_m=.005,certify_curved_ownership=True)
+        reference_rise_m=.005,certify_curved_ownership=True,initial_trial=initial_trial)
 
 
 def test_actual_curved_reference_and_restart_bind_opt_in():
     owner=_curved_owner()
+    from anysolver._ge_beam3_p5_seeded.codec import _load
+    frozen=(Path(__file__).parent/'data/general_contact_native_curved_fibre_pair_v14.checkpoint').read_bytes()
+    assert owner.identity==_load(frozen.decode())['identity']
     for curve in owner.contact.reference_curves:
         assert np.linalg.norm(curve[1]-.5*(curve[0]+curve[2]))>1e-4
     raw=owner._checkpoint(())
@@ -48,8 +51,8 @@ def test_opt_in_straight_pair_preserves_analytic_line_law():
     np.testing.assert_allclose(actual.beam_b_force_n,-actual.beam_a_force_n,atol=1e-12)
 
 
-def _coupled_curved(line_stiffness=4000.):
-    owner=_curved_owner(line_stiffness)
+def _coupled_curved(line_stiffness=4000.,initial_trial=None):
+    owner=_curved_owner(line_stiffness,initial_trial)
     evaluate=owner._contact
     query=owner._physical_gap
     def trace_context():
@@ -134,7 +137,7 @@ def _coupled_curved(line_stiffness=4000.):
                     stream.write(json.dumps(event)+'\n')
     owner._contact=recorded_contact
     record=_check_coupled_commit_and_restart(owner,
-        restart_factory=lambda:_curved_owner(line_stiffness))
+        restart_factory=lambda:_curved_owner(line_stiffness,initial_trial))
     assert record['gap_lower_m']>=-5e-5
     return record
 
@@ -148,13 +151,25 @@ def test_actual_curved_plastic_pair_commit_material_work_and_exact_restart():
 @pytest.mark.skipif(os.environ.get('CONTACT_NATIVE_CURVED_PAIR_REFINE')!='1',
     reason='explicit fixed-discretization normal-enforcement sensitivity run')
 def test_actual_curved_pair_normal_enforcement_sensitivity():
+    _normal_enforcement_sensitivity()
+
+
+def _normal_enforcement_sensitivity(*,use_saved_trial=False):
     data=Path(__file__).parent/'data'
     reference=json.loads((data/'general_contact_native_curved_fibre_pair_v14_response.json').read_text())
     capsule=(data/'general_contact_native_curved_fibre_pair_v14.checkpoint').read_bytes()
     assert sha256(capsule).hexdigest()==reference['checkpoint_sha256']==(
         'a1d72a795421b1d7351d9bcbcfb06faa55c7fe1a3a732a204bd92c27de879086')
     assert reference['status']=='completed' and reference['line_stiffness_n_per_m2']==4000.
-    current=_coupled_curved(8000.)
+    initial_trial=None
+    if use_saved_trial:
+        # Extract mechanical coordinates only. This is a virgin-origin solve,
+        # never restoration of a checkpoint with a different contact law.
+        from anysolver._ge_beam3_p5_seeded.codec import _load
+        mechanical=_load(capsule.decode())['records'][-1]['mechanical']
+        template=_curved_owner(8000.)
+        initial_trial=dict(native_model=template.context.identity,mechanical=mechanical)
+    current=_coupled_curved(8000.,initial_trial)
     errors={}
     for key in ('force_a_n','moment_a_nm'):
         before=np.asarray(reference[key]);after=np.asarray(current[key])
@@ -171,6 +186,13 @@ def test_actual_curved_pair_normal_enforcement_sensitivity():
             scope='fixed-discretization development enforcement comparison only',
             reference_checkpoint_sha256=reference['checkpoint_sha256'],
             current_checkpoint_sha256=current['checkpoint_sha256'],
+            initialization='disposable frozen mechanical trial; virgin physical history' if use_saved_trial else 'reference pose',
             stiffnesses_n_per_m2=[4000.,8000.],response_target=.02,
             gaps_m=[reference['gap_lower_m'],current['gap_lower_m']],errors=errors),indent=2))
     assert max(errors.values())<=.02
+
+
+@pytest.mark.skipif(os.environ.get('CONTACT_NATIVE_CURVED_PAIR_SEEDED_REFINE')!='1',
+    reason='explicit changed virgin-origin initial-trial enforcement comparison')
+def test_actual_curved_pair_seeded_normal_enforcement_sensitivity():
+    _normal_enforcement_sensitivity(use_saved_trial=True)

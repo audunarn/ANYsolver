@@ -11,12 +11,12 @@ from test_general_contact_native_fibre_s3 import _independent_material_history
 
 
 def _owner(*,plastic=True,targets=(.05,),force=-.05,separation=.101,line_stiffness=100.,gap_step_control=False,
-           reference_rise_m=0.,certify_curved_ownership=False):
+           reference_rise_m=0.,certify_curved_ownership=False,initial_trial=None):
     builder=runpy.run_path(str(Path(__file__).parents[1]/'examples/general_contact_native_retained_whole_pair.py'))['analysis']
     return builder(physical_fibres=True,plastic_fibres=plastic,targets=targets,force=force,
         separation=separation,gap_tolerance_m=5e-5,line_stiffness_n_per_m2=line_stiffness,
         gap_step_control=gap_step_control,reference_rise_m=reference_rise_m,
-        certify_curved_ownership=certify_curved_ownership)
+        certify_curved_ownership=certify_curved_ownership,initial_trial=initial_trial)
 
 
 def test_fibre_pair_context_step_complete_constrained_rank_one_reference():

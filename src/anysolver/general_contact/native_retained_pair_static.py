@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from hashlib import sha256
 from fractions import Fraction
-from math import isfinite, sqrt
+from math import fsum, isfinite, sqrt
 
 import numpy as np
 
@@ -19,6 +19,7 @@ from anysolver._ge_beam3_retained_nodal_loading import (
 )
 from anysolver._ge_beam3_p5_seeded.core import canonical, sha
 from anysolver._ge_beam3_p5_seeded.codec import MAX_BYTES, _load
+from anysolver._ge_beam3_p5.algebra import log_rotation
 
 from .native_retained_cell_pair import (
     NativeRetainedCellPairResult,
@@ -116,7 +117,8 @@ class NativeRetainedRoundPairAnalysis:
                  boundaries: tuple, program: NativeNodalProgram,
                  contact: NativeRetainedSelectedCellPair | NativeRetainedWholeCurvePair, *,
                  gap_tolerance_m: float, equilibrium_tolerance: float,
-                 maximum_swept_intervals: int, gap_step_control: bool = False):
+                 maximum_swept_intervals: int, gap_step_control: bool = False,
+                 initial_trial: dict | None = None):
         if type(gap_step_control) is not bool:
             raise TypeError('native pair gap step control must be bool')
         if (type(definitions) is not tuple or len(definitions) != 2
@@ -186,6 +188,22 @@ class NativeRetainedRoundPairAnalysis:
         self.equilibrium_tolerance = float(equilibrium_tolerance)
         self.maximum_swept_intervals = maximum_swept_intervals
         self.gap_step_control = gap_step_control
+        self.initial_trial = None
+        self._trial_state = None
+        if initial_trial is not None:
+            if not self._uses_physical_gap():
+                raise ValueError('initial native pair trial requires explicit curved physical geometry')
+            if (type(initial_trial) is not dict or set(initial_trial) != {'native_model','mechanical'}
+                    or initial_trial['native_model'] != self.context.identity):
+                raise ValueError('initial native pair trial model binding')
+            self._trial_state = self.context.make(initial_trial['mechanical'])
+            self.initial_trial = canonical(dict(native_model=self.context.identity,
+                                                mechanical=self._trial_state.descriptor()))
+            if len(self.initial_trial) > MAX_BYTES:
+                raise ValueError('initial native pair trial byte limit')
+            # Validate supported motion/chart now; admission remains disposable
+            # and is checked again inside the cancellation-aware solve operation.
+            self._trial_increment(self.context.initial.mechanical, self._trial_state)
         self.identity = self._identity()
         initial = self.context.initial
         first = self._contact(initial.mechanical)
@@ -222,6 +240,9 @@ class NativeRetainedRoundPairAnalysis:
         if self._uses_physical_gap():
             # Bind every curved owner, including owners without secant control.
             values['swept_gap_policy']='RETAINED_EXP_PATH_DISTANCE_CHORD_DEV_V14'
+        if self.initial_trial is not None:
+            values['initial_trial']=dict(policy='VIRGIN_MODEL_BOUND_RETAINED_TRIAL_DEV_V1',
+                                        sha256=sha256(self.initial_trial).hexdigest())
         return sha(values)
 
     def _guard(self) -> None:
@@ -229,6 +250,10 @@ class NativeRetainedRoundPairAnalysis:
             raise ValueError("native pair definition/settings changed")
         if self.contact._fingerprint() != self.contact.identity:
             raise ValueError("native pair contact definition changed")
+        if self.initial_trial is not None and canonical(dict(
+                native_model=self.context.identity,
+                mechanical=self._trial_state.descriptor())) != self.initial_trial:
+            raise ValueError('initial native pair trial definition changed')
         self.native._guard()
         if self.native._family=='PHYSICAL_FIBRE_NODAL':self.context.guard()
 
@@ -561,6 +586,47 @@ class NativeRetainedRoundPairAnalysis:
         return (_directed_fraction(sum(speeds), True),
                 _directed_fraction(sum(accelerations), True))
 
+    def _trial_increment(self, start, target):
+        """Supported exponential-chart motion to a disposable mechanical guess."""
+        increment = np.zeros(self.context.count)
+        for node in range(len(self.context.node_ids)):
+            for axis in range(3):
+                increment[6*node+axis] = fsum((float(target.positions[node,axis]),
+                    float(target.position_low[node,axis]),-float(start.positions[node,axis]),
+                    -float(start.position_low[node,axis])))
+            increment[6*node+3:6*node+6] = log_rotation(
+                target.nodal_frames[node]@start.nodal_frames[node].T)
+        for index in range(len(self.context.elements)):
+            first = self.context.nodal_count+24*index
+            for cell in (0,1):
+                increment[first+3*cell:first+3*cell+3] = log_rotation(
+                    target.cell_rotations[index,cell]@start.cell_rotations[index,cell].T)
+            increment[first+6:first+24] = target.resultants[index]-start.resultants[index]
+        # advance owns the exact support/chart/finite validation. The returned
+        # endpoint, rather than an approximately reconstructed guess, is used
+        # in both path admission and Newton; no endpoint discrepancy is hidden.
+        endpoint = self.context.advance(start, increment)
+        return increment, endpoint
+
+    def _initial_trial_candidate(self, accepted):
+        self._guard()
+        self.context._safe_point()
+        if self.initial_trial is None or accepted.completed_targets != 0:
+            return accepted.mechanical, None
+        if canonical(accepted.histories) != canonical(self.initial.histories):
+            raise ValueError('initial native pair trial requires virgin accepted origins')
+        increment, candidate = self._trial_increment(accepted.mechanical, self._trial_state)
+        gap = self._physical_gap(candidate)
+        if gap < -self.gap_tolerance or not self._swept_admissible(
+                accepted.mechanical, increment, candidate,
+                accepted.contact.conservative_lower_gap_m, gap):
+            raise ValueError('initial native pair trial path is not certified')
+        self._guard()
+        self.context._safe_point()
+        # This is not an accepted state/history. Only a converged _record can
+        # publish an accepted target, and origins remain accepted.histories.
+        return candidate, None
+
     def solve(self, *, checkpoint: bytes | None = None,
               expected_sha256: str | None = None,
               stop_after: int | None = None, cancellation_token=None) -> NativeRetainedPairRun:
@@ -593,6 +659,8 @@ class NativeRetainedRoundPairAnalysis:
                 trial = accepted.mechanical
                 origins = accepted.histories
                 prepared_evaluation = None
+                if index == 0 and self.initial_trial is not None:
+                    trial, prepared_evaluation = self._initial_trial_candidate(accepted)
                 for iteration in range(self.program.max_iterations+1):
                     if prepared_evaluation is None:
                         residual, tangent, metrics, responses, contact = self._assemble(
