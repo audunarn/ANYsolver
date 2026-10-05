@@ -1286,6 +1286,19 @@ class ExperimentalGEAnalysis:
         with self._operation_lock:
             return capabilities(self)
 
+    @property
+    def point_buckling_capabilities(self):
+        """Experimental accepted-state route; reference modal schema is unchanged."""
+        from ._stiffened_shell_ge_point_buckling import capabilities
+        with self._operation_lock:
+            return capabilities(self)
+
+    @_state_writer
+    def buckling(self, request, *, cancellation_token=None):
+        """Finite elastic point-state prestress factors, with all mixed coordinates."""
+        from ._stiffened_shell_ge_point_buckling import solve
+        return solve(self, request, cancellation_token=cancellation_token)
+
     @_state_writer
     def modes(self, request, *, cancellation_token=None):
         """Supported virgin Q4/native-GE point modes with explicit physical mass."""

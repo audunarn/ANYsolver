@@ -17,6 +17,7 @@ from ._stiffened_shell_ge_reference_modal import (
     GEReferenceModesRequest, GEReferenceModesResult, GEFreeReferenceModesResult,
     GE_FREE_FREE_MODAL_ONLY_V1,
 )
+from ._stiffened_shell_ge_point_buckling import GEPointBucklingRequest, GEPointBucklingResult
 
 from ._b2_physical_linear_definition import (
     PROFILE_ID as B2_E4_PL_FAST_LINEAR_V1,
@@ -313,3 +314,4 @@ from ._stiffened_shell_stress_free_reference import (
     ReferencePosePerturbation, StressFreePointReference, create_stress_free_point_reference,
 )
 __all__ += ["ReferencePosePerturbation", "StressFreePointReference", "create_stress_free_point_reference"]
+__all__ += ["GEPointBucklingRequest", "GEPointBucklingResult"]

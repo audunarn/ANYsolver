@@ -1,8 +1,9 @@
 # Current state - 5 October 2026
 
 Full Revision8 goal ACTIVE; aggregate G0-G6/F01-F13/V01-V28/B01-B18 incomplete.
-Previous goal turn PROGRESS: retained CCX force-control failures at74319629.
-Current turn PROGRESS: inverse CCX eight-state response completed; no product change.
+Previous goal turn PROGRESS: committed inverse CCX eight-state evidence6666cd03
+and restart20a09c21. Current turn delivers experimental conservative mixed
+buckling through source checks, an installed wheel and a public example.
 
 ## Identity and delivered behavior
 Canonical root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
@@ -30,19 +31,29 @@ Original force8 and extended-iteration force failures remain failed, E04/G4D ope
 Success supports compatible admitted material response under changed boundary
 parameterization, not unique allocation to the external predictor/constitutive code.
 
-## Next connected action
-Read owner /root/restricted_nonlinear_reference completed local split derivation;
-/root/nonlinear_external_scope_audit is reviewing the accepted-state conservative
-GE/Q4 point buckling contract against actual source, with no edits/jobs.
-Astra must resolve review and adopt the work/material-vs-prestress contract before Edit.
-Beam full42 mixed Hessian is available; Q4 objective component extraction and
-chart-covector corrections are required. Historical corotational equivalence
-remains unestablished; no silent admission or permanent scope reduction.
-Preserve retained/algebraic variables and constraint curvature; no SPD assumption,
-artificial mass or global dense inverse. No numerical job live.
-Current inverse slice source/test/doc/evidence committed6666cd03, canonical clean
-before this restart-note delta. Next implementation owner receives one connected
-mixed operator/pencil slice after contract adoption, not isolated helper requests.
+## Current delivered slice and next action
+Experimental accepted-state GE/Q4 six-pose-point buckling retains all42/member
+coordinates and point multipliers in a general sparse descriptor. Objective Q4
+components and actual mixed-chart curvature reconstruct the conservative Hessian.
+Source41PASS(191.13s); installed18PASS(4.31s), exact package source-byte checks.
+Wheel4d23ea7e9073ef3651234abe649ca6c7731ef79b5a90ea3a86a6b036697dbd45.
+Installed public compression example completes, unchanged checkpoint; two frozen
+prestress factors13115.7456715/42746.5121121, equation/constraint residuals<1e-15.
+Split error9.299e-17/skew2.120e-16, one factorization/21 inverse solves.
+No lowest-instability/nonlinear-limit-load or full G4B claim. Other profiles,
+materials, loads, attachment laws and external/platform/scale acceptance remain
+mandatory and OPEN. Historical corotational equivalence is not silently admitted.
+Raw .qualification/b3-ge-e4-pl/r8-ge-point-buckling-dev-20261005-v1 binds source,
+wheel, imports, runtime, tests and example. No numerical job live.
+Supporting independent full-slice Read review found no blocking defect. Its
+coverage gaps were repaired by the same owner, product bytes unchanged:
+source-v2/installed-v2 18PASS each(4.60/4.50s), material rejection, iterative
+cancellation, backend/ARPACK failures and model guard. Independent delta review
+also leaves no identified defect; corrected stale documentation. Preserve exact
+evidence and scoped local commit, then remaining conservative spectral coverage
+under adopted contracts. No numerical job live; do not repeat closed campaigns.
+Root reviewed chart corrections, sparse representation and actual evidence;
+OpenAI supporting review does not supply different-family scientific acceptance.
 
 ## Preserved execution boundaries
 Mistral/local cached unavailable for this goal; OpenAI fallback does not supply

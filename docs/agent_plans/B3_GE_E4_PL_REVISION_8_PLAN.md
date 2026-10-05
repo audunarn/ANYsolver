@@ -1304,3 +1304,29 @@ predecessor restoration and tangent branch before another physical run.
 Raw failures and exact source snapshots preserved in the CCX restricted-dev
 root; grouped results carry exact execution identities. No E04/G4D, connection,
 complete installed-graph or different-family acceptance claim follows.
+
+
+### 5 October - accepted-state point buckling development
+
+IMPLEMENTED_NOT_QUALIFIED: objective elastic Q4/generalized native GE six-pose
+point accepted-state buckling keeps full42/member and multipliers in a general
+sparse descriptor; no SPD, artificial mass, condensation or symmetry repair.
+Local Q4 material/prestress components and actual mixed-chart point curvature
+reconstruct the conservative Hessian. Lambda scales frozen accepted stress, not
+a nonlinear limit load; nearest-shift finite pairs do not prove completeness.
+Initial source41PASS191.13s, installed18PASS4.31s. Review-driven failure/admission
+coverage adds fresh source-v2/installed-v2 18PASS4.60/4.50s; product bytes unchanged.
+Supporting independent OpenAI full-slice/delta review leaves no identified defect,
+not required different-family scientific acceptance.
+Installed compression example completes, unchanged accepted checkpoint, factors
+13115.7456715/42746.5121121, original equation/constraint residuals<1e-15; split
+error9.299e-17/skew2.120e-16, one factorization/21 inverse solves.
+Wheel4d23ea7e9073ef3651234abe649ca6c7731ef79b5a90ea3a86a6b036697dbd45.
+Source/install package bytes, imports, effective pools1/JIToff and supervised
+600s/2GiB/affinity1 verified; no speedup or complete installed-graph claim.
+Raw .qualification/b3-ge-e4-pl/r8-ge-point-buckling-dev-20261005-v1 preserves
+bindings, sources, logs, JUnit, artifacts, sparse packets, modes and checkpoint.
+Full G4B, S3/fibre/line/footprint/B2 extensions, external/platform/scale and
+aggregate acceptance remain OPEN mandatory obligations, not permanent exclusions.
+Next: continue remaining conservative spectral coverage under adopted contracts;
+do not reopen closed F03/Fy/material/turning campaigns or qualify a subset as full.
