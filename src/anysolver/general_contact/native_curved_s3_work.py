@@ -4,7 +4,7 @@ Reuses curved axial/angular integration. All moving-normal derivatives and
 authoritative offset columns remain. The separately profiled retained owner
 uses whole-path controls; finite overlap, rims and friction are not represented.
 """
-from math import fsum,sqrt
+from math import fsum,sqrt,sin,cos,pi
 from fractions import Fraction
 import numpy as np
 from scipy import sparse
@@ -23,6 +23,30 @@ from .native_retained_station import _readonly
 from .native_curved_geometry import curved_patch_path_control,CurvedPatchPathControl
 
 PROFILE='NATIVE_RETAINED_CURVED_MATERIAL_S3_LOCAL_WORK_DEV_V1'
+
+
+def _declared_arc_gradient_bound(base,circular,angle_range):
+    """Enclose ||base+B(cos a,sin a)|| on the declared material arc.
+
+    For |a-m|<=delta<=pi/2, rotation about the arc midpoint gives
+    B u (cos(a-m)-1)+B v sin(a-m). The triangle inequality bounds
+    both terms. Wider arcs keep the existing whole-circle enclosure.
+    Add roundoff using uncancelled magnitudes, including when base+B u
+    nearly cancels. This bound does not infer an arc from active measure.
+    """
+    base=np.asarray(base);circular=np.asarray(circular)
+    magnitude=np.linalg.norm(base)+np.linalg.norm(circular,2)
+    lo,hi=angle_range;delta=(hi-lo)/2
+    if delta>pi/2:return float(magnitude)
+    midpoint=lo+delta
+    u=np.array((cos(midpoint),sin(midpoint)));v=np.array((-u[1],u[0]))
+    radial=circular@u;tangential=circular@v
+    # 2 sin(delta/2)^2 avoids loss of the small 1-cos(delta) term.
+    arc=(np.linalg.norm(base+radial)+sin(delta)*np.linalg.norm(tangential)
+         +2*sin(delta/2)**2*np.linalg.norm(radial))
+    roundoff=8192*np.finfo(float).eps*(np.linalg.norm(base)
+        +np.linalg.norm(circular[:,0])+np.linalg.norm(circular[:,1]))
+    return float(np.nextafter(min(magnitude,arc+roundoff),np.inf))
 
 
 def _normal_derivatives(corners):
@@ -93,7 +117,8 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         return result
 
     def _root_work_bound(self,high,low,U,cell,width,angular_width,geometry,
-                         settings,stiffness,normal,pad,*,fallback=False,interval=None,station=None):
+                         settings,stiffness,normal,pad,*,fallback=False,interval=None,station=None,
+                         declared_arc=False):
         # At this candidate n/Dn/D²n are constant in xi. Bound their COMPLETE
         # scaled authoritative maps, not just the native nine-coordinate block.
         ref=self.reference;r=self.radius;L=settings.characteristic_length_m
@@ -118,14 +143,17 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         full_scale=self._coordinate_scale(self._coordinate_count())
         if interval is not None and station is not None:
             # Complete mapped gradient is affine in cos(alpha),sin(alpha) at
-            # one xi. Bound that whole circular field, then its change over the
+            # one xi. Keep the historical circle bound for passing evaluations;
+            # a budget failure may use the declared arc, then its change over the
             # WHOLE band by the complete axial derivative bound above.
             t=station+1 if cell==0 else station
             frame=ref.frame(station);base=U[cell]@ref.half_cell_lift(cell,t)
             gradients=[full_scale*(mapping.T@self._gap_work_jet(0.,high,low,cell,t,arm).gradient)
                        for arm in (base,base+U[cell]@(r*frame[:,1]),base+U[cell]@(r*frame[:,2]))]
             circular=np.column_stack((gradients[1]-gradients[0],gradients[2]-gradients[0]))
-            tight=np.linalg.norm(gradients[0])+np.linalg.norm(circular,2)+max(abs(station-x) for x in interval)*gx
+            angular=(_declared_arc_gradient_bound(gradients[0],circular,self.rule.definition['angle_range'])
+                     if declared_arc else np.linalg.norm(gradients[0])+np.linalg.norm(circular,2))
+            tight=angular+max(abs(station-x) for x in interval)*gx
             g=min(g,tight*(1+8192*np.finfo(float).eps))
         # Includes the once-spatial native correction, mixed and shell blocks.
         h=3*arm/L**2+2*x1*n1+distance*n2+2*n1*o1
@@ -142,6 +170,9 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         active=np.count_nonzero(np.any(mapping!=0.,axis=0))
         te=2*sqrt(active)*stiffness*area*width*angular_width*(g*g+depth*h)
         return np.array((ee,fe,te))*(1+8192*np.finfo(float).eps)
+
+    def _refined_root_work_bound(self,*args,**kwargs):
+        return self._root_work_bound(*args,**kwargs,declared_arc=True)
 
 
 class NativeCurvedMaterialS3Work(NativeRetainedMaterialS3Work):

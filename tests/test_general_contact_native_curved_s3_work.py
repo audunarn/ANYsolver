@@ -226,7 +226,8 @@ def test_curved_s3_complete_scaled_root_enclosure_with_large_tangential_lever():
     maximum=0.
     for xi in np.linspace(left,right,5):
         area=_prepare_reference_area(candidate.reference,xi,candidate.radius)
-        for alpha in np.linspace(0.,2*pi,31):
+        # The root-band integration represents only the declared material arc.
+        for alpha in np.linspace(*candidate.rule.definition['angle_range'],31):
             arm=U[1]@(candidate.reference.half_cell_lift(1,xi)+candidate.radius*(
                 np.cos(alpha)*area.frame[:,1]+np.sin(alpha)*area.frame[:,2]))
             gap=_projected_gap(p,low,1,xi,arm,candidate.origin,candidate.normal)
@@ -238,3 +239,26 @@ def test_curved_s3_complete_scaled_root_enclosure_with_large_tangential_lever():
             maximum=max(maximum,float(observed))
             assert 2*observed*width*angle_width<=bound[2]
     assert maximum>1e5
+
+
+def test_declared_arc_gradient_enclosure_endpoints_interior_and_cancellation():
+    from anysolver.general_contact.native_curved_s3_work import _declared_arc_gradient_bound
+    # Independent scalar maximum: cancellation at the arc midpoint.
+    delta=.3
+    bound=_declared_arc_gradient_bound(np.array([1.]),np.array([[1.,0.]]),(pi-delta,pi+delta))
+    assert bound>=2*np.sin(delta/2)**2
+    assert bound<.045
+    # Vector maps, asymmetric arcs and near-cancellation at different scales.
+    rng=np.random.default_rng(5179)
+    for lo,hi in ((-.8,.25),(2.8,3.4),(0.,2*pi),(.2,4.5)):
+        for scale in (1e-8,1.,1e8):
+            B=rng.normal(size=(60,2))*scale
+            base=-(B@np.array((np.cos((lo+hi)/2),np.sin((lo+hi)/2))))
+            base+=rng.normal(size=60)*scale*1e-12
+            bound=_declared_arc_gradient_bound(base,B,(lo,hi))
+            # Direct trigonometric samples do not use the production bound.
+            observed=max(np.linalg.norm(base+B@np.array((np.cos(a),np.sin(a))))
+                         for a in np.linspace(lo,hi,1025))
+            assert observed<=bound*(1+1e-14)
+            if hi-lo>pi:
+                assert bound==pytest.approx(np.linalg.norm(base)+np.linalg.norm(B,2),rel=1e-14)

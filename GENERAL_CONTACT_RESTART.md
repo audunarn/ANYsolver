@@ -68,6 +68,24 @@ the declared arc, retaining representation uncertainty and all derivative gates.
 One new development test file records this unresolved gate; its2e7 test is
 currently NONPASS. No production code or installed wheel changed. No live job.
 
+Next corrective slice: declared-arc gradient bound retains full authoritative
+maps, additive uncancelled rounding and whole-band axial allowance. Apply only
+when the original root-band enclosure rejects; passing evaluations/diagnostics
+stay byte-identical for checkpoint replay. First always-on prototype passed8
+local checks but broke exact coarse replay; failure retained candidate05/arc_local_work.
+Conditional correction passes9checks10.100s, including coarse exact replay and
+independent partial-front tangent errors8.27e-10/1.45e-8. Source2e7 still NONPASS
+47.185s/181383168B, zero accepted targets,37candidates/34rejections. Last tangent
+bound1.569736e-6 remains above1e-6 despite30refined brackets. No live job.
+Installed10checks17.014s/188420096B include active/open replay;525files/221imports
+match wheelSHAf67f64ceab7a6f5c0046238cee5c34e45ad8d6052798774e459a30bb71dd2fbc.
+[Correction evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/arc_enclosure.md).
+Next verify PSD leading-integral difference bound: if0<=A,B<=M I, norm(A-B)<=M,
+while the non-PSD gap-Hessian/once-spatial remainder keeps factor2. Check common
+area/gradient/positive quadrature measure, including grazing fallback masses,
+before implementing this new candidate or another coupled run. No unchanged
+retry, tolerance/cap change or4e7 launch. FullC0–C9 remains incomplete.
+
 Close native enforcement convergence through one discriminating curved/S3 case.
 Choose explicit stiffness levels and dimensional reaction/displacement/gap scales
 prospectively, reuse actual coarse state, and record how outcomes choose next action.

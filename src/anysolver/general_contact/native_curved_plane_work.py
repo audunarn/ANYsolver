@@ -512,6 +512,26 @@ class NativeCurvedMaterialPlaneWork:
                         angular_fallback=fallback,representative_xi=station,error_bounds=tuple(error)))
             prepared.append((cell,bands))
         remaining=np.asarray(limits)-root_errors
+        if np.all(np.isfinite(root_errors)) and np.any(remaining<=0):
+            # A formulation-owned tighter enclosure may resolve a conservative
+            # rejection. Reuse the same isolated bands/stations and interval
+            # budget; do not change an already passing integration or its saved
+            # diagnostics. No roots, quadrature points or tolerances are reset.
+            refined=[]
+            for row in root_brackets:
+                error=self._refined_root_work_bound(high,low,U,row['cell'],
+                    row['upper']-row['lower'],row['active_angular_width_bound'],
+                    geometry,settings,self.stiffness,self.normal,row['representation_gap_m'],
+                    fallback=row['angular_fallback'],interval=(row['lower'],row['upper']),
+                    station=row['representative_xi'])
+                if error is None:break
+                refined.append(np.minimum(row['error_bounds'],error))
+            if len(refined)==len(root_brackets) and refined:
+                root_errors=np.sum(refined,axis=0)
+                for row,error in zip(root_brackets,refined):
+                    row['error_bounds']=tuple(error)
+                    row['enclosure_refinement']='declared_material_arc'
+                remaining=np.asarray(limits)-root_errors
         if not np.all(np.isfinite(root_errors)) or np.any(remaining<=0):
             failure=ValueError('curved axial front bracket work uncertainty exceeds integration budget')
             failure.integration_diagnostics=dict(root_brackets=root_brackets,error_bounds=tuple(root_errors))
@@ -668,6 +688,9 @@ class NativeCurvedMaterialPlaneWork:
                          settings,stiffness,normal,pad,*,fallback=False,interval=None,station=None):
         return _root_band_work_bound(self.rule,high,low,U,cell,width,angular_width,
             geometry,settings,stiffness,normal,pad,fallback=fallback)
+
+    def _refined_root_work_bound(self,*args,**kwargs):
+        return None
 
     def certify_path(self,start,translations,angular,*,gap_tolerance_m,
                      maximum_intervals,cancellation_token=None):
