@@ -2,7 +2,8 @@
 
 Revision8 goal ACTIVE. Canonical worktree:
 C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001; delivered HEADf506d28e.
+branch codex/stiffened-main-reconcile-20261001. Source identity is git HEAD;
+native33 base b40e0180 plus the bound prescribed-field slice below.
 User requires separate work: NO contact-worker communication. Replacement
 AGENTS applies. Mistral/local cached unavailable; OpenAI supporting review
 cannot satisfy required different-family scientific acceptance.
@@ -55,12 +56,20 @@ whole2.780s/177745920B. Further Read review found unchecked uint64/intp gather
 overflow; range checks now precede casts/addition. AffectedV3:16PASS, whole2.795s,
 178126848B. Exact snapshots/bindings preserve the missed V1/V2 defects. Native
 work remains local/unadopted, not full native element or structural evidence.
-The next physical discriminator must examine beam shear/section rotation
-under prescribed homogeneous shell shear: polar spin and line-tangent yaw can
-impose different beam shear even when their translations match. Declare the
-intended bond/footprint meaning before comparing loaded compliance. This is a
-physical-law decision, not a change of representation. No structural/external
-campaign follows automatically. F03/fullE01/E04
+The bounded prescribed-field discriminator is COMPLETE:16new controls PASS,
+16unchanged controls deselected; whole3.311s/178089984B, effective pools1/JIToff.
+Same beam positions, DIFFERENT imposed section rotations: at gamma=0.2,
+polar native in-plane shear=0.099503719(simple) or0.2(symmetric), L1~0;
+local gaps<=1.6653e-16 for both. Both preserve transverse shear0.2 with independent
+director ez, and finite rigid motions give zero strain. Supporting independent
+Read derivation confirms actual compensated strains/eccentric mappings.
+Decision: these are distinct continuous laws, not equivalent representations.
+Retain existing point/BL5 identities; polar remains an unadopted alternative.
+Stop equivalent-law refinement and multiplier tuning for this difference.
+Next: define the physical bond/footprint section-rotation/shear meaning and
+match the reference work/poses at that level before a loaded comparison.
+These prescribed states establish no equilibrium or constitutive-work claim.
+No structural/external campaign follows automatically. F03/fullE01/E04
 remain OPEN; rank, gaps or one quotient cannot select multipliers. Grouped report:
 docs/reference_cases/stiffened_shell_e01_material_frame_work.md.
 
@@ -94,8 +103,10 @@ r8-e01-objective-polar-trace-dev-20261005-v1;
 r8-e01-native-polar-work-dev-20261005-v1/v2/v3;
 r8-native-s3-portable-candidate-dev-20261005-v1.
 Root owns integration/Git/this note. E01 author owns its scripts/tests/grouped
-report; S3 author owns certificate/opt-in subsystem/grouped report. Preserve
-concurrent dirt; check worker state before checks. Numerical slot RELEASED; native33 repairs and S3 experiment terminal. ONE job,max3workers,600s/2GiB process tree,affinity1/pools1/
+report. S3 candidate is archived outside the working package; no active writer. Preserve
+concurrent dirt; check worker state before checks. S3 experiment terminal.
+Numerical slot RELEASED; both bounded workstreams terminal, no job running.
+ONE job,max3workers,600s/2GiB process tree,affinity1/pools1/
 JIToff. Supervisor thread ceiling8, observed1. FormalF03 UNCONSUMED: never
 execute/copy/substitute prepared F03 script. Never inspect/traverse/copy/archive
 us3-modal-canary; no Get-CimInstance. FrozenG3c lease and closed Fy/pressure/

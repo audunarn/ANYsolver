@@ -11,11 +11,14 @@ The bounded S3 portable-consistency candidate remains unable to certify the
 unchanged predecessor and is preserved outside the working package, with strict
 default binding unchanged. Stop further expansion of that route. Native half-cell
 composition of the finite projected-polar/director tool now has reviewed local
-work/update/gather controls, but its law remains unadopted. Next discriminate
-beam shear and section rotation under the same prescribed homogeneous shell
-field for polar and material-line frames, using actual retained kinematics.
-This is a local law decision before another structural/external campaign;
-existing point/BL5 identities remain unchanged. See the active note for exact evidence and remaining decisions.
+work/update/gather controls. The actual retained-kinematic discriminator now
+establishes that projected-polar and material-line maps impose different
+in-plane beam shear despite zero local gaps; both preserve independent-director
+transverse shear. Retain distinct identities and stop attempts to refine this
+continuous-law difference away. The next decision concerns the intended
+physical bond/footprint section rotation and shear, with matched reference
+work/pose interpretation before another loaded comparison. Existing point/BL5
+identities stay unchanged; no new law is adopted from prescribed fields. See the active note for exact evidence and remaining decisions.
 No scope or scientific acceptance threshold changes.
 
 **Status 4 October 2026: planning update adopted; explicitly resumed by the user.**

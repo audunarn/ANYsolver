@@ -2925,3 +2925,19 @@ r8-native-s3-portable-candidate-dev-20261005-v1/closed-candidate-source/.
 Unaccepted policy removed from working package; strict defaults/fixtures unchanged.
 Portable restart and common-main CI remain OPEN; no scientific relaxation,
 qualification, different-family acceptance, merge or publication.
+
+
+### 5 October - prescribed-field connection law discriminator
+
+DECISION_RESOLVED_NOT_QUALIFICATION: projected-polar and material-line frames
+are distinct continuous connection laws. Actual L1/polar zero gaps share beam
+positions but impose different native section rotations and chord strains.
+Gamma0.2 gives polar shear0.099503719(simple)/0.2(symmetric), line approximately
+zero. Both retain transverse shear0.2 with independent director and rigid-motion
+zero strain.16new controls PASS;16unchanged deselected; whole3.311s/178089984B.
+Actual source imports/pools1/JIToff/affinity1 and exact executed hashes verified.
+Supporting independent Read derivation clear on this scope; not different-family
+scientific acceptance. Prescribed fields prove no equilibrium/constitutive work
+or welded-footprint accuracy. Keep identities; no production-law replacement or
+basis selection. Bound raw/source/review in existing native-dev-v3/shear-v1.
+Physical-law adoption/E01/E04/F03 and complete programme remain OPEN.

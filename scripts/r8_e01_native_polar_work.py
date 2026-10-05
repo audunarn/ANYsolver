@@ -19,6 +19,87 @@ from anysolver._ge_beam3_p5.algebra import rotation as retained_rotation
 from scripts import r8_e01_objective_polar_trace as polar
 
 
+def native_chord_kinematics(reference, mechanical):
+    """Actual compensated six chord entries and twelve endpoint Log entries.
+
+    This invokes the retained operator's kinematic primitives only, without
+    material response, assembly, owner issuance or equilibrium evaluation.
+    Chord entries are length-valued; divide by each reference chord length
+    for the straight-cell engineering strain used in the homogeneous controls.
+    """
+    from anysolver._ge_beam3_p5.compensated import compensated_strain
+    from anysolver._ge_beam3_p5.algebra import HALVES
+    variables = [ad.Jet2.constant(0., 1) for _ in range(24)]
+    chord, endpoints = [], []
+    for cell, (left, right) in enumerate(HALVES):
+        frame = ad.constant_matrix(mechanical.cell_rotations[0, cell], 1)
+        chord.extend(value.value for value in compensated_strain(
+            frame, reference.coordinates, mechanical.positions,
+            mechanical.position_low, variables, left, right))
+        for node, sign in ((left, -1), (right, 1)):
+            material_frame = ad.matmul(frame, ad.constant_matrix(reference.nodal_triads[node], 1))
+            relative = ad.matmul(ad.transpose(material_frame),
+                                 ad.constant_matrix(mechanical.nodal_frames[node], 1))
+            endpoints.extend(sign*value.value for value in ad.so3_log(relative))
+    return np.array(chord+endpoints)
+
+
+def homogeneous_frame_comparison(deformation, *, cell=0, weight=.4,
+                                 director_rotation=None, thickness=.2,
+                                 eccentricity=.05):
+    """Prescribed-field discrimination; not an energy/equilibrium mechanism.
+
+    Both laws use the same straight two-cell beam, Q4 midsurface field and
+    independent directors. Each law supplies its own physical section frame.
+    Vertical reference arm is half-thickness plus eccentricity; L1's declared
+    section offset is minus eccentricity, so both reference distances match.
+    Resultants and all 42 retained coordinates remain explicit.
+    """
+    from anysolver._ge_beam3_centered_reference import CenteredCurvedBeam3ReferenceGeometry
+    from anysolver._stiffened_shell_l1_local_experimental import L1LocalOperator
+    from anysolver._ge_beam3_p5.algebra import log_rotation
+    f = polar._owned(deformation, (3, 3), "homogeneous deformation")
+    dr = np.eye(3) if director_rotation is None else polar._rotation(director_rotation)
+    if not np.isfinite(thickness) or thickness <= 0 or not np.isfinite(eccentricity):
+        raise polar.TraceDomainError("positive thickness and finite eccentricity required")
+    xy = np.array(((0., -1.), (2., -1.), (2., 1.), (0., 1.)))
+    midsurface = np.column_stack((xy, np.zeros(4)))
+    height = .5*thickness+eccentricity
+    coordinates = np.array(((0., 0., height), (1., 0., height), (2., 0., height)))
+    reference = CenteredCurvedBeam3ReferenceGeometry(coordinates, np.tile(np.eye(3), (3, 1, 1)))
+    initial = Mechanical(coordinates.copy(), np.zeros((3, 3)), np.tile(np.eye(3), (3, 1, 1)),
+                         np.tile(np.eye(3), (1, 2, 1, 1)), np.arange(18).reshape(1, 18)*.01)
+    port = NativeHalfCellPort.from_reference(reference, (0, 1, 2), 0, cell, weight, 18, 42)
+    station = (cell+weight, 0.)
+    candidate = NativePolarWork.at_reference(xy, station, port, initial, np.arange(24), native_base=100)
+    shell = ShellState(midsurface@f.T, np.tile(dr[:, 2], (4, 1)))
+    polar_frame = candidate.evaluate(shell, initial, np.zeros(6)).local.shell_frame
+    line = np.array(((float(cell), 0., 0.), (float(cell+1), 0., 0.)))
+    l1 = L1LocalOperator.at_reference(line, np.zeros((2, 6)), thickness, port, initial,
+                                    offset=(0., 0., -eccentricity), station=weight)
+    normal = dr[:, 2]
+    tangent = f[:, 0]-normal*(normal@f[:, 0]); tangent /= np.linalg.norm(tangent)
+    line_frame = np.column_stack((tangent, np.cross(normal, tangent), normal))
+    total = np.zeros((2, 6)); total[:, :3] = line@f.T-line
+    total[:, 3:] = log_rotation(dr)
+    output = {}
+    for name, frame in (("projected_polar", polar_frame), ("material_line", line_frame)):
+        # The same deformed midsurface beam line; its vertical section arm
+        # follows each admitted frame. With these controls the arms coincide.
+        positions = np.column_stack((coordinates[:, :2], np.zeros(3)))@f.T+frame[:, 2]*height
+        state = Mechanical(positions, initial.position_low.copy(), np.tile(frame, (3, 1, 1)),
+                           np.tile(frame, (1, 2, 1, 1)), initial.resultants.copy())
+        gap = (candidate.evaluate(shell, state, np.zeros(6)).local.constraint if name == "projected_polar"
+               else l1.evaluate(total, state, np.zeros(6)).gap)
+        kinematics = native_chord_kinematics(reference, state)
+        output[name] = dict(frame=frame, gap=gap, kinematics=kinematics,
+                           positions=state.positions.copy(), resultants=state.resultants.copy())
+    output["reference"] = dict(coordinates=coordinates, lift=port.lift.copy(), frame=port.frame.copy(),
+                               beam_slots=port.active_beam_slots(), retained_count=42,
+                               thickness=thickness, eccentricity=eccentricity, station=np.array(station))
+    return output
+
+
 IDENTITY = "R8_E01_NATIVE_HALF_CELL_PROJECTED_POLAR_WORK_V1_PROPOSAL"
 SIZE = 33
 

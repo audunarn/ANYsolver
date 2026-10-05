@@ -494,3 +494,92 @@ execution/logs are preserved under
 Current native script/test bytes and snapshots match their pre-run hashes.
 No finite-suite repetition, structural solve, external solve or qualification
 execution was performed. Candidate physical adoption remains reserved.
+
+### Prescribed homogeneous-field shear discrimination
+
+This bounded tooling control uses one straight unit-length two-half-cell native
+beam (42 retained coordinates), with an identity reference section frame and
+zero lift, under the same Cartesian Q4 homogeneous midsurface field. Nodal and
+retained cell frames are prescribed per each law; resultants are preserved.
+The reference beam height is `thickness/2 + eccentricity`. L1 uses section offset
+`-eccentricity ez` and shell top `thickness/2 d`, while projected-polar uses the
+full beam-to-midsurface arm. Thus neither comparison introduces a reference
+station, section-frame or offset mismatch. Both cells use their actual native
+ports and their corresponding actual local constraints.
+
+For independent director `ez`, let `F` denote the deformed material tangent
+columns. On these positive-orientation fields the projected-polar yaw is
+`atan2(F21-F12,F11+F22)` and L1 material-line yaw is `atan2(F21,F11)`.
+For a unit reference x chord, physical section strain is independently
+`U.T @ (F ex) - ex`. The actual retained `compensated_strain` primitive yields
+length-valued integrated chord changes; division by each reference chord length
+produces this strain. The twelve endpoint Log entries are also evaluated with
+the unchanged retained kinematic primitives, without material response or solve.
+
+At `gamma = +/-0.2` the predictions are:
+
+| Shell field | Polar yaw | L1 yaw | Polar physical in-plane beam shear | L1 shear |
+| --- | --- | --- | --- | --- |
+| `ux=gamma*y` | `-atan(gamma/2)` | `0` | `gamma/sqrt(4+gamma^2)` | `0` |
+| `uy=gamma*x` | `atan(gamma/2)` | `atan(gamma)` | `gamma/sqrt(4+gamma^2)` | `0` |
+| symmetric in-plane shear | `0` | `atan(gamma)` | `gamma` | `0` |
+
+Polar axial strains are respectively `2/sqrt(4+gamma^2)-1`,
+`(2+gamma^2)/sqrt(4+gamma^2)-1`, and `0`. L1 axial strains are respectively
+`0`, `sqrt(1+gamma^2)-1`, and `sqrt(1+gamma^2)-1`.
+A common finite rigid rotation must give the same frame and zero chord/endpoint
+strains for both laws. An independent-director control with `F ex=(1,0,h)` and
+`F ey=(0,1,0)` must give frame `I` and actual transverse beam shear `h` for both
+laws, despite the tilted geometric surface normal.
+
+These are imposed-field kinematic consequences, not prescribed reactions,
+global equilibrium, material energy or an instability mechanism. Inequivalent
+section rotations/chord shear settle distinct coupling semantics; they cannot
+select a physical law or justify automatic substitution. Root retains physical
+adoption and external/scientific acceptance.
+
+The authorized new-controls-only job completed **16 PASS**, zero failures/errors,
+with 16 previously tested controls deselected (pytest 2.19 s; JUnit 2.141 s).
+All 16 field/cell records are preserved in `homogeneous-results.jsonl`. Actual
+local gap components across both laws were at most `1.66533453693773e-16`;
+all twelve endpoint Log entries were zero. Both signed shear cases and both
+native cells matched the independent strain/frame predictions.
+
+For positive `gamma=0.2`, measured normalized strains were:
+
+| Field | Polar axial | Polar in-plane shear | L1 axial | L1 in-plane shear |
+| --- | --- | --- | --- | --- |
+| `ux=gamma*y` | `-0.004962809790010958` | `0.09950371902099894` | `0` | `0` |
+| `uy=gamma*x` | `0.01493793401418882` | `0.09950371902099894` | `0.01980390271855692` | `2.78e-17` |
+| symmetric | `-1.11e-17` | `0.20000000000000007` | `0.01980390271855692` | `2.78e-17` |
+
+Negative gamma reversed shear/yaw signs with the predicted even axial strains.
+Both finite rigid-motion controls had zero chord and endpoint strains to the
+existing `2e-14` control threshold, including nonzero thickness/eccentricity.
+Both independent-director controls retained transverse beam shear `0.2`, without
+substituting the tilted geometric normal for the physical director.
+
+The concrete development disposition is **inequivalent laws; declare distinct
+semantics and prohibit automatic substitution**. L1's projected material-line
+frame aligns the beam section x axis with the prescribed projected chord, while
+projected-polar transports the section with the recovered surface polar frame.
+Their respective zero local constraints admit different physical chord shear
+under the same prescribed shell field. Neither is selected by these outcomes.
+The next reserved decision is which physical section-rotation/shear meaning the
+intended E01 coupling and its external recovered material-frame reference must
+represent; an external comparison must match that choice before scoring it.
+There is no claim of global equilibrium, reactions, energy, instability or
+physical/scientific acceptance from these prescribed fields.
+
+Raw source bindings, exact executed source/test snapshots, JUnit, runtime and
+execution/logs reside inside the existing V3 development record at
+`r8-e01-native-polar-work-dev-20261005-v3/shear-v1/`. Tested script SHA-256 is
+`85d613c5b8e6927508b13c4072d0710c4bc3db246477b5fe7ec311e236f531d4`; test SHA-256 is
+`5ae4edcd53f8fbca9c39d259c63499799087ad9698536c1eb6fadb29d905d4a4`.
+Current script/test bytes and saved snapshots were verified against the binding.
+Supervisor wall time was 3.3108253 s, sampled peak tree memory 178,089,984 bytes,
+affinity `[0]`, sampled numerical/unresolved maximum one; both effective OpenBLAS
+pools and Numba were one thread and JIT was disabled. The numerical slot was
+released. All earlier source copies/bindings remain preserved. No product law,
+retained layout, scientific criterion, structural/external solver or campaign
+was changed or executed.

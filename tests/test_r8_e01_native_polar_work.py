@@ -2,6 +2,9 @@
 from dataclasses import replace
 from types import SimpleNamespace
 import math
+import json
+import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -273,3 +276,74 @@ def test_maximum_valid_global_slot_normalized_without_wrap():
     assert np.all(result.global_slots >= 0)
     assert len(np.unique(result.global_slots)) == 33
     np.testing.assert_array_equal(result.global_slots[:24], np.arange(24))
+
+
+def record_homogeneous(name, cell, result):
+    destination = os.environ.get('ANYSOLVER_E01_SHEAR_RECORD')
+    if destination:
+        with Path(destination).open('a', encoding='utf-8') as stream:
+            stream.write(json.dumps(dict(case=name, cell=cell, result=result),
+                                    default=lambda value: value.tolist())+'\n')
+
+
+@pytest.mark.parametrize('cell', (0, 1))
+@pytest.mark.parametrize('field,gamma', ((name, sign*.2) for name in
+                         ('ux_gamma_y', 'uy_gamma_x', 'symmetric') for sign in (-1, 1)))
+def test_homogeneous_inplane_frames_impose_distinct_native_shear(field, gamma, cell):
+    f = np.eye(3)
+    if field in ('ux_gamma_y', 'symmetric'): f[0, 1] = gamma
+    if field in ('uy_gamma_x', 'symmetric'): f[1, 0] = gamma
+    result = native.homogeneous_frame_comparison(f, cell=cell)
+    polar_angle = (-math.atan(gamma/2) if field == 'ux_gamma_y' else
+                   math.atan(gamma/2) if field == 'uy_gamma_x' else 0.)
+    line_angle = 0. if field == 'ux_gamma_y' else math.atan(gamma)
+    expected_polar_shear = gamma if field == 'symmetric' else gamma/math.sqrt(4+gamma**2)
+    for name, angle in (('projected_polar', polar_angle), ('material_line', line_angle)):
+        expected_frame = np.array(((math.cos(angle), -math.sin(angle), 0.),
+                                   (math.sin(angle), math.cos(angle), 0.), (0., 0., 1.)))
+        np.testing.assert_allclose(result[name]['frame'], expected_frame, rtol=0., atol=2e-14)
+        np.testing.assert_allclose(result[name]['gap'], 0., rtol=0., atol=2e-14)
+        # Independent physical strain oracle; raw native entries are integrated
+        # half-cell chord changes and are divided by each reference length.
+        chord = f @ np.array((1., 0., 0.))
+        expected = expected_frame.T @ chord-np.array((1., 0., 0.))
+        lengths = np.linalg.norm(np.diff(result['reference']['coordinates'], axis=0), axis=1)
+        physical = result[name]['kinematics'][:6].reshape(2, 3)/lengths[:, None]
+        np.testing.assert_allclose(physical, np.tile(expected, (2, 1)), rtol=0., atol=2e-14)
+        np.testing.assert_allclose(result[name]['kinematics'][6:], 0., rtol=0., atol=2e-14)
+        np.testing.assert_array_equal(result[name]['resultants'], np.arange(18).reshape(1, 18)*.01)
+    np.testing.assert_allclose(result['projected_polar']['kinematics'][[1, 4]], expected_polar_shear,
+                               rtol=0., atol=2e-14)
+    np.testing.assert_allclose(result['material_line']['kinematics'][[1, 4]], 0., rtol=0., atol=2e-14)
+    np.testing.assert_array_equal(result['reference']['lift'], np.zeros(3))
+    assert result['reference']['retained_count'] == 42
+    record_homogeneous(field+str(gamma), cell, result)
+
+
+@pytest.mark.parametrize('cell', (0, 1))
+def test_homogeneous_finite_rigid_rotation_reference_and_eccentric_arm(cell):
+    rotation = rotation_exponential((.2, -.3, .4))
+    result = native.homogeneous_frame_comparison(rotation, cell=cell, director_rotation=rotation,
+                                                thickness=.4, eccentricity=.125)
+    for name in ('projected_polar', 'material_line'):
+        np.testing.assert_allclose(result[name]['frame'], rotation, rtol=0., atol=2e-14)
+        np.testing.assert_allclose(result[name]['gap'], 0., rtol=0., atol=2e-14)
+        np.testing.assert_allclose(result[name]['kinematics'], 0., rtol=0., atol=2e-14)
+        np.testing.assert_allclose(result[name]['positions'],
+                                   result['reference']['coordinates']@rotation.T, rtol=0., atol=2e-14)
+    record_homogeneous('finite_rigid', cell, result)
+
+
+@pytest.mark.parametrize('cell', (0, 1))
+def test_homogeneous_independent_director_admits_transverse_beam_shear(cell):
+    f = np.eye(3); f[2, 0] = .2
+    result = native.homogeneous_frame_comparison(f, cell=cell)
+    geometric_normal = np.cross(f[:, 0], f[:, 1]); geometric_normal /= np.linalg.norm(geometric_normal)
+    assert np.linalg.norm(geometric_normal-np.array((0., 0., 1.))) > .1
+    for name in ('projected_polar', 'material_line'):
+        np.testing.assert_allclose(result[name]['frame'], np.eye(3), rtol=0., atol=2e-14)
+        np.testing.assert_allclose(result[name]['gap'], 0., rtol=0., atol=2e-14)
+        np.testing.assert_allclose(result[name]['kinematics'][:6], (0., 0., .2, 0., 0., .2),
+                                   rtol=0., atol=2e-14)
+        np.testing.assert_allclose(result[name]['kinematics'][6:], 0., rtol=0., atol=2e-14)
+    record_homogeneous('independent_director_transverse', cell, result)
