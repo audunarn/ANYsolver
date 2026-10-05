@@ -6,7 +6,7 @@ from anysolver import stiffened_shell as ss
 from anysolver.control import CancellationToken, SolveCancelled
 from anysolver._stiffened_shell_displacement_checkpoint import decode_snapshot
 from test_stiffened_shell_native_point_displacement import (
-    model, owner, compare, ACTIONS, DIRECTION, CONTROL, OPTIONS, HISTORICAL_POLICY)
+    model, owner, compare, native_state, ACTIONS, DIRECTION, CONTROL, OPTIONS, HISTORICAL_POLICY)
 
 
 @pytest.mark.parametrize('q4,s3', (
@@ -46,13 +46,36 @@ def test_native_elastic_s3_displacement_cancel_restore_reject(request, monkeypat
         with pytest.raises(ss.DisplacementCorrectorFailure):
             analysis.solve(DIRECTION, (targets[1],), **kwargs)
     assert analysis.checkpoint() == saved
-    with pytest.raises(ValueError, match='chart rebasing'):
+    # Native displacement chart events are admitted by the current public
+    # controller. Preserve the accepted load, physical frames and histories;
+    # restart and continue the same rebased endpoint on both owners.
+    history_before = native_state(analysis)
+    rebased = analysis.rebase_rotations(prefix.generation)
+    repeated_rebase = resumed.rebase_rotations(prefix.generation)
+    compare(rebased, repeated_rebase)
+    assert rebased.generation == prefix.generation+1
+    assert rebased.history == prefix.history and rebased.amplitude == prefix.amplitude
+    np.testing.assert_array_equal(rebased.shell_frames, prefix.shell_frames)
+    for name, value in history_before.items():
+        np.testing.assert_array_equal(value, native_state(analysis)[name])
+    rebased_raw = analysis.checkpoint()
+    assert resumed.checkpoint() == rebased_raw
+    rebased_metadata, rebased_arrays = decode_snapshot(analysis, rebased_raw)
+    assert rebased_metadata['chart_events'] == 1
+    assert not np.any(rebased_arrays['q'][:analysis._shell_count].reshape(-1,6)[:,3:])
+    np.testing.assert_array_equal(rebased_arrays['shell_anchors'], prefix.shell_frames)
+    replayed = owner(request, definition)
+    compare(rebased, replayed.restore(rebased_raw))
+    assert replayed.checkpoint() == rebased_raw
+    with pytest.raises(ValueError, match='stale or invalid'):
         analysis.rebase_rotations(prefix.generation)
-    assert analysis.checkpoint() == saved
+    assert analysis.checkpoint() == rebased_raw
     final = analysis.solve(DIRECTION, (targets[1],), **kwargs)
     continued = resumed.solve(DIRECTION, (targets[1],), **kwargs)
+    continued_replay = replayed.solve(DIRECTION, (targets[1],), **kwargs)
     compare(final, continued)
-    assert analysis.checkpoint() == resumed.checkpoint()
+    compare(final, continued_replay)
+    assert analysis.checkpoint() == resumed.checkpoint() == replayed.checkpoint()
     assert final.free_equilibrium_ratio <= 1e-8 and final.constraint_max <= 1e-9
     assert not final.production_qualified
     support = final.support_reactions[:analysis._shell_count].reshape(-1, 6)
