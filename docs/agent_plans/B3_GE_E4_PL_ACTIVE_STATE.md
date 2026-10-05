@@ -69,10 +69,19 @@ explain this diagnostic difference. On this quadratic continuum trace only,
 quarter integrals are exact linear pullbacks of strong station gaps; strong
 kernel is contained in weak kernel. This does not map arbitrary native broken
 director sides or establish physical accuracy/convergence/stability.
-Next same-owner20min READ decision: inspect actual body/section/trace contracts
-and saved fields to choose the smallest body-reduction/trace discriminator.
-No edits, new solves, external/native rerun, F03 or automatic refinement in that
-assignment. Numerical scope must be adopted explicitly after its findings.
+Read decision COMPLETE: geometry/load/section EA/EI/offsets/intended supports
+match; reduced Q4/director/beam bodies differ from full3D. No pullback defect
+established. Native saved scalar calibration has no full q,density or body energy,
+so it cannot localize the difference. Adopt ONE common-density body-port probe:
+saved continuum lambda/K/U; native loads f+Cn.T*lambda versus solid f-Cr.T*lambda.
+Original shell clamp; beam rigid gauge only after six rigid-load pairings pass.
+Keep native retained saddle/material stationarity, report physical work/energy,
+gauge reactions and saved continuum pointwise/weak gaps. At most TWO new native
+body RHS, not a coupled calibration replay; no load balancing or artificial support.
+Outcome directs shell-port,beam-port or interface-redistribution investigation;
+does not isolate constitutive laws or qualify accuracy. Same owner NEW probe
+script/test/doc/raw only,50min/final10 reserve, immutable installed baseline wheel.
+Source design may proceed; numerical launch awaits material-owner slot release.
 Matched slice27fc6564; weak slicee51ae173 with housekeeping repairfdd5c9dd.
 Any later external deck needs separate authority and physical density recovery.
 
