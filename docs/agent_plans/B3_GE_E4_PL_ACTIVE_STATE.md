@@ -53,12 +53,20 @@ fibre alpha advances to1.906638e-6; shell alpha0. Four rejected attempts exhaust
 backtracking while constraint gaps remain <=9.85e-13. Simultaneous yielding gate
 NOT met. Prefix/runtime/attempt inventories preserved; do not silently replace
 fixture or infer a physical limit point.
-Next: rich actual-update tangent at fixed accepted .284375 predecessor (rotations,
-retained force/moment/multipliers, branch consistency, finite-difference plateau)
-and recovery/atomic snapshot controls. Derivative defect -> isolate/repair;
-passing derivative -> identify global equilibrium obstruction, no automatic sweep.
-Owner holds numerical lease; no new continuation adopted. Ordinary connected
-checks remain within existing90min/final15 reserve. Root owns Git/adoption/review.
+Rich actual-update tangent at fixed accepted .284375 predecessor PASSES:
+rotations/retained forces/moments/multipliers, same branch masks and all three
+errors <=5.14e-8. Freshrestore/cancel/guard atomicity/stale checks pass. This does
+not validate the rejected Newton trial, whose state was not saved before exit.
+Root adopts ONE pinpoint .284375->.3125 replay, unchanged law/controls/runtime,
+to retain failed trial R/K/step/candidates/branches and test linear-step residual,
+actual-update derivative and troublesome-row merit slope. Defect -> repair;
+otherwise return exact obstruction without sweep or physical-limit claim.
+Owner holds numerical lease; no continuation beyond this pending load adopted.
+Ordinary connected checks stay in existing90min/final15 reserve; root owns
+Git/adoption/review. Independent non-author material review running, no jobs.
+Review finding: linear JSON restore omits new-policy translation-only load guard;
+matching-identity checkpoint can bypass solve admission. Same owner repairing
+before mechanics/publication with atomic-refusal coverage; not yet verified.
 
 Material V1 lifecycle failure used unintended global NumPy fallback due sandbox
 CI read denial; no intended-CI acceptance or physical inference. Exact elevated
