@@ -1,56 +1,57 @@
 # Current state - 5 October 2026
 
-Full Revision8 goal ACTIVE. Previous goal turn PROGRESS (tested state/codec
-prerequisite); this turn delivers the installed native plastic all-S3 controller.
-Canonical goal/plan/matrix remain adjacent; full G0-G6/F01-F13/V01-V28/B01-B18
-and all final requirements remain mandatory and incomplete.
+Full Revision8 goal ACTIVE; complete G0-G6/F01-F13/V01-V28/B01-B18 remain
+mandatory and incomplete. Previous goal turn PROGRESS (Mistral guidance);
+current turn preserves installed mixed yielded-prefix evidence and chooses the
+next implementation contract. Canonical goal/plan/matrix adjacent.
 
-Root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
-branch codex/stiffened-main-reconcile-20261001; source parent c06326e0.
-ANYfem experimental consumer remains9faed76 unchanged. Product/evidence committed
-as36418e7804ca6f719c9e6b50499be92b028c20eb; scoped122file proof passed.
+Repository C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
+branch codex/stiffened-main-reconcile-20261001; parent189ebb84.
+ANYfem experimental consumer9faed76 unchanged. No product source changed.
 
-## Delivered behavior
+## Delivered behavior and decision
 
-Native POINT shell-J2 all-S3 fixed translation controller now supports actual
-further shell plasticity, authoritative accepted/origin blobs, physical origin
-q/anchors, exact same-predecessor replay, separate S3 recovery and atomic restart.
-Q4-S3 numeric arrays/recovery split; mixed dormant binding/rollback tested.
-Distinct checkpoint/controller identity; force/default identities unchanged.
-Unrebased ordinary dead-translation seed, fixed targets only. Experimental,
-not qualified. No staged/external/chart/event/adaptation/arc extension.
-Installed39PASS264.03s; public all-S3 and unchanged ANYfem experimental case/
-project roundtrip, exact prefix restore and continued checkpoints PASS.
-All520 source identities match; actual pools1/JIToff, whole271.84s/216219648B,
-one numerical worker under600s/2GiB. Raw adjudication binds source/wheel/consumer.
-Supporting same-family review clean; independent scientific acceptance OPEN.
-No numerical or review job live; installed session28129 terminal exit0.
+Native POINT all-S3 shell-J2 fixed displacement already passed installed39 and
+public/consumer continued restart. New actual mixed Q4/S3 yielded FIRST-QUARTER
+prefix passes installed1 plus ANYfem experimental case/project reopen/recovery,
+exact restore, forged-history atomic rejection and cancellation. Actual Q4/S3
+alpha9.23834e-6/1.07599e-5/8.06036e-6; eq5.61421e-10/gap2.92921e-21.
+Fibres elastic; no simultaneous S3/fibre flow claim. Experimental/not qualified.
+Wheel4e9bb8b and unchanged consumer626f27b6; all520 source hashes exact.
+Installed4.27s/185315328B, actual pools1/JIToff/one numerical job under600s/2GiB.
 
-## Failures and next action
+Mixed nominal single-step and subsequent four-quarter history FAILED: programme
+accepted quarter then failed half target; STOP both loading slices. Captured
+actual-update differences decrease with h, but no passing plateau established.
+Accurate scaled/refined border solve does not resolve smallest-step merit
+increase. Do not adopt it as a route fix. Mis-scaled ancillary
+relative_direction_change field excluded; raw bytes preserved. No formulation,
+stability or equilibrium inference from failed states.
 
-Mixed active plastic continuation OPEN: unchanged .05 force seed FAILED before
-control; zero/50N-equivalent displacement converged but S3 inactive; nominal
-1000N-equivalent displacement FAILED on first step. STOP those loading slices.
-Dormant binding/rejection coverage does not replace active mixed evidence.
-S3/fibre simultaneous flow unproven. Other parked generalized-seed, S3 unload,
-coupled loaded-chart and native80 convergence failures remain OPEN unchanged.
-NEXT: assess the actual failed
-mixed corrector detail and same-predecessor directional derivative in ONE bounded
-discriminator before choosing repair or an engineering load programme. No blind
-load/curve/budget sweep. Reuse completed all-S3/consumer workflow.
+NEXT: inspect and derive native admission to the EXISTING adaptive displacement
+controller, bounded cutback and checkpointed work, without a new framework or
+changed globalization/physics/tolerances. This changes declared integration
+history; never claim parity with failed single/quarter routes. Retain native
+chart/event/external exclusions and legacy defaults. Implement and verify the
+complete admitted lifecycle slice, rather than another fixed-step refinement.
+Current public native admission remains fixed-target only.
 
-## Evidence and authority
+## Evidence, open scope and authority
 
-Raw r8-native-plastic-s3-displacement-dev-20261005-v1, adjudication-v1.md and
-installed-runtime-v1.json; exact failed source snapshots/controller-source-v1/v2/v3.
-Current/history notes archived; protected report/matrix prefixes preserved.
-No push/main merge/publication/contact-worker communication. Mistral/local
-unavailable current task; no repeated probes. Max3workers/ONE numerical job;
-tighter600s/2GiB/affinity1/pools1/JIToff unchanged.
+Raw .qualification/b3-ge-e4-pl/r8-native-mixed-j2-displacement-diagnosis-20261005-v1;
+results-v1.md, program-result-v1.json (FAILED), installed-prefix-result-v1.json,
+linear-check-result-v1.json, preserved before-final-v1. New regression fixture is
+exact accepted-quarter checkpoint; successful prefix does not complete history.
+Supporting same-family review clean; different-family scientific acceptance OPEN.
+Prior all-S3 raw r8-native-plastic-s3-displacement-dev-20261005-v1 retained.
+Other generalized-seed/S3-unload/loaded-chart/native80 convergence failures remain.
+No numerical job live. No push/main merge/publication/contact-worker communication.
+Mistral/local unavailable current task; do not repeatedly probe. Max3workers;
+ONE numerical job; tighter600s/2GiB/affinity1/pools1/JIToff unchanged.
 FormalF03 UNCONSUMED: never execute/copy/substitute
 scripts/b3_e4_f03_c1_fy_supported_reference.py,
 SHA c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
 Never inspect/copy/archive us3-modal-canary(credentials); no Get-CimInstance.
-Frozen G3c guard needs reviewed lease; no bypass/replay. Complete external,
-scale/platform, mechanics/material/load/stability/capacity, consumer, independent
-acceptance and coordinated release obligations remain OPEN.
+Frozen G3c guard needs reviewed lease; no bypass/replay. Full connection,
+materials/chart/loads/stability/capacity, scale/platform/external/consumer,
+independent acceptance and coordinated release obligations remain OPEN.
