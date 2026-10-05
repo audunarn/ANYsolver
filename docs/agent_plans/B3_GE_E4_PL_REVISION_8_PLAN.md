@@ -1282,3 +1282,15 @@ plastic shell records; detailed outcomes and retained failures are in the groupe
 Mandatory CalculiX row, connection/capacity and aggregate acceptance remain OPEN.
 Next: justified restricted CalculiX representation and actual material-output
 comparison, without reopening closed connection/refinement campaigns.
+
+### 5 October - restricted CalculiX evidence and closed diagnostic route
+Derived SPRING2 half-cell axial work and CPS4 elastic controls pass on pinned
+CCX2.23. The eight-target direct plastic history remains incomplete: default
+v3 fails first unloading at iteration4; bounded heuristic diagnostic v4 still
+cycles and fails at iteration28. Nominal IC24 was not effective; late IP25 may
+activate, with no accepted unloading endpoint. Do not repeat/enlarge this route.
+Next: source/evidence diagnosis of predictor, signed load change, committed
+predecessor restoration and tangent branch before another physical run.
+Raw failures and exact source snapshots preserved in the CCX restricted-dev
+root; grouped results carry exact execution identities. No E04/G4D, connection,
+complete installed-graph or different-family acceptance claim follows.

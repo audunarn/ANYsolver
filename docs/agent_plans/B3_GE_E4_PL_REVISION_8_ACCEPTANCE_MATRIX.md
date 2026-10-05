@@ -2786,3 +2786,12 @@ plastic shell records; detailed outcomes and retained failures are in the groupe
 Mandatory CalculiX row, connection/capacity and aggregate acceptance remain OPEN.
 Next: justified restricted CalculiX representation and actual material-output
 comparison, without reopening closed connection/refinement campaigns.
+
+### 5 October - restricted CCX development evidence, aggregate unchanged
+Pinned SPRING2 axial and elastic CPS4 controls PASSED at development scope.
+Restricted nonlinear external history IMPLEMENTED_NOT_QUALIFIED: five accepted
+loading steps, failed first unloading in v3 and v4 (4/28 iterations). No complete
+response comparison; no E04 closure. Effective IC bound not demonstrated; late
+residual-switch exclusion not established in v4. Historical failures retained.
+Source/parser focused checks and supporting OpenAI review do not supply the
+required different-family acceptance. All aggregate pending rows remain pending.

@@ -1,7 +1,7 @@
 # Current state - 5 October 2026
 Full Revision 8 goal ACTIVE; aggregate G0-G6/F01-F13/V01-V28/B01-B18 incomplete.
-Previous goal turn PROGRESS: AGENTS implementation-ownership policy updated.
-Current turn PROGRESS: executed restricted nonlinear material comparison.
+Previous goal turn PROGRESS: committed executed nonlinear material reference d2b4f6ef.
+Current turn PROGRESS: actual CCX controls pass; fixed-increment unloading fails and rules out automatic iteration extension. Full external history remains incomplete.
 
 ## Identity and delivered behavior
 Root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
@@ -32,7 +32,17 @@ Final diff review confirms no changed physical solve/material equations.
 Raw .qualification/b3-ge-e4-pl/r8-restricted-nonlinear-reference-dev-20261005-v1.
 Next: mandatory CalculiX restricted nonlinear work/material comparison, with
 actual output and a justified exact reduced axial representation. No product
-physics changes in this slice; coherent harness/evidence locally delivered.
+physics changes in preceding slice; preceding committed reference HEAD d2b4f6ef; current tooling identity is bound by Git HEAD and saved source hashes.
+New CCX owner: scripts/r8_e04_ccx_restricted_membrane.py + matching test/doc.
+Read contract review supports exact SPRING2 axial reduction k=EA/half-length,
+actual offset nodes retained; original CPS4 z auto-restraint not duplicated.
+Actual S/E/PEEQ, monotone plastic history and ordered eight steps required.
+DAT rounding may limit tight external balance verification; response agreement
+and balance observability remain separate. No changed scientific tolerances.
+Prospective decision .qualification/b3-ge-e4-pl/
+r8-ccx-restricted-nonlinear-dev-20261005-v1/decision.md. No numerical job live.
+Actual CCX v3: source19PASS; spring and elastic CPS4 controls PASS. Full direct history accepted steps1-5 but failed unloading step6 at iteration4 (exit201).
+Final source-v5 23PASS(.42s), reviewed failure parser; v4 source21PASS; full-only controls I0/IR/IP25, IC24 still failed at step6/28 iterations, with residual1915%/2800% two-cycle. Nominal IC24 was not enforced; late relaxed criterion may activate after25, with no accepted endpoint. Stop this route; next identify a concrete predictor/constitutive-tangent explanation before another physical run. Preserve raw v3/v4 failures and exact snapshots.
 All numerical jobs terminal; no roof/connection/capacity qualification follows.
 
 ## Preserved boundaries
@@ -43,4 +53,4 @@ substitute scripts/b3_e4_f03_c1_fy_supported_reference.py. Never inspect/copy/
 archive us3-modal-canary; no Get-CimInstance. FrozenG3c reviewedlease required.
 Protected evidence and historical failures unchanged. No automatic refinement,
 closed pressure/BL5/native80 campaign replay or adaptive1.01 retry.
-Archived preceding active note byte-exact: history/PRE_RESTRICTED_REFERENCE_20261005.md.
+Archived preceding active note byte-exact: history/PRE_CCX_RESTRICTED_20261005.md; earlier reference checkpoint history remains unchanged.
