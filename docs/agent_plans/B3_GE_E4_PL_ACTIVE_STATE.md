@@ -7,7 +7,8 @@ buckling through source checks, an installed wheel and a public example.
 
 ## Identity and delivered behavior
 Canonical root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
-branch codex/stiffened-main-reconcile-20261001; product ec4bd257; evidence HEAD6666cd03.
+branch codex/stiffened-main-reconcile-20261001; product/evidence2f68f681;
+earlier arc product ec4bd257 and inverse evidence6666cd03 preserved.
 ANYfem9faed76 unchanged. No main/push/publication/contact-worker communication.
 Native arc guard, supplemental OpenSees material comparison and prior delivered
 GE/B2/consumer behavior remain as recorded in linked history/results/matrix.
@@ -49,8 +50,8 @@ Supporting independent full-slice Read review found no blocking defect. Its
 coverage gaps were repaired by the same owner, product bytes unchanged:
 source-v2/installed-v2 18PASS each(4.60/4.50s), material rejection, iterative
 cancellation, backend/ARPACK failures and model guard. Independent delta review
-also leaves no identified defect; corrected stale documentation. Preserve exact
-evidence and scoped local commit, then remaining conservative spectral coverage
+also leaves no identified defect; corrected stale documentation. Exact source,
+evidence and reviews committed2f68f681. Next: remaining conservative spectral coverage
 under adopted contracts. No numerical job live; do not repeat closed campaigns.
 Root reviewed chart corrections, sparse representation and actual evidence;
 OpenAI supporting review does not supply different-family scientific acceptance.
