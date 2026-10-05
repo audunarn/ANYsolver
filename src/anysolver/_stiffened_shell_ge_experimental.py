@@ -1201,6 +1201,12 @@ class ExperimentalGEAnalysis:
                 "native displacement chart continuation; no staged/external seed, event policy or arc qualification")
             capabilities["adaptive_displacement_control"] = "experimental_native_point_translation_halving_v1"
             capabilities["displacement_chart_rebase"] = "experimental_native_point_material_chart_v1"
+            if getattr(self,"_external_context",None) is None:
+                capabilities["arc_length"] = "experimental_native_point_material_tangent_plane_v1"
+                capabilities["arc_length_limits"] = (
+                    "affine nodal dead translations; fixed physical metric and free translation orientation; "
+                    "ordinary/displacement endpoint or compatible arc prefix; no branch switching, "
+                    "arc chart rebase or limit-point qualification")
         if self._bl5_shell_material:
             capabilities["displacement_control"] = "experimental_nodal_translation_seeded_v1"
             if getattr(self,"_external_context",None) is None:
@@ -1267,7 +1273,8 @@ class ExperimentalGEAnalysis:
             details["footprint_finite_numerical_policy"] = stable_s3_policy_descriptor()
         if self._modal_only:
             details["modal_boundary_policy"] = self._definition.modal_boundary_policy
-        if self._bl5_shell_material or self._curved_reference:
+        from ._stiffened_shell_affine_endpoint import is_native_point_material
+        if self._bl5_shell_material or self._curved_reference or is_native_point_material(self):
             details["arc_metric_node_order"] = (tuple(("shell",int(i)) for i in self._shell_ids)
                 +tuple(("beam",int(i)) for i in self._beam_ids))
         return details

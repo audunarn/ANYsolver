@@ -5,6 +5,10 @@ accepted Q4 shell J2 / generalized BL5 states, and separately selected
 `CURVED_Q4_POINT_REFERENCE_V1` elastic point states or
 `CURVED_Q4_POINT_MATERIAL_REFERENCE_V1` generalized-beam material point states
 (with optional shell J2), with affine nodal dead forces.
+The native flat point route also admits the same Q4/S3 and generalized/physical
+fibre material combinations as its displacement controller, under their existing
+numerical policies. Its tested material endpoints include Q4/generalized J2 and
+all-S3/fibre J2, with unchanged fixed accepted predecessors.
 It is experimental and unqualified. It does not establish stability, a first
 limit point, branch uniqueness, mesh-independent continuation or capacity.
 Other materials, external load contexts, moments and chart rebasing on this
@@ -82,6 +86,22 @@ are stored only when the definition admits that material. Restore replays the
 actual endpoint update before atomic publication. Elastic checkpoint identities
 are unchanged. Bounded loading/unloading and restart evidence does not establish
 material limit loads or the programme's full continuation envelope.
+
+The native point route has a distinct tangent-plane policy and explicit fixed
+shell-chart metadata. Native beam history arrays and paired accepted/predecessor
+S3 serialized states use the existing mechanical codecs. A validated native
+displacement endpoint may be rebased before it becomes an arc seed; rebasing an
+already accepted arc history remains unsupported. An unfinished adaptive
+displacement schedule cannot itself become an arc history: using its accepted
+mechanical endpoint is an explicit change of controller, not completion of the
+remaining displacement targets.
+
+Native trials use the existing ordinary backtracking route and report zero
+generalized branch-event evaluations. Legacy BL5 event selection is unchanged.
+Restoration validates the actual material update, physical supported poses and
+the predecessor bindings before atomic publication. The native regression is
+`tests/test_stiffened_shell_native_arc.py`. Its bounded restart/cancellation
+checks do not demonstrate a first limit point or a descending branch.
 
 Other limits include the explicit per-step budgets. These development limits do not fulfill the
 programme's scale or capacity requirements. The standing test is

@@ -2690,3 +2690,32 @@ preserve legacy branch-event behavior, native ordinary backtracking and stable
 S3 arithmetic admission. First-limit-point/descending-branch evidence is separate
 and mandatory. Full G0-G6/F01-F13/V01-V28/B01-B18 remain active/incomplete.
 Formal F03 unconsumed; no protected authority renewed, no main/push/release.
+
+
+## 5 October 2026 - native material arc development
+Delivered native point tangent-plane continuation through the existing public
+facade: native generalized/fibre history adapters, Q4/S3 accepted/predecessor
+replay, charted displacement seeds, separate arc policies, ordinary native
+backtracking, material recovery, cancellation and exact checkpoint restart.
+Legacy BL5 event/identity paths and physical metric/update equations unchanged.
+Source initial6PASS28.83s; final native+legacy6modules22PASS132.85s. Installed-v1
+6PASS/1 test-only failure retained: stableS3 negative checked absence of optional
+arc field by direct attribute. Mechanical checks passed before that assertion.
+Corrected affectedtest installed-v2 1PASS and public nativeS3/fibre example2steps
+with exact restore/continue checkpoint agreement; no repeated unchanged6 tests.
+Installed coverage all7 native cases, unchanged source/wheel byteidentity all520
+package modules; solverwheel e66a4da03a9a2af32a671931d7dc0ff9299d1f943467384fa5707bf5271f742e,
+unchangedANYfem626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f.
+Public example eq4.12620e-11/gap3.01655e-20; finalcheckpoint
+04364f67fa8d9571b882d9042034b3720003cd576dfb2661e1bc322c03ddcf4d.
+Installed-v2 complete7.30s/187277312B/max1/pools1/JIToff. No speedup/yielding/
+limitpoint claim for example. Supporting OpenAI review no actionable source
+finding; added stable elastic S3 ordinary seed and historical-policy rejection
+before trial/assembly. Required scientific/different-family acceptance OPEN.
+Raw .qualification/b3-ge-e4-pl/r8-native-arc-dev-20261005-v1 preserves failedtest,
+actual versioned source/test/runtime records and installed outputs.
+NEXT: define one mechanically justified native turning-point fixture and a
+bounded physical continuation/restart check. Derive its expected turning mode,
+supports/load/section idealization before executing; no broad parameter sweep.
+Small arc advances do not close G4D. Connection/work/multiplier and all remaining
+programme obligations remain mandatory. FormalF03 untouched; no main/push/release.

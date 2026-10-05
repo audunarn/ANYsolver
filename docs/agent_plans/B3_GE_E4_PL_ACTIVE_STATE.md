@@ -1,50 +1,50 @@
 # Current state - 5 October 2026
-Full Revision8 goal ACTIVE; all G0-G6/F01-F13/V01-V28/B01-B18 obligations retained.
-Current goal turn PROGRESS: native material chart slice implemented and installed
-evidence reconciled; native arc implementation now assigned under fixed contracts.
+Full Revision8 goal ACTIVE; G0-G6/F01-F13/V01-V28/B01-B18 mandatory/incomplete.
+Current goal turn PROGRESS: installed native material chart and arc routes.
 Root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
-branch codex/stiffened-main-reconcile-20261001; HEAD5b0feb22 plus owned chart
-source/test/docs/evidence changes. Inspect actual Git state before continuing.
+branch codex/stiffened-main-reconcile-20261001; chart commit99f479cb plus scoped
+native arc source/test/example/docs/evidence. Read actual HEAD/status on resume.
 ANYfem9faed76 unchanged. No main/push/publication/contact-worker communication.
 
-## Delivered behavior and evidence
-Native point displacement chart rebase preserves physical frames, loads, beam
-retained variables and fixed accepted/predecessor material states. New chart
-policy; zero-event identities unchanged. Q4/generalizedJ2 and allS3/fibreJ2
-fixtures exercised actual rebase, stale generation, pre/late cancellation,
-corrupt endpoint/predecessor anchors, exact restore and continued pending targets.
-Source2PASS; installed24PASS/3 obsolete-error-regex failures retained in v1,
-corrected/new6PASS in v3 on same wheel: all27 impacted cases covered across runs.
-Actual ANYfem experimental case/project save-reopen and fresh chart restore/
-exact continuation passed both models. Source/wheel520 hashes exact at execution.
-Solverwheel6b25593b; consumer626f27b unchanged; full hashes in artifact-v1.json.
-Spatial residual invariance and actual additive-update derivative plateaus pass;
-no matrix symmetrization, material transport tolerance or physical law changes.
-Raw .qualification/b3-ge-e4-pl/r8-native-displacement-chart-dev-20261005-v1
-contains historical failures, separate terminal-v1 disposition, final-v3 outputs,
-supporting review and archived preceding note. No measured speedup/qualification.
+## Delivered and evidence
+Native material displacement chart rebase: actual Q4/generalizedJ2 and allS3/
+fibreJ2 fixtures preserve same physical configuration, accepted/predecessor
+materials, serializedS3 and load history; distinct chart policy and atomic state.
+Installed coverage all27 impacted cases across preserved failed-v1 and corrected
+focused-v3; actual ANYfem chart restore/continue passed both models. Raw
+.qualification/b3-ge-e4-pl/r8-native-displacement-chart-dev-20261005-v1.
 
-## Next action and ownership
-Root reconciles chart evidence/docs and independently reviews integrated source.
-Worker /root/native_arc_implementation owns only arc_control/trial/checkpoint/
-publication modules and new native_arc test; implementing, no numerical runs
-authorized yet. Separate native identities/material+S3 replay, chart seed and
-ordinary native backtracking; preserve legacy arc behavior. Metric already
-excludes algebraic force-like variables; nodal-dead affine pattern is actual
-load derivative. Root owns capability reporting. Inspect agent status before
-editing worker files. No numerical job currently live.
-Then run bounded focused native/legacy arc checks, repair by impact, installed
-verification at the meaningful integration boundary. Native first-limit-point/
-descending-branch acceptance remains separate mandatory work, not implied.
+Native point tangent-plane arc now reuses existing physical metric/sparse border:
+retained/resultant/multiplier variables stay in equilibrium but out of path norm.
+Generalized/fibre and Q4/S3 material codecs/recovery, charted displacement seeds,
+fixed predecessors and exact restart; native ordinary backtracking, legacy event
+logic unchanged. Source6PASS then final22PASS native+legacy checks. Installed
+v1 retains6PASS/1 test-only optionalattribute failure; corrected stableS3 case
+passedv2 on samewheel, plus runnable public2step restart. Installed all7 native
+cases covered; actual520 package bytes/imports bound, consumer unchanged.
+Solverwheel e66a4da0 (fullhash artifact-v1.json); public example eq4.12620e-11/
+gap3.01655e-20, exactcheckpoint04364f67. No example yielding/capacity claim.
+Raw .qualification/b3-ge-e4-pl/r8-native-arc-dev-20261005-v1; installedv2
+7.30s/187277312B/max1. Supporting review no source defect; stable elastic S3/
+historical mismatch coverage added. No numerical laws/defaults/tolerances changed.
 
-## Scientific and execution boundaries
-Full connection/multiplier, physicalwork, external/scale/platform/stability/
-capacity/consumer and independent acceptance remain OPEN. Parked failed histories
-retain their dispositions; this small chart slice does not repair them.
-Mistral/local cached unavailable; no repeated probes. Supporting OpenAI review
-does not satisfy independent-model-family acceptance. Max3 workers; ONE numerical
-job; tighter600s/2GiB/affinity1/pools1/JIToff. FormalF03 UNCONSUMED: never execute/
+## Next action
+Define one mechanically justified native first-limit-point fixture and bounded
+descending-branch/restart check. Derive expected turning mode, geometry/supports,
+loads and section idealization first; use one discriminator, not a parameter
+sweep. Small accepted arc advances do not establish G4D. Keep the unresolved
+physical connection/work/multiplier acceptance visible; do not reopen parked
+pressure/axial/curvature campaigns without an actual new discriminating need.
+All arc workers terminal; no owned numerical job live. Source and installed
+checks terminal. Root retains integration and scientific decisions.
+
+## Boundaries
+Full connection/multiplier, external/scale/platform/stability/capacity/consumer
+and independent acceptance remainOPEN. Historical failures/dispositions retained.
+Mistral/local cached unavailable, no repeated probes; OpenAI supporting review
+does not establish different-family acceptance. Max3workers; ONE numericaljob;
+tighter600s/2GiB/affinity1/pools1/JIToff. FormalF03 UNCONSUMED; never execute/
 copy/substitute scripts/b3_e4_f03_c1_fy_supported_reference.py SHA
 c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
 Never inspect/copy/archive us3-modal-canary; no Get-CimInstance.
-FrozenG3c requires reviewedlease; no bypass/replay. Full programme remainsACTIVE.
+FrozenG3c requires reviewedlease; no bypass/replay. Full programme ACTIVE.

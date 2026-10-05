@@ -52,8 +52,13 @@ def solve(owner,actions,control,*,steps=1,cancellation_token=None,on_accepted=No
         raise ValueError('arc control and bounded accepted-step count required')
     if on_accepted is not None and not callable(on_accepted):raise ValueError('accepted observer must be callable')
     driver=owner._finite_driver
-    if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False)) or driver is None or driver._accepted is None:
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    native=is_native_point_material(owner)
+    if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or native) or driver is None or driver._accepted is None:
         raise ValueError('arc continuation requires an accepted coupled Q4/J2 BL5 or admitted curved point state')
+    if native:
+        from ._stiffened_shell_arc_checkpoint import require_native_seed
+        require_native_seed(owner,driver)
     if getattr(owner,'_external_context',None) is not None or driver._external is not None:
         raise ValueError('arc continuation admits affine nodal dead translations only')
     adaptive=getattr(owner,'_displacement_adaptive',None)

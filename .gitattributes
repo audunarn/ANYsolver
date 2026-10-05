@@ -295,3 +295,12 @@ tests/data/native_s3_fibre_history/** -text
 
 /tests/test_stiffened_shell_native_displacement_chart.py -text
 /.qualification/b3-ge-e4-pl/r8-native-displacement-chart-dev-20261005-v1/** -text -whitespace
+
+/tests/test_stiffened_shell_native_arc.py -text
+/examples/stiffened_shell_native_arc.py -text
+/.qualification/b3-ge-e4-pl/r8-native-arc-dev-20261005-v1/** -text -whitespace
+/src/anysolver/_stiffened_shell_arc_control.py -text
+/src/anysolver/_stiffened_shell_arc_trial.py -text
+/src/anysolver/_stiffened_shell_arc_checkpoint.py -text
+/src/anysolver/_stiffened_shell_arc_publication.py -text
+/docs/stiffened_shell_arc_development.md -text

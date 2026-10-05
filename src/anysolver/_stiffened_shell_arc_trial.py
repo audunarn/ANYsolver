@@ -151,9 +151,14 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
     from ._stiffened_shell_branch_event_trial import trial_fraction
     owner=driver.owner
     n=owner._K.shape[0]; nodal=owner._shell_count+6*len(owner._beam_ids)
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    native=is_native_point_material(owner)
+    if native:
+        from ._stiffened_shell_arc_checkpoint import require_native_seed
+        require_native_seed(owner,driver)
     size=n+len(driver._state.multipliers)
     if (type(metric) is not PhysicalChordMetric or len(metric.weights)!=nodal//6
-            or not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False)) or driver._accepted is None
+            or not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or native) or driver._accepted is None
             or driver._external is not None):
         raise ValueError("accepted admitted arc owner with fixed physical metric required")
     if (not np.isfinite(radius) or radius<=0. or type(orientation) is not int or orientation not in (-1,1)
@@ -255,7 +260,8 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
             raise ArcTrialFailure("local arc Newton limit",trial_snapshot())
         step,delta=bordered_path_correction(evaluation[1],evaluation[0],direction,gradient,gap,free);solves+=1
         record=dict(cell_evaluations=0);events.append(record)
-        initial,_=trial_fraction(driver,state,step,beam,current,record)
+        initial=1.
+        if not native:initial,_=trial_fraction(driver,state,step,beam,current,record)
         old=merit(state,evaluation)
         for backtrack in range(max_backtracks+1):
             amount=initial*.5**backtrack
