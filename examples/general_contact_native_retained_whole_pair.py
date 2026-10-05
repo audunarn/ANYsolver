@@ -37,7 +37,8 @@ from anysolver.general_contact.native_retained_whole_pair import (
 def analysis(*,physical_fibres=False,plastic_fibres=False,separation=0.13,force=-0.05,
              targets=(0.0,0.1,0.2,0.3),line_stiffness_n_per_m2=100.0,
              gap_tolerance_m=1e-3,gap_step_control=False,reference_rise_m=0.0,
-             certify_curved_ownership=False,initial_trial=None) -> NativeRetainedRoundPairAnalysis:
+             certify_curved_ownership=False,initial_trial=None,
+             reuse_target_trials=False) -> NativeRetainedRoundPairAnalysis:
     if plastic_fibres and not physical_fibres:
         raise ValueError('plastic fibre pair requires the physical-fibre section family')
     if (isinstance(reference_rise_m, (bool, np.bool_))
@@ -117,6 +118,7 @@ def analysis(*,physical_fibres=False,plastic_fibres=False,separation=0.13,force=
         maximum_swept_intervals=128,
         gap_step_control=gap_step_control,
         initial_trial=initial_trial,
+        reuse_target_trials=reuse_target_trials,
     )
 
 

@@ -118,9 +118,11 @@ class NativeRetainedRoundPairAnalysis:
                  contact: NativeRetainedSelectedCellPair | NativeRetainedWholeCurvePair, *,
                  gap_tolerance_m: float, equilibrium_tolerance: float,
                  maximum_swept_intervals: int, gap_step_control: bool = False,
-                 initial_trial: dict | None = None):
+                 initial_trial: dict | None = None, reuse_target_trials: bool = False):
         if type(gap_step_control) is not bool:
             raise TypeError('native pair gap step control must be bool')
+        if type(reuse_target_trials) is not bool:
+            raise TypeError('native pair repeated target trial control must be bool')
         if (type(definitions) is not tuple or len(definitions) != 2
                 or any(type(item) is not NativeBeamDefinition for item in definitions)):
             raise ValueError("native pair owner needs two exact beam definitions")
@@ -188,6 +190,9 @@ class NativeRetainedRoundPairAnalysis:
         self.equilibrium_tolerance = float(equilibrium_tolerance)
         self.maximum_swept_intervals = maximum_swept_intervals
         self.gap_step_control = gap_step_control
+        self.reuse_target_trials = reuse_target_trials
+        if reuse_target_trials and not self._uses_physical_gap():
+            raise ValueError('repeated native pair trial requires explicit curved physical geometry')
         self.initial_trial = None
         self._trial_state = None
         if initial_trial is not None:
@@ -243,9 +248,15 @@ class NativeRetainedRoundPairAnalysis:
         if self.initial_trial is not None:
             values['initial_trial']=dict(policy='VIRGIN_MODEL_BOUND_RETAINED_TRIAL_DEV_V1',
                                         sha256=sha256(self.initial_trial).hexdigest())
+        if self.reuse_target_trials:
+            values['repeated_target_trial']='LAST_ACCEPTED_SAME_PARAMETER_MECHANICAL_TRIAL_DEV_V1'
         return sha(values)
 
     def _guard(self) -> None:
+        if type(self.reuse_target_trials) is not bool:
+            raise ValueError('native pair repeated target trial setting changed')
+        if self._uses_physical_gap() and self.program is not self.context.program:
+            raise ValueError('native pair bound program changed')
         if self._identity() != self.identity:
             raise ValueError("native pair definition/settings changed")
         if self.contact._fingerprint() != self.contact.identity:
@@ -627,6 +638,36 @@ class NativeRetainedRoundPairAnalysis:
         # publish an accepted target, and origins remain accepted.histories.
         return candidate, None
 
+    def _target_trial_candidate(self, accepted, records, target):
+        """A prior same-parameter mechanical guess with CURRENT material origins.
+
+        records are the validated accepted prefix owned by solve/_restore.
+        No accepted state/history is replaced. The current-to-guess supported
+        path must be admitted before the ordinary Newton/material transaction.
+        """
+        self._guard()
+        self.context._safe_point()
+        if not self.reuse_target_trials:
+            return accepted.mechanical, None
+        if (type(target) is not int or target != accepted.completed_targets
+                or len(records) != target or not 0 <= target < len(self.program.targets)):
+            raise ValueError('repeated native pair trial requires validated preceding prefix')
+        parameter = canonical(self.program.targets[target])
+        matches = [index for index in range(target)
+                   if canonical(self.program.targets[index]) == parameter]
+        if not matches:
+            return accepted.mechanical, None
+        guess = self.context.make(records[matches[-1]]['mechanical'], decoded=True)
+        increment, candidate = self._trial_increment(accepted.mechanical, guess)
+        gap = self._physical_gap(candidate)
+        if gap < -self.gap_tolerance or not self._swept_admissible(
+                accepted.mechanical, increment, candidate,
+                accepted.contact.conservative_lower_gap_m, gap):
+            raise ValueError('repeated native pair trial path is not certified')
+        self._guard()
+        self.context._safe_point()
+        return candidate, None
+
     def solve(self, *, checkpoint: bytes | None = None,
               expected_sha256: str | None = None,
               stop_after: int | None = None, cancellation_token=None) -> NativeRetainedPairRun:
@@ -661,6 +702,8 @@ class NativeRetainedRoundPairAnalysis:
                 prepared_evaluation = None
                 if index == 0 and self.initial_trial is not None:
                     trial, prepared_evaluation = self._initial_trial_candidate(accepted)
+                elif self.reuse_target_trials:
+                    trial, prepared_evaluation = self._target_trial_candidate(accepted, records, index)
                 for iteration in range(self.program.max_iterations+1):
                     if prepared_evaluation is None:
                         residual, tangent, metrics, responses, contact = self._assemble(

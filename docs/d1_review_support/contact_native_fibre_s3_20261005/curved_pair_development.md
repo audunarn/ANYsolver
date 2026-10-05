@@ -259,3 +259,52 @@ response and comparison provenance alongside, exact bytes protected. Source work
 candidate24/worker_handoff.md; build/install/private run raw in candidate25.
 Next actual curved pair opening/recontact and split-restart/history coverage,
 reusing the now demonstrated normal law/virgin trial route; do not keep doubling.
+
+## Curved-pair plastic lifecycle and exact split replay
+
+The existing owner now has explicit reuse_target_trials=False by default. When
+selected, only the last earlier accepted mechanical record at exactly the same
+canonical parameter supplies a disposable guess. CURRENT committed histories
+remain every material origin. The actual current-to-guess exponential path and
+endpoint gap must be certified; refusal preserves the accepted prefix. Optional
+policy binds restart identity, default identities remain, and exact bool/program
+alias guards reject corrupted controls. No plastic or pressure history is imported
+from the old target. Same-family supporting scrutiny found no history-path defect.
+
+One new programme(.05,0,.05), k8000, same beams/radius/load and50um gap:
+- Source press prefix PASS30.492915s/201846784B, independent30yielded returns.
+- Installed opening PASS70.958894s/201076736B: zero contact potential and
+  complete conservative gap+0.900167522mm; independent28unloading yields,
+  incremental dissipation1.066753694e-7J.
+- Installed recontact PASS64.464290s/200077312B: active contact with
+  gap-13.538723830um; independent30CURRENT-origin yields,
+  incremental dissipation7.725368262e-8J.
+- Installed final exact-chain replay plus bound-program refusal PASS2,
+ 37.387503s/198909952B. No solve replay: all three exact records/capsule,
+ earlier prefix records and final mechanical/material state match. Actual full
+ replay residual gives per-beam support+contact+load force/moment balance,
+ normalized errors<=5.8900e-9 against the1e-6gate; vectors retained before assert.
+
+Four focused source control outcomes pass: nonvirgin rejected material/contact
+trial, cancellation, exception rollback, incompatible programme/policy, mutated
+bool and reassigned program. Source time94.569010s includes press. Final test path
+plumbing now uses a portable press fixture for ordinary controls, configurable
+explicit staged evidence directory; it reuses byte-identical input without another
+solve. Prior successful saved-state evidence and all historical failures remain.
+
+The new private wheel6f4bffeb3606083c4f2ee7686e03c5fe3970525c4d35d772181a504f1f11e3a9
+matches528source Python files, no extras/errors. Build/install11.758490/3.990915s.
+All new numerical jobs' runtime/import errors[], JIT disabled, Numba1,pools[1,1].
+Conservative total including artifacts283.129102s<=360s; no deadline reset or
+budget renewal. Staged fresh owners authenticate the identical complete programme.
+Source prefix1 is replayed through the installed package, not solved a second time.
+Portable press/open/recontact fixtures and exact-byte attributes retain the chain;
+[curated measurements](curved_pair_lifecycle.json) link raw candidate26/27.
+
+Development lifecycle/state/reaction coverage is closed for this fixture, not
+spatial/section convergence, engineering acceptance, dynamics or general admission.
+Next enable real native spatial refinement through an explicit multi-element body
+profile, preserving the historical single-element owner, native guards, authoritative
+retained work and complete structural/contact cross blocks. Inspect native binding
+limits first; if that route is structurally barred, identify the exact prerequisite.
+Avoid another fixed-mesh regularization sweep or duplicate prototype.
