@@ -2871,3 +2871,22 @@ sparse packets, checkpoint and coefficient/density/gap recovery.
 Full G4B, remaining materials/shells/attachments/loads, B2 and external/platform/
 scale/consumer qualification remain mandatory OPEN. Continue those obligations
 under adopted contracts, without reopening closed campaigns or narrowing scope.
+
+
+### 5 October - mixed-shell / native-fibre conservative buckling development
+IMPLEMENTED_NOT_QUALIFIED: distinct GEMixedBucklingRequest/result, matching-point
+elastic Q4/S3/mixed shells and generalized/physical-fibre/mixed native families.
+Actual S3 coordinate pullback, full42 retained compliance/high+low, every-fibre
+elastic/history/yield-margin admission. Current captured equilibrium/gap recheck
+with original1e-8/1e-9 criteria now applies to point/BL5/mixed routes; corruption
+and nonfinite cached measures reject before factorization without publication.
+Failed sourcev1/launch preserved; corrected affectedv2:24PASS, guard/seamsv3:22PASS.
+Installed52PASS26.628s, public example/tool PASS, checkpoint unchanged; original
+equation/constraint residuals<=1.0531e-15. Exact423package/import/wheel identities
+verified; wheel9fd1400670a09e6b011f0b307d851b9a79b6c9db0beabaaf7cc8acaecd84de80.
+Source/evidence under r8-ge-mixed-buckling-dev-20261005-v1; supporting independent
+OpenAI full/delta/artifact review clear on tested scope. Different-family
+scientific acceptance, fullG4B, mass/modes/B2/line-fibre/footprint/J2 active-plastic
+coverage, external/platform/scale/consumer and aggregate release remain OPEN.
+No global dense production path, altered physical threshold, spectral
+completeness/lowest-factor/nonlinear limit-load or speedup claim.

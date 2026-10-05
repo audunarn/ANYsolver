@@ -6,6 +6,7 @@ No resultant elimination, SPD whitening, mass or symmetry repair is used.
 from dataclasses import dataclass, field
 from decimal import Decimal, localcontext
 from hashlib import sha256
+from math import ulp
 import json
 import pickle
 
@@ -20,12 +21,14 @@ from ._ge_beam3_pose_joint import _exp_terms
 from ._ge_beam3_p5.algebra import skew
 from ._ge_beam3_p5_seeded.core import canonical
 from ._ge_beam3_retained_generalized import RetainedGeneralizedOperator
+from ._ge_beam3_retained_fibre import RetainedFibreOperator
 from ._stiffened_shell_q4_algorithmic_pullback import POLICY as Q4_POLICY, conservative_components
 from ._stiffened_shell_ge_finite_experimental import _position_pair, _State
 from ._stiffened_shell_b2_q4_panel_experimental import _modal_scaled_residual
 
 POLICY = 'GE_Q4_POINT_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
 LINE_POLICY = 'GE_Q4_BL5_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
+MIXED_POLICY = 'GE_Q4_S3_PHYSICAL_FIBRE_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
 TOLERANCE = 1e-8
 
 
@@ -98,6 +101,21 @@ class GELineBucklingResult(GEPointBucklingResult):
     line_station_gap_modes: tuple = ()
     line_station_metadata: tuple = ()
     density_measure: str = 'existing reference-arclength quadrature; coefficient densities are not physical wrenches'
+
+
+@dataclass(frozen=True)
+class GEMixedBucklingRequest(GEPointBucklingRequest):
+    """Matching-point elastic Q4/S3 and generalized/physical-fibre members."""
+    def __post_init__(self):
+        try:
+            super().__post_init__()
+        except ValueError as exc:
+            raise ValueError('finite positive bounded mixed-buckling controls and accepted generation required') from exc
+
+
+@dataclass(frozen=True)
+class GEMixedBucklingResult(GEPointBucklingResult):
+    policy: str = MIXED_POLICY
 
 
 @dataclass(frozen=True)
@@ -177,7 +195,8 @@ def _matrix_digest(matrices):
 
 def _state_digest(driver):
     return sha256(pickle.dumps((driver._state, driver._shell_origins,
-        driver._beam_origins, driver._pattern, driver._applied_load, driver._load_factor), protocol=5)).hexdigest()
+        driver._beam_origins, driver._pattern, driver._applied_load, driver._load_factor,
+        driver._stable_s3, driver._q4_corrections), protocol=5)).hexdigest()
 
 
 def _model_digest(owner):
@@ -193,22 +212,26 @@ def _model_digest(owner):
         owner._line_samples, owner._line_terms), protocol=5)).hexdigest()
 
 
-def _admit(owner, generation=None, *, lines=False):
+def _admit(owner, generation=None, *, lines=False, mixed=False):
     owner._require_open()
     d = owner._definition
     driver = owner._finite_driver
     if (driver is None or driver._accepted is None or owner._accepted is not None
             or (generation is not None and generation != owner._generation)):
         raise ValueError('current accepted finite state and matching generation required')
-    if (d.q4_pullback_policy != Q4_POLICY or d.shell_reference_policy != 'flat'
-            or not d.shell.q4_elements or d.shell.s3_elements or d.shell.j2_curve is not None
+    if ((d.q4_pullback_policy != Q4_POLICY and (not mixed or bool(d.shell.q4_elements)))
+            or d.shell_reference_policy != 'flat'
+            or (not (d.shell.q4_elements or d.shell.s3_elements) if mixed else
+                not d.shell.q4_elements or bool(d.shell.s3_elements)) or d.shell.j2_curve is not None
             or (not d.lines or not owner._finite_bl5 or
                 any(line.basis not in ('p0', 'continuous_p1_coarse') for line in d.lines)
                 if lines else not d.points or bool(d.lines))
             or d.footprints or d.distributing_footprints
-            or d.finite_distributing_footprints or owner._has_physical_fibre
+            or d.finite_distributing_footprints or (owner._has_physical_fibre and not mixed)
             or driver._external is not None or driver._programme is not None):
         attachment = 'BL5 lines with optional six-pose points' if lines else 'six-pose points'
+        if mixed:
+            raise ValueError('mixed buckling requires matching points, elastic objective Q4/S3 and supported native members with nodal dead translations')
         raise ValueError('accepted buckling requires elastic objective flat Q4/generalized GE '+attachment+' and nodal dead translations')
     if lines:
         from ._stiffened_shell_bl5_local_experimental import BL5LocalOperator
@@ -253,21 +276,22 @@ def _admit(owner, generation=None, *, lines=False):
     if (not np.isfinite(applied).all() or np.any(applied[nodal:] != 0)
             or np.any(applied[:nodal].reshape(-1, 6)[:, 3:] != 0)):
         raise ValueError('conservative buckling admits nodal dead translations only')
-    if driver._accepted.free_equilibrium_ratio > TOLERANCE or driver._accepted.constraint_max > 1e-9:
+    witnesses = (driver._accepted.free_equilibrium_ratio, driver._accepted.constraint_max)
+    if not np.isfinite(witnesses).all() or witnesses[0] > TOLERANCE or witnesses[1] > 1e-9:
         raise ValueError('accepted equilibrium/constraint witness is unresolved')
     for element, _, _ in owner._beam_parts:
-        if type(element.operator) is not RetainedGeneralizedOperator:
+        if type(element.operator) not in ((RetainedGeneralizedOperator, RetainedFibreOperator) if mixed else (RetainedGeneralizedOperator,)):
             raise ValueError('full42 generalized retained member required')
     return driver, applied
 
 
-def capabilities(owner, *, lines=False):
+def capabilities(owner, *, lines=False, mixed=False):
     reason = None
     try:
-        _admit(owner, lines=lines)
+        _admit(owner, lines=lines, mixed=mixed)
     except (ValueError, RuntimeError) as exc:
         reason = str(exc)
-    return dict(policy=LINE_POLICY if lines else POLICY, definition_admitted=reason is None,
+    result = dict(policy=MIXED_POLICY if mixed else LINE_POLICY if lines else POLICY, definition_admitted=reason is None,
         eligible=None if reason is None else False, material_capture_validation_pending=reason is None,
         ineligibility_reason=reason,
         state=('accepted elastic objective Q4/generalized GE BL5 equilibrium with optional six-pose points'
@@ -278,6 +302,11 @@ def capabilities(owner, *, lines=False):
         material_admission='elastic-interior unchanged-history and yield-margin witness checked during capture, before factorization',
         selection='finite positive factors nearest shift; completeness unqualified',
         multiplier='frozen accepted prestress, not a nonlinear limit load', production_qualified=False)
+    if mixed:
+        result.update(state='accepted elastic objective Q4/S3 matching-point native equilibrium',
+            material_admission='unchanged generalized/fibre history, every elastic branch and positive yield margin checked before factorization',
+            coordinates='all shell, native nodal/cell rotations, eighteen resultants/member and point multipliers')
+    return result
 
 
 def _elastic_beam(core, response, origin):
@@ -295,6 +324,39 @@ def _elastic_beam(core, response, origin):
             q = sum(values[i]*core.section._m[i][j]*values[j] for i in range(6) for j in range(6)).sqrt()
             if radius-q <= Decimal.from_float(64*np.finfo(float).eps)*max(Decimal(1), q, radius):
                 raise ValueError('generalized material is on an unresolved yield boundary')
+
+
+def _elastic_fibre(core, response, origin):
+    if canonical(response.history) != canonical(origin):
+        raise ValueError('buckling replay must not advance physical-fibre history')
+    material = json.loads(response.material)
+    if material['cell_identity'] != core.cell.identity:
+        raise ValueError('physical-fibre station cell identity mismatch')
+    with localcontext() as context:
+        context.prec = 80
+        for station, history in zip(material['stations'], origin.stations, strict=True):
+            if history.section_identity != core.section.identity:
+                raise ValueError('physical-fibre station section identity mismatch')
+            for recovered, fibre, row in zip(station['fibres'], core.section.fibres, history.rows, strict=True):
+                if recovered['fibre_id'] != fibre.fibre_id:
+                    raise ValueError('physical-fibre station inventory/order mismatch')
+                if recovered['branch'] != 'ELASTIC':
+                    raise ValueError('buckling requires every physical fibre elastic-interior')
+                if len(recovered['stress']) != 2 or not np.isfinite(recovered['stress']).all():
+                    raise ValueError('physical fibre stress requires actual high+low pair')
+                stress = sum((Decimal.from_float(v) for v in recovered['stress']), Decimal(0))
+                accumulated = Decimal.from_float(row[2])+Decimal.from_float(row[3])
+                radius = fibre.curve._at(accumulated)[0]
+                represented_radius = float(radius)
+                if not np.isfinite(represented_radius) or represented_radius <= 0:
+                    raise ValueError('physical fibre positive flow radius is not representable')
+                # Metadata is binary64 high+low. Include a representability
+                # witness without introducing any unit-dependent stress floor.
+                rounding = 4*sum((Decimal.from_float(ulp(v)) for v in
+                    (*recovered['stress'], represented_radius)), Decimal(0))
+                margin = Decimal.from_float(64*np.finfo(float).eps)*max(radius, abs(stress))+rounding
+                if radius <= 0 or radius-abs(stress) <= margin:
+                    raise ValueError('physical fibre is on an unresolved yield boundary')
 
 
 def _line_components(local, shell_q, basis):
@@ -319,9 +381,9 @@ def _line_components(local, shell_q, basis):
     return np.r_[d.T@local.gradient, basis.T@local.gap], h, km, mapped
 
 
-def capture(owner, expected_generation, *, cancellation_token=None, lines=False):
+def capture(owner, expected_generation, *, cancellation_token=None, lines=False, mixed=False):
     """Pure local replay from copied accepted data; no trial-cache publication."""
-    driver, applied = _admit(owner, expected_generation, lines=lines)
+    driver, applied = _admit(owner, expected_generation, lines=lines, mixed=mixed)
     initial_state = driver._state
     initial_digest = _state_digest(driver)
     initial_model_digest = _model_digest(owner)
@@ -359,8 +421,13 @@ def capture(owner, expected_generation, *, cancellation_token=None, lines=False)
     for (_eid, element, slots, _), origin in zip(owner._shell_parts, pickle.loads(snap.shell_origins), strict=True):
         check('shell')
         anchors = None if snap.shell_anchors is None else snap.shell_anchors[slots[::6]//6]
-        force, h, km, g, _ = conservative_components(owner._shell_model, element, snap.q[slots], origin, 3,
-            rotation_anchors=anchors, prepared_correction=driver._q4_corrections.get(_eid))
+        if len(slots) == 18:
+            from ._stiffened_shell_s3_conservative_buckling import conservative_components as s3_components
+            force, h, km, g, _ = s3_components(owner._shell_model, element, snap.q[slots], origin, 3,
+                rotation_anchors=anchors, stable_translation=driver._stable_s3)
+        else:
+            force, h, km, g, _ = conservative_components(owner._shell_model, element, snap.q[slots], origin, 3,
+                rotation_anchors=anchors, prepared_correction=driver._q4_corrections.get(_eid))
         scatter('material', slots, km); scatter('shell', slots, g); scatter('total', slots, h)
         scatter_force(slots, force)
     for node, row in enumerate(snap.q[:owner._shell_count].reshape(-1, 6)):
@@ -375,7 +442,10 @@ def capture(owner, expected_generation, *, cancellation_token=None, lines=False)
         nodes = np.array([owner._beam_index[node] for node in element.node_ids])
         response = element.operator.evaluate(positions[nodes], low[nodes], snap.frames[nodes],
             snap.cells[index], snap.resultants[index], origin=origin, check=element.operator.guard)
-        _elastic_beam(element.operator, response, origin)
+        if type(element.operator) is RetainedFibreOperator:
+            _elastic_fibre(element.operator, response, origin)
+        else:
+            _elastic_beam(element.operator, response, origin)
         h = response.hessian+response.hessian_low
         g = np.zeros((42, 42)); g[:24, :24] = h[:24, :24]
         km = np.zeros((42, 42)); km[:24, 24:] = h[:24, 24:]
@@ -435,6 +505,20 @@ def capture(owner, expected_generation, *, cancellation_token=None, lines=False)
     constraints = _freeze(material[n:, :n])
     free = tuple(map(int, owner._free))+tuple(range(n, size)); fixed = tuple(map(int, owner._fixed))
     residual = _owned(np.array([fsum(values) for values in forces]))
+    # The replay already subtracts the accepted dead translations exactly once.
+    # Recover the driver's spatial shell rows from the coordinate covectors
+    # before applying its unchanged equilibrium and constraint metrics.
+    from ._stiffened_shell_ge_experimental import _linear_equilibrium, _scaled_constraint_gap
+    spatial_residual = residual.copy()
+    for node, row in enumerate(snap.q[:owner._shell_count].reshape(-1, 6)):
+        rotation_rows = slice(6*node+3, 6*node+6)
+        p = _exp_terms(row[3:])[1]
+        spatial_residual[rotation_rows] = np.linalg.solve(p.T, residual[rotation_rows])
+    equilibrium = _linear_equilibrium(spatial_residual[owner._free],
+        snap.applied_dead_load[owner._free], owner._coordinate_scale[owner._free])
+    constraint = _scaled_constraint_gap(residual[n:], owner._constraint_scale)
+    if not np.isfinite((equilibrium, constraint)).all() or equilibrium > TOLERANCE or constraint > 1e-9:
+        raise ValueError('current replayed accepted equilibrium/constraint witness is unresolved')
     pchart = _freeze(chart.tocsc())
     identity = _matrix_digest((material, geometric, hessian, constraints, pchart,
                                matrices['shell'], matrices['beam'], matrices['joint']))
@@ -486,15 +570,16 @@ def _scaled_pencil(owner, packet):
 
 def solve(owner, request, *, cancellation_token=None):
     lines = type(request) is GELineBucklingRequest
-    if type(request) not in (GEPointBucklingRequest, GELineBucklingRequest):
+    mixed = type(request) is GEMixedBucklingRequest
+    if type(request) not in (GEPointBucklingRequest, GELineBucklingRequest, GEMixedBucklingRequest):
         raise ValueError('typed GE point-buckling request required')
     if cancellation_token is not None and not isinstance(cancellation_token, CancellationToken):
         raise ValueError('CancellationToken required')
-    _admit(owner, request.expected_generation, lines=lines)
+    _admit(owner, request.expected_generation, lines=lines, mixed=mixed)
     packet = None; handle = None; raw = ()
     checkpoint = sha256(owner._finite_driver.checkpoint()).hexdigest()
     def finish(status, **kwargs):
-        result_type = GELineBucklingResult if lines else GEPointBucklingResult
+        result_type = GEMixedBucklingResult if mixed else GELineBucklingResult if lines else GEPointBucklingResult
         return result_type(status, owner._identity, owner._generation, checkpoint,
             pencil_identity='' if packet is None else packet.identity,
             decomposition_error=0. if packet is None else packet.decomposition_error,
@@ -502,7 +587,7 @@ def solve(owner, request, *, cancellation_token=None):
             inverse_eigenvalues=raw, factorization_count=0 if handle is None else handle.factorization_count,
             solve_count=0 if handle is None else handle.solve_count, **kwargs)
     try:
-        packet, guard = capture(owner, request.expected_generation, cancellation_token=cancellation_token, lines=lines)
+        packet, guard = capture(owner, request.expected_generation, cancellation_token=cancellation_token, lines=lines, mixed=mixed)
         if request.count >= len(packet.free)-1:
             raise ValueError('buckling count must leave sparse Arnoldi room')
         a, g, scale = _scaled_pencil(owner, packet)

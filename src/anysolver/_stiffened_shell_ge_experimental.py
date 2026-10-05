@@ -1300,9 +1300,16 @@ class ExperimentalGEAnalysis:
         with self._operation_lock:
             return capabilities(self, lines=True)
 
+    @property
+    def mixed_buckling_capabilities(self):
+        """Elastic Q4/S3 matching-point native-family accepted-state route."""
+        from ._stiffened_shell_ge_point_buckling import capabilities
+        with self._operation_lock:
+            return capabilities(self, mixed=True)
+
     @_state_writer
     def buckling(self, request, *, cancellation_token=None):
-        """Typed point-only or BL5 accepted-state conservative prestress factors."""
+        """Typed point-only, BL5 or mixed-shell/native accepted-state prestress factors."""
         from ._stiffened_shell_ge_point_buckling import solve
         return solve(self, request, cancellation_token=cancellation_token)
 
