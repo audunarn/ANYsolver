@@ -73,8 +73,23 @@ Next same-owner20min READ decision: inspect actual body/section/trace contracts
 and saved fields to choose the smallest body-reduction/trace discriminator.
 No edits, new solves, external/native rerun, F03 or automatic refinement in that
 assignment. Numerical scope must be adopted explicitly after its findings.
-Matched slice integrated at27fc6564; weak slice awaits root local integration.
+Matched slice27fc6564; weak slicee51ae173 with housekeeping repairfdd5c9dd.
 Any later external deck needs separate authority and physical density recovery.
+
+Implementation lane: /root/native_bl5_material owns existing GE/finite owner,
+explicit policy/export and NEW Q4 native-fibre BL5 material example/tests/doc/raw.
+90min/final15 verification reserve; root adopts separate experimental
+BL5_NATIVE_FIBRE_MATERIAL_V1_DEV after actual reuse-seam checkpoint.
+Reuse constitutive/atomic/checkpoint routes and explicitly bound policy identity;
+old elastic guards/identities stay unchanged. No S3 plastic extension or active
+plastic spectral admission. Focus actual simultaneous shell/fibre activity,
+same-predecessor tangent,rejection/cancellation/restart/recovery and installed
+public path. Ordinary new DEV checks only; closed campaigns/F03 not renewed.
+Mistral/local unavailable; OpenAI fallback implementation owner. Root remains
+contract/Git/review owner; implementation worker holds sole numerical slot.
+Worker disclosed accidental broad file-list traversal while locating a runner;
+no protected bytes read/copied/printed, search stopped, exact known paths only.
+Preserve this procedure failure in handoff, without inspecting protected tree.
 
 Complete G0-G6/F01-F13/V01-V28/B01-B18 and named programme applications remain
 mandatory. Matrix B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md separates tested
