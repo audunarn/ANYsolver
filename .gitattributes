@@ -375,3 +375,4 @@ tests/data/native_s3_fibre_history/** -text
 /tests/test_r8_bl5_body_port_probe.py -text whitespace=cr-at-eol
 /docs/reference_cases/stiffened_shell_bl5_body_port_probe.md -text whitespace=cr-at-eol
 /docs/agent_plans/history/PRE_BODY_PORT_DISPOSITION_20261006.md -text
+/.qualification/b3-ge-e4-pl/r8-native-fibre-bl5-material-dev-20261006-v1/** -text -whitespace

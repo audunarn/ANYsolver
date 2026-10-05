@@ -57,16 +57,25 @@ Rich actual-update tangent at fixed accepted .284375 predecessor PASSES:
 rotations/retained forces/moments/multipliers, same branch masks and all three
 errors <=5.14e-8. Freshrestore/cancel/guard atomicity/stale checks pass. This does
 not validate the rejected Newton trial, whose state was not saved before exit.
-Root adopts ONE pinpoint .284375->.3125 replay, unchanged law/controls/runtime,
-to retain failed trial R/K/step/candidates/branches and test linear-step residual,
-actual-update derivative and troublesome-row merit slope. Defect -> repair;
-otherwise return exact obstruction without sweep or physical-limit claim.
-Owner holds numerical lease; no continuation beyond this pending load adopted.
-Ordinary connected checks stay in existing90min/final15 reserve; root owns
-Git/adoption/review. Independent non-author material review running, no jobs.
-Review finding: linear JSON restore omits new-policy translation-only load guard;
-matching-identity checkpoint can bypass solve admission. Same owner repairing
-before mechanics/publication with atomic-refusal coverage; not yet verified.
+ONE pinpoint .284375->.3125 replay completed FAIL,55.70s/thread1/178MBsampled;
+131 evaluations/failure state saved, prefix unchanged. All13 dyadic candidates
+fail, min h2.44e-4; actual Newton direction branch-stable h1e-4/1e-5/1e-6 descends.
+Rich direction crosses branches; its FD errors are inapplicable. No tangent defect
+or physical limit established; raw linear residual needs full KKT interpretation.
+Root adopts new-policy-only safeguarded quadratic backtracking candidate under
+same trial/iteration budgets and unchanged max-merit/physical acceptance. Fit
+squared frozen merit with justified Newton slope, safeguarded finite estimate/
+fallback and same-parent trials. Historical dyadic dispatch remains unchanged.
+After4 restore fixes, compare ONE same-law pending.3125 candidate; only if it
+converges proceed original simultaneous history/lifecycle/installed checks within
+existing90min/final15 reserve. No parameter sweep/floor/tolerance/iteration change
+or closed Armijo reopening. Owner keeps numerical lease. Independent affected
+mathematical/source review running, no numerical jobs; root owns Git/adoption.
+Non-author review finds four restore admission bypasses: linear moment/retained
+load and chart/staged/distributed envelopes. Fixed-support-only moment with zero
+q is a source-level consistent linear counterexample. Inner native/native-shell
+patterns and public rebase guards are correct. Same owner repairs all4 with
+atomic-refusal coverage; runtime proof pending. Raw independent-review-v1.md.
 
 Material V1 lifecycle failure used unintended global NumPy fallback due sandbox
 CI read denial; no intended-CI acceptance or physical inference. Exact elevated
