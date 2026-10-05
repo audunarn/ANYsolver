@@ -30,15 +30,15 @@ independent gap and material/storage outputs with dimensional scales. State the
 hypothesis and stopping decision before a new solve; do not renew the historical
 failed convergence campaign or infer convergence from a gap/residual alone.
 
-**Latest discriminator disposition:** the declared-arc enclosure is integrated
-conditionally to preserve exact passing checkpoint diagnostics. Ten installed
-local/replay checks pass;525 source files match. The corrected2e7 coupled solve
-still rejects tangent uncertainty1.569736e-6 against1e-6, with zero accepted
-targets. Stop stiffness escalation. Next verify a PSD leading-integral difference
-bound while retaining the full non-PSD remainder, positive quadrature-mass and
-rounding controls. This new mathematical candidate needs focused noncommuting
-PSD and grazing-fallback checks before another coupled run. No unchanged retry,
-tolerance/resource relaxation or convergence claim. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/arc_enclosure.md).
+**Latest discriminator disposition:** conditional declared-arc/PSD root-band
+bounds are implemented, with12 installed local/work/grazing-mass and exact
+active/open replay checks passing17.161s. The corrected2e7 source solve hits the
+unchanged120s cap before returning a result: resource NONPASS, not convergence.
+A saved-pose profile identifies repeated exact axial-centre construction as a
+concrete cost. Next reuse exact rational axial data inside one candidate, retaining
+final cancellation/rounding and cleanup. Require bitwise work/replay parity and
+measured unprofiled cost reduction before another changed coupled run. No cap
+increase, owner reset, unchanged retry or stiffness escalation. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/psd_enclosure.md).
 
 Latest D3 material/history slice: explicit physical fibres Y2Pa/H1e5Pa through
 the same owner now press, unload/open and recontact with actual committed history.

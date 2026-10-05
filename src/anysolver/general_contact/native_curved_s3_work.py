@@ -49,6 +49,17 @@ def _declared_arc_gradient_bound(base,circular,angle_range):
     return float(np.nextafter(min(magnitude,arc+roundoff),np.inf))
 
 
+def _psd_root_tangent_difference_bound(leading,remainder,active):
+    """Infinity bound for two PSD leading integrals plus general remainders.
+
+    If 0<=A,B<=leading*I, their difference has spectral norm<=leading.
+    Each indefinite/nonsymmetric remainder has norm<=remainder, so their
+    difference still needs 2*remainder. sqrt(active) converts to infinity
+    norm on the complete supported coordinate space. Caller adds roundoff.
+    """
+    return sqrt(active)*(leading+2*remainder)
+
+
 def _normal_derivatives(corners):
     q=[Jet2.variable(0.,i,9) for i in range(9)]
     edges=[[Jet2.constant(corners[a,i]-corners[0,i],9)+q[3*a+i]-q[i]
@@ -168,7 +179,13 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
             ee=max(ee,stiffness*area*width*angular_width*depth**2)
             fe=max(fe,2*stiffness*area*width*angular_width*depth*g)
         active=np.count_nonzero(np.any(mapping!=0.,axis=0))
-        te=2*sqrt(active)*stiffness*area*width*angular_width*(g*g+depth*h)
+        factor=stiffness*area*width*angular_width
+        # Positive area and Gauss weights make both exact and approximate
+        # mapped leading g*g^T integrals PSD, bounded by factor*g². The
+        # measure covers the true union AND grazing fallback quadrature mass.
+        # Only the non-PSD Hessian/once-spatial remainder needs a sum bound.
+        te=(_psd_root_tangent_difference_bound(factor*g*g,factor*depth*h,active)
+            if declared_arc else 2*sqrt(active)*stiffness*area*width*angular_width*(g*g+depth*h))
         return np.array((ee,fe,te))*(1+8192*np.finfo(float).eps)
 
     def _refined_root_work_bound(self,*args,**kwargs):

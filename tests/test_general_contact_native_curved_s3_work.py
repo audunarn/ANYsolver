@@ -262,3 +262,27 @@ def test_declared_arc_gradient_enclosure_endpoints_interior_and_cancellation():
             assert observed<=bound*(1+1e-14)
             if hi-lo>pi:
                 assert bound==pytest.approx(np.linalg.norm(base)+np.linalg.norm(B,2),rel=1e-14)
+
+
+def test_psd_difference_enclosure_noncommuting_and_general_remainder():
+    from anysolver.general_contact.native_curved_s3_work import _psd_root_tangent_difference_bound
+    # Rank-one projections do not commute. Both are bounded by I, but their
+    # difference is indefinite; eigenvalue order proves the common norm bound.
+    A=np.array(((1.,0.),(0.,0.)))
+    v=np.array((.6,.8));B=np.outer(v,v)
+    assert np.linalg.norm(A@B-B@A)>0.
+    assert np.linalg.norm(A-B,2)<=1.
+    bound=_psd_root_tangent_difference_bound(1.,0.,2)
+    assert np.linalg.norm(A-B,np.inf)<=bound
+    # General remainders are nonsymmetric and can have opposite signs.
+    E=np.array(((0.,.17),(-.12,0.)));F=-E
+    r=np.linalg.norm(E,2)
+    assert np.linalg.norm(A-B+E-F,np.inf)<=_psd_root_tangent_difference_bound(1.,r,2)
+    # A sharp scalar example requires the factor two on the remainder.
+    assert _psd_root_tangent_difference_bound(0.,.7,1)==pytest.approx(1.4)
+    rng=np.random.default_rng(928)
+    for n in (3,17,60):
+        P=rng.normal(size=(n,n));Q=rng.normal(size=(n,n))
+        P=P@P.T;Q=Q@Q.T
+        P/=np.linalg.norm(P,2);Q/=np.linalg.norm(Q,2)
+        assert np.linalg.norm(P-Q,np.inf)<=_psd_root_tangent_difference_bound(1.,0.,n)

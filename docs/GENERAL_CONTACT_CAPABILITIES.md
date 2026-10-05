@@ -2367,3 +2367,15 @@ and active/open replay controls pass17.014s;525files/221imports match.
 Corrected2e7 coupled enforcement remains NONPASS47.185s, no accepted target.
 No engineering acceptance, enforcement convergence or speedup is established.
 [Evidence](d1_review_support/contact_native_fibre_s3_20261005/arc_enclosure.md).
+
+
+### Conditional PSD root-band tangent difference — installed development, 5 October 2026
+
+Complete PSD leading-integral difference uses one common norm bound; general
+Hessian/once-spatial remainder retains factor2. Historical passing branch stays
+unchanged. Twelve installed local/grazing-mass/work/replay controls pass17.161s,
+525files/221imports match. Corrected coupled2e7 source job reaches120s resource
+limit without a mechanical result; enforcement convergence remains unproven.
+Saved-pose profiling identifies exact axial-centre repetition for a bounded
+performance correction, with no measured whole-route saving yet.
+[Evidence](d1_review_support/contact_native_fibre_s3_20261005/psd_enclosure.md).

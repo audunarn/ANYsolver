@@ -8,6 +8,15 @@ On resumption, this goal prevails over conflicting future instructions in the 28
 
 ## Current milestone and next delivery
 
+Conditional declared-arc/PSD root-band enclosures pass twelve installed local,
+grazing-mass, work/derivative and exact active/open replay checks. The corrected
+2e7 native enforcement solve reaches the unchanged120s resource limit before
+returning a result; convergence remains unproven. Saved-state profiling identifies
+repeated exact axial-centre construction. Next remove that measured repetition
+within one candidate, preserving cancellation, work/replay parity and resource
+limits, before another changed coupled attempt. No programme scope or scientific
+criterion is reduced. [Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/psd_enclosure.md).
+
 Committed native material recovery/reporting now passes six installed checks,
 including independent rational energy checks, bound histories, detached optional
 fields and interrupted publication. Stored material energy and contact storage

@@ -1,0 +1,31 @@
+{
+  "source_parent": "3b277409",
+  "disposition": "installed local/replay tested; coupled resource NONPASS",
+  "raw_directory": "C:\\ANYworkspaceWork\\contact_native_fibre_s3_20261005\\candidate06",
+  "installed_checks": 12,
+  "installed_resource": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 17.160824799910188,
+    "peak_bytes": 187928576
+  },
+  "import_count": 221,
+  "import_errors": [],
+  "production_file_parity": 525,
+  "wheel_sha256": "38fe0fa8d965bb412178e31649d3af41cbf55f6153ed5c2d55f19d0a05b87f46",
+  "coupled_resource": {
+    "status": "timeout",
+    "returncode": 15,
+    "elapsed_s": 120.13757469994016,
+    "peak_bytes": 181661696
+  },
+  "saved_pose_profile": {
+    "profiled_contact_elapsed_s": 4.623385000042617,
+    "integration_intervals": 11,
+    "integration_evaluations": 10880
+  },
+  "source_hashes": {
+    "src/anysolver/general_contact/native_curved_s3_work.py": "b9b4721f337981d8fc6c9b0eb0a6df45f64b3f9de807a2eba5a84782c28c4932",
+    "tests/test_general_contact_native_curved_s3_work.py": "58e871e280869f457f1263a7c73e27eb3c0f163ccb09c6d717cbb72cba1c77b3"
+  }
+}

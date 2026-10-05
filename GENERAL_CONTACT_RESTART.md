@@ -86,6 +86,27 @@ area/gradient/positive quadrature measure, including grazing fallback masses,
 before implementing this new candidate or another coupled run. No unchanged
 retry, tolerance/cap change or4e7 launch. FullC0–C9 remains incomplete.
 
+Prospective PSD correction: true and positive-weight approximate mapped leading
+integrals are bounded PSD matrices. Their difference needs one common bound;
+the gap-Hessian/once-spatial remainder retains factor2 and sqrt(active) conversion.
+Existing actual grazing-pocket test verifies mass bound covers fallback weights.
+Twelve source controls pass16.395s, including noncommuting/general-remainder
+checks and exact active/open replay. Preserve original arithmetic in the passing
+historical branch. Run one corrected source2e7 under120s/953MiB; if it fails,
+retain the actual state/failure and diagnose that boundary before further solves.
+Do not change stiffness levels, geometry, material, tolerances or cap to force a pass.
+
+Actual PSD candidate: installed12checks17.161s/187928576B,525files match; wheelSHA
+38fe0fa8d965bb412178e31649d3af41cbf55f6153ed5c2d55f19d0a05b87f46.
+Source2e7 hit120.138s wrapper limit,181661696B, no returned mechanical result.
+Resource NONPASS; no owner reset, cap increase or unchanged retry. No live job.
+One saved-coarse-pose profile passes; kernel4.623profiled seconds/10880 evaluations,
+exact relative-centre construction1.209s. Next candidate-local exact rational
+axial-centre reuse before adding angular arms; preserve final rounding, both
+high/low parts and origin, clear on exception, no cross-candidate cache.
+Require bitwise local work/replay parity and actual unprofiled cost reduction
+before another changed coupled run. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/psd_enclosure.md).
+
 Close native enforcement convergence through one discriminating curved/S3 case.
 Choose explicit stiffness levels and dimensional reaction/displacement/gap scales
 prospectively, reuse actual coarse state, and record how outcomes choose next action.
