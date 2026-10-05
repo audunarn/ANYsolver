@@ -86,3 +86,58 @@ development checks. This workflow is experimental and
 not scientifically or production qualified. Plastic native BL5, S3 native BL5,
 consumer integration, scale domains and different-family acceptance remain
 open obligations.
+
+## Separate stable elastic S3/mixed-shell development slice
+
+`BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1` selects
+`BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1_DEV` for a flat mesh containing admitted
+elastic S3-V2D cells, with optional algorithmic Q4 cells. The earlier Q4-only
+policy continues to refuse S3. When no Q4 exists, its selector is irrelevant;
+the example retains the historical selector. Every actual BL5 segment still
+must follow an edge of the declared Q4/S3 cells. No surface-normal replacement,
+sixth bond row, physical port/lift, quadrature or multiplier basis changes.
+
+The existing stable elastic S3 material/prestress/chart map is consumed by the
+finite driver and conservative capture. Fresh snapshots use the unchanged
+stable-native binary schema and replay, with the explicit mixed-shell model and
+material policy bound into their identity. Existing readers and old S3 archives
+are not changed or consumed. The same `GENativeLineBucklingRequest` dispatches
+the selected owner; mixed-shell results/capabilities/pencil identities report
+`B3_GE_NATIVE_FIBRE_MIXED_SHELL_BL5_ACCEPTED_BUCKLING_V1_DEV`.
+
+Use the example's `--shell s3|mixed` option for this separate domain; its default
+remains Q4. The focused slice includes all-S3 biaxial and axial fibres plus a
+mixed Q4/S3 generalized/physical-fibre model, both admitted line spaces,
+physical recovery, fresh restart/continue, chart restart and prestress-factor
+parity. An independent bounded S3/native full-coordinate scatter and direct
+BL5 scalar-work oracle preserve the original derivative and spectral criteria.
+Versioned `s3-v1` evidence is retained under the existing evidence root;
+`handoff-s3.md` identifies the current inputs and exact commands. The source
+slice passed **16 cases** in 44.34 seconds. After supporting source review, a
+fresh offline wheel and isolated target passed all **32 installed cases** in
+73.84 seconds: the 16 new cases, 14 impacted Q4-native controls, one legacy
+point/request control and one legacy BL5 fixed-history/chart/restart control.
+All **424** package modules matched source bytes, and all **245** loaded solver
+modules came from the fresh target. Bound source inputs stayed unchanged.
+
+Both installed headless examples completed with eight recovered fibre stations,
+twelve line work records, byte-exact fresh restart/continuation and unchanged
+accepted checkpoints during spectrum. S3 equilibrium was `8.5474e-11`, gap
+`1.8340e-17` and maximum eigen/constraint residual `3.9265e-16`. Mixed-shell
+values were `2.3353e-10`, `1.4190e-17` and `2.9972e-16`. The spectrum reports
+frozen-prestress factors, without completeness or nonlinear limit-load claims.
+
+Wheel SHA256 is
+`b3d5f572797f3c2954d1bf9dc1c6b4293da14c5812e543dbde7f314a60207291`.
+Actual isolated dependency imports, unforced SkylakeX pools at one thread,
+one-core affinity and disabled JIT were verified. The installed child took
+84.88 seconds and peaked at 194437120 bytes. The source sampler recorded a
+maximum numerical-or-unresolved thread count of five in one PID at exit,
+including four unresolved ending-thread queries; its pool settings remained
+one and the inherited sampler ceiling eight was met. This counter is not a
+count of concurrent numerical jobs. Complete samples remain preserved.
+
+This delivers the admitted elastic S3/mixed-shell development route. Plastic
+native/S3 BL5, consumer integration, scale/scientific qualification and
+different-family acceptance remain mandatory open obligations. Root owns
+integration and final acceptance.

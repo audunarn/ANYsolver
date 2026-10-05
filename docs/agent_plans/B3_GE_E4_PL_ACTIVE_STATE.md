@@ -5,7 +5,7 @@ C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
 branch codex/stiffened-main-reconcile-20261001. Git HEAD identifies integrated
 source; the elastic native BL5 slice below was tested from df094d6b plus bound
 changes. User requires separate work: NO contact-worker communication.
-Replacement AGENTS and risk-proportionate policy apply. Mistral/local cached
+Latest global AGENTS reread: early checkpoints and explicit handoff states apply. Mistral/local cached
 unavailable; OpenAI independent reviews support development, not the required
 different-family scientific acceptance.
 
@@ -35,6 +35,18 @@ Supporting source/artifact reviews clear; scientific qualification still OPEN.
 Raw/source/artifact identities, retained failures and author handoff:
 .qualification/b3-ge-e4-pl/r8-native-fibre-bl5-dev-20261005-v1/.
 Group contract: docs/reference_cases/stiffened_shell_native_fibre_bl5.md.
+
+Separate BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1_DEV now delivers the same
+public route for admitted flat elastic S3/mixed Q4-S3 with full42 and unchanged
+edge/director law. Old Q4-only policy still refuses S3. Source16PASS44.341s;
+installed32PASS73.842s and both public examples completed. Root verified all8
+inputs/all424 package bytes/245 loaded target modules and artifact/runner hashes.
+Wheel:b3d5f572797f3c2954d1bf9dc1c6b4293da14c5812e543dbde7f314a60207291.
+Fresh/chart restart and continuation preserve bytes; original residuals pass.
+Source samplermax5 includes four unresolved exit-thread queries in one PID;
+actual pools1/ceiling8 verified. Installedmax1/84.878s/194437120B. Scoped DEV
+verification only; plastic/physical/consumer/scale/different-family remain OPEN.
+Exact source/artifact/runtime/handoff-s3.md remain in the same evidence root.
 
 Native point Q4/S3/generalized/fibre/mixed buckling at888be00b already has
 installed52PASS/public example and original residual/checkpoint evidence.
@@ -66,9 +78,14 @@ development checks, acceptance and release are separate. Matrix:
 B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md. Plastic/S3 native BL5, footprint
 combinations, consumer, physical references, stability/capacity, scale/platform
 and different-family acceptance remain OPEN; no permanent scope exclusions.
-Next select one unblocked required combination or specific physical-reference
-obstruction using existing code/evidence; do not reopen closed diagnostics or
-repeat working routes. No numerical job/worker is active after this handoff.
+Next scientific deliverable: independent reference preparation for a linear
+zero-width director hinge, with explicit material-face pairs and normal spin
+released. Five collocated stations are NOT algebraically equivalent to native
+weak BL5. /root/test_campaign_sweep owns new reference script/test/doc/raw only,
+35min budget/final8 handoff, sole offline-test slot. No external CCX launch yet.
+/root/fast_test_runner independently reviews that construction (Read/no jobs).
+Saved five-channel Fy/Mx/Mz already exist: no new Mz replay for the obsolete gap.
+Root owns reserved decisions/integration; no closed campaign or fixture repeated.
 Common-main PR62 remains NONPASS; local02ca395e repairs unpushed. Main untouched.
 No merge/publication or contact-task communication is authorized by this slice.
 

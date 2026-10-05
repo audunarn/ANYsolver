@@ -9,10 +9,35 @@ from anysolver import stiffened_shell as ss
 from anysolver.control import CancellationToken, SolveCancelled
 from anysolver import _stiffened_shell_ge_point_buckling as buckling
 from examples.stiffened_shell_native_fibre_bl5 import definition, workflow
-from test_stiffened_shell_ge_line_buckling import line_oracle
+from test_stiffened_shell_ge_line_buckling import line_oracle, direct_line_ad
+from test_stiffened_shell_ge_mixed_buckling import dense_mixed_oracle
 from anysolver._ge_beam3_pose_joint import _exp_terms
+from anysolver._ge_beam3_retained_generalized_state import Mechanical
+from anysolver._stiffened_shell_ge_finite_experimental import _position_pair
 
 ACTIONS = (ss.NodalAction('beam',105,(-1000.,0.,100.,0.,0.,0.)),)
+
+
+def native_line_oracle(owner,packet):
+    if not owner._definition.shell.s3_elements:
+        h,km=line_oracle(owner,packet);return h,km,h-km
+    h,km,g=dense_mixed_oracle(owner,packet)
+    snap=packet.snapshot;driver=owner._finite_driver
+    u=snap.q[owner._shell_count:owner._shell_count+driver._beam_nodal].reshape(-1,6)[:,:3]
+    positions,low=_position_pair(driver._reference_positions,u)
+    mechanical=Mechanical(positions,low,snap.frames,snap.cells,snap.resultants)
+    for sample,(rows,basis) in zip(owner._line_samples,owner._line_terms,strict=True):
+        op,slots,weight,_,_=sample;rows=rows+6*len(owner._connections)
+        anchors=None if snap.shell_anchors is None else snap.shell_anchors[slots[:12:6]//6]
+        local=direct_line_ad(op,snap.q[slots[:12]].reshape(2,6),anchors,mechanical,basis@snap.multipliers[rows])
+        cross=local.gap_jacobian.T@basis
+        material=np.block([[np.zeros((21,21)),cross],[cross.T,np.zeros((len(rows),len(rows)))]])
+        geometric=np.zeros_like(material);geometric[:21,:21]=local.hessian
+        extended=np.r_[slots,packet.primal_count+rows]
+        km[np.ix_(extended,extended)] += weight*material
+        g[np.ix_(extended,extended)] += weight*geometric
+        h[np.ix_(extended,extended)] += weight*(material+geometric)
+    return h,km,g
 
 
 @pytest.fixture(scope='module', params=(('biaxial','fibre','p0'),
@@ -28,7 +53,8 @@ def accepted(request):
 
 def test_public_recovery_fresh_restart_continue_and_spectrum(accepted):
     owner = accepted; raw = owner.checkpoint(); result = owner.recover()
-    assert owner.capabilities['analysis'][-1] == 'experimental_elastic_native_fibre_bl5'
+    assert owner.capabilities['analysis'][-1] == ('experimental_elastic_native_fibre_mixed_shell_bl5'
+        if owner._bl5_native_mixed_shell else 'experimental_elastic_native_fibre_bl5')
     assert owner.native_line_buckling_capabilities['definition_admitted']
     assert not owner.line_buckling_capabilities['definition_admitted']
     assert result.beam_fibre_material and result.beam_fibre_energy and result.beam_shell_line_work
@@ -43,7 +69,7 @@ def test_public_recovery_fresh_restart_continue_and_spectrum(accepted):
         before = fresh.checkpoint()
         spectrum = fresh.buckling(ss.GENativeLineBucklingRequest(continued.generation,count=2))
         assert type(spectrum) is ss.GENativeLineBucklingResult and spectrum.status == 'completed', spectrum.failure_reason
-        assert spectrum.policy == buckling.NATIVE_LINE_POLICY
+        assert spectrum.policy == buckling._native_line_policy(fresh)
         assert spectrum.resultant_modes and spectrum.cell_rotation_modes and spectrum.line_coefficient_modes
         assert max(spectrum.equation_residuals) <= 1e-8 and max(spectrum.constraint_residuals) <= 1e-8
         assert fresh.checkpoint() == before
@@ -54,7 +80,7 @@ def test_public_recovery_fresh_restart_continue_and_spectrum(accepted):
 def test_full42_and_direct_bl5_scalar_curvature_oracle(accepted):
     owner = accepted; raw = owner.checkpoint()
     packet, guard = buckling.capture(owner,owner._generation,lines=True,mixed=True,native_lines=True)
-    h, km = line_oracle(owner,packet); free = list(packet.free)
+    h, km, g = native_line_oracle(owner,packet); free = list(packet.free)
     assert packet.primal_count == owner._shell_count+6*len(owner._beam_ids)+24*len(owner._beam_parts)
     assert packet.line_stations and any(np.linalg.norm(station.basis@packet.snapshot.multipliers[
         np.array(station.rows)+6*len(owner._connections)]) > 0 for station in packet.line_stations)
@@ -86,7 +112,7 @@ def test_full42_and_direct_bl5_scalar_curvature_oracle(accepted):
     errors=[np.max(abs((value-exact)*row_scale))/max(1.,np.max(abs(exact*row_scale))) for value in finite]
     assert max(errors) <= 1e-6,errors
     _,_,scale = buckling._scaled_pencil(owner,packet); congruence = np.outer(scale,scale)
-    values = eig(km[np.ix_(free,free)]*congruence,-(h-km)[np.ix_(free,free)]*congruence,right=False)
+    values = eig(km[np.ix_(free,free)]*congruence,-g[np.ix_(free,free)]*congruence,right=False)
     expected = [v.real for v in values if np.isfinite(v) and v.real > 0 and abs(v.imag) <= 1e-8*abs(v.real)]
     spectrum = owner.buckling(ss.GENativeLineBucklingRequest(owner._generation,count=2))
     assert spectrum.status == 'completed',spectrum.failure_reason

@@ -30,6 +30,7 @@ POLICY = 'GE_Q4_POINT_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
 LINE_POLICY = 'GE_Q4_BL5_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
 MIXED_POLICY = 'GE_Q4_S3_PHYSICAL_FIBRE_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
 NATIVE_LINE_POLICY = 'B3_GE_NATIVE_FIBRE_BL5_ACCEPTED_BUCKLING_V1_DEV'
+NATIVE_MIXED_SHELL_LINE_POLICY = 'B3_GE_NATIVE_FIBRE_MIXED_SHELL_BL5_ACCEPTED_BUCKLING_V1_DEV'
 TOLERANCE = 1e-8
 
 
@@ -227,12 +228,17 @@ def _model_digest(owner):
         owner._line_samples, owner._line_terms), protocol=5)).hexdigest()
 
 
+def _native_line_policy(owner):
+    return NATIVE_MIXED_SHELL_LINE_POLICY if owner._bl5_native_mixed_shell else NATIVE_LINE_POLICY
+
+
 def _admit(owner, generation=None, *, lines=False, mixed=False, native_lines=False):
     owner._require_open()
     d = owner._definition
     driver = owner._finite_driver
     if native_lines and (not lines or not mixed or not owner._bl5_native_fibre or
-            not d.shell.q4_elements or d.shell.s3_elements):
+            (not d.shell.s3_elements if owner._bl5_native_mixed_shell else
+             not d.shell.q4_elements or bool(d.shell.s3_elements))):
         raise ValueError('native line buckling requires the explicit elastic native-fibre Q4 BL5 policy')
     if (driver is None or driver._accepted is None or owner._accepted is not None
             or (generation is not None and generation != owner._generation)):
@@ -325,11 +331,14 @@ def capabilities(owner, *, lines=False, mixed=False, native_lines=False):
             material_admission='unchanged generalized/fibre history, every elastic branch and positive yield margin checked before factorization',
             coordinates='all shell, native nodal/cell rotations, eighteen resultants/member and point multipliers')
     if native_lines:
-        result.update(policy=NATIVE_LINE_POLICY,
-            state='accepted elastic objective Q4/native physical-fibre BL5 equilibrium with optional six-pose points',
+        result.update(policy=_native_line_policy(owner),
+            state='accepted elastic objective Q4/S3/native physical-fibre BL5 equilibrium with optional six-pose points'
+                  if owner._bl5_native_mixed_shell else 'accepted elastic objective Q4/native physical-fibre BL5 equilibrium with optional six-pose points',
             coordinates='all shell, full 42 native coordinates/member, existing five-row BL5 coefficients and optional point multipliers',
             attachment='director bond; normal spin remains free',
             open_domains=('plastic native BL5', 'S3 native BL5', 'consumer integration', 'scale qualification'))
+        if owner._bl5_native_mixed_shell:
+            result['open_domains']=('plastic native BL5','plastic S3 native BL5','consumer integration','scale qualification')
     return result
 
 
@@ -548,7 +557,7 @@ def capture(owner, expected_generation, *, cancellation_token=None, lines=False,
                                matrices['shell'], matrices['beam'], matrices['joint']))
     matrix_identity = identity
     if native_lines:
-        identity = sha256((NATIVE_LINE_POLICY+owner._identity+identity).encode()).hexdigest()
+        identity = sha256((_native_line_policy(owner)+owner._identity+identity).encode()).hexdigest()
     packet_type = LineBucklingPencil if lines else PointBucklingPencil
     packet = packet_type(material, geometric, constraints, hessian, matrices['shell'], matrices['beam'],
         matrices['joint'], residual, pchart, free, fixed, n, snap, identity, decomposition, symmetry,
@@ -613,7 +622,8 @@ def solve(owner, request, *, cancellation_token=None):
             decomposition_error=0. if packet is None else packet.decomposition_error,
             symmetry_error=0. if packet is None else packet.symmetry_error,
             inverse_eigenvalues=raw, factorization_count=0 if handle is None else handle.factorization_count,
-            solve_count=0 if handle is None else handle.solve_count, **kwargs)
+            solve_count=0 if handle is None else handle.solve_count,
+            **(dict(policy=_native_line_policy(owner)) if native_lines else {}), **kwargs)
     try:
         packet, guard = capture(owner, request.expected_generation, cancellation_token=cancellation_token, lines=lines, mixed=mixed, native_lines=native_lines)
         if request.count >= len(packet.free)-1:

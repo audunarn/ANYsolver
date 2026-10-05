@@ -1397,3 +1397,33 @@ failed evidence: r8-native-fibre-bl5-dev-20261005-v1; grouped contract:
 docs/reference_cases/stiffened_shell_native_fibre_bl5.md. No production claim.
 Plastic/S3 line combinations, physical reference, consumer, scale/platform and
 all remaining aggregate/release obligations stay OPEN; no scope reduction.
+
+
+### 5 October - stable S3/mixed-shell native BL5 installed development
+
+IMPLEMENTED_NOT_QUALIFIED: separate BL5_ELASTIC_NATIVE_FIBRE_MIXED_SHELL_V1_DEV
+uses existing S3/Q4 operators and BL5 edge law through public solve/recovery/
+fresh restore/continue/chart/native-line buckling. Old Q4-only domain preserved;
+new model/spectral identities explicit. Native full42, five rows/free normal
+spin, checkpoint schema/readers, material equations and criteria unchanged.
+Source16PASS44.341s; installed32PASS73.842s plus direct S3/mixed examples. Root
+verified8 inputs/all424 package bytes/245 loaded target prefixes/wheel/runner
+hashes/exact CI4 runtime and original equilibrium/derivative/spectral controls.
+Wheel b3d5f572797f3c2954d1bf9dc1c6b4293da14c5812e543dbde7f314a60207291.
+Fresh/chart restore and continuation byte-exact, spectrum checkpoint unchanged.
+Source samplermax5 includes4 unresolved ending queries/one PID, actual pools1;
+installedmax1/84.878s/194437120B, affinity1/JIToff/unforcedSkylakeX, ceiling8.
+Root supporting complete-source/artifact review clear; not different-family
+scientific acceptance. Same raw root r8-native-fibre-bl5-dev-20261005-v1 retains
+versioned s3-v1 bindings/snapshots/JUnit/artifact/import/runtime and handoff-s3.md.
+Plastic native/S3 BL5, consumer/physical/scale/platform and aggregate acceptance
+remain OPEN. No release or F03 consumption.
+
+Physical-reference decision: saved direct-five-channel Fy/Mx/Mz already exist;
+no Mz rerun for obsolete applicability note. Six-row/weld/pad CCX captures cannot
+qualify five-row BL5. Prepare independently declared zero-width director-hinge
+reference with material-face directors, top position3/director2, normal spin
+released, complete work/cuts and independent transverse shear. Collocated
+station reference differs from native weak discretization; verify mechanism
+before response scoring, physical matching/convergence still required. New
+reference source preparation/offline checks only; no external launch yet.
