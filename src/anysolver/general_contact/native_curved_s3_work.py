@@ -66,13 +66,23 @@ def _component_root_leading_difference_bound(factor,bounds):
     return float(np.nextafter(2*factor*np.max(bounds)*fsum(bounds),np.inf))
 
 
-def _root_component_gradient_bounds(gradients,angle_range,axial_extension,supported):
+def _anchored_root_leading_difference_bound(factor,anchor,variation):
+    """Common fixed gradient plus whole-support variation; both masses<=factor."""
+    vi=float(np.max(np.abs(anchor)));v1=fsum(np.abs(anchor))
+    ei=float(np.max(variation));e1=fsum(variation)
+    bound=factor*(vi*v1+2*(vi*e1+ei*v1+ei*e1))
+    return float(np.nextafter(bound*(1+8192*np.finfo(float).eps),np.inf))
+
+
+def _root_component_gradient_bounds(gradients,angle_range,axial_extension,supported,*,anchor=None):
     base=gradients[0]
     circular=np.column_stack((gradients[1]-base,gradients[2]-base))
     bounds=np.zeros(len(base))
     for i in np.flatnonzero(supported):
-        angular=_declared_arc_gradient_bound(base[i:i+1],circular[i:i+1],angle_range)
+        centre=base[i:i+1] if anchor is None else base[i:i+1]-anchor[i:i+1]
+        angular=_declared_arc_gradient_bound(centre,circular[i:i+1],angle_range)
         rounding=8192*np.finfo(float).eps*fsum(abs(g[i]) for g in gradients)
+        if anchor is not None:rounding+=8192*np.finfo(float).eps*abs(anchor[i])
         bounds[i]=np.nextafter(angular+axial_extension+rounding,np.inf)
     return bounds
 
@@ -212,7 +222,7 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         gx=sqrt(2)+ap/L+n1*xp
         mapping=self._local_mapping(cell,self._coordinate_count())
         full_scale=self._coordinate_scale(self._coordinate_count())
-        components=None
+        components=anchored=None
         if interval is not None and station is not None:
             # Complete mapped gradient is affine in cos(alpha),sin(alpha) at
             # one xi. Keep the historical circle bound for passing evaluations;
@@ -227,9 +237,15 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
                      if declared_arc else np.linalg.norm(gradients[0])+np.linalg.norm(circular,2))
             tight=angular+max(abs(station-x) for x in interval)*gx
             g=min(g,tight*(1+8192*np.finfo(float).eps))
-            if declared_arc and self.root_tangent_enclosure_policy=='componentwise':
+            if declared_arc and self.root_tangent_enclosure_policy in ('componentwise','anchored'):
                 components=_root_component_gradient_bounds(gradients,self.rule.definition['angle_range'],
                     max(abs(station-x) for x in interval)*gx,np.any(mapping!=0.,axis=0))
+                if self.root_tangent_enclosure_policy=='anchored':
+                    midpoint=sum(self.rule.definition['angle_range'])/2
+                    anchor=gradients[0]+circular@np.array((cos(midpoint),sin(midpoint)))
+                    variation=_root_component_gradient_bounds(gradients,self.rule.definition['angle_range'],
+                        max(abs(station-x) for x in interval)*gx,np.any(mapping!=0.,axis=0),anchor=anchor)
+                    anchored=anchor,variation
         # Includes the once-spatial native correction, mixed and shell blocks.
         h=3*arm/L**2+2*x1*n1+distance*n2+2*n1*o1
         depth=max(0.,-geometry.gap_lower_m)
@@ -253,6 +269,8 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         if components is not None:
             leading=min(sqrt(active)*factor*g*g,
                 _component_root_leading_difference_bound(factor,components))
+            if anchored is not None:
+                leading=min(leading,_anchored_root_leading_difference_bound(factor,*anchored))
             te=leading+2*sqrt(active)*factor*depth*h
         return np.array((ee,fe,te))*(1+8192*np.finfo(float).eps)
 
@@ -267,7 +285,7 @@ class NativeCurvedMaterialS3Work(NativeRetainedMaterialS3Work):
         if integration_budget_policy not in ('full_reference','certified_active'):
             raise ValueError('unknown curved S3 integration budget policy')
         self.integration_budget_policy=integration_budget_policy
-        if root_tangent_enclosure_policy not in ('spectral','componentwise'):
+        if root_tangent_enclosure_policy not in ('spectral','componentwise','anchored'):
             raise ValueError('unknown curved S3 root tangent enclosure policy')
         self.root_tangent_enclosure_policy=root_tangent_enclosure_policy
         super().__init__(contact,shell)

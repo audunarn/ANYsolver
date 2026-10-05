@@ -1,15 +1,20 @@
 # General contact — goal
 
-### Latest development decision — 5 October 2026
+### Latest development decision - 5 October 2026
 
-Certified-active quadrature allocation now passes7 installed checks, exact legacy
-replay and cross-policy checkpoint rejection; default settings remain unchanged.
-The saved rejected pose completes at unchanged tolerances and passes independent
-work/tangent checks. Next one explicit4e7 complete candidate using saved2e7
-coordinates-only initialization under the existing response/gap/resource gates.
-No full-route improvement or engineering acceptance is established.
-[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/active_budget.md).
-
+Explicit anchored whole-band root tangent enclosure now passes installed local
+work/identity controls and the fine native plastic opening/recontact lifecycle.
+Fresh first target uses coordinates-only initialization with virgin histories;
+old checkpoints are not rebound. Opening6.310s/recontact8.369s meet unchanged
+120s/953MiB limits, material/history/gap/wrench/restart gates. All526production
+files match the installed artifact. Preserve the prior opening timeout and larger
+perturbation failure. No balanced speedup or native engineering acceptance claim.
+Next close a bounded native multi-body/section or spatial-accuracy requirement;
+do not repeat fine enforcement or lifecycle merely to recreate evidence.
+Cached Mistral unavailable; no repeated probe without changed availability.
+Full C0-C9 remains ACTIVE/incomplete. Earlier entries below retain history;
+this current decision supersedes their proposed next actions.
+[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/anchored_lifecycle.md).
 **Revision:** 2026-10-05.2. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-05.2. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
@@ -270,3 +275,10 @@ and full C0–C9 remain incomplete. Stop enforcement doubling; next restore the
 saved fine8e7 checkpoint for separately bounded opening/recontact/state coverage.
 No changed defaults/caps/tolerances or automatic policy switching.
 [Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/component_enclosure.md).
+Fine opening resource NONPASS120.155s, no accepted target2/checkpoint. Corrected
+one actual opening Newton observation passes20.047s with unchanged physical
+prefix/history and cleanup. Dominant cost: full step root uncertainty1.717674e-6
+rejects; half step contact12.350s/64intervals rejects; quarter trial/path pass.
+Next local anchored-gradient root-bound discriminator, keeping all work/uncertainty/
+tolerances. No full opening retry or recontact. No live jobs.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fine_lifecycle.md).
