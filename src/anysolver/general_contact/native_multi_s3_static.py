@@ -542,6 +542,12 @@ class NativeRetainedMultiS3Analysis:
     def _begin_candidate_context(self,cancellation_token):
         if self._fibre_mode:self.context.activate_cancellation(cancellation_token)
 
+    def recover_material(self,checkpoint,expected_sha256,*,include_stations=False,cancellation_token=None):
+        """Return bound committed fibre fields and separate energy summaries."""
+        from .native_fibre_results import recover_native_material
+        return recover_native_material(self,checkpoint,expected_sha256,
+            include_stations=include_stations,cancellation_token=cancellation_token)
+
 
 def create_native_contact_analysis(definitions, boundaries, program, shell_model, pairs, *,
         equilibrium_tolerance, maximum_pairs=8, maximum_coupled_coordinates=256,

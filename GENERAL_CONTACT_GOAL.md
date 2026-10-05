@@ -8,6 +8,15 @@ On resumption, this goal prevails over conflicting future instructions in the 28
 
 ## Current milestone and next delivery
 
+Committed native material recovery/reporting now passes six installed checks,
+including independent rational energy checks, bound histories, detached optional
+fields and interrupted publication. Stored material energy and contact storage
+remain distinct from plastic dissipation and incremental variational potential.
+This closes development reporting coverage, not physical energy-balance or native
+engineering qualification. Next address native enforcement convergence within
+unchanged scientific/resource contracts.
+[Material reporting](docs/d1_review_support/contact_native_fibre_s3_20261005/material_results.md).
+
 The same retained owner now has actual plastic-fibre press/open/recontact history,
 nonvirgin rollback and exact staged complete-chain replay in installed development
 checks. Independent rational returns validate local constitutive histories, not

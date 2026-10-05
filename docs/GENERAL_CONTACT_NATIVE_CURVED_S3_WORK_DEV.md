@@ -113,6 +113,29 @@ This toy material is a constitutive/transaction discriminator, not an engineerin
 material recommendation. Stage the same CLI commands above with `--plastic-fibres`
 at every stage and the immediately preceding checkpoint.
 
+### Committed material results
+
+The physical-fibre owner exposes
+`recover_material(checkpoint, expected_sha256, include_stations=False)`.
+It validates and replays the bound committed chain, then returns detached JSON
+data. This operation does not advance a load target or commit a material trial.
+Generalized-section checkpoints are explicitly unsupported by this recovery route.
+
+```powershell
+python examples/general_contact_native_curved_material_s3.py --plastic-fibres --restart open.checkpoint --recover-material material-results.json
+```
+
+Add `--material-stations` for reference/current frames, station strains and
+resultants, per-fibre stresses and histories. Station measures are reference
+arclength in metres; stored and dissipative densities have units J/m=N. Integrated
+energies are joules. Elastic and hardening storage of the native section, elastic
+shell storage, contact regularization storage, incremental plastic dissipation
+and its accumulated sum are separately named. Stored native energy includes
+hardening energy. `incremental_material_potential_j` is a variational quantity,
+not measured physical work. These fields do not certify an energy balance.
+Cancellation or invalid binding publishes no partial report; returned data cannot
+mutate committed state. The existing context lifetime and result byte cap apply.
+
 The existing native fibre context expires 120 seconds after construction,
 including idle time. Neither solve nor replay renews that allowance. An expired
 owner raises an explicit resource preflight error before candidate evaluation;

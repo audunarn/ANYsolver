@@ -2332,3 +2332,16 @@ This is development-tested, not independently accepted/released. Oracle uses
 production station strains; coupled independent reference, convergence and full
 material/work reporting remain required. No uninterrupted-cycle/speedup claim.
 [Evidence](d1_review_support/contact_native_fibre_s3_20261005/plastic_history.md).
+
+### Committed native fibre material reporting — installed development, 5 October 2026
+
+Existing owner.recover_material validates a bound committed chain and returns
+separate native/shell stored energy, contact storage, incremental/cumulative plastic
+dissipation and labelled incremental material potential, plus optional detached
+station fields. Six installed checks21.5244s/184647680B;525files/219imports match,
+JIT0/pools1. CLI export advances no target. Rational section-work oracle agrees
+within6.618e-24J; paired recovered strains, not independent coupled equilibrium.
+No mechanical/schema change or expensive replay; prior solve evidence reused by
+impact. Implemented/tested, not independently accepted/released; complete physical
+work/energy balance and remaining convergence/admission remain open.
+[Evidence](d1_review_support/contact_native_fibre_s3_20261005/material_results.md).

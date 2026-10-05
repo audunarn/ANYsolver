@@ -120,6 +120,13 @@ class NativeFibreContactContext:
     def histories(self,values,*,decoded=False):
         self.guard();return self._backend.history(values,decoded=decoded)
 
+    def recover(self,mechanical,origins,histories,completed_targets):
+        """Recover exact accepted fibre fields using this family's state owner."""
+        from anysolver._ge_beam3_retained_fibre_state import State
+        state=State(self.make(mechanical.descriptor()),self.histories(origins),
+            self.histories(histories),completed_targets,self._backend.identity)
+        return self._backend.recover(state)
+
     def assemble(self,mechanical,parameter,origins):
         self.guard()
         residual,hessian,metrics,responses=self._backend.assemble(mechanical,parameter,origins)

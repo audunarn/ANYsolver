@@ -2,62 +2,65 @@
 
 ## Authority and ownership
 
-FullC0–C9 ACTIVE/incomplete; goal/plan2026-10-05.2. Only authoritative checkout
+FullC0–C9 ACTIVE/incomplete; goal/plan2026-10-05.2. Only checkout
 C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. Production coree8d2cf63; current slice changes
-example/tests/fixtures/docs only. Never access protected original ANYsolver-general-contact
-or infer authority from stale goal-tool paths. Main/ANYfem/other chats separately
-owned; no other-chat messages, publication/merge/release/default changes.
-Expanded Mistral policy active; cached Local/Mistral unavailable, no reprobe without
-changed availability. Same-family scrutiny is not independent engineering acceptance.
-No live owned process; final supporting review finished, no consequential finding.
+codex/contact-main-reconcile-20261001. PriorHEAD80ff5979/coree8d2cf63. Current slice
+adds committed material reporting only; mechanical operators/schema unchanged.
+Never access protected original ANYsolver-general-contact despite stale goal-tool
+paths. Main/ANYfem/other chats separately owned; no other-chat messaging, merge,
+publication, release or default change. Expanded Mistral policy adopted; cached
+Local/Mistral unavailable, no reprobe without changed availability. Supporting
+same-family review is not independent engineering acceptance. No live owned job.
 
-## Completed current slice
+## Current integrated slice
 
-Explicit physical-fibre Y2Pa/H1e5Pa fixture uses the same retained curved/S3 owner,
-round geometry/load/1e7N/m³ law/30um gap and integration/path controls. Existing
-elastic response peak5.73643Pa predicted yielding. Rational section oracle checks
-real recovered strain/stress/moduli/history/resultants independently of the
-production return map. It does not solve the cell/coupled problem independently.
-Local plastic tangent errors1.002e-8/4.486e-8; discarded candidates retain origins.
-Actual firstcontact105.6947s/181829632B,12yielded entries. Installed saved-state
-positive force/work, invented-history rejection and nonvirgin exception/cancel
-rollback:3checks15.1431s. Installed unloading44.4019s/182288384B opens contact and
-includes6reverse-yielded entries. Installed recontact100.6586s/182091776B includes
-10yielded entries and complete three-record byte-exact replay. Five installed
-cases across3bounded jobs, not an uninterrupted-cycle qualification.
-Targetgaps−15.0131um,+92.3421um,−15.0043um; normalforces0.00540210N,0,0.00540207N.
+Physical-fibre native contact owner has recover_material(checkpoint,hash,
+include_stations=False,cancellation_token=None). Exact bound committed chain and
+histories are replayed, then the existing fibre backend supplies station fields.
+Existing section.response at paired recovered strains supplies stored/dissipative
+energy. Reference arclength weights integrate densities J/m=N into joules.
+Native elastic+hardening storage, elastic shell storage, contact regularization
+storage, incremental/cumulative plastic dissipation and explicitly labelled
+incremental variational potential are separate. No physical-work/energy-balance
+claim. Returned JSON is detached; optional stations, bool validation and byte cap.
+Generalized family rejects this recovery; cancellation/failure publish no report.
 
-Raw C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate02.
-Wheel813b08560894ae4b68f84b8e4eb55c91da845c91bca5ae9ff9a093d273c3f6a1 unchanged;
-524production files byte-identical, installed import/runtime records JIT0/pools1.
-FinalcheckpointSHA fddc268042fbe95123271ba9222b520828efe3acd7c1c8b49e73b6545fbe1659.
-Committed active/open fixtures bind material/state. First-contact test lacked
-positive-force assertion initially; corrected and real completed state verified
-installed without another unchanged full solve. No failed batch or historical
-failure regraded. [Evidence/resources/review](docs/d1_review_support/contact_native_fibre_s3_20261005/plastic_history.md),
+Source4checks16.7877s, enhanced reporting/publication4checks11.8895s (overlap),
+CLI1check6.5004s. Final installed6uniquechecks21.5244s/184647680B. Independent
+rational integrated energy errors6.61744e-24J/4.13590e-25J. All525production files/
+219imports match installed wheel,JIT0/pools1; new recovery module path verified.
+WheelSHA50cff5fe9e52b68d25cd65d5f6dc46a946596db0d8f5e5d6ebff49db8a2adfc0.
+Raw C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate03.
+Example --plastic-fibres --restart open.checkpoint --recover-material material.json
+[--material-stations] advances no target. Supporting review found no consequential
+reporting issue. Its fault-phase finding was incorrect, resolved against cell
+source; explicit replay-completed assertion and publication cancellation pass.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/material_results.md),
 [usage](docs/GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md).
 
 ## Next bounded action
 
-Expose actual committed native material recovery/reporting through the existing
-owner. Keep plastic dissipation, stored material energy and contact regularization
-storage separate; do not rename incremental potential as physical work. Reuse
-active/open fixtures and independent rational reference; no new geometry owner
-or unchanged expensive cycle. Material/section convergence, independent native
-acceptance, further pairings, friction/dynamics and applications remain required.
-Native context still expires120s after construction including idle; no clock reset.
+Close native enforcement convergence through one discriminating curved/S3 case.
+Choose explicit stiffness levels and dimensional reaction/displacement/gap scales
+prospectively, reuse actual coarse state, and record how outcomes choose next action.
+Keep all existing mechanical/material inputs and resource limits. No blind sweep,
+unchanged failed campaign replay, budget increase or convergence inferred solely
+from gap/residual. Material reporting is available for actual accepted states.
+Full material/section admission, independent coupled reference/acceptance, further
+pairings, friction/dynamics and applications remain required by C0–C9.
 
-## Preserved restrictions
+## Preserved evidence and restrictions
 
-[Previous restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261005_PRE_PLASTIC.md)
-retains elastic-family and earlier evidence/authority. Routine180s1GB/private180s953MiB/
-native120s; named900s4GB prospective only. No frozen/consumed authority renewed.
-Original120h consumed432011s; explicit subsequent resumption permits bounded work
-without new duration/accounting reset. ANYfem434ec004 untouched/appfalse.
-Actual-tangent free-rim continuum negative, guided benchmark retained.
-ImpactV4/V16 NONPASS900s at1.79779ms/3ms,65nm hiddenpulse/oldoracle sign: no
-unchanged/full replay or cap/gap relaxation. Native grazing friction NONPASS
-−1.33564e-13m, missing closed derivative/mixed enclosure: no saved/full/owner/split
-retry/reset/zero/native acceptance. Q4FDappcycle180.124s: no unchanged retry.
-Other scientific/enforcement/penalty-convergence failures retain dispositions.
+[Previous restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261005_PRE_MATERIAL_RESULTS.md)
+retains real plastic press/open/recontact and all prior identities. Active/open
+fixtures are byte-preserved in Git; checkout-filter parity verified80ff5979.
+Native context expires120s after construction including idle; never reset clocks.
+Routine180s1GB/private180s953MiB/native120s; named900s4GB prospective only. No frozen/
+consumed authority renewed. Original120h consumed432011s; later explicit resumption
+permits bounded work without duration/accounting reset. ANYfem434ec004 untouched/appfalse.
+Free-rim continuum admission negative/guided reference retained. ImpactV4/V16
+NONPASS900s/1.79779ms of3ms,65nm hidden pulse/old oracle: no unchanged/full replay or
+cap/gap relaxation. Native grazing friction NONPASS−1.33564e-13m: missing closed
+derivative/mixed enclosure; no saved/full/owner/split retry/reset/zero/native admission.
+Q4FDappcycle180.124s: no unchanged retry. Other scientific/enforcement/penalty
+convergence failures retain dispositions.

@@ -15,6 +15,21 @@ retains the detailed chronology; current evidence remains in the
 
 ## 1. Status and diagnosis
 
+Committed native material recovery is implemented through the existing owner,
+with distinct native/shell stored energy, contact regularization storage, plastic
+dissipation and explicitly labelled incremental material potential. Optional
+station results are detached; actual checkpoint histories and origins bind recovery.
+Six installed checks pass21.5244s/184647680B,525files/219imports match,JIT0/pools1.
+CLI recovery advances no target. Existing physical checkpoints/solve evidence
+remain compatible; no expensive solve replay was needed for reporting.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/material_results.md).
+Next choose one bounded native enforcement-convergence discriminator using the
+existing curved/S3 fixture, immutable mechanical inputs and explicit stiffness
+levels. Reuse the existing coarse solved state; compare reaction, displacement,
+independent gap and material/storage outputs with dimensional scales. State the
+hypothesis and stopping decision before a new solve; do not renew the historical
+failed convergence campaign or infer convergence from a gap/residual alone.
+
 Latest D3 material/history slice: explicit physical fibres Y2Pa/H1e5Pa through
 the same owner now press, unload/open and recontact with actual committed history.
 Independent rational returns and local spatial derivatives pass; five installed
@@ -23,10 +38,8 @@ chain replay. Coupled stages105.6947/44.4019/100.6586s, within unchanged120s bou
 No production kernel or wheel changed. This closes development workflow coverage,
 not convergence or independent native/material engineering acceptance.
 [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/plastic_history.md).
-Next expose committed native material recovery/work summaries through the existing
-result owner, preserving material dissipation, stored material energy and contact
-regularization storage as distinct quantities. Reuse the actual plastic fixtures;
-do not replay their expensive solves unless inputs or mechanics change.
+This preceding history evidence is reused by impact analysis; do not replay its
+expensive solves unless inputs or mechanics change.
 
 Current D3 section-family slice adds physical-fibre retained work to the existing
 curved material/S3 owner. Independent sectional elasticity and full local spatial

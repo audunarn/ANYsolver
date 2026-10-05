@@ -80,8 +80,21 @@ def main():
     parser.add_argument('--two-facets',action='store_true',help='two explicit disjoint source patches against connected S3 facets')
     parser.add_argument('--physical-fibres',action='store_true',help='declared axial/biaxial physical-fibre section and elastic background')
     parser.add_argument('--plastic-fibres',action='store_true',help='physical fibres with explicit 2 Pa yield stress and 1e5 Pa linear hardening')
+    parser.add_argument('--recover-material',type=Path,help='recover the accepted --restart checkpoint to material-results JSON without solving another target')
+    parser.add_argument('--material-stations',action='store_true',help='include optional station and fibre fields in material recovery')
     args=parser.parse_args()
     raw=None if args.restart is None else args.restart.read_bytes()
+    if args.material_stations and args.recover_material is None:
+        parser.error('--material-stations requires --recover-material')
+    if args.recover_material is not None:
+        if raw is None or not (args.physical_fibres or args.plastic_fibres):
+            parser.error('--recover-material requires --restart and a physical-fibre fixture')
+        owner=analysis(two_facets=args.two_facets,physical_fibres=True,plastic_fibres=args.plastic_fibres)
+        report=owner.recover_material(raw,sha256(raw).hexdigest(),include_stations=args.material_stations)
+        args.recover_material.write_text(json.dumps(report,indent=2),encoding='utf-8')
+        print(json.dumps(dict(status='recovered',profile=owner.profile,completed_targets=report['completed_targets'],
+            checkpoint_sha256=report['checkpoint_sha256'],material_results=str(args.recover_material)),indent=2))
+        return
     if args.through_target>1 and raw is None:
         parser.error('--restart is required for subsequent bounded stages')
     if raw is not None and json.loads(raw)['completed_targets']!=args.through_target-1:
