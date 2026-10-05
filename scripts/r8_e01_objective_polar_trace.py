@@ -142,13 +142,26 @@ def _values(matrix):
 
 
 def _jets(candidate, state, increments):
-    n, dx, dy = rectangular_patch(candidate.xy, candidate.station)
     delta = [Jet2.variable(value, i, SIZE) for i, value in enumerate(increments)]
     x = [[Jet2.constant(state.positions[i, j], SIZE)+delta[6*i+j]
           for j in range(3)] for i in range(4)]
     directors = [matvec(so3_exp(delta[6*i+3:6*i+6]),
                        [Jet2.constant(v, SIZE) for v in state.directors[i]]) for i in range(4)]
-    raw_d = [sum((n[i]*directors[i][j] for i in range(4)), Jet2.constant(0., SIZE))
+    rb = matmul(so3_exp(delta[27:]), constant_matrix(state.beam_rotation, SIZE))
+    beam_x = [Jet2.constant(state.beam_position[j], SIZE)+delta[24+j] for j in range(3)]
+    return _trace_from_jets(candidate, x, directors, beam_x, rb)
+
+
+def _trace_from_jets(candidate, x, directors, beam_x, rb, *,
+                     beam_origin_relative=None, reference_arm=None):
+    """Bounded local AD seam for a supplied authoritative physical beam pose.
+
+    A compensated adapter may supply beam_origin_relative = rb_position-x[0]
+    directly, before rounding a high/low position to one component.
+    """
+    size = x[0][0].gradient.size
+    n, dx, dy = rectangular_patch(candidate.xy, candidate.station)
+    raw_d = [sum((n[i]*directors[i][j] for i in range(4)), Jet2.constant(0., size))
              for j in range(3)]
     norm2 = dot(raw_d, raw_d)
     if norm2.value <= METRIC_MARGIN:
@@ -156,9 +169,9 @@ def _jets(candidate, state, increments):
     d = [v/sqrt(norm2) for v in raw_d]
     # Remove a common origin before forming gradients. Material derivatives are
     # frozen in reference coordinates; no derivative of a geometry-based host.
-    f = [[sum(((x[i][j]-x[0][j])*grad[i] for i in range(4)), Jet2.constant(0., SIZE))
+    f = [[sum(((x[i][j]-x[0][j])*grad[i] for i in range(4)), Jet2.constant(0., size))
           for grad in (dx, dy)] for j in range(3)]
-    e = [[f[j][a]-d[j]*sum((d[k]*f[k][a] for k in range(3)), Jet2.constant(0., SIZE))
+    e = [[f[j][a]-d[j]*sum((d[k]*f[k][a] for k in range(3)), Jet2.constant(0., size))
           for a in range(2)] for j in range(3)]
     g = matmul(transpose(e), e)
     determinant = g[0][0]*g[1][1]-g[0][1]*g[1][0]
@@ -179,19 +192,20 @@ def _jets(candidate, state, increments):
         raise TraceDomainError("projected material orientation flipped")
     if np.max(np.abs(frame.T@frame-np.eye(3))) > 1e-9:
         raise TraceDomainError("projected polar frame is numerically unresolved")
-    rb = matmul(so3_exp(delta[27:]), constant_matrix(state.beam_rotation, SIZE))
-    beam_x = [Jet2.constant(state.beam_position[j], SIZE)+delta[24+j] for j in range(3)]
-    arm = matvec(rs, [Jet2.constant(v, SIZE) for v in candidate.shell_offset])
-    center_relative = [sum((n[i]*(x[i][j]-x[0][j]) for i in range(4)), Jet2.constant(0., SIZE))
+    arm = matvec(rs, [Jet2.constant(v, size) for v in candidate.shell_offset])
+    center_relative = [sum((n[i]*(x[i][j]-x[0][j]) for i in range(4)), Jet2.constant(0., size))
                        for j in range(3)]
     # Difference first: an arbitrary common origin is not part of the law.
     # Rs.T (rb-center-Rs*a) - (rb0-center0-a) simplifies exactly to
     # Rs.T (rb-center) - (rb0-center0). Do not form the two cancelling a terms:
     # a large frame-offset gauge can otherwise erase a real displacement while
     # the AD gradient still reports its nonzero derivative.
-    gap = [beam_x[j]-x[0][j]-center_relative[j] for j in range(3)]
-    ct = [v-v0 for v, v0 in zip(matvec(transpose(rs), gap), candidate.reference_arm, strict=True)]
-    relative = matmul(constant_matrix(candidate.reference_beam_rotation.T, SIZE),
+    base_relative = ([beam_x[j]-x[0][j] for j in range(3)] if beam_origin_relative is None
+                     else beam_origin_relative)
+    gap = [base_relative[j]-center_relative[j] for j in range(3)]
+    arm0 = candidate.reference_arm if reference_arm is None else reference_arm
+    ct = [v-v0 for v, v0 in zip(matvec(transpose(rs), gap), arm0, strict=True)]
+    relative = matmul(constant_matrix(candidate.reference_beam_rotation.T, size),
                       matmul(transpose(rs), rb))
     try:
         cr = so3_log(relative)
@@ -214,10 +228,17 @@ def evaluate(candidate, state, multipliers, *, increments=None):
     lam = _owned(multipliers, (6,), "constraint multipliers")
     delta = np.zeros(SIZE) if increments is None else _owned(increments, (SIZE,), "local increments")
     try:
-        constraint, rs, d, position, metric = _jets(candidate, state, delta)
-        potential = sum((v*l for v, l in zip(constraint, lam, strict=True)), Jet2.constant(0., SIZE))
+        parts = _jets(candidate, state, delta)
+        return _evaluation_from_jets(parts, lam, delta)
     except (FloatingPointError, OverflowError, ZeroDivisionError) as error:
         raise TraceDomainError("finite representable local derivative domain required") from error
+
+
+def _evaluation_from_jets(parts, lam, increments):
+    """Shared owned local derivative result; no global gather or assembly."""
+    constraint, rs, d, position, metric = parts
+    size = constraint[0].gradient.size
+    potential = sum((v*l for v, l in zip(constraint, lam, strict=True)), Jet2.constant(0., size))
     arrays = (np.array([v.value for v in constraint]),
               np.array([v.gradient for v in constraint]),
               np.array([v.hessian for v in constraint]), potential.gradient,
@@ -227,7 +248,7 @@ def evaluate(candidate, state, multipliers, *, increments=None):
         raise TraceDomainError("nonfinite local trace derivatives")
     copied = [_owned(a, a.shape, "result") for a in arrays]
     return TraceEvaluation(*copied[:3], potential.value, *copied[3:], metric,
-                           "spatial_left_physical" if not np.any(delta) else "fixed_base_exponential_parameters")
+                           "spatial_left_physical" if not np.any(increments) else "fixed_base_exponential_parameters")
 
 
 def wrench_balance(state, evaluation, origin=(0., 0., 0.)):

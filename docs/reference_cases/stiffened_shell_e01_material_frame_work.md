@@ -335,6 +335,102 @@ preserve the repaired evidence. Binding V2 predates this result prose; tested
 code is unchanged. Independent review of the repaired slice remains required,
 and neither the passing controls nor algebraic repair adopts the physical law.
 
+## Actual native half-cell local composition proposal
+
+`scripts/r8_e01_native_polar_work.py` has identity
+`R8_E01_NATIVE_HALF_CELL_PROJECTED_POLAR_WORK_V1_PROPOSAL`. The physical polar
+law remains unadopted. The adapter uses actual `NativeHalfCellPort` reference
+lift/frame, endpoint indices, cell identity and active native slots. It does
+not average beam nodal rotations, reconstruct a new beam trace, condense a
+retained variable, change a history or supply full native element work.
+
+For port weight t, endpoint high/low positions rL/rR and retained rotation Rc,
+the authoritative pose is `r=(1-t)rL+t rR+Rc lift`, `Rb=Rc reference.frame`.
+`NativeHalfCellPort.pose_pair` computes this at the compensated split-sum
+boundary. The adapter obtains that exact base high/low pair and computes
+`fsum(r_high,r_low,-shell_origin)` before rounding the relative position.
+Its reference arm is bound from the reference pair by the same relative sum.
+No displayed single-component port position substitutes for these low parts.
+
+The local chart has 33 coordinates: shell translations/left physical director
+rotations (24), endpoint translations (6) and one retained half-cell left
+physical rotation (3). The increment of the beam position is
+`(1-t)delta_rL+t delta_rR+(Exp(delta_theta)-I)Rc lift`; the beam frame is
+`Exp(delta_theta)Rc reference.frame`. Rodrigues difference coefficients evaluate
+the lift change directly, without adding/subtracting identity or two large
+rotated lifts. The shared bounded polar AD seam differentiates this pose, so
+the constraint gradient and multiplier Hessian include lift curvature.
+
+Independently, let J be the map from these 33 coordinates to the previous 30
+physical-pose coordinates. Its endpoint blocks are `(1-t)I,tI`, retained
+rotation block is I, and port-translation/rotation block is `-[Rc lift]x`.
+Then the covector is `J.T g30`, while
+`H33=J.T H30 J+sum f_port_j D2r_port_j`. The latter retained-rotation curvature
+is explicitly `1/2(e_a cross(e_b cross lift)+e_b cross(e_a cross lift))`.
+Omitting it does not give the full multiplier work Hessian.
+
+Shell global slots are explicitly supplied; native global slots are an explicit
+native-base offset plus the actual port's nine active slots. Overlap is rejected.
+Nodal beam rotations, the other half-cell rotation and 18 resultants per native
+element remain explicit and unchanged. The update helper returns a copied
+Mechanical using split_sum on endpoint high/low pairs and the native physical
+rotation update pattern. It does not issue or commit an owner state. A midpoint
+retains its chosen cell side, including different left/right cell rotations.
+
+Force/moment balance uses endpoint forces at their actual high/low positions
+and the retained-cell rotation covector, together with the shell covectors;
+using the interpolated port position for both endpoint forces loses this work
+interpretation. Nonzero anchored-chart gradients are not relabeled as physical
+wrenches. Both new/native and affected finite checks remain development evidence.
+
+The combined analytic control uses symmetric in-plane shear g and independent
+director `d=Ry(beta) ez`. Projection gives a tangent-plane matrix with rows
+`cos(beta)*(1,g)` and `(g,1)`, whose polar angle satisfies
+`tan(phi)=g*(1-cos(beta))/(1+cos(beta))`; thus `Rs=Ry(beta)Rz(phi)`.
+This is a declared consequence of the proposed trace, not physical endorsement.
+
+The native pose remains a binary64/compensated boundary. The tiny-rotation,
+large-lift control checks the analytic lift increment; it does not establish
+that a fresh floating `Rc@lift` resolves arbitrary sub-ULP motion for huge
+physical lifts. Uniform error/admission limits, external director/frame recovery,
+physical law adoption and full native material work remain separate obligations.
+
+### Executed native local controls
+
+The bounded native/affected-finite job completed **31 PASS in 2.69 s**: 13 native
+controls and 18 affected finite controls. No failures or retries occurred; the
+unchanged linear suite was not rerun. Curved-reference lift/frame and both
+cells/reversed references, actual native base pose and slots, independent chain
+gradient/Hessian including nonzero lift curvature, compensated endpoint updates,
+1e16 common-origin low-part preservation, physical wrench/origin balance,
+common-motion covector/Hessian covariance, sided midpoint rotations, inactive
+variable preservation and combined shear/director-tilt frame controls passed.
+The actual-update Jacobian and anchored-Hessian directional checks satisfy 1e-6
+at the same three prescribed step sizes, with conservative skew <=1e-9.
+
+`NativeEvaluation` reports the authoritative **base** beam high/low pose and
+frame used to anchor its derivatives. A nonzero `increments` argument changes
+the local chart evaluation; it does not issue an updated native state or replace
+those base-pose metadata fields. Use the copied actual-update helper and then
+evaluate at zero increments for a new physical-wrench interpretation.
+
+Whole supervised execution was 3.771 s, sampled process-tree peak 178,155,520
+bytes, affinity one CPU, sampled numerical/unresolved maximum one, both measured
+OpenBLAS pools one thread, and Numba one thread/JIT disabled under existing
+600 s/2 GiB bounds. Runtime source imports remained inside the checkout with
+zero runtime-record errors. No structural assembly/solve, external execution,
+refinement, history change or qualification campaign occurred.
+
+Raw [JUnit](../../.qualification/b3-ge-e4-pl/r8-e01-native-polar-work-dev-20261005-v1/junit-v1.xml),
+[execution/logs](../../.qualification/b3-ge-e4-pl/r8-e01-native-polar-work-dev-20261005-v1/focused-v1/),
+[source bindings](../../.qualification/b3-ge-e4-pl/r8-e01-native-polar-work-dev-20261005-v1/binding-v1.json)
+and [effective runtime](../../.qualification/b3-ge-e4-pl/r8-e01-native-polar-work-dev-20261005-v1/runtime-v1.json)
+remain grouped. Exact pre-run snapshots preserve the new native script/tests and
+the shared polar AD seam; older finite V1/V2 records and snapshots remain intact.
+Bindings predate this final prose; tested script/test bytes are unchanged.
+Independent review and root adoption remain pending; this is not E01 closure,
+an accepted finite deformation/error domain or different-family acceptance.
+
 Supporting independent OpenAI source/evidence review confirmed the cancellation
 repair and found no further implementation blocker in this bounded slice. It
 identified an adoption-relevant combined-field behavior: for symmetric in-plane
@@ -347,3 +443,54 @@ the declared law; it is not a failed objectivity check or an adopted physical
 assumption. A combined-field/native-port control belongs in the next connected
 slice. No test execution of this combined field is claimed by V2. The review is
 supporting evidence, not the mandatory different-family scientific acceptance.
+
+### Native update primitive correction (development V2)
+
+Independent review found that V1's copied update helper used the general
+corotational rotation primitive, while retained `Context.advance` uses
+`_ge_beam3_p5.algebra.rotation`. For spin `(1e-9,1e-9,0)` and lift
+`(0,2^54,0)`, the P5 quadratic series retains `R01 = 0.5e-18`; omitting it
+loses approximately `0.0090072 m` in an initially zero x coordinate. This is
+an observable update-helper error, separate from large-origin output resolution.
+The helper now uses the exact retained primitive. No product law, tolerance,
+coordinate layout or candidate physical assumption changed. Original V1's
+31 passing checks and exact executed source snapshots remain immutable; they did
+not cover this counterexample. A new control invokes the actual `Context.advance`
+method through its layout/make boundary, compares all copied Mechanical arrays,
+and compares the actual port's high/low position and physical frame.
+
+The single authorized V2 affected-native job completed with **14 PASS**, zero
+failures/errors (pytest 1.80 s; JUnit 1.752 s). The unchanged finite suite was not
+repeated. Supervisor wall time was 2.7796673 s, sampled peak tree memory
+177,745,920 bytes, affinity `[0]`, sampled numerical/unresolved maximum one;
+both effective OpenBLAS pools and Numba reported one thread, JIT disabled.
+The shared numerical slot was released. Raw binding, exact executed native
+script/test snapshots, JUnit, runtime and execution/logs remain under
+`.qualification/b3-ge-e4-pl/r8-e01-native-polar-work-dev-20261005-v2/`.
+Current native script/test bytes and snapshots were verified against the pre-run
+binding. This repair corrects the implementation/update claim; adoption of the
+candidate physical law and scientific/different-family acceptance remain open.
+
+### Native gather representability correction (development V3)
+
+Supporting review found that unsigned shell-slot identities could wrap negative
+when cast to `intp`, and that adding the native base in NumPy could overflow.
+The constructor now validates each original slot and each base-plus-active-slot
+sum as Python integers in `0..intp.max` before conversion, normalizes the combined
+gather once, checks uniqueness, and retains the immutable normalized gather.
+Controls include the actual unsigned `2^63` input, native-base overflow, and the
+maximum valid native global slot. AD, coordinate/law definitions, tolerances and
+product code remain unchanged. Earlier V1/V2 source snapshots and results remain
+preserved; this is an input-validation repair, not scientific acceptance.
+
+The single authorized V3 affected-native job completed **16 PASS**, zero
+failures/errors (pytest 1.82 s; JUnit 1.770 s). Supervisor wall time was
+2.7954013 s, sampled peak tree memory 178,126,848 bytes, affinity `[0]`, sampled
+numerical/unresolved maximum one. Both effective OpenBLAS pools and Numba
+reported one thread; JIT was disabled. The numerical slot was released.
+Raw binding, exact executed native script/test snapshots, JUnit, runtime and
+execution/logs are preserved under
+`.qualification/b3-ge-e4-pl/r8-e01-native-polar-work-dev-20261005-v3/`.
+Current native script/test bytes and snapshots match their pre-run hashes.
+No finite-suite repetition, structural solve, external solve or qualification
+execution was performed. Candidate physical adoption remains reserved.

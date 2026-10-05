@@ -2905,3 +2905,23 @@ r8-e01-objective-polar-trace-dev-20261005-v1. Physical-reference correspondence,
 admitted finite domain, native composition and scientific acceptance remainOPEN.
 No F03/E01/E04/G0/G4B or aggregate gate closure; formalF03 unconsumed. No new
 structural/external campaign, tolerance relaxation, main merge or publication.
+
+### 5 October - native half-cell work tool and stopped portable certificate
+
+IMPLEMENTED_NOT_QUALIFIED: local33 projected-polar proposal composes the actual
+native retained port without nodal averaging, condensation or history changes.
+V1:31PASS; supporting Read review found an update-primitive mismatch, repaired
+with actual Context.advance/P5 control; affectedV2:14PASS. Subsequent unsigned
+gather overflow repaired before intp conversion/addition; affectedV3:16PASS,
+whole2.795s/178126848B. Earlier source/results preserved. Scientific law adoption,
+full native element work, physical-reference correspondence and F03 remain OPEN.
+No new production attachment dispatch or external/structural campaign.
+
+FAILED_ADMISSION_CANDIDATE_PRESERVED: S3 portable consistency experiment V1--V5.
+Final1PASS/1FAIL: valid seed reaches physical fields but cannot certify original
+predecessor static yield cap; corruption rejects. No global workmargin or
+continuation acceptance. Exact executed source and failures retained under
+r8-native-s3-portable-candidate-dev-20261005-v1/closed-candidate-source/.
+Unaccepted policy removed from working package; strict defaults/fixtures unchanged.
+Portable restart and common-main CI remain OPEN; no scientific relaxation,
+qualification, different-family acceptance, merge or publication.

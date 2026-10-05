@@ -7,12 +7,15 @@ for review. Print-limited balance/uniformity checks leave the evidence partial;
 original force-controlled failures and E04/G4D remain open. Do not extend the
 closed force-iteration route. Point, BL5 and mixed Q4/S3/native-family conservative
 buckling now have experimental installed evidence; aggregate G4B stays open.
-Current connected work resolves S3 numerical restart portability through an
-explicit consistency candidate and the physical connection/reference distinction
-through a finite objective projected-polar/director candidate. Strict legacy
-default binding and existing point/BL5 identities stay unchanged. Complete these
-bounded slices and review their actual work maps before another structural or
-external campaign. See the active note for exact evidence and remaining decisions.
+The bounded S3 portable-consistency candidate remains unable to certify the
+unchanged predecessor and is preserved outside the working package, with strict
+default binding unchanged. Stop further expansion of that route. Native half-cell
+composition of the finite projected-polar/director tool now has reviewed local
+work/update/gather controls, but its law remains unadopted. Next discriminate
+beam shear and section rotation under the same prescribed homogeneous shell
+field for polar and material-line frames, using actual retained kinematics.
+This is a local law decision before another structural/external campaign;
+existing point/BL5 identities remain unchanged. See the active note for exact evidence and remaining decisions.
 No scope or scientific acceptance threshold changes.
 
 **Status 4 October 2026: planning update adopted; explicitly resumed by the user.**

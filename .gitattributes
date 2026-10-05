@@ -338,3 +338,10 @@ tests/data/native_s3_fibre_history/** -text
 /tests/test_r8_e01_objective_polar_trace.py -text
 /docs/reference_cases/stiffened_shell_e01_material_frame_work.md -text
 /docs/agent_plans/history/PRE_FINITE_TRACE_REVIEW_20261005.md -text
+
+/.qualification/b3-ge-e4-pl/r8-e01-native-polar-work-dev-20261005-v1/** -text -whitespace
+/.qualification/b3-ge-e4-pl/r8-e01-native-polar-work-dev-20261005-v2/** -text -whitespace
+/.qualification/b3-ge-e4-pl/r8-e01-native-polar-work-dev-20261005-v3/** -text -whitespace
+/.qualification/b3-ge-e4-pl/r8-native-s3-portable-candidate-dev-20261005-v1/** -text -whitespace
+/scripts/r8_e01_native_polar_work.py -text
+/tests/test_r8_e01_native_polar_work.py -text
