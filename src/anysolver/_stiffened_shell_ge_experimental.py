@@ -78,6 +78,7 @@ from ._stiffened_shell_l1_assembly_experimental import (
 PROFILE = "B3_GE_E4_PL_STIFFENED_SHELL_V1"
 BL5_GENERALIZED_MATERIAL_V1 = "BL5_GENERALIZED_MATERIAL_V1_DEV"
 BL5_COUPLED_J2_MATERIAL_V1 = "BL5_COUPLED_J2_MATERIAL_V1_DEV"
+BL5_ELASTIC_NATIVE_FIBRE_V1 = "BL5_ELASTIC_NATIVE_FIBRE_V1_DEV"
 GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1_DEV"
 GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1 = "GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1_DEV"
@@ -616,10 +617,11 @@ class ExperimentalGEAnalysis:
         if self._modal_only and (definition.fixed or definition.lines or definition.footprints):
             raise ValueError("free-free modal-only policy requires empty supports and six-pose points only")
         if (type(definition.bl5_material_policy) is not str or
-                definition.bl5_material_policy not in ("elastic", BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1)):
+                definition.bl5_material_policy not in ("elastic", BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1, BL5_ELASTIC_NATIVE_FIBRE_V1)):
             raise ValueError("explicit admitted BL5 material policy required")
         self._bl5_shell_material = definition.bl5_material_policy == BL5_COUPLED_J2_MATERIAL_V1
-        self._bl5_material = definition.bl5_material_policy != "elastic"
+        self._bl5_native_fibre = definition.bl5_material_policy == BL5_ELASTIC_NATIVE_FIBRE_V1
+        self._bl5_material = definition.bl5_material_policy in (BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1)
         if self._bl5_material and (not definition.lines or definition.footprints or
                 definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1):
             raise ValueError("BL5 material policy requires objective Q4 line model")
@@ -720,7 +722,14 @@ class ExperimentalGEAnalysis:
         self._beam_families = tuple(dict.fromkeys(
             "PHYSICAL_AXIAL_BIAXIAL_FIBRE" if type(element.section) is PhysicalFibreSection
             else "RESULTANT_ELLIPSOID" for element, _, _ in beam_parts))
-        if self._has_physical_fibre and definition.lines:
+        if self._bl5_native_fibre and (not self._has_physical_fibre or not definition.lines or
+                not panel.q4_elements or panel.s3_elements or panel.j2_curve is not None or
+                definition.shell_reference_policy != "flat" or definition.footprints or groups or
+                definition.q4_pullback_policy != Q4_ALGORITHMIC_PULLBACK_V1 or
+                any(type(line) is not ExperimentalBL5Line or line.basis not in
+                    ("p0", "continuous_p1_coarse") for line in definition.lines)):
+            raise ValueError("native-fibre BL5 requires explicit elastic flat objective Q4, supported director-bond lines and physical fibres")
+        if self._has_physical_fibre and definition.lines and not self._bl5_native_fibre:
             raise ValueError("physical-fibre mixed owner currently admits point attachments only")
         shell_count = 6*len(shell_ids)
         reference_length, shell_scale, beam_scale = _reference_scales(
@@ -788,7 +797,7 @@ class ExperimentalGEAnalysis:
             raise ValueError("typed experimental weak lines required")
         self._finite_bl5 = bool(definition.lines) and all(
             type(line) is ExperimentalBL5Line for line in definition.lines
-        ) and (panel.j2_curve is None or self._bl5_shell_material) and not self._has_physical_fibre
+        ) and (panel.j2_curve is None or self._bl5_shell_material) and (not self._has_physical_fibre or self._bl5_native_fibre)
         if definition.lines and definition.q4_pullback_policy == Q4_ALGORITHMIC_PULLBACK_V1 and not self._finite_bl5:
             raise ValueError("algorithmic Q4 line pullback requires admitted generalized BL5 beams")
         if self._bl5_material and not self._finite_bl5:
@@ -835,7 +844,7 @@ class ExperimentalGEAnalysis:
             identity_payload["shell_reference_policy"] = definition.shell_reference_policy
         if self._native_retained_scale:
             identity_payload["retained_scale_policy"] = definition.retained_scale_policy
-        if self._bl5_material:
+        if self._bl5_material or self._bl5_native_fibre:
             identity_payload["bl5_material_policy"] = definition.bl5_material_policy
         if panel.j2_curve is not None:
             identity_payload["shell_j2_curve"] = panel.j2_curve.as_dict()
@@ -1167,6 +1176,12 @@ class ExperimentalGEAnalysis:
                               if shell_plastic
                               else ())),
                 "excluded": excluded}
+        if self._bl5_native_fibre:
+            capabilities.update(analysis=("reference_linear", "experimental_elastic_native_fibre_bl5"),
+                native_bl5_material_domain="virgin unchanged history, every native station/fibre elastic-interior with positive yield margin",
+                native_bl5_checkpoint="existing native-material binary schema; explicit model/line/material-policy identity",
+                excluded=tuple(v for v in excluded if v != "physical-fibre B3 finite"),
+                open_domains=("plastic native BL5", "S3 native BL5", "consumer integration", "scale qualification"))
         if self._definition.footprints:
             capabilities["attachment"] = (
                 (("reference point pose",) if self._definition.points else ())+
@@ -1306,6 +1321,13 @@ class ExperimentalGEAnalysis:
         from ._stiffened_shell_ge_point_buckling import capabilities
         with self._operation_lock:
             return capabilities(self, mixed=True)
+
+    @property
+    def native_line_buckling_capabilities(self):
+        """Explicit elastic physical-fibre BL5 accepted-state descriptor."""
+        from ._stiffened_shell_ge_point_buckling import capabilities
+        with self._operation_lock:
+            return capabilities(self, lines=True, mixed=True, native_lines=True)
 
     @_state_writer
     def buckling(self, request, *, cancellation_token=None):
@@ -1776,7 +1798,8 @@ class ExperimentalGEAnalysis:
                     raise ValueError("BL5 material checkpoint must retain histories")
                 if kind == "finite_bl5" and not self._finite_bl5:
                     raise ValueError("finite BL5 checkpoint requires elastic BL5 line model")
-                if self._line_samples and kind not in ("linear", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled"):
+                if self._line_samples and kind not in (("linear", "finite_native_material") if self._bl5_native_fibre else
+                        ("linear", "finite_bl5", "finite_bl5_material", "finite_bl5_coupled")):
                     raise ValueError("experimental weak line requires its finite BL5 checkpoint identity"
                                      if self._finite_bl5 else
                                      "experimental weak line admits reference-linear checkpoints only")
@@ -1930,7 +1953,7 @@ class ExperimentalGEAnalysis:
                     self._distributing_native and
                     value["schema"] == _BINARY_SCHEMAS[self._distributing_checkpoint_kind]):
                 raise ValueError("physical-fibre mixed owner admits reference-linear checkpoints only")
-            if (bool(self._finite_bl5) != (value["schema"] in (
+            if (bool(self._finite_bl5 and not self._bl5_native_fibre) != (value["schema"] in (
                     _BINARY_SCHEMAS["finite_bl5"], _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) or
                     self._bl5_material != (value["schema"] in (_BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) or
                     self._bl5_shell_material != (value["schema"] == _BINARY_SCHEMAS["finite_bl5_coupled"])):

@@ -29,6 +29,7 @@ from ._stiffened_shell_b2_q4_panel_experimental import _modal_scaled_residual
 POLICY = 'GE_Q4_POINT_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
 LINE_POLICY = 'GE_Q4_BL5_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
 MIXED_POLICY = 'GE_Q4_S3_PHYSICAL_FIBRE_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
+NATIVE_LINE_POLICY = 'B3_GE_NATIVE_FIBRE_BL5_ACCEPTED_BUCKLING_V1_DEV'
 TOLERANCE = 1e-8
 
 
@@ -119,6 +120,16 @@ class GEMixedBucklingResult(GEPointBucklingResult):
 
 
 @dataclass(frozen=True)
+class GENativeLineBucklingRequest(GELineBucklingRequest):
+    """Explicit elastic physical-fibre Q4/BL5 full-native accepted state."""
+
+
+@dataclass(frozen=True)
+class GENativeLineBucklingResult(GELineBucklingResult):
+    policy: str = NATIVE_LINE_POLICY
+
+
+@dataclass(frozen=True)
 class LineStationMap:
     slots: tuple
     rows: tuple
@@ -173,6 +184,10 @@ class _Failure(RuntimeError):
     pass
 
 
+class _ElasticBranchDomainError(ValueError):
+    """Only a witnessed constitutive branch or yield margin is out of domain."""
+
+
 def _freeze(matrix):
     result = matrix.tocsc(copy=True)
     result.sum_duplicates(); result.eliminate_zeros(); result.sort_indices()
@@ -212,10 +227,13 @@ def _model_digest(owner):
         owner._line_samples, owner._line_terms), protocol=5)).hexdigest()
 
 
-def _admit(owner, generation=None, *, lines=False, mixed=False):
+def _admit(owner, generation=None, *, lines=False, mixed=False, native_lines=False):
     owner._require_open()
     d = owner._definition
     driver = owner._finite_driver
+    if native_lines and (not lines or not mixed or not owner._bl5_native_fibre or
+            not d.shell.q4_elements or d.shell.s3_elements):
+        raise ValueError('native line buckling requires the explicit elastic native-fibre Q4 BL5 policy')
     if (driver is None or driver._accepted is None or owner._accepted is not None
             or (generation is not None and generation != owner._generation)):
         raise ValueError('current accepted finite state and matching generation required')
@@ -285,10 +303,10 @@ def _admit(owner, generation=None, *, lines=False, mixed=False):
     return driver, applied
 
 
-def capabilities(owner, *, lines=False, mixed=False):
+def capabilities(owner, *, lines=False, mixed=False, native_lines=False):
     reason = None
     try:
-        _admit(owner, lines=lines, mixed=mixed)
+        _admit(owner, lines=lines, mixed=mixed, native_lines=native_lines)
     except (ValueError, RuntimeError) as exc:
         reason = str(exc)
     result = dict(policy=MIXED_POLICY if mixed else LINE_POLICY if lines else POLICY, definition_admitted=reason is None,
@@ -306,6 +324,12 @@ def capabilities(owner, *, lines=False, mixed=False):
         result.update(state='accepted elastic objective Q4/S3 matching-point native equilibrium',
             material_admission='unchanged generalized/fibre history, every elastic branch and positive yield margin checked before factorization',
             coordinates='all shell, native nodal/cell rotations, eighteen resultants/member and point multipliers')
+    if native_lines:
+        result.update(policy=NATIVE_LINE_POLICY,
+            state='accepted elastic objective Q4/native physical-fibre BL5 equilibrium with optional six-pose points',
+            coordinates='all shell, full 42 native coordinates/member, existing five-row BL5 coefficients and optional point multipliers',
+            attachment='director bond; normal spin remains free',
+            open_domains=('plastic native BL5', 'S3 native BL5', 'consumer integration', 'scale qualification'))
     return result
 
 
@@ -317,13 +341,13 @@ def _elastic_beam(core, response, origin):
         context.prec = 80
         for station, history in zip(material['stations'], origin.stations, strict=True):
             if station['branch'] != 'ELASTIC':
-                raise ValueError('buckling requires elastic-interior generalized material')
+                raise _ElasticBranchDomainError('buckling requires elastic-interior generalized material')
             high, low = station['resultants']
             values = [Decimal.from_float(a)+Decimal.from_float(b) for a, b in zip(high, low)]
             radius = Decimal.from_float(core.section.yield_force)+Decimal.from_float(core.section.hardening)*core.section._origin(history)[1]
             q = sum(values[i]*core.section._m[i][j]*values[j] for i in range(6) for j in range(6)).sqrt()
             if radius-q <= Decimal.from_float(64*np.finfo(float).eps)*max(Decimal(1), q, radius):
-                raise ValueError('generalized material is on an unresolved yield boundary')
+                raise _ElasticBranchDomainError('generalized material is on an unresolved yield boundary')
 
 
 def _elastic_fibre(core, response, origin):
@@ -341,7 +365,7 @@ def _elastic_fibre(core, response, origin):
                 if recovered['fibre_id'] != fibre.fibre_id:
                     raise ValueError('physical-fibre station inventory/order mismatch')
                 if recovered['branch'] != 'ELASTIC':
-                    raise ValueError('buckling requires every physical fibre elastic-interior')
+                    raise _ElasticBranchDomainError('buckling requires every physical fibre elastic-interior')
                 if len(recovered['stress']) != 2 or not np.isfinite(recovered['stress']).all():
                     raise ValueError('physical fibre stress requires actual high+low pair')
                 stress = sum((Decimal.from_float(v) for v in recovered['stress']), Decimal(0))
@@ -356,7 +380,7 @@ def _elastic_fibre(core, response, origin):
                     (*recovered['stress'], represented_radius)), Decimal(0))
                 margin = Decimal.from_float(64*np.finfo(float).eps)*max(radius, abs(stress))+rounding
                 if radius <= 0 or radius-abs(stress) <= margin:
-                    raise ValueError('physical fibre is on an unresolved yield boundary')
+                    raise _ElasticBranchDomainError('physical fibre is on an unresolved yield boundary')
 
 
 def _line_components(local, shell_q, basis):
@@ -381,9 +405,9 @@ def _line_components(local, shell_q, basis):
     return np.r_[d.T@local.gradient, basis.T@local.gap], h, km, mapped
 
 
-def capture(owner, expected_generation, *, cancellation_token=None, lines=False, mixed=False):
+def capture(owner, expected_generation, *, cancellation_token=None, lines=False, mixed=False, native_lines=False):
     """Pure local replay from copied accepted data; no trial-cache publication."""
-    driver, applied = _admit(owner, expected_generation, lines=lines, mixed=mixed)
+    driver, applied = _admit(owner, expected_generation, lines=lines, mixed=mixed, native_lines=native_lines)
     initial_state = driver._state
     initial_digest = _state_digest(driver)
     initial_model_digest = _model_digest(owner)
@@ -522,6 +546,9 @@ def capture(owner, expected_generation, *, cancellation_token=None, lines=False,
     pchart = _freeze(chart.tocsc())
     identity = _matrix_digest((material, geometric, hessian, constraints, pchart,
                                matrices['shell'], matrices['beam'], matrices['joint']))
+    matrix_identity = identity
+    if native_lines:
+        identity = sha256((NATIVE_LINE_POLICY+owner._identity+identity).encode()).hexdigest()
     packet_type = LineBucklingPencil if lines else PointBucklingPencil
     packet = packet_type(material, geometric, constraints, hessian, matrices['shell'], matrices['beam'],
         matrices['joint'], residual, pchart, free, fixed, n, snap, identity, decomposition, symmetry,
@@ -539,7 +566,7 @@ def capture(owner, expected_generation, *, cancellation_token=None, lines=False,
             for element, _, _ in owner._beam_parts:
                 element.operator.guard()
             if _matrix_digest((packet.material, packet.geometric, packet.hessian, packet.constraints, packet.chart,
-                               packet.shell_geometric, packet.beam_geometric, packet.multiplier_curvature)) != identity:
+                               packet.shell_geometric, packet.beam_geometric, packet.multiplier_curvature)) != matrix_identity:
                 raise ValueError('immutable accepted buckling pencil changed')
     guard(); return packet, guard
 
@@ -569,17 +596,18 @@ def _scaled_pencil(owner, packet):
 
 
 def solve(owner, request, *, cancellation_token=None):
-    lines = type(request) is GELineBucklingRequest
-    mixed = type(request) is GEMixedBucklingRequest
-    if type(request) not in (GEPointBucklingRequest, GELineBucklingRequest, GEMixedBucklingRequest):
+    native_lines = type(request) is GENativeLineBucklingRequest
+    lines = type(request) is GELineBucklingRequest or native_lines
+    mixed = type(request) is GEMixedBucklingRequest or native_lines
+    if type(request) not in (GEPointBucklingRequest, GELineBucklingRequest, GEMixedBucklingRequest, GENativeLineBucklingRequest):
         raise ValueError('typed GE point-buckling request required')
     if cancellation_token is not None and not isinstance(cancellation_token, CancellationToken):
         raise ValueError('CancellationToken required')
-    _admit(owner, request.expected_generation, lines=lines, mixed=mixed)
+    _admit(owner, request.expected_generation, lines=lines, mixed=mixed, native_lines=native_lines)
     packet = None; handle = None; raw = ()
     checkpoint = sha256(owner._finite_driver.checkpoint()).hexdigest()
     def finish(status, **kwargs):
-        result_type = GEMixedBucklingResult if mixed else GELineBucklingResult if lines else GEPointBucklingResult
+        result_type = GENativeLineBucklingResult if native_lines else GEMixedBucklingResult if mixed else GELineBucklingResult if lines else GEPointBucklingResult
         return result_type(status, owner._identity, owner._generation, checkpoint,
             pencil_identity='' if packet is None else packet.identity,
             decomposition_error=0. if packet is None else packet.decomposition_error,
@@ -587,7 +615,7 @@ def solve(owner, request, *, cancellation_token=None):
             inverse_eigenvalues=raw, factorization_count=0 if handle is None else handle.factorization_count,
             solve_count=0 if handle is None else handle.solve_count, **kwargs)
     try:
-        packet, guard = capture(owner, request.expected_generation, cancellation_token=cancellation_token, lines=lines, mixed=mixed)
+        packet, guard = capture(owner, request.expected_generation, cancellation_token=cancellation_token, lines=lines, mixed=mixed, native_lines=native_lines)
         if request.count >= len(packet.free)-1:
             raise ValueError('buckling count must leave sparse Arnoldi room')
         a, g, scale = _scaled_pencil(owner, packet)

@@ -729,7 +729,10 @@ class FinitePointDriver:
             tangent = spatial_jacobian(
                 response.residual, response.hessian+response.hessian_low)
             scatter(slots+owner._shell_count, response.residual, tangent)
-            if getattr(owner, "_finite_bl5", False) and not owner._bl5_material and any(
+            if owner._bl5_native_fibre:
+                from ._stiffened_shell_bl5_native_elastic import require_elastic
+                require_elastic(element, response, origin)
+            if getattr(owner, "_finite_bl5", False) and not owner._bl5_material and not owner._bl5_native_fibre and any(
                     station.accumulated != (0., 0.) for station in response.history.stations):
                 raise ValueError("experimental finite BL5 admits elastic beam response only")
             if getattr(owner, "_finite_elastic_footprint", False) or (owner._finite_distributing and not owner._distributing_material):
@@ -1399,7 +1402,7 @@ class FinitePointDriver:
                 checkpoint_kind = self.owner._distributing_checkpoint_kind
             return _encode_binary_checkpoint(kind(checkpoint_kind),
                 self._checkpoint_identity(), generation, arrays + material)
-        if getattr(self.owner, "_finite_bl5", False):
+        if getattr(self.owner, "_finite_bl5", False) and not self.owner._bl5_native_fibre:
             return _encode_binary_checkpoint(kind("finite_bl5"),
                 self._checkpoint_identity(), generation, arrays)
         if self.owner._has_physical_fibre or self.owner._footprint_stable_s3 or self._external_stable_s3:
@@ -1527,7 +1530,7 @@ class FinitePointDriver:
         if type(value) is not dict:
             raise ValueError("incompatible experimental finite checkpoint")
         if ((value.get("schema") in (_BINARY_SCHEMAS["finite_bl5"],
-                _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) != bool(owner._finite_bl5) or
+                _BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) != bool(owner._finite_bl5 and not owner._bl5_native_fibre) or
                 owner._bl5_material != (value.get("schema") in (_BINARY_SCHEMAS["finite_bl5_material"], _BINARY_SCHEMAS["finite_bl5_coupled"])) or
                 owner._bl5_shell_material != (value.get("schema") == _BINARY_SCHEMAS["finite_bl5_coupled"])):
             raise ValueError("finite BL5 checkpoint requires its matching line policy")

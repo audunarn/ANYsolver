@@ -19,6 +19,8 @@ from ._stiffened_shell_ge_reference_modal import (
 )
 from ._stiffened_shell_ge_point_buckling import GEPointBucklingRequest, GEPointBucklingResult, GELineBucklingRequest, GELineBucklingResult
 from ._stiffened_shell_ge_point_buckling import GEMixedBucklingRequest, GEMixedBucklingResult
+from ._stiffened_shell_ge_point_buckling import GENativeLineBucklingRequest, GENativeLineBucklingResult
+from ._stiffened_shell_bl5_native_elastic import BL5NativeElasticDomainError
 
 from ._b2_physical_linear_definition import (
     PROFILE_ID as B2_E4_PL_FAST_LINEAR_V1,
@@ -83,7 +85,7 @@ from ._stiffened_shell_ge_experimental import (
     LinearDefinition, LinearResult,
     NodalAction, PointConnection, ShellPanel,
     NodalRigidFootprint, NodalRigidFootprintSelection, NodalRigidFootprintWrench,
-    Q4_ALGORITHMIC_PULLBACK_V1, BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1,
+    Q4_ALGORITHMIC_PULLBACK_V1, BL5_GENERALIZED_MATERIAL_V1, BL5_COUPLED_J2_MATERIAL_V1, BL5_ELASTIC_NATIVE_FIBRE_V1,
     GE_FINITE_DISTRIBUTING_GENERALIZED_MATERIAL_V1, GE_FINITE_DISTRIBUTING_COUPLED_J2_MATERIAL_V1,
     GE_FINITE_DISTRIBUTING_GENERALIZED_CYCLIC_MATERIAL_V1, GE_FINITE_DISTRIBUTING_COUPLED_J2_CYCLIC_MATERIAL_V1,
     GE_FINITE_DISTRIBUTING_NATIVE_CYCLIC_MATERIAL_V1, GE_FINITE_DISTRIBUTING_NATIVE_COUPLED_J2_CYCLIC_MATERIAL_V1,
@@ -318,3 +320,4 @@ __all__ += ["ReferencePosePerturbation", "StressFreePointReference", "create_str
 __all__ += ["GEPointBucklingRequest", "GEPointBucklingResult"]
 __all__ += ["GELineBucklingRequest", "GELineBucklingResult"]
 __all__ += ["GEMixedBucklingRequest", "GEMixedBucklingResult"]
+__all__ += ["GENativeLineBucklingRequest", "GENativeLineBucklingResult", "BL5_ELASTIC_NATIVE_FIBRE_V1", "BL5NativeElasticDomainError"]

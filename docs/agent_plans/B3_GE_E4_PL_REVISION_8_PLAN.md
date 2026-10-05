@@ -1374,3 +1374,26 @@ sparse packets, checkpoint and coefficient/density/gap recovery.
 Full G4B, remaining materials/shells/attachments/loads, B2 and external/platform/
 scale/consumer qualification remain mandatory OPEN. Continue those obligations
 under adopted contracts, without reopening closed campaigns or narrowing scope.
+
+
+### 5 October - elastic native physical-fibre BL5 installed development
+
+IMPLEMENTED_NOT_QUALIFIED: explicit BL5_ELASTIC_NATIVE_FIBRE_V1_DEV extends
+existing owner/facade with flat objective Q4, axial/biaxial fibres, optional
+native generalized members/points and unchanged five-row P0/coarse-P1 BL5.
+Compile/solve/recovery/fresh restart/continue and distinct native-line buckling
+request/result work with full42, native cross blocks and BL5 curvature.
+Virgin-history/positive-margin admission rejects yielding; ownership errors
+retain identity. Old policies/requests, binary reader/schema and criteria intact.
+Source-v1:4PASS10FAIL; repaired guard/test setup, affected-v2:10PASS4deselected.
+Installed-v1 collection failure preserved; runner-only repair gives16PASS34.023s
+and complete installed example. Root verified7 inputs/all424 package bytes,
+244 loaded target paths, wheel/runner identities, original residuals and exact
+checkpoint/continuation behavior. Wheel52bf905e84682206256996d2440af1812972d92e66464b7faca61710852d2eec.
+Effective CI4 imports/unforcedSkylakeX pools1/JIToff/affinity1 verified;
+supervisor40.253s/191635456B/numericalmax1. Supporting source/artifact independent
+review clear, not different-family/scientific acceptance. Bound raw/source/
+failed evidence: r8-native-fibre-bl5-dev-20261005-v1; grouped contract:
+docs/reference_cases/stiffened_shell_native_fibre_bl5.md. No production claim.
+Plastic/S3 line combinations, physical reference, consumer, scale/platform and
+all remaining aggregate/release obligations stay OPEN; no scope reduction.

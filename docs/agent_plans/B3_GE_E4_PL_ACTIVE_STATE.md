@@ -1,116 +1,87 @@
 # Current state - 5 October 2026
 
-Revision8 goal ACTIVE. Canonical worktree:
+Revision8 goal ACTIVE; complete programme remains incomplete. Canonical worktree:
 C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
-branch codex/stiffened-main-reconcile-20261001. Source identity is git HEAD;
-native33 base b40e0180 plus the bound prescribed-field slice below.
-User requires separate work: NO contact-worker communication. Replacement
-AGENTS applies. Mistral/local cached unavailable; OpenAI supporting review
-cannot satisfy required different-family scientific acceptance.
+branch codex/stiffened-main-reconcile-20261001. Git HEAD identifies integrated
+source; the elastic native BL5 slice below was tested from df094d6b plus bound
+changes. User requires separate work: NO contact-worker communication.
+Replacement AGENTS and risk-proportionate policy apply. Mistral/local cached
+unavailable; OpenAI independent reviews support development, not the required
+different-family scientific acceptance.
 
-## Current decisions and next actions
+## Delivered behavior and current decision
 
-Portable S3 restart: distinguish exact archive identity from numerical
-mechanical consistency without silent guard/tolerance changes. Exact CI library
-versions alone did not reproduce the failure. Actual Haswell dispatch does:
-all8 accepted/predecessor local vectors differ by <=8.132e-20; one component
-matches CI exactly. Stop backend/version sweeps. Strict defaults/readers/fixture
-bytes stay unchanged; no dependency pin, forced production CPU or new history.
+Explicit BL5_ELASTIC_NATIVE_FIBRE_V1_DEV now runs flat virgin-elastic Q4/native
+axial or biaxial fibres, optional generalized members/points and P0/coarse-P1
+BL5 through the existing facade: compile/preflight/solve/physical recovery,
+fresh checkpoint restore/continue and GENativeLineBucklingRequest. Five-row
+director bond/free normal spin, full42/member, native binary reader/schema,
+legacy request domains/defaults and scientific criteria remain unchanged.
+Every station/fibre stays virgin elastic with existing positive margin checks;
+true yielding is typed refusal, ownership/programming errors propagate, and
+failure/cancellation preserves the accepted prefix. Public mutations, stale
+state, corrupt snapshots and model/policy mismatch have refusal controls.
+Source-v1:4PASS/10FAIL; actual matrix-identity guard and test fresh-restore setup
+repaired. Affected source-v2:10PASS;4 unchanged passes reused by impact.
+Installed-v1 stopped in collection (examples namespace absent); runner-only
+repair gives installed-v2:16PASS34.023s plus complete public example.
+Root verified all7 Python inputs, all424 package module bytes, wheel/runner
+hashes and244 loaded solver modules in fresh target. Wheel SHA256:
+52bf905e84682206256996d2440af1812972d92e66464b7faca61710852d2eec.
+Example equilibrium9.396e-11/gap9.291e-18; original spectral residuals<=3.292e-16.
+Fresh restore/continue byte-exact; spectrum leaves checkpoint unchanged.
+Frozen-prestress factors7436.2365/40821.1607 are not limit loads or completeness.
+Supporting source/artifact reviews clear; scientific qualification still OPEN.
+Raw/source/artifact identities, retained failures and author handoff:
+.qualification/b3-ge-e4-pl/r8-native-fibre-bl5-dev-20261005-v1/.
+Group contract: docs/reference_cases/stiffened_shell_native_fibre_bl5.md.
 
-The bounded candidate B3_GE_S3_RESTART_PORTABLE_CONSISTENCY_V1_DEV is
-STOPPED/NOT_DELIVERED. V1:3PASS/1FAIL included a real predecessor-corruption hole;
-V2:3FAIL/4PASS repaired that hole but rejected the valid seed. V3 failed its import
-guard before execution; V4 isolated a rotation enclosure miss. Final V5 actual
-binary64 coefficient-DAG bounds passed both physical/local gates and rejected
-the corrupted predecessor, but the unchanged seed failed predecessor station0
-static yield certification:1PASS/1FAIL, whole5.490s/191139840B. The interval cannot
-prove the original1e-10 local yield cap; no numeric margin was emitted. Global
-workmargin and continuation were not reached. No empirical widening or success
-claim. All seven executed candidate files are hash-verified in
-r8-native-s3-portable-candidate-dev-20261005-v1/closed-candidate-source/;
-the five tracked owner/service files were restored to delivered HEAD and the
-two new candidate import/test files removed ONLY after verified preservation.
-Original fixture, strict defaults and all failed evidence remain unchanged.
-Future portable-archive design is a separate OPEN obligation; no automatic
-certificate extension or renewed old-history campaign. Grouped checkpoint:
-docs/reference_cases/stiffened_shell_s3_portable_restart.md.
+Native point Q4/S3/generalized/fibre/mixed buckling at888be00b already has
+installed52PASS/public example and original residual/checkpoint evidence.
+Do not rerun unchanged coverage. ANYfem9faed76 unchanged this slice.
 
-Connection/reference: nodal drilling yaw, material polar spin and line-tangent
-yaw are DIFFERENT laws. Director tilt cannot be replaced by surface normal under
-transverse shear. Linear material-frame/adjoint tool committed545ec27b:15PASS
-and both original hash-bound saved fields, whole0.846s/61MB. Failures retained.
+Connection discriminator atdf094d6b:16new prescribed-field controls pass.
+Polar and L1 six-channel maps impose DIFFERENT section rotations/chord shear;
+zero local gaps do not establish equivalence, equilibrium or physical accuracy.
+Both preserve independent-director transverse shear and finite rigid motion.
+Keep them separate; no automatic law replacement/refinement/multiplier tuning.
+BL5 remains the adopted development target, deliberately free normal spin.
+Next physical decision needs declared bond/footprint section-rotation/shear
+semantics and matched reference work/poses; no new campaign follows by default.
+Details: docs/reference_cases/stiffened_shell_e01_material_frame_work.md and
+r8-e01-native-polar-work-dev-20261005-v3/shear-v1/; F03/fullE01/E04 OPEN.
 
-Finite projected-polar/director trace is UNADOPTED, with full local multiplier
-Jacobian/Hessian and actual left updates; no native-port substitution/product
-dispatch. V1:31PASS (16finite+15linear). Independent review then found a genuine
-large-offset gauge cancellation: offset2^54 erased a real1m displacement.
-Equivalent algebra removes the cancelling terms. V2 affected18PASS, whole2.743s,
-177070080B, pools1/affinity1/JIToff; unchanged linear controls not rerun. RawV1
-and bindings preserved. Supporting independent review finds the blocker repaired;
-combined symmetric shear/director tilt induces yaw by the declared polar law.
-That physical interpretation remains reserved. Native33-coordinate composition
-now has31PASS (13native+18affectedfinite), whole3.771s. Read review found its
-update helper used a different small-angle rotation primitive from Context;
-actualP5 primitive now used, with actualContext/port regression. Affected14PASS,
-whole2.780s/177745920B. Further Read review found unchecked uint64/intp gather
-overflow; range checks now precede casts/addition. AffectedV3:16PASS, whole2.795s,
-178126848B. Exact snapshots/bindings preserve the missed V1/V2 defects. Native
-work remains local/unadopted, not full native element or structural evidence.
-The bounded prescribed-field discriminator is COMPLETE:16new controls PASS,
-16unchanged controls deselected; whole3.311s/178089984B, effective pools1/JIToff.
-Same beam positions, DIFFERENT imposed section rotations: at gamma=0.2,
-polar native in-plane shear=0.099503719(simple) or0.2(symmetric), L1~0;
-local gaps<=1.6653e-16 for both. Both preserve transverse shear0.2 with independent
-director ez, and finite rigid motions give zero strain. Supporting independent
-Read derivation confirms actual compensated strains/eccentric mappings.
-Decision: these are distinct continuous laws, not equivalent representations.
-Retain existing point/BL5 identities; polar remains an unadopted alternative.
-Stop equivalent-law refinement and multiplier tuning for this difference.
-Next: define the physical bond/footprint section-rotation/shear meaning and
-match the reference work/poses at that level before a loaded comparison.
-These prescribed states establish no equilibrium or constitutive-work claim.
-No structural/external campaign follows automatically. F03/fullE01/E04
-remain OPEN; rank, gaps or one quotient cannot select multipliers. Grouped report:
-docs/reference_cases/stiffened_shell_e01_material_frame_work.md.
+Portable S3 consistency candidate STOPPED/NOT_DELIVERED. Preserved V1--V5;
+final1PASS/1FAIL rejects corruption but cannot certify valid predecessor station0
+against original static yield cap. No global workmargin/continuation reached.
+Candidate source hash-preserved outside working package; strict readers/defaults
+and original fixture unchanged. No empirical tolerance change, CPU forcing or
+backend/version sweep. Grouped record: stiffened_shell_s3_portable_restart.md;
+raw r8-native-s3-portable-candidate-dev-20261005-v1/closed-candidate-source/.
 
-## Delivered behavior and remaining acceptance
+## Remaining work and restart
 
-888be00b: experimental mixed conservative POINT buckling, Q4/S3/mixed elastic
-shells, generalized/fibre/mixed native families, full42/member retained. S3 actual
-stable coordinate/material/prestress split; every-fibre elastic branch/history
-witnesses. Current equilibrium/gaps replay-validated before factorization;
-corrupt q/resultants/NaN reject without publication. Installed52PASS26.628s,
-public example/diagnostic complete with unchanged checkpoint. Wheel:
-9fd1400670a09e6b011f0b307d851b9a79b6c9db0beabaaf7cc8acaecd84de80;
-423package bytes verified. Factors11211.39615199803/41263.84675594574 are frozen-
-prestress predictions, not lowest/limit loads. Supporting review only for tested
-scope. c4169681 repairs obsolete S3 rebase-rejection tests with physical/history
-invariance, stale-generation and fresh restart/continuation checks. ANYfem9faed76
-unchanged. No aggregateG4B, external/platform/scale or release acceptance claimed.
+Complete G0-G6/F01-F13/V01-V28/B01-B18 remains mandatory. Implementation,
+development checks, acceptance and release are separate. Matrix:
+B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md. Plastic/S3 native BL5, footprint
+combinations, consumer, physical references, stability/capacity, scale/platform
+and different-family acceptance remain OPEN; no permanent scope exclusions.
+Next select one unblocked required combination or specific physical-reference
+obstruction using existing code/evidence; do not reopen closed diagnostics or
+repeat working routes. No numerical job/worker is active after this handoff.
+Common-main PR62 remains NONPASS; local02ca395e repairs unpushed. Main untouched.
+No merge/publication or contact-task communication is authorized by this slice.
 
-Full Revision8 G0-G6/F01-F13/V01-V28/B01-B18 remains mandatory and incomplete.
-Authoritative matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md.
-Common-main PR62 remains NONPASS; local02ca395e license/collection repairs are
-unpushed. Keep common integration and feature separate; main untouched.
+## Execution and preservation
 
-## Evidence, ownership and execution
-
-Raw roots under .qualification/b3-ge-e4-pl/:
-r8-ge-mixed-buckling-dev-20261005-v1;
-r8-native-s3-restart-binding-dev-20261005-v1;
-r8-e01-material-frame-work-dev-20261005-v1;
-r8-e01-objective-polar-trace-dev-20261005-v1;
-r8-e01-native-polar-work-dev-20261005-v1/v2/v3;
-r8-native-s3-portable-candidate-dev-20261005-v1.
-Root owns integration/Git/this note. E01 author owns its scripts/tests/grouped
-report. S3 candidate is archived outside the working package; no active writer. Preserve
-concurrent dirt; check worker state before checks. S3 experiment terminal.
-Numerical slot RELEASED; both bounded workstreams terminal, no job running.
-ONE job,max3workers,600s/2GiB process tree,affinity1/pools1/
-JIToff. Supervisor thread ceiling8, observed1. FormalF03 UNCONSUMED: never
-execute/copy/substitute prepared F03 script. Never inspect/traverse/copy/archive
-us3-modal-canary; no Get-CimInstance. FrozenG3c lease and closed Fy/pressure/
-native80/material/turning campaigns remain binding; no adaptive1.01 retry,
-authority renewal, main merge or publication. Previous detailed note preserved
-byte-exact in history/PRE_FINITE_TRACE_REVIEW_20261005.md, SHA:
-c0d5ca73376717b2dc882d8489fa4d04bc94397f7d60f3d01c242a33eef03162.
+Root owns integration/Git/this note; all worker-owned changes reconciled.
+ONE numerical job,max3workers; current source checks600s/2GiB process tree,
+affinity1/pools1/JIToff. Installed actual unforcedSkylakeX pools1 verified;
+whole40.253s/191635456B. Supervisor ceiling8, observed numerical maximum1.
+FormalF03 UNCONSUMED: never execute/copy/substitute prepared F03 driver.
+Never inspect/traverse/copy/archive us3-modal-canary; no Get-CimInstance.
+FrozenG3c lease and closed Fy/pressure/native80/material/turning campaigns stay
+binding. No adaptive1.01 retry, authority renewal or fixture rewrite.
+Previous active note preserved byte-exact in
+history/PRE_NATIVE_BL5_DELIVERY_20261005.md, SHA256:
+0ad3060c193f362a4524ee30c2e96ad3f5c5ece81db631614db85bd7dd730d80.
