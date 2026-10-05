@@ -1478,3 +1478,27 @@ yielding material history with its existing frozen laws and a bounded declared
 reference-seeded path; preserve parked failed force seeds. No blind model/load/
 curve/budget sweep. Full connection/multiplier and external/scale acceptance
 remain separate and mandatory. No formalF03 consumption, push, main merge/release.
+
+5 October2026 - native generalized signed history IMPLEMENTED_NOT_QUALIFIED
+Raw .qualification/b3-ge-e4-pl/r8-native-generalized-adaptive-history-dev-20261005-v1.
+Exact parked-v2 strength5/hardening1e6, elasticQ4 geometry/supports/point model;
+ordinary zero-wrench seed and reference-linear250N target2.9876760592228153e-5.
+Different loading/controller history, not repair of parked failed force seeds.
+Existing native adaptation6cuts24attempts/corrector20/12; all4 declared targets
+completed without rejected numerical trials. Actual per-station accumulation and
+plastic state changes, positive incremental generalized dissipation density;
+fixed-law density5*plastic_increment agrees within1e-10. Finaleq6.50470e-11/
+gap8.47033e-22/alpha2.40556e-4. Shell stays ELASTIC, no shellJ2 claim.
+Source regression1PASS13.88s; final compensated-increment installed1PASS11.51s.
+Separate installed two-owner continuation compares all generalized station fields,
+element IDs/native material arrays and complete checkpoint bytes; cancellation
+before trial preserves loaded prefix. Verify11.44s/169734144B; finalinstalled12.28s/
+179019776B/max1/pools1/JIToff/600s/2GiB. All520 source/import identities match
+unchanged wheel13e6a88c; no kernel change or performance claim.
+Failed harnessv1 empty ordinary-force recovery field/v2 scalar-pair iteration
+retained. Corrected field access only, no physical/solver changes. Screen's
+per-element accumulation check is supplemented by regression native per-station
+compensated differences. Supporting same-family review; independent acceptance
+OPEN. No aggregateG0-G6/F01-F13 closure, F03 consumption, push/main/release.
+NEXT: missing generalized/shellJ2 accepted-history combination using existing
+frozen laws after source inspection, one bounded declared path, no sweep.

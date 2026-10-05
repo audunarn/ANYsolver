@@ -1,61 +1,41 @@
-# Current state - 5 October2026
+# Current state -5 October2026
+Full Revision8 goal ACTIVE; allG0-G6/F01-F13/V01-V28/B01-B18 remain mandatory/incomplete.
+This goal turn PROGRESS: native generalized yielding signed-history evidence/regression.
+Root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001; parentb53cb296 plus scoped test,
+fixture/evidence/doc changes. Read actual Git status/HEAD on resume.
+ANYfem9faed76 unchanged. No kernel/product source change. Prior allS3/fibre and
+mixedJ2 histories remain evidence for their source, no passed campaign replay.
 
-Full Revision8 goal ACTIVE; G0-G6/F01-F13/V01-V28/B01-B18 mandatory/incomplete.
-Previous goal turn PROGRESS(native adaptation); current turn delivers installed
-all-S3/native fibre unload-reverse-reload lifecycle. Canonical goal/plan/matrix
-adjacent; protected history archived byte-exact in new raw before-final-v1.
+## Delivered behavior and limitations
+Frozen generalized strength5/hardening1e6 elasticQ4 point model now completes
+reference-seeded native adaptive loading, quarter unload, reversal and1.1reload.
+Actual per-station accumulation/plastic changes and incremental dissipation;
+all4 accepted, no rejected numerical trials. Finaleq6.50470e-11/gap8.47033e-22.
+Reference250N defines target, actual force follows100N direction/amplitude.
+Shell stays elastic; this does not close generalized/shellJ2 combination.
+Source1PASS13.88s; final strengthened installed1PASS11.51s, complete generalized
+station fields/native arrays and checkpoint exact continuation, pre-trial cancel.
+All520 source/import/hash identities match unchanged solverwheel13e6a88c.
+Finalinstalled12.28s/179019776B/max1; verify11.44s/169734144B. No speedup claim.
+Failed harness versions retained (wrong recovery field shapes, not solver failure).
+Supporting review drove compensated subtraction improvement; scientific independent
+acceptance remainsOPEN. Parked failed force seeds unchanged; new controller path.
+Raw .qualification/b3-ge-e4-pl/r8-native-generalized-adaptive-history-dev-20261005-v1
+has original scripts/logs, correctedscreen/verified outputs, actual checkpoints,
+source metrics, test versions, installed results/identities/review. Fixture is
+actual accepted loading, not fabricated. Historical notes archived byte-exact.
 
-Root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
-branch codex/stiffened-main-reconcile-20261001; candidate parent8e9121e1.
-ANYfem consumer9faed76 unchanged. No product/kernel source change; current
-identity is Git HEAD plus raw scope proof. Read status on resume.
-
-## Delivered behavior and remaining distinction
-
-Existing native optional adaptive POINT controller remains installed/verified.
-New runnable examples/stiffened_shell_coupled_s3_adaptive_history.py uses exact
-existing two-stiffener panel laws/sections/geometry/supports/six point bonds,
-explicit all-S3 discretization. Both physical fibres and shell J2 flow in same
-accepted update. Signed displacement unloading/reversal/reload completed; final
-shellalpha6.12055e-6, eq2.05394e-12/gap7.68693e-18, nonnegative fibre dissipation.
-Reference1500N defines displacement target; actual forces follow one amplitude,
-beam205 not independently controlled. Experimental, not qualified capacity.
-
-Source newtest1PASS13.90s; installed1PASS16.47s plus actual public-source example
-against installed packages, ANYfem experimental case/project save/reopen,
-unloaded-prefix restore and byte-exact continued final state. Authoritative
-fibre/S3 state, corruption rejection and cancellation verified. Same-step
-initial-loading observer fixed before installed check; supporting review clean.
-No different-family scientific acceptance. All520 source/import/hash identities
-match unchanged wheel13e6a88c899fbe76902093716abc5e486f4484fbf56b095151d8abed4ac95d7e;
-consumer626f27b6. Whole38.79s/191299584B, one numerical worker/pools1/JIToff.
-
-Mixed Q4/S3 nominal screen completed with Q4/fibre flow but S3 INACTIVE:
-COMPLETED_ACTIVITY_INCOMPLETE, STOP. Separate all-S3 success cannot close it.
-Prior failed mixed fixed single/quarter, S3 force-unload, generalized force seed,
-loaded-chart and native80 convergence evidence remains preserved/unresolved.
-Source initial newtest failed only wrong expected error string; actual guard
-rejected corruption correctly. Exact failed test/log retained, expectation fixed.
-No improvement/time saving/physical qualification inferred from these routes.
-
-## Next action and execution boundaries
-
-NEXT: missing generalized-yielding history using existing frozen section laws
-and ONE bounded declared reference-seeded adaptive path; preserve parked force
-seed failures. Do not launch a load/curve/budget sweep or replay those histories.
-Full connection/multiplier, physical work, chart, loads, spectra/capacity,
-scale/external/platform/consumer/independent acceptance and release remain OPEN.
-No aggregate gate closes. Optional native material progress does not confer G0.
-
-Raw .qualification/b3-ge-e4-pl/r8-native-mixed-s3-fibre-history-dev-20261005-v1:
-results-v1.md, decision-v1.md, failed screen/source-v1, all-S3/reversal outputs,
-installed-result-v1.json (pins wheel/source/test/example/fixture identities),
-source-v2, supporting-review-v1.md and stage proof. Actual unloaded fixture is
-recorded accepted history, not fabricated. No owned numerical/review job live.
-No push/main merge/publication/contact-worker communication. Mistral/local cached
-unavailable; no repeated probes. Max3workers/ONE numerical job; tighter600s/2GiB/
-affinity1/pools1/JIToff unchanged. FormalF03 UNCONSUMED, never execute/copy/
-substitute scripts/b3_e4_f03_c1_fy_supported_reference.py,
-SHA c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
-Never inspect/copy/archive us3-modal-canary(credentials); no Get-CimInstance.
-Frozen G3c guard needs reviewed lease; no bypass/replay. Full programme remains.
+## Next action and authority
+NEXT inspect existing frozen generalized/shellJ2 definitions and prior histories;
+select ONE bounded required coupled-history path, preserve earlier failures.
+No curve/load/budget sweep. Connection/multiplier, physical work, chart, loads,
+spectra/capacity/scale/external/platform/consumer acceptance remainOPEN/mandatory.
+Mistral/local cached unavailable; no repeated probes. Supporting OpenAI Read review
+terminal; no owned numerical job live. Max3workers/ONE numerical job; tighter
+600s/2GiB/affinity1/pools1/JIToff. No contact-worker communication/push/main/release.
+FormalF03 UNCONSUMED; never execute/copy/substitute
+scripts/b3_e4_f03_c1_fy_supported_reference.py SHA
+c908b1f3e4d9467deb3a96876126d5488cd040503cc6c6ec485b8aeaecef9481.
+Never inspect/copy/archive us3-modal-canary; no Get-CimInstance.
+FrozenG3c guard needs reviewed lease; no bypass/replay. No aggregate acceptance.

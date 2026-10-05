@@ -284,3 +284,7 @@ examples/stiffened_shell_coupled_s3_adaptive_history.py -text
 tests/test_stiffened_shell_native_s3_fibre_reversal.py -text
 tests/data/native_s3_fibre_history/** -text
 .qualification/b3-ge-e4-pl/r8-native-mixed-s3-fibre-history-dev-20261005-v1/** -text -whitespace
+
+/tests/test_stiffened_shell_native_generalized_adaptive_history.py -text
+/tests/data/native_generalized_adaptive_history/** -text
+/.qualification/b3-ge-e4-pl/r8-native-generalized-adaptive-history-dev-20261005-v1/** -text -whitespace
