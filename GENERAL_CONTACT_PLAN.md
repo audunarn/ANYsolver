@@ -26,14 +26,24 @@ If a native prerequisite or geometry certificate prevents the full outcome, pres
 
 ### Current source checkpoint
 
-Connected-body implementation is partial. Actual saved C0 contact and independent
-scalar work/H checks pass; curved retained-rotation control now fails at an isolated
-endpoint-projection integration boundary, before returning any derivative result.
-Full active156 solve/restart and installed verification are unmet. Numerical work
-used172.556881/180s;7.443119s remain, not renewed. Next derive the exact endpoint
-projection breakpoint and its error/work accounting before another changed check.
-The unique C0 target-switch proof and gap-bound correction are retained; do not
-restart their resolved diagnostics. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/grouped_body_development.md).
+Connected-body implementation remains partial. Exact endpoint-root inventory and
+the shared distance-jet mechanism pass focused analytical controls. The changed V8
+curved production evaluation passed its former endpoint-cut obstruction but refused
+an interior station rounded to an endpoint inside an uncertain junction band;
+4.090s, no complete residual/tangent or wrench result. That NONPASS is retained.
+
+V9 now omits only the already bounded junction strip, charging its complete
+half-weighted E/F/H and root-H to the unchanged total and half-boundary reserves.
+This removes the unnecessary midpoint projection; supporting source review agrees
+with the bound argument. The integrated V9 correction and new accounting/refusal
+controls are UNVERIFIED. No endpoint fallback, law, tolerance or cap change.
+Numerical work used177.357927799691/180s;2.642072200309s remain, not renewed.
+Full curved/native work, floating derivative-error audit, active156 solve/restart
+and current installed verification remain unmet. Preserve the source checkpoint;
+do not squeeze a full route into the residual purse or replay resolved diagnostics.
+Before further execution select a genuinely unblocked programme requirement or
+obtain the specific execution decision needed for this changed integrated route.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/grouped_body_development.md).
 ## Programme disposition and subsequent order
 
 | Delivery | Current disposition | Required next breadth |

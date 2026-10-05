@@ -60,3 +60,39 @@ Remaining: endpoint-projection root uncertainty/error accounting; curved retaine
 rotation work/H; full active coupled equilibrium/wrench/rollback/restart; installed
 current candidate; spatial/section evidence and independent engineering assessment.
 No complete-route speed claim, engineering acceptance, release or C0-C9 completion.
+
+## Endpoint repair continuation - current disposition, 6 October
+
+The preceding source/check figures describe d67feafd and remain historical evidence.
+V8 added exact rational endpoint-phi root strips, strict constrained KKT station
+selection and shared historical distance-jet formulas. Independent root inventory
+2PASS (0.114148s) and analytical near-endpoint derivative control1PASS (0.597248s)
+exercise the changed mechanisms. The derivative control includes target-tangent
+variation and asserts that the historical public endpoint selector is unchanged.
+These source checks do not verify full native contact or a new installed artifact.
+
+One actual curved contact-only caller run then NONPASS4.089651s/168890368B.
+It reached15 private domain calls beyond the former visited1001 obstruction, but
+refused an exact-KKT interior station whose finite Brent result rounded to an
+endpoint inside a bounded junction band's midpoint. No complete156-coordinate
+residual/Hessian, physical-gap or wrench gate was produced. Raw failure/inputs
+and executed source hashes remain unchanged in source_changed_curved_contact_only.
+
+V9 replaces only that private uncertain band's midpoint approximation with zero.
+Existing complete half-weighted physical30 bulk E/F/H and possible root-H bounds
+are charged outward against BOTH unchanged global and half-boundary reserves
+before omission. All source coverage, visited limits and native map/curvature
+error propagation remain. The exact projector still refuses unresolved stations;
+legacy midpoint behavior is preserved. The changed private checkpoint identity
+is COMPLETE_NATIVE_BODY_WINDOW_PAIR_DEV_V9_CHARGED_JUNCTION_OMISSION.
+This is an IMPLEMENTED BUT UNVERIFIED integrated correction: new accounting,
+malformed-input/refusal and legacy-flow controls were added but not executed.
+Supporting Read scrutiny confirms the bound argument; it is same-family input,
+not independent engineering acceptance. AST/whitespace and final source identities
+were checked. Old numerical passes are scoped to their executed hashes.
+
+All30 terminal jobs used177.35792779969077/180s;2.64207220030923s remain.
+Peak across the milestone remains201658368B. No further numerical job, tolerance,
+cap, stiffness or physical-law change. Routine integration, current installed
+verification, curved native work/error audit, active equilibrium/restart/rollback,
+spatial/section qualification and independent engineering assessment remain open.

@@ -123,7 +123,7 @@ class NativeRetainedBodyPair:
         self.identity=self._fingerprint()
 
     def _fingerprint(self):
-        return sha(dict(policy='COMPLETE_NATIVE_BODY_WINDOW_PAIR_DEV_V7_COMPLETE_C0_ROOT_SUPPORT_RESERVE',context=self.context.identity,
+        return sha(dict(policy='COMPLETE_NATIVE_BODY_WINDOW_PAIR_DEV_V9_CHARGED_JUNCTION_OMISSION',context=self.context.identity,
             bodies=self.bodies,chains=[[self.cells.index(cell) for cell in chain] for chain in self.chains],radius=self.radius,stiffness=self.stiffness,distance=self.distance_tolerance,
             tolerances=self.tolerances,search=(self.maximum_search_cells,self.maximum_search_depth),
             integration=self.maximum_integration_intervals,

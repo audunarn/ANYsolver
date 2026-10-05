@@ -160,6 +160,19 @@ def b3_distance_jet(source_positions: np.ndarray,
     if not projection.unique:
         raise ValueError("B3 projection has competing equal-distance minima")
     t = projection.minimizers[0]
+    return _b3_distance_jet_at_station(source, target, s, radius, t,
+                                       source_is_a=source_is_a)
+
+
+def _b3_distance_jet_at_station(source, target, s, radius, t, *, source_is_a=True):
+    """Internal envelope derivatives at an independently certified station.
+
+    Callers supplying a station must prove constrained KKT and unique strict
+    projection convexity. Historical b3_distance_jet selects/validates its
+    station exactly as before and shares these identical derivative formulas.
+    """
+    source_shape = _shape(s)[0]
+    source_position = source_shape @ source
     target_shape, target_shape_t, _target_shape_tt = _shape(t)
     target_position, target_tangent, target_second = _curve(target, t)
     separation = source_position - target_position

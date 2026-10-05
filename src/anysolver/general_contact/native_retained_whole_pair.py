@@ -152,8 +152,8 @@ def _endpoint_distance_lower(source, target, station, convexity):
 def _private_factored_gap(source, target, station, radius, target_station=None):
     """Exact stored-Q2 value enclosure at a feasible production station.
 
-    For f=.5*dÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â², exact strong convexity m bounds squared value surplus
-    by phiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â²/m. Endpoint exact KKT removes that surplus. Factored numerators
+    For f = 0.5*distance_squared, exact strict convexity bounds surplus
+    by phi_squared/m. The corrected squared-distance denominator is used.
     and outward denominator intervals preserve the physical zero surface.
     """
     if target_station is None:
@@ -189,8 +189,8 @@ def _private_interval_open(source,target,left,right,radius):
     """Complete exact strong-convex distance floor for a source Q2 hull.
 
     A feasible midpoint target station is fixed over the interval. For every
-    source point, min distanceÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â² >= feasible distanceÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â² - phiÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â²/m. Component
-    boxes lower the feasible squared norm; exact hull extrema upper phiÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â².
+    source point, min squared distance >= feasible squared distance minus phi_squared/m.
+    Boxes lower the feasible squared norm; exact hull extrema bound phi_squared.
     Convexity m=min_t f_tt is proved for every source-hull vertex (affine in p).
     No rounded distance subtraction or sampled clearance proves opening.
     """
@@ -254,7 +254,7 @@ def _exact_tiny_cell_omission_bound(source, target, reference, radius, stiffness
     kkt = (t == 0.0 and phi >= 0) or (t == 1.0 and phi <= 0)
     if distance <= 0.0:
         return None
-    # F'' >= 2*convexity, so distance surplus <=phiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â²/(convexity*d).
+    # F_second >= 2*convexity; distance surplus <= phi_squared/(convexity*d).
     surplus = (0.0 if kkt else
                _up(_up(phi*phi/Fraction(float(convexity)))/distance))
     reach = _sqrt_up(max(square(tuple(a-b for a, b in zip(control, point)))
@@ -1148,14 +1148,28 @@ class NativeRetainedWholeCurvePair:
                 def integrand(station: float, owner: int | None,
                               certified_active: bool = False) -> tuple[np.ndarray, bool]:
                     nonlocal evaluations
-                    chosen = (search.nearest(station).target_cell
-                              if owner is None or self.certify_curved_ownership
-                              else owner)
+                    if _source_domains is not None:
+                        if type(owner) is not int or owner not in (0,1):
+                            raise ValueError('native body integration requires an explicit target owner')
+                        chosen = owner
+                    else:
+                        chosen = (search.nearest(station).target_cell
+                                  if owner is None or self.certify_curved_ownership
+                                  else owner)
                     target_index = target_base+chosen
-                    jet = b3_distance_jet(
-                        current[source_index], current[target_index],
-                        station, self.radius, source_is_a=True,
-                    )
+                    if _source_domains is not None:
+                        from .native_retained_body_projection import strict_projection_station
+                        from .beam_curve_pair import _b3_distance_jet_at_station
+                        target_station = strict_projection_station(
+                            current[source_index],current[target_index],station)
+                        jet = _b3_distance_jet_at_station(
+                            current[source_index],current[target_index],station,
+                            self.radius,target_station,source_is_a=True)
+                    else:
+                        jet = b3_distance_jet(
+                            current[source_index], current[target_index],
+                            station, self.radius, source_is_a=True,
+                        )
                     evaluations += 1
                     if _source_domains is not None:
                         lo,hi,gap=_private_factored_gap(current[source_index],current[target_index],station,self.radius,jet.target_parameter)
@@ -1511,6 +1525,57 @@ class NativeRetainedWholeCurvePair:
                 if self.certify_curved_ownership:
                     source_pieces = _joined_owned_pieces(source_pieces)
                 for begin, stop, certified_owner, certified_active in source_pieces:
+                    if _source_domains is not None:
+                        from .native_retained_body_projection import endpoint_projection_bands
+                        bands, cells = endpoint_projection_bands(
+                            current[source_index], current[target_base+certified_owner],
+                            begin, stop, maximum_cells=self.maximum_search_cells-search_cells,
+                        )
+                        search_cells += cells
+                        segments = []
+                        cursor = begin
+                        for band_left, band_right in bands:
+                            if cursor < band_left:
+                                segments.append((cursor, band_left))
+                            bound = _exact_tiny_cell_omission_bound(
+                                current[source_index], current[target_base+certified_owner],
+                                reference_curves[source_index], self.radius,
+                                self.stiffness, band_left, band_right,
+                            )
+                            if bound is None or not np.all(np.isfinite(bound)) or np.any(bound < 0):
+                                raise MemoryError('native body endpoint projection strip enclosure unresolved')
+                            # Both one-sided constrained Hessians are enclosed
+                            # by the existing strict-convex strip bound. Their
+                            # envelope gradient agrees at the endpoint, hence
+                            # no moving-boundary Hessian is added. Charge the
+                            # complete physical30 strip before omitting it.
+                            bound = np.array([_up(Fraction(float(a))*b)
+                                              for a,b in zip(bound,(1,2,4))])
+                            charged = np.array([_up(Fraction(float(a))+Fraction(float(b)))
+                                                for a,b in zip(error,bound)])
+                            boundary_charged = np.array([_up(Fraction(float(a))+Fraction(float(b)))
+                                                         for a,b in zip(boundary_error,bound)])
+                            limits = np.array((self.energy_tolerance,self.force_tolerance,self.tangent_tolerance))
+                            if np.any(charged > limits) or np.any(boundary_charged > .5*limits):
+                                raise MemoryError('native body endpoint projection strip reserve exhausted')
+                            visited += 1
+                            if visited > self.maximum_integration_intervals:
+                                raise MemoryError('native body endpoint projection strip integration budget exhausted')
+                            error[:],boundary_error[:] = charged,boundary_charged
+                            omissions += 1
+                            if _diagnostics is not None:
+                                _diagnostics.setdefault('projection_strips',[]).append(
+                                    dict(source=source_index,target=target_base+certified_owner,
+                                         interval=(band_left,band_right),bound=bound.copy()))
+                            cursor = band_right
+                        if cursor < stop:
+                            segments.append((cursor,stop))
+                        for start,end in segments:
+                            share = .125*(end-start)
+                            budget = np.array((self.energy_tolerance*share,
+                                               self.force_tolerance*share,self.tangent_tolerance*share))
+                            total += .5*integrate(start,end,certified_owner,budget,certified_active)
+                        continue
                     if certified_owner not in projection_cuts:
                         projection_cuts[certified_owner] = (
                             _endpoint_projection_cuts(
@@ -1540,7 +1605,29 @@ class NativeRetainedWholeCurvePair:
                     visited += 1
                     if visited > self.maximum_integration_intervals:
                         raise MemoryError("curved junction band integration budget exhausted")
-                    density, _ = integrand(0.5*(begin+stop), None)
+                    if _source_domains is not None:
+                        from .native_retained_body_projection import charged_junction_omission
+                        limits = np.array((self.energy_tolerance,self.force_tolerance,self.tangent_tolerance))
+                        bound,charged,boundary_charged = charged_junction_omission(
+                            bulk_bound,root_h_bound,error,boundary_error,limits)
+                        error[:],boundary_error[:] = charged,boundary_charged
+                        omissions += 1
+                        intervals += 1
+                        if _diagnostics is not None:
+                            _diagnostics.setdefault('junction_omissions',[]).append(
+                                dict(source=source_index,interval=(begin,stop),bound=bound.copy()))
+                        # Complete half-weighted bulk and root-H bounds cover
+                        # the zero approximation in physical30. Native work
+                        # error amplification occurs in the body adapter.
+                        continue
+                    midpoint = 0.5*(begin+stop)
+                    # A bounded unresolved band uses an explicit nominal
+                    # branch only for its returned midpoint approximation;
+                    # full bulk+returned-density bounds below cover either
+                    # branch. Proven integration pieces keep their owner.
+                    nominal_owner = (search.nearest(midpoint).target_cell
+                                     if _source_domains is not None else None)
+                    density, _ = integrand(midpoint, nominal_owner)
                     approximation = 0.5*(stop-begin)*density
                     magnitude = np.array((
                         abs(approximation[0]),
