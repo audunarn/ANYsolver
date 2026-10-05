@@ -88,13 +88,23 @@ def test_native_fibre_enforcement_seeded_successive_response():
     _enforcement_case(2e7,seeded=True)
 
 
-def _enforcement_case(stiffness,seeded=False):
+def test_native_fibre_enforcement_seeded_saved_fine_successive_response():
+    path=os.environ.get('CONTACT_ENFORCEMENT_SOURCE_CHECKPOINT')
+    digest=os.environ.get('CONTACT_ENFORCEMENT_SOURCE_SHA256')
+    if not path or not digest:
+        pytest.skip('explicit saved fine checkpoint and hash required')
+    raw=Path(path).read_bytes()
+    assert sha256(raw).hexdigest()==digest
+    _enforcement_case(4e7,seeded=True,source_checkpoint=raw)
+
+
+def _enforcement_case(stiffness,seeded=False,source_checkpoint=None):
+    raw=(DATA/BASE).read_bytes() if source_checkpoint is None else source_checkpoint
     owner=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness)
     output=os.environ.get('CONTACT_APP_RESULT_RECORD')
     guess=None
     if seeded:
-        source=_analysis(physical_fibres=True,plastic_fibres=True)
-        raw=(DATA/BASE).read_bytes()
+        source=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness/2)
         guess=owner.make_initial_guess(source,raw,sha256(raw).hexdigest())
         if output:Path(output+'-initial-guess-provenance.json').write_text(json.dumps(dict(
             fingerprint=guess.fingerprint,owner_identity=guess.owner_identity,
@@ -105,10 +115,10 @@ def _enforcement_case(stiffness,seeded=False):
         Path(output+'-enforcement.checkpoint').write_bytes(run.checkpoint)
         Path(output+'-enforcement-run.json').write_text(json.dumps(dict(stiffness_Pa_per_m=stiffness,seeded=seeded,
             status=run.status,failure=run.failure,completed=run.accepted.completed_targets,
-            candidates=owner.candidate_evaluations,trial_failures=owner.curved_trial_failures),indent=2))
+            candidates=owner.candidate_evaluations,pair_evaluations=owner.pair_evaluations,
+            contact_reuse_hits=owner.contact_reuse_hits,trial_failures=owner.curved_trial_failures),indent=2))
     assert run.status=='paused',run.failure
     assert run.accepted.completed_targets==1
-    raw=(DATA/BASE).read_bytes()
     coarse=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness/2)
     state,_=coarse._restore(raw,sha256(raw).hexdigest())
     assert coarse.context.identity==owner.context.identity

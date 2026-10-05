@@ -138,3 +138,7 @@ def solve_native_shell(owner, schema, run_type, *, checkpoint=None,
         return run_type(
             "cancelled" if cancellation_token is not None and isinstance(exc, SolveCancelled) else "failed", accepted, type(exc).__name__+": "+str(exc), capsule,
         )
+    finally:
+        end_context = getattr(owner, '_end_candidate_context', None)
+        if end_context is not None:
+            end_context()

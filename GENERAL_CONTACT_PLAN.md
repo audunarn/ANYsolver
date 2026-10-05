@@ -35,12 +35,16 @@ passes22 installed checks; seeded2e7 accepts target1 in96.138s. Tip changes3.011
 against2%: response NONPASS. Tenth-budget pose integration rejects its root tangent
 enclosure; independent analytic residual agrees1.72e-14 relative, with negligible
 constrained tip correction. This supports enforcement sensitivity, not convergence.
-Next one4e7 comparison seeds actual2e7 coordinates only, preserving fine virgin
-histories and full path admission. Keep120s/953MiB, save outputs before assertions
-and compare all four response quantities with unchanged gap/work gates. No
-automatic next level/cap increase. Defaults, restart and rollback remain unchanged.
-No whole-route saving claimed.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/initial_guess.md).
+Both4e7 attempts now hit120s without a result. Exact candidate reuse passes11
+installed checks, including sparse-buffer integrity and constitutive-origin
+reevaluation; three-use local median7.779487 to2.639750s(66.07%). No whole-route
+benefit established. Stop full retries. Next one saved2e7-pose/4e7-law first-step
+cost experiment separates contact, structural/material, linear step, endpoint and
+swept admission; persist phase timings immediately, keep120s/953MiB, no physical
+commit or stiffness/load progression. Choose a correction from measured cost
+and rejection/step evidence; no automatic full retry, level or cap increase.
+Defaults, restart, rollback, scientific gates and full programme remain unchanged.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/candidate_reuse.md).
 
 Latest D3 material/history slice: explicit physical fibres Y2Pa/H1e5Pa through
 the same owner now press, unload/open and recontact with actual committed history.

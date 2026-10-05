@@ -175,3 +175,15 @@ checkpoints bind the fine definition and committed history and resume through
 ordinary checkpoint controls. Preparing or using a guess retains the original
 owner deadline. Convergence, branch selection and performance require measured
 evidence for each admitted workflow.
+
+### Disposable repeated-candidate work
+
+Curved physical-fibre solves reuse at most the last exact physical contact pose
+between admission and assembly. Definitions and complete result integrity are
+checked before reuse; changed coordinates evict it. Material work remains an
+evaluation from the requested physical origin. Every terminal driver path clears
+the entry; direct work calls remain uncached. Replacing cached sparse buffers or
+changing contact work rejects explicitly. `contact_reuse_hits` counts hits;
+`pair_evaluations` counts actual pair integrations, while `candidate_evaluations`
+continues to count successful contributor requests. Local reuse timings do not
+establish complete-route performance or enforcement convergence.

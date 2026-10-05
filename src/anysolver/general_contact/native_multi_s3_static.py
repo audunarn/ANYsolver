@@ -38,6 +38,17 @@ FIBRE_CURVED_MATERIAL_PROFILE = 'NATIVE_B3_GE_PHYSICAL_FIBRE_CURVED_MATERIAL_PAT
 SCHEMA = 'NATIVE_B3_GE_MULTIPLE_S3_CHECKPOINT_DEV_V1'
 
 
+def _candidate_work_signature(result):
+    def matrix(value):
+        if not sparse.isspmatrix_csr(value):
+            raise ValueError('cached native/S3 contact requires CSR work')
+        return value.shape, value.data, value.indices, value.indptr
+    return sha(dict(profile=result.profile, residual=result.residual,
+        tangent=matrix(result.tangent), pairs=[dict(name=p.name,
+            residual=r.residual,tangent=matrix(r.tangent),profile=r.profile,
+            physical=vars(r.contact)) for p,r in result.pairs]))
+
+
 @dataclass(frozen=True)
 class NativeS3ContactPair:
     name: str
@@ -255,6 +266,9 @@ class NativeRetainedMultiS3Analysis:
         self.shell_contract_sha = self._shell_contract_sha()
         self.identity = self._identity()
         self.candidate_evaluations = self.pair_evaluations = 0
+        self.contact_reuse_hits = 0
+        self._contact_reuse_enabled = False
+        self._contact_reuse_entry = None
         self.curved_trial_failures=[]
         initial = self.context.initial
         u = np.zeros(n_shell)
@@ -349,6 +363,32 @@ class NativeRetainedMultiS3Analysis:
     def _contact(self, mechanical, displacement):
         if self._identity() != self.identity:
             raise ValueError('multiple native/S3 consumed work/settings changed')
+        key = None
+        if self._contact_reuse_enabled:
+            # Recheck all formulation guards even on a geometry-identical hit.
+            # Native material/resultant state is never stored or reused here.
+            for p, i in zip(self.pairs, self.beam_indices):
+                nodes = self.context.nodes[i]
+                p.work._configuration(mechanical.positions[nodes], mechanical.position_low[nodes],
+                    mechanical.cell_rotations[i], displacement)
+            key = sha(dict(positions=mechanical.positions, low=mechanical.position_low,
+                rotations=mechanical.cell_rotations, shell=displacement))
+            entry = self._contact_reuse_entry
+            if entry is not None and key == entry[0]:
+                try:
+                    intact = _candidate_work_signature(entry[1]) == entry[2]
+                except Exception:
+                    self._contact_reuse_entry = None
+                    raise
+                if not intact:
+                    self._contact_reuse_entry = None
+                    raise ValueError('cached native/S3 contact work mutated')
+                self.candidate_evaluations += 1
+                self.contact_reuse_hits += 1
+                return entry[1]
+            # Keep at most one complete evaluation. Failed evaluations replace
+            # nothing; they cannot expose an earlier pose as the new candidate.
+            self._contact_reuse_entry = None
         total = self.context.count+len(displacement)
         residual = np.zeros(total); tangent = sparse.csr_matrix((total, total)); pairs = []
         for p, i in zip(self.pairs, self.beam_indices):
@@ -368,8 +408,14 @@ class NativeRetainedMultiS3Analysis:
             tangent += P.T@result.tangent@P
             pairs.append((p, result)); self.pair_evaluations += 1
         self.candidate_evaluations += 1
-        return NativeMultiS3WorkResult(NativeMultiS3Physical(tuple(pairs)), _readonly(residual), tangent.tocsr(), tuple(pairs),
+        result = NativeMultiS3WorkResult(NativeMultiS3Physical(tuple(pairs)), _readonly(residual), tangent.tocsr(), tuple(pairs),
             self.profile if self._material_mode else PROFILE)
+        if key is not None:
+            for matrix in (result.tangent, *(r.tangent for _, r in pairs)):
+                for array in (matrix.data, matrix.indices, matrix.indptr):
+                    array.setflags(write=False)
+            self._contact_reuse_entry = key, result, _candidate_work_signature(result)
+        return result
 
     def _contact_admissible(self, result):
         return all(r.contact.minimum_gap_m >= -p.gap_tolerance_m for p, r in result.pairs)
@@ -552,6 +598,12 @@ class NativeRetainedMultiS3Analysis:
 
     def _begin_candidate_context(self,cancellation_token):
         if self._fibre_mode:self.context.activate_cancellation(cancellation_token)
+        self._contact_reuse_enabled = self._fibre_mode and self._curved_mode
+        self._contact_reuse_entry = None
+
+    def _end_candidate_context(self):
+        self._contact_reuse_enabled = False
+        self._contact_reuse_entry = None
 
     def recover_material(self,checkpoint,expected_sha256,*,include_stations=False,cancellation_token=None):
         """Return bound committed fibre fields and separate energy summaries."""

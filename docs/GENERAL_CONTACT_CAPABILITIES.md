@@ -2401,3 +2401,12 @@ local tangent response supports enforcement sensitivity as principal cause.
 Tighter root-enclosure rejection and invalid oracle attempts remain retained.
 Implemented/tested only, not independently accepted/released.
 [Evidence](d1_review_support/contact_native_fibre_s3_20261005/initial_guess.md).
+### Exact native candidate reuse - installed development, 5 October2026
+
+One exact geometry entry during curved physical-fibre solves only; guarded work
+and cache-integrity validation, constitutive origins reevaluated, terminal cleanup.
+11 installed checks pass. Three-use saved-pose median7.779487 to2.639750s(66.07%
+local reduction), bitwise work. Both4e7 full attempts hit120s with no mechanical
+result: resource NONPASS, no full-route speedup or acceptance/release claim.
+Next one first-step cost discriminator; no automatic full retry/cap/level increase.
+[Evidence](d1_review_support/contact_native_fibre_s3_20261005/candidate_reuse.md).

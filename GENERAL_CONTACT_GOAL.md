@@ -8,13 +8,13 @@ On resumption, this goal prevails over conflicting future instructions in the 28
 
 ## Current milestone and next delivery
 
-Validated coordinates-only first-target initialization passes22 installed checks.
-Seeded2e7 accepts target1 in96.138s, but tip changes3.011197% against2%: enforcement
-convergence remains unproven. Independent saved-pose residual agrees1.72e-14
-relative, supporting enforcement sensitivity as principal discrepancy. Next one
-bounded4e7 comparison seeds actual2e7 coordinates with fine virgin histories and
-complete path admission. Preserve all scientific/resource and programme requirements.
-[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/initial_guess.md).
+Seeded2e7 accepts target1 in96.138s but tip changes3.011197% against2%: enforcement
+convergence remains unproven. Both next4e7 attempts hit120s without a result.
+Exact candidate reuse passes11 installed checks and reduces a local three-use
+pattern66.07%; no complete-route benefit established. Stop full retries and time
+one saved-pose Newton step, including material and swept admission, before the
+next corrective choice. Preserve all scientific/resource and programme requirements.
+[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/candidate_reuse.md).
 
 Committed native material recovery/reporting now passes six installed checks,
 including independent rational energy checks, bound histories, detached optional
