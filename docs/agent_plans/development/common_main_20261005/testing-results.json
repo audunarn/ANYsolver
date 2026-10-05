@@ -1,0 +1,112 @@
+{
+  "scope": "prospective ordinary development testing, no qualification",
+  "product_source_changed": false,
+  "prior_portable_modules": 923,
+  "current_portable_modules": 924,
+  "removed_portable_modules": [],
+  "contact_parity_solves_before": 8,
+  "contact_parity_solves_after": 2,
+  "original_timing_protocol": "preserved opt-in, not executed",
+  "root_physical_focused": "25 passed, 1 skipped,15.89s",
+  "final_root_control": "30 passed,1 skipped,7.48s",
+  "worker_runner": "28 passed,1.26s",
+  "compatibility": "36 passed,32 deselected,44.30s",
+  "cache_real_probes": [
+    {
+      "record": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\anysolver-portable-ci-vx13xrhb\\P01",
+      "exit_code": 1,
+      "outcomes": {
+        "passed": 1
+      },
+      "errors": [
+        "cache-enabled run imported unbound dependency ANYfileio; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYfileio; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYgeometry; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYgeometry; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYmaterial; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYmaterial; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYmesher; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYmesher; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency charset-normalizer; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency pywin32; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency cffi; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency PyYAML; rerun with cold development (omit --development-cache)"
+      ],
+      "cache_key": "211f9228fb3da7909f0dedfe7692c654bac910bea75a19074b4e3e8ca8e0b56b",
+      "preparation_seconds": 17.39357730001211,
+      "session_seconds": 78.39334250008687,
+      "nodes": [
+        {
+          "nodeid": "tests/test_development_compilation_cache.py::test_real_compiled_kernel_matches_reference",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration_seconds": 0.00015169999096542597
+        },
+        {
+          "nodeid": "tests/test_development_compilation_cache.py::test_real_compiled_kernel_matches_reference",
+          "phase": "call",
+          "outcome": "passed",
+          "duration_seconds": 5.336824500001967
+        },
+        {
+          "nodeid": "tests/test_development_compilation_cache.py::test_real_compiled_kernel_matches_reference",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration_seconds": 0.00015430001076310873
+        }
+      ],
+      "jit_disabled": false,
+      "numba_threads": 1
+    },
+    {
+      "record": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\anysolver-portable-ci-mgjq2eyn\\P01",
+      "exit_code": 1,
+      "outcomes": {
+        "passed": 1
+      },
+      "errors": [
+        "cache-enabled run imported unbound dependency ANYfileio; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYfileio; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYgeometry; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYgeometry; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYmaterial; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYmaterial; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYmesher; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency ANYmesher; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency charset-normalizer; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency pywin32; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency cffi; rerun with cold development (omit --development-cache)",
+        "cache-enabled run imported unbound dependency PyYAML; rerun with cold development (omit --development-cache)"
+      ],
+      "cache_key": "211f9228fb3da7909f0dedfe7692c654bac910bea75a19074b4e3e8ca8e0b56b",
+      "preparation_seconds": 21.527909900061786,
+      "session_seconds": 69.4047983000055,
+      "nodes": [
+        {
+          "nodeid": "tests/test_development_compilation_cache.py::test_real_compiled_kernel_matches_reference",
+          "phase": "setup",
+          "outcome": "passed",
+          "duration_seconds": 0.00014240003656595945
+        },
+        {
+          "nodeid": "tests/test_development_compilation_cache.py::test_real_compiled_kernel_matches_reference",
+          "phase": "call",
+          "outcome": "passed",
+          "duration_seconds": 1.493849299964495
+        },
+        {
+          "nodeid": "tests/test_development_compilation_cache.py::test_real_compiled_kernel_matches_reference",
+          "phase": "teardown",
+          "outcome": "passed",
+          "duration_seconds": 0.00016980001237243414
+        }
+      ],
+      "jit_disabled": false,
+      "numba_threads": 1
+    }
+  ],
+  "cache_disposition": "guarded experimental option; this editable environment NONPASS; bytecode reuse disabled; no speedup claim",
+  "ci_original_failure": "run37283352534 Ubuntu3.11 collection missing psutil; dev dependency added",
+  "raw_evidence": "C:\\Github\\ANYsolver\\.perf2-worktrees\\common-main-20261005\\.qualification\\common-main-20261005\\testing-tooling",
+  "independent_review": "OpenAI supporting review repaired consequential findings; not scientific different-family acceptance"
+}

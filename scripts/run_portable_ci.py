@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import os
+import platform
 import re
 import shutil
 import signal
@@ -30,7 +32,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.run_e4_pl_burnin_gate import inventory  # noqa: E402
+def inventory():
+    """Keep the historical inventory API without importing it in focused runs."""
+    from scripts.run_e4_pl_burnin_gate import inventory as historical_inventory
+    return historical_inventory()
 
 
 MERGE_LANES = ("quick", "additive", "functional")
@@ -253,8 +258,13 @@ def merge_test_modules() -> tuple[str, ...]:
     """Return the current non-performance, non-historical merge-test extent."""
 
     _ge_beam3_inventory()
+    intents = _current_development_inventory()
     lanes = inventory()
     registered = [module for lane in MERGE_LANES for module in lanes[lane]]
+    if not set(intents["portable"]) <= set(registered):
+        raise RuntimeError("portable development test intent is incompatible with existing lanes")
+    nonportable = set(intents["performance"] + intents["extended"])
+    registered = [module for module in registered if module not in nonportable]
     if len(registered) != len(set(registered)):
         raise RuntimeError("merge-test lane inventories overlap")
     missing_historical = set(POST_CLOSEOUT_HISTORICAL_MODULES) - set(registered)
@@ -301,12 +311,31 @@ def _ge_beam3_inventory() -> dict[str, list[str]]:
     return record
 
 
+def _current_development_inventory() -> dict[str, object]:
+    """Current test intent only; frozen lane inventories remain authoritative."""
+    record = json.loads((ROOT / "scripts/development_test_inventory.json").read_text(encoding="utf-8"))
+    if set(record) != {"schema", "portable", "performance", "extended"} or record["schema"] != "anysolver.development-test-intent.v1":
+        raise RuntimeError("invalid current development test inventory schema")
+    registered = []
+    for category in ("portable", "performance", "extended"):
+        entries = record[category]
+        if not isinstance(entries, list) or any(not isinstance(name, str) for name in entries):
+            raise RuntimeError("invalid current development test intent entries")
+        registered.extend(entries)
+    actual = {path.relative_to(ROOT).as_posix() for pattern in (
+        "test_stiffened_shell_*.py", "test_general_contact_*.py", "test_performance_contact_chain_*.py"
+    ) for path in (ROOT / "tests").glob(pattern)}
+    if len(registered) != len(set(registered)) or set(registered) != actual:
+        raise RuntimeError("current development test inventory is incomplete or overlapping")
+    return record
+
+
 def _worker_environment(root: Path) -> dict[str, str]:
     environment = dict(os.environ)
     for name in tuple(environment):
         if name.startswith("ANYSOLVER_CI_") or name.startswith(
             "ANYSOLVER_FUNCTIONAL_"
-        ):
+        ) or name.startswith("ANYSOLVER_DEVELOPMENT_"):
             environment.pop(name, None)
     environment.pop("ANYSOLVER_BURNIN_ACTIVE_TEST_LANE", None)
     environment.update(
@@ -397,6 +426,8 @@ def _development_targets(targets: Sequence[str]) -> tuple[str, ...]:
         if not isinstance(target, str) or not target or target.startswith("-"):
             raise ValueError("test file or node ID required")
         filename, separator, node = target.partition("::")
+        if "us3-modal-canary" in {part.casefold() for part in Path(filename).parts}:
+            raise ValueError("protected source subtree is not a development target")
         path = (ROOT / filename).resolve(strict=True)
         if not path.is_relative_to(ROOT / "tests") or path.suffix != ".py" or not path.is_file():
             raise ValueError("development targets must be test files inside this repository")
@@ -408,6 +439,163 @@ def _development_targets(targets: Sequence[str]) -> tuple[str, ...]:
     return tuple(normalized)
 
 
+def _profile_targets(name: str) -> tuple[str, ...]:
+    profiles = json.loads((ROOT / "scripts/development_test_profiles.json").read_text(encoding="utf-8"))
+    if not isinstance(profiles, dict):
+        raise ValueError("development profiles must be an object of explicit string arrays")
+    if name not in profiles or not isinstance(profiles[name], list):
+        raise ValueError(f"unknown development profile: {name}")
+    return _development_targets(profiles[name])
+
+
+def _development_cache(environment: dict[str, str], parent: Path, deadline: float | None = None) -> dict[str, object]:
+    """Opt-in compilation cache; hash watched source even with restored times.
+
+    Normal cold runs do no cache hashing. External editable dependencies are
+    unbound: the runtime guard rejects their use in any cache-enabled run.
+    """
+    identity = str(ROOT.resolve())
+    base = parent / "anysolver-development-cache" / hashlib.sha256(identity.encode()).hexdigest()[:20]
+    base.mkdir(parents=True, exist_ok=True)
+    current = {}
+    for directory in ("src", "scripts", "tests"):
+        source_directory = ROOT / directory
+        if source_directory.is_symlink():
+            raise RuntimeError("source directory symlinks require cold development")
+        for folder, directories, filenames in os.walk(source_directory, topdown=True, followlinks=False):
+            # Prune before descent: even enumerating protected code is outside
+            # this runner's development authority.
+            directories[:] = sorted(name for name in directories if name.casefold() not in
+                                    {"__pycache__", "us3-modal-canary"})
+            if any((Path(folder) / name).is_symlink() for name in directories):
+                raise RuntimeError("source directory symlinks require cold development")
+            for filename in sorted(filenames):
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise TimeoutError("shared deadline reached during cache preparation")
+                if not filename.endswith(".py"):
+                    continue
+                path = Path(folder) / filename
+                relative = path.relative_to(ROOT).as_posix()
+                if relative.casefold() == "scripts/b3_e4_f03_c1_fy_supported_reference.py":
+                    continue
+                if path.is_symlink():
+                    raise RuntimeError("source symlinks require cold development")
+                stat = path.stat()
+                fingerprint = [stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns, stat.st_ino]
+                digest = hashlib.sha256(path.read_bytes()).hexdigest()
+                after = path.stat()
+                if fingerprint != [after.st_size, after.st_mtime_ns, after.st_ctime_ns, after.st_ino]:
+                    raise RuntimeError(f"source changed while preparing compilation cache: {relative}")
+                current[relative] = {"stat": fingerprint, "sha256": digest}
+    dependencies = []
+    dependency_bytes = 0
+    unbound_dependencies = []
+    native_eligible = {"numpy", "scipy", "numba", "llvmlite", "threadpoolctl", "anymaterial",
+                       "anygeometry", "anymesher", "anyfileio", "pypardiso", "mkl", "mkl-service",
+                       "intel-openmp", "intel-cmplr-lib-rt", "intel-cmplr-lib-ur", "tbb", "umf"}
+    for distribution in importlib.metadata.distributions():
+        name = distribution.metadata["Name"]
+        normalized_name = name.lower().replace("_", "-")
+        own_source = normalized_name == "anysolver"
+        unbound = False
+        recorded_files = distribution.files if not own_source else None
+        explicit_top_levels = distribution.read_text("top_level.txt")
+        if explicit_top_levels:
+            top_levels = explicit_top_levels.split()
+        else:
+            top_levels = sorted({entry.parts[0] if len(entry.parts) > 1 else entry.name.partition(".")[0]
+                                 for entry in (recorded_files or []) if entry.parts and
+                                 (entry.parts[0] if len(entry.parts) > 1 else entry.name.partition(".")[0]).isidentifier()})
+            if not top_levels:
+                top_levels = [name.lower().replace("-", "_")]
+        location = Path(distribution.locate_file("")).resolve()
+        module_roots = {str(location / top.replace(".", "/")) for top in top_levels}
+        module_roots.update(str(location / (top+".py")) for top in top_levels)
+        module_roots.update(str(distribution.locate_file(entry)) for entry in (recorded_files or [])
+                            if len(entry.parts) == 1 and entry.name.partition(".")[0] in top_levels)
+        unbound_record = {"name": name, "root": str(location), "top_levels": top_levels,
+                          "module_roots": sorted(module_roots)}
+        direct = distribution.read_text("direct_url.json")
+        if direct and json.loads(direct).get("dir_info", {}).get("editable"):
+            # The selected checkout itself is fully watched above; other
+            # editable installs have unbound code and cannot share this cache.
+            from urllib.parse import unquote, urlparse
+            editable = Path(unquote(urlparse(json.loads(direct)["url"]).path).lstrip("/")
+                            if os.name == "nt" else unquote(urlparse(json.loads(direct)["url"]).path)).resolve()
+            if not own_source and editable != ROOT.resolve():
+                unbound_record.update(root=str(editable), module_roots=[str(editable)], reason="editable source")
+                unbound = True
+        content = {}
+        if not own_source and not unbound:
+            if not recorded_files or not distribution.read_text("RECORD"):
+                unbound_record["reason"] = "missing installed file inventory"
+                unbound = True
+            elif normalized_name not in native_eligible and any(
+                re.search(r"\.(?:pyd|dll|dylib|so(?:\.\d+)*)$", str(entry), re.IGNORECASE)
+                for entry in recorded_files
+            ):
+                unbound_record["reason"] = "native package outside solver/compiler eligibility"
+                unbound = True
+        if unbound:
+            unbound_dependencies.append(unbound_record)
+        if not own_source and not unbound:
+            for entry in sorted(recorded_files, key=str):
+                if "us3-modal-canary" in {part.casefold() for part in Path(entry).parts} or Path(entry).name.casefold() == "b3_e4_f03_c1_fy_supported_reference.py":
+                    raise RuntimeError(f"protected dependency source cannot be inspected: {name}")
+                if Path(entry).suffix == ".pyc":
+                    continue
+                installed = Path(distribution.locate_file(entry))
+                if installed.is_symlink():
+                    raise RuntimeError(f"dependency symlinks require cold development: {name}")
+                # Bind current bytes, rather than trusting version or RECORD
+                # hashes after an in-place local package repair.
+                before = installed.stat()
+                digest = hashlib.sha256()
+                with installed.open("rb") as stream:
+                    while chunk := stream.read(1024 * 1024):
+                        if deadline is not None and time.monotonic() >= deadline:
+                            raise TimeoutError("shared deadline reached during cache preparation")
+                        digest.update(chunk)
+                        dependency_bytes += len(chunk)
+                after = installed.stat()
+                if (before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (after.st_size, after.st_mtime_ns, after.st_ctime_ns):
+                    raise RuntimeError(f"dependency changed while preparing compilation cache: {name}")
+                content[str(entry)] = digest.hexdigest()
+        dependencies.append({"name": name, "version": distribution.version,
+                              "location": str(location),
+                              "installed_record_sha256": hashlib.sha256(
+                                  (distribution.read_text("RECORD") or "").encode()).hexdigest(),
+                              "current_content": content,
+                              "unbound": unbound})
+    dependencies.sort(key=lambda entry: json.dumps(entry, sort_keys=True))
+    unbound_dependencies.sort(key=lambda entry: json.dumps(entry, sort_keys=True))
+    binding = {"schema": 1, "checkout": identity, "python": sys.version,
+               "executable": str(Path(sys.executable).resolve()), "optimization": sys.flags.optimize,
+               "dependencies": dependencies, "platform": platform.platform(),
+               "machine": platform.machine(), "processor": platform.processor(), "host": platform.node(),
+               "runtime": {name: value for name, value in sorted(environment.items())
+                           if name.startswith(("NUMBA_", "ANYSOLVER_")) and name not in
+                           ("NUMBA_CACHE_DIR", "ANYSOLVER_DEVELOPMENT_RECORD", "ANYSOLVER_DEVELOPMENT_SOURCE",
+                            "ANYSOLVER_EXPECT_DEVELOPMENT_CACHE_HIT")
+                           or name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+                                       "NUMEXPR_NUM_THREADS", "PYTHONHASHSEED", "PYTHONOPTIMIZE")},
+               "sources": {name: entry["sha256"] for name, entry in current.items()},
+               "native_eligible_dependencies": sorted(native_eligible),
+               "unbound_dependencies": unbound_dependencies}
+    key = hashlib.sha256(json.dumps(binding, sort_keys=True).encode()).hexdigest()
+    directory = base / key
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "binding.json").write_text(json.dumps(binding, indent=2)+"\n", encoding="utf-8")
+    # Keep bytecode cold in the isolated per-invocation prefix. Repository
+    # helpers outside watched source cannot safely share a bytecode cache.
+    environment.update(NUMBA_CACHE_DIR=str(directory / "numba"), PYTHONDONTWRITEBYTECODE="1")
+    return {"enabled": True, "key": key, "path": str(directory),
+            "watched_root": identity,
+            "dependency_bytes_hashed": dependency_bytes,
+            "unbound_dependencies": unbound_dependencies,
+            "scope": "Numba compilation only; watched source and eligible installed dependency content hashes; unbound imports forbidden; bytecode reuse disabled"}
+
+
 def run(
     *,
     workers: int,
@@ -417,9 +605,17 @@ def run(
     development_targets: Sequence[str] | None = None,
     jit: str | None = None,
     memory_limit_mib: int | None = None,
+    development_cache: bool = False,
+    development_profile: str | None = None,
 ) -> int:
     if isinstance(timeout_seconds, bool) or timeout_seconds < 1:
         raise ValueError("timeout_seconds must be a positive integer")
+    if isinstance(workers, bool) or workers < 1:
+        raise ValueError("workers must be a positive integer")
+    if development_profile is not None:
+        if development_targets is not None:
+            raise ValueError("choose explicit development targets or a profile")
+        development_targets = _profile_targets(development_profile)
     development = development_targets is not None
     if development:
         if matrix_shard_index is not None or matrix_shard_count is not None:
@@ -428,7 +624,7 @@ def run(
         if memory_limit_mib is not None and (isinstance(memory_limit_mib, bool) or memory_limit_mib < 1):
             raise ValueError("memory_limit_mib must be positive")
     else:
-        if jit is not None or memory_limit_mib is not None:
+        if jit is not None or memory_limit_mib is not None or development_cache:
             raise ValueError("JIT/memory options belong to explicit focused development")
         modules = matrix_modules(
             merge_test_modules(), matrix_shard_index, matrix_shard_count
@@ -458,48 +654,73 @@ def run(
         options = {"start_new_session": True}
 
     try:
-        for index, modules_for_worker in enumerate(partitions, start=1):
-            worker_root = run_root / f"P{index:02d}"
-            worker_root.mkdir()
-            environment = _worker_environment(worker_root)
-            command = _worker_command(modules_for_worker, worker_root)
-            if development:
-                # Explicit targets are never silently filtered by CI/history rules.
-                command = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
-                           "-p", "scripts.development_test_runtime", "--durations=10",
-                           f"--basetemp={worker_root / 'basetemp'}", *modules_for_worker]
-                environment.update(NUMBA_DISABLE_JIT="0" if jit == "on" else "1",
-                    ANYSOLVER_DEVELOPMENT_RECORD=str(worker_root / "runtime.json"),
-                    ANYSOLVER_DEVELOPMENT_SOURCE=str(ROOT / "src" / "anysolver"))
-                (worker_root / "selection.json").write_text(json.dumps({
-                    "scope": "focused source development, not qualification",
-                    "targets": list(modules_for_worker), "command": command,
-                    "source_root": str(ROOT), "timeout_seconds": timeout_seconds,
-                    "selected_file_sha256": {target.partition("::")[0]: hashlib.sha256(
-                        (ROOT / target.partition("::")[0]).read_bytes()).hexdigest()
-                        for target in modules_for_worker},
-                    "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-                    "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
-                    "memory_limit_mib": memory_limit_mib,
-                    "jit": jit or "off"}, indent=2)+"\n", encoding="utf-8")
-                print(f"[development] exact targets={len(modules_for_worker)}; record={worker_root}", flush=True)
-            print(
-                f"[portable-ci] starting P{index:02d}/{len(partitions):02d} "
-                f"with {len(modules_for_worker)} modules",
-                flush=True,
-            )
-            launched.append(
-                subprocess.Popen(
-                    command,
-                    cwd=ROOT,
-                    env=environment,
-                    **options,
-                )
-            )
-
         deadline = started + timeout_seconds
-        while any(worker.poll() is None for worker in launched):
-            if monitor is not None:
+        next_partition = 0
+        ceiling = 1 if development else workers
+        while next_partition < len(partitions) or any(worker.poll() is None for worker in launched):
+            while next_partition < len(partitions) and sum(w.poll() is None for w in launched) < ceiling:
+                if time.monotonic() >= deadline:
+                    break
+                index = next_partition + 1
+                modules_for_worker = partitions[next_partition]
+                next_partition += 1
+                worker_root = run_root / f"P{index:02d}"
+                worker_preparation_started = time.monotonic()
+                worker_root.mkdir()
+                environment = _worker_environment(worker_root)
+                command = _worker_command(modules_for_worker, worker_root)
+                if development:
+                    # Explicit targets are never silently filtered by CI/history rules.
+                    command = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
+                               "-p", "scripts.development_test_runtime", "--durations=10",
+                               f"--basetemp={worker_root / 'basetemp'}", *modules_for_worker]
+                    environment.update(NUMBA_DISABLE_JIT="0" if jit == "on" else "1",
+                        ANYSOLVER_DEVELOPMENT_RECORD=str(worker_root / "runtime.json"),
+                        ANYSOLVER_DEVELOPMENT_SOURCE=str(ROOT / "src" / "anysolver"))
+                    cache = {"enabled": False, "reason": "cold default"}
+                    if development_cache:
+                        cache_started = time.monotonic()
+                        try:
+                            cache = _development_cache(environment, temp_parent, deadline)
+                        except (OSError, ValueError, RuntimeError) as exc:
+                            cache = {"enabled": False, "reason": str(exc)}
+                        cache["preparation_seconds"] = time.monotonic() - cache_started
+                        summary = {name: cache[name] for name in ("enabled", "key", "preparation_seconds", "reason") if name in cache}
+                        summary["unbound_dependency_count"] = len(cache.get("unbound_dependencies", []))
+                        print(f"[development] compilation cache={json.dumps(summary, sort_keys=True)}", flush=True)
+                    environment["ANYSOLVER_DEVELOPMENT_CACHE"] = json.dumps(cache, sort_keys=True)
+                    (worker_root / "selection.json").write_text(json.dumps({
+                        "scope": "focused source development, not qualification",
+                        "targets": list(modules_for_worker), "command": command,
+                        "source_root": str(ROOT), "timeout_seconds": timeout_seconds,
+                        "selected_file_sha256": {target.partition("::")[0]: hashlib.sha256(
+                            (ROOT / target.partition("::")[0]).read_bytes()).hexdigest()
+                            for target in modules_for_worker},
+                        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                        "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+                        "memory_limit_mib": memory_limit_mib,
+                        "profile": development_profile, "compilation_cache": cache,
+                        "worker_preparation_seconds": time.monotonic() - worker_preparation_started,
+                        "jit": jit or "off"}, indent=2)+"\n", encoding="utf-8")
+                    print(f"[development] exact targets={len(modules_for_worker)}; record={worker_root}", flush=True)
+                if time.monotonic() >= deadline:
+                    next_partition -= 1
+                    break
+                print(
+                    f"[portable-ci] starting P{index:02d}/{len(partitions):02d} "
+                    f"with {len(modules_for_worker)} modules",
+                    flush=True,
+                )
+                launched.append(
+                    subprocess.Popen(
+                        command,
+                        cwd=ROOT,
+                        env=environment,
+                        **options,
+                    )
+                )
+
+            if monitor is not None and launched:
                 try:
                     parent = monitor.Process(launched[0].pid)
                     peak_bytes = max(peak_bytes, sum(p.memory_info().rss for p in
@@ -525,6 +746,8 @@ def run(
                 for worker in launched:
                     _terminate_tree(worker)
                 if development:
+                    worker_root = run_root / "P01"
+                    worker_root.mkdir(exist_ok=True)
                     (worker_root / "resource.json").write_text(json.dumps({
                         "peak_sampled_bytes": peak_bytes if monitor is not None else None,
                         "limit_mib": memory_limit_mib, "elapsed_seconds": time.monotonic()-started,
@@ -565,6 +788,9 @@ def _parser() -> argparse.ArgumentParser:
                         help="Focused development JIT mode (default off); use on for affected compiled paths")
     parser.add_argument("--memory-limit-mib", type=int,
                         help="Focused child process-tree RSS ceiling; requires psutil when selected")
+    parser.add_argument("--development-profile", help="Explicit named source-development selection")
+    parser.add_argument("--development-cache", action="store_true",
+                        help="Opt-in Numba compilation reuse; bytecode stays cold; imported unbound dependencies reject the run")
     return parser
 
 
@@ -573,12 +799,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     return run(
         workers=args.workers,
         timeout_seconds=args.timeout_seconds if args.timeout_seconds is not None else (
-            600 if args.development is not None else DEFAULT_TIMEOUT_SECONDS),
+            600 if args.development is not None or args.development_profile is not None else DEFAULT_TIMEOUT_SECONDS),
         matrix_shard_index=args.matrix_shard_index,
         matrix_shard_count=args.matrix_shard_count,
         development_targets=args.development,
         jit=args.jit,
         memory_limit_mib=args.memory_limit_mib,
+        development_profile=args.development_profile,
+        development_cache=args.development_cache,
     )
 
 

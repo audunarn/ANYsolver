@@ -55,9 +55,11 @@
     ],
     "scope": "Common-main installed development compatibility, no qualification or release"
   },
-  "full_portable_modules": 923,
+  "full_portable_modules": 924,
   "license": "PASS after missing optional ANYgeometry inventory entry repaired",
   "review": "Supporting independent OpenAI seamreview no blocker; not scientific acceptance",
   "installed_import": "C:\\Github\\ANYsolver\\.perf2-worktrees\\common-main-20261005\\.qualification\\common-main-20261005\\site-v1\\anysolver\\__init__.py",
-  "installed_source_files": 586
+  "installed_source_files": 586,
+  "pr": "https://github.com/audunarn/ANYsolver/pull/62",
+  "testing_regime": "Implemented, focused verified; full candidate CI required"
 }

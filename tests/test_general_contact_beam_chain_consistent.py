@@ -1,8 +1,7 @@
 """Moving nearest-cell interfaces in the opt-in B2 chain tangent."""
 from dataclasses import replace
-from pathlib import Path
 from fractions import Fraction
-import json,os,time
+import json
 from itertools import permutations
 
 import numpy as np
@@ -274,47 +273,28 @@ def test_coupled_opt_in_force_displacement_active_restart_and_selection_rejectio
     assert forced.info['general_contact']['active_source_intervals']>0
 
 
-def test_balanced_displacement_route_comparison_preserves_mechanics():
-    rows=[]; solutions=[]
+def _solve_displacement_route_comparison(tag):
     # Fresh models; equal loads, controls, integration and equilibrium tolerances.
-    # One import/cache warm-up per selection precedes three balanced pairs.
-    for tag in ('finite_difference','consistent_dev'):
-        model,definition,settings,load=_coupled_case()
-        settings=replace(settings,beam_chain_tangent=tag,line_integration_relative_tolerance=1e-6)
-        warm=solve_static_nonlinear(model,load,contact=definition,contact_settings=settings,
-            control='displacement',displacement_control=DisplacementControl(node_id=6,dof='uy',target_displacement=-.008),
-            num_steps=4,max_iterations=20,tolerance=1e-8)
-        assert warm.status=='completed',warm.failure_reason
-    for pair,order in enumerate((('consistent_dev','finite_difference'),
-                                 ('finite_difference','consistent_dev'),
-                                 ('consistent_dev','finite_difference'))):
-        values={}
-        for tag in order:
-            started=time.perf_counter()
-            model,definition,settings,load=_coupled_case()
-            settings=replace(settings,beam_chain_tangent=tag,line_integration_relative_tolerance=1e-6)
-            result=solve_static_nonlinear(model,load,contact=definition,contact_settings=settings,
-                control='displacement',displacement_control=DisplacementControl(node_id=6,dof='uy',target_displacement=-.008),
-                num_steps=4,max_iterations=20,tolerance=1e-8)
-            elapsed=time.perf_counter()-started
-            assert result.status=='completed',result.failure_reason
-            values[tag]=result
-            rows.append({'pair':pair,'selection':tag,'elapsed_s':elapsed,
-                'contact':result.info['general_contact'],'solver_info':result.info})
-        old,new=(values[tag] for tag in ('finite_difference','consistent_dev'))
-        np.testing.assert_allclose(new.displacements,old.displacements,rtol=1e-6,atol=1e-10)
-        np.testing.assert_allclose(new.info['general_contact']['beam_a_force'],
-            old.info['general_contact']['beam_a_force'],rtol=1e-6,atol=1e-8)
-        solutions.append(float(np.linalg.norm(new.displacements-old.displacements)))
-    times={tag:[r['elapsed_s'] for r in rows if r['selection']==tag]
-           for tag in ('finite_difference','consistent_dev')}
-    median={tag:float(np.median(values)) for tag,values in times.items()}
-    evidence={'scope':'guided four-step displacement-controlled B2 two-chain development comparison; not universal speed qualification',
-        'times_s':times,'median_s':median,'speed_ratio':median['finite_difference']/median['consistent_dev'],
-        'displacement_difference_norm_m':solutions,'rows':rows}
-    record=os.environ.get('CONTACT_APP_RESULT_RECORD')
-    if record:
-        Path(record).write_text(json.dumps(evidence,indent=2,default=lambda x:np.asarray(x).tolist()),encoding='utf8')
+    model,definition,settings,load=_coupled_case()
+    settings=replace(settings,beam_chain_tangent=tag,line_integration_relative_tolerance=1e-6)
+    result=solve_static_nonlinear(model,load,contact=definition,contact_settings=settings,
+        control='displacement',displacement_control=DisplacementControl(node_id=6,dof='uy',target_displacement=-.008),
+        num_steps=4,max_iterations=20,tolerance=1e-8)
+    return result
+
+
+def _assert_displacement_route_mechanics(old,new):
+    np.testing.assert_allclose(new.displacements,old.displacements,rtol=1e-6,atol=1e-10)
+    np.testing.assert_allclose(new.info['general_contact']['beam_a_force'],
+        old.info['general_contact']['beam_a_force'],rtol=1e-6,atol=1e-8)
+
+
+def test_balanced_displacement_route_comparison_preserves_mechanics():
+    values={tag:_solve_displacement_route_comparison(tag)
+            for tag in ('consistent_dev','finite_difference')}
+    for result in values.values():
+        assert result.status=='completed',result.failure_reason
+    _assert_displacement_route_mechanics(values['finite_difference'],values['consistent_dev'])
 
 
 def test_public_consistent_chain_example(capsys):

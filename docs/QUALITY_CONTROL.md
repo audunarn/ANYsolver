@@ -21,10 +21,11 @@ Use evidence in this order:
 Generated CalculiX-style input decks without matching executed results are
 reproducible handoff artifacts, not numerical validation.
 
-## Current 0.2 verification policy
+## Current verification policy
 
-Version 0.2 delegates material behavior, neutral meshing, and interchange
-syntax to ANYmaterial, ANYmesher, and ANYfileio. A qualifying ecosystem run
+Since version 0.2, ANYsolver delegates material behavior, neutral meshing,
+and interchange syntax to ANYmaterial, ANYmesher, and ANYfileio. A qualifying
+ecosystem run
 therefore installs those sibling packages, runs their own tests, and then runs
 the ANYsolver suite and ecosystem-wiring tests. Compatibility tests must cover
 both the historical ANYsolver imports and the canonical package imports.
@@ -82,8 +83,10 @@ Broaden testing for changed shared assembly, state, constraints, constitutive
 updates, acceleration, public entry points or imports. Include required guard/
 preimport and no-feature compatibility checks when affected. An isolated-plugin
 development pass does not dismiss a real application/preimport failure.
-The known application ABC metadata-cache mismatch remains an integration issue
-until its responsible maintainer resolves it.
+Preimport metadata-cache and authority guards remain required when imports or
+public adapters change; run them through the actual application entry point.
+Recorded application failures remain open until that entry point passes; a
+focused source guard test alone does not resolve them.
 
 Full portable CI and all named scientific, external, installed-platform,
 performance and release gates remain mandatory at their existing boundaries.
@@ -91,6 +94,72 @@ These tiers change execution frequency, not tolerances or supported claims.
 Focused mode grants no execution authority, replays no consumed authority and
 does not qualify or release a capability. Preserve failures. Do not repeat a
 passed campaign without changed relevant inputs, a failure or an unresolved issue.
+
+### Faster development, prospective 5 October 2026
+
+Use four execution levels: exact changed-behavior checks after an edit; affected
+subsystem checks after a connected slice; full portable CI and impacted installed
+checks at integration; named scientific and release campaigns at their existing
+acceptance boundaries. This implements the adopted risk-proportionate philosophy;
+it does not change frozen registrations, tolerances or execution authorities.
+
+Small named selections make the first level easy to repeat:
+
+```powershell
+python scripts/run_portable_ci.py --development-profile runner --timeout-seconds 180
+python scripts/run_portable_ci.py --development-profile contact-smoke --timeout-seconds 180
+python scripts/run_portable_ci.py --development-profile stiffened-smoke --timeout-seconds 180
+```
+
+Profiles expand to recorded exact selectors. They are starting selections, not
+automatic dependency analysis or acceptance coverage. Add the changed behavior
+and transitive consumers explicitly; broaden for shared operators, lifecycle,
+constraints, import policy, or uncertain impact. Skips remain non-execution.
+Collection, node setup/call/teardown and total resource time are recorded to
+identify where deeper profiling is worthwhile. Work performed inside a test's
+call phase still needs targeted profiling to separate preparation from solving.
+
+`--development-cache` opts into checkout/runtime/source-bound compilation
+reuse. It is for development only; default runs and CI remain cold.
+Cache bindings include content changes and eligible runtime dependency bytes.
+Unused unbound installations may coexist, but importing an unbound dependency
+or repository helper makes a cached run fail explicitly; rerun cold without the
+option. Unsupported cache preparation falls back cold with a recorded reason.
+Bytecode reuse is disabled. Opt-in fingerprint preparation is measured separately;
+it can outweigh compilation savings, particularly in large environments. Never cache
+mutable models, material predecessors, accepted states or solved results to
+speed up rollback, restart or independence tests. Use a cold run when testing
+compilation/cache behavior or when a registered gate requires one. JIT-off
+checks still cannot replace compiled parity.
+
+The current contact/stiffened test intent inventory requires deliberate placement
+of new modules. Existing classifications and coverage are preserved; adding a
+test requires selecting its execution intent rather than silently extending a
+functional campaign. Performance studies remain explicitly selected. The contact
+chain mechanics regression uses one fresh-model parity pair; its original two
+warm-ups and three alternating timing pairs remain in:
+
+```powershell
+$env:ANYSOLVER_RUN_CONTACT_CHAIN_BENCHMARK = '1'
+python scripts/run_portable_ci.py --development tests/test_performance_contact_chain_comparison.py --jit on --timeout-seconds 180 --memory-limit-mib 1024
+Remove-Item Env:ANYSOLVER_RUN_CONTACT_CHAIN_BENCHMARK
+```
+
+That command is an opt-in development benchmark, not qualification authority or
+a universal speed claim. Existing stricter resource or campaign contracts win.
+Do not enable saved-pose, external or historical campaigns by inheriting their
+environment variables during an unrelated run.
+
+Portable workers now include isolated interpreters within the requested worker
+ceiling. Fresh-process isolation and complete inventory coverage remain intact.
+CI cancels only superseded runs of this Tests workflow for the same PR; main and
+manual runs remain independent. Cancellation is retained as cancellation, never
+as a pass. Dedicated compiled/backend jobs retain their selectors and now record
+effective single-thread/JIT/source settings through the development runtime.
+
+Use observed costs to target further fixture/setup reuse and CI installation
+reuse. No percentage development-speed improvement follows from these changes
+without matched timing measurements.
 
 ### Full verification commands
 

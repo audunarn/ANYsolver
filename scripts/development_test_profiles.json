@@ -1,0 +1,12 @@
+{
+  "runner": [
+    "tests/test_development_test_runner.py"
+  ],
+  "contact-smoke": [
+    "tests/test_fe_solver_contact.py::test_sphere_contact_load_resultant_and_nodal_distribution",
+    "tests/test_general_contact_beam_chain_consistent.py::test_capability_does_not_admit_development_or_foreign_geometry"
+  ],
+  "stiffened-smoke": [
+    "tests/test_stiffened_shell_multi_member_panel.py::test_connected_four_stiffener_reference_route"
+  ]
+}
