@@ -473,11 +473,13 @@ class NativeRetainedMultiS3Analysis:
         return activation_fraction(self, start, u_start, step, fraction, contact, cancellation_token)
 
     def _swept_admissible(self, start, u_start, increment, end, u_end, *_, cancellation_token=None):
-        first = self._contact(start, u_start); last = self._contact(end, u_end)
-        admitted = []
-        for (p, r0), (_, r1), i in zip(first.pairs, last.pairs, self.beam_indices):
-            a, b = r0.contact, r1.contact
-            if type(p.work) is NativeCurvedMaterialS3Work:
+        if self._curved_mode:
+            # Curved certification uses the complete authoritative path, not
+            # endpoint forces/tangents. Admission and equilibrium independently
+            # evaluate endpoint work; do not repeat their quadrature here.
+            self._guard()
+            admitted = []
+            for p, i in zip(self.pairs, self.beam_indices):
                 nodes=self.context.nodes[i];work=p.work
                 pose=work._configuration(start.positions[nodes],start.position_low[nodes],start.cell_rotations[i],u_start)
                 translations=np.array([increment[6*index:6*index+3] for index in nodes])
@@ -487,7 +489,11 @@ class NativeRetainedMultiS3Analysis:
                     gap_tolerance_m=p.gap_tolerance_m,maximum_intervals=p.maximum_swept_intervals,
                     cancellation_token=cancellation_token)
                 admitted.append(control.certified)
-                continue
+            return all(admitted)
+        first = self._contact(start, u_start); last = self._contact(end, u_end)
+        admitted = []
+        for (p, r0), (_, r1), i in zip(first.pairs, last.pairs, self.beam_indices):
+            a, b = r0.contact, r1.contact
             if type(p.work) is NativeRetainedMaterialS3Work:
                 nodes=self.context.nodes[i];work=p.work
                 pose=work._configuration(start.positions[nodes],start.position_low[nodes],

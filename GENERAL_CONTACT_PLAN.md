@@ -1,5 +1,15 @@
 # General contact — current delivery plan
 
+### Latest development decision — 5 October 2026
+
+Certified-active quadrature allocation now passes7 installed checks, exact legacy
+replay and cross-policy checkpoint rejection; default settings remain unchanged.
+The saved rejected pose completes at unchanged tolerances and passes independent
+work/tangent checks. Next one explicit4e7 complete candidate using saved2e7
+coordinates-only initialization under the existing response/gap/resource gates.
+No full-route improvement or engineering acceptance is established.
+[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/active_budget.md).
+
 **Revision:** 2026-10-05.2. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-05.2, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
@@ -35,16 +45,19 @@ passes22 installed checks; seeded2e7 accepts target1 in96.138s. Tip changes3.011
 against2%: response NONPASS. Tenth-budget pose integration rejects its root tangent
 enclosure; independent analytic residual agrees1.72e-14 relative, with negligible
 constrained tip correction. This supports enforcement sensitivity, not convergence.
-Both4e7 attempts now hit120s without a result. Exact candidate reuse passes11
-installed checks, including sparse-buffer integrity and constitutive-origin
-reevaluation; three-use local median7.779487 to2.639750s(66.07%). No whole-route
-benefit established. Stop full retries. Next one saved2e7-pose/4e7-law first-step
-cost experiment separates contact, structural/material, linear step, endpoint and
-swept admission; persist phase timings immediately, keep120s/953MiB, no physical
-commit or stiffness/load progression. Choose a correction from measured cost
-and rejection/step evidence; no automatic full retry, level or cap increase.
-Defaults, restart, rollback, scientific gates and full programme remain unchanged.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/candidate_reuse.md).
+Exact first-step trace identifies unused endpoint quadrature in curved path
+certification. Geometry-only separation passes17 installed checks; observed
+first-step body37.199 to22.879s with exact step/metrics/rejection parity. Full4e7
+still resource NONPASS120.108s, no result. Stop full retries/cap or level increases.
+Next explicit numerical policy allocates unchanged global quadrature tolerances
+over certified-active support, preserving default allocation/old checkpoint bytes
+and binding opt-in policy to work identity. Complete topology proof must justify
+excluded open bands; uncertain bands/root bounds and final global sum remain.
+Use the saved rejected pose first, independent residual/directional tangent and
+default replay before any full candidate. Keep64intervals/120s953MiB and physical
+reference measure, all coordinates and response/gap gates unchanged. Local
+budget-efficiency hypothesis is not mechanics failure or a whole-route saving.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/geometry_only_path.md).
 
 Latest D3 material/history slice: explicit physical fibres Y2Pa/H1e5Pa through
 the same owner now press, unload/open and recontact with actual committed history.

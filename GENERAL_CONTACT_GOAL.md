@@ -1,5 +1,15 @@
 # General contact — goal
 
+### Latest development decision — 5 October 2026
+
+Certified-active quadrature allocation now passes7 installed checks, exact legacy
+replay and cross-policy checkpoint rejection; default settings remain unchanged.
+The saved rejected pose completes at unchanged tolerances and passes independent
+work/tangent checks. Next one explicit4e7 complete candidate using saved2e7
+coordinates-only initialization under the existing response/gap/resource gates.
+No full-route improvement or engineering acceptance is established.
+[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/active_budget.md).
+
 **Revision:** 2026-10-05.2. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-05.2. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
 
 This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
@@ -10,11 +20,14 @@ On resumption, this goal prevails over conflicting future instructions in the 28
 
 Seeded2e7 accepts target1 in96.138s but tip changes3.011197% against2%: enforcement
 convergence remains unproven. Both next4e7 attempts hit120s without a result.
-Exact candidate reuse passes11 installed checks and reduces a local three-use
-pattern66.07%; no complete-route benefit established. Stop full retries and time
-one saved-pose Newton step, including material and swept admission, before the
-next corrective choice. Preserve all scientific/resource and programme requirements.
-[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/candidate_reuse.md).
+Curved path/work separation now passes17 installed checks; identical first-step
+body time37.199 to22.879s, unchanged step/metrics/rejection. The full4e7 route
+still hits120s without a result. Stop full retries; next explicit quadrature
+budget candidate uses certified-active support with unchanged global tolerances,
+physical measure and limits. Preserve old defaults/checkpoints; verify the saved
+rejected pose and independent work/tangent before another complete candidate.
+Preserve all scientific/resource and programme requirements.
+[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/geometry_only_path.md).
 
 Committed native material recovery/reporting now passes six installed checks,
 including independent rational energy checks, bound histories, detached optional

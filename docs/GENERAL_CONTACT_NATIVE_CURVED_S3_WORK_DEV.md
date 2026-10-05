@@ -187,3 +187,9 @@ changing contact work rejects explicitly. `contact_reuse_hits` counts hits;
 `pair_evaluations` counts actual pair integrations, while `candidate_evaluations`
 continues to count successful contributor requests. Local reuse timings do not
 establish complete-route performance or enforcement convergence.
+
+Curved swept admission evaluates the complete authoritative geometry path without
+integrating endpoint forces. Admission and equilibrium separately require full
+endpoint integration and its error controls. A certified path therefore makes
+no force, tangent, material-state or equilibrium acceptance claim. Line and
+straight-material owners retain their historical dispatch.

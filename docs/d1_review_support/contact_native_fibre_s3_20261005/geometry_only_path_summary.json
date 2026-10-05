@@ -1,0 +1,63 @@
+{
+  "parent": "200a97f0",
+  "status": "development-tested; full route resource NONPASS",
+  "source_hash": "ED2E194F4A11FA3E55A7B130EC423353DD0AA75B2E45BC274CED7809183E6D41",
+  "test_hash": "9A811728D8239B6678C1C9F9D20F14D21BC4D53E1E704B3C10013FE7D53FFF81",
+  "wheel_hash": "10FD0ABC0C798547FD9B00ABFD8B04465FC72D7C9227CEAB623C13C402DF4D2E",
+  "production_files": 526,
+  "parity_errors": [],
+  "import_count": 221,
+  "import_errors": [],
+  "runtime_errors": [],
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    }
+  ],
+  "jit_disabled": true,
+  "collected": 17,
+  "failed": 0,
+  "pytest_exit_code": 0,
+  "installed_resources": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 72.09248009999283,
+    "peak_bytes": 189587456
+  },
+  "first_step": {
+    "scope": "single identical first-step observation pair, not balanced complete-solve performance",
+    "linear_step_equal": true,
+    "guess_fingerprint_equal": true,
+    "coupled_metrics_equal": true,
+    "observed_relative_time_reduction": 0.3849531471695051,
+    "baseline_s": 37.1993004999822,
+    "changed_s": 22.879312700009905,
+    "owner_identity_equal": true,
+    "trial_failures_equal": true
+  },
+  "full_route_resources": {
+    "status": "timeout",
+    "returncode": 15,
+    "elapsed_s": 120.10784599999897,
+    "peak_bytes": 182484992
+  },
+  "raw_root": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate09",
+  "runner_note": "Archived runner must use original candidate08 raw directory for its relative checkpoint dependency."
+}

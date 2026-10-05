@@ -511,6 +511,8 @@ class NativeCurvedMaterialPlaneWork:
                         representation_gap_m=pad,active_angular_width_bound=active_width,
                         angular_fallback=fallback,representative_xi=station,error_bounds=tuple(error)))
             prepared.append((cell,bands))
+        total_area=self._integration_budget_area(prepared,segmented,high,low,U,
+            alo,ahi,total_area)
         remaining=np.asarray(limits)-root_errors
         if np.all(np.isfinite(root_errors)) and np.any(remaining<=0):
             # A formulation-owned tighter enclosure may resolve a conservative
@@ -658,6 +660,10 @@ class NativeCurvedMaterialPlaneWork:
             _readonly(force),_readonly(-force),_readonly(moment),_readonly(-moment),geometry,
             visited,accepted,evaluations,final_errors,
             tuple(root_brackets),budget['visited'])
+
+    def _integration_budget_area(self,prepared,segmented,high,low,U,alo,ahi,total_area):
+        """Default allocation preserves the complete reference parameter domain."""
+        return total_area
 
     def _coordinate_count(self):
         return 42

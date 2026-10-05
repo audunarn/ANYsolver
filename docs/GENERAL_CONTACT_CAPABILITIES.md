@@ -2410,3 +2410,14 @@ local reduction), bitwise work. Both4e7 full attempts hit120s with no mechanical
 result: resource NONPASS, no full-route speedup or acceptance/release claim.
 Next one first-step cost discriminator; no automatic full retry/cap/level increase.
 [Evidence](d1_review_support/contact_native_fibre_s3_20261005/candidate_reuse.md).
+## 2026-10-05 curved geometry-only path and certified-active budget
+
+Geometry-only complete path:17 installed controls pass; single first-Newton
+observation38.4953% lower body time, not balanced/full-route speedup. Full4e7
+resource NONPASS remains. Opt-in certified-active allocation:7 installed checks,
+526 source files match, legacy replay/cross-policy rejection and independent
+saved-pose work/tangent pass. Implemented/tested development candidate; no new
+independent engineering acceptance or release. Defaults unchanged.
+Evidence: d1_review_support/contact_native_fibre_s3_20261005/active_budget.md and
+geometry_only_path.md. Next explicit changed-policy complete candidate under
+unchanged acceptance/resource limits; all historical failures remain.

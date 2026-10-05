@@ -12,7 +12,7 @@ from scipy import sparse
 from anysolver._ge_beam3_mixed_ad import Jet2,dot,sqrt as jet_sqrt
 from anysolver._ge_beam3_generalized_static_boundary import spatial_jacobian
 from anysolver._ge_beam3_p5_seeded.core import sha
-from .native_curved_plane_work import NativeCurvedMaterialPlaneWork
+from .native_curved_plane_work import NativeCurvedMaterialPlaneWork,_station_field,_critical_gaps
 from .native_curved_geometry import (curved_patch_geometry_control,
     _reference_norm_bounds,_reference_second_bound,_reference_curvature_norm)
 from .native_surface_bounds import _reference_radial_gain,_rotation_gain
@@ -93,6 +93,26 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         self.dn=dn;self.hn=hn
         self.origin_map=np.zeros((3,9));self.origin_map[:,:3]=np.eye(3)
         self._axial_centres=None
+        self.integration_budget_policy=work.integration_budget_policy
+
+    def _integration_budget_area(self,prepared,segmented,high,low,U,alo,ahi,total_area):
+        if self.integration_budget_policy=='full_reference' or not segmented:
+            return total_area
+        areas=[]
+        for cell,bands in prepared:
+            for xl,xr,uncertain,_ in bands:
+                # Only the existing complete axial root partition permits this
+                # classification. Uncertain bands always retain their share.
+                if not uncertain:
+                    xm=(xl+xr)/2;t=xm+1 if cell==0 else xm
+                    field=_station_field(high,low,cell,t,self.reference.half_cell_lift(cell,t),
+                        self.reference.frame(xm),U[cell],self.radius,self.origin,self.normal)
+                    if min(_critical_gaps(field,alo,ahi))>0:continue
+                areas.append((xr-xl)*(ahi-alo))
+        area=fsum(areas)
+        # An entirely open partition performs no quadrature. Keep a positive
+        # denominator without altering its zero contribution.
+        return area if area>0 else total_area
 
     def evaluate(self,positions,position_low,cell_rotations):
         # Exact axial data belongs to this disposable evaluation only. Keep
@@ -216,10 +236,19 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
 
 class NativeCurvedMaterialS3Work(NativeRetainedMaterialS3Work):
     """Local whole-contained curved patch; exact inherited skin/identity guards."""
+    def __init__(self,contact,shell,*,integration_budget_policy='full_reference'):
+        if integration_budget_policy not in ('full_reference','certified_active'):
+            raise ValueError('unknown curved S3 integration budget policy')
+        self.integration_budget_policy=integration_budget_policy
+        super().__init__(contact,shell)
+
     def _fingerprint(self):
-        return sha(dict(profile=PROFILE,base=super()._fingerprint(),
+        definition=dict(profile=PROFILE,base=super()._fingerprint(),
             numerical='CURVED_SHARED_GAUSS8_16_V7_COMPLETE_MOVING_NORMAL_WORK_V2',
-            path='affine_skin_left_exp_complete_bernstein_controls_v1'))
+            path='affine_skin_left_exp_complete_bernstein_controls_v1')
+        if self.integration_budget_policy!='full_reference':
+            definition['integration_budget_policy']=self.integration_budget_policy
+        return sha(definition)
 
     def _geometry(self,pose):
         k=self.contact;corners=self.shell.current_positions(pose.shell_displacement)
