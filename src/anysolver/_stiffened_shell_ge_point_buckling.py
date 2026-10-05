@@ -25,6 +25,7 @@ from ._stiffened_shell_ge_finite_experimental import _position_pair, _State
 from ._stiffened_shell_b2_q4_panel_experimental import _modal_scaled_residual
 
 POLICY = 'GE_Q4_POINT_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
+LINE_POLICY = 'GE_Q4_BL5_ACCEPTED_CONSERVATIVE_MIXED_BUCKLING_V1_EXPERIMENTAL'
 TOLERANCE = 1e-8
 
 
@@ -80,6 +81,37 @@ class GEPointBucklingResult:
 
 
 @dataclass(frozen=True)
+class GELineBucklingRequest(GEPointBucklingRequest):
+    """Existing BL5 coefficient spaces, with optional unchanged pose points."""
+    def __post_init__(self):
+        try:
+            super().__post_init__()
+        except ValueError as exc:
+            raise ValueError('finite positive bounded BL5 line-buckling controls and accepted generation required') from exc
+
+
+@dataclass(frozen=True)
+class GELineBucklingResult(GEPointBucklingResult):
+    policy: str = LINE_POLICY
+    line_coefficient_modes: tuple = ()
+    line_station_density_modes: tuple = ()
+    line_station_gap_modes: tuple = ()
+    line_station_metadata: tuple = ()
+    density_measure: str = 'existing reference-arclength quadrature; coefficient densities are not physical wrenches'
+
+
+@dataclass(frozen=True)
+class LineStationMap:
+    slots: tuple
+    rows: tuple
+    basis: np.ndarray
+    gap_jacobian: np.ndarray
+    weight: float
+    beam_edge: int
+    station: float
+
+
+@dataclass(frozen=True)
 class AcceptedSnapshot:
     generation: int
     checkpoint_sha256: str
@@ -112,6 +144,11 @@ class PointBucklingPencil:
     identity: str
     decomposition_error: float
     symmetry_error: float
+
+
+@dataclass(frozen=True)
+class LineBucklingPencil(PointBucklingPencil):
+    line_stations: tuple = ()
 
 
 class _Failure(RuntimeError):
@@ -152,10 +189,11 @@ def _model_digest(owner):
     elements = tuple((eid, tuple(element.node_ids), element.thickness)
                      for eid, element, _, _ in owner._shell_parts)
     return sha256(pickle.dumps((owner._identity, owner._definition, geometry, materials, elements,
-        owner._fixed, owner._free, owner._coordinate_scale, owner._constraint_scale), protocol=5)).hexdigest()
+        owner._fixed, owner._free, owner._coordinate_scale, owner._constraint_scale,
+        owner._line_samples, owner._line_terms), protocol=5)).hexdigest()
 
 
-def _admit(owner, generation=None):
+def _admit(owner, generation=None, *, lines=False):
     owner._require_open()
     d = owner._definition
     driver = owner._finite_driver
@@ -164,12 +202,42 @@ def _admit(owner, generation=None):
         raise ValueError('current accepted finite state and matching generation required')
     if (d.q4_pullback_policy != Q4_POLICY or d.shell_reference_policy != 'flat'
             or not d.shell.q4_elements or d.shell.s3_elements or d.shell.j2_curve is not None
-            or not d.points or d.lines or d.footprints or d.distributing_footprints
+            or (not d.lines or not owner._finite_bl5 or
+                any(line.basis not in ('p0', 'continuous_p1_coarse') for line in d.lines)
+                if lines else not d.points or bool(d.lines))
+            or d.footprints or d.distributing_footprints
             or d.finite_distributing_footprints or owner._has_physical_fibre
             or driver._external is not None or driver._programme is not None):
-        raise ValueError('accepted buckling requires elastic objective flat Q4/generalized GE six-pose points and nodal dead translations')
+        attachment = 'BL5 lines with optional six-pose points' if lines else 'six-pose points'
+        raise ValueError('accepted buckling requires elastic objective flat Q4/generalized GE '+attachment+' and nodal dead translations')
+    if lines:
+        from ._stiffened_shell_bl5_local_experimental import BL5LocalOperator
+        if not owner._line_samples or len(owner._line_samples) != len(owner._line_terms):
+            raise ValueError('complete compiled BL5 station/term inventory required')
+        covered = set(); line_count = owner._C.shape[0]-6*len(owner._connections)
+        for sample, term in zip(owner._line_samples, owner._line_terms, strict=True):
+            if len(sample) != 5 or len(term) != 2:
+                raise ValueError('complete compiled BL5 station/term records required')
+            op, slots, weight, edge, alpha = sample; rows, basis = term
+            if (type(op) is not BL5LocalOperator or np.shape(slots) != (21,)
+                    or np.asarray(slots).dtype.kind not in 'iu' or len(set(slots)) != 21
+                    or np.any(slots < 0) or np.any(slots >= owner._K.shape[0])
+                    or np.asarray(rows).ndim != 1 or np.asarray(rows).dtype.kind not in 'iu'
+                    or len(set(rows)) != len(rows) or not len(rows)
+                    or np.any(rows < 0) or np.any(rows >= line_count)
+                    or np.shape(basis) != (5, len(rows)) or not np.isfinite(basis).all()
+                    or not np.isfinite(weight) or weight <= 0 or not 0 <= alpha <= 1):
+                raise ValueError('actual BL5 operator and compatible finite compiled support maps required')
+            if (not np.array_equal(slots[12:], op.port.active_beam_slots()+owner._shell_count)
+                    or np.any(slots[:12] >= owner._shell_count)
+                    or any(not np.array_equal(slots[start:start+6], np.arange(slots[start], slots[start]+6))
+                           or slots[start] % 6 for start in (0, 6))):
+                raise ValueError('BL5 compiled slots must preserve actual shell/half-cell port coordinates')
+            covered.update(map(int, rows))
+        if covered != set(range(line_count)):
+            raise ValueError('complete BL5 coefficient row inventory required')
     if not len(owner._fixed):
-        raise ValueError('supported point buckling requires declared fixed coordinates')
+        raise ValueError('supported '+('BL5 line' if lines else 'point')+' buckling requires declared fixed coordinates')
     fixed = set(owner._fixed)
     for start, count in ((0, len(owner._shell_ids)), (owner._shell_count, len(owner._beam_ids))):
         for node in range(count):
@@ -193,17 +261,19 @@ def _admit(owner, generation=None):
     return driver, applied
 
 
-def capabilities(owner):
+def capabilities(owner, *, lines=False):
     reason = None
     try:
-        _admit(owner)
+        _admit(owner, lines=lines)
     except (ValueError, RuntimeError) as exc:
         reason = str(exc)
-    return dict(policy=POLICY, definition_admitted=reason is None,
+    return dict(policy=LINE_POLICY if lines else POLICY, definition_admitted=reason is None,
         eligible=None if reason is None else False, material_capture_validation_pending=reason is None,
         ineligibility_reason=reason,
-        state='accepted elastic objective Q4/generalized GE six-pose-point equilibrium',
-        coordinates='all shell, native nodal/cell rotations, eighteen resultants/member and point multipliers',
+        state=('accepted elastic objective Q4/generalized GE BL5 equilibrium with optional six-pose points'
+               if lines else 'accepted elastic objective Q4/generalized GE six-pose-point equilibrium'),
+        coordinates=('all shell, native nodal/cell rotations, eighteen resultants/member, existing BL5 coefficients and optional point multipliers'
+                     if lines else 'all shell, native nodal/cell rotations, eighteen resultants/member and point multipliers'),
         loads='conservative nodal dead translations', mass='none',
         material_admission='elastic-interior unchanged-history and yield-margin witness checked during capture, before factorization',
         selection='finite positive factors nearest shift; completeness unqualified',
@@ -227,9 +297,31 @@ def _elastic_beam(core, response, origin):
                 raise ValueError('generalized material is on an unresolved yield boundary')
 
 
-def capture(owner, expected_generation, *, cancellation_token=None):
+def _line_components(local, shell_q, basis):
+    """Exact scalar-work pullback, preserving the existing BL5 coefficient map."""
+    d = np.eye(21); extra = np.zeros((21, 21))
+    spatial = local.hessian.copy()
+    for start in (3, 9, 18):
+        spatial[start:start+3, start:start+3] -= .5*skew(local.gradient[start:start+3])
+    for start in (3, 9):
+        _, p, dp = _exp_terms(shell_q[start:start+3])
+        if np.linalg.svd(p, compute_uv=False)[-1] <= 1e-11:
+            raise ValueError('singular BL5 additive shell chart requires rebase')
+        d[start:start+3, start:start+3] = p
+        for k in range(3):
+            extra[start:start+3, start+k] = dp[:, :, k].T@local.gradient[start:start+3]
+    mechanical = d.T@spatial@d+extra
+    mechanical[18:21, 18:21] += .5*skew(local.gradient[18:21])
+    mapped = local.gap_jacobian@d
+    cross = mapped.T@basis
+    km = np.block([[np.zeros((21, 21)), cross], [cross.T, np.zeros((basis.shape[1], basis.shape[1]))]])
+    h = km.copy(); h[:21, :21] = mechanical
+    return np.r_[d.T@local.gradient, basis.T@local.gap], h, km, mapped
+
+
+def capture(owner, expected_generation, *, cancellation_token=None, lines=False):
     """Pure local replay from copied accepted data; no trial-cache publication."""
-    driver, applied = _admit(owner, expected_generation)
+    driver, applied = _admit(owner, expected_generation, lines=lines)
     initial_state = driver._state
     initial_digest = _state_digest(driver)
     initial_model_digest = _model_digest(owner)
@@ -263,6 +355,7 @@ def capture(owner, expected_generation, *, cancellation_token=None):
             forces[int(slot)].append(float(value))
 
     from math import fsum
+    line_stations = []
     for (_eid, element, slots, _), origin in zip(owner._shell_parts, pickle.loads(snap.shell_origins), strict=True):
         check('shell')
         anchors = None if snap.shell_anchors is None else snap.shell_anchors[slots[::6]//6]
@@ -308,6 +401,25 @@ def capture(owner, expected_generation, *, cancellation_token=None):
         extended = np.r_[slots, np.arange(n+6*index, n+6*index+6)]
         scatter('material', extended, km); scatter('joint', extended, g)
         scatter('total', extended, h); scatter_force(extended, trial.residual)
+    if lines:
+        from ._stiffened_shell_rotation_charts import physical_frames
+        from ._ge_beam3_retained_generalized_state import Mechanical
+        shell_frames = physical_frames(snap.q[:owner._shell_count], snap.shell_anchors)
+        mechanical = Mechanical(positions, low, snap.frames, snap.cells, snap.resultants)
+        offset = 6*len(owner._connections)
+        for sample, (rows_at, basis) in zip(owner._line_samples, owner._line_terms, strict=True):
+            check('line')
+            operator, slots, weight, edge, alpha = sample
+            rows_at = np.asarray(rows_at)+offset
+            local = operator.evaluate_spatial(snap.q[slots[:12]].reshape(2, 6),
+                shell_frames[slots[:12:6]//6], mechanical, basis@snap.multipliers[rows_at])
+            force, h, km, mapped = _line_components(local, snap.q[slots[:12]], basis)
+            extended = np.r_[slots, n+rows_at]
+            scatter('material', extended, weight*km)
+            scatter('joint', extended, weight*(h-km))
+            scatter('total', extended, weight*h); scatter_force(extended, weight*force)
+            line_stations.append(LineStationMap(tuple(map(int, slots)), tuple(map(int, rows_at)),
+                _owned(basis), _owned(mapped), float(weight), int(edge), float(alpha)))
     for slot, value in enumerate(snap.applied_dead_load):
         forces[slot].append(-float(value))  # translation dead work has zero Hessian
     matrices = {name: _freeze(sparse.coo_matrix((data, (rows, columns)), shape=(size, size)))
@@ -326,11 +438,16 @@ def capture(owner, expected_generation, *, cancellation_token=None):
     pchart = _freeze(chart.tocsc())
     identity = _matrix_digest((material, geometric, hessian, constraints, pchart,
                                matrices['shell'], matrices['beam'], matrices['joint']))
-    packet = PointBucklingPencil(material, geometric, constraints, hessian, matrices['shell'], matrices['beam'],
-        matrices['joint'], residual, pchart, free, fixed, n, snap, identity, decomposition, symmetry)
+    packet_type = LineBucklingPencil if lines else PointBucklingPencil
+    packet = packet_type(material, geometric, constraints, hessian, matrices['shell'], matrices['beam'],
+        matrices['joint'], residual, pchart, free, fixed, n, snap, identity, decomposition, symmetry,
+        **(dict(line_stations=tuple(line_stations)) if lines else {}))
+    station_identity = sha256(pickle.dumps(tuple(line_stations), protocol=5)).hexdigest()
     def guard(stage='guard', *, full=True):
         check(stage)
         if full:
+            if lines and sha256(pickle.dumps(packet.line_stations, protocol=5)).hexdigest() != station_identity:
+                raise ValueError('immutable BL5 station recovery map changed')
             if _state_digest(driver) != initial_digest:
                 raise ValueError('accepted state changed during buckling capture/solution')
             if _model_digest(owner) != initial_model_digest:
@@ -368,22 +485,24 @@ def _scaled_pencil(owner, packet):
 
 
 def solve(owner, request, *, cancellation_token=None):
-    if type(request) is not GEPointBucklingRequest:
+    lines = type(request) is GELineBucklingRequest
+    if type(request) not in (GEPointBucklingRequest, GELineBucklingRequest):
         raise ValueError('typed GE point-buckling request required')
     if cancellation_token is not None and not isinstance(cancellation_token, CancellationToken):
         raise ValueError('CancellationToken required')
-    _admit(owner, request.expected_generation)
+    _admit(owner, request.expected_generation, lines=lines)
     packet = None; handle = None; raw = ()
     checkpoint = sha256(owner._finite_driver.checkpoint()).hexdigest()
     def finish(status, **kwargs):
-        return GEPointBucklingResult(status, owner._identity, owner._generation, checkpoint,
+        result_type = GELineBucklingResult if lines else GEPointBucklingResult
+        return result_type(status, owner._identity, owner._generation, checkpoint,
             pencil_identity='' if packet is None else packet.identity,
             decomposition_error=0. if packet is None else packet.decomposition_error,
             symmetry_error=0. if packet is None else packet.symmetry_error,
             inverse_eigenvalues=raw, factorization_count=0 if handle is None else handle.factorization_count,
             solve_count=0 if handle is None else handle.solve_count, **kwargs)
     try:
-        packet, guard = capture(owner, request.expected_generation, cancellation_token=cancellation_token)
+        packet, guard = capture(owner, request.expected_generation, cancellation_token=cancellation_token, lines=lines)
         if request.count >= len(packet.free)-1:
             raise ValueError('buckling count must leave sparse Arnoldi room')
         a, g, scale = _scaled_pencil(owner, packet)
@@ -450,6 +569,14 @@ def solve(owner, request, *, cancellation_token=None):
             raise ValueError('buckling changed accepted checkpoint bytes')
         n = packet.primal_count; beam_start = owner._shell_count
         retained = beam_start+6*len(owner._beam_ids)
+        line_fields = {}
+        if lines:
+            point_count = 6*len(owner._connections)
+            line_fields = dict(
+                line_coefficient_modes=tuple(_owned(p[1][n+point_count:]) for p in pairs),
+                line_station_density_modes=tuple(tuple(_owned(s.basis@p[1][n+np.asarray(s.rows)]) for s in packet.line_stations) for p in pairs),
+                line_station_gap_modes=tuple(tuple(_owned(s.gap_jacobian@p[1][list(s.slots)]) for s in packet.line_stations) for p in pairs),
+                line_station_metadata=tuple((s.weight, s.beam_edge, s.station, s.rows) for s in packet.line_stations))
         return finish('completed' if pairs else 'no_factors_in_requested_window',
             prestress_multipliers=tuple(p[0] for p in pairs), full_coordinates=tuple(_owned(p[1][:n]) for p in pairs),
             shell_coordinate_modes=tuple(_owned(p[1][:beam_start].reshape(-1, 6)) for p in pairs),
@@ -460,7 +587,7 @@ def solve(owner, request, *, cancellation_token=None):
             multiplier_modes=tuple(_owned(p[1][n:]) for p in pairs),
             coordinate_support_reactions=tuple(p[2] for p in pairs), physical_support_wrenches=tuple(p[3] for p in pairs),
             support_provenance=tuple((f.domain, f.node, f.component) for f in owner._definition.fixed),
-            equation_residuals=tuple(p[4] for p in pairs), constraint_residuals=tuple(p[5] for p in pairs))
+            equation_residuals=tuple(p[4] for p in pairs), constraint_residuals=tuple(p[5] for p in pairs), **line_fields)
     except SolveCancelled as exc:
         return finish('cancelled', failure_reason=str(exc))
     except (ArpackError, _Failure, np.linalg.LinAlgError) as exc:

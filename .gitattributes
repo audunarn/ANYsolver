@@ -320,3 +320,4 @@ tests/data/native_s3_fibre_history/** -text
 /.qualification/b3-ge-e4-pl/r8-ccx-restricted-nonlinear-dev-20261005-v1/** -text -whitespace
 /.qualification/b3-ge-e4-pl/r8-ccx-inverse-material-dev-20261005-v1/** -text -whitespace
 /docs/agent_plans/history/PRE_CCX_INVERSE_20261005.md -text
+/docs/agent_plans/history/PRE_BL5_BUCKLING_20261005.md -text

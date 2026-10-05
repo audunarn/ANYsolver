@@ -2838,3 +2838,36 @@ Full G4B, S3/fibre/line/footprint/B2 extensions, external/platform/scale and
 aggregate acceptance remain OPEN mandatory obligations, not permanent exclusions.
 Next: continue remaining conservative spectral coverage under adopted contracts;
 do not reopen closed F03/Fy/material/turning campaigns or qualify a subset as full.
+
+
+### 5 October - nonmatching BL5 conservative buckling development
+
+IMPLEMENTED_NOT_QUALIFIED: GELineBucklingRequest/result and separate experimental
+policy extend existing owner.buckling. Existing point API/defaults unchanged.
+Exact BL5 additive-shell covector/Hessian pullback preserves five-channel law,
+frozen basis/quadrature, native cell lifts, all42/member and point+line curvature.
+Boundary witnesses bind actual compiled stations and owned density/gap maps.
+No SPD, artificial mass, condensation, symmetry repair or multiplier-space choice.
+Initial source-v1:39PASS2FAIL due new negative test None.copy assumption, fixed
+without product edit. v2 supervisor refused output reuse before child launch.
+All failed evidence preserved. Source-v3:41PASS19.37s. Anchored independent AD,
+actual rebase covariance/history/factor/restart and controlled nonzero-lift work
+checks extend source-v4:45PASS28.96s; installed-v4:45PASS26.48s. Rebase finite
+factors agree within1e-9 relative; actual-update derivative plateau<=1e-6.
+The local lift witness does not confer whole-model geometry qualification.
+Installed P0 public example COMPLETE_DEVELOPMENT, unchanged checkpoint, accepted
+equilibrium9.250e-11/gap1.258e-17, two frozen-prestress factors7436.23653335 and
+40821.1606844, original pair equation/constraint residuals<3e-16. One factorization
+and21 inverse solves; split1.069e-16/skew1.668e-16. No nonlinear limit-load or
+lowest-instability/completeness claim.
+Solverwheel7aa5b9f911cb9e506ca5d25fbbaaa063e8d18a1f450930061cb1dd18fe753777.
+Source/package bytes, actual imports, effective pools1/JIToff, supervisor600s/2GiB
+process tree/affinity1 verified. No speedup or complete dependency/platform claim.
+Supporting independent OpenAI contract/full/delta reviews leave no identified
+defect; different-family scientific acceptance remains pending.
+Raw .qualification/b3-ge-e4-pl/r8-ge-line-buckling-dev-20261005-v1 binds immutable
+source versions, failed/startup and successful logs, JUnit, wheel/import identities,
+sparse packets, checkpoint and coefficient/density/gap recovery.
+Full G4B, remaining materials/shells/attachments/loads, B2 and external/platform/
+scale/consumer qualification remain mandatory OPEN. Continue those obligations
+under adopted contracts, without reopening closed campaigns or narrowing scope.

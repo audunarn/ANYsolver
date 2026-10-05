@@ -1293,9 +1293,16 @@ class ExperimentalGEAnalysis:
         with self._operation_lock:
             return capabilities(self)
 
+    @property
+    def line_buckling_capabilities(self):
+        """Accepted conservative BL5 route, distinct from point-only admission."""
+        from ._stiffened_shell_ge_point_buckling import capabilities
+        with self._operation_lock:
+            return capabilities(self, lines=True)
+
     @_state_writer
     def buckling(self, request, *, cancellation_token=None):
-        """Finite elastic point-state prestress factors, with all mixed coordinates."""
+        """Typed point-only or BL5 accepted-state conservative prestress factors."""
         from ._stiffened_shell_ge_point_buckling import solve
         return solve(self, request, cancellation_token=cancellation_token)
 
