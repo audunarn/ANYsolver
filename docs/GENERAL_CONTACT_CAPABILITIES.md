@@ -2345,3 +2345,14 @@ No mechanical/schema change or expensive replay; prior solve evidence reused by
 impact. Implemented/tested, not independently accepted/released; complete physical
 work/energy balance and remaining convergence/admission remain open.
 [Evidence](d1_review_support/contact_native_fibre_s3_20261005/material_results.md).
+
+
+### Native physical-fibre enforcement sensitivity — NONPASS, 5 October 2026
+
+Reused actual plastic1e7 checkpoint; independent angular/axial coarse gap control
+passes. Installed2e7 solve rejects the root-band tangent uncertainty at iteration7
+before accepting a target (4.937s,181395456B). No enforcement-response convergence
+claim is supported. Force/energy uncertainty is negligible relative to its gates;
+complete mapped-gradient enclosure over the declared arc is the next bounded
+candidate, subject to local verification. No unchanged retry or4e7 run.
+[Evidence](d1_review_support/contact_native_fibre_s3_20261005/enforcement_sensitivity.md).

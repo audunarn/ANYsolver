@@ -40,6 +40,34 @@ source; explicit replay-completed assertion and publication cancellation pass.
 
 ## Next bounded action
 
+Prospective enforcement discriminator (2026-10-05): reuse the actual plastic
+1e7 Pa/m checkpoint and run only 2e7 Pa/m first, with unchanged geometry,
+loads, supports, material and 120s/953MiB owner limits. Compare complete beam
+contact force and moment, tip displacement and free target displacement using
+the finer response norm; each successive relative change target is 2%.
+Also retain equilibrium/wrench, 30um physical-gap and checkpoint binding gates.
+An independent analytic angular minimum with bracket-refined axial sampling
+supplements the production whole-patch gap enclosure; it is not a conservative
+global certificate. Coarse 65/129-point agreement is checked before the solve.
+If all response changes pass and gap improves, one 4e7 case may check the trend.
+If a response fails, classify the dominant discrepancy and use one integration
+control on the completed pose before any further coupled solve. A resource or
+mechanical failure gets diagnosis, not a cap increase or unchanged retry.
+These are development comparisons, not a continuum or zero-penalty-limit claim.
+Current expanded Mistral ownership applies prospectively; cached unavailability
+remains binding. No optional-worker reprobe or duplicate investigation is needed.
+
+Actual discriminator: coarse independent preflight passes5.910s; installed2e7
+fails4.937s/181395456B before accepting any target. Iteration7 has nine geometry
+rejections;34 saved failures show root-band tangent uncertainty1.0102–1.6004e-6
+above the unchanged1e-6 budget, with energy/force uncertainties negligible.
+No enforcement-response comparison is available. Do not launch4e7 or retry
+unchanged2e7. Next examine complete mapped-gradient angular enclosure versus
+the declared arc, retaining representation uncertainty and all derivative gates.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/enforcement_sensitivity.md).
+One new development test file records this unresolved gate; its2e7 test is
+currently NONPASS. No production code or installed wheel changed. No live job.
+
 Close native enforcement convergence through one discriminating curved/S3 case.
 Choose explicit stiffness levels and dimensional reaction/displacement/gap scales
 prospectively, reuse actual coarse state, and record how outcomes choose next action.

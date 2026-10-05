@@ -30,6 +30,15 @@ independent gap and material/storage outputs with dimensional scales. State the
 hypothesis and stopping decision before a new solve; do not renew the historical
 failed convergence campaign or infer convergence from a gap/residual alone.
 
+**Latest discriminator disposition:** source coarse preflight passes; installed
+2e7 Pa/m fails before any accepted target because axial-front tangent uncertainty
+exceeds the unchanged integration budget. No successive-response comparison is
+available. Do not repeat unchanged2e7 or launch4e7. Supporting review identifies
+a rigorous declared-arc mapped-gradient enclosure as a candidate correction;
+verify its complete native/shell maps, cancellation rounding and whole-band
+axial allowance before another coupled run. No tolerance, resource or model
+change is authorized by this failure. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/enforcement_sensitivity.md).
+
 Latest D3 material/history slice: explicit physical fibres Y2Pa/H1e5Pa through
 the same owner now press, unload/open and recontact with actual committed history.
 Independent rational returns and local spatial derivatives pass; five installed
