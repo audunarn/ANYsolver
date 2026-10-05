@@ -47,10 +47,16 @@ def require_native_seed(owner,driver):
     from ._stiffened_shell_affine_endpoint import require_native_displacement_policy
     require_native_displacement_policy(owner,driver)
     anchors=driver._state.shell_anchors
+    snapshot=getattr(owner,"_displacement_snapshot",None)
+    charted=False
+    if snapshot is not None:
+        from ._stiffened_shell_displacement_checkpoint import identities
+        metadata=snapshot[1]
+        charted=(metadata.get("chart_events",0)>0 and metadata.get("policy")==identities(owner)[2])
     if (driver._programme is not None or driver._external is not None or
             driver._adaptive_state is not None or
-            (getattr(owner,"_displacement_snapshot",None) is None and anchors is not None) or
-            (anchors is not None and not np.array_equal(
+            (snapshot is None and anchors is not None) or
+            (anchors is not None and not charted and not np.array_equal(
                 anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1))))):
         raise ValueError("native adaptive displacement requires an ordinary unrebased force seed")
     if getattr(owner,"_displacement_snapshot",None) is None:

@@ -24,17 +24,17 @@ def identities(owner):
         if owner._definition.shell.s3_elements:
             if owner._definition.shell.j2_curve is not None:
                 return ("finite_displacement_native_point_plastic_s3",
-                        "B3_GE_NATIVE_POINT_SHELL_J2_S3_DISPLACEMENT_V1_DEV",None,None)
+                        "B3_GE_NATIVE_POINT_SHELL_J2_S3_DISPLACEMENT_V1_DEV","B3_GE_NATIVE_POINT_SHELL_J2_S3_DISPLACEMENT_CHART_V1_DEV",None)
             if owner._has_physical_fibre:
                 return ("finite_displacement_native_point_fibre_elastic_s3",
-                        "B3_GE_NATIVE_POINT_FIBRE_ELASTIC_S3_DISPLACEMENT_V1_DEV",None,None)
+                        "B3_GE_NATIVE_POINT_FIBRE_ELASTIC_S3_DISPLACEMENT_V1_DEV","B3_GE_NATIVE_POINT_FIBRE_ELASTIC_S3_DISPLACEMENT_CHART_V1_DEV",None)
             return ("finite_displacement_native_point_elastic_s3",
-                    "B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_V1_DEV",None,None)
+                    "B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_V1_DEV","B3_GE_NATIVE_POINT_ELASTIC_S3_DISPLACEMENT_CHART_V1_DEV",None)
         if owner._definition.shell.j2_curve is not None:
             return ("finite_displacement_native_point_coupled",
-                    "B3_GE_NATIVE_POINT_COUPLED_J2_DISPLACEMENT_V1_DEV",None,None)
+                    "B3_GE_NATIVE_POINT_COUPLED_J2_DISPLACEMENT_V1_DEV","B3_GE_NATIVE_POINT_COUPLED_J2_DISPLACEMENT_CHART_V1_DEV",None)
         return ("finite_displacement_native_point_material",
-                "B3_GE_NATIVE_POINT_MATERIAL_DISPLACEMENT_V1_DEV",None,None)
+                "B3_GE_NATIVE_POINT_MATERIAL_DISPLACEMENT_V1_DEV","B3_GE_NATIVE_POINT_MATERIAL_DISPLACEMENT_CHART_V1_DEV",None)
     if getattr(owner,"_curved_material",False):
         return ("finite_displacement_curved_material",
                 "B3_GE_CURVED_MATERIAL_POINT_DISPLACEMENT_V1_DEV",
@@ -92,7 +92,7 @@ def encode_snapshot(owner, *, generation, seed_generation, seed_sha256,
             (trial_policy is None and event_cell_evaluations!=0)):
         raise ValueError("invalid displacement trial policy/work")
     kind,policy,chart_policy,event_policy=identities(owner)
-    if chart_policy is None and (chart_events or trial_policy is not None):
+    if (chart_policy is None and chart_events) or (event_policy is None and trial_policy is not None):
         raise ValueError("native point displacement excludes chart/event policies")
     steps=len(arrays["history"])
     metadata=dict(policy=policy,model=owner._identity,generation=generation,
@@ -154,7 +154,7 @@ def decode_snapshot(owner,raw):
             not ((m.get("policy")==policy and set(m)==base_keys) or
                  (m.get("policy")==chart_policy and set(m)==base_keys|{"chart_events"}
                   and type(chart_events) is int and chart_events>0) or
-                 (m.get("policy")==event_policy and
+                 (event_policy is not None and m.get("policy")==event_policy and
                   set(m)==base_keys|{"chart_events","trial_policy","event_cell_evaluations"} and
                   m["trial_policy"]==EVENT_TRIAL_POLICY and
                   type(chart_events) is int and chart_events>=0 and
@@ -207,4 +207,4 @@ def validate_endpoint(owner,raw):
     """
     from ._stiffened_shell_affine_endpoint import validate_arrays
     metadata,a=decode_snapshot(owner,raw)
-    return metadata,a,*validate_arrays(owner,a)
+    return metadata,a,*validate_arrays(owner,a,native_chart=metadata.get("chart_events",0)>0)

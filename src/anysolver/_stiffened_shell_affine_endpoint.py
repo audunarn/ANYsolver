@@ -50,7 +50,7 @@ def has_shell_material(owner):
         and owner._definition.shell.j2_curve is not None)
 
 
-def validate_arrays(owner,a):
+def validate_arrays(owner,a,*,native_chart=False):
     """Replay decoded fixed-affine translation arrays in isolated mechanics."""
     if not (owner._bl5_shell_material or getattr(owner,"_curved_reference",False) or is_native_point_material(owner)):
         raise ValueError("bounded coupled affine endpoint required")
@@ -70,7 +70,7 @@ def validate_arrays(owner,a):
     if not np.any(a["load_direction"][owner._free]):
         raise ValueError("nonzero free displacement load direction required")
     anchors=owned_anchors(a["shell_anchors"],len(owner._shell_ids))
-    if is_native_point_material(owner) and not np.array_equal(
+    if is_native_point_material(owner) and not native_chart and not np.array_equal(
             anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1))):
         raise ValueError("native point displacement excludes rebased shell charts")
     witness=owned_anchors(a["shell_frames"],len(owner._shell_ids))
@@ -92,7 +92,7 @@ def validate_arrays(owner,a):
     s3_material=has_native_s3_material(owner)
     if s3_material:
         predecessor_anchors=owned_anchors(a["shell_origin_anchors"],len(owner._shell_ids))
-        if not np.array_equal(predecessor_anchors,
+        if not native_chart and not np.array_equal(predecessor_anchors,
                               np.tile(np.eye(3),(len(owner._shell_ids),1,1))):
             raise ValueError("native point displacement excludes rebased predecessor charts")
         from ._stiffened_shell_ge_finite_experimental import _restore_native_s3_histories

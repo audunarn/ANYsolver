@@ -338,6 +338,10 @@ def _restore_native_s3_histories(owner, q, rotation_anchors, value):
     fixed = np.asarray(owner._fixed)
     if np.any(origin_q[fixed[fixed < owner._shell_count]] != 0.):
         raise ValueError("invalid shell predecessor support coordinates")
+    fixed_set=set(owner._fixed)
+    for i,anchor in enumerate(origin_anchors):
+        if any(6*i+j in fixed_set for j in (3,4,5)) and np.linalg.norm(anchor-np.eye(3))>1e-12:
+            raise ValueError("shell predecessor anchor violates rotational support")
     blobs = value["s3_states"]
     s3_count = len(owner._definition.shell.s3_elements)
     if type(blobs) is not tuple or len(blobs) != 2*s3_count:

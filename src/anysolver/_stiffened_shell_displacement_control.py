@@ -247,9 +247,6 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
 
 def rebase(owner,expected_generation,*,cancellation_token=None):
     """Publish a chart event at the same accepted displacement and affine load."""
-    from ._stiffened_shell_affine_endpoint import is_native_point_material
-    if is_native_point_material(owner):
-        raise ValueError("native point displacement chart rebasing is not admitted")
     if type(expected_generation) is not int or expected_generation!=owner._generation:
         raise ValueError("stale or invalid displacement rebase generation")
     snapshot=getattr(owner,"_displacement_snapshot",None)

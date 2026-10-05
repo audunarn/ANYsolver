@@ -1158,3 +1158,31 @@ NEXT: native material/displacement chart-rebase compatibility and durable-state
 contract, starting from existing force-chart operations and actual yielded
 fixtures. Derive the needed mapping before implementation; do not simply disable
 admission guards or retry parked loaded-chart histories. No release/main/push.
+
+
+## 5 October 2026 - native material displacement chart development
+Implemented same-physical-pose native chart rebase with distinct chart policy,
+unchanged zero-event legacy identities, fixed accepted material predecessors,
+exact S3 serialized replay and atomic generation/cancellation checks.
+Q4/generalizedJ2 and allS3/fibreJ2 actual fixtures passed. Source 2 cases passed;
+installed v1 retained 24 passes/3 obsolete-error-expectation failures. Corrected
+and strengthened changed/new tests passed 6 cases in installed v3 on the same
+wheel; together coverage is all 27 impacted cases, not a clean v1 campaign.
+Actual ANYfem experimental project/case save-reopen and chart-checkpoint restore
+then exact pending-target continuation passed for both models. Wheel solver
+6b25593b604ad221ff6325873fcabe52dfc9f55caf4aa74b225fed2478a5a0a9;
+consumer626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f.
+Actual-update derivative plateaus preserved the spatial-residual/additive-column
+contract. Installed v3 66.23s/194560000B/max1; no speedup/qualification claim.
+Raw: .qualification/b3-ge-e4-pl/r8-native-displacement-chart-dev-20261005-v1.
+Original failed probe/import and installed v1/v2 remain preserved. Separate
+terminal disposition corrects the original failed-v1 IN_PROGRESS label without
+overwriting it. Supporting OpenAI review found no actionable defect; required
+independent-family/scientific acceptance remains open.
+Next bounded implementation: native point tangent-plane arc continuation using
+the existing physical metric, sparse border and admitted affine load derivative.
+Complete native material/S3 predecessor publication and distinct checkpoints;
+preserve legacy branch-event behavior, native ordinary backtracking and stable
+S3 arithmetic admission. First-limit-point/descending-branch evidence is separate
+and mandatory. Full G0-G6/F01-F13/V01-V28/B01-B18 remain active/incomplete.
+Formal F03 unconsumed; no protected authority renewed, no main/push/release.

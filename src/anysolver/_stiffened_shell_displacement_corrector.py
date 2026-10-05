@@ -108,10 +108,9 @@ def correct(driver, *, base_load, load_direction, amplitude, control_dof,
     require_native_displacement_policy(owner,driver)
     if native and trial_policy is not None:
         raise ValueError("native point displacement excludes branch event policy")
-    if native and (driver._programme is not None or
-            (driver._state.shell_anchors is not None and not np.array_equal(
-                driver._state.shell_anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1))))):
-        raise ValueError("native point displacement requires an ordinary unrebased force seed")
+    if native:
+        from ._stiffened_shell_displacement_adaptive import require_native_seed
+        require_native_seed(owner,driver)
     if driver._accepted is None or not (
             owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native):
         raise ValueError("accepted coupled-J2 BL5 predecessor required")

@@ -1198,8 +1198,9 @@ class ExperimentalGEAnalysis:
                 "experimental_native_point_material_fixed_translation_v1")
             capabilities["displacement_control_seed"] = (
                 "ordinary unrebased nodal-dead-translation force seed; fixed or bounded adaptive targets; "
-                "no staged/external seed, chart rebase, event policy or arc qualification")
+                "native displacement chart continuation; no staged/external seed, event policy or arc qualification")
             capabilities["adaptive_displacement_control"] = "experimental_native_point_translation_halving_v1"
+            capabilities["displacement_chart_rebase"] = "experimental_native_point_material_chart_v1"
         if self._bl5_shell_material:
             capabilities["displacement_control"] = "experimental_nodal_translation_seeded_v1"
             if getattr(self,"_external_context",None) is None:

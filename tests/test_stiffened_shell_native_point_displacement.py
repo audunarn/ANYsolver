@@ -96,8 +96,8 @@ def test_native_fixed_displacement_cancel_restore_reload(request,monkeypatch,tmp
     assert control.checkpoint()==saved
     with pytest.raises(ValueError,match='match restart'):
         control.solve(ACTIONS,(targets[1],),**kw)
-    with pytest.raises(ValueError,match='chart rebasing'):
-        control.rebase_rotations(prefix.generation)
+    with pytest.raises(ValueError,match='generation'):
+        control.rebase_rotations(prefix.generation-1)
     assert control.checkpoint()==saved
     metadata={k:m[k] for k in ('generation','seed_generation','seed_sha256','control_dof')}
     fields=['applied_load','frames','beam_accumulated' if family=='generalized' else 'beam_fibres',
@@ -116,7 +116,7 @@ def test_native_fixed_displacement_cancel_restore_reload(request,monkeypatch,tmp
         publish(control,saved,expected_driver=control._finite_driver,
                 expected_generation=control._generation+1)
     assert control.checkpoint()==saved
-    with pytest.raises(ValueError,match='chart/event'):
+    with pytest.raises(ValueError,match='generation/history'):
         encode_snapshot(control,arrays=dict(a),**metadata,chart_events=1)
     final=control.solve(DIRECTION,(targets[1],),**kw)
     resumed=fresh.solve(DIRECTION,(targets[1],),**kw)
