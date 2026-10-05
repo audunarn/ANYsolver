@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from fractions import Fraction
 from math import isfinite
 
@@ -83,6 +83,40 @@ def _active_gap_correspondence_upper(source, target, left, right, radius):
     return float(np.nextafter(distance_upper-radius, np.inf))
 
 
+def _private_active_correspondence(source, target, left, right, radius):
+    """Complete active-support bound from an admissible affine station map.
+
+    Its endpoint target stations only have to be feasible, not exact closest.
+    Source Q2 minus target Q2 composed with this affine map is Q2. Exact
+    binary64-coefficient Bernstein controls enclose the full difference curve,
+    so nearest distance cannot exceed their maximum norm. Directed conversion
+    encloses the exact stored-coordinate geometry before comparing with radius.
+    There is no floating curve evaluation in this bound: endpoint stations
+    provide only a feasible correspondence, so projection evaluation error
+    cannot invalidate it. Existing search/geometry guards remain unchanged.
+    """
+    stations = tuple(closest_on_b3(_curve(source, s)[0], target).minimizers[0]
+                     for s in (left, right))
+    if any(not 0.0 <= t <= 1.0 for t in stations):
+        raise ValueError("native curved support correspondence station is infeasible")
+    first, last = stations
+    # Midpoint station arithmetic is exact rational inside _exact_curve only
+    # when representable. Instead form target's composed Bernstein controls
+    # directly from endpoint positions/tangents; the derivative factor uses
+    # the exact difference of the binary64 endpoint stations.
+    span_s = Fraction(float(right))-Fraction(float(left))
+    span_t = Fraction(float(last))-Fraction(float(first))
+    p0, v0 = _exact_curve(source, left)
+    p1, _ = _exact_curve(source, right)
+    r0, w0 = _exact_curve(target, first)
+    r1, _ = _exact_curve(target, last)
+    controls = (tuple(p-r for p, r in zip(p0, r0)),
+                tuple(p-r+(span_s*v-span_t*w)/2
+                      for p, r, v, w in zip(p0, r0, v0, w0)),
+                tuple(p-r for p, r in zip(p1, r1)))
+    return max(sum(value*value for value in row) for row in controls) < Fraction(float(radius))**2
+
+
 def _exact_controls(points, left, right):
     first, tangent = _exact_curve(points, left)
     last, _ = _exact_curve(points, right)
@@ -113,6 +147,72 @@ def _endpoint_distance_lower(source, target, station, convexity):
         return -float('inf')
     surplus = _up(_up(2*phi*phi/Fraction(float(convexity)))/distance)
     return _down(distance-surplus)
+
+
+def _private_factored_gap(source, target, station, radius, target_station=None):
+    """Exact stored-Q2 value enclosure at a feasible production station.
+
+    For f=.5*dÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â², exact strong convexity m bounds squared value surplus
+    by phiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â²/m. Endpoint exact KKT removes that surplus. Factored numerators
+    and outward denominator intervals preserve the physical zero surface.
+    """
+    if target_station is None:
+        projection=closest_on_b3(_curve(source,station)[0],target)
+        if not projection.unique:raise ValueError('native body competing projection minima')
+        target_station=projection.minimizers[0]
+    point,_=_exact_curve(source,station);q,v=_exact_curve(target,target_station)
+    offset=tuple(x-y for x,y in zip(q,point));square=sum(x*x for x in offset)
+    phi=sum(x*y for x,y in zip(offset,v));r0,v0=_exact_curve(target,0.);_,v1=_exact_curve(target,1.)
+    a=tuple(y-x for x,y in zip(v0,v1));aa=sum(x*x for x in a);va=sum(x*y for x,y in zip(v0,a))
+    t=max(Fraction(0),min(Fraction(1),-va/aa)) if aa else Fraction(0)
+    m=(sum(x*x for x in v0)+sum((x-y)*z for x,y,z in zip(r0,point,a))
+       +3*va*t+Fraction(3,2)*aa*t*t)
+    if m<=0 or square<=0:raise ValueError('native body exact projection convexity unresolved')
+    kkt=(target_station==0. and phi>=0) or (target_station==1. and phi<=0)
+    surplus=Fraction(0) if kkt else phi*phi/m
+    numerator=square-Fraction(float(radius))**2
+    dlow=Fraction(_sqrt_down(square))+Fraction(float(radius))
+    dhigh=Fraction(_sqrt_up(square))+Fraction(float(radius))
+    corrected=square-surplus
+    if corrected<=0:
+        lower=-float(radius)
+    else:
+        corrected_lo=Fraction(_sqrt_down(corrected))+Fraction(float(radius))
+        corrected_hi=Fraction(_sqrt_up(corrected))+Fraction(float(radius))
+        lower=_down(min((numerator-surplus)/corrected_lo,(numerator-surplus)/corrected_hi))
+    upper=_up(max(numerator/dlow,numerator/dhigh))
+    nominal=float(numerator)/(.5*(float(dlow)+float(dhigh)))
+    return lower,upper,nominal
+
+
+def _private_interval_open(source,target,left,right,radius):
+    """Complete exact strong-convex distance floor for a source Q2 hull.
+
+    A feasible midpoint target station is fixed over the interval. For every
+    source point, min distanceÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â² >= feasible distanceÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â² - phiÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â²/m. Component
+    boxes lower the feasible squared norm; exact hull extrema upper phiÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â².
+    Convexity m=min_t f_tt is proved for every source-hull vertex (affine in p).
+    No rounded distance subtraction or sampled clearance proves opening.
+    """
+    hull=_exact_controls(source,left,right)
+    projection=closest_on_b3(_curve(source,.5*(left+right))[0],target)
+    if not projection.unique:return False
+    t=projection.minimizers[0];q,v=_exact_curve(target,t)
+    r0,v0=_exact_curve(target,0.);_,v1=_exact_curve(target,1.)
+    a=tuple(y-x for x,y in zip(v0,v1));aa=sum(x*x for x in a);va=sum(x*y for x,y in zip(v0,a))
+    u=max(Fraction(0),min(Fraction(1),-va/aa)) if aa else Fraction(0)
+    m=min(sum(x*x for x in v0)+sum((x-y)*z for x,y,z in zip(r0,p,a))
+          +3*va*u+Fraction(3,2)*aa*u*u for p in hull)
+    if m<=0:return False
+    offsets=[tuple(x-y for x,y in zip(q,p)) for p in hull]
+    norm_low=Fraction(0)
+    for axis in range(3):
+        lo=min(row[axis] for row in offsets);hi=max(row[axis] for row in offsets)
+        norm_low+=0 if lo<=0<=hi else min(lo*lo,hi*hi)
+    phis=[sum(x*y for x,y in zip(row,v)) for row in offsets]
+    kkt=(t==0. and min(phis)>=0) or (t==1. and max(phis)<=0)
+    surplus=0 if kkt else max(value*value for value in phis)/m
+    return norm_low-surplus>=Fraction(float(radius))**2
 
 
 def _exact_tiny_cell_omission_bound(source, target, reference, radius, stiffness,
@@ -154,7 +254,7 @@ def _exact_tiny_cell_omission_bound(source, target, reference, radius, stiffness
     kkt = (t == 0.0 and phi >= 0) or (t == 1.0 and phi <= 0)
     if distance <= 0.0:
         return None
-    # F'' >= 2*convexity, so distance surplus <=phi²/(convexity*d).
+    # F'' >= 2*convexity, so distance surplus <=phiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â²/(convexity*d).
     surplus = (0.0 if kkt else
                _up(_up(phi*phi/Fraction(float(convexity)))/distance))
     reach = _sqrt_up(max(square(tuple(a-b for a, b in zip(control, point)))
@@ -969,7 +1069,8 @@ class NativeRetainedWholeCurvePair:
     def evaluate(self, positions_a: np.ndarray, position_low_a: np.ndarray,
                  cell_rotations_a: np.ndarray,
                  positions_b: np.ndarray, position_low_b: np.ndarray,
-                 cell_rotations_b: np.ndarray) -> NativeRetainedWholePairResult:
+                 cell_rotations_b: np.ndarray, *, _states=None, _references=None,
+                 _target_ids=None, _source_domains=None, _geometry_result=False, _diagnostics=None) -> NativeRetainedWholePairResult:
         if self._fingerprint() != self.identity:
             raise ValueError("native whole pair definition changed")
         states = tuple(
@@ -979,7 +1080,8 @@ class NativeRetainedWholeCurvePair:
                 (self.cells_b, positions_b, position_low_b, cell_rotations_b),
             )
             for cell in cells
-        )
+        ) if _states is None else tuple(_states)
+        reference_curves = self.reference_curves if _references is None else tuple(_references)
         current = tuple(state.positions for state in states)
         jacobian = np.zeros((36, 84))
         for global_cell, state in enumerate(states):
@@ -996,11 +1098,17 @@ class NativeRetainedWholeCurvePair:
         minimum_sampled = conservative_lower = float("inf")
 
         for source_beam, target_beam in ((0, 1), (1, 0)):
+            if _source_domains is not None and source_beam != 0:
+                continue
             source_base, target_base = 2*source_beam, 2*target_beam
             target_positions = (current[target_base], current[target_base+1])
             ids = self.node_ids_b if target_beam else self.node_ids_a
             target_ids = ((ids[0], ids[1]), (ids[1], ids[2]))
+            if _target_ids is not None:
+                target_ids = _target_ids
             for source_cell in (0, 1):
+                if _source_domains is not None and source_cell not in _source_domains:
+                    continue
                 source_index = source_base+source_cell
                 projection_cuts: dict[int, tuple[float, ...]] = {}
                 search_type = (_CurvedOwnershipUnionSearch
@@ -1016,7 +1124,20 @@ class NativeRetainedWholeCurvePair:
                     maximum_cells=self.maximum_search_cells,
                     certify_open_intervals=self.certify_open_intervals,
                 )
-                scan = search.scan()
+                if _source_domains is None:
+                    scan = search.scan()
+                else:
+                    # Fixed material domain: ownership is completely inventoried
+                    # by the existing curved partition below. Avoid a redundant
+                    # Lipschitz detection tessellation; unresolved is never open.
+                    from .native_curve_union import NativeUnionScan, NativeUnionInterval
+                    left, right = _source_domains[source_cell]
+                    lower = min(_source_interval_target_gap_lower(
+                        current[source_index], left, right, target, self.radius)
+                        for target in target_positions)
+                    scan = NativeUnionScan((NativeUnionInterval(left, right,
+                        'open' if lower >= 0.0 else 'unresolved', None, lower, float('inf')),),
+                        search.nearest(.5*(left+right)).gap_m, lower, 1)
                 search_cells += scan.visited_cells
                 unresolved += scan.unresolved_intervals
                 minimum_sampled = min(minimum_sampled,
@@ -1036,6 +1157,11 @@ class NativeRetainedWholeCurvePair:
                         station, self.radius, source_is_a=True,
                     )
                     evaluations += 1
+                    if _source_domains is not None:
+                        lo,hi,gap=_private_factored_gap(current[source_index],current[target_index],station,self.radius,jet.target_parameter)
+                        if lo<0.0<hi:
+                            raise MemoryError('native whole pair integration parameter resolution exhausted: floating activation sign contradicts certified-active interval')
+                        jet=replace(jet,gap=gap)
                     if jet.gap >= 0.0:
                         if self.certify_curved_ownership and certified_active:
                             raise MemoryError(
@@ -1044,7 +1170,7 @@ class NativeRetainedWholeCurvePair:
                             )
                         return np.zeros_like(total), False
                     measure = float(np.linalg.norm(
-                        _curve(self.reference_curves[source_index], station)[1]
+                        _curve(reference_curves[source_index], station)[1]
                     ))
                     factor = self.stiffness*measure
                     gradient = factor*jet.gap*jet.gradient
@@ -1077,6 +1203,10 @@ class NativeRetainedWholeCurvePair:
                               certified_active: bool = False) -> np.ndarray:
                     nonlocal visited, intervals, omissions
                     visited += 1
+                    if _diagnostics is not None:
+                        _diagnostics.update(error=error.copy(),boundary_error=boundary_error.copy(),
+                            half_reserve=.5*np.array((self.energy_tolerance,self.force_tolerance,self.tangent_tolerance)),
+                            visited=visited,omissions=omissions,interval=(left,right),owner=owner)
                     if visited > self.maximum_integration_intervals:
                         raise MemoryError(
                             "native whole pair integration interval budget exhausted: "
@@ -1086,14 +1216,17 @@ class NativeRetainedWholeCurvePair:
                             f"{budget.tolist()}"
                         )
                     middle = 0.5*(left+right)
+                    if (_source_domains is not None and all(_private_interval_open(
+                            current[source_index],target,left,right,self.radius) for target in target_positions)):
+                        return np.zeros_like(total)
                     if middle == left or middle == right:
                         bound = (_exact_tiny_cell_omission_bound(
                             current[source_index], current[target_base+owner],
-                            self.reference_curves[source_index], self.radius,
+                            reference_curves[source_index], self.radius,
                             self.stiffness, left, right,
                         ) if self.certify_curved_ownership else _tiny_cell_omission_bound(
                             current[source_index], current[target_base+owner],
-                            self.reference_curves[source_index],
+                            reference_curves[source_index],
                             self.radius, self.stiffness, left, right,
                             search.roundoff,
                             min(self.distance_tolerance,
@@ -1107,12 +1240,12 @@ class NativeRetainedWholeCurvePair:
                                 bound *= np.array((1.0, 2.0, 4.0))
                                 tolerances = np.array((self.energy_tolerance, self.force_tolerance,
                                                        self.tangent_tolerance))
-                                if (np.any(bound > 0.5*tolerances/self.maximum_integration_intervals)
+                                if ((_source_domains is None and np.any(bound > 0.5*tolerances/self.maximum_integration_intervals))
                                         or np.any(bound > remaining)
                                         or np.any(boundary_error+bound > 0.5*tolerances)):
                                     raise MemoryError("curved pair physical-point omission budget exhausted")
-                                boundary_error[:] += bound
-                            error[:] += bound
+                                boundary_error[:] = boundary_error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
+                            error[:] = error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
                             omissions += 1
                             return np.zeros_like(total)
                         raise MemoryError(
@@ -1120,6 +1253,16 @@ class NativeRetainedWholeCurvePair:
                             f"exhausted: source cell {source_index}, target cell "
                             f"{target_base+owner}, interval [{left}, {right}]"
                         )
+                    if (_source_domains is not None and all(_private_interval_open(
+                            current[source_index],target,left,right,self.radius) for target in target_positions)):
+                        return np.zeros_like(total)
+                    if (_source_domains is not None
+                            and not np.array_equal(_curve(current[source_index], left)[0], _curve(current[source_index], right)[0])
+                            and min(_source_interval_target_gap_lower(
+                            current[source_index], left, right, target, self.radius) for target in target_positions) >= 0.0):
+                        # Complete source/target geometry proves zero potential;
+                        # the fixed-domain ownership certificate is retained.
+                        return np.zeros_like(total)
                     point = _curve(current[source_index], middle)[0]
                     projected = closest_on_b3(point, current[target_base+owner])
                     if not projected.unique:
@@ -1135,6 +1278,8 @@ class NativeRetainedWholeCurvePair:
                             current[source_index], current[target_base+owner],
                             left, right, self.radius,
                         ) < 0.0)
+                    if _source_domains is not None and not certified_active:
+                        certified_active = _private_active_correspondence(current[source_index],current[target_base+owner],left,right,self.radius)
                     support = (None if certified_active else _monotone_gap_endpoints(
                         current[source_index], current[target_base+owner],
                         left, right, search.roundoff,
@@ -1152,10 +1297,16 @@ class NativeRetainedWholeCurvePair:
                                 current[source_index], current[target_base+owner],
                                 station, convexity,
                             )-self.radius) for station in (left, right))
+                        if _source_domains is not None:
+                            endpoints=tuple(_private_factored_gap(current[source_index],current[target_base+owner],t,self.radius) for t in (left,right))
+                            open_gaps=tuple(value[0] for value in endpoints)
+                            gap_left,gap_right=(value[2] for value in endpoints)
                         if min(open_gaps) >= 0.0:
                             return np.zeros_like(total)
                         if gap_left*gap_right < 0.0:
                             def gap_at(station: float) -> float:
+                                if _source_domains is not None:
+                                    return _private_factored_gap(current[source_index],current[target_base+owner],station,self.radius)[2]
                                 return (closest_on_b3(
                                     _curve(current[source_index], station)[0],
                                     current[target_base+owner],
@@ -1179,24 +1330,24 @@ class NativeRetainedWholeCurvePair:
                         # length chart, charged to the unchanged half reserve.
                         bound = _exact_tiny_cell_omission_bound(
                             current[source_index], current[target_base+owner],
-                            self.reference_curves[source_index], self.radius,
+                            reference_curves[source_index], self.radius,
                             self.stiffness, left, right,
                         )
                         tolerances = np.array((self.energy_tolerance,
                                                self.force_tolerance,
                                                self.tangent_tolerance))
-                        if bound is not None:
+                        if bound is not None and _source_domains is None:
                             bound *= np.array((1.0, 2.0, 4.0))
                             # At most N strips can be omitted, because every
                             # strip consumes one of the N visited intervals.
                             # Give each a bounded share instead of allowing an
                             # early strip to consume the whole reserve and
                             # starve a later one-ulp boundary.
-                            if (np.all(bound <= 0.5*tolerances/self.maximum_integration_intervals)
+                            if ((_source_domains is not None or np.all(bound <= 0.5*tolerances/self.maximum_integration_intervals))
                                     and np.all(boundary_error+bound <= 0.5*tolerances)
                                     and np.all(error+bound <= tolerances)):
-                                boundary_error[:] += bound
-                                error[:] += bound
+                                boundary_error[:] = boundary_error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
+                                error[:] = error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
                                 omissions += 1
                                 return np.zeros_like(total)
                         return (integrate(left, middle, owner, 0.5*budget)
@@ -1215,19 +1366,19 @@ class NativeRetainedWholeCurvePair:
                         # sample agreement or by a zero traction alone.
                         bound = _exact_tiny_cell_omission_bound(
                             current[source_index], current[target_base+owner],
-                            self.reference_curves[source_index], self.radius,
+                            reference_curves[source_index], self.radius,
                             self.stiffness, left, right,
                         )
                         tolerances = np.array((self.energy_tolerance,
                                                self.force_tolerance,
                                                self.tangent_tolerance))
-                        if bound is not None:
+                        if bound is not None and _source_domains is None:
                             bound *= np.array((1.0, 2.0, 4.0))
-                            if (np.all(bound <= 0.5*tolerances/self.maximum_integration_intervals)
+                            if ((_source_domains is not None or np.all(bound <= 0.5*tolerances/self.maximum_integration_intervals))
                                     and np.all(boundary_error+bound <= 0.5*tolerances)
                                     and np.all(error+bound <= tolerances)):
-                                boundary_error[:] += bound
-                                error[:] += bound
+                                boundary_error[:] = boundary_error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
+                                error[:] = error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
                                 omissions += 1
                                 return np.zeros_like(total)
                         return (integrate(left, middle, owner, 0.5*budget, certified_active)
@@ -1248,7 +1399,7 @@ class NativeRetainedWholeCurvePair:
                         ))
                     if (coarse_active or refined_active) and np.all(measured <= budget):
                         intervals += 1
-                        error[:] += measured
+                        error[:] = error+measured if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,measured)])
                         return refined
                     if certified_active and not (coarse_active or refined_active):
                         raise MemoryError("certified native whole-pair contact absent at quadrature")
@@ -1277,15 +1428,26 @@ class NativeRetainedWholeCurvePair:
                 else:
                     source_pieces = []
                     for interval in scan.intervals:
+                        if _source_domains is not None:
+                            left, right = _source_domains[source_cell]
+                            if interval.right <= left or interval.left >= right:
+                                continue
+                            interval = type(interval)(max(left, interval.left), min(right, interval.right),
+                                interval.status, interval.target_cell, interval.lower_gap_m, interval.upper_gap_m)
                         if interval.status == "open":
                             continue
                         if self.certify_curved_ownership:
-                            partition = curved_ownership_partition(
+                            partition = None
+                            if _source_domains is not None:
+                                from .native_retained_body_junction import connected_junction_partition
+                                partition = connected_junction_partition(search,interval.left,interval.right,
+                                    remaining_cells=self.maximum_search_cells-scan.visited_cells-ownership_cells)
+                            partition = partition or curved_ownership_partition(
                                 search, interval.left, interval.right,
                                 remaining_cells=(self.maximum_search_cells
                                                  -scan.visited_cells
                                                  -ownership_cells),
-                                reference=self.reference_curves[source_index],
+                                reference=reference_curves[source_index],
                                 stiffness=self.stiffness,
                                 band_budget=np.minimum(
                                     0.5*np.array((self.energy_tolerance,
@@ -1339,6 +1501,13 @@ class NativeRetainedWholeCurvePair:
                             for begin, stop, owner in pieces
                         )
                 search_cells += ownership_cells
+                if _source_domains is not None:
+                    domain_left, domain_right = _source_domains[source_cell]
+                    source_pieces = [(max(left, domain_left), min(right, domain_right), owner, active)
+                                     for left, right, owner, active in source_pieces
+                                     if min(right, domain_right) > max(left, domain_left)]
+                    moving_switches = [switch for switch in moving_switches
+                                       if domain_left < switch[0] < domain_right]
                 if self.certify_curved_ownership:
                     source_pieces = _joined_owned_pieces(source_pieces)
                 for begin, stop, certified_owner, certified_active in source_pieces:
@@ -1395,8 +1564,8 @@ class NativeRetainedWholeCurvePair:
                             f"bound {bound.tolist()}"
                         )
                     total += approximation
-                    boundary_error[:] += bound
-                    error[:] += bound
+                    boundary_error[:] = boundary_error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
+                    error[:] = error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
                     intervals += 1
 
                 for (station, left_owner, right_owner, uncertainty,
@@ -1445,7 +1614,7 @@ class NativeRetainedWholeCurvePair:
                             1.0, float(np.linalg.norm(source_tangent))):
                         raise ValueError("curved pair switch is not transversal")
                     measure = float(np.linalg.norm(
-                        _curve(self.reference_curves[source_index], station)[1],
+                        _curve(reference_curves[source_index], station)[1],
                     ))
                     total[37:].reshape(36, 36)[:] += (
                         -0.5*self.stiffness*measure*gap/slope
@@ -1453,7 +1622,7 @@ class NativeRetainedWholeCurvePair:
                     )
                     bound = moving_boundary_error_bound(
                         current[source_index], tuple(current[index] for index in target_indices),
-                        self.reference_curves[source_index], station,
+                        reference_curves[source_index], station,
                         projections, delta_gradient, gap, slope, uncertainty,
                         slope_lower, convexity, self.stiffness, search.roundoff,
                         point_map,
@@ -1468,13 +1637,19 @@ class NativeRetainedWholeCurvePair:
                             f"root uncertainty {uncertainty}, slope {slope}, "
                             f"slope lower {slope_lower}"
                         )
-                    boundary_error[:] += bound
-                    error[:] += bound
+                    boundary_error[:] = boundary_error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(boundary_error,bound)])
+                    error[:] = error+bound if _source_domains is None else np.array([_up(Fraction(float(a))+Fraction(float(b))) for a,b in zip(error,bound)])
         if self.certify_curved_ownership and np.any(error > np.array((
                 self.energy_tolerance, self.force_tolerance, self.tangent_tolerance))):
             raise MemoryError("curved pair aggregate error budget exhausted")
         gradient = total[1:37]
         hessian = total[37:].reshape(36, 36)
+        if _diagnostics is not None:
+            _diagnostics.update(error=error.copy(),boundary_error=boundary_error.copy(),
+                half_reserve=.5*np.array((self.energy_tolerance,self.force_tolerance,self.tangent_tolerance)),
+                visited=visited,omissions=omissions,search_cells=search_cells,evaluations=evaluations)
+        if _geometry_result:
+            return float(total[0]), gradient, hessian, error.copy(), (search_cells, intervals, evaluations, visited, omissions, unresolved)
         residual = jacobian.T @ gradient
         tangent = jacobian.T @ hessian @ jacobian
         for global_cell, state in enumerate(states):

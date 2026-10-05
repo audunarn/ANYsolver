@@ -27,7 +27,7 @@ POLICY='PHYSICAL_FIBRE_RETAINED_CONTACT_CONTEXT_DEV_V1'
 
 
 class NativeFibreContactContext:
-    def __init__(self,native,program):
+    def __init__(self,native,program,*,max_coordinates=256):
         if (type(native) is not NativeBeamAnalysis or native._family!='PHYSICAL_FIBRE_NODAL'
                 or type(program) is not Program):
             raise TypeError('exact physical-fibre native owner and nodal program required')
@@ -35,6 +35,9 @@ class NativeFibreContactContext:
         program.nodal_forces.require(native.model.mesh)
         if program.pattern.line.rows or program.pattern.couples:
             raise ValueError('physical-fibre contact currently requires pure spatial nodal dead forces')
+        if type(max_coordinates) is not int or max_coordinates not in (256,512):
+            raise ValueError('native fibre contact requires an admitted coordinate budget')
+        self.max_coordinates=max_coordinates
         self.native,self.program=native,program
         self._token=None;self._cancel_active=False;self._lock=Lock()
         # The existing fibre family has a distinct retained container. Its
@@ -49,7 +52,7 @@ class NativeFibreContactContext:
             model.add_element(eid,retained);model.materials[retained.material_name]=retained.section
         for boundary in native.model.boundary_conditions:model.add_boundary_condition(deepcopy(boundary))
         force=ForceProgram(program.targets,program.nodal_forces.rows,program.max_iterations,program.max_backtracks)
-        self._backend=FibreContext(model,force,check=self._safe_point,max_coordinates=256)
+        self._backend=FibreContext(model,force,check=self._safe_point,max_coordinates=max_coordinates)
         # Preserve the existing construction-to-expiry resource contract. An
         # operation, pause or checkpoint replay never renews this allowance.
         self._started=self._backend.started
@@ -66,7 +69,7 @@ class NativeFibreContactContext:
 
     def _fingerprint(self):
         layout=self._backend.layout
-        return sha(dict(policy=POLICY,native=self.native.identity,program=self.program,
+        values=dict(policy=POLICY,native=self.native.identity,program=self.program,
             backend=self._backend.identity,support=sha256(self.support_identity).hexdigest(),length=self.length,
             count=layout.count,nodal_count=layout.nodal_count,node_ids=layout.node_ids,
             free=layout.free,fixed=layout.fixed,nodes=layout.nodes,slots=layout.slots,
@@ -75,10 +78,14 @@ class NativeFibreContactContext:
             reference_positions=layout.reference_positions,reference_frames=layout.reference_frames,
             operator_ids=[probe.identity for probe in layout.probes],
             backend_program=self._backend.program,program_data=self._backend.program_data,
-            initial=self.initial,backend_initial=self._backend.initial,layout_initial=layout.initial))
+            initial=self.initial,backend_initial=self._backend.initial,layout_initial=layout.initial)
+        if self.max_coordinates != 256:values['max_coordinates']=self.max_coordinates
+        return sha(values)
 
     def guard(self):
         layout=self._backend.layout
+        if type(self.max_coordinates) is not int or self.max_coordinates not in (256,512):
+            raise ValueError('native fibre contact coordinate budget changed')
         if (self._backend.started!=self._started or
                 len(layout.probes)!=len(layout.elements) or
                 len(self._backend.probes)!=len(layout.probes) or

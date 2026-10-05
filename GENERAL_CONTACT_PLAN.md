@@ -24,6 +24,16 @@ Source verification for this milestone is bounded to 180 s cumulative numerical 
 
 If a native prerequisite or geometry certificate prevents the full outcome, preserve the implemented boundary and exact counterexample, choose one discriminating repair within remaining authority, and stop unchanged expensive repeats. Do not silently reduce the programme or waive a gate.
 
+### Current source checkpoint
+
+Connected-body implementation is partial. Actual saved C0 contact and independent
+scalar work/H checks pass; curved retained-rotation control now fails at an isolated
+endpoint-projection integration boundary, before returning any derivative result.
+Full active156 solve/restart and installed verification are unmet. Numerical work
+used172.556881/180s;7.443119s remain, not renewed. Next derive the exact endpoint
+projection breakpoint and its error/work accounting before another changed check.
+The unique C0 target-switch proof and gap-bound correction are retained; do not
+restart their resolved diagnostics. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/grouped_body_development.md).
 ## Programme disposition and subsequent order
 
 | Delivery | Current disposition | Required next breadth |
