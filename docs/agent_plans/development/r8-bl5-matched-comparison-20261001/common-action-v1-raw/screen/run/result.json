@@ -1,0 +1,147 @@
+{
+  "status": "PREPARED_NO_FACTORIZATION",
+  "classification": "uncoupled native common-P0-action development control only",
+  "source_sha256": "594c8b73f7ca9b8fa5ecb809c7debbc4ee0e0fc5ae0f26dc0a1934c448a18d51",
+  "nx": 64,
+  "cases": {
+    "fy": {
+      "mapping_checks": {
+        "external_full_transpose_recovery": 1.872796230863796e-19,
+        "native_full_transpose_recovery": 0.0,
+        "common_shell_all160_basis": 3.469446951953614e-18,
+        "common_rigid_all160_basis": {
+          "shell": 0.0,
+          "beam": 6.938893903907228e-18
+        },
+        "combined6rigid_zero": 0.0,
+        "combined_all160_basis_zero": 3.469446951953614e-18,
+        "external_stationarity_free": 2.0103342324162554e-11
+      },
+      "compatibility": {
+        "native_self": {
+          "rigid_work_Nm": -1.4210854715202004e-14,
+          "scale_Nm": 192.64569190621265,
+          "ratio": 7.3766792159154e-17
+        },
+        "external_common": {
+          "rigid_work_Nm": 2.533980136831815e-09,
+          "scale_Nm": 192.69143064033705,
+          "ratio": 1.3150455774868092e-11
+        }
+      },
+      "status": "prepared"
+    }
+  },
+  "bound_inputs": {
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\b3_e4_bl5_matched_p0_native_refinement_dev.py": "143297217ec7a4851fb79f83155d23adce7d38971bc82760e94c82a5a1f83fd7",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\b3_e4_bl5_external_p0_refinement_dev.py": "0e5435e0d38952642662eb1aad7dd374c341c866c9d099c87d2e66ce135a21c0",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n64\\identity.json": "a373425ce1ed452cd42f10bf59078f5ecdbbafba5a5ca0a39bebed082321d955",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\_ge_beam3_retained_generalized.py": "39121d4d76a5524579c2ea506c9bdf968a3d254cb7e6740de6173eb5aa7e6787",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\_stiffened_shell_l1_local_experimental.py": "ac954ee5aa9caa0a86b8b24f4f51726a5abd051b00dfcdebafc24fa7b74b35f6",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\_stiffened_shell_bl5_local_experimental.py": "0389999a092bda04c03f5d860db23ccf4fb6a6deedb3fa52cc910e284a49e4e9",
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\_stiffened_shell_ge_experimental.py": "60da6cfc8c84f0f7bb3b18a0a9bf2ff748666a69f1772e03ebbf2ce300d91647",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n64\\layout.json": "b6b79ae55f31d8fb50995c39909401fabc9390578da0fa12cda042fd35f5b0fb",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n64\\inputs.json": "b52987495a4297f617279bd93efd7d3c4c6e140695bc07bb6c96adbbd7c6fcc6",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n64\\station-traces.json": "0e7577ca1c133ad9f97fdf2779521e64bd879aed571e988446b64c8068bf27ef",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n64\\operators.npz": "844ae9f5101a1238346cd67976b51bda78ecf0c9c4546875873185253783ea55",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-local-kernel-v2\\result.json": "1d3ed66a7f1128254bc07d323d678ebca512af2dcd7662329752685d8447430f",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n64\\fy\\raw-state.npz": "a9d42e799a2d39bffdd0610551f1e803fe4b35f735509f84925ee030569fee58",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n64\\fy\\raw-state.json": "edf033c4d6008a3c9ce32b9b583b603284671e1521eaf6e726dae26793e077fa",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-native-p0-family-v1\\n64\\fy\\physical-actions.json": "67f66c6a1112e2ad74a94d867f6f129f2c0d07cfdeb57d46b21eaede85633d77",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n64\\fy\\raw-inventory.json": "48c041d8b702e889553dd004467c5b093daac764b8732d5d87d9d0cfe143e37f",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n64\\fy\\recovered-actions.json": "a3cf56628160d5581fecbaca2c1fbdeafa88d7f9dfffc4c026aa0837b5d19e61",
+    "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-external-p0-family-v1\\n64\\fy\\summary.json": "0c429a790a1064c7a4ceac154f685f7c72a749f6dd91ff82a62ff9d626e67efc"
+  },
+  "runtime": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "threadpools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      }
+    ],
+    "product_or_numba_imports": false
+  },
+  "not_claimed": [
+    "1%convergence",
+    "locking acceptance",
+    "formalF03",
+    "new external solve",
+    "full coupled gauge removal"
+  ],
+  "premises": {
+    "C_full_derivative_relative": 3.469446951953614e-18,
+    "support_measures_m": [
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125,
+      0.03125
+    ],
+    "six_bulk_rigid_K_ratios": {
+      "shell": [
+        1.9678993830605161e-16,
+        1.9678993830605161e-16,
+        2.530156349649234e-16,
+        1.8221290583893661e-16,
+        2.8012783629131084e-16,
+        1.6816367161261282e-16
+      ],
+      "beam": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "isolated_normal_spin_K_ratio": 0.0,
+    "gauge_coordinate": 6635,
+    "nullspace_scope": "Source positive section + connected native local6rigid/negative18 structure, root5 constraints leave only1 spin; nominal numerical corroboration, no exact PSD certificate."
+  },
+  "no_product_reference_imports": true
+}

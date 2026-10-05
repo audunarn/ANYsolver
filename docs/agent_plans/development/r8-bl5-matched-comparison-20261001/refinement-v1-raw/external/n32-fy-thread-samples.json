@@ -1,0 +1,242 @@
+[
+  {
+    "seconds": 0.08994990002247505,
+    "threads": [
+      {
+        "pid": 69872,
+        "id": 73436,
+        "win32_start_address": 140695758508704,
+        "start_module": "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-runtime-install-JZnfFI\\payload\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "query_status": 0,
+        "user_seconds": 0.015625,
+        "system_seconds": 0.046875,
+        "OS_support_start": false,
+        "numeric_or_unresolved": true
+      }
+    ]
+  },
+  {
+    "seconds": 0.18478600002708845,
+    "threads": [
+      {
+        "pid": 69872,
+        "id": 73436,
+        "win32_start_address": 140695758508704,
+        "start_module": "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-runtime-install-JZnfFI\\payload\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "query_status": 0,
+        "user_seconds": 0.09375,
+        "system_seconds": 0.0625,
+        "OS_support_start": false,
+        "numeric_or_unresolved": true
+      },
+      {
+        "pid": 69872,
+        "id": 33224,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 59668,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      }
+    ]
+  },
+  {
+    "seconds": 0.2815915000101086,
+    "threads": [
+      {
+        "pid": 69872,
+        "id": 73436,
+        "win32_start_address": 140695758508704,
+        "start_module": "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-runtime-install-JZnfFI\\payload\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "query_status": 0,
+        "user_seconds": 0.125,
+        "system_seconds": 0.0625,
+        "OS_support_start": false,
+        "numeric_or_unresolved": true
+      },
+      {
+        "pid": 69872,
+        "id": 33224,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 59668,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.015625,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 71000,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 57796,
+        "win32_start_address": 140710536828528,
+        "start_module": "C:\\Windows\\System32\\combase.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 70124,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 74412,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 74732,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      }
+    ]
+  },
+  {
+    "seconds": 0.3791627000027802,
+    "threads": [
+      {
+        "pid": 69872,
+        "id": 73436,
+        "win32_start_address": 140695758508704,
+        "start_module": "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-runtime-install-JZnfFI\\payload\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "query_status": 0,
+        "user_seconds": 0.234375,
+        "system_seconds": 0.0625,
+        "OS_support_start": false,
+        "numeric_or_unresolved": true
+      },
+      {
+        "pid": 69872,
+        "id": 33224,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 59668,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.015625,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 71000,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 57796,
+        "win32_start_address": 140710536828528,
+        "start_module": "C:\\Windows\\System32\\combase.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 70124,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 74412,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      },
+      {
+        "pid": 69872,
+        "id": 74732,
+        "win32_start_address": 140710560899808,
+        "start_module": "C:\\Windows\\System32\\ntdll.dll",
+        "query_status": 0,
+        "user_seconds": 0.0,
+        "system_seconds": 0.0,
+        "OS_support_start": true,
+        "numeric_or_unresolved": false
+      }
+    ]
+  }
+]

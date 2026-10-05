@@ -1,0 +1,51 @@
+{
+  "classification": "bounded native endpoint and shared-solid trace compatibility, not connection qualification",
+  "conclusion": "Exact independent rigid-section port traces are incompatible on the intact shared solid cut. The chosen common projection has a material broken-bar complement, but its total physical work is unidentified without a side allocation of seam action and a specified conforming warping/transition extension. Stop direct sided-port accuracy scoring.",
+  "decision": "Can independent native retained half-cell twists be scored as exact admissible sided motions of the saved shared-node solid?",
+  "inputs_sha256": {
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-sided-port-cut-dev-20260926-v1\\model.json": "4ee8c8b53df1ad7653b4b4b5b877359a95ed3781bdea5991bd06264a878ed608",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-sided-port-cut-dev-20260926-v1\\run_result.json": "e654194ad38797f9ce742981b5b75e16b68928b4e50d06cd6536cc6bde2dbdb8",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-sided-port-cut-dev-20260926-v1\\solid-5-sided-port.dat": "003444ccd420ef743a843b35aad1d5b460d017cded11e7fa1d02b1f7629c1a57",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-sided-port-cut-dev-20260926-v1\\solid-5-sided-port.inp": "4d70bff15fa9b3c077133a562b678e3bcde3d84b7aa03380414c5988abdb6854"
+  },
+  "limits": [
+    "rank is exact finite-dimensional trace geometry with a declared coordinate scale, not a stability constant",
+    "the equal-side projection is arbitrary and its bar-only omitted work is not admissible total assembly work",
+    "the net seam-cut moment cannot bound unknown side-local seam work",
+    "conforming regional gradient fields are possible but depend on a separately defined extension"
+  ],
+  "native": {
+    "half_cell_abscissa_m": 0.95,
+    "left_port": [
+      5,
+      0,
+      1.0
+    ],
+    "left_retained_rotation_column": 198,
+    "left_right_spatial_tangent_columns_independent": true,
+    "right_port": [
+      5,
+      1,
+      0.0
+    ],
+    "right_retained_rotation_column": 201,
+    "shared_centerline_position_difference_m": 0.0
+  },
+  "runner_sha256": "5a6db15fc2303086745a9d4e8fd2e316c94a2d779818634f4eb612857bc302f0",
+  "solid": {
+    "bonded_cut_nodes": 21,
+    "compatible_subspace_dimension_of_twelve_rigid_port_coordinates": 6,
+    "cut_nodes": 341,
+    "left_minus_right_trace_rank": 6,
+    "normalized_rigid_trace_rank_bonded_seam": 5,
+    "normalized_rigid_trace_rank_full": 6,
+    "rotation_normalization_length_m": 0.1,
+    "unit_twist_cut_trace_rms_m_per_rad": 0.043440727137026014
+  },
+  "work": {
+    "antisymmetric_jump_bar_only_work_Nm_per_rad": 115.69362364912172,
+    "equal_side_projection_omitted_bar_work_Nm_per_rad": 57.84681182456086,
+    "left_bar_broken_twist_Nm_per_rad": 57.416042208855096,
+    "right_bar_broken_twist_Nm_per_rad": -58.277581440266616
+  }
+}

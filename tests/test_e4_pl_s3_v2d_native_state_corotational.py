@@ -242,6 +242,94 @@ def test_layered_algorithmic_tangent_matches_plastic_force_difference() -> None:
     assert relative <= 2.0e-6
 
 
+def test_yielded_s3_corotational_tangent_uses_fixed_predecessor() -> None:
+    model, element = _model(plastic=True)
+    material = model.get_material("steel")
+    virgin = element.init_model_bound_nonlinear_state(model.mesh, material, 5)
+    rigid = _rigid_rotation_field(model, np.radians(20.), (0.2, 0.6, 1.0))
+    committed_u = rigid.copy()
+    committed_u[6] += .012
+    committed_u[12] -= .003
+    _force, _tangent, committed = corotational_element_response(
+        model, 1, element, committed_u, tangent=True,
+        committed_state=virgin, num_layers=5, tangent_mode="consistent")
+    assert float(np.max(committed["alpha"])) > 0.
+    predecessor_bytes = canonical_json_bytes(committed)
+
+    trial_u = committed_u.copy()
+    trial_u[6] += .0002
+    trial_u[12] -= .00005
+    force, tangent, candidate = corotational_element_response(
+        model, 1, element, trial_u, tangent=True,
+        committed_state=committed, num_layers=5, tangent_mode="consistent")
+    assert float(np.max(candidate["alpha"])) > float(np.max(committed["alpha"]))
+    assert np.isfinite(force).all() and np.isfinite(tangent).all()
+    rng = np.random.default_rng(20260929)
+    direction = rng.normal(size=18)
+    direction /= np.linalg.norm(direction)
+    active = candidate["alpha"]-committed["alpha"] > 1e-9
+    assert np.any(active)
+    force_rows = np.array([6*node+axis for node in range(3)
+                           for axis in range(3)])
+    moment_rows = np.array([6*node+axis for node in range(3)
+                            for axis in range(3, 6)])
+    errors = {"force": [], "moment": []}
+    for step in (2e-7, 1e-7, 5e-8):
+        plus, _, plus_state = corotational_element_response(
+            model, 1, element, trial_u+step*direction, tangent=False,
+            committed_state=committed, num_layers=5, tangent_mode="consistent")
+        minus, _, minus_state = corotational_element_response(
+            model, 1, element, trial_u-step*direction, tangent=False,
+            committed_state=committed, num_layers=5, tangent_mode="consistent")
+        for state in (plus_state, minus_state):
+            np.testing.assert_array_equal(
+                state["alpha"]-committed["alpha"] > 1e-9, active)
+        observed = (plus-minus)/(2*step)
+        predicted = tangent@direction
+        for name, rows in (("force", force_rows), ("moment", moment_rows)):
+            scale = float(np.linalg.norm(observed[rows]))
+            assert scale > 1.
+            errors[name].append(float(np.linalg.norm(
+                observed[rows]-predicted[rows])/scale))
+    assert max(errors["force"]) < 1e-5
+    assert max(errors["moment"]) < 1e-5
+    assert canonical_json_bytes(committed) == predecessor_bytes
+
+
+def test_yielded_s3_solver_state_round_trip_preserves_next_trial() -> None:
+    model, element = _model(plastic=True)
+    material = model.get_material("steel")
+    virgin = element.init_model_bound_nonlinear_state(model.mesh, material, 5)
+    global_u = _rigid_rotation_field(model, np.radians(20.), (0.2, 0.6, 1.0))
+    global_u[6] += .012
+    global_u[12] -= .003
+    _force, _tangent, candidate = corotational_element_response(
+        model, 1, element, global_u, tangent=True,
+        committed_state=virgin, num_layers=5, tangent_mode="consistent")
+    assert float(np.max(candidate["alpha"])) > 0.
+    accepted = element.seal_solver_integrated_nonlinear_state(
+        model.mesh, material, candidate, 5, global_u,
+        kinematics="COROTATIONAL")
+    raw = element.serialize_nonlinear_state(model.mesh, material, accepted, 5)
+    restored = element.deserialize_nonlinear_state(
+        model.mesh, material, raw, 5,
+        expected_committed_total_u=global_u)
+    np.testing.assert_array_equal(restored["committed_total_u"], global_u)
+    assert restored["solver_kinematics"] == "COROTATIONAL"
+    trial = global_u.copy()
+    trial[6] += .0002
+    trial[12] -= .00005
+    first = corotational_element_response(
+        model, 1, element, trial, tangent=True,
+        committed_state=accepted, num_layers=5, tangent_mode="consistent")
+    repeated = corotational_element_response(
+        model, 1, element, trial, tangent=True,
+        committed_state=restored, num_layers=5, tangent_mode="consistent")
+    for original, resumed in zip(first[:2], repeated[:2]):
+        np.testing.assert_array_equal(original, resumed)
+    np.testing.assert_array_equal(first[2]["alpha"], repeated[2]["alpha"])
+
+
 def _rigid_rotation_field(model: FEModel, angle: float, axis: tuple[float, float, float]) -> np.ndarray:
     direction = np.asarray(axis, dtype=np.float64)
     direction /= float(np.linalg.norm(direction))

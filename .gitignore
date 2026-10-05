@@ -29,4 +29,26 @@ reports/performance/*
 !reports/performance/nonlinear_static_revision_qualification.json
 qc_results/
 .pytest_tmp_*/
+.pytest-b3-g0-*/
 .qualification/
+# Raw local Q6 certificate feasibility archive; hash and receipt are versioned.
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X0_FULL_CERT_20260924/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X1_FULL_CERT_20260924/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X2_FULL_CERT_20260924/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X2_INTEGRATED_REHEARSAL_20260924/certificate/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X2_INTEGRATED_REHEARSAL_V2_20260924/certificate/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X2_BOUND_STATE_REHEARSAL_20260924/certificate/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X2_KKT_BOUND_REHEARSAL_20260924/certificate/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X2_KERNEL_PATCH_REHEARSAL_20260924/certificate/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X0_SYSTEM_ARCHIVE_REHEARSAL_20260924/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X1_SYSTEM_ARCHIVE_REHEARSAL_20260924/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X2_SYSTEM_ARCHIVE_REHEARSAL_20260924/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_*/scaled_system.npz
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_*/certificate/scaled_system.npz
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_*/certificate/inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X0_POSITIVITY_INTERVAL_REHEARSAL_20260924/lower_inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_X0_POSITIVITY_INTERVAL_V2_REHEARSAL_20260924/lower_inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_*POSITIVITY*/lower_inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_*POSITIVITY*/positivity_inputs.npz
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_*/positivity/lower_inverse_float64.bin
+/docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_*/positivity/positivity_inputs.npz

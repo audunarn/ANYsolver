@@ -35,6 +35,18 @@ class Evaluation:
     production_qualified: bool = False
 
 
+@dataclass(frozen=True)
+class MaterialRecovery:
+    """Native beam material quantities in J, not the mixed saddle potential."""
+    stations: tuple
+    history: CellHistory
+    stored_energy: tuple[float, float]
+    previous_hardening_energy: tuple[float, float]
+    incremental_dissipation: tuple[float, float]
+    material_potential: tuple[float, float]
+    energy_recovery_station_updates: int
+
+
 class RetainedFibreOperator:
     __slots__ = ('reference', 'section', 'order', 'cell', 'stations', 'identity', '_reference_identity', '_sealed')
 
@@ -111,6 +123,12 @@ class RetainedFibreOperator:
         self.guard(); u = _frames(rotations, 2, 'retained fibre recovery rotations')
         p = _array(resultants, (18,), 'retained fibre recovery resultants')
         response = self.cell.response(p.tolist(), origin, check=check)
+        rows = self._recovery_rows(u, response)
+        self.guard()
+        if check is not None: check()
+        return rows
+
+    def _recovery_rows(self, u, response):
         rows = []
         for (cell, index, xi, weight, ref), fields, history in zip(self.stations, response['stations'], response['history'].stations):
             rows.append(dict(cell=cell, station=index, xi=xi, measure=weight,
@@ -119,6 +137,21 @@ class RetainedFibreOperator:
                 fibres=fields['fibres'], history=history, reference_frame=ref,
                 current_frame=_owned(u[cell]@ref), formulation_id=POLICY,
                 recovery_policy='PAIRED_PHYSICAL_FIBRE_RETAINED_FIELDS_V1'))
+        return tuple(rows)
+
+    def recover_material(self, rotations, resultants, *, origin=None, check=None):
+        """One local solve plus final accepted return-map energy capture.
+
+        Default evaluate/recover payloads and their identities remain unchanged.
+        The supplied origin is the last accepted material predecessor.
+        """
+        self.guard(); u = _frames(rotations, 2, 'retained fibre recovery rotations')
+        p = _array(resultants, (18,), 'retained fibre recovery resultants')
+        response = self.cell.response(p.tolist(), origin, check=check, include_energy=True)
+        rows = self._recovery_rows(u, response)
         self.guard()
         if check is not None: check()
-        return tuple(rows)
+        return MaterialRecovery(rows, response['history'], response['stored_energy'],
+            response['previous_hardening_energy'], response['incremental_dissipation'],
+            tuple(value[0] for value in response['material_potential']),
+            response['energy_recovery_station_updates'])

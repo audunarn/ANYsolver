@@ -1,0 +1,119 @@
+{
+  "beam_layout": {
+    "cell_rotations": 54,
+    "complementary_min_diagonal_J_per_resultant_squared": 5.952380952380931e-12,
+    "free": 324,
+    "nodal": 114,
+    "resultants": 162
+  },
+  "classification": "private material-line native retained KKT metric",
+  "decision": "three-level mixed behavior only; no uniform stability or multiplier selection",
+  "effective_threadpools": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "elapsed_s": 40.52949509996688,
+  "env": {
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "geometry": "C1 Q4 x8/y4; B3-18; 1:1 bond",
+  "imported_anysolver": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "limits": [
+    "one level per run",
+    "1900 dense KKT rows",
+    "120 s wall deadline",
+    "auxiliary Riesz norm not added to tangent",
+    "no physical transfer or mesh-uniform claim"
+  ],
+  "p0_intervals": 8,
+  "p0_line_norm": {
+    "basis_integrals_m": [
+      0.012499999999999956,
+      0.012500000000000068,
+      0.012499999999999956,
+      0.012499999999999956,
+      0.012500000000000068,
+      0.012499999999999956,
+      0.012500000000000068,
+      0.012499999999999956
+    ],
+    "density_gram_ordering_defect": -1.016438284170338e-20,
+    "moment_to_force_equivalent_length_m": 0.1,
+    "physical_density_units": [
+      "N/m",
+      "N/m",
+      "N/m",
+      "Nm/m",
+      "Nm/m",
+      "Nm/m"
+    ]
+  },
+  "primal_rows": 1512,
+  "report": {
+    "assembly_asymmetry_relative": 2.923854809181409e-16,
+    "beta_min": 0.0018919738497937466,
+    "constraint_rows": 45,
+    "left_right_svd_defect": 3.072580717363089e-14,
+    "near_null_metric_share": {
+      "beam_complementary": 6.44933614725667e-06,
+      "beam_kinematic": 3.159593790004043e-06,
+      "line_dual": 3.632906762324283e-05,
+      "shell_drilling_chart": 0.9993232186770229,
+      "shell_physical": 0.0006308433254164315
+    },
+    "normed_condition": 166932.23680497296,
+    "operator_max": 315.83142672258606,
+    "rows": 1557,
+    "scaled_weak_residual_norm": 0.0018919738497924427,
+    "svd_residual_defect": -1.3038615326310676e-15,
+    "weak_constraint_euclidean": 2.962497752124472e-10,
+    "weak_vector_metric_norm_sq": 1.0,
+    "work_left_J": 6.873364593153332e-08,
+    "work_right_J": 6.873364593153279e-08
+  },
+  "row_rank": 45,
+  "runner_sha256": "e7733d6c00cea5b021f112843c5fd7fc2dcf666b0baf0658799d82add498eff8",
+  "source_git": "900eb34e3ab27c242b07600533e677e1b7ef7ea3",
+  "space_kind": "continuous_linear",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
+  "yaw_intervals": 4,
+  "yaw_line_norm": {
+    "basis_integrals_m": [
+      0.012500000000000028,
+      0.024999999999999977,
+      0.024999999999999974,
+      0.02500000000000006,
+      0.012499999999999952
+    ],
+    "density_gram_ordering_defect": -6.522601003461569e-20,
+    "moment_to_force_equivalent_length_m": 0.1,
+    "physical_density_units": [
+      "N/m",
+      "N/m",
+      "N/m",
+      "Nm/m",
+      "Nm/m",
+      "Nm/m"
+    ]
+  }
+}

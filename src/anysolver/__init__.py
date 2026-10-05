@@ -143,6 +143,7 @@ from .ge_beam3_element import (
     GeometricallyExactBeam3D3NElement,
 )
 from . import b3_ge
+from . import stiffened_shell
 from .boundary import (
     BoundaryCondition,
     FixedSupport,
@@ -572,6 +573,7 @@ __all__ = [
     "GE_BEAM3_QUALIFIED_FORMULATION_ID",
     "GeometricallyExactBeam3D3NElement",
     "b3_ge",
+    "stiffened_shell",
     "QualifiedE4PLShellElement",
     "QualifiedE4PLS3ShellElement",
     "QualifiedS3MigrationWarning",

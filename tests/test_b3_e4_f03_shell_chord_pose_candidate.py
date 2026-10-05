@@ -1,0 +1,389 @@
+"""Bounded physical checks for a longitudinal shell-line chord pose."""
+
+import numpy as np
+import pytest
+from scipy.spatial.transform import Rotation
+
+from scripts._b3_e4_f03_shell_chord_pose_candidate import (
+    TRANSVERSE_TOP_CHORD_PORT, directional_pose_from_e4_total_chord,
+    pose_from_e4_total_chord, reference_spatial_trace_chord,
+)
+from scripts._b3_e4_f03_shell_finite_pose_candidate import reference_nodes
+from scripts._b3_e4_f03_shell_strip_pose_candidate import (
+    TRANSVERSE_BAND_PORT, reference_spatial_trace_strip,
+    reference_spatial_trace_transverse_band,
+)
+from scripts._b3_e4_f03_shell_trace import make_shell
+from scripts._b3_e4_f03_e4_trial_panel import FlatE4TrialPanel
+from scripts._b3_e4_f03_native_fixture import build
+from scripts._b3_e4_f03_weak_line_candidate import (
+    LineMultiplierSpace, assemble_reference_kkt, integrate_weak_line,
+)
+from scripts.b3_e4_f03_weak_line_resolution_screen import (
+    chord_reference_modes, one_case,
+)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+@pytest.mark.parametrize("confined", (False, True))
+def test_chord_reference_work_rigid_motion_and_no_drilling(topology, confined):
+    panel = make_shell(2, topology, n_y=4)
+    nodes = reference_nodes(panel)
+    translation = np.array((.1, -.2, .3))
+    omega = np.array((.02, -.03, .04))
+    rigid = np.zeros((panel.node_count, 6))
+    rigid[:, :3] = translation+np.cross(omega, nodes)
+    rigid[:, 3:] = omega
+    for station in (0., .37, 1.):
+        trace = reference_spatial_trace_chord(
+            panel, station, confined=confined)
+        np.testing.assert_allclose(
+            trace@rigid.ravel(),
+            np.r_[translation+np.cross(omega, (station, 0., 0.)), omega],
+            atol=2e-14)
+        assert np.array_equal(trace[5, 5::6], np.zeros(panel.node_count))
+        assert np.array_equal(trace[5, 0::6], np.zeros(panel.node_count))
+
+    # The earlier normal-gradient boundary layer uses only ux. Its fixed
+    # local polar yaw does not enter this line-trace functional.
+    localized = np.zeros_like(rigid)
+    localized[:, 0] = 1e-4*nodes[:, 0]*nodes[:, 1]
+    assert (reference_spatial_trace_chord(
+        panel, .37, confined=confined)[5]@localized.ravel() == 0.)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+@pytest.mark.parametrize("confined", (False, True))
+def test_chord_objectivity_actual_chart_derivatives_and_shear(topology,
+                                                               confined):
+    panel = make_shell(2, topology, n_y=4)
+    nodes = reference_nodes(panel)
+    station = .37
+    angle = np.array((.13, -.21, .18))
+    rotation = Rotation.from_rotvec(angle).as_matrix()
+    shift = np.array((.31, -.27, .19))
+    rigid = np.zeros((panel.node_count, 6))
+    rigid[:, :3] = nodes@rotation.T+shift-nodes
+    rigid[:, 3:] = angle
+    position, frame = pose_from_e4_total_chord(
+        panel, station, rigid.ravel(), confined=confined)
+    np.testing.assert_allclose(position,
+                               rotation@(station, 0., 0.)+shift, atol=2e-12)
+    np.testing.assert_allclose(frame, rotation, atol=2e-12)
+
+    rng = np.random.default_rng(3519)
+    first = rng.normal(size=rigid.shape)*.04
+    second = rng.normal(size=rigid.shape)*.04
+    analytic = directional_pose_from_e4_total_chord(
+        panel, station, rigid.ravel(), first, second, confined=confined)
+
+    def moved(a, b):
+        return pose_from_e4_total_chord(
+            panel, station, (rigid+a*first+b*second).ravel(),
+            confined=confined)
+
+    h = 1e-5
+    plus, minus = moved(h, 0.), moved(-h, 0.)
+    np.testing.assert_allclose(analytic.position_first,
+                               (plus[0]-minus[0])/(2*h),
+                               rtol=2e-7, atol=2e-9)
+    np.testing.assert_allclose(analytic.frame_first,
+                               (plus[1]-minus[1])/(2*h),
+                               rtol=2e-7, atol=2e-9)
+    h = 2e-3
+    pp, pm, mp, mm = (moved(h, h), moved(h, -h),
+                      moved(-h, h), moved(-h, -h))
+    np.testing.assert_allclose(analytic.frame_mixed,
+        (pp[1]-pm[1]-mp[1]+mm[1])/(4*h*h), rtol=2e-5, atol=2e-8)
+
+    zero = np.zeros_like(rigid)
+    reference = directional_pose_from_e4_total_chord(
+        panel, station, zero.ravel(), first, zero, confined=confined)
+    derivative = reference.frame_first
+    spin = np.array((derivative[2, 1]-derivative[1, 2],
+                     derivative[0, 2]-derivative[2, 0],
+                     derivative[1, 0]-derivative[0, 1]))/2
+    np.testing.assert_allclose(
+        np.r_[reference.position_first, spin],
+        reference_spatial_trace_chord(
+            panel, station, confined=confined)@first.ravel(),
+        atol=2e-13)
+
+    shear = np.zeros_like(rigid)
+    shear[:, 2] = .07*nodes[:, 0]
+    _, sheared_frame = pose_from_e4_total_chord(
+        panel, station, shear.ravel(), confined=confined)
+    np.testing.assert_allclose(sheared_frame, np.eye(3), atol=2e-14)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+@pytest.mark.parametrize("shell_port", ("line_chord_020",
+                                        "line_chord_confined_020"))
+def test_chord_weak_work_derivative_and_loaded_balance(topology, shell_port):
+    shell = FlatE4TrialPanel(make_shell(1, topology, n_y=4))
+    beam = build(4)
+    space = LineMultiplierSpace("piecewise_constant", (0., .5, 1.))
+    zero = np.zeros((shell.panel.node_count, 6))
+    rng = np.random.default_rng(3520)
+    base = rng.normal(size=zero.shape)*1e-5
+    direction = rng.normal(size=zero.shape)*1e-3
+    beam_zero = np.zeros(beam.context.count)
+    coefficients = np.arange(1., 13.).reshape(2, 6)
+
+    def evaluate(a):
+        return integrate_weak_line(
+            shell, beam, space, coefficients, zero.ravel(),
+            (base+a*direction).ravel(), direction, np.zeros_like(direction),
+            beam.context.initial.mechanical, beam_zero, beam_zero,
+            shell_port=shell_port)
+
+    central = evaluate(0.)
+    h = 1e-5
+    observed = (evaluate(h).potential-evaluate(-h).potential)/(2*h)
+    np.testing.assert_allclose(central.first, observed,
+                               rtol=2e-6, atol=2e-8)
+    kkt = assemble_reference_kkt(
+        shell, beam, space, shell_port=shell_port,
+        shell_support_policy="full_left_edge")
+    assert np.linalg.matrix_rank(
+        kkt.constraint_jacobian[:, kkt.free_primal]) == 12
+    loaded = one_case(
+        topology, 2, "piecewise_constant",
+        shell_port=shell_port, load_kind="yaw_torque_z",
+        n_s=2, n_y=4, native_half_cells=4,
+        shell_support_policy="full_left_edge")
+    assert loaded["tip_rz_rad"] > 0.
+    assert loaded["shell_physical_inplane_energy_j"] > 0.
+    assert abs(loaded["global_moment_z_balance_n_m"]) < 1e-8
+    assert abs(loaded["global_work_error_j"]) < 1e-10
+
+
+def test_chord_native_six_channel_mode_is_not_an_axial_proxy_for_transverse():
+    for confined in (False, True):
+        result = chord_reference_modes(
+            "Q4", 2, "piecewise_constant", n_s=2, n_y=4,
+            native_half_cells=4, confined=confined)
+        assert result["row_rank"] == result["row_count"] == 12
+        assert result["physical_stiffness_min_eigen"] > 0.
+        assert result["retained_negative_modes"] > 0
+        assert result["decomposition_relative_error"] < 1e-9
+        np.testing.assert_allclose(
+            sum(result["weakest_mode_channel_l2_shares"]),
+            1., atol=1e-12)
+        assert result["weakest_mode_channel_l2_shares"][0] > .99
+        assert result["transverse_fz_mx_my_beta"] > 0.
+        assert result["transverse_mode_fz_mx_my_l2_shares"][0] > .5
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_chord_and_finite_footprint_make_distinct_inplane_shear_choices(topology):
+    panel = make_shell(2, topology, n_y=4)
+    nodes = reference_nodes(panel)
+    chord = reference_spatial_trace_chord(panel, .37)
+    strip = reference_spatial_trace_strip(
+        panel, .37, half_length=.2, half_width=.23)
+    gamma = .01
+    along = np.zeros((panel.node_count, 6))
+    along[:, 1] = gamma*nodes[:, 0]
+    np.testing.assert_allclose(chord[5]@along.ravel(), gamma,
+                               atol=2e-15)
+    np.testing.assert_allclose(strip[5]@along.ravel(), gamma/2,
+                               atol=2e-15)
+    across = np.zeros_like(along)
+    across[:, 0] = gamma*nodes[:, 1]
+    np.testing.assert_allclose(chord[5]@across.ravel(), 0., atol=2e-15)
+    np.testing.assert_allclose(strip[5]@across.ravel(), -gamma/2,
+                               atol=2e-15)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_confined_chord_keeps_weak_work_inside_declared_line(topology):
+    panel = make_shell(4, topology, n_y=4)
+    shell = FlatE4TrialPanel(panel)
+    beam = build(8)
+    space = LineMultiplierSpace("piecewise_constant",
+                                (0., .25, .5, .75, 1.))
+    x = reference_nodes(panel)[:, 0]
+    outside = (x < 0.) | (x > 1.)
+    old = assemble_reference_kkt(
+        shell, beam, space, shell_port="line_chord_020",
+        shell_support_policy="full_left_edge")
+    confined = assemble_reference_kkt(
+        shell, beam, space, shell_port="line_chord_confined_020",
+        shell_support_policy="full_left_edge")
+    shell_size = 6*panel.node_count
+    old_rows = old.constraint_jacobian[:, :shell_size].reshape(
+        -1, panel.node_count, 6)
+    confined_rows = confined.constraint_jacobian[:, :shell_size].reshape(
+        -1, panel.node_count, 6)
+    assert np.linalg.norm(old_rows[:, outside, :]) > .1
+    np.testing.assert_allclose(confined_rows[:, outside, :], 0., atol=1e-14)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_transverse_top_chord_has_distinct_objective_work_and_free_shear(topology):
+    panel = make_shell(2, topology, n_y=4)
+    nodes = reference_nodes(panel)
+    station = .37
+    top = panel.thickness/2
+    zero = np.zeros((panel.node_count, 6))
+    trace = reference_spatial_trace_chord(
+        panel, station, half_chord=.05, axis="transverse_top")
+    assert np.array_equal(trace[:, 5::6], np.zeros((6, panel.node_count)))
+
+    gamma = .01
+    along = zero.copy()
+    along[:, 1] = gamma*nodes[:, 0]
+    across = zero.copy()
+    across[:, 0] = gamma*nodes[:, 1]
+    np.testing.assert_allclose(trace[5]@along.ravel(), 0., atol=2e-15)
+    np.testing.assert_allclose(trace[5]@across.ravel(), -gamma, atol=2e-15)
+    np.testing.assert_allclose(
+        pose_from_e4_total_chord(
+            panel, station, along.ravel(), half_chord=.05,
+            axis="transverse_top")[1], np.eye(3), atol=2e-14)
+    shear = zero.copy()
+    shear[:, 2] = gamma*nodes[:, 0]
+    np.testing.assert_allclose(
+        pose_from_e4_total_chord(
+            panel, station, shear.ravel(), half_chord=.05,
+            axis="transverse_top")[1], np.eye(3), atol=2e-14)
+    shear[:, 2] = gamma*nodes[:, 1]
+    np.testing.assert_allclose(
+        pose_from_e4_total_chord(
+            panel, station, shear.ravel(), half_chord=.05,
+            axis="transverse_top")[1], np.eye(3), atol=2e-14)
+
+    angle = np.array((.13, -.21, .18))
+    rotation = Rotation.from_rotvec(angle).as_matrix()
+    shift = np.array((.31, -.27, .19))
+    rigid = zero.copy()
+    rigid[:, :3] = nodes@rotation.T+shift-nodes
+    rigid[:, 3:] = angle
+    position, frame = pose_from_e4_total_chord(
+        panel, station, rigid.ravel(), half_chord=.05,
+        axis="transverse_top")
+    np.testing.assert_allclose(
+        position, rotation@np.array((station, 0., top))+shift, atol=2e-12)
+    np.testing.assert_allclose(frame, rotation, atol=2e-12)
+    infinitesimal = zero.copy()
+    infinitesimal[:, :3] = np.cross(angle, nodes)
+    infinitesimal[:, 3:] = angle
+    np.testing.assert_allclose(trace@infinitesimal.ravel(),
+        np.r_[np.cross(angle, (station, 0., top)), angle], atol=2e-14)
+
+
+def test_transverse_top_chord_q4_changes_piecewise_band_fz_trace():
+    panel = make_shell(2, "Q4", n_y=4)
+    chord = reference_spatial_trace_chord(
+        panel, .37, half_chord=.05, axis="transverse_top")
+    polar = reference_spatial_trace_transverse_band(
+        panel, .37, half_width=.05)
+    indices, values = panel._shape(.37, 0.)
+    center = np.zeros(panel.node_count)
+    center[indices] = values
+    np.testing.assert_allclose(chord[2, 2::6], center, atol=2e-14)
+    # The Q4 trace is piecewise across y=0, so width averaging and the
+    # center-point interpolation act differently on the Fz row.
+    assert np.linalg.norm(chord[2]-polar[2]) > 1e-3
+    assert np.linalg.norm(chord[5]-polar[5]) > 1e-3
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_transverse_top_chord_actual_chart_derivatives(topology):
+    panel = make_shell(2, topology, n_y=4)
+    station = .37
+    zero = np.zeros((panel.node_count, 6))
+    rng = np.random.default_rng(3532)
+    base = rng.normal(size=zero.shape)*.01
+    first = rng.normal(size=zero.shape)*.04
+    second = rng.normal(size=zero.shape)*.04
+    analytic = directional_pose_from_e4_total_chord(
+        panel, station, base.ravel(), first, second,
+        half_chord=.05, axis="transverse_top")
+
+    def moved(a, b):
+        return pose_from_e4_total_chord(
+            panel, station, (base+a*first+b*second).ravel(),
+            half_chord=.05, axis="transverse_top")
+
+    h = 1e-5
+    plus, minus = moved(h, 0.), moved(-h, 0.)
+    np.testing.assert_allclose(analytic.position_first,
+        (plus[0]-minus[0])/(2*h), rtol=2e-7, atol=2e-9)
+    np.testing.assert_allclose(analytic.frame_first,
+        (plus[1]-minus[1])/(2*h), rtol=2e-7, atol=2e-9)
+    h = 2e-3
+    pp, pm, mp, mm = (moved(h, h), moved(h, -h),
+                      moved(-h, h), moved(-h, -h))
+    np.testing.assert_allclose(analytic.frame_mixed,
+        (pp[1]-pm[1]-mp[1]+mm[1])/(4*h*h), rtol=2e-5, atol=2e-8)
+    reference = directional_pose_from_e4_total_chord(
+        panel, station, zero.ravel(), first, zero,
+        half_chord=.05, axis="transverse_top")
+    derivative = reference.frame_first
+    spin = np.array((derivative[2, 1]-derivative[1, 2],
+                     derivative[0, 2]-derivative[2, 0],
+                     derivative[1, 0]-derivative[0, 1]))/2
+    np.testing.assert_allclose(
+        np.r_[reference.position_first, spin],
+        reference_spatial_trace_chord(
+            panel, station, half_chord=.05,
+            axis="transverse_top")@first.ravel(), atol=2e-13)
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_transverse_top_chord_has_distinct_supported_weak_rows(topology):
+    shell = FlatE4TrialPanel(make_shell(4, topology, n_y=4, thickness=.035))
+    beam = build(8, z_offset=.0675)
+    space = LineMultiplierSpace(
+        "piecewise_constant", (0., .25, .5, .75, 1.))
+    polar = assemble_reference_kkt(
+        shell, beam, space, shell_port=TRANSVERSE_BAND_PORT,
+        shell_support_policy="full_left_edge")
+    chord = assemble_reference_kkt(
+        shell, beam, space, shell_port=TRANSVERSE_TOP_CHORD_PORT,
+        shell_support_policy="full_left_edge")
+    np.testing.assert_array_equal(polar.free_primal, chord.free_primal)
+    assert polar.constraint_jacobian.shape == chord.constraint_jacobian.shape
+    free = polar.free_primal
+
+    def row_basis(packet):
+        rows = packet.constraint_jacobian[:, free]
+        scaled = rows*packet.coordinate_scale[:len(free)][None, :]
+        _, singular, right = np.linalg.svd(scaled, full_matrices=False)
+        rank = np.count_nonzero(singular > 1e-10*singular[0])
+        assert rank == len(rows)
+        return right.T
+
+    overlap = np.linalg.svd(row_basis(polar).T@row_basis(chord),
+                            compute_uv=False)
+    # An invertible re-origin would leave every supported row-space angle
+    # unchanged. The physical transverse-chord yaw has a different action.
+    assert overlap[-1] < .9999
+
+
+@pytest.mark.parametrize("topology", ("Q4", "S3-V2D"))
+def test_transverse_top_chord_exact_weak_work_derivative(topology):
+    shell = FlatE4TrialPanel(make_shell(1, topology, n_y=4))
+    beam = build(4)
+    space = LineMultiplierSpace("piecewise_constant", (0., .5, 1.))
+    zero = np.zeros((shell.panel.node_count, 6))
+    rng = np.random.default_rng(3533)
+    base = rng.normal(size=zero.shape)*1e-5
+    direction = rng.normal(size=zero.shape)*1e-3
+    beam_zero = np.zeros(beam.context.count)
+    multipliers = np.arange(1., 13.).reshape(2, 6)
+
+    def evaluate(a):
+        return integrate_weak_line(
+            shell, beam, space, multipliers, zero.ravel(),
+            (base+a*direction).ravel(), direction,
+            np.zeros_like(direction), beam.context.initial.mechanical,
+            beam_zero, beam_zero, shell_port=TRANSVERSE_TOP_CHORD_PORT)
+
+    central = evaluate(0.)
+    h = 1e-5
+    observed = (evaluate(h).potential-evaluate(-h).potential)/(2*h)
+    np.testing.assert_allclose(central.first, observed,
+                               rtol=2e-6, atol=2e-8)

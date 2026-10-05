@@ -1,0 +1,161 @@
+{
+  "cases": {
+    "tip_fz": {
+      "components": {
+        "native_bar": {
+          "signed_work_by_channel_J": {
+            "Fx": 0.07609658673594383,
+            "Fy": 1.2539397068233648e-22,
+            "Fz": 0.006272268171687777,
+            "Mx": 1.260131844885602e-21,
+            "My": 0.020423745100282817,
+            "Mz": -1.5698639077932135e-23
+          },
+          "work_J": 0.10279260000791443
+        },
+        "native_shell": {
+          "signed_work_by_channel_J": {
+            "Fx": 0.0025315368599859263,
+            "Fy": 2.367454510586673e-22,
+            "Fz": 0.00404631768590542,
+            "Mx": 2.6487514309256396e-21,
+            "My": 0.006415368594708597,
+            "Mz": -1.3050112709165516e-22
+          },
+          "work_J": 0.012993223140599943
+        },
+        "solid_bar": {
+          "signed_work_by_channel_J": {
+            "Fx": 0.07621700204207593,
+            "Fy": 9.311635938740106e-22,
+            "Fz": 0.0062398598717228314,
+            "Mx": 9.805288650973166e-22,
+            "My": 0.02035499591046896,
+            "Mz": -1.0575087351450063e-23
+          },
+          "work_J": 0.10281185782426774
+        },
+        "solid_shell": {
+          "signed_work_by_channel_J": {
+            "Fx": 0.004682845295416827,
+            "Fy": 1.2005687066570525e-21,
+            "Fz": 0.004087150829030804,
+            "Mx": 5.541916468717934e-22,
+            "My": 0.006394269004684729,
+            "Mz": 1.0575150911469401e-23
+          },
+          "work_J": 0.015164265129132357
+        }
+      },
+      "native_minus_solid_shell_by_channel_J": {
+        "Fx": -0.0021513084354309008,
+        "Fy": -9.638232555983852e-22,
+        "Fz": -4.0833143125384476e-05,
+        "Mx": 2.094559784053846e-21,
+        "My": 2.1099590023867555e-05,
+        "Mz": -1.4107627800312456e-22
+      },
+      "native_minus_solid_shell_total_J": -0.0021710419885324177
+    },
+    "tip_mx": {
+      "components": {
+        "native_bar": {
+          "signed_work_by_channel_J": {
+            "Fx": -1.8550671160480404e-23,
+            "Fy": 0.00019165736235755664,
+            "Fz": 1.5868899128222473e-22,
+            "Mx": 0.0012999960008603642,
+            "My": -9.540391905304008e-24,
+            "Mz": -5.709441520184987e-05
+          },
+          "work_J": 0.0014345589480160702
+        },
+        "native_shell": {
+          "signed_work_by_channel_J": {
+            "Fx": 4.819055596666829e-22,
+            "Fy": -2.705501859681806e-05,
+            "Fz": 2.898255180117281e-21,
+            "Mx": 0.0017983033462060432,
+            "My": -1.6844971771983534e-22,
+            "Mz": 6.84894775618482e-06
+          },
+          "work_J": 0.00177809727536541
+        },
+        "solid_bar": {
+          "signed_work_by_channel_J": {
+            "Fx": -1.6898982066369074e-23,
+            "Fy": 0.0001939982246190004,
+            "Fz": 1.390935640402722e-22,
+            "Mx": 0.0013038734915636616,
+            "My": -9.488449254283587e-24,
+            "Mz": -5.419947657393335e-05
+          },
+          "work_J": 0.0014436722396087283
+        },
+        "solid_shell": {
+          "signed_work_by_channel_J": {
+            "Fx": 1.6841566224422505e-23,
+            "Fy": -3.271155227100861e-05,
+            "Fz": -1.3908698084625424e-22,
+            "Mx": 0.001958648187698041,
+            "My": 9.484327347768713e-24,
+            "Mz": 5.420029562736456e-05
+          },
+          "work_J": 0.0019801369310543967
+        }
+      },
+      "native_minus_solid_shell_by_channel_J": {
+        "Fx": 4.650639934422605e-22,
+        "Fy": 5.656533674190548e-06,
+        "Fz": 3.0373421609635354e-21,
+        "Mx": -0.0001603448414919978,
+        "My": -1.7793404506760407e-22,
+        "Mz": -4.735134787117974e-05
+      },
+      "native_minus_solid_shell_total_J": -0.000202039655688987
+    }
+  },
+  "classification": "same physical P0 action, solid/native plate and beam compliance blocks",
+  "limitations": [
+    "fixed duals and linear component actions only; not loaded coupled sensitivity",
+    "3D plate/bar and E4/B3 differ in kinematics and support spaces",
+    "signed channel contributions may cancel and are not isolated energies",
+    "no line-law selection, stability or F03/G0B acceptance"
+  ],
+  "matrix_diagnostics": {
+    "native_bar": {
+      "frobenius_norm_J": 0.9663319443857196,
+      "minimum_symmetric_eigenvalue_J": -5.9519499064152046e-18,
+      "relative_1e_minus_10_numerical_rank": 15,
+      "relative_skew": 1.8232039212709524e-16
+    },
+    "native_shell": {
+      "frobenius_norm_J": 5.205966216842041,
+      "minimum_symmetric_eigenvalue_J": -3.475974286248651e-18,
+      "relative_1e_minus_10_numerical_rank": 21,
+      "relative_skew": 2.6218267014823687e-12
+    },
+    "solid_bar": {
+      "frobenius_norm_J": 0.9587405322065398,
+      "minimum_symmetric_eigenvalue_J": 9.84969520382237e-06,
+      "relative_1e_minus_10_numerical_rank": 24,
+      "relative_skew": 1.135859655938799e-06
+    },
+    "solid_shell": {
+      "frobenius_norm_J": 5.252981301406488,
+      "minimum_symmetric_eigenvalue_J": 0.00012392749037326296,
+      "relative_1e_minus_10_numerical_rank": 24,
+      "relative_skew": 2.116219653501997e-06
+    }
+  },
+  "native_diagnostics": {
+    "beam_equilibrium_ratio": 7.575213373277563e-17,
+    "beam_free_variables": 216,
+    "shell_equilibrium_ratio": 4.6164056457399356e-11,
+    "shell_free_variables": 924
+  },
+  "same_action_sha256": "b61ad12d112e5dc1a4d7046e60c0a1a8f4c3dda8344dd43cc4eebcee6e243a7b",
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "source_commit": "00ef20cd41462c3df8a2f32e51f5e9b7af45f9a4",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

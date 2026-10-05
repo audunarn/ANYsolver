@@ -1,0 +1,74 @@
+{
+  "accepted_alpha_max": 0.00760137011048914,
+  "active_stations": 15,
+  "classification": "F05_S3_POSE_PULLBACK_DEV_NOT_ACCEPTANCE",
+  "directions": [
+    {
+      "adjacent_plateau": true,
+      "measurements": [
+        {
+          "active_mask_stable": true,
+          "combined_error": 8.286565838038843e-08,
+          "joint_error": 2.351437142831335e-10,
+          "material_error": 8.288091400151744e-08
+        },
+        {
+          "active_mask_stable": true,
+          "combined_error": 9.46393644613264e-09,
+          "joint_error": 1.080750124578386e-09,
+          "material_error": 9.464613169157793e-09
+        },
+        {
+          "active_mask_stable": true,
+          "combined_error": 1.2443963577814894e-07,
+          "joint_error": 1.5552397125247976e-08,
+          "material_error": 1.2446214459641867e-07
+        }
+      ],
+      "phase": 0.3
+    },
+    {
+      "adjacent_plateau": true,
+      "measurements": [
+        {
+          "active_mask_stable": true,
+          "combined_error": 2.092990217195137e-06,
+          "joint_error": 6.544855133761116e-11,
+          "material_error": 2.0931862955568328e-06
+        },
+        {
+          "active_mask_stable": true,
+          "combined_error": 2.2581078256596148e-08,
+          "joint_error": 6.804924328686675e-10,
+          "material_error": 2.258268980602452e-08
+        },
+        {
+          "active_mask_stable": true,
+          "combined_error": 5.156526077457864e-08,
+          "joint_error": 9.803280395869533e-09,
+          "material_error": 5.156756360621725e-08
+        }
+      ],
+      "phase": 0.7
+    }
+  ],
+  "first_variation_relative_error": 2.503690073066911e-16,
+  "joint_cross_block_norm": 3240477.0286995876,
+  "joint_force_norm": 3241377.414964351,
+  "limits": [
+    "one yielded S3 triangle and one eccentric nodal pose joint",
+    "additive chart direction and same accepted material predecessor only",
+    "not a mixed owner, generalized shell material, restart or F05/G0B acceptance"
+  ],
+  "material_force_norm": 2016590.4808523674,
+  "predecessor_unchanged": true,
+  "runner_sha256": "e611f4df7d1371eef942df7d5fbd804ab814ed740ab1d490d50fea19005fb87c",
+  "status": "DEV_F05_S3_PASS",
+  "steps": [
+    2e-06,
+    2e-07,
+    2e-08
+  ],
+  "tolerance": 1e-05,
+  "trial_alpha_max": 0.007833728187324439
+}

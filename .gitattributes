@@ -41,3 +41,283 @@ tests/test_e4_* text eol=lf
 docs/reference_cases/b3_ge_g7_*.json text eol=lf
 docs/reference_cases/qualified_shell_runtime_guard_performance_successor.json text eol=lf
 docs/STATIC_RUNTIME_PERFORMANCE.md text eol=lf
+docs/agent_plans/B3_GE_E4_PL_G0_F03_Q6_*/** -text
+/.qualification/b3-ge-e4-pl/r8-owned-shell-chart-dev-20260930-v1/** -text
+/docs/agent_plans/B3_GE_E4_PL_ACTIVE_STATE_HISTORY_R8_20260929_MASS_MODES.md -text
+/.qualification/b3-ge-e4-pl/r8-q4-pullback-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-f05-foundation-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-f06-noncommuting-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-b2-consumer-mass-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-f09-admission-dev-20260930-v1/** -text
+docs/agent_plans/B3_GE_E4_PL_ACTIVE_STATE_HISTORY_R8_20260930_B2_F09.md -text
+.qualification/b3-ge-e4-pl/r8-b2-output-guard-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-f09-foundation-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-f08-foundation-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-ge-fibre-linear-dev-20260930-v1/** -text
+docs/agent_plans/B3_GE_E4_PL_ACTIVE_STATE_HISTORY_R8_20260930_F08_FIBRE.md -text
+.qualification/b3-ge-e4-pl/r8-ge-fibre-finite-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-ge-native-energy-coupled-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-stable-native-s3-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-adaptive-native-increments-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-e01-cross-work-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-b2-work-envelope-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-b2-e01-finite-point-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-ge-point-native-project-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-bl5-physical-transfer-dev-20260930-v1/** -text
+.qualification/b3-ge-e4-pl/r8-bl5-coherent-aggregation-dev-20260930-v1/** -text
+docs/agent_plans/development/r8-bl5-riesz-controls-20260930/** -text
+docs/agent_plans/development/r8-bl5-native-reference-work-20260930/** -text
+docs/agent_plans/development/r8-bl5-reference-error-bounds-20260930/** -text
+docs/agent_plans/development/r8-bl5-native-stability-20260930/** -text
+docs/agent_plans/B3_GE_E4_PL_F06_CURRENT_REVIEW_20260930.md -text
+docs/agent_plans/development/r8-f06-loaded-transport-20260930/** -text
+docs/agent_plans/development/r8-staged-load-20261001/** -text
+docs/agent_plans/development/r8-f06-staged-transport-20261001/** -text
+docs/agent_plans/development/r8-bl5-matched-comparison-20261001/** -text
+docs/agent_plans/development/r8-anyfem-staged-20261001/** -text
+docs/agent_plans/development/r8-staged-material-history-20261001/** -text
+tests/test_stiffened_shell_staged_material_history.py -text
+docs/agent_plans/development/r8-ge-footprint-gravity-20261003/** -text
+docs/agent_plans/development/r8-bl5-torsion-consistency-20261003/** -text
+docs/agent_plans/development/r8-bl5-projected-density-20261003/** -text
+docs/agent_plans/development/r8-bl5-projected-assessment-20261003/** -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/** -text
+scripts/r8_bl5_projected_auxiliary_norm_dev.py -text
+scripts/r8_bl5_projected_physical_dual_dev.py -text
+scripts/r8_bl5_nested_projected_norm_dev.py -text
+scripts/r8_bl5_nested_projected_kernel_dev.py -text
+scripts/r8_bl5_nested_projected_owner_dev.py -text
+scripts/r8_bl5_nested_projected_external_dev.py -text
+scripts/r8_bl5_nested_projected_comparison_dev.py -text
+scripts/r8_bl5_projected_joint_norm_dev.py -text
+scripts/r8_bl5_projected_joint_kernel_dev.py -text
+scripts/r8_bl5_projected_joint_owner_dev.py -text
+scripts/r8_bl5_projected_joint_external_dev.py -text
+scripts/r8_bl5_projected_joint_comparison_dev.py -text
+scripts/r8_bl5_projected_ratio_norm_dev.py -text
+scripts/r8_bl5_projected_ratio_owner_dev.py -text
+scripts/r8_bl5_projected_ratio_kernel_dev.py -text
+scripts/r8_bl5_projected_ratio_external_dev.py -text
+scripts/r8_bl5_projected_ratio_comparison_dev.py -text
+scripts/r8_bl5_sparse_kernel_saved_dev.py -text
+scripts/r8_bl5_sparse_kernel_interval_dev.py -text
+scripts/r8_bl5_projected_modal_envelope_dev.py -text
+tests/test_r8_bl5_sparse_kernel_saved_dev.py -text
+tests/test_r8_bl5_sparse_kernel_interval_dev.py -text
+tests/test_r8_bl5_projected_modal_envelope_dev.py -text
+
+scripts/r8_bl5_projected_envelope_norm_dev.py -text
+scripts/r8_bl5_projected_envelope_owner_dev.py -text
+scripts/r8_bl5_projected_uniform_modal_dev.py -text
+tests/test_r8_bl5_projected_envelope_norm_dev.py -text
+tests/test_r8_bl5_projected_envelope_owner_dev.py -text
+tests/test_r8_bl5_projected_uniform_modal_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope/** -text
+scripts/r8_bl5_sparse_envelope_kernel_dev.py -text
+tests/test_r8_bl5_sparse_envelope_kernel_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/sparse-family/** -text
+scripts/r8_bl5_sparse_factor_residual_dev.py -text
+scripts/r8_bl5_sparse_factor_block_dev.py -text
+tests/test_r8_bl5_sparse_factor_residual_dev.py -text
+tests/test_r8_bl5_sparse_factor_block_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/factor-residual/** -text
+scripts/r8_bl5_density_subspace_dev.py -text
+tests/test_r8_bl5_density_subspace_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-control/** -text
+scripts/r8_bl5_density_reference_dev.py -text
+tests/test_r8_bl5_density_reference_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/density-reference/** -text
+src/anysolver/_stiffened_shell_b2_q4_panel_experimental.py -text
+src/anysolver/stiffened_shell.py -text
+tests/test_stiffened_shell_b2_free_reference_modes.py -text
+tests/test_stiffened_shell_b2_mixed_reference_modes.py -text
+docs/agent_plans/development/r8-b2-free-reference-modes-20261004/** -text
+
+scripts/r8_bl5_projected_native_beta_dev.py -text
+tests/test_r8_bl5_projected_native_beta_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/native-beta/** -text
+scripts/r8_bl5_sparse_gram_margin_dev.py -text
+tests/test_r8_bl5_sparse_gram_margin_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/gram-margin/** -text
+scripts/r8_bl5_envelope_gram_dev.py -text
+tests/test_r8_bl5_envelope_gram_dev.py -text
+scripts/r8_bl5_regional_action_dev.py -text
+tests/test_r8_bl5_regional_action_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/** -text
+scripts/r8_bl5_positive_part_gram_dev.py -text
+tests/test_r8_bl5_positive_part_gram_dev.py -text
+.qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/positive-part-gram/** -text
+src/anysolver/_stiffened_shell_distributing_footprint.py -text
+tests/test_stiffened_shell_distributing_footprint.py -text
+docs/agent_plans/development/r8-distributing-reference-linear-20261004/** -text
+.qualification/b3-ge-e4-pl/r8-distributing-reference-linear-dev-20261004-v1/** -text
+src/anysolver/_stiffened_shell_ge_distributing_reference.py -text
+tests/test_stiffened_shell_ge_distributing_reference.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-ge-reference-dev-20261004-v1/** -text
+src/anysolver/_stiffened_shell_ge_experimental.py -text
+src/anysolver/stiffened_shell.py -text
+src/anysolver/_stiffened_shell_ge_body_load.py -text
+src/anysolver/_stiffened_shell_ge_distributed_load.py -text
+src/anysolver/_stiffened_shell_ge_pressure_load.py -text
+src/anysolver/_stiffened_shell_ge_reference_modal.py -text
+tests/test_stiffened_shell_ge_distributing_owner.py -text
+examples/stiffened_shell_ge_distributing_reference.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-ge-owner-dev-20261004-v1/** -text
+docs/agent_plans/development/r8-distributing-reference-linear-20261004/active-before-workflow-consolidation-20261004.md -text
+scripts/r8_e02_distributing_solid_area.py -text
+scripts/r8_e02_distributing_feasibility.py -text
+scripts/r8_e02_distributing_native_adequacy.py -text
+tests/test_r8_e02_distributing_native_adequacy.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-native-adequacy-dev-20261004-v1/** -text -whitespace
+tests/test_r8_e02_distributing_solid_area.py -text
+tests/test_r8_e02_distributing_feasibility.py -text
+# Immutable external fixed-width outputs and failed logs retain their whitespace.
+.qualification/b3-ge-e4-pl/r8-e02-distributing-area-feasibility-dev-20261004-v1/** -text -whitespace
+.qualification/b3-ge-e4-pl/r8-distributing-multihost-dev-20261004-v1/** -text -whitespace
+src/anysolver/_stiffened_shell_distributing_pose.py -text
+tests/test_stiffened_shell_distributing_pose.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-finite-pose-dev-20261004-v1/** -text -whitespace
+
+src/anysolver/_stiffened_shell_ge_distributing_finite.py -text
+tests/test_stiffened_shell_ge_distributing_finite.py -text
+
+# Final tested finite owner and raw development evidence retain exact bytes.
+src/anysolver/_stiffened_shell_ge_checkpoint_binary.py -text
+tests/test_stiffened_shell_ge_distributing_finite_public.py -text
+examples/stiffened_shell_ge_distributing_finite.py -text
+docs/agent_plans/development/r8-distributing-reference-linear-20261004/active-before-public-finite-owner-20261004.md -text
+.qualification/b3-ge-e4-pl/r8-distributing-finite-owner-dev-20261004-v1/** -text -whitespace
+scripts/r8_e02_distributing_thickness.py -text
+tests/test_r8_e02_distributing_thickness.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-thickness-dev-20261004-v1/** -text -whitespace
+scripts/r8_e02_distributing_my.py -text
+tests/test_r8_e02_distributing_my.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-my-dev-20261004-v1/** -text -whitespace
+src/anysolver/_stiffened_shell_ge_finite_experimental.py -text
+tests/test_stiffened_shell_ge_distributing_material.py -text
+examples/stiffened_shell_ge_distributing_material.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-material-dev-20261004-v1/** -text -whitespace
+
+src/anysolver/_ge_beam3_variational_shell.py -text
+
+src/anysolver/_stiffened_shell_algorithmic_pullback.py -text
+
+src/anysolver/_stiffened_shell_q4_algorithmic_pullback.py -text
+
+tests/test_stiffened_shell_material_rotation_numerics.py -text
+
+tests/data/stiffened_shell_material_pre_stable_rotation.bin -text
+
+scripts/r8_e02_double_output.py -text
+tests/test_r8_e02_double_output.py -text
+.qualification/b3-ge-e4-pl/r8-e02-double-output-dev-20261004-v1/** -text -whitespace
+src/anysolver/_stiffened_shell_increment_control.py -text
+tests/test_stiffened_shell_accepted_observer_experimental.py -text
+tests/test_stiffened_shell_distributing_adaptive.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-adaptive-dev-20261004-v1/** -text -whitespace
+tests/test_stiffened_shell_distributing_cyclic.py -text
+docs/stiffened_shell_distributing_material_development.md -text
+.qualification/b3-ge-e4-pl/r8-distributing-cyclic-dev-20261004-v1/** -text -whitespace
+tests/test_stiffened_shell_distributing_native_material.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-fy80-dev-20261004-v1/** -text -whitespace
+.qualification/b3-ge-e4-pl/r8-distributing-native-material-dev-20261004-v1/** -text -whitespace
+
+docs/agent_plans/B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md -text
+tests/test_stiffened_shell_distributing_native_tangent.py -text
+tests/test_stiffened_shell_distributing_native_reverse_flow.py -text
+.qualification/b3-ge-e4-pl/r8-distributing-native-tangent-dev-20261004-v1/** -text -whitespace
+.qualification/b3-ge-e4-pl/r8-distributing-native-reverse-dev-20261004-v1/** -text -whitespace
+tests/test_stiffened_shell_native_plastic_chart.py -text
+.qualification/b3-ge-e4-pl/r8-native-plastic-chart-dev-20261004-v1/** -text -whitespace
+.qualification/b3-ge-e4-pl/r8-native-coupled-chart-dev-20261004-v1/** -text -whitespace
+.qualification/b3-ge-e4-pl/r8-point-zero-reference-dev-20261004-v1/** -text -whitespace
+src/anysolver/_stiffened_shell_staged_load_experimental.py -text
+tests/test_stiffened_shell_staged_load_owner_experimental.py -text
+tests/test_stiffened_shell_staged_zero_reference.py -text
+examples/stiffened_shell_ge_point_zero_unload.py -text
+docs/stiffened_shell_staged_zero_load_development.md -text
+docs/agent_plans/B3_GE_E4_PL_ACTIVE_STATE.md -text
+docs/agent_plans/B3_GE_E4_PL_REVISION_8_GOAL.md -text
+docs/agent_plans/B3_GE_E4_PL_REVISION_8_PLAN.md -text
+.qualification/b3-ge-e4-pl/r8-native-point-displacement-dev-20261004-v1/** -text -whitespace
+src/anysolver/_stiffened_shell_affine_endpoint.py -text
+src/anysolver/_stiffened_shell_displacement_checkpoint.py -text
+src/anysolver/_stiffened_shell_displacement_control.py -text
+src/anysolver/_stiffened_shell_displacement_corrector.py -text
+tests/test_stiffened_shell_native_point_displacement.py -text
+examples/stiffened_shell_ge_point_displacement.py -text
+docs/stiffened_shell_native_displacement_development.md -text
+
+tests/test_stiffened_shell_native_coupled_displacement.py -text
+examples/stiffened_shell_native_coupled_displacement.py -text
+.qualification/b3-ge-e4-pl/r8-native-coupled-displacement-dev-20261005-v1/** -text -whitespace
+
+tests/test_stiffened_shell_native_s3_displacement.py -text
+tests/test_stiffened_shell_native_s3_displacement_admission.py -text
+examples/stiffened_shell_native_s3_displacement.py -text
+src/anysolver/_stiffened_shell_ge_checkpoint_binary.py -text
+src/anysolver/_stiffened_shell_ge_experimental.py -text
+.qualification/b3-ge-e4-pl/r8-native-s3-displacement-dev-20261005-v1/** -text -whitespace
+
+tests/test_stiffened_shell_native_fibre_s3_displacement.py -text
+tests/test_stiffened_shell_native_fibre_s3_displacement_identity.py -text
+examples/stiffened_shell_native_fibre_s3_displacement.py -text
+.qualification/b3-ge-e4-pl/r8-native-fibre-s3-displacement-dev-20261005-v1/** -text -whitespace
+
+tests/test_stiffened_shell_native_plastic_s3_displacement.py -text
+tests/test_stiffened_shell_displacement_s3_checkpoint_binary.py -text
+tests/data/native_s3_checkpoint_legacy/** -text
+examples/stiffened_shell_native_plastic_s3_displacement.py -text
+.qualification/b3-ge-e4-pl/r8-native-plastic-s3-displacement-dev-20261005-v1/** -text -whitespace
+
+tests/test_stiffened_shell_native_mixed_j2_displacement_snapshot.py -text
+tests/data/native_mixed_j2_displacement/** -text
+.qualification/b3-ge-e4-pl/r8-native-mixed-j2-displacement-diagnosis-20261005-v1/** -text -whitespace
+
+src/anysolver/_stiffened_shell_displacement_adaptive.py -text
+tests/test_stiffened_shell_native_displacement_adaptive.py -text
+tests/test_stiffened_shell_native_fibre_s3_displacement_identity.py -text
+tests/test_stiffened_shell_native_point_displacement.py -text
+.qualification/b3-ge-e4-pl/r8-native-displacement-adaptive-dev-20261005-v1/** -text -whitespace
+
+examples/stiffened_shell_coupled_s3_adaptive_history.py -text
+tests/test_stiffened_shell_native_s3_fibre_reversal.py -text
+tests/data/native_s3_fibre_history/** -text
+.qualification/b3-ge-e4-pl/r8-native-mixed-s3-fibre-history-dev-20261005-v1/** -text -whitespace
+
+/tests/test_stiffened_shell_native_generalized_adaptive_history.py -text
+/tests/data/native_generalized_adaptive_history/** -text
+/.qualification/b3-ge-e4-pl/r8-native-generalized-adaptive-history-dev-20261005-v1/** -text -whitespace
+
+/tests/test_stiffened_shell_native_generalized_q4_j2_history.py -text
+/tests/data/native_generalized_q4_j2_history/** -text
+/.qualification/b3-ge-e4-pl/r8-native-generalized-q4-j2-history-dev-20261005-v1/** -text -whitespace
+
+/tests/test_stiffened_shell_native_displacement_chart.py -text
+/.qualification/b3-ge-e4-pl/r8-native-displacement-chart-dev-20261005-v1/** -text -whitespace
+
+/tests/test_stiffened_shell_native_arc.py -text
+/examples/stiffened_shell_native_arc.py -text
+/.qualification/b3-ge-e4-pl/r8-native-arc-dev-20261005-v1/** -text -whitespace
+/src/anysolver/_stiffened_shell_arc_control.py -text
+/src/anysolver/_stiffened_shell_arc_trial.py -text
+/src/anysolver/_stiffened_shell_arc_checkpoint.py -text
+/src/anysolver/_stiffened_shell_arc_publication.py -text
+/docs/stiffened_shell_arc_development.md -text
+
+/tests/test_stiffened_shell_native_arc_progress.py -text
+/docs/agent_plans/history/B3_GE_E4_PL_ACTIVE_STATE_PRE_TURNING_20261005.md -text
+
+/scripts/r8_e04_restricted_membrane.py -text
+/tests/test_stiffened_shell_e04_restricted_membrane.py -text
+/docs/agent_plans/history/PRE_RESTRICTED_REFERENCE_20261005.md -text
+/.qualification/b3-ge-e4-pl/r8-restricted-nonlinear-reference-dev-20261005-v1/** -text -whitespace
+
+/scripts/r8_e04_ccx_restricted_membrane.py -text
+/tests/test_stiffened_shell_e04_ccx_restricted_membrane.py -text
+/docs/reference_cases/stiffened_shell_e04_ccx_restricted_membrane.md -text
+/docs/agent_plans/history/PRE_CCX_RESTRICTED_20261005.md -text
+/.qualification/b3-ge-e4-pl/r8-ccx-restricted-nonlinear-dev-20261005-v1/** -text -whitespace
+/.qualification/b3-ge-e4-pl/r8-ccx-inverse-material-dev-20261005-v1/** -text -whitespace
+/docs/agent_plans/history/PRE_CCX_INVERSE_20261005.md -text
+/docs/agent_plans/history/PRE_BL5_BUCKLING_20261005.md -text

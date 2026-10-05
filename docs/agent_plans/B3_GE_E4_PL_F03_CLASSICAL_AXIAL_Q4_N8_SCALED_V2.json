@@ -1,0 +1,64 @@
+{
+  "algebraic_residual_ratio": 3.596423162555055e-15,
+  "beam_elements": 16,
+  "beam_energy_j": 0.0005021703263944095,
+  "beam_root": "u,v,theta fixed",
+  "beam_root_reaction_fx_n": -7503.737629118705,
+  "beam_tip_axial_m": -3.022414936698928e-07,
+  "distinct_from_native": [
+    "classical Q4/CST membrane",
+    "quadratic/Hermite Timoshenko beam",
+    "three-channel P1 weak line"
+  ],
+  "elapsed_seconds": 0.19098200000007637,
+  "energy_work_relative_error": 0.0,
+  "external_work_j": 0.009350763336199067,
+  "gap_l2_m": 1.0661459754250681e-08,
+  "global_axial_balance_n": 4.8203219193965197e-11,
+  "multiplier_intervals": 8,
+  "numerical_solver": "symmetric_row_equilibration_6_passes",
+  "physical_load": "q_x(s)=1e5 sin(2 pi s) N/m, s in [0,1] m",
+  "shell_elements": 128,
+  "shell_energy_j": 0.004173211341705124,
+  "shell_hosts": 8,
+  "shell_nodes": 153,
+  "shell_reaction_fx_n": 7503.737629118753,
+  "shell_support": "both x edges ux/uy fixed",
+  "shell_transverse_intervals": 8,
+  "station_fields": [
+    {
+      "axial_gap_m": -7.191804251081116e-08,
+      "beam_axial_m": 0.0,
+      "shell_axial_m": 7.191804251081116e-08,
+      "station": 0.0
+    },
+    {
+      "axial_gap_m": 7.566143679574566e-09,
+      "beam_axial_m": 4.6487071404305976e-08,
+      "shell_axial_m": 3.892092772473141e-08,
+      "station": 0.25
+    },
+    {
+      "axial_gap_m": 8.626256273390858e-10,
+      "beam_axial_m": -1.3983567165403853e-07,
+      "shell_axial_m": -1.4069829728137762e-07,
+      "station": 0.5
+    },
+    {
+      "axial_gap_m": -1.1937876048253572e-09,
+      "beam_axial_m": -2.881594371695214e-07,
+      "shell_axial_m": -2.8696564956469604e-07,
+      "station": 0.75
+    },
+    {
+      "axial_gap_m": -6.181890813071843e-09,
+      "beam_axial_m": -3.022414936698928e-07,
+      "shell_axial_m": -2.9605960285682095e-07,
+      "station": 1.0
+    }
+  ],
+  "status": "UNREGISTERED_CLASSICAL_AXIAL_REFERENCE_DIAGNOSTIC",
+  "topology": "Q4",
+  "weak_compatibility_ratio": 2.3980435829327904e-16,
+  "weak_gap_l2": 1.5784411596680855e-23
+}

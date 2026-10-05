@@ -1,0 +1,67 @@
+{
+  "cases": [
+    {
+      "local_finite_trace_z_max_m": 0.0,
+      "local_linear_trace_z_max_m": 0.0,
+      "local_rx_max_error_rad": 2.168404344971009e-19,
+      "n_s": 2,
+      "n_y": 2,
+      "rail_linear_trace_z_max_m": 2.1910316443107815e-20,
+      "topology": "Q4"
+    },
+    {
+      "local_finite_trace_z_max_m": 0.0,
+      "local_linear_trace_z_max_m": 0.0,
+      "local_rx_max_error_rad": 1.0842021724855044e-19,
+      "n_s": 4,
+      "n_y": 4,
+      "rail_linear_trace_z_max_m": 8.977004252799792e-21,
+      "topology": "Q4"
+    },
+    {
+      "local_finite_trace_z_max_m": 0.0,
+      "local_linear_trace_z_max_m": 0.0,
+      "local_rx_max_error_rad": 2.168404344971009e-19,
+      "n_s": 8,
+      "n_y": 8,
+      "rail_linear_trace_z_max_m": 1.8648168946533426e-20,
+      "topology": "Q4"
+    },
+    {
+      "local_finite_trace_z_max_m": 0.0,
+      "local_linear_trace_z_max_m": 0.0,
+      "local_rx_max_error_rad": 1.0842021724855044e-19,
+      "n_s": 2,
+      "n_y": 2,
+      "rail_linear_trace_z_max_m": 5.000000000000001e-05,
+      "topology": "S3-V2D"
+    },
+    {
+      "local_finite_trace_z_max_m": 0.0,
+      "local_linear_trace_z_max_m": 0.0,
+      "local_rx_max_error_rad": 1.0842021724855044e-19,
+      "n_s": 4,
+      "n_y": 4,
+      "rail_linear_trace_z_max_m": 2.500000000000008e-06,
+      "topology": "S3-V2D"
+    },
+    {
+      "local_finite_trace_z_max_m": 0.0,
+      "local_linear_trace_z_max_m": 0.0,
+      "local_rx_max_error_rad": 1.0842021724855044e-19,
+      "n_s": 8,
+      "n_y": 8,
+      "rail_linear_trace_z_max_m": 1.2500000000000067e-06,
+      "topology": "S3-V2D"
+    }
+  ],
+  "interpretation": "same represented nodal twist field; local origin changes the mechanical pose law, not a postprocessing correction; finite patch does not rank loaded accuracy",
+  "parent_raw_sha256": "e0a56a8e16ced06e34da200988570827561da4f216b8873a3d10048043b4d675",
+  "source_revision": "a5acee9211d2f570067503a91f7025b0c5e1bd8e",
+  "source_sha256": {
+    "scripts/_b3_e4_f03_shell_local_translation_candidate.py": "14c63865451863834e1b895dffaf407d96c95c353ed08bfb6d1424bc23a48154",
+    "scripts/_b3_e4_f03_shell_trace.py": "3d941ba161abeed78a91862a778fbe912a744df71dfdcfc5c7f488ae9da7fe8d",
+    "tests/test_b3_e4_f03_transverse_shear_patch.py": "c213868ee580d4a049cd86ac8f7a49d6b1addf1362a57707a55460ebecd9179a"
+  },
+  "status": "UNREGISTERED_ANALYTIC_TWIST_PORT_COMPARISON"
+}

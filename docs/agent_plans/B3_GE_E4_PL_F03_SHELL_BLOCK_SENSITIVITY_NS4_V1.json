@@ -1,0 +1,127 @@
+{
+  "cases": [
+    {
+      "full_block_relative_difference": 0.08577267809520693,
+      "n_s": 4,
+      "n_y": 2,
+      "native": {
+        "beam_tip_ux_m": -2.1591071776889428e-07,
+        "scaled_residual": 1.227923768018097e-17,
+        "shell_energy_j": 0.0030546971905802377,
+        "shell_reaction_fx_n": 5013.5346687905185
+      },
+      "reaction_change_fraction": 0.020464324357986678,
+      "substituted": {
+        "beam_tip_ux_m": -2.219734287890079e-07,
+        "scaled_residual": 1.348929935478524e-17,
+        "shell_energy_j": 0.0031302635987693014,
+        "shell_reaction_fx_n": 5116.133268432659
+      },
+      "tip_change_fraction": 0.02807971314607459,
+      "topology": "Q4"
+    },
+    {
+      "full_block_relative_difference": 0.08515203596298816,
+      "n_s": 4,
+      "n_y": 4,
+      "native": {
+        "beam_tip_ux_m": -2.7488859717089174e-07,
+        "scaled_residual": 1.7767229464148545e-17,
+        "shell_energy_j": 0.003948072764328861,
+        "shell_reaction_fx_n": 5922.103580416066
+      },
+      "reaction_change_fraction": 0.10098759807748743,
+      "substituted": {
+        "beam_tip_ux_m": -3.1094723406211725e-07,
+        "scaled_residual": 1.8202897607284532e-17,
+        "shell_energy_j": 0.0044204722006207986,
+        "shell_reaction_fx_n": 6520.1625965683725
+      },
+      "tip_change_fraction": 0.1311754553020208,
+      "topology": "Q4"
+    },
+    {
+      "full_block_relative_difference": 0.084548187071141,
+      "n_s": 4,
+      "n_y": 8,
+      "native": {
+        "beam_tip_ux_m": -2.847337270563837e-07,
+        "scaled_residual": 2.5900320333033282e-17,
+        "shell_energy_j": 0.0041088466176170705,
+        "shell_reaction_fx_n": 5999.4908659118755
+      },
+      "reaction_change_fraction": 0.10343572771795825,
+      "substituted": {
+        "beam_tip_ux_m": -3.2622285505951534e-07,
+        "scaled_residual": 2.4429961695404963e-17,
+        "shell_energy_j": 0.004642891739804494,
+        "shell_reaction_fx_n": 6620.052569564714
+      },
+      "tip_change_fraction": 0.14571202516839832,
+      "topology": "Q4"
+    },
+    {
+      "full_block_relative_difference": 0.08148364016339639,
+      "n_s": 4,
+      "n_y": 2,
+      "native": {
+        "beam_tip_ux_m": -2.1221534814732287e-07,
+        "scaled_residual": 2.5666958055539003e-17,
+        "shell_energy_j": 0.003050245678695133,
+        "shell_reaction_fx_n": 4946.078966143904
+      },
+      "reaction_change_fraction": 0.013669019625242028,
+      "substituted": {
+        "beam_tip_ux_m": -2.165700827157175e-07,
+        "scaled_residual": 2.6698148978928105e-17,
+        "shell_energy_j": 0.0031088937537963536,
+        "shell_reaction_fx_n": 5013.687016600122
+      },
+      "tip_change_fraction": 0.020520356356937552,
+      "topology": "S3-V2D"
+    },
+    {
+      "full_block_relative_difference": 0.07964129654906649,
+      "n_s": 4,
+      "n_y": 4,
+      "native": {
+        "beam_tip_ux_m": -2.541964220870045e-07,
+        "scaled_residual": 2.394003498219803e-17,
+        "shell_energy_j": 0.0035627914469370005,
+        "shell_reaction_fx_n": 5631.912486642167
+      },
+      "reaction_change_fraction": 0.0462073251580107,
+      "substituted": {
+        "beam_tip_ux_m": -2.7168256916729415e-07,
+        "scaled_residual": 2.856592169220505e-17,
+        "shell_energy_j": 0.0037786310125564855,
+        "shell_reaction_fx_n": 5892.148098173902
+      },
+      "tip_change_fraction": 0.06878990245702443,
+      "topology": "S3-V2D"
+    },
+    {
+      "full_block_relative_difference": 0.08062180462834923,
+      "n_s": 4,
+      "n_y": 8,
+      "native": {
+        "beam_tip_ux_m": -2.6939432408607726e-07,
+        "scaled_residual": 3.698695289917926e-17,
+        "shell_energy_j": 0.003797981996065066,
+        "shell_reaction_fx_n": 5845.07094721454
+      },
+      "reaction_change_fraction": 0.06243656496891811,
+      "substituted": {
+        "beam_tip_ux_m": -2.9378163585257887e-07,
+        "scaled_residual": 3.478373259267149e-17,
+        "shell_energy_j": 0.0041036771115437855,
+        "shell_reaction_fx_n": 6210.017099158236
+      },
+      "tip_change_fraction": 0.09052644983978708,
+      "topology": "S3-V2D"
+    }
+  ],
+  "fixed": "native B3, six-channel weak line, rail port, physical load, both-edge supports",
+  "replacement": "only native E4 in-plane tangent block; all cross/other blocks retained",
+  "status": "UNREGISTERED_NONPHYSICAL_OPERATOR_SENSITIVITY"
+}

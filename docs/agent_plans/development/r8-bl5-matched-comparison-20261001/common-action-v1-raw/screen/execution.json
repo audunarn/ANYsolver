@@ -1,0 +1,25 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "resource_failure": null,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-common-density-control.py",
+    "--output-dir",
+    "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-common-density-screen-v1\\run",
+    "--cases",
+    "fy",
+    "--screen-only"
+  ],
+  "source_sha256": "594c8b73f7ca9b8fa5ecb809c7debbc4ee0e0fc5ae0f26dc0a1934c448a18d51",
+  "elapsed_seconds": 0.6218657999997959,
+  "sampled_process_tree_peak_rss_bytes": 96325632,
+  "limits": {
+    "seconds": 600,
+    "bytes": 8589934592,
+    "numerical_threads": 8
+  },
+  "formal_F03_consumed": false,
+  "scope": "saved finest-domain diagnostic, not qualification"
+}

@@ -1,0 +1,45 @@
+{
+  "cases": {
+    "tip_fz": {
+      "native_beam_action_only_work_J": 0.10279260000791443,
+      "native_beam_equilibrium_ratio": 1.743500259493176e-23,
+      "native_beam_vs_solid_relative": -0.00018731123783599646,
+      "native_shell_action_only_work_J": 0.01299322314074704,
+      "native_shell_equilibrium_ratio": 1.5192495484517917e-12,
+      "native_shell_vs_solid_relative": -0.143168295324413,
+      "solid_beam_action_only_work_J": 0.10281185782426772,
+      "solid_shell_action_only_work_J": 0.01516426512913236,
+      "solid_total_action_only_work_J": 0.1179761229534001
+    },
+    "tip_mx": {
+      "native_beam_action_only_work_J": 0.0014345589480160704,
+      "native_beam_equilibrium_ratio": 1.313964167166431e-16,
+      "native_beam_vs_solid_relative": -0.006312576596421704,
+      "native_shell_action_only_work_J": 0.0017780972753723746,
+      "native_shell_equilibrium_ratio": 1.6943455477625352e-12,
+      "native_shell_vs_solid_relative": -0.10203317382421562,
+      "solid_beam_action_only_work_J": 0.0014436722396087283,
+      "solid_shell_action_only_work_J": 0.0019801369310543967,
+      "solid_total_action_only_work_J": 0.003423809170663125
+    }
+  },
+  "classification": "matched line-dual separate-component action-only comparison",
+  "limitations": [
+    "same projected line dual, but E4 and B3 versus 3D plate/bar idealizations differ",
+    "action-only linear component compliance, not a loaded coupled solution",
+    "no connection-law acceptance or multiplier-space selection",
+    "not F03 or G0B acceptance"
+  ],
+  "native_beam_half_cells": 12,
+  "native_interval_measures_m": [
+    0.02500000000000003,
+    0.02499999999999991,
+    0.02500000000000003,
+    0.02500000000000003
+  ],
+  "native_shell_cells": 4,
+  "solid_action_source_commit": "673a611847f18880d4bc3d84011aa40e1b1243b8",
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "solid_source_deck_sha256": "4792273d1efe3957de336436d7398d3eb6ee7960c50fe1eea1aab70fa504fdec",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

@@ -1,0 +1,117 @@
+{
+  "beam_layout": {
+    "cell_rotations": 36,
+    "complementary_min_diagonal_J_per_resultant_squared": 1.7857142859640813e-11,
+    "free": 216,
+    "nodal": 78,
+    "resultants": 108
+  },
+  "classification": "private material-line native retained KKT metric",
+  "decision": "finite-level trace or mixed behavior only; no uniform stability or multiplier selection",
+  "drilling_quotient_check": {
+    "drill_equation_relative": 7.033076749476222e-16,
+    "drill_rows": 132,
+    "physical_action_relative": 3.024194402780808e-16,
+    "quotient_relative_skew": 7.170484595425801e-17
+  },
+  "effective_threadpools": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "elapsed_s": 16.691080799966585,
+  "env": {
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "fz_riesz_audit": true,
+  "geometry": "C1 Q4 x2/y4; B3-12; 1:1 bond",
+  "imported_anysolver": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "limits": [
+    "one level per run",
+    "1900 dense KKT rows",
+    "120 s wall deadline",
+    "auxiliary Riesz norm not added to tangent",
+    "no physical transfer or mesh-uniform claim"
+  ],
+  "p0_intervals": 2,
+  "p0_line_norm": {
+    "basis_integrals_m": [
+      0.04999999999999994,
+      0.05000000000000006
+    ],
+    "density_gram_ordering_defect": -2.16840436112688e-19,
+    "moment_to_force_equivalent_length_m": 0.1,
+    "physical_density_units": [
+      "N/m",
+      "N/m",
+      "N/m",
+      "Nm/m",
+      "Nm/m",
+      "Nm/m"
+    ]
+  },
+  "primal_rows": 876,
+  "report": {
+    "beta_min": 1.7179024992895038,
+    "constraint_rows": 12,
+    "dual_metric_norm_sq": 1.0000000000000004,
+    "fz_riesz_audit": {
+      "beam_native_supremal_work_sq": 0.26861515906436373,
+      "isolated_fz_dual_action_N": [
+        84675.34823192144,
+        -83719.79093890014
+      ],
+      "isolated_fz_dual_metric_norm_sq": 0.9999999999999999,
+      "least_mode_fz_metric_share_before_isolation": 0.71401193098561,
+      "native_trace_beta_for_isolated_fz": 5.05191205451223,
+      "scalar_norm": "independent Q4 H1; E*T^3/[12(1-nu^2)*L_line^2]; plus zeroth/L_line^2",
+      "scalar_q4_h1_shell_supremal_work_sq": 17.679152113938752,
+      "scalar_shell_to_e4_shell_work_ratio": 0.7000757108168463,
+      "shell_exact_drill_supremal_work_sq": 25.253200247885715,
+      "shell_other_channel_action_norm_N": 0.0,
+      "split_relative_defect": 1.661708163091758e-11,
+      "status": "finite-level diagnostic; no interface or shell-law qualification",
+      "total_native_supremal_work_sq": 25.52181540652598
+    },
+    "left_right_svd_defect": 1.865520938324325e-14,
+    "normed_condition": 57.0166965547196,
+    "operator_max": 97.94912551258405,
+    "rows": 888,
+    "trace_channel_metric_share": {
+      "fx": 0.22759675732585868,
+      "fy": 4.701316575021163e-29,
+      "fz": 0.71401193098561,
+      "mx": 1.2604760995591264e-29,
+      "my": 0.05839131168853186,
+      "mz": 3.3913465957523713e-34
+    }
+  },
+  "representation": "exact_drilling_quotient",
+  "row_rank": 12,
+  "runner_sha256": "199cd323b7f6e9ec3391aef09eb62513201abc2ee6e53ffbb329c4dc563d5994",
+  "source_git": "f64c772e184768904807e216394fdbc1b4dab127",
+  "space_kind": "piecewise_constant",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
+  "trace_only": true,
+  "yaw_intervals": null,
+  "yaw_line_norm": null
+}

@@ -1,0 +1,46 @@
+[
+  {
+    "case": "fy",
+    "command": [
+      "C:\\Python\\Python314\\python.exe",
+      "-u",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-matched-mz-native-v1\\b3_e4_bl5_matched_mz_native_dev.py",
+      "--expected-site",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-staged-load-installed-v1\\site",
+      "--external-dir",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-matched-mz-reference-v1\\fy",
+      "--output-dir",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-matched-mz-native-v1\\fy",
+      "--case",
+      "fy"
+    ],
+    "exit_code": 0,
+    "status": "passed",
+    "elapsed_seconds": 5.19945220000227,
+    "sampled_process_tree_peak_rss_bytes": 170983424,
+    "timeout_seconds": 600,
+    "memory_limit_bytes": 8589934592
+  },
+  {
+    "case": "mz",
+    "command": [
+      "C:\\Python\\Python314\\python.exe",
+      "-u",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-matched-mz-native-v1\\b3_e4_bl5_matched_mz_native_dev.py",
+      "--expected-site",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-staged-load-installed-v1\\site",
+      "--external-dir",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-matched-mz-reference-v1\\mz",
+      "--output-dir",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-matched-mz-native-v1\\mz",
+      "--case",
+      "mz"
+    ],
+    "exit_code": 0,
+    "status": "passed",
+    "elapsed_seconds": 5.169579200010048,
+    "sampled_process_tree_peak_rss_bytes": 172384256,
+    "timeout_seconds": 600,
+    "memory_limit_bytes": 8589934592
+  }
+]

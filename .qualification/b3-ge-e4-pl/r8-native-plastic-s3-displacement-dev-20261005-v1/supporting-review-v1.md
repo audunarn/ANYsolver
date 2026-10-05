@@ -1,0 +1,1 @@
+Read-only same-family source review: no actionable defect in codec or extracted restoration/replay. Count/order/support/coordinate/LINEAR binding and exact serialization retained; defaults unchanged. No reviewer execution; plastic-S3 admission remains closed.

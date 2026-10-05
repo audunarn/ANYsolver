@@ -1,0 +1,1420 @@
+{
+  "identity": "R8_BL5_PROJECTED_JOINT32_DEVELOPMENT_SAFE_RAW_V5",
+  "source_parent": "961a755cb651f3a85c2380245c3dfbf3dd334829",
+  "previous_manifest_sha256": "cccb7bb60aba3bd42057d0e01f4b63931a18d6424b8dd0617e291965bedd27c4",
+  "files": [
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/active-parent-note.raw",
+      "sha256": "cf062dac0ad25ee2a74fa39b23db112bd20310ffe5b162c02c7c054688f218f5",
+      "bytes": 5688,
+      "source": "exact parent/prospective note"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/active-prospective-note.md",
+      "sha256": "ede1d2c1485ee642a0718630864fab4b67cb0b27a7750621805c6da93cd25673",
+      "bytes": 7321,
+      "source": "exact parent/prospective note"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/active-prospective.md",
+      "sha256": "cc9ecf9ccef205cdad82e5441dfe7e25eb1d18e322db33bda02412d943e2d824",
+      "bytes": 6664,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\active-prospective.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/additional-full-correction-check/execution.json",
+      "sha256": "59159b51f8535b3fa391e186779a21cf28020ca24c6fa61dbecb488dd7c42aa4",
+      "bytes": 881,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\additional-full-correction-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/additional-full-correction-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\additional-full-correction-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/additional-full-correction-check/stdout.log",
+      "sha256": "2aa2e00d1a58f9faea4c767f3fed537e69e0bee1de77d8d8ab9d446c23e504ab",
+      "bytes": 89,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\additional-full-correction-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/additional-full-correction-check/thread-samples.json",
+      "sha256": "47bc4c25b7f15d21916608962b445385584e41cb02164b721c9b68b5e1834d79",
+      "bytes": 17734,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\additional-full-correction-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/additional-full-correction.json",
+      "sha256": "7307f9c58ef42a76e41113bf505d28c1903e3e6c728f09e8b9173a1ad4c99f81",
+      "bytes": 1993,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\additional-full-correction.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/additional-full-correction.npz",
+      "sha256": "b0cdccfcffc0770203e58073942c16e9266cddfcc296b0e301c61523a81035e6",
+      "bytes": 190800,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\additional-full-correction.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/additional-full-correction.py",
+      "sha256": "8775bd15854ec0ffd600292e2632828c61eb89a1f27fd2f0eb4a8501b9fcc1f5",
+      "bytes": 1999,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\additional-full-correction.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-check/execution.json",
+      "sha256": "92e14a2e286b7522422d73216e0fd6b65587ea07aaa2c5d66d23eedbad70524b",
+      "bytes": 1087,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-check/stdout.log",
+      "sha256": "d8aa387202e154fcd07316be47a4b7f16e34448bbbe122fe84a0a0ba969d5ada",
+      "bytes": 261,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-check/thread-samples.json",
+      "sha256": "239d3b36ce7fbb8a7d4be509eb1db8fb2c92786a76678f7f1ba1b12d19574e3b",
+      "bytes": 158553,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-repair-review.md",
+      "sha256": "fe7a94f50fbceeaee0757fb831c89c3932512ba29ce5ca88f73841d9fc12dcd5",
+      "bytes": 4132,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-repair-review.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-review.md",
+      "sha256": "badd8521db45034bc8a0f5c577cd2e6a3cd619b93a04be849c27e74c99f87824",
+      "bytes": 3854,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-review.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-v2-check/execution.json",
+      "sha256": "9b5f80ce84ee451745eeefbb8922b49f3c026e3eec0027736df2c540b14e1f90",
+      "bytes": 1093,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-v2-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-v2-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-v2-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-v2-check/stdout.log",
+      "sha256": "02b0b3e20f201d2b524c30e8277feb1f6087bad2a2e2593140a88b44e16ed9d7",
+      "bytes": 261,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-v2-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-v2-check/thread-samples.json",
+      "sha256": "f891989699f6c490259fba434c60e57e06901a8a85b9eab91827f44e90b85b00",
+      "bytes": 142489,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-v2-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-v2.json",
+      "sha256": "1c35369e7506aed070a57e9e74988686199f0d1dc0a9e6bdf119d7a4b675ac41",
+      "bytes": 132988,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-v2.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-v2.npz",
+      "sha256": "4a1038df0d92e06eb47aacb88f0181fe082eb4a7a09043c7d41807bd1c9c9bd4",
+      "bytes": 45131505,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-v2.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel-v2.py",
+      "sha256": "aa8dc6b2a6bd809989ffda1f772c6462ec6b9b6da3ff11f4c20d04ec3a28800a",
+      "bytes": 33878,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel-v2.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel.json",
+      "sha256": "2520bcba6e0dec86102a0c36ddc3045d0f0a72fa80be46acd79767faf6e8271c",
+      "bytes": 132869,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel.npz",
+      "sha256": "f17e424623d95ee0eeaab017838064f192884ac74508bab66ccce3006a0df76b",
+      "bytes": 44814698,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/kernel.py",
+      "sha256": "cefaab39b841ba22b26fec2d624bd729845d38e058378d32b759c870c5588f8d",
+      "bytes": 31869,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\kernel.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/norm-check/execution.json",
+      "sha256": "e6e62b641cb77096b413aaff01374e66f093ab757c93f7baf9c42527764fbd99",
+      "bytes": 1375,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\norm-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/norm-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\norm-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/norm-check/stdout.log",
+      "sha256": "c02e9f9c60229b393adf8a88b8a185dea47059c09346ec83955544e7ac9a8e0a",
+      "bytes": 193,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\norm-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/norm-check/thread-samples.json",
+      "sha256": "2055f789aaeda218c1debb39cd315eeb6ae53bff63019c809e16b1e294a650a5",
+      "bytes": 27564,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\norm-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/norm.json",
+      "sha256": "147a242f3762dec8def6fe54441b8666c453c3e94421c5f948261ef2f035616f",
+      "bytes": 6962,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\norm.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/norm.npz",
+      "sha256": "e79b09a9c9b024d7e5aa5c9738728267abbeb165b88eaf1d0fffb6bd71cff16f",
+      "bytes": 2791722,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\norm.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/norm.py",
+      "sha256": "63c825e358e2510f72cb8f4c02c2fc0a157bdd7f7ecd9abec39b6d86e23fe514",
+      "bytes": 16954,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\norm.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner-check/execution.json",
+      "sha256": "9b56738d6099b2e7930aabd15ea34422d4c89d28975fe3fe6b0742e86bf76615",
+      "bytes": 1556,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner-check/stdout.log",
+      "sha256": "0f999dfe3c6bec2b5cb829c4120903c1db5166e6501530431579f69a40eab2fa",
+      "bytes": 521,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner-check/thread-samples.json",
+      "sha256": "5e43676afed62af807256b63063e96536d070498371fb958429ad6a74a8f435f",
+      "bytes": 82521,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner.py",
+      "sha256": "88acb0bd4d71aa6a9191e125e80a55bce0441667b715ed028527de3623004eb2",
+      "bytes": 20143,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/identity.json",
+      "sha256": "f19a7075014840814f3f9f94b29ee72323c9603f90468a20ef5733c2b1f21ef2",
+      "bytes": 94287,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\identity.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/fy/physical-actions.json",
+      "sha256": "39f56fcbe755a027d38bf5584df1c6b05bc61766af832dd1bb90d7666ad61348",
+      "bytes": 74205,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\fy\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/fy/raw-state.json",
+      "sha256": "ab575c2dc3a0522b4ae239451098aef31489212e8281d1f02a4b377dfe78f5f7",
+      "bytes": 522,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\fy\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/fy/raw-state.npz",
+      "sha256": "d17b5db401207b73b7b6461cd866fac0410968e3d35f7521cb1a251b286ef55f",
+      "bytes": 232690,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\fy\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/inputs.json",
+      "sha256": "843edddc42e85fce146e1cc6cc87a6cfe4e1c4e1294b96815bfbf064b755eee0",
+      "bytes": 675608,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/mx/physical-actions.json",
+      "sha256": "8d106a1e7736a000b5be3f92324a200c332cb03636ab5a59be276f8e791765e9",
+      "bytes": 74362,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\mx\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/mx/raw-state.json",
+      "sha256": "337def580af7f0f75ba6f8c8610ab3a79ee455223a98f45f71c018c17a6c930e",
+      "bytes": 522,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\mx\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/mx/raw-state.npz",
+      "sha256": "4a79b6704695277b260f249e47c33ced567b94d6ebdfb2f92076e3982d85de26",
+      "bytes": 232690,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\mx\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/mz/physical-actions.json",
+      "sha256": "18b596491d7d71dfe5b954024e89de07c4d70f8af92ae13c957e1f6a39998655",
+      "bytes": 74116,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\mz\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/mz/raw-state.json",
+      "sha256": "7bdbbf2537346c83f91a66865204b773d619de4c60b0c92c184f98b7e8f93978",
+      "bytes": 522,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\mz\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/mz/raw-state.npz",
+      "sha256": "3b52c6ae406dc3192b8535b0809c80a714d9f194a0305fc1dadbf2e278b16cee",
+      "bytes": 232690,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\mz\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/operators.npz",
+      "sha256": "35ef6c2eb615c3b0b58b2c004cc480419888afe11c9fdfb42c890a30fb41f70f",
+      "bytes": 2086702,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\operators.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/native/states.npz",
+      "sha256": "c89e0e56f07d2efc9db961a19e27e6029f2f7932bd8c39788686da54b1996771",
+      "bytes": 216628,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\native\\states.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/owner/summary.json",
+      "sha256": "2be9fd9b366fbc5a1cd228818b14b84806ce205f13ef604bf17c9c97eccd6a46",
+      "bytes": 349299,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\owner\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/prospective-parity-repair.md",
+      "sha256": "ede1d2c1485ee642a0718630864fab4b67cb0b27a7750621805c6da93cd25673",
+      "bytes": 7321,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\prospective-parity-repair.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/register-check/execution.json",
+      "sha256": "d7062d04c7ed182c9bfabe66475a96929ad74c107e921475ac4f9b400b6cd2fe",
+      "bytes": 996,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\register-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/register-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\register-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/register-check/stdout.log",
+      "sha256": "d2deb6d4821b8e78b5714f2b06ebeedf10041b80b3174cee89b1aacb90210991",
+      "bytes": 219,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\register-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/register-check/thread-samples.json",
+      "sha256": "f0158ac1ba75defd4044a5693fcf609dc7120f0bcb8b87243279e8f076b3a8ae",
+      "bytes": 3186,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\register-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/register.json",
+      "sha256": "ea3fe15bfb26089f2bcf7108166a303df4e740790ddd03385d4388f064d6273b",
+      "bytes": 3624,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\register.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/register.npz",
+      "sha256": "0705862e42a1991c3f87b1999fc4c0f5ad0408e7faf31ce6e92fba96c325b6af",
+      "bytes": 59320,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\register.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis-check/execution.json",
+      "sha256": "f29dda264b1f5a8f77c343caa26d2722230b6fcf3b5cca3c8642b063d010cdeb",
+      "bytes": 874,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis-check/stdout.log",
+      "sha256": "b2aba4b7520bb750cdbb00cf02beca44d03f9912c545182b03283ccf29a7fcee",
+      "bytes": 721,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis-check/thread-samples.json",
+      "sha256": "55f664e322e04cf963062dc06ef50ccbff00ea14a5093a664024e605f20e4c62",
+      "bytes": 21224,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis-v2-check/execution.json",
+      "sha256": "d4690732007f991eb9ed4476287023afd9ec7d4f297b147376f3f2e42c21c9be",
+      "bytes": 876,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis-v2-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis-v2-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis-v2-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis-v2-check/stdout.log",
+      "sha256": "9b79663f66188f0168d5e0124dd73f4dfa05290ce0baecbc162fd7bf107ca475",
+      "bytes": 1619,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis-v2-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis-v2-check/thread-samples.json",
+      "sha256": "8d75e20f4928eda62e0d05b528de560fb4f3fcc1a43aaeb61da54195cede1ec5",
+      "bytes": 26015,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis-v2-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis-v2.json",
+      "sha256": "ed4dbef3b579235a3e795a52ea10982a10119bf521a0f2294935030ec17aaae6",
+      "bytes": 2751,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis-v2.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis-v2.py",
+      "sha256": "f14deb98cb7fbd8772ebe83f103642320fadd032a0efc645f31c764139c05033",
+      "bytes": 2658,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis-v2.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis.json",
+      "sha256": "af91139d0952fd48370e13a231c5f025a6b8ce3aa0cf6fa8bea10705c589f7c6",
+      "bytes": 1727,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/residual-diagnosis.py",
+      "sha256": "d6a8e2e8ef856a1301eace9c0ebf5cecb714b2c1d77269e5589985652d48633a",
+      "bytes": 1997,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\residual-diagnosis.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/run-additional-full-correction.py",
+      "sha256": "7f8ad27a8a4da090efd74357a1560eff74df2c1adaf1e20dd251d39e227ced63",
+      "bytes": 626,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\run-additional-full-correction.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/run-kernel-v2.py",
+      "sha256": "a50e82be4276d8370c555cda0b67ba7bdf6768c9e55c05f62615884d5628bcd0",
+      "bytes": 657,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\run-kernel-v2.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/run-kernel.py",
+      "sha256": "4c054581908edb0a2cf559172fb723954e1d58acd3cc5603b028040e2ae14073",
+      "bytes": 648,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\run-kernel.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/run-norm.py",
+      "sha256": "55325554c401d674d64942021d81d64509c89f2833d87ace5977b9ff3fef997f",
+      "bytes": 793,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\run-norm.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/run-owner.py",
+      "sha256": "41f4183bce19fc5bca1c1d1714cf925b7934e581eb5b86deae709710468ed2fd",
+      "bytes": 880,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\run-owner.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/run-register.py",
+      "sha256": "11c804f18d895a8d6c61677ae05eba1d2235175fc1ea1ab6e406a56f790e1462",
+      "bytes": 552,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\run-register.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/run-residual-diagnosis-v2.py",
+      "sha256": "0842cf60e3ffe15c3d8f15e4845c37fc22e8c8ac7608e7856cf7e770178c6974",
+      "bytes": 616,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\run-residual-diagnosis-v2.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/before-fix/run-residual-diagnosis.py",
+      "sha256": "43314367d04dee6cf383033cd3a3e04c0fbfd112cb5c1ab641cbe3fc7456668c",
+      "bytes": 610,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v1\\run-residual-diagnosis.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/binding.json",
+      "sha256": "8557c490ef77310c7357342b04d16f6b802e03556aa1ee0f0e84da975d74623a",
+      "bytes": 49099,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\binding.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/build/execution.json",
+      "sha256": "ebd46ea6b7896ccb2281af86c1501f035a0f38212f8a3ffca05a74c7dc6e1c85",
+      "bytes": 1023,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\build\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/build/stderr.log",
+      "sha256": "315af2aefb11d38b01a166590ef46919e4f15aa9fc66cbaec0ca483e10561885",
+      "bytes": 308,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\build\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/build/stdout.log",
+      "sha256": "6fbe984e463f5b7b2ff0552710a9c888e9949a9dbee58a85257a26c0c54917f2",
+      "bytes": 100546,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\build\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/build/thread-samples.json",
+      "sha256": "4de12e123967666af1112e6587c2b193ed9f14583e244b95f094737040d87f02",
+      "bytes": 27839,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\build\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/check-installed-missing-helpers.py",
+      "sha256": "50367c3d287b01fad0d609d3dde5d8bba93fedd769cc103deda8bbd314049c12",
+      "bytes": 565,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\check-installed-missing-helpers.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/check-installed.py",
+      "sha256": "65a249dd723485df0f65119e905dd018b1e3a6f9702576d067a1058e751d3060",
+      "bytes": 629,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\check-installed.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/comparison-check/execution.json",
+      "sha256": "ee0ed527248476c65a4eb66d098608e700c15477566373cfe3d41dde548049eb",
+      "bytes": 1354,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\comparison-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/comparison-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\comparison-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/comparison-check/stdout.log",
+      "sha256": "078cfc4834e880fe57f28547bf9e70d0b62603d915e3c87234212df3f7d55750",
+      "bytes": 153,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\comparison-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/comparison-check/thread-samples.json",
+      "sha256": "d5c37a6defd6af7057f2156e72a59581542eeb8a9325828aeae2e1f0e7d1efb3",
+      "bytes": 2221,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\comparison-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/comparison.json",
+      "sha256": "7638df04fc04f7629f0c895a459b57039f41aec31ff5f808c825cd78dbd2dd2d",
+      "bytes": 18790,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\comparison.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/comparison.py",
+      "sha256": "e19137a94cb61d17d8eeedee389362f6832f5fb53660090874a1bf3cf487790a",
+      "bytes": 12722,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\comparison.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/complete-review.md",
+      "sha256": "0ba2c6d8e3f377eadee14d4ad257b912929af1e419e661855fb8c2718997d5be",
+      "bytes": 5766,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\complete-review.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/crosslevel-interpretation.json",
+      "sha256": "cd4cbb7e07095d918634477466a99004a8dec4159dadfc151b2a2e96dbbded67",
+      "bytes": 933,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\crosslevel-interpretation.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/dist/anysolver-0.4.7-py3-none-any.whl",
+      "sha256": "1bf7dabd8771e76ed09825fb66a89e3e48d513dbb0321989c41701096a679632",
+      "bytes": 2212038,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\dist\\anysolver-0.4.7-py3-none-any.whl"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fixtures/b3_e4_bl5_external_p0_enforcement_dev.py",
+      "sha256": "11e593497dab40ae052a491740a6ed50bfe51a3580f275fa87d950dc1004a004",
+      "bytes": 35782,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fixtures\\b3_e4_bl5_external_p0_enforcement_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fixtures/b3_e4_bl5_external_p0_refinement_dev.py",
+      "sha256": "6f3d19d0c95a851d7e1d7dd694f1c1dce051716a811fc4fb7c733e314c4c733a",
+      "bytes": 33736,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fixtures\\b3_e4_bl5_external_p0_refinement_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fixtures/b3_e4_bl5_matched_mz_reference_dev.py",
+      "sha256": "5b6eb1dac1bb4f58548c7555e10cc798ef4727406ca25efb735808b776444702",
+      "bytes": 30002,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fixtures\\b3_e4_bl5_matched_mz_reference_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fixtures/b3_e4_bl5_matched_reference_actions.py",
+      "sha256": "a42d4bdeb96c7106f296e92129104eb896fbc7cb2904d9867bc61c7a9ca169c6",
+      "bytes": 21000,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fixtures\\b3_e4_bl5_matched_reference_actions.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fixtures/b3_e4_f03_bl5_opensees_line_reference.py",
+      "sha256": "fe654b7a7c384620dae65f0b0981bb18e512513c090abdfe0dbf6c62c43d15cc",
+      "bytes": 16790,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fixtures\\b3_e4_f03_bl5_opensees_line_reference.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fixtures/r8_bl5_external_affine_reference_dev.py",
+      "sha256": "04c1b930258d5911c500ab3430b196e9488324ae8cafaebbfa30584420a26b08",
+      "bytes": 39416,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fixtures\\r8_bl5_external_affine_reference_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fixtures/r8_bl5_projected_joint_external_dev.py",
+      "sha256": "ce9382cc56c7d427489ab56dd9b48977f6c6445ac20573191e5bef23527dd529",
+      "bytes": 10940,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fixtures\\r8_bl5_projected_joint_external_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fy/execution.json",
+      "sha256": "e202995daaf5c9f0c1a93e37712cbd004c850a1aa6685ee755300ab2c4b4cfb5",
+      "bytes": 1190,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fy\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fy/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fy\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fy/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fy\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-fy/thread-samples.json",
+      "sha256": "db9d19a24ba56b3be75b8955b4b0a3c22c900104faee6c171d48a3f142a0ecc0",
+      "bytes": 5372,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-fy\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-mx/execution.json",
+      "sha256": "8913443654cebdef3e6f75ff0e670f675e50d0d5775615d421480d3f6e0dc34e",
+      "bytes": 1189,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-mx\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-mx/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-mx\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-mx/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-mx\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-mx/thread-samples.json",
+      "sha256": "aecb08d6aed4e585346be79dfbe8856a1e4376a4719c87051a167d9f17dc439d",
+      "bytes": 5380,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-mx\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-mz/execution.json",
+      "sha256": "7740a6090e84e2fc6d6e82864b4f6fec55bd06795826c9785a96bea035ff4c14",
+      "bytes": 1190,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-mz\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-mz/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-mz\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-mz/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-mz\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external-mz/thread-samples.json",
+      "sha256": "43eaf65c98cfa1311e12fd115585009419c516df284802fdc7aab33819b92ee5",
+      "bytes": 4677,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external-mz\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/fy/inputs.json",
+      "sha256": "204e13947ad37ce1edd28db1ca39ff6116bfe516446ecf24bc251a79c3a51869",
+      "bytes": 439665,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\fy\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/fy/interface-recovery-blocks.json",
+      "sha256": "20497d68ddd0fd064f2426afa40f3e72661180dd508481c0454b69e1949cde14",
+      "bytes": 22536,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\fy\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/fy/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\fy\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/fy/preparation-controls.json",
+      "sha256": "b02e5ae047e3ba71efc0b5c94476b2298f445b8c6cfe5f06f44bf133a4b60ce3",
+      "bytes": 778,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\fy\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/fy/raw-inventory.json",
+      "sha256": "b517a2fe45d215ec1cb1062cddd09478a27466e8172d154f6d102f856f1e617c",
+      "bytes": 427815,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\fy\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/fy/recovered-actions.json",
+      "sha256": "8a75be4472b266e60b56b7373b8c40fd6a2219a074e59ec517210b6466af1ff0",
+      "bytes": 540975,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\fy\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/fy/summary.json",
+      "sha256": "b006a5881d732ed6b6111b31299c8009cf3bd721d2b0115f2795bc14f7ae7b2f",
+      "bytes": 3281,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\fy\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mx/inputs.json",
+      "sha256": "8879bffd0c07d9f7939f9aa38077f0d35f13b5b1cf4a03c07565315086020baa",
+      "bytes": 439663,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mx\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mx/interface-recovery-blocks.json",
+      "sha256": "94018836a7268f107384a6fc5c21a275fcbfea8a0430c3a852856f4915f0be10",
+      "bytes": 22670,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mx\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mx/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mx\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mx/preparation-controls.json",
+      "sha256": "b02e5ae047e3ba71efc0b5c94476b2298f445b8c6cfe5f06f44bf133a4b60ce3",
+      "bytes": 778,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mx\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mx/raw-inventory.json",
+      "sha256": "5b8dd72e7062f81c26fa17d84f4fa72260ef8c72eb6b61a06af833d5f1da752f",
+      "bytes": 432117,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mx\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mx/recovered-actions.json",
+      "sha256": "d8ecdcd90bda65ab15b7b2a61b2c66b4523b112f99fa3e1172991b178c0cd5f6",
+      "bytes": 543275,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mx\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mx/summary.json",
+      "sha256": "59bf00c1aabefe63cd4d87466087625b50441ef1d12654a40c9ea030b62e6268",
+      "bytes": 3315,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mx\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mz/inputs.json",
+      "sha256": "f81a7a46905e47c7ec11a456716da5c4e3d7e0de7f367f57a182b9efcce1b064",
+      "bytes": 439663,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mz\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mz/interface-recovery-blocks.json",
+      "sha256": "911c9ed6faac2b424d0f7204ebf0789a1540b788e18502a9b652adc0e8b37c96",
+      "bytes": 22648,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mz\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mz/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mz\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mz/preparation-controls.json",
+      "sha256": "b02e5ae047e3ba71efc0b5c94476b2298f445b8c6cfe5f06f44bf133a4b60ce3",
+      "bytes": 778,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mz\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mz/raw-inventory.json",
+      "sha256": "ce6691070a2b9701fef7917465b872fa4d6ee8b399fc58ba9a5ba6bfe10e8471",
+      "bytes": 432016,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mz\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mz/recovered-actions.json",
+      "sha256": "7bc893e6472ecca9d77ad955690d1add755b64e2cdbb7ad60f9748af1d731ddd",
+      "bytes": 543119,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mz\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/external/mz/summary.json",
+      "sha256": "18bc5475f4e65d8168a5d3a6e149e62282c30b41e6ba77e4773a818a7841c6e2",
+      "bytes": 3319,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\external\\mz\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixture-delta.json",
+      "sha256": "543e44ec3b91b2ffbce2031084c3e204c9dbf5100598f29cd8f072a425a49036",
+      "bytes": 357,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixture-delta.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixture-impact-binding.json",
+      "sha256": "2a26d2b79eb7269ef07cde311b805b96243ad4954a7cd06fb3b05a74e21e0965",
+      "bytes": 726,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixture-impact-binding.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures-v2/test_stiffened_shell_ge_experimental.py",
+      "sha256": "9562db7de7f68ade267c21731b81c1dc62dd3d4065a927bdd6c8bce6cefe85e9",
+      "bytes": 30377,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures-v2\\test_stiffened_shell_ge_experimental.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures-v3/test_stiffened_shell_curved_reference_seam.py",
+      "sha256": "aa27a11ded5e18d3a0910de5752740cb15805c2421164a2123b1023df283dfcc",
+      "bytes": 8019,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures-v3\\test_stiffened_shell_curved_reference_seam.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures-v3/test_stiffened_shell_ge_experimental.py",
+      "sha256": "9562db7de7f68ade267c21731b81c1dc62dd3d4065a927bdd6c8bce6cefe85e9",
+      "bytes": 30377,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures-v3\\test_stiffened_shell_ge_experimental.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures-v3/test_stiffened_shell_ge_finite_experimental.py",
+      "sha256": "482e53fd2f16031037d50a40cca159b509be3c4ba45573fb3523ed939820323a",
+      "bytes": 50876,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures-v3\\test_stiffened_shell_ge_finite_experimental.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures-v3/test_stiffened_shell_ge_physical_fibre_finite.py",
+      "sha256": "e27851d0b07ba9caaeac1256283bee82a8420c987ed16abe538b139417ae71e4",
+      "bytes": 11846,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures-v3\\test_stiffened_shell_ge_physical_fibre_finite.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures-v3/test_stiffened_shell_ge_physical_fibre_linear.py",
+      "sha256": "4979ef4a7f107cbe15d8cdadd163943172057e27cd7bba4ea2116da7f2977186",
+      "bytes": 7245,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures-v3\\test_stiffened_shell_ge_physical_fibre_linear.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures-v3/test_stiffened_shell_nodal_rigid_footprint.py",
+      "sha256": "154ea911ee995eb320232c6bd0a2d0899044e2028b2ac88ae0eda9a41bfe7b83",
+      "bytes": 43071,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures-v3\\test_stiffened_shell_nodal_rigid_footprint.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures/test_stiffened_shell_bl5_affine_supports.py",
+      "sha256": "0a2b1f07503be48c5a05bf419c816b69728aa0adc2965171169cb078d414b878",
+      "bytes": 11772,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures\\test_stiffened_shell_bl5_affine_supports.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures/test_stiffened_shell_bl5_projected_density.py",
+      "sha256": "6f7f058e629716758efee2f430fbd28f0cddb30f8aabfb69c869ebf53ff0a9fb",
+      "bytes": 10979,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures\\test_stiffened_shell_bl5_projected_density.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures/test_stiffened_shell_ge_experimental.py",
+      "sha256": "c5685789c7b4507cdf8883a7c672aeec8a1b8aa008ec5bda084f2062eb7df419",
+      "bytes": 30178,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures\\test_stiffened_shell_ge_experimental.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/fixtures/test_stiffened_shell_l1_assembly_experimental.py",
+      "sha256": "b05875dbc723b041abf425784afc98a090366b914792da6833b1139a17d8d0d7",
+      "bytes": 31951,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\fixtures\\test_stiffened_shell_l1_assembly_experimental.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/focused/execution.json",
+      "sha256": "aeb22f07cde425945fdd484c94669b5f604d91064a91038a2e724203e777e6af",
+      "bytes": 992,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\focused\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/focused/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\focused\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/focused/stdout.log",
+      "sha256": "e149aaf7fdc6ab6e537e9974ba2d7a499e249a1d1ef03fba4548b07239e02625",
+      "bytes": 115,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\focused\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/focused/thread-samples.json",
+      "sha256": "0b1877e86f797aed88e3536993557227e2fc78ded2d95bb5c1fb0125c82b16b2",
+      "bytes": 33862,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\focused\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/install/execution.json",
+      "sha256": "8dfe6f1d84e6b4ae59220980c8ef0c1f0958a14a822766c696fd6371433cb10a",
+      "bytes": 1080,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\install\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/install/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\install\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/install/stdout.log",
+      "sha256": "76b3fe135dd67be4fe3f60e2623d628d0568d0fead0bb1e1bc4e732916338f94",
+      "bytes": 206,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\install\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/install/thread-samples.json",
+      "sha256": "5940c097ef7f4e9e3cfcfaa1a493193ad17735aee5ef4f31d955cdece6b853cd",
+      "bytes": 34966,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\install\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed-affected/execution.json",
+      "sha256": "ec7f6e1173f37ad04025ff86e27a70d5547441879c1b58e8d83d74d425fbeaca",
+      "bytes": 889,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed-affected\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed-affected/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed-affected\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed-affected/stdout.log",
+      "sha256": "0205b154497b75c908c6a8f419556d6637f9d676d73f2b357006e87aac945b89",
+      "bytes": 870,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed-affected\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed-affected/thread-samples.json",
+      "sha256": "f22684dce99e72ef405088ec7dac4a0880381a1377223ff83cca9402467520bc",
+      "bytes": 22499,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed-affected\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed-impact/execution.json",
+      "sha256": "14a2637d662a643e992e0d38e57a5ad895c92f0fc63b10763a5be6716e990d68",
+      "bytes": 1337,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed-impact\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed-impact/stderr.log",
+      "sha256": "b194bb09c5cbd066e58ee714a3bcee79bd782eabc2008aa30b02dbd63b95fcaa",
+      "bytes": 634,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed-impact\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed-impact/stdout.log",
+      "sha256": "78a42f302d6158deb0a3bca61382b3a510831bcb5e02ea5553083849e582741e",
+      "bytes": 100,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed-impact\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed-impact/thread-samples.json",
+      "sha256": "6fd7fd797e1a5b870c46c1ea98b2fafaad8c47d116d73ba91c089db9326b519f",
+      "bytes": 69351,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed-impact\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed/execution.json",
+      "sha256": "5eaf5843e14f1646c4c41a6002c2243b49b4b74b7ae534e0edbcc698895417be",
+      "bytes": 871,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed/stdout.log",
+      "sha256": "fcca5fb37cd9a1f60070035ee857f404f3ee4de9e531cda7a778156bc4ca7808",
+      "bytes": 6423,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/installed/thread-samples.json",
+      "sha256": "4b2b40d1d7a4f125d1f41d7d1a47fc05a98287cd174efb4889871560798d29e6",
+      "bytes": 278690,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\installed\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/kernel-check/execution.json",
+      "sha256": "2cfa02790e84ce0706e2c4b297c1b134071e9cc2d3e505d02e4a727f03bd732d",
+      "bytes": 1089,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\kernel-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/kernel-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\kernel-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/kernel-check/stdout.log",
+      "sha256": "3f494ba487cbbca2483d4b40c6e0068087df9e2cbe67fb8c6327f560cb2d2f5e",
+      "bytes": 260,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\kernel-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/kernel-check/thread-samples.json",
+      "sha256": "ae167b2b0f9c8bab16e6fda35ef7c937354f9a4aa50216c53d3ac7322e658629",
+      "bytes": 195334,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\kernel-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/kernel.json",
+      "sha256": "1fd41759c22df75e4278e12029314db5c3450bff68511b5af67f9c1ab40dd4a6",
+      "bytes": 131891,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\kernel.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/kernel.npz",
+      "sha256": "ef72839f625c0131482859f2605c4dede23e2e7ca07bb3d633761698102b3140",
+      "bytes": 45322008,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\kernel.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/kernel.py",
+      "sha256": "16d05f01f9fffa10b1fd8193216cf70f1101ed36c4055b31383aa09d72c4e6cb",
+      "bytes": 34247,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\kernel.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm-check/execution.json",
+      "sha256": "9afb10a9a3357dcc4481002d0bb12f58ebe8191e43fdf0f907540938efa60c42",
+      "bytes": 1371,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm-check/stderr.log",
+      "sha256": "b191475b05d317010b8c164d4e563f0ad3912f8682794760be64859f89bb54ad",
+      "bytes": 596,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm-check/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm-check/thread-samples.json",
+      "sha256": "8d1b7be88118202d3a32c1c37ecb5c828b2e8eb90a27cb91d997b093686524b3",
+      "bytes": 3184,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm-v2-check/execution.json",
+      "sha256": "f0a9d490129521987bcaf5cd2c2f49bae7f1c315cd799a422e91e866d4d6979e",
+      "bytes": 1374,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm-v2-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm-v2-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm-v2-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm-v2-check/stdout.log",
+      "sha256": "c02e9f9c60229b393adf8a88b8a185dea47059c09346ec83955544e7ac9a8e0a",
+      "bytes": 193,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm-v2-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm-v2-check/thread-samples.json",
+      "sha256": "2949674035f7acf7594dad2904df026b8fcf4512a6808f6f2746a6f460904b45",
+      "bytes": 27434,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm-v2-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm-v2.json",
+      "sha256": "f3ed4aec126ec182fd56eec56f5a8cf257cafa2983b8f101892cb51cf7e660b0",
+      "bytes": 6958,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm-v2.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm-v2.npz",
+      "sha256": "e79b09a9c9b024d7e5aa5c9738728267abbeb165b88eaf1d0fffb6bd71cff16f",
+      "bytes": 2791722,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm-v2.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/norm.py",
+      "sha256": "63c825e358e2510f72cb8f4c02c2fc0a157bdd7f7ecd9abec39b6d86e23fe514",
+      "bytes": 16954,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\norm.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/old-wheel-regression/execution.json",
+      "sha256": "1766d661c54007096c83babbf5d7946f09681b67a67ede9405230c4b6ce92ee8",
+      "bytes": 1119,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\old-wheel-regression\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/old-wheel-regression/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\old-wheel-regression\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/old-wheel-regression/stdout.log",
+      "sha256": "4ea88feb3cd7abb768e2bba46101d66deb7f85b884fa417e73b3adc99a9591c0",
+      "bytes": 3791,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\old-wheel-regression\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/old-wheel-regression/thread-samples.json",
+      "sha256": "ba44d20b59819f9120b2e4be1fc2f16aaab425361428d4563a042637919c3662",
+      "bytes": 22590,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\old-wheel-regression\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner-check/execution.json",
+      "sha256": "3184d0afc827c26dc28250301a74827b7fa2be4c9868f6a466a2b9a1ef6e3dba",
+      "bytes": 1548,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner-check/stdout.log",
+      "sha256": "a7d51cc9b6fea7b40a58aea2261d13f17478db2f5985716649bbe897e97ec980",
+      "bytes": 522,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner-check/thread-samples.json",
+      "sha256": "a669a8ca7141e3ec84fd0aa03f56b7bf6b66afa6e575e7aebd119284f64b6d71",
+      "bytes": 84859,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner.py",
+      "sha256": "79228d2709a56794433d5164000798cf5483aa9aa392063831621941551d83c4",
+      "bytes": 20145,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/identity.json",
+      "sha256": "646a1b14ce4bad215fed09b76e21bfa083493d69e91f0778791907f181ab6485",
+      "bytes": 93331,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\identity.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/fy/physical-actions.json",
+      "sha256": "4b2d5663540f7f20245f9f44a77721c47be4df4559a892291436bdf724bba637",
+      "bytes": 74138,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\fy\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/fy/raw-state.json",
+      "sha256": "f2f74d873a0954146c7a0f58a24903cc3b614883bd3ad7ad24d6e5c52e7da5dd",
+      "bytes": 522,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\fy\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/fy/raw-state.npz",
+      "sha256": "45aa560b6f0a94e64ccd62a2b6f200fe1d088bf507d484ad596454fcf792acdd",
+      "bytes": 232690,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\fy\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/inputs.json",
+      "sha256": "843edddc42e85fce146e1cc6cc87a6cfe4e1c4e1294b96815bfbf064b755eee0",
+      "bytes": 675608,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/mx/physical-actions.json",
+      "sha256": "c4fa0116d3238aa4007d33afbe1e8bd20e43204dcd15195957ce25376ef49ad3",
+      "bytes": 74342,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\mx\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/mx/raw-state.json",
+      "sha256": "2fbc8e8e1cf0938951ea2e3bbef702395a4b3eb9f9b6c26023420a2bbbc8dc12",
+      "bytes": 522,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\mx\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/mx/raw-state.npz",
+      "sha256": "a3cb43898cf005b81e2630aae3e8709175d8369ccfa2e0e6ceaf6ff7fbf78344",
+      "bytes": 232690,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\mx\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/mz/physical-actions.json",
+      "sha256": "ed46c760b602107af1b9a94dfe549c1b6eb0197d24b7f01364f1a10ab18043be",
+      "bytes": 74103,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\mz\\physical-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/mz/raw-state.json",
+      "sha256": "1ad40e2d0291f5327e8894a5c32469b80995ba5ab2ca951fd3e520cc9acf8506",
+      "bytes": 522,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\mz\\raw-state.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/mz/raw-state.npz",
+      "sha256": "5c7fe5ebb0c156e5a24b0bfcb189a08b205ebeab21f0fec473b55db9f9f14fd2",
+      "bytes": 232690,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\mz\\raw-state.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/operators.npz",
+      "sha256": "35ef6c2eb615c3b0b58b2c004cc480419888afe11c9fdfb42c890a30fb41f70f",
+      "bytes": 2086702,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\operators.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/native/states.npz",
+      "sha256": "30176e4590f61575d610cc4ab7ccb2b4288d5e88c593530eb73d3e59402f0e2b",
+      "bytes": 216628,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\native\\states.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/owner/summary.json",
+      "sha256": "816d0f0daba26683963cb0285bc0a789963f2c97741c711398bb95b7082c03fc",
+      "bytes": 348244,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\owner\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/pytest.ini",
+      "sha256": "8965aec51f7cb92c81e1f02b48a33098d11711dcbad04cee732968562aa59653",
+      "bytes": 41,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\pytest.ini"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/register.json",
+      "sha256": "ea3fe15bfb26089f2bcf7108166a303df4e740790ddd03385d4388f064d6273b",
+      "bytes": 3624,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\register.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/register.npz",
+      "sha256": "0705862e42a1991c3f87b1999fc4c0f5ad0408e7faf31ce6e92fba96c325b6af",
+      "bytes": 59320,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\register.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/review-addendum.md",
+      "sha256": "b461ad7564f9b392cc1b34082a2458bdc8f85914593bd042f0bb9d66fd704f43",
+      "bytes": 1979,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\review-addendum.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/run-cancel-second.py",
+      "sha256": "db02fc1a456b0c153f18beea92bcf21c900c315a0695f11a0f0c24fb256734e9",
+      "bytes": 770,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\run-cancel-second.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/run-comparison.py",
+      "sha256": "0920a7910bc8bd02fc0d1c41f449e3fd756939aefe375127339b602b1c9e2704",
+      "bytes": 712,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\run-comparison.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/run-external.py",
+      "sha256": "b2520794b0d7a452ad275fcc8175c6847a340ab00553f368a242459f9a58b98f",
+      "bytes": 951,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\run-external.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/run-impact.py",
+      "sha256": "ef19de4626e78e988f02caa77e62c6649ea40e8a259f7ea806b7ecaeafada60a",
+      "bytes": 906,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\run-impact.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/run-kernel.py",
+      "sha256": "ebcae2b3614acf0c7438079c356364ad57858b415df2d6da7d4ff77b653dc374",
+      "bytes": 609,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\run-kernel.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/run-norm-v2.py",
+      "sha256": "fda548f72ee5151d7f8418aa661a1ccb4d9acd9ddbf55a350d769db97f6bfe1d",
+      "bytes": 721,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\run-norm-v2.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/run-norm.py",
+      "sha256": "077262c37c3c2020a1631d0d2eafcf8a695845dcc377168617d2ab065adfb31c",
+      "bytes": 754,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\run-norm.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/run-old-regression.py",
+      "sha256": "52bf20c0736e8bdbc7c2cde65fc7179e195676582ca10625a9dec3c8b21a7b90",
+      "bytes": 683,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\run-old-regression.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/run-owner.py",
+      "sha256": "913426f6fcfec175e2caed044fdb82b6e9f2e3476852332cb47437de8363238e",
+      "bytes": 802,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\run-owner.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/run.py",
+      "sha256": "333ce59fa1e8e44edd1aab8a95913b0fd65c4ef32ccf4fc98f09d004bce099d2",
+      "bytes": 1304,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/second-correction-cancellation/execution.json",
+      "sha256": "c3a8dea6956ac4a0953394000cf44217d28b2e1a442e5dd39989c1574a96bd5b",
+      "bytes": 1128,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\second-correction-cancellation\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/second-correction-cancellation/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\second-correction-cancellation\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/second-correction-cancellation/stdout.log",
+      "sha256": "dc9dec0c71a2b5497940202d78f7726acc89f18b0f84dc8e068da34988c84d68",
+      "bytes": 100,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\second-correction-cancellation\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/installed-v2/second-correction-cancellation/thread-samples.json",
+      "sha256": "4d6c36fff5449c3b1b053ff9bc35788d66fec714bcbf91798f28c906600b3feb",
+      "bytes": 22976,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-joint32-v2\\second-correction-cancellation\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/source/_stiffened_shell_ge_experimental.py",
+      "sha256": "00528178ec741cf0e34b6ffd6925c304a72eea44150fbc9807a5520144b9cea5",
+      "bytes": 95902,
+      "source": "exact current candidate/supervisor snapshot"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/source/r8_bl5_projected_joint_comparison_dev.py",
+      "sha256": "e19137a94cb61d17d8eeedee389362f6832f5fb53660090874a1bf3cf487790a",
+      "bytes": 12722,
+      "source": "exact current candidate/supervisor snapshot"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/source/r8_bl5_projected_joint_external_dev.py",
+      "sha256": "ce9382cc56c7d427489ab56dd9b48977f6c6445ac20573191e5bef23527dd529",
+      "bytes": 10940,
+      "source": "exact current candidate/supervisor snapshot"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/source/r8_bl5_projected_joint_kernel_dev.py",
+      "sha256": "16d05f01f9fffa10b1fd8193216cf70f1101ed36c4055b31383aa09d72c4e6cb",
+      "bytes": 34247,
+      "source": "exact current candidate/supervisor snapshot"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/source/r8_bl5_projected_joint_norm_dev.py",
+      "sha256": "63c825e358e2510f72cb8f4c02c2fc0a157bdd7f7ecd9abec39b6d86e23fe514",
+      "bytes": 16954,
+      "source": "exact current candidate/supervisor snapshot"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/source/r8_bl5_projected_joint_owner_dev.py",
+      "sha256": "79228d2709a56794433d5164000798cf5483aa9aa392063831621941551d83c4",
+      "bytes": 20145,
+      "source": "exact current candidate/supervisor snapshot"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/source/supervisor.py",
+      "sha256": "ad9947c9268774a980041112004364d4daba6ce884fe339fab9f0d90b265d3ec",
+      "bytes": 7424,
+      "source": "exact current candidate/supervisor snapshot"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/joint32/source/test_stiffened_shell_ge_experimental.py",
+      "sha256": "9562db7de7f68ade267c21731b81c1dc62dd3d4065a927bdd6c8bce6cefe85e9",
+      "bytes": 30377,
+      "source": "exact current candidate/supervisor snapshot"
+    }
+  ],
+  "count": 235,
+  "bytes": 159276157,
+  "limitation": "Explicit newly owned source/registration/installed/numerical/failure/review whitelist only; no historical credential-bearing archive, site caches, formalF03 execution, acceptance or release; previous raw manifests/evidence unchanged."
+}

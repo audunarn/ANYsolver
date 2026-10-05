@@ -1,0 +1,424 @@
+{
+  "identity": "PROJECTED_COARSE_AUXILIARY_NORM_DEV_V1",
+  "source_parent": "67fa79455e79d782c3b8bfd8a5f3ae3ada989c48",
+  "previous_manifest_sha256": "5e49b7115a3fd51aa4e67587675bb0e3c9ef6a2ecbcfd8c3d7990e54b80a9918",
+  "files": [
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v1/scalar.py",
+      "sha256": "2b504fe679c948cbc10f31030dd6771b70e43f94827f4fd1a36acbc5f6af4020",
+      "bytes": 8994,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v1\\scalar.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v1/run.py",
+      "sha256": "eb782f267fc10fd8d59309d2214ec8cf1046a2aa9c7e8a5f9da220727fde3ad8",
+      "bytes": 580,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v1\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v1/scalar-check/execution.json",
+      "sha256": "1af24ba66694c38a2db80d79ffa6b1a4acccb874d639e6d6617392165e67e5bc",
+      "bytes": 985,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v1\\scalar-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v1/scalar-check/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v1\\scalar-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v1/scalar-check/stderr.log",
+      "sha256": "f63d51cbdca571c312838e091819c6e53629564316cf6357091858f93d7b6975",
+      "bytes": 757,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v1\\scalar-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v1/scalar-check/thread-samples.json",
+      "sha256": "244743fdd273ee8e97545c803edcc32c17b860375d99c5ae04dff4cca4f75d76",
+      "bytes": 17925,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v1\\scalar-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v2/scalar.py",
+      "sha256": "5c34c94aaee6b430b7bddc81651f89219a6c6adc489b4c0a8f6c2a6de7d4b9f4",
+      "bytes": 9470,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v2\\scalar.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v2/run.py",
+      "sha256": "eb782f267fc10fd8d59309d2214ec8cf1046a2aa9c7e8a5f9da220727fde3ad8",
+      "bytes": 580,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v2\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v2/scalar-check/execution.json",
+      "sha256": "762d0932c3e529e8d40ec9db82e740f77a5cf32e5babec011dba7db80ccc20f2",
+      "bytes": 984,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v2\\scalar-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v2/scalar-check/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v2\\scalar-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v2/scalar-check/stderr.log",
+      "sha256": "ee6702a32f4f5d60c1f478cc6062729c0f7dc159b33123e977d5d0fd1f9a7a53",
+      "bytes": 1304,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v2\\scalar-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v2/scalar-check/thread-samples.json",
+      "sha256": "01362e702055fac9dfbc07020bd2549630dc75668c47de4c357cff903e094a82",
+      "bytes": 1373,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v2\\scalar-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/scalar.py",
+      "sha256": "7b772bdaa007f2da3116acb7ae6a6567bcec17d1b6549a09cdc134115c421180",
+      "bytes": 9454,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\scalar.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/run.py",
+      "sha256": "eb782f267fc10fd8d59309d2214ec8cf1046a2aa9c7e8a5f9da220727fde3ad8",
+      "bytes": 580,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/scalar-check/execution.json",
+      "sha256": "10a129059acd7ae6eda35a9a74c632bd63ab8c43f2c3d6e940b4465528303e05",
+      "bytes": 985,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\scalar-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/scalar-check/stdout.log",
+      "sha256": "3cc130ba1de0243803686aa44788a9d5d5c1fe6dd7146ce2e89d1c447965904b",
+      "bytes": 641,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\scalar-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/scalar-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\scalar-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/scalar-check/thread-samples.json",
+      "sha256": "ce19518c4b378a7269dd4108347da98e2d8090ecc6bc44ff4996773096f1ac72",
+      "bytes": 1497,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\scalar-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/scalar.json",
+      "sha256": "a82267b27bd36c50167e55e0e90fc264ec631ff30e5b12b42eb361598de1f60c",
+      "bytes": 2731,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\scalar.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/scalar.npz",
+      "sha256": "0a2a4a8132e1d30d79f827f9f4301558ce153d59e5aefaad35a6226cca33f156",
+      "bytes": 21782,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\scalar.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/representation.py",
+      "sha256": "f1387a06728aced34ed62982b058483ee9507e5f240dc1d33104641f4837145c",
+      "bytes": 1840,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\representation.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/representation.json",
+      "sha256": "d105125ec642ad4c1552f552de87b7a9829ec6485f9f57b30cf73569142e7b2e",
+      "bytes": 4938,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\representation.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/run-representation.py",
+      "sha256": "60aff1144e61c439471dfc81c81e50e8a99111fe0739e39b8f9547f13a6e5936",
+      "bytes": 563,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\run-representation.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/register.py",
+      "sha256": "825b40cae6b672eee895d18e0bf0a83e53a8f06dec2a129a5abc09d43998134e",
+      "bytes": 1462,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\register.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-registration.json",
+      "sha256": "f1601ede98b56a7d835550e09280a11146a06a4b6eb759410233aeba1db0f6c6",
+      "bytes": 1902,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-registration.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical.py",
+      "sha256": "c05ffd8a70d28a8e5605f041e507feddd164ceb69ca48d48168ccac6664a6db7",
+      "bytes": 9925,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical.json",
+      "sha256": "b03ecd035dfb9cbd67b52be19e36877a598b36718030f26bb2743b0b11634497",
+      "bytes": 6128,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical.npz",
+      "sha256": "c480f596f2ed3d37d41dfa1f24ac0e8e7bf7d1e9b318d26ba3bb05b983b63b45",
+      "bytes": 1089706,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/run-physical.py",
+      "sha256": "71d57159266f76b9b7b1a7ec15903c00d70893fd1b26bc686fd0bafb0b67d2c7",
+      "bytes": 687,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\run-physical.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v2.py",
+      "sha256": "2c66fd67758d4a0f581e7e5c416f42f641d60a078e949a92c4a0347c3e367a2f",
+      "bytes": 11273,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v2.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v2.json",
+      "sha256": "bbb9b183c5fe7aaf1df0281925523b3ea1437c401e4e3b91bde2ece59ee4f4cb",
+      "bytes": 7917,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v2.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v2.npz",
+      "sha256": "c480f596f2ed3d37d41dfa1f24ac0e8e7bf7d1e9b318d26ba3bb05b983b63b45",
+      "bytes": 1089706,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v2.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/run-physical-v2.py",
+      "sha256": "c37db5e6f5fdc13667cbbfeedf39d7b3242facb14c5b522ebaec4a9b85f172bc",
+      "bytes": 797,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\run-physical-v2.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v3.py",
+      "sha256": "42d749a9498a9135f0c92687bac165773d13b6d3caa829867541393e6e7aeb5d",
+      "bytes": 12535,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v3.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v3.json",
+      "sha256": "f9b5a5015d2dbb3d4e5282f8a7b541efe5a43025fa81ac69acfcb025264787da",
+      "bytes": 7917,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v3.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v3.npz",
+      "sha256": "c480f596f2ed3d37d41dfa1f24ac0e8e7bf7d1e9b318d26ba3bb05b983b63b45",
+      "bytes": 1089706,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v3.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/run-physical-v3.py",
+      "sha256": "86bce4f262083c37f13119b3ecd3e9710c142ea29243a672848b44fd933e23f3",
+      "bytes": 799,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\run-physical-v3.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/mutation-check.py",
+      "sha256": "c44d16efc24fb69013b42b398c543f6e6c26f9a9438d368f5dfb974d59c1c51c",
+      "bytes": 2152,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\mutation-check.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/mutation-results.json",
+      "sha256": "1a5261b31dbd9a82618119da3632ce4d7b96869ecb214ad52ff589e41f1a6805",
+      "bytes": 1854,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\mutation-results.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/run-mutation.py",
+      "sha256": "2d138a55e40dc1ea004cc8823727eed791b2e348d5bdcebd30ee0ba4b4d7028a",
+      "bytes": 557,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\run-mutation.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/representation-check/execution.json",
+      "sha256": "061e088dffd6180aff1d415405c9fc1c24b703eefad01638af0f24d60fb9fede",
+      "bytes": 881,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\representation-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/representation-check/stdout.log",
+      "sha256": "21ade7064165c379ceba22d6e92dc111a0c50aa6ad90a3c9449d65620a989c1a",
+      "bytes": 265,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\representation-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/representation-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\representation-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/representation-check/thread-samples.json",
+      "sha256": "b784ee68b34e55d4c8a0899648a578362e3df661252dea9540161e9bed7e1461",
+      "bytes": 3181,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\representation-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-check/execution.json",
+      "sha256": "25ac8d48a0e756eeff7332f753da9bc7c5f60553821d9c37f3ff0b4f1b834733",
+      "bytes": 1229,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-check/stdout.log",
+      "sha256": "dc350abdf5d87471cc02690b3d3076976cc2180668bf0e69c19d4609bc800a37",
+      "bytes": 478,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-check/thread-samples.json",
+      "sha256": "205261cd8a0ee40cb60f555576bd8a33bf85b9a18c0f9b05a5b2fcbb9bb309b9",
+      "bytes": 16456,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v2-check/execution.json",
+      "sha256": "4fb866f9b4cae67e6adc35c2c6694893265a3556ba6c7ba13750b225735b3e9e",
+      "bytes": 1383,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v2-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v2-check/stdout.log",
+      "sha256": "dc350abdf5d87471cc02690b3d3076976cc2180668bf0e69c19d4609bc800a37",
+      "bytes": 478,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v2-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v2-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v2-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v2-check/thread-samples.json",
+      "sha256": "dfb51602bd1484c8a507d1fd91708403d9db8c195eef33fe8d39ee4c06d81d7b",
+      "bytes": 20382,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v2-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v3-check/execution.json",
+      "sha256": "f7c4dcb14bd8523986bc42d75c155f143bc99b02a5ecdc2dfcf003e82ae678dd",
+      "bytes": 1382,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v3-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v3-check/stdout.log",
+      "sha256": "dc350abdf5d87471cc02690b3d3076976cc2180668bf0e69c19d4609bc800a37",
+      "bytes": 478,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v3-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v3-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v3-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/physical-v3-check/thread-samples.json",
+      "sha256": "1218f56632d5ef385576863cd7cb8ebbdb2390752923d8093429a5febe86172c",
+      "bytes": 19502,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\physical-v3-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/mutation-check/execution.json",
+      "sha256": "a79bfe946d5c3fbc0a38c5f2b3c5a1ae1e38e948cfea81318f53d2ebc6a7c10d",
+      "bytes": 881,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\mutation-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/mutation-check/stdout.log",
+      "sha256": "c3e67c1dd2e33bb2cf7008785d41c44fcc8823be2a41eedc4a50a6282a71b20f",
+      "bytes": 40,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\mutation-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/mutation-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\mutation-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/v3/mutation-check/thread-samples.json",
+      "sha256": "d09aa9ab528e5fed5429f9870280876e29e18ef9f0d246882c52761210fdcc56",
+      "bytes": 27370,
+      "source": "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-projected-norm-v3\\mutation-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/source/r8_bl5_projected_auxiliary_norm_dev.py",
+      "sha256": "906ebf3d821a85b6d8851f2dc86fc6e0cb2e80d19eb4f70976bad0b22f5e2bbf",
+      "bytes": 9449,
+      "source": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\scripts\\r8_bl5_projected_auxiliary_norm_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/source/r8_bl5_projected_physical_dual_dev.py",
+      "sha256": "42d749a9498a9135f0c92687bac165773d13b6d3caa829867541393e6e7aeb5d",
+      "bytes": 12535,
+      "source": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\scripts\\r8_bl5_projected_physical_dual_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/source/b3_e4_bl5_modal_reference_dev.py",
+      "sha256": "e1553e83596d5d371a7b2e196c000a1d9b551e361abf0942e352d54018b5712b",
+      "bytes": 4987,
+      "source": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\scripts\\b3_e4_bl5_modal_reference_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/source/b3_e4_bl5_riesz_controls_dev.py",
+      "sha256": "da2ed22be805ce6901cfdfe034fe52a80089617e83849f71375948c64f724a4f",
+      "bytes": 15746,
+      "source": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\scripts\\b3_e4_bl5_riesz_controls_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/source/b3_e4_bl5_reference_accuracy_dev.py",
+      "sha256": "bc4d66871d152d3eb41f2ae9818e4ca416a11881e215d925fc6c5231ecebbf27",
+      "bytes": 12891,
+      "source": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\scripts\\b3_e4_bl5_reference_accuracy_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/source/r8_bl5_projected_density_patch_dev.py",
+      "sha256": "f1f81778b0bd4672142febe23dc9bcf03641ee66cabdd62050dedd4c4e6f91ce",
+      "bytes": 11585,
+      "source": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\scripts\\r8_bl5_projected_density_patch_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/source/r8_bl5_projected_reference_action_dev.py",
+      "sha256": "b199b5273381009a21815184c2b665f1339ede0bc81d2f89d462fc085617202b",
+      "bytes": 8042,
+      "source": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\scripts\\r8_bl5_projected_reference_action_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/active-before-final-update.md",
+      "sha256": "ca2e9630aa109386bda5d037429d2c6282f10df46a7c6654577cf22d5001ac19",
+      "bytes": 8529,
+      "source": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\docs\\agent_plans\\B3_GE_E4_PL_ACTIVE_STATE.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/auxiliary-norm/active-at-source-parent.md",
+      "sha256": "b84e30af35bd7e4d5698f61c6a5f502882a200583202d6c56ceb469d2364c1f4",
+      "bytes": 6542,
+      "source": "Git67fa7945 active note"
+    }
+  ],
+  "count": 69,
+  "bytes": 3607678,
+  "limitation": "development extension only; original raw failure preserved, no F03 consumption or new qualification"
+}

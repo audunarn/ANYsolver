@@ -1,0 +1,6 @@
+{
+  "case": "s3-zero_edge",
+  "rejected": true,
+  "exception": "ValueError",
+  "message": "finite noncollinear shell point support required"
+}

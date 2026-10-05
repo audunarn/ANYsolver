@@ -1,0 +1,346 @@
+{
+  "beam_half_cells": 12,
+  "cases": {
+    "tip_fz_1000n": {
+      "continuous_gap_modes": {
+        "assembled_weak_mean_max": 1.3552527156068805e-20,
+        "channel_order": [
+          "tx_m",
+          "ty_m",
+          "tz_m",
+          "rx_rad",
+          "ry_rad",
+          "rz_rad"
+        ],
+        "component_max_m_rad": [
+          1.1373463067616725e-07,
+          2.2653207799001087e-21,
+          1.3601628547970004e-09,
+          5.463389936507772e-18,
+          1.1394997840799564e-06,
+          4.622231866529366e-33
+        ],
+        "component_min_m_rad": [
+          -1.1373463067616725e-07,
+          -2.265320779900494e-21,
+          -1.3601628547785093e-09,
+          -5.463389936507769e-18,
+          -1.1394997840799429e-06,
+          -1.5407439555097887e-33
+        ],
+        "component_rms_m_rad": [
+          7.09538136264702e-08,
+          1.2615194502619188e-21,
+          1.0138055345850803e-09,
+          4.0610622971903144e-18,
+          6.217677830148697e-07,
+          3.4452082204418e-33
+        ],
+        "interval_mean_gap_m_rad": [
+          [
+            1.902515408871966e-22,
+            -2.460897423446462e-34,
+            -5.008772479464656e-21,
+            9.629649721936191e-34,
+            3.771943593241811e-21,
+            -1.5407439555097887e-33
+          ],
+          [
+            0.0,
+            -1.0696998592482803e-34,
+            1.413360861169022e-20,
+            -9.629649721936167e-34,
+            3.755399980990741e-21,
+            4.622231866529365e-33
+          ]
+        ],
+        "interval_measure_m": [
+          0.04999999999999994,
+          0.05000000000000006
+        ],
+        "station_gap_m_rad": [
+          [
+            -7.203076419322061e-08,
+            7.729647652722088e-22,
+            1.3601628547699013e-09,
+            5.463389936507772e-18,
+            1.1394997840799564e-06,
+            -1.5407439555097887e-33
+          ],
+          [
+            4.235164736271502e-22,
+            -1.925929944387236e-34,
+            -5.8896827396238585e-21,
+            0.0,
+            0.0,
+            -1.5407439555097887e-33
+          ],
+          [
+            7.203076419322061e-08,
+            -7.729647652727865e-22,
+            -1.3601628547785093e-09,
+            -5.463389936507769e-18,
+            -1.1394997840799429e-06,
+            -1.5407439555097887e-33
+          ],
+          [
+            1.1373463067616725e-07,
+            -2.265320779900494e-21,
+            -1.360162854769198e-09,
+            -5.433542816215223e-18,
+            -3.0542245442101857e-07,
+            4.622231866529366e-33
+          ],
+          [
+            0.0,
+            0.0,
+            1.4424164542414613e-20,
+            0.0,
+            0.0,
+            4.622231866529366e-33
+          ],
+          [
+            -1.1373463067616725e-07,
+            2.2653207799001087e-21,
+            1.3601628547970004e-09,
+            5.43354281621522e-18,
+            3.054224544210321e-07,
+            4.622231866529366e-33
+          ]
+        ],
+        "station_x_m": [
+          0.905635083268963,
+          0.925,
+          0.9443649167310371,
+          0.9556350832689628,
+          0.975,
+          0.9943649167310371
+        ]
+      },
+      "drilling_equilibrium_max": 1.616484723854228e-13,
+      "full_free_equilibrium_ratio": 3.540278614058566e-12,
+      "orientation_max_rad": 1.1394997840799564e-06,
+      "orientation_rms_rad": 6.217677830148697e-07,
+      "position_max_m": 1.1374276354140397e-07,
+      "position_rms_m": 7.096105600822061e-08,
+      "shell_physical_work_j": 0.013697674231170236,
+      "status": "BOUNDED_SOLVE_PASSED",
+      "support_force_balance_n": 1.1548979177658655e-09,
+      "support_moment_balance_nm": 1.2577348850560834e-09,
+      "tip_rotation_rad": [
+        -2.832840826152421e-17,
+        -6.288685024509682e-05,
+        8.661506263221673e-18
+      ],
+      "tip_translation_m": [
+        -2.619077288112209e-06,
+        1.8331567924258754e-18,
+        7.028940065014304e-05
+      ],
+      "weak_constraint_max": 1.3552527156068805e-20,
+      "work_relative_error": 5.237828596462225e-12
+    },
+    "tip_mx_100nm": {
+      "continuous_gap_modes": {
+        "assembled_weak_mean_max": 6.776263578034403e-21,
+        "channel_order": [
+          "tx_m",
+          "ty_m",
+          "tz_m",
+          "rx_rad",
+          "ry_rad",
+          "rz_rad"
+        ],
+        "component_max_m_rad": [
+          3.911254772149413e-20,
+          2.521112508174186e-08,
+          1.5149344594555398e-20,
+          1.3840200485077612e-06,
+          8.591140240192627e-19,
+          1.5881867761018131e-21
+        ],
+        "component_min_m_rad": [
+          -3.911254772149413e-20,
+          -2.5211125081742706e-08,
+          -1.5149344594551717e-20,
+          -1.3840200485077612e-06,
+          -8.591140240192627e-19,
+          -4.0234064994579266e-21
+        ],
+        "component_rms_m_rad": [
+          2.468199825889138e-20,
+          1.844884926939108e-08,
+          1.1291654775996483e-20,
+          7.584424398833875e-07,
+          5.498744418870731e-19,
+          3.058605654188272e-21
+        ],
+        "interval_mean_gap_m_rad": [
+          [
+            2.633107345841927e-35,
+            -2.3574647457761317e-22,
+            2.8211864419734934e-34,
+            0.0,
+            0.0,
+            -4.0234064994579266e-21
+          ],
+          [
+            0.0,
+            -4.239300639334262e-22,
+            2.297856356987405e-33,
+            4.896909226313918e-21,
+            8.425943506694147e-34,
+            1.588186776101813e-21
+          ]
+        ],
+        "interval_measure_m": [
+          0.04999999999999994,
+          0.05000000000000006
+        ],
+        "station_gap_m_rad": [
+          [
+            2.57552392285676e-20,
+            -2.5211125081742706e-08,
+            -1.5149344594551717e-20,
+            1.3840200485077612e-06,
+            -8.591140240192627e-19,
+            -4.0234064994579266e-21
+          ],
+          [
+            0.0,
+            0.0,
+            -2.1849106372770563e-34,
+            0.0,
+            0.0,
+            -4.0234064994579266e-21
+          ],
+          [
+            -2.5755239228567502e-20,
+            2.521112508174186e-08,
+            1.5149344594553083e-20,
+            -1.3840200485077612e-06,
+            8.591140240192627e-19,
+            -4.0234064994579266e-21
+          ],
+          [
+            -3.911254772149413e-20,
+            -2.4283642927405448e-08,
+            1.5149344594555398e-20,
+            -3.9412468832481336e-07,
+            5.919678541607344e-19,
+            1.5881867761018131e-21
+          ],
+          [
+            0.0,
+            -4.235164736271502e-22,
+            2.867783077347053e-33,
+            6.776263578034403e-21,
+            0.0,
+            1.5881867761018131e-21
+          ],
+          [
+            3.911254772149413e-20,
+            2.42836429274046e-08,
+            -1.5149344594551714e-20,
+            3.9412468832482014e-07,
+            -5.919678541607313e-19,
+            1.5881867761018131e-21
+          ]
+        ],
+        "station_x_m": [
+          0.905635083268963,
+          0.925,
+          0.9443649167310371,
+          0.9556350832689628,
+          0.975,
+          0.9943649167310371
+        ]
+      },
+      "drilling_equilibrium_max": 9.769962616701378e-15,
+      "full_free_equilibrium_ratio": 2.8840628924054797e-12,
+      "orientation_max_rad": 1.3840200485077612e-06,
+      "orientation_rms_rad": 7.584424398833875e-07,
+      "position_max_m": 2.5211125081742706e-08,
+      "position_rms_m": 1.844884926939108e-08,
+      "shell_physical_work_j": 0.0018375429516283223,
+      "status": "BOUNDED_SOLVE_PASSED",
+      "support_force_balance_n": 8.507460944885643e-11,
+      "support_moment_balance_nm": 9.105250011221601e-11,
+      "tip_rotation_rad": [
+        4.8684233685363896e-05,
+        1.540065595915575e-17,
+        -6.519489386934232e-07
+      ],
+      "tip_translation_m": [
+        6.428323150817918e-19,
+        -3.156521298115535e-06,
+        -1.9870797921109122e-17
+      ],
+      "weak_constraint_max": 6.776263578034403e-21,
+      "work_relative_error": 1.4448833149037937e-13
+    }
+  },
+  "classification": "bounded exact-drill loaded material-line space diagnostic",
+  "drill_partition_rows": 132,
+  "drill_test_relative_residual": 7.078640006271173e-16,
+  "elapsed_s": 17.30302870000014,
+  "full_kkt_rows": 1020,
+  "limits": [
+    "private exact algebraic elimination, not production condensation",
+    "one level and terminal nodal loads per run, not mesh-uniform stability",
+    "no physical connection accuracy or multiplier-space selection"
+  ],
+  "max_rows": 1900,
+  "max_seconds": 120.0,
+  "mode_resolved_mx_only": false,
+  "model": "C1 Q4 x2/y4 35 mm shell, B3-12, material-line P0-five plus continuous_linear yaw m2, original full equations reconstructed",
+  "p0_intervals": 2,
+  "provenance": {
+    "anysolver_import": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+    "env": {
+      "MKL_NUM_THREADS": "1",
+      "NUMBA_DISABLE_JIT": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "numpy": "2.4.6",
+    "python": "3.14.2",
+    "scipy": "1.17.1",
+    "threadpools": [
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.31.188.0"
+      },
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.30"
+      }
+    ]
+  },
+  "quotient_kkt_rows": 888,
+  "quotient_nnz": 79312,
+  "row_diagnostic": {
+    "active_primal_columns": 30,
+    "rank_tolerance": 8.417416523669923e-15,
+    "scaled_row_rank": 12
+  },
+  "runner_sha256": "fc550d038371a40f234298749d52251c5d2fcdf309113f9a7fb8465ee37914d2",
+  "schur_test_relative_residual": 3.024194402780808e-16,
+  "selective_yaw": true,
+  "shell_cells": 2,
+  "source_git": "c42e9314bd254d28be644a683b3a4e8e4b1f6fcf",
+  "space_kind": "continuous_linear",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

@@ -1,0 +1,67 @@
+{
+  "classification": "bounded reference-chart drilling coupling diagnosis; not F03/G0B acceptance",
+  "drilling_shell_dofs": 286,
+  "elapsed_s_not_benchmark": 66.0878887999861,
+  "limitations": [
+    "reference chart only; finite-state drilling coupling not tested",
+    "zero top-face drill rows alone do not justify deleting coupled E4 coordinates",
+    "no new mixed eigenvalue or physical accuracy result"
+  ],
+  "limits": {
+    "max_dense_rows": 1900,
+    "rss_bytes": 2147483648,
+    "wall_s": 120
+  },
+  "model": "C1 Q4 x16/y4, native B3-12, eight top-face P0 intervals, fixed left roots",
+  "numpy": "2.4.6",
+  "peak_rss_bytes": 385175552,
+  "physical_E4_drill_block_frobenius": 0.0,
+  "physical_shell_dofs": 1430,
+  "python": "3.14.2",
+  "question": "Can the chart-dominated weak mixed spectrum be quotiented without changing the physical connection operator?",
+  "scaled_actual_E4_cross_frobenius": 7.876564198836643,
+  "scaled_actual_E4_cross_max_absolute": 0.9621712608577226,
+  "scaled_actual_E4_cross_over_blocks": 0.10816251430749343,
+  "scaled_actual_E4_cross_over_full": 0.06951989524309976,
+  "scaled_actual_E4_drill_block_frobenius": 99.3017061272039,
+  "scaled_actual_E4_physical_block_frobenius": 53.402719728763834,
+  "shell_free_dofs": 1716,
+  "source_git": "bfa3fa6f1541e62227284ff7db17bc601fae4347",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_top_face_drill_coupling.py": "8d57080501df327c2543e7292a17bb8ed1cd70256c8f751a4dc960856e788b2b",
+    "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+    "scripts\\b3_e4_f03_c1_native_mixed_metric.py": "9e5be04e9757b9ad365d0f89c74ee9027447dbf74773da43b9a4ced3ee47c390",
+    "scripts\\b3_e4_f03_distributed_surface_finite.py": "2cedbdc73564d6ffee0efa54825065dd10cb02329ca505ef49815d636ccc7cca",
+    "scripts\\b3_e4_f03_plate_patch_work.py": "61226436c029b6ebd80a7d63fb5b7038493fb29dfd06ee245fe3ca7fd78507ea"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "top_face_drill_frobenius": 0.0,
+  "top_face_max_normalized_drill_row": 0.0
+}

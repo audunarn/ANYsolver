@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from abc import ABC
 from typing import Any
 
 import numpy as np
@@ -15,6 +16,8 @@ from anysolver._native_rotation_state import (
 from anysolver.current_state_tangent import (
     require_exact_qualified_component_lifecycle_api,
 )
+from anysolver.e4_pl_element import _QUALIFIED_Q4_CLASS_NAMESPACE_AUTHORITY
+from anysolver.e4_pl_s3_element import _QUALIFIED_S3_CLASS_NAMESPACE_AUTHORITY
 from anysolver.element_capabilities import ElementCapabilityError
 from anysolver.elements import Element
 from anysolver.fe_core import FEMesh
@@ -56,6 +59,23 @@ def _qualified_case(family: str):
         model.add_node(node_id, *point)
     model.add_element(1, element)
     return model, element, model.get_material("steel")
+
+
+@pytest.mark.parametrize("family", ("q4", "s3"))
+def test_lazy_abc_annotations_are_captured_before_qualified_call(family: str) -> None:
+    authority = (
+        _QUALIFIED_Q4_CLASS_NAMESPACE_AUTHORITY
+        if family == "q4"
+        else _QUALIFIED_S3_CLASS_NAMESPACE_AUTHORITY
+    )
+    type.__getattribute__(ABC, "__annotations__")
+    namespace = type.__getattribute__(ABC, "__dict__")
+    assert set(namespace).issubset(authority[ABC])
+
+    model, element, material = _qualified_case(family)
+    stiffness = element.compute_stiffness_matrix(model.mesh, material)
+    assert stiffness.shape == ((24, 24) if family == "q4" else (18, 18))
+    assert np.all(np.isfinite(stiffness))
 
 
 def test_s3_material_deepcopy_slotnames_cache_is_benign_before_qualified_call(

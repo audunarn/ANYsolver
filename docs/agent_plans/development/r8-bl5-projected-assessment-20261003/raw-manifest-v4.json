@@ -1,0 +1,850 @@
+{
+  "identity": "NESTED40_COMPLETE_COARSE_DEVELOPMENT_SLICE_V1",
+  "source_parent": "39f12419bbe11a5cfcc73a286320a8a039789bdb",
+  "previous_manifest_sha256": "40535b04f7d96c7502524776db503d80a41b17adb30313654598e091c01c0994",
+  "files": [
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/norm.py",
+      "sha256": "8c1642a019efd19ce57fd7dcdddbd2d72d06a4f0f17d5905c2c67a8820db87aa",
+      "bytes": 9865,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\norm.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/run.py",
+      "sha256": "75a517750a79649cfb922a110ec8e0b58c420bb46c132f0b51f580b2453dae53",
+      "bytes": 802,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/register.json",
+      "sha256": "956fdbb0a2cb687c66e0356ff404b76c1d50911c2f15f719e0b45acbff757796",
+      "bytes": 1898,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\register.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/register.npz",
+      "sha256": "c494f55d87cb6c5ca06972a0db0fd958a6d5904d1e3614e360d769a3b00623f4",
+      "bytes": 39314,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\register.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/register-check/execution.json",
+      "sha256": "c4ac5830044e6c4de76c4711672acdfa3632f7fb733f64bda553ead0911b655f",
+      "bytes": 1187,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\register-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/register-check/stdout.log",
+      "sha256": "9972d55fa006fb007806b06c4a1975b35c3ec7640fff6ad9beda4b9a9c240717",
+      "bytes": 208,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\register-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/register-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\register-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/register-check/thread-samples.json",
+      "sha256": "60bfd51c8f4e00ef9d051b83c959f437ed3eb12ce2d06cf90e001253c479baff",
+      "bytes": 1765,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\register-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/assess-check/execution.json",
+      "sha256": "0dadd27bd1341c3073ff7a87aca0f84fc95a3a5a17cec2142f97b274ed028922",
+      "bytes": 1296,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\assess-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/assess-check/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\assess-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/assess-check/stderr.log",
+      "sha256": "f9584f373787917bc7886adf29f9cfb9578aaeffa33b9390362087caf65c4576",
+      "bytes": 2203,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\assess-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v1/assess-check/thread-samples.json",
+      "sha256": "28cc571b633e379d10968f36564af853c087da85aca0fca12ef8f3cbbd9c5ccd",
+      "bytes": 2605,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v1\\assess-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/norm.py",
+      "sha256": "94a22a198648cb33b0e392899e74fa41cb466b4aa5f3c99fcc2687e77535a9d6",
+      "bytes": 9999,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\norm.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/run.py",
+      "sha256": "75a517750a79649cfb922a110ec8e0b58c420bb46c132f0b51f580b2453dae53",
+      "bytes": 802,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/register.json",
+      "sha256": "3e2dac755e6a696514535eff9d38c654a1b31a4b5f4a63773ecfa87aa14e04e6",
+      "bytes": 1898,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\register.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/register.npz",
+      "sha256": "c494f55d87cb6c5ca06972a0db0fd958a6d5904d1e3614e360d769a3b00623f4",
+      "bytes": 39314,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\register.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/assess.json",
+      "sha256": "cf4018a9b395606e62cd333125f3fc5e2b9e3b7e0986599f2aaca9f2d07ee414",
+      "bytes": 2383,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\assess.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/assess.npz",
+      "sha256": "bcb9ff014407ba4bb32929eb56073526f6105d1e58077d7a3526d307aa3bf49f",
+      "bytes": 315174,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\assess.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/kernel.json",
+      "sha256": "00cdcb707b073f573e4f2b52b2197a13f6f7fcd8eff299edc208d7dc7d67ea79",
+      "bytes": 12656,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\kernel.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/kernel.npz",
+      "sha256": "c6fe014bbe735480c4ed4435cf8b606606dc4a13928904626c9ca96730e0c59a",
+      "bytes": 4603744,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\kernel.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/r8_bl5_nested_projected_kernel_dev.py",
+      "sha256": "4b28eb26672ac0c3408a305c2f984ba6123fdf2baf9be26699b57e34f7675178",
+      "bytes": 20955,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\r8_bl5_nested_projected_kernel_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/r8_bl5_projected_mixed_system_dev.py",
+      "sha256": "d9ac54792cf1b4411f9cc14eac2e557a0bc56baf42dfffbc3e23909984ea44f1",
+      "bytes": 12371,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\r8_bl5_projected_mixed_system_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/run-kernel.py",
+      "sha256": "642405532fb74506b942579de132ee8e018e6737437819e74294523ae67c2665",
+      "bytes": 727,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\run-kernel.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/register-check/execution.json",
+      "sha256": "58c5231346374c5062c945ec06bc2be3e8d290b0a84d3882ec2adff4f8e770d6",
+      "bytes": 1186,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\register-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/register-check/stdout.log",
+      "sha256": "9972d55fa006fb007806b06c4a1975b35c3ec7640fff6ad9beda4b9a9c240717",
+      "bytes": 208,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\register-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/register-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\register-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/register-check/thread-samples.json",
+      "sha256": "6cd90ca3ea62f98e127f1931b9535b312555791152ee91e91e6cd13e03ee283e",
+      "bytes": 1764,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\register-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/assess-check/execution.json",
+      "sha256": "3e6db34b1b7bfeabf9f60c35a0ff402d9eca70d81c52fca2243dd1c919695b21",
+      "bytes": 1300,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\assess-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/assess-check/stdout.log",
+      "sha256": "59f405df63a286f0528b4b1f4d9c32b5cc4e94ffaa7268494a96238cfcd991a3",
+      "bytes": 194,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\assess-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/assess-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\assess-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/assess-check/thread-samples.json",
+      "sha256": "8b97cc3a7bc644582687d854f0d08903e3eed00170653bc78fca45216ce0c5a3",
+      "bytes": 1307,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\assess-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/kernel-check/execution.json",
+      "sha256": "56d3b60ddaacf1fc540cd5a478f354ee8164939c31009e434a0e851c3b182bdd",
+      "bytes": 1222,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\kernel-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/kernel-check/stdout.log",
+      "sha256": "d1f9b3ca0931f09f697419d9ead2b40e2bdb686203298faa02760dad5859a354",
+      "bytes": 261,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\kernel-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/kernel-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\kernel-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v2/kernel-check/thread-samples.json",
+      "sha256": "d50848f6a11b069cd7bc6d0028dd91629bca91f0f41e3a2990d6ba0fdcda03c9",
+      "bytes": 23620,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v2\\kernel-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/norm.py",
+      "sha256": "bab6a87ab7de216114df8da4864f91e9dcdf5a5433b42dbc5b9adb88f521f290",
+      "bytes": 10080,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\norm.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/run.py",
+      "sha256": "75a517750a79649cfb922a110ec8e0b58c420bb46c132f0b51f580b2453dae53",
+      "bytes": 802,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/register.json",
+      "sha256": "c0532ff4c264997d8ae641204309d2d9d7bbf8c812ed55c903926cb0a91c5917",
+      "bytes": 2083,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\register.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/register.npz",
+      "sha256": "c494f55d87cb6c5ca06972a0db0fd958a6d5904d1e3614e360d769a3b00623f4",
+      "bytes": 39314,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\register.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/assess.json",
+      "sha256": "61a72cba019f40e33263847e8bde19f8266d83141bcf878da00e8cd71345a6a6",
+      "bytes": 2383,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\assess.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/assess.npz",
+      "sha256": "bcb9ff014407ba4bb32929eb56073526f6105d1e58077d7a3526d307aa3bf49f",
+      "bytes": 315174,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\assess.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/kernel.json",
+      "sha256": "39288945824854077cf7583654fe0ac7a3a25b9e04176a04dde98855c1dc7ab7",
+      "bytes": 15511,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\kernel.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/kernel.npz",
+      "sha256": "27c37e3cc276c5d0086a1b433d0659458ab03de14fdb97db8139736396eb6113",
+      "bytes": 4699723,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\kernel.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/r8_bl5_nested_projected_kernel_dev.py",
+      "sha256": "b60be2bbe19fb33d225774713a6e3ab029c9d12c79a317aa43584678de8d1304",
+      "bytes": 24696,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\r8_bl5_nested_projected_kernel_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/r8_bl5_projected_mixed_system_dev.py",
+      "sha256": "d9ac54792cf1b4411f9cc14eac2e557a0bc56baf42dfffbc3e23909984ea44f1",
+      "bytes": 12371,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\r8_bl5_projected_mixed_system_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/run-kernel.py",
+      "sha256": "642405532fb74506b942579de132ee8e018e6737437819e74294523ae67c2665",
+      "bytes": 727,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\run-kernel.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/owner.py",
+      "sha256": "68e0b9ae2ff12a60d89069dd8c9095d3c89c469404ace8f0884442cd3866240c",
+      "bytes": 7121,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\owner.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/owner.json",
+      "sha256": "b2532f53b17990aa2d035658ff54fcfb78f4ca10345a5977e8535cf8a5cd44b8",
+      "bytes": 177530,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\owner.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/owner.npz",
+      "sha256": "872cfcbb64b7f5114f4b219c005cefd712e19f0c81cbef1cdd5b599422294e99",
+      "bytes": 82612,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\owner.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/run-owner.py",
+      "sha256": "d66112f51d69951ae44a07344598be21dc0a75ff6ed3efa89e7d98535d898334",
+      "bytes": 916,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\run-owner.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/register-check/execution.json",
+      "sha256": "784db7c932b802f7cee945eb592f090773fa66e887d176fb437f72d43804a730",
+      "bytes": 1186,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\register-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/register-check/stdout.log",
+      "sha256": "9972d55fa006fb007806b06c4a1975b35c3ec7640fff6ad9beda4b9a9c240717",
+      "bytes": 208,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\register-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/register-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\register-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/register-check/thread-samples.json",
+      "sha256": "8d68981548426770592600f7ccd339f1fc455ea54a1201b76f0bf2b7e503b209",
+      "bytes": 3117,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\register-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/assess-check/execution.json",
+      "sha256": "42ca089e17ba5907f19b7180e4ed02aa385c27abb034c013ba648c8c09be8d5f",
+      "bytes": 1299,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\assess-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/assess-check/stdout.log",
+      "sha256": "59f405df63a286f0528b4b1f4d9c32b5cc4e94ffaa7268494a96238cfcd991a3",
+      "bytes": 194,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\assess-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/assess-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\assess-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/assess-check/thread-samples.json",
+      "sha256": "7e5eb80ad753ff3b228f5828f7060ead44d9b207020a46aa6c21e3923c019323",
+      "bytes": 1764,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\assess-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/kernel-check/execution.json",
+      "sha256": "d49369dfe9592d94f01ade2961000354cf287e243242d971ad0caa643cd219fb",
+      "bytes": 1226,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\kernel-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/kernel-check/stdout.log",
+      "sha256": "b4d8b5304600fa05d3cca0ae5d32206df15fcd169a990b8d1ff713d14e5e7383",
+      "bytes": 259,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\kernel-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/kernel-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\kernel-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/kernel-check/thread-samples.json",
+      "sha256": "2a9d47d44b89b6b928c8feffd4d1d9ee833bdaa11e3c3300a5f3df58162ec6a1",
+      "bytes": 22275,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\kernel-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/owner-check/execution.json",
+      "sha256": "8d21c2bedd63519eed73d28c0f4d24bfed0648533db81a0d5bddb3593a8c4577",
+      "bytes": 1641,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\owner-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/owner-check/stdout.log",
+      "sha256": "e77d84118e04302aa2855249ba64642e5edc7fa12c2cc298905da6962762a7e9",
+      "bytes": 308,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\owner-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/owner-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\owner-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/norm/v3/owner-check/thread-samples.json",
+      "sha256": "5a1b6f4850842eac4421f715597db1b4bb98a33770ec383fef2177de46b7ce21",
+      "bytes": 52535,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-v3\\owner-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v4/owner.py",
+      "sha256": "4cf665af97c042117093a84d6383f6ae9c02c52ab108cf9e7968cefca94629bf",
+      "bytes": 9903,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v4\\owner.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v4/run.py",
+      "sha256": "eb5f43a043a746d4739da99b63e7d4f00315f854e3b85cbfcd3d89c884e01390",
+      "bytes": 924,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v4\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v4/check/execution.json",
+      "sha256": "3a226d64969d9c2f43a344e0d8b537ab33b3ac6b1f351c5a2eff570878080df6",
+      "bytes": 1637,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v4\\check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v4/check/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v4\\check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v4/check/stderr.log",
+      "sha256": "88208a375c5d814ed153052b55ffe2023dcb4fc22355fe7064995276df5cae50",
+      "bytes": 514,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v4\\check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v4/check/thread-samples.json",
+      "sha256": "47abeb82ee4969e0c10d3e0420570bee7c4e018f49e8bee73b93d5e49e03e0d4",
+      "bytes": 20903,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v4\\check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v5/owner.py",
+      "sha256": "38feccefdf4df5e3c8c86d2b2f7fe523c67ac1219b1750bd09eb54cee2432bd3",
+      "bytes": 9932,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v5\\owner.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v5/run.py",
+      "sha256": "7731233d08e4b5147159bdd630b0c5b45294320efb7f3efc6696947062cdb215",
+      "bytes": 948,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v5\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v5/check/execution.json",
+      "sha256": "9e7e50533a78011682f48b9325d842610518a9814987d8c49b535fd1f51dcdfb",
+      "bytes": 1637,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v5\\check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v5/check/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v5\\check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v5/check/stderr.log",
+      "sha256": "8a779ea2c03f8fd265e7334f0f33e1b6f53bd6766045590744a537aee7316797",
+      "bytes": 778,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v5\\check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v5/check/thread-samples.json",
+      "sha256": "5f40658aeac4402ceed072457eb295f741b6e539c19e9ab4e818956a98632eae",
+      "bytes": 36964,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v5\\check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v6/owner.py",
+      "sha256": "d87bb4800926c1e66fca226389860f52c65d4870f7241aaf1f4a4e3197ba4c93",
+      "bytes": 10478,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v6\\owner.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v6/run.py",
+      "sha256": "7731233d08e4b5147159bdd630b0c5b45294320efb7f3efc6696947062cdb215",
+      "bytes": 948,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v6\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v6/owner.json",
+      "sha256": "872a21354ae2e9a0e1615bfb312b415aeae0567352610b735cd9df015adc0241",
+      "bytes": 181066,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v6\\owner.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v6/owner.npz",
+      "sha256": "872cfcbb64b7f5114f4b219c005cefd712e19f0c81cbef1cdd5b599422294e99",
+      "bytes": 82612,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v6\\owner.npz"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v6/owner-inputs.json",
+      "sha256": "ee1ef6e9fd7646e267577ce30a52ed3a7b5d472488798193ec760e08f85890e2",
+      "bytes": 316532,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v6\\owner-inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v6/check/execution.json",
+      "sha256": "01a35e4fcd4f7981d7be220cc636d1720b8c08b2e61bd9357604945ab2528688",
+      "bytes": 1640,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v6\\check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v6/check/stdout.log",
+      "sha256": "612d4185730c9718bf2b58aca2783c12e3a640190d43080b3e1ee568f42856e1",
+      "bytes": 343,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v6\\check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v6/check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v6\\check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/owner/v6/check/thread-samples.json",
+      "sha256": "e8a70e633adb09cf77f6786a0e98ea40498b0a81aa15f695f40aabacbda80693",
+      "bytes": 40367,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-owner-v6\\check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/binding.json",
+      "sha256": "deb5a32dbe8e4ea68fa5a2b7eea2bf0bb51446990db91fc693d10e80cadd0aea",
+      "bytes": 983,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\binding.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/comparison.py",
+      "sha256": "c0726203803037ef06206693e35a11c6999f448ac1bde9ffa2df3e308fedbfbb",
+      "bytes": 12042,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\comparison.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/comparison.json",
+      "sha256": "c338e69c9b0feae6b7a2ef749071da4cf00efbded0b18fd13e9978e95e03e693",
+      "bytes": 18574,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\comparison.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/run-comparison.py",
+      "sha256": "4f5ecf210014bdd41ed6de743f219f59fa674472e975f6e49a295c1e48260a8d",
+      "bytes": 568,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\run-comparison.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/run-external.py",
+      "sha256": "93152f6ab017ae13d15d4f57eb1285011f2fd232997b68290e5d9bcf4079382d",
+      "bytes": 622,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\run-external.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/comparison-check/execution.json",
+      "sha256": "b0b55a40fc8162c1e4233a2db80c23ecbf171b4d8942ccf67b448fca684f4923",
+      "bytes": 1331,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\comparison-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/comparison-check/stdout.log",
+      "sha256": "ca2b9c66eb2972377eb1319bc798e1e65ba272e2d25edc8511b357e2c0703630",
+      "bytes": 149,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\comparison-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/comparison-check/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\comparison-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/comparison-check/thread-samples.json",
+      "sha256": "dd76b7b067cd84834428727e056222a035d1f389250f64897367d30f08cb4262",
+      "bytes": 2536,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\comparison-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fy-check/execution.json",
+      "sha256": "004b1e8fd0dbb708c2ca6fa247ed3c1171c83154c93f1aaf6317694724f6d8c8",
+      "bytes": 1191,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fy-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fy-check/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fy-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fy-check/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fy-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fy-check/thread-samples.json",
+      "sha256": "3e3aec1f3d963d419b4e98adebd35d0099de971e98e11a37023f1f19077501e4",
+      "bytes": 3069,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fy-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/fy/inputs.json",
+      "sha256": "13ec8d84f74dbe1ab1bb2155bd7a5f7a0a6d7187a9c53a429317b959728182fb",
+      "bytes": 190962,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\fy\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/fy/interface-recovery-blocks.json",
+      "sha256": "6b91c1f0eabf93262c95487ba7d8293cff7e1e53134801ccd37e29ca65d5a54b",
+      "bytes": 11131,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\fy\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/fy/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\fy\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/fy/preparation-controls.json",
+      "sha256": "f1d90dc2b5ddb2c84fcefe7cfcc504564342592286aba778538330d93025e3a2",
+      "bytes": 1076,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\fy\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/fy/raw-inventory.json",
+      "sha256": "fe1509c8515bf649b13cdae2d156ae90a29d3f09eb2e4f83e711abca15d4363e",
+      "bytes": 136750,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\fy\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/fy/recovered-actions.json",
+      "sha256": "89a6f5c73424302bdd2e4a7f16bc0d97b839b12f9eae4a1f9362ffcfe50ff557",
+      "bytes": 194994,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\fy\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/fy/summary.json",
+      "sha256": "acdb82714bfd166d35c86591496bc7e13612b101b26c84a80dedffad7cad4bc3",
+      "bytes": 3059,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\fy\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/mx-check/execution.json",
+      "sha256": "efa327f1a4ee399ed033ff9401c37c8130e7ba02b465bcd8b1d17aad9592819f",
+      "bytes": 1192,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\mx-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/mx-check/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\mx-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/mx-check/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\mx-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/mx-check/thread-samples.json",
+      "sha256": "ecae45ac105030f196b0211a4963823c279deef2df494db03d2ea1311268b2b5",
+      "bytes": 3139,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\mx-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mx/inputs.json",
+      "sha256": "f9a99a4863da03b4bcf357717c90b64e027b395d79bba11750f0b2f6a1db0d45",
+      "bytes": 190960,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mx\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mx/interface-recovery-blocks.json",
+      "sha256": "4c4d60f33fca5918c75e4729d35536d6b47055871b772e77aeb541a1a1b6f041",
+      "bytes": 11182,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mx\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mx/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mx\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mx/preparation-controls.json",
+      "sha256": "f1d90dc2b5ddb2c84fcefe7cfcc504564342592286aba778538330d93025e3a2",
+      "bytes": 1076,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mx\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mx/raw-inventory.json",
+      "sha256": "e7b688e9429216b7ad87ea60bcffa4fd5dbf1a648459a9657b1dc9deb5d1f6c9",
+      "bytes": 137903,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mx\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mx/recovered-actions.json",
+      "sha256": "3bd1196ee2f443cfff835142d1a801d2239f462e51f7c4b174e2fdf0474120fc",
+      "bytes": 196038,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mx\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mx/summary.json",
+      "sha256": "41f98aa2453337f1efcb2e1fa76b9a4f662b5cc4e60e712b109d6c389301cb1e",
+      "bytes": 3064,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mx\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/mz-check/execution.json",
+      "sha256": "beea503c623edb47d43a68f320841b3ccb6b260a15737bc28cdbff190e0ec6bd",
+      "bytes": 1192,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\mz-check\\execution.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/mz-check/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\mz-check\\stdout.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/mz-check/stderr.log",
+      "sha256": "23b326b47ea464109714be3eb4a2105df733a3b2080180c9b7e936512795a935",
+      "bytes": 92,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\mz-check\\stderr.log"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/mz-check/thread-samples.json",
+      "sha256": "421281e61af03eaca9d36c64d5e5ebcc20b85499cde65818052f3a87cde5d014",
+      "bytes": 3336,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\mz-check\\thread-samples.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mz/inputs.json",
+      "sha256": "06221824b20d71742458375472549629373bfd9a6b652951a8953c4aca970321",
+      "bytes": 190960,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mz\\inputs.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mz/interface-recovery-blocks.json",
+      "sha256": "edfe93bda799ca44b63bea7344f22adb0ba5801a4522aebde7d4fe47acf77ba8",
+      "bytes": 11196,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mz\\interface-recovery-blocks.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mz/inventory-predicates.json",
+      "sha256": "7be9f8d98c87f114d087da6ad9ef755836a4f2b746f69ae8b8b10384fba759ed",
+      "bytes": 193,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mz\\inventory-predicates.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mz/preparation-controls.json",
+      "sha256": "f1d90dc2b5ddb2c84fcefe7cfcc504564342592286aba778538330d93025e3a2",
+      "bytes": 1076,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mz\\preparation-controls.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mz/raw-inventory.json",
+      "sha256": "7ad4427ab6869f18654392d841c5754d17091dd0ec98b5071ac2b3d0ccff79c2",
+      "bytes": 137918,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mz\\raw-inventory.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mz/recovered-actions.json",
+      "sha256": "988636a33b9ce9d007bbe9eddd8fdd0cb7e6c669f9f849d8d34ac439ee3f52fd",
+      "bytes": 196185,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mz\\recovered-actions.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/external/mz/summary.json",
+      "sha256": "ae81bf207d94eafc868443f50de31b2fb2b7d553ca95eca2582e7371d92362f3",
+      "bytes": 3060,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\external\\mz\\summary.json"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fixtures/r8_bl5_nested_projected_external_dev.py",
+      "sha256": "4622aa94a3ee25806a407502d7aed939967218f2774599bbed7bb2b9736e5eac",
+      "bytes": 15431,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fixtures\\r8_bl5_nested_projected_external_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fixtures/r8_bl5_external_affine_reference_dev.py",
+      "sha256": "04c1b930258d5911c500ab3430b196e9488324ae8cafaebbfa30584420a26b08",
+      "bytes": 39416,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fixtures\\r8_bl5_external_affine_reference_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fixtures/b3_e4_bl5_external_p0_refinement_dev.py",
+      "sha256": "6f3d19d0c95a851d7e1d7dd694f1c1dce051716a811fc4fb7c733e314c4c733a",
+      "bytes": 33736,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fixtures\\b3_e4_bl5_external_p0_refinement_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fixtures/b3_e4_bl5_external_p0_enforcement_dev.py",
+      "sha256": "11e593497dab40ae052a491740a6ed50bfe51a3580f275fa87d950dc1004a004",
+      "bytes": 35782,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fixtures\\b3_e4_bl5_external_p0_enforcement_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fixtures/b3_e4_bl5_matched_mz_reference_dev.py",
+      "sha256": "5b6eb1dac1bb4f58548c7555e10cc798ef4727406ca25efb735808b776444702",
+      "bytes": 30002,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fixtures\\b3_e4_bl5_matched_mz_reference_dev.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fixtures/b3_e4_bl5_matched_reference_actions.py",
+      "sha256": "a42d4bdeb96c7106f296e92129104eb896fbc7cb2904d9867bc61c7a9ca169c6",
+      "bytes": 21000,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fixtures\\b3_e4_bl5_matched_reference_actions.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/matched/fixtures/b3_e4_f03_bl5_opensees_line_reference.py",
+      "sha256": "fe654b7a7c384620dae65f0b0981bb18e512513c090abdfe0dbf6c62c43d15cc",
+      "bytes": 16790,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-nested40-matched-v1\\fixtures\\b3_e4_f03_bl5_opensees_line_reference.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/inputs/reused-supervisor.py",
+      "sha256": "ad9947c9268774a980041112004364d4daba6ce884fe339fab9f0d90b265d3ec",
+      "bytes": 7424,
+      "source": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-bl5-affine-flexible-v1\\run.py"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/active-prospective.md",
+      "sha256": "89e58d496c96fe53782546d91ca53154962f6121966b3e63c6607e3dc61536b4",
+      "bytes": 8208,
+      "source": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\docs\\agent_plans\\B3_GE_E4_PL_ACTIVE_STATE.md"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/active-at-source-parent.md",
+      "sha256": "3547fb4f1baaaf1024601c25aa69edb72e43d68df6b9ce01839478d2c7735ae9",
+      "bytes": 6166,
+      "source": "Git39f12419 active state"
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/nested40/independent-review.md",
+      "sha256": "d0491eb190ad4ecbdef240eb38f9040ec23121b33b0db5c01b52a14f7e19f72c",
+      "bytes": 2983,
+      "source": "Independent worker findings/disposition, source and evidence Read only"
+    }
+  ],
+  "count": 140,
+  "bytes": 13193716,
+  "limitation": "Explicit owned whitelist only; failures retained; supplementary OpenSees, no policy/F03/G0 qualification"
+}

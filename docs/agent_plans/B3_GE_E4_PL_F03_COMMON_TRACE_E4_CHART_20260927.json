@@ -1,0 +1,111 @@
+{
+  "cases": {
+    "continuous_linear": {
+      "first_ad_formal_pairing": [
+        -0.0018711688539544287,
+        -0.0015294878716069042
+      ],
+      "first_fd_formal_pairing": [
+        -0.0018711688541445026,
+        -0.0015294878713182191
+      ],
+      "first_max_formal_error": 2.8868509145685284e-13,
+      "mixed_ad_formal_pairing": -0.00010065918828266157,
+      "mixed_fd_formal_pairing": -0.0001006591883819961,
+      "mixed_formal_error": 9.933453528048614e-14,
+      "nonzero_gap_norm": 1.1671721048699064e-05,
+      "nonzero_total_rotation_norm": 0.5632131373195758,
+      "reference_directional_error": 2.202285662861181e-20,
+      "signed_weight_min": 5.4350725973793586e-05
+    },
+    "dual_linear": {
+      "first_ad_formal_pairing": [
+        -0.000940516237874655,
+        -0.0005093479462252114
+      ],
+      "first_fd_formal_pairing": [
+        -0.0009405162369399699,
+        -0.0005093479467843318
+      ],
+      "first_max_formal_error": 9.346851634686737e-13,
+      "mixed_ad_formal_pairing": -0.00018482660359856888,
+      "mixed_fd_formal_pairing": -0.00018482660340364207,
+      "mixed_formal_error": 1.94926811237367e-13,
+      "nonzero_gap_norm": 4.292647197033894e-05,
+      "nonzero_total_rotation_norm": 0.5632131373195758,
+      "reference_directional_error": 6.776263578034403e-21,
+      "signed_weight_min": -0.0005107214535973998
+    },
+    "piecewise_constant": {
+      "first_ad_formal_pairing": [
+        -0.0029612442306622883,
+        -0.0019590063841291366
+      ],
+      "first_fd_formal_pairing": [
+        -0.0029612442313899953,
+        -0.0019590063838720003
+      ],
+      "first_max_formal_error": 7.277069571931527e-13,
+      "mixed_ad_formal_pairing": -0.0002125532887854087,
+      "mixed_fd_formal_pairing": -0.00021255328558702786,
+      "mixed_formal_error": 3.198380850531063e-12,
+      "nonzero_gap_norm": 3.2460658785265615e-05,
+      "nonzero_total_rotation_norm": 0.5632131373195758,
+      "reference_directional_error": 3.3881317890172014e-21,
+      "signed_weight_min": 0.00048225308641975154
+    }
+  },
+  "classification": "bounded actual E4 total-rotation chart pullback; no F03 acceptance",
+  "derivative_steps": {
+    "first": 1e-05,
+    "mixed": 0.002
+  },
+  "development_limits": {
+    "first_formal": 1e-07,
+    "mixed_formal": 1e-06,
+    "reference_directional": 1e-10
+  },
+  "elapsed_s_not_benchmark": 3.9903673000226263,
+  "limitations": [
+    "selected basis rows and one finite chart only",
+    "formal multipliers have no physical dual units yet",
+    "interface stability and physical transfer remain open"
+  ],
+  "model": "Q4 x4/y4 35mm, C1 B3-12, fixed reference arm and co-moving x=.95 beam frame",
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "question": "Do selected P0/P1/signed-dual common rows have correct first and mixed formal-work derivatives through E4 additive total coordinates at nonzero rotation?",
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_common_trace_e4_chart.py": "cff48e583c318c4b799b94e5080db44e7164183d57005f7dd758c22def6b0bb7",
+    "scripts\\b3_e4_f03_common_trace_finite_work.py": "e8e605bd9b46a9c904fe4ad7f5f7a7a88ca8fd6a1ff22141f5fce96b2632e11f",
+    "scripts\\b3_e4_f03_distributed_surface_finite.py": "2cedbdc73564d6ffee0efa54825065dd10cb02329ca505ef49815d636ccc7cca"
+  },
+  "thread_env": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "threadpool_info": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ]
+}

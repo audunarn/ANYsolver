@@ -31,11 +31,10 @@ Scope and validity:
   nonsymmetric; frame sensitivity is evaluated by centered differences while
   the remaining derivatives are analytical.  ``"rotated"`` retains the
   inexpensive historical ``E k_local E.T`` approximation;
-- the pull-back subtracts order-one nodal coordinates, so the internal force
-  carries an intrinsic roundoff floor of roughly ``eps * ||K_e|| * L`` per
-  element (~1e-7 N for steel at metre scale).  Use residual tolerances of
-  1e-5..1e-6 relative and realistic load magnitudes; demanding convergence
-  below the floor stalls the increment adaptation;
+- the shell pull-back uses displacement differences to reduce cancellation
+  at small loads. Beam pull-back and geometric-frame extraction can still
+  impose a roundoff floor; demanding convergence below it can stall an
+  increment;
 - eccentric beam-shell couplings use linear MPC constraints whose eccentricity
   vectors do not rotate; coupled regions should not undergo large rotations.
 """
@@ -199,31 +198,40 @@ class _CorotationalReference:
 
     __slots__ = ("coordinates", "centroid", "frame", "category")
 
-    def __init__(self, element: Any, model: "FEModel"):
-        self.coordinates = np.asarray(element.get_node_coordinates(model.mesh), dtype=float).copy()
-        self.centroid = self.coordinates.mean(axis=0)
+    def __init__(self, element: Any, model: "FEModel", *, centered_shell: bool = False):
+        coordinates = np.asarray(element.get_node_coordinates(model.mesh), dtype=float).copy()
         self.category = _element_category(element)
+        if centered_shell and self.category == "shell":
+            coordinates -= coordinates.mean(axis=0)
+        self.coordinates = coordinates
+        self.centroid = coordinates.mean(axis=0)
         if self.category == "shell":
             self.frame = _shell_center_frame(element, self.coordinates)
         else:
             self.frame = None
 
 
-def _corotational_cache(model: "FEModel") -> Dict[int, _CorotationalReference]:
+def _corotational_cache(
+    model: "FEModel", *, centered_shell: bool = False
+) -> Dict[int, _CorotationalReference]:
     mesh = model.mesh
     revisions = mesh.revision_signature()
     signature = (
         int(revisions.get("topology", 0)),
         int(revisions.get("geometry", 0)),
     )
-    cached = getattr(mesh, "_corotational_cache", None)
+    cache_name = (
+        "_corotational_centered_shell_cache" if centered_shell else "_corotational_cache"
+    )
+    cached = getattr(mesh, cache_name, None)
     if cached is not None and cached[0] == signature:
         return cached[1]
     cache: Dict[int, _CorotationalReference] = {}
     for element_id, element in mesh.elements.items():
         if _element_category(element) is not None:
-            cache[int(element_id)] = _CorotationalReference(element, model)
-    mesh._corotational_cache = (signature, cache)
+            cache[int(element_id)] = _CorotationalReference(
+                element, model, centered_shell=centered_shell)
+    setattr(mesh, cache_name, (signature, cache))
     return cache
 
 
@@ -231,6 +239,8 @@ def _corotational_deformation_state(
     reference: _CorotationalReference,
     element: Any,
     u_element: np.ndarray,
+    *,
+    stable_shell_rotation: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return deformational DOFs, rigid rotation, and current coordinates.
 
@@ -248,16 +258,50 @@ def _corotational_deformation_state(
     else:
         R_rig = _beam_rigid_rotation(reference.coordinates, deformed, rotations)
 
-    centroid_def = deformed.mean(axis=0)
     u_d = np.zeros((num_nodes, 6), dtype=float)
+    if reference.category == "shell":
+        # The equivalent difference of order-element-size coordinates loses
+        # small shell deformation when the applied load is small.  Form the
+        # translational pull-back from displacement differences instead.
+        translation_offset = translations - translations.mean(axis=0)
+        reference_arm = reference.coordinates - reference.centroid
+        rotation_difference = (_stable_shell_rotation_difference(R_rig)
+                               if stable_shell_rotation else R_rig.T - np.eye(3))
+    else:
+        centroid_def = deformed.mean(axis=0)
     for node in range(num_nodes):
-        u_d[node, :3] = (
-            R_rig.T @ (deformed[node] - centroid_def)
-            - (reference.coordinates[node] - reference.centroid)
-        )
+        if reference.category == "shell":
+            u_d[node, :3] = (
+                R_rig.T @ translation_offset[node]
+                + rotation_difference @ reference_arm[node]
+            )
+        else:
+            u_d[node, :3] = (
+                R_rig.T @ (deformed[node] - centroid_def)
+                - (reference.coordinates[node] - reference.centroid)
+            )
         R_node = rotation_matrix_from_vector(rotations[node])
         u_d[node, 3:] = rotation_vector_from_matrix(R_rig.T @ R_node)
     return u_d.reshape(-1), R_rig, deformed
+
+
+def _stable_shell_rotation_difference(rotation: np.ndarray) -> np.ndarray:
+    """Form R.T-I without subtracting nearly equal diagonal entries.
+
+    For a proper rotation A=(R-R.T)/2=sin(theta)*hat(axis), so
+    R-I=A+A@A/(1+cos(theta)). The skew entries retain small rotations and
+    their quadratic strain contribution. Away from identity use the historical
+    subtraction, avoiding the near-pi denominator. Callers already validate the
+    shell frame; this is not a projection/admission rule for arbitrary matrices.
+    """
+    cosine = .5 * (float(np.trace(rotation)) - 1.)
+    if (not np.isfinite(rotation).all() or cosine <= .5 or
+            not np.allclose(rotation.T @ rotation, np.eye(3), rtol=0.,
+                            atol=64. * np.finfo(float).eps) or
+            float(np.linalg.det(rotation)) <= 0.):
+        return rotation.T - np.eye(3)
+    skew = .5 * (rotation - rotation.T)
+    return (skew + (skew @ skew) / (1. + cosine)).T
 
 
 def _dense_block_rotation(rotation: np.ndarray, num_nodes: int) -> np.ndarray:
@@ -279,6 +323,8 @@ def corotational_element_response(
     committed_state: Optional[Any] = None,
     num_layers: int = 5,
     tangent_mode: str = "rotated",
+    centered_shell_reference: bool = False,
+    stable_shell_rotation: bool = False,
 ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[Any]]:
     """Corotational internal force, tangent and trial state for one element.
 
@@ -291,6 +337,10 @@ def corotational_element_response(
 
     Returns ``(None, None, None)`` for element types outside the corotational
     scope so the caller can fall back to the element's own response.
+
+    ``stable_shell_rotation`` is used by the experimental mixed point owner's
+    checkpoint-bound numerical policy. Ordinary and legacy callers retain the
+    historical arithmetic unless they explicitly request it.
     """
     if bool(getattr(element, "formulation_native_total_lagrangian", False)):
         raise ValueError(
@@ -301,7 +351,12 @@ def corotational_element_response(
     if tangent_mode not in {"rotated", "consistent"}:
         raise ValueError("corotational tangent_mode must be 'rotated' or 'consistent'")
 
-    reference = _corotational_cache(model).get(int(element_id))
+    if type(centered_shell_reference) is not bool:
+        raise ValueError("centered shell reference flag must be boolean")
+    if type(stable_shell_rotation) is not bool:
+        raise ValueError("stable shell rotation flag must be boolean")
+    reference = _corotational_cache(
+        model, centered_shell=centered_shell_reference).get(int(element_id))
     if reference is None or reference.category is None:
         return None, None, None
     num_nodes = int(element.num_nodes)
@@ -311,6 +366,7 @@ def corotational_element_response(
         reference,
         element,
         u_element,
+        stable_shell_rotation=stable_shell_rotation,
     )
 
     material = model.get_material(element.material_name)

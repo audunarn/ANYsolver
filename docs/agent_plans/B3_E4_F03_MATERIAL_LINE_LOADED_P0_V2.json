@@ -1,0 +1,120 @@
+{
+  "anysolver_import_path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "beam_half_cells": 12,
+  "classification": "private same-primal provisional-P0 loaded discriminator",
+  "material_line_station_count": 6,
+  "numpy_version": "2.4.6",
+  "python_version": "3.14.2",
+  "qualification": "development only; F03 and G0B remain open",
+  "result": {
+    "material_line": {
+      "tip_fz_1000n": {
+        "constraint_max": 8.008337569266824e-21,
+        "dimension": 1014,
+        "free_residual_ratio": 3.5177095134905077e-12,
+        "material_line_orientation_rms_rad": 1.8601151255606614e-06,
+        "material_line_position_rms_m": 1.7265049888208442e-07,
+        "nnz": 18079,
+        "row_rank": 6,
+        "shell_physical_work_j": 0.013429224728551898,
+        "support_force_balance_n": 1.222906927235061e-09,
+        "support_moment_balance_nm": 8.944186886427517e-10,
+        "tip_rotation_rad": [
+          -4.484070506773714e-16,
+          -6.0593195145361446e-05,
+          1.739433935856072e-17
+        ],
+        "tip_translation_m": [
+          -2.6511096991892344e-06,
+          2.9996579097850854e-17,
+          7.116795804531487e-05
+        ],
+        "work_absolute_error_j": 1.651040415495686e-13,
+        "work_relative_error": 2.3199210162028492e-12
+      },
+      "tip_mx_100nm": {
+        "constraint_max": 7.411538288475128e-22,
+        "dimension": 1014,
+        "free_residual_ratio": 4.1355427965943225e-12,
+        "material_line_orientation_rms_rad": 2.446253091297152e-06,
+        "material_line_position_rms_m": 8.821122839888956e-08,
+        "nnz": 18079,
+        "row_rank": 6,
+        "shell_physical_work_j": 0.0019303421625772176,
+        "support_force_balance_n": 1.5733143522665524e-10,
+        "support_moment_balance_nm": 1.2927646107556053e-10,
+        "tip_rotation_rad": [
+          5.152106521381535e-05,
+          9.683325778266554e-18,
+          -1.151752252955527e-06
+        ],
+        "tip_translation_m": [
+          4.3007274535746916e-19,
+          -3.2051653736938274e-06,
+          -1.6176801287858832e-17
+        ],
+        "work_absolute_error_j": 1.5395670849294163e-15,
+        "work_relative_error": 2.988228365504722e-13
+      }
+    },
+    "reduced_strip_pose": {
+      "tip_fz_1000n": {
+        "constraint_max": 1.125581440849353e-19,
+        "dimension": 1014,
+        "free_residual_ratio": 4.158270587334991e-12,
+        "material_line_orientation_rms_rad": 2.339410907279454e-06,
+        "material_line_position_rms_m": 3.05534597640947e-07,
+        "nnz": 18299,
+        "row_rank": 6,
+        "shell_physical_work_j": 0.013561698121446126,
+        "support_force_balance_n": 1.994085210854426e-09,
+        "support_moment_balance_nm": 1.4935250093012152e-09,
+        "tip_rotation_rad": [
+          -2.985173594833416e-16,
+          -6.102024442307947e-05,
+          1.1718115779520001e-17
+        ],
+        "tip_translation_m": [
+          -2.704244437058079e-06,
+          2.0156343457154034e-17,
+          7.06588292190669e-05
+        ],
+        "work_absolute_error_j": 1.2979894936648861e-13,
+        "work_relative_error": 1.836981319971589e-12
+      },
+      "tip_mx_100nm": {
+        "constraint_max": 6.776263578034403e-21,
+        "dimension": 1014,
+        "free_residual_ratio": 2.6202726067840523e-12,
+        "material_line_orientation_rms_rad": 1.4953586042535912e-06,
+        "material_line_position_rms_m": 7.953816801168839e-08,
+        "nnz": 18299,
+        "row_rank": 6,
+        "shell_physical_work_j": 0.0019233595419781962,
+        "support_force_balance_n": 9.79789138153453e-11,
+        "support_moment_balance_nm": 8.384036247819393e-11,
+        "tip_rotation_rad": [
+          4.954609916735038e-05,
+          1.018915305266977e-17,
+          -2.2844064060726065e-07
+        ],
+        "tip_translation_m": [
+          4.786190591885483e-19,
+          -2.9955809008632235e-06,
+          -1.0403492256308017e-17
+        ],
+        "work_absolute_error_j": 1.93421667571414e-15,
+        "work_relative_error": 3.903872773477068e-13
+      }
+    }
+  },
+  "scipy_version": "1.17.1",
+  "scope": "Q4 35 mm C1 E4/native retained generalized B3, two loads",
+  "shell_nodes": 143,
+  "thread_environment": {
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "classification": "pure-torque solid-face kinematic fit and Q4 energy comparison",
+  "face_fit": {
+    "face_displacement_components": 16278,
+    "face_displacement_rms_m": 1.0798763426052497e-05,
+    "fit_component_max_abs_m": 6.739719297358971e-07,
+    "fit_component_rms_m": 5.018891213834712e-08,
+    "fitted_free_variables": 770,
+    "iterations": 87,
+    "lsqr_status": 2
+  },
+  "limits": [
+    "kinematic least-squares fit, not an energy-orthogonal projection",
+    "E4 and 3D plate/support idealizations remain distinct",
+    "open-interface pure-action component response, not a coupled bond",
+    "one shell grid and load; no F03/G0B or multiplier acceptance"
+  ],
+  "pure_action_width_sha256": "31aafbf3ad37f9e07afa08a6e45a86a69afff6e6d212d36ac0324298a4e4f166",
+  "pure_torque_unit_fields": 4,
+  "q4": {
+    "equilibrium_action_work_j": 0.012122226959156419,
+    "equilibrium_residual_ratio": 1.3261370734317847e-11,
+    "fit_minus_equilibrium_q4_energy_j": 0.0017533863878202364,
+    "fitted_action_work_j": 0.012635909721354662,
+    "fitted_free_residual_ratio": 56.42521255883167,
+    "fitted_internal_quadratic_work_j": 0.014902978871353386,
+    "free_coordinates": 924,
+    "relative_energy_norm_distance": 0.3803186387059535,
+    "variational_identity_defect_j": -1.9756331987030862e-14
+  },
+  "runner_sha256": "4940014bb360b1fdfac92e1d1b3367ffc30c12d073d9a67695c021e865da0565",
+  "solid_plate_action_work_j": 0.013104938095238095,
+  "solid_reconstruction_sha256": "118aef26cf0766fa50a6d42929a095440e142f7177216e5b85dc2c7e51fa7f92",
+  "source_commit": "4468ab18c9d0aa6bcd9e590fe2b9384d39b289ea",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE"
+}

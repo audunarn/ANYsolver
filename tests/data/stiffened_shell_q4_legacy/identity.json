@@ -1,0 +1,15 @@
+{
+  "library_commit": "5136f026cb1844b57adb9c8e12404037cec9a728",
+  "wheel_sha256": "cd4814160b79e308b69005014ae7992653368a4e25b3e213b8dc2f90a8ca2c58",
+  "site": "C:\\Users\\AUDUNA~1\\AppData\\Local\\Temp\\r8-q4-reference-installed-v1\\site",
+  "verified_module_count": 414,
+  "checkpoint_sha256": "6bac1b648b5528a9bd10a226ec71c06dcbc29bff3652757f0ab4e71e7181067c",
+  "continued_sha256": "938644ff42ce481fba3dbfcd9c8cac0d4ba6d744b51d75ade2f6f98b2fc89832",
+  "accepted_factors": [
+    0.5,
+    1.0,
+    2.0
+  ],
+  "eq": 8.294819683084385e-10,
+  "gap": 6.384039346980133e-19
+}

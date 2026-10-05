@@ -1,0 +1,683 @@
+{
+  "classification": "bounded physically explicit two-sided linear pitch external diagnostic; not G0B acceptance",
+  "equation_node_x_coefficients": [
+    [
+      2085,
+      2.380952380952383
+    ],
+    [
+      89,
+      -0.2976190476190472
+    ],
+    [
+      90,
+      -0.5952380952380949
+    ],
+    [
+      91,
+      -0.29761904761904784
+    ],
+    [
+      108,
+      -0.5952380952380945
+    ],
+    [
+      109,
+      -1.1904761904761898
+    ],
+    [
+      110,
+      -0.5952380952380956
+    ],
+    [
+      127,
+      -0.5952380952380945
+    ],
+    [
+      128,
+      -1.19047619047619
+    ],
+    [
+      129,
+      -0.5952380952380957
+    ],
+    [
+      146,
+      -0.5952380952380941
+    ],
+    [
+      147,
+      -1.19047619047619
+    ],
+    [
+      148,
+      -0.5952380952380956
+    ],
+    [
+      165,
+      -0.2976190476190471
+    ],
+    [
+      166,
+      -0.5952380952380949
+    ],
+    [
+      167,
+      -0.2976190476190477
+    ],
+    [
+      1077,
+      0.4017857142857137
+    ],
+    [
+      1078,
+      0.8035714285714282
+    ],
+    [
+      1079,
+      0.4017857142857146
+    ],
+    [
+      1096,
+      0.8035714285714275
+    ],
+    [
+      1097,
+      1.6071428571428563
+    ],
+    [
+      1098,
+      0.803571428571429
+    ],
+    [
+      1115,
+      0.8035714285714275
+    ],
+    [
+      1116,
+      1.6071428571428565
+    ],
+    [
+      1117,
+      0.8035714285714292
+    ],
+    [
+      1134,
+      0.803571428571427
+    ],
+    [
+      1135,
+      1.6071428571428565
+    ],
+    [
+      1136,
+      0.803571428571429
+    ],
+    [
+      1153,
+      0.40178571428571364
+    ],
+    [
+      1154,
+      0.8035714285714282
+    ],
+    [
+      1155,
+      0.4017857142857144
+    ],
+    [
+      1449,
+      -0.10416666666666652
+    ],
+    [
+      1450,
+      -0.2083333333333332
+    ],
+    [
+      1451,
+      -0.10416666666666674
+    ],
+    [
+      1460,
+      -0.2083333333333331
+    ],
+    [
+      1461,
+      -0.4166666666666664
+    ],
+    [
+      1462,
+      -0.20833333333333345
+    ],
+    [
+      1471,
+      -0.2083333333333331
+    ],
+    [
+      1472,
+      -0.4166666666666665
+    ],
+    [
+      1473,
+      -0.20833333333333348
+    ],
+    [
+      1482,
+      -0.20833333333333298
+    ],
+    [
+      1483,
+      -0.4166666666666665
+    ],
+    [
+      1484,
+      -0.20833333333333345
+    ],
+    [
+      1493,
+      -0.1041666666666665
+    ],
+    [
+      1494,
+      -0.2083333333333332
+    ],
+    [
+      1495,
+      -0.10416666666666671
+    ],
+    [
+      1894,
+      1.190476190476189
+    ],
+    [
+      1899,
+      1.1904761904761916
+    ],
+    [
+      1981,
+      1.190476190476189
+    ],
+    [
+      1986,
+      2.38095238095238
+    ],
+    [
+      1987,
+      2.3809523809523783
+    ],
+    [
+      1991,
+      1.1904761904761914
+    ],
+    [
+      1992,
+      2.3809523809523827
+    ],
+    [
+      2074,
+      1.190476190476189
+    ],
+    [
+      2079,
+      2.38095238095238
+    ],
+    [
+      2080,
+      2.3809523809523783
+    ],
+    [
+      2084,
+      1.1904761904761914
+    ],
+    [
+      2167,
+      1.1904761904761891
+    ],
+    [
+      2172,
+      2.3809523809523805
+    ],
+    [
+      2173,
+      2.380952380952378
+    ],
+    [
+      2177,
+      1.190476190476192
+    ],
+    [
+      2178,
+      2.380952380952383
+    ],
+    [
+      2260,
+      1.1904761904761885
+    ],
+    [
+      2265,
+      2.3809523809523796
+    ],
+    [
+      2266,
+      1.1904761904761882
+    ],
+    [
+      2270,
+      1.1904761904761911
+    ],
+    [
+      2271,
+      1.1904761904761911
+    ],
+    [
+      4329,
+      -1.607142857142855
+    ],
+    [
+      4332,
+      -1.6071428571428585
+    ],
+    [
+      4381,
+      -1.607142857142855
+    ],
+    [
+      4384,
+      -3.214285714285713
+    ],
+    [
+      4385,
+      -3.214285714285711
+    ],
+    [
+      4387,
+      -1.6071428571428583
+    ],
+    [
+      4388,
+      -3.2142857142857166
+    ],
+    [
+      4437,
+      -1.607142857142855
+    ],
+    [
+      4440,
+      -3.214285714285713
+    ],
+    [
+      4441,
+      -3.214285714285711
+    ],
+    [
+      4443,
+      -1.6071428571428583
+    ],
+    [
+      4444,
+      -3.214285714285717
+    ],
+    [
+      4493,
+      -1.6071428571428554
+    ],
+    [
+      4496,
+      -3.2142857142857135
+    ],
+    [
+      4497,
+      -3.21428571428571
+    ],
+    [
+      4499,
+      -1.6071428571428594
+    ],
+    [
+      4500,
+      -3.214285714285717
+    ],
+    [
+      4549,
+      -1.6071428571428545
+    ],
+    [
+      4552,
+      -3.2142857142857126
+    ],
+    [
+      4553,
+      -1.607142857142854
+    ],
+    [
+      4555,
+      -1.607142857142858
+    ],
+    [
+      4556,
+      -1.607142857142858
+    ],
+    [
+      5352,
+      0.4166666666666662
+    ],
+    [
+      5356,
+      0.4166666666666662
+    ],
+    [
+      5357,
+      0.8333333333333331
+    ],
+    [
+      5358,
+      0.8333333333333325
+    ],
+    [
+      5361,
+      0.4166666666666671
+    ],
+    [
+      5362,
+      0.41666666666666696
+    ],
+    [
+      5363,
+      0.8333333333333339
+    ],
+    [
+      5389,
+      0.4166666666666662
+    ],
+    [
+      5392,
+      0.8333333333333331
+    ],
+    [
+      5393,
+      0.8333333333333325
+    ],
+    [
+      5395,
+      0.41666666666666696
+    ],
+    [
+      5396,
+      0.8333333333333341
+    ],
+    [
+      5421,
+      0.41666666666666624
+    ],
+    [
+      5424,
+      0.8333333333333333
+    ],
+    [
+      5425,
+      0.8333333333333324
+    ],
+    [
+      5427,
+      0.4166666666666673
+    ],
+    [
+      5428,
+      0.8333333333333341
+    ],
+    [
+      5453,
+      0.416666666666666
+    ],
+    [
+      5456,
+      0.8333333333333328
+    ],
+    [
+      5457,
+      0.41666666666666596
+    ],
+    [
+      5459,
+      0.4166666666666669
+    ],
+    [
+      5460,
+      0.4166666666666669
+    ]
+  ],
+  "exit_code": 0,
+  "failure": null,
+  "limitations": [
+    "linearized area-average pitch, not finite-rotation native pose",
+    "shared top-face nodes plus one additional weak two-sided constraint",
+    "solid section deformation and inferred shell director are not native B3/E4 states",
+    "contact and mesh convergence are not qualified"
+  ],
+  "mechanics_preflight": {
+    "dependent_node": 2085,
+    "group_force_x": {
+      "bar_bottom": -9.999999999999998,
+      "bar_top": 9.999999999999998,
+      "plate_bottom": 28.571428571428566,
+      "plate_top": -28.571428571428566
+    },
+    "group_moment_y": {
+      "bar_bottom": -0.17499999999999993,
+      "bar_top": 1.1749999999999998,
+      "plate_bottom": -0.5,
+      "plate_top": -0.5
+    },
+    "meaning": "one unit equation multiplier gives opposite unit My on plate and bar; zero global force/moment",
+    "rigid_y_rotation": 2.636779683484747e-16,
+    "rigid_z_rotation": -1.734723475976807e-17,
+    "term_count": 111,
+    "top_fixed_unit_pitch_witness": -0.9999999999999999,
+    "translation_x": 9.853229343548264e-16
+  },
+  "peak_solver_rss_bytes": 106176512,
+  "response": {
+    "applied_load_work_j": 0.07363598767395838,
+    "applied_load_work_meaning": "mixed opening-force and torque work; no pure-load tip displacement follows by dividing this value",
+    "applied_wrench_N_Nm": [
+      0.0,
+      -2.1316282072803006e-14,
+      -1000.0,
+      99.99999999999991,
+      1000.0,
+      -2.1316282072803006e-14
+    ],
+    "meaning": "midspan plate and bar have declared clearance outside the bonded patch",
+    "plate_midspan_centerline_tangent_yaw_rad": -5.546068000000003e-07,
+    "plate_midspan_square_patch_yaw_rad": 5.288861999999744e-08,
+    "sided_pitch_equation_rad": 5.278273807892442e-11,
+    "station_motion": {
+      "0": {
+        "detached_bottom_mean_translation_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "detached_bottom_slope_z_y_rad": 0.0,
+        "fitted_section_bottom_translation_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "interface_shared": false,
+        "max_warping_residual_m": 0.0,
+        "node_count": 25,
+        "section_rotation_rad": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translation_m": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "1000": {
+        "fitted_section_bottom_translation_m": [
+          -3.9202924800000087e-07,
+          -6.524319839999994e-07,
+          -6.871679519999999e-05
+        ],
+        "interface_shared": true,
+        "max_warping_residual_m": 2.410028109396973e-07,
+        "node_count": 25,
+        "section_rotation_rad": [
+          4.9039789359999954e-05,
+          6.079261664000001e-05,
+          -1.4617247199998778e-06
+        ],
+        "shared_face_mean_translation_m": [
+          -3.5787213750000004e-07,
+          -6.642009625e-07,
+          -6.867837125e-05
+        ],
+        "shared_face_minus_fitted_bottom_m": [
+          3.415711050000083e-08,
+          -1.1768978500000535e-08,
+          3.842394999998579e-08
+        ],
+        "shared_face_slope_minus_section_rx_rad": -3.3440893600000655e-06,
+        "shared_face_slope_z_y_rad": 4.569569999999989e-05,
+        "translation_m": [
+          2.6476015839999997e-06,
+          -3.1044214519999972e-06,
+          -6.871679519999999e-05
+        ]
+      },
+      "250": {
+        "detached_bottom_mean_translation_m": [
+          -2.3436095e-06,
+          1.648314575e-07,
+          -8.49561925e-06
+        ],
+        "detached_bottom_slope_z_y_rad": 1.2250700000000008e-05,
+        "fitted_section_bottom_translation_m": [
+          -2.339646395999999e-06,
+          1.6338621680000046e-07,
+          -8.50882008e-06
+        ],
+        "interface_shared": false,
+        "max_warping_residual_m": 1.539032345337342e-07,
+        "node_count": 25,
+        "section_rotation_rad": [
+          1.2113517728000002e-05,
+          6.085892063999998e-05,
+          -3.1037831200000004e-06
+        ],
+        "translation_m": [
+          7.032996360000001e-07,
+          -4.422896695999997e-07,
+          -8.50882008e-06
+        ]
+      },
+      "500": {
+        "detached_bottom_mean_translation_m": [
+          -3.0452595000000003e-06,
+          -2.0500001250000001e-07,
+          -2.8226004999999997e-05
+        ],
+        "detached_bottom_slope_z_y_rad": 2.43588e-05,
+        "fitted_section_bottom_translation_m": [
+          -3.040878895999999e-06,
+          -2.0514583400000337e-07,
+          -2.8259803999999998e-05
+        ],
+        "interface_shared": false,
+        "max_warping_residual_m": 7.550516327491129e-08,
+        "node_count": 25,
+        "section_rotation_rad": [
+          2.4361859479999987e-05,
+          8.913757295999996e-05,
+          -4.2672063999999914e-06
+        ],
+        "translation_m": [
+          1.4159997519999998e-06,
+          -1.423238808000003e-06,
+          -2.8259803999999998e-05
+        ]
+      },
+      "750": {
+        "detached_bottom_mean_translation_m": [
+          -2.080419875e-06,
+          -6.181183000000001e-07,
+          -5.085850125e-05
+        ],
+        "detached_bottom_slope_z_y_rad": 3.646969999999999e-05,
+        "fitted_section_bottom_translation_m": [
+          -2.0758934215999992e-06,
+          -6.168794560000008e-07,
+          -5.0919262e-05
+        ],
+        "interface_shared": false,
+        "max_warping_residual_m": 1.0769636793642842e-07,
+        "node_count": 25,
+        "section_rotation_rad": [
+          3.6621782239999975e-05,
+          8.409706581599997e-05,
+          -3.450017432000121e-06
+        ],
+        "translation_m": [
+          2.1289598691999996e-06,
+          -2.4479685679999996e-06,
+          -5.0919262e-05
+        ]
+      }
+    },
+    "support_wrench_N_Nm": [
+      -0.0004949999992049925,
+      -0.00012335200017332681,
+      999.9997547000007,
+      -100.00001564574872,
+      -999.9999988343993,
+      3.6776000108318385e-05
+    ],
+    "unbonded_midspan_normal_separation_m": {
+      "bar_minus_plate_z_m": [
+        1.1410969999995061e-05,
+        1.1258889999995061e-05,
+        1.1121679999995064e-05
+      ],
+      "meaning": "negative value is sampled geometric overlap of unbonded surfaces; not a mortar integration-point contact gap or traction",
+      "y_m": [
+        -0.05,
+        0.0,
+        0.05
+      ]
+    },
+    "unbonded_open_audit": {
+      "maximum_reference_normal_gap_m": 1.722541499999534e-05,
+      "meaning": "reference-normal paired-node check on matching element faces; contact and deformed-surface closest-point gap were not solved",
+      "minimum_reference_normal_gap_m": 5.909044444388911e-07,
+      "negative_nodal_gaps": 0,
+      "paired_nodes": 112,
+      "sampled_face_count": 32,
+      "sampled_face_meaning": "nine-point Gauss grid per direction on paired quadratic faces, excluding the zero-gap bonded seam; not an exact minimum or deformed closest-point contact check",
+      "sampled_face_minimum_reference_normal_gap_m": 8.5171291363081e-09,
+      "sampled_face_negative_points": 0,
+      "sampled_face_points_per_face": 81
+    },
+    "wrench_imbalance_N_Nm": [
+      -0.0004949999992049925,
+      -0.0001233520001946431,
+      -0.0002452999992783589,
+      -1.5645748803194692e-05,
+      1.1656006790872198e-06,
+      3.67760000870021e-05
+    ]
+  },
+  "seconds": 0.7878846000530757,
+  "solver_sha256": "27a9426a1ee2f72c38fbe892e0ffaf38e14867628ffd0235770261b6f3ec9c5f",
+  "source_hashes": {
+    ".qualification\\b3-ge-e4-pl\\f03-ccx-c1-preopen-combined-factor2-dev-20260926-v1\\solid-2-tip_mx\\model.json": "9726e26e57f9f13bae15a2995f59e0c6f636486147ea14175021204ee77cff90",
+    ".qualification\\b3-ge-e4-pl\\f03-ccx-c1-preopen-combined-factor2-dev-20260926-v1\\solid-2-tip_mx\\solid-2-tip_mx.inp": "54eb26899e371bfa2a2bc8910ab6ffcc4b4cd61374980e3b9abd1bbb32676a3e",
+    "scripts\\b3_e4_f03_ccx_sided_pitch_reference.py": "feb2dc6d98279da23b33377c1a75622db503c06066213683269ecc5177f7d260"
+  },
+  "source_head": "6b38a7bc824150b24eb1cb9f89c29013aeb27f8f",
+  "status": "EXPLORATORY_COMPLETE"
+}

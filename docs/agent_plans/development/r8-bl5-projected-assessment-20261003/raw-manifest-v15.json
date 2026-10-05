@@ -1,0 +1,671 @@
+{
+  "identity": "BL5_SAVED_ENVELOPE_AND_REGIONAL_DEVELOPMENT_RAW_V15",
+  "source_parent": "b56d0b48",
+  "previous_manifest": "raw-manifest-v14.json",
+  "previous_manifest_sha256": "6a0da0ef546c1e7f2154dfe4dedd339e01fd877e0ff9814ac478c79fd055a55f",
+  "formal_f03_authority_consumed": false,
+  "qualification_claim": false,
+  "files": [
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/audit-v1.json",
+      "sha256": "ae11d2cf5c68ed82d1f2d25de9187eec2ce03191dcea34c1061ec5ed2d589130",
+      "bytes": 7447
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/audit-v1.py",
+      "sha256": "89c7106f2b9ee0bec453ce3fd157b575fcae5f3d2a6822937e903fd2b496a3f3",
+      "bytes": 3718
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/bindings-batch-v1.json",
+      "sha256": "566c4312ac98dfc46ca96320bdb13271f43871da84207915ffc3814a2a9c42b1",
+      "bytes": 1410
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/bindings-draft-v1.json",
+      "sha256": "aa0f6930e9d2eaa29c4826f14d5e374af5f6cfbfa3d91b5b46774088694c7413",
+      "bytes": 1410
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/bindings-v1.json",
+      "sha256": "281670e3108f1de7240975492e0007a33071a625d2752fd29f0ba9578502740c",
+      "bytes": 1410
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1/kernel-v1.json",
+      "sha256": "251dc2e718cc92676f43fe579eed6f2bf9ccc98e46d1216e345dcdecfef629da",
+      "bytes": 12723
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1/kernel-v1.npz",
+      "sha256": "5d091b5e9079ab9f21263afb4a498d45334bfb1da2a84d29db9468341bb25c3e",
+      "bytes": 145690
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1/prepared-v1.json",
+      "sha256": "1a5139888d91d63acdfa9f7d929aeb0b9a63399273d5c7e1e8d52604a3e7e958",
+      "bytes": 29043
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1/prepared-v1.npz",
+      "sha256": "e51a88a4962ba8b0ddbd687b35e9648303b09713d20bca616f6176c45dae3099",
+      "bytes": 61385
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1/run-v1/execution.json",
+      "sha256": "83db079a1d27a7a99cb3411c88fba9147d5c682b79b6f2f5b47dd316ef18f6ce",
+      "bytes": 981
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1/run-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1/run-v1/stdout.log",
+      "sha256": "fbbbdedb4aad8ad94db66752abe6f02ede01025500f0d216e5ff96defcee26e9",
+      "bytes": 161
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1/run-v1/thread-samples.json",
+      "sha256": "396c7e21963c3abe80ef4ff83f9358f25c3507da73f17f3197fff107932329fb",
+      "bytes": 18513
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_2/kernel-v1.json",
+      "sha256": "7dda117b945e8a01533f37ed1363f839583e70ac5ae51385731b0cd115c202d1",
+      "bytes": 11139
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_2/kernel-v1.npz",
+      "sha256": "9b167eefad1257162fcdcbdeb3616ecab50c816611b46870b12c42edd03b1c2b",
+      "bytes": 119905
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_2/prepared-v1.json",
+      "sha256": "6c36dfece271157e3c659840c2dc53bc3b7cd5e791ed3afd00184171b02ef29c",
+      "bytes": 21701
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_2/prepared-v1.npz",
+      "sha256": "1b92fdcf1c9637ab5a86117fcc2025727cba14b5bff105e83b917f2f84c5cea5",
+      "bytes": 43807
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_2/run-v1/execution.json",
+      "sha256": "46318e936a3523d628b9d1f5d910001d443f42e322061160b78092c105ce2968",
+      "bytes": 985
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_2/run-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_2/run-v1/stdout.log",
+      "sha256": "267a00f1d1da0c1864cd391759f01469d270a842cbe593898e49ef74d79b33b3",
+      "bytes": 161
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_2/run-v1/thread-samples.json",
+      "sha256": "4eb91df4569ea090afe3e827c944f1f9bf60b69cc1e4ce6b3ffd6d5559f05929",
+      "bytes": 12000
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_4/kernel-v1.json",
+      "sha256": "85c7d465a27c896bce6d992a9e2320cd39d5f3bfc6508fbe3cf32baae39355e8",
+      "bytes": 10569
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_4/kernel-v1.npz",
+      "sha256": "44f27e644d5464e24a36b84909e403570721220a7d72279655e5f57404d2819b",
+      "bytes": 109038
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_4/prepared-v1.json",
+      "sha256": "f96303f5dab0136b73d2df68dfb88756b93d9de4495e617e70d11647550b13b7",
+      "bytes": 16837
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_4/prepared-v1.npz",
+      "sha256": "38d419b093520b26db9ae54de4af0bd67a2403386bcafae9b575b0539a6e6dc7",
+      "bytes": 48841
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_4/run-v1/execution.json",
+      "sha256": "7fb2e96c811f4b3146efc9dae116d0a7c2a7efef8c77b58566b04150d5290ee9",
+      "bytes": 985
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_4/run-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_4/run-v1/stdout.log",
+      "sha256": "9da6b01aa638ef9fe699efefa4ef0f0de11e6185c3a32b7789ad3112a83677dd",
+      "bytes": 162
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b1_4/run-v1/thread-samples.json",
+      "sha256": "3954dc3c7033584e41d81ace4f1e13f40e5fb4c31eedf85f323663eeb47d764e",
+      "bytes": 13539
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b2/kernel-v1.json",
+      "sha256": "c87260a497acc75579e0bcd196fa526a733784316f2eae929972d07648f82fa0",
+      "bytes": 15907
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b2/kernel-v1.npz",
+      "sha256": "6a22720f8d3b8d0badc46e1eec2cff3e2820f1673960fe12ec50b5b8271a238e",
+      "bytes": 205542
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b2/prepared-v1.json",
+      "sha256": "ac95967cdcc8ba44c204f8606e83aee9a2d733490cbadcd84d31786cf50b7990",
+      "bytes": 43747
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b2/prepared-v1.npz",
+      "sha256": "97833195a77ca844f975724b4f5846ce2d7ead718d79622c12561bfe5a933d3a",
+      "bytes": 109786
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b2/run-v1/execution.json",
+      "sha256": "d7dfa29aeba9187a26875f68844ba86c78b4ccff3df17c981ce6f4e0c5c7bef9",
+      "bytes": 981
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b2/run-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b2/run-v1/stdout.log",
+      "sha256": "5c77e18dd54005d7f3f2a4e17db855308d25385e84529faa7896d89ab17f29e5",
+      "bytes": 162
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b2/run-v1/thread-samples.json",
+      "sha256": "367046a261d2d4d1f9c07895b070a61a0b8d39f6d075847793fa2e9e55e8931b",
+      "bytes": 22471
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b4/kernel-v1.json",
+      "sha256": "34c560faae343f495f4901c088bb5ab5d63d8744a10c5e7dbdcf7e49433c77ca",
+      "bytes": 22827
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b4/kernel-v1.npz",
+      "sha256": "3489db0d6b4327fbdfe357c47098a0c17a4d02fa8540ed8da2f7a0df260fd163",
+      "bytes": 458430
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b4/prepared-v1.json",
+      "sha256": "1cf06b31395ef14f6382fe85f5dc4ecca6ee77c797ffadf382df40bcfc99d671",
+      "bytes": 73853
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b4/prepared-v1.npz",
+      "sha256": "4e8fa2492f747239bebc996ef1f00018db117c0e1f91bfa756e120e1c1fadb98",
+      "bytes": 361554
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b4/run-v1/execution.json",
+      "sha256": "db851a8633b199fee0007dc9197206e8e15d9101831f98624999fcb5da27fe29",
+      "bytes": 982
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b4/run-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b4/run-v1/stdout.log",
+      "sha256": "5b0894ee58623a739381cd9a75bc4eb3b24683833925fbcb1497920f2549cb05",
+      "bytes": 160
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns16_b4/run-v1/thread-samples.json",
+      "sha256": "4c623a2a171d758283b79a92c8c2bae73b1fefa56faa59b0a59c34e44a55333c",
+      "bytes": 38776
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1/kernel-v1.json",
+      "sha256": "d1567ede513c7731d57ce7ec4f3f7b3861f97090ef772f4f46c264ea391f53b3",
+      "bytes": 30409
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1/kernel-v1.npz",
+      "sha256": "3d3197ce5501b89956e5b0bf3cb81f1ad74f55983e61d3cf65359d85d7023e9b",
+      "bytes": 669881
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1/prepared-v1.json",
+      "sha256": "63094a24d3e6689118629567402256aaa163db4f52212c9d4f696986e33dc046",
+      "bytes": 46975
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1/prepared-v1.npz",
+      "sha256": "a92c555dd546e6be98b4913313f78aef3dad53de3b9e27c5cd76d0a004da985e",
+      "bytes": 124473
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1/run-v1/execution.json",
+      "sha256": "f31c088f8bdbb8aea03d1f3c229b4b07de09dc62b98f7a32d97b39183794634f",
+      "bytes": 982
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1/run-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1/run-v1/stdout.log",
+      "sha256": "c01b284dd556740e4e4abeee2e14daffa6543a281e8b088bc239eb7906b21b17",
+      "bytes": 162
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1/run-v1/thread-samples.json",
+      "sha256": "3cc4c03a242f2f7aa160daecd7f00b15b96106e6cd6f0dad3cbe42d5582ce1b3",
+      "bytes": 46277
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_2/kernel-v1.json",
+      "sha256": "b07f559bd7a71db7ded3f697e6710f1613f97ec916e0e47d974e8aaaa7798f0a",
+      "bytes": 26956
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_2/kernel-v1.npz",
+      "sha256": "af9577efc9b116c861d0b4bd4ca5198536b32837fb136729e9de63c6ba3cb449",
+      "bytes": 608371
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_2/prepared-v1.json",
+      "sha256": "b2886d5106bc1a68afdd997af9bb27e3b7d35281e8c2970246287b1f436e5b32",
+      "bytes": 31947
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_2/prepared-v1.npz",
+      "sha256": "22909ddcce6eb2449dd1ce0f8a45e6a45472a62c61fbc46df82773716fe91d7a",
+      "bytes": 99684
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_2/run-v1/execution.json",
+      "sha256": "ff161f285d925a381fa74e24ee9f62bf945bb9b58966f4bd48e4300a67594692",
+      "bytes": 985
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_2/run-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_2/run-v1/stdout.log",
+      "sha256": "18ffd82342b80939a3ac0bf092a5873bea3ee217ca112f125e52165ad966dd7a",
+      "bytes": 161
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_2/run-v1/thread-samples.json",
+      "sha256": "6a4e0b98fa759fd88134e1deb4cc9a8283fe8f773bbf4f5da4ef1de048afbb3d",
+      "bytes": 48450
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_4/kernel-v1.json",
+      "sha256": "15a5985ab13429005edaf53bd72ccf14b79828f6453928aeaaa51e84d9c93229",
+      "bytes": 25703
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_4/kernel-v1.npz",
+      "sha256": "d12f9638d91184f47732c16f782ea895056f8f1a28afe688548a2cc357f7270b",
+      "bytes": 583051
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_4/prepared-v1.json",
+      "sha256": "8d17b30aa76e3fdf6b97f724dbaa05e381a85f94bd8b6ef8b195a0045eee0883",
+      "bytes": 21939
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_4/prepared-v1.npz",
+      "sha256": "2051fc66c2e669d80c368a6c2bcab4ae1bdd0ee96ec4e5196ffc61333adc5f73",
+      "bytes": 109423
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_4/run-v1/execution.json",
+      "sha256": "d0a3da7b21cca80213899acad1cb275a02e157e6608a6e7ed8556eb46c9d7378",
+      "bytes": 985
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_4/run-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_4/run-v1/stdout.log",
+      "sha256": "fb7683e699a6de40a526ddac2fc42307bac71d3ee24112d0f635056a26c6d2b0",
+      "bytes": 161
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b1_4/run-v1/thread-samples.json",
+      "sha256": "394695c0897ed1525df5236007e0986d0427078bc6dc9a5012451772c660304b",
+      "bytes": 35350
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b4/kernel-v1.json",
+      "sha256": "0ca910c80127e74de48b5876c1836cce7071134fa44f1c94290940a450c39216",
+      "bytes": 51146
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b4/kernel-v1.npz",
+      "sha256": "5f9b72a0eb87fd2a9de95d142af8785a886f9ee73730e2efb8ecc1f1e38f67ec",
+      "bytes": 1201698
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b4/prepared-v1.json",
+      "sha256": "c1b41d80f45da4951d9e8d1edd560a86018bf97e0423debca35a86dd8e1bc76c",
+      "bytes": 137194
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b4/prepared-v1.npz",
+      "sha256": "98abf0b4c1ce379e11fe56938ebd7149046cd37f32eae38fd14c5aef1844287b",
+      "bytes": 723560
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b4/run-v1/execution.json",
+      "sha256": "e688d303ec463a0ff2dd3ef4626c36bbe22a2b150334f6c98cfd171a6bc4a9c4",
+      "bytes": 983
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b4/run-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b4/run-v1/stdout.log",
+      "sha256": "abdd09e9ecdf5813a2f96976057edcefd50ef2e926801eff98c6142646cd4645",
+      "bytes": 160
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b4/run-v1/thread-samples.json",
+      "sha256": "f1e51abbf3b24c63ff4515e2ae18c167c25e34b50b102d274bdc7262a7ae3e58",
+      "bytes": 91231
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b8/kernel-v1.json",
+      "sha256": "13640511cda2a72fdcc92895d6d360635fc24f6edaad4611f2a5e77f9d2c49d1",
+      "bytes": 3539
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b8/kernel-v1.npz",
+      "sha256": "9aa0dc46bb51ecbdc03ae13ff53e7abf8cfef74d9300b83c3cb4c15c463edc22",
+      "bytes": 49327
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b8/prepared-v1.json",
+      "sha256": "48f6d716dcf6ecba9938e3f8d9a1762e6f2e44ad6a1213f3e89c0a43f9bb2cc5",
+      "bytes": 258409
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b8/prepared-v1.npz",
+      "sha256": "6945ea6d9f10cbf287bd1d4d9a6fdcf552a2c1c022236c53f0f484300bfcab4d",
+      "bytes": 2592293
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b8/run-v1/execution.json",
+      "sha256": "5b4e53547e9059477c732a0333d6e668c8e213c812db65124c72511d2a422d66",
+      "bytes": 984
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b8/run-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b8/run-v1/stdout.log",
+      "sha256": "f7d1a91932b54894a258244c6a1105d6c61da78fd4f65a22efc815d6d1bf46b1",
+      "bytes": 114
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1/ns32_b8/run-v1/thread-samples.json",
+      "sha256": "fce6d6884371c2386af1b82828f901d18b12ae38b24bf7bcd6a4898d26c8ce21",
+      "bytes": 131251
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/campaign-v1.md",
+      "sha256": "79beec6c7b07afdf47d8c538825e4d7b78b6a566ea860bf02e7533d84380cafb",
+      "bytes": 1215
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/design.md",
+      "sha256": "c43971e67114ff77a42d565d4913e4ec110a0f2570cdadbaf92ffa9f12c403c5",
+      "bytes": 2248
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/generate-v1.py",
+      "sha256": "d7ad24683b90166e2d7b1bf0fb15269a33501b0e32235dbb41e9a392a515b7c0",
+      "bytes": 3040
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/helper-draft-v1.py",
+      "sha256": "cb59818d3be5585dc477cd8f2b54fd661aac7010c902863b645bf483b32d733f",
+      "bytes": 11682
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/kernel-v1.json",
+      "sha256": "acaaab56a827268ddb6caebee1ce2b940241d0e917602602df68818467062d7e",
+      "bytes": 37328
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/kernel-v1.npz",
+      "sha256": "a8ce4e782f41227826e377de77d08c2c7fc0550d70cfc4752e193b6d2ecc1f77",
+      "bytes": 796295
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/ns32_b2-v1/execution.json",
+      "sha256": "97f0e7428d3b12c7e821ff5fe569d989589a11d68e57c6169b1d7e24708f44d7",
+      "bytes": 960
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/ns32_b2-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/ns32_b2-v1/stdout.log",
+      "sha256": "e3beb637512a52839d06044f073db7063cd829983ff71233f2239e96506a8f26",
+      "bytes": 161
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/ns32_b2-v1/thread-samples.json",
+      "sha256": "b88c6c2efdbea41a0d9ecc508ef6cd35d1d0432e26a184159c24f020bac50ea4",
+      "bytes": 79806
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/prepared-v1.json",
+      "sha256": "0ba6d79a43ce119cbfd0da848ed830607cf54aa2233b75c5c33106ef1dbded16",
+      "bytes": 77118
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/prepared-v1.npz",
+      "sha256": "150a9c9c2f816bfe578599a5a50da7c1b39173495edd8ebd57db6c3a38e1a166",
+      "bytes": 184964
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/probe-batch-v1.py",
+      "sha256": "a4fb7ea500fb8fd8025497915847969a657cf2944748aa76ecc60efc52eb6d25",
+      "bytes": 4497
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/probe-draft-v1.py",
+      "sha256": "67f1db056c08c9222f99150e701e34f7ceb88dc3ad729de319d01995dc6d7c58",
+      "bytes": 3769
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/probe-v1.py",
+      "sha256": "2727f244d75fef8d190da76091f5d83886ff8f380ae85241338fb7ab58309165",
+      "bytes": 3926
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/actions-v1/execution.json",
+      "sha256": "5e917bda4e821ccbb6f2f9b4ca327132d107571c3b5df2581ac6e4093d238a73",
+      "bytes": 972
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/actions-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/actions-v1/stdout.log",
+      "sha256": "fee4bc3a92d3de174d3ecc818e766bc5fb3e67470ff4cbd8dbe615371b3b266d",
+      "bytes": 657
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/actions-v1/thread-samples.json",
+      "sha256": "1544515c84b7fc549a06998e1e2fe9d4178718296bfecae5fb277edbc1be913b",
+      "bytes": 920
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/bindings.json",
+      "sha256": "13860f567362c09ad735246475b85f84431d3c80965062b6d35c1838384da361",
+      "bytes": 1000
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/probe.py",
+      "sha256": "79a390d567f9173003d1e764d6e30f56343cf5e7b0fa80277b83009ebb432791",
+      "bytes": 891
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/regional-actions.json",
+      "sha256": "589a52237e28c3ab9486c7952b181499f0a6fa7e326ff9364cfbc2501e4a91b2",
+      "bytes": 5099
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/run.py",
+      "sha256": "e0ff5732365758eeb156fb9a886cf2096fa9f1db1d40fa2ba679b28c579f7866",
+      "bytes": 1109
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/test-v1/execution.json",
+      "sha256": "013141d6e27e666f763a1907f9387d7362a54b8ce3ad68b5d2f4892055a10153",
+      "bytes": 1179
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/test-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/test-v1/stdout.log",
+      "sha256": "d8601f6f4f4ea1d93c4c9483d1d7356b36134e846547aaf2eace9abe5b61f52a",
+      "bytes": 101
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/regional-v1/test-v1/thread-samples.json",
+      "sha256": "e592a60377a75250414d544898bc0877f91bb14f092e9104ea90df493dfcac18",
+      "bytes": 6806
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/review-after-results-v1.md",
+      "sha256": "e5adfeb335d52a3ea55bc6a13831c660822f6c47bc3c8df7ffcf455fb6867cf3",
+      "bytes": 1473
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/review-batch-before-run.md",
+      "sha256": "061f2ac6ce66398fd0b3f78d387b43b5d329dc1440d8ab7e490316cc569ae047",
+      "bytes": 937
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/review-before-run.md",
+      "sha256": "a67027dfdd3323f6b3d696a51c0661ca15651a5ea35b078fb386a0cc151ef75f",
+      "bytes": 1673
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/run-stage-v1.py",
+      "sha256": "f7f460b0fcdd1d347958b31784b5a82d663bdc28c9273cc3abd4533c0da8af34",
+      "bytes": 2530
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/run-v1.py",
+      "sha256": "9f14a9dc7c1d68cdf546ea880a0664de0587cd09f2d95b3771cacc68163ae5b8",
+      "bytes": 1378
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/run-v2.py",
+      "sha256": "08e358c73b34bcf451b98a5bc5d27b8ff671c39929ab5bf98bc2c7983569333c",
+      "bytes": 1378
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/stage-16-v1.json",
+      "sha256": "511331480fa56dca1e932ad2670bdd65a3302ab94d0d8d015d5299c552422a4b",
+      "bytes": 635
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/stage-32-v1.json",
+      "sha256": "2b8bf1547fb5541adab414dcb88cd03c16a06645a3f70c7f527b2de1c3599739",
+      "bytes": 714
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/test-v1/execution.json",
+      "sha256": "b396bfec68951693ff611bae014b92ea140a13d584946683d0b1356b2b4c8401",
+      "bytes": 1164
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/test-v1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/test-v1/stdout.log",
+      "sha256": "6c671d06267bf1e6144125f762d73c4f19fb0de1ccc101806348855c92169e42",
+      "bytes": 100
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/test-v1/thread-samples.json",
+      "sha256": "a1a03104ac0198aac4c2df1a3d12c1ebe763e80dd4ca80836d99c8e9843a8f0a",
+      "bytes": 8620
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/test-v2/execution.json",
+      "sha256": "03897b027eea06fafe44e28d4eec918ed9d9ac0e7c8ab293495b0b95221eac20",
+      "bytes": 1164
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/test-v2/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/test-v2/stdout.log",
+      "sha256": "46123987267099f0dd012759920aed4d2ee827e4fac2b6753d5799138474376b",
+      "bytes": 101
+    },
+    {
+      "path": ".qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/envelope-gram/test-v2/thread-samples.json",
+      "sha256": "f116172ff9249a8c426b615c32fd23a5a69d913025f4740400954eb37e0e5b9f",
+      "bytes": 8616
+    },
+    {
+      "path": "scripts/r8_bl5_envelope_gram_dev.py",
+      "sha256": "16cd1df2b253acb11cf5b3687f66f5beb0cb33e48b0f45e7279c18c3c88f6789",
+      "bytes": 11972
+    },
+    {
+      "path": "scripts/r8_bl5_regional_action_dev.py",
+      "sha256": "146f0c12ef626ed2300936532389e8eafa31ac8f8cc0bd0cd183f8645bd53cd6",
+      "bytes": 18416
+    },
+    {
+      "path": "tests/test_r8_bl5_envelope_gram_dev.py",
+      "sha256": "150622935d223df1ff3a36af46e47cc06f6e829212abd657e5bc1ebdee14077a",
+      "bytes": 3804
+    },
+    {
+      "path": "tests/test_r8_bl5_regional_action_dev.py",
+      "sha256": "3f4922c4bb326754081f5e61371bfd433adb03f3b84549f2701aa3cd9653c377",
+      "bytes": 8479
+    }
+  ],
+  "scope": "Ten new positive original-target kernels, original producer HOLD, fine stage NOT_STARTED; distinct saved sharp/smooth regional actions; all historical evidence intact"
+}

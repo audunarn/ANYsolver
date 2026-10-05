@@ -1,0 +1,108 @@
+{
+  "beam_layout": {
+    "cell_rotations": 54,
+    "complementary_min_diagonal_J_per_resultant_squared": 5.952380952380931e-12,
+    "free": 324,
+    "nodal": 114,
+    "resultants": 162
+  },
+  "classification": "private material-line native retained KKT metric",
+  "decision": "three-level mixed behavior only; no uniform stability or multiplier selection",
+  "drilling_quotient_check": {
+    "drill_equation_relative": 1.1988594736076903e-15,
+    "drill_rows": 198,
+    "physical_action_relative": 3.6583227307997044e-16,
+    "quotient_relative_skew": 2.953032247416072e-16
+  },
+  "effective_threadpools": [
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.31.188.0"
+    },
+    {
+      "architecture": "SkylakeX",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "threading_layer": "pthreads",
+      "user_api": "blas",
+      "version": "0.3.30"
+    }
+  ],
+  "elapsed_s": 34.859083500050474,
+  "env": {
+    "NUMBA_DISABLE_JIT": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "geometry": "C1 Q4 x8/y4; B3-18; 1:1 bond",
+  "imported_anysolver": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\src\\anysolver\\__init__.py",
+  "limits": [
+    "one level per run",
+    "1900 dense KKT rows",
+    "120 s wall deadline",
+    "auxiliary Riesz norm not added to tangent",
+    "no physical transfer or mesh-uniform claim"
+  ],
+  "p0_intervals": 8,
+  "p0_line_norm": {
+    "basis_integrals_m": [
+      0.012499999999999956,
+      0.012500000000000068,
+      0.012499999999999956,
+      0.012499999999999956,
+      0.012500000000000068,
+      0.012499999999999956,
+      0.012500000000000068,
+      0.012499999999999956
+    ],
+    "density_gram_ordering_defect": -1.016438284170338e-20,
+    "moment_to_force_equivalent_length_m": 0.1,
+    "physical_density_units": [
+      "N/m",
+      "N/m",
+      "N/m",
+      "Nm/m",
+      "Nm/m",
+      "Nm/m"
+    ]
+  },
+  "primal_rows": 1314,
+  "report": {
+    "assembly_asymmetry_relative": 2.953032247416072e-16,
+    "beta_min": 0.015144613509718635,
+    "constraint_rows": 48,
+    "left_right_svd_defect": 6.685664318827714e-15,
+    "near_null_metric_share": {
+      "beam_complementary": 0.011956351349358478,
+      "beam_kinematic": 0.9838562373622886,
+      "line_dual": 0.0014038183407779241,
+      "shell_drilling_chart": 0.0,
+      "shell_physical": 0.002783592947574768
+    },
+    "normed_condition": 20854.375356105345,
+    "operator_max": 315.8314547548164,
+    "rows": 1362,
+    "scaled_weak_residual_norm": 0.015144613509784466,
+    "svd_residual_defect": 6.583102118984385e-14,
+    "weak_constraint_euclidean": 2.9249878306451446e-08,
+    "weak_vector_metric_norm_sq": 0.9999999999999997,
+    "work_left_J": 2.126028620893416e-05,
+    "work_right_J": 2.1260286208934533e-05
+  },
+  "representation": "exact_drilling_quotient",
+  "row_rank": 48,
+  "runner_sha256": "9522279ad1759a759bc6d2c16cdadbaf62a6f4742332221db1a3c22e28c45f89",
+  "source_git": "c29f94323fd05f8eed5048e2f6c9ad26998cd03b",
+  "space_kind": "piecewise_constant",
+  "status": "DEVELOPMENT_DIAGNOSTIC_COMPLETE",
+  "yaw_intervals": null,
+  "yaw_line_norm": null
+}

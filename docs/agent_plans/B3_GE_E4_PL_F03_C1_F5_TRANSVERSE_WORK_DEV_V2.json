@@ -1,0 +1,186 @@
+{
+  "classification": "bounded saved-F5 transverse virtual-work diagnostic; no G0B acceptance",
+  "decision": "Does transverse face deformation outside the affine section trace carry material work on the validated F5 bond action?",
+  "inputs_sha256": {
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-stiffener-ip-stress-dev-20260926-v1\\solid-5-tip_mx.dat": "9df0f2deae16047c14268c7f6f60039a485fa5988c0bfba78fb2e0cc07127dfa",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-stiffener-ip-stress-dev-20260926-v1\\solid-5-tip_mx.frd": "96d72d5e47ebfba93af07880001226adda2b9aee954ef753ee808dd20c495850",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-stiffener-ip-stress-dev-20260926-v1\\solid-5-tip_mx.inp": "5468cb18f61d1a80ebacd8c14ea1834da3d817e91b110aa0694a19124edd14cf",
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-stress-force-recovery-dev-20260926-v1\\result.json": "dbe4bb067689d650820485081ad9314a2e6bc85a54de415bb058dedf4629b816",
+    ".qualification\\b3-ge-e4-pl\\f03-ccx-c1-preopen-combined-factor5-dev-20260926-v1\\solid-5-tip_mx\\model.json": "bf41b8bd670243c59d1d63a73b137304f515a94e123e58d687bbd807ea39cf75"
+  },
+  "known_seam_work_J": 0.015217464123298257,
+  "known_seam_wrench_N_Nm": [
+    -5974.983704674281,
+    54.62361059514069,
+    -72.20733066508228,
+    40.52199234654318,
+    48.18880568181669,
+    28.71827206842103
+  ],
+  "limitations": [
+    "affine/quadratic face traces do not encode the independent E4 director-pitch channel",
+    "saved 3D section is not the native retained B3 port",
+    "nodal interface action is a weak discrete functional, not a pointwise traction",
+    "one saved mesh and a combined pre-opened linear load; no law, multiplier, or stability selection"
+  ],
+  "model": "pre-opened +100 Nm/-1000 N C1 35 mm plate, 100 mm square bar, 0.1 m terminal shared-node bond, no contact",
+  "results": {
+    "transverse_affine": {
+      "max_weighted_orthogonality_m2": 4.6756295267267525e-21,
+      "maximum_vector_residual_m": 1.1147362645504102e-07,
+      "omitted_abs_nodal_work_J": 0.0002013688604287181,
+      "omitted_over_total_abs_signed_work": 0.0027064800212278314,
+      "omitted_signed_work_J": -4.118576262345803e-05,
+      "projected_work_J": 0.01525864988592171,
+      "stations": [
+        {
+          "max_residual_m": 1.1147362645504102e-07,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 2.7106320932450583e-22,
+          "x_m": 0.9
+        },
+        {
+          "max_residual_m": 8.436141797005982e-08,
+          "nodes": 11,
+          "weighted_orthogonality_m2": 2.6427321971818187e-21,
+          "x_m": 0.91
+        },
+        {
+          "max_residual_m": 8.160307738755498e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 6.437403870223226e-22,
+          "x_m": 0.92
+        },
+        {
+          "max_residual_m": 7.167495630714248e-08,
+          "nodes": 11,
+          "weighted_orthogonality_m2": 4.6756295267267525e-21,
+          "x_m": 0.93
+        },
+        {
+          "max_residual_m": 6.777614191220527e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 1.0165435805165831e-22,
+          "x_m": 0.94
+        },
+        {
+          "max_residual_m": 6.297097472250378e-08,
+          "nodes": 11,
+          "weighted_orthogonality_m2": 2.371714224297062e-21,
+          "x_m": 0.95
+        },
+        {
+          "max_residual_m": 6.131863719296783e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 8.470030588923233e-22,
+          "x_m": 0.96
+        },
+        {
+          "max_residual_m": 5.75734570437236e-08,
+          "nodes": 11,
+          "weighted_orthogonality_m2": 4.1335523834853246e-21,
+          "x_m": 0.97
+        },
+        {
+          "max_residual_m": 5.700869362806989e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 5.759697379297945e-22,
+          "x_m": 0.98
+        },
+        {
+          "max_residual_m": 6.354620824852874e-08,
+          "nodes": 11,
+          "weighted_orthogonality_m2": 2.575013246877575e-21,
+          "x_m": 0.99
+        },
+        {
+          "max_residual_m": 7.07356178993096e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 1.1519136264654467e-21,
+          "x_m": 1.0
+        }
+      ],
+      "weighted_component_rms_m": 1.3296223374278045e-08
+    },
+    "transverse_quadratic": {
+      "max_weighted_orthogonality_m2": 3.997990082667528e-21,
+      "maximum_vector_residual_m": 5.3666503893340474e-08,
+      "omitted_abs_nodal_work_J": 7.135906399351557e-05,
+      "omitted_over_total_abs_signed_work": 0.00044772891867367,
+      "omitted_signed_work_J": -6.813298756879696e-06,
+      "projected_work_J": 0.015224277422055146,
+      "stations": [
+        {
+          "max_residual_m": 5.3666503893340474e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 9.937864201485715e-22,
+          "x_m": 0.9
+        },
+        {
+          "max_residual_m": 3.037043815202624e-08,
+          "nodes": 11,
+          "weighted_orthogonality_m2": 1.1519572473180618e-21,
+          "x_m": 0.91
+        },
+        {
+          "max_residual_m": 3.3226320248344004e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 9.825411259031118e-22,
+          "x_m": 0.92
+        },
+        {
+          "max_residual_m": 2.4879857330259806e-08,
+          "nodes": 11,
+          "weighted_orthogonality_m2": 3.997990082667528e-21,
+          "x_m": 0.93
+        },
+        {
+          "max_residual_m": 2.5579610482380366e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 1.7279382943577936e-21,
+          "x_m": 0.94
+        },
+        {
+          "max_residual_m": 2.1833567418080034e-08,
+          "nodes": 11,
+          "weighted_orthogonality_m2": 1.5585375210206156e-21,
+          "x_m": 0.95
+        },
+        {
+          "max_residual_m": 2.338635307175535e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 6.314086104293202e-22,
+          "x_m": 0.96
+        },
+        {
+          "max_residual_m": 2.048518012708312e-08,
+          "nodes": 11,
+          "weighted_orthogonality_m2": 3.1848456911337592e-21,
+          "x_m": 0.97
+        },
+        {
+          "max_residual_m": 2.1597859721513538e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 2.54108591706583e-21,
+          "x_m": 0.98
+        },
+        {
+          "max_residual_m": 2.7216481514810282e-08,
+          "nodes": 11,
+          "weighted_orthogonality_m2": 8.131185421396262e-22,
+          "x_m": 0.99
+        },
+        {
+          "max_residual_m": 3.3391387175725765e-08,
+          "nodes": 21,
+          "weighted_orthogonality_m2": 6.141735268849536e-22,
+          "x_m": 1.0
+        }
+      ],
+      "weighted_component_rms_m": 5.063028761846622e-09
+    }
+  },
+  "runner_sha256": "362c46b570adc62d5d60a68e4e7c3961537879aadc97e74ce5f011c0d67798fb",
+  "saved_face_nodes": 181,
+  "transverse_projection": "weighted least-squares in y independently at every saved x station; positive trapezoid weights; no longitudinal coarsening"
+}

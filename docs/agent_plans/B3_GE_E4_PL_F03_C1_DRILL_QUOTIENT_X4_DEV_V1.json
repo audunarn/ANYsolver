@@ -1,0 +1,321 @@
+{
+  "beam_layout": {
+    "cell_rotations": 36,
+    "complementary_min_diagonal_J_per_resultant_squared": 1.7857142859640813e-11,
+    "free": 216,
+    "nodal": 78,
+    "resultants": 108
+  },
+  "beam_rows": 216,
+  "cases": {
+    "continuous_linear_m2": {
+      "assembly_asymmetry_relative": 9.056188199650666e-17,
+      "beta_min": 0.01522770048349457,
+      "constraint_rows": 18,
+      "drill_constraint_column_max": 0.0,
+      "left_right_svd_defect": 3.015307793560855e-15,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.02499999999999998,
+          0.050000000000000044,
+          0.024999999999999984
+        ],
+        "density_gram_ordering_defect": -3.6471576918828804e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "near_null_metric_share": {
+        "beam_complementary": 0.012116673135626446,
+        "beam_kinematic": 0.9838821142408133,
+        "line_dual": 0.0013027199487744138,
+        "shell_physical": 0.0026984926747600025
+      },
+      "normalized_constraint_rank": 18,
+      "normed_condition": 6494.472385194141,
+      "operator_max": 98.89588028006294,
+      "rows": 1004,
+      "scaled_weak_residual_norm": 0.01522770048350438,
+      "svd_residual_defect": 9.809861256648844e-15,
+      "weak_constraint_euclidean": 1.1147037604336942e-08,
+      "weak_vector_metric_norm_sq": 0.999999999999974,
+      "work_left_J": 1.9837429193831022e-05,
+      "work_right_J": 1.983742919381892e-05
+    },
+    "continuous_linear_m4": {
+      "assembly_asymmetry_relative": 9.056188199650667e-17,
+      "beta_min": 0.015242279545935936,
+      "constraint_rows": 30,
+      "drill_constraint_column_max": 0.0,
+      "left_right_svd_defect": 2.55910636939382e-15,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.012499999999999949,
+          0.025000000000000064,
+          0.025000000000000064,
+          0.024999999999999897,
+          0.012500000000000037
+        ],
+        "density_gram_ordering_defect": -6.522601003461569e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "near_null_metric_share": {
+        "beam_complementary": 0.012139177178488203,
+        "beam_kinematic": 0.9837904569704246,
+        "line_dual": 0.001383288242185493,
+        "shell_physical": 0.0026870776088829687
+      },
+      "normalized_constraint_rank": 30,
+      "normed_condition": 6488.261146205959,
+      "operator_max": 98.89589015750595,
+      "rows": 1016,
+      "scaled_weak_residual_norm": 0.015242279545920057,
+      "svd_residual_defect": -1.5879658699091692e-14,
+      "weak_constraint_euclidean": 1.45984197960893e-08,
+      "weak_vector_metric_norm_sq": 0.9999999999999813,
+      "work_left_J": 2.108446607999277e-05,
+      "work_right_J": 2.1084466079994034e-05
+    },
+    "dual_linear_m2": {
+      "assembly_asymmetry_relative": 9.056188199650666e-17,
+      "beta_min": 0.015201493686785889,
+      "constraint_rows": 18,
+      "drill_constraint_column_max": 0.0,
+      "left_right_svd_defect": 2.8577749804847035e-15,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.02499999999999999,
+          0.05000000000000013,
+          0.024999999999999897
+        ],
+        "density_gram_ordering_defect": 1.080670640812199e-19,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "near_null_metric_share": {
+        "beam_complementary": 0.012103197607340684,
+        "beam_kinematic": 0.983866031627683,
+        "line_dual": 0.0013451767210770377,
+        "shell_physical": 0.0026855940439085226
+      },
+      "normalized_constraint_rank": 18,
+      "normed_condition": 6505.667601674354,
+      "operator_max": 98.89586497518019,
+      "rows": 1004,
+      "scaled_weak_residual_norm": 0.015201493686800516,
+      "svd_residual_defect": 1.4627188349436437e-14,
+      "weak_constraint_euclidean": 1.2218266236291624e-08,
+      "weak_vector_metric_norm_sq": 1.000000000000009,
+      "work_left_J": 2.044869543305657e-05,
+      "work_right_J": 2.044869543305853e-05
+    },
+    "dual_linear_m4": {
+      "assembly_asymmetry_relative": 9.056188199650667e-17,
+      "beta_min": 0.015234545267080445,
+      "constraint_rows": 30,
+      "drill_constraint_column_max": 0.0,
+      "left_right_svd_defect": 2.85053471296084e-15,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.012499999999999815,
+          0.02500000000000024,
+          0.02500000000000024,
+          0.02499999999999963,
+          0.01250000000000008
+        ],
+        "density_gram_ordering_defect": 3.2525794168174266e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "near_null_metric_share": {
+        "beam_complementary": 0.012132162897951227,
+        "beam_kinematic": 0.9837713613571135,
+        "line_dual": 0.0014105421361489672,
+        "shell_physical": 0.0026859336087745045
+      },
+      "normalized_constraint_rank": 30,
+      "normed_condition": 6491.554735626651,
+      "operator_max": 98.89588447363464,
+      "rows": 1016,
+      "scaled_weak_residual_norm": 0.015234545267077336,
+      "svd_residual_defect": -3.1086244689504383e-15,
+      "weak_constraint_euclidean": 1.54292149361534e-08,
+      "weak_vector_metric_norm_sq": 0.9999999999999881,
+      "work_left_J": 2.148896802428303e-05,
+      "work_right_J": 2.148896802428536e-05
+    },
+    "piecewise_constant_m2": {
+      "assembly_asymmetry_relative": 9.056188199650666e-17,
+      "beta_min": 0.015196699746572112,
+      "constraint_rows": 12,
+      "drill_constraint_column_max": 0.0,
+      "left_right_svd_defect": 2.961802183959105e-15,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.04999999999999995,
+          0.05000000000000006
+        ],
+        "density_gram_ordering_defect": -2.16840436112688e-19,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "near_null_metric_share": {
+        "beam_complementary": 0.012090274413290601,
+        "beam_kinematic": 0.9840461641323593,
+        "line_dual": 0.0011638470640944428,
+        "shell_physical": 0.0026997143902430486
+      },
+      "normalized_constraint_rank": 12,
+      "normed_condition": 6507.716361775766,
+      "operator_max": 98.89581158576097,
+      "rows": 998,
+      "scaled_weak_residual_norm": 0.015196699746591887,
+      "svd_residual_defect": 1.9774112902659624e-14,
+      "weak_constraint_euclidean": 8.773886608899542e-09,
+      "weak_vector_metric_norm_sq": 0.9999999999999876,
+      "work_left_J": 1.768663438398607e-05,
+      "work_right_J": 1.768663438398571e-05
+    },
+    "piecewise_constant_m4": {
+      "assembly_asymmetry_relative": 9.056188199650664e-17,
+      "beta_min": 0.015249836315107271,
+      "constraint_rows": 24,
+      "drill_constraint_column_max": 0.0,
+      "left_right_svd_defect": 3.127032072277705e-15,
+      "line_norm": {
+        "basis_integrals_m": [
+          0.02500000000000003,
+          0.024999999999999918,
+          0.02500000000000003,
+          0.02500000000000003
+        ],
+        "density_gram_ordering_defect": 2.710505071948774e-20,
+        "moment_to_force_equivalent_length_m": 0.1,
+        "physical_density_units": [
+          "N/m",
+          "N/m",
+          "N/m",
+          "Nm/m",
+          "Nm/m",
+          "Nm/m"
+        ]
+      },
+      "near_null_metric_share": {
+        "beam_complementary": 0.012150151718838532,
+        "beam_kinematic": 0.9837922772949198,
+        "line_dual": 0.001374117753798672,
+        "shell_physical": 0.00268345323247203
+      },
+      "normalized_constraint_rank": 24,
+      "normed_condition": 6485.044829881617,
+      "operator_max": 98.89587215182735,
+      "rows": 1010,
+      "scaled_weak_residual_norm": 0.015249836315098138,
+      "svd_residual_defect": -9.13331910101789e-15,
+      "weak_constraint_euclidean": 1.2465129378310748e-08,
+      "weak_vector_metric_norm_sq": 1.0000000000000289,
+      "work_left_J": 2.0955070823109443e-05,
+      "work_right_J": 2.0955070823107814e-05
+    }
+  },
+  "classification": "bounded drill-quotient native retained KKT diagnostic, not G0B acceptance",
+  "drilling_equilibrium_relative_residual": 6.6329693895299305e-16,
+  "elapsed_s": 23.194273800007068,
+  "limits": [
+    "exact bounded diagnostic elimination, not a production assembler or changed mechanics",
+    "physical-coordinate restriction is not a full continuum quotient proof",
+    "two interface resolutions on one shell grid, not registered ratio/refinement acceptance",
+    "no multiplier selection or physical connection accuracy claim"
+  ],
+  "maximum_rows": 1900,
+  "metric": "physical E4 energy on non-drilling coordinates; previous native B3 and basis-specific line norms",
+  "model": "C1 Q4 x4/y4 35 mm shell, native B3-12, P0/P1/dual m2/m4",
+  "operator": "actual E4 tangent with exact free-drilling Schur complement; actual native retained B3 tangent and line rows",
+  "provenance": {
+    "effective_threadpools": [
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.31.188.0"
+      },
+      {
+        "architecture": "SkylakeX",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "threading_layer": "pthreads",
+        "user_api": "blas",
+        "version": "0.3.30"
+      }
+    ],
+    "env": {
+      "NUMBA_DISABLE_JIT": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONPATH": null
+    },
+    "executable": "C:\\Python\\Python314\\python.exe",
+    "numpy": "2.4.6",
+    "python": "3.14.2",
+    "scipy": "1.17.1",
+    "source_git": "d679202a4e1c72eb42f1ff90807770e0fb746d54",
+    "source_sha256": {
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_c1_drill_quotient_metric.py": "f27ff837e697b92afca608306e98d9314f943e98c8680a2ef1bb89b217f4d6d3",
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_c1_native_mixed_metric.py": "9e5be04e9757b9ad365d0f89c74ee9027447dbf74773da43b9a4ced3ee47c390",
+      "scripts\\_b3_e4_f03_dual_linear_norm.py": "690812e542ccd7274082f4f9f0b55cf3f0c6c821c060be704455394c31fdf21f",
+      "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+      "scripts\\_b3_e4_f03_p0_dual_norm.py": "08295c8376857840087b5dc699dbe9cefdb33995ca79fed638cf672ff7c3905e",
+      "scripts\\_b3_e4_f03_p1_dual_norm.py": "50b5397aa11ceb97932f7c8a66497ffa8f77537da57b0c046ea30eb07f386935",
+      "scripts\\b3_e4_f03_distributed_surface_finite.py": "14ecadacdcc2243ae3b9c055cdaa19568e3b7e20dd38dd2c58722bebec0d4746",
+      "scripts\\b3_e4_f03_plate_patch_work.py": "61226436c029b6ebd80a7d63fb5b7038493fb29dfd06ee245fe3ca7fd78507ea",
+      "scripts\\b3_e4_f03_square_section_control.py": "efe684d6ad08236da0eeb4323812107d8a6bc96e04de622132a9b9915f4ab17f"
+    },
+    "threadpoolctl": "3.6.0"
+  },
+  "question": "Was the prior smallest native KKT mode only a numerical drilling metric mode, and do line-coupled modes decline under growing rows?",
+  "runner_sha256": "f27ff837e697b92afca608306e98d9314f943e98c8680a2ef1bb89b217f4d6d3",
+  "schur_action_relative_residual": 1.5455708347469447e-15,
+  "shell_drilling_rows_eliminated": 154,
+  "shell_physical_rows": 770
+}

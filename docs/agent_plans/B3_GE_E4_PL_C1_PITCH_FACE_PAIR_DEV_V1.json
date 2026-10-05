@@ -1,0 +1,149 @@
+{
+  "cases": {
+    "finite_chart": {
+      "actual_pitch_derivative": -0.09774713614902186,
+      "samples": [
+        {
+          "couple_about_face_midpoint": [
+            2.4433516949344637e-05,
+            1.0000000000000013,
+            0.0028378657943410506
+          ],
+          "face_pair_work": -0.09774713590782882,
+          "net_force": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_error": 2.411930377643756e-10,
+          "step": 0.0001
+        },
+        {
+          "couple_about_face_midpoint": [
+            2.4433516949344637e-05,
+            1.0000000000000013,
+            0.0028378657943410506
+          ],
+          "face_pair_work": -0.0977471360886904,
+          "net_force": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_error": 6.03314620484241e-11,
+          "step": 5e-05
+        },
+        {
+          "couple_about_face_midpoint": [
+            2.4433516949344637e-05,
+            1.0000000000000013,
+            0.0028378657943410506
+          ],
+          "face_pair_work": -0.09774713613389817,
+          "net_force": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_error": 1.5123693963836615e-11,
+          "step": 2.5e-05
+        }
+      ]
+    },
+    "reference": {
+      "actual_pitch_derivative": 0.1971498108131719,
+      "samples": [
+        {
+          "couple_about_face_midpoint": [
+            0.0,
+            1.0000000000000013,
+            0.0
+          ],
+          "face_pair_work": 0.19714981039064,
+          "net_force": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_error": 4.225318983586135e-10,
+          "step": 0.0001
+        },
+        {
+          "couple_about_face_midpoint": [
+            0.0,
+            1.0000000000000013,
+            0.0
+          ],
+          "face_pair_work": 0.19714981070753937,
+          "net_force": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_error": 1.0563253050044352e-10,
+          "step": 5e-05
+        },
+        {
+          "couple_about_face_midpoint": [
+            0.0,
+            1.0000000000000013,
+            0.0
+          ],
+          "face_pair_work": 0.19714981078676383,
+          "net_force": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relative_error": 2.6408070175065745e-11,
+          "step": 2.5e-05
+        }
+      ]
+    }
+  },
+  "classification": "bounded two-face pitch work interpretation, not F03/G0B acceptance",
+  "compensated_top_fixed": {
+    "face_pair_moment": [
+      0.0,
+      1.0000000000000013,
+      0.0
+    ],
+    "net_force": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pitch_work": 9.666666666666663e-05,
+    "top_face_only_work": 5.462018013048558e-22,
+    "two_face_work": 9.666666666666663e-05
+  },
+  "geometry": "C1 Q4 x8/y4 shell t=0.035 m, B3-12; unchanged 0.1 m line",
+  "interpretation": "C1 pitch permits an embedded/two-sided couple interpretation; a top-only positional bond has zero work on the compensated field",
+  "limits": [
+    "virtual-work identity, not a loaded or external reference",
+    "a two-sided physical weld is a distinct idealization from a top-face bond",
+    "does not establish intended joint, shear/locking, torque accuracy or multiplier stability"
+  ],
+  "provenance": {
+    "env": {
+      "NUMBA_DISABLE_JIT": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONPATH": "src;."
+    },
+    "executable": "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\.venv\\Scripts\\python.exe",
+    "numpy": "2.4.6",
+    "python": "3.14.2",
+    "scipy": "1.17.1",
+    "source_git": "1c67f3b9bd544d5e078afeff326b1b5bd5da2505",
+    "source_sha256": {
+      "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_c1_pitch_face_pair.py": "72b8973a347888b59abf521f7cc4048937dca924e026ccfa330aa589eb651d00",
+      "scripts\\_b3_e4_f03_native_fixture.py": "94d9e1a3532c3b2c061153e73942ccd73283eae0ef895b5ca4ef4014e5caa3fb",
+      "scripts\\b3_e4_f03_distributed_surface_finite.py": "cfc4cde7fe9920899415341c813a4c3df99a3fddb0d5579737cb2bb27f7b09e7",
+      "scripts\\b3_e4_f03_plate_patch_work.py": "cf1e58684b334003297306cd5a9e8b50390f075c3f3c6b0038b8cc572bc6bc18",
+      "scripts\\b3_e4_f03_square_section_control.py": "efe684d6ad08236da0eeb4323812107d8a6bc96e04de622132a9b9915f4ab17f"
+    }
+  },
+  "question": "Can the extra C1 director-pitch work be represented by a two-sided through-thickness face-force couple?",
+  "unit_pitch_dual": "1 N m per normalized line basis; physical density follows basis integral"
+}

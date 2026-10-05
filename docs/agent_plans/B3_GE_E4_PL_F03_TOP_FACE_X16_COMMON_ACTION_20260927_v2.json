@@ -1,0 +1,256 @@
+{
+  "cases": {
+    "x16_b24_m4": {
+      "active_shell_nodes": 85,
+      "native_first_x_moment_yz_Nm": [
+        31.204732255538087,
+        -85.54616826382902
+      ],
+      "native_hat_action_N_Nm": [
+        [
+          -279.43900363993583,
+          819.3337889948607,
+          -7.83931438214528
+        ],
+        [
+          344.65564147082586,
+          -891.5895762817196,
+          53.210875060084284
+        ]
+      ],
+      "native_minus_F5_hat_action_N_Nm": [
+        [
+          -140.02727390752364,
+          13.896890509511763,
+          -14.238254038562726
+        ],
+        [
+          150.62030114327294,
+          -13.945347131288827,
+          15.40072865478654
+        ]
+      ],
+      "native_shell_wrench_N_Nm": [
+        -6035.1596249941595,
+        65.21663783089006,
+        -72.25578728685824,
+        40.96943762435391,
+        48.57387274894675,
+        31.511170927659613
+      ],
+      "relative_l2_by_channel": [
+        0.8607512227496348,
+        0.01652724389007945,
+        0.546942468544257
+      ]
+    },
+    "x16_b24_m8": {
+      "active_shell_nodes": 85,
+      "native_first_x_moment_yz_Nm": [
+        13.949442352143093,
+        -86.21814100366873
+      ],
+      "native_hat_action_N_Nm": [
+        [
+          -106.09298190910701,
+          826.3994264592461,
+          9.645010152168568
+        ],
+        [
+          172.8958651337548,
+          -897.9633936141287,
+          35.667726943407246
+        ]
+      ],
+      "native_minus_F5_hat_action_N_Nm": [
+        [
+          33.31874782330519,
+          20.96252797389718,
+          3.2460704957511233
+        ],
+        [
+          -21.13947519379812,
+          -20.319164463697916,
+          -2.1424194618904977
+        ]
+      ],
+      "native_shell_wrench_N_Nm": [
+        -6041.158300975724,
+        66.80288322464777,
+        -71.56396715488255,
+        40.8035424779121,
+        48.48363953373226,
+        31.943548030427586
+      ],
+      "relative_l2_by_channel": [
+        0.16515216793342796,
+        0.024507887110655786,
+        0.10142266976946679
+      ]
+    },
+    "x16_m4": {
+      "active_shell_nodes": 85,
+      "native_first_x_moment_yz_Nm": [
+        11.648374612134305,
+        -85.35588805876495
+      ],
+      "native_hat_action_N_Nm": [
+        [
+          -83.47114662454152,
+          817.4118813986163,
+          11.927275063180492
+        ],
+        [
+          149.49634561814455,
+          -889.7058797766823,
+          33.38246735996749
+        ]
+      ],
+      "native_minus_F5_hat_action_N_Nm": [
+        [
+          55.94058310787068,
+          11.974982913267354,
+          5.528335406763047
+        ],
+        [
+          -44.53899470940837,
+          -12.061650626251549,
+          -4.427679045330251
+        ]
+      ],
+      "native_shell_wrench_N_Nm": [
+        -6015.097173099744,
+        66.02519899360311,
+        -72.29399837806668,
+        40.85304149107978,
+        48.77098598868254,
+        31.78818823939623
+      ],
+      "relative_l2_by_channel": [
+        0.29928062138508504,
+        0.01426829591066884,
+        0.18470043488712687
+      ]
+    },
+    "x16_m8": {
+      "active_shell_nodes": 85,
+      "native_first_x_moment_yz_Nm": [
+        5.171623065176963,
+        -85.60305781891788
+      ],
+      "native_hat_action_N_Nm": [
+        [
+          -17.970337930339056,
+          819.983466141693,
+          18.606257669425663
+        ],
+        [
+          85.4621233732002,
+          -892.0776902366641,
+          26.716878235312276
+        ]
+      ],
+      "native_minus_F5_hat_action_N_Nm": [
+        [
+          121.44139180207314,
+          14.54656765634411,
+          12.207318013008218
+        ],
+        [
+          -108.57321695435272,
+          -14.433461086233365,
+          -11.093268169985468
+        ]
+      ],
+      "native_shell_wrench_N_Nm": [
+        -6024.165957267049,
+        67.49178544286114,
+        -72.09422409497118,
+        40.76744038734482,
+        48.66966645696703,
+        32.178451282274025
+      ],
+      "relative_l2_by_channel": [
+        0.6817995154999564,
+        0.017202745400188454,
+        0.430137444961221
+      ]
+    },
+    "x8_m4": {
+      "active_shell_nodes": 45,
+      "native_first_x_moment_yz_Nm": [
+        9.883597445916337,
+        -85.77713007213886
+      ],
+      "native_hat_action_N_Nm": [
+        [
+          -65.74311020462065,
+          821.8577460819806,
+          13.727129418361782
+        ],
+        [
+          131.92883871370606,
+          -893.6848553607964,
+          31.580810732262815
+        ]
+      ],
+      "native_minus_F5_hat_action_N_Nm": [
+        [
+          73.66861952779155,
+          16.42084759663169,
+          7.328189761944337
+        ],
+        [
+          -62.10650161384686,
+          -16.040626210365645,
+          -6.229335673034928
+        ]
+      ],
+      "native_shell_wrench_N_Nm": [
+        -6014.906770408255,
+        66.18572850908541,
+        -71.82710927881591,
+        40.840403476261315,
+        48.752015404869425,
+        31.831124687664445
+      ],
+      "relative_l2_by_channel": [
+        0.4032848208767662,
+        0.01927053026586488,
+        0.2508111510459248
+      ]
+    }
+  },
+  "classification": "saved-action common-work diagnostic, not G0B acceptance or multiplier selection",
+  "input_sha256": {
+    ".qualification\\b3-ge-e4-pl\\f03-c1-factor5-common-weak-work-dev-20260926-v2\\result.json": "d061624e305227918d77e23a0d23e79814b66d545c080ab183cee3f3134f9edf",
+    "docs\\agent_plans\\B3_GE_E4_PL_F03_TOP_FACE_X16_B24_EIGHT_20260927.json": "ec0575c9c33a0d411ee8599303763b86002fc6714a25f2a611cc940bc3d0a19b",
+    "docs\\agent_plans\\B3_GE_E4_PL_F03_TOP_FACE_X16_B24_FOUR_20260927.json": "b097c7e909183c725f477c2d860cbcc73fe0b86f2949a1992852ceef7cdf908f",
+    "docs\\agent_plans\\B3_GE_E4_PL_F03_TOP_FACE_X16_FOUR_CONTROL_20260927.json": "a416bb791dcff89c52d7e01dd304d037d1f55e13d17e2e2af17c7c9c2a569b5b",
+    "docs\\agent_plans\\B3_GE_E4_PL_F03_TOP_FACE_X16_PHYSICAL_DEV_20260927_v2.json": "c941bfc9596e0cf797ef429a54591d52112d0aa01b8a6d10616ce727782d5310",
+    "docs\\agent_plans\\B3_GE_E4_PL_F03_TOP_FACE_X8_RESOLUTION_DEV_20260927_v2.json": "3daf0787623d937e1e308491270a55b3b1fa0793e578ad04dfeda4efec2bcf90"
+  },
+  "limitations": [
+    "two low-order hats do not detect every native retained or pointwise mode",
+    "F5 pointwise bond and continuum shell differ from the native weak law",
+    "no new solid or coupled numerical solve was run"
+  ],
+  "question": "Does top-face row enrichment move the x16 physical action coherently toward the validated F5 common transfer fields?",
+  "reference": "saved F5 bar-on-plate action, stronger shared-node bond and different continuum idealization",
+  "solid_hat_action_N_Nm": [
+    [
+      -139.4117297324122,
+      805.4368984853489,
+      6.398939656417445
+    ],
+    [
+      194.03534032755292,
+      -877.6442291504308,
+      37.81014640529774
+    ]
+  ],
+  "source_sha256": {
+    "C:\\Github\\ANYsolver\\.perf2-worktrees\\b3-ge-e4-pl-coupling\\scripts\\b3_e4_f03_top_face_x16_common_action.py": "46dd1fc09d7d4dc7869c04ae7f2406f47870fe905f56ee8187245438cd0098a0",
+    "scripts/b3_e4_f03_c1_factor5_common_weak_work.py": "959c868bb7d820cba729ef3535c55aeb4bfd6597649b311e05e913d39602d484"
+  }
+}

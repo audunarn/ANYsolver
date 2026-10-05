@@ -1,0 +1,42 @@
+[
+  {
+    "case": "fy",
+    "command": [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-matched-mz-reference-v1\\b3_e4_bl5_matched_mz_reference_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-matched-mz-reference-v1\\fy",
+      "--case",
+      "fy"
+    ],
+    "exit_code": 0,
+    "status": "passed",
+    "elapsed_seconds": 0.27686549999634735,
+    "sampled_process_tree_peak_rss_bytes": 8802304,
+    "timeout_seconds": 600,
+    "memory_limit_bytes": 8589934592
+  },
+  {
+    "case": "mz",
+    "command": [
+      "C:\\Users\\AudunArnesenNyhus\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-u",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-matched-mz-reference-v1\\b3_e4_bl5_matched_mz_reference_dev.py",
+      "--site",
+      "C:\\Python\\Python314\\Lib\\site-packages",
+      "--output-dir",
+      "C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\r8-bl5-matched-mz-reference-v1\\mz",
+      "--case",
+      "mz"
+    ],
+    "exit_code": 0,
+    "status": "passed",
+    "elapsed_seconds": 0.27588649999233894,
+    "sampled_process_tree_peak_rss_bytes": 11849728,
+    "timeout_seconds": 600,
+    "memory_limit_bytes": 8589934592
+  }
+]

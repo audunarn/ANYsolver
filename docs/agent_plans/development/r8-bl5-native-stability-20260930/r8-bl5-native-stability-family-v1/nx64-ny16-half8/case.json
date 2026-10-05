@@ -1,0 +1,26 @@
+{
+  "nx": 64,
+  "ny": 16,
+  "beam_halfcells": 8,
+  "coefficient": 2,
+  "span": 1,
+  "supports": 8,
+  "shell_intervals_per_support": 8.0,
+  "alignment_error": 0.0,
+  "scalar_rows": 1088,
+  "scalar_nnz": 9310,
+  "inverse_relative_residual": 3.961598247748498e-14,
+  "eigen_relative_residual": 6.342396106367854e-16,
+  "discrete_gram_min_eigenvalue": 0.005221289122751164,
+  "discrete_gram_condition": 19.052134734298406,
+  "modal_reference": {
+    "modes": 4096,
+    "supports": 8,
+    "relative_loewner_tail_bound": 1.369673255741123e-05,
+    "lower_min_eigenvalue": 0.0053425410839050835
+  },
+  "cs_squared_upper": 1.023236287519966,
+  "product_squared_upper": 4.092945150079864,
+  "prospective_product_floor": 0.494290242818664,
+  "ratio": "1:8"
+}

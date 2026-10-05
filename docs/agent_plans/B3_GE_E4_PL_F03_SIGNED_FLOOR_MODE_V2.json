@@ -1,0 +1,1202 @@
+{
+  "cases": [
+    {
+      "n_beam": 4,
+      "n_shell": 4,
+      "native_negative_modes": 36,
+      "spaces": {
+        "k4": {
+          "mode": {
+            "eigen_equation_residual": 2.9816770431844608e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.024819178751777388,
+            "normalized_constraint_action_l2": 0.0207072246146833,
+            "physical_schur_positive_contribution": 0.11167963026003984,
+            "primal_h0_contribution": 0.139610951216726,
+            "primal_h_coordinate_share": 0.9751808212482227,
+            "primal_trace_graph_contribution": 0.8355698700314986,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  -3.6965185825883273e-16,
+                  2.0600473083526455e-15,
+                  3.6465898101867526e-15,
+                  1.593661194872915e-15
+                ],
+                "normalized_l2": 4.4964219838407975e-15,
+                "sign_changes": 0
+              },
+              {
+                "normalized_coefficients": [
+                  1.0,
+                  -0.5377463969627359,
+                  0.21275642586670226,
+                  -0.11385712159959682
+                ],
+                "normalized_l2": 1.1607755719056647,
+                "sign_changes": 3
+              },
+              {
+                "normalized_coefficients": [
+                  0.29677799811483396,
+                  -0.1407680350963345,
+                  -0.1432817075073004,
+                  0.02923996409866671
+                ],
+                "normalized_l2": 0.3595517251754331,
+                "sign_changes": 2
+              }
+            ],
+            "retained_absolute_contribution": 0.027931320956686198,
+            "retained_signed_contribution": 0.013236088256652505,
+            "signed_eigenvalue": 0.13144019384932193,
+            "signed_nearby_eigenvalues": [
+              0.13144019384932193,
+              0.20702076094048705,
+              0.23765350807012098,
+              -0.2631953662335833,
+              -0.29161443676991583,
+              -0.3082759718420298
+            ],
+            "signed_primal_operator_rayleigh": 0.12491571851669235,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              1.634506276438136e-28,
+              0.8630151995784825,
+              0.13698480042151745
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.13144019384932193,
+              0.20702076094048705,
+              0.23765350807012098,
+              0.2631953662335833,
+              0.29161443676991583,
+              0.3082759718420298
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.5851342179702681,
+              "beam_retained": 7.716650925361422,
+              "shell": 1.056354528252297
+            }
+          },
+          "positive_constraint_beta": 0.5752184115381427,
+          "signed_kkt_equation_residual": 5.710937869559281e-16,
+          "signed_kkt_min_singular": 0.13144019384932154,
+          "signed_schur_min_eigen": 1.4847569426928668
+        },
+        "local-dual": {
+          "mode": {
+            "eigen_equation_residual": 3.1059373117986686e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.022733073930408635,
+            "normalized_constraint_action_l2": 0.024540002709242177,
+            "physical_schur_positive_contribution": 0.14766763065212482,
+            "primal_h0_contribution": 0.1624022311984627,
+            "primal_h_coordinate_share": 0.9772669260695913,
+            "primal_trace_graph_contribution": 0.8148646948711309,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  -1.6927478368048664e-15,
+                  -5.343107398220162e-15,
+                  -6.2963353497385345e-15,
+                  -1.1516477392211378e-14
+                ],
+                "normalized_l2": 1.4271905348256953e-14,
+                "sign_changes": 0
+              },
+              {
+                "normalized_coefficients": [
+                  -1.0,
+                  -0.006330853268107664,
+                  0.0054533405983521605,
+                  0.008543880679449124
+                ],
+                "normalized_l2": 1.0000714057125364,
+                "sign_changes": 1
+              },
+              {
+                "normalized_coefficients": [
+                  -0.8452716875474529,
+                  0.373186332434735,
+                  0.6035243686786527,
+                  -0.21292471502971552
+                ],
+                "normalized_l2": 1.1239799207925643,
+                "sign_changes": 2
+              }
+            ],
+            "retained_absolute_contribution": 0.014734600546337885,
+            "retained_signed_contribution": 0.007691527501882969,
+            "signed_eigenvalue": 0.16275919162619212,
+            "signed_nearby_eigenvalues": [
+              0.16275919162619212,
+              0.20789720080803487,
+              0.24851725963838622,
+              -0.25945204452437665,
+              -0.2923929668279781,
+              -0.30919210612446535
+            ],
+            "signed_primal_operator_rayleigh": 0.15535915815400775,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              1.788766184975044e-28,
+              0.5166229322641959,
+              0.4833770677358042
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.16275919162619212,
+              0.20789720080803487,
+              0.24851725963838622,
+              0.25945204452437665,
+              0.2923929668279781,
+              0.30919210612446535
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.5711998086025628,
+              "beam_retained": 7.086997370974545,
+              "shell": 1.0978257569071477
+            }
+          },
+          "positive_constraint_beta": 0.6235618302383392,
+          "signed_kkt_equation_residual": 5.898516423679971e-16,
+          "signed_kkt_min_singular": 0.1627591916261908,
+          "signed_schur_min_eigen": 2.3121599066596144
+        }
+      },
+      "topology": "Q4"
+    },
+    {
+      "n_beam": 8,
+      "n_shell": 8,
+      "native_negative_modes": 72,
+      "spaces": {
+        "k4": {
+          "mode": {
+            "eigen_equation_residual": 3.785262154270841e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.017846157562172973,
+            "normalized_constraint_action_l2": 0.012593722440803605,
+            "physical_schur_positive_contribution": 0.0826341720808534,
+            "primal_h0_contribution": 0.11122362239494347,
+            "primal_h_coordinate_share": 0.9821538424378273,
+            "primal_trace_graph_contribution": 0.8709302200428829,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  4.758048970311339e-15,
+                  -6.009929942627286e-15,
+                  3.956493290980548e-15,
+                  -2.7522025041428813e-15,
+                  -3.942384571007231e-16,
+                  8.955118348088867e-16,
+                  -2.276396345596553e-15,
+                  1.47861751394637e-15
+                ],
+                "normalized_l2": 9.503283705471887e-15,
+                "sign_changes": 0
+              },
+              {
+                "normalized_coefficients": [
+                  1.0,
+                  -0.5315130506613505,
+                  0.21714535730098158,
+                  -0.08785639037704916,
+                  0.022170524132476728,
+                  -0.0011995994944537338,
+                  -0.005161672256817693,
+                  0.021980634221542946
+                ],
+                "normalized_l2": 1.1568836315167201,
+                "sign_changes": 6
+              },
+              {
+                "normalized_coefficients": [
+                  0.1750859210444016,
+                  -0.0032657058809327398,
+                  -0.01890934396249852,
+                  -0.07170013273291528,
+                  -0.035280238413036714,
+                  -0.022153046848452897,
+                  -0.014582591904772341,
+                  0.023981577569806595
+                ],
+                "normalized_l2": 0.19669122416220092,
+                "sign_changes": 2
+              }
+            ],
+            "retained_absolute_contribution": 0.02858945031409005,
+            "retained_signed_contribution": 0.008272840015518108,
+            "signed_eigenvalue": 0.09427179055209467,
+            "signed_nearby_eigenvalues": [
+              0.09427179055209467,
+              -0.11257518230272412,
+              -0.12727327904448904,
+              -0.1537040360690587,
+              0.17393008990690184,
+              0.18203693134150445
+            ],
+            "signed_primal_operator_rayleigh": 0.09090701209637153,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              2.851940078367901e-28,
+              0.8749683120636372,
+              0.1250316879363627
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.09427179055209467,
+              0.11257518230272412,
+              0.12727327904448904,
+              0.1537040360690587,
+              0.17393008990690184,
+              0.18203693134150445
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.648578547427675,
+              "beam_retained": 13.298516384724534,
+              "shell": 1.1936211814260582
+            }
+          },
+          "positive_constraint_beta": 0.5196770544511711,
+          "signed_kkt_equation_residual": 9.024096700428299e-16,
+          "signed_kkt_min_singular": 0.09427179055209321,
+          "signed_schur_min_eigen": 0.8426124651719986
+        },
+        "local-dual": {
+          "mode": {
+            "eigen_equation_residual": 2.4306252317460997e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.002238890100465375,
+            "normalized_constraint_action_l2": 0.005277021004842118,
+            "physical_schur_positive_contribution": 0.0027360439689139587,
+            "primal_h0_contribution": 0.994514860294924,
+            "primal_h_coordinate_share": 0.9977611098995345,
+            "primal_trace_graph_contribution": 0.003246249604604827,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  -2.6926722976736626e-15,
+                  -7.089421247292477e-15,
+                  1.9094054627659507e-17,
+                  -5.766567349278468e-17,
+                  2.719545654490462e-15,
+                  1.5585567778885784e-14,
+                  -2.248864690231462e-14,
+                  3.3588871852352647e-14
+                ],
+                "normalized_l2": 4.406553609120053e-14,
+                "sign_changes": 0
+              },
+              {
+                "normalized_coefficients": [
+                  -0.757246361402211,
+                  1.0,
+                  -0.9641014928539601,
+                  0.8583169520810233,
+                  -0.6784338657697586,
+                  0.465404504131789,
+                  -0.23236650645867232,
+                  0.09969269596534866
+                ],
+                "normalized_l2": 1.9951011052705785,
+                "sign_changes": 7
+              },
+              {
+                "normalized_coefficients": [
+                  0.38265901414101716,
+                  -0.38576071599976347,
+                  0.38015917526393284,
+                  -0.35588833259374886,
+                  0.2870176321541714,
+                  -0.20814144552894676,
+                  0.12369742544113434,
+                  -0.0353523979146136
+                ],
+                "normalized_l2": 0.84182514962377,
+                "sign_changes": 7
+              }
+            ],
+            "retained_absolute_contribution": 0.9917788163260101,
+            "retained_signed_contribution": -0.11376171140765123,
+            "signed_eigenvalue": -0.11152505210897945,
+            "signed_nearby_eigenvalues": [
+              -0.11152505210897945,
+              0.12081918325152197,
+              -0.1261014952513113,
+              -0.152906606019779,
+              0.17531994236790638,
+              0.1860420705754311
+            ],
+            "signed_primal_operator_rayleigh": -0.11102566743873718,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              3.1322807266636014e-28,
+              0.5515904096787888,
+              0.44840959032121125
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.11152505210897945,
+              0.12081918325152197,
+              0.1261014952513113,
+              0.152906606019779,
+              0.17531994236790638,
+              0.1860420705754311
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.34170850904630057,
+              "beam_retained": 88.20478923734431,
+              "shell": 0.09063734919393637
+            }
+          },
+          "positive_constraint_beta": 0.5498485928787171,
+          "signed_kkt_equation_residual": 8.204776842315916e-16,
+          "signed_kkt_min_singular": 0.11152505210897845,
+          "signed_schur_min_eigen": 1.251993539030296
+        }
+      },
+      "topology": "Q4"
+    },
+    {
+      "n_beam": 16,
+      "n_shell": 16,
+      "native_negative_modes": 144,
+      "spaces": {
+        "k4": {
+          "mode": {
+            "eigen_equation_residual": 2.1499529669775382e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.00030986061424656894,
+            "normalized_constraint_action_l2": 0.0006092540712658854,
+            "physical_schur_positive_contribution": 0.0005163812604170181,
+            "primal_h0_contribution": 0.9981727635310012,
+            "primal_h_coordinate_share": 0.9996901393857541,
+            "primal_trace_graph_contribution": 0.0015173758546785125,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  2.7287971923610776e-14,
+                  -2.1968595489779478e-14,
+                  -1.6397283030118386e-14,
+                  3.7576111802508346e-14,
+                  -4.525529949011388e-14,
+                  2.2105341869870703e-14,
+                  -1.3048797083670599e-14,
+                  1.997969463324938e-14,
+                  -7.637509820949143e-15,
+                  3.4430156810547235e-16,
+                  -9.327819470523477e-15,
+                  1.4155857404416292e-14,
+                  7.67034764976681e-15,
+                  -1.8245399401232822e-14,
+                  3.083212067826745e-14,
+                  -4.8960490123668235e-14
+                ],
+                "normalized_l2": 1.004965668486531e-13,
+                "sign_changes": 0
+              },
+              {
+                "normalized_coefficients": [
+                  -0.4342064552210461,
+                  0.7633057383160649,
+                  -0.9228399402862161,
+                  0.9870580492150738,
+                  -1.0,
+                  0.9787640631642002,
+                  -0.9351505924733328,
+                  0.8792971021738252,
+                  -0.8101211913224448,
+                  0.7265510416134753,
+                  -0.6282221488752893,
+                  0.5169514490961542,
+                  -0.39699000988584116,
+                  0.27521842755093484,
+                  -0.16717914158729638,
+                  0.11805145611623152
+                ],
+                "normalized_l2": 2.8851417732740656,
+                "sign_changes": 15
+              },
+              {
+                "normalized_coefficients": [
+                  0.19599572152576336,
+                  -0.21114933977424663,
+                  0.22225594637652363,
+                  -0.22909353110548009,
+                  0.23077933345417215,
+                  -0.22807720383442956,
+                  0.22029981056583986,
+                  -0.21124381011438995,
+                  0.19709097892596958,
+                  -0.1788564704181015,
+                  0.15773052601627446,
+                  -0.13347566864638497,
+                  0.10685730650243638,
+                  -0.07813807598009476,
+                  0.04816380273014724,
+                  -0.015587860360740842
+                ],
+                "normalized_l2": 0.718978528080185,
+                "sign_changes": 15
+              }
+            ],
+            "retained_absolute_contribution": 0.9976563822705841,
+            "retained_signed_contribution": -0.03510602001023997,
+            "signed_eigenvalue": -0.03461108797578269,
+            "signed_nearby_eigenvalues": [
+              -0.03461108797578269,
+              -0.03636753460004223,
+              -0.03981079229890572,
+              -0.04509570068284541,
+              -0.0525604418110901,
+              -0.06256341481233196
+            ],
+            "signed_primal_operator_rayleigh": -0.034589638749822946,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              1.9011383396644877e-27,
+              0.9518116999722448,
+              0.048188300027755135
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.03461108797578269,
+              0.03636753460004223,
+              0.03981079229890572,
+              0.04509570068284541,
+              0.0525604418110901,
+              0.06256341481233196
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.08867511279849798,
+              "beam_retained": 75.1395124012793,
+              "shell": 0.047328297775759594
+            }
+          },
+          "positive_constraint_beta": 0.45375227523934686,
+          "signed_kkt_equation_residual": 1.5222901720053583e-15,
+          "signed_kkt_min_singular": 0.03461108797578274,
+          "signed_schur_min_eigen": 0.45797871070241514
+        },
+        "local-dual": {
+          "mode": {
+            "eigen_equation_residual": 2.1141526098466626e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.0003360985166738419,
+            "normalized_constraint_action_l2": 0.0006325615408965051,
+            "physical_schur_positive_contribution": 0.00044006904395970726,
+            "primal_h0_contribution": 0.9989118645121281,
+            "primal_h_coordinate_share": 0.9996639014833262,
+            "primal_trace_graph_contribution": 0.0007520369711122884,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  -1.1398996569602874e-13,
+                  9.374610714612821e-14,
+                  -4.933975512410781e-14,
+                  3.7723769420528343e-14,
+                  1.0284086439560425e-14,
+                  6.016336646420503e-15,
+                  1.6950156910351934e-14,
+                  -3.817152353684613e-14,
+                  5.316000505974641e-15,
+                  -1.940956315780596e-14,
+                  9.646134353343105e-15,
+                  4.515051460810107e-15,
+                  -3.440228858611947e-14,
+                  4.045350719163937e-14,
+                  -3.583741314487454e-14,
+                  5.1212520466851706e-14
+                ],
+                "normalized_l2": 1.864707526851005e-13,
+                "sign_changes": 0
+              },
+              {
+                "normalized_coefficients": [
+                  0.7616257138950113,
+                  -0.9920400333527712,
+                  1.0,
+                  -0.9918799063411838,
+                  0.9655389030514901,
+                  -0.9156769987127702,
+                  0.8568139792135364,
+                  -0.7950483756262919,
+                  0.7223116231585701,
+                  -0.6389376774971964,
+                  0.5455109354879104,
+                  -0.443123610680276,
+                  0.33441835345930926,
+                  -0.22139585543975465,
+                  0.10801615132618471,
+                  -0.04970707945929882
+                ],
+                "normalized_l2": 2.878178408763088,
+                "sign_changes": 15
+              },
+              {
+                "normalized_coefficients": [
+                  -0.6291325901333079,
+                  0.6643057141826669,
+                  -0.6746523868265242,
+                  0.6739841657911845,
+                  -0.6612486773100396,
+                  0.6377587810136136,
+                  -0.6063749897214897,
+                  0.5723005593953312,
+                  -0.5257470873824269,
+                  0.4707487864162662,
+                  -0.4107019085532103,
+                  0.34424691120052375,
+                  -0.2734560448041113,
+                  0.19850614650154014,
+                  -0.12152854063365007,
+                  0.03852510382938045
+                ],
+                "normalized_l2": 2.049721374459465,
+                "sign_changes": 15
+              }
+            ],
+            "retained_absolute_contribution": 0.9984717954681682,
+            "retained_signed_contribution": -0.03492087878825408,
+            "signed_eigenvalue": -0.034504003232906186,
+            "signed_nearby_eigenvalues": [
+              -0.034504003232906186,
+              -0.03621338592291882,
+              -0.03965542035668368,
+              -0.04498709189278527,
+              -0.05251357634466469,
+              -0.06250893810540803
+            ],
+            "signed_primal_operator_rayleigh": -0.034480809744294336,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              1.011712829648575e-27,
+              0.763957094364412,
+              0.23604290563558797
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.034504003232906186,
+              0.03621338592291882,
+              0.03965542035668368,
+              0.04498709189278527,
+              0.05251357634466469,
+              0.06250893810540803
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.08245483589923182,
+              "beam_retained": 74.97698510671084,
+              "shell": 0.03999947641491931
+            }
+          },
+          "positive_constraint_beta": 0.4710488091463996,
+          "signed_kkt_equation_residual": 1.5986469457899115e-15,
+          "signed_kkt_min_singular": 0.03450400323290613,
+          "signed_schur_min_eigen": 0.6346672610648935
+        }
+      },
+      "topology": "Q4"
+    },
+    {
+      "n_beam": 4,
+      "n_shell": 4,
+      "native_negative_modes": 36,
+      "spaces": {
+        "k4": {
+          "mode": {
+            "eigen_equation_residual": 2.83449748561212e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.029042973466528024,
+            "normalized_constraint_action_l2": 0.024085233611830358,
+            "physical_schur_positive_contribution": 0.1197223089392552,
+            "primal_h0_contribution": 0.1470994192799713,
+            "primal_h_coordinate_share": 0.9709570265334722,
+            "primal_trace_graph_contribution": 0.8238576072535035,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  0.008951869878928388,
+                  0.0029716328326871906,
+                  -0.0039892651214392455,
+                  -0.00765996641735137
+                ],
+                "normalized_l2": 0.012788897440579164,
+                "sign_changes": 1
+              },
+              {
+                "normalized_coefficients": [
+                  -1.0,
+                  0.5389872356499976,
+                  -0.2114388209092667,
+                  0.10920281527974884
+                ],
+                "normalized_l2": 1.1606631165183765,
+                "sign_changes": 3
+              },
+              {
+                "normalized_coefficients": [
+                  -0.2707215928332935,
+                  0.15463873568786546,
+                  0.12458948788975815,
+                  -0.043623098834856044
+                ],
+                "normalized_l2": 0.3385688034150886,
+                "sign_changes": 2
+              }
+            ],
+            "retained_absolute_contribution": 0.027377110340716083,
+            "retained_signed_contribution": 0.013397167390339046,
+            "signed_eigenvalue": 0.14132868693926892,
+            "signed_nearby_eigenvalues": [
+              0.14132868693926892,
+              0.22384228277413576,
+              0.23740999101162896,
+              -0.26298501139256625,
+              -0.2915673395556797,
+              -0.30786536154131294
+            ],
+            "signed_primal_operator_rayleigh": 0.1331194763295943,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              0.00025650116149974014,
+              0.8477365966811167,
+              0.15200690215738355
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.14132868693926892,
+              0.22384228277413576,
+              0.23740999101162896,
+              0.26298501139256625,
+              0.2915673395556797,
+              0.30786536154131294
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.561129084080381,
+              "beam_retained": 7.847231773002995,
+              "shell": 1.010791108521275
+            }
+          },
+          "positive_constraint_beta": 0.5731195317141287,
+          "signed_kkt_equation_residual": 6.791217343522639e-16,
+          "signed_kkt_min_singular": 0.14132868693926678,
+          "signed_schur_min_eigen": 1.4801636432715524
+        },
+        "local-dual": {
+          "mode": {
+            "eigen_equation_residual": 3.0612606549548766e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.024791728010526072,
+            "normalized_constraint_action_l2": 0.027739436627268244,
+            "physical_schur_positive_contribution": 0.1603116051955565,
+            "primal_h0_contribution": 0.17346749303340492,
+            "primal_h_coordinate_share": 0.9752082719894746,
+            "primal_trace_graph_contribution": 0.8017407789560704,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  -0.011672343312674721,
+                  -0.005915126799950006,
+                  0.011356482371526146,
+                  0.013352274228021039
+                ],
+                "normalized_l2": 0.021874305529170246,
+                "sign_changes": 1
+              },
+              {
+                "normalized_coefficients": [
+                  1.0,
+                  0.004963169445805363,
+                  -0.0082755530273419,
+                  -0.004254440185414998
+                ],
+                "normalized_l2": 1.0000556074989768,
+                "sign_changes": 1
+              },
+              {
+                "normalized_coefficients": [
+                  0.8255127018089508,
+                  -0.48899812056800707,
+                  -0.5827607190540467,
+                  0.31123512804070846
+                ],
+                "normalized_l2": 1.1649325059272158,
+                "sign_changes": 2
+              }
+            ],
+            "retained_absolute_contribution": 0.013155887837848417,
+            "retained_signed_contribution": 0.0071280128860789545,
+            "signed_eigenvalue": 0.17617498258252695,
+            "signed_nearby_eigenvalues": [
+              0.17617498258252695,
+              0.2258745604105512,
+              0.24737251418709172,
+              -0.25929103226103956,
+              -0.2923023276005119,
+              -0.3086483676010108
+            ],
+            "signed_primal_operator_rayleigh": 0.16743961808163554,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              0.00011436614330622357,
+              0.49369270444670743,
+              0.5061929294099864
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.17617498258252695,
+              0.2258745604105512,
+              0.24737251418709172,
+              0.25929103226103956,
+              0.2923023276005119,
+              0.3086483676010108
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.5136868811860398,
+              "beam_retained": 6.9301064376843025,
+              "shell": 0.9984527416517022
+            }
+          },
+          "positive_constraint_beta": 0.6221115496323352,
+          "signed_kkt_equation_residual": 6.242857016312796e-16,
+          "signed_kkt_min_singular": 0.17617498258252584,
+          "signed_schur_min_eigen": 2.309276509079715
+        }
+      },
+      "topology": "S3-V2D"
+    },
+    {
+      "n_beam": 8,
+      "n_shell": 8,
+      "native_negative_modes": 72,
+      "spaces": {
+        "k4": {
+          "mode": {
+            "eigen_equation_residual": 2.389475566191694e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.021118655512706575,
+            "normalized_constraint_action_l2": 0.014435727972860829,
+            "physical_schur_positive_contribution": 0.08676381946402545,
+            "primal_h0_contribution": 0.11480555545392859,
+            "primal_h_coordinate_share": 0.9788813444872934,
+            "primal_trace_graph_contribution": 0.8640757890333477,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  0.004651824902752115,
+                  -0.0025598358284944535,
+                  0.006608073106362122,
+                  -0.0023797370766506266,
+                  0.000565401426293046,
+                  -9.649284477701342e-05,
+                  -0.0005476606392754241,
+                  -0.005027316868484571
+                ],
+                "normalized_l2": 0.010169800875220177,
+                "sign_changes": 5
+              },
+              {
+                "normalized_coefficients": [
+                  -1.0,
+                  0.529549853703104,
+                  -0.20879117903300612,
+                  0.07886125364425853,
+                  -0.01716029310424005,
+                  -0.0004466903723165776,
+                  0.004757489289237258,
+                  -0.021688755399802834
+                ],
+                "normalized_l2": 1.1536999663396708,
+                "sign_changes": 6
+              },
+              {
+                "normalized_coefficients": [
+                  -0.1504482154428663,
+                  0.001086406799842591,
+                  0.022333292098064998,
+                  0.07067748511959998,
+                  0.024200411611333007,
+                  0.014347279584977796,
+                  0.00693554560055096,
+                  -0.01719751397649987
+                ],
+                "normalized_l2": 0.17107100654945398,
+                "sign_changes": 2
+              }
+            ],
+            "retained_absolute_contribution": 0.028041735989903126,
+            "retained_signed_contribution": 0.00837625150874945,
+            "signed_eigenvalue": 0.09933574576248727,
+            "signed_nearby_eigenvalues": [
+              0.09933574576248727,
+              -0.11266646645342204,
+              -0.12763197062258014,
+              -0.15447426775469153,
+              -0.18804992043357083,
+              0.18936224506796506
+            ],
+            "signed_primal_operator_rayleigh": 0.09514007097277487,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              6.926887527689517e-05,
+              0.921005493719899,
+              0.07892523740482404
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.09933574576248727,
+              0.11266646645342204,
+              0.12763197062258014,
+              0.15447426775469153,
+              0.18804992043357083,
+              0.18936224506796506
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.6259902714134435,
+              "beam_retained": 13.284629500117198,
+              "shell": 1.1537111558468722
+            }
+          },
+          "positive_constraint_beta": 0.5175532726876363,
+          "signed_kkt_equation_residual": 9.713134286798696e-16,
+          "signed_kkt_min_singular": 0.0993357457624865,
+          "signed_schur_min_eigen": 0.8400707013993441
+        },
+        "local-dual": {
+          "mode": {
+            "eigen_equation_residual": 1.907115617700364e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.0022448640615038862,
+            "normalized_constraint_action_l2": 0.005291229729265494,
+            "physical_schur_positive_contribution": 0.002885516457126759,
+            "primal_h0_contribution": 0.9946537021261448,
+            "primal_h_coordinate_share": 0.9977551359384963,
+            "primal_trace_graph_contribution": 0.0031014338125440093,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  -0.003723611284887949,
+                  0.00035906359854467575,
+                  0.00015287738889638484,
+                  2.1987558777843147e-05,
+                  -0.0003970365216954695,
+                  0.0010412811278383536,
+                  -0.001409592480219764,
+                  0.0018101639957869686
+                ],
+                "normalized_l2": 0.004530299289915559,
+                "sign_changes": 5
+              },
+              {
+                "normalized_coefficients": [
+                  0.7658777538996957,
+                  -1.0,
+                  0.9631802573284208,
+                  -0.8623196890585533,
+                  0.6869704500443216,
+                  -0.47667761213850995,
+                  0.24267221391103308,
+                  -0.10654940855256152
+                ],
+                "normalized_l2": 2.006806595858026,
+                "sign_changes": 7
+              },
+              {
+                "normalized_coefficients": [
+                  -0.39042503906500137,
+                  0.3963853682256182,
+                  -0.39430787672018025,
+                  0.36858457878142203,
+                  -0.2978208015336007,
+                  0.21459080005051487,
+                  -0.1275405901543964,
+                  0.036828001322623594
+                ],
+                "normalized_l2": 0.8679030531932177,
+                "sign_changes": 7
+              }
+            ],
+            "retained_absolute_contribution": 0.9917681856690181,
+            "retained_signed_contribution": -0.11406056802905279,
+            "signed_eigenvalue": -0.11167644846326952,
+            "signed_nearby_eigenvalues": [
+              -0.11167644846326952,
+              -0.12660628542172514,
+              0.13004101783040145,
+              -0.1538922716957234,
+              -0.18759644110459694,
+              0.18945011120470823
+            ],
+            "signed_primal_operator_rayleigh": -0.11117505157192613,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              7.908270942819806e-05,
+              0.6728262935981266,
+              0.3270946236924452
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.11167644846326952,
+              0.12660628542172514,
+              0.13004101783040145,
+              0.1538922716957234,
+              0.18759644110459694,
+              0.18945011120470823
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.3423784017910223,
+              "beam_retained": 88.36560680279082,
+              "shell": 0.08827347879153968
+            }
+          },
+          "positive_constraint_beta": 0.5477221395720838,
+          "signed_kkt_equation_residual": 9.583865854694588e-16,
+          "signed_kkt_min_singular": 0.11167644846326918,
+          "signed_schur_min_eigen": 1.2500768172324024
+        }
+      },
+      "topology": "S3-V2D"
+    },
+    {
+      "n_beam": 16,
+      "n_shell": 16,
+      "native_negative_modes": 144,
+      "spaces": {
+        "k4": {
+          "mode": {
+            "eigen_equation_residual": 2.5612128996034238e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.00031188810480315494,
+            "normalized_constraint_action_l2": 0.0006112150638924235,
+            "physical_schur_positive_contribution": 0.0005211299136021333,
+            "primal_h0_contribution": 0.9983549672379181,
+            "primal_h_coordinate_share": 0.999688111895196,
+            "primal_trace_graph_contribution": 0.001333144657246921,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  -0.00017447302871520848,
+                  0.0021566304676807926,
+                  -0.003490466041833737,
+                  0.004141916756248865,
+                  -0.004589057014185899,
+                  0.005357795866178743,
+                  -0.00530033419467596,
+                  0.0043059905728481205,
+                  -0.0036752447135957956,
+                  0.0030939274569836287,
+                  -0.0025934745905726742,
+                  0.0020680480868287368,
+                  -0.0015357523589815654,
+                  0.0008773425853625306,
+                  9.069980614891403e-06,
+                  -0.0005173551132811653
+                ],
+                "normalized_l2": 0.012957607405761079,
+                "sign_changes": 14
+              },
+              {
+                "normalized_coefficients": [
+                  -0.43772749348915907,
+                  0.7665107659150429,
+                  -0.9246105193704833,
+                  0.987492809513892,
+                  -1.0,
+                  0.9794018632113969,
+                  -0.937834978359632,
+                  0.8851566686057876,
+                  -0.8192300864157944,
+                  0.7385876895303652,
+                  -0.6426662582493585,
+                  0.5329463659713192,
+                  -0.41365886685112374,
+                  0.29189871348779406,
+                  -0.18375217307278383,
+                  0.13421269327251345
+                ],
+                "normalized_l2": 2.907447925893075,
+                "sign_changes": 15
+              },
+              {
+                "normalized_coefficients": [
+                  0.1944953807067833,
+                  -0.20784285693338778,
+                  0.21809012755246038,
+                  -0.22418386627073084,
+                  0.2257280863738019,
+                  -0.22284929842530488,
+                  0.2155448991958984,
+                  -0.20691583075932754,
+                  0.19368195191098947,
+                  -0.1762743680515062,
+                  0.1560464569432038,
+                  -0.13253048446618376,
+                  0.10661578356143829,
+                  -0.07830734522089518,
+                  0.048622744184677096,
+                  -0.0161013694345597
+                ],
+                "normalized_l2": 0.7066541782486893,
+                "sign_changes": 15
+              }
+            ],
+            "retained_absolute_contribution": 0.9978338373243159,
+            "retained_signed_contribution": -0.03510898704874867,
+            "signed_eigenvalue": -0.03460944568399227,
+            "signed_nearby_eigenvalues": [
+              -0.03460944568399227,
+              -0.036405057648499994,
+              -0.03986916328719059,
+              -0.045133159639024756,
+              -0.05255754122820022,
+              -0.0625509846926422
+            ],
+            "signed_primal_operator_rayleigh": -0.034587857135146526,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              1.0809724136479471e-05,
+              0.9531800982290521,
+              0.046809092046811475
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.03460944568399227,
+              0.036405057648499994,
+              0.03986916328719059,
+              0.045133159639024756,
+              0.05255754122820022,
+              0.0625509846926422
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.08872352032209138,
+              "beam_retained": 75.08606781135954,
+              "shell": 0.043411178019994064
+            }
+          },
+          "positive_constraint_beta": 0.4504062309919882,
+          "signed_kkt_equation_residual": 2.121561550824778e-15,
+          "signed_kkt_min_singular": 0.03460944568399188,
+          "signed_schur_min_eigen": 0.45434744917309733
+        },
+        "local-dual": {
+          "mode": {
+            "eigen_equation_residual": 2.352892532632626e-15,
+            "interpretation_limit": "single eigenvector is unstable if nearby modes cluster; raw coefficient magnitudes are not physical channel norms",
+            "multiplier_n_coordinate_share": 0.00033713098539857664,
+            "normalized_constraint_action_l2": 0.000633456584653653,
+            "physical_schur_positive_contribution": 0.0004417767047327504,
+            "primal_h0_contribution": 0.99907815087039,
+            "primal_h_coordinate_share": 0.9996628690146016,
+            "primal_trace_graph_contribution": 0.0005847181441854965,
+            "raw_multiplier_row_profiles_x_y_yaw": [
+              {
+                "normalized_coefficients": [
+                  0.0014022736735490005,
+                  -0.004026360485769762,
+                  0.004316891925192551,
+                  -0.0042628651351249,
+                  0.004236099027012747,
+                  -0.005145548958510303,
+                  0.004877957953777902,
+                  -0.0034237712154778855,
+                  0.0032279814167861937,
+                  -0.002681253264963427,
+                  0.0022563063200191913,
+                  -0.0017857505470163719,
+                  0.0013845157868174487,
+                  -0.0009127720048521344,
+                  0.00012007940656024035,
+                  0.0003290014115514124
+                ],
+                "normalized_l2": 0.012793940810797533,
+                "sign_changes": 14
+              },
+              {
+                "normalized_coefficients": [
+                  0.7636935138982417,
+                  -0.9935229676581931,
+                  1.0,
+                  -0.9912191587047721,
+                  0.966057292685062,
+                  -0.9191565532349407,
+                  0.8651497776115782,
+                  -0.8081525178473143,
+                  0.7381327273175801,
+                  -0.6561289426205197,
+                  0.5635752299755763,
+                  -0.4612563438016173,
+                  0.35178643606135973,
+                  -0.23702332671028425,
+                  0.12176231146905184,
+                  -0.061605767003888486
+                ],
+                "normalized_l2": 2.904619740167701,
+                "sign_changes": 15
+              },
+              {
+                "normalized_coefficients": [
+                  -0.6231710288856107,
+                  0.65221369698866,
+                  -0.6607229696357843,
+                  0.6590063839202847,
+                  -0.6471923785663408,
+                  0.6244579380689287,
+                  -0.5958715527858715,
+                  0.5639566913698593,
+                  -0.520066568558017,
+                  0.4670746033624242,
+                  -0.4089242201668143,
+                  0.3440477941969928,
+                  -0.2745419951364535,
+                  0.20025887324669311,
+                  -0.12345879350327764,
+                  0.04016132689361923
+                ],
+                "normalized_l2": 2.018175561127757,
+                "sign_changes": 15
+              }
+            ],
+            "retained_absolute_contribution": 0.9986363741656572,
+            "retained_signed_contribution": -0.034918389623012684,
+            "signed_eigenvalue": -0.034499874871903646,
+            "signed_nearby_eigenvalues": [
+              -0.034499874871903646,
+              -0.0362546325014077,
+              -0.03973435000131098,
+              -0.04505063862796943,
+              -0.052516673490481836,
+              -0.062479521878527455
+            ],
+            "signed_primal_operator_rayleigh": -0.034476612918279866,
+            "six_mode_raw_multiplier_channel_power_shares_x_y_yaw": [
+              7.441024164540256e-06,
+              0.7700321355846721,
+              0.22996042339116332
+            ],
+            "smallest_absolute_eigenvalues": [
+              0.034499874871903646,
+              0.0362546325014077,
+              0.03973435000131098,
+              0.04505063862796943,
+              0.052516673490481836,
+              0.062479521878527455
+            ],
+            "work_scaled_primal_coordinate_l2": {
+              "beam_physical": 0.082565926351123,
+              "beam_retained": 74.92081368345853,
+              "shell": 0.035342159216339035
+            }
+          },
+          "positive_constraint_beta": 0.4678168380875177,
+          "signed_kkt_equation_residual": 2.051262301772584e-15,
+          "signed_kkt_min_singular": 0.03449987487190327,
+          "signed_schur_min_eigen": 0.6307518464507141
+        }
+      },
+      "topology": "S3-V2D"
+    }
+  ],
+  "limitations": [
+    "finite signed KKT mode observation, not an inf-sup proof",
+    "single eigenvectors can rotate inside a nearby cluster",
+    "raw multiplier row coefficients are not physical channel norms",
+    "not a loaded physical response or formal F03 assessment"
+  ],
+  "numpy": "2.4.6",
+  "python": "3.14.2",
+  "scipy": "1.17.1",
+  "source_revision": "85f61665885769ad578e7499adb2e0183bceae5e",
+  "source_sha256": {
+    "b3_e4_f03_signed_floor_mode_screen.py": "483122fc0b9ce6e4e5d7934f1be806413dfd731786fcfafb91d56369c007b937",
+    "probe_b3_ge_e4_pl_g0_f03_shell_port_lift_v1.py": "1889e066b89088a54f515b7cddd16cdac87d67f904432d76a8bd882a6c082f94",
+    "probe_b3_ge_e4_pl_g0_f03_signed_graph_v1.py": "5108297b110de584067df0168229d1fdd5a7fdcd679c3917200cf1f792d87cb4",
+    "probe_b3_ge_e4_pl_g0_f03_signed_norm_v1.py": "3b86531f25675c1220ca1e792c7f4446eb102bd88e7224e134a8e1bab212de4a"
+  },
+  "status": "UNREGISTERED_NATIVE_F03_SIGNED_FLOOR_MODE_DIAGNOSTIC",
+  "threads": {
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  }
+}

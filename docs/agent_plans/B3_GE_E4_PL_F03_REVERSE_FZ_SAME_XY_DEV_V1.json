@@ -1,0 +1,48 @@
+{
+  "case": "solid-4-tip_fz",
+  "limitations": [
+    "only interior samples on each face",
+    "same paired face only",
+    "seam-adjacent faces omitted because saved output lacks shared seam displacements",
+    "no continuous deformed-surface separation certificate",
+    "reverse-Fz opening is not a torque/shear reference",
+    "no F03 or G0B acceptance"
+  ],
+  "omitted_seam_face_count": 8,
+  "result": {
+    "maximum_projected_xy_defect_m": 1.7678498769987978e-14,
+    "meaning": "interior bar-face Q8 samples projected to the same deformed XY in their paired plate face; negative values witness surface-order overlap, while nonnegative samples do not certify continuous separation or adjacent-face contact",
+    "minimum_same_xy_gap_m": 5.477353929236872e-07,
+    "minimum_sample": {
+      "bar_parameters": [
+        0.9681602395076261,
+        -0.9681602395076261
+      ],
+      "bar_point_m": [
+        0.8619018243987147,
+        -0.04980087279075802,
+        0.017439715369165006
+      ],
+      "face_index": 112,
+      "plate_parameters": [
+        0.9681144715519725,
+        -0.9681373252177811
+      ],
+      "xy_defect_m": 4.225057114026392e-15
+    },
+    "negative_same_xy_count": 0,
+    "same_face_projected_count": 9720,
+    "sample_count": 9720,
+    "unprojected_count": 0
+  },
+  "sampled_face_count": 120,
+  "saved_face_count": 128,
+  "saved_field_sha256": {
+    "model.json": "a087c5b43cc64b0771f2ccfabb1e94310069542c8cb44658cb0dbf118fb154e6",
+    "solid-4-tip_fz.dat": "c5417b6ecb6e66c5a9a29098e06cd124831e24f94572c40ac6b17062f077d53b",
+    "solid-4-tip_fz.inp": "3b9888d7611acbad8b08112089fc1ef0c7567381bf5b17ba6674d51ee70655a2"
+  },
+  "source_sha256": "c05ac68659d4c41fc5aabc7567de59130eb7ac21ff602e975186015502baf49d",
+  "status": "EXPLORATORY_COMPLETE",
+  "unavailable_shared_seam_nodes": 17
+}

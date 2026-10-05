@@ -97,7 +97,7 @@ class GeneralizedCellConjugate:
         saddle += [list(row)+[D(0)]*6 for row in self.constraint]
         return value,gradient,h,residual,saddle,fields
 
-    def response(self,resultants,origin=None,*,check=None):
+    def response(self,resultants,origin=None,*,check=None,branch_direction=None):
         started=monotonic()
         def guard():
             if check is not None:check()
@@ -107,6 +107,9 @@ class GeneralizedCellConjugate:
         with localcontext() as ctx:
             ctx.prec=80;p=[dec(v) for v in resultants]
             if len(p)!=18:raise ValueError('18 retained resultants required')
+            direction=None if branch_direction is None else tuple(dec(v) for v in branch_direction)
+            if direction is not None and (len(direction)!=18 or any(not v.is_finite() for v in direction)):
+                raise ValueError('finite 18-component retained branch direction required')
             origins=self._origins(origin);x=[D(0)]*(self.size+6)
             # Affine elastic predictor at the actual plastic origin only.
             _,_,_,r,a,_=self._evaluate(x,p,origins,guard,elastic=True)
@@ -144,6 +147,20 @@ class GeneralizedCellConjugate:
                 stations=stations,iterations=iteration,evaluations=evaluations,line_trials=cuts,residual=str(max(abs(v) for v in r)),
                 derivative_kind='SEMISMOOTH_ELASTIC_SELECTION' if any(f[9]=='YIELD_BOUNDARY' for f in fields) else 'CLASSICAL_SMOOTH_BRANCH',
                 production_qualified=False)
+            if direction is not None:
+                # The constrained station forces depend implicitly on all retained
+                # resultants. Use the same saddle sensitivity as the cell Hessian.
+                force_direction=mv(dx[:self.size],direction)
+                indicators=[]
+                for j,(station,f,old) in enumerate(zip(self.stations,fields,origins)):
+                    ds=force_direction[3*j:3*j+3]+mv(station[4],direction[6:])
+                    ms=mv(self.section._m,f[1]);q=dot(f[1],ms).sqrt()
+                    radius=dec(self.section.yield_force)+dec(self.section.hardening)*old[1]
+                    margin=q-radius
+                    indicators.append(dict(station=j,branch=f[9],margin=pair([margin]),
+                        margin_derivative=None if not q else pair([dot(ms,ds)/q]),
+                        resultant_direction=pair(ds)))
+                result['branch_direction']=tuple(indicators)
         guard()
         if canonical(origin)!=captured:raise ValueError('generalized cell origin changed')
         return result
