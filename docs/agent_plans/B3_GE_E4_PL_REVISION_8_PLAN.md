@@ -1130,3 +1130,31 @@ compensated differences. Supporting same-family review; independent acceptance
 OPEN. No aggregateG0-G6/F01-F13 closure, F03 consumption, push/main/release.
 NEXT: missing generalized/shellJ2 accepted-history combination using existing
 frozen laws after source inspection, one bounded declared path, no sweep.
+
+5 October2026 - generalized/Q4J2 controller transition IMPLEMENTED_NOT_QUALIFIED
+Raw .qualification/b3-ge-e4-pl/r8-native-generalized-q4-j2-history-dev-20261005-v1.
+Exact preexisting selectedQ4 fixture: generalized4000/hardening1e8, shellJ2 DNVC
+strength1MPa, geometry/supports/three objective point bonds unchanged.
+Zero/reference1000N target1.19507e-4 completed with beamflow but shellalpha0:
+COMPLETED_ACTIVITY_INCOMPLETE preserved, STOP; no largerload/law/tolerance sweep.
+Distinct source-existing force1000N(.5,1.) yielded predecessor followed by .99/
+1.01 measured105z adaptive displacement completed. Unload elastic, reload fresh
+both-domain flow in same update. No reversal or incomplete-path repair claim.
+Actualforce1000+100*amplitude: unload980.9564N, reload1006.1566N. Finalbeamalpha
+1.07051e-5/shellalpha1.17365e-6; eq1.44845e-10/gap7.79830e-18. Incremental
+section density4000*plasticincrement agrees within1e-10; not integratedenergy.
+Source final1PASS6.13s; installed1PASS2.53s and actual ANYfem experimental case/
+project save/reopen, exact pending-target resume and wholeendpoint checkpoint
+SHA dfaf17c473401f339414ae2106e8a1b7f5af942b7f599f31537f6799a30adadc.
+Compensated per-station material/strain fields, allQ4 arrays and globalforce/
+momentbalance checked. Completeinstalled6.39s/186699776B/max1/pools1/JIToff;
+transition21.65s/169033728B; unchangedwheel13e6a88c/all520 sources exact.
+Failedsource-v1 incorrectly supplied synthesized targets for a pendingprogramme;
+existingguard rejected it. Corrected test resumes exact checkpointtargets.
+Failedinstalled-v1 harness outputdirectory collision retained, v2corrected.
+No productsource, tolerance/default changes or speedup claims. Scientific
+independent acceptance and all aggregategates remainOPEN. FormalF03 untouched.
+NEXT: native material/displacement chart-rebase compatibility and durable-state
+contract, starting from existing force-chart operations and actual yielded
+fixtures. Derive the needed mapping before implementation; do not simply disable
+admission guards or retry parked loaded-chart histories. No release/main/push.
