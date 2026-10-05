@@ -60,6 +60,23 @@ def _psd_root_tangent_difference_bound(leading,remainder,active):
     return sqrt(active)*(leading+2*remainder)
 
 
+def _component_root_leading_difference_bound(factor,bounds):
+    """Two positive integrals, each with mass<=factor and |g_i|<=bounds_i."""
+    bounds=np.asarray(bounds)
+    return float(np.nextafter(2*factor*np.max(bounds)*fsum(bounds),np.inf))
+
+
+def _root_component_gradient_bounds(gradients,angle_range,axial_extension,supported):
+    base=gradients[0]
+    circular=np.column_stack((gradients[1]-base,gradients[2]-base))
+    bounds=np.zeros(len(base))
+    for i in np.flatnonzero(supported):
+        angular=_declared_arc_gradient_bound(base[i:i+1],circular[i:i+1],angle_range)
+        rounding=8192*np.finfo(float).eps*fsum(abs(g[i]) for g in gradients)
+        bounds[i]=np.nextafter(angular+axial_extension+rounding,np.inf)
+    return bounds
+
+
 def _normal_derivatives(corners):
     q=[Jet2.variable(0.,i,9) for i in range(9)]
     edges=[[Jet2.constant(corners[a,i]-corners[0,i],9)+q[3*a+i]-q[i]
@@ -94,6 +111,7 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         self.origin_map=np.zeros((3,9));self.origin_map[:,:3]=np.eye(3)
         self._axial_centres=None
         self.integration_budget_policy=work.integration_budget_policy
+        self.root_tangent_enclosure_policy=work.root_tangent_enclosure_policy
 
     def _integration_budget_area(self,prepared,segmented,high,low,U,alo,ahi,total_area):
         if self.integration_budget_policy=='full_reference' or not segmented:
@@ -194,6 +212,7 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         gx=sqrt(2)+ap/L+n1*xp
         mapping=self._local_mapping(cell,self._coordinate_count())
         full_scale=self._coordinate_scale(self._coordinate_count())
+        components=None
         if interval is not None and station is not None:
             # Complete mapped gradient is affine in cos(alpha),sin(alpha) at
             # one xi. Keep the historical circle bound for passing evaluations;
@@ -208,6 +227,9 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
                      if declared_arc else np.linalg.norm(gradients[0])+np.linalg.norm(circular,2))
             tight=angular+max(abs(station-x) for x in interval)*gx
             g=min(g,tight*(1+8192*np.finfo(float).eps))
+            if declared_arc and self.root_tangent_enclosure_policy=='componentwise':
+                components=_root_component_gradient_bounds(gradients,self.rule.definition['angle_range'],
+                    max(abs(station-x) for x in interval)*gx,np.any(mapping!=0.,axis=0))
         # Includes the once-spatial native correction, mixed and shell blocks.
         h=3*arm/L**2+2*x1*n1+distance*n2+2*n1*o1
         depth=max(0.,-geometry.gap_lower_m)
@@ -228,6 +250,10 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         # Only the non-PSD Hessian/once-spatial remainder needs a sum bound.
         te=(_psd_root_tangent_difference_bound(factor*g*g,factor*depth*h,active)
             if declared_arc else 2*sqrt(active)*stiffness*area*width*angular_width*(g*g+depth*h))
+        if components is not None:
+            leading=min(sqrt(active)*factor*g*g,
+                _component_root_leading_difference_bound(factor,components))
+            te=leading+2*sqrt(active)*factor*depth*h
         return np.array((ee,fe,te))*(1+8192*np.finfo(float).eps)
 
     def _refined_root_work_bound(self,*args,**kwargs):
@@ -236,10 +262,14 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
 
 class NativeCurvedMaterialS3Work(NativeRetainedMaterialS3Work):
     """Local whole-contained curved patch; exact inherited skin/identity guards."""
-    def __init__(self,contact,shell,*,integration_budget_policy='full_reference'):
+    def __init__(self,contact,shell,*,integration_budget_policy='full_reference',
+                 root_tangent_enclosure_policy='spectral'):
         if integration_budget_policy not in ('full_reference','certified_active'):
             raise ValueError('unknown curved S3 integration budget policy')
         self.integration_budget_policy=integration_budget_policy
+        if root_tangent_enclosure_policy not in ('spectral','componentwise'):
+            raise ValueError('unknown curved S3 root tangent enclosure policy')
+        self.root_tangent_enclosure_policy=root_tangent_enclosure_policy
         super().__init__(contact,shell)
 
     def _fingerprint(self):
@@ -248,6 +278,8 @@ class NativeCurvedMaterialS3Work(NativeRetainedMaterialS3Work):
             path='affine_skin_left_exp_complete_bernstein_controls_v1')
         if self.integration_budget_policy!='full_reference':
             definition['integration_budget_policy']=self.integration_budget_policy
+        if self.root_tangent_enclosure_policy!='spectral':
+            definition['root_tangent_enclosure_policy']=(self.root_tangent_enclosure_policy,'whole_band_v1')
         return sha(definition)
 
     def _geometry(self,pose):

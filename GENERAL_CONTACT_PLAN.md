@@ -470,3 +470,25 @@ through this shared owner with one bounded discriminating case. Preserve actual
 reference area, authoritative increments and physical commit gates. Do not start
 another local optimization campaign or replay consumed failures. Independent
 engineering acceptance, finite overlap and the rest of C0–C9 remain open.
+
+Latest complete candidate: installed4e7 certified-active returns accepted target1
+and checkpoint in11.973217s/184225792B, but tip2.293585% response exceeds2%
+(convergence NONPASS). Force/moment/target/gap/wrench pass. Independent accepted-
+pose residual agrees1.886145e-14; local quadrature tip correction negligible.
+Next one4e7->8e7 enforcement comparison, same explicit certified-active policy,
+saved4e7 coordinates-only virgin initialization and unchanged criteria/120s953MiB.
+This is an evidence-led prospective convergence test, no automatic sweep/cap or
+stiffness increase to rescue a resource failure. No live jobs; full goal incomplete.
+8e7 enforcement test NONPASS before target acceptance: root-band scaled tangent
+uncertainty1.141856e-6 exceeds1e-6;3.005341s/183189504B. No changed8e7 response.
+Next examine conservative root tangent enclosure versus representation floor at
+that initial-guess pose, keeping full work columns/root uncertainty/tolerances.
+A componentwise leading-term bound is under supporting review, not adopted.
+No new solve/cap/stiffness escalation pending that discriminator. No live jobs.
+Latest installed component-enclosure8e7 comparison passes the four2% successive-
+response gates (tip1.744162%), gap/wrench/storage checks in14.679s. Independent
+accepted-pose residual/work sensitivity passes. Native engineering acceptance
+and full C0–C9 remain incomplete. Stop enforcement doubling; next restore the
+saved fine8e7 checkpoint for separately bounded opening/recontact/state coverage.
+No changed defaults/caps/tolerances or automatic policy switching.
+[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/component_enclosure.md).

@@ -69,3 +69,62 @@ coordinates-only virgin-origin initialization and the existing four2% response,
 30um gap, equilibrium/wrench and120s953MiB limits. Source/default checkpoints
 remain unchanged; no automatic policy switching, cap increase or stiffness
 escalation. Prior three4e7 resource NONPASS results remain retained.
+## First complete changed-policy candidate
+
+Installed4e7 solve returns one accepted target/checkpoint, no trial failures,
+16 candidate requests,6 pair integrations,10 reuse hits. Complete test11.973217s/
+184225792B. This is the first returned4e7 result; prior default120s timeouts are
+censored failures, so no balanced whole-route speedup ratio is asserted.
+CheckpointSHAa88d56a9ec6b1347794ff08a50fa72793865d1f28c9ff189249aa4f8719c0c83.
+
+Convergence NONPASS: tip response2.293585% >2%. Force0.241809%,moment0.091743%,
+target0.168210%. Whole-patch gap lower-8.393580um, independent sampled/refined
+-8.392979um, both within30um; wrench and remaining named checks pass before
+response assertion. Saved records/checkpoint retained before that assertion.
+No qualification/release claim. Raw candidate10/installed_seeded_k4e7_certified_active.
+
+Independent accepted-pose analytic residual control passes3.014610s/179023872B.
+Residual relative discrepancy1.886145e-14; linearized tip correction2.588097e-16
+relative. Reference refinement1.210009e-15 relative tip. Local derivative of tip
+with respect to log(normal stiffness)4.325718e-6m (2.848813% of tip magnitude).
+That implies a local linear doubling prediction about1.975%, close to the2%
+gate, not a forecasted pass or global extrapolation. Quadrature is not the
+principal discrepancy at this accepted pose. Raw installed_accepted_k4e7_independent_residual.
+
+Decided next action: one further explicitly bounded enforcement comparison,
+4e7 to8e7 using certified-active policy on both owners and the saved4e7 coordinates
+as a virgin-origin initial guess. This is a new mechanical convergence question
+supported by the declining observed response and local sensitivity; no resource
+cap/default/gap/tolerance change or blind sweep. All four2% gates retained.
+A nonpass gets a new discriminating diagnosis, not automatic further doubling.
+Default-policy source checkpoints and all prior nonpasses remain unchanged.
+## Next enforcement refinement — geometry uncertainty NONPASS
+
+Installed8e7 vs saved4e7, both certified-active, fails initial-guess admission
+before any target acceptance in3.005341s/183189504B. Failure is root-band work
+uncertainty, not resource exhaustion or failed equilibrium. Returned empty-prefix
+checkpoint/run retained; no source material history transferred.
+Root xi[0.859985646999894,0.8599856516378176], pad4.722710e-13m,
+active-angular-width bound1.617855e-5rad; tangent uncertainty1.141856e-6
+exceeds unchanged1e-6. Energy/force bounds4.831328e-21/6.230385e-16.
+Raw candidate10/installed_seeded_k8e7_certified_active. No changed8e7 response
+comparison exists, so no convergence pass/trajectory claim.
+
+Next principal question: conservative root tangent enclosure versus numerical
+representation floor. Inspect full mapped leading PSD and general remainder
+separately. Candidate componentwise absolute-row leading bound is
+2*factor*max(b_i)*sum(b_i), with each b_i bounding the entire declared arc and
+axial root band. Compare with existing sqrt(active)*factor*g^2; retain the
+existing general remainder and all representation uncertainty. Supporting reviewer
+is assessing assumptions. No adoption yet, no default/identity/criterion change,
+no automatic new solve or larger stiffness/resource cap. A new numerical profile
+would require explicit identity and focused independent controls before retry.
+Supporting read-only assessment closes equation question: componentwise bound is
+conservative when every b_i encloses the complete scaled gradient on the whole
+band/arc, positive exact/quadrature mass shares factor, and factor2 is retained.
+Combine min(spectral leading,componentwise leading) plus unchanged general
+remainder. Require outward roundoff, full axial extension, structural-zero handling,
+and tests for signed products, dominant coordinate, station-small/band-large,
+moving-normal/offset and grazing fallback. Same-family review is supporting
+scrutiny, not independent engineering acceptance. Next implement an explicit
+opt-in enclosure policy and those local controls before any full8e7 retry.

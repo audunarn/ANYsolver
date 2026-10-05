@@ -2421,3 +2421,8 @@ independent engineering acceptance or release. Defaults unchanged.
 Evidence: d1_review_support/contact_native_fibre_s3_20261005/active_budget.md and
 geometry_only_path.md. Next explicit changed-policy complete candidate under
 unchanged acceptance/resource limits; all historical failures remain.
+Installed certified-active4e7 target1 completed; convergence NONPASS tip2.293585%>2%. Independent accepted-pose residual control passes. No native acceptance or release. See active_budget.md for retained checkpoint and next bounded enforcement discriminator.
+
+Installed8e7 certified-active refinement: geometry uncertainty NONPASS during initial guess, root tangent1.141856e-6>1e-6; no accepted target or response. Retain raw candidate10/installed_seeded_k8e7_certified_active. See active_budget.md for next enclosure discriminator; no capability promotion.
+
+2026-10-05 explicit componentwise root enclosure:7 installed controls/526files match;8e7 vs4e7 four2% successive-response gates pass, tip1.744162%,14.679s. Gap/wrench/storage and independent accepted-pose residual checks pass. Development-tested only; no independent native/material acceptance/release. Stop doubling; next fine8e7 lifecycle. Evidence: d1_review_support/contact_native_fibre_s3_20261005/component_enclosure.md. Prior nonpasses retained.

@@ -98,13 +98,38 @@ def test_native_fibre_enforcement_seeded_saved_fine_successive_response():
     _enforcement_case(4e7,seeded=True,source_checkpoint=raw)
 
 
-def _enforcement_case(stiffness,seeded=False,source_checkpoint=None):
+def test_native_fibre_enforcement_saved_fine_certified_active():
+    path=os.environ.get('CONTACT_ENFORCEMENT_SOURCE_CHECKPOINT')
+    digest=os.environ.get('CONTACT_ENFORCEMENT_SOURCE_SHA256')
+    if not path or not digest:
+        pytest.skip('explicit saved fine checkpoint and hash required')
+    raw=Path(path).read_bytes()
+    assert sha256(raw).hexdigest()==digest
+    _enforcement_case(4e7,seeded=True,source_checkpoint=raw,
+        integration_budget_policy='certified_active')
+
+
+def test_native_fibre_enforcement_saved_active_policy_next_refinement():
+    path=os.environ.get('CONTACT_ENFORCEMENT_SOURCE_CHECKPOINT')
+    digest=os.environ.get('CONTACT_ENFORCEMENT_SOURCE_SHA256')
+    if not path or not digest:
+        pytest.skip('explicit saved active-policy checkpoint and hash required')
+    raw=Path(path).read_bytes()
+    assert sha256(raw).hexdigest()==digest
+    _enforcement_case(8e7,seeded=True,source_checkpoint=raw,
+        integration_budget_policy='certified_active',source_integration_budget_policy='certified_active')
+
+
+def _enforcement_case(stiffness,seeded=False,source_checkpoint=None,integration_budget_policy='full_reference',
+                      source_integration_budget_policy='full_reference',root_tangent_enclosure_policy='spectral'):
     raw=(DATA/BASE).read_bytes() if source_checkpoint is None else source_checkpoint
-    owner=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness)
+    owner=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness,
+        integration_budget_policy=integration_budget_policy,root_tangent_enclosure_policy=root_tangent_enclosure_policy)
     output=os.environ.get('CONTACT_APP_RESULT_RECORD')
     guess=None
     if seeded:
-        source=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness/2)
+        source=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness/2,
+            integration_budget_policy=source_integration_budget_policy)
         guess=owner.make_initial_guess(source,raw,sha256(raw).hexdigest())
         if output:Path(output+'-initial-guess-provenance.json').write_text(json.dumps(dict(
             fingerprint=guess.fingerprint,owner_identity=guess.owner_identity,
@@ -114,12 +139,16 @@ def _enforcement_case(stiffness,seeded=False,source_checkpoint=None):
     if output:
         Path(output+'-enforcement.checkpoint').write_bytes(run.checkpoint)
         Path(output+'-enforcement-run.json').write_text(json.dumps(dict(stiffness_Pa_per_m=stiffness,seeded=seeded,
+            integration_budget_policy=integration_budget_policy,
+            source_integration_budget_policy=source_integration_budget_policy,
+            root_tangent_enclosure_policy=root_tangent_enclosure_policy,
             status=run.status,failure=run.failure,completed=run.accepted.completed_targets,
             candidates=owner.candidate_evaluations,pair_evaluations=owner.pair_evaluations,
             contact_reuse_hits=owner.contact_reuse_hits,trial_failures=owner.curved_trial_failures),indent=2))
     assert run.status=='paused',run.failure
     assert run.accepted.completed_targets==1
-    coarse=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness/2)
+    coarse=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness/2,
+        integration_budget_policy=source_integration_budget_policy)
     state,_=coarse._restore(raw,sha256(raw).hexdigest())
     assert coarse.context.identity==owner.context.identity
     np.testing.assert_array_equal(coarse.shell_stiffness,owner.shell_stiffness)

@@ -1,80 +1,53 @@
 # General contact restart — 5 October 2026
 
-Full C0–C9 goal ACTIVE and incomplete. Work only in
-`C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch
-`codex/contact-main-reconcile-20261001`. Parent200a97f0 plus preserved geometry-only
-path slice; exact source, package and test hashes in linked summary.
-Never access protected original checkout. Main/applications separately owned;
-no other-chat messages, publication, merge, push or defaults changes.
+Full C0–C9 ACTIVE/incomplete. Work only in
+C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
+codex/contact-main-reconcile-20261001. Parent8e2b8875 plus verified enclosure/
+enforcement slice; source/wheel/test/fixture hashes in linked summary.
+Never access protected original checkout despite stale goal-tool paths. Main and
+applications separately owned; no other-chat messages/push/merge/release/default
+changes. Local commits authorized. No live owned numerical jobs.
 
-## Current result
+## Current result and disposition
 
-Curved native/S3 swept certification now uses the complete existing geometry
-certificate directly, without unused endpoint force integration. Equilibrium
-and admission still require endpoint work.8 source and17 installed checks pass.
-526 production files match the installed wheel. One identical first-Newton
-observation body37.1993 ->22.8793s (38.4953% observed reduction); exact step,
-metrics, identities and rejected-trial reason match. No physical commit.
-This is not balanced complete-route performance or engineering acceptance.
+Explicit certified-active budget plus componentwise whole-band root tangent
+policy preserves full work, uncertainties and old/default identities. Installed7
+controls pass10.839s/188522496B;526files match. Cross-policy rejection and exact
+legacy replay pass. Policy-mutation guard defect fixed. Supporting review is
+same-family scrutiny, not independent engineering acceptance.
 
-Changed4e7 full route resource NONPASS120.107846s/182484992B. No returned
-checkpoint, target or comparison. Stop unchanged full retries; do not raise
-caps/stiffness or relax criteria. No live owned numerical jobs at checkpoint.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/geometry_only_path.md)
-[Exact summary](docs/d1_review_support/contact_native_fibre_s3_20261005/geometry_only_path_summary.json).
+Installed8e7 vs saved4e7 enforcement check passes14.679s/180629504B: one accepted
+target,16candidate requests/6pair evaluations/10hits/no trial failures. Four
+response changes force0.187340%,moment0.071148%,tip1.744162%,target0.130180%
+meet2%. Independent sampled/refined gap-6.301609um meets30um; whole-patch bound,
+wrench/storage/refinement/restart mismatch gates pass. Accepted-pose independent
+residual discrepancy1.107887e-12; tip integration sensitivity negligible.
+Not native engineering/material acceptance or full-programme completion.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/component_enclosure.md)
+[Exact summary](docs/d1_review_support/contact_native_fibre_s3_20261005/component_enclosure_summary.json).
 
-## Next authorized bounded slice
+## Next bounded slice
 
-Test explicit opt-in local error-budget allocation over certified active support
-at the saved rejected first-Newton pose. Current full-domain allocation includes
-certified-open zero-work bands; interval exhaustion may reflect wasted budget.
-Last-leaf small error alone does not establish global adequacy.
-Preserve old default identities/checkpoint bytes; bind new policy into restart
-identity. Exclude open bands only through existing complete topology proof;
-include uncertain/root bands and representation bounds. Preserve physical measure,
-all work columns, final global sum gate and absolute energy1e-10/force1e-8/
-scaled-tangent1e-6 tolerances,64 intervals. Independent residual/directional
-tangent and default replay checks before any new full candidate.
+Stop enforcement doubling for this fixture. Restore accepted8e7 fixture and open,
+then recontact in separately bounded stages, retaining actual material histories,
+physical skin/both-body work, gap, state/restart/rollback checks. Use explicit
+integration_budget_policy='certified_active',root_tangent_enclosure_policy='componentwise'.
+Fixture tests/data/general_contact_native_fibre_s3_plastic_k8e7_component_v1.checkpoint
+SHA5c72a14e4288010a7f9407ada3cd1c5334e37ae071a7baf2281de75615a7d50a.
+Do not replay unchanged prior coarse histories merely to recreate evidence.
+Review actual prior plastic lifecycle tests/owner transaction interfaces first.
+Native120s953MiB from construction including idle, never reset; routine180s1GB/
+private180s953MiB. No raised cap or changed scientific tolerance.
 
-Use expanded Mistral ownership when available; cached Local/Mistral unavailable,
-no repeat probe without changed availability. Same-family supporting scrutiny
-is not independent engineering acceptance. Existing scientific decisions and
-execution restrictions remain; native owner120s953MiB from construction including
-idle, never reset; routine180s1GB/private180s953MiB. Full convergence and required
-beam/friction/dynamics/application/scale capabilities remain incomplete.
+## Retained restrictions and history
 
-[Retained complete history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261005_PRE_ACTIVE_BUDGET.md)
-links prior failures, consumed authorities and all other restricted cases.
-Current goal and plan remain authoritative in this checkout.
-## Latest bounded slice delta
-
-Explicit certified-active allocation is now implemented behind the shared
-integration hook; default fingerprint preserved, opt-in bound into identity.
-Five focused source controls pass, including independent partial-front work and
-mixed tangent plus exact full-active both-body parity. No installed/full-solve
-claim. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/active_budget.md).
-Next reconstruct/persist the rejected first-Newton pose and compare both policies
-locally; do not launch another unchanged complete solve. No live owned jobs.
-Saved rejected pose captured through actual one-step driver (no physical commit).
-Default64-interval rejection reproduced exactly; active policy completes3intervals
-with unchanged global tolerances. Independent residual agrees5.607691e-14 relative;
-normalized directional tangent/virtual work pass. Two harness failures retained.
-Next installed package/default and incompatible-policy restart checks plus review
-before another complete candidate. Raw/archive links in active_budget.md. No live
-owned jobs; full C0–C9 remains ACTIVE/incomplete, no default/admission change.
-## Installed active-support candidate — current action
-
-Opt-in certified-active allocation is installed-tested:7 checks pass11.297237s/
-185839616B;526 production files match. Exact historical default checkpoint replay
-and both directions of cross-policy rejection pass. Supporting read-only review
-found no consequential source defect; this is not different-family acceptance.
-Wheel17cdb4411182a2c01918ff16b67c6406d1a841277bfebb93d087b52e1ae79feb.
-Saved rejected pose completes3 intervals at unchanged absolute tolerances; its
-independent residual and directional tangent/work checks pass. No full-route,
-convergence, memory-saving or engineering-acceptance claim follows.
-
-Next one explicit4e7 certified-active complete candidate, using saved2e7
-coordinates-only virgin-origin initialization and the existing four2% response,
-30um gap, equilibrium/wrench and120s953MiB limits. Source/default checkpoints
-remain unchanged; no automatic policy switching, cap increase or stiffness
-escalation. Prior three4e7 resource NONPASS results remain retained.
+Earlier default4e7 timeouts, certified-active4e7 tip2.293585% NONPASS and spectral8e7
+root uncertainty1.141856e-6 NONPASS remain preserved. New policy never switches
+automatically. No balanced full-route speedup or general convergence claim.
+Cached Local/Mistral unavailable: do not reprobe absent changed availability.
+Original120h authority consumed432011s; later explicit resumption permits bounded
+work without resetting accounting. All frozen/consumed case restrictions remain.
+Native grazing friction, impact900s/hidden pulse and Q4 app timeout restrictions,
+free-rim negative result, application nonadmission and full beam/friction/dynamics/
+application/scale obligations remain; see retained history for exact identities.
+[Preceding complete history](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261005_PRE_COMPONENT_ENCLOSURE.md).

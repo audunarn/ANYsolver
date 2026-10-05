@@ -24,7 +24,7 @@ from anysolver.general_contact import NativeS3ContactPair,create_native_contact_
 
 
 def analysis(targets=(1.,0.,1.),*,normal_stiffness_Pa_per_m=1e7,two_facets=False,physical_fibres=False,plastic_fibres=False,
-             integration_budget_policy='full_reference'):
+             integration_budget_policy='full_reference',root_tangent_enclosure_policy='spectral'):
     if plastic_fibres and not physical_fibres:
         raise ValueError('plastic fibre fixture requires the physical-fibre section family')
     points=[];frames=[]
@@ -70,7 +70,8 @@ def analysis(targets=(1.,0.,1.),*,normal_stiffness_Pa_per_m=1e7,two_facets=False
             geometry_tolerance_m=1e-10,rim_clearance_m=1e-6)
         name=f'curved material / top {eid}' if two_facets else 'curved material / top'
         pairs.append(NativeS3ContactPair(name,NativeCurvedMaterialS3Work(patch,skin,
-            integration_budget_policy=integration_budget_policy),3e-5,128))
+            integration_budget_policy=integration_budget_policy,
+            root_tangent_enclosure_policy=root_tangent_enclosure_policy),3e-5,128))
     return create_native_contact_analysis((definition,),(root,),program,shell,tuple(pairs),equilibrium_tolerance=1e-10)
 
 
