@@ -30,15 +30,15 @@ independent gap and material/storage outputs with dimensional scales. State the
 hypothesis and stopping decision before a new solve; do not renew the historical
 failed convergence campaign or infer convergence from a gap/residual alone.
 
-**Latest discriminator disposition:** conditional declared-arc/PSD root-band
-bounds are implemented, with12 installed local/work/grazing-mass and exact
-active/open replay checks passing17.161s. The corrected2e7 source solve hits the
-unchanged120s cap before returning a result: resource NONPASS, not convergence.
-A saved-pose profile identifies repeated exact axial-centre construction as a
-concrete cost. Next reuse exact rational axial data inside one candidate, retaining
-final cancellation/rounding and cleanup. Require bitwise work/replay parity and
-measured unprofiled cost reduction before another changed coupled run. No cap
-increase, owner reset, unchanged retry or stiffness escalation. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/psd_enclosure.md).
+**Latest discriminator disposition:** candidate-local exact axial reuse passes14
+installed checks with bitwise work and active/open replay parity. Balanced local
+median falls2.871090 to2.553095s (11.08%); no whole-route saving established.
+The changed installed2e7 attempt still hits120s without a mechanical result.
+Stop unchanged retries. Next add a validated first-target Newton guess using
+coarse coordinates only, fine virgin histories and full initial-to-guess path
+admission. Preserve the default route, checkpoint binding, rollback/cancellation
+and resource caps; prove those contracts before another coupled solve.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/exact_axial_reuse.md).
 
 Latest D3 material/history slice: explicit physical fibres Y2Pa/H1e5Pa through
 the same owner now press, unload/open and recontact with actual committed history.

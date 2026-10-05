@@ -286,3 +286,48 @@ def test_psd_difference_enclosure_noncommuting_and_general_remainder():
         P=P@P.T;Q=Q@Q.T
         P/=np.linalg.norm(P,2);Q/=np.linalg.norm(Q,2)
         assert np.linalg.norm(P-Q,np.inf)<=_psd_root_tangent_difference_bound(1.,0.,n)
+
+
+def test_exact_axial_candidate_reuse_preserves_cancellation_and_cleanup(monkeypatch):
+    from fractions import Fraction as F
+    from anysolver.general_contact.native_curved_s3_work import _S3CandidateIntegration
+    from anysolver.general_contact.native_curved_plane_work import NativeCurvedMaterialPlaneWork
+    work,p,low,U,u=_case();candidate=_S3CandidateIntegration(work,work.shell.reference_positions)
+    p+=np.array((1e12,-2e12,3e12));candidate.origin=np.array((1e12,-2e12,3e12))
+    low[:]=np.array((2e-9,-3e-8,7e-10))
+    arms=[np.array((a,-2*a,3*a)) for a in (0.,1e-10,-.07)]
+    def independent(cell,t,arm):
+        t=F(float(t))
+        return np.array([float((1-t)*(F(float(p[cell,i]))+F(float(low[cell,i]))-F(float(candidate.origin[i])))+
+            t*(F(float(p[cell+1,i]))+F(float(low[cell+1,i]))-F(float(candidate.origin[i])))+
+            F(float(arm[i]))) for i in range(3)])
+    def fake_evaluation(self,*args):
+        for cell in (0,1):
+            for t in (0.,.123,1.):
+                for arm in arms:
+                    np.testing.assert_array_equal(self._candidate_relative_center(p,low,cell,t,arm),independent(cell,t,arm))
+        assert len(self._axial_centres)==6
+        raise ValueError('owned evaluation failure')
+    monkeypatch.setattr(NativeCurvedMaterialPlaneWork,'evaluate',fake_evaluation)
+    with pytest.raises(ValueError,match='owned evaluation failure'):candidate.evaluate(p,low,U)
+    assert candidate._axial_centres is None
+    # A later candidate sees changed low parts; discarded data cannot persist.
+    low[:,2]+=1e-8
+    with pytest.raises(ValueError,match='owned evaluation failure'):candidate.evaluate(p,low,U)
+    assert candidate._axial_centres is None
+
+
+def test_candidate_exact_reuse_bitwise_full_work_and_tangent_parity(monkeypatch):
+    from anysolver.general_contact.native_curved_s3_work import _S3CandidateIntegration,_relative_center
+    work,p,low,U,u=_case()
+    cached=work.evaluate(p,low,U,u)
+    monkeypatch.setattr(_S3CandidateIntegration,'_candidate_relative_center',
+        lambda self,high,low,cell,t,arm:_relative_center(high,low,cell,t,self.origin,arm))
+    original=work.evaluate(p,low,U,u)
+    np.testing.assert_array_equal(cached.residual,original.residual)
+    np.testing.assert_array_equal(cached.tangent.toarray(),original.tangent.toarray())
+    from dataclasses import fields
+    for field in fields(cached.contact):
+        a,b=getattr(cached.contact,field.name),getattr(original.contact,field.name)
+        if isinstance(a,np.ndarray):np.testing.assert_array_equal(a,b)
+        else:assert a==b

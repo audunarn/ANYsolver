@@ -2379,3 +2379,14 @@ limit without a mechanical result; enforcement convergence remains unproven.
 Saved-pose profiling identifies exact axial-centre repetition for a bounded
 performance correction, with no measured whole-route saving yet.
 [Evidence](d1_review_support/contact_native_fibre_s3_20261005/psd_enclosure.md).
+
+
+### Exact candidate-local axial reuse — installed development, 5 October 2026
+
+Fourteen installed work/derivative/large-origin/cleanup/bitwise parity and active/
+open replay controls pass15.771s. All525files/221imports match. Four balanced
+saved-pose pairs show11.08% less local time at identical work/counts; no complete
+route saving established. Changed installed2e7 still resource NONPASS120.062s,
+no returned mechanical result. Validated virgin-origin Newton seeding is next;
+no limit/tolerance change or enforcement acceptance follows.
+[Evidence](d1_review_support/contact_native_fibre_s3_20261005/exact_axial_reuse.md).

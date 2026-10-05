@@ -92,6 +92,28 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
         self.shell_map=work.shell.work_map.toarray()
         self.dn=dn;self.hn=hn
         self.origin_map=np.zeros((3,9));self.origin_map[:,:3]=np.eye(3)
+        self._axial_centres=None
+
+    def evaluate(self,positions,position_low,cell_rotations):
+        # Exact axial data belongs to this disposable evaluation only. Keep
+        # rational centre+arm addition before the final float conversion.
+        if self._axial_centres is not None:
+            raise RuntimeError('curved S3 candidate evaluation already active')
+        self._axial_centres={}
+        try:return super().evaluate(positions,position_low,cell_rotations)
+        finally:self._axial_centres=None
+
+    def _candidate_relative_center(self,high,low,cell,t,arm):
+        cache=self._axial_centres
+        if cache is None:return _relative_center(high,low,cell,t,self.origin,arm)
+        key=(id(high),id(low),cell,float(t))
+        base=cache.get(key)
+        if base is None:
+            f=lambda v:Fraction(float(v));weight=f(t)
+            base=tuple((1-weight)*(f(high[cell,i])+f(low[cell,i])-f(self.origin[i]))+
+                weight*(f(high[cell+1,i])+f(low[cell+1,i])-f(self.origin[i])) for i in range(3))
+            cache[key]=base
+        return np.array([float(base[i]+Fraction(float(arm[i]))) for i in range(3)])
 
     def _coordinate_count(self):return 42+self.shell_map.shape[1]
 
@@ -109,7 +131,7 @@ class _S3CandidateIntegration(NativeCurvedMaterialPlaneWork):
 
     def _gap_work_jet(self,gap,high,low,cell,t,arm):
         n=self.normal;dn=self.dn;hn=self.hn;o=self.origin_map
-        d=_relative_center(high,low,cell,t,self.origin,arm)
+        d=self._candidate_relative_center(high,low,cell,t,arm)
         # DX maps left spatial section increments; shell corner motion is affine.
         a,b,c=arm
         dx=np.column_stack(((1-t)*np.eye(3),t*np.eye(3),
