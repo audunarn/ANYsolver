@@ -2,19 +2,20 @@
 
 ### Latest development decision - 5 October 2026
 
-Explicit anchored whole-band root tangent enclosure now passes installed local
-work/identity controls and the fine native plastic opening/recontact lifecycle.
-Fresh first target uses coordinates-only initialization with virgin histories;
-old checkpoints are not rebound. Opening6.310s/recontact8.369s meet unchanged
-120s/953MiB limits, material/history/gap/wrench/restart gates. All526production
-files match the installed artifact. Preserve the prior opening timeout and larger
-perturbation failure. No balanced speedup or native engineering acceptance claim.
-Next close a bounded native multi-body/section or spatial-accuracy requirement;
-do not repeat fine enforcement or lifecycle merely to recreate evidence.
-Cached Mistral unavailable; no repeated probe without changed availability.
-Full C0-C9 remains ACTIVE/incomplete. Earlier entries below retain history;
-this current decision supersedes their proposed next actions.
-[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/anchored_lifecycle.md).
+Two separately clamped curved physical-fibre beams now act on one deformable S3
+patch through the existing retained owner. Installed first-target equilibrium,
+per-beam plastic history and exact restart pass in 76.167 s / 183566336 B.
+Independent both-beam work/tangent, physical gaps, full support/load wrench and
+CLI material-energy recovery pass. Explicit example flags reproduce the tested
+definition. Existing single-beam checkpoint identity and defaults are preserved.
+Earlier fine anchored opening/recontact evidence remains valid and is not replayed.
+Next address multiple native beams/physical-fibre shell patches or the remaining
+spatial-accuracy requirement. Do not repeat this first-target solve for reporting.
+Supporting review is same-family only; native engineering acceptance and full
+C0-C9 remain incomplete. Cached Mistral unavailable; no repeated probe.
+Earlier entries below retain history; this current decision supersedes proposed
+next actions where they conflict.
+[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/two_beam.md).
 **Revision:** 2026-10-05.2. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-05.2, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.

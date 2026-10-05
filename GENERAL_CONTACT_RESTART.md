@@ -48,3 +48,21 @@ free-rim negative result and application nonadmission preserved. No unchanged
 retries, relaxed gaps/caps or broadened claims. Full beam/friction/dynamics/
 application/scale/independent engineering acceptance obligations remain.
 [Prior state and full linked history](docs/d1_review_support/contact_native_fibre_s3_20261005/restart_pre_anchored_lifecycle.md).
+
+
+## Latest completed two-beam slice
+
+Two curved physical-fibre beams share one actual deformable S3 patch, separate
+clamps/loads and histories, all84 native coordinates retained. Installed actual
+first target passes76.167s/183566336B. Local tangent/work, legacy single-beam
+identity, independent gap, complete reaction wrench, exact restart and CLI
+material recovery pass. One rejected grazing trial retained; no settings changed.
+Core wheel unchanged/all526files match. Source example now exposes explicit
+--two-beams, --targets, --normal-stiffness and numerical-policy flags.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/two_beam.md)
+[Identities](docs/d1_review_support/contact_native_fibre_s3_20261005/two_beam_summary.json).
+New byte-preserved first-target fixture SHAa8211bce3cf3468fa2c4f10328b031b635f88bb240f9fee0bdb98b09653282da.
+Do not replay this full solve for reporting. Next multiple physical-fibre shell
+patches or native spatial accuracy; retain all earlier no-replay/resource gates.
+Mistral cached unavailable; lead owns connected implementation, supporting
+same-family review only. No live jobs; fullC0-C9/native acceptance incomplete.
