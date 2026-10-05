@@ -6,7 +6,8 @@ implements and verifies nonmatching BL5 conservative buckling; no job live.
 
 ## Source and authority
 Canonical root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
-branch codex/stiffened-main-reconcile-20261001; parenta4ee8a66 plus current slice.
+branch codex/stiffened-main-reconcile-20261001; product/evidence4adaf436;
+prior point/restart2f68f681/a4ee8a66 preserved.
 ANYfem9faed76 unchanged. No main/push/publication/contact-worker communication.
 Previous active note preserved byte-exact in history/PRE_BL5_BUCKLING_20261005.md.
 Prior point/GE/B2/consumer/arc and inverse CCX behavior/evidence remain in history,
@@ -36,9 +37,12 @@ defect; not different-family scientific acceptance. Other shells/materials/
 attachments/loads, B2, external/platform/scale/consumer and full G4B stay OPEN.
 
 ## Next action
-Scoped local commit of complete slice and immutable evidence, then continue
-remaining conservative spectral coverage under adopted contracts; preserve
-mandatory physical/external acceptance. No automatic closed-campaign replay.
+Complete slice/evidence committed4adaf436. Next connected spectral extension:
+inspect actual elastic S3 and physical-fibre operators; derive/adopt conservative
+material/prestress and fixed-history admission contracts, then reuse the shared
+descriptor for required mixed shell/beam families. Preserve existing request
+identities, mechanics guards and mandatory physical/external acceptance. No
+automatic closed-campaign replay or artificial inertia/condensation fallback.
 Implementation owner /root/restricted_nonlinear_reference and supporting reviewer
 /root/nonlinear_external_scope_audit are terminal; no workers or numerical jobs live.
 
