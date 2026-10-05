@@ -130,7 +130,8 @@ def publish(owner,raw,*,expected_driver,expected_generation,cancellation_token=N
     adaptive_raw=None
     if adaptive is not None:
         from ._stiffened_shell_displacement_adaptive import encode
-        adaptive_raw=encode(owner._identity,adaptive,raw)
+        from ._stiffened_shell_affine_endpoint import is_native_point_material
+        adaptive_raw=encode(owner._identity,adaptive,raw,native=is_native_point_material(owner))
         result=replace(result,status="completed" if adaptive.state.completed else "accepted_prefix",
                        increment_attempts=adaptive.state.attempts)
         driver._accepted=result
@@ -151,9 +152,8 @@ def solve(owner,actions,targets,control,*,max_iterations,max_backtracks,
     from ._stiffened_shell_rotation_charts import physical_frames
     from ._stiffened_shell_affine_endpoint import is_native_point_material
     native=is_native_point_material(owner)
-    if native and (_adaptive is not None or
-            (type(control) is DisplacementControl and control.trial_policy is not None)):
-        raise ValueError("native point displacement admits fixed targets without branch event policy")
+    if native and type(control) is DisplacementControl and control.trial_policy is not None:
+        raise ValueError("native point displacement excludes branch event policy")
     if type(control) is not DisplacementControl or not (
             owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native):
         raise ValueError("coupled BL5 or curved material displacement control required")

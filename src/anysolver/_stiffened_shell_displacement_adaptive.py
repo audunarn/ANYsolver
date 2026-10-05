@@ -12,6 +12,8 @@ from ._stiffened_shell_branch_event_trial import POLICY as EVENT_POLICY
 
 MAGIC=b"ANYSSDCA1"
 EVENT_MAGIC=b"ANYSSDCA2"
+NATIVE_MAGIC=b"ANYSSDCN1"
+MAGICS=(MAGIC,EVENT_MAGIC,NATIVE_MAGIC)
 HEADER_LIMIT=256*1024
 
 
@@ -40,26 +42,58 @@ def direction_hash(direction):
     return sha256(np.asarray(direction,dtype="<f8").tobytes()).hexdigest()
 
 
-def encode(model,context,inner):
+def require_native_seed(owner,driver):
+    """Check native seed admission before controller publication or restoration."""
+    from ._stiffened_shell_affine_endpoint import require_native_displacement_policy
+    require_native_displacement_policy(owner,driver)
+    anchors=driver._state.shell_anchors
+    if (driver._programme is not None or driver._external is not None or
+            driver._adaptive_state is not None or
+            (getattr(owner,"_displacement_snapshot",None) is None and anchors is not None) or
+            (anchors is not None and not np.array_equal(
+                anchors,np.tile(np.eye(3),(len(owner._shell_ids),1,1))))):
+        raise ValueError("native adaptive displacement requires an ordinary unrebased force seed")
+    if getattr(owner,"_displacement_snapshot",None) is None:
+        applied=driver._load_factor*driver._pattern
+        nodal=owner._shell_count+6*len(owner._beam_ids)
+        if np.any(applied[nodal:]) or np.any(applied[:nodal].reshape(-1,6)[:,3:]):
+            raise ValueError("native adaptive displacement requires nodal dead translations")
+
+
+def require_native_inner(inner):
+    from ._stiffened_shell_ge_checkpoint_binary import MAGIC as FORCE_MAGIC,S3_MAGIC,NATIVE_SHELL_MAGIC
+    from ._stiffened_shell_displacement_checkpoint import MAGIC as FIXED_MAGIC
+    if not inner.startswith((FORCE_MAGIC,S3_MAGIC,NATIVE_SHELL_MAGIC,FIXED_MAGIC)):
+        raise ValueError("nested or unsupported native adaptive displacement checkpoint")
+
+
+def encode(model,context,inner,*,native=False):
+    if type(native) is not bool or (native and context.trial_policy is not None):
+        raise ValueError("native adaptive displacement excludes branch event policy")
     value=dict(model=model,state=context.state.payload(),dof=context.dof,
         direction_sha256=context.direction_sha256,history_start=context.history_start,
         max_iterations=context.max_iterations,max_backtracks=context.max_backtracks)
     if context.trial_policy is not None:
         value.update(trial_policy=context.trial_policy,event_work_start=context.event_work_start)
-    magic=EVENT_MAGIC if context.trial_policy is not None else MAGIC
+    magic=NATIVE_MAGIC if native else EVENT_MAGIC if context.trial_policy is not None else MAGIC
     header=json.dumps(value,sort_keys=True,separators=(",",":"),allow_nan=False).encode("ascii")
     if len(header)>HEADER_LIMIT or type(inner) is not bytes or not inner:
         raise ValueError("bounded adaptive displacement metadata required")
+    if native:require_native_inner(inner)
     content=magic+len(header).to_bytes(4,"little")+header+inner
     if len(content)+32>MAX_CHECKPOINT_BYTES:raise ValueError("adaptive displacement byte limit")
     return content+sha256(content).digest()
 
 
 def decode(owner,raw):
-    if (not (owner._bl5_shell_material or getattr(owner,"_curved_material",False)) or
-            type(raw) is not bytes or not raw.startswith((MAGIC,EVENT_MAGIC)) or
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    native=is_native_point_material(owner)
+    if (not (owner._bl5_shell_material or getattr(owner,"_curved_material",False) or native) or
+            type(raw) is not bytes or not raw.startswith(MAGICS) or
             not len(MAGIC)+36<len(raw)<=MAX_CHECKPOINT_BYTES):
         raise ValueError("bounded adaptive displacement checkpoint required")
+    if raw.startswith(NATIVE_MAGIC)!=native:
+        raise ValueError("adaptive displacement formulation identity mismatch")
     eventful=raw.startswith(EVENT_MAGIC)
     start=len(MAGIC)+4;size=int.from_bytes(raw[len(MAGIC):start],"little")
     if not 0<size<=HEADER_LIMIT or start+size>=len(raw)-32 or sha256(raw[:-32]).digest()!=raw[-32:]:
@@ -87,7 +121,9 @@ def decode(owner,raw):
             any(c not in "0123456789abcdef" for c in context.direction_sha256)):
         raise ValueError("invalid adaptive displacement controls")
     inner=raw[start+size:-32]
-    if inner.startswith((MAGIC,EVENT_MAGIC)):raise ValueError("nested adaptive displacement checkpoint")
+    if inner.startswith(MAGICS):
+        raise ValueError("nested adaptive displacement checkpoint")
+    if native:require_native_inner(inner)
     return context,inner
 
 
@@ -99,6 +135,11 @@ def inner_checkpoint(owner):
 def validate_progress(owner,context):
     if owner._finite_driver is None or owner._finite_driver._accepted is None:
         raise ValueError("adaptive displacement requires a finite accepted seed")
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    if is_native_point_material(owner):
+        if context.trial_policy is not None:
+            raise ValueError("native adaptive displacement excludes branch event policy")
+        require_native_seed(owner,owner._finite_driver)
     snapshot=getattr(owner,"_displacement_snapshot",None)
     rows=tuple(row.displacement for row in context.state.attempts if row.accepted)
     if snapshot is None:
@@ -130,6 +171,12 @@ def solve(owner,actions,targets,control,limits,*,max_iterations,max_backtracks,
     if type(control) is not DisplacementControl or type(targets) is not tuple or any(
             not isinstance(v,(float,int,np.floating,np.integer)) or isinstance(v,(bool,np.bool_)) or not np.isfinite(v) for v in targets):
         raise ValueError("typed control and finite displacement targets required")
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    native=is_native_point_material(owner)
+    if native:
+        if control.trial_policy is not None:
+            raise ValueError("native adaptive displacement excludes branch event policy")
+        require_native_seed(owner,driver)
     dof=control.dof(owner);direction=direction_hash(driver._load(actions))
     targets=tuple(float(v) for v in targets)
     snapshot=getattr(owner,"_displacement_snapshot",None)
@@ -166,7 +213,7 @@ def solve(owner,actions,targets,control,limits,*,max_iterations,max_backtracks,
                 linear_solves=detail.linear_solves,rejected_trials=detail.rejected_trials,
                 event_cell_evaluations=detail.event_cell_evaluations)
             context=replace(context,state=state)
-            raw=encode(owner._identity,context,inner_checkpoint(owner))
+            raw=encode(owner._identity,context,inner_checkpoint(owner),native=native)
             result=(replace(owner._finite_driver._accepted,status="accepted_prefix",
                             increment_attempts=state.attempts)
                     if getattr(owner,"_displacement_snapshot",None) is not None else None)

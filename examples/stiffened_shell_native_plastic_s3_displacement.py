@@ -1,7 +1,8 @@
 """Experimental yielded all-S3 point panel: fixed targets and exact restart.
 
 This low-yield shell is a lifecycle control, not a qualified capacity model.
-Mixed Q4/S3 active plastic continuation and simultaneous fibre flow remain open.
+This example covers all-S3; simultaneous fibre flow and physical qualification
+remain open. The failed mixed fixed histories remain separate evidence.
 """
 from dataclasses import replace
 from pathlib import Path
@@ -10,6 +11,7 @@ import json
 import numpy as np
 from anymaterial import DNVC208MaterialCurve
 from anysolver import stiffened_shell as ss
+from anysolver.control import CancellationToken,SolveCancelled
 from stiffened_shell_ge_point_zero_unload import definition as reference_definition
 
 
@@ -22,7 +24,7 @@ def definition():
     return ss.LinearDefinition(base.profile,shell,base.beams,base.points,base.fixed)
 
 
-def workflow(output):
+def workflow(output,*,adaptive=False):
     output=Path(output);output.mkdir(exist_ok=False)
     model=definition();analysis=ss.create_analysis(definition=model)
     resumed=ss.create_analysis(definition=model)
@@ -33,12 +35,22 @@ def workflow(output):
         seed=analysis.solve(actions,(.05,),**options)
         initial=float(seed.beam_positions[-1,2]-model.beams[-1].instantiate()[0].operator.reference.coordinates[-1,2])
         options['displacement_control']=ss.DisplacementControl('beam',105,2)
-        prefix=analysis.solve(direction,(initial*1.01,),**options)
+        targets=(initial*1.01,initial*1.02)
+        if adaptive:
+            options['increment_control']=ss.AdaptiveIncrementControl(2,8)
+            token=CancellationToken()
+            try:
+                analysis.solve(direction,targets,**options,cancellation_token=token,
+                    on_accepted=lambda result:token.cancel('accepted adaptive prefix'))
+            except SolveCancelled:prefix=analysis.recover()
+            else:raise AssertionError('adaptive cancellation did not preserve prefix')
+        else:prefix=analysis.solve(direction,targets[:1],**options)
         raw=analysis.checkpoint();(output/'prefix.checkpoint').write_bytes(raw)
         restored=resumed.restore(raw)
         assert resumed.checkpoint()==raw and restored.shell_layer_alpha==prefix.shell_layer_alpha
-        final=analysis.solve(direction,(initial*1.02,),**options)
-        continued=resumed.solve(direction,(initial*1.02,),**options)
+        remaining=targets if adaptive else targets[1:]
+        final=analysis.solve(direction,remaining,**options)
+        continued=resumed.solve(direction,remaining,**options)
         assert analysis.checkpoint()==resumed.checkpoint()
         assert final.shell_layer_alpha==continued.shell_layer_alpha
         assert final.free_equilibrium_ratio<=1e-8 and final.constraint_max<=1e-9
@@ -46,7 +58,7 @@ def workflow(output):
         previous=np.concatenate([row.alpha for row in prefix.shell_s3_material])
         assert np.any(alpha>previous)
         result=dict(status=final.status,production_qualified=False,mesh='all-S3',
-            exact_restart=True,shell_last_increment_flow=True,max_shell_alpha=float(alpha.max()),
+            adaptive=adaptive,exact_restart=True,shell_last_increment_flow=True,max_shell_alpha=float(alpha.max()),
             equilibrium=final.free_equilibrium_ratio,gap=final.constraint_max,history=final.history)
         (output/'completed.checkpoint').write_bytes(analysis.checkpoint())
         (output/'result.json').write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
@@ -56,4 +68,5 @@ def workflow(output):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--output',required=True)
-    arguments=parser.parse_args();print(json.dumps(workflow(arguments.output)))
+    parser.add_argument('--adaptive',action='store_true',help='use bounded native cutback and durable controller restart')
+    arguments=parser.parse_args();print(json.dumps(workflow(arguments.output,adaptive=arguments.adaptive)))

@@ -74,3 +74,16 @@ def test_legacy_s3_direct_corrector_rejects_before_assembly(request, monkeypatch
                 control_dof=CONTROL.dof(legacy), target=.001)
     assert legacy.recover() is before and legacy._generation == generation
     assert legacy.checkpoint() == historical and not legacy._finite_driver._stable_s3
+    # A native adaptive envelope cannot smuggle the same incompatible force seed.
+    from anysolver._stiffened_shell_displacement_adaptive import Context,encode as envelope,direction_hash
+    from anysolver._stiffened_shell_displacement_increment import DisplacementIncrementState
+    context=Context(DisplacementIncrementState(ss.AdaptiveIncrementControl(),(.001,),0.),
+        CONTROL.dof(legacy),direction_hash(legacy._finite_driver._load(DIRECTION)),0,20,12)
+    fresh=owner(request,definition)
+    with pytest.raises(ValueError,match='seed numerical policy mismatch'):
+        fresh.restore(envelope(legacy._identity,context,historical,native=True))
+    assert fresh._generation==0 and fresh._finite_driver is None
+    with pytest.raises(ValueError,match='seed numerical policy mismatch'):
+        legacy.solve(DIRECTION,(.001,),displacement_control=CONTROL,
+                     increment_control=ss.AdaptiveIncrementControl(),**OPTIONS)
+    assert legacy.recover() is before and legacy.checkpoint()==historical

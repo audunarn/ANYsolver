@@ -1197,8 +1197,9 @@ class ExperimentalGEAnalysis:
                 if self._definition.shell.j2_curve is not None else
                 "experimental_native_point_material_fixed_translation_v1")
             capabilities["displacement_control_seed"] = (
-                "ordinary unrebased nodal-dead-translation force seed; fixed targets only; "
-                "no staged/external seed, chart rebase, event policy, adaptation or arc qualification")
+                "ordinary unrebased nodal-dead-translation force seed; fixed or bounded adaptive targets; "
+                "no staged/external seed, chart rebase, event policy or arc qualification")
+            capabilities["adaptive_displacement_control"] = "experimental_native_point_translation_halving_v1"
         if self._bl5_shell_material:
             capabilities["displacement_control"] = "experimental_nodal_translation_seeded_v1"
             if getattr(self,"_external_context",None) is None:
@@ -1440,9 +1441,6 @@ class ExperimentalGEAnalysis:
         if getattr(self,"_arc_snapshot",None) is not None:
             raise ValueError("arc history requires its dedicated continuation controller")
         if displacement_control is not None:
-            from ._stiffened_shell_affine_endpoint import is_native_point_material
-            if is_native_point_material(self) and increment_control is not None:
-                raise ValueError("native point displacement admits fixed targets only")
             if self._unsupported_modes:
                 raise ValueError(self._unsupported_modes[0])
             if increment_control is not None:
@@ -1585,8 +1583,8 @@ class ExperimentalGEAnalysis:
         if raw.startswith(ARC_MAGIC):
             from ._stiffened_shell_arc_publication import publish
             return publish(self,raw,expected_driver=None,expected_generation=self._generation,restoring=True)
-        from ._stiffened_shell_displacement_adaptive import MAGIC as DISPLACEMENT_ADAPTIVE_MAGIC, EVENT_MAGIC
-        if raw.startswith((DISPLACEMENT_ADAPTIVE_MAGIC,EVENT_MAGIC)):
+        from ._stiffened_shell_displacement_adaptive import MAGICS as DISPLACEMENT_ADAPTIVE_MAGICS
+        if raw.startswith(DISPLACEMENT_ADAPTIVE_MAGICS):
             from ._stiffened_shell_displacement_adaptive import decode,validate_progress
             context,inner=decode(self,raw)
             prepared=copy(self);prepared._commit_lock=RLock();prepared._writing=False

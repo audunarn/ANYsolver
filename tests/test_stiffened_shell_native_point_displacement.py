@@ -148,8 +148,8 @@ def test_native_displacement_scope_guards_are_atomic(request):
     target=control._finite_driver._state.q[dof]*1.01
     with pytest.raises(ValueError,match='branch event'):
         control.solve(DIRECTION,(target,),displacement_control=replace(CONTROL,trial_policy=ss.GENERALIZED_BRANCH_EVENT_TRIAL))
-    with pytest.raises(ValueError,match='fixed targets'):
-        control.solve(DIRECTION,(target,),displacement_control=CONTROL,increment_control=ss.AdaptiveIncrementControl())
+    with pytest.raises(ValueError,match='branch event'):
+        control.solve(DIRECTION,(target,),displacement_control=replace(CONTROL,trial_policy=ss.GENERALIZED_BRANCH_EVENT_TRIAL),increment_control=ss.AdaptiveIncrementControl())
     assert control.checkpoint()==saved
     historical=owner(request,replace(model('mixed'),q4_pullback_policy=HISTORICAL_POLICY))
     assert 'displacement_control' not in historical.capabilities
