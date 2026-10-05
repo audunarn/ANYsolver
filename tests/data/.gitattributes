@@ -1,0 +1,5 @@
+# Exact-byte contact development inputs must survive checkout unchanged.
+general_contact_native_curved_fibre_pair_v14.checkpoint -text
+general_contact_native_curved_fibre_pair_v14_provenance.json -text
+general_contact_native_curved_fibre_pair_v14_response.json -text
+general_contact_native_curved_pair_quadrature_pose_v1.json -text

@@ -3,8 +3,9 @@
 ## Scope and source
 
 Authoritative worktree: `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
-Branch `codex/contact-main-reconcile-20261001`; baseline HEAD
-`da2518f6990a9a30421c516adb6b1c2159970289`. Current dirty changes belong to this task.
+Branch `codex/contact-main-reconcile-20261001`; implementation checkpoint
+`980b9aab262681654313aabf84648ecdc1c13622` (evidence baseline da2518f6).
+Further dirty changes belong to this task; use Git for the current exact HEAD.
 Full C0-C9 development remains authorized and incomplete; no push/merge/release.
 [Goal](GENERAL_CONTACT_GOAL.md) / [plan](GENERAL_CONTACT_PLAN.md) /
 [capabilities](docs/GENERAL_CONTACT_CAPABILITIES.md).
@@ -46,7 +47,7 @@ error; do not claim false rejection or secant distortion from that pose.
 
 ## Next authorized work
 
-Checkpoint this slice locally. Then assess explicit curved k4000/k8000 normal
+Assess explicit curved k4000/k8000 normal
 regularization sensitivity against the frozen base response, unchanged mechanics
 and retained2% integrated-response criterion. No unmodified coupled replay.
 Use the saved state for unaffected restart/material checks. Spatial/section
