@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 77.17548989999341,
+  "peak_process_tree_memory_mb": 447.561728,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d2_projected_penalty_radial_assess_dev.py",
+    "--stage",
+    "wrench",
+    "--saved",
+    "docs/d1_review_support/d2_projected_penalty_radial_v1_20260930.json",
+    "--output",
+    "docs/d1_review_support/d2_projected_penalty_radial_wrench_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d2_projected_penalty_radial_wrench_v1_20260930.log"
+}

@@ -191,6 +191,45 @@ def _make_module_authority_signer(
         for value in numpy_module.sctypeDict.values()
         if type(value) is type and issubclass(value, numpy_module.generic)
     )
+    original_asarray = numpy_module.asarray
+    original_float64 = numpy_module.float64
+    # Cache only small, recursively inert immutable containers. Strong owner
+    # references prevent identity reuse; mutable authority is always signed live.
+    immutable_cache: list[tuple[Any, tuple[Any, ...]] | None] = [None] * 256
+
+    def cached_immutable(value: Any) -> tuple[Any, ...] | None:
+        if (numpy_module.asarray is not original_asarray
+                or numpy_module.float64 is not original_float64):
+            return None
+        entry = immutable_cache[(id(value) >> 4) % 256]
+        return entry[1] if entry is not None and entry[0] is value else None
+
+    def retain_immutable(value: Any, result: tuple[Any, ...]) -> None:
+        if (numpy_module.asarray is not original_asarray
+                or numpy_module.float64 is not original_float64):
+            return
+        pending = [value]
+        nodes = 0
+        payload_bytes = 0
+        while pending:
+            member = pending.pop()
+            nodes += 1
+            kind = type(member)
+            if kind in {tuple, frozenset}:
+                if len(member) + len(pending) > 256:
+                    return
+                pending.extend(member)
+            elif kind in {str, bytes}:
+                payload_bytes += len(member) * (4 if kind is str else 1)
+            elif member is None or kind in {bool, int, float}:
+                payload_bytes += (member.bit_length() // 8 + 1
+                                  if kind is int else 8)
+            else:
+                return
+            if nodes > 256 or payload_bytes > 4096 or len(pending) > 256:
+                return
+        # A fixed slot assignment cannot race eviction or grow the cache.
+        immutable_cache[(id(value) >> 4) % 256] = (value, result)
 
     def signature(value: Any) -> tuple[Any, ...]:
         """Return an immutable exact signature for frozen module authority data."""
@@ -222,13 +261,27 @@ def _make_module_authority_signer(
                 tuple(items),
             )
         if type(value) in {tuple, list}:
-            return (
+            if type(value) is tuple:
+                cached = cached_immutable(value)
+                if cached is not None:
+                    return cached
+            result = (
                 type(value).__name__,
                 tuple(signature(item) for item in value),
             )
+            if type(value) is tuple:
+                retain_immutable(value, result)
+            return result
         if type(value) in {set, frozenset}:
+            if type(value) is frozenset:
+                cached = cached_immutable(value)
+                if cached is not None:
+                    return cached
             items = sorted((signature(item) for item in value), key=repr)
-            return (type(value).__name__, tuple(items))
+            result = (type(value).__name__, tuple(items))
+            if type(value) is frozenset:
+                retain_immutable(value, result)
+            return result
         if type(value) is bytes:
             return ("bytes", value)
         if value is None or type(value) in {bool, int, str}:

@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\examples\general_contact_free_target_cycle_dev.py", line 345, in <module>
+    main()
+    ~~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\examples\general_contact_free_target_cycle_dev.py", line 333, in main
+    report = run()
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\examples\general_contact_free_target_cycle_dev.py", line 302, in run
+    raise RuntimeError(
+    ...<2 lines>...
+    )
+RuntimeError: split restart did not complete recontact: status=completed, steps=8, reason=None

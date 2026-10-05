@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.5457311000063783,
+  "peak_process_tree_memory_mb": 139.825152,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-c",
+    "from pathlib import Path; from scripts.general_contact_d1_interior_two_body_oracle_dev import offline_target_xy_reference; offline_target_xy_reference(Path('docs/d1_review_support/d1_lowload_clearance5_full_oracle_20260929.json'), None, (4,), 5.0, 4, 0.001, -0.1, 0.000035)"
+  ],
+  "log": "docs\\d1_review_support\\d1_lowload_clearance5_full_oracle_20260929.log"
+}

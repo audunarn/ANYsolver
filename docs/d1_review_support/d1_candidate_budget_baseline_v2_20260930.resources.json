@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 18.448430699994788,
+  "peak_process_tree_memory_mb": 260.235264,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-c",
+    "import sys\nsys.path.insert(0, 'src')\nimport subprocess, types\nimport anysolver.general_contact.s3_patch_mortar_energy as geometry\nimport anysolver.general_contact.s3_patch_augmented as augmented\nfor module, path, classname in ((geometry, 's3_patch_mortar_energy.py', 'MovingS3PatchPrimalMortarPenalty'), (augmented, 's3_patch_augmented.py', 'MovingS3PatchProjectedNormal')):\n    original = dict(vars(module))\n    exec(subprocess.check_output(['git', 'show', 'HEAD:src/anysolver/general_contact/'+path]), original)\n    live_class = getattr(module, classname)\n    for name, value in vars(original[classname]).items():\n        if isinstance(value, (types.FunctionType, staticmethod)):\n            setattr(live_class, name, value)\nimport pytest\nraise SystemExit(pytest.main(['tests/test_general_contact_q4_s3_jet2_static_owner.py::test_q4_s3_jet2_static_work_matches_existing_smooth_patch', 'tests/test_general_contact_q4_s3_jet2_static_owner.py::test_q4_s3_jet2_partial_shared_pressure_work', 'tests/test_general_contact_q4_s3_jet2_static_owner.py::test_q4_s3_jet2_runs_coupled_static_path_and_restart', 'tests/test_general_contact_q4_s3_refined_patch.py::test_refined_q4_pressure_failure_uses_path_transaction', '-q']))"
+  ],
+  "log": "docs\\d1_review_support\\d1_candidate_budget_baseline_v2_20260930.log"
+}

@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_cycle_tangent_discriminator.py", line 177, in <module>
+    main()
+    ~~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_cycle_tangent_discriminator.py", line 173, in main
+    args.output.write_text(json.dumps(run(), indent=2)+"\n", encoding="utf-8")
+                                      ~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_cycle_tangent_discriminator.py", line 82, in run
+    multipliers = np.asarray(row["normal_multipliers"], dtype=float)
+                             ~~~^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'normal_multipliers'

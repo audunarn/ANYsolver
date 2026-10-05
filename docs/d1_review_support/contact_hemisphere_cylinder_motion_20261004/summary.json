@@ -1,0 +1,98 @@
+{
+  "scope": "development/code verification, not independent engineering acceptance/release",
+  "starting_head": "59a8fa34c337405afc0f02b329bedb5ae04a57c9",
+  "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "wheel_sha256": "c92f303bd5d3c002bde3d832440725dfc0adff276786d2900a5d6f51b7f45b52",
+  "package_python_files": 514,
+  "loaded_solver_modules": 219,
+  "package_errors": [],
+  "runtime_errors": [],
+  "installed_passed": 26,
+  "jit_disabled": true,
+  "effective_numba_threads": 1,
+  "cases": {
+    "moving_B2": {
+      "actual_displacement_m": [
+        0.0019999000050002656,
+        0.0
+      ],
+      "independent_displacement_m": [
+        0.0019999000050002604,
+        0.0
+      ],
+      "maximum_displacement_error_m": 5.204170427930421e-18,
+      "minimum_gap_m": -9.999499974398807e-08,
+      "history_rows": 284,
+      "independent_tool_force_N": 0.009999500024378364,
+      "independent_work_J": 9.999558434701581e-06,
+      "storage_J": 9.999500025000423e-06,
+      "relative_storage_work_defect": 5.841262164326593e-06
+    },
+    "moving_B3": {
+      "actual_displacement_m": [
+        0.001999900005000265,
+        0.0009999500025001339,
+        0.0
+      ],
+      "independent_displacement_m": [
+        0.0019999000050002587,
+        0.0009999500025001304,
+        0.0
+      ],
+      "maximum_displacement_error_m": 6.5052130349130266e-18,
+      "minimum_gap_m": -9.999499974398807e-08,
+      "history_rows": 284,
+      "independent_tool_force_N": 0.009999500024378365,
+      "independent_work_J": 9.999558434081514e-06,
+      "storage_J": 9.999500025000406e-06,
+      "relative_storage_work_defect": 5.841200156212328e-06
+    }
+  },
+  "runs": {
+    "build01": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 9.363472700002603,
+      "peak_bytes": 109039616
+    },
+    "install01": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 3.3190586999990046,
+      "peak_bytes": 84455424
+    },
+    "installed01": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 139.16924900002778,
+      "peak_bytes": 198733824
+    },
+    "installed02": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 110.4195400000317,
+      "peak_bytes": 338456576
+    },
+    "source01": {
+      "status": "timeout",
+      "returncode": 15,
+      "elapsed_s": 180.0680007999763,
+      "peak_bytes": 199585792
+    },
+    "source02": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 32.968998300028034,
+      "peak_bytes": 195239936
+    },
+    "source03": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 43.471255200041924,
+      "peak_bytes": 196259840
+    }
+  },
+  "retained_failure": "source01 180-second combined batch timeout after five success prefixes; last cancellation check incomplete then passed alone. No cap/law/tolerance/solver control change.",
+  "next_measured_question": "284 accepted force-history states for four requested tool targets: closed coupled load staging versus fixed-pose cutbacks; no unmeasured speed claim."
+}

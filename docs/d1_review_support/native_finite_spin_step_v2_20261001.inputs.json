@@ -1,0 +1,2317 @@
+{
+  "workspace": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver",
+  "source_commit": "90435dd9 main checkpoint; production exact9050dbf3 source",
+  "environment": {
+    "PYTHONPATH": "src;tests;.;examples",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_CACHE_DIR": "C:\\ANYworkspaceWork\\native_finite_spin_step_v2_20261001-cache",
+    "NATIVE_FINITE_SPIN_STEP_INPUTS": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_step_v2_20261001.inputs.json",
+    "NATIVE_FINITE_SPIN_STEP_RAW_OUTPUT": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_step_v2_20261001.raw.json"
+  },
+  "sources": [
+    {
+      "path": "docs\\d1_review_support\\contact_development_check.py",
+      "sha256": "21af21515e9dcdf3372e49f9fe4d04d00ee9a2f50b19a459cd8cc08e45aaa80f"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "2e48a246340ff9f815a3f9d52b3b52a2772f4f6e8e350a6cc08c3d308c8ab196"
+    },
+    {
+      "path": "src\\anysolver\\__init__.py",
+      "sha256": "0432c72667157e0df529faf2c1ed8ddd99426aa1b367877524158972a3ddec56"
+    },
+    {
+      "path": "src\\anysolver\\_dyadic_bilinear.py",
+      "sha256": "a79e1260439a9c5d8292bcd47b3bc26c4c0d608af840a5f149e4511d271eb6f2"
+    },
+    {
+      "path": "src\\anysolver\\_dyadic_factor_chain.py",
+      "sha256": "c2e07867c18ab29a03aa8196d7909044763bf1881d9579f12c1459ea3d7d2004"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_adaptive_arc_program.py",
+      "sha256": "136a6e32c15df82765ad0292a29810d33745f2ef85f09a494bc9633e514d136c"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_analysis_combined.py",
+      "sha256": "29cc1f3aceeaebb500fb36a68a539f43a0107ebcd9dd2e7ca0d610b2e9162899"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_analysis_fibre_translation.py",
+      "sha256": "9435e945d39473bd86fae359e5eeeb29e4e5c90017ffa3a5aea3842f317819a8"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_analysis_modal_snapshot.py",
+      "sha256": "c5903d32733557f21482bc118f46b7682aa7b7a767cd0fbd2b744a82db7fd9de"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_analysis_nodal_program.py",
+      "sha256": "af5dae11e588b05e931de5cd964e238d3f23a6bda25b3df66ba7775a0518f77a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_analysis_translation.py",
+      "sha256": "910e1b4564af8072113db78b8c3e27d7f11f864315d9e759200a19b02590d027"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_analysis_translation_modal.py",
+      "sha256": "51fe623d6075ff4b9bcb51b291495f093aa560cb7e898ef9e9c82c2df53eb5eb"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_arc_geometry.py",
+      "sha256": "1a50282dd000ff92448270a3638b1de9eb79ffc8b9ad8785f63925ac165ae1e7"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_arc_program.py",
+      "sha256": "5da4d9c8f6a850224f4defffcfea8b4fe1accbdbebeb1db2a0adad2c626ea4a1"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_authoritative_cell_seed.py",
+      "sha256": "da9c612b78b23e8a6e7649abe5f2ff40c91857f3afe8e3f434af54ff062397ea"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_cell_identity.py",
+      "sha256": "b4a6787bb798d7d16079f2c1c0b4d0ba3ae95e555db8514b3cde30eedc40c94e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_centered_finite_inertia.py",
+      "sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_centered_mixed.py",
+      "sha256": "d6a1657c87089dedcec25b6ca8166551d6d17b848944cd5d38e794b45cabbce3"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_centered_reference.py",
+      "sha256": "9187333942931213a01fdca90dd4d7f44850304370ef4452de505a3193904758"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_complementary_section.py",
+      "sha256": "145616aa3b786586199832107e8d895c366cb2bfd3d6bb4dbec49e712f01aceb"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_compliance_snapshot_guard.py",
+      "sha256": "c74a67ba6d2c6101c342749024762d18239a13b627a3506030af42b558c5d68f"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_conservative_backtrack.py",
+      "sha256": "5107f692df74d8942d15373a920682797c5edfdad704b8bff82a740495e6598a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_controlled_fibre_modes.py",
+      "sha256": "b3b6c2bfc165cb7a9137349ece8f35175c934280dedb69826b1558c9f2881d68"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_coupled_beam_subdomain.py",
+      "sha256": "dfb25d53e397752634c143472ee9baca7161183d5bd905d55f0b412271ac1da1"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_coupled_modes.py",
+      "sha256": "8e3784868fce5bfbc786e0a736e044b87f46bef8198df1665adca24679a61296"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_displacement_program.py",
+      "sha256": "2163fdb080ef388dd1141a73c2df64dffac7fab5dbc0baa8a2bbbc35cf795335"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_durable_coupled.py",
+      "sha256": "84ff9f94b9ea2451b70b4a9de1c2a0ee9260e5a76fdeedaf42d3412cec2d386e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+      "sha256": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_elastic_seed_continuation.py",
+      "sha256": "1cfe848e519943e2d2706bdcfc2ac05ec761cf4b9e47ac54010a6bfbbe966efd"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_elastic_seed_modal.py",
+      "sha256": "f07a3d1bd5b18a15a6e02825b70f08d95ba4e8fed398779121e3174635c95ca7"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_equilibrium_line_program.py",
+      "sha256": "8837d7948f65e249b0ca91ea8c5b9cd1df4d763c0d9121c43abb3ad0ec78dbba"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_equilibrium_schur_solver.py",
+      "sha256": "1b2fcaa32911540a72f03d9fb115835d3c4d4cb16e38f0e8ad8f2fb4791eeea1"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_factor_chain_modes.py",
+      "sha256": "82a38bdc4b4d4094855ef4231d219a5fbe88ecf8e7ed68756838c7dcff473f31"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_fibre_cell.py",
+      "sha256": "140eff52c240151511ebe2911912d6b26c2cd35c25f0c4a1e88cdc7922f0c0c7"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_fibre_distributed_couples.py",
+      "sha256": "c7c2f01fa844a5be56cdbc5724734f284475c19ef33aad7a9263dabd863dee2c"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_fibre_kinematic_cell.py",
+      "sha256": "a79c254ada4f518958d83adc642f80bc22c892c71db6276b0ffad1ad7d67a776"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_fibre_line_program.py",
+      "sha256": "c7be2708b08de837bce77c86aee93bcbf6f1389496e704ad16137b82b30074a4"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_fibre_line_work.py",
+      "sha256": "4967febb2c623622082d688218a286a10ebec3297a0d694078d5fcb4d6c6f0bf"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_fibre_reference_modal.py",
+      "sha256": "3d95ea54c681c7a26c59592ddab19ce431aa714bec08adc986692595cbb474c1"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_fibre_schur_solver.py",
+      "sha256": "134b4a089ecc609fe80b0609171a949c930ec8cc141351bd8f14ed5ae92c43eb"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_fibre_section.py",
+      "sha256": "2c8ba8c72252515bad3051c0bb0e8ed61a5563c2ce1854601c87ba6e09248824"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_fibre_static_boundary.py",
+      "sha256": "7919fb7e2258cf01c9e5aceb17f9e1e01886df76b4693ab34090a281bcb4c534"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g1_analysis.py",
+      "sha256": "6bc038b76768ff6cfd4aeb474cc6730667a90d8c90eba57690c20c9fe4923734"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g1_elastic.py",
+      "sha256": "fef9426000dffba96bb2d590b7e76740eb1032ac9c3de8c6e5adca4e6fc6b51d"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g1_element.py",
+      "sha256": "0d898e5c3dbc22cf09acb9ad31c0520cff3ded8d6d1b83f5e605236a02c25273"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g1_operator.py",
+      "sha256": "5a6c52595d16af37d708ec344ea9c3a99c1ffece03d3a7ef93d32d95267761a6"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g2_analysis.py",
+      "sha256": "6f1b3017963c77aa97914b1194efd2c488f6dba718698a2217a8f60cbe464995"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g2_constraints.py",
+      "sha256": "af3c7fbd3e672af86aa65c7cb3bda40d7c9ecba0a81894a32db98b57c948fe2a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3_analysis.py",
+      "sha256": "f26c77c530d4181a513b6ff10628aa081980c1a42c0e31d8ab7c9510890344a5"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3_constraints.py",
+      "sha256": "949c0ee64339979bb24a7e69e10a5049f1d61b039087b26755ba4e63c8a83f3d"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3b_owner.py",
+      "sha256": "454f1ea8f045bcd55f4758586c878ac06b5b566d98c0e81df4fa09c57581f4a2"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3b_q4_reference.py",
+      "sha256": "9e5debd860d156ca929d66ce0dd00a9cba6f87f045349d6c4bcc56e379ed8f56"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3b_reference.py",
+      "sha256": "144d97cd35ab9e485ee253a8e45d472471bc98ac90e6e7bac994913f03d8b8ed"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3b_result_schema.py",
+      "sha256": "cc142136c04b89662c224728eaf072fd2ec9088d223475be8ce6b92e028ade49"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3b_s3_reference.py",
+      "sha256": "31ad44515652d85c6ecbe9515e85e30a18f538c9de772185c547ad49e9c04544"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3b_weighted_reference.py",
+      "sha256": "12aa8595e68899eff55f07025ce94ac5ab7d29f38bbb1fc8f10381bb9796c071"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_affine_q4_chart.py",
+      "sha256": "70d363a0d20d72f738790829715af02c807aa5ca00bc3d3e63b3b16ddee70c0c"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_affine_q4_increment_chart.py",
+      "sha256": "269c8f90315ce1181ff70c1ae92c9b2c71d4710afc260c8cd581aa576c9a118c"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_affine_q4_recovery.py",
+      "sha256": "d2847220edeb78b4307416ed24ec64c530a78222e4ef812b11e522e36caee482"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_affine_q4_registry.py",
+      "sha256": "7e1be71cee76644e0c78cf414feed893e1b4ee41a69c8ffcd860390573f727e9"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_b2_physical.py",
+      "sha256": "bd72eeabf5e43e124026815b3dba0083d98e9d477ef96f97b8ff56559c528b08"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_b2_physical_adapter.py",
+      "sha256": "e68165cd8bfb346277ebc91f0ade1d4720e915d53d65dec2def4651598364b34"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_definition.py",
+      "sha256": "3b240c4228650764333da7d396247422a630e57b8b8db61e41df325590c710f4"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_local_beam.py",
+      "sha256": "c1b0667fa4e1764d46725413d5822206bc6289052d8d9daefe4fadc71e828b75"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_local_shell.py",
+      "sha256": "6848f123b24c1534b6f762aabf5fab95235e84617ecf9929996ed2155cd8dff6"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_owner.py",
+      "sha256": "e4979dded757ad121faf08589fb5b4810a6ceb530b04d152ea7bf7d93637f7f2"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_physical_authority.py",
+      "sha256": "3275d3be7a807e234892056d6bb6675dc48b95a356e16cae1922dc1b6e6034ef"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_physical_owner.py",
+      "sha256": "584b84b7f30a40eaf27a5314b08cc4050748b1444c70dc54dbe036febd8eed4d"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_recovery.py",
+      "sha256": "8e16a9b3b68dae4205f8007b491335ba7ecbbedbe17bc4a941cfba7daecee98e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_so3_numerics.py",
+      "sha256": "0945cd083ca5500a97d62bc9c2d1d9a3aaeabea2150903d20b51d66ef77f1173"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\__init__.py",
+      "sha256": "3bfa5d5a06201d92de8e1a8ce6e53ed8ad43554380a7daf87ca799a85c62a79a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\authority.py",
+      "sha256": "6a51d0211d9bb751e42c4950330757ddb7ebc578313444f84cfdc4772520a031"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\beam.py",
+      "sha256": "a69ec660411d78360bcc1d02a0533959a835abddff243844715dd32b88ef029c"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\boundary.py",
+      "sha256": "8fb6e5963782c4ecadfc5ab055701b908ac3190240c6d334216ebc5710f23896"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\chart.py",
+      "sha256": "106cb16675c09a56cc821e19ef1effef4b5ca3e098b07df4ca6d36c25b9230e4"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\compensated.py",
+      "sha256": "f910c4f972e24c59e1886fe60b36cce5ce87adad58b8e36f075edbe8cdf4c208"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\element.py",
+      "sha256": "e326a89f2bb6597adc1205a9f701ff930258205d9b448f52bbefb6263e58b09a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\fit.py",
+      "sha256": "aadf17a1ebeb83856da0a91bba4e1b247a514869361a68d3ef8f98c1321eb265"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\joint.py",
+      "sha256": "b13fb55e67df6ea2ffda4721e4cb044fbb90522d29058ac5b69b1d8a2a4a2f30"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\line_work.py",
+      "sha256": "296adcf69656734a7ef1468a5a17137cc8566a42d511d0900440f61b376f9152"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\operator.py",
+      "sha256": "40631f75dbf603721a6b7d192a9f5b1388cfa1d40d1cc935f01a909d69e09d58"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\owner.py",
+      "sha256": "9004d6fa56c8547d15816be4790bbd5c1aa76d749cd726b8ee838a0417afaa65"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g3c_stable\\shell.py",
+      "sha256": "0323f40d761291dae9d0793ceec775b0e62d9fdc07b5f8d6292f6ff06c99c505"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g4_completion.py",
+      "sha256": "24d6446bf968ffad3dfb53d1fa178d27337bb99734bcde465a94fefe69f3bdf4"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g4a_station_transaction.py",
+      "sha256": "da1b25089fb2c3ed96393ebd4a2d51dececb9194307c2119d13b844b6b45da9e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g5_completion.py",
+      "sha256": "5713861b5b9c8575f6da3d670b8f1bf48ca77c163725dd9efade5060fe423eeb"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_g6_domain.py",
+      "sha256": "82b9d5d8d026847f0bcae9567be5e48bdf8d74e495b5ebaf9f26bbab75d68ad4"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_generalized_cell.py",
+      "sha256": "d98b5d1d353c11221fd6447ea44d349622d373583232f3aaebcddd3e37c93034"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_generalized_ellipsoid_section.py",
+      "sha256": "dbe6ff691190eae66f92d7ef39f4220c862958a44e7d8b43512f04f69f42fd80"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_generalized_static_boundary.py",
+      "sha256": "8ea10a90290ab89a413d7c947a6cd3a50c71331f2a89e41e4b94f7248f1b2085"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_lifted_kinetic_factor.py",
+      "sha256": "57f653ae64fb2a8d897a391f3cccdcce464985a600fa6dbfe6ffb4624b2df1f5"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_line_fibre_modes.py",
+      "sha256": "758e181d94af1ba401e25f4d0df0ac287f85a6bfa0f9ff25762328b0188bdedd"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_load_program.py",
+      "sha256": "26b2bd8cc6453c097c8b3a0ade38693969ceeec6172b6fc6acd1bdfd097f8f97"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_loaded_modal.py",
+      "sha256": "67a5d3969d4f5a2e88a639d6a93b46263e2703690c1d8ea37c00dcfd78d0afd7"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_mixed_ad.py",
+      "sha256": "c71cea89056ccb671d37d3169085844b7012e7fa8b7d78545dfc45fadaec105b"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_analysis.py",
+      "sha256": "168be571e8f91c0a9d1fde58314659bdda2a83e32bf79e5d9b05c1ff18e9860d"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_arc.py",
+      "sha256": "e76a3cb850f079606887bbec592ac72c9cbfd8457d10a42ecccf66ab25ce240b"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_arc_adaptive.py",
+      "sha256": "5276ec6a4f2ceaae32fa61ec711f6dab79541f42d3340e4b09b657e97992a516"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_arc_restart.py",
+      "sha256": "dafeacb4591aa7d62aa7e7460fa98875480d9607d7d4bd57440d024c4924a433"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_arc_source.py",
+      "sha256": "3d47d317d8fe563413aa743c131d90e58094221fa7f97f5871db1e50a5c83692"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_buckling.py",
+      "sha256": "d4299fd5b58afa4b3aabc6b94a52eca5476add327b29624071e79574de9737b6"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_combined_couples.py",
+      "sha256": "8303ef0c32b3a9eed59ac507f699097f4cdaf0306d7337f91d34971ea19f2c6b"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_combined_restart.py",
+      "sha256": "61dc6c308d9f0c92b465c72e85674b8592baba2679098eb413178b1d9976237a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_definition.py",
+      "sha256": "07611697125258bbd6a338f1a4ad316c08de3a5f78b96242d71356cb1ed7d1b0"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_distributed_element.py",
+      "sha256": "bb6cbc9d21f5d8f9463f33a47d127bf5fc8d36e692fdf5d983bcf254b2a182ed"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_distributed_loading.py",
+      "sha256": "eb03a306795194f7eccfefdeb313a51182593a3de7d866c5157b7492922c9dca"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_distributed_program.py",
+      "sha256": "ef8a6b45d14fbffc42a16d736f26fb6f2abec511e4632343b92d90e72dbc1516"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_distributed_recovery.py",
+      "sha256": "d624af39bb1c872d26964ce1e6033464f82a6bb25745dc42867ecf0dc7659917"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_distributed_restart.py",
+      "sha256": "7e90a0b5cd8a38aaf8d3609655c4d7ca1817a4458a1faf4e1da8c69f995f795d"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_dynamic_analysis.py",
+      "sha256": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_dynamic_restart.py",
+      "sha256": "3f26dc51cd9e87998c2b89610b92dce297ff4d1ed0194a5fd464e7954b7fa4af"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_fibre_current_modal.py",
+      "sha256": "715f090a14f1954a294a589995cb869c1c620e77e0d45ec0dcc273bce6fb48b6"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_fibre_recovery.py",
+      "sha256": "ce9a1fa85a9c345bc744f7d71c5e267fe08e93449df219aa46cb3b64ff712ad0"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_fibre_restart.py",
+      "sha256": "a05f823d98f9dadcdb4d4d24ca5beb72b3cbcd9d51dd2d3708a60b0b88bf0252"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_fibre_static_element.py",
+      "sha256": "83f1ce4d4a1b936977263be5d2740653a264f3bae00ed339665e449dfa39a2f4"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_force_adaptation.py",
+      "sha256": "fd6d300ec6de39fc76978673dc06ced9d85506dadb400eacfabe56ec7f7283de"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_combined_couples.py",
+      "sha256": "f4876632c8b86f253bc53490cff59339ad3be46db321b5dd53f8e6a1abee77ae"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_combined_restart.py",
+      "sha256": "8e5d9d14ca4f4f81a14e25ecd1937c3ffcea5c5b9f68e6ad9a4c8cff0e0e2671"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_element.py",
+      "sha256": "ce1895091ac177a1605a97d880e42ab039a518f9a33838231a39a1d0668e61e5"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_factor_modal.py",
+      "sha256": "2e456b856380c23e15d8845dc3391752a82d48cff141d672962a5bd796faca65"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_loading.py",
+      "sha256": "40730fe174a7b2c707b736f4269b96381975128190564d5633f0b167fa42c173"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_modal.py",
+      "sha256": "f089155252b84e52ce82ff7547edca42a199a56055dd586b3332321ed068ee26"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_paired_modal.py",
+      "sha256": "7433831dfd299746852a1e273d74d4cbef472b70c9b1707173b36bd4bbb13a67"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_parameter.py",
+      "sha256": "30eac3a1d687f909db315de843a45fb80cd993acfcff41c4161b2bad5e4549a6"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_program.py",
+      "sha256": "ba63b7fb5d7044a0e78f520b689ea6dcce69b3a14f98b427c144722788cc007d"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_recovery.py",
+      "sha256": "a05953a03bc3fba4ba49a7f3a1ca6309b540f72a908b139351b8d65fb27774a7"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_generalized_restart.py",
+      "sha256": "e933bfde2dc0339b6002d068af333118c3020e85ab9d5595917cb62527dc8c0a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_history_profile.py",
+      "sha256": "6f09f041f02f71292d66210ad0e96179cd20bd1d4dd2818db309da37c7055a8b"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_line_loading.py",
+      "sha256": "73fcf3be15e252e2858180a340e08872e47edb37e0f6ee736c3cca7eae09f335"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_line_program.py",
+      "sha256": "f6a048b7f8653b0b040cc979338573d328a39cf4f11dc3f8a441aee6dffd3f2e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_line_recovery.py",
+      "sha256": "ca2992b0ec115526e3d833ea0681ebf952b752758caa676bf296d5471f173f7a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_line_restart.py",
+      "sha256": "12179aa3c7026ebde3c70e5e5b563d6105f47b1061366099253aa675f3fb82e5"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_line_static_element.py",
+      "sha256": "6504dd3342af5538977321c409b25f4f6bfbb51783225687f11ebbb640510b59"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_load_admission.py",
+      "sha256": "6e2d2de183a3d8f3d1042f169319b99776f03d96abed305f7916352f6c50b876"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_midpoint.py",
+      "sha256": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_spatial_couples.py",
+      "sha256": "3af48f8a3581c7159f22c78b137a5bf0e68a0c7f53e0136522086c7619dd485e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_spatial_restart.py",
+      "sha256": "c170aef24d2434d7ea3616480e66d3ed4cd4c2aeab1db5236a6e2e39ccb3a9e4"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_translation.py",
+      "sha256": "2b67e097d8e24f3fe5448f502195abad0f55f67f1659acae1a9ccbf26bc1eb79"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_native_translation_restart.py",
+      "sha256": "b1ddc946483d9d4cb96f64d7de3fed5f777170ad9a2e4dc1f7ce242a0e31bf50"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_operator_validation_scope.py",
+      "sha256": "5cf6e890e1c2f0df863d46812810e865b97a7aaaa6a6fde531718282faa8e143"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\__init__.py",
+      "sha256": "37076ee49ff687658d2af2af4e56d77c460e3415cf63aafd74c476b8d2f6fbd2"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\algebra.py",
+      "sha256": "295419f24290472341aae83035c042f8c9bdd19290b7f375e2241dfe1a546eee"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\arrays.py",
+      "sha256": "25a7014e63926acdd756d4499b45926942739c0a3c227bb385a83c081f90843f"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\chart.py",
+      "sha256": "785afe1f3feccb325cfe7f2b5b5a5c41357d1bdf60b78f4c72f750638f3fc35a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\codec.py",
+      "sha256": "f323a2e371597bf924c88aa0622fc7ea569d9a89ab9cfaeae87779536fc76727"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\committed_modal.py",
+      "sha256": "6ad266215c0ab73de03ececf5280a02a1ae3006fc548c50278b824bfabfefc46"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\compensated.py",
+      "sha256": "0d66c81dd3820a2cc034f0383901805c87cb251d7cf31326ebee32a5d90ff0f0"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\compensated_coordinates.py",
+      "sha256": "b374360f2d1dbe85018cb1b801d1c54321bdadf4a6bff467678838ab4e662d0e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\core.py",
+      "sha256": "be9762b1c84988b39931013fed447cfc1120f8fdb1804cad37ac913ead065467"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\element.py",
+      "sha256": "d655edb9e33048d81ae85eba3840b96bb578592c1bd609b9a12aa6c6ccc7c754"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\factors.py",
+      "sha256": "f2a3b4172a79cc6914fb3e874a723c5e03d99d88a89c9bf7f4377970b89e6258"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\inertia.py",
+      "sha256": "4274095b7a010a707aff68ede94c342f3b4504395dc0b3c9fc5bad075e269dfa"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\mass.py",
+      "sha256": "f6c47419990f4c33ddf4323ee630997973dcab3b1b9b21525f169131e917a19b"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\mixed.py",
+      "sha256": "cf9079f53f10137f00a8878ff82c0c4c8643520827b21b6657d0375e38fb8b6a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\reference_modal.py",
+      "sha256": "be739353029b1c09ef568c193d83a212c1833febe3da1926be51a5b496ba2946"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\section.py",
+      "sha256": "b84c2eb804f1d943e39733f230a17a6064d1c2c982b2e09a5b94021cf858f713"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5\\typed_schema.py",
+      "sha256": "ad44a7f743b9a23aebf786677b47744a4e335dd05c95cf3e2609a542c05733ad"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_centered\\__init__.py",
+      "sha256": "69f6d2952abd0f6b5329779a4e3ae0f5a1512056cecaf068b7abbd3403f97a15"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_centered\\codec.py",
+      "sha256": "443c4deb50e9c54ca976c008e33eee8580eeb581a4b8d72dbe22f4a14b3c4f24"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_centered\\committed_modal.py",
+      "sha256": "c866277fd8002b77f071e0cc86f3ce4093e438b5792d5a06c1b2f7dc7b4a484c"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_centered\\core.py",
+      "sha256": "3de1ce7dea69c8630b72470f4119f551fcba04b070fbb3ded29b18044ab188ee"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_centered\\element.py",
+      "sha256": "4f0672f92f352818b10a9cb7fe4a9426c86a8865812635cfe573d393be5e7d3b"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_centered\\mass.py",
+      "sha256": "f1f0de6eb24d8759b0f4c6d4515d65c5c7bb7487354ed4637ba07ad9d5d403b5"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_centered\\positions.py",
+      "sha256": "86e709ecaf06d7cc396cf283e6e12bdb33f08544e893661ad0b0382a7fa96587"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_centered\\reference_modal.py",
+      "sha256": "cf9b682c654442935cdce98c6ab323367ad3f52932d6b5abdb8c83abb2ab09e2"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_coordinates\\__init__.py",
+      "sha256": "27a481d76867af1baccbc447f3908370e03ab3b6364bfe21c14688e351e37247"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_coordinates\\codec.py",
+      "sha256": "1d20e03cae36ae505a707fd72be1c6f0fa02d3707d53d37cbe2253d817f20fff"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_coordinates\\committed_modal.py",
+      "sha256": "9e81fbad29ae396a50c408ed9a10e88dfa583424068f743eb3bc8e0a85510346"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_coordinates\\core.py",
+      "sha256": "c4db276611e0a8a274372f97f0755ebbde4560a5d01c73cf9ac0e52d9483e238"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_coordinates\\element.py",
+      "sha256": "59b6590348251bf8366e1bc010bf5b516e5b1bb2bdabacc693f6e9252257e3e0"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_coordinates\\positions.py",
+      "sha256": "2c53ae303654dc27c73dec6e9fb56f6f61d4c47a1de7493f661525b0af7efa7b"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_coordinates\\reference_modal.py",
+      "sha256": "3b9ac82efd626e8a277355ad26a456ce00d24d6764d0c53067bb995efa890bc8"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_loads\\__init__.py",
+      "sha256": "520dba87ad088b040dbe7ff61cb140690f75ff2350592abb40e01775746c80f6"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_loads\\codec.py",
+      "sha256": "1d3a4f18de7a61bcfa0e2f8351f406ee4a02934c07016328710e4c0e546cce00"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_loads\\core.py",
+      "sha256": "38c3d28eccb299c5f63dc8702b12ceaadeafe5258cf48c4fc24d6aef5ca00e87"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_loads\\element.py",
+      "sha256": "0123896674dfa9988fe60a22abc15e8b6d4762a6d35e441e51f082b17944e700"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_loads\\state.py",
+      "sha256": "ad4fd12243c71fcc004f1166605ffb82f5364e2b4940831813417279b3afbb0b"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_loads\\work.py",
+      "sha256": "fc8c799f16e70ff56c8aea67942b4aa26accfd41c2a53d744d088a279434c325"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_seeded\\__init__.py",
+      "sha256": "5387814401d8e6b0baeece04d61ef6b50247878d40197517c77624dc9c0371b4"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_seeded\\codec.py",
+      "sha256": "54b22910e707d61b4dc28984101f2b92ac68e7a57bf24783c885b53ebd54749e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_seeded\\core.py",
+      "sha256": "746f10adbccc7b06291699ca3fbc24be378839bd7fdc7962594d7f2aea8dc059"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_seeded\\element.py",
+      "sha256": "5d03573660e5e4a65c9b77b0c4b340b4971749998485058300518adae1d5839b"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_seeded\\state.py",
+      "sha256": "090677fe971f5fec51c1942d0ba1cf8ffc6305a19368d8c6af1f77e9d6733f87"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_p5_seeded\\work.py",
+      "sha256": "2fbe5f697e9d99b07df6c586056f790a92549cde958e62b24e8bf502456b2ea6"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_pose_joint.py",
+      "sha256": "f3fce05e6d65dfac9a9783e6fb466b8a0067ab4831ba00a74df9c579461abf71"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_precise_geometric_work.py",
+      "sha256": "14f4bf50da7290a2057d1e35398fa6e6e04dbcde7ffeef5a722a8be0afa547b4"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_reassembled_signed_modes.py",
+      "sha256": "aba0676ad3e385fb02e4a5522a0011ceb696151ed7cfc5a9f516c9e324329793"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_reference_identity.py",
+      "sha256": "e6f3a3daaa302b352a0e7a456467b7877875cbfb2847718d744d1d322890cbdb"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_refined_fibre_schur_solver.py",
+      "sha256": "c7b311522b94f53388999bdec57a680359b2dfb7793edd35a0f6e6f8912fbc71"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_refinement_capacity.py",
+      "sha256": "2495dd37ba1f08c9b4079866842faab3cee93f1a2168ce4ed52a2d0bcc078304"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_relative_virgin_reference_modes.py",
+      "sha256": "e110dee5837036cdd6f1dd9769b25710eba0826f55df894eccfae7afd48bd2c9"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_arc.py",
+      "sha256": "1cc32ceb5cd011934db035b8b3cba3b7b3dcee80057a678b2d941b32dbce9edd"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_arc_geometry.py",
+      "sha256": "2f615cdaf2452333e4474396f6e36905a874722ad993ee009aa5eb4573f2081e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_arc_modal.py",
+      "sha256": "39131ab0688f91fc6dd09fdb83efe50dbe0deb2c3f60ff2e88980a63f7978767"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_elastic.py",
+      "sha256": "53e61e777c95fcce72c85c664eb6b39d2cea2a1099ae83d9961deaf00eafecba"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_fibre.py",
+      "sha256": "b484e356a4acfa681647b669fbce51985bd56919a7356e23437e75d947561ee9"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_fibre_control.py",
+      "sha256": "4a91d9321ae6f569bc6198870026e1f9d69c59fd841b0c349d5cbe77b5fdd7ac"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_fibre_element.py",
+      "sha256": "894caedb3c196ff772647bf45097e1caec8b30bf6874834964fa50f1a74d517e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_fibre_modal.py",
+      "sha256": "66be4f84d0708828bfec01c10914f9c9180d017a1289d24c5d4330fed95a5d14"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_fibre_modes.py",
+      "sha256": "ddddc5ffce458ea36f937332b5226f930d63bc56384677ad9f6e6e0569cfbb2c"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_fibre_program.py",
+      "sha256": "4610265d30dfa6e8d0676c4a7b0e5c2952a5408c5e76d00e131ea75463845ee7"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_fibre_state.py",
+      "sha256": "4372b3da1b657c050175b8b50505e785006c55a1a317cbaea7dcd90b7c4c822a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_force_program.py",
+      "sha256": "eb73e939f7de8068445b21d6dd481e862f1e88459cda83f6ac8af584df0fdfe0"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_generalized.py",
+      "sha256": "39121d4d76a5524579c2ea506c9bdf968a3d254cb7e6740de6173eb5aa7e6787"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_generalized_modal.py",
+      "sha256": "5992238c202540058e71bdce574e4a4afcbf6db0fb5717d3c9ac3d06b3408428"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_generalized_program.py",
+      "sha256": "c08a0e894d1df63c3779d21ab5949cf260aef929fd243b693de69d02ae197e0f"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_generalized_state.py",
+      "sha256": "e4965fd3cc8cd8c498a8fd21247bc8ce09a073fdf245dca1b3b10b084cfde719"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_nodal_loading.py",
+      "sha256": "7fe20b10f607f4e24a3af9addb2bff0fb75a8d5a6b09116e5139d75399f86a97"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_plastic.py",
+      "sha256": "5ce4aeb61995a09929fa36a597d633f1bd42827205449f295ce960cea3dbbf0b"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_plastic_modes.py",
+      "sha256": "7b4abd9d39e42fff7a3e37e324756af4638cf2bbbd92d7c761c448ec3aa4a94c"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_plastic_program.py",
+      "sha256": "d8fecefb2eebc1be0b0369fcfae23f4bf938f75e8849036724ae4116e4e37709"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_plastic_state.py",
+      "sha256": "c58790c39589369a453689d8fc81d288f20b9ab2803305d0c1281dcd499cd504"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_state.py",
+      "sha256": "5c4e78d2c3fa0f43ef5e821c37e656e2f0a81e94ea8c5e8644a77ed27fd0757a"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_translation_control.py",
+      "sha256": "7773a95a1137aefeff41b43626c4d9adc81f46cecb802e4bf8e4bd03148887b2"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_retained_translation_modal.py",
+      "sha256": "19fc85ac3b4e2d2ee68b37e60c891e7a94133658aa4cf0148bf090d68ad3728e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_schur_line_program.py",
+      "sha256": "35a2db189a97b1442566f91de5d0fdfc7dc9b7fa45c2fd5027d92578a23ea197"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_seeded_fibre_control.py",
+      "sha256": "e7b2d076d012bf313f5736f55d9c7cf2a441554f73599008f0d69756a93687ff"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_seeded_load_program.py",
+      "sha256": "2ebfbda8900edcff29197c698c36b0cd2b411e13047a27fdd5fb16dfdee6faf9"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_seeded_loaded_modal.py",
+      "sha256": "b728f5fa9dcfd218331453f49137b41247cf000c2f95eac71afda14f2feb63e1"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_seeded_signed_modes.py",
+      "sha256": "17e6949ca577911d09033650c0089428404a33fb5410738caaaa97349e8873da"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_shared_kinematic_split.py",
+      "sha256": "28dcf2f79828cbe395b8032ecb96e9c10783adad23f3f20766f44bca13045973"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_shell_joint_state.py",
+      "sha256": "df6159bf5df3ca9ad1aa54633ab388d911511e43285961bf5240ab5d7352ab4d"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_shell_joint_trial.py",
+      "sha256": "1c6176921eadc2ef132c516caf706bced799b95f4f1009d97fab17c41103b504"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_signed_loaded_modes.py",
+      "sha256": "2f882cabbbab2911e2a7c3872eece6cf64fca7dcfa803c340f24c17829891c69"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_spatial_fibre_program.py",
+      "sha256": "bffae3558cd9a08e67a75365cd4723ee54db72770a06f152b3e54b08439a5934"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_spatial_nodal_moments.py",
+      "sha256": "f139357813d345ba851adca7a2c986f1a9aa88b0a0c56d42ed8f666a7058c69e"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_station_resultant_cell.py",
+      "sha256": "4946ab1a8ec06e388694e8b7a16e7a6cdc9bc75b42b8313a3c9cedb209b672b0"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_variational_shell.py",
+      "sha256": "958cbf00f62e8af87724f909b793fa24391e02e3a0a2a5d5d62f05e9f1168320"
+    },
+    {
+      "path": "src\\anysolver\\_ge_beam3_virgin_reference_modes.py",
+      "sha256": "87eac10f454a4cff73cccd75938eb7160c7baacbad7c32e25a1a0714b3d8880c"
+    },
+    {
+      "path": "src\\anysolver\\_native_dyadic_interval_inertia.py",
+      "sha256": "45ef206a8b597c5af6530402865c3cfed2e70020f79dbf0e209db8def164d9be"
+    },
+    {
+      "path": "src\\anysolver\\_native_exact_shift_chain_modes.py",
+      "sha256": "484fb7b4326ee923e78c119583844bb4251f98be943ef742c24eade0cfe4115f"
+    },
+    {
+      "path": "src\\anysolver\\_native_exact_shift_inertia.py",
+      "sha256": "62ca9708e98ff5cd8e8a0fe8e765ef3c81b909a5319c70b36e3838a5dfccc650"
+    },
+    {
+      "path": "src\\anysolver\\_native_factor_chain_modes.py",
+      "sha256": "403497f819b0e1d4c32483c1f36df0e75116ac3a80ee7a017f22f4479879e6bb"
+    },
+    {
+      "path": "src\\anysolver\\_native_large_factor_chain.py",
+      "sha256": "b5ce9b10045210e93a582e5431d7a3581d6ec1ec2b41512e91339c73e4c51702"
+    },
+    {
+      "path": "src\\anysolver\\_native_material_protocol.py",
+      "sha256": "8de7b76beb43b62f2256270aa4a4593842624800b3652ed3b409467dce2728a5"
+    },
+    {
+      "path": "src\\anysolver\\_native_modal_capacity.py",
+      "sha256": "5d7cb1b2040ba3198728ee64361a50941ce59dcf794798f20f24babd84f3c400"
+    },
+    {
+      "path": "src\\anysolver\\_native_paired_factor_chain_modes.py",
+      "sha256": "4dfd2ba2a4dd36d0f39126deac19d2976e0efee59b82bfa0b52cff0358c96cde"
+    },
+    {
+      "path": "src\\anysolver\\_native_reassembled_factor_modes.py",
+      "sha256": "5e72b5d01a8ba9ed94ca84c402ed801cc1b793e9f829bacd4fae313419c48c1c"
+    },
+    {
+      "path": "src\\anysolver\\_native_reference_factor_spectrum.py",
+      "sha256": "a56abe45efcff8560709c11a6159df67956a4d31338666bf62148c5ecf4a02ab"
+    },
+    {
+      "path": "src\\anysolver\\_native_reference_modal.py",
+      "sha256": "f2f563d35f9a34d81d71f5409915da34f9858fb5150cf911daf92bddfbf224c0"
+    },
+    {
+      "path": "src\\anysolver\\_native_relative_factor_chain_modes.py",
+      "sha256": "714ee56760bb2e2fbc0b257d18b5806f9cf8e9808cdc174889c53a61a593944f"
+    },
+    {
+      "path": "src\\anysolver\\_native_relative_reference_factor_spectrum.py",
+      "sha256": "b271b3dd6b91845923f0b54a7da13ef1326345c4396fec060632d8b3494643bc"
+    },
+    {
+      "path": "src\\anysolver\\_native_rotation_state.py",
+      "sha256": "01f5efe9a4935fcec317be8ec6508f2085999aaddf19593712ce54e55bc60dd5"
+    },
+    {
+      "path": "src\\anysolver\\_native_signed_factor_modes.py",
+      "sha256": "4511efbbf752a58e4b642cdbf904ad210a7cf0b9db45c3c6cc981649d24bf107"
+    },
+    {
+      "path": "src\\anysolver\\_native_signed_kinetic_factor_modes.py",
+      "sha256": "8ac8cce0f26cd5b0e5edac97e2520808dee91b0d1899ced82910ebbb6926feee"
+    },
+    {
+      "path": "src\\anysolver\\_native_stationary_spectrum.py",
+      "sha256": "92c56b5a585a5a2e51ead35f8495e824f1c3716395f530ae35c5959c0891ea97"
+    },
+    {
+      "path": "src\\anysolver\\_paired_modal_arithmetic.py",
+      "sha256": "495b0f4b66d62bd17a4ab5e004740976c390451c71df12b1b62fb48291fd4b9b"
+    },
+    {
+      "path": "src\\anysolver\\_qualified_authority_epoch.py",
+      "sha256": "6f541ab16ac84355e76fa778de0ceed820e1a4f73a7f8e0752eee763652ee02f"
+    },
+    {
+      "path": "src\\anysolver\\_relative_reference_svd.py",
+      "sha256": "46d68952e94d5f4b9549bee1071bd5b91b5897b18b1003767da487ab35d37ab6"
+    },
+    {
+      "path": "src\\anysolver\\activity.py",
+      "sha256": "86f5475876523fdbf2f9060f0beb27dba6d8ca123dcdb2c423a44ade5de4590b"
+    },
+    {
+      "path": "src\\anysolver\\algebraic_dynamics.py",
+      "sha256": "eded5ee910e5ab8d839d34bcc0298e21c997645904f11831bf41108248a64f0c"
+    },
+    {
+      "path": "src\\anysolver\\analysis_session.py",
+      "sha256": "8df2799b9bdeb8ce5ed8bce67d55a108da8c8470dde5e12d67bbe6d23a2cda9e"
+    },
+    {
+      "path": "src\\anysolver\\anystructure_fem_mode.py",
+      "sha256": "2cc8af98f8fe4f1210f34c5890f06199176f53796b311109ede4f05a57ef1ee8"
+    },
+    {
+      "path": "src\\anysolver\\arc_length.py",
+      "sha256": "6d6b6bcb54cee38e8bb3d70347c452405adf5cb83022e100db563304f00a9fa6"
+    },
+    {
+      "path": "src\\anysolver\\assembly.py",
+      "sha256": "919601e6aed8adf6039b3c32269baa4ec15172b81e91f247ddd2091bc01b6a3f"
+    },
+    {
+      "path": "src\\anysolver\\b3_ge.py",
+      "sha256": "845b017ffd232da5cc499d338f1dd1b6da9fe3c02e54b6281c3f0f952ec31aca"
+    },
+    {
+      "path": "src\\anysolver\\baselines.py",
+      "sha256": "327e785b7d825de86ded68d0e87effd827b0712128ffde737e7d8329f6b80f37"
+    },
+    {
+      "path": "src\\anysolver\\beam_sections.py",
+      "sha256": "144402bc9936f7d1eced62c7f345966ba6a2252c40ff736d2cd5a6fbedcd444a"
+    },
+    {
+      "path": "src\\anysolver\\beam_shell_verification.py",
+      "sha256": "0a29e69e4fd7ad03bbbcf3de33b462baef24d07af9d6368bdf27291cfd100266"
+    },
+    {
+      "path": "src\\anysolver\\beam_validity.py",
+      "sha256": "a17e857b911be92deafac4199367e6d5de51cbf9fb67489a728846a5729270bd"
+    },
+    {
+      "path": "src\\anysolver\\benchmarks.py",
+      "sha256": "725727453b9e62d0de3f2b7e3654540a2739f4af855ce7f74a8d64f5edc764d0"
+    },
+    {
+      "path": "src\\anysolver\\boundary.py",
+      "sha256": "b88157cde4c1aaafa15ce670f1a8c461b481ec9686f31939141812633bb1ae44"
+    },
+    {
+      "path": "src\\anysolver\\buckling.py",
+      "sha256": "1622b9c5530e28849aaf4bb3a4d7434e0c99d71acb235c3f8b21350e1599ddfc"
+    },
+    {
+      "path": "src\\anysolver\\buckling_validity.py",
+      "sha256": "f664b00b68ecd51a4f3de31acd3f41d7342fc0a186edb021aa2d8c0f805339c5"
+    },
+    {
+      "path": "src\\anysolver\\capacity_workflow.py",
+      "sha256": "b96bb7302affd1f0754f533ff91c41a4fa301a04377615eed27f736cd289ccf1"
+    },
+    {
+      "path": "src\\anysolver\\cases.py",
+      "sha256": "fef60bd1a9c6198913a3c1ae8c2f14d299c8e15b79c44edf2718c56b7a70de28"
+    },
+    {
+      "path": "src\\anysolver\\composite_strip_verification.py",
+      "sha256": "13a83485261f48f2b674d38d7ad7d6b171df8872a645dc74d4fe75ed32b346f7"
+    },
+    {
+      "path": "src\\anysolver\\constraint_audit.py",
+      "sha256": "229e3fa9db27a5e55a4118d237bf53adc537e10c93bfbdd4ee1e7a19eab46dda"
+    },
+    {
+      "path": "src\\anysolver\\contact.py",
+      "sha256": "cbec3e165fba16f45ddb3cccbb11e05f35ab915b548a66fc2496b8ce3889512d"
+    },
+    {
+      "path": "src\\anysolver\\contact_performance.py",
+      "sha256": "a42eec83590d9bf3a606c2ee029378be57e54b7f489e4688e25d01fdf1e8f5a4"
+    },
+    {
+      "path": "src\\anysolver\\control.py",
+      "sha256": "cd0432c28fe429474608d5a310d36e29c4143783f313f77b45177027d9f230bf"
+    },
+    {
+      "path": "src\\anysolver\\corotational.py",
+      "sha256": "1293d11bda0a2d45f09632eef82b442c4eea09564e6feef28fc294c5b0a88045"
+    },
+    {
+      "path": "src\\anysolver\\corotational_performance.py",
+      "sha256": "3972e99c80b7c7cf0bf369980eefc70c89307350c0bbdb3e1f6a96115011991b"
+    },
+    {
+      "path": "src\\anysolver\\current_state_tangent.py",
+      "sha256": "6da6ef5b3bf32a96b7a875863281e2c719546bd2c8646c89f834acb2c65ddf82"
+    },
+    {
+      "path": "src\\anysolver\\cylinder_benchmarks.py",
+      "sha256": "5f48cf05aaf111d707c1942669957aa743521c37bf3c7d697e166385e6bbfb36"
+    },
+    {
+      "path": "src\\anysolver\\damage_matrix_performance.py",
+      "sha256": "9d7f8679b125caec13004e1b87eb7b6f2fe0b3668f6ab69f796d96a09132eb20"
+    },
+    {
+      "path": "src\\anysolver\\dynamics.py",
+      "sha256": "40039ee5ff79727dc892c11fc136481c91ceee8c086d18dadbf7fac83d2f109a"
+    },
+    {
+      "path": "src\\anysolver\\e4_pl_element.py",
+      "sha256": "8aa0a6845804857c15d3ca30d883e1960386c00044d69a892f9bf35bb0110f33"
+    },
+    {
+      "path": "src\\anysolver\\e4_pl_s3_element.py",
+      "sha256": "8f6a3c18b6747a641d15d7ca9e96499486bbf593f90120c55f1c8febfa443f45"
+    },
+    {
+      "path": "src\\anysolver\\e4_pl_s3_initial_fields.py",
+      "sha256": "25996035fc5279377784194812b8cc21cc7b47b5ab9e7e1637622999163f8389"
+    },
+    {
+      "path": "src\\anysolver\\e4_pl_s3_state.py",
+      "sha256": "70d3e26c0521cc8803c447102e859f3c0e50c04cc70ffc4ebc2b3e97e3975f25"
+    },
+    {
+      "path": "src\\anysolver\\e4_pl_s3_v2_element.py",
+      "sha256": "7facbbae7706c058c4003f26462b95f09be5a93e8ebbeaf2c1bb5bcbf46b7ff0"
+    },
+    {
+      "path": "src\\anysolver\\e4_pl_s3_v2b_element.py",
+      "sha256": "e09da2f4a223828b97e0da2d869a3849c2517ed4d14ea00d6108b925df1176b4"
+    },
+    {
+      "path": "src\\anysolver\\e4_pl_s3_v2c_element.py",
+      "sha256": "39cb171aa31f432eb937af972b30d709b5a51bfd5a977b51ac459b52b61aa8d8"
+    },
+    {
+      "path": "src\\anysolver\\e4_pl_s3_v2d_element.py",
+      "sha256": "d0ad70f7c87718d60ee02a82420915b435d0cf66b466049f83ea9c2ad1b90a80"
+    },
+    {
+      "path": "src\\anysolver\\e4_pl_s3_v2d_state.py",
+      "sha256": "d8f1429dcfb1bd575046cd064e506e36330c709f1e38e068f8e90a9dc0713e66"
+    },
+    {
+      "path": "src\\anysolver\\element_capabilities.py",
+      "sha256": "ced1166253be6cd34a4aedb123fac0dcd3129a058173550d220482e10f0fee53"
+    },
+    {
+      "path": "src\\anysolver\\element_qualification.py",
+      "sha256": "8356722de4caa5a8a3cb2e007c984e17f6471814784e9f60aa60360f0904b258"
+    },
+    {
+      "path": "src\\anysolver\\elements.py",
+      "sha256": "32967dd7cf4ee47d2439d4833844e0c10886c2880768f218d468844d9da671b9"
+    },
+    {
+      "path": "src\\anysolver\\experimental_csr_assembly.py",
+      "sha256": "35491c102989e34fd3b2c51f3617269da34f99f065215cb7a9323827bac9c898"
+    },
+    {
+      "path": "src\\anysolver\\external_references.py",
+      "sha256": "2a7c4b8c7006eff6d2da07a13db2cea31f651b0bdd7832295e02c5ef52c39d22"
+    },
+    {
+      "path": "src\\anysolver\\fe_core.py",
+      "sha256": "c142b04c44c3b09d12b79c133c19e1c486f2ca1f5f6bf22348a3cfc5a0c897f1"
+    },
+    {
+      "path": "src\\anysolver\\fracture.py",
+      "sha256": "170118803ff0bfb5233723e926aecab9f56d83f50681ef4994ac7fc4868d8013"
+    },
+    {
+      "path": "src\\anysolver\\ge_beam3_curved_reference.py",
+      "sha256": "96fdb87afb02ba8b4d657491d631f07addbd18f96e33f538154ccf27c628a480"
+    },
+    {
+      "path": "src\\anysolver\\ge_beam3_element.py",
+      "sha256": "65965a5858e8e99b539203139be346483b3006e5596e7cd976699b758674bbaa"
+    },
+    {
+      "path": "src\\anysolver\\ge_beam3_mixed_element.py",
+      "sha256": "ad575f7049aa8c4dd70981d9f09db8d39c6cfd2f30ba3b3145f69deed062e5a7"
+    },
+    {
+      "path": "src\\anysolver\\ge_beam3_mixed_state.py",
+      "sha256": "1f517eb3359484d263db1302811f72b1267462779e0f0c1487fab353b20ce13c"
+    },
+    {
+      "path": "src\\anysolver\\ge_beam3_native.py",
+      "sha256": "45cf3507bfe1da798c206a05370365e02475a77c3925d7355a970a20154f80ea"
+    },
+    {
+      "path": "src\\anysolver\\ge_beam3_native_dynamics.py",
+      "sha256": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+    },
+    {
+      "path": "src\\anysolver\\ge_beam3_state.py",
+      "sha256": "1b3dcd2f6f17f2067c734f56944a93a49f49b266af54e319ffae8586d52e46b4"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\__init__.py",
+      "sha256": "3086df6ef088944ce877792145b632fcbfef3ec531e1051ddefa97b6b6929821"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\augmentation.py",
+      "sha256": "5d0d8a6bd6f3bdcbbb6395eba522f9f3d04b88b6d710abdeab67b95618e93622"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\beam_chain_pair.py",
+      "sha256": "6a0c3c72f5e436ad96a2481a0a60301c937828427b32a067f289793ece2c6d65"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\beam_curve_pair.py",
+      "sha256": "98fbd30baa4d825abdc8ddc9b5c1e05175ce5e88b3064f808698870a62ce0354"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\beam_curve_pair_static.py",
+      "sha256": "ea9c21c9d974a10ef7ce365379632dba362d2bd8c735932fed63a3367d7913db"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\beam_pair.py",
+      "sha256": "f3d93be006f62dd83684247c35c2fcd042522446f4d5a7f6f3f1407a979c5be0"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\beam_plane.py",
+      "sha256": "d6b3ac4e9422bfbc07ba9c202e7f3d107751f47fd88b5d95941893f6ad70bc9f"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\beam_radial.py",
+      "sha256": "5dfa5046ff3b1a2f8b9f25fc66bb7854be3cbc57d8a4a004b6aa97ce2554c939"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\beam_shell.py",
+      "sha256": "e01874a0e516f95ca0743fb5991c1eaf8e9dcf383aa10e88d9d45de21313a7f1"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\beam_shell_patch.py",
+      "sha256": "b34ed3a23b8c5692458ef559661434e77c83bb3f12a32df9c3bec4dd0d7f337c"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\capability.py",
+      "sha256": "b28103f9dc5aa396a5d037a4fd622eb4052f3ed431761f23c1f682814f07a16f"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\contact_search.py",
+      "sha256": "6f7373ad63ab9e95f6ec9f80d71d8f91791f880632f82b0d96b10f6789590f68"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\core.py",
+      "sha256": "5dd813429bbdc78933dc5ebaa7d990503e143194ea9ff71939da5d5c843fc371"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\d1_interior_profile.py",
+      "sha256": "fe2c7018788f73e2b559653e0aeaddf59b409ee7a1a6cb0f824ec23ee700cb95"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\equilibrated_pressure_pivot.py",
+      "sha256": "78d1abaab1d6009595369fa6eeb4eca99795975d083cf3a7637565a5491577b0"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\fixed_projection_graph.py",
+      "sha256": "3526046175cf840c93b5a5681d5f056fadf3e8cc9c1ea75b790e6eec16b590c8"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\friction_point.py",
+      "sha256": "fb06f9c6ebd46d4d91501cfe7e8b4f3b0409c71addd4ed8d72c21b68074ea5fa"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\gap_extrema.py",
+      "sha256": "7cb062f853f09ee60c8e5313416c1f887fd6909a37a9b7fde2879779b239adf7"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\linearized_pivot.py",
+      "sha256": "60f7d412dbda97dcba6c3dfe678b3f8dbb47a126d81c4e6bf67c4c9158673244"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\moving.py",
+      "sha256": "27458bef16cc3f58d42be635dc36143dd79bd279cea3963c4bbe7948de32ace8"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_curve_union.py",
+      "sha256": "a5f1d5210e0c94ed1ec5937ceb0b4f9438614dc048045835d0403a0f86d9f174"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_retained_cell_pair.py",
+      "sha256": "3bededfdfd181edb691a34d4c78f558a5bb877df2c480e0d687f81cd941f1a32"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_retained_curve_cell.py",
+      "sha256": "3b6d1f50fb3ac63ddcdc26c3418cf0d0dc8f52a00638403324a24a529a04d8e5"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_retained_line_plane.py",
+      "sha256": "3d4339f9a4f674c85d848b2ce6bcc814945f2b13c7deca98f806176dd0385d54"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_retained_line_s3.py",
+      "sha256": "f3f8c5c67cb2a40d3c6ea7ed96f22404ec8310448a3056cba46438309c5a7a74"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_retained_line_s3_work.py",
+      "sha256": "470c036e015c6e18181233cf1a36b3ee6a74e9b42e36a769d53aa37b73c3633c"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_retained_pair_static.py",
+      "sha256": "624b9abdd62440be547e447e217eecebdc7f040351fd47ebbacd3aa33f08592f"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_retained_s3_static.py",
+      "sha256": "061f41c3ea9aeef3f3f24335a2a349b08c19f0cbb37e71f9c8b4087a698f5e0f"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_retained_static.py",
+      "sha256": "e8167befd7fa6cfa1aca72be3c2052cf4bfb1562cdeaf9dc9f1f6b79c39f2f8f"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_retained_station.py",
+      "sha256": "883f29c056727e8cda88bcd85ab93344086666cdae6b243e352268bd50e94d4d"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\native_retained_whole_pair.py",
+      "sha256": "10a209fc018b260a374ea1451a528ef730ba4d5458a7f37d8393717b2badb993"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\overlap.py",
+      "sha256": "3c6d98ac0e346669cff3f423d52367766e12d7c9a9d476f761fda2bf1c62deca"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\pair.py",
+      "sha256": "ae2404da37a82cde159a2f358f9ff0d55eaabc7a492ff0a1f8f01e99ef46ee26"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\patch_broadphase.py",
+      "sha256": "b6b1e7ff037a19450e1ab4d6a4c06c0a66d6c734545fa8adfaf296be64908fef"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\patch_mortar.py",
+      "sha256": "e652a9d591ab5e5a4894333d39157a4e6c86102841f556bdb4be9372c6dd8435"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\patch_sliding.py",
+      "sha256": "c3d0057c0650fd170188092f4f5611517e1b56a8781955a83904e2c6bd8d964b"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\pointwise_patch.py",
+      "sha256": "19295ac816dc3bc3d84a9e33d44a17d0ae74e07c7f12ab5d6f55b3bf055777d2"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\pressure_basis.py",
+      "sha256": "f566cacd090a6bdbfb8fd5ed6f384c14f085bdb3381e4da9d6c2b494af3c97b9"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\pressure_overlay.py",
+      "sha256": "0f5960015b82da941f20af350fdc6e32be469d3fac0d78e580463b58b3a6d861"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\pressure_space.py",
+      "sha256": "d1d33d36edb6e13dd0892009b7efa337a16e73bebea845260828db4994b97333"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\q4_overlap_local_bound.py",
+      "sha256": "360243d08a53d86d4dd476170e0464a86aa15cf78eae6f6e0ecef9004f0a268f"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\q4_s3_overlap_derivatives.py",
+      "sha256": "a089b02cabd2e18cd0e9d3197796eb4ecb06e73a6044e4bc6c35d848d132a786"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\q4_s3_tiny_wedge.py",
+      "sha256": "f27db6b3b410509a71da46b8f5393e842989ff97751ca295c257d1258c1ad5b7"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\q4_skin_work.py",
+      "sha256": "27d176c578e5d7788d22955967002eb515d7f23476ed2e6ca44b9b2ee11bbca8"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\q4_source_mortar_energy.py",
+      "sha256": "0defe6a3bca6db3f4d2b6c018b13fd1f3e99d66a3052dd83fd9e5e49c5b14be5"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\q4_source_overlap.py",
+      "sha256": "3a22e5d3f739cffbe0b1f7517947b976f7191f2e3832e1e439e8cddbb4955d64"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\q4_target_overlap.py",
+      "sha256": "0c91620b26f42d441084b29e5c9e152441c160d7d90677487308156c0eb41d08"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\runtime.py",
+      "sha256": "b458a146d0ac6ff2f2aeb921eac7a7f5b032d5330cb73f6972b66ead8d980ad4"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\s3_friction_pair.py",
+      "sha256": "1ea4eea135a1fecac56a896338cf9a295bfd9449aee1e3ef58bf5001c025da8d"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\s3_friction_point.py",
+      "sha256": "2241d3b3d49493d422203e2626c10127c595e5c11d71a8b196ecf93054fde0ea"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\s3_overlap_derivatives.py",
+      "sha256": "d5312edabbb01a2553b934e1f5d172d4a7846b79a3fd537261eecef3df315846"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\s3_pair_static.py",
+      "sha256": "1443dbe856a490c221229bc6ae1fbca819392b598dfead5ba751677694fb4b8c"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\s3_patch_augmented.py",
+      "sha256": "6c5971a7f60cafb0fc9cb74537b0fc1325a5b8411ac92df7c907010ea62ecfa7"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\s3_patch_mortar_energy.py",
+      "sha256": "dfcbc1320073b38a5eed36217e63a57eb33cb17f8767a1c5ab4c3c4284583638"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "e4b3fdc8f98aa7c580dfd1608430a6d41bf0c54d5d1bb5e4a32a3554a0c07ebb"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\s3_skin_work.py",
+      "sha256": "6a90f38d00ec2e6d81c8baa22742d76927527711c5c569a2ad4a8c794159d184"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\semismooth.py",
+      "sha256": "df6b63ad8d13f872a8c7bf436a84653ec8c87c32d584833274209052892a1c9f"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\semismooth_block.py",
+      "sha256": "db72aee59f82071575d0b29fbd08e58267a57a83bf4e2919ab8f9881eddd595a"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\semismooth_path.py",
+      "sha256": "f34529aca34d5131607b3b02e4c7111ffa42409cda4f0cd498ae556f41325d8e"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\sliding.py",
+      "sha256": "e4dc608e44ce00de07c65d336a82c6f01791fa7c62cca253755675c3f35a52e2"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\sphere.py",
+      "sha256": "d8741b79936ee7f1a4d396fd2af5c98fee4087941142c6dd339a0168b358b9e0"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\static_path.py",
+      "sha256": "1d3771814c82e3dd45a6d8fb43c7a8ff6d8511e4b2736c2fb1eace0c96814f3c"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\supported_schur.py",
+      "sha256": "b8e298338f18f1af03d7e9bfc8b5f850d9d62f91b81daeeb330fa64b8065c58a"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\swept_patch_broadphase.py",
+      "sha256": "ec058f18dfa3334d73970b2217fdd2760b188966b5e22d32d6a72e45f79d8626"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\transient.py",
+      "sha256": "3e8f02eef3436ff81ad2a178f136a9c8dc5856f8fb081be1e32e7aa491eb8be9"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\triangle_mortar_energy.py",
+      "sha256": "cd0fae7c6cd5b8b568c53e68644de20fa50b633e43a739f16450d9ed229ce6b7"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\triangle_pair_energy.py",
+      "sha256": "b641c479879a107602397cf437d673951dea0073c4dc246f138ef99527da853f"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\warped_q4_plane.py",
+      "sha256": "0553f7bbe782bb6264002f67ae1d2dbd48d7f39116836868b05b0e579f9cbe65"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\warped_q4_skin.py",
+      "sha256": "8a5d171fb8839463dfac24086d901151a35e66098d359d34486fe2ab4f094299"
+    },
+    {
+      "path": "src\\anysolver\\general_contact\\warped_q4_static.py",
+      "sha256": "32958895c114d654fc4be763e8db1d6a3cdd18d0db2d106f676a04f34fc81aab"
+    },
+    {
+      "path": "src\\anysolver\\impact_performance.py",
+      "sha256": "3627552ea073fde55f12c9c9c92d9412440266d7ba5e9ea2489fc992fda95813"
+    },
+    {
+      "path": "src\\anysolver\\impact_reduced_assembly.py",
+      "sha256": "761ca6396a5ae5080977616241e074b8876621c8c908bd8d3c0bb2efd2c1611a"
+    },
+    {
+      "path": "src\\anysolver\\imperfections.py",
+      "sha256": "f12be5f73c406fd95184514c1721a1675065ff1ac3cef6a4087a1f997f2a61b3"
+    },
+    {
+      "path": "src\\anysolver\\initial_field_state.py",
+      "sha256": "35fcd79b652d777af3f82b6b84de3b99fadc72ed9849e2ecf499ece0d3571e8f"
+    },
+    {
+      "path": "src\\anysolver\\jit_compiler.py",
+      "sha256": "0616785c369052fd3ae8704fcd6dbf528b91a1977c93ac06e67c11dbf9be8912"
+    },
+    {
+      "path": "src\\anysolver\\kernel_warmup.py",
+      "sha256": "33c905ec3cf463b92ad3b0ef39819d824d8fd502725d05bb3cf83d2fd58da9da"
+    },
+    {
+      "path": "src\\anysolver\\linalg.py",
+      "sha256": "98d15d22bb89d89643331c9a946a6b15894ad5c6e4bb0796f914e03be8e4f4a1"
+    },
+    {
+      "path": "src\\anysolver\\mass_properties.py",
+      "sha256": "6be9c1d6e74af7c518e901e7e3adea21d77f76a0a28286fbe3f982173b9fc1ee"
+    },
+    {
+      "path": "src\\anysolver\\material_curves.py",
+      "sha256": "5400ce65fe87a049a6d89f880b4bc8a19f48aeaf9c5cda0bef0e6e88a8116661"
+    },
+    {
+      "path": "src\\anysolver\\materials.py",
+      "sha256": "6a0b9df37a7b93fb509aa61a8e1fdb19f241f64d1d293f991bdadae709ab3165"
+    },
+    {
+      "path": "src\\anysolver\\matrix_assembly.py",
+      "sha256": "80222fc1a6401ae756612cb9f732b997c61d4b32c140d227b6344532ce92d558"
+    },
+    {
+      "path": "src\\anysolver\\mesh_gen.py",
+      "sha256": "02d6e8cacf8e627693b200b6c7e05ccd52fca4bd522989836e784b2efb980964"
+    },
+    {
+      "path": "src\\anysolver\\mesh_load_bc_verification.py",
+      "sha256": "f141b589e3278a54fd7a25ac0a10e3085e9189e56abd409c6aa74a7a6237fdbe"
+    },
+    {
+      "path": "src\\anysolver\\modal.py",
+      "sha256": "ed3202b4f2750b209a462be819eb0cc38d16ff4c05e480a39f5aca7a79fe968d"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear.py",
+      "sha256": "f9c53352ae952c157d95706f54da27e6f527614010f7a347797773b948820e52"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear_analysis_diagnostics.py",
+      "sha256": "378e95e36a53c3cf919169c52eafe85c0751d73e8c749d5a6e3da461994963b4"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear_element_evaluation.py",
+      "sha256": "b0a44df23abb83bbc235edfb275de4c705b4fb1063fdbc87516835c21a2ad1eb"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear_performance.py",
+      "sha256": "a1f620c3dd502c34fccf67c51cd83a18ec23d33b8c95f3551984507e88ea0535"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear_performance_batch_b.py",
+      "sha256": "7159ba357d4a9cfbeffc8ee93d1057c64076a0928be6c20bcd44f12db8ee7f6f"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear_performance_batch_c.py",
+      "sha256": "df512afd03b8edb341e7ecb938f6e896beb2cfcfceb72bcc2497af52a343fd3b"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear_performance_bootstrap.py",
+      "sha256": "a348678e631c725632462e44addb8e8978b76da6855e961caa248112cde28b02"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear_reduced_assembly.py",
+      "sha256": "c4d186f8e556d03d116febfaf41c35735f597b8106fdc97822196f28cefaa786"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear_restart.py",
+      "sha256": "a7f952c9d5c0f987b3766d6b7eae370c505f2f6bfce7391a2a1763714be57fc0"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear_state.py",
+      "sha256": "a6b15a6522b0a977ca3c46d35597874ef68c69868ae93154e214c79088bf74cf"
+    },
+    {
+      "path": "src\\anysolver\\nonlinear_static.py",
+      "sha256": "a603c9d4868c96d8cf55b892c05ab61d7dda9914cbbbf5c2758d0556d84f5386"
+    },
+    {
+      "path": "src\\anysolver\\outcomes.py",
+      "sha256": "730b76567527215d19bf202cffdce8350cb775add039ea25273890d1678a234f"
+    },
+    {
+      "path": "src\\anysolver\\plasticity.py",
+      "sha256": "1b6c5ab0af2eacbcc949cf473844d326869523f5a2e9fddb192be5f672726010"
+    },
+    {
+      "path": "src\\anysolver\\plasticity_qualification.py",
+      "sha256": "7dfbc234216ce1b728cc198a035a591e9d400fb222324388cf88ca00ec66107e"
+    },
+    {
+      "path": "src\\anysolver\\production_readiness.py",
+      "sha256": "df880607f71433b56036ce60f261517f16f2dc418c4342b1ce0833b3803945d1"
+    },
+    {
+      "path": "src\\anysolver\\quality_control.py",
+      "sha256": "018d26e791d40d3c24516c9b3bb5e264a532dae7d146e9235ac957863e0ef65d"
+    },
+    {
+      "path": "src\\anysolver\\quantities.py",
+      "sha256": "5c275c710ee43848d8d76dfde096f7fa20bbba655b142c48383927a777e44574"
+    },
+    {
+      "path": "src\\anysolver\\recovery.py",
+      "sha256": "40528ba5a5419225eba2084288c40e091a3166f183ca797947b2c27df77bae2f"
+    },
+    {
+      "path": "src\\anysolver\\recovery_batches.py",
+      "sha256": "3be1f7f2e36cd2e81586640d9c4496dfac10c977681f4d80ef0d080afe9c999a"
+    },
+    {
+      "path": "src\\anysolver\\recovery_policy.py",
+      "sha256": "719ba5c397a58c9ea7eaac3443045563ab29068f39118d3ed78cf41799268c2a"
+    },
+    {
+      "path": "src\\anysolver\\recovery_s4.py",
+      "sha256": "a81e40a5fdb67f3bb11558bbd0f936540636eb57dbaf5ff5b6e4ff614ebb1ad4"
+    },
+    {
+      "path": "src\\anysolver\\reference_cases.py",
+      "sha256": "dcf68da45fdfe89f12d45b4c5e81402c30ac22a95c874cb4fd9b7ff571ee8b78"
+    },
+    {
+      "path": "src\\anysolver\\results.py",
+      "sha256": "73aed7f705ef00c8361962a5ef82a0ef38272aa2c09a201c059de90003d1e232"
+    },
+    {
+      "path": "src\\anysolver\\runtime.py",
+      "sha256": "9b7d6c22f930388e1172053600481754d82ca0c7200d539d871a8737c42f8d96"
+    },
+    {
+      "path": "src\\anysolver\\s3_reference_batch.py",
+      "sha256": "6f2470627079d1dd15e6727dcd4f872b575d6641d64192045c34d3e104fcabfb"
+    },
+    {
+      "path": "src\\anysolver\\s3_v2c_fast_assembly.py",
+      "sha256": "faebcb3f102c8cbe3f3fef2c1c026cb5d9b416a6e4de957c2eaf9da503e0c91d"
+    },
+    {
+      "path": "src\\anysolver\\s3_v2d_fast_assembly.py",
+      "sha256": "a8bae3e526103eef6b6e413b2fa7678c7f35d1781633bf6a8dde6a2ef40887c7"
+    },
+    {
+      "path": "src\\anysolver\\s4_validity.py",
+      "sha256": "d538b80d9597ad77af80639861d18ccbdc0a35e440e6007307a2e48eb0901bbc"
+    },
+    {
+      "path": "src\\anysolver\\sections.py",
+      "sha256": "60f041f4cc9c3f66218511d141d7217b26e770ed67d105cb88833cf5f9f16a5c"
+    },
+    {
+      "path": "src\\anysolver\\sesam_fem\\__init__.py",
+      "sha256": "b11a62f3c3de345a4896895829524a1d81ef13cc26913e8e9f380bd79ebedaef"
+    },
+    {
+      "path": "src\\anysolver\\sesam_fem\\__main__.py",
+      "sha256": "08a3feec4bad464aefee7bc051cdddfd29bd18c902aa221be5d1762b0098e0e3"
+    },
+    {
+      "path": "src\\anysolver\\sesam_fem\\diagnostics.py",
+      "sha256": "e6a80a1cc2dd19f7aea6fd97eb33fc67cb7f5747a556d9476d797d2bae3bddae"
+    },
+    {
+      "path": "src\\anysolver\\sesam_fem\\document.py",
+      "sha256": "4612bfeae3f801418fbfed9cefc476a7f788c43c9d4fe8a2b0f06be71c4349b1"
+    },
+    {
+      "path": "src\\anysolver\\sesam_fem\\exporter.py",
+      "sha256": "ea07ada930d1d6c87cac2190d63e933fa7a63934208b0c6a61e1e69f84dcb384"
+    },
+    {
+      "path": "src\\anysolver\\sesam_fem\\importer.py",
+      "sha256": "c89d108fd1f1892cdd27df639849c10bf49d767f5d922b63eef70b592cbfbd6b"
+    },
+    {
+      "path": "src\\anysolver\\sesam_fem\\records.py",
+      "sha256": "7939f0af0fbfd3bc9028ea48227b68fb5036dfc26103ce27ebe3a43e407b51b2"
+    },
+    {
+      "path": "src\\anysolver\\sesam_fem\\schema.py",
+      "sha256": "05d10a04c1b26a874a9e9cc61d1ae511eaabad99b09c68865c137f3d81d2c3eb"
+    },
+    {
+      "path": "src\\anysolver\\sesam_fem\\sif_importer.py",
+      "sha256": "0fa3da30da88d5cf24591b3edd54dfa328bb613b0b8a6fba2e2e293b1425e177"
+    },
+    {
+      "path": "src\\anysolver\\sesam_fem\\validation.py",
+      "sha256": "8a560a715a713603edb7d5e0ea13d3a53f219a796b58cdff1dcc9e2debfaefdc"
+    },
+    {
+      "path": "src\\anysolver\\shell_benchmarks.py",
+      "sha256": "5b8c5528cd9e961a25ba4f61cb27380af1c52b838efce452c1f74dc53a695345"
+    },
+    {
+      "path": "src\\anysolver\\shell_formulations\\director_field.py",
+      "sha256": "661667462d74c2eb9be0179fc1ea4744d1f3c9e73e4b99cd47955954d71936f2"
+    },
+    {
+      "path": "src\\anysolver\\shell_formulations\\geometry_provenance.py",
+      "sha256": "ac249e3c702cc455f7f65b561cf493732bca88c58a380ddcae0e2351b9fb738b"
+    },
+    {
+      "path": "src\\anysolver\\shell_formulations\\mitc4_plus_d_quality.py",
+      "sha256": "db7f95fb832911afc154159ee31d39c3971694d83c5f58b443d2db5e1334df33"
+    },
+    {
+      "path": "src\\anysolver\\shell_formulations\\mitc4_plus_d_reference.py",
+      "sha256": "d736baaed3d32d5929664d406b91dd92e7ad91791750b863f1dc4d5ade49862f"
+    },
+    {
+      "path": "src\\anysolver\\shell_formulations\\mitc4_plus_d_scalar.py",
+      "sha256": "7f18c6eeeb0c6b5b2b66fda8c63a724687bc9debce2be217f9055cbc95eee2b5"
+    },
+    {
+      "path": "src\\anysolver\\shell_formulations\\protocol.py",
+      "sha256": "a90d6461b55256a56895b43eb9eb647336a247af9b449ed677e242ec67318280"
+    },
+    {
+      "path": "src\\anysolver\\shell_formulations\\q4_common.py",
+      "sha256": "b645c772191af8f10a1d1074fb2a748c32d22d2f1e1d01b94d6462e81ea3b19c"
+    },
+    {
+      "path": "src\\anysolver\\shell_formulations\\s4_restricted_policy.py",
+      "sha256": "e182666421747efab4764cd89ce4be6f8fea639e598ef4b51f738fc2739cd861"
+    },
+    {
+      "path": "src\\anysolver\\shell_sections.py",
+      "sha256": "145eeee0014869bf60453e030f572682da4298d9c1e4bd9264bdc6a5a09fd5db"
+    },
+    {
+      "path": "src\\anysolver\\test_cases.py",
+      "sha256": "ba446fb16bced39c35f08b198d5d79b1a24d23e9153946c4a6c75f641fbf3b83"
+    },
+    {
+      "path": "src\\anysolver\\threading_policy.py",
+      "sha256": "a6a3e576c4140c230eb2997a1f0170c707429e00a38bcbf6b6d7bcf02e88a4c1"
+    },
+    {
+      "path": "src\\anysolver\\validation.py",
+      "sha256": "c2ed406b77f11490f59634711620b0dc79d5b96b595fce9aa0ee31d0d9d48bc7"
+    },
+    {
+      "path": "src\\anysolver\\vectorized_beam.py",
+      "sha256": "233d42ff158c6ef9daf230bf4927a1d256786c935e76526522428c4e74c619fd"
+    },
+    {
+      "path": "src\\anysolver\\vectorized_generalized_shell.py",
+      "sha256": "636f3d951882ed37a1074af59f35af2e5a40acd8e167cef211c44bf78511f55d"
+    },
+    {
+      "path": "src\\anysolver\\vectorized_hill48.py",
+      "sha256": "8000b771b6c7011e96cdc81d71f00f98f06fb75c3c0211f2b0fb1bb3cc67e41c"
+    },
+    {
+      "path": "src\\anysolver\\vectorized_nonlinear.py",
+      "sha256": "3d20e36dc63d3e8bd772aa21b5eb87bf3c270bf6481eeb6ba95aaac23847b038"
+    },
+    {
+      "path": "src\\anysolver\\vectorized_stiffness.py",
+      "sha256": "0fd79df40a57e15baa26a027584af04c3872bf8bc0b2337380a8faaf75871f3d"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_finite_spin_step.py",
+      "sha256": "fd6236f0a26f0cada2ecd335d67d1343cdba97e90af4015b9b2f3bae5480d6f0"
+    },
+    {
+      "path": "tests\\conftest.py",
+      "sha256": "de5d07f1dfa5c4bde71e29e611270cac3a20e25cd2359e0616087ecef624b619"
+    },
+    {
+      "path": "tests\\native_forced_response_reference.py",
+      "sha256": "4d9a62656122a4e2a2e54e27775d39fc6473538e8f1b8e965a6f8e8b3bb0cf01"
+    },
+    {
+      "path": "tests\\test_ge_beam3_native_forced_response.py",
+      "sha256": "568dc23aaf88c590154d33cbc560e00bbac725abb784c2b38bcdf4520d79ea9e"
+    },
+    {
+      "path": "tests\\test_ge_beam3_native_midpoint.py",
+      "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+    }
+  ],
+  "source_sha256": {
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/__init__.py": "0432c72667157e0df529faf2c1ed8ddd99426aa1b367877524158972a3ddec56",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_dyadic_bilinear.py": "a79e1260439a9c5d8292bcd47b3bc26c4c0d608af840a5f149e4511d271eb6f2",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_dyadic_factor_chain.py": "c2e07867c18ab29a03aa8196d7909044763bf1881d9579f12c1459ea3d7d2004",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_adaptive_arc_program.py": "136a6e32c15df82765ad0292a29810d33745f2ef85f09a494bc9633e514d136c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_analysis_combined.py": "29cc1f3aceeaebb500fb36a68a539f43a0107ebcd9dd2e7ca0d610b2e9162899",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_analysis_fibre_translation.py": "9435e945d39473bd86fae359e5eeeb29e4e5c90017ffa3a5aea3842f317819a8",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_analysis_modal_snapshot.py": "c5903d32733557f21482bc118f46b7682aa7b7a767cd0fbd2b744a82db7fd9de",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_analysis_nodal_program.py": "af5dae11e588b05e931de5cd964e238d3f23a6bda25b3df66ba7775a0518f77a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_analysis_translation_modal.py": "51fe623d6075ff4b9bcb51b291495f093aa560cb7e898ef9e9c82c2df53eb5eb",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_analysis_translation.py": "910e1b4564af8072113db78b8c3e27d7f11f864315d9e759200a19b02590d027",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_arc_geometry.py": "1a50282dd000ff92448270a3638b1de9eb79ffc8b9ad8785f63925ac165ae1e7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_arc_program.py": "5da4d9c8f6a850224f4defffcfea8b4fe1accbdbebeb1db2a0adad2c626ea4a1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_authoritative_cell_seed.py": "da9c612b78b23e8a6e7649abe5f2ff40c91857f3afe8e3f434af54ff062397ea",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_cell_identity.py": "b4a6787bb798d7d16079f2c1c0b4d0ba3ae95e555db8514b3cde30eedc40c94e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_centered_finite_inertia.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_centered_mixed.py": "d6a1657c87089dedcec25b6ca8166551d6d17b848944cd5d38e794b45cabbce3",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_centered_reference.py": "9187333942931213a01fdca90dd4d7f44850304370ef4452de505a3193904758",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_complementary_section.py": "145616aa3b786586199832107e8d895c366cb2bfd3d6bb4dbec49e712f01aceb",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_compliance_snapshot_guard.py": "c74a67ba6d2c6101c342749024762d18239a13b627a3506030af42b558c5d68f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_conservative_backtrack.py": "5107f692df74d8942d15373a920682797c5edfdad704b8bff82a740495e6598a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_controlled_fibre_modes.py": "b3b6c2bfc165cb7a9137349ece8f35175c934280dedb69826b1558c9f2881d68",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_coupled_beam_subdomain.py": "dfb25d53e397752634c143472ee9baca7161183d5bd905d55f0b412271ac1da1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_coupled_modes.py": "8e3784868fce5bfbc786e0a736e044b87f46bef8198df1665adca24679a61296",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_displacement_program.py": "2163fdb080ef388dd1141a73c2df64dffac7fab5dbc0baa8a2bbbc35cf795335",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_durable_coupled.py": "84ff9f94b9ea2451b70b4a9de1c2a0ee9260e5a76fdeedaf42d3412cec2d386e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_dynamic_elastic_state.py": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_elastic_seed_continuation.py": "1cfe848e519943e2d2706bdcfc2ac05ec761cf4b9e47ac54010a6bfbbe966efd",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_elastic_seed_modal.py": "f07a3d1bd5b18a15a6e02825b70f08d95ba4e8fed398779121e3174635c95ca7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_equilibrium_line_program.py": "8837d7948f65e249b0ca91ea8c5b9cd1df4d763c0d9121c43abb3ad0ec78dbba",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_equilibrium_schur_solver.py": "1b2fcaa32911540a72f03d9fb115835d3c4d4cb16e38f0e8ad8f2fb4791eeea1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_factor_chain_modes.py": "82a38bdc4b4d4094855ef4231d219a5fbe88ecf8e7ed68756838c7dcff473f31",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_fibre_cell.py": "140eff52c240151511ebe2911912d6b26c2cd35c25f0c4a1e88cdc7922f0c0c7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_fibre_distributed_couples.py": "c7c2f01fa844a5be56cdbc5724734f284475c19ef33aad7a9263dabd863dee2c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_fibre_kinematic_cell.py": "a79c254ada4f518958d83adc642f80bc22c892c71db6276b0ffad1ad7d67a776",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_fibre_line_program.py": "c7be2708b08de837bce77c86aee93bcbf6f1389496e704ad16137b82b30074a4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_fibre_line_work.py": "4967febb2c623622082d688218a286a10ebec3297a0d694078d5fcb4d6c6f0bf",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_fibre_reference_modal.py": "3d95ea54c681c7a26c59592ddab19ce431aa714bec08adc986692595cbb474c1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_fibre_schur_solver.py": "134b4a089ecc609fe80b0609171a949c930ec8cc141351bd8f14ed5ae92c43eb",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_fibre_section.py": "2c8ba8c72252515bad3051c0bb0e8ed61a5563c2ce1854601c87ba6e09248824",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_fibre_static_boundary.py": "7919fb7e2258cf01c9e5aceb17f9e1e01886df76b4693ab34090a281bcb4c534",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g1_analysis.py": "6bc038b76768ff6cfd4aeb474cc6730667a90d8c90eba57690c20c9fe4923734",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g1_elastic.py": "fef9426000dffba96bb2d590b7e76740eb1032ac9c3de8c6e5adca4e6fc6b51d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g1_element.py": "0d898e5c3dbc22cf09acb9ad31c0520cff3ded8d6d1b83f5e605236a02c25273",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g1_operator.py": "5a6c52595d16af37d708ec344ea9c3a99c1ffece03d3a7ef93d32d95267761a6",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g2_analysis.py": "6f1b3017963c77aa97914b1194efd2c488f6dba718698a2217a8f60cbe464995",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g2_constraints.py": "af3c7fbd3e672af86aa65c7cb3bda40d7c9ecba0a81894a32db98b57c948fe2a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3_analysis.py": "f26c77c530d4181a513b6ff10628aa081980c1a42c0e31d8ab7c9510890344a5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3_constraints.py": "949c0ee64339979bb24a7e69e10a5049f1d61b039087b26755ba4e63c8a83f3d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3b_owner.py": "454f1ea8f045bcd55f4758586c878ac06b5b566d98c0e81df4fa09c57581f4a2",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3b_q4_reference.py": "9e5debd860d156ca929d66ce0dd00a9cba6f87f045349d6c4bcc56e379ed8f56",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3b_reference.py": "144d97cd35ab9e485ee253a8e45d472471bc98ac90e6e7bac994913f03d8b8ed",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3b_result_schema.py": "cc142136c04b89662c224728eaf072fd2ec9088d223475be8ce6b92e028ade49",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3b_s3_reference.py": "31ad44515652d85c6ecbe9515e85e30a18f538c9de772185c547ad49e9c04544",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3b_weighted_reference.py": "12aa8595e68899eff55f07025ce94ac5ab7d29f38bbb1fc8f10381bb9796c071",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_affine_q4_chart.py": "70d363a0d20d72f738790829715af02c807aa5ca00bc3d3e63b3b16ddee70c0c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_affine_q4_increment_chart.py": "269c8f90315ce1181ff70c1ae92c9b2c71d4710afc260c8cd581aa576c9a118c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_affine_q4_recovery.py": "d2847220edeb78b4307416ed24ec64c530a78222e4ef812b11e522e36caee482",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_affine_q4_registry.py": "7e1be71cee76644e0c78cf414feed893e1b4ee41a69c8ffcd860390573f727e9",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_b2_physical_adapter.py": "e68165cd8bfb346277ebc91f0ade1d4720e915d53d65dec2def4651598364b34",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_b2_physical.py": "bd72eeabf5e43e124026815b3dba0083d98e9d477ef96f97b8ff56559c528b08",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_definition.py": "3b240c4228650764333da7d396247422a630e57b8b8db61e41df325590c710f4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_local_beam.py": "c1b0667fa4e1764d46725413d5822206bc6289052d8d9daefe4fadc71e828b75",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_local_shell.py": "6848f123b24c1534b6f762aabf5fab95235e84617ecf9929996ed2155cd8dff6",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_owner.py": "e4979dded757ad121faf08589fb5b4810a6ceb530b04d152ea7bf7d93637f7f2",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_physical_authority.py": "3275d3be7a807e234892056d6bb6675dc48b95a356e16cae1922dc1b6e6034ef",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_physical_owner.py": "584b84b7f30a40eaf27a5314b08cc4050748b1444c70dc54dbe036febd8eed4d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_recovery.py": "8e16a9b3b68dae4205f8007b491335ba7ecbbedbe17bc4a941cfba7daecee98e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_so3_numerics.py": "0945cd083ca5500a97d62bc9c2d1d9a3aaeabea2150903d20b51d66ef77f1173",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/__init__.py": "3bfa5d5a06201d92de8e1a8ce6e53ed8ad43554380a7daf87ca799a85c62a79a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/authority.py": "6a51d0211d9bb751e42c4950330757ddb7ebc578313444f84cfdc4772520a031",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/beam.py": "a69ec660411d78360bcc1d02a0533959a835abddff243844715dd32b88ef029c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/boundary.py": "8fb6e5963782c4ecadfc5ab055701b908ac3190240c6d334216ebc5710f23896",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/chart.py": "106cb16675c09a56cc821e19ef1effef4b5ca3e098b07df4ca6d36c25b9230e4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/compensated.py": "f910c4f972e24c59e1886fe60b36cce5ce87adad58b8e36f075edbe8cdf4c208",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/element.py": "e326a89f2bb6597adc1205a9f701ff930258205d9b448f52bbefb6263e58b09a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/fit.py": "aadf17a1ebeb83856da0a91bba4e1b247a514869361a68d3ef8f98c1321eb265",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/joint.py": "b13fb55e67df6ea2ffda4721e4cb044fbb90522d29058ac5b69b1d8a2a4a2f30",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/line_work.py": "296adcf69656734a7ef1468a5a17137cc8566a42d511d0900440f61b376f9152",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/operator.py": "40631f75dbf603721a6b7d192a9f5b1388cfa1d40d1cc935f01a909d69e09d58",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/owner.py": "9004d6fa56c8547d15816be4790bbd5c1aa76d749cd726b8ee838a0417afaa65",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g3c_stable/shell.py": "0323f40d761291dae9d0793ceec775b0e62d9fdc07b5f8d6292f6ff06c99c505",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g4_completion.py": "24d6446bf968ffad3dfb53d1fa178d27337bb99734bcde465a94fefe69f3bdf4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g4a_station_transaction.py": "da1b25089fb2c3ed96393ebd4a2d51dececb9194307c2119d13b844b6b45da9e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g5_completion.py": "5713861b5b9c8575f6da3d670b8f1bf48ca77c163725dd9efade5060fe423eeb",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_g6_domain.py": "82b9d5d8d026847f0bcae9567be5e48bdf8d74e495b5ebaf9f26bbab75d68ad4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_generalized_cell.py": "d98b5d1d353c11221fd6447ea44d349622d373583232f3aaebcddd3e37c93034",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_generalized_ellipsoid_section.py": "dbe6ff691190eae66f92d7ef39f4220c862958a44e7d8b43512f04f69f42fd80",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_generalized_static_boundary.py": "8ea10a90290ab89a413d7c947a6cd3a50c71331f2a89e41e4b94f7248f1b2085",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_lifted_kinetic_factor.py": "57f653ae64fb2a8d897a391f3cccdcce464985a600fa6dbfe6ffb4624b2df1f5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_line_fibre_modes.py": "758e181d94af1ba401e25f4d0df0ac287f85a6bfa0f9ff25762328b0188bdedd",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_load_program.py": "26b2bd8cc6453c097c8b3a0ade38693969ceeec6172b6fc6acd1bdfd097f8f97",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_loaded_modal.py": "67a5d3969d4f5a2e88a639d6a93b46263e2703690c1d8ea37c00dcfd78d0afd7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_mixed_ad.py": "c71cea89056ccb671d37d3169085844b7012e7fa8b7d78545dfc45fadaec105b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_analysis.py": "168be571e8f91c0a9d1fde58314659bdda2a83e32bf79e5d9b05c1ff18e9860d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_arc_adaptive.py": "5276ec6a4f2ceaae32fa61ec711f6dab79541f42d3340e4b09b657e97992a516",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_arc_restart.py": "dafeacb4591aa7d62aa7e7460fa98875480d9607d7d4bd57440d024c4924a433",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_arc_source.py": "3d47d317d8fe563413aa743c131d90e58094221fa7f97f5871db1e50a5c83692",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_arc.py": "e76a3cb850f079606887bbec592ac72c9cbfd8457d10a42ecccf66ab25ce240b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_buckling.py": "d4299fd5b58afa4b3aabc6b94a52eca5476add327b29624071e79574de9737b6",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_combined_couples.py": "8303ef0c32b3a9eed59ac507f699097f4cdaf0306d7337f91d34971ea19f2c6b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_combined_restart.py": "61dc6c308d9f0c92b465c72e85674b8592baba2679098eb413178b1d9976237a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_definition.py": "07611697125258bbd6a338f1a4ad316c08de3a5f78b96242d71356cb1ed7d1b0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_distributed_element.py": "bb6cbc9d21f5d8f9463f33a47d127bf5fc8d36e692fdf5d983bcf254b2a182ed",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_distributed_loading.py": "eb03a306795194f7eccfefdeb313a51182593a3de7d866c5157b7492922c9dca",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_distributed_program.py": "ef8a6b45d14fbffc42a16d736f26fb6f2abec511e4632343b92d90e72dbc1516",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_distributed_recovery.py": "d624af39bb1c872d26964ce1e6033464f82a6bb25745dc42867ecf0dc7659917",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_distributed_restart.py": "7e90a0b5cd8a38aaf8d3609655c4d7ca1817a4458a1faf4e1da8c69f995f795d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_fibre_current_modal.py": "715f090a14f1954a294a589995cb869c1c620e77e0d45ec0dcc273bce6fb48b6",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_fibre_recovery.py": "ce9a1fa85a9c345bc744f7d71c5e267fe08e93449df219aa46cb3b64ff712ad0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_fibre_restart.py": "a05f823d98f9dadcdb4d4d24ca5beb72b3cbcd9d51dd2d3708a60b0b88bf0252",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_fibre_static_element.py": "83f1ce4d4a1b936977263be5d2740653a264f3bae00ed339665e449dfa39a2f4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_force_adaptation.py": "fd6d300ec6de39fc76978673dc06ced9d85506dadb400eacfabe56ec7f7283de",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_combined_couples.py": "f4876632c8b86f253bc53490cff59339ad3be46db321b5dd53f8e6a1abee77ae",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_combined_restart.py": "8e5d9d14ca4f4f81a14e25ecd1937c3ffcea5c5b9f68e6ad9a4c8cff0e0e2671",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_element.py": "ce1895091ac177a1605a97d880e42ab039a518f9a33838231a39a1d0668e61e5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_factor_modal.py": "2e456b856380c23e15d8845dc3391752a82d48cff141d672962a5bd796faca65",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_loading.py": "40730fe174a7b2c707b736f4269b96381975128190564d5633f0b167fa42c173",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_modal.py": "f089155252b84e52ce82ff7547edca42a199a56055dd586b3332321ed068ee26",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_paired_modal.py": "7433831dfd299746852a1e273d74d4cbef472b70c9b1707173b36bd4bbb13a67",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_parameter.py": "30eac3a1d687f909db315de843a45fb80cd993acfcff41c4161b2bad5e4549a6",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_program.py": "ba63b7fb5d7044a0e78f520b689ea6dcce69b3a14f98b427c144722788cc007d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_recovery.py": "a05953a03bc3fba4ba49a7f3a1ca6309b540f72a908b139351b8d65fb27774a7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_restart.py": "e933bfde2dc0339b6002d068af333118c3020e85ab9d5595917cb62527dc8c0a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_history_profile.py": "6f09f041f02f71292d66210ad0e96179cd20bd1d4dd2818db309da37c7055a8b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_line_loading.py": "73fcf3be15e252e2858180a340e08872e47edb37e0f6ee736c3cca7eae09f335",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_line_program.py": "f6a048b7f8653b0b040cc979338573d328a39cf4f11dc3f8a441aee6dffd3f2e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_line_recovery.py": "ca2992b0ec115526e3d833ea0681ebf952b752758caa676bf296d5471f173f7a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_line_restart.py": "12179aa3c7026ebde3c70e5e5b563d6105f47b1061366099253aa675f3fb82e5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_line_static_element.py": "6504dd3342af5538977321c409b25f4f6bfbb51783225687f11ebbb640510b59",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_load_admission.py": "6e2d2de183a3d8f3d1042f169319b99776f03d96abed305f7916352f6c50b876",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_midpoint.py": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_spatial_couples.py": "3af48f8a3581c7159f22c78b137a5bf0e68a0c7f53e0136522086c7619dd485e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_spatial_restart.py": "c170aef24d2434d7ea3616480e66d3ed4cd4c2aeab1db5236a6e2e39ccb3a9e4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_translation_restart.py": "b1ddc946483d9d4cb96f64d7de3fed5f777170ad9a2e4dc1f7ce242a0e31bf50",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_translation.py": "2b67e097d8e24f3fe5448f502195abad0f55f67f1659acae1a9ccbf26bc1eb79",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_operator_validation_scope.py": "5cf6e890e1c2f0df863d46812810e865b97a7aaaa6a6fde531718282faa8e143",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_centered/__init__.py": "69f6d2952abd0f6b5329779a4e3ae0f5a1512056cecaf068b7abbd3403f97a15",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_centered/codec.py": "443c4deb50e9c54ca976c008e33eee8580eeb581a4b8d72dbe22f4a14b3c4f24",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_centered/committed_modal.py": "c866277fd8002b77f071e0cc86f3ce4093e438b5792d5a06c1b2f7dc7b4a484c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_centered/core.py": "3de1ce7dea69c8630b72470f4119f551fcba04b070fbb3ded29b18044ab188ee",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_centered/element.py": "4f0672f92f352818b10a9cb7fe4a9426c86a8865812635cfe573d393be5e7d3b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_centered/mass.py": "f1f0de6eb24d8759b0f4c6d4515d65c5c7bb7487354ed4637ba07ad9d5d403b5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_centered/positions.py": "86e709ecaf06d7cc396cf283e6e12bdb33f08544e893661ad0b0382a7fa96587",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_centered/reference_modal.py": "cf9b682c654442935cdce98c6ab323367ad3f52932d6b5abdb8c83abb2ab09e2",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_coordinates/__init__.py": "27a481d76867af1baccbc447f3908370e03ab3b6364bfe21c14688e351e37247",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_coordinates/codec.py": "1d20e03cae36ae505a707fd72be1c6f0fa02d3707d53d37cbe2253d817f20fff",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_coordinates/committed_modal.py": "9e81fbad29ae396a50c408ed9a10e88dfa583424068f743eb3bc8e0a85510346",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_coordinates/core.py": "c4db276611e0a8a274372f97f0755ebbde4560a5d01c73cf9ac0e52d9483e238",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_coordinates/element.py": "59b6590348251bf8366e1bc010bf5b516e5b1bb2bdabacc693f6e9252257e3e0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_coordinates/positions.py": "2c53ae303654dc27c73dec6e9fb56f6f61d4c47a1de7493f661525b0af7efa7b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_coordinates/reference_modal.py": "3b9ac82efd626e8a277355ad26a456ce00d24d6764d0c53067bb995efa890bc8",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_loads/__init__.py": "520dba87ad088b040dbe7ff61cb140690f75ff2350592abb40e01775746c80f6",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_loads/codec.py": "1d3a4f18de7a61bcfa0e2f8351f406ee4a02934c07016328710e4c0e546cce00",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_loads/core.py": "38c3d28eccb299c5f63dc8702b12ceaadeafe5258cf48c4fc24d6aef5ca00e87",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_loads/element.py": "0123896674dfa9988fe60a22abc15e8b6d4762a6d35e441e51f082b17944e700",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_loads/state.py": "ad4fd12243c71fcc004f1166605ffb82f5364e2b4940831813417279b3afbb0b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_loads/work.py": "fc8c799f16e70ff56c8aea67942b4aa26accfd41c2a53d744d088a279434c325",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_seeded/__init__.py": "5387814401d8e6b0baeece04d61ef6b50247878d40197517c77624dc9c0371b4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_seeded/codec.py": "54b22910e707d61b4dc28984101f2b92ac68e7a57bf24783c885b53ebd54749e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_seeded/core.py": "746f10adbccc7b06291699ca3fbc24be378839bd7fdc7962594d7f2aea8dc059",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_seeded/element.py": "5d03573660e5e4a65c9b77b0c4b340b4971749998485058300518adae1d5839b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_seeded/state.py": "090677fe971f5fec51c1942d0ba1cf8ffc6305a19368d8c6af1f77e9d6733f87",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5_seeded/work.py": "2fbe5f697e9d99b07df6c586056f790a92549cde958e62b24e8bf502456b2ea6",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/__init__.py": "37076ee49ff687658d2af2af4e56d77c460e3415cf63aafd74c476b8d2f6fbd2",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/algebra.py": "295419f24290472341aae83035c042f8c9bdd19290b7f375e2241dfe1a546eee",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/arrays.py": "25a7014e63926acdd756d4499b45926942739c0a3c227bb385a83c081f90843f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/chart.py": "785afe1f3feccb325cfe7f2b5b5a5c41357d1bdf60b78f4c72f750638f3fc35a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/codec.py": "f323a2e371597bf924c88aa0622fc7ea569d9a89ab9cfaeae87779536fc76727",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/committed_modal.py": "6ad266215c0ab73de03ececf5280a02a1ae3006fc548c50278b824bfabfefc46",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/compensated_coordinates.py": "b374360f2d1dbe85018cb1b801d1c54321bdadf4a6bff467678838ab4e662d0e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/compensated.py": "0d66c81dd3820a2cc034f0383901805c87cb251d7cf31326ebee32a5d90ff0f0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/core.py": "be9762b1c84988b39931013fed447cfc1120f8fdb1804cad37ac913ead065467",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/element.py": "d655edb9e33048d81ae85eba3840b96bb578592c1bd609b9a12aa6c6ccc7c754",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/factors.py": "f2a3b4172a79cc6914fb3e874a723c5e03d99d88a89c9bf7f4377970b89e6258",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/inertia.py": "4274095b7a010a707aff68ede94c342f3b4504395dc0b3c9fc5bad075e269dfa",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/mass.py": "f6c47419990f4c33ddf4323ee630997973dcab3b1b9b21525f169131e917a19b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/mixed.py": "cf9079f53f10137f00a8878ff82c0c4c8643520827b21b6657d0375e38fb8b6a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/reference_modal.py": "be739353029b1c09ef568c193d83a212c1833febe3da1926be51a5b496ba2946",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/section.py": "b84c2eb804f1d943e39733f230a17a6064d1c2c982b2e09a5b94021cf858f713",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_p5/typed_schema.py": "ad44a7f743b9a23aebf786677b47744a4e335dd05c95cf3e2609a542c05733ad",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_pose_joint.py": "f3fce05e6d65dfac9a9783e6fb466b8a0067ab4831ba00a74df9c579461abf71",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_precise_geometric_work.py": "14f4bf50da7290a2057d1e35398fa6e6e04dbcde7ffeef5a722a8be0afa547b4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_reassembled_signed_modes.py": "aba0676ad3e385fb02e4a5522a0011ceb696151ed7cfc5a9f516c9e324329793",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_reference_identity.py": "e6f3a3daaa302b352a0e7a456467b7877875cbfb2847718d744d1d322890cbdb",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_refined_fibre_schur_solver.py": "c7b311522b94f53388999bdec57a680359b2dfb7793edd35a0f6e6f8912fbc71",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_refinement_capacity.py": "2495dd37ba1f08c9b4079866842faab3cee93f1a2168ce4ed52a2d0bcc078304",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_relative_virgin_reference_modes.py": "e110dee5837036cdd6f1dd9769b25710eba0826f55df894eccfae7afd48bd2c9",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_arc_geometry.py": "2f615cdaf2452333e4474396f6e36905a874722ad993ee009aa5eb4573f2081e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_arc_modal.py": "39131ab0688f91fc6dd09fdb83efe50dbe0deb2c3f60ff2e88980a63f7978767",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_arc.py": "1cc32ceb5cd011934db035b8b3cba3b7b3dcee80057a678b2d941b32dbce9edd",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_elastic.py": "53e61e777c95fcce72c85c664eb6b39d2cea2a1099ae83d9961deaf00eafecba",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_fibre_control.py": "4a91d9321ae6f569bc6198870026e1f9d69c59fd841b0c349d5cbe77b5fdd7ac",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_fibre_element.py": "894caedb3c196ff772647bf45097e1caec8b30bf6874834964fa50f1a74d517e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_fibre_modal.py": "66be4f84d0708828bfec01c10914f9c9180d017a1289d24c5d4330fed95a5d14",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_fibre_modes.py": "ddddc5ffce458ea36f937332b5226f930d63bc56384677ad9f6e6e0569cfbb2c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_fibre_program.py": "4610265d30dfa6e8d0676c4a7b0e5c2952a5408c5e76d00e131ea75463845ee7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_fibre_state.py": "4372b3da1b657c050175b8b50505e785006c55a1a317cbaea7dcd90b7c4c822a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_fibre.py": "b484e356a4acfa681647b669fbce51985bd56919a7356e23437e75d947561ee9",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_force_program.py": "eb73e939f7de8068445b21d6dd481e862f1e88459cda83f6ac8af584df0fdfe0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_generalized_modal.py": "5992238c202540058e71bdce574e4a4afcbf6db0fb5717d3c9ac3d06b3408428",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_generalized_program.py": "c08a0e894d1df63c3779d21ab5949cf260aef929fd243b693de69d02ae197e0f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_generalized_state.py": "e4965fd3cc8cd8c498a8fd21247bc8ce09a073fdf245dca1b3b10b084cfde719",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_generalized.py": "39121d4d76a5524579c2ea506c9bdf968a3d254cb7e6740de6173eb5aa7e6787",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_nodal_loading.py": "7fe20b10f607f4e24a3af9addb2bff0fb75a8d5a6b09116e5139d75399f86a97",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_plastic_modes.py": "7b4abd9d39e42fff7a3e37e324756af4638cf2bbbd92d7c761c448ec3aa4a94c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_plastic_program.py": "d8fecefb2eebc1be0b0369fcfae23f4bf938f75e8849036724ae4116e4e37709",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_plastic_state.py": "c58790c39589369a453689d8fc81d288f20b9ab2803305d0c1281dcd499cd504",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_plastic.py": "5ce4aeb61995a09929fa36a597d633f1bd42827205449f295ce960cea3dbbf0b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_state.py": "5c4e78d2c3fa0f43ef5e821c37e656e2f0a81e94ea8c5e8644a77ed27fd0757a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_translation_control.py": "7773a95a1137aefeff41b43626c4d9adc81f46cecb802e4bf8e4bd03148887b2",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_retained_translation_modal.py": "19fc85ac3b4e2d2ee68b37e60c891e7a94133658aa4cf0148bf090d68ad3728e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_schur_line_program.py": "35a2db189a97b1442566f91de5d0fdfc7dc9b7fa45c2fd5027d92578a23ea197",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_seeded_fibre_control.py": "e7b2d076d012bf313f5736f55d9c7cf2a441554f73599008f0d69756a93687ff",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_seeded_load_program.py": "2ebfbda8900edcff29197c698c36b0cd2b411e13047a27fdd5fb16dfdee6faf9",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_seeded_loaded_modal.py": "b728f5fa9dcfd218331453f49137b41247cf000c2f95eac71afda14f2feb63e1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_seeded_signed_modes.py": "17e6949ca577911d09033650c0089428404a33fb5410738caaaa97349e8873da",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_shared_kinematic_split.py": "28dcf2f79828cbe395b8032ecb96e9c10783adad23f3f20766f44bca13045973",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_shell_joint_state.py": "df6159bf5df3ca9ad1aa54633ab388d911511e43285961bf5240ab5d7352ab4d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_shell_joint_trial.py": "1c6176921eadc2ef132c516caf706bced799b95f4f1009d97fab17c41103b504",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_signed_loaded_modes.py": "2f882cabbbab2911e2a7c3872eece6cf64fca7dcfa803c340f24c17829891c69",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_spatial_fibre_program.py": "bffae3558cd9a08e67a75365cd4723ee54db72770a06f152b3e54b08439a5934",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_spatial_nodal_moments.py": "f139357813d345ba851adca7a2c986f1a9aa88b0a0c56d42ed8f666a7058c69e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_station_resultant_cell.py": "4946ab1a8ec06e388694e8b7a16e7a6cdc9bc75b42b8313a3c9cedb209b672b0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_variational_shell.py": "958cbf00f62e8af87724f909b793fa24391e02e3a0a2a5d5d62f05e9f1168320",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_virgin_reference_modes.py": "87eac10f454a4cff73cccd75938eb7160c7baacbad7c32e25a1a0714b3d8880c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_dyadic_interval_inertia.py": "45ef206a8b597c5af6530402865c3cfed2e70020f79dbf0e209db8def164d9be",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_exact_shift_chain_modes.py": "484fb7b4326ee923e78c119583844bb4251f98be943ef742c24eade0cfe4115f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_exact_shift_inertia.py": "62ca9708e98ff5cd8e8a0fe8e765ef3c81b909a5319c70b36e3838a5dfccc650",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_factor_chain_modes.py": "403497f819b0e1d4c32483c1f36df0e75116ac3a80ee7a017f22f4479879e6bb",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_large_factor_chain.py": "b5ce9b10045210e93a582e5431d7a3581d6ec1ec2b41512e91339c73e4c51702",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_material_protocol.py": "8de7b76beb43b62f2256270aa4a4593842624800b3652ed3b409467dce2728a5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_modal_capacity.py": "5d7cb1b2040ba3198728ee64361a50941ce59dcf794798f20f24babd84f3c400",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_paired_factor_chain_modes.py": "4dfd2ba2a4dd36d0f39126deac19d2976e0efee59b82bfa0b52cff0358c96cde",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_reassembled_factor_modes.py": "5e72b5d01a8ba9ed94ca84c402ed801cc1b793e9f829bacd4fae313419c48c1c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_reference_factor_spectrum.py": "a56abe45efcff8560709c11a6159df67956a4d31338666bf62148c5ecf4a02ab",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_reference_modal.py": "f2f563d35f9a34d81d71f5409915da34f9858fb5150cf911daf92bddfbf224c0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_relative_factor_chain_modes.py": "714ee56760bb2e2fbc0b257d18b5806f9cf8e9808cdc174889c53a61a593944f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_relative_reference_factor_spectrum.py": "b271b3dd6b91845923f0b54a7da13ef1326345c4396fec060632d8b3494643bc",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_rotation_state.py": "01f5efe9a4935fcec317be8ec6508f2085999aaddf19593712ce54e55bc60dd5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_signed_factor_modes.py": "4511efbbf752a58e4b642cdbf904ad210a7cf0b9db45c3c6cc981649d24bf107",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_signed_kinetic_factor_modes.py": "8ac8cce0f26cd5b0e5edac97e2520808dee91b0d1899ced82910ebbb6926feee",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_native_stationary_spectrum.py": "92c56b5a585a5a2e51ead35f8495e824f1c3716395f530ae35c5959c0891ea97",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_paired_modal_arithmetic.py": "495b0f4b66d62bd17a4ab5e004740976c390451c71df12b1b62fb48291fd4b9b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_qualified_authority_epoch.py": "6f541ab16ac84355e76fa778de0ceed820e1a4f73a7f8e0752eee763652ee02f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_relative_reference_svd.py": "46d68952e94d5f4b9549bee1071bd5b91b5897b18b1003767da487ab35d37ab6",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/activity.py": "86f5475876523fdbf2f9060f0beb27dba6d8ca123dcdb2c423a44ade5de4590b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/algebraic_dynamics.py": "eded5ee910e5ab8d839d34bcc0298e21c997645904f11831bf41108248a64f0c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/analysis_session.py": "8df2799b9bdeb8ce5ed8bce67d55a108da8c8470dde5e12d67bbe6d23a2cda9e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/anystructure_fem_mode.py": "2cc8af98f8fe4f1210f34c5890f06199176f53796b311109ede4f05a57ef1ee8",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/arc_length.py": "6d6b6bcb54cee38e8bb3d70347c452405adf5cb83022e100db563304f00a9fa6",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/assembly.py": "919601e6aed8adf6039b3c32269baa4ec15172b81e91f247ddd2091bc01b6a3f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/b3_ge.py": "845b017ffd232da5cc499d338f1dd1b6da9fe3c02e54b6281c3f0f952ec31aca",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/baselines.py": "327e785b7d825de86ded68d0e87effd827b0712128ffde737e7d8329f6b80f37",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/beam_sections.py": "144402bc9936f7d1eced62c7f345966ba6a2252c40ff736d2cd5a6fbedcd444a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/beam_shell_verification.py": "0a29e69e4fd7ad03bbbcf3de33b462baef24d07af9d6368bdf27291cfd100266",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/beam_validity.py": "a17e857b911be92deafac4199367e6d5de51cbf9fb67489a728846a5729270bd",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/benchmarks.py": "725727453b9e62d0de3f2b7e3654540a2739f4af855ce7f74a8d64f5edc764d0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/boundary.py": "b88157cde4c1aaafa15ce670f1a8c461b481ec9686f31939141812633bb1ae44",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/buckling_validity.py": "f664b00b68ecd51a4f3de31acd3f41d7342fc0a186edb021aa2d8c0f805339c5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/buckling.py": "1622b9c5530e28849aaf4bb3a4d7434e0c99d71acb235c3f8b21350e1599ddfc",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/capacity_workflow.py": "b96bb7302affd1f0754f533ff91c41a4fa301a04377615eed27f736cd289ccf1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/cases.py": "fef60bd1a9c6198913a3c1ae8c2f14d299c8e15b79c44edf2718c56b7a70de28",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/composite_strip_verification.py": "13a83485261f48f2b674d38d7ad7d6b171df8872a645dc74d4fe75ed32b346f7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/constraint_audit.py": "229e3fa9db27a5e55a4118d237bf53adc537e10c93bfbdd4ee1e7a19eab46dda",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/contact_performance.py": "a42eec83590d9bf3a606c2ee029378be57e54b7f489e4688e25d01fdf1e8f5a4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/contact.py": "cbec3e165fba16f45ddb3cccbb11e05f35ab915b548a66fc2496b8ce3889512d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/control.py": "cd0432c28fe429474608d5a310d36e29c4143783f313f77b45177027d9f230bf",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/corotational_performance.py": "3972e99c80b7c7cf0bf369980eefc70c89307350c0bbdb3e1f6a96115011991b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/corotational.py": "1293d11bda0a2d45f09632eef82b442c4eea09564e6feef28fc294c5b0a88045",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/current_state_tangent.py": "6da6ef5b3bf32a96b7a875863281e2c719546bd2c8646c89f834acb2c65ddf82",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/cylinder_benchmarks.py": "5f48cf05aaf111d707c1942669957aa743521c37bf3c7d697e166385e6bbfb36",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/damage_matrix_performance.py": "9d7f8679b125caec13004e1b87eb7b6f2fe0b3668f6ab69f796d96a09132eb20",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/dynamics.py": "40039ee5ff79727dc892c11fc136481c91ceee8c086d18dadbf7fac83d2f109a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/e4_pl_element.py": "8aa0a6845804857c15d3ca30d883e1960386c00044d69a892f9bf35bb0110f33",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/e4_pl_s3_element.py": "8f6a3c18b6747a641d15d7ca9e96499486bbf593f90120c55f1c8febfa443f45",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/e4_pl_s3_initial_fields.py": "25996035fc5279377784194812b8cc21cc7b47b5ab9e7e1637622999163f8389",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/e4_pl_s3_state.py": "70d3e26c0521cc8803c447102e859f3c0e50c04cc70ffc4ebc2b3e97e3975f25",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/e4_pl_s3_v2_element.py": "7facbbae7706c058c4003f26462b95f09be5a93e8ebbeaf2c1bb5bcbf46b7ff0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/e4_pl_s3_v2b_element.py": "e09da2f4a223828b97e0da2d869a3849c2517ed4d14ea00d6108b925df1176b4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/e4_pl_s3_v2c_element.py": "39cb171aa31f432eb937af972b30d709b5a51bfd5a977b51ac459b52b61aa8d8",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/e4_pl_s3_v2d_element.py": "d0ad70f7c87718d60ee02a82420915b435d0cf66b466049f83ea9c2ad1b90a80",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/e4_pl_s3_v2d_state.py": "d8f1429dcfb1bd575046cd064e506e36330c709f1e38e068f8e90a9dc0713e66",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/element_capabilities.py": "ced1166253be6cd34a4aedb123fac0dcd3129a058173550d220482e10f0fee53",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/element_qualification.py": "8356722de4caa5a8a3cb2e007c984e17f6471814784e9f60aa60360f0904b258",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/elements.py": "32967dd7cf4ee47d2439d4833844e0c10886c2880768f218d468844d9da671b9",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/experimental_csr_assembly.py": "35491c102989e34fd3b2c51f3617269da34f99f065215cb7a9323827bac9c898",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/external_references.py": "2a7c4b8c7006eff6d2da07a13db2cea31f651b0bdd7832295e02c5ef52c39d22",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/fe_core.py": "c142b04c44c3b09d12b79c133c19e1c486f2ca1f5f6bf22348a3cfc5a0c897f1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/fracture.py": "170118803ff0bfb5233723e926aecab9f56d83f50681ef4994ac7fc4868d8013",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/ge_beam3_curved_reference.py": "96fdb87afb02ba8b4d657491d631f07addbd18f96e33f538154ccf27c628a480",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/ge_beam3_element.py": "65965a5858e8e99b539203139be346483b3006e5596e7cd976699b758674bbaa",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/ge_beam3_mixed_element.py": "ad575f7049aa8c4dd70981d9f09db8d39c6cfd2f30ba3b3145f69deed062e5a7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/ge_beam3_mixed_state.py": "1f517eb3359484d263db1302811f72b1267462779e0f0c1487fab353b20ce13c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/ge_beam3_native.py": "45cf3507bfe1da798c206a05370365e02475a77c3925d7355a970a20154f80ea",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/ge_beam3_state.py": "1b3dcd2f6f17f2067c734f56944a93a49f49b266af54e319ffae8586d52e46b4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/__init__.py": "3086df6ef088944ce877792145b632fcbfef3ec531e1051ddefa97b6b6929821",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/augmentation.py": "5d0d8a6bd6f3bdcbbb6395eba522f9f3d04b88b6d710abdeab67b95618e93622",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/beam_chain_pair.py": "6a0c3c72f5e436ad96a2481a0a60301c937828427b32a067f289793ece2c6d65",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/beam_curve_pair_static.py": "ea9c21c9d974a10ef7ce365379632dba362d2bd8c735932fed63a3367d7913db",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/beam_curve_pair.py": "98fbd30baa4d825abdc8ddc9b5c1e05175ce5e88b3064f808698870a62ce0354",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/beam_pair.py": "f3d93be006f62dd83684247c35c2fcd042522446f4d5a7f6f3f1407a979c5be0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/beam_plane.py": "d6b3ac4e9422bfbc07ba9c202e7f3d107751f47fd88b5d95941893f6ad70bc9f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/beam_radial.py": "5dfa5046ff3b1a2f8b9f25fc66bb7854be3cbc57d8a4a004b6aa97ce2554c939",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/beam_shell_patch.py": "b34ed3a23b8c5692458ef559661434e77c83bb3f12a32df9c3bec4dd0d7f337c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/beam_shell.py": "e01874a0e516f95ca0743fb5991c1eaf8e9dcf383aa10e88d9d45de21313a7f1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/capability.py": "b28103f9dc5aa396a5d037a4fd622eb4052f3ed431761f23c1f682814f07a16f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/contact_search.py": "6f7373ad63ab9e95f6ec9f80d71d8f91791f880632f82b0d96b10f6789590f68",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/core.py": "5dd813429bbdc78933dc5ebaa7d990503e143194ea9ff71939da5d5c843fc371",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/d1_interior_profile.py": "fe2c7018788f73e2b559653e0aeaddf59b409ee7a1a6cb0f824ec23ee700cb95",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/equilibrated_pressure_pivot.py": "78d1abaab1d6009595369fa6eeb4eca99795975d083cf3a7637565a5491577b0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/fixed_projection_graph.py": "3526046175cf840c93b5a5681d5f056fadf3e8cc9c1ea75b790e6eec16b590c8",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/friction_point.py": "fb06f9c6ebd46d4d91501cfe7e8b4f3b0409c71addd4ed8d72c21b68074ea5fa",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/gap_extrema.py": "7cb062f853f09ee60c8e5313416c1f887fd6909a37a9b7fde2879779b239adf7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/linearized_pivot.py": "60f7d412dbda97dcba6c3dfe678b3f8dbb47a126d81c4e6bf67c4c9158673244",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/moving.py": "27458bef16cc3f58d42be635dc36143dd79bd279cea3963c4bbe7948de32ace8",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_curve_union.py": "a5f1d5210e0c94ed1ec5937ceb0b4f9438614dc048045835d0403a0f86d9f174",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_retained_cell_pair.py": "3bededfdfd181edb691a34d4c78f558a5bb877df2c480e0d687f81cd941f1a32",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_retained_curve_cell.py": "3b6d1f50fb3ac63ddcdc26c3418cf0d0dc8f52a00638403324a24a529a04d8e5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_retained_line_plane.py": "3d4339f9a4f674c85d848b2ce6bcc814945f2b13c7deca98f806176dd0385d54",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_retained_line_s3_work.py": "470c036e015c6e18181233cf1a36b3ee6a74e9b42e36a769d53aa37b73c3633c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_retained_line_s3.py": "f3f8c5c67cb2a40d3c6ea7ed96f22404ec8310448a3056cba46438309c5a7a74",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_retained_pair_static.py": "624b9abdd62440be547e447e217eecebdc7f040351fd47ebbacd3aa33f08592f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_retained_s3_static.py": "061f41c3ea9aeef3f3f24335a2a349b08c19f0cbb37e71f9c8b4087a698f5e0f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_retained_static.py": "e8167befd7fa6cfa1aca72be3c2052cf4bfb1562cdeaf9dc9f1f6b79c39f2f8f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_retained_station.py": "883f29c056727e8cda88bcd85ab93344086666cdae6b243e352268bd50e94d4d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/native_retained_whole_pair.py": "10a209fc018b260a374ea1451a528ef730ba4d5458a7f37d8393717b2badb993",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/overlap.py": "3c6d98ac0e346669cff3f423d52367766e12d7c9a9d476f761fda2bf1c62deca",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/pair.py": "ae2404da37a82cde159a2f358f9ff0d55eaabc7a492ff0a1f8f01e99ef46ee26",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/patch_broadphase.py": "b6b1e7ff037a19450e1ab4d6a4c06c0a66d6c734545fa8adfaf296be64908fef",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/patch_mortar.py": "e652a9d591ab5e5a4894333d39157a4e6c86102841f556bdb4be9372c6dd8435",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/patch_sliding.py": "c3d0057c0650fd170188092f4f5611517e1b56a8781955a83904e2c6bd8d964b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/pointwise_patch.py": "19295ac816dc3bc3d84a9e33d44a17d0ae74e07c7f12ab5d6f55b3bf055777d2",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/pressure_basis.py": "f566cacd090a6bdbfb8fd5ed6f384c14f085bdb3381e4da9d6c2b494af3c97b9",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/pressure_overlay.py": "0f5960015b82da941f20af350fdc6e32be469d3fac0d78e580463b58b3a6d861",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/pressure_space.py": "d1d33d36edb6e13dd0892009b7efa337a16e73bebea845260828db4994b97333",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/q4_overlap_local_bound.py": "360243d08a53d86d4dd476170e0464a86aa15cf78eae6f6e0ecef9004f0a268f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/q4_s3_overlap_derivatives.py": "a089b02cabd2e18cd0e9d3197796eb4ecb06e73a6044e4bc6c35d848d132a786",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/q4_s3_tiny_wedge.py": "f27db6b3b410509a71da46b8f5393e842989ff97751ca295c257d1258c1ad5b7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/q4_skin_work.py": "27d176c578e5d7788d22955967002eb515d7f23476ed2e6ca44b9b2ee11bbca8",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/q4_source_mortar_energy.py": "0defe6a3bca6db3f4d2b6c018b13fd1f3e99d66a3052dd83fd9e5e49c5b14be5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/q4_source_overlap.py": "3a22e5d3f739cffbe0b1f7517947b976f7191f2e3832e1e439e8cddbb4955d64",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/q4_target_overlap.py": "0c91620b26f42d441084b29e5c9e152441c160d7d90677487308156c0eb41d08",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/runtime.py": "b458a146d0ac6ff2f2aeb921eac7a7f5b032d5330cb73f6972b66ead8d980ad4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/s3_friction_pair.py": "1ea4eea135a1fecac56a896338cf9a295bfd9449aee1e3ef58bf5001c025da8d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/s3_friction_point.py": "2241d3b3d49493d422203e2626c10127c595e5c11d71a8b196ecf93054fde0ea",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/s3_overlap_derivatives.py": "d5312edabbb01a2553b934e1f5d172d4a7846b79a3fd537261eecef3df315846",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/s3_pair_static.py": "1443dbe856a490c221229bc6ae1fbca819392b598dfead5ba751677694fb4b8c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/s3_patch_augmented.py": "6c5971a7f60cafb0fc9cb74537b0fc1325a5b8411ac92df7c907010ea62ecfa7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/s3_patch_mortar_energy.py": "dfcbc1320073b38a5eed36217e63a57eb33cb17f8767a1c5ab4c3c4284583638",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/s3_patch_static.py": "e4b3fdc8f98aa7c580dfd1608430a6d41bf0c54d5d1bb5e4a32a3554a0c07ebb",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/s3_skin_work.py": "6a90f38d00ec2e6d81c8baa22742d76927527711c5c569a2ad4a8c794159d184",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/semismooth_block.py": "db72aee59f82071575d0b29fbd08e58267a57a83bf4e2919ab8f9881eddd595a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/semismooth_path.py": "f34529aca34d5131607b3b02e4c7111ffa42409cda4f0cd498ae556f41325d8e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/semismooth.py": "df6b63ad8d13f872a8c7bf436a84653ec8c87c32d584833274209052892a1c9f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/sliding.py": "e4dc608e44ce00de07c65d336a82c6f01791fa7c62cca253755675c3f35a52e2",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/sphere.py": "d8741b79936ee7f1a4d396fd2af5c98fee4087941142c6dd339a0168b358b9e0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/static_path.py": "1d3771814c82e3dd45a6d8fb43c7a8ff6d8511e4b2736c2fb1eace0c96814f3c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/supported_schur.py": "b8e298338f18f1af03d7e9bfc8b5f850d9d62f91b81daeeb330fa64b8065c58a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/swept_patch_broadphase.py": "ec058f18dfa3334d73970b2217fdd2760b188966b5e22d32d6a72e45f79d8626",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/transient.py": "3e8f02eef3436ff81ad2a178f136a9c8dc5856f8fb081be1e32e7aa491eb8be9",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/triangle_mortar_energy.py": "cd0fae7c6cd5b8b568c53e68644de20fa50b633e43a739f16450d9ed229ce6b7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/triangle_pair_energy.py": "b641c479879a107602397cf437d673951dea0073c4dc246f138ef99527da853f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/warped_q4_plane.py": "0553f7bbe782bb6264002f67ae1d2dbd48d7f39116836868b05b0e579f9cbe65",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/warped_q4_skin.py": "8a5d171fb8839463dfac24086d901151a35e66098d359d34486fe2ab4f094299",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/general_contact/warped_q4_static.py": "32958895c114d654fc4be763e8db1d6a3cdd18d0db2d106f676a04f34fc81aab",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/impact_performance.py": "3627552ea073fde55f12c9c9c92d9412440266d7ba5e9ea2489fc992fda95813",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/impact_reduced_assembly.py": "761ca6396a5ae5080977616241e074b8876621c8c908bd8d3c0bb2efd2c1611a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/imperfections.py": "f12be5f73c406fd95184514c1721a1675065ff1ac3cef6a4087a1f997f2a61b3",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/initial_field_state.py": "35fcd79b652d777af3f82b6b84de3b99fadc72ed9849e2ecf499ece0d3571e8f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/jit_compiler.py": "0616785c369052fd3ae8704fcd6dbf528b91a1977c93ac06e67c11dbf9be8912",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/kernel_warmup.py": "33c905ec3cf463b92ad3b0ef39819d824d8fd502725d05bb3cf83d2fd58da9da",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/linalg.py": "98d15d22bb89d89643331c9a946a6b15894ad5c6e4bb0796f914e03be8e4f4a1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/mass_properties.py": "6be9c1d6e74af7c518e901e7e3adea21d77f76a0a28286fbe3f982173b9fc1ee",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/material_curves.py": "5400ce65fe87a049a6d89f880b4bc8a19f48aeaf9c5cda0bef0e6e88a8116661",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/materials.py": "6a0b9df37a7b93fb509aa61a8e1fdb19f241f64d1d293f991bdadae709ab3165",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/matrix_assembly.py": "80222fc1a6401ae756612cb9f732b997c61d4b32c140d227b6344532ce92d558",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/mesh_gen.py": "02d6e8cacf8e627693b200b6c7e05ccd52fca4bd522989836e784b2efb980964",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/mesh_load_bc_verification.py": "f141b589e3278a54fd7a25ac0a10e3085e9189e56abd409c6aa74a7a6237fdbe",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/modal.py": "ed3202b4f2750b209a462be819eb0cc38d16ff4c05e480a39f5aca7a79fe968d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear_analysis_diagnostics.py": "378e95e36a53c3cf919169c52eafe85c0751d73e8c749d5a6e3da461994963b4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear_element_evaluation.py": "b0a44df23abb83bbc235edfb275de4c705b4fb1063fdbc87516835c21a2ad1eb",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear_performance_batch_b.py": "7159ba357d4a9cfbeffc8ee93d1057c64076a0928be6c20bcd44f12db8ee7f6f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear_performance_batch_c.py": "df512afd03b8edb341e7ecb938f6e896beb2cfcfceb72bcc2497af52a343fd3b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear_performance_bootstrap.py": "a348678e631c725632462e44addb8e8978b76da6855e961caa248112cde28b02",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear_performance.py": "a1f620c3dd502c34fccf67c51cd83a18ec23d33b8c95f3551984507e88ea0535",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear_reduced_assembly.py": "c4d186f8e556d03d116febfaf41c35735f597b8106fdc97822196f28cefaa786",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear_restart.py": "a7f952c9d5c0f987b3766d6b7eae370c505f2f6bfce7391a2a1763714be57fc0",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear_state.py": "a6b15a6522b0a977ca3c46d35597874ef68c69868ae93154e214c79088bf74cf",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear_static.py": "a603c9d4868c96d8cf55b892c05ab61d7dda9914cbbbf5c2758d0556d84f5386",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/nonlinear.py": "f9c53352ae952c157d95706f54da27e6f527614010f7a347797773b948820e52",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/outcomes.py": "730b76567527215d19bf202cffdce8350cb775add039ea25273890d1678a234f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/plasticity_qualification.py": "7dfbc234216ce1b728cc198a035a591e9d400fb222324388cf88ca00ec66107e",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/plasticity.py": "1b6c5ab0af2eacbcc949cf473844d326869523f5a2e9fddb192be5f672726010",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/production_readiness.py": "df880607f71433b56036ce60f261517f16f2dc418c4342b1ce0833b3803945d1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/quality_control.py": "018d26e791d40d3c24516c9b3bb5e264a532dae7d146e9235ac957863e0ef65d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/quantities.py": "5c275c710ee43848d8d76dfde096f7fa20bbba655b142c48383927a777e44574",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/recovery_batches.py": "3be1f7f2e36cd2e81586640d9c4496dfac10c977681f4d80ef0d080afe9c999a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/recovery_policy.py": "719ba5c397a58c9ea7eaac3443045563ab29068f39118d3ed78cf41799268c2a",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/recovery_s4.py": "a81e40a5fdb67f3bb11558bbd0f936540636eb57dbaf5ff5b6e4ff614ebb1ad4",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/recovery.py": "40528ba5a5419225eba2084288c40e091a3166f183ca797947b2c27df77bae2f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/reference_cases.py": "dcf68da45fdfe89f12d45b4c5e81402c30ac22a95c874cb4fd9b7ff571ee8b78",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/results.py": "73aed7f705ef00c8361962a5ef82a0ef38272aa2c09a201c059de90003d1e232",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/runtime.py": "9b7d6c22f930388e1172053600481754d82ca0c7200d539d871a8737c42f8d96",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/s3_reference_batch.py": "6f2470627079d1dd15e6727dcd4f872b575d6641d64192045c34d3e104fcabfb",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/s3_v2c_fast_assembly.py": "faebcb3f102c8cbe3f3fef2c1c026cb5d9b416a6e4de957c2eaf9da503e0c91d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/s3_v2d_fast_assembly.py": "a8bae3e526103eef6b6e413b2fa7678c7f35d1781633bf6a8dde6a2ef40887c7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/s4_validity.py": "d538b80d9597ad77af80639861d18ccbdc0a35e440e6007307a2e48eb0901bbc",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sections.py": "60f041f4cc9c3f66218511d141d7217b26e770ed67d105cb88833cf5f9f16a5c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sesam_fem/__init__.py": "b11a62f3c3de345a4896895829524a1d81ef13cc26913e8e9f380bd79ebedaef",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sesam_fem/__main__.py": "08a3feec4bad464aefee7bc051cdddfd29bd18c902aa221be5d1762b0098e0e3",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sesam_fem/diagnostics.py": "e6a80a1cc2dd19f7aea6fd97eb33fc67cb7f5747a556d9476d797d2bae3bddae",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sesam_fem/document.py": "4612bfeae3f801418fbfed9cefc476a7f788c43c9d4fe8a2b0f06be71c4349b1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sesam_fem/exporter.py": "ea07ada930d1d6c87cac2190d63e933fa7a63934208b0c6a61e1e69f84dcb384",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sesam_fem/importer.py": "c89d108fd1f1892cdd27df639849c10bf49d767f5d922b63eef70b592cbfbd6b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sesam_fem/records.py": "7939f0af0fbfd3bc9028ea48227b68fb5036dfc26103ce27ebe3a43e407b51b2",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sesam_fem/schema.py": "05d10a04c1b26a874a9e9cc61d1ae511eaabad99b09c68865c137f3d81d2c3eb",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sesam_fem/sif_importer.py": "0fa3da30da88d5cf24591b3edd54dfa328bb613b0b8a6fba2e2e293b1425e177",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/sesam_fem/validation.py": "8a560a715a713603edb7d5e0ea13d3a53f219a796b58cdff1dcc9e2debfaefdc",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/shell_benchmarks.py": "5b8c5528cd9e961a25ba4f61cb27380af1c52b838efce452c1f74dc53a695345",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/shell_formulations/director_field.py": "661667462d74c2eb9be0179fc1ea4744d1f3c9e73e4b99cd47955954d71936f2",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/shell_formulations/geometry_provenance.py": "ac249e3c702cc455f7f65b561cf493732bca88c58a380ddcae0e2351b9fb738b",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/shell_formulations/mitc4_plus_d_quality.py": "db7f95fb832911afc154159ee31d39c3971694d83c5f58b443d2db5e1334df33",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/shell_formulations/mitc4_plus_d_reference.py": "d736baaed3d32d5929664d406b91dd92e7ad91791750b863f1dc4d5ade49862f",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/shell_formulations/mitc4_plus_d_scalar.py": "7f18c6eeeb0c6b5b2b66fda8c63a724687bc9debce2be217f9055cbc95eee2b5",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/shell_formulations/protocol.py": "a90d6461b55256a56895b43eb9eb647336a247af9b449ed677e242ec67318280",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/shell_formulations/q4_common.py": "b645c772191af8f10a1d1074fb2a748c32d22d2f1e1d01b94d6462e81ea3b19c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/shell_formulations/s4_restricted_policy.py": "e182666421747efab4764cd89ce4be6f8fea639e598ef4b51f738fc2739cd861",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/shell_sections.py": "145eeee0014869bf60453e030f572682da4298d9c1e4bd9264bdc6a5a09fd5db",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/test_cases.py": "ba446fb16bced39c35f08b198d5d79b1a24d23e9153946c4a6c75f641fbf3b83",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/threading_policy.py": "a6a3e576c4140c230eb2997a1f0170c707429e00a38bcbf6b6d7bcf02e88a4c1",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/validation.py": "c2ed406b77f11490f59634711620b0dc79d5b96b595fce9aa0ee31d0d9d48bc7",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/vectorized_beam.py": "233d42ff158c6ef9daf230bf4927a1d256786c935e76526522428c4e74c619fd",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/vectorized_generalized_shell.py": "636f3d951882ed37a1074af59f35af2e5a40acd8e167cef211c44bf78511f55d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/vectorized_hill48.py": "8000b771b6c7011e96cdc81d71f00f98f06fb75c3c0211f2b0fb1bb3cc67e41c",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/vectorized_nonlinear.py": "3d20e36dc63d3e8bd772aa21b5eb87bf3c270bf6481eeb6ba95aaac23847b038",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/vectorized_stiffness.py": "0fd79df40a57e15baa26a027584af04c3872bf8bc0b2337380a8faaf75871f3d",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/tests/test_ge_beam3_native_vibration.py": "62519303cff18d14e1aef6aac76ec4f2bf16141216ef4c8dea4ab391b889a556",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/tests/test_ge_beam3_native_midpoint.py": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\native_forced_response_reference.py": "4d9a62656122a4e2a2e54e27775d39fc6473538e8f1b8e965a6f8e8b3bb0cf01",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_forced_response.py": "568dc23aaf88c590154d33cbc560e00bbac725abb784c2b38bcdf4520d79ea9e",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_finite_spin_step.py": "fd6236f0a26f0cada2ecd335d67d1343cdba97e90af4015b9b2f3bae5480d6f0",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py": "9586af4379a566f8bfa51c6454bba173dd110966d09a7d7f36ba967aedcd8498",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_analysis.py": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_dynamic_restart.py": "3f26dc51cd9e87998c2b89610b92dce297ff4d1ed0194a5fd464e7954b7fa4af",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\ge_beam3_native_dynamics.py": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+  },
+  "historical_source_overrides": {
+    "_ge_beam3_native_midpoint.py": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a"
+  },
+  "historical": {
+    "raw": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.raw.json",
+      "sha256": "705b627848aef2df9ce17cdce2dda937ea1ae29d1031a855f48ff567181248f7"
+    },
+    "inputs": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_v2_20260930.inputs.json",
+      "sha256": "07b3f12777cd21ed5932fe14f51ec3254ba1796f6627d3ce8373be4c2996926d"
+    },
+    "fixture": {
+      "path": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py",
+      "sha256": "426f673d40e82a4d554c3964dc9b51b4ca5638f180f3f985e4ba85c974ebc05d"
+    }
+  },
+  "criteria": {
+    "spatial_spin_rad_per_s": [
+      35.0,
+      -25.0,
+      20.0
+    ],
+    "dt_seconds": 0.0005,
+    "maximum_accepted_steps": 1,
+    "internal_time_limit_seconds": 120.0,
+    "explicit_stage_solve_tolerance": 1e-12,
+    "scientific_stage_gate": 1e-11,
+    "endpoint_balance_gate": 1e-11,
+    "normalized_defect_limit": 1e-06,
+    "elastic_witness_limit": 1e-10,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "length_scale_m": 2.0,
+    "maximum_returned_stage_observations": 128
+  },
+  "proposal_sha256": "e91555fe4848a124501788fa9f10b601082599accd416131107c68c68c8b132d",
+  "pytest_args": [
+    "-q",
+    "-s",
+    "tests/test_ge_beam3_native_finite_spin_step.py::test_one_finite_spin_step_resolution_and_actual_balance",
+    "--junitxml=C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_step_v2_20261001.xml",
+    "--basetemp=C:\\ANYworkspaceWork\\native_finite_spin_step_v2_20261001-tmp"
+  ],
+  "limits": {
+    "threads": 1,
+    "internal_seconds": 120.0,
+    "memory_limit_bytes": 1073741824,
+    "maximum_accepted_steps": 1,
+    "supervisor_seconds": 180.0,
+    "no_checkpoint_segments": true
+  },
+  "basetemp_admission": {
+    "path": "C:\\ANYworkspaceWork\\native_finite_spin_step_v2_20261001-tmp",
+    "must_be_absent_before_execution": true
+  },
+  "purpose": "One step only, not finite-anglecoverage/trajectory/spatialaccuracy, rigidrotor, C7acceptance or release",
+  "entry_sha256": "5e78500955231e4ac42aa05e09e9464ec054b9f62d26ced3d3a3efbb84a4ed1f",
+  "base_input_sha256": "83cee9ac5da6621bb2c61f5033ba3491cca6b9c17a097df5b3a60c8907731c96",
+  "preparation": "Source-only verification/preparation. Execute once after independent corrected-source review; no checkpoint segments, retuning, or numerical preparation performed."
+}

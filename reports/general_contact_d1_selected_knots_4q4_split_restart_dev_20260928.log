@@ -1,0 +1,24 @@
+{
+  "candidate": "selected_q1_knots_4q4_two_s3_press_dev",
+  "source_faces": 4,
+  "target_faces": 2,
+  "selected_pressure_knot_columns": [
+    0,
+    1,
+    3,
+    4
+  ],
+  "total_downward_force_n": 0.1,
+  "steps_per_segment": 2,
+  "elapsed_seconds": 35.983295599988196,
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 2,
+  "profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+  "has_restart_checkpoint": true,
+  "terminal_checkpoint_replay_exact": true,
+  "half_path_steps": 1,
+  "split_path_restart_equal": true,
+  "changed_knot_restart_rejected": true,
+  "final_displacement_norm_m": 8.389173938861994e-05
+}

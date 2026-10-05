@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="4" time="19.820" timestamp="2026-09-30T19:35:30.844126+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_general_contact_multiple_projected_pairs" name="test_uniform_pressure_wrench_complete_both_body_tangent_and_pair_identity" time="2.839" /><testcase classname="tests.test_general_contact_multiple_projected_pairs" name="test_duplicate_features_and_aggregate_limits_fail_before_a_solve" time="0.002" /><testcase classname="tests.test_general_contact_multiple_projected_pairs" name="test_every_pair_keeps_its_dimensional_gap_gate" time="0.264" /><testcase classname="tests.test_general_contact_multiple_projected_pairs" name="test_existing_static_driver_press_open_recontact_and_authentic_restart" time="14.988"><failure message="assert [12, 0, 12] == [0, 12, 0, 12]&#10;  &#10;  At index 0 diff: 12 != 0&#10;  Right contains one more item: 12&#10;  Use -v to get more diff">tmp_path = WindowsPath('C:/Users/AudunArnesenNyhus/AppData/Local/Temp/pytest-of-AudunArnesenNyhus/pytest-453/test_existing_static_driver_pr0')
+
+    def test_existing_static_driver_press_open_recontact_and_authentic_restart(tmp_path):
+        model,definition,settings,program=build()
+        result=solve_static_nonlinear(model,contact=definition,contact_settings=settings,
+            contact_path_program=program,tolerance=1e-8,emit_restart_checkpoint=True)
+        assert result.status=="completed",result.failure_reason
+        history=result.info["force_displacement_history"]
+&gt;       assert [row["contact"]["active_pressure_dofs"] for row in history]==[0,12,0,12]
+E       assert [12, 0, 12] == [0, 12, 0, 12]
+E         
+E         At index 0 diff: 12 != 0
+E         Right contains one more item: 12
+E         Use -v to get more diff
+
+tests\test_general_contact_multiple_projected_pairs.py:128: AssertionError</failure></testcase></testsuite></testsuites>

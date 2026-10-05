@@ -1,0 +1,32 @@
+{
+  "status": "exact reviewed development source integration",
+  "managed_fixture_summary_sha256": "c950272c1e42f56f91f91b516401eba69b5ac5c84a904186abb48eea8e481ada",
+  "rows": [
+    {
+      "path": "src/anysolver/_ge_beam3_native_dynamic_restart.py",
+      "prechange_sha256": null,
+      "imported_sha256": "3f26dc51cd9e87998c2b89610b92dce297ff4d1ed0194a5fd464e7954b7fa4af"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_midpoint.py",
+      "prechange_sha256": "36da82603885f6f110adf40404331a5d519c7dccbe284dc67bb93ec44f75d1ac",
+      "imported_sha256": "f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a"
+    },
+    {
+      "path": "src/anysolver/_ge_beam3_native_dynamic_analysis.py",
+      "prechange_sha256": "79b173131e9cde52c07f3bb00721e6d07ebc5a68d8f92e0115a42649cb5d0914",
+      "imported_sha256": "13185a6c0d9ee0c09b08fdba05cfde5e33e7f06926b253abd7b88488d2d87215"
+    },
+    {
+      "path": "src/anysolver/ge_beam3_native_dynamics.py",
+      "prechange_sha256": "cec497e3bcee79d50d8a52cc6358dd3a8249ccdff315d95db808fc78e74cefa7",
+      "imported_sha256": "ddd77596e60629fe96d5920b6362ee60985510c6fbe40aeb4ee8ab0024504a20"
+    },
+    {
+      "path": "tests/test_ge_beam3_native_dynamic_restart.py",
+      "prechange_sha256": null,
+      "imported_sha256": "4760849a084fa98091c3f473ee0231d2cffbef27df3a6fbd7b9f1ffbd5821230"
+    }
+  ],
+  "cross_artifact_restart": "rejected unless wholepackage manifest matches; main/managed manifests differ"
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="12.959" timestamp="2026-10-01T00:46:13.715849+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_general_contact_deformable_beam_s3_static" name="test_complete_sparse_work_map_deforming_target_and_rejected_candidate" time="0.012" /><testcase classname="tests.test_general_contact_deformable_beam_s3_static" name="test_profile_admission_and_restart_settings_are_explicit" time="0.008" /><testcase classname="tests.test_general_contact_deformable_beam_s3_static" name="test_coupled_deforming_target_independent_contact_equilibrium_and_split_restart" time="12.299"><failure message="AssertionError: contact_gap_exceeded&#10;assert 'contact_gap_exceeded' == 'completed'&#10;  &#10;  - completed&#10;  + contact_gap_exceeded">def test_coupled_deforming_target_independent_contact_equilibrium_and_split_restart():
+        m,d,s=fixture();constraints(m)
+        load=LoadCase('press');load.add_nodal_load(2,forces=(0.,0.,-.001))
+        kwargs=dict(contact=d,contact_settings=s,kinematics='von_karman',num_steps=4,
+                    max_iterations=20,tolerance=1.e-10)
+        full=solve_static_nonlinear(m,load,**kwargs)
+&gt;       assert full.status=='completed',full.failure_reason
+E       AssertionError: contact_gap_exceeded
+E       assert 'contact_gap_exceeded' == 'completed'
+E         
+E         - completed
+E         + contact_gap_exceeded
+
+tests\test_general_contact_deformable_beam_s3_static.py:100: AssertionError</failure></testcase></testsuite></testsuites>

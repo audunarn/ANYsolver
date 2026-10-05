@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 20.53289240000595,
+  "peak_process_tree_memory_mb": 337.031168,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "scripts.general_contact_d1_cycle_tangent_discriminator",
+    "docs/d1_review_support/d1_two_body_pressure_work_guarded_20260929.json",
+    "--pressure-cone-preflight"
+  ],
+  "log": "docs\\d1_review_support\\d1_two_body_pressure_work_guarded_log_20260929.txt"
+}

@@ -1,0 +1,25 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+______ TestStaticIsolation.test_source_bindings_and_no_existing_routing _______
+
+self = <test_ge_beam3_g3c_so3_numerics.TestStaticIsolation object at 0x00000270290779D0>
+
+    def test_source_bindings_and_no_existing_routing(self):
+        contract = runner.environment.strict((ROOT/runner.CONTRACT).read_bytes().replace(b'\r\n', b'\n'))
+        runner.verify_sources(contract)
+        changes = runner.git('diff', '--name-status', '--no-renames', contract['base']['commit'])
+        for row in changes.splitlines():
+            status, path = row.split('\t')
+>           assert status == 'A', path
+E           AssertionError: .gitattributes
+E           assert 'M' == 'A'
+E             
+E             - A
+E             + M
+
+tests\test_ge_beam3_g3c_so3_numerics.py:83: AssertionError
+---------------------------- Captured stderr call -----------------------------
+warning: unable to access 'C:\Users\AudunArnesenNyhus/.config/git/ignore': Permission denied
+=========================== short test summary info ===========================
+FAILED tests/test_ge_beam3_g3c_so3_numerics.py::TestStaticIsolation::test_source_bindings_and_no_existing_routing
+1 failed in 1.51s

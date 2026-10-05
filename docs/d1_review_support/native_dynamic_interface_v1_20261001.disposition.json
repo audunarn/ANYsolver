@@ -1,0 +1,4 @@
+{
+  "reason": "Prospective review found facade provenance lacked model/settings guard; isolated V2 identity guard required. No mechanics ran.",
+  "status": "NOT_EXECUTED"
+}

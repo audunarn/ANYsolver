@@ -1,0 +1,81 @@
+{"seconds": 0.03240380000352161, "event": "solve_begin", "source_commit": "6efbe8fae32b74ba38fa0bf24e956e3d1ac24f9e", "probe_sha256": "bfeb42325c7a10776e1d0438206eb2d3367eb110dc23a39d19416ce21b4f2d73"}
+{"seconds": 23.94801130000269, "event": "step_begin", "step": 1}
+{"seconds": 23.948501200000464, "event": "structural_assembly_begin", "tangent": true}
+{"seconds": 26.78240590000496, "event": "structural_assembly_end"}
+{"seconds": 26.782480599998962, "event": "contact_linearize_begin", "tangent": true}
+{"seconds": 39.702533600000606, "event": "contact_linearize_end"}
+{"seconds": 39.70521860000008, "event": "factorize_begin", "tangent": null}
+{"seconds": 39.71876840000186, "event": "factorize_end"}
+{"seconds": 39.71881389999908, "event": "linear_solve_begin"}
+{"seconds": 39.71912480000174, "event": "linear_solve_end"}
+{"seconds": 39.72032530000433, "event": "factorize_begin", "tangent": null}
+{"seconds": 39.73829259999911, "event": "factorize_end"}
+{"seconds": 39.738334500005294, "event": "linear_solve_begin"}
+{"seconds": 39.738670400001865, "event": "linear_solve_end"}
+{"seconds": 39.739943000000494, "event": "factorize_begin", "tangent": null}
+{"seconds": 39.7580689000024, "event": "factorize_end"}
+{"seconds": 39.75810479999927, "event": "linear_solve_begin"}
+{"seconds": 39.75842130000092, "event": "linear_solve_end"}
+{"seconds": 42.536100199999055, "event": "structural_assembly_begin", "tangent": false}
+{"seconds": 43.760923699999694, "event": "structural_assembly_end"}
+{"seconds": 43.760968300004606, "event": "contact_linearize_begin", "tangent": false}
+{"seconds": 56.76119309999922, "event": "contact_linearize_end"}
+{"seconds": 56.7614195999995, "event": "structural_assembly_begin", "tangent": true}
+{"seconds": 58.0104072000031, "event": "structural_assembly_end"}
+{"seconds": 58.01045310000336, "event": "contact_linearize_begin", "tangent": true}
+{"seconds": 70.62341960000049, "event": "contact_linearize_end"}
+{"seconds": 70.63293490000069, "event": "factorize_begin", "tangent": null}
+{"seconds": 70.65620450000279, "event": "factorize_end"}
+{"seconds": 70.65626060000068, "event": "linear_solve_begin"}
+{"seconds": 70.65673520000564, "event": "linear_solve_end"}
+{"seconds": 73.42566850000003, "event": "structural_assembly_begin", "tangent": false}
+{"seconds": 74.69409150000138, "event": "structural_assembly_end"}
+{"seconds": 74.69413460000214, "event": "contact_linearize_begin", "tangent": false}
+{"seconds": 90.51621880000312, "event": "contact_linearize_end"}
+{"seconds": 90.51984030000312, "event": "structural_assembly_begin", "tangent": true}
+{"seconds": 91.75492050000321, "event": "structural_assembly_end"}
+{"seconds": 91.75495870000304, "event": "contact_linearize_begin", "tangent": true}
+{"seconds": 104.88140560000465, "event": "contact_linearize_end"}
+{"seconds": 105.76037120000547, "event": "step_end", "step": 1, "completed": true, "iterations": 3, "evaluations": 5, "backtracks": 0, "reason": null}
+{"seconds": 115.37928240000474, "event": "step_begin", "step": 2}
+{"seconds": 115.37976190000336, "event": "structural_assembly_begin", "tangent": true}
+{"seconds": 116.6207310000027, "event": "structural_assembly_end"}
+{"seconds": 116.6207790000044, "event": "contact_linearize_begin", "tangent": true}
+{"seconds": 129.5341186000005, "event": "contact_linearize_end"}
+{"seconds": 129.5407067999986, "event": "factorize_begin", "tangent": null}
+{"seconds": 129.5644586999988, "event": "factorize_end"}
+{"seconds": 129.56449760000396, "event": "linear_solve_begin"}
+{"seconds": 129.56487220000417, "event": "linear_solve_end"}
+{"seconds": 129.56732639999973, "event": "factorize_begin", "tangent": null}
+{"seconds": 129.5998544000031, "event": "factorize_end"}
+{"seconds": 129.59990950000065, "event": "linear_solve_begin"}
+{"seconds": 129.60034850000375, "event": "linear_solve_end"}
+{"seconds": 129.60292000000481, "event": "factorize_begin", "tangent": null}
+{"seconds": 129.63355800000136, "event": "factorize_end"}
+{"seconds": 129.63360220000322, "event": "linear_solve_begin"}
+{"seconds": 129.63411479999922, "event": "linear_solve_end"}
+{"seconds": 129.63645740000356, "event": "factorize_begin", "tangent": null}
+{"seconds": 129.66815860000497, "event": "factorize_end"}
+{"seconds": 129.66821080000227, "event": "linear_solve_begin"}
+{"seconds": 129.66864570000325, "event": "linear_solve_end"}
+{"seconds": 129.67094270000234, "event": "factorize_begin", "tangent": null}
+{"seconds": 129.70043940000323, "event": "factorize_end"}
+{"seconds": 129.7004958000034, "event": "linear_solve_begin"}
+{"seconds": 129.70124719999876, "event": "linear_solve_end"}
+{"seconds": 132.39071010000043, "event": "structural_assembly_begin", "tangent": false}
+{"seconds": 133.64476339999965, "event": "structural_assembly_end"}
+{"seconds": 133.64480520000507, "event": "contact_linearize_begin", "tangent": false}
+{"seconds": 146.6721733000013, "event": "contact_linearize_end"}
+{"seconds": 146.67234060000192, "event": "structural_assembly_begin", "tangent": true}
+{"seconds": 147.9151084000041, "event": "structural_assembly_end"}
+{"seconds": 147.915155900002, "event": "contact_linearize_begin", "tangent": true}
+{"seconds": 160.89900409999973, "event": "contact_linearize_end"}
+{"seconds": 160.91899150000245, "event": "factorize_begin", "tangent": null}
+{"seconds": 160.97283750000497, "event": "factorize_end"}
+{"seconds": 160.97288950000075, "event": "linear_solve_begin"}
+{"seconds": 160.97350000000006, "event": "linear_solve_end"}
+{"seconds": 163.79804030000378, "event": "structural_assembly_begin", "tangent": false}
+{"seconds": 165.08047960000113, "event": "structural_assembly_end"}
+{"seconds": 165.08052500000485, "event": "contact_linearize_begin", "tangent": false}
+{"seconds": 178.5086289000028, "event": "contact_linearize_end"}
+{"seconds": 178.51196190000337, "event": "structural_assembly_begin", "tangent": true}

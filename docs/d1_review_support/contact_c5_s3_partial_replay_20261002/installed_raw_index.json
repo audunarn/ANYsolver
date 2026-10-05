@@ -1,0 +1,166 @@
+{
+  "source_commit": "ec5bc0ad9a4d7b8aa461f9b993185764417c7fa4",
+  "scope": "13 installed development checks; full five-phase example execution reused only from source tests, not claimed installed",
+  "wheel_sha256": "db4bc12dfb5194cc1ebf4b4f49787217d73a87efff0ce3ba17dc11905e330735",
+  "artifact": "C:\\ANYworkspaceWork\\contact-friction-partial-replay-package-20261002",
+  "passed_checks": 13,
+  "files": [
+    {
+      "path": "package/build-execution.json",
+      "sha256": "e751daa6c43b90c1a6745ff41dcde028a2f23b11ddb50e32414e11729358b1df",
+      "bytes": 234
+    },
+    {
+      "path": "package/build.log",
+      "sha256": "ca58eaaeefc13569d18ce1c047bcdfd2b94c8fb28c934afa9af80bff457d66a9",
+      "bytes": 956
+    },
+    {
+      "path": "package/build_bounded.py",
+      "sha256": "3db1f0f92cf11e128a27b4df60293eb65acb17b78af858e3e74dc273b61ead6f",
+      "bytes": 1657
+    },
+    {
+      "path": "package/example-execution.json",
+      "sha256": "696e243e16519c179df18c2210933292c508763c3a906cb0c5d8d3422ecbafb3",
+      "bytes": 299
+    },
+    {
+      "path": "package/example-identity.json",
+      "sha256": "69a2ad511c6367741564b13abc4a3e652c4a8e017374e41676c0652d93816fce",
+      "bytes": 2447
+    },
+    {
+      "path": "package/example-imports.json",
+      "sha256": "53a3284667d9df741ef3d78daf84887629e7ba2f6e5a0a9931368a3465d56a22",
+      "bytes": 38620
+    },
+    {
+      "path": "package/example-inventory.xml",
+      "sha256": "f382787c0101a84f3b6fc924afc86f34a189e254db594127fcbc3975e5832fde",
+      "bytes": 396
+    },
+    {
+      "path": "package/example.log",
+      "sha256": "706bea3d65d2f6976f554de87f9efae2ffee4807adeadd03c692b31529a8cbf0",
+      "bytes": 164
+    },
+    {
+      "path": "package/focused-execution.json",
+      "sha256": "3ee1f9ba03da25a0b5f08abd16023428f2d525042687211daf51b315d99fed97",
+      "bytes": 1395
+    },
+    {
+      "path": "package/focused-identity.json",
+      "sha256": "1f56ef5137d9d96db59e1b439a734a56db9fd9a2f50e9b3a987319d6b93dfb56",
+      "bytes": 2186
+    },
+    {
+      "path": "package/focused-imports.json",
+      "sha256": "136a7937cf30a0ab2c29674620eda5ed9ad0d10270226ae02b17c672f34a9ae6",
+      "bytes": 36631
+    },
+    {
+      "path": "package/focused-inventory.xml",
+      "sha256": "9011f92493416ca637cabc6184e1191e94b360e692a5bf97885459603bcddb69",
+      "bytes": 2165
+    },
+    {
+      "path": "package/focused.log",
+      "sha256": "efcdde7963b23ba068e66a111e42641705a933fbb66f88b1530f884a513a756e",
+      "bytes": 165
+    },
+    {
+      "path": "package/prepare.py",
+      "sha256": "915f2e66bdf0aed56ed96af1771527af7e8b17bf7cbc9b20066a672612433ac5",
+      "bytes": 2875
+    },
+    {
+      "path": "package/pytest.ini",
+      "sha256": "8965aec51f7cb92c81e1f02b48a33098d11711dcbad04cee732968562aa59653",
+      "bytes": 41
+    },
+    {
+      "path": "package/run_bounded.py",
+      "sha256": "72fdf7c5112cadee72ddcaf6f8f3ec53643ecd80c9e39734521e92b14889ac42",
+      "bytes": 1681
+    },
+    {
+      "path": "package/run_installed.py",
+      "sha256": "72ad7abbe62544ace26b2e496aae830d65ffeb882f1e58e4f670d14eaffcc9c7",
+      "bytes": 2996
+    },
+    {
+      "path": "package/source-identity.json",
+      "sha256": "698280ad657b71308e089026cb7761b85091dad32c1c8369056e7e99d74d1bc5",
+      "bytes": 178
+    },
+    {
+      "path": "package/source-manifest.json",
+      "sha256": "2308aa4d244dadde6fef37d531e1640d68462aa1bf0ad0de5dacb327c7204fff",
+      "bytes": 54419
+    },
+    {
+      "path": "package/fixtures/friction_example.py",
+      "sha256": "b9349cd2b1f3ba92bf557f5fa80d28d67e66c3d224dff47902ad38c969928874",
+      "bytes": 4420
+    },
+    {
+      "path": "package/fixtures/test_friction_example.py",
+      "sha256": "de1a962cc44f64c83ecb268fc193e04e4ecfcec1e0debe6827e31ea54c4965bb",
+      "bytes": 359
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_friction_activation.py",
+      "sha256": "5a60072cc40ee16dee91da2d4d65435fef9cd0f9b4721ae25a5959ae8ff1140d",
+      "bytes": 7841
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_friction_integration.py",
+      "sha256": "2a6f647f4244c2c39fe4b577b0b5fb7715c831e5a1de476a11b62f7384038c1c",
+      "bytes": 7277
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_friction_pair.py",
+      "sha256": "27023a3a0dff81b1f59a05c231fdcc7b477ec838bb1f1ecc0200ca7f09269bf8",
+      "bytes": 11296
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_friction_replay.py",
+      "sha256": "54a69e836b6efb1e98d7710a4a7df94d590c5a3dbf06605b1f38dc0370aa9a6d",
+      "bytes": 74302
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_friction_static.py",
+      "sha256": "42e86ce7df0f2db118914b410e26d0a26ef5ace89359193bdf1052db9cbc57c3",
+      "bytes": 8648
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_partial_friction_example.py",
+      "sha256": "f723c3659ef9d51f7d1c372f9b0bd9981937df258b8ea0aa578797d2f25d02c8",
+      "bytes": 1162
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_sliding_friction.py",
+      "sha256": "bea8501d969fc8c11cae1a143edd968d471097753186a4c6cd1c4fab09406b50",
+      "bytes": 20601
+    },
+    {
+      "path": "package/examples/general_contact_s3_partial_friction.py",
+      "sha256": "82a7442c6be10e0807d15a8fc0199ac3ce7cb5e63e1601402f6cf1c912a4f8fc",
+      "bytes": 4480
+    },
+    {
+      "path": "package/wheels/anysolver-0.4.7-py3-none-any.whl",
+      "sha256": "db4bc12dfb5194cc1ebf4b4f49787217d73a87efff0ce3ba17dc11905e330735",
+      "bytes": 2445064
+    },
+    {
+      "path": "package/example-states/test_partial_example_press_cli0/press.json",
+      "sha256": "8ae7be576bebea27e6513c794dfbe13f5530140bb6c9fdd0a4c68a05c01c138f",
+      "bytes": 38362
+    }
+  ],
+  "archive_sha256": "4fd76a3aad26a16056e46ffd9f268ad39e08a09c7969347239a155cc5c9718e3",
+  "readback": "PASS"
+}

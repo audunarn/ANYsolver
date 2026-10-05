@@ -1,0 +1,58 @@
+diff --git a/src/anysolver/general_contact/overlap.py b/src/anysolver/general_contact/overlap.py
+index 3d0c7077..72cf0704 100644
+--- a/src/anysolver/general_contact/overlap.py
++++ b/src/anysolver/general_contact/overlap.py
+@@ -68,6 +68,53 @@ class ProjectedOverlap:
+ 
+         xy = _to_frame(face.corners, self.origin, self.tangent, self.binormal)
+ 
++        if len(xy) == 4:
++            # The bilinear map is fixed for every quadrature point of this
++            # candidate. Avoid rebuilding its shapes and a tiny dense solve
++            # at each Newton step; retain the original guarded inverse for
++            # nearly singular projected Jacobians.
++            x0, x1, x2, x3 = xy
++            center = 0.25 * (x0+x1+x2+x3)
++            along_r = 0.25 * (-x0+x1+x2-x3)
++            along_s = 0.25 * (-x0-x1+x2+x3)
++            twist = 0.25 * (x0-x1+x2-x3)
++            scale = float(np.max(np.linalg.norm(xy-xy[0], axis=1)))
++            tolerance = 1.0e-12 * scale
++
++            def values(point: np.ndarray) -> np.ndarray:
++                location = np.asarray(point, dtype=float)
++                relative = location-self.origin
++                target_x = float(relative @ self.tangent)
++                target_y = float(relative @ self.binormal)
++                r = s = 0.0
++                for _ in range(30):
++                    residual_x = (center[0]+along_r[0]*r+along_s[0]*s
++                                  +twist[0]*r*s-target_x)
++                    residual_y = (center[1]+along_r[1]*r+along_s[1]*s
++                                  +twist[1]*r*s-target_y)
++                    if np.hypot(residual_x, residual_y) <= tolerance:
++                        break
++                    dr_x = along_r[0]+twist[0]*s
++                    dr_y = along_r[1]+twist[1]*s
++                    ds_x = along_s[0]+twist[0]*r
++                    ds_y = along_s[1]+twist[1]*r
++                    determinant = dr_x*ds_y-ds_x*dr_y
++                    if abs(determinant) <= 1.0e-12*scale*scale:
++                        target = np.array((target_x, target_y))
++                        return self._shape_from_xy(xy, target)[0]
++                    r -= (residual_x*ds_y-ds_x*residual_y)/determinant
++                    s -= (dr_x*residual_y-residual_x*dr_y)/determinant
++                else:
++                    raise ValueError("Q4 projected point did not invert")
++                shape = _q4_shape(np.array((r, s)))[0]
++                if (not np.all(np.isfinite(shape))
++                        or float(np.min(shape)) < -1.0e-8
++                        or abs(float(np.sum(shape))-1.0) > 1.0e-9):
++                    raise ValueError("projected point is outside the physical contact face")
++                return shape
++
++            return values
++
+         def values(point: np.ndarray) -> np.ndarray:
+             target = _to_frame(np.asarray(point, dtype=float).reshape(1, 3),
+                                self.origin, self.tangent, self.binormal)[0]

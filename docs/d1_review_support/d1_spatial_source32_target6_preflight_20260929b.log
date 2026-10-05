@@ -1,0 +1,1 @@
+{"status": "allocation_inventory_fits", "dimensions": {"full_dofs": 6828, "uncontrolled_free_coordinates": 5570, "control_rank": 2, "structural_free_coordinates": 5568, "source_pressure_nodes": 1089}, "predicted_peak_bytes": 3098453360, "production_energy_evaluation_cap": 14144, "physical_load_sum_n": -0.03999999999999994}

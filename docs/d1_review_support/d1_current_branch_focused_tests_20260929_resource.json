@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 36.10971900000004,
+  "peak_process_tree_memory_mb": 376.774656,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_monolithic_work.py",
+    "tests/test_general_contact_monolithic_restart.py::test_monolithic_zero_swept_fraction_rolls_back_accepted_prefix"
+  ],
+  "log": "docs\\d1_review_support\\d1_current_branch_focused_tests_20260929.log"
+}

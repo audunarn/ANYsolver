@@ -1,0 +1,19 @@
+{
+  "status": "time_limit_exceeded",
+  "exit_code": 15,
+  "elapsed_seconds": 180.07915170000342,
+  "peak_process_tree_memory_mb": 520.921088,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_q4_s3_pair_resolution.py",
+    "tests/test_general_contact_q4_s3_overlap_derivatives.py",
+    "tests/test_general_contact_monolithic_work.py",
+    "tests/test_general_contact_d1_interior_profile.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_anchored_reaction_suite_20260929.log"
+}

@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.6033120999927633,
+  "peak_process_tree_memory_mb": 212.43904,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_monolithic_cycle_restart.py::test_physical_skin_path_matches_linear_swept_certificate_assumption"
+  ],
+  "log": "docs\\d1_review_support\\d1_lowload_fixture_compatibility_20260929.log"
+}

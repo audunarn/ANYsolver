@@ -1,0 +1,26 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 78.78530560000218,
+  "peak_process_tree_memory_mb": 263.077888,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d1_installed_entry.py",
+    "--expected-root",
+    "C:/ANYworkspaceWork/general-contact-final-87c53913/target",
+    "--identity-output",
+    "docs/d1_review_support/d1_saved_report_touch_probe_v1_20260930.import.json",
+    "--script",
+    "docs/d1_review_support/d1_saved_report_touch_probe_dev.py",
+    "--",
+    "--saved",
+    "docs/d1_review_support/d1_radial_nonmatching_swept_search_coupled_v8_20260930.json",
+    "--patched-source",
+    "src/anysolver/general_contact/s3_patch_augmented.py",
+    "--output",
+    "docs/d1_review_support/d1_saved_report_touch_probe_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_saved_report_touch_probe_v1_20260930.log"
+}

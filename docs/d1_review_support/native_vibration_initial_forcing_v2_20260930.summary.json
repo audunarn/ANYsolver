@@ -1,0 +1,134 @@
+{
+  "status": "PASS",
+  "time_steps": 0,
+  "elapsed_seconds": 2.270140199980233,
+  "last_stage": "complete",
+  "quadratic_comparison": {
+    "full_modal_remainder15": [
+      3.891275717571462e-09,
+      -2.9180531801170634e-09,
+      7.371317879138201e-10,
+      2.816992763385918e-10,
+      -3.1204319444651546e-09,
+      6.272194867400682e-10,
+      6.033505907005968e-09,
+      -3.1371580669439e-09,
+      3.658225025858686e-10,
+      -0.00019535487174495773,
+      2.3796022248712682e-05,
+      -3.5386134254274333e-06,
+      7.09229935657057e-05,
+      -1.798053521352837e-05,
+      -3.45340894518474e-05
+    ],
+    "half_modal_remainder15": [
+      9.972092885505708e-10,
+      -6.426651769555227e-10,
+      1.7940546582910905e-10,
+      -2.447145604708036e-12,
+      -8.854428738675594e-10,
+      2.962550653734636e-11,
+      -2.0616479829437235e-09,
+      -7.777241922821304e-10,
+      9.247413021487525e-11,
+      -4.883829652484852e-05,
+      5.948563347221566e-06,
+      -8.846008452530896e-07,
+      1.77291130747169e-05,
+      -4.495080417409487e-06,
+      -8.633603490272908e-06
+    ],
+    "difference_from_quarter15": [
+      2.4390359157705253e-11,
+      8.684811807374313e-11,
+      -4.877481149345986e-12,
+      -7.287196468935598e-11,
+      -1.0533488775127079e-10,
+      -1.271793651476707e-10,
+      -3.5700244596952154e-09,
+      6.565324453844558e-12,
+      1.0185045684080947e-12,
+      4.214113909106645e-10,
+      -4.4221495660434214e-10,
+      5.251110376874261e-11,
+      -1.6353167095246748e-09,
+      5.338597260558253e-11,
+      -8.11273110576529e-11
+    ],
+    "mode9_relative_error": 8.628633361359549e-06,
+    "full_vector_relative_error": 7.482029716217099e-05,
+    "resolved_full_mode9": true,
+    "resolved_half_mode9": true,
+    "resolved_full_vector": true,
+    "initial_force_sign_matches_saved_constant_fit": true,
+    "temporal_steps": 0,
+    "stage_directional_check": "Not needed if measured initial forcing resolves the principal hypothesis"
+  },
+  "states": {
+    "full": {
+      "amplitude": 0.0001,
+      "physical_balance_norm": 6.849759122736359e-20,
+      "algebraic_balance_norm": 5.306996327007122e-17,
+      "total_energy_j": 2.7316580422224402e-08,
+      "kinetic_energy_j": 0.0,
+      "elastic_witness_j": 1.4560848307009076e-24,
+      "rank_mass_checks": {
+        "algebraic_condition": 46900.210922768456,
+        "algebraic_rank": 27,
+        "algebraic_sigma_max": 1.617335709720504,
+        "algebraic_sigma_min": 3.448461484285868e-05,
+        "physical_mass_condition": 17.43361491515599,
+        "physical_mass_max_eigenvalue": 2.1685760978365676,
+        "physical_mass_min_eigenvalue": 0.12439050124660644
+      },
+      "mode9_remainder": -0.00019535487174495773,
+      "mode9_balance_floor": 1.439471802425281e-11,
+      "mode9_arithmetic_floor": 4.460766064368944e-11,
+      "mode9_floor": 5.900237866794226e-11
+    },
+    "half": {
+      "amplitude": 5e-05,
+      "physical_balance_norm": 6.164757435214106e-20,
+      "algebraic_balance_norm": 4.521515844644365e-17,
+      "total_energy_j": 6.829109604710208e-09,
+      "kinetic_energy_j": 0.0,
+      "elastic_witness_j": 2.003421383254577e-24,
+      "rank_mass_checks": {
+        "algebraic_condition": 46900.21092269867,
+        "algebraic_rank": 27,
+        "algebraic_sigma_max": 1.6173357097183811,
+        "algebraic_sigma_min": 3.448461484286473e-05,
+        "physical_mass_condition": 17.43361578120862,
+        "physical_mass_max_eigenvalue": 2.168576099895252,
+        "physical_mass_min_eigenvalue": 0.12439049518532588
+      },
+      "mode9_remainder": -4.883829652484852e-05,
+      "mode9_balance_floor": 1.4394776362058517e-11,
+      "mode9_arithmetic_floor": 2.2303823472837644e-11,
+      "mode9_floor": 3.669859983489617e-11
+    }
+  },
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 6.110545000003185,
+    "peak_process_tree_memory_mb": 208.781312,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_initial_forcing_v2_20260930.entry.source.py"
+    ],
+    "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_initial_forcing_v2_20260930.log"
+  },
+  "hashes": {
+    "raw.json": "76b8f5e58b2b0a5af49cd901bd971ea0a3e35ce202e4fe0a899652f79bacefa7",
+    "execution.json": "1a28ed53d2d59700e802f45819110fa3851fa76c6f7b052dbe01592b9bc6e1ac",
+    "log": "60f024abd96b32b7d84e61e437562c900fbd6e88bd3fbff4c3c1779ea1c55df5",
+    "resource.json": "6db7d35030a47fc82a5bdfc94f6866727582cea96f2e8cccfe55ce8eb6856cad",
+    "xml": "af0a12a6d4822541ee8d92f0f9690bf07288f4f10b1269bcf1a4c5ad96da3c05",
+    "inputs.json": "92b60e2d12ccdc6344fc4772639da851197eb488bf32250aea0adbe6bee6209d",
+    "test.source.py": "279696cad1faad048bb590af0c2dff876a2cd5d78e7bbf5fb4afc39bd4dcde41",
+    "entry.source.py": "5667380f6787b815e6bdd450c94a3391dbea1406038e9635400cad449ba24e30"
+  }
+}

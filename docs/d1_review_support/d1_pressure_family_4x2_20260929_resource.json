@@ -1,0 +1,32 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 22.691856699995697,
+  "peak_process_tree_memory_mb": 318.918656,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_press_dev.py",
+    "docs/d1_review_support/d1_pressure_family_4x2_20260929.json",
+    "--force-n",
+    "0.04",
+    "--reference-slope",
+    "0.0001",
+    "--source-support",
+    "perimeter",
+    "--source-columns",
+    "4",
+    "--source-rows",
+    "2",
+    "--target-columns",
+    "1",
+    "--target-rows",
+    "1",
+    "--load-shape",
+    "interior_distributed",
+    "--slide-body",
+    "target"
+  ],
+  "log": "docs\\d1_review_support\\d1_pressure_family_4x2_20260929.log"
+}

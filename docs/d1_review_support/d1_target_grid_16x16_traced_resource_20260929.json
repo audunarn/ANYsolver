@@ -1,0 +1,24 @@
+{
+  "status": "time_limit_exceeded",
+  "exit_code": 15,
+  "elapsed_seconds": 180.02530799999658,
+  "peak_process_tree_memory_mb": 470.372352,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "docs/d1_review_support/d1_two_body_refined_target_route.py",
+    "--source-columns",
+    "4",
+    "--target-x-cells",
+    "16",
+    "--target-y-cells",
+    "16",
+    "--record-pressure",
+    "--trace-progress",
+    "docs/d1_review_support/d1_target_grid_16x16_traced_progress_20260929.jsonl",
+    "--output",
+    "docs/d1_review_support/d1_target_grid_16x16_traced_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_target_grid_16x16_traced_log_20260929.txt"
+}

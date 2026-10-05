@@ -1,0 +1,1 @@
+{"status": "diverged", "failure_reason": "contact_semismooth_backtracking_failed", "accepted_steps": 0, "elapsed_seconds": 13.306176000005507}

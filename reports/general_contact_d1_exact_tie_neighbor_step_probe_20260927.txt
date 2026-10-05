@@ -1,0 +1,4 @@
+step 3e-08 FAIL shared-edge tie smooth neighbor unresolved (offset_m=-3e-08): differentiated S3 overlap disagrees with mortar geometry (pair=2, support_error_m2=2.08719776532e-25, weighted_gap_error_m3=7.54055740007e
+step 6e-08 FAIL shared-edge tie smooth neighbor unresolved (offset_m=-6e-08): differentiated S3 overlap disagrees with mortar geometry (pair=2, support_error_m2=4.17193822892e-25, weighted_gap_error_m3=1.50715573728e
+step 1.2e-07 FAIL shared-edge tie smooth neighbor unresolved (offset_m=-1.2e-07): differentiated S3 overlap disagrees with mortar geometry (pair=2, support_error_m2=5.18218298091e-27, weighted_gap_error_m3=1.8722983790
+step 2.4e-07 FAIL shared-edge tie smooth neighbor unresolved (offset_m=-2.4e-07): differentiated S3 overlap disagrees with mortar geometry (pair=2, support_error_m2=1.00012605979e-23, weighted_gap_error_m3=3.6134547987

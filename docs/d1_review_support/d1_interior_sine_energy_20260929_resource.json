@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 0.13234530000772793,
+  "peak_process_tree_memory_mb": 24.600576,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_sine_energy_dev.py",
+    "docs/d1_review_support/d1_interior_work_spectrum_20260929.json",
+    "docs/d1_review_support/d1_interior_sine_energy_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_interior_sine_energy_20260929.log"
+}

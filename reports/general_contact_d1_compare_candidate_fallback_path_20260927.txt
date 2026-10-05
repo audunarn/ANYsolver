@@ -1,0 +1,100 @@
+....FFF                                                                  [100%]
+================================== FAILURES ===================================
+___ test_original_control_rejects_inaccurate_second_proposal_and_rolls_back ___
+
+projected_only = None
+
+    def test_original_control_rejects_inaccurate_second_proposal_and_rolls_back(projected_only):
+        model, definition, settings, program = _case()
+        settings = replace(
+            settings, general_s3_differentiation="jet2_q4_s3_dev",
+            q4_source_support_gradient_tolerance=1e-5,
+            q4_source_support_hessian_tolerance=1e-5,
+            q4_source_weighted_gap_gradient_tolerance=1e-5,
+            q4_source_weighted_gap_hessian_tolerance=1e-5,
+            maximum_q4_source_integration_triangles=128,
+            augmentation_schur_maximum_attempts=2,
+        )
+        result = solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=12,
+            emit_restart_checkpoint=True,
+        )
+        assert result.status == "diverged"
+        assert result.failure_reason == "maximum_augmentations_reached"
+        failure = result.info["contact_failure"]
+        assert failure["schur_attempts"] == 2
+>       assert failure["schur_applied"] == failure["schur_rejected"] == 1
+E       assert 2 == 0
+
+tests\test_general_contact_supported_schur_path.py:194: AssertionError
+__________ test_relinearized_original_control_completes_and_restarts __________
+
+projected_only = None
+
+    def test_relinearized_original_control_completes_and_restarts(projected_only):
+        model, definition, settings, program = _case()
+        settings = replace(
+            settings, general_s3_differentiation="jet2_q4_s3_dev",
+            q4_source_support_gradient_tolerance=1e-5,
+            q4_source_support_hessian_tolerance=1e-5,
+            q4_source_weighted_gap_gradient_tolerance=1e-5,
+            q4_source_weighted_gap_hessian_tolerance=1e-5,
+            maximum_q4_source_integration_triangles=128,
+            augmentation_schur_maximum_attempts=2,
+            augmentation_schur_maximum_relinearizations=1,
+        )
+        result = solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=12,
+            emit_restart_checkpoint=True,
+        )
+>       assert result.status == "completed"
+E       AssertionError: assert 'diverged' == 'completed'
+E         
+E         - completed
+E         + diverged
+
+tests\test_general_contact_supported_schur_path.py:224: AssertionError
+_____ test_unexpected_relinearization_failure_restores_algorithmic_origin _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001BD21602140>
+projected_only = None
+
+    def test_unexpected_relinearization_failure_restores_algorithmic_origin(monkeypatch, projected_only):
+        model, definition, settings, program = _case()
+        settings = replace(
+            settings, general_s3_differentiation="jet2_q4_s3_dev",
+            q4_source_support_gradient_tolerance=1e-5,
+            q4_source_support_hessian_tolerance=1e-5,
+            q4_source_weighted_gap_gradient_tolerance=1e-5,
+            q4_source_weighted_gap_hessian_tolerance=1e-5,
+            maximum_q4_source_integration_triangles=128,
+            augmentation_schur_maximum_attempts=2,
+            augmentation_schur_maximum_relinearizations=1,
+        )
+        original = static_path.refined_patch_supported_schur
+        calls = 0
+    
+        def fail_third_call(*args, **kwargs):
+            nonlocal calls
+            calls += 1
+            if calls == 3:
+                raise RuntimeError("injected relinearization failure")
+            return original(*args, **kwargs)
+    
+        monkeypatch.setattr(static_path, "refined_patch_supported_schur", fail_third_call)
+        result = solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=12,
+            emit_restart_checkpoint=True,
+        )
+>       assert calls == 3
+E       assert 2 == 3
+
+tests\test_general_contact_supported_schur_path.py:279: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_supported_schur_path.py::test_original_control_rejects_inaccurate_second_proposal_and_rolls_back
+FAILED tests/test_general_contact_supported_schur_path.py::test_relinearized_original_control_completes_and_restarts
+FAILED tests/test_general_contact_supported_schur_path.py::test_unexpected_relinearization_failure_restores_algorithmic_origin
+3 failed, 4 passed in 145.48s (0:02:25)

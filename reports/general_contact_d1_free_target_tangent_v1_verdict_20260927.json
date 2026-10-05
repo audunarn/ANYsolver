@@ -1,0 +1,77 @@
+{
+  "registration": "docs\\reference_cases\\general_contact_d1_free_target_tangent_v1.json",
+  "registration_sha256": "dbd19a856c2f2dd038556f37696c61c3f537b7fcc879ff825083afa50d89ecc0",
+  "raw_report": "reports\\general_contact_d1_free_target_tangent_v1_formal_20260927.json",
+  "raw_sha256": "10c9f9ae8b887223927fe9646e7be21d47ee07a2592d77fc13cfc46a0b2965bc",
+  "checks": {
+    "saved_pose_sha256": true,
+    "status": false,
+    "free_dofs": true,
+    "force_rows": true,
+    "moment_rows": true,
+    "target_weights": true,
+    "source_weight": true,
+    "active_modes": true,
+    "pair_branches": true,
+    "pressure_replay": true,
+    "pose_constraints": true,
+    "steps": true,
+    "smooth_branch": true,
+    "wall_limit": true,
+    "coupled_force_action": true,
+    "coupled_force_error": true,
+    "coupled_moment_action": true,
+    "coupled_moment_error": true,
+    "mapped_contact_force_action": true,
+    "mapped_contact_force_error": true,
+    "mapped_contact_moment_action": true,
+    "mapped_contact_moment_error": false
+  },
+  "runs": [
+    {
+      "step_m": 1e-06,
+      "branch_checks": {
+        "pressure_active": true,
+        "reference_support": true,
+        "overlap_signature": true,
+        "pair_derivatives": true
+      },
+      "smooth_branch": true,
+      "relative_coupled_error": 1.4867482272848816e-06,
+      "relative_mapped_contact_error": 3.8518385580602477e-07,
+      "coupled_action_n_per_m": 23802.013068977496,
+      "mapped_contact_action_n_per_m": 684.800133025847,
+      "coupled_force_error": 1.4867482239235666e-06,
+      "coupled_force_action": 23802.012998453956,
+      "mapped_contact_force_error": 3.851476389090116e-07,
+      "mapped_contact_force_action": 684.8001330257729,
+      "coupled_moment_error": 1.9741011701621235e-06,
+      "coupled_moment_action": 1.832267492289742,
+      "mapped_contact_moment_error": 0.011351617375771913,
+      "mapped_contact_moment_action": 0.0003186401797084568
+    },
+    {
+      "step_m": 5e-07,
+      "branch_checks": {
+        "pressure_active": true,
+        "reference_support": true,
+        "overlap_signature": true,
+        "pair_derivatives": true
+      },
+      "smooth_branch": true,
+      "relative_coupled_error": 7.433838811714089e-07,
+      "relative_mapped_contact_error": 1.925919002508556e-07,
+      "coupled_action_n_per_m": 23802.013057027667,
+      "mapped_contact_action_n_per_m": 684.800133025847,
+      "coupled_force_error": 7.433838794908273e-07,
+      "coupled_force_action": 23802.01298650426,
+      "mapped_contact_force_error": 1.925737917993986e-07,
+      "mapped_contact_force_action": 684.8001330257729,
+      "coupled_moment_error": 9.870515265852985e-07,
+      "coupled_moment_action": 1.8322657621461746,
+      "mapped_contact_moment_error": 0.00567580874275535,
+      "mapped_contact_moment_action": 0.0003186401797084568
+    }
+  ],
+  "status": "fail"
+}

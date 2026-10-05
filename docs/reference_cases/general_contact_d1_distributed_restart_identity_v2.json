@@ -1,0 +1,56 @@
+{
+  "case_id": "general_contact_d1_distributed_restart_identity_v2",
+  "status": "registered_pending_execution",
+  "claim_boundary": "Fresh-model version-2 split restart for the planar elastic 24-Q4 distributed-force Q4/S3 cycle, including exact pressure-feature identity at every step; general C1, complete tangent and application release remain open",
+  "policy": "ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1/2026-09-24.2",
+  "source_commit": "29b0ce61d439c70ed68c1499dd1beef4f0b139df",
+  "source_tree": "eb603e9827bb08c729149291b610efc1ee94bc64",
+  "source_blobs": {
+    "src/anysolver/general_contact/s3_patch_augmented.py": "1688a6294622fc96a23c780e1a2e6b917ad94bf0",
+    "src/anysolver/general_contact/q4_s3_overlap_derivatives.py": "7a7497f7a2f4e2fe864c6b2bd8a0b2573a6253ec",
+    "src/anysolver/general_contact/q4_source_overlap.py": "7376c671c3b0429f48a590169f06ea32f2e9b371",
+    "src/anysolver/general_contact/linearized_pivot.py": "34455a884b1c2ca038e04b517f9182c63ff16be1",
+    "src/anysolver/general_contact/static_path.py": "9afc7363f33dc4f8490f6a04a0b3babc8a4a111c",
+    "src/anysolver/general_contact/core.py": "19523f5e8b72ee60cceaa0700497c91c292f0a2c",
+    "src/anysolver/general_contact/supported_schur.py": "f20929a4e2f8421aec4b7b228c3cfe637961b68b",
+    "scripts/general_contact_d1_mixed_mesh_jet2_schur_press.py": "e70097501c4b9407b777601aa4a68459237fd2c4",
+    "scripts/general_contact_d1_mixed_mesh_restart_probe_v2.py": "401dcc2be343987013655cee1536615ada4b0f66"
+  },
+  "reference_report": "reports/general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+  "reference_sha256": "f4a3942b2bf3c0112f4774b6593464a80c8da479582b586eff7962570f935815",
+  "prior_restart_report_sha256": "7e565d6870586a3f337ba68c2852561d8fc302754c4cb7194977e99985e93d35",
+  "environment": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "anysolver_source_root": "C:/ANYworkspaceWork/ANYsolver-general-contact/src",
+    "anymaterial_source_root": "C:/Github/ANYmaterial/src"
+  },
+  "runner": {
+    "script": "scripts/general_contact_d1_mixed_mesh_restart_probe_v2.py",
+    "output": "reports/general_contact_d1_distributed_restart_identity_v2_formal_20260927.json",
+    "maximum_wall_seconds": 1200,
+    "single_execution": true,
+    "split_after_step": 6,
+    "fresh_model_resume": true
+  },
+  "criteria": {
+    "prefix_steps": 6,
+    "resumed_steps": 12,
+    "checkpoint_schema": "ANYSOLVER_STATIC_RESTART_CONTRACT_V2",
+    "checkpoint_version": 2,
+    "all_active_counts_match": true,
+    "all_pressure_node_ids_match": true,
+    "all_active_pressure_node_ids_match": true,
+    "all_active_membership_consistent": true,
+    "all_gap_and_pressure_gates_met": true,
+    "maximum_force_difference_n": 1e-9,
+    "maximum_gap_difference_m": 1e-10,
+    "maximum_multiplier_change_difference_pa": 1e-8,
+    "maximum_pressure_vector_difference_pa": 1e-8,
+    "final_displacement_difference_m": 1e-10,
+    "final_pressure_difference_pa": 1e-8,
+    "force_wrench_imbalance_n": 3e-7,
+    "moment_wrench_imbalance_nm": 3e-7
+  }
+}

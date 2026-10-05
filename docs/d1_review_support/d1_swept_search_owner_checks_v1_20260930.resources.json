@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 12.361420200002613,
+  "peak_process_tree_memory_mb": 221.847552,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_swept_search_owner.py",
+    "tests/test_general_contact_overlap_local_swept_roundoff.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_swept_search_owner_checks_v1_20260930.log"
+}

@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.0895866000064416,
+  "peak_process_tree_memory_mb": 212.692992,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_d1_overlap_gap_bound_dev.py::test_linear_sweep_bound_covers_independent_planar_overlap_samples"
+  ],
+  "log": "docs\\d1_review_support\\d1_overlap_path_symmetry_20260929.log"
+}

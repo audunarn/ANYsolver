@@ -1,0 +1,30 @@
+{
+  "method": "full-reference Q1 normal-gradient jump across shared Q4 edges",
+  "status": "algebraic screen only; no physical law or coupled result",
+  "matrix_minimum_eigenvalue": -2.481082787698497e-16,
+  "matrix_maximum_eigenvalue": 5.128521810108813,
+  "preserved_pressure_residual_norms": {
+    "constant": 6.693065852540755e-16,
+    "x": 1.0322872847368884e-15,
+    "y": 8.053900950903363e-16,
+    "xy": 7.221785298249066e-16
+  },
+  "two_hat_rows": [
+    {
+      "theta": 0.1,
+      "jump_norm_squared_m2": 1.5645882491256107
+    },
+    {
+      "theta": 0.05,
+      "jump_norm_squared_m2": 1.5627889103620793
+    },
+    {
+      "theta": 0.025,
+      "jump_norm_squared_m2": 1.5623884196851374
+    },
+    {
+      "theta": 0.0125,
+      "jump_norm_squared_m2": 1.562288526570461
+    }
+  ]
+}

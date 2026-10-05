@@ -1,0 +1,29 @@
+{
+  "status": "captured",
+  "solver_status": "stopped_at_limit",
+  "failure_reason": "maximum_augmentations_reached",
+  "accepted_steps": 1,
+  "schur_calls": 1,
+  "fraction": 1.0,
+  "active_indices": [
+    20,
+    44,
+    45
+  ],
+  "predicted_active_indices": [
+    20,
+    45
+  ],
+  "actual_active_indices": [
+    20,
+    45
+  ],
+  "overlap_signature_matches": true,
+  "maximum_gap_response_error_m": 5.754289736508152e-08,
+  "base_clip_signature_available": true,
+  "actual_clip_signature_available": true,
+  "clip_signature_matches": true,
+  "predicted_projected_residual_pa": 2.4999999955513148e-11,
+  "actual_projected_residual_pa": 0.0004345434261290842,
+  "elapsed_seconds": 114.45903989998624
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="1.473" timestamp="2026-09-30T18:02:41.014366+02:00" hostname="WORK_STABEIST1"><testcase classname="" name="tests.test_ge_beam3_centered_finite_inertia" file="tests/test_ge_beam3_centered_finite_inertia.py" time="0.000"><error message="collection failure">tests\test_ge_beam3_centered_finite_inertia.py:6: in &lt;module&gt;
+    import anysolver
+src\anysolver\__init__.py:147: in &lt;module&gt;
+    from . import b3_ge
+src\anysolver\b3_ge.py:14: in &lt;module&gt;
+    from . import ge_beam3_native as _native
+src\anysolver\ge_beam3_native.py:13: in &lt;module&gt;
+    from ._ge_beam3_native_definition import NativeBeamDefinition as BeamDefinition
+src\anysolver\_ge_beam3_native_definition.py:17: in &lt;module&gt;
+    from ._ge_beam3_native_fibre_static_element import NativeFibreStaticElement
+src\anysolver\_ge_beam3_native_fibre_static_element.py:13: in &lt;module&gt;
+    from ._ge_beam3_retained_fibre import RetainedFibreOperator
+src\anysolver\_ge_beam3_retained_fibre.py:19: in &lt;module&gt;
+    from ._native_reference_modal import _owned
+src\anysolver\_native_reference_modal.py:14: in &lt;module&gt;
+    from .assembly import build_constraint_transformation
+src\anysolver\assembly.py:53: in &lt;module&gt;
+    from .recovery import ResourceConfig
+src\anysolver\recovery.py:25: in &lt;module&gt;
+    from .recovery_s4 import recover_isotropic_s4
+src\anysolver\recovery_s4.py:16: in &lt;module&gt;
+    from .vectorized_stiffness import (
+src\anysolver\vectorized_stiffness.py:15: in &lt;module&gt;
+    @njit(cache=True)
+     ^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\numba\core\decorators.py:227: in wrapper
+    disp.enable_caching()
+C:\Python\Python314\Lib\site-packages\numba\core\dispatcher.py:811: in enable_caching
+    self._cache = FunctionCache(self.py_func)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\numba\core\caching.py:687: in __init__
+    self._impl = self._impl_class(py_func)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\site-packages\numba\core\caching.py:423: in __init__
+    raise RuntimeError("cannot cache function %r: no locator available "
+E   RuntimeError: cannot cache function '_cross3': no locator available for file 'C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\vectorized_stiffness.py'</error></testcase></testsuite></testsuites>

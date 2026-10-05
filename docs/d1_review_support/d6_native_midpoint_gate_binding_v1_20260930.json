@@ -1,0 +1,92 @@
+{
+  "status": "local_development_PASS",
+  "accepted": false,
+  "released": false,
+  "counts": {
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "old_checks_deselected": 3,
+  "time_steps": 0,
+  "checks": [
+    {
+      "owner": "legacy_clamp",
+      "mutation_controls": [
+        {
+          "field": "scale",
+          "rejected_before_initial_mechanics": true,
+          "actual_gate_unchanged": true,
+          "issuance_unchanged": true,
+          "identity_payload_unchanged": true
+        },
+        {
+          "field": "length",
+          "rejected_before_initial_mechanics": true,
+          "actual_gate_unchanged": true,
+          "issuance_unchanged": true,
+          "identity_payload_unchanged": true
+        }
+      ],
+      "time_steps": 0,
+      "numerical_norm": 138.0543371285379,
+      "numerical_correction": 0.2705668581832858,
+      "default_identity_preserved": true
+    },
+    {
+      "owner": "dynamic_elastic",
+      "mutation_controls": [
+        {
+          "field": "scale",
+          "rejected_before_initial_mechanics": true,
+          "actual_gate_unchanged": true,
+          "issuance_unchanged": true,
+          "identity_payload_unchanged": true
+        },
+        {
+          "field": "length",
+          "rejected_before_initial_mechanics": true,
+          "actual_gate_unchanged": true,
+          "issuance_unchanged": true,
+          "identity_payload_unchanged": true
+        }
+      ],
+      "time_steps": 0,
+      "numerical_norm": 138.1747082500991,
+      "numerical_correction": 0.2705668581832858,
+      "default_identity_preserved": false
+    }
+  ],
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 4.098055000009481,
+    "peak_process_tree_memory_mb": 204.398592,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_native_midpoint_gate_binding_v1_20260930.entry.source.py"
+    ],
+    "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_midpoint_gate_binding_v1_20260930.log"
+  },
+  "all_frozen_files_unchanged_postrun": true,
+  "final_owned_source_sha256": {
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py": "8c3cd98ea263e43fa238964acd39f0d6502700467986fabceb707e560a72d032",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py": "211665de1e62fc10dd69f30e9bb29c519bf90029647e202b2d3093b84aa73519",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py": "191409ab8e452b808c8d501a82a84c69b978d083daa7e4c67146669ec986392f"
+  },
+  "evidence_sha256": {
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_midpoint_gate_binding_v1_20260930.inputs.json": "1edb4e719a473670629af840ed062838b0d292f744e994c65d8ef7b685b51958",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_midpoint_gate_binding_v1_20260930.entry.source.py": "44175727dab5d7154218dc52414e53e6d19a414c5f1473b79010cfdf6910d5df",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_midpoint_gate_binding_v1_20260930.midpoint.source.py": "211665de1e62fc10dd69f30e9bb29c519bf90029647e202b2d3093b84aa73519",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_midpoint_gate_binding_v1_20260930.dynamic.source.py": "8c3cd98ea263e43fa238964acd39f0d6502700467986fabceb707e560a72d032",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_midpoint_gate_binding_v1_20260930.test.source.py": "191409ab8e452b808c8d501a82a84c69b978d083daa7e4c67146669ec986392f",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_midpoint_gate_binding_v1_20260930.log": "d92dabba30943f1a22f22c225f4ded7103c00c5ba4b5e95119376bd84707d761",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_midpoint_gate_binding_v1_20260930.xml": "b95fb60f05440b94d2b3d1a860f2314e140ba8cd689138de66dae17d2bb72131",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_midpoint_gate_binding_v1_20260930.resource.json": "a86e5f55b44e954a1cf2904463594edd7e033ed04f571c9c13106ef41cedc1a3"
+  },
+  "impact": "Acceptance inputs now read guarded selected-owner values and reject changed aliases; legacy identity payload unchanged, source numerical formulas/factors at frozen values unchanged; no temporal replay",
+  "retained_prior_temporal_evidence": "d6_native_free_temporal_v1_20260930.*"
+}

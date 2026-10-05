@@ -1,0 +1,120 @@
+{
+  "source_sha": "12ae5bbcd6f79ccc6c4a04d68aa1dc7915ffbc8b",
+  "source_files": 523,
+  "imported_modules": 227,
+  "source_installed_errors": [],
+  "extra_installed_files": [],
+  "outcomes": {
+    "passed": 19
+  },
+  "runs": {
+    "installed_curved_s3_local": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 48.98040240001865,
+        "peak_bytes": 192237568
+      },
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "runtime_errors": [],
+      "import_errors": [],
+      "outcomes": {
+        "passed": 14
+      }
+    },
+    "installed_curved_s3_active": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 102.5791316999821,
+        "peak_bytes": 179793920
+      },
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "runtime_errors": [],
+      "import_errors": [],
+      "outcomes": {
+        "passed": 1
+      }
+    },
+    "installed_curved_s3_recontact": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 112.44039020000491,
+        "peak_bytes": 181764096
+      },
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "runtime_errors": [],
+      "import_errors": [],
+      "outcomes": {
+        "passed": 1
+      }
+    },
+    "installed_curved_s3_exception": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 61.27285229996778,
+        "peak_bytes": 180523008
+      },
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "runtime_errors": [],
+      "import_errors": [],
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "installed_curved_s3_cancel": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 60.870135299977846,
+        "peak_bytes": 179892224
+      },
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "runtime_errors": [],
+      "import_errors": [],
+      "outcomes": {
+        "passed": 1
+      }
+    }
+  },
+  "wheel_sha256": "ded36dc7c512e51f4c8277178656eefad7323745c33adf5806a8cfbdfeee4057",
+  "frozen_fixture_sha256": {
+    "general_contact_native_curved_s3_v2_active.checkpoint": "cb6a4292a98936f6d0879f67c86e10cd5ce42f7edfb4710ee72b2accd151c097",
+    "general_contact_native_curved_s3_v2_open.checkpoint": "c5f199ef86abe05a42a89920d07679e0cadaa545c3fd0f32b8211154d5448b58"
+  },
+  "excluded_nonpass": "installed_curved_s3_open: combined batch exhausted 120s; not counted as passed",
+  "example_sha256": "261d05efbc3c13ef45885984f40ac7cd53cc008aedcf9856cd372fb66f6eb364",
+  "scope": "Installed development verification; no independent engineering acceptance or release",
+  "raw_directory": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate11",
+  "algorithm": "CURVED_SHARED_GAUSS8_16_V7_COMPLETE_MOVING_NORMAL_WORK_V2",
+  "profile": "NATIVE_B3_GE_CURVED_MATERIAL_PATCHES_S3_STATIC_DEV_V1",
+  "restart": "Actual active/open/recontact stages; no uninterrupted cycle runtime claim",
+  "review": "Same-family supporting scrutiny; different-family engineering acceptance remains open"
+}

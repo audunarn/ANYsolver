@@ -1,0 +1,56 @@
+{
+  "status": "development_preflight_only",
+  "seed": "docs\\d1_review_support\\d1_coupled_contrast_12q4_32s3_20260929.json",
+  "records": [
+    {
+      "source_cells": 4,
+      "maximum_source_displacement_m": 0.0006085305783476563,
+      "maximum_target_displacement_m": 0.00040521418477959466,
+      "path_controls": [
+        8.183949611846904e-25,
+        -8.713043824841346e-25
+      ],
+      "status": "geometry_preflight_complete",
+      "interior_modes": 9,
+      "interior_negative_gap_nodes": 0,
+      "minimum_interior_gap_m": 1.995176266121012e-05,
+      "minimum_interior_support_m2": 0.06250000031249994,
+      "reference_overlap_area_m2": 1.0000000049999993,
+      "current_overlap_area_m2": 1.0000324128033182,
+      "source_nodes": 25,
+      "target_start": 26,
+      "elapsed_seconds": 6.175771399997757
+    },
+    {
+      "source_cells": 8,
+      "maximum_source_displacement_m": 0.0006085305783476563,
+      "maximum_target_displacement_m": 0.00040521418477959466,
+      "path_controls": [
+        8.183949611846904e-25,
+        -8.713043824841346e-25
+      ],
+      "status": "preflight_failed",
+      "error": "UnsupportedQ4S3Branch: pair=461, overlap_area_m2=0.00890519698446, reference_overlap_area_m2=0.00890499399664, integration_triangles=16: Q1 projected inversion did not converge",
+      "elapsed_seconds": 13.697469600010663
+    },
+    {
+      "source_cells": 12,
+      "maximum_source_displacement_m": 0.0006085305783476563,
+      "maximum_target_displacement_m": 0.00040521418477959466,
+      "path_controls": [
+        8.183949611846904e-25,
+        -8.713043824841346e-25
+      ],
+      "status": "geometry_preflight_complete",
+      "interior_modes": 121,
+      "interior_negative_gap_nodes": 2,
+      "minimum_interior_gap_m": -7.178924072524141e-08,
+      "minimum_interior_support_m2": 0.006944444479166653,
+      "reference_overlap_area_m2": 1.0000000049999986,
+      "current_overlap_area_m2": 1.0000334850153383,
+      "source_nodes": 169,
+      "target_start": 170,
+      "elapsed_seconds": 34.998235499995644
+    }
+  ]
+}

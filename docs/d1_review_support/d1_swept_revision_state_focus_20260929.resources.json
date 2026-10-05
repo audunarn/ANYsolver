@@ -1,0 +1,18 @@
+{
+  "status": "time_limit_exceeded",
+  "exit_code": 15,
+  "elapsed_seconds": 180.06482690000848,
+  "peak_process_tree_memory_mb": 517.115904,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_interior_profile.py",
+    "-q",
+    "-k",
+    "guarded_active_press_restarts or cancel_after_step or contact_exception"
+  ],
+  "log": "docs\\d1_review_support\\d1_swept_revision_state_focus_20260929.log"
+}

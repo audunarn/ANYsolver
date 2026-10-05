@@ -1,0 +1,28 @@
+[
+  {
+    "step_m": 1.2e-07,
+    "error": "UnsupportedQ4S3Branch: tiny seam wedge exceeds area or independent support budget"
+  },
+  {
+    "step_m": 6e-08,
+    "relative_error": 4.6581687022993503e-07,
+    "max_abs_error_n_per_m": 4.030701375098977e-09,
+    "force_action_norm_n_per_m": 0.014976956713238935
+  },
+  {
+    "step_m": 3e-08,
+    "relative_error": 1.1147790547615425e-06,
+    "max_abs_error_n_per_m": 9.438235139267636e-09,
+    "force_action_norm_n_per_m": 0.014976956713239183
+  },
+  {
+    "step_m": 1.5e-08,
+    "relative_error": 2.10219074476667e-06,
+    "max_abs_error_n_per_m": 2.5309976279738744e-08,
+    "force_action_norm_n_per_m": 0.01497695671323938
+  },
+  {
+    "step_m": 7.5e-09,
+    "error": "UnsupportedQ4S3Branch: tiny seam wedge has no resolved clipping-branch margin"
+  }
+]

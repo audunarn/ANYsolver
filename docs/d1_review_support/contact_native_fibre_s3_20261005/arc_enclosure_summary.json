@@ -1,0 +1,35 @@
+{
+  "disposition": "NONPASS coupled enforcement; installed local/replay controls tested",
+  "source_parent": "00c4d0de",
+  "raw_directory": "C:\\ANYworkspaceWork\\contact_native_fibre_s3_20261005\\candidate05",
+  "coupled_resource": {
+    "status": "completed",
+    "returncode": 1,
+    "elapsed_s": 47.18462159996852,
+    "peak_bytes": 181383168
+  },
+  "coupled_status": "failed",
+  "coupled_failure": "RuntimeError: native/S3 line-search/gap limit: iteration=7, rejected={'geometry': 9, 'gap': 0, 'swept': 0, 'merit': 0}, last=curved axial front bracket work uncertainty exceeds integration budget",
+  "candidates": 37,
+  "completed": 0,
+  "last_error_bounds": [
+    5.064043227284537e-23,
+    1.098921364855751e-15,
+    1.569735966327785e-06
+  ],
+  "installed_resource": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 17.014157199999318,
+    "peak_bytes": 188420096
+  },
+  "installed_checks": 10,
+  "installed_imports": 221,
+  "import_errors": [],
+  "production_file_parity": 525,
+  "wheel_sha256": "f67f64ceab7a6f5c0046238cee5c34e45ad8d6052798774e459a30bb71dd2fbc",
+  "changed_source_hashes": {
+    "src/anysolver/general_contact/native_curved_plane_work.py": "92417bc717daf67e566346d5da1b9a31639cec3ac950e102d3f59a1586c36b18",
+    "src/anysolver/general_contact/native_curved_s3_work.py": "9ac07967197b00afdcc1c53ede8474cf1514d50f62b45b9d9bfe1fcecdbde7fd"
+  }
+}

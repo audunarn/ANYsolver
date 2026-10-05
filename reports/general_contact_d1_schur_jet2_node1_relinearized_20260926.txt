@@ -1,0 +1,53 @@
+normal_control_node=1
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\tests\diagnose_general_contact_schur_jet2_path.py", line 46, in <module>
+    result = solve_static_nonlinear(
+        model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=12,
+        emit_restart_checkpoint=True,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7579, in solve_static_nonlinear
+    return solve_static_contact_path(
+        model, contact, contact_settings, contact_path_program,
+    ...<4 lines>...
+        cancellation_token=cancellation_token,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1061, in solve_static_contact_path
+    return _run_with_qualified_assembly_runtime_lease(
+        model, context="solve_static_contact_path", operation=operation,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3651, in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3626, in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1059, in operation
+    return _run_with_nonlinear_state_cleanup(run)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_state.py", line 271, in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 491, in run
+    internal, tangent, trial = _assemble_nonlinear_system(
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        model, u, committed_states, num_layers,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        kinematics="von_karman",
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 1556, in _assemble_nonlinear_system
+    contact_force, contact_tangent, _ = contact_manager.evaluate(
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~^
+        displacements, tangent=tangent
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py", line 470, in evaluate
+    work = (self.law.work(source, target, self.normal_multipliers, tangent=tangent)
+            ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 179, in work
+    return self._jet2_s3_work(current_source, current_target,
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              base, tangent=tangent)
+                              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 360, in _jet2_s3_work
+    raise ValueError("differentiated S3 patch disagrees with shared pressure support")
+ValueError: differentiated S3 patch disagrees with shared pressure support

@@ -1,0 +1,1 @@
+Initial development witness failed for installed and current source at JSON encoding: numpy.bool gap_tolerance_met is not JSON serializable. No witness output produced, no comparison occurred. Adapter now converts only numpy scalar item(). This was a reporting-helper failure, not a solver failure.

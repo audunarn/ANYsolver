@@ -1,0 +1,141 @@
+{
+  "profile": "fixed_affine_partial_pressure_central_q4_s3_dev",
+  "target_x_range_m": [
+    0.24,
+    0.77
+  ],
+  "target_y_range_m": [
+    0.21,
+    0.73
+  ],
+  "left_penetration_m": 2.5e-05,
+  "gap_slope": 9.433962264150943e-05,
+  "normal_stiffness_pa_per_m": 100000.0,
+  "reference_assumption": "continuous local-plane positive-part pressure over the fixed target rectangle; finite-slope projection differences remain",
+  "elapsed_seconds_total": 99.86914470000193,
+  "rows": [
+    {
+      "divisions": 16,
+      "rows": 4,
+      "elapsed_seconds": 6.248124499979895,
+      "reaction_z_n": 0.16976139758984216,
+      "source_force_n": [
+        -2.3963137875318617e-06,
+        -7.037590613055218e-20,
+        0.16976139758984216
+      ],
+      "target_force_n": [
+        2.396313787531903e-06,
+        5.3872618934353586e-20,
+        -0.1697613975898421
+      ],
+      "force_balance_norm_n": 5.551116920054093e-17,
+      "source_moment_about_origin_nm": [
+        0.07978785686722571,
+        -0.0560823341350751,
+        1.126267480139987e-06
+      ],
+      "target_moment_about_origin_nm": [
+        -0.0797878568672257,
+        0.056082334135075095,
+        -1.1262674801400227e-06
+      ],
+      "moment_balance_norm_nm": 1.5515879729101362e-17,
+      "continuous_local_plane_reference_z_n": 0.17225,
+      "relative_reference_error": 0.014447619217171732,
+      "minimum_gap_m": -2.4999999917175232e-05,
+      "sampled_overlap_gap_m": -2.4999999888751168e-05,
+      "gap_tolerance_met": true,
+      "active_pressure_dofs": 24,
+      "supported_pressure_modes": 44,
+      "scaled_pressure_rank": 44,
+      "overlapping_pairs": 42,
+      "integration_triangles": 328,
+      "area_integration_error_m2": 8.30227813580775e-17,
+      "weighted_gap_integration_error_m3": 7.470836798637523e-20,
+      "integration_force_error_indicator_n": 7.678393752032717e-15
+    },
+    {
+      "divisions": 32,
+      "rows": 4,
+      "elapsed_seconds": 11.771149099979084,
+      "reaction_z_n": 0.17177348497348763,
+      "source_force_n": [
+        -1.3194660634629605e-06,
+        2.9731611250934897e-20,
+        0.17177348497348763
+      ],
+      "target_force_n": [
+        1.3194660634629955e-06,
+        -2.6435038015969658e-20,
+        -0.17177348497348766
+      ],
+      "force_balance_norm_n": 2.775559780356949e-17,
+      "source_moment_about_origin_nm": [
+        0.08073353793753917,
+        -0.056518856805311164,
+        6.201490498276407e-07
+      ],
+      "target_moment_about_origin_nm": [
+        -0.08073353793753915,
+        0.05651885680531117,
+        -6.20149049827653e-07
+      ],
+      "moment_balance_norm_nm": 1.5515843318859002e-17,
+      "continuous_local_plane_reference_z_n": 0.17225,
+      "relative_reference_error": 0.0027664152482575243,
+      "minimum_gap_m": -2.4999999917175232e-05,
+      "sampled_overlap_gap_m": -2.4999999888749434e-05,
+      "gap_tolerance_met": true,
+      "active_pressure_dofs": 40,
+      "supported_pressure_modes": 76,
+      "scaled_pressure_rank": 76,
+      "overlapping_pairs": 74,
+      "integration_triangles": 584,
+      "area_integration_error_m2": 1.5722625566934323e-16,
+      "weighted_gap_integration_error_m3": 6.693093798616464e-20,
+      "integration_force_error_indicator_n": 7.086159437789822e-15
+    },
+    {
+      "divisions": 64,
+      "rows": 4,
+      "elapsed_seconds": 27.300507199950516,
+      "reaction_z_n": 0.17218069317077198,
+      "source_force_n": [
+        -7.166665749489602e-07,
+        3.5134108777277716e-20,
+        0.17218069317077198
+      ],
+      "target_force_n": [
+        7.166665749490285e-07,
+        -4.5378301224046545e-20,
+        -0.17218069317077195
+      ],
+      "force_balance_norm_n": 2.775566152156929e-17,
+      "source_moment_about_origin_nm": [
+        0.08092492579026281,
+        -0.05657246209296639,
+        3.368332902259888e-07
+      ],
+      "target_moment_about_origin_nm": [
+        -0.08092492579026277,
+        0.05657246209296636,
+        -3.3683329022601814e-07
+      ],
+      "moment_balance_norm_nm": 5.00370841263282e-17,
+      "continuous_local_plane_reference_z_n": 0.17225,
+      "relative_reference_error": 0.00040236185328308157,
+      "minimum_gap_m": -2.4999999917176967e-05,
+      "sampled_overlap_gap_m": -2.4999999888751168e-05,
+      "gap_tolerance_met": true,
+      "active_pressure_dofs": 72,
+      "supported_pressure_modes": 144,
+      "scaled_pressure_rank": 144,
+      "overlapping_pairs": 142,
+      "integration_triangles": 1128,
+      "area_integration_error_m2": 3.4687777959252833e-16,
+      "weighted_gap_integration_error_m3": 6.830768318053112e-20,
+      "integration_force_error_indicator_n": 7.697962767034432e-15
+    }
+  ]
+}

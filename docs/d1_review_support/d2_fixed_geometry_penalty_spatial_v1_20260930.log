@@ -1,0 +1,3 @@
+{"stage": "coarse_reference_consistency", "elapsed_seconds": 0.001104399998439476}
+{"stage": "spatial_reference", "elapsed_seconds": 0.0208936000126414}
+{"output": "docs\\d1_review_support\\d2_fixed_geometry_penalty_spatial_v1_20260930.json", "elapsed_seconds": 0.10576100001344457, "minimum_represented_gap_m": -6.271347906848346e-05, "target_normal_reaction_n": 0.3499983017490868, "active_pressure_source_nodes": [5, 15], "newton_updates": 4}

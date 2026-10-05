@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 8.034782700007781,
+  "peak_process_tree_memory_mb": 221.507584,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_interior_profile.py",
+    "tests/test_general_contact_overlap_local_swept_roundoff.py",
+    "-q",
+    "-k",
+    "swept_cutback or saved_deformable_press"
+  ],
+  "log": "docs\\d1_review_support\\d1_swept_parent_path_focus_20260929.log"
+}

@@ -1,0 +1,17 @@
+{
+  "columns": 2,
+  "rows": 2,
+  "edge_control": true,
+  "gap_certificate": "projected_matching",
+  "gap_tolerance_m": 5e-05,
+  "normal_approach_m": 0.01504,
+  "four_phase": false,
+  "slide_distance_m": 0.05,
+  "pressure_tolerance_pa": 1e-05,
+  "stop_after_slide": false,
+  "elapsed_seconds": 23.726134299999103,
+  "status": "diverged",
+  "failure_reason": "maximum_augmentations_reached",
+  "accepted_steps": 0,
+  "has_restart_checkpoint": false
+}

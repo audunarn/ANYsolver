@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 34.33092719999695,
+  "peak_process_tree_memory_mb": 233.590784,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "docs.d1_review_support.d1_saved_active_compliance",
+    "--enriched-source-x2",
+    "--output",
+    "docs/d1_review_support/d1_shell_enriched_x2_retry_20260929.json"
+  ],
+  "log": "reports\\d1_shell_enriched_x2_retry_log_dev_20260929.txt"
+}

@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "total_solver_committed_steps": 6,
+  "total_gate_passing_steps": 6,
+  "actual_dynamic_owner_count": 3,
+  "continuation_parity": {
+    "complete_state_work_accounting_candidate_equal": true,
+    "direct_sha256": "e9f519338bfd2f3831cca92256db3bf029e84d142fe37b4c7d2a3c24e36635c2",
+    "restored_sha256": "e9f519338bfd2f3831cca92256db3bf029e84d142fe37b4c7d2a3c24e36635c2"
+  },
+  "incompatible_restore": {
+    "observed_chart": "increment",
+    "semantic_work_calls": 0,
+    "current_is_none": true,
+    "issued_count": 0,
+    "candidate_count": 0,
+    "initial_checks": null,
+    "restore_checks": null,
+    "error": "native dynamic checkpoint header/body authority mismatch"
+  },
+  "elapsed_seconds": 32.74444950002362,
+  "peak_process_tree_memory_mb": 265.99424,
+  "checkpoint_sha256": "6fcc1f2c97f36a90746fa389c51b202606cc7fd4cf610da25a73fc5e6ae40a3a",
+  "scope": "Acceleration-chart official restart development control; no full-angle/C7 admission",
+  "bindings": {
+    "raw.json": "99f4371a3360f5370dd791461b0f30998823f02da23910ebe01938a435d71396",
+    "resources.json": "6c3e20867586c8290397d077ff9f9d6c0f673aaa696b665b68e21f385cc3160f",
+    "inputs.json": "aca655047b2ac19c2f6e98179393df62eafd44b867684c281e0b8528618b569e",
+    "test.source.py": "1de92ec5367150225d99cbd5d391703927a0a15d6f545e4360021e77e3a1096e"
+  }
+}

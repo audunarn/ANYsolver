@@ -1,0 +1,236 @@
+{
+  "scope": "D3 small-motion B2 partial-contact code verification and mesh/penalty sensitivity; not engineering acceptance",
+  "source_parent": "8d584718",
+  "source_files": {
+    "src/anysolver/general_contact/beam_chain_consistent.py": "9ea0b6596cd506d0280789782ec6b0332c4efb0f1242fc63c8c5a58e136055a6",
+    "tests/test_general_contact_beam_chain_consistent.py": "83fd30b56f985dd5cdad4ecaac5477f3002196004c653b847a6cf03665125552",
+    "tests/test_general_contact_beam_chain_refinement.py": "dc9674197ed23a06d581a68f8e6f8c6b309b201f25e8d606783e8ff62729f4c7"
+  },
+  "wheels": {
+    "anyfem-0.4.1-py3-none-any.whl": "55492e7af7783738fa82d08b440394f788d76156dcfef6e34d1f10cace879a21",
+    "anysolver-0.4.7-py3-none-any.whl": "480fff33802acdf8a335ecc6e3a678c0afbaf7bbba29f1be705278afe2199da9"
+  },
+  "runs": {
+    "partial_foundation_first": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 3.419354699959513,
+        "peak_bytes": 160182272
+      },
+      "outcomes": {
+        "failed": 1
+      }
+    },
+    "partial_foundation_merit": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 3.1328140000114217,
+        "peak_bytes": 197337088
+      },
+      "outcomes": {
+        "failed": 1
+      }
+    },
+    "exact_owner_discriminator": {
+      "resource": null,
+      "outcomes": null
+    },
+    "exact_owner_source": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 24.79462689999491,
+        "peak_bytes": 185217024
+      },
+      "outcomes": {
+        "passed": 20,
+        "failed": 1
+      }
+    },
+    "canonical_tie_guards": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 5.640513000020292,
+        "peak_bytes": 182231040
+      },
+      "outcomes": {
+        "passed": 10
+      }
+    },
+    "build_refinement": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 12.013587400026154,
+        "peak_bytes": 110374912
+      },
+      "outcomes": null
+    },
+    "install_refinement": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.8267057000193745,
+        "peak_bytes": 103149568
+      },
+      "outcomes": null
+    },
+    "installed_refinement": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 49.42655219999142,
+        "peak_bytes": 336564224
+      },
+      "outcomes": {
+        "passed": 44
+      }
+    },
+    "installed_independent_gap": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 12.4503679999616,
+        "peak_bytes": 165916672
+      },
+      "outcomes": {
+        "passed": 6
+      }
+    }
+  },
+  "reference_cases": [
+    {
+      "cells": 2,
+      "line_stiffness_n_per_m2": 1000.0,
+      "reaction_n": 9.847688971544825e-09,
+      "oracle_reaction_n": 9.847688979563019e-09,
+      "oracle_equilibrium_n": 3.3142754102440704e-23,
+      "displacement_relative_error": 5.2475687957102673e-11,
+      "reaction_relative_error": 8.142209020535642e-10,
+      "independent_minimum_gap_m": -5.422718862488352e-10,
+      "normalized_contact_force_balance": 1.6543612251060553e-16
+    },
+    {
+      "cells": 2,
+      "line_stiffness_n_per_m2": 10000.0,
+      "reaction_n": 9.747551316986682e-09,
+      "oracle_reaction_n": 9.747551271250732e-09,
+      "oracle_equilibrium_n": 3.312480847109389e-23,
+      "displacement_relative_error": 4.4158161663530383e-11,
+      "reaction_relative_error": 4.692045010359571e-09,
+      "independent_minimum_gap_m": -1.6589580273743132e-10,
+      "normalized_contact_force_balance": 1.6543612251060553e-16
+    },
+    {
+      "cells": 4,
+      "line_stiffness_n_per_m2": 1000.0,
+      "reaction_n": 9.847755183019934e-09,
+      "oracle_reaction_n": 9.847755193729688e-09,
+      "oracle_equilibrium_n": 4.661763189672212e-23,
+      "displacement_relative_error": 1.2369020034709706e-10,
+      "reaction_relative_error": 1.0875325066331624e-09,
+      "independent_minimum_gap_m": -5.755166360837949e-10,
+      "normalized_contact_force_balance": 1.6543612251060553e-16
+    },
+    {
+      "cells": 4,
+      "line_stiffness_n_per_m2": 10000.0,
+      "reaction_n": 9.7486079478295e-09,
+      "oracle_reaction_n": 9.748607978809255e-09,
+      "oracle_equilibrium_n": 3.730933599080605e-23,
+      "displacement_relative_error": 1.230889601035669e-10,
+      "reaction_relative_error": 3.1778645024495546e-09,
+      "independent_minimum_gap_m": -1.730535701717495e-10,
+      "normalized_contact_force_balance": 2.465190328815662e-24
+    },
+    {
+      "cells": 8,
+      "line_stiffness_n_per_m2": 1000.0,
+      "reaction_n": 9.845581739476829e-09,
+      "oracle_reaction_n": 9.84558173370441e-09,
+      "oracle_equilibrium_n": 2.195888003159198e-22,
+      "displacement_relative_error": 1.3678790509311065e-10,
+      "reaction_relative_error": 5.862953403327338e-10,
+      "independent_minimum_gap_m": -5.906020425321123e-10,
+      "normalized_contact_force_balance": 1.6543612251060553e-16
+    },
+    {
+      "cells": 8,
+      "line_stiffness_n_per_m2": 10000.0,
+      "reaction_n": 9.748600215921998e-09,
+      "oracle_reaction_n": 9.748600218906828e-09,
+      "oracle_equilibrium_n": 1.27670887772026e-22,
+      "displacement_relative_error": 1.164233367411495e-10,
+      "reaction_relative_error": 3.061803631469801e-10,
+      "independent_minimum_gap_m": -1.7559135439063067e-10,
+      "normalized_contact_force_balance": 1.232595164407831e-24
+    }
+  ],
+  "reference_error_target": 1e-06,
+  "normal_gap_budget_m": 1e-07,
+  "benchmark": {
+    "scope": "guided four-step displacement-controlled B2 two-chain development comparison; not universal speed qualification",
+    "times_s": {
+      "finite_difference": [
+        3.960646599996835,
+        3.9795174000319093,
+        4.776242599997204
+      ],
+      "consistent_dev": [
+        0.35012750001624227,
+        0.3898056000471115,
+        0.36813850002363324
+      ]
+    },
+    "median_s": {
+      "finite_difference": 3.9795174000319093,
+      "consistent_dev": 0.36813850002363324
+    },
+    "speed_ratio": 10.809837601273536,
+    "displacement_difference_norm_m": [
+      2.7365873456197676e-11,
+      2.7365873456197676e-11,
+      2.7365873456197676e-11
+    ]
+  },
+  "imported_modules_matching": 209,
+  "package_files_matching": 491,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "raw_records": 56,
+  "raw_sha256": "b28bd61fcc1879039532201e5cb402ce9b757b993a8d1e00188856fc6c328f58",
+  "restrictions": "fixed-target small-motion fixture; no finite-motion/continuum/profile/application acceptance; original scientific and resource limits retained"
+}

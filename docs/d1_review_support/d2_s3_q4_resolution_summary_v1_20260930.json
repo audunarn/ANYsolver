@@ -1,0 +1,162 @@
+{
+  "status": "implemented_and_locally_tested",
+  "accepted": false,
+  "released": false,
+  "scope": "new S3-source/Q4-target elastic small-motion projected finite-penalty profile; legitimate zero contact-free reporting predictor; value-only original-bilinear-Q4 resolution fallback",
+  "base_commit": "09f1c522f5d3d4fd3db28028986197fb18951d66",
+  "sources": [
+    {
+      "path": "src/anysolver/general_contact/core.py",
+      "sha256": "207a0fd46e27fc762cd6d992e55293a4ad17058d418d1bd011b9f101b2b0bfe2",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.core.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/static_path.py",
+      "sha256": "0efd511056dfc00c983cdd35ff50513fb295899c28e40c60349f6aa751c98c45",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.static_path.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_patch_static.py",
+      "sha256": "325ac0c75887f40f22d08ae4263fe30c7ed67f30bf5b59b3560db94ed62dcf8a",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_patch_static.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_patch_augmented.py",
+      "sha256": "9c0189fc6cc549c5bdb0d555f0cf9b933c467d05214ff3e29f26a306c8b1cb64",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_patch_augmented.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_q4_overlap_derivatives.py",
+      "sha256": "1f712469590e616873d513076d0428eebe2f6f418f573a8da37ee39bb05712df",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_q4_overlap_derivatives.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_q4_gap_resolution.py",
+      "sha256": "22f63a8d764513e2592b6968ccc4aa6e4d35d360875ec2bf7fcbf80da55c8d87",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_q4_gap_resolution.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_q4_swept.py",
+      "sha256": "35aa736fddafeef067bc341c84cdd0a91b62d339e98726efc08e225e506a0c76",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_q4_swept.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/s3_patch_mortar_energy.py",
+      "sha256": "ef8d44042beab99d1fe7b97adabbd1bbbefab8f5b96fef7395e6f5aff1cf6f09",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.s3_patch_mortar_energy.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/q4_target_overlap.py",
+      "sha256": "eaa2362bb534150c26eef85fc31e400405b62766bcf26c867948981df79f0a87",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.q4_target_overlap.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/triangle_mortar_energy.py",
+      "sha256": "4c8c8195873baf2caac3a6df710332bf6758d08c8f0e17a0412fa6b59cb90da3",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.triangle_mortar_energy.source.py"
+    },
+    {
+      "path": "src/anysolver/general_contact/q4_s3_overlap_derivatives.py",
+      "sha256": "5327364afa12236bff97fb16131e8feb9b5563eaf72ea2084c21c510e18e51eb",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.q4_s3_overlap_derivatives.source.py"
+    },
+    {
+      "path": "tests/test_general_contact_s3_q4_static_dev.py",
+      "sha256": "9dc7a2dc3383faeb54856b82db9d1e4a822af5049955dc2c5b100fb63e011430",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.test_general_contact_s3_q4_static_dev.source.py"
+    },
+    {
+      "path": "docs/d1_review_support/contact_development_check.py",
+      "sha256": "21af21515e9dcdf3372e49f9fe4d04d00ee9a2f50b19a459cd8cc08e45aaa80f",
+      "snapshot": "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.contact_development_check.source.py"
+    }
+  ],
+  "raw": {
+    "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.inputs.json": "ed4e428ed3d66ffa889fb3af3495433b635c77b34700914e2b86f464da6d9d37",
+    "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.resources.json": "7d4d080bed9aa85ace8717a9cf0d6ed5e8a36e2457daed110ecb5c0f00144872",
+    "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.log": "96e80139c2d1cbf3711de97beffba7598077c2571e638ff6e413816fd26cae90",
+    "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.xml": "b139ffb80b70280d374ab19ccf07384836cfd919309b76e81eadb9a25b6b375d",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v1_20260930.entry.source.py": "68bfd85e1b942884ad6748479491a2b95ea768ebf8ec0a260a7e5336e0a3406c",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v1_20260930.inputs.json": "f9161f9749f94dfb2da95317e6dbdfd1573620677a18581a7af93cc789aced0a",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v1_20260930.log": "ec379854e0fff696200642b2be0c26f391b52e33434911b72c1a51454c2d168c",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v1_20260930.module.source.py": "f8d1e9b5f63d835b4fc97c524b6b2ec287bd1f5c09d731275befb1340c105f92",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v1_20260930.raw.json": "31d8a2b0272ab9e037807b85f35d452196ae0f3359cea4d1daebc6ae2bc88ed5",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v1_20260930.resource.json": "2f4e0453cc3ed8cf29b624a82d6f06a591fe8e02c3fdd53d2c2e5f1090b4b176",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v1_20260930.test.source.py": "8215a461bd179ff6759c05dcc8731e204db72eb3b259527adca9fdfc722d395f",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v1_20260930.xml": "05ae5fbb0e8afe151f30af6c77091c62a8874e509c0d4c2afa9e7e661a6ee722",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v2_20260930.entry.source.py": "c8b9cf22a9049b1de93f66ab36115a1fccd8d477cf6997b6afac650e2cd643a9",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v2_20260930.inputs.json": "4ecc7b9bf2bfe5965c0e6dcb2010486feee7c1add08132216fc4646d26cf69ba",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v2_20260930.log": "2f842819474935c916f0c1cd7934c4f3b42aa3000a421a67f1381772319cf2e8",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v2_20260930.module.source.py": "22f63a8d764513e2592b6968ccc4aa6e4d35d360875ec2bf7fcbf80da55c8d87",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v2_20260930.raw.json": "1e5c72fe26ba91e9e1e0de14ea96f52d69becfe27c46b95c415e5478617c85ff",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v2_20260930.resource.json": "cd6fb8f8f31b44defc922217897df5fd98ff8bbf3004e16d4d0245b563beeb18",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v2_20260930.test.source.py": "c6770bdd88e0813b5ec76ec368aa5f50ba82af4d358facae55a4bc9e165bd6bc",
+    "docs/d1_review_support/d2_s3_q4_gap_resolution_v2_20260930.xml": "c4c6f1b7ffe34bfbcc55e1bb11a9782bd228336598bc730c7865c873e862dd12",
+    "docs/d1_review_support/d2_s3_q4_pure_press_v1_20260930.log": "6404fe4ea6352d6610d567ddffc7ea0528eb98158de1db9318a6347913e1b44e",
+    "docs/d1_review_support/d2_s3_q4_pure_press_v1_20260930.resources.json": "4ef81d1654947c56d3edac150cd05d25e8c353a3382d5de7ef20b7131ddc199a",
+    "docs/d1_review_support/d2_s3_q4_pure_press_v1_20260930.static_path.source.py": "0efd511056dfc00c983cdd35ff50513fb295899c28e40c60349f6aa751c98c45",
+    "docs/d1_review_support/d2_s3_q4_pure_press_v1_20260930.test.source.py": "cad5d6d505c556b85dada2787c6fefa2aa2a55001dd5d239df19d390b87a66fc",
+    "docs/d1_review_support/d2_s3_q4_pure_press_v1_20260930.xml": "b3bf02ef00146c6433139bc4b531c9884232add701e83367b01d41ee07cb2acd"
+  },
+  "checks": {
+    "new_value_resolution": 16,
+    "pure_press_kkt": 1,
+    "older_static_checks_deselected": 6,
+    "zero_predictor_and_mechanism_negatives": "reused V1 passed check; unchanged predictor source"
+  },
+  "pure_press_resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 8.403732800012222,
+    "peak_process_tree_memory_mb": 337.342464,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "docs/d1_review_support/contact_development_check.py",
+      "docs/d1_review_support/d2_s3_q4_pure_press_v2_20260930.inputs.json"
+    ],
+    "log": "docs\\d1_review_support\\d2_s3_q4_pure_press_v2_20260930.log"
+  },
+  "pure_press_response": {
+    "actual_displacement_m": [
+      -6.385964673184758e-07,
+      -1.1157894319077517e-06
+    ],
+    "actual_pressure_pa": [
+      0.04392993537618587,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "actual_source_force_n": 0.004685859773459826,
+    "reference_displacement_m": [
+      -6.385964672890835e-07,
+      -1.1157894318567462e-06
+    ],
+    "reference_pressure_pa": [
+      0.043929935375245734,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "reference_source_force_n": 0.004685859773359545,
+    "relative_displacement_error": 4.579020742552757e-11,
+    "relative_pressure_error": 2.14008249550566e-11,
+    "target_load_per_node_n": 0.0
+  },
+  "gates": {
+    "relative_displacement_pressure_force": 1e-06,
+    "no_external_target_load": true,
+    "no_changed_mechanical_tolerance": true
+  },
+  "failures_retained": "V1 purepress failed shape3-only fallback; original pre-admission zero-predictor rejection retained; helper V1 boundary rounding finding preserved and two new directed controls verify V2",
+  "limits": [
+    "Fixed-geometry P1-Q1 independent contact moments/KKT reference reuses existing structural linear stiffness; not an independent spatial continuum qualification.",
+    "Measured projected residual/value-chain resolution envelope, not quadrature or derivative true-error certificate; unresolved conditioning fails closed.",
+    "Original bilinear target retained; no general warped-reference, finite rotation, automatic pairing or CCD admission.",
+    "New resolution revision included only new profile restart contract; existing full fingerprint validator unchanged.",
+    "D1 and named D2 installed accepted artifact unchanged."
+  ],
+  "independent_review": "D2_S3_Q4_STATIC_REVIEW_20260930.md addendum pending; source-only exact helper clearance received"
+}

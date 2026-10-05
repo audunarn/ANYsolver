@@ -1,0 +1,94 @@
+{
+  "baseline": null,
+  "cases": [
+    {
+      "source_columns": 32,
+      "source_rows": 32,
+      "target_columns": 6,
+      "target_rows": 6,
+      "target_s3_faces": 72,
+      "target_young_multiplier": 5.0,
+      "target_y0_m": -0.1,
+      "force_n": 0.04,
+      "source_reference_downshift_m": 0.0,
+      "fixed_middle_left_nodes": [
+        1097,
+        1104,
+        1111,
+        1118,
+        1125
+      ],
+      "load_shape": "physical_bump",
+      "integrated_normal_force_n": 0.018584645828208245,
+      "active_node_ids": [
+        509,
+        540,
+        541,
+        542,
+        543,
+        574,
+        575
+      ],
+      "independent_projected_lower_gap_m": -1.1474106760532023e-06,
+      "sample_xy_m": [
+        [
+          0.6,
+          0.6
+        ],
+        [
+          0.6,
+          0.7
+        ],
+        [
+          0.6,
+          0.9
+        ]
+      ],
+      "source_vertical_displacement_m": [
+        -0.0001922587795001431,
+        -0.0001813019644656258,
+        -0.00010547485367496923
+      ],
+      "structural_free_coordinates": 5568,
+      "target_maximum_vertical_displacement_m": 0.00039615054484078095
+    }
+  ],
+  "identity": {
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "python_version": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "numpy_version": "2.4.6",
+    "git_head": "250871682540d824ec55317d034274874a4ac042",
+    "helper_sha256": {
+      "scripts/general_contact_d1_interior_two_body_oracle_dev.py": "51966ec74607c014f6398a759cf8d0dfd05ad0e380b3ad48aaf57b9892403c6f",
+      "scripts/general_contact_d1_interior_press_dev.py": "ddce87bebeabbfd984b24f77f317177fd673dab4a6f8042493610a8c39a8091d",
+      "scripts/general_contact_d1_mixed_mesh_jet2_schur_press.py": "d3d63ab646129c776a6fd4d6f43e1243ef6be81724b7bca8c33f02d07d485829",
+      "docs/d1_review_support/d1_two_body_reference_oracle.py": "01e555611f59c5661c01882458b966f6a063f3c19afe810d51d98672937d52f1",
+      "examples/general_contact_d1_interior_controls_dev.py": "4fc744756387b64b777d9ddf1a3d4efaa539cf64138ebe881a636801b66da885",
+      "src/anysolver/assembly.py": "919601e6aed8adf6039b3c32269baa4ec15172b81e91f247ddd2091bc01b6a3f",
+      "src/anysolver/matrix_assembly.py": "80222fc1a6401ae756612cb9f732b997c61d4b32c140d227b6344532ce92d558",
+      "docs/d1_review_support/d1_bounded_single.py": "e37d1b08e107dbefb41aedb76924d68674c07e4360f99a31be3ea5976e87b272"
+    },
+    "inputs": {
+      "source_columns": 32,
+      "source_rows": 32,
+      "source_y_profile": "uniform_ref32",
+      "offline_structural_reference_y32": true,
+      "target_columns": 6,
+      "target_rows": 6,
+      "target_young_multiplier": 5.0,
+      "target_y0_m": -0.1,
+      "force_n": 0.04,
+      "reference_slope": 0.0001,
+      "source_support": "perimeter",
+      "load_shape": "physical_bump",
+      "slide_body": "target",
+      "target_reference_full_left_clamp": true,
+      "source_reference_downshift_m": 0.0,
+      "accepted_step": 2,
+      "expected_initial_gap_m": 4e-05
+    }
+  },
+  "allocation_inventory": "docs\\d1_review_support\\d1_spatial_source32_target6_allocation_20260929.json",
+  "reference_scope": "independent_frozen_footprint_linear_q1_s3_mortar_kkt",
+  "status": "development_reference_not_spatial_acceptance"
+}

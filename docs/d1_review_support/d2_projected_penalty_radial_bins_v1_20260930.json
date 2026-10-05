@@ -1,0 +1,329 @@
+{
+  "source_guided_shear_n_m": 1602.5641025641025,
+  "target_guided_shear_n_m": 3163.400547104653,
+  "target_phi_squared_range": [
+    0.39479238827866037,
+    0.3947923882786611
+  ],
+  "target_p1_energy_max_relative_error": 4.491729488897204e-16,
+  "target_cells": 12,
+  "target_y0_m": -0.113,
+  "target_right_x_m": 1.297,
+  "gap_m": 7.741263872132846e-06,
+  "exact_force_n": 0.020435219974701022,
+  "status": "development_saved_physical_source_bins",
+  "input_sha256": "a49b9238be5e2abdd77ba4e3e47116115bcb0dc8e58053552a9ec9706c7101fa",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "quadrature_tolerance_n": 2.0435219974701022e-10,
+  "maximum_triangles": 14144,
+  "evidence": {
+    "scope": "guided flat-reference source whole-face vertical work bins; no target-bin or moment claim",
+    "bin_edges": [
+      0.1,
+      0.6,
+      1.1
+    ],
+    "slope_conversion_bound": {
+      "source_slope_max": 1.332354785247962e-05,
+      "target_slope_max": 3.0023031925498186e-06,
+      "physical_projection_cosine_lower": 0.9999999996449661,
+      "kappa_lower": 0.9999999996049648,
+      "kappa_upper": 1.00000000012876,
+      "relative_conversion_bound": 3.950352267523272e-10
+    },
+    "reference_pressure_bins_n": [
+      [
+        0.005057064262453127,
+        0.005036672260507654
+      ],
+      [
+        0.005033566565059662,
+        0.005061567073739609
+      ]
+    ],
+    "reference_pressure_estimated_error_bins_n": [
+      [
+        2.8746082207664625e-16,
+        2.8630167096864934e-16
+      ],
+      [
+        2.86125132621445e-16,
+        2.8771677726465494e-16
+      ]
+    ],
+    "independent_geometry_work_bins_n": [
+      [
+        0.0050570642624433665,
+        0.005036672260498424
+      ],
+      [
+        0.00503356656505044,
+        0.005061567073729588
+      ]
+    ],
+    "estimated_quadrature_error_bins_n": [
+      [
+        5.757311499253915e-16,
+        5.735604957840917e-16
+      ],
+      [
+        5.730577970061242e-16,
+        5.763130324458801e-16
+      ]
+    ],
+    "conversion_allowance_bins_n": [
+      [
+        1.9977185276192614e-12,
+        1.9896629685067977e-12
+      ],
+      [
+        1.9884361094012765e-12,
+        1.9994972966968398e-12
+      ]
+    ],
+    "visited_triangles": 1408,
+    "production_comparison": {
+      "status": "measured",
+      "source_pair_gradient_bins_n": [
+        [
+          0.0050570642624433605,
+          0.005036672260498417
+        ],
+        [
+          0.005033566565050437,
+          0.005061567073729588
+        ]
+      ],
+      "moving_normalization_term_bins_n": [
+        [
+          -6.933347799794049e-32,
+          -1.6948183510607676e-32
+        ],
+        [
+          4.468157470978387e-32,
+          1.039927408528395e-31
+        ]
+      ],
+      "pair_energy_evaluations": 2576,
+      "straight_jet2_work_branch_validated": true,
+      "validated_total_source_vertical_work_n": 0.0201888701617218,
+      "sum_of_bins_minus_validated_total_n": 0.0,
+      "gradient_minus_independent_bins_n": [
+        [
+          -6.071532165918825e-18,
+          -6.938893903907228e-18
+        ],
+        [
+          -3.469446951953614e-18,
+          0.0
+        ]
+      ]
+    }
+  },
+  "exact_disk_observables": {
+    "integration_measure": "uniform analytic disk pressure on reference area",
+    "total": {
+      "force_n": 0.020435219974701026,
+      "first_x_nm": 0.012261131984820614,
+      "first_y_nm": 0.012261131984820614,
+      "moment_nm": [
+        -1.734723475976807e-18,
+        1.734723475976807e-18,
+        0.0
+      ],
+      "resultant_xy_m": [
+        0.5999999999999999,
+        0.5999999999999999
+      ],
+      "estimated_absolute_error": [
+        2.9040194213367024e-16,
+        2.758818450269867e-16,
+        2.758818450269867e-16
+      ],
+      "estimated_moment_error_nm": [
+        4.501230103071889e-16,
+        4.501230103071889e-16,
+        0.0
+      ]
+    },
+    "bins": [
+      [
+        {
+          "force_n": 0.005108804993675256,
+          "first_x_nm": 0.0023063975327049092,
+          "first_y_nm": 0.0023063975327049092,
+          "moment_nm": [
+            -0.0007588854635002442,
+            0.0007588854635002442,
+            0.0
+          ],
+          "resultant_xy_m": [
+            0.4514553864475644,
+            0.4514553864475644
+          ],
+          "estimated_absolute_error": [
+            2.4159474761922314e-16,
+            2.1808863612153115e-16,
+            2.1808863612153115e-16
+          ],
+          "estimated_moment_error_nm": [
+            3.6304548469306505e-16,
+            3.6304548469306505e-16,
+            0.0
+          ]
+        },
+        {
+          "force_n": 0.005108804993675256,
+          "first_x_nm": 0.003824168459705397,
+          "first_y_nm": 0.0023063975327049092,
+          "moment_nm": [
+            -0.0007588854635002442,
+            -0.0007588854635002438,
+            0.0
+          ],
+          "resultant_xy_m": [
+            0.7485446135524355,
+            0.4514553864475644
+          ],
+          "estimated_absolute_error": [
+            2.4159474761922314e-16,
+            2.1808863612153115e-16,
+            2.1808863612153115e-16
+          ],
+          "estimated_moment_error_nm": [
+            3.6304548469306505e-16,
+            3.6304548469306505e-16,
+            0.0
+          ]
+        }
+      ],
+      [
+        {
+          "force_n": 0.005108804993675256,
+          "first_x_nm": 0.0023063975327049092,
+          "first_y_nm": 0.003824168459705397,
+          "moment_nm": [
+            0.0007588854635002438,
+            0.0007588854635002442,
+            0.0
+          ],
+          "resultant_xy_m": [
+            0.4514553864475644,
+            0.7485446135524355
+          ],
+          "estimated_absolute_error": [
+            2.4159474761922314e-16,
+            2.1808863612153115e-16,
+            2.1808863612153115e-16
+          ],
+          "estimated_moment_error_nm": [
+            3.6304548469306505e-16,
+            3.6304548469306505e-16,
+            0.0
+          ]
+        },
+        {
+          "force_n": 0.005108804993675256,
+          "first_x_nm": 0.003824168459705397,
+          "first_y_nm": 0.003824168459705397,
+          "moment_nm": [
+            0.0007588854635002438,
+            -0.0007588854635002438,
+            0.0
+          ],
+          "resultant_xy_m": [
+            0.7485446135524355,
+            0.7485446135524355
+          ],
+          "estimated_absolute_error": [
+            2.4159474761922314e-16,
+            2.1808863612153115e-16,
+            2.1808863612153115e-16
+          ],
+          "estimated_moment_error_nm": [
+            3.6304548469306505e-16,
+            3.6304548469306505e-16,
+            0.0
+          ]
+        }
+      ]
+    ],
+    "x_bin_edges": [
+      0.1,
+      0.6,
+      1.1
+    ],
+    "y_bin_edges": [
+      0.1,
+      0.6,
+      1.1
+    ],
+    "material_force_threshold_n": 8e-08
+  },
+  "assessment": {
+    "scope": "guided whole-source-face physical vertical-force bins",
+    "development_checks_met": true,
+    "physical_bins_n": [
+      [
+        0.0050570642624433605,
+        0.005036672260498417
+      ],
+      [
+        0.005033566565050437,
+        0.005061567073729588
+      ]
+    ],
+    "exact_bins_n": [
+      [
+        0.005108804993675256,
+        0.005108804993675256
+      ],
+      [
+        0.005108804993675256,
+        0.005108804993675256
+      ]
+    ],
+    "uncertainty_bins_n": [
+      [
+        1.9988293858710487e-12,
+        1.9907713643150738e-12
+      ],
+      [
+        1.9895403565254754e-12,
+        2.0006029212541694e-12
+      ]
+    ],
+    "uncertainty_budget_bins_n": [
+      [
+        1.021760998735051e-05,
+        1.021760998735051e-05
+      ],
+      [
+        1.021760998735051e-05,
+        1.021760998735051e-05
+      ]
+    ],
+    "exact_reference_error_bins_n": [
+      [
+        2.4159474761922314e-16,
+        2.4159474761922314e-16
+      ],
+      [
+        2.4159474761922314e-16,
+        2.4159474761922314e-16
+      ]
+    ],
+    "physical_bin_force_l1_relative_error": 0.012055158363071377,
+    "physical_bin_force_l2_relative_error": 0.012291379439311667,
+    "uncertainty_accounted_l1_relative_error": 0.012055158753561132,
+    "uncertainty_accounted_l2_relative_error": 0.01229137982211195,
+    "bins_to_reassembled_force_relative_difference": 0.0,
+    "reassembled_to_saved_force_relative_difference": 1.3010426069826053e-16,
+    "uncertainty_budget_met": true
+  },
+  "elapsed_seconds": 82.51822790000006,
+  "adapter": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_radial_assess_dev.py",
+    "sha256": "077e6bb1f3dfc4040b62e9aed83367b18e1e15da13f86aa1a4a1900c27ef6c5d"
+  }
+}

@@ -1,0 +1,103 @@
+Timeout (0:00:30)!
+Thread 0x00003950 (most recent call first):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_mortar_energy.py", line 306 in evaluate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 390 in _nodal_force_unresolved
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 360 in nodal_force_linearization
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth.py", line 50 in linearize
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 81 in wrapper
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth_path.py", line 66 in evaluate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth_path.py", line 86 in solve_increment
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 66 in timed_step
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 664 in run
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_state.py", line 271 in _run_with_nonlinear_state_cleanup
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1627 in operation
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3626 in _run_with_qualified_assembly_runtime_lease
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1629 in solve_static_contact_path
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7713 in solve_static_nonlinear
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 41 in solve
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 123 in _solve_with_trace
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 261 in run
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 329 in main
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 344 in <module>
+Timeout (0:00:30)!
+Thread 0x00003950 (most recent call first):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\moving.py", line 258 in _triangle_samples
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py", line 328 in rule
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py", line 356 in integrate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py", line 387 in q4_source_overlap_integrals
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_mortar_energy.py", line 87 in evaluate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_mortar_energy.py", line 306 in evaluate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 390 in _nodal_force_unresolved
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 360 in nodal_force_linearization
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth.py", line 50 in linearize
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 81 in wrapper
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth_path.py", line 66 in evaluate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth_path.py", line 86 in solve_increment
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 66 in timed_step
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 664 in run
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_state.py", line 271 in _run_with_nonlinear_state_cleanup
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1627 in operation
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3626 in _run_with_qualified_assembly_runtime_lease
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1629 in solve_static_contact_path
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7713 in solve_static_nonlinear
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 41 in solve
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 123 in _solve_with_trace
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 261 in run
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 329 in main
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 344 in <module>
+Timeout (0:00:30)!
+Thread 0x00003950 (most recent call first):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py", line 1087 in _rule_batched
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py", line 712 in rule_many
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py", line 752 in integrate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py", line 836 in _evaluate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_s3_overlap_derivatives.py", line 907 in q4_s3_overlap_derivatives
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 1214 in _jet2_s3_work
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 400 in _nodal_force_unresolved
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 360 in nodal_force_linearization
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth.py", line 50 in linearize
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 81 in wrapper
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth_path.py", line 66 in evaluate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth_path.py", line 246 in solve_increment
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 66 in timed_step
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 664 in run
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_state.py", line 271 in _run_with_nonlinear_state_cleanup
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1627 in operation
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3626 in _run_with_qualified_assembly_runtime_lease
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1629 in solve_static_contact_path
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7713 in solve_static_nonlinear
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 41 in solve
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 123 in _solve_with_trace
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 261 in run
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 329 in main
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 344 in <module>
+Timeout (0:00:30)!
+Thread 0x00003950 (most recent call first):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\overlap.py", line 109 in _q4_shape
+  <invalid frame>
+Timeout (0:00:30)!
+Thread 0x00003950 (most recent call first):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py", line 300 in sample
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py", line 328 in rule
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py", line 356 in integrate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py", line 387 in q4_source_overlap_integrals
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_mortar_energy.py", line 87 in evaluate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_mortar_energy.py", line 306 in evaluate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 390 in _nodal_force_unresolved
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_augmented.py", line 360 in nodal_force_linearization
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth.py", line 50 in linearize
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 81 in wrapper
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth_path.py", line 66 in evaluate
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth_path.py", line 86 in solve_increment
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 66 in timed_step
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 664 in run
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_state.py", line 271 in _run_with_nonlinear_state_cleanup
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1627 in operation
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3626 in _run_with_qualified_assembly_runtime_lease
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1629 in solve_static_contact_path
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7713 in solve_static_nonlinear
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 41 in solve
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 123 in _solve_with_trace
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 261 in run
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 329 in main
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_two_body_refined_target_route.py", line 344 in <module>

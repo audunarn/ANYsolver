@@ -1,0 +1,382 @@
+{
+  "parent": "47dc4070",
+  "scope": "fine lifecycle development; opening resource NONPASS; no accepted target2",
+  "source_checkpoint_sha256": "5c72a14e4288010a7f9407ada3cd1c5334e37ae071a7baf2281de75615a7d50a",
+  "lifecycle_test_sha256": "75F4D216BEF119431A2CF8A1BF57B34926D03D732942A395C325DE0539B93F69",
+  "opening_resources": {
+    "status": "timeout",
+    "returncode": 15,
+    "elapsed_s": 120.1546419999795,
+    "peak_bytes": 182509568
+  },
+  "observation_resources": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 20.047067400068045,
+    "peak_bytes": 179310592
+  },
+  "observation": {
+    "scope": "one actual opening Newton step; no physical commit",
+    "events": [
+      {
+        "phase": "construction",
+        "start_s": 0.00014219991862773895,
+        "status": "completed",
+        "duration_s": 0.08838720002677292
+      },
+      {
+        "phase": "source_replay",
+        "start_s": 0.09120129991788417,
+        "status": "completed",
+        "duration_s": 1.5823754000011832
+      },
+      {
+        "phase": "coupled_assembly",
+        "start_s": 0.09781770000699908,
+        "status": "completed",
+        "duration_s": 1.563839300069958,
+        "metrics": [
+          1.1373475339636086E-13,
+          9.181885741625962E-17,
+          6.661598356272336E-14
+        ]
+      },
+      {
+        "phase": "structural_material",
+        "start_s": 0.09845489996951073,
+        "status": "completed",
+        "duration_s": 0.03446539992000908
+      },
+      {
+        "phase": "contact",
+        "start_s": 0.13424980000127107,
+        "status": "completed",
+        "duration_s": 1.5247459000675008,
+        "gap": -6.302183730616266E-06,
+        "pair_evaluations": 2,
+        "reuse_hits": 0
+      },
+      {
+        "phase": "linear_step",
+        "start_s": 1.6633410999784246,
+        "status": "completed",
+        "duration_s": 0.0003112000413239002,
+        "correction": 6.497497738305112E-16,
+        "step_norm": 1.5630275687596384E-15
+      },
+      {
+        "phase": "coupled_assembly",
+        "start_s": 1.674744899966754,
+        "status": "completed",
+        "duration_s": 1.679376699961722,
+        "metrics": [
+          0.0050000000001126635,
+          9.181885741625962E-17,
+          6.661598356272336E-14
+        ]
+      },
+      {
+        "phase": "structural_material",
+        "start_s": 1.675365199916996,
+        "status": "completed",
+        "duration_s": 0.02533269999548793
+      },
+      {
+        "phase": "contact",
+        "start_s": 1.7022820999845862,
+        "status": "completed",
+        "duration_s": 1.650316399987787,
+        "gap": -6.302183730616266E-06,
+        "pair_evaluations": 3,
+        "reuse_hits": 0
+      },
+      {
+        "phase": "linear_step",
+        "start_s": 3.3556191999232396,
+        "status": "completed",
+        "duration_s": 0.0001501999795436859,
+        "correction": 0.0003106129892622054,
+        "step_norm": 0.0007789999630950241
+      },
+      {
+        "phase": "activation_fraction",
+        "start_s": 3.358198400004767,
+        "status": "completed",
+        "duration_s": 0.010493499925360084,
+        "fraction": 1.0
+      },
+      {
+        "phase": "endpoint_geometry",
+        "start_s": 3.3723211999749765,
+        "status": "completed",
+        "duration_s": 0.008258000016212463,
+        "admitted": true
+      },
+      {
+        "phase": "contact",
+        "start_s": 3.382718599983491,
+        "status": "exception",
+        "duration_s": 0.03287570003885776,
+        "error": "ValueError: curved axial front bracket work uncertainty exceeds integration budget",
+        "diagnostics": {
+          "root_brackets": [
+            {
+              "cell": 1,
+              "lower": 0.8727977456682873,
+              "upper": 0.8727977571449003,
+              "features": [
+                2
+              ],
+              "representation_gap_m": 4.722709568835759E-13,
+              "active_angular_width_bound": 1.602598945857393E-05,
+              "angular_fallback": false,
+              "representative_xi": 0.8727977485374405,
+              "error_bounds": [
+                7.826620381972054E-21,
+                3.810388393400193E-15,
+                1.7176738986020192E-06
+              ],
+              "enclosure_refinement": "declared_material_arc"
+            }
+          ],
+          "error_bounds": [
+            7.826620381972054E-21,
+            3.810388393400193E-15,
+            1.7176738986020192E-06
+          ]
+        }
+      },
+      {
+        "phase": "endpoint_geometry",
+        "start_s": 3.419481399934739,
+        "status": "completed",
+        "duration_s": 0.010083100060001016,
+        "admitted": true
+      },
+      {
+        "phase": "contact",
+        "start_s": 3.43141909991391,
+        "status": "exception",
+        "duration_s": 12.350766399991699,
+        "error": "MemoryError: curved normal integration interval budget exhausted",
+        "diagnostics": {
+          "visited": 64,
+          "accepted": 30,
+          "evaluations": 40320,
+          "last_errors": [
+            9.085027055504513E-25,
+            2.4992368853228174E-18,
+            1.4715510116456367E-10
+          ],
+          "last_rectangle": [
+            0.8706858598619076,
+            0.8708017260284613,
+            2.8415926535897933,
+            3.441592653589793
+          ],
+          "last_support": "active"
+        }
+      },
+      {
+        "phase": "endpoint_geometry",
+        "start_s": 15.786222699913196,
+        "status": "completed",
+        "duration_s": 0.008106499910354614,
+        "admitted": true
+      },
+      {
+        "phase": "contact",
+        "start_s": 15.796194099937566,
+        "status": "completed",
+        "duration_s": 1.939252599957399,
+        "gap": -5.287135148115231E-06,
+        "pair_evaluations": 4,
+        "reuse_hits": 0
+      },
+      {
+        "phase": "complete_path",
+        "start_s": 17.73749410000164,
+        "status": "completed",
+        "duration_s": 0.024616100010462105,
+        "admitted": true
+      },
+      {
+        "phase": "coupled_assembly",
+        "start_s": 17.764096099999733,
+        "status": "completed",
+        "duration_s": 0.04684700001962483,
+        "metrics": [
+          0.003802819706572709,
+          4.321680143408549E-06,
+          3.090506841515973E-05
+        ]
+      },
+      {
+        "phase": "structural_material",
+        "start_s": 17.76507349999156,
+        "status": "completed",
+        "duration_s": 0.04030849994160235
+      },
+      {
+        "phase": "contact",
+        "start_s": 17.807327099959366,
+        "status": "completed",
+        "duration_s": 0.0025727999163791537,
+        "gap": -5.287135148115231E-06,
+        "pair_evaluations": 4,
+        "reuse_hits": 1
+      },
+      {
+        "phase": "coupled_assembly",
+        "start_s": 17.812805900000967,
+        "status": "completed",
+        "duration_s": 0.03623079997487366,
+        "metrics": [
+          0.003802819706572709,
+          4.321680143408549E-06,
+          3.090506841515973E-05
+        ]
+      },
+      {
+        "phase": "structural_material",
+        "start_s": 17.813766499981284,
+        "status": "completed",
+        "duration_s": 0.030771900084801018
+      },
+      {
+        "phase": "contact",
+        "start_s": 17.84627819992602,
+        "status": "completed",
+        "duration_s": 0.001727099996060133,
+        "gap": -5.287135148115231E-06,
+        "pair_evaluations": 4,
+        "reuse_hits": 2
+      }
+    ],
+    "elapsed_s": 17.850780999986455,
+    "step": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.9399659425752996E-07,
+      6.591727735901664E-08,
+      -5.167381428388795E-05,
+      -0.0001827962612702634,
+      2.238279311145725E-05,
+      4.1599058700910936E-08,
+      -4.368245535565191E-07,
+      2.997095849036652E-08,
+      3.892905131592719E-05,
+      -0.00028054693720740614,
+      -5.8980015998440285E-05,
+      7.22624789823213E-08,
+      -9.918312150853217E-05,
+      3.0764970202808865E-05,
+      1.7228035859838138E-08,
+      -0.00024155825437317238,
+      -4.184753660465905E-05,
+      5.841894757754373E-08,
+      -5.468889638337683E-08,
+      -6.51346347103043E-08,
+      -0.0004182059268508492,
+      -6.875730007687502E-08,
+      1.1170667116997253E-07,
+      0.00017304348132177408,
+      -0.00011653949089121544,
+      1.2968288848961039E-08,
+      -0.0003106129892622054,
+      -0.00013992180018374022,
+      6.462210712087548E-08,
+      0.00017309075651622525,
+      -0.00013992179816058826,
+      8.044248263482017E-08,
+      0.00017309075365222172,
+      0.0,
+      0.0,
+      -0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      4.110685968070869E-05,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "actual_candidate_steps": 1,
+    "status": "failed",
+    "failure": "RuntimeError: bounded opening observation complete",
+    "completed": 1,
+    "checkpoint_unchanged": true,
+    "cache_cleared": true,
+    "trial_failures": [
+      {
+        "pair": "curved material / top",
+        "error": "ValueError: curved axial front bracket work uncertainty exceeds integration budget",
+        "integration": {
+          "root_brackets": [
+            {
+              "cell": 1,
+              "lower": 0.8727977456682873,
+              "upper": 0.8727977571449003,
+              "features": [
+                2
+              ],
+              "representation_gap_m": 4.722709568835759E-13,
+              "active_angular_width_bound": 1.602598945857393E-05,
+              "angular_fallback": false,
+              "representative_xi": 0.8727977485374405,
+              "error_bounds": [
+                7.826620381972054E-21,
+                3.810388393400193E-15,
+                1.7176738986020192E-06
+              ],
+              "enclosure_refinement": "declared_material_arc"
+            }
+          ],
+          "error_bounds": [
+            7.826620381972054E-21,
+            3.810388393400193E-15,
+            1.7176738986020192E-06
+          ]
+        }
+      },
+      {
+        "pair": "curved material / top",
+        "error": "MemoryError: curved normal integration interval budget exhausted",
+        "integration": {
+          "visited": 64,
+          "accepted": 30,
+          "evaluations": 40320,
+          "last_errors": [
+            9.085027055504513E-25,
+            2.4992368853228174E-18,
+            1.4715510116456367E-10
+          ],
+          "last_rectangle": [
+            0.8706858598619076,
+            0.8708017260284613,
+            2.8415926535897933,
+            3.441592653589793
+          ],
+          "last_support": "active"
+        }
+      }
+    ]
+  },
+  "raw_root": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate11",
+  "failed_harness_scope": "installed_opening_first_step_observation counted checkpoint replay step, not actual candidate; retained, not credited to opening mechanics"
+}

@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 14.594287600004463,
+  "peak_process_tree_memory_mb": 366.563328,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_monolithic_ordinary_force.py::test_deformable_s3_target_ordinary_force_matches_controlled_press"
+  ],
+  "log": "docs\\d1_review_support\\d1_free_target_force_pytest_20260929.log"
+}

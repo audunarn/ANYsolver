@@ -1,0 +1,201 @@
+{
+  "source_parent": "6fd19c5d49303848e909fc840b01ef7cb6d9eed5",
+  "unique_installed_passed_checks": 32,
+  "artifact": "C:\\ANYworkspaceWork\\contact-friction-activation-package-20261002",
+  "files": [
+    {
+      "path": "package/archive.py",
+      "bytes": 3145,
+      "sha256": "ffe53393f800133594e165084829000e530ed441de171462919afc101db8a2e0"
+    },
+    {
+      "path": "package/build-execution.json",
+      "bytes": 234,
+      "sha256": "1f5ac8c1d644d13ac2c2062fcf5affad8e682f60adccdb6e9014cd1f0e3442c0"
+    },
+    {
+      "path": "package/build.log",
+      "bytes": 948,
+      "sha256": "ecd5bb0f5b5a4971528b97e5be6469f5eca387cf80f9e5008abcbfb6463fc313"
+    },
+    {
+      "path": "package/build_bounded.py",
+      "bytes": 1657,
+      "sha256": "3db1f0f92cf11e128a27b4df60293eb65acb17b78af858e3e74dc273b61ead6f"
+    },
+    {
+      "path": "package/focused-execution.json",
+      "bytes": 608,
+      "sha256": "7968203b752344f1c26ae8c774f8c7dd16320e92f3fe8037b2aac9d96bffd0c9"
+    },
+    {
+      "path": "package/focused-identity.json",
+      "bytes": 2051,
+      "sha256": "405fcaa87581870d29ee33386a26cdc0a5d5b49ab5bd6db251eb0443e9b89374"
+    },
+    {
+      "path": "package/focused-imports.json",
+      "bytes": 37286,
+      "sha256": "0eda16f46b202a8d960467a033c168d136ae2aa8691a8633a598eef97806b4f5"
+    },
+    {
+      "path": "package/focused-inventory.xml",
+      "bytes": 6015,
+      "sha256": "17f287aa90049ff569b5220291778df6e9b557049cb0d1dc0ec401376a0557c1"
+    },
+    {
+      "path": "package/focused.log",
+      "bytes": 1511,
+      "sha256": "aed4fa6396ea4dd3b6eba41f646096158d190494c2ea02b5dc9184ce1f9622e2"
+    },
+    {
+      "path": "package/prepare.py",
+      "bytes": 2630,
+      "sha256": "66b3eb54cf41230bffad426aa18aa49cce3b9a60af976ff841ac040d8fbd813c"
+    },
+    {
+      "path": "package/pytest.ini",
+      "bytes": 41,
+      "sha256": "8965aec51f7cb92c81e1f02b48a33098d11711dcbad04cee732968562aa59653"
+    },
+    {
+      "path": "package/run_bounded.py",
+      "bytes": 1681,
+      "sha256": "72fdf7c5112cadee72ddcaf6f8f3ec53643ecd80c9e39734521e92b14889ac42"
+    },
+    {
+      "path": "package/run_installed.py",
+      "bytes": 2966,
+      "sha256": "49b51b396efeff3d91b75aee381122dcd9f6ddf15da589226893b2adc435daa7"
+    },
+    {
+      "path": "package/source-identity.json",
+      "bytes": 175,
+      "sha256": "99ef7c07f08b56a3639b140f605ea4632166cdc597acfa1c9a09ac357496f3b3"
+    },
+    {
+      "path": "package/source-manifest.json",
+      "bytes": 54160,
+      "sha256": "c1b6319789bcc30c2357d13de461b8cabac359589c0a750cd8e80f580533d347"
+    },
+    {
+      "path": "package/fixtures/friction_example.py",
+      "bytes": 4420,
+      "sha256": "b9349cd2b1f3ba92bf557f5fa80d28d67e66c3d224dff47902ad38c969928874"
+    },
+    {
+      "path": "package/fixtures/test_friction_example.py",
+      "bytes": 359,
+      "sha256": "de1a962cc44f64c83ecb268fc193e04e4ecfcec1e0debe6827e31ea54c4965bb"
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_friction_activation.py",
+      "bytes": 6682,
+      "sha256": "02020667fb3625ccdc8148df2f3e4c91d44ba126509a40940012f275a4573558"
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_friction_integration.py",
+      "bytes": 7277,
+      "sha256": "2a6f647f4244c2c39fe4b577b0b5fb7715c831e5a1de476a11b62f7384038c1c"
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_friction_pair.py",
+      "bytes": 11296,
+      "sha256": "27023a3a0dff81b1f59a05c231fdcc7b477ec838bb1f1ecc0200ca7f09269bf8"
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_friction_static.py",
+      "bytes": 8648,
+      "sha256": "42e86ce7df0f2db118914b410e26d0a26ef5ace89359193bdf1052db9cbc57c3"
+    },
+    {
+      "path": "package/fixtures/test_general_contact_s3_sliding_friction.py",
+      "bytes": 20601,
+      "sha256": "bea8501d969fc8c11cae1a143edd968d471097753186a4c6cd1c4fab09406b50"
+    },
+    {
+      "path": "package/wheels/anysolver-0.4.7-py3-none-any.whl",
+      "bytes": 2426366,
+      "sha256": "0ada7f67b52ff143c0cb55ad9e7a5b224d2fc7f66f2a52252444820c3535b7c5"
+    },
+    {
+      "path": "development/contact-friction-activation-baseline-20261002.log",
+      "bytes": 1698,
+      "sha256": "6d19cc93b43899177bbf16813aa15638c7df1c05c185f05581585c4cf627e3cd"
+    },
+    {
+      "path": "development/contact-friction-activation-source-20261002.log",
+      "bytes": 1015,
+      "sha256": "13e44cacf9ef935e3143564238fa821edb95ced349e85d4677c0566d3c164e83"
+    },
+    {
+      "path": "development/contact-friction-activation-coupled-20261002.log",
+      "bytes": 1079,
+      "sha256": "b2b842e18d7349d91bc512ee425d6e51eb635162c5e83a466312c9fd3d89eb92"
+    },
+    {
+      "path": "development/contact-friction-activation-design-review-20261002.log",
+      "bytes": 72305,
+      "sha256": "2bfa3e73f0ea5f74911327757dec128031e2ba1493e904095698805d78ffcf98"
+    },
+    {
+      "path": "development/contact-friction-activation-source-review-20261002.log",
+      "bytes": 244305,
+      "sha256": "29f8851eef1932c4cedafa4c9e1639c9186284e702088d56b769003a82abc1ca"
+    },
+    {
+      "path": "source/src/anysolver/general_contact/s3_sliding_friction.py",
+      "bytes": 30537,
+      "sha256": "e4d71ca8230a64590c95e6c887c6c4bf1e01dd422c213b145fcbd5d1900965a4"
+    },
+    {
+      "path": "source/src/anysolver/general_contact/s3_friction_touch.py",
+      "bytes": 4907,
+      "sha256": "29200a75d820c59bf36d87a85009acd7b68a504da487f95b4f6c0872e06d18d0"
+    },
+    {
+      "path": "source/tests/test_general_contact_s3_friction_activation.py",
+      "bytes": 6682,
+      "sha256": "02020667fb3625ccdc8148df2f3e4c91d44ba126509a40940012f275a4573558"
+    },
+    {
+      "path": "source/tests/test_general_contact_s3_friction_integration.py",
+      "bytes": 7277,
+      "sha256": "2a6f647f4244c2c39fe4b577b0b5fb7715c831e5a1de476a11b62f7384038c1c"
+    },
+    {
+      "path": "source/tests/test_general_contact_s3_sliding_friction.py",
+      "bytes": 20601,
+      "sha256": "bea8501d969fc8c11cae1a143edd968d471097753186a4c6cd1c4fab09406b50"
+    },
+    {
+      "path": "source/examples/general_contact_s3_friction_static.py",
+      "bytes": 4420,
+      "sha256": "b9349cd2b1f3ba92bf557f5fa80d28d67e66c3d224dff47902ad38c969928874"
+    },
+    {
+      "path": "failed-inputs/failed-seam-test-v1.py",
+      "bytes": 6575,
+      "sha256": "4d75786121aa43a69ca6c5dc8221e26dbd8fba0d4e7f459c7fa3d5b33101e57a"
+    },
+    {
+      "path": "failed-inputs/test_general_contact_s3_friction_activation.py",
+      "bytes": 1411,
+      "sha256": "d7b4dccf139ce9dff1819037aeb1f6e8ffc5d43e1f2c88ae660b68acc5cf635e"
+    },
+    {
+      "path": "development/contact-friction-activation-seam-20261002.log",
+      "bytes": 2876,
+      "sha256": "0a0706f26cb4f22d88566c88255d06a693c2b654946e9d573d3a32d64abfdc47"
+    },
+    {
+      "path": "development/contact-friction-activation-final-source-20261002.log",
+      "bytes": 1165,
+      "sha256": "38bb6d9040e4bc499f82ff5ba4aaf8d647d7f01c534b2b5ab2c2dd3a7cfaced6"
+    }
+  ],
+  "zip_sha256": "d1c405eb6fd8fb039f919474111da79e9a7fd41753f90e63538eeafc52ed4af1",
+  "readback": "PASS",
+  "file_count": 38,
+  "raw_bytes": 3007610
+}

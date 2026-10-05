@@ -1,0 +1,15 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 21.071763300002203,
+  "peak_process_tree_memory_mb": 319.95904,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "general_contact_free_target_cycle_dev.py",
+    "--output",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\d1_installed_cycle_result_df37e784_20260928.json"
+  ],
+  "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\d1_installed_cycle_df37e784_20260928.txt"
+}

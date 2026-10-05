@@ -1,0 +1,66 @@
+{
+  "source_base": "cc13138bce66237511033c607bab64e6641ba63d",
+  "branch": "codex/contact-main-reconcile-20261001",
+  "owned_source_sha256": {
+    "src/anysolver/general_contact/native_surface_friction_integral.py": "47e957b20e7d007d4b31e3ea3ef2286d0804950791a79fb51a95a4a461f53ce8",
+    "tests/test_general_contact_native_surface_local_fronts.py": "6c826c7edb3334629fb58fd68ca5edb628212faebd89f70ad563d088a7832555"
+  },
+  "resources": {
+    "contact-native-front-edge-integral-20261002": {
+      "peak_sampled_bytes": 259608576,
+      "limit_mib": 953,
+      "elapsed_seconds": 82.39570920000551,
+      "status": "terminal",
+      "child_exit_codes": [
+        1
+      ]
+    },
+    "contact-native-lazy-controls-parity-20261002": {
+      "peak_sampled_bytes": 255721472,
+      "limit_mib": 953,
+      "elapsed_seconds": 87.24518019997049,
+      "status": "terminal",
+      "child_exit_codes": [
+        1
+      ]
+    },
+    "contact-native-lazy-controls-probe-20261002": {
+      "peak_sampled_bytes": 184057856,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.3333809999749064,
+      "status": "terminal",
+      "child_exit_codes": [
+        1
+      ]
+    },
+    "contact-native-lazy-controls-probe-corrected-20261002": {
+      "peak_sampled_bytes": 186216448,
+      "limit_mib": 953,
+      "elapsed_seconds": 5.321416100021452,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    "contact-native-lazy-controls-integral-20261002": {
+      "peak_sampled_bytes": 250974208,
+      "limit_mib": 953,
+      "elapsed_seconds": 88.59170230000746,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    },
+    "contact-native-lazy-controls-closed-20261002": {
+      "peak_sampled_bytes": 193851392,
+      "limit_mib": 953,
+      "elapsed_seconds": 6.81012889998965,
+      "status": "terminal",
+      "child_exit_codes": [
+        0
+      ]
+    }
+  },
+  "scope": "development code/one-segment mixed integration only; no native-owner acceptance",
+  "impact": "post-run test edit changed skip reason only; selected run enabled its existing explicit environment flag"
+}

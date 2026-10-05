@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_free_target_identity_probe.py", line 14, in <module>
+    from scripts.general_contact_d1_free_target_press_probe import build_free_target_case
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_free_target_press_probe.py", line 12, in <module>
+    from scripts.general_contact_d1_mixed_mesh_jet2_schur_press import (
+        _json_default, build_case,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_mixed_mesh_jet2_schur_press.py", line 16, in <module>
+    from anysolver import (
+    ...<4 lines>...
+    )
+ImportError: cannot import name 'ContactDefinition' from 'anysolver' (C:\Github\ANYsolver\src\anysolver\__init__.py)

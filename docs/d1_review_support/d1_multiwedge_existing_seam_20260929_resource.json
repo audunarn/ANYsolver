@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 43.899335499998415,
+  "peak_process_tree_memory_mb": 343.719936,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_monolithic_exact_seam.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_multiwedge_existing_seam_20260929.log"
+}

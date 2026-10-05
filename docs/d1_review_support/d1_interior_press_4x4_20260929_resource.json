@@ -1,0 +1,21 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 42.91972929998883,
+  "peak_process_tree_memory_mb": 348.401664,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_interior_press_4x4_20260929.json",
+    "--source-support",
+    "perimeter",
+    "--source-rows",
+    "4",
+    "--load-shape",
+    "interior_distributed"
+  ],
+  "log": "docs\\d1_review_support\\d1_interior_press_4x4_20260929.log"
+}

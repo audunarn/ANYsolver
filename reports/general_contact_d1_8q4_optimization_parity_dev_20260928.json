@@ -1,0 +1,36 @@
+{
+  "method": "same fixture old/current source, full saved state comparison; development only",
+  "old_sha256": "13eb273301b6d3723e7bb0ec42b838e7ab261986c5b0fc3b5f2c2ea76e8dc387",
+  "new_sha256": "a1b73071991ea051228438ab33fac79f444cb4dcc60f233098a49188236506b3",
+  "old_elapsed_seconds": 101.25754470005631,
+  "new_elapsed_seconds": 148.6564024000545,
+  "same_steps": true,
+  "force_z_difference_n": 2.7755575615628914e-17,
+  "gap_difference_m": 0.0,
+  "fields": {
+    "fine_pressure_pa": {
+      "maximum_absolute_difference": 1.942890293094024e-14,
+      "relative_l2_difference": 2.972749709271274e-14
+    },
+    "final_displacements_m": {
+      "maximum_absolute_difference": 3.3881317890172014e-20,
+      "relative_l2_difference": 4.804768231295539e-16
+    }
+  },
+  "old_step_augmentations": [
+    4,
+    4
+  ],
+  "new_step_augmentations": [
+    4,
+    4
+  ],
+  "old_step_energy_evaluations": [
+    34,
+    38
+  ],
+  "new_step_energy_evaluations": [
+    18,
+    22
+  ]
+}

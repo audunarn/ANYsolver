@@ -1,0 +1,24 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 883, in <module>
+    radial_preflight(arguments.output)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 643, in radial_preflight
+    model, definition, settings, program, reference, record = build_radial_guided_case()
+                                                              ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 628, in build_radial_guided_case
+    settings = replace(settings, enforcement_solver="monolithic_active_set",
+        complementarity_force_scale_n=reference.load_pa, augmentation_acceleration="none",
+        d1_interior_profile=True, d1_interior_coverage_tolerance_m2=1e-10,
+        d1_interior_boundary_force_tolerance_n=1e-10,
+        q4_source_gap_certificate="overlap_local_dev")
+  File "C:\Python\Python314\Lib\dataclasses.py", line 1770, in replace
+    return _replace(obj, **changes)
+  File "C:\Python\Python314\Lib\dataclasses.py", line 1804, in _replace
+    return self.__class__(**changes)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "<string>", line 67, in __init__
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\core.py", line 439, in __post_init__
+    raise ValueError("Schur bounds require supported_schur_dev")
+ValueError: Schur bounds require supported_schur_dev

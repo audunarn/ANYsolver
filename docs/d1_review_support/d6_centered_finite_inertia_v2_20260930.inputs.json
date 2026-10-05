@@ -1,0 +1,48 @@
+{
+  "managed_worktree": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver",
+  "git_head": "23e845e131a8ea0c3457d10d9355ecdd5d1dd28e",
+  "source_sha256": {
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_centered_finite_inertia.py": "416105c01a1c80d5d234c18b82bba74a8fab7133d863074596c2eba27fc25a88",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_p5\\inertia.py": "4274095b7a010a707aff68ede94c342f3b4504395dc0b3c9fc5bad075e269dfa",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_p5_centered\\mass.py": "f1f0de6eb24d8759b0f4c6d4515d65c5c7bb7487354ed4637ba07ad9d5d403b5",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_p5_centered\\positions.py": "86e709ecaf06d7cc396cf283e6e12bdb33f08544e893661ad0b0382a7fa96587",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_p5_coordinates\\positions.py": "2c53ae303654dc27c73dec6e9fb56f6f61d4c47a1de7493f661525b0af7efa7b"
+  },
+  "resource_caps": {
+    "seconds": 180,
+    "process_tree_bytes": 1073741824
+  },
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.entry.source.py"
+  ],
+  "environment": {
+    "PYTHONPATH": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_CACHE_DIR": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.numba_cache"
+  },
+  "mechanics": {
+    "coordinates": "nodal18/cellspin6/resultants18",
+    "kinetic_physical_dimension": 15,
+    "full_mixed_dimension": 42,
+    "section_inertia": "physical mass2.7, COM(.035,-.025,.012), centered principal J(.12,.17,.19)",
+    "reference": "three-node centered curved x=-1,0,1; y=.3*(1-x*x),z=.15*(1-x*x)",
+    "directions_and_velocities": "exact test source retained; deterministic, no random seed"
+  },
+  "accepted": false,
+  "released": false,
+  "pytest_args": [
+    "tests/test_ge_beam3_centered_finite_inertia.py",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "junit_family=legacy",
+    "--junitxml=C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.xml"
+  ],
+  "replaced_collection_failure": "d6_centered_finite_inertia_v1_20260930; no mechanical checks ran"
+}

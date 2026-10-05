@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 25.42561469998327,
+  "peak_process_tree_memory_mb": 278.401024,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d2_moving_edge_restart_dev.py",
+    "--reference",
+    "docs/d1_review_support/d2_moving_prescribed_edge_v1_20260930.json",
+    "--output",
+    "docs/d1_review_support/d2_moving_edge_restart_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d2_moving_edge_restart_v1_20260930.log"
+}

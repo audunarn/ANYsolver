@@ -1,0 +1,86 @@
+{
+  "status": "independent_two_hat_target_limit",
+  "source_x_hat_centers": [
+    1.0,
+    1.5
+  ],
+  "target_free_node_order": "bottom_right_then_top_right",
+  "bulk_matrix": [
+    [
+      -0.0254160785300636,
+      -0.00928327774099183
+    ],
+    [
+      -0.09880267146993639,
+      -0.17073904368757958
+    ]
+  ],
+  "rim_delta_matrix": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.12421875000000002,
+      0.18002232142857144
+    ]
+  ],
+  "full_limit_matrix": [
+    [
+      -0.0254160785300636,
+      -0.00928327774099183
+    ],
+    [
+      0.025416078530063627,
+      0.009283277740991858
+    ]
+  ],
+  "unit_l2_null_coefficients": [
+    0.3430831936537267,
+    -0.939305020870409
+  ],
+  "null_residual_l2": 1.5040209277792026e-17,
+  "limit_singular_values": [
+    0.03826633751648452,
+    1.0658291930543654e-17
+  ],
+  "finite_cut_exact_polynomial_work": {
+    "0.1": {
+      "target_shape_work": [
+        6.655979833744976e-05,
+        -0.00013469219570151787
+      ],
+      "normal_gap_gradient_work": [
+        -6.655979833744976e-05,
+        0.00013469219570151787
+      ],
+      "free_norm": 0.0001502404550632684,
+      "free_norm_over_theta_cubed": 0.15024045506326836
+    },
+    "0.05": {
+      "target_shape_work": [
+        9.966487355283067e-06,
+        -1.926507510007806e-05
+      ],
+      "normal_gap_gradient_work": [
+        -9.966487355283067e-06,
+        1.926507510007806e-05
+      ],
+      "free_norm": 2.1690412370784123e-05,
+      "free_norm_over_theta_cubed": 0.17352329896627294
+    },
+    "0.025": {
+      "target_shape_work": [
+        1.3810228470409053e-06,
+        -2.6114519158512517e-06
+      ],
+      "normal_gap_gradient_work": [
+        -1.3810228470409053e-06,
+        2.6114519158512517e-06
+      ],
+      "free_norm": 2.9541335807393916e-06,
+      "free_norm_over_theta_cubed": 0.18906454916732102
+    }
+  },
+  "quadrature": "3-point x by 2-point y, split at Q1 knots and S3 diagonal"
+}

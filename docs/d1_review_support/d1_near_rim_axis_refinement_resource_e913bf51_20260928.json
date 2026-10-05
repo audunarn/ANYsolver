@@ -1,0 +1,14 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 0.5178978999974788,
+  "peak_process_tree_memory_mb": 9.867264,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "scripts/general_contact_d1_near_rim_axis_refinement.py",
+    "reports/general_contact_d1_near_rim_axis_refinement_e913bf51_20260928.json"
+  ],
+  "log": "reports\\general_contact_d1_near_rim_axis_refinement_e913bf51_20260928.txt"
+}

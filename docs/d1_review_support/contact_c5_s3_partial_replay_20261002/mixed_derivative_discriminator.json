@@ -1,0 +1,74 @@
+[
+  {
+    "level": 3,
+    "omit_history": false,
+    "step": 2e-07,
+    "actual": -0.1885336650673023,
+    "reference": -0.1885336658353932,
+    "relative_oracle_error": 4.074025151094112e-09,
+    "relative_probe_difference": 3.7535699111867946e-06
+  },
+  {
+    "level": 3,
+    "omit_history": false,
+    "step": 2e-08,
+    "actual": -0.1885336667542531,
+    "reference": -0.1885336658353932,
+    "relative_oracle_error": 4.87371791535987e-09,
+    "relative_probe_difference": 1.9029693725669908e-08
+  },
+  {
+    "level": 3,
+    "omit_history": false,
+    "step": 2e-09,
+    "actual": -0.18853362257538628,
+    "reference": -0.1885336658353932,
+    "relative_oracle_error": 2.2945507752332888e-07,
+    "relative_probe_difference": 1.378733086538998e-07
+  },
+  {
+    "level": 3,
+    "omit_history": true,
+    "step": 2e-07,
+    "actual": -0.1878104664768861,
+    "reference": -0.1885336658353932,
+    "relative_oracle_error": 0.003835916282127091,
+    "relative_probe_difference": 0.003767469337245797
+  },
+  {
+    "level": 3,
+    "omit_history": true,
+    "step": 2e-08,
+    "actual": -0.18216861079677169,
+    "reference": -0.1885336658353932,
+    "relative_oracle_error": 0.03376084059267573,
+    "relative_probe_difference": 0.007075821535437402
+  },
+  {
+    "level": 3,
+    "omit_history": true,
+    "step": 2e-09,
+    "actual": -0.18095942264114806,
+    "reference": -0.1885336658353932,
+    "relative_oracle_error": 0.040174486401055406,
+    "relative_probe_difference": 0.0017277503055530823
+  },
+  {
+    "level": 4,
+    "omit_history": false,
+    "step": 2e-09,
+    "actual": -0.18853362752883496,
+    "reference": -0.1885336658353932,
+    "relative_oracle_error": 2.0318152761348199e-07,
+    "relative_probe_difference": 1.1510352785561051e-07
+  },
+  {
+    "level": 4,
+    "omit_history": true,
+    "step": 2e-09,
+    "actual": -0.1851560942632872,
+    "reference": -0.1885336658353932,
+    "relative_oracle_error": 0.017914951990881674,
+    "relative_probe_difference": 0.0004979011020122869
+  }
+]

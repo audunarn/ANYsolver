@@ -1,0 +1,76 @@
+{
+  "status": "implemented and installed-tested development; not engineering accepted or released",
+  "source_candidate": "46ea65f6",
+  "wheel_sha256": "d654f456679403486be46e2dc200f0657e008e43c6b8e9873ad7f60cac6d86ba",
+  "raw_root": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate01",
+  "resource": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 73.46614759997465,
+    "peak_bytes": 349569024
+  },
+  "runtime_package": {
+    "source_files": 517,
+    "imported_modules": 222,
+    "source_installed_errors": [],
+    "import_errors": [],
+    "runtime_errors": [],
+    "jit_disabled": true,
+    "numba_threads": 1,
+    "pool_threads": [
+      1,
+      1
+    ],
+    "outcomes": {
+      "passed": 39
+    }
+  },
+  "response": {
+    "profile": "NATIVE_B3_GE_RETAINED_MATERIAL_PATCH_S3_STATIC_DEV_V1",
+    "metrics": [
+      5.056958827795096e-15,
+      3.348191124726339e-17,
+      3.1736765992995686e-15
+    ],
+    "minimum_gap_m": -3.109282962779052e-05,
+    "force_n": [
+      2.286022442861209e-08,
+      -7.620074809537365e-09,
+      0.005505581282962273
+    ],
+    "shell_displacement_norm": 4.152190886611284e-05,
+    "normalized_force_balance": 1.2396333959545046e-12,
+    "normalized_moment_balance": 1.1081413700328422e-12,
+    "owner_tangent_errors": [
+      2.1816067250838458e-10,
+      3.7268918196593566e-10
+    ],
+    "checkpoint_sha256": "ed0da9b9989802ac3331039fcf6833656fc52aacd39b99aaf5210153e8e013dd"
+  },
+  "penalty_sensitivity": {
+    "scope": "explicit sensitivity; no convergence acceptance",
+    "rows": [
+      {
+        "normal_stiffness_Pa_per_m": 1000000.0,
+        "gap_lower_m": -3.109282962779052e-05,
+        "force_n": [
+          2.286022442861209e-08,
+          -7.620074809537365e-09,
+          0.005505581282962273
+        ],
+        "shell_displacement_norm": 4.152190886611284e-05
+      },
+      {
+        "normal_stiffness_Pa_per_m": 10000000.0,
+        "gap_lower_m": -1.1438934295117783e-05,
+        "force_n": [
+          2.205381923125581e-08,
+          -7.351273077085269e-09,
+          0.005391914680811372
+        ],
+        "shell_displacement_norm": 4.09016472566639e-05
+      }
+    ],
+    "force_change_relative": 0.021080934859288004
+  }
+}

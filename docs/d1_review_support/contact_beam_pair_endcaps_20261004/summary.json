@@ -1,0 +1,177 @@
+{
+  "scope": "D3 explicit B2/B2 physical-end pair work; developmental code verification, not engineering acceptance",
+  "source_parent": "c075ea0526fb902cf36696f7071e59ba26105d7f",
+  "source_files": {
+    "src/anysolver/general_contact/beam_pair_ends.py": "a5543c36a108d59d51405a61484e60ac478fd285d15cc0047192e1ce1eebbc40",
+    "src/anysolver/general_contact/beam_pair_end_geometry.py": "af826f9fc866b8ae4d604b6c4ff8862ad93e1c3c1a6a27c33ec05237778a85fc",
+    "src/anysolver/general_contact/core.py": "3fc93f7c7dd599fc832c4125279a1cc0d17d65b4d6a281d981239c887e982975",
+    "tests/test_general_contact_beam_pair_ends.py": "01b44dc06ad6d110343fdab624b0c4ecda265890bcfc0211cc19bbe28467c655",
+    "examples/general_contact_beam_pair_ends.py": "577350d909a90d664adfa9ed7ca5eef823aa0eec9285553b58c39c908117458b"
+  },
+  "wheels": {
+    "anyfem-0.4.1-py3-none-any.whl": "943b23e7fbf8c2afd51c99a436624990b9d98c17734289ad8345210af2d236f7",
+    "anysolver-0.4.7-py3-none-any.whl": "a525441699aee22a781b79b59ee82667fa093095b108e3034ee7c8d0198951d0"
+  },
+  "runs": {
+    "build01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 11.423745800042525,
+        "peak_bytes": 110465024
+      },
+      "outcomes": null
+    },
+    "geometry-support": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.194493599992711,
+        "peak_bytes": 160301056
+      },
+      "outcomes": {
+        "passed": 4
+      }
+    },
+    "install01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.8451102999970317,
+        "peak_bytes": 102166528
+      },
+      "outcomes": null
+    },
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 6.64957140001934,
+        "peak_bytes": 328585216
+      },
+      "outcomes": {
+        "passed": 30
+      }
+    },
+    "source01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 3.3540600999840535,
+        "peak_bytes": 185118720
+      },
+      "outcomes": {
+        "failed": 3,
+        "passed": 8
+      }
+    },
+    "source02": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.3283209999790415,
+        "peak_bytes": 184897536
+      },
+      "outcomes": {
+        "passed": 3
+      }
+    },
+    "source03": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.724659600004088,
+        "peak_bytes": 182255616
+      },
+      "outcomes": {
+        "passed": 4
+      }
+    },
+    "source04": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.777074999990873,
+        "peak_bytes": 190701568
+      },
+      "outcomes": {
+        "passed": 10
+      }
+    },
+    "source05": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.941876700031571,
+        "peak_bytes": 184639488
+      },
+      "outcomes": {
+        "passed": 5
+      }
+    },
+    "source06": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.3428189999540336,
+        "peak_bytes": 181698560
+      },
+      "outcomes": {
+        "passed": 2
+      }
+    }
+  },
+  "installed_modules_matching": 243,
+  "installed_package_files_matching": 496,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "independent_bar_relative_error": 1.0836874338712956e-15,
+  "bar_relative_target": 1e-06,
+  "gap_budget_m": 1e-05,
+  "raw_records": 63,
+  "raw_sha256": "c20795298a32e05fa2943a23362289800d11e92de6889c14100e8499ae31731d",
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "versions": {
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "numba": "0.65.1",
+      "ANYmaterial": "0.2.0",
+      "ANYgeometry": "0.4.3"
+    }
+  },
+  "review_disposition": "intermediate active line-clamp plateau now certified along full affine path; isolated manager regression, finite-normal ownership root, topology/settings restart, actual candidate exception/cancel reuse pass",
+  "retained_failures": "source01 three test defects: unpartitioned scalar quadrature missed narrow active intervals; nonexistent capability.profile field. Inputs/logs retained; independent oracle corrected without changing production law/tolerances.",
+  "limits": "180s/953MiB process tree; one elastic scalar/von-Karman B2 per side; explicit hemisphere point penalties, strict resolved feature branches; no B3/chains/cap transitions, native/friction/dynamics, normal application admission, release or independent engineering acceptance"
+}

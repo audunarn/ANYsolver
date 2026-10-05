@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.676" timestamp="2026-10-01T02:08:22.708471+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_general_contact_multiple_beam_sphere_lifecycle" name="test_sphere_plane_coupling_cancelled_path_and_full_checkpoint" time="0.982"><failure message="AssertionError: contact_gap_exceeded&#10;assert 'contact_gap_exceeded' == 'completed'&#10;  &#10;  - completed&#10;  + contact_gap_exceeded">def test_sphere_plane_coupling_cancelled_path_and_full_checkpoint():
+        model,definition,settings=fixture()
+        load=LoadCase("sphere_plane");load.add_nodal_load(2,forces=(0.,-10.,-12.))
+        controls=dict(contact=definition,contact_settings=settings,num_steps=4,max_iterations=22,
+                      tolerance=1e-8,emit_restart_checkpoint=True)
+        full=solve_static_nonlinear(model,load,**controls)
+&gt;       assert full.status=="completed",full.failure_reason
+E       AssertionError: contact_gap_exceeded
+E       assert 'contact_gap_exceeded' == 'completed'
+E         
+E         - completed
+E         + contact_gap_exceeded
+
+tests\test_general_contact_multiple_beam_sphere_lifecycle.py:45: AssertionError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,53 @@
+FFF.                                                                     [100%]
+================================== FAILURES ===================================
+_______ test_complete_mixed_static_equilibrium_work_and_restart[plane] ________
+
+left_kind = 'plane'
+
+    @pytest.mark.parametrize('left_kind', ('plane', 'sphere', 'cylinder'))
+    def test_complete_mixed_static_equilibrium_work_and_restart(left_kind):
+        model, definition, settings, load = cylinder_bars(left_kind)
+        assert validate_general_contact(model, definition, settings).valid
+        capability = report_general_contact_capability(model, definition, settings)
+>       assert capability.profile == PROFILE_SUPPORT_CYLINDER
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ContactCapabilityReport' object has no attribute 'profile'
+
+tests\test_general_contact_multiple_hemisphere_cylinders.py:29: AttributeError
+_______ test_complete_mixed_static_equilibrium_work_and_restart[sphere] _______
+
+left_kind = 'sphere'
+
+    @pytest.mark.parametrize('left_kind', ('plane', 'sphere', 'cylinder'))
+    def test_complete_mixed_static_equilibrium_work_and_restart(left_kind):
+        model, definition, settings, load = cylinder_bars(left_kind)
+        assert validate_general_contact(model, definition, settings).valid
+        capability = report_general_contact_capability(model, definition, settings)
+>       assert capability.profile == PROFILE_SUPPORT_CYLINDER
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ContactCapabilityReport' object has no attribute 'profile'
+
+tests\test_general_contact_multiple_hemisphere_cylinders.py:29: AttributeError
+______ test_complete_mixed_static_equilibrium_work_and_restart[cylinder] ______
+
+left_kind = 'cylinder'
+
+    @pytest.mark.parametrize('left_kind', ('plane', 'sphere', 'cylinder'))
+    def test_complete_mixed_static_equilibrium_work_and_restart(left_kind):
+        model, definition, settings, load = cylinder_bars(left_kind)
+        assert validate_general_contact(model, definition, settings).valid
+        capability = report_general_contact_capability(model, definition, settings)
+>       assert capability.profile == PROFILE_SUPPORT_CYLINDER
+               ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ContactCapabilityReport' object has no attribute 'profile'
+
+tests\test_general_contact_multiple_hemisphere_cylinders.py:29: AttributeError
+============================= slowest 5 durations =============================
+0.31s call     tests/test_general_contact_multiple_hemisphere_cylinders.py::test_public_installed_example
+
+(4 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_multiple_hemisphere_cylinders.py::test_complete_mixed_static_equilibrium_work_and_restart[plane]
+FAILED tests/test_general_contact_multiple_hemisphere_cylinders.py::test_complete_mixed_static_equilibrium_work_and_restart[sphere]
+FAILED tests/test_general_contact_multiple_hemisphere_cylinders.py::test_complete_mixed_static_equilibrium_work_and_restart[cylinder]
+3 failed, 1 passed in 1.97s

@@ -1,0 +1,48 @@
+{
+  "cases": [
+    {
+      "saved_pose": "docs\\d1_review_support\\d1_coupled_fixed_bump_y16_20260929.json",
+      "source_rows": 16,
+      "source_sample_xy_m": [
+        [
+          0.6,
+          0.6
+        ],
+        [
+          0.6,
+          0.7
+        ],
+        [
+          0.6,
+          0.9
+        ]
+      ],
+      "production_source_vertical_displacement_m": [
+        -0.00032097058441932035,
+        -0.00029852598592842593,
+        -0.0001715451179086599
+      ],
+      "oracle_source_vertical_displacement_m": [
+        -0.00032098164255104603,
+        -0.0002985368979409494,
+        -0.0001715520973359069
+      ],
+      "relative_source_displacement_difference": [
+        3.445097868462092e-05,
+        3.655163766608172e-05,
+        4.0684010020202874e-05
+      ],
+      "production_active_node_ids": [
+        76,
+        85
+      ],
+      "oracle_active_node_ids": [
+        76,
+        85
+      ],
+      "production_integrated_normal_force_n": 0.004738005223177554,
+      "oracle_integrated_normal_force_n": 0.004737850999721624,
+      "relative_integrated_force_difference": 3.255135206629382e-05
+    }
+  ]
+}

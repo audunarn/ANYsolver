@@ -1,0 +1,9 @@
+{
+  "divisions": 2,
+  "total_load_n": 0.4,
+  "elapsed_seconds": 23.31035939999856,
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 1,
+  "has_restart_checkpoint": true
+}

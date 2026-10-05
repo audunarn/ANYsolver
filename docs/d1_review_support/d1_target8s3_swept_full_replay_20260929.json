@@ -1,0 +1,39 @@
+{
+  "capture": "docs\\d1_review_support\\d1_target8s3_swept_capture_20260929.json",
+  "certificate": "overlap_local_dev",
+  "gap_tolerance_m": 5e-05,
+  "trials": [
+    {
+      "fraction": 0.125,
+      "overlap_local_swept_admissible": true,
+      "overlap_local_endpoint_lower_gap_m": -3.328367329566151e-05,
+      "independent_endpoint_lower_gap_m": -1.3019825285961117e-05,
+      "independent_endpoint_issue": null,
+      "coverage_issue": null
+    },
+    {
+      "fraction": 0.25,
+      "overlap_local_swept_admissible": true,
+      "overlap_local_endpoint_lower_gap_m": -3.382558198348419e-05,
+      "independent_endpoint_lower_gap_m": -1.3197521567906964e-05,
+      "independent_endpoint_issue": null,
+      "coverage_issue": null
+    },
+    {
+      "fraction": 0.5,
+      "overlap_local_swept_admissible": true,
+      "overlap_local_endpoint_lower_gap_m": -3.490941112406393e-05,
+      "independent_endpoint_lower_gap_m": -1.3552927851402959e-05,
+      "independent_endpoint_issue": null,
+      "coverage_issue": null
+    },
+    {
+      "fraction": 1.0,
+      "overlap_local_swept_admissible": true,
+      "overlap_local_endpoint_lower_gap_m": -3.7077116463842514e-05,
+      "independent_endpoint_lower_gap_m": -1.426379529596387e-05,
+      "independent_endpoint_issue": null,
+      "coverage_issue": null
+    }
+  ]
+}

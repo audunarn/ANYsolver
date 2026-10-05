@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\docs\d1_review_support\d1_saved_active_compliance.py", line 24, in <module>
+    from anysolver.general_contact.s3_patch_static import GeneralS3PatchManager
+ModuleNotFoundError: No module named 'anysolver.general_contact'

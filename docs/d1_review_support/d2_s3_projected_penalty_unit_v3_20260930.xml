@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="10" time="2.522" timestamp="2026-09-30T14:26:20.221881+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_affine_gap_pressure_uses_exact_p1_mass_on_flat_source_projection" time="0.038" /><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_moving_cut_has_zero_constant_gap_work_but_storage_flux_and_nonsymmetric_tangent" time="0.082" /><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_both_body_small_rotation_skin_map_smooth_directional_tangent_interval" time="0.179" /><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_positive_support_cutoff_limit_retains_tiny_p1_hat[0.02]" time="0.017" /><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_positive_support_cutoff_limit_retains_tiny_p1_hat[0.002]" time="0.019" /><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_positive_support_cutoff_limit_retains_tiny_p1_hat[0.0002]" time="0.022" /><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_unsupported_enforcement_and_geometry_fail_closed[change0]" time="0.001" /><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_unsupported_enforcement_and_geometry_fail_closed[change1]" time="0.001" /><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_unsupported_enforcement_and_geometry_fail_closed[change2]" time="0.001" /><testcase classname="tests.test_general_contact_s3_projected_penalty" name="test_unsupported_enforcement_and_geometry_fail_closed[change3]" time="0.001"><failure message="ValueError: restricted sliding requires an explicit sliding_difference_step">change = {'pair_motion': 'restricted_sliding'}
+
+    @pytest.mark.parametrize("change", [
+        {"general_s3_differentiation": "existing"},
+        {"general_s3_differentiation": "jet2_q4_s3_dev"},
+        {"q4_source_gap_certificate": "overlap_local_dev"},
+        {"pair_motion": "restricted_sliding"},
+        {"normal_discretization": "pointwise_penalty"},
+        {"augmentation_acceleration": "active_secant"},
+        {"augmentation_support_resolution": "roundoff", "augmentation_support_force_budget_n": 1e-6},
+        {"enforcement_solver": "monolithic_active_set", "complementarity_force_scale_n": 1.},
+        {"d1_interior_profile": True, "d1_interior_coverage_tolerance_m2": 1e-10,
+         "d1_interior_boundary_force_tolerance_n": 1e-8},
+        {"q4_s3_shared_edge_tie_step_m": 1e-7, "q4_s3_shared_edge_tie_direction": (1., 0., 0.),
+         "q4_s3_shared_edge_tie_relative_tolerance": 1e-5},
+    ])
+    def test_unsupported_enforcement_and_geometry_fail_closed(change):
+        model, definition, settings = _candidate()
+&gt;       selected = replace(settings, **change)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_general_contact_s3_projected_penalty.py:247: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Python\Python314\Lib\dataclasses.py:1770: in replace
+    return _replace(obj, **changes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Python\Python314\Lib\dataclasses.py:1804: in _replace
+    return self.__class__(**changes)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;string&gt;:67: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ContactSolverSettings(maximum_candidate_pairs=100000, pair_motion='restricted_sliding', sliding_difference_step=None, ...e=None, d1_interior_profile=False, d1_interior_coverage_tolerance_m2=None, d1_interior_boundary_force_tolerance_n=None)
+
+    def __post_init__(self) -&gt; None:
+        if type(self.d1_interior_profile) is not bool:
+            raise TypeError("d1_interior_profile must be bool")
+        interior_controls = (self.d1_interior_coverage_tolerance_m2,
+                             self.d1_interior_boundary_force_tolerance_n)
+        if self.d1_interior_profile:
+            if any(value is None or not np.isfinite(value) or value &lt;= 0.0
+                   for value in interior_controls):
+                raise ValueError("D1 interior profile needs positive dimensional coverage and boundary-force tolerances")
+        elif any(value is not None for value in interior_controls):
+            raise ValueError("D1 interior controls require d1_interior_profile")
+        if self.enforcement_solver not in {"nested_augmented", "monolithic_active_set"}:
+            raise ValueError("enforcement_solver must be nested_augmented or monolithic_active_set")
+        if (self.enforcement_solver == "monolithic_active_set"
+                and self.augmentation_acceleration != "none"):
+            raise ValueError("monolithic_active_set does not use augmentation acceleration")
+        if self.enforcement_solver == "monolithic_active_set":
+            if (self.complementarity_force_scale_n is None
+                    or not np.isfinite(self.complementarity_force_scale_n)
+                    or self.complementarity_force_scale_n &lt;= 0.0):
+                raise ValueError("monolithic_active_set requires a positive complementarity force scale")
+        elif self.complementarity_force_scale_n is not None:
+            raise ValueError("complementarity force scale requires monolithic_active_set")
+        if (type(self.monolithic_maximum_pivots) is not int
+                or not 1 &lt;= self.monolithic_maximum_pivots &lt;= 64):
+            raise ValueError("monolithic_maximum_pivots must be an integer in [1, 64]")
+        if (self.enforcement_solver != "monolithic_active_set"
+                and self.monolithic_maximum_pivots != 12):
+            raise ValueError("monolithic pivot limit requires monolithic_active_set")
+        if self.monolithic_linear_solver not in {"direct", "block_response_dev"}:
+            raise ValueError("unsupported monolithic_linear_solver")
+        if (self.enforcement_solver != "monolithic_active_set"
+                and self.monolithic_linear_solver != "direct"):
+            raise ValueError("monolithic linear solver requires monolithic_active_set")
+        if (self.q4_target_weighted_gap_tolerance is not None
+                and (not np.isfinite(self.q4_target_weighted_gap_tolerance)
+                     or self.q4_target_weighted_gap_tolerance &lt;= 0.0)):
+            raise ValueError("q4_target_weighted_gap_tolerance must be finite and positive")
+        if (self.maximum_q4_target_integration_triangles is not None
+                and (type(self.maximum_q4_target_integration_triangles) is not int
+                     or self.maximum_q4_target_integration_triangles &lt; 1)):
+            raise ValueError("maximum_q4_target_integration_triangles must be a positive integer")
+        for name in ("q4_source_area_tolerance",
+                     "q4_source_weighted_gap_tolerance",
+                     "q4_source_support_gradient_tolerance",
+                     "q4_source_support_hessian_tolerance",
+                     "q4_source_weighted_gap_gradient_tolerance",
+                     "q4_source_weighted_gap_hessian_tolerance"):
+            value = getattr(self, name)
+            if value is not None and (not np.isfinite(value) or value &lt;= 0.0):
+                raise ValueError(f"{name} must be finite and positive")
+        if (self.maximum_q4_source_integration_triangles is not None
+                and (type(self.maximum_q4_source_integration_triangles) is not int
+                     or self.maximum_q4_source_integration_triangles &lt; 1)):
+            raise ValueError("maximum_q4_source_integration_triangles must be a positive integer")
+        if self.q4_source_gap_certificate not in {
+                "whole_face", "projected_matching", "fixed_projection_graph",
+                "overlap_local_dev"}:
+            raise ValueError("q4_source_gap_certificate must be whole_face, projected_matching, fixed_projection_graph or overlap_local_dev")
+        if self.q4_source_pressure_basis not in {
+                "fine_nodal_q1", "macro_q1_pair_dev",
+                "selected_q1_knots_dev"}:
+            raise ValueError("unsupported q4_source_pressure_basis")
+        knots = self.q4_source_pressure_knot_columns
+        if self.q4_source_pressure_basis == "selected_q1_knots_dev":
+            if (type(knots) is not tuple or len(knots) &lt; 2
+                    or any(type(column) is not int for column in knots)):
+                raise ValueError("selected Q1 pressure needs immutable integer knot columns")
+        elif knots is not None:
+            raise ValueError("pressure knot columns require selected_q1_knots_dev")
+        if type(self.maximum_candidate_pairs) is not int or self.maximum_candidate_pairs &lt; 1:
+            raise ValueError("maximum_candidate_pairs must be a positive integer")
+        if self.pair_motion not in {"guided", "restricted_sliding", "general"}:
+            raise ValueError("pair_motion must be guided, restricted_sliding or general")
+        if self.normal_discretization not in {"primal_mortar", "pointwise_penalty"}:
+            raise ValueError("normal_discretization must be primal_mortar or pointwise_penalty")
+        if type(self.warped_q4_plane) is not bool:
+            raise ValueError("warped_q4_plane must be a boolean")
+        for name in ("warped_q4_quadrature_order", "warped_q4_control_order",
+                     "warped_q4_maximum_gap_cells"):
+            value = getattr(self, name)
+            if value is not None and (type(value) is not int or value &lt; 1):
+                raise ValueError(f"{name} must be a positive integer")
+        if (self.warped_q4_maximum_gap_depth is not None
+                and (type(self.warped_q4_maximum_gap_depth) is not int
+                     or self.warped_q4_maximum_gap_depth &lt; 0)):
+            raise ValueError("warped_q4_maximum_gap_depth must be a nonnegative integer")
+        for name in ("warped_q4_integration_tolerance", "warped_q4_gap_accuracy"):
+            value = getattr(self, name)
+            if value is not None and (not np.isfinite(value) or value &lt;= 0.0):
+                raise ValueError(f"{name} must be finite and positive")
+        if (self.beam_pair_gap_accuracy is not None
+                and (not np.isfinite(self.beam_pair_gap_accuracy)
+                     or self.beam_pair_gap_accuracy &lt;= 0.0)):
+            raise ValueError("beam_pair_gap_accuracy must be finite and positive")
+        if (self.maximum_beam_pair_gap_cells is not None
+                and (type(self.maximum_beam_pair_gap_cells) is not int
+                     or self.maximum_beam_pair_gap_cells &lt; 1)):
+            raise ValueError("maximum_beam_pair_gap_cells must be a positive integer")
+        if (self.maximum_beam_pair_gap_depth is not None
+                and (type(self.maximum_beam_pair_gap_depth) is not int
+                     or self.maximum_beam_pair_gap_depth &lt; 0)):
+            raise ValueError("maximum_beam_pair_gap_depth must be a nonnegative integer")
+        if (type(self.pointwise_integration_subdivisions) is not int
+                or not 0 &lt;= self.pointwise_integration_subdivisions &lt;= 20):
+            raise ValueError("pointwise_integration_subdivisions must be an integer from 0 to 20")
+        if type(self.maximum_pointwise_triangles) is not int or self.maximum_pointwise_triangles &lt; 1:
+            raise ValueError("maximum_pointwise_triangles must be a positive integer")
+        if self.beam_shell_rim_clearance is not None and (
+            not np.isfinite(self.beam_shell_rim_clearance)
+            or self.beam_shell_rim_clearance &lt;= 0.0
+        ):
+            raise ValueError("beam_shell_rim_clearance must be finite and positive")
+        if self.beam_shell_difference_step is not None and (
+            not np.isfinite(self.beam_shell_difference_step)
+            or self.beam_shell_difference_step &lt;= 0.0
+        ):
+            raise ValueError("beam_shell_difference_step must be finite and positive")
+        if self.sliding_difference_step is not None and (
+            not np.isfinite(self.sliding_difference_step)
+            or self.sliding_difference_step &lt;= 0.0
+        ):
+            raise ValueError("sliding_difference_step must be finite and positive")
+        if self.general_s3_difference_step is not None and (
+            not np.isfinite(self.general_s3_difference_step)
+            or self.general_s3_difference_step &lt;= 0.0
+        ):
+            raise ValueError("general_s3_difference_step must be finite and positive")
+        if self.general_s3_differentiation not in {
+            "existing", "jet2_s3_dev", "jet2_q4_s3_dev",
+        }:
+            raise ValueError("general_s3_differentiation is not an admitted development mode")
+        tie_values = (self.q4_s3_shared_edge_tie_step_m,
+                      self.q4_s3_shared_edge_tie_direction,
+                      self.q4_s3_shared_edge_tie_relative_tolerance)
+        if any(value is not None for value in tie_values):
+            if any(value is None for value in tie_values):
+                raise ValueError("Q4/S3 shared-edge tie needs step, direction and relative tolerance")
+            if self.general_s3_differentiation != "jet2_q4_s3_dev":
+                raise ValueError("Q4/S3 shared-edge tie needs Jet2 Q4/S3 development differentiation")
+            if (not np.isfinite(self.q4_s3_shared_edge_tie_step_m)
+                    or self.q4_s3_shared_edge_tie_step_m &lt;= 0.0
+                    or not np.isfinite(self.q4_s3_shared_edge_tie_relative_tolerance)
+                    or not 0.0 &lt; self.q4_s3_shared_edge_tie_relative_tolerance &lt;= 1.0e-3):
+                raise ValueError("Q4/S3 shared-edge tie step and tolerance must be finite and positive")
+            direction = np.asarray(self.q4_s3_shared_edge_tie_direction, dtype=float)
+            if direction.shape != (3,) or not np.all(np.isfinite(direction)) or not np.isclose(np.linalg.norm(direction), 1.0, rtol=0.0, atol=1.0e-12):
+                raise ValueError("Q4/S3 shared-edge tie direction must be a unit 3-vector")
+        if (type(self.maximum_general_s3_energy_evaluations) is not int
+                or self.maximum_general_s3_energy_evaluations &lt; 1):
+            raise ValueError("maximum_general_s3_energy_evaluations must be positive")
+        if type(self.maximum_gap_triangles) is not int or self.maximum_gap_triangles &lt; 1:
+            raise ValueError("maximum_gap_triangles must be a positive integer")
+        if type(self.maximum_patch_normal_dofs) is not int or self.maximum_patch_normal_dofs &lt; 1:
+            raise ValueError("maximum_patch_normal_dofs must be a positive integer")
+        if type(self.maximum_augmentations) is not int or self.maximum_augmentations &lt; 1:
+            raise ValueError("maximum_augmentations must be a positive integer")
+        if (type(self.augmentation_acceleration) is not str
+                or self.augmentation_acceleration not in {
+                    "none", "active_secant", "active_secant_pivot",
+                    "supported_schur_dev",
+                }):
+            raise ValueError("augmentation_acceleration must be none, active_secant, active_secant_pivot or supported_schur_dev")
+        pivot_bounds = (self.augmentation_pivot_max_pressure_pa,
+                        self.augmentation_pivot_difference_step_m)
+        if self.augmentation_acceleration == "active_secant_pivot":
+            if any(value is None or not np.isfinite(value) or value &lt;= 0.0
+                   for value in pivot_bounds):
+                raise ValueError("active_secant_pivot requires positive pressure and difference-step bounds")
+            if self.maximum_augmentations &lt; 15:
+                raise ValueError("active_secant_pivot requires at least 15 augmentations")
+        elif any(value is not None for value in pivot_bounds):
+            raise ValueError("augmentation pivot bounds require active_secant_pivot")
+        pressure_step = self.augmentation_equilibrated_pressure_step_pa
+        if pressure_step is not None:
+            if self.augmentation_acceleration != "active_secant_pivot":
+                raise ValueError("equilibrated pressure step requires active_secant_pivot")
+            if not np.isfinite(pressure_step) or pressure_step &lt;= 0.0:
+                raise ValueError("equilibrated pressure step must be finite and positive")
+        schur_bounds = (
+            self.augmentation_schur_maximum_modes,
+            self.augmentation_schur_maximum_pressure_pa,
+            self.augmentation_schur_maximum_step_pa,
+            self.augmentation_schur_difference_step_m,
+        )
+        if self.augmentation_acceleration == "supported_schur_dev":
+            if (type(schur_bounds[0]) is not int or schur_bounds[0] &lt; 1
+                    or any(value is None or not np.isfinite(value) or value &lt;= 0.0
+                           for value in schur_bounds[1:])):
+                raise ValueError("supported_schur_dev needs explicit positive mode, pressure, step and geometry-difference bounds")
+            if self.maximum_augmentations &lt; 4:
+                raise ValueError("supported_schur_dev needs at least four augmentations")
+            if (type(self.augmentation_schur_maximum_attempts) is not int
+                    or self.augmentation_schur_maximum_attempts &lt; 1
+                    or self.augmentation_schur_maximum_attempts
+                    &gt; self.maximum_augmentations - 3):
+                raise ValueError("Schur attempt cap must be positive and fit the augmentation budget")
+            if (type(self.augmentation_schur_maximum_relinearizations) is not int
+                    or self.augmentation_schur_maximum_relinearizations not in {0, 1}):
+                raise ValueError("Schur relinearization cap must be zero or one")
+            if type(self.augmentation_schur_nonlinear_backtrack_dev) is not bool:
+                raise ValueError("Schur nonlinear backtrack opt-in must be boolean")
+            if (self.augmentation_schur_nonlinear_backtrack_dev
+                    and self.augmentation_schur_maximum_attempts &lt; 2):
+                raise ValueError("Schur nonlinear backtrack needs at least two attempts")
+        elif any(value is not None for value in schur_bounds):
+            raise ValueError("Schur bounds require supported_schur_dev")
+        elif self.augmentation_schur_maximum_attempts != 1:
+            raise ValueError("Schur attempts require supported_schur_dev")
+        elif self.augmentation_schur_maximum_relinearizations != 0:
+            raise ValueError("Schur relinearization requires supported_schur_dev")
+        elif self.augmentation_schur_nonlinear_backtrack_dev:
+            raise ValueError("Schur nonlinear backtrack requires supported_schur_dev")
+        if self.augmentation_support_resolution not in {"exact", "roundoff"}:
+            raise ValueError("augmentation_support_resolution must be exact or roundoff")
+        if self.augmentation_support_resolution == "roundoff":
+            budget = self.augmentation_support_force_budget_n
+            if budget is None or not np.isfinite(budget) or budget &lt;= 0.0:
+                raise ValueError("roundoff support requires a positive force budget")
+        elif self.augmentation_support_force_budget_n is not None:
+            raise ValueError("support force budget requires roundoff support")
+        if self.pressure_tolerance is not None and (
+            not np.isfinite(self.pressure_tolerance) or self.pressure_tolerance &lt;= 0.0
+        ):
+            raise ValueError("pressure_tolerance must be finite and positive")
+        if self.maximum_shell_tilt is not None and (
+            not np.isfinite(self.maximum_shell_tilt)
+            or self.maximum_shell_tilt &lt;= 0.0
+        ):
+            raise ValueError("maximum_shell_tilt must be finite and positive")
+        if self.line_integration_relative_tolerance is not None and (
+            not np.isfinite(self.line_integration_relative_tolerance)
+            or self.line_integration_relative_tolerance &lt;= 0.0
+        ):
+            raise ValueError("line_integration_relative_tolerance must be finite and positive")
+        for name in ("maximum_line_subdivisions", "maximum_swept_subdivisions"):
+            value = getattr(self, name)
+            if type(value) is not int or value &lt; 1:
+                raise ValueError(f"{name} must be a positive integer")
+        if self.pair_motion == "restricted_sliding" and self.sliding_difference_step is None:
+&gt;           raise ValueError("restricted sliding requires an explicit sliding_difference_step")
+E           ValueError: restricted sliding requires an explicit sliding_difference_step
+
+src\anysolver\general_contact\core.py:473: ValueError</failure></testcase></testsuite></testsuites>

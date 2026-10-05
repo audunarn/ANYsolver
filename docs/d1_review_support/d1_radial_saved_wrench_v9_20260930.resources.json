@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 79.56263940001372,
+  "peak_process_tree_memory_mb": 419.827712,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_radial_saved_wrench_v9_20260930.json",
+    "--radial-wrench-check",
+    "docs/d1_review_support/d1_radial_nonmatching_swept_search_coupled_v8_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_saved_wrench_v9_20260930.log"
+}

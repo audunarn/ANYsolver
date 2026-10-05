@@ -1,0 +1,694 @@
+{
+  "baseline": "adbdfa3d",
+  "scope": "guided curved B3 active planar rim code verification, no engineering acceptance",
+  "source_sha256": "116d2b2dd6e066d3471fc94533648a56e4bdb99afb1aa73b95a977c77d721553",
+  "test_sha256": "8355ac52c24d7e9c83e36d3c378271780cd8d3a813edf0aecc25408221778eec",
+  "installed_python_files": 515,
+  "loaded_solver_modules": 217,
+  "wheel_sha256": "f6a1b3dc3318d4e8ec5faea8c4b26c933a61970c0e2cbe422440b19df185dfab",
+  "package_errors": [],
+  "raw_root": "C:\\ANYworkspaceWork\\contact_coupled_tool_staging_20261004",
+  "decisions_root": "C:/ANYworkspaceWork/contact_curved_cylinder_response_20261004",
+  "runs": {
+    "curved_rim01": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 9.46639029996004,
+      "peak_bytes": 184750080
+    },
+    "curved_rim02": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 8.780782799993176,
+      "peak_bytes": 184643584
+    },
+    "curved_installed03": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 19.556110700010322,
+      "peak_bytes": 184885248
+    },
+    "curved_installed04": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 19.538150499982294,
+      "peak_bytes": 184000512
+    }
+  },
+  "fixtures": {
+    "fixed": {
+      "reference_q": -6.396273867958281e-05,
+      "actual_q": -6.396273868177796e-05,
+      "independent_gap": -1.3174832850099127e-06,
+      "extremal_gaps": [
+        [
+          0.00011857257066130722,
+          0.0
+        ],
+        [
+          0.11388858842066964,
+          1.0
+        ],
+        [
+          -1.3174832850099127e-06,
+          0.02566746289272325
+        ]
+      ],
+      "cap_gaps": [
+        0.00013056351880956496,
+        0.11915973835254631
+      ],
+      "force_balance": [
+        1.1434944787933055e-20,
+        2.3862296687215956e-12,
+        0.0
+      ],
+      "moment_balance": [
+        0.0,
+        0.0,
+        5.058828789900049e-13
+      ],
+      "info": {
+        "profile": "CLASSICAL_B2_B3_HEMISPHERE_SUPPORT_CYLINDER_STATIC_DEV_V1",
+        "obstacle_kind": "cylinder",
+        "minimum_gap": -1.5350515160435924e-06,
+        "line_contact_energy": 4.980410543483626e-08,
+        "algorithmic_contact_potential": 4.980410543483626e-08,
+        "active_line_length": 0.001075986758245063,
+        "active_line_cells": 1,
+        "active_intervals": 2,
+        "integration_points": 72,
+        "maximum_integration_relative_error": 4.753780700515224e-16,
+        "candidate_cells": 1,
+        "beam_force": [
+          0.0001146908744391449,
+          0.09450589574018056,
+          0.0
+        ],
+        "rigid_force": [
+          -0.0001146908744391449,
+          -0.09450589574018056,
+          -0.0
+        ],
+        "beam_moment": [
+          0.0,
+          0.0,
+          0.011069806371243806
+        ],
+        "rigid_moment": [
+          -0.0,
+          -0.0,
+          -0.011069806371243806
+        ],
+        "gap_tolerance_met": true,
+        "normal_law": "penalty",
+        "line_stiffness_N_per_m2": 100000000.0,
+        "endpoint_contact_energy": 0.0,
+        "candidate_endpoints": 2,
+        "active_endpoints": 0,
+        "endpoint_stiffness_N_per_m": 100000.0,
+        "endpoint_fields": [
+          {
+            "node": 1,
+            "element": 1,
+            "gap": 0.00013056351880956496,
+            "active": false,
+            "branch": "rim",
+            "skin_point": [
+              0.1119872074627311,
+              -0.009999991817546164,
+              -1.2246467991473534e-18
+            ],
+            "rigid_point": [
+              0.11199374380697733,
+              -0.010130391620643525,
+              -1.2246467991473534e-18
+            ]
+          },
+          {
+            "node": 3,
+            "element": 1,
+            "gap": 0.11915973835254628,
+            "active": false,
+            "branch": "rim",
+            "skin_point": [
+              0.31201279253726893,
+              -0.009999991817546164,
+              0.0
+            ],
+            "rigid_point": [
+              0.20598203383669225,
+              -0.06437389597778992,
+              0.0
+            ]
+          }
+        ],
+        "minimum_gap_kind": "conservative_full_curve_lower_bound",
+        "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+        "moment_origin": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "moment_units": "N*m",
+        "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+        "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+        "beam_end_cap_work": "hemisphere_support_dev",
+        "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+        "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+        "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+        "gap_tolerance": 1e-05,
+        "maximum_candidate_pairs": 100000,
+        "swept_trial_cutbacks": 1
+      },
+      "states": 4,
+      "iterations": 20,
+      "history_checks": [
+        {
+          "factor": 0.25,
+          "q": -5.550444734888529e-05,
+          "reference_q": -5.550444734887557e-05
+        },
+        {
+          "factor": 0.5,
+          "q": -5.8823751053848314e-05,
+          "reference_q": -5.882375105384475e-05
+        },
+        {
+          "factor": 0.75,
+          "q": -6.155073103126031e-05,
+          "reference_q": -6.155073100109863e-05
+        },
+        {
+          "factor": 1.0,
+          "q": -6.396273868177796e-05,
+          "reference_q": -6.396273867958281e-05
+        }
+      ],
+      "independent_active_length": 0.0010759867582444058
+    },
+    "moving": {
+      "reference_q": -6.396273867958281e-05,
+      "actual_q": -6.396273868016605e-05,
+      "independent_gap": -1.317483284857257e-06,
+      "extremal_gaps": [
+        [
+          0.00011857257066130722,
+          0.0
+        ],
+        [
+          0.11388858842066964,
+          1.0
+        ],
+        [
+          -1.317483284857257e-06,
+          0.025667462892706435
+        ]
+      ],
+      "cap_gaps": [
+        0.00013056351880955108,
+        0.11915973835254601
+      ],
+      "force_balance": [
+        -6.776263578034403e-21,
+        6.312060249480389e-13,
+        0.0
+      ],
+      "moment_balance": [
+        0.0,
+        0.0,
+        1.3381472579315767e-13
+      ],
+      "info": {
+        "profile": "CLASSICAL_B2_B3_HEMISPHERE_COUPLED_TRANSLATING_CYLINDER_STATIC_DEV_V1",
+        "obstacle_kind": "cylinder",
+        "minimum_gap": -1.535051515877059e-06,
+        "line_contact_energy": 4.9804105419598355e-08,
+        "algorithmic_contact_potential": 4.9804105419598355e-08,
+        "active_line_length": 0.001075986758179237,
+        "active_line_cells": 1,
+        "active_intervals": 2,
+        "integration_points": 72,
+        "maximum_integration_relative_error": 3.166635458815715e-16,
+        "candidate_cells": 1,
+        "beam_force": [
+          0.0001146908744152052,
+          0.09450589572283241,
+          0.0
+        ],
+        "rigid_force": [
+          -0.0001146908744152052,
+          -0.09450589572283241,
+          -0.0
+        ],
+        "beam_moment": [
+          0.0,
+          0.0,
+          0.011069806369211437
+        ],
+        "rigid_moment": [
+          -0.0,
+          -0.0,
+          -0.011069806369211437
+        ],
+        "gap_tolerance_met": true,
+        "normal_law": "penalty",
+        "line_stiffness_N_per_m2": 100000000.0,
+        "endpoint_contact_energy": 0.0,
+        "candidate_endpoints": 2,
+        "active_endpoints": 0,
+        "endpoint_stiffness_N_per_m": 100000.0,
+        "endpoint_fields": [
+          {
+            "node": 1,
+            "element": 1,
+            "gap": 0.00013056351880955108,
+            "active": false,
+            "branch": "rim",
+            "skin_point": [
+              0.11198720746273141,
+              -0.009999991817546164,
+              -1.2246467991473534e-18
+            ],
+            "rigid_point": [
+              0.11199374380697764,
+              -0.010130391620643511,
+              -1.2246467991473534e-18
+            ]
+          },
+          {
+            "node": 3,
+            "element": 1,
+            "gap": 0.11915973835254601,
+            "active": false,
+            "branch": "rim",
+            "skin_point": [
+              0.3120127925372686,
+              -0.009999991817546164,
+              0.0
+            ],
+            "rigid_point": [
+              0.20598203383669222,
+              -0.06437389597778986,
+              0.0
+            ]
+          }
+        ],
+        "minimum_gap_kind": "conservative_full_curve_lower_bound",
+        "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+        "moment_origin": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "moment_units": "N*m",
+        "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+        "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+        "beam_end_cap_work": "hemisphere_coupled_tool_dev",
+        "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+        "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+        "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+        "rigid_motion_profile": "prescribed_axis_translation_affine_static_v1",
+        "load_staging": "active_origin_one_newton_seed_complete_path_v1",
+        "gap_tolerance": 1e-05,
+        "maximum_candidate_pairs": 100000,
+        "swept_trial_cutbacks": 16,
+        "rigid_tool_position": [
+          0.117,
+          -0.110005,
+          0.0
+        ],
+        "rigid_contact_work_trapezoid": -4.751519994486431e-06,
+        "prescribed_actuator_work_trapezoid": 4.751519994486431e-06
+      },
+      "states": 11,
+      "iterations": 67,
+      "history_checks": [
+        {
+          "factor": 0.25,
+          "q": -0.0002924906314642361,
+          "reference_q": -0.0002924906314642073
+        },
+        {
+          "factor": 0.625,
+          "q": -0.0007311036904257597,
+          "reference_q": -0.0007311036904183791
+        },
+        {
+          "factor": 0.8125,
+          "q": -0.0009503036908558104,
+          "reference_q": -0.0009503036908538044
+        },
+        {
+          "factor": 0.859375,
+          "q": -0.0010050886053451225,
+          "reference_q": -0.001005088605345111
+        },
+        {
+          "factor": 0.89453125,
+          "q": -0.0009498508683001249,
+          "reference_q": -0.0009498508683001203
+        },
+        {
+          "factor": 0.912109375,
+          "q": -0.0008184597115231056,
+          "reference_q": -0.0008184597115230495
+        },
+        {
+          "factor": 0.9296875,
+          "q": -0.0006816443815940018,
+          "reference_q": -0.000681644381594008
+        },
+        {
+          "factor": 0.947265625,
+          "q": -0.0005387991772718426,
+          "reference_q": -0.0005387991772718193
+        },
+        {
+          "factor": 0.96484375,
+          "q": -0.00038905886158850916,
+          "reference_q": -0.00038905886156469975
+        },
+        {
+          "factor": 0.982421875,
+          "q": -0.00023128423685682376,
+          "reference_q": -0.00023128423685324947
+        },
+        {
+          "factor": 1.0,
+          "q": -6.396273868016605e-05,
+          "reference_q": -6.396273867958281e-05
+        }
+      ],
+      "independent_active_length": 0.0010759867581786014
+    },
+    "rim": {
+      "info": {
+        "profile": "CLASSICAL_B2_B3_HEMISPHERE_COUPLED_TRANSLATING_CYLINDER_STATIC_DEV_V1",
+        "obstacle_kind": "cylinder",
+        "minimum_gap": -6.11391950699168e-06,
+        "line_contact_energy": 1.7525247977812255e-06,
+        "algorithmic_contact_potential": 2.9518320346773792e-06,
+        "active_line_length": 0.0015824154851960216,
+        "active_line_cells": 1,
+        "active_intervals": 1,
+        "integration_points": 24,
+        "maximum_integration_relative_error": 3.624911392095629e-16,
+        "candidate_cells": 1,
+        "beam_force": [
+          0.0033223226928791034,
+          1.1858350653125913,
+          1.2037062152420224e-35
+        ],
+        "rigid_force": [
+          -0.0033223226928791034,
+          -1.1858350653125913,
+          -1.2037062152420224e-35
+        ],
+        "beam_moment": [
+          9.704047089650183e-24,
+          2.684655836027128e-21,
+          0.13323825795287908
+        ],
+        "rigid_moment": [
+          -9.704047089650183e-24,
+          -2.684655836027128e-21,
+          -0.13323825795287908
+        ],
+        "gap_tolerance_met": true,
+        "normal_law": "penalty",
+        "line_stiffness_N_per_m2": 100000000.0,
+        "endpoint_contact_energy": 1.1993072368961538e-06,
+        "candidate_endpoints": 2,
+        "active_endpoints": 1,
+        "endpoint_stiffness_N_per_m": 100000.0,
+        "endpoint_fields": [
+          {
+            "node": 1,
+            "element": 1,
+            "gap": -4.897565184652786e-06,
+            "active": true,
+            "branch": "rim",
+            "skin_point": [
+              0.11196385390050537,
+              -0.009999934672761184,
+              -1.2246467991473532e-18
+            ],
+            "rigid_point": [
+              0.11196384968123735,
+              -0.009995037109393987,
+              -1.2246467991473532e-18
+            ]
+          },
+          {
+            "node": 3,
+            "element": 1,
+            "gap": 0.12359219959901818,
+            "active": false,
+            "branch": "rim",
+            "skin_point": [
+              0.31203614609949465,
+              -0.009999934672761184,
+              0.0
+            ],
+            "rigid_point": [
+              0.20149236268445064,
+              -0.06527292762602353,
+              0.0
+            ]
+          }
+        ],
+        "minimum_gap_kind": "conservative_full_curve_lower_bound",
+        "gap_enclosure_accuracy_m": 1.0000000000000002e-06,
+        "moment_origin": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "moment_units": "N*m",
+        "beam_end_cap_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+        "geometry_kinematics": "exact_literal_axis_projection_affine_static_v1",
+        "beam_end_cap_work": "hemisphere_coupled_tool_dev",
+        "endpoint_geometry": "actual_tangent_hemisphere_minimum_cylinder_axis_distance",
+        "contact_integration_measure": "reference_line_length_and_distinct_endpoint_point_springs",
+        "endpoint_integration_rule": "one_minimum_support_point_per_physical_end",
+        "rigid_motion_profile": "prescribed_axis_translation_affine_static_v1",
+        "load_staging": "active_origin_one_newton_seed_complete_path_v1",
+        "gap_tolerance": 1e-05,
+        "maximum_candidate_pairs": 100000,
+        "swept_trial_cutbacks": 13,
+        "rigid_tool_position": [
+          0.11205,
+          -0.109995,
+          0.0
+        ],
+        "rigid_contact_work_trapezoid": -8.397719076196466e-06,
+        "prescribed_actuator_work_trapezoid": 8.397719076196466e-06
+      },
+      "history_checks": [
+        {
+          "factor": 0.25,
+          "q": -0.0002924906314642361,
+          "reference_q": -0.0002924906314642074
+        },
+        {
+          "factor": 0.625,
+          "q": -0.0007311036904257597,
+          "reference_q": -0.0007311036904183756
+        },
+        {
+          "factor": 0.8125,
+          "q": -0.0009503036908558104,
+          "reference_q": -0.0009503036908538045
+        },
+        {
+          "factor": 0.90625,
+          "q": -0.0010598667517516284,
+          "reference_q": -0.0010598667517514163
+        },
+        {
+          "factor": 0.953125,
+          "q": -0.0011146377639230565,
+          "reference_q": -0.0011146377639230402
+        },
+        {
+          "factor": 0.96484375,
+          "q": -0.0011283293593788149,
+          "reference_q": -0.0011283293593788149
+        },
+        {
+          "factor": 0.9736328125,
+          "q": -0.0009908680697591932,
+          "reference_q": -0.0009908680697591457
+        },
+        {
+          "factor": 0.982421875,
+          "q": -0.0007810469903395505,
+          "reference_q": -0.0007810469903394939
+        },
+        {
+          "factor": 0.9912109375,
+          "q": -0.0005148208660555808,
+          "reference_q": -0.0005148208660556287
+        },
+        {
+          "factor": 1.0,
+          "q": -0.00018073167814334552,
+          "reference_q": -0.00018073167814331708
+        }
+      ],
+      "independent_fields": [
+        {
+          "gap": -4.897565184638908e-06,
+          "branch": "rim"
+        },
+        {
+          "gap": 0.12359219959901818,
+          "branch": "rim"
+        }
+      ],
+      "curve_gap": -5.895691169863215e-06,
+      "line_energy": 1.7525247977809544e-06,
+      "cap_energy": 1.199307236889357e-06,
+      "contact_tangent_errors": [
+        4.412570370651856e-07,
+        4.8699837851106054e-08,
+        7.931468679695e-09
+      ],
+      "force_balance": [
+        -1.6940658945086007e-19,
+        -3.7643499428696714e-16,
+        0.0
+      ],
+      "moment_balance": [
+        0.0,
+        7.52316384526264e-37,
+        -8.261620554339544e-17
+      ],
+      "independent_active_length": 0.001582415485195391
+    }
+  },
+  "saved_continuum_active_length": [
+    {
+      "beam": "B2",
+      "cells": 1,
+      "line_stiffness": 1000000000.0,
+      "reference_length": 4.440249350401502e-06,
+      "actual_length": 4.4439126365968216e-06,
+      "relative_error": 0.0008250181253870981
+    },
+    {
+      "beam": "B2",
+      "cells": 2,
+      "line_stiffness": 1000000000.0,
+      "reference_length": 4.440249350401502e-06,
+      "actual_length": 4.4439124738792225e-06,
+      "relative_error": 0.0008249814793372427
+    },
+    {
+      "beam": "B2",
+      "cells": 4,
+      "line_stiffness": 1000000000.0,
+      "reference_length": 4.440249350401502e-06,
+      "actual_length": 4.443912148430425e-06,
+      "relative_error": 0.0008249081841748402
+    },
+    {
+      "beam": "B2",
+      "cells": 4,
+      "line_stiffness": 4000000000.0,
+      "reference_length": 2.2216313735214435e-06,
+      "actual_length": 2.2234629299431306e-06,
+      "relative_error": 0.0008244195880183266
+    },
+    {
+      "beam": "B2",
+      "cells": 4,
+      "line_stiffness": 16000000000.0,
+      "reference_length": 1.1111925523532698e-06,
+      "actual_length": 1.1121083686200302e-06,
+      "relative_error": 0.0008241742304885598
+    },
+    {
+      "beam": "B3",
+      "cells": 1,
+      "line_stiffness": 1000000000.0,
+      "reference_length": 4.440249350401502e-06,
+      "actual_length": 4.443912148449182e-06,
+      "relative_error": 0.0008249081883990844
+    },
+    {
+      "beam": "B3",
+      "cells": 2,
+      "line_stiffness": 1000000000.0,
+      "reference_length": 4.440249350401502e-06,
+      "actual_length": 4.443911497622173e-06,
+      "relative_error": 0.0008247616139710887
+    },
+    {
+      "beam": "B3",
+      "cells": 4,
+      "line_stiffness": 1000000000.0,
+      "reference_length": 4.440249350401502e-06,
+      "actual_length": 4.443910196096692e-06,
+      "relative_error": 0.0008244684940631118
+    },
+    {
+      "beam": "B3",
+      "cells": 4,
+      "line_stiffness": 4000000000.0,
+      "reference_length": 2.2216313735214435e-06,
+      "actual_length": 2.2234624408409475e-06,
+      "relative_error": 0.0008241994335008429
+    },
+    {
+      "beam": "B3",
+      "cells": 4,
+      "line_stiffness": 16000000000.0,
+      "reference_length": 1.1111925523532698e-06,
+      "actual_length": 1.1121082462018348e-06,
+      "relative_error": 0.0008240640621876902
+    }
+  ],
+  "runtime": {
+    "jit_disabled": true,
+    "numba_threads": 1,
+    "effective_pools": [
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+        "version": "0.3.31.188.0",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "blas",
+        "internal_api": "openblas",
+        "num_threads": 1,
+        "prefix": "libscipy_openblas",
+        "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+        "version": "0.3.30",
+        "threading_layer": "pthreads",
+        "architecture": "SkylakeX"
+      },
+      {
+        "user_api": "openmp",
+        "internal_api": "openmp",
+        "num_threads": 1,
+        "prefix": "vcomp",
+        "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+        "version": null
+      }
+    ]
+  },
+  "review": "Read-only worker: planar formula eligible only for coplanar XY and perpendicular radial magnitude above beam radius; guards added. Signed committed snapshots replace norm inference. No fixture defect. Supporting same-family review, not acceptance.",
+  "remaining": [
+    "pressure-field/spatial-resolution claim if required",
+    "frozen candidate independent engineering assessment",
+    "broader D3 pairings/native/section scope",
+    "full C0-C9 programme"
+  ]
+}

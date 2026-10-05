@@ -1,0 +1,117 @@
+{
+  "base": "4c3ac836574b085716a02d507e6b619ec18cd0ea",
+  "status": "development packaging/routing and actual B3 coupling; no scientific admission",
+  "excluded_active_worker_note": "D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md",
+  "paths": [
+    {
+      "path": ".gitattributes",
+      "sha256": "8a8985a031941a90539542eeff35ef295fa164360c472858ff647e502d27d6a5"
+    },
+    {
+      "path": "GENERAL_CONTACT_PLAN.md",
+      "sha256": "ee8aa988e4d8db961cddedfed2be65ffe50d3d5169326bc57f89a92b021978fb"
+    },
+    {
+      "path": "GENERAL_CONTACT_RESTART.md",
+      "sha256": "19ec5756403a097b5f682536385cb6b5350bfa87e000c6529d2fb98e0ac85bd4"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_C2_DEFORMABLE_BEAM_S3.md",
+      "sha256": "f0e52dec2b46b6e1a06136d4de23b3ed3b750a8e6642360d08104abd0be5b48b"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_CAPABILITIES.md",
+      "sha256": "3dbdead5dad4148a05102588433b50ff334b8f4d61d863d2ae2336d90054d07a"
+    },
+    {
+      "path": "docs/GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md",
+      "sha256": "4e9189769fbf2a8ad89b3958276c7dcd996dc0942fbfea6b57bc9ec0e142877b"
+    },
+    {
+      "path": "docs/d1_review_support/D3_DEFORMABLE_BEAM_S3_REVIEW_20261001.md",
+      "sha256": "64569125104ff9a2864dabd853ffb7e364d23f6e0402445a9b0e67c1cdbba544"
+    },
+    {
+      "path": "docs/d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md",
+      "sha256": "cc1d2dfe3c42ea28dba829888d3904b6875cd63ce3cdf04e9407ffdf0c1101bd"
+    },
+    {
+      "path": "docs/d1_review_support/GENERAL_CONTACT_DEVELOPMENT_20260929.md",
+      "sha256": "871d644e1a18ee1d5df25d0f7ac6c332a4cffc5c1f260c48514919bd999482ea"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_summary_v1_20261001.json",
+      "sha256": "30d310a17749875c4a93a2b681f9cd77defff011b55a6881fb6eea25dbf0390b"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_v1_20261001.inputs.json",
+      "sha256": "daaf02477032530eeae1c0fb893e67d726ec94ca99ad04228df1e78ee9ca9ca1"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_v1_20261001.log",
+      "sha256": "e0954f0dc77a54599956498864f22d9377897be07eec547d468720b1656c5fc7"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_v1_20261001.resources.json",
+      "sha256": "c1dbda5dd3fd36bb96316a1567934019dbf934668a8a298f4ea9470811c06182"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_v1_20261001.test.source.py",
+      "sha256": "58fed6456c0fedef61c424e3a820e797d8af1dfed84b7ec21a43b12e2f14a66f"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_v1_20261001.xml",
+      "sha256": "d8ad35532650813b1f778ddd90353f751727a26384ccf0b880a224da6408eef6"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_v2_20261001.inputs.json",
+      "sha256": "a344964e5f7a6e2c68f447f8c8f3046dc8f2adef535acb6b885ef0babc19b2a9"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_v2_20261001.log",
+      "sha256": "e652cd748b36035cbbe7ad81e69c07e14abba555f518d5ed812aa12bc44d3317"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_v2_20261001.resources.json",
+      "sha256": "93e5490c276a6c21bb9a88e5e7f337b6e28b7aea98082b6d1a1832d37c13ed12"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_v2_20261001.test.source.py",
+      "sha256": "7734454077293c5beb61542cd5d2a3bc29d77e3964ff6b62b37479d681d0c1f7"
+    },
+    {
+      "path": "docs/d1_review_support/d3_deformable_b3_s3_static_v2_20261001.xml",
+      "sha256": "5de1c36ed552443723bec8856c338a645fc5a20a25138caa7dce09d638445c2e"
+    },
+    {
+      "path": "docs/d1_review_support/native_beam_installed_development_entry.py",
+      "sha256": "2f82efbfbccb531c76addc85657e3fa660d9e2a6b4051a7cb230dd2e76a5ed7f"
+    },
+    {
+      "path": "docs/d1_review_support/native_beam_installed_development_v1_20261001.inputs.json",
+      "sha256": "74780178aa02112676ea702516a52cae223046d0db1769bea37d7f275aeaa4f2"
+    },
+    {
+      "path": "docs/d1_review_support/native_beam_installed_development_v1_20261001.log",
+      "sha256": "287cc3baffd12b21c5ba73a425495b3b1114d9e1ea29155993568d39205c65e0"
+    },
+    {
+      "path": "docs/d1_review_support/native_beam_installed_development_v1_20261001.resources.json",
+      "sha256": "c980e2f1c98a307bbb9505826f6f87862a7c447fd1cfb3d5becf58ca318ada49"
+    },
+    {
+      "path": "docs/d1_review_support/native_beam_installed_development_v1_20261001.summary.json",
+      "sha256": "697ce6ceab6832818d790cb4471b2772a076480ae2a4411422ec9288d62e89e8"
+    },
+    {
+      "path": "tests/test_general_contact_deformable_b3_s3_static.py",
+      "sha256": "0da4295275e6f1e285e8fce34db0726934415257c9bfcce6c3c3565f470ddbd7"
+    }
+  ],
+  "postrun_whitespace_only_test_change": {
+    "executed_test_sha256": "7734454077293c5beb61542cd5d2a3bc29d77e3964ff6b62b37479d681d0c1f7",
+    "current_test_sha256": "0da4295275e6f1e285e8fce34db0726934415257c9bfcce6c3c3565f470ddbd7",
+    "exact_executed_snapshot": "docs/d1_review_support/d3_deformable_b3_s3_static_v2_20261001.test.source.py",
+    "ast_equal": true
+  }
+}

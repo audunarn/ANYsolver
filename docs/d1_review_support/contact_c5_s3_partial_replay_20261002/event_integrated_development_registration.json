@@ -1,0 +1,20 @@
+{
+  "id": "C5_PARTIAL_REPLAY_EVENT_INTEGRATED_DEV_20261002",
+  "kind": "prospective integrated development; not qualification",
+  "authority": "GENERAL_CONTACT_GOAL.md revision2026-09-30.4 resources: named registered integrated development up to900s/4GB; no frozen acceptance authority reused",
+  "question": "Can the original nonguided press/partial slide/reverse/open/recontact and split restart complete with event-resolved friction and unchanged mechanical gates?",
+  "head": "c43881a767179f5c8c68e1a059a22b38f19c74cf",
+  "sha256": {
+    "src/anysolver/general_contact/s3_friction_replay.py": "e4b11af091440cbaf7b6729abbbeec1562c2b9f0d4e17280592f3f3e9b503f7c",
+    "src/anysolver/general_contact/s3_friction_static.py": "6670c349825cc18894fc4fb1a78534a3c1f1de06512551335a1a7099d325bbc7",
+    "src/anysolver/general_contact/s3_friction_touch.py": "42ff9e313b1536672d8ad17984db5df0de54e0f872f8074b28f6a6f6ef1de795",
+    "src/anysolver/general_contact/s3_sliding_friction.py": "b2995997051dc18c0ebd42e66b53a3ef0010603f9644ca8d02ad3d32b5f48655",
+    "tests/test_general_contact_s3_friction_replay.py": "a8f43a5b58d3f0f52f28b16ded4c05047f1d2e904c43a74b3feb5e6dde80fe30"
+  },
+  "selector": "tests/test_general_contact_s3_friction_replay.py::test_partial_overlap_coupled_workflow_and_split_restart[False]",
+  "timeout_seconds": 900,
+  "memory_limit_mib": 953,
+  "event_subdivisions": 4,
+  "jit": "off",
+  "decision": "If mechanical checks pass, pursue event-time/integration refinement and installed evidence. If it fails, classify the first discrepancy; no automatic retry or further resource increase. Earlier180s development failures remain failures."
+}

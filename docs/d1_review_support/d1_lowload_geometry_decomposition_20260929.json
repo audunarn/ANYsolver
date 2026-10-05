@@ -1,0 +1,13 @@
+{
+  "status": "development_lowload_geometry_decomposition",
+  "saved_pose": "docs\\d1_review_support\\d1_lowload_clearance5_coupled_20260929.json",
+  "oracle_scope": "frozen_reference_xy_work_map",
+  "active_node_id": 13,
+  "production_gap_m": -9.275143074956763e-19,
+  "frozen_oracle_gap_at_production_pose_m": -1.3150880117686597e-11,
+  "active_gap_difference_m": 1.315087919017229e-11,
+  "active_support_relative_difference": 5.000011960021307e-09,
+  "active_work_row_relative_l2_difference": 9.785429792413733e-05,
+  "active_work_on_production_pose_difference_m3": 7.975687888788299e-13,
+  "independent_reference_overlap_area_m2": 0.9999999999999972
+}

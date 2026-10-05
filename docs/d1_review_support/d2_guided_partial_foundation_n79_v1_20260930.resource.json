@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 118.56078460000572,
+  "peak_process_tree_memory_mb": 335.634432,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "python",
+    "docs/d1_review_support/d2_guided_partial_foundation_coupled_dev.py",
+    "--nx",
+    "79",
+    "--output",
+    "docs/d1_review_support/d2_guided_partial_foundation_n79_v1_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d2_guided_partial_foundation_n79_v1_20260930.log"
+}

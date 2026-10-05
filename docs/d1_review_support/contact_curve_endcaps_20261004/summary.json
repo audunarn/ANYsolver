@@ -1,0 +1,212 @@
+{
+  "scope": "D3 single classical B2/B3-cell physical ends on actual quadratic curves; developmental code verification, not engineering acceptance",
+  "source_parent": "8081d582e60fe519e0de23fdf6b352c2a3b6ee5d",
+  "source_files": {
+    "src/anysolver/general_contact/beam_curve_ends.py": "8166a77bc3774d32c91dc1518b2ce1268e045b1c84efba85b60eeb968d3fe356",
+    "src/anysolver/general_contact/beam_curve_end_geometry.py": "059020e22a4e0877afb277563696e10380642ce058e2d86af8ec9d3b86d66017",
+    "src/anysolver/general_contact/beam_pair_ends.py": "ec9cece34b9b2aff0d588cc3d64bfd8e450b1f4e8ed59344abf58474df7452d3",
+    "src/anysolver/general_contact/core.py": "05276862ad74ec132253d593565e3eadd243ce8b818b9269bebd5fcf06b7f076",
+    "tests/test_general_contact_beam_curve_ends.py": "42f9af3cdef4271916b7b0d46f6e52b6da58ad4498a3838310cc2ca74ec7640f",
+    "examples/general_contact_beam_curve_ends.py": "98f449e66ed01c3753b15f6293c9915052d7db35aa91c3aa2694419cb19b69ac"
+  },
+  "wheels": {
+    "anyfem-0.4.1-py3-none-any.whl": "e4b06ec8abeda303499fe88927786dca44e32f5a05e6c376788b7420a354b24a",
+    "anysolver-0.4.7-py3-none-any.whl": "83524d9c9d10ace7c0be09cbd49da51f034d7ae1d9d5e9f1249d0712acfb5876"
+  },
+  "runs": {
+    "build01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 11.930768699967302,
+        "peak_bytes": 110469120
+      },
+      "outcomes": null
+    },
+    "install01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.828127000015229,
+        "peak_bytes": 85200896
+      },
+      "outcomes": null
+    },
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 27.587518099986482,
+        "peak_bytes": 335622144
+      },
+      "outcomes": {
+        "passed": 21
+      }
+    },
+    "source01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 3.7050289000035264,
+        "peak_bytes": 183496704
+      },
+      "outcomes": {
+        "failed": 2
+      }
+    },
+    "source02": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.5856532999896444,
+        "peak_bytes": 185131008
+      },
+      "outcomes": {
+        "failed": 2,
+        "passed": 1
+      }
+    },
+    "source03": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.7946515000076033,
+        "peak_bytes": 184045568
+      },
+      "outcomes": {
+        "passed": 4
+      }
+    },
+    "source04": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 10.750488399993628,
+        "peak_bytes": 183816192
+      },
+      "outcomes": {
+        "passed": 4,
+        "failed": 1
+      }
+    },
+    "source05": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 4.023570100020152,
+        "peak_bytes": 184651776
+      },
+      "outcomes": {
+        "passed": 2,
+        "failed": 1
+      }
+    },
+    "source06": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 5.0126277999952435,
+        "peak_bytes": 181764096
+      },
+      "outcomes": {
+        "passed": 5
+      }
+    }
+  },
+  "installed_modules_matching": 220,
+  "installed_package_files_matching": 500,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "independent_p2_bar": {
+    "independent_displacement_m": [
+      0.0018735718721768777,
+      0.0037522826821111835,
+      -0.003752282682111186,
+      -0.001873571872176879
+    ],
+    "solved_displacement_m": [
+      0.00187357187217688,
+      0.003752282682111188,
+      -0.0037522826821111866,
+      -0.0018735718721768794
+    ],
+    "relative_error": 8.4085567617166e-16
+  },
+  "bar_relative_target": 1e-06,
+  "smooth_directional_tangent_target": 1e-05,
+  "bar_gap_budget_m": 0.008,
+  "full_curve_gap_accuracies_m": [
+    1e-05,
+    1e-07
+  ],
+  "full_curve_gap_caps": {
+    "cells": 10000,
+    "depth": 25
+  },
+  "raw_records": 59,
+  "raw_sha256": "789bf8946f877ed929f3e5e3087224d8634a4b3221de98b78d593ef762e7d1b5",
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "versions": {
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "numba": "0.65.1",
+      "ANYmaterial": "0.2.0",
+      "ANYgeometry": "0.4.3"
+    }
+  },
+  "review_disposition": "rounded clamp penetration lost its finite active tangent; exact stable squared-gap calculation/underflow rejection plus interior roundoff rejection close it. Whole-curve tensor/path bounds reviewed after actual rotated AABB depth failure. Supporting same-family source scrutiny only.",
+  "preserved_failures": [
+    "source01 exploratory1e-7m AABB depth25 exhaustion;2fail",
+    "source02 separating-support experiment still exhausteddepth25;2fail+exact-oblique1pass;experiment abandoned",
+    "source04 incorrect through-crossing endpose actually still overlapping;1testdefect+4pass",
+    "source05 rotated complete reference geometry AABB depth25 failure at1e-5m;1fail+2pass"
+  ],
+  "unchanged": [
+    "legacy beam_curve_pair.py/uncapped profiles",
+    "material/contact law units",
+    "historical sphere/default/no-contact semantics",
+    "frozen scientific criteria/failed authorities",
+    "ANYfem source",
+    "engineering acceptance/release flags"
+  ],
+  "limits": [
+    "oneB2/B3cellperbody",
+    "elastic scalar vonKarman",
+    "strict globallyconvex endpoint projection certificate",
+    "unresolved closed ownership/branch changes and nonconvex minima reject",
+    "point end law is not continuous cap-surface integration",
+    "normal application/mesh-enforcement/engineering qualification/native-friction-dynamics/fullprogramme incomplete"
+  ]
+}

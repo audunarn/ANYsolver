@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_open_ring_restart_dev.py", line 95, in <module>
+    main(args.reference, args.full_result, args.output)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_open_ring_restart_dev.py", line 42, in main
+    raise AssertionError((resumed.status, resumed.failure_reason,
+                          len(resumed.steps)))
+AssertionError: ('completed', None, 8)

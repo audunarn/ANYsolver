@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 11.387888199998997,
+  "peak_process_tree_memory_mb": 335.798272,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_s3_q4_static_dev.py",
+    "-q",
+    "--junitxml=docs/d1_review_support/d2_s3_q4_static_v1_20260930.xml"
+  ],
+  "log": "docs\\d1_review_support\\d2_s3_q4_static_v1_20260930.log"
+}

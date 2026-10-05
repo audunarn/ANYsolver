@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 73.40418469998986,
+  "peak_process_tree_memory_mb": 409.944064,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_d1_interior_profile.py",
+    "-k",
+    "guarded_left_edge_contact_exception"
+  ],
+  "log": "docs\\d1_review_support\\d1_exception_focus_current_20260929.log"
+}

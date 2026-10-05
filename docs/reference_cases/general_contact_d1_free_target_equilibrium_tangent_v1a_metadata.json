@@ -1,0 +1,21 @@
+{
+  "case_id": "general_contact_d1_free_target_equilibrium_tangent_v1a_metadata",
+  "status": "registered_metadata_correction",
+  "amends": "general_contact_d1_free_target_equilibrium_tangent_v1",
+  "original_registration": "docs/reference_cases/general_contact_d1_free_target_equilibrium_tangent_v1.json",
+  "original_registration_sha256": "b5940a6258d4058473c3dd7e6484cded00383be08c1869fe23c710744dc5827c",
+  "original_formal_raw": "reports/general_contact_d1_free_target_8q4_equilibrium_tangent_v1_formal_20260927.json",
+  "original_formal_raw_sha256": "bec5aa71f3811b336230eae9f0e1c7700753ef9ac7a59f83c446a3f63b9db0a1",
+  "original_numerical_verdict": "reports/general_contact_d1_free_target_8q4_equilibrium_tangent_v1_verdict_20260927.json",
+  "original_numerical_verdict_sha256": "df6461b273fbdcf23959079a7a0cfa433bd95c02c8bb5fbcdf68ff814b2c578b",
+  "source_commit": "ee5518b9233e3915c0608b713c8e788ba7460032",
+  "correction": {
+    "field": "source_blobs.src/anysolver/general_contact/s3_patch_static.py",
+    "original_value": "b69d4b271ce7c7bbbca1f76a3c6e48d8a0b2573a6253ec",
+    "corrected_value": "b69d4b271ce7c7bbbca1f76a3c6e48d8a641387b",
+    "reason": "The original value is a malformed 46-character transcription; the corrected value is the Git blob at the registered source commit."
+  },
+  "mechanical_inputs_or_criteria_changed": false,
+  "additional_mechanics_execution": false,
+  "required_disposition": "Independent review of the original numerical evidence together with a separate source-identity verdict; original registration and numerical verdict remain retained."
+}

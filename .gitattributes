@@ -132,7 +132,6 @@ src/anysolver/stiffened_shell.py -text
 tests/test_stiffened_shell_b2_free_reference_modes.py -text
 tests/test_stiffened_shell_b2_mixed_reference_modes.py -text
 docs/agent_plans/development/r8-b2-free-reference-modes-20261004/** -text
-
 scripts/r8_bl5_projected_native_beta_dev.py -text
 tests/test_r8_bl5_projected_native_beta_dev.py -text
 .qualification/b3-ge-e4-pl/r8-bl5-projected-assessment-dev-20261003-v1/native-beta/** -text
@@ -155,7 +154,6 @@ src/anysolver/_stiffened_shell_ge_distributing_reference.py -text
 tests/test_stiffened_shell_ge_distributing_reference.py -text
 .qualification/b3-ge-e4-pl/r8-distributing-ge-reference-dev-20261004-v1/** -text
 src/anysolver/_stiffened_shell_ge_experimental.py -text
-src/anysolver/stiffened_shell.py -text
 src/anysolver/_stiffened_shell_ge_body_load.py -text
 src/anysolver/_stiffened_shell_ge_distributed_load.py -text
 src/anysolver/_stiffened_shell_ge_pressure_load.py -text
@@ -177,10 +175,8 @@ tests/test_r8_e02_distributing_feasibility.py -text
 src/anysolver/_stiffened_shell_distributing_pose.py -text
 tests/test_stiffened_shell_distributing_pose.py -text
 .qualification/b3-ge-e4-pl/r8-distributing-finite-pose-dev-20261004-v1/** -text -whitespace
-
 src/anysolver/_stiffened_shell_ge_distributing_finite.py -text
 tests/test_stiffened_shell_ge_distributing_finite.py -text
-
 # Final tested finite owner and raw development evidence retain exact bytes.
 src/anysolver/_stiffened_shell_ge_checkpoint_binary.py -text
 tests/test_stiffened_shell_ge_distributing_finite_public.py -text
@@ -197,17 +193,11 @@ src/anysolver/_stiffened_shell_ge_finite_experimental.py -text
 tests/test_stiffened_shell_ge_distributing_material.py -text
 examples/stiffened_shell_ge_distributing_material.py -text
 .qualification/b3-ge-e4-pl/r8-distributing-material-dev-20261004-v1/** -text -whitespace
-
 src/anysolver/_ge_beam3_variational_shell.py -text
-
 src/anysolver/_stiffened_shell_algorithmic_pullback.py -text
-
 src/anysolver/_stiffened_shell_q4_algorithmic_pullback.py -text
-
 tests/test_stiffened_shell_material_rotation_numerics.py -text
-
 tests/data/stiffened_shell_material_pre_stable_rotation.bin -text
-
 scripts/r8_e02_double_output.py -text
 tests/test_r8_e02_double_output.py -text
 .qualification/b3-ge-e4-pl/r8-e02-double-output-dev-20261004-v1/** -text -whitespace
@@ -221,7 +211,6 @@ docs/stiffened_shell_distributing_material_development.md -text
 tests/test_stiffened_shell_distributing_native_material.py -text
 .qualification/b3-ge-e4-pl/r8-distributing-fy80-dev-20261004-v1/** -text -whitespace
 .qualification/b3-ge-e4-pl/r8-distributing-native-material-dev-20261004-v1/** -text -whitespace
-
 docs/agent_plans/B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md -text
 tests/test_stiffened_shell_distributing_native_tangent.py -text
 tests/test_stiffened_shell_distributing_native_reverse_flow.py -text
@@ -247,55 +236,40 @@ src/anysolver/_stiffened_shell_displacement_corrector.py -text
 tests/test_stiffened_shell_native_point_displacement.py -text
 examples/stiffened_shell_ge_point_displacement.py -text
 docs/stiffened_shell_native_displacement_development.md -text
-
 tests/test_stiffened_shell_native_coupled_displacement.py -text
 examples/stiffened_shell_native_coupled_displacement.py -text
 .qualification/b3-ge-e4-pl/r8-native-coupled-displacement-dev-20261005-v1/** -text -whitespace
-
 tests/test_stiffened_shell_native_s3_displacement.py -text
 tests/test_stiffened_shell_native_s3_displacement_admission.py -text
 examples/stiffened_shell_native_s3_displacement.py -text
-src/anysolver/_stiffened_shell_ge_checkpoint_binary.py -text
-src/anysolver/_stiffened_shell_ge_experimental.py -text
 .qualification/b3-ge-e4-pl/r8-native-s3-displacement-dev-20261005-v1/** -text -whitespace
-
 tests/test_stiffened_shell_native_fibre_s3_displacement.py -text
 tests/test_stiffened_shell_native_fibre_s3_displacement_identity.py -text
 examples/stiffened_shell_native_fibre_s3_displacement.py -text
 .qualification/b3-ge-e4-pl/r8-native-fibre-s3-displacement-dev-20261005-v1/** -text -whitespace
-
 tests/test_stiffened_shell_native_plastic_s3_displacement.py -text
 tests/test_stiffened_shell_displacement_s3_checkpoint_binary.py -text
 tests/data/native_s3_checkpoint_legacy/** -text
 examples/stiffened_shell_native_plastic_s3_displacement.py -text
 .qualification/b3-ge-e4-pl/r8-native-plastic-s3-displacement-dev-20261005-v1/** -text -whitespace
-
 tests/test_stiffened_shell_native_mixed_j2_displacement_snapshot.py -text
 tests/data/native_mixed_j2_displacement/** -text
 .qualification/b3-ge-e4-pl/r8-native-mixed-j2-displacement-diagnosis-20261005-v1/** -text -whitespace
-
 src/anysolver/_stiffened_shell_displacement_adaptive.py -text
 tests/test_stiffened_shell_native_displacement_adaptive.py -text
-tests/test_stiffened_shell_native_fibre_s3_displacement_identity.py -text
-tests/test_stiffened_shell_native_point_displacement.py -text
 .qualification/b3-ge-e4-pl/r8-native-displacement-adaptive-dev-20261005-v1/** -text -whitespace
-
 examples/stiffened_shell_coupled_s3_adaptive_history.py -text
 tests/test_stiffened_shell_native_s3_fibre_reversal.py -text
 tests/data/native_s3_fibre_history/** -text
 .qualification/b3-ge-e4-pl/r8-native-mixed-s3-fibre-history-dev-20261005-v1/** -text -whitespace
-
 /tests/test_stiffened_shell_native_generalized_adaptive_history.py -text
 /tests/data/native_generalized_adaptive_history/** -text
 /.qualification/b3-ge-e4-pl/r8-native-generalized-adaptive-history-dev-20261005-v1/** -text -whitespace
-
 /tests/test_stiffened_shell_native_generalized_q4_j2_history.py -text
 /tests/data/native_generalized_q4_j2_history/** -text
 /.qualification/b3-ge-e4-pl/r8-native-generalized-q4-j2-history-dev-20261005-v1/** -text -whitespace
-
 /tests/test_stiffened_shell_native_displacement_chart.py -text
 /.qualification/b3-ge-e4-pl/r8-native-displacement-chart-dev-20261005-v1/** -text -whitespace
-
 /tests/test_stiffened_shell_native_arc.py -text
 /examples/stiffened_shell_native_arc.py -text
 /.qualification/b3-ge-e4-pl/r8-native-arc-dev-20261005-v1/** -text -whitespace
@@ -304,15 +278,12 @@ tests/data/native_s3_fibre_history/** -text
 /src/anysolver/_stiffened_shell_arc_checkpoint.py -text
 /src/anysolver/_stiffened_shell_arc_publication.py -text
 /docs/stiffened_shell_arc_development.md -text
-
 /tests/test_stiffened_shell_native_arc_progress.py -text
 /docs/agent_plans/history/B3_GE_E4_PL_ACTIVE_STATE_PRE_TURNING_20261005.md -text
-
 /scripts/r8_e04_restricted_membrane.py -text
 /tests/test_stiffened_shell_e04_restricted_membrane.py -text
 /docs/agent_plans/history/PRE_RESTRICTED_REFERENCE_20261005.md -text
 /.qualification/b3-ge-e4-pl/r8-restricted-nonlinear-reference-dev-20261005-v1/** -text -whitespace
-
 /scripts/r8_e04_ccx_restricted_membrane.py -text
 /tests/test_stiffened_shell_e04_ccx_restricted_membrane.py -text
 /docs/reference_cases/stiffened_shell_e04_ccx_restricted_membrane.md -text
@@ -321,3 +292,162 @@ tests/data/native_s3_fibre_history/** -text
 /.qualification/b3-ge-e4-pl/r8-ccx-inverse-material-dev-20261005-v1/** -text -whitespace
 /docs/agent_plans/history/PRE_CCX_INVERSE_20261005.md -text
 /docs/agent_plans/history/PRE_BL5_BUCKLING_20261005.md -text
+reports/general_contact_d1_supported_schur_*.txt text eol=lf -whitespace
+reports/general_contact_d1_q4_s3_jet2_focused_20260926.txt text eol=lf -whitespace
+# Preserve exact predicate archives used by byte-bound development comparisons.
+docs/d1_review_support/d1_touch_bounds_prepatch_20260930.py.txt -text
+docs/d1_review_support/d1_touch_bounds_probe_candidate_4ae_20260930.py.source -text
+docs/d1_review_support/d1_saved_report_touch_probe_V2_executed_20260930.py.source -text
+docs/d1_review_support/d1_checkpoint_pre_plain_dict_590d7a42.py.source -text
+# Canonical-byte D2 checkpoint and executed reference snapshots retain their
+# recorded hashes after checkout on platforms with automatic newline conversion.
+docs/d1_review_support/d2_moving_edge_restart_v1_20260930_*.checkpoint.json -text
+docs/d1_review_support/d2_fixed_geometry_penalty_reference_v1_20260930.source.py -text
+docs/d1_review_support/d2_s3_manufactured_force_v1_20260930.runner.source.py -text
+# Retain exact bytes of the new S3 raw evidence and hashed Python sources.
+docs/d1_review_support/d2_s3_projected_penalty*20260930*.json -text
+docs/d1_review_support/d2_s3_projected_penalty*20260930*.log -text
+docs/d1_review_support/d2_s3_projected_penalty*20260930*.xml -text
+docs/d1_review_support/d2_s3_manufactured*20260930*.json -text
+docs/d1_review_support/d2_s3_manufactured*20260930*.log -text
+src/anysolver/general_contact/core.py text eol=lf
+src/anysolver/general_contact/s3_patch_static.py text eol=lf
+src/anysolver/general_contact/s3_patch_augmented.py text eol=lf
+src/anysolver/general_contact/static_path.py text eol=lf
+tests/test_general_contact_s3_projected_penalty.py text eol=lf
+docs/d1_review_support/d2_s3_projected_penalty_coupled_dev.py text eol=lf
+docs/d1_review_support/d2_s3_deformable*20260930*.json -text
+docs/d1_review_support/d2_s3_deformable*20260930*.log -text
+docs/d1_review_support/d2_s3_*20260930.runner.source.py -text
+docs/d1_review_support/d2_s3_deformable_mms_reference_dev.py text eol=lf
+docs/d1_review_support/d2_s3_normal_control*20260930*.json -text
+docs/d1_review_support/d2_s3_normal_control*20260930*.log -text
+# Exact-byte radial finite-law evidence and executed helper identities.
+docs/d1_review_support/d2_projected_penalty_radial*20260930*.json -text -whitespace
+docs/d1_review_support/d2_projected_penalty_radial*20260930*.jsonl -text -whitespace
+docs/d1_review_support/d2_projected_penalty_radial*20260930*.log -text -whitespace
+docs/d1_review_support/d2_projected_penalty_radial*20260930.runner.source.py -text -whitespace
+docs/d1_review_support/d2_radial_finite_reference*20260930*.json -text -whitespace
+docs/d1_review_support/d2_radial_finite_reference*20260930*.log -text -whitespace
+docs/d1_review_support/d2_radial_finite_reference*20260930.runner.source.py -text -whitespace
+docs/d1_review_support/d2_projected_penalty_radial_dev.py -text whitespace=cr-at-eol
+docs/d1_review_support/d2_projected_penalty_radial_assess_dev.py -text whitespace=cr-at-eol
+docs/d1_review_support/d2_radial_finite_reference_dev.py -text whitespace=cr-at-eol
+# Guided partial-foundation development source/runner and raw evidence hashes.
+docs/d1_review_support/d2_guided_partial_foundation*20260930*.json -text -whitespace
+docs/d1_review_support/d2_guided_partial_foundation*20260930*.log -text -whitespace
+docs/d1_review_support/d2_guided_partial_foundation*20260930.runner.source.py -text -whitespace
+docs/d1_review_support/d2_guided_partial_foundation_reference.py -text whitespace=cr-at-eol
+docs/d1_review_support/d2_guided_partial_foundation_coupled_dev.py -text whitespace=cr-at-eol
+# Preserve hashed finite-reference proof and private native development evidence.
+docs/d1_review_support/D2_FINITE_PENALTY_FIXED_GEOMETRY_BOUND_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D2_GUIDED_PARTIAL_FOUNDATION_DERIVATION_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D2_GUIDED_PARTIAL_FOUNDATION_ENCLOSURE_DERIVATION_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d2_guided_partial_foundation_enclosure_dev.py -text whitespace=cr-at-eol
+docs/d1_review_support/d6_centered_finite_inertia*20260930*.json -text -whitespace
+docs/d1_review_support/d6_centered_finite_inertia*20260930*.log -text -whitespace
+docs/d1_review_support/d6_centered_finite_inertia*20260930*.xml -text -whitespace
+docs/d1_review_support/d6_centered_finite_inertia*20260930*.source.py -text -whitespace
+docs/d1_review_support/D2_FINITE_PENALTY_RADIAL_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D2_RADIAL_K1E8_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D2_GUIDED_PARTIAL_FOUNDATION_REVIEW_20260930.md -text whitespace=cr-at-eol
+# Exact partial swept development evidence and executed snapshots.
+docs/d1_review_support/d2_partial_swept*20260930*.json -text -whitespace
+docs/d1_review_support/d2_partial_swept*20260930*.log -text -whitespace
+docs/d1_review_support/d2_partial_swept*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_partial_swept*20260930*.source.py -text -whitespace
+docs/d1_review_support/d2_partial_installed*20260930*.json -text -whitespace
+docs/d1_review_support/d2_partial_installed*20260930*.log -text -whitespace
+docs/d1_review_support/D2_PARTIAL_SHELL_HANDOFF_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d6_native_midpoint*20260930*.json -text -whitespace
+docs/d1_review_support/d6_native_midpoint*20260930*.log -text -whitespace
+docs/d1_review_support/d6_native_midpoint*20260930*.xml -text -whitespace
+docs/d1_review_support/d6_native_midpoint*20260930*.py -text -whitespace
+docs/d1_review_support/D6_NATIVE_MIDPOINT_DEVELOPMENT_20260930.md -text whitespace=cr-at-eol
+# Exact new multiple-pair and dynamic elastic development evidence.
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.json -text -whitespace
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.log -text -whitespace
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_multiple_projected_pairs*20260930*.source.py -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.json -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.log -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.xml -text -whitespace
+docs/d1_review_support/d6_dynamic_elastic_state*20260930*.source.py -text -whitespace
+docs/d1_review_support/D2_MULTIPLE_PROJECTED_PAIRS_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/D6_DYNAMIC_ELASTIC_STATE_REVIEW_20260930.md -text whitespace=cr-at-eol
+# Exact S3-source/Q4-target derivative development evidence.
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.json -text -whitespace
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.log -text -whitespace
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_s3_q4_jet2*20260930*.source.py -text -whitespace
+docs/d1_review_support/D2_S3_Q4_JET2_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d2_s3_q4*20260930*.json -text -whitespace
+docs/d1_review_support/d2_s3_q4*20260930*.log -text -whitespace
+docs/d1_review_support/d2_s3_q4*20260930*.xml -text -whitespace
+docs/d1_review_support/d2_s3_q4*20260930*.snapshot -text -whitespace
+docs/d1_review_support/D2_S3_Q4_STATIC_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d6_native_free_temporal*20260930* -text -whitespace
+docs/d1_review_support/d6_native_midpoint_gate_binding*20260930* -text -whitespace
+docs/d1_review_support/D6_NATIVE_FREE_TEMPORAL_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/d2_s3_q4*20260930*.source.py -text -whitespace
+docs/d1_review_support/d6_native_loaded_temporal*20260930* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART23.md -text -whitespace
+docs/d1_review_support/native_vibration*20260930* -text -whitespace
+docs/d1_review_support/d3_beam*20260930* -text -whitespace
+docs/d1_review_support/d3_multiple_beam*20260930* -text -whitespace
+docs/d1_review_support/D3_BEAM_FOUNDATION_REVIEW_20260930.md -text whitespace=cr-at-eol
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20260930_PART24.md -text -whitespace
+docs/d1_review_support/d3_deformable_beam_s3_*_20261001.* -text -whitespace
+docs/d1_review_support/native_vibration*_20261001.* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART25.md -text -whitespace
+# Exact opt-in native dynamics integration and API evidence bytes.
+docs/d1_review_support/native_dynamic*_20261001.* -text -whitespace
+src/anysolver/_ge_beam3_centered_finite_inertia.py -text whitespace=cr-at-eol
+src/anysolver/_ge_beam3_dynamic_elastic_state.py -text whitespace=cr-at-eol
+src/anysolver/_ge_beam3_native_midpoint.py -text whitespace=cr-at-eol
+src/anysolver/_ge_beam3_native_dynamic_analysis.py -text whitespace=cr-at-eol
+src/anysolver/ge_beam3_native_dynamics.py -text whitespace=cr-at-eol
+examples/native_contact_free_finite_velocity_dev.py -text whitespace=cr-at-eol
+tests/test_native_dynamic_main_example.py -text whitespace=cr-at-eol
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART26.md -text -whitespace
+docs/d1_review_support/native_beam_installed_development* -text -whitespace
+docs/d1_review_support/d3_deformable_b3_s3_static*_20261001.* -text -whitespace
+tests/test_general_contact_deformable_b3_s3_static.py -text whitespace=cr-at-eol
+docs/d1_review_support/d3_multiple_beam_sphere_lifecycle*_20261001.* -text -whitespace
+tests/test_general_contact_multiple_beam_sphere_lifecycle.py -text whitespace=cr-at-eol
+src/anysolver/_ge_beam3_native_dynamic_restart.py -text whitespace=cr-at-eol
+tests/test_ge_beam3_native_dynamic_restart.py -text whitespace=cr-at-eol
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART28.md -text -whitespace
+docs/d1_review_support/native_forced_response* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART29.md -text -whitespace
+docs/d1_review_support/native_clamped_response* -text -whitespace
+docs/d1_review_support/native_temporal_development* -text -whitespace
+docs/d1_review_support/native_finite_angle* -text -whitespace
+docs/d1_review_support/native_finite_spin_step* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART30.md -text -whitespace
+docs/d1_review_support/native_finite_spin_acceleration_chart* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART31.md -text -whitespace
+docs/d1_review_support/native_finite_spin_trajectory* -text -whitespace
+docs/d1_review_support/native_finite_spin_temporal_half* -text -whitespace
+docs/d1_review_support/native_stage_reuse* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART32.md -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART33.md -text -whitespace
+docs/d1_review_support/native_acceleration_restart* -text -whitespace
+docs/d1_review_support/native_dynamic_runtime* -text -whitespace
+docs/d1_review_support/native_finite_spin_resolution* -text -whitespace
+docs/d1_review_support/native_validation_cost* -text -whitespace
+docs/d1_review_support/native_step_profile* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART34.md -text -whitespace
+docs/d1_review_support/anystructure_contact_slice_baseline_20261001.json -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART35.md -text -whitespace
+docs/d1_review_support/native_inertia_batch* -text -whitespace
+docs/d1_review_support/native_principal_spin* -text -whitespace
+src/anysolver/_ge_beam3_centered_batched_finite_inertia.py text eol=lf
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART36.md -text -whitespace
+docs/d1_review_support/native_finite_spin_temporal_refinement* -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_PLAN_HISTORY_20261001_REV58.md -text -whitespace
+docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261001_PART37.md -text -whitespace
+tests/data/general_contact_native_multi_line_46ea65f6.checkpoint -text
+tests/data/general_contact_material_s3_ce3e5495.checkpoint -text
+tests/data/general_contact_material_plane_ce3e5495.checkpoint -text
+tests/data/general_contact_native_fibre_s3_plastic_*.checkpoint -text

@@ -1,0 +1,215 @@
+{
+  "scope": "D3 opt-in complete actual hemisphere work on a deforming fixed-director S3 physical interior; development/code verification only",
+  "source_parent": "69097c11e402ee719d69ef0d8be1d0eaba4b03c0",
+  "source_files": {
+    "src/anysolver/general_contact/beam_hemisphere_s3_support.py": "763b315271c8dc4512dc4d2522a124261b5a1400b5ba8aded8b3b7015f33a4a0",
+    "src/anysolver/general_contact/deformable_beam_s3_caps.py": "d44c05b9d5a4d40a021ea6fc39f47939b7a4f234b9597021cb3d21dbb33b858c",
+    "src/anysolver/general_contact/core.py": "da44fdaa842a905b7a24a05fc0fa1d47635f64e4bd05403d9b6bc6914e3692dc",
+    "src/anysolver/nonlinear_static.py": "8d780c0c3b8fe64077efdc7e6ef0382d170ba21a163abc4be32ddd663ca820e9",
+    "tests/test_general_contact_deformable_beam_s3_caps.py": "76a73a95cedf950782b3e283f8c361bf69997699100b015d5cdc0e628f2589e6",
+    "examples/general_contact_deformable_s3_caps.py": "49e34bcd4a206542ec688363387c6195e093f9642b87e7e72189f5acbc675839"
+  },
+  "wheels": {
+    "anysolver-0.4.7-py3-none-any.whl": "639805414a62ef0096759d2f7b5c8b0f5f7591fc845fec3124766399047703d7"
+  },
+  "runs": {
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 14.24238680000417,
+        "peak_bytes": 351694848
+      },
+      "outcomes": {
+        "passed": 31
+      }
+    },
+    "source01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.5593582000001334,
+        "peak_bytes": 183603200
+      },
+      "outcomes": {
+        "passed": 5,
+        "failed": 2
+      }
+    },
+    "source02": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 3.673885299998801,
+        "peak_bytes": 215248896
+      },
+      "outcomes": {
+        "passed": 7,
+        "failed": 1
+      }
+    },
+    "source03": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 6.807192899985239,
+        "peak_bytes": 209100800
+      },
+      "outcomes": {
+        "failed": 2
+      }
+    },
+    "source04": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 5.519632900017314,
+        "peak_bytes": 186073088
+      },
+      "outcomes": {
+        "passed": 2
+      }
+    },
+    "source05": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 8.635128699999768,
+        "peak_bytes": 208883712
+      },
+      "outcomes": {
+        "passed": 11,
+        "failed": 2
+      }
+    },
+    "source06": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 4.436355799960438,
+        "peak_bytes": 184369152
+      },
+      "outcomes": {
+        "passed": 2
+      }
+    }
+  },
+  "installed_modules_matching": 217,
+  "installed_package_files_matching": 504,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "coupled_reference": {
+    "scope": "guided fixed-director moving-S3 development",
+    "coordinates_m": [
+      -0.0010235509692386345,
+      -0.0029195229420614565
+    ],
+    "linearized_reference_m": [
+      -0.0010235552744546274,
+      -0.0029195358527779676
+    ],
+    "linearized_response_relative_error": 4.3990507214322776e-06,
+    "contact_gradient_relative_error": 5.871350159294924e-12,
+    "gap_tolerance_m": 1e-05,
+    "minimum_gap_m": -3.8139037765623496e-07,
+    "endpoint_fields": [
+      {
+        "node": 1,
+        "element": 1,
+        "gap": 0.0010231900472210465,
+        "active": false,
+        "branch": "rim",
+        "skin_point": [
+          -2.0470966797971306e-05,
+          -9.73175892289495e-06,
+          0.01005002568841366
+        ]
+      },
+      {
+        "node": 2,
+        "element": 1,
+        "gap": -3.8139037765672237e-07,
+        "active": true,
+        "branch": "sphere",
+        "skin_point": [
+          0.5,
+          -9.731738531895677e-06,
+          0.009026453766099228
+        ]
+      }
+    ]
+  },
+  "directional_tangent_target": 1e-05,
+  "contact_gradient_comparison_target": 1e-06,
+  "linearized_structural_comparison_target": 0.001,
+  "raw_records": 51,
+  "raw_sha256": "9c54cdf8fa80f8db5413b737d4eb6b99814c437b19a512563c7f293724f57539",
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "versions": {
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "numba": "0.65.1",
+      "ANYmaterial": "0.2.0",
+      "ANYgeometry": "0.4.3"
+    }
+  },
+  "review_disposition": "same-family source-only supporting review of lead-owned integration/driver; geometry author did not assess own geometry for independent acceptance. Lead numerically checked all-coordinate scalar work, tangent, wrenches, offset couples, actual coupled response and transactions. No engineering acceptance.",
+  "preserved_failures": [
+    "source01: local work fixture wrongly asserted admission beyond dimensional gap budget; fixture now expects cutback",
+    "source02: rejected first displacement trial masked by missing qualified-S3 origin state during final sealing; production recovery at accepted origin retains non-success",
+    "source03: unsupported-law exception regex and arbitrary completed fixture incorrectly expected rejection",
+    "source05: honest failed checkpoint is correctly noncontinuable; test now preserves existing restriction; invalid settings construction fixture corrected",
+    "build01: cache permission denial; no-cache build succeeded",
+    "all historical consumed/nonpass evidence unchanged"
+  ],
+  "unchanged": [
+    "line/end units and dimensional criteria",
+    "uncapped deformable-S3 line kernel/profile",
+    "default owned_point arithmetic/settings and old sphere APIs",
+    "normal application admission false",
+    "frozen authority/resource caps and historical failures",
+    "ANYfem source"
+  ],
+  "limits": [
+    "one scalar-elastic concentric B2 or straight-reference B3 and one qualified S3 V2D",
+    "von Karman structural route, target rotations exactly zero",
+    "physical top/bottom offsets and moving skin translations/normal",
+    "face-interior radius-covering clearance, not physical rims/corners/multiple faces",
+    "full-radius sweep envelope may reject a safe hemisphere path conservatively",
+    "genuine material ends, distinct endpoint N/m support spring, no material-surface spin/friction",
+    "linearized independent structural comparison is bounded, not full nonlinear engineering qualification",
+    "native contact, broader pair/radial transitions, dynamics, mesh/enforcement and full C0-C9 acceptance remain"
+  ]
+}

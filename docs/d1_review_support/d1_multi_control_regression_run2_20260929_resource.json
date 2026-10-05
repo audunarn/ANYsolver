@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 30.6105319000053,
+  "peak_process_tree_memory_mb": 381.100032,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_monolithic_ordinary_displacement.py",
+    "tests/test_general_contact_monolithic_restart.py::test_monolithic_rejects_missing_ordinary_load_and_invalid_force_scale",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_multi_control_regression_run2_20260929.log"
+}

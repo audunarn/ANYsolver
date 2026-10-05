@@ -1,0 +1,30 @@
+{
+  "scope": "fixed-path development work refinement, no new coupled/acceptance/release claim",
+  "source_sha256": {
+    "src\\anysolver\\general_contact\\s3_friction_replay.py": "c99daf4dde5fd0ee737b6ba08c25c5dc26558c0647bf80a712b4e52d2ab602b6",
+    "src\\anysolver\\general_contact\\s3_friction_prepared_path.py": "c8f4c046b6453c3247b982d67d48f6b79e646a45d71b39afe05fc798733eec6c",
+    "tests\\test_general_contact_s3_friction_replay.py": "25fb74929c8a4ab26add2e9ec940ae0fa04a260ad0296756aca69e3e6e7d63d8"
+  },
+  "refinement_resource": {
+    "peak_sampled_bytes": 222056448,
+    "limit_mib": 953,
+    "elapsed_seconds": 44.17393860005541,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "step_resource": {
+    "peak_sampled_bytes": 193748992,
+    "limit_mib": 953,
+    "elapsed_seconds": 14.894058600009885,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "raw_roots": [
+    "C:/ANYworkspaceWork/contact-friction-retained-work-refinement-20261002",
+    "C:/ANYworkspaceWork/contact-friction-retained-step-partition-20261002"
+  ]
+}

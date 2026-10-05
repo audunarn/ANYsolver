@@ -1,0 +1,27 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_________ test_supported_schur_proposal_is_reequilibrated_and_traced __________
+
+    def test_supported_schur_proposal_is_reequilibrated_and_traced():
+        model, definition, settings, program = _case()
+        result = solve_static_nonlinear(
+            model, contact=definition, contact_settings=settings,
+            contact_path_program=program, max_iterations=12,
+            emit_restart_checkpoint=True,
+        )
+        failure = result.info.get("contact_failure", {})
+        compact_trace = [(
+            round(row.get("pressure_change", -1.0), 6),
+            row.get("schur_proposed"), row.get("schur_rejected"),
+            row.get("schur_ineligible"), row.get("schur_failure"),
+            row.get("schur_predicted_residual_pa"),
+            row.get("schur_verified"),
+        ) for row in failure.get("augmentation_trace", ())]
+>       if result.status != "completed":
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: maximum_augmentations_reached: [(0.044209, None, None, None, None, None), (0.039281, False, None, None, None, None), (0.035087, None, None, None, None, None), (0.031518, None, None, None, None, None), (0.02848, None, None, None, None, None), (0.025895, None, None, None, None, None), (0.023695, None, None, None, None, None)]
+
+tests\test_general_contact_supported_schur_path.py:75: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_supported_schur_path.py::test_supported_schur_proposal_is_reequilibrated_and_traced
+1 failed in 64.68s (0:01:04)

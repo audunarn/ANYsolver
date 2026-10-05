@@ -1,0 +1,40 @@
+{
+  "status": "development_saved_active_pressure_compliance",
+  "source_commit": "eaefa8897205cca21ef471df7957431d6f6375d5",
+  "saved_source_file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d1_32x8_near_rim_direct_result_20260928.json",
+  "saved_source_sha256": "fda79a813d4235594af6cd0e7d367e62e98d57210d67e1152d435f00a845a72a",
+  "saved_runtime_identity": {
+    "python": "3.14.2",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py",
+    "compiled_bjet_mul_enabled": false
+  },
+  "python": "3.14.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "active_modes": 96,
+  "supported_modes": 297,
+  "controlled_dofs": [
+    0,
+    198
+  ],
+  "physical_free_coordinates": 583,
+  "reduced_tangent_nnz": 14531,
+  "relative_linear_solve_residual": 2.1174120475089198e-14,
+  "compliance_symmetry_defect": 7.711113451804615e-16,
+  "minimum_symmetric_eigenvalue_m_per_n": 1.0577280730920241e-06,
+  "maximum_symmetric_eigenvalue_m_per_n": 0.047483312101888775,
+  "minimum_singular_value_m_per_n": 1.057728073091702e-06,
+  "maximum_singular_value_m_per_n": 0.04748331210188878,
+  "unscaled_singular_ratio": 2.2275785455362703e-05,
+  "support_scaled_singular_ratio": 3.082619439687577e-07,
+  "minimum_active_support_m2": 1.8601190475162381e-06,
+  "maximum_active_support_m2": 0.006250000000000009,
+  "active_support_ratio": 0.0002976190476025977,
+  "unit_diagonal_minimum_eigenvalue": 0.0014646991699124026,
+  "unit_diagonal_maximum_eigenvalue": 62.562382850976306,
+  "unit_diagonal_eigen_ratio": 2.3411818782563292e-05,
+  "geometry_seconds": 20.925939000000653,
+  "elapsed_seconds": 26.455939200001012,
+  "peak_process_working_set_mb": 312.287232
+}

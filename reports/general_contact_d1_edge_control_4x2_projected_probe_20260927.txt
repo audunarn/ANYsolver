@@ -1,0 +1,16 @@
+{
+  "whole_face": {
+    "profile": "Q4_S3_PATCH_REFINED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1",
+    "minimum_gap_lower_m": -0.0004295038808469912,
+    "sampled_overlap_gap_m": -5.000000964300063e-05,
+    "active_pressure_dofs": 0,
+    "restart_certificate": "whole_face"
+  },
+  "projected_matching": {
+    "profile": "Q4_S3_PATCH_REFINED_PROJECTED_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V0",
+    "minimum_gap_lower_m": -5.000000976805617e-05,
+    "sampled_overlap_gap_m": -5.000000964300063e-05,
+    "active_pressure_dofs": 0,
+    "restart_certificate": "projected_matching"
+  }
+}

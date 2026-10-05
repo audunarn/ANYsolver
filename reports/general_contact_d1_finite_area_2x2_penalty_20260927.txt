@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_finite_area_load.py", line 156, in <module>
+    main()
+    ~~~~^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_finite_area_load.py", line 124, in main
+    raise ValueError(f"invalid contact model: {capability.issues}")
+ValueError: invalid contact model: ('general shell patch needs three faces or one Q4/Q4 pair', 'Q4 pressure-side patch needs one source Q4 and two target S3 faces')

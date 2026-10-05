@@ -1,0 +1,6210 @@
+{
+  "accepted": false,
+  "released": false,
+  "kind": "s3_s3_projected_penalty_force_code_verification_development",
+  "adapter": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_s3_projected_penalty_coupled_dev.py",
+    "sha256": "e943c512db8cc1274a300ce4240e03b9bfc5679686229999da958749852b88a6"
+  },
+  "production": {
+    "nonlinear_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\nonlinear_static.py",
+      "sha256": "a603c9d4868c96d8cf55b892c05ab61d7dda9914cbbbf5c2758d0556d84f5386"
+    },
+    "general_contact/core.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\core.py",
+      "sha256": "d78885e37ce0d99571e95d781459ac30fcfb7c590b7974db332f438e7a2e5e85"
+    },
+    "general_contact/s3_patch_static.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "8cc9776eb5d382e7e3090c51f8bba0b8c4937cadb0af8877648ad63b0ae9b99b"
+    },
+    "general_contact/s3_patch_augmented.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py",
+      "sha256": "0b2f64f0192e72edf374e2d7d9bd5a112936f42e8861a4d884fdfaf3bae20375"
+    },
+    "general_contact/s3_overlap_derivatives.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_overlap_derivatives.py",
+      "sha256": "ff013fb6cf6f6a9dfdac095e12fc5c6d569788a99f709036ce8e380e3f1546e6"
+    },
+    "general_contact/triangle_mortar_energy.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\triangle_mortar_energy.py",
+      "sha256": "f69bdd49016d40da6c9bd215d38c2bab62fa209673e20bf4f3117817c6f0aa8c"
+    },
+    "general_contact/static_path.py": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\static_path.py",
+      "sha256": "1d3771814c82e3dd45a6d8fb43c7a8ff6d8511e4b2736c2fb1eace0c96814f3c"
+    }
+  },
+  "inputs": {
+    "initial_clearance_m": 1e-08,
+    "normal_regularization_pa_per_m": 10000000.0,
+    "force_n": 11.548348882810515,
+    "gap_budget_m": 5e-05,
+    "code_comparison_relative": 1e-06,
+    "force_and_moment_scales": [
+      11.548348882810515,
+      11.548348882810515
+    ],
+    "time_cap_s": 180,
+    "memory_cap_bytes": 1000000000,
+    "target_extent_m": 1.4,
+    "deformable_target": true,
+    "free_normal_nodal_forces_n": [
+      0.0,
+      -1.9869923765452684,
+      -1.8537450396825408,
+      0.0,
+      -2.5034854321008244,
+      -0.9659350198412696,
+      0.0,
+      3.547831405846384,
+      0.690359608794229,
+      0.0
+    ]
+  },
+  "reference_source": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_s3_deformable_mms_reference_dev.py",
+    "sha256": "4d8323b475aa0f274ee19b5141a6dc38034b99d76fac49283b5b3c70d6d8e837"
+  },
+  "manufactured": {
+    "known_normal_displacements_m": [
+      0.0,
+      -1e-06,
+      -1e-06,
+      0.0,
+      -1e-06,
+      -1e-06,
+      0.0,
+      3e-07,
+      3e-07,
+      0.0
+    ],
+    "scope": "two-body code verification; no point-load or continuum accuracy claim"
+  },
+  "oracle": {
+    "normal_displacements_m": [
+      0.0,
+      -9.999999999999659e-07,
+      -9.999999999999383e-07,
+      0.0,
+      -1.0000000000000565e-06,
+      -1.0000000000003347e-06,
+      0.0,
+      3.000000000000355e-07,
+      2.9999999999940775e-07,
+      0.0
+    ],
+    "pressure_pa": [
+      2.8821428571428283,
+      8.50714285714285,
+      11.855357142857143,
+      4.266071428571469,
+      10.530952380952384,
+      11.989285714285712
+    ],
+    "free_normal_forces_n": [
+      -1.9869923765452684,
+      -1.8537450396825408,
+      -2.5034854321008244,
+      -0.9659350198412696,
+      3.547831405846384,
+      0.690359608794229
+    ],
+    "contact_force_n": 8.68571428571429,
+    "G": [
+      [
+        0.04166666666666667,
+        0.020833333333333336,
+        0.0,
+        0.020833333333333336,
+        0.0,
+        0.0,
+        -0.04910714285714286,
+        -0.013392857142857146,
+        -0.0,
+        -0.020833333333333343
+      ],
+      [
+        0.020833333333333336,
+        0.12500000000000003,
+        0.020833333333333353,
+        0.04166666666666667,
+        0.0416666666666667,
+        0.0,
+        -0.08083928571428572,
+        -0.09177976190476192,
+        -0.0004821428571428588,
+        -0.07689880952380955
+      ],
+      [
+        0.0,
+        0.020833333333333353,
+        0.0833333333333334,
+        0.0,
+        0.041666666666666685,
+        0.020833333333333336,
+        -0.013196428571428574,
+        -0.09692261904761912,
+        -0.011708333333333348,
+        -0.04483928571428574
+      ],
+      [
+        0.020833333333333336,
+        0.04166666666666667,
+        0.0,
+        0.08333333333333334,
+        0.020833333333333343,
+        0.0,
+        -0.046613095238095224,
+        -0.03374404761904762,
+        -0.000482142857142858,
+        -0.08582738095238096
+      ],
+      [
+        0.0,
+        0.0416666666666667,
+        0.041666666666666685,
+        0.020833333333333343,
+        0.12500000000000003,
+        0.02083333333333332,
+        -0.014005952380952381,
+        -0.09908928571428575,
+        -0.022934523809523828,
+        -0.11397023809523812
+      ],
+      [
+        0.0,
+        0.0,
+        0.020833333333333336,
+        0.0,
+        0.02083333333333332,
+        0.04166666666666666,
+        -4.761904761904738e-05,
+        -0.032690476190476186,
+        -0.025345238095238108,
+        -0.025249999999999988
+      ]
+    ],
+    "kff": [
+      [
+        64.02668062922577,
+        -25.610672251690296,
+        -12.805336125845155,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        -25.610672251690296,
+        32.01334031461287,
+        0.0,
+        -6.402668062922575,
+        0.0,
+        0.0
+      ],
+      [
+        -12.805336125845155,
+        0.0,
+        64.02668062922574,
+        -25.610672251690282,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        -6.402668062922575,
+        -25.610672251690282,
+        32.01334031461286,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        6.282740056516739,
+        -3.1413700282583696
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -3.1413700282583696,
+        6.282740056516739
+      ]
+    ],
+    "free_indices": [
+      1,
+      2,
+      4,
+      5,
+      7,
+      8
+    ],
+    "free_residual_n": [
+      0.0,
+      0.0,
+      -4.440892098500626e-16,
+      1.1102230246251565e-16,
+      0.0,
+      0.0
+    ],
+    "active_node_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "source_physical_contact_nodal_force_n": [
+      0.3861979166666662,
+      1.9869667658730168,
+      1.8537450396825408,
+      0.9894097222222249,
+      2.5034598214285726,
+      0.9659350198412696
+    ],
+    "target_physical_contact_nodal_force_n": [
+      -1.3326152565192744,
+      -3.5478304634353757,
+      -0.6903586663832205,
+      -3.1149098993764204
+    ],
+    "contact_internal_normal_forces_n": [
+      -0.3861979166666662,
+      -1.9869667658730168,
+      -1.8537450396825408,
+      -0.9894097222222249,
+      -2.503459821428573,
+      -0.9659350198412695,
+      1.3326152565192744,
+      3.5478304634353757,
+      0.6903586663832205,
+      3.114909899376421
+    ],
+    "normalized_gap_m": [
+      -2.882142857142828e-07,
+      -8.507142857142849e-07,
+      -1.1855357142857142e-06,
+      -4.2660714285714693e-07,
+      -1.0530952380952383e-06,
+      -1.1989285714285712e-06
+    ],
+    "known_normal_displacements_m": [
+      0.0,
+      -1e-06,
+      -1e-06,
+      0.0,
+      -1e-06,
+      -1e-06,
+      0.0,
+      3e-07,
+      3e-07,
+      0.0
+    ],
+    "manufactured_pressure_pa": [
+      2.8821428571428562,
+      8.507142857142858,
+      11.855357142857143,
+      4.266071428571428,
+      10.530952380952384,
+      11.989285714285714
+    ],
+    "gap0_m": 1e-08,
+    "kappa_pa_per_m": 10000000.0,
+    "mask_count": 64,
+    "compatible_mask_count": 1,
+    "tangent_condition_number": 54221.54802822498,
+    "normal_recovery_max_error_m": 5.922348488083661e-19,
+    "pressure_recovery_max_error_pa": 4.085620730620576e-14
+  },
+  "independent_integrals": {
+    "support_m2": [
+      0.08333333333333336,
+      0.25000000000000006,
+      0.16666666666666677,
+      0.16666666666666669,
+      0.25000000000000006,
+      0.08333333333333333
+    ],
+    "mass_m2": [
+      [
+        0.04166666666666667,
+        0.020833333333333336,
+        0.0,
+        0.020833333333333336,
+        0.0,
+        0.0
+      ],
+      [
+        0.020833333333333336,
+        0.12500000000000003,
+        0.020833333333333353,
+        0.04166666666666667,
+        0.0416666666666667,
+        0.0
+      ],
+      [
+        0.0,
+        0.020833333333333353,
+        0.0833333333333334,
+        0.0,
+        0.041666666666666685,
+        0.020833333333333336
+      ],
+      [
+        0.020833333333333336,
+        0.04166666666666667,
+        0.0,
+        0.08333333333333334,
+        0.020833333333333343,
+        0.0
+      ],
+      [
+        0.0,
+        0.0416666666666667,
+        0.041666666666666685,
+        0.020833333333333343,
+        0.12500000000000003,
+        0.02083333333333332
+      ],
+      [
+        0.0,
+        0.0,
+        0.020833333333333336,
+        0.0,
+        0.02083333333333332,
+        0.04166666666666666
+      ]
+    ],
+    "cells": [
+      {
+        "source_indices": [
+          0,
+          1,
+          3
+        ],
+        "target_indices": [
+          0,
+          1,
+          3
+        ],
+        "polygon_xy_m": [
+          [
+            0.1,
+            0.1
+          ],
+          [
+            0.6,
+            0.1
+          ],
+          [
+            0.1,
+            1.1
+          ]
+        ],
+        "source_values": [
+          [
+            1.0,
+            0.0,
+            -1.3877787807814457e-17
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            2.220446049250313e-16,
+            -2.7755575615628914e-17,
+            0.9999999999999999
+          ]
+        ],
+        "target_values": [
+          [
+            0.8571428571428571,
+            0.07142857142857144,
+            0.07142857142857144
+          ],
+          [
+            0.5,
+            0.42857142857142855,
+            0.07142857142857144
+          ],
+          [
+            0.1428571428571428,
+            0.07142857142857144,
+            0.7857142857142858
+          ]
+        ],
+        "area_m2": 0.25
+      },
+      {
+        "source_indices": [
+          1,
+          4,
+          3
+        ],
+        "target_indices": [
+          0,
+          1,
+          3
+        ],
+        "polygon_xy_m": [
+          [
+            0.6,
+            0.1
+          ],
+          [
+            0.6,
+            0.7999999999999999
+          ],
+          [
+            0.29999999999999977,
+            1.1
+          ],
+          [
+            0.1,
+            1.1
+          ]
+        ],
+        "source_values": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.30000000000000004,
+            0.7,
+            0.0
+          ],
+          [
+            0.0,
+            0.3999999999999997,
+            0.6000000000000005
+          ],
+          [
+            2.220446049250313e-16,
+            0.0,
+            1.0
+          ]
+        ],
+        "target_values": [
+          [
+            0.5,
+            0.42857142857142855,
+            0.07142857142857144
+          ],
+          [
+            1.1102230246251565e-16,
+            0.42857142857142855,
+            0.5714285714285714
+          ],
+          [
+            1.1102230246251565e-16,
+            0.21428571428571414,
+            0.7857142857142858
+          ],
+          [
+            0.1428571428571428,
+            0.07142857142857144,
+            0.7857142857142858
+          ]
+        ],
+        "area_m2": 0.20499999999999996
+      },
+      {
+        "source_indices": [
+          1,
+          4,
+          3
+        ],
+        "target_indices": [
+          1,
+          2,
+          3
+        ],
+        "polygon_xy_m": [
+          [
+            0.6,
+            0.7999999999999998
+          ],
+          [
+            0.6,
+            1.1
+          ],
+          [
+            0.29999999999999977,
+            1.1
+          ]
+        ],
+        "source_values": [
+          [
+            0.30000000000000016,
+            0.7,
+            0.0
+          ],
+          [
+            0.0,
+            1.0000000000000002,
+            0.0
+          ],
+          [
+            0.0,
+            0.3999999999999997,
+            0.6000000000000005
+          ]
+        ],
+        "target_values": [
+          [
+            0.4285714285714287,
+            -1.1102230246251565e-16,
+            0.5714285714285714
+          ],
+          [
+            0.2142857142857142,
+            0.2142857142857144,
+            0.5714285714285714
+          ],
+          [
+            0.2142857142857142,
+            -1.1102230246251565e-16,
+            0.7857142857142858
+          ]
+        ],
+        "area_m2": 0.045000000000000075
+      },
+      {
+        "source_indices": [
+          1,
+          2,
+          4
+        ],
+        "target_indices": [
+          0,
+          1,
+          3
+        ],
+        "polygon_xy_m": [
+          [
+            0.6,
+            0.8
+          ],
+          [
+            0.6,
+            0.1
+          ],
+          [
+            1.1,
+            0.1
+          ],
+          [
+            0.9000000000000002,
+            0.49999999999999967
+          ]
+        ],
+        "source_values": [
+          [
+            0.30000000000000027,
+            0.0,
+            0.6999999999999998
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0000000000000002,
+            0.0
+          ],
+          [
+            0.0,
+            0.6000000000000005,
+            0.3999999999999996
+          ]
+        ],
+        "target_values": [
+          [
+            0.0,
+            0.42857142857142855,
+            0.5714285714285715
+          ],
+          [
+            0.5,
+            0.42857142857142855,
+            0.07142857142857144
+          ],
+          [
+            0.1428571428571428,
+            0.7857142857142858,
+            0.07142857142857144
+          ],
+          [
+            1.1102230246251565e-16,
+            0.642857142857143,
+            0.35714285714285693
+          ]
+        ],
+        "area_m2": 0.20500000000000004
+      },
+      {
+        "source_indices": [
+          1,
+          2,
+          4
+        ],
+        "target_indices": [
+          1,
+          2,
+          3
+        ],
+        "polygon_xy_m": [
+          [
+            0.6,
+            0.7999999999999998
+          ],
+          [
+            0.9000000000000004,
+            0.49999999999999944
+          ],
+          [
+            0.6,
+            1.1
+          ]
+        ],
+        "source_values": [
+          [
+            0.3000000000000005,
+            0.0,
+            0.6999999999999996
+          ],
+          [
+            0.0,
+            0.6000000000000008,
+            0.39999999999999936
+          ],
+          [
+            4.440892098500626e-16,
+            2.220446049250313e-16,
+            0.9999999999999999
+          ]
+        ],
+        "target_values": [
+          [
+            0.4285714285714287,
+            -1.1102230246251565e-16,
+            0.5714285714285714
+          ],
+          [
+            0.6428571428571432,
+            -1.1102230246251565e-16,
+            0.3571428571428569
+          ],
+          [
+            0.2142857142857142,
+            0.2142857142857144,
+            0.5714285714285714
+          ]
+        ],
+        "area_m2": 0.045000000000000095
+      },
+      {
+        "source_indices": [
+          2,
+          5,
+          4
+        ],
+        "target_indices": [
+          0,
+          1,
+          3
+        ],
+        "polygon_xy_m": [
+          [
+            0.9000000000000001,
+            0.4999999999999998
+          ],
+          [
+            1.1,
+            0.1
+          ],
+          [
+            1.1,
+            0.2999999999999998
+          ]
+        ],
+        "source_values": [
+          [
+            0.6000000000000003,
+            -4.440892098500626e-16,
+            0.3999999999999997
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.8000000000000002,
+            0.19999999999999973,
+            0.0
+          ]
+        ],
+        "target_values": [
+          [
+            0.0,
+            0.642857142857143,
+            0.357142857142857
+          ],
+          [
+            0.1428571428571428,
+            0.7857142857142858,
+            0.07142857142857144
+          ],
+          [
+            0.0,
+            0.7857142857142858,
+            0.21428571428571416
+          ]
+        ],
+        "area_m2": 0.019999999999999983
+      },
+      {
+        "source_indices": [
+          2,
+          5,
+          4
+        ],
+        "target_indices": [
+          1,
+          2,
+          3
+        ],
+        "polygon_xy_m": [
+          [
+            0.9000000000000004,
+            0.49999999999999956
+          ],
+          [
+            1.1,
+            0.2999999999999997
+          ],
+          [
+            1.1,
+            1.1
+          ],
+          [
+            0.6,
+            1.1
+          ]
+        ],
+        "source_values": [
+          [
+            0.6000000000000005,
+            0.0,
+            0.39999999999999925
+          ],
+          [
+            0.8000000000000003,
+            0.19999999999999973,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            -4.440892098500626e-16,
+            1.0
+          ]
+        ],
+        "target_values": [
+          [
+            0.6428571428571432,
+            0.0,
+            0.3571428571428569
+          ],
+          [
+            0.7857142857142859,
+            -1.1102230246251565e-16,
+            0.2142857142857142
+          ],
+          [
+            0.2142857142857142,
+            0.5714285714285716,
+            0.2142857142857142
+          ],
+          [
+            0.2142857142857142,
+            0.2142857142857144,
+            0.5714285714285714
+          ]
+        ],
+        "area_m2": 0.2300000000000001
+      }
+    ],
+    "cross_mass_m2": [
+      [
+        0.04910714285714286,
+        0.013392857142857146,
+        0.0,
+        0.020833333333333343
+      ],
+      [
+        0.08083928571428572,
+        0.09177976190476192,
+        0.0004821428571428588,
+        0.07689880952380955
+      ],
+      [
+        0.013196428571428574,
+        0.09692261904761912,
+        0.011708333333333348,
+        0.04483928571428574
+      ],
+      [
+        0.046613095238095224,
+        0.03374404761904762,
+        0.000482142857142858,
+        0.08582738095238096
+      ],
+      [
+        0.014005952380952381,
+        0.09908928571428575,
+        0.022934523809523828,
+        0.11397023809523812
+      ],
+      [
+        4.761904761904738e-05,
+        0.032690476190476186,
+        0.025345238095238108,
+        0.025249999999999988
+      ]
+    ]
+  },
+  "independent_reference_gap_preflight_m": -1.2257142857143313e-06,
+  "status": "completed",
+  "failure": null,
+  "info": {
+    "stiffness": {
+      "matrix_type": "stiffness",
+      "num_elements": 6,
+      "num_nodes": 10,
+      "total_dofs": 60,
+      "assembly_time": 0.0017230510711669922,
+      "element_times": {
+        "1": 2.1457672119140625e-05,
+        "2": 1.5020370483398438e-05,
+        "3": 1.3113021850585938e-05,
+        "4": 1.2636184692382812e-05,
+        "5": 0.0005059242248535156,
+        "6": 0.000396728515625
+      },
+      "skipped_elements": [],
+      "diagnostics": {
+        "s3_v2d_exact_stiffness": {
+          "element_count": 4,
+          "element_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "matrix_payload_sha256": "D635F2617B1897C61B185406FB34D0FE8FCAC55E4B979C8BA71FF7980A1790BC",
+          "matrix_shape_finite_symmetry_prevalidated": true,
+          "path": "exact_revision_bound_per_element_stiffness_plan",
+          "policy_id": "S3_V2D_EXACT_REVISION_BOUND_STIFFNESS_PLAN_V1",
+          "revision_key": [
+            16,
+            10,
+            1
+          ],
+          "speedup_claimed": false,
+          "plan_reused": true
+        },
+        "assembled_symmetry_error": 2.54764771449458e-20,
+        "vectorized_shell_groups": [
+          {
+            "shell_order": "S3",
+            "num_elements": 4,
+            "kernel": "s3_v2d_exact_revision_bound_stiffness_plan",
+            "parallel_kernel": false,
+            "unique_geometry_count": 4,
+            "component_evaluation_count": 0,
+            "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+            "speedup_claimed": false
+          }
+        ],
+        "vectorized_shell_element_count": 4,
+        "scalar_shell_element_count": 2
+      },
+      "revision_signature": {
+        "boundary": 4,
+        "geometry": 10,
+        "load": 0,
+        "mass": 0,
+        "material": 1,
+        "mpc": 6,
+        "result_state": 0,
+        "topology": 16
+      },
+      "sparsity_signature": "7ffc73704a27a3e7a46848b72f557383c7b08c0e85f1b80c6ed0568ab3985110"
+    },
+    "load": {
+      "vector_type": "load",
+      "load_case": "independent_two_body_manufactured_normal_field",
+      "num_nodes": 10,
+      "total_dofs": 60,
+      "assembly_time": 0.003723621368408203,
+      "load_norm": 5.258201519688828,
+      "pressure_configuration": "reference",
+      "element_activity": null
+    },
+    "constant_load": null,
+    "constraint_info": {
+      "method": "transformation",
+      "num_total_dofs": 60,
+      "num_independent_dofs": 6,
+      "num_fixed_dofs": 54,
+      "num_mpc_slave_dofs": 0,
+      "num_mpc_constraints": 0,
+      "num_generalized_constraint_equations": 0,
+      "fixed_dofs": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        9,
+        10,
+        11,
+        12,
+        13,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        27,
+        28,
+        29,
+        30,
+        31,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        45,
+        46,
+        47,
+        48,
+        49,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59
+      ],
+      "slave_dofs": [],
+      "audit": {
+        "status": "ok",
+        "total_dofs": 60,
+        "equation_count": 54,
+        "structural_rank": 54,
+        "redundant_equations": 0,
+        "independent_dofs": 6,
+        "fixed_dofs": 54,
+        "mpc_slave_dofs": 0,
+        "homogeneous": true,
+        "feasible": true,
+        "max_dependency_depth": 0,
+        "origin_counts": {
+          "support": 54
+        },
+        "equations": [
+          {
+            "dependent_dof": 0,
+            "terms": [
+              {
+                "dof": 0,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 0,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 1,
+            "terms": [
+              {
+                "dof": 1,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 1,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 2,
+            "terms": [
+              {
+                "dof": 2,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 2,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 3,
+            "terms": [
+              {
+                "dof": 3,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 3,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 4,
+            "terms": [
+              {
+                "dof": 4,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 4,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 5,
+            "terms": [
+              {
+                "dof": 5,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 5,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 18,
+            "terms": [
+              {
+                "dof": 18,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 18,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 19,
+            "terms": [
+              {
+                "dof": 19,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 19,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 20,
+            "terms": [
+              {
+                "dof": 20,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 20,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 21,
+            "terms": [
+              {
+                "dof": 21,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 21,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 22,
+            "terms": [
+              {
+                "dof": 22,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 22,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 23,
+            "terms": [
+              {
+                "dof": 23,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:left",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 23,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:left"
+          },
+          {
+            "dependent_dof": 36,
+            "terms": [
+              {
+                "dof": 36,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 36,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 37,
+            "terms": [
+              {
+                "dof": 37,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 37,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 38,
+            "terms": [
+              {
+                "dof": 38,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 38,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 39,
+            "terms": [
+              {
+                "dof": 39,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 39,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 40,
+            "terms": [
+              {
+                "dof": 40,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 40,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 41,
+            "terms": [
+              {
+                "dof": 41,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 41,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 54,
+            "terms": [
+              {
+                "dof": 54,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 54,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 55,
+            "terms": [
+              {
+                "dof": 55,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 55,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 56,
+            "terms": [
+              {
+                "dof": 56,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 56,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 57,
+            "terms": [
+              {
+                "dof": 57,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 57,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 58,
+            "terms": [
+              {
+                "dof": 58,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 58,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 59,
+            "terms": [
+              {
+                "dof": 59,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 59,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target"
+          },
+          {
+            "dependent_dof": 42,
+            "terms": [
+              {
+                "dof": 42,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 42,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_guided"
+          },
+          {
+            "dependent_dof": 43,
+            "terms": [
+              {
+                "dof": 43,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 43,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_guided"
+          },
+          {
+            "dependent_dof": 45,
+            "terms": [
+              {
+                "dof": 45,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 45,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_guided"
+          },
+          {
+            "dependent_dof": 46,
+            "terms": [
+              {
+                "dof": 46,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 46,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_guided"
+          },
+          {
+            "dependent_dof": 47,
+            "terms": [
+              {
+                "dof": 47,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 47,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_guided"
+          },
+          {
+            "dependent_dof": 48,
+            "terms": [
+              {
+                "dof": 48,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 48,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_guided"
+          },
+          {
+            "dependent_dof": 49,
+            "terms": [
+              {
+                "dof": 49,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 49,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_guided"
+          },
+          {
+            "dependent_dof": 51,
+            "terms": [
+              {
+                "dof": 51,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 51,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_guided"
+          },
+          {
+            "dependent_dof": 52,
+            "terms": [
+              {
+                "dof": 52,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 52,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_guided"
+          },
+          {
+            "dependent_dof": 53,
+            "terms": [
+              {
+                "dof": 53,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:target_guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 53,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:target_guided"
+          },
+          {
+            "dependent_dof": 6,
+            "terms": [
+              {
+                "dof": 6,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 6,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 7,
+            "terms": [
+              {
+                "dof": 7,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 7,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 9,
+            "terms": [
+              {
+                "dof": 9,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 9,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 10,
+            "terms": [
+              {
+                "dof": 10,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 10,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 11,
+            "terms": [
+              {
+                "dof": 11,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 11,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 12,
+            "terms": [
+              {
+                "dof": 12,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 12,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 13,
+            "terms": [
+              {
+                "dof": 13,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 13,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 15,
+            "terms": [
+              {
+                "dof": 15,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 15,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 16,
+            "terms": [
+              {
+                "dof": 16,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 16,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 17,
+            "terms": [
+              {
+                "dof": 17,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 17,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 24,
+            "terms": [
+              {
+                "dof": 24,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 24,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 25,
+            "terms": [
+              {
+                "dof": 25,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 25,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 27,
+            "terms": [
+              {
+                "dof": 27,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 27,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 28,
+            "terms": [
+              {
+                "dof": 28,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 28,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 29,
+            "terms": [
+              {
+                "dof": 29,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 29,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 30,
+            "terms": [
+              {
+                "dof": 30,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 30,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 31,
+            "terms": [
+              {
+                "dof": 31,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 31,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 33,
+            "terms": [
+              {
+                "dof": 33,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 33,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 34,
+            "terms": [
+              {
+                "dof": 34,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 34,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          },
+          {
+            "dependent_dof": 35,
+            "terms": [
+              {
+                "dof": 35,
+                "coefficient": 1.0
+              }
+            ],
+            "rhs": 0.0,
+            "source_id": "support:guided",
+            "kind": "support",
+            "coefficients": [
+              {
+                "dof": 35,
+                "coefficient": 1.0
+              }
+            ],
+            "value": 0.0,
+            "origin": "support:guided"
+          }
+        ],
+        "issues": [],
+        "error_count": 0,
+        "warning_count": 0
+      }
+    },
+    "num_layers": 5,
+    "total_dofs": 60,
+    "reduced_dofs": 6,
+    "control": "force",
+    "kinematics": "von_karman",
+    "corotational_tangent_requested": "auto",
+    "corotational_tangent": "not_applicable",
+    "follower_pressure": false,
+    "equilibrium_tangent": "K_internal",
+    "convergence_settings": {
+      "profile": "auto",
+      "line_search": "auto",
+      "fast_iterations": 4,
+      "slow_iterations": 9,
+      "growth_factor": 1.5,
+      "cutback_factor": 0.5,
+      "max_step_factor": 2.0,
+      "min_step_fraction": null,
+      "max_line_search_cuts": 16,
+      "line_search_reduction": 0.5,
+      "characteristic_length": null
+    },
+    "resource_config": null,
+    "thread_policy": {
+      "requested_solver_threads": null,
+      "requested_assembly_threads": null,
+      "active_solver_threads": null,
+      "limiter_available": true,
+      "fallback_reason": null,
+      "runtime_pools": [
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "prefix": "libscipy_openblas",
+          "num_threads": 1,
+          "version": "0.3.31.188.0"
+        },
+        {
+          "user_api": "blas",
+          "internal_api": "openblas",
+          "prefix": "libscipy_openblas",
+          "num_threads": 1,
+          "version": "0.3.30"
+        }
+      ]
+    },
+    "external_load_reduction": {
+      "preprojected": true,
+      "constant_vector": true,
+      "proportional_vector": true,
+      "stage_vector_count": 0
+    },
+    "armijo": {
+      "enabled": false,
+      "characteristic_length": null,
+      "residual_scaling": null,
+      "sufficient_decrease": null
+    },
+    "initial_condition_provenance": {
+      "geometric_imperfection": [],
+      "residual_stress_or_prestrain": [],
+      "coordinate_system": {
+        "geometric_imperfection": "global nodal coordinates",
+        "residual_stress_or_prestrain": "element-local reference coordinates"
+      }
+    },
+    "qualified_q4_committed_state_lifecycle": {
+      "schema": "ANYSOLVER_Q4_COMMITTED_STATE_LIFECYCLE_V1",
+      "ordinary_restart": false,
+      "preflight_count": 1,
+      "validated_bound_element_ids": [],
+      "migrated_historical_unbound_element_ids": [],
+      "stripped_internal_binding_element_ids": [],
+      "fresh_unbound_element_ids": [],
+      "explicit_initial_material_state_element_ids": [],
+      "restored_deleted_frozen_element_ids": [],
+      "input_states_deep_copied": true,
+      "final_state_policy": "DETERMINISTIC_RESEAL_AFTER_MATERIALIZATION",
+      "sealed_final_element_ids": [],
+      "sealed_deleted_frozen_element_ids": [],
+      "origin_materialized_from_unevaluated_parent_element_ids": [],
+      "sealed_final_state_digests": []
+    },
+    "qualified_s3_committed_state_lifecycle": {
+      "schema": "ANYSOLVER_S3_COMMITTED_STATE_LIFECYCLE_V1",
+      "ordinary_restart": false,
+      "preflight_count": 1,
+      "validated_active_element_ids": [],
+      "restored_deleted_frozen_element_ids": [],
+      "input_states_deep_copied": true,
+      "final_state_policy": "ACTIVE_ONLY_OR_EXPLICIT_NONCURRENT_DISPOSITION",
+      "sealed_active_element_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "sealed_deleted_frozen_element_ids": [],
+      "sealed_final_state_digests": [
+        {
+          "element_id": 1,
+          "state_integrity_sha256": "A4E9C8AF27C94C69404C475D22D467131C50858B700CBAC6CC5E18ED546242AE"
+        },
+        {
+          "element_id": 2,
+          "state_integrity_sha256": "889FAE82806CA4B47938A35477998331B8C711C113B6D30E6D3CCBE8AC19F3C5"
+        },
+        {
+          "element_id": 3,
+          "state_integrity_sha256": "F68FE8D3F528AAFAD4A04EC0CE08F55C2080E2ABC1194670CCA1538978FCBA7D"
+        },
+        {
+          "element_id": 4,
+          "state_integrity_sha256": "D7DD57F150A72CFEDA2D23DC940FEC959A7E619B3D9DC3F8787D3BD7096A3EA0"
+        },
+        {
+          "element_id": 5,
+          "state_integrity_sha256": "C7515856DCC2D1FFB2A516CFC216CC3C3F79C47C767858E4164CD90B628003EA"
+        },
+        {
+          "element_id": 6,
+          "state_integrity_sha256": "477ED039BD647ED8568E4C0C9EA08FDC1DA6A6EC509EDAFAA9E3227F90A98124"
+        }
+      ]
+    },
+    "nonlinear_state_storage": {
+      "activated": false,
+      "eligible_batch_count": 0,
+      "fallback_reason": "no_plastic_shell_batch",
+      "batch_eligibility": []
+    },
+    "initial_state_equilibration": {
+      "requested": false,
+      "converged": true,
+      "iterations": 0,
+      "history": [],
+      "failure_reason": null
+    },
+    "prescribed_displacement_path": {
+      "mode": "proportional_to_load_factor",
+      "schema_mode": "PROPORTIONAL_PRESCRIBED_FIELD",
+      "restart_schema_disposition": "NOT_A_RESTART",
+      "initial_affine_scale": 0.0,
+      "affine_scale_slope": 1.0,
+      "target_max_abs": 0.0
+    },
+    "failure_reason": null,
+    "stop_reason": "target_load_factor_reached",
+    "status_category": "converged",
+    "last_converged_load_factor": 1.0,
+    "peak_load_factor": 1.0,
+    "force_displacement_history": [
+      {
+        "step_index": 1,
+        "load_factor": 0.5,
+        "control_value": 9.770904636693684e-07,
+        "displacement_norm": 9.770904636693684e-07,
+        "residual_norm": 3.189498013709188e-12,
+        "iterations": 4,
+        "step_size": 0.5,
+        "line_search_used": false,
+        "stage_factors": {
+          "proportional": 0.5
+        },
+        "active_stage": null,
+        "stage_endpoint_committed": false,
+        "deleted_element_count": 0,
+        "newly_deleted_element_ids": [],
+        "max_fracture_utilization": 0.0,
+        "deleted_pressure_force_resultant": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "support_reactions": {
+          "left": [
+            1.0761453059891541e-07,
+            -1.805390158677384e-10,
+            -0.6877601505679021,
+            -2.7310286654425255e-09,
+            -6.092298775926989e-06,
+            0.0
+          ],
+          "target": [
+            -3.4525364693142156e-07,
+            3.2693816435265042e-09,
+            2.223743577330966,
+            -4.9040724652848315e-11,
+            9.452775680988162e-07,
+            0.0
+          ],
+          "target_guided": [
+            -3.270927746520452e-07,
+            5.028548778243138e-09,
+            0.0,
+            2.8986767537945485e-08,
+            9.455499811830067e-07,
+            0.0
+          ],
+          "guided": [
+            5.647318909833506e-07,
+            -8.117391406870527e-09,
+            0.0,
+            4.03794977084601e-08,
+            -5.505562534891572e-06,
+            0.0
+          ]
+        }
+      },
+      {
+        "step_index": 2,
+        "load_factor": 1.0,
+        "control_value": 2.0445048287165795e-06,
+        "displacement_norm": 2.0445048287165795e-06,
+        "residual_norm": 7.799076857899917e-12,
+        "iterations": 2,
+        "step_size": 0.5,
+        "line_search_used": false,
+        "stage_factors": {
+          "proportional": 1.0
+        },
+        "active_stage": null,
+        "stage_endpoint_committed": false,
+        "deleted_element_count": 0,
+        "newly_deleted_element_ids": [],
+        "max_fracture_utilization": 0.0,
+        "deleted_pressure_force_resultant": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "support_reactions": {
+          "left": [
+            2.947730662623886e-07,
+            3.1741977087054364e-16,
+            -1.375556417551822,
+            2.438339345700851e-15,
+            -1.2812705446547381e-05,
+            0.0
+          ],
+          "target": [
+            -9.530411120283242e-07,
+            -5.747775570410848e-15,
+            4.447523271087163,
+            8.621667790437745e-17,
+            1.3050798099560198e-06,
+            0.0
+          ],
+          "target_guided": [
+            -9.081833951756148e-07,
+            -8.839419521805632e-15,
+            0.0,
+            -2.540326956519936e-14,
+            1.3057526757088105e-06,
+            0.0
+          ],
+          "guided": [
+            1.5664514409419148e-06,
+            1.4266318707527086e-14,
+            0.0,
+            -3.549904709120839e-14,
+            -1.2844497369648336e-05,
+            0.0
+          ]
+        }
+      }
+    ],
+    "convergence_adaptation": [
+      {
+        "step_index": 1,
+        "load_factor": 0.5,
+        "iterations": 4,
+        "line_search_used": false,
+        "attempted_step_size": 0.5,
+        "next_step_size": 0.75,
+        "action": "grow"
+      },
+      {
+        "step_index": 2,
+        "load_factor": 1.0,
+        "iterations": 2,
+        "line_search_used": false,
+        "attempted_step_size": 0.5,
+        "next_step_size": 0.75,
+        "action": "grow"
+      }
+    ],
+    "reaction_force_recovery": {
+      "accepted_force_reuse_count": 2,
+      "full_reassembly_count": 0
+    },
+    "strain_summary": {
+      "max_equivalent_plastic_strain": 0.0,
+      "max_plastic_strain_component": 0.0,
+      "max_compressed_side_plastic_strain": 0.0,
+      "layer_strain_min": 0.0,
+      "layer_strain_max": 0.0,
+      "fiber_strain_min": null,
+      "fiber_strain_max": null,
+      "yielded_element_count": 0
+    },
+    "total_newton_iterations": 6,
+    "solve_time": 1.2668259143829346,
+    "constraint_postcheck": {
+      "status": "passed",
+      "equation_count": 54,
+      "vector_count": 1,
+      "max_absolute_residual": 0.0,
+      "max_relative_residual": 0.0,
+      "residual_l2_norm": 0.0,
+      "relative_tolerance": 1e-10,
+      "worst_origin": "support:guided",
+      "collection_issue_count": 0,
+      "homogeneous_variation": false,
+      "affine_scale": 1.0,
+      "issue_code": null
+    },
+    "result_case": {
+      "name": "nonlinear_static",
+      "analysis_case": {
+        "name": "nonlinear_static",
+        "analysis_type": "nonlinear_static",
+        "load_cases": [
+          {
+            "name": "independent_two_body_manufactured_normal_field",
+            "factor": 1.0,
+            "metadata": {}
+          }
+        ],
+        "settings": {
+          "control": "force",
+          "max_load_factor": 1.0,
+          "num_steps": 2,
+          "num_layers": 5,
+          "kinematics": "von_karman",
+          "corotational_tangent": "not_applicable",
+          "convergence_settings": {
+            "profile": "auto",
+            "line_search": "auto",
+            "fast_iterations": 4,
+            "slow_iterations": 9,
+            "growth_factor": 1.5,
+            "cutback_factor": 0.5,
+            "max_step_factor": 2.0,
+            "min_step_fraction": null,
+            "max_line_search_cuts": 16,
+            "line_search_reduction": 0.5,
+            "characteristic_length": null
+          },
+          "fracture": null
+        },
+        "metadata": {}
+      },
+      "matrix_signature": "66eba4da298416272f8b022ff94cfd2009b3b401a2eac487eefd8ce555567bcd",
+      "load_signature": "3485e3bdc1b7fedfc4cbb0d4f41771b006cae30b25961fb3f449f4fe36b09abf",
+      "solver_backend": null,
+      "recovery": {
+        "displacements": true,
+        "element_states": true,
+        "force_displacement_history": true
+      },
+      "warnings": [],
+      "metadata": {
+        "matrix_revisions": {
+          "stiffness": {
+            "boundary": 4,
+            "geometry": 10,
+            "load": 0,
+            "mass": 0,
+            "material": 1,
+            "mpc": 6,
+            "result_state": 0,
+            "topology": 16
+          }
+        }
+      }
+    },
+    "nonlinear_performance": {
+      "scope": "analysis_local_inclusive",
+      "nested_analysis_count": 0,
+      "assembly": {
+        "activated": false,
+        "fallback_reason": "persistent_assembly_plan_not_selected",
+        "fallback_reason_counts": {
+          "persistent_assembly_plan_not_selected": 6
+        },
+        "path_counts": {
+          "reference_full_coordinate": 6
+        },
+        "calls": 6,
+        "tangent_calls": 6,
+        "residual_only_calls": 0,
+        "elapsed_seconds": 0.7424795000406448,
+        "unique_plan_count": 0,
+        "plan_reused": false,
+        "plan_reuse_scope": "within_analysis",
+        "plans": []
+      },
+      "direct_reduced_assembly": {
+        "context_active": false,
+        "activated": false,
+        "fallback_reason": "direct_reduction_context_not_active",
+        "estimated_assemblies": 0,
+        "activation_threshold": 144,
+        "assembly_count": 0,
+        "residual_only_assembly_count": 0,
+        "plan_build_count": 0,
+        "plan_reused": false,
+        "plan_reuse_scope": "within_analysis",
+        "plan": null
+      },
+      "solver": {
+        "event_counts": {
+          "dead_load_projection_reuse": 8,
+          "linear_factorization": 4,
+          "linear_solve": 4,
+          "reaction_force_reuse": 2
+        },
+        "failure_reason_counts": {},
+        "linear_factorizations": 4,
+        "linear_solves": 4,
+        "rejected_full_steps": 0,
+        "backtracks": 0,
+        "promotion_evaluations": 0,
+        "recoverable_trial_failures": 0,
+        "failed_increments": 0,
+        "failed_work": {
+          "increment_count": 0,
+          "newton_iterations": 0,
+          "rejected_trial_evaluations": 0,
+          "recoverable_trial_failures": 0
+        },
+        "reaction_force_reuse_count": 2,
+        "reaction_force_reassembly_count": 0
+      },
+      "hill48": {
+        "public_call_count": 0,
+        "point_count": 0,
+        "compiled_call_count": 0,
+        "compiled_point_count": 0,
+        "scalar_fallback_call_count": 0,
+        "scalar_fallback_point_count": 0,
+        "row_fallback_count": 0,
+        "numerical_tangent_row_count": 0,
+        "fallback_reason_counts": {},
+        "last_call": null,
+        "eligible": true,
+        "activated": false,
+        "fallback_reason": "hill48_not_exercised",
+        "fast_path": "hill48_flattened_numba_return_map",
+        "jit_backend": "numba",
+        "jit_disabled_reason": null
+      },
+      "corotational": {
+        "eligible": false,
+        "activated": false,
+        "exercised": false,
+        "fallback_reason": "kinematics_not_corotational",
+        "tangent_mode": "not_applicable",
+        "force_block_rotations": 0,
+        "tangent_block_rotations": 0,
+        "dense_consistent_rotations": 0,
+        "force_block_activated": false,
+        "rotated_tangent_block_activated": false,
+        "dense_consistent_tangent_activated": false,
+        "fast_path_name": "corotational_direct_3x3_blocks",
+        "backend": "numba",
+        "jit_enabled": true,
+        "backend_fallback_reason": null
+      }
+    },
+    "general_contact": {
+      "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+      "minimum_gap": -2.8900000458223287e-06,
+      "sampled_overlap_gap": -1.2257142860423037e-06,
+      "penalty_energy": 0.0,
+      "current_overlap_area": 1.000000000001,
+      "reference_overlap_area": 1.0000000000000002,
+      "overlapping_pairs": 7,
+      "integration_force": [
+        -1.8612245072043036e-06,
+        -1.458373847839763e-14,
+        8.68571428573294
+      ],
+      "target_force": [
+        1.861224507203939e-06,
+        1.458719509221648e-14,
+        -8.685714285732942
+      ],
+      "integration_moment": [
+        5.327375992063659,
+        -5.933464809671876,
+        1.1415805711374738e-06
+      ],
+      "target_moment": [
+        -5.32737599206366,
+        5.933464809671877,
+        -1.1415805711358833e-06
+      ],
+      "gap_tolerance_met": true,
+      "active_pressure_dofs": 6,
+      "source_pressure_node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "normalized_weighted_gap_m": [
+        -2.882142857665551e-07,
+        -8.507142857087086e-07,
+        -1.1855357142866091e-06,
+        -4.2660714284137973e-07,
+        -1.0530952380983458e-06,
+        -1.19892857142637e-06
+      ],
+      "numerical_pressure_pa": [
+        2.882142857665551,
+        8.507142857087086,
+        11.855357142866092,
+        4.266071428413797,
+        10.530952380983459,
+        11.9892857142637
+      ],
+      "reference_support_m2": [
+        0.08333333333333334,
+        0.25,
+        0.16666666666666674,
+        0.1666666666666667,
+        0.2500000000000001,
+        0.08333333333333336
+      ],
+      "energy_evaluations": 15,
+      "weighted_gap_integration_error_m3": 0.0,
+      "integration_triangles": 0,
+      "area_integration_error_m2": 0.0,
+      "augmented_merit_j": 0.0,
+      "normal_multiplier_estimate_pa": [],
+      "pair_geometry_evaluations": 23,
+      "pressure_gram_rank": 6,
+      "pressure_gram_condition_estimate": 6.84064613981679,
+      "pressure_gram_supported_modes": 6,
+      "pressure_gram_scaled_rank": 6,
+      "pressure_gram_scaled_condition_estimate": 4.000000000000003,
+      "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+      "regularization_storage_j": 4.247353121454153e-06,
+      "normal_law": "projected_penalty",
+      "gap_tolerance": 5e-05,
+      "maximum_candidate_pairs": 100000,
+      "swept_trial_cutbacks": 1,
+      "normal_stiffness": 10000000.0
+    }
+  },
+  "displacements": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -9.99999999914604e-07,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -9.99999999970039e-07,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -9.999999991554194e-07,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    -9.99999996267881e-07,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    3.0000000045476043e-07,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    3.000000062611126e-07,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "steps": [
+    {
+      "step_index": 1,
+      "load_factor": 0.5,
+      "iterations": 4,
+      "residual_norm": 3.189498013709188e-12,
+      "displacement_norm": 9.770904636693684e-07,
+      "max_equivalent_plastic_strain": 0.0,
+      "control_value": 9.770904636693684e-07,
+      "active_stage": null,
+      "deleted_element_count": 0,
+      "max_fracture_utilization": 0.0,
+      "support_reactions": {
+        "left": [
+          1.0761453059891541e-07,
+          -1.805390158677384e-10,
+          -0.6877601505679021,
+          -2.7310286654425255e-09,
+          -6.092298775926989e-06,
+          0.0
+        ],
+        "target": [
+          -3.4525364693142156e-07,
+          3.2693816435265042e-09,
+          2.223743577330966,
+          -4.9040724652848315e-11,
+          9.452775680988162e-07,
+          0.0
+        ],
+        "target_guided": [
+          -3.270927746520452e-07,
+          5.028548778243138e-09,
+          0.0,
+          2.8986767537945485e-08,
+          9.455499811830067e-07,
+          0.0
+        ],
+        "guided": [
+          5.647318909833506e-07,
+          -8.117391406870527e-09,
+          0.0,
+          4.03794977084601e-08,
+          -5.505562534891572e-06,
+          0.0
+        ]
+      }
+    },
+    {
+      "step_index": 2,
+      "load_factor": 1.0,
+      "iterations": 2,
+      "residual_norm": 7.799076857899917e-12,
+      "displacement_norm": 2.0445048287165795e-06,
+      "max_equivalent_plastic_strain": 0.0,
+      "control_value": 2.0445048287165795e-06,
+      "active_stage": null,
+      "deleted_element_count": 0,
+      "max_fracture_utilization": 0.0,
+      "support_reactions": {
+        "left": [
+          2.947730662623886e-07,
+          3.1741977087054364e-16,
+          -1.375556417551822,
+          2.438339345700851e-15,
+          -1.2812705446547381e-05,
+          0.0
+        ],
+        "target": [
+          -9.530411120283242e-07,
+          -5.747775570410848e-15,
+          4.447523271087163,
+          8.621667790437745e-17,
+          1.3050798099560198e-06,
+          0.0
+        ],
+        "target_guided": [
+          -9.081833951756148e-07,
+          -8.839419521805632e-15,
+          0.0,
+          -2.540326956519936e-14,
+          1.3057526757088105e-06,
+          0.0
+        ],
+        "guided": [
+          1.5664514409419148e-06,
+          1.4266318707527086e-14,
+          0.0,
+          -3.549904709120839e-14,
+          -1.2844497369648336e-05,
+          0.0
+        ]
+      }
+    }
+  ],
+  "checkpoint": {
+    "schema": "ANYSOLVER_NONLINEAR_CHECKPOINT_V2",
+    "version": 2,
+    "integrity_id": "SHA256_CANONICAL_JSON_EXCLUDING_SELF_V1",
+    "analysis_kind": "static",
+    "model_fingerprint": "5D15FFA9368170D89FA01E22B42663F0CD994ABB3F37CFA6AC3EE18790771510",
+    "analysis_fingerprint": "748196AC824BD563D7FAF3D15AB7C8656C15F78A3843392FDF6F5FD5D05B8676",
+    "total_dofs": 60,
+    "displacements": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -9.99999999914604e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -9.99999999970039e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -9.999999991554194e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -9.99999996267881e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      3.0000000045476043e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      3.000000062611126e-07,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "element_states": [
+      {
+        "element_id": 1,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 1,
+          "node_ids": [
+            1,
+            2,
+            4
+          ],
+          "element_identity_sha256": "90637202022C91801D398C11720AFE849FB25CCC4D584F5C64EC64F31B83DF8D",
+          "num_layers": 5,
+          "committed_total_u": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.99999999914604e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.99999999914604e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "layer_stress": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.999999999829208e-06,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.999999999829208e-06,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.999999999829208e-06,
+              0.0
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -5.122134449900653e-05,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -5.122134449900653e-05,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -5.122134449900653e-05,
+              0.0
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "A4E9C8AF27C94C69404C475D22D467131C50858B700CBAC6CC5E18ED546242AE"
+        }
+      },
+      {
+        "element_id": 2,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 2,
+          "node_ids": [
+            2,
+            5,
+            4
+          ],
+          "element_identity_sha256": "1EC96BAF7CFF7C00083A6855B2F97E888F8A4B9276A3F546F0C60CCA19FAE3A7",
+          "num_layers": 5,
+          "committed_total_u": [
+            0.0,
+            0.0,
+            -9.99999999914604e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999991554194e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            0.0,
+            0.0,
+            -9.99999999914604e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999991554194e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "layer_stress": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              7.591846191957151e-16,
+              1.9999999983108388e-06
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              7.591846191957151e-16,
+              1.9999999983108388e-06
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              7.591846191957151e-16,
+              1.9999999983108388e-06
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.9443228460745773e-14,
+              5.122134446012006e-05
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.9443228460745773e-14,
+              5.122134446012006e-05
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.9443228460745773e-14,
+              5.122134446012006e-05
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "889FAE82806CA4B47938A35477998331B8C711C113B6D30E6D3CCBE8AC19F3C5"
+        }
+      },
+      {
+        "element_id": 3,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 3,
+          "node_ids": [
+            2,
+            3,
+            5
+          ],
+          "element_identity_sha256": "C7CDFC450D89576FF5E5535867DEBD4B0CEC4B31C66FC8191D53C13F79B1FBD4",
+          "num_layers": 5,
+          "committed_total_u": [
+            0.0,
+            0.0,
+            -9.99999999914604e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.99999999970039e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999991554194e-07,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            0.0,
+            0.0,
+            -9.99999999914604e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.99999999970039e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999991554194e-07,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "layer_stress": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.1086983653200988e-16,
+              7.591846191957151e-16
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.1086983653200988e-16,
+              7.591846191957151e-16
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -1.1086983653200988e-16,
+              7.591846191957151e-16
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -2.839451046019785e-15,
+              1.944322846074577e-14
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -2.839451046019785e-15,
+              1.944322846074577e-14
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              -2.839451046019785e-15,
+              1.944322846074577e-14
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "F68FE8D3F528AAFAD4A04EC0CE08F55C2080E2ABC1194670CCA1538978FCBA7D"
+        }
+      },
+      {
+        "element_id": 4,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 4,
+          "node_ids": [
+            3,
+            6,
+            5
+          ],
+          "element_identity_sha256": "0B683F0456F9B7BB18D15AECB653E9F79C7B1763323C19746DC473963C72751C",
+          "num_layers": 5,
+          "committed_total_u": [
+            0.0,
+            0.0,
+            -9.99999999970039e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.99999996267881e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999991554194e-07,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            0.0,
+            0.0,
+            -9.99999999970039e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.99999996267881e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            -9.999999991554194e-07,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "layer_stress": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.702157819266945e-15,
+              -5.7750765636104505e-15
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.702157819266945e-15,
+              -5.7750765636104505e-15
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.702157819266945e-15,
+              -5.7750765636104505e-15
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              9.48147505332782e-14,
+              -1.4790359309904507e-13
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              9.48147505332782e-14,
+              -1.4790359309904507e-13
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              9.48147505332782e-14,
+              -1.4790359309904507e-13
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "D7DD57F150A72CFEDA2D23DC940FEC959A7E619B3D9DC3F8787D3BD7096A3EA0"
+        }
+      },
+      {
+        "element_id": 5,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 5,
+          "node_ids": [
+            7,
+            8,
+            10
+          ],
+          "element_identity_sha256": "93A961E2845B0F780E933B6E50919227C4039A02C0A5C6F36F3324F437352DFC",
+          "num_layers": 5,
+          "committed_total_u": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            3.0000000045476043e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            3.0000000045476043e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "layer_stress": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.1428571461054316e-07,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.1428571461054316e-07,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.1428571461054316e-07,
+              0.0
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.3463014427229738e-06,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.3463014427229738e-06,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.3463014427229738e-06,
+              0.0
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "C7515856DCC2D1FFB2A516CFC216CC3C3F79C47C767858E4164CD90B628003EA"
+        }
+      },
+      {
+        "element_id": 6,
+        "state": {
+          "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+          "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+          "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+          "material_mode": "LAYERED_PLANE_STRESS",
+          "element_id": 6,
+          "node_ids": [
+            8,
+            9,
+            10
+          ],
+          "element_identity_sha256": "457BF8B8B14781C920ADFB1F45DBFC9E2350CDD0B55D73AA30A25BE4F537593C",
+          "num_layers": 5,
+          "committed_total_u": [
+            0.0,
+            0.0,
+            3.0000000045476043e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            3.000000062611126e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "committed_constitutive_u": [
+            0.0,
+            0.0,
+            3.0000000045476043e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            3.000000062611126e-07,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "solver_kinematics": "VON_KARMAN",
+          "qualified_s3_activity_disposition": null,
+          "plastic_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "alpha": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "layer_strain": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "layer_stress": [
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "station_generalized_strain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              4.147394388183623e-15,
+              -2.1428571875793755e-07
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              4.147394388183623e-15,
+              -2.1428571875793755e-07
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              4.147394388183623e-15,
+              -2.1428571875793755e-07
+            ]
+          ],
+          "station_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.6057000852813984e-14,
+              -1.3463014687799746e-06
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.6057000852813984e-14,
+              -1.3463014687799746e-06
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.6057000852813984e-14,
+              -1.3463014687799746e-06
+            ]
+          ],
+          "initial_generalized_prestrain": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_generalized_resultant": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "initial_field_provenance": {},
+          "state_integrity_sha256": "477ED039BD647ED8568E4C0C9EA08FDC1DA6A6EC509EDAFAA9E3227F90A98124"
+        }
+      }
+    ],
+    "deleted_element_ids": [],
+    "activity_state": null,
+    "path_state": {
+      "mode": "force",
+      "load_factor": 1.0,
+      "step_index": 2,
+      "total_iterations": 6,
+      "steps": [
+        {
+          "step_index": 1,
+          "load_factor": 0.5,
+          "iterations": 4,
+          "residual_norm": 3.189498013709188e-12,
+          "displacement_norm": 9.770904636693684e-07,
+          "max_equivalent_plastic_strain": 0.0,
+          "control_value": 9.770904636693684e-07,
+          "active_stage": null,
+          "deleted_element_count": 0,
+          "max_fracture_utilization": 0.0,
+          "support_reactions": {
+            "left": [
+              1.0761453059891541e-07,
+              -1.805390158677384e-10,
+              -0.6877601505679021,
+              -2.7310286654425255e-09,
+              -6.092298775926989e-06,
+              0.0
+            ],
+            "target": [
+              -3.4525364693142156e-07,
+              3.2693816435265042e-09,
+              2.223743577330966,
+              -4.9040724652848315e-11,
+              9.452775680988162e-07,
+              0.0
+            ],
+            "target_guided": [
+              -3.270927746520452e-07,
+              5.028548778243138e-09,
+              0.0,
+              2.8986767537945485e-08,
+              9.455499811830067e-07,
+              0.0
+            ],
+            "guided": [
+              5.647318909833506e-07,
+              -8.117391406870527e-09,
+              0.0,
+              4.03794977084601e-08,
+              -5.505562534891572e-06,
+              0.0
+            ]
+          }
+        },
+        {
+          "step_index": 2,
+          "load_factor": 1.0,
+          "iterations": 2,
+          "residual_norm": 7.799076857899917e-12,
+          "displacement_norm": 2.0445048287165795e-06,
+          "max_equivalent_plastic_strain": 0.0,
+          "control_value": 2.0445048287165795e-06,
+          "active_stage": null,
+          "deleted_element_count": 0,
+          "max_fracture_utilization": 0.0,
+          "support_reactions": {
+            "left": [
+              2.947730662623886e-07,
+              3.1741977087054364e-16,
+              -1.375556417551822,
+              2.438339345700851e-15,
+              -1.2812705446547381e-05,
+              0.0
+            ],
+            "target": [
+              -9.530411120283242e-07,
+              -5.747775570410848e-15,
+              4.447523271087163,
+              8.621667790437745e-17,
+              1.3050798099560198e-06,
+              0.0
+            ],
+            "target_guided": [
+              -9.081833951756148e-07,
+              -8.839419521805632e-15,
+              0.0,
+              -2.540326956519936e-14,
+              1.3057526757088105e-06,
+              0.0
+            ],
+            "guided": [
+              1.5664514409419148e-06,
+              1.4266318707527086e-14,
+              0.0,
+              -3.549904709120839e-14,
+              -1.2844497369648336e-05,
+              0.0
+            ]
+          }
+        }
+      ],
+      "force_displacement_history": [
+        {
+          "step_index": 1,
+          "load_factor": 0.5,
+          "control_value": 9.770904636693684e-07,
+          "displacement_norm": 9.770904636693684e-07,
+          "residual_norm": 3.189498013709188e-12,
+          "iterations": 4,
+          "step_size": 0.5,
+          "line_search_used": false,
+          "stage_factors": {
+            "proportional": 0.5
+          },
+          "active_stage": null,
+          "stage_endpoint_committed": false,
+          "deleted_element_count": 0,
+          "newly_deleted_element_ids": [],
+          "max_fracture_utilization": 0.0,
+          "deleted_pressure_force_resultant": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "support_reactions": {
+            "left": [
+              1.0761453059891541e-07,
+              -1.805390158677384e-10,
+              -0.6877601505679021,
+              -2.7310286654425255e-09,
+              -6.092298775926989e-06,
+              0.0
+            ],
+            "target": [
+              -3.4525364693142156e-07,
+              3.2693816435265042e-09,
+              2.223743577330966,
+              -4.9040724652848315e-11,
+              9.452775680988162e-07,
+              0.0
+            ],
+            "target_guided": [
+              -3.270927746520452e-07,
+              5.028548778243138e-09,
+              0.0,
+              2.8986767537945485e-08,
+              9.455499811830067e-07,
+              0.0
+            ],
+            "guided": [
+              5.647318909833506e-07,
+              -8.117391406870527e-09,
+              0.0,
+              4.03794977084601e-08,
+              -5.505562534891572e-06,
+              0.0
+            ]
+          }
+        },
+        {
+          "step_index": 2,
+          "load_factor": 1.0,
+          "control_value": 2.0445048287165795e-06,
+          "displacement_norm": 2.0445048287165795e-06,
+          "residual_norm": 7.799076857899917e-12,
+          "iterations": 2,
+          "step_size": 0.5,
+          "line_search_used": false,
+          "stage_factors": {
+            "proportional": 1.0
+          },
+          "active_stage": null,
+          "stage_endpoint_committed": false,
+          "deleted_element_count": 0,
+          "newly_deleted_element_ids": [],
+          "max_fracture_utilization": 0.0,
+          "deleted_pressure_force_resultant": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "support_reactions": {
+            "left": [
+              2.947730662623886e-07,
+              3.1741977087054364e-16,
+              -1.375556417551822,
+              2.438339345700851e-15,
+              -1.2812705446547381e-05,
+              0.0
+            ],
+            "target": [
+              -9.530411120283242e-07,
+              -5.747775570410848e-15,
+              4.447523271087163,
+              8.621667790437745e-17,
+              1.3050798099560198e-06,
+              0.0
+            ],
+            "target_guided": [
+              -9.081833951756148e-07,
+              -8.839419521805632e-15,
+              0.0,
+              -2.540326956519936e-14,
+              1.3057526757088105e-06,
+              0.0
+            ],
+            "guided": [
+              1.5664514409419148e-06,
+              1.4266318707527086e-14,
+              0.0,
+              -3.549904709120839e-14,
+              -1.2844497369648336e-05,
+              0.0
+            ]
+          }
+        }
+      ],
+      "reduced_coordinates": [
+        -9.99999999914604e-07,
+        -9.99999999970039e-07,
+        -9.999999991554194e-07,
+        -9.99999996267881e-07,
+        3.0000000045476043e-07,
+        3.000000062611126e-07
+      ],
+      "terminal_status": "completed",
+      "failure_reason": null,
+      "base_step": 0.5,
+      "minimum_step": 0.00048828125,
+      "maximum_step": 1.0,
+      "next_step_size": 0.75,
+      "force_line_search_next": false,
+      "convergence_adaptation": [
+        {
+          "step_index": 1,
+          "load_factor": 0.5,
+          "iterations": 4,
+          "line_search_used": false,
+          "attempted_step_size": 0.5,
+          "next_step_size": 0.75,
+          "action": "grow"
+        },
+        {
+          "step_index": 2,
+          "load_factor": 1.0,
+          "iterations": 2,
+          "line_search_used": false,
+          "attempted_step_size": 0.5,
+          "next_step_size": 0.75,
+          "action": "grow"
+        }
+      ],
+      "deletion_records": [],
+      "fracture_warnings": [],
+      "max_fracture_utilization": 0.0,
+      "affine_path_mode": "PROPORTIONAL_PRESCRIBED_FIELD",
+      "exact_base_offset": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "contact_state": {},
+    "checkpoint_sha256": "C9B00ACF40463356C3B985DD66E6459950B86B28DE37DF619E4D6A15D2A2E78B"
+  },
+  "assessment": {
+    "certificate": {
+      "profile": "S3_PATCH_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+      "minimum_gap": -2.8900000458223287e-06,
+      "sampled_overlap_gap": -1.2257142860423037e-06,
+      "penalty_energy": 0.0,
+      "current_overlap_area": 1.000000000001,
+      "reference_overlap_area": 1.0000000000000002,
+      "overlapping_pairs": 7,
+      "integration_force": [
+        -1.8612245072043036e-06,
+        -1.458373847839763e-14,
+        8.68571428573294
+      ],
+      "target_force": [
+        1.861224507203939e-06,
+        1.458719509221648e-14,
+        -8.685714285732942
+      ],
+      "integration_moment": [
+        5.327375992063659,
+        -5.933464809671876,
+        1.1415805711374738e-06
+      ],
+      "target_moment": [
+        -5.32737599206366,
+        5.933464809671877,
+        -1.1415805711358833e-06
+      ],
+      "gap_tolerance_met": true,
+      "active_pressure_dofs": 6,
+      "source_pressure_node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "normalized_weighted_gap_m": [
+        -2.882142857665551e-07,
+        -8.507142857087086e-07,
+        -1.1855357142866091e-06,
+        -4.2660714284137973e-07,
+        -1.0530952380983458e-06,
+        -1.19892857142637e-06
+      ],
+      "numerical_pressure_pa": [
+        2.882142857665551,
+        8.507142857087086,
+        11.855357142866092,
+        4.266071428413797,
+        10.530952380983459,
+        11.9892857142637
+      ],
+      "reference_support_m2": [
+        0.08333333333333334,
+        0.25,
+        0.16666666666666674,
+        0.1666666666666667,
+        0.2500000000000001,
+        0.08333333333333336
+      ],
+      "energy_evaluations": 15,
+      "weighted_gap_integration_error_m3": 0.0,
+      "integration_triangles": 0,
+      "area_integration_error_m2": 0.0,
+      "augmented_merit_j": 0.0,
+      "normal_multiplier_estimate_pa": [],
+      "pair_geometry_evaluations": 23,
+      "pressure_gram_rank": 6,
+      "pressure_gram_condition_estimate": 6.84064613981679,
+      "pressure_gram_supported_modes": 6,
+      "pressure_gram_scaled_rank": 6,
+      "pressure_gram_scaled_condition_estimate": 4.000000000000003,
+      "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+      "regularization_storage_j": 4.247353121454153e-06
+    },
+    "wrench": {
+      "scope": "zero-rotation guided Cartesian nodal work; all constraint/path actions",
+      "maximum_nodal_rotation_norm": 0.0,
+      "origin_m": [
+        0.6,
+        0.6,
+        0.0
+      ],
+      "force_scale_n": 11.548348882810515,
+      "moment_scale_nm": 11.548348882810515,
+      "total_reaction_wrench": [
+        3.646476837929763e-19,
+        -3.4566138188488998e-18,
+        3.071966853535341,
+        1.3907526743325305,
+        1.9807127819532164,
+        7.02190313273815e-19
+      ],
+      "external_wrench": [
+        0.0,
+        0.0,
+        -3.0719668535292914,
+        -1.39075267432959,
+        -1.9807127819505848,
+        0.0
+      ],
+      "physical_contact_wrench": [
+        -3.646476837929763e-19,
+        3.4566138188512663e-18,
+        -1.7763568394002505e-15,
+        0.0,
+        -3.3306690738754696e-16,
+        -7.022697226126201e-19
+      ],
+      "structural_internal_wrench": [
+        0.0,
+        0.0,
+        -1.4823076576950256e-21,
+        -1.0587911840678754e-21,
+        -1.5881867761018131e-22,
+        0.0
+      ],
+      "mapped_to_physical_contact_defect": [
+        0.0,
+        -2.3665827156630354e-30,
+        4.440892098500626e-16,
+        -0.0,
+        3.3306690738754696e-16,
+        7.940933880509066e-23
+      ],
+      "total_balance_defect": [
+        0.0,
+        2.3665827156630354e-30,
+        6.047606859738153e-12,
+        2.9405367030221896e-12,
+        2.6313395906640835e-12,
+        -7.940933880509066e-23
+      ],
+      "free_equilibrium_residual_n": 7.799076857899917e-12,
+      "constraint_reconstruction_relative_force": 6.753412922524956e-13,
+      "balance_relative_force": 5.236771871985868e-13,
+      "balance_relative_moment": 3.416915435663329e-13,
+      "contact_conversion_max_scaled": 3.845477949761983e-17,
+      "structural_internal_max_scaled": 1.2835667442480983e-22,
+      "bodies": {
+        "source": {
+          "node_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "total_reaction_wrench": [
+            1.8612245072043036e-06,
+            1.458373847839763e-14,
+            -1.375556417551822,
+            -0.30160590276579086,
+            -0.6878037915312947,
+            -2.484587556513483e-08
+          ],
+          "external_wrench": [
+            0.0,
+            0.0,
+            -7.310157868169904,
+            0.18565848214285735,
+            1.4098400297619056,
+            0.0
+          ],
+          "physical_contact_wrench": [
+            -1.8612245072043036e-06,
+            -1.458373847839763e-14,
+            8.68571428573294,
+            0.11594742062389418,
+            -0.7220362382321118,
+            2.484587556513483e-08
+          ],
+          "structural_internal_wrench": [
+            0.0,
+            0.0,
+            -1.4032243645683936e-21,
+            -8.912579158615069e-22,
+            -5.910497418335187e-22,
+            0.0
+          ],
+          "mapped_to_physical_contact_defect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "total_balance_defect": [
+            0.0,
+            0.0,
+            1.1214140727133781e-11,
+            9.60675983208148e-13,
+            -1.5009105069907491e-12,
+            0.0
+          ],
+          "balance_relative_force": 9.710600918738958e-13,
+          "balance_relative_moment": 1.5431036545733925e-13,
+          "contact_conversion_max_scaled": 0.0,
+          "structural_internal_max_scaled": 1.215086571082958e-22
+        },
+        "target": {
+          "node_ids": [
+            7,
+            8,
+            9,
+            10
+          ],
+          "total_reaction_wrench": [
+            -1.861224507203939e-06,
+            -1.458719509221648e-14,
+            4.447523271087163,
+            1.6923585770983212,
+            2.668516573484511,
+            2.48458755658371e-08
+          ],
+          "external_wrench": [
+            0.0,
+            0.0,
+            4.238191014640613,
+            -1.5764111564724472,
+            -3.39055281171249,
+            0.0
+          ],
+          "physical_contact_wrench": [
+            1.861224507203939e-06,
+            1.458719509221648e-14,
+            -8.685714285732942,
+            -0.11594742062389418,
+            0.7220362382321115,
+            -2.48458755658371e-08
+          ],
+          "structural_internal_wrench": [
+            0.0,
+            0.0,
+            -1.0587911840678754e-22,
+            -1.0587911840678754e-22,
+            4.235164736271502e-22,
+            0.0
+          ],
+          "mapped_to_physical_contact_defect": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            4.440892098500626e-16,
+            0.0
+          ],
+          "total_balance_defect": [
+            0.0,
+            0.0,
+            -5.165645688975928e-12,
+            1.979749697511579e-12,
+            4.132250097654833e-12,
+            0.0
+          ],
+          "balance_relative_force": 4.473059951163138e-13,
+          "balance_relative_moment": 3.9676833658709945e-13,
+          "contact_conversion_max_scaled": 3.845477949761983e-17,
+          "structural_internal_max_scaled": 3.6673335549945667e-23
+        }
+      }
+    },
+    "comparison": {
+      "normal_displacement_relative": 1.9139489741565914e-09,
+      "normal_pressure_relative": 2.4753683183972214e-11,
+      "contact_force_relative": 1.6149469197820422e-12,
+      "target_normal_displacement_relative": 1.4797845582166934e-08,
+      "full_normal_contact_residual_relative": 9.567318025966956e-13,
+      "both_body_prescribed_row_normal_work_relative": 5.347175543923536e-13
+    },
+    "both_body_normal_virtual_work": {
+      "virtual_displacements_m": [
+        [
+          1.0,
+          -0.2,
+          0.3,
+          -0.4,
+          0.5,
+          -0.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.7,
+          -0.8,
+          0.9,
+          -1.0
+        ],
+        [
+          0.2,
+          0.0,
+          0.0,
+          -0.4,
+          0.0,
+          0.0,
+          -0.1,
+          0.0,
+          0.0,
+          0.3
+        ]
+      ],
+      "production_virtual_work_j": [
+        -0.8213330853382472,
+        -4.399020790808597,
+        1.1197357497084681
+      ],
+      "independent_virtual_work_j": [
+        -0.8213330853358687,
+        -4.399020790802423,
+        1.119735749709019
+      ],
+      "work_scale_j": 11.548348882810515,
+      "relative_error": 5.347175543923536e-13
+    },
+    "independent_target_normal_gap_m": -1.2257142860416367e-06,
+    "checks": {
+      "fixed_geometry_normal_reference": true,
+      "both_body_wrench": true,
+      "physical_gap": true,
+      "production_gap": true,
+      "all_six_supports_retained": true,
+      "nonnegative_pressure": true,
+      "zero_multipliers": true
+    },
+    "limits": "fixed-XY/vertical-normal oracle; tangential geometry and general continuum accuracy outside this comparison"
+  },
+  "development_checks_met": true,
+  "elapsed_seconds": 1.673293100000592
+}

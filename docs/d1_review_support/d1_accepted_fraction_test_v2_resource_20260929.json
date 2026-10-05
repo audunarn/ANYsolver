@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 19.07696570000553,
+  "peak_process_tree_memory_mb": 371.2,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_monolithic_restart.py::test_monolithic_accepted_swept_fraction_reaches_same_committed_state"
+  ],
+  "log": "docs\\d1_review_support\\d1_accepted_fraction_test_v2_20260929.log"
+}

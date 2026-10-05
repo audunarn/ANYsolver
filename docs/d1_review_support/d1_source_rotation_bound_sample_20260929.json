@@ -1,0 +1,393 @@
+{
+  "source": "current working tree",
+  "status": "diverged",
+  "failure_reason": "contact_semismooth_backtracking_failed",
+  "accepted_steps": 0,
+  "requested_steps": 4,
+  "source_columns": 4,
+  "elapsed_seconds": 13.413485600001877,
+  "source_nodes": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "left_rotation_support_nodes": [
+    1,
+    6
+  ],
+  "available_info_keys": [
+    "contact_failure",
+    "contact_path",
+    "control",
+    "failure_reason",
+    "force_displacement_history",
+    "general_contact",
+    "general_contact_profile",
+    "nonlinear_state_storage",
+    "profile",
+    "qualified_q4_committed_state_lifecycle",
+    "qualified_s3_committed_state_lifecycle",
+    "status_category",
+    "stop_reason",
+    "total_newton_iterations"
+  ],
+  "contact_failure": {
+    "iteration": 9,
+    "merit": 0.052772869905373124,
+    "equilibrium": 0.052772869905373124,
+    "constraint": 3.211439707943206e-13,
+    "complementarity": 0.01564096528128577,
+    "active_modes": 0,
+    "z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0007450122636450907,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.00394727732074064
+    ],
+    "c": [
+      624.9999999999999,
+      1249.9999999999998,
+      1249.9999999999998,
+      1250.0000000000002,
+      625.0000000000005,
+      624.9999999999999,
+      1249.9999999999998,
+      1249.9999999999995,
+      1250.0,
+      625.0000000000002
+    ],
+    "support": [
+      0.061875000722112765,
+      0.12375000275701901,
+      0.12375000472666978,
+      0.12375000669595786,
+      0.061875004004425284,
+      0.05062500649898917,
+      0.10125002481321563,
+      0.1012500425400741,
+      0.10125006026371172,
+      0.05062503603989275
+    ],
+    "gap": [
+      0.0002934718591450018,
+      0.0003944801661589346,
+      0.00034821729071469467,
+      0.00016787787247944086,
+      2.4204079504505936e-05,
+      0.0002934555641385185,
+      0.00039442494933989705,
+      0.0003480882113445179,
+      0.00016776234490030608,
+      2.4205821675815634e-05
+    ],
+    "y": [
+      -0.18341991196562607,
+      -0.49310020769866814,
+      -0.4352716133933683,
+      -0.2098473405993011,
+      -0.014382537426671132,
+      -0.183409727586574,
+      -0.4930311866748712,
+      -0.4351102641806472,
+      -0.2097029311253826,
+      -0.011181361226644137
+    ],
+    "ncp": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0007450122636450907,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.00394727732074064
+    ],
+    "last_trial": null,
+    "direction_q_norm": 0.014255970609768796,
+    "direction_z_min": -0.0,
+    "direction_z_max": 0.006102200839379686,
+    "attempts": []
+  },
+  "contact_path": {
+    "accepted_step": 0,
+    "total_steps": 4,
+    "targets": [
+      0.0,
+      0.0
+    ],
+    "reaction_generalized": [
+      0.0,
+      0.0
+    ],
+    "profile": "Q4_S3_PATCH_REFINED_PROJECTED_AUGMENTED_PATH_DEV_V0",
+    "enforcement_solver": "monolithic_active_set",
+    "monolithic_linear_solver": "direct",
+    "monolithic_maximum_pivots": 12,
+    "nodal_forces_n": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0
+    ]
+  },
+  "rejected_pose_geometry": {
+    "certified_global_lower_m": -4.999323370843679e-05,
+    "sampled_pairs": [
+      {
+        "source_face": [
+          0,
+          1,
+          6,
+          5
+        ],
+        "target_face": [
+          0,
+          1,
+          3
+        ],
+        "sampled_vertical_gap_m": 0.00021752709608877964,
+        "sampled_parametric_location": [
+          0.0,
+          0.05
+        ],
+        "sampled_overlap_points": 4752,
+        "certified_pair_lower_m": 0.00012636618955461635
+      },
+      {
+        "source_face": [
+          0,
+          1,
+          6,
+          5
+        ],
+        "target_face": [
+          1,
+          2,
+          3
+        ],
+        "sampled_vertical_gap_m": 0.00021746037955538977,
+        "sampled_parametric_location": [
+          0.0,
+          0.9
+        ],
+        "sampled_overlap_points": 1161,
+        "certified_pair_lower_m": 0.00012636674458144434
+      },
+      {
+        "source_face": [
+          1,
+          2,
+          7,
+          6
+        ],
+        "target_face": [
+          0,
+          1,
+          3
+        ],
+        "sampled_vertical_gap_m": 0.0003679477529697425,
+        "sampled_parametric_location": [
+          1.0,
+          0.4375
+        ],
+        "sampled_overlap_points": 3507,
+        "certified_pair_lower_m": 0.0001509341545740653
+      },
+      {
+        "source_face": [
+          1,
+          2,
+          7,
+          6
+        ],
+        "target_face": [
+          1,
+          2,
+          3
+        ],
+        "sampled_vertical_gap_m": 0.0003675145986139286,
+        "sampled_parametric_location": [
+          1.0,
+          0.9
+        ],
+        "sampled_overlap_points": 2406,
+        "certified_pair_lower_m": 0.0001500062920919412
+      },
+      {
+        "source_face": [
+          2,
+          3,
+          8,
+          7
+        ],
+        "target_face": [
+          0,
+          1,
+          3
+        ],
+        "sampled_vertical_gap_m": 0.00017237012675566134,
+        "sampled_parametric_location": [
+          1.0,
+          0.0
+        ],
+        "sampled_overlap_points": 2260,
+        "certified_pair_lower_m": -1.4780124629514101e-13
+      },
+      {
+        "source_face": [
+          2,
+          3,
+          8,
+          7
+        ],
+        "target_face": [
+          1,
+          2,
+          3
+        ],
+        "sampled_vertical_gap_m": 0.0001719270845871243,
+        "sampled_parametric_location": [
+          1.0,
+          0.9
+        ],
+        "sampled_overlap_points": 3653,
+        "certified_pair_lower_m": -1.4780124637239397e-13
+      },
+      {
+        "source_face": [
+          3,
+          4,
+          9,
+          8
+        ],
+        "target_face": [
+          0,
+          1,
+          3
+        ],
+        "sampled_vertical_gap_m": -4.999329256408225e-05,
+        "sampled_parametric_location": [
+          1.0,
+          0.0
+        ],
+        "sampled_overlap_points": 1014,
+        "certified_pair_lower_m": -4.999323370843679e-05
+      },
+      {
+        "source_face": [
+          3,
+          4,
+          9,
+          8
+        ],
+        "target_face": [
+          1,
+          2,
+          3
+        ],
+        "sampled_vertical_gap_m": -4.9927374173985156e-05,
+        "sampled_parametric_location": [
+          1.0,
+          0.0625
+        ],
+        "sampled_overlap_points": 4899,
+        "certified_pair_lower_m": -4.994644001327044e-05
+      }
+    ],
+    "physical_source_positions_m": [
+      [
+        0.1,
+        0.1,
+        0.015039999999999998
+      ],
+      [
+        0.34995742187163165,
+        0.1,
+        0.014824100370394607
+      ],
+      [
+        0.5999383279258593,
+        0.1,
+        0.014302925779210544
+      ],
+      [
+        0.8499327147143688,
+        0.1,
+        0.013663509259614662
+      ],
+      [
+        1.0999317617419462,
+        0.1,
+        0.012997329791857224
+      ],
+      [
+        0.1,
+        1.1,
+        0.015039999999999998
+      ],
+      [
+        0.3499574220487532,
+        1.1,
+        0.014824105920511973
+      ],
+      [
+        0.599938312619101,
+        1.1,
+        0.014302854679227175
+      ],
+      [
+        0.8499327757851365,
+        1.1,
+        0.013663646932877015
+      ],
+      [
+        1.0999319059465074,
+        1.1,
+        0.01299850289563286
+      ]
+    ],
+    "physical_target_positions_m": [
+      [
+        0.0,
+        0.0,
+        0.015000000000000001
+      ],
+      [
+        1.3000731132408354,
+        3.636613824624605e-06,
+        0.01269201795503248
+      ],
+      [
+        1.3000635717102744,
+        1.000000409685332,
+        0.0126929022515369
+      ],
+      [
+        0.0,
+        1.0,
+        0.015000000000000001
+      ]
+    ]
+  }
+}

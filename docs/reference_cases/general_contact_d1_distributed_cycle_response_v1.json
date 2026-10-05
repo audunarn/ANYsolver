@@ -1,0 +1,100 @@
+{
+  "case_id": "general_contact_d1_distributed_cycle_response_v1",
+  "status": "registered_pending_execution",
+  "claim_boundary": "Refined integrated normal-force trend and active/open/active state sequence for one elastic planar Q4/S3 distributed-force interior-overlap full cycle; complete tangent, restart, C1, installed applications and release remain open",
+  "policy": "ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1/2026-09-24.2",
+  "source_commit": "1cde0b431568a647dfaa38c32f303a4bb8ba9474",
+  "source_tree": "f80356ed5f3534a02d878f503f1af9874b7253e1",
+  "source_blobs": {
+    "src/anysolver/general_contact/s3_patch_augmented.py": "1688a6294622fc96a23c780e1a2e6b917ad94bf0",
+    "src/anysolver/general_contact/q4_s3_overlap_derivatives.py": "7a7497f7a2f4e2fe864c6b2bd8a0b2573a6253ec",
+    "src/anysolver/general_contact/q4_source_overlap.py": "7376c671c3b0429f48a590169f06ea32f2e9b371",
+    "src/anysolver/general_contact/linearized_pivot.py": "34455a884b1c2ca038e04b517f9182c63ff16be1",
+    "src/anysolver/general_contact/static_path.py": "9afc7363f33dc4f8490f6a04a0b3babc8a4a111c",
+    "src/anysolver/general_contact/core.py": "19523f5e8b72ee60cceaa0700497c91c292f0a2c",
+    "src/anysolver/general_contact/supported_schur.py": "f20929a4e2f8421aec4b7b228c3cfe637961b68b",
+    "scripts/general_contact_d1_mixed_mesh_jet2_schur_press.py": "e70097501c4b9407b777601aa4a68459237fd2c4"
+  },
+  "environment": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "anysolver_source_root": "C:/ANYworkspaceWork/ANYsolver-general-contact/src",
+    "anymaterial_source_root": "C:/Github/ANYmaterial/src"
+  },
+  "prior_development_inputs": [
+    {
+      "columns": 8,
+      "path": "reports/general_contact_d1_mixed_8q4_interior_distributed_0p3n_four_phase_20260927.json",
+      "sha256": "8fb6c607b0ab4ad4816096d2b9cebb4213f1afac63d74e3492c3aefa9a30a86c",
+      "loaded_force_n": 0.10347981515520803,
+      "first_unload_force_n": 0.03980671281149368
+    },
+    {
+      "columns": 16,
+      "path": "reports/general_contact_d1_mixed_16q4_interior_distributed_0p3n_cartesian_roundoff_four_phase_20260927.json",
+      "sha256": "dd960f179d996ebccceb7433963abfec94c5c8509ddd73cb2a864950d579fa11",
+      "loaded_force_n": 0.10387155974562323,
+      "first_unload_force_n": 0.039844694930915664
+    }
+  ],
+  "runner": {
+    "script": "scripts/general_contact_d1_mixed_mesh_jet2_schur_press.py",
+    "columns": 24,
+    "output": "reports/general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+    "maximum_wall_seconds": 1200,
+    "single_execution": true,
+    "arguments": [
+      "--four-phase", "--steps-per-segment", "3",
+      "--load-profile", "distributed", "--total-force-n", "0.3",
+      "--pressure-cap-pa", "250", "--schur-step-cap-pa", "200",
+      "--target-right-x-m", "1.3"
+    ]
+  },
+  "model": {
+    "source": "24 Q4 faces along x, y=[0.1,1.1] m, physical bottom skin, 0.05 m elastic thickness",
+    "target": "two fixed S3 V2D faces spanning x=[0,1.3] m and y=[0,1] m, physical top skin, 0.05 m thickness and 0.01 m reference offset",
+    "material": "existing isotropic elastic E=100000 Pa, nu=0.3",
+    "normal_law": "projected augmented primal Q1 mortar",
+    "normal_regularization_pa_per_m": 10000,
+    "gap_tolerance_m": 0.00005,
+    "pressure_tolerance_pa": 0.00001,
+    "maximum_augmentations": 7,
+    "force_control": "-0.3 N total downward distributed Q4 nodal force at full load; three increments per press, slide, unload and recontact phase",
+    "candidate_pair_cap": 48,
+    "supported_pressure_mode_cap": 50,
+    "schur_maximum_pressure_pa": 250,
+    "schur_maximum_step_pa": 200,
+    "schur_maximum_attempts_per_active_epoch": 2,
+    "schur_maximum_relinearizations": 0
+  },
+  "frozen_prediction": {
+    "method": "8/16-Q4 development-force inverse-N extrapolation to N=24, separately for full load and first unload",
+    "loaded_force_24_n": 0.10400214127576163,
+    "first_unload_force_24_n": 0.03985735563738966,
+    "interpretation": "development trend prediction only; not an independent analytical oracle"
+  },
+  "criteria": {
+    "status": "completed",
+    "accepted_steps": 12,
+    "expected_load_totals_n": [-0.1, -0.2, -0.3, -0.3, -0.3, -0.3, -0.2, -0.1, 0.0, -0.1, -0.2, -0.3],
+    "loaded_force_relative_prediction_error_max": 0.01,
+    "first_unload_relative_prediction_error_max": 0.01,
+    "loaded_force_relative_change_16_to_24_max": 0.01,
+    "first_unload_relative_change_16_to_24_max": 0.01,
+    "loaded_press_slide_recontact_relative_spread_max": 0.000001,
+    "full_scaled_pressure_rank": true,
+    "loaded_active_pressure_modes_min": 12,
+    "first_unload_active_pressure_modes_min": 4,
+    "open_steps": [8, 9, 10],
+    "open_contact_force_abs_max_n": 0.0000000001,
+    "recontact_step": 11,
+    "normalized_force_and_moment_wrench_error_max": 0.000001,
+    "normalized_equilibrium_error_max": 0.000001,
+    "pressure_change_pa_max": 0.00001,
+    "independent_minimum_gap_m_min": -0.00005,
+    "contact_integration_error_fraction_of_2pct_response_budget_max": 0.1,
+    "force_scale_n": 0.3,
+    "moment_scale_nm": 0.3
+  }
+}

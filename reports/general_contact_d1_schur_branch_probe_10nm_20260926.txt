@@ -1,0 +1,8 @@
+difference_step_m=1e-08
+status=diverged reason=maximum_augmentations_reached
+augmentation=2 schur_proposed=False ineligible=projection_branch_or_nonfinite_response scaled_condition=None
+signature_calls=9
+base_ambiguous=False
+base_source_bbox=[0.09999999979960955, 0.1, 0.01495] to [1.0999999998359047, 1.1, 0.014975610403256035]
+base_target_bbox=[-0.5, 0.0, 0.015000000000000001] to [0.5, 1.0, 0.015000000000000001]
+first_changed_call=7 ambiguous=False source_shift=1.00000000502e-08 target_shift=0 changed_signature_entries=[4, 29, 49, 74]

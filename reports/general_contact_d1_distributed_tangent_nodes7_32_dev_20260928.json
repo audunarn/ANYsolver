@@ -1,0 +1,35 @@
+{
+  "reference": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+  "candidate": "distributed_24q4_coupled_tangent_dev",
+  "free_dofs": 98,
+  "source_nodes": [
+    7,
+    32
+  ],
+  "pose_constraint_error_m": 0.0,
+  "pressure_replay_error_pa": 0.0,
+  "base_active_modes": 18,
+  "base_internal_force_norm_n": 0.1538435213176461,
+  "mapped_contact_force_norm_n": 0.024721792269813456,
+  "branch_pairs": 4,
+  "runs": [
+    {
+      "step_m": 1e-06,
+      "smooth_branch": true,
+      "relative_reduced_tangent_error": 6.914185788443548e-11,
+      "action_scale_n_per_m": 118948.83103274446,
+      "relative_mapped_contact_tangent_error": 0.0,
+      "mapped_contact_action_scale_n_per_m": 0.0
+    },
+    {
+      "step_m": 5e-07,
+      "smooth_branch": true,
+      "relative_reduced_tangent_error": 1.731018063979642e-11,
+      "action_scale_n_per_m": 118948.8310312795,
+      "relative_mapped_contact_tangent_error": 0.0,
+      "mapped_contact_action_scale_n_per_m": 0.0
+    }
+  ],
+  "status": "inconclusive_or_failed_development",
+  "elapsed_seconds": 35.470780300034676
+}

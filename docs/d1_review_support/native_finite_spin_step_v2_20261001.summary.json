@@ -1,0 +1,25 @@
+{
+  "status": "INDEPENDENTLY_REVIEWED_DEVELOPMENT_NONPASS",
+  "accepted_steps": 0,
+  "returned_stage_observations": 22,
+  "failure": "midpoint stage residual backtracking failed",
+  "complete_route_seconds": 12.061026799987303,
+  "peak_process_tree_memory_mb": 224.579584,
+  "initial_balance": 9.71543740588829e-14,
+  "minimum_actual_stage_norm": 6.341949461040904e-12,
+  "last_algebraic_norm": 3.671284058879858e-18,
+  "last_normalized_correction": 9.265434734922402e-17,
+  "explicit_solve_tolerance": 1e-12,
+  "scientific_stage_gate": 1e-11,
+  "conclusion": "Backtracking exhausted before issued candidate. Local arithmetic sensitivity/ULP indicators do not establish cause; signed acceleration correction at unchanged unknown worsens residual.",
+  "next_action": "One optional acceleration-coordinate correction candidate; same physical fixture, time step, all gates and caps; no default change or macro",
+  "bindings": {
+    "inputs": "991f4bd14edcfd14367a258bedd1638c9ea75d132d3c72407cd658ddb518667d",
+    "proposal": "e91555fe4848a124501788fa9f10b601082599accd416131107c68c68c8b132d",
+    "raw": "63338a2594bd43c8bb996211ff12187e1e896bc88cf41d49ddecc4b102762d6f",
+    "resources": "9392a664d7732d5ae502cda1f11fad0ce44f43cd465c039f17d807e954360b7a",
+    "log": "c85757e549b1e0a1c89db2b8017edc747d1ea6110f1297b34d6f01f6b3f6245f",
+    "xml": "a6dc5ea9d3aa30c8d07133e43705156b4040e3a8ac6932a7dca6f29d838d6128"
+  },
+  "review_sha256": "4d58990a0245072492cf202dccf2ef819bf8339359169c3bbf7056bea9d9a11c"
+}

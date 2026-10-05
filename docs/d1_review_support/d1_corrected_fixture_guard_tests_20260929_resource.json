@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 65.84631399999489,
+  "peak_process_tree_memory_mb": 384.045056,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_interior_profile.py",
+    "-q",
+    "-k",
+    "not diagonal_target_motion"
+  ],
+  "log": "docs\\d1_review_support\\d1_corrected_fixture_guard_tests_20260929.log"
+}

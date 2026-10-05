@@ -1,0 +1,9 @@
+{
+  "elapsed_seconds": 147.40781390000484,
+  "statuses": [
+    "completed",
+    "completed",
+    "completed"
+  ],
+  "maximum_absolute_displacement_difference_m": 1.4807694588571442e-05
+}

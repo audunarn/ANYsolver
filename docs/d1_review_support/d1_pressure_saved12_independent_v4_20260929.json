@@ -1,0 +1,91 @@
+{
+  "status": "exploratory_saved_pose_pressure_screen",
+  "saved_pose": "docs\\d1_review_support\\d1_coupled_contrast_12q4_32s3_20260929.json",
+  "pose_rule": "saved_accepted_development_pose",
+  "source_cells": [
+    12,
+    12
+  ],
+  "target_cells": [
+    4,
+    4
+  ],
+  "target_y0_m": -0.1,
+  "source_reference_normal": [
+    -9.999999949998899e-05,
+    0.0,
+    0.9999999950000001
+  ],
+  "signed_interior_modes": 121,
+  "active_modes": 2,
+  "negative_gap_interior_modes": 0,
+  "minimum_interior_gap_m": 2.7984644948378778e-18,
+  "reference_support_min_m2": 0.006944444479166605,
+  "reference_support_max_m2": 0.006944444479166723,
+  "mass_minimum_eigenvalue_m2": 0.0008250844151871093,
+  "independent_mass_relative_error": 5.815406373623701e-16,
+  "q_orthonormal_gram_error": 2.220446049250313e-16,
+  "path_control_error": 0.0,
+  "structural_constraint_error": null,
+  "full_constrained_energy_dimension": 916,
+  "full_constrained_stiffness_symmetry_error": 1.234808534141929e-18,
+  "full_constrained_minimum_cholesky_pivot": 0.6902334357371475,
+  "eta": 0.9999975409545713,
+  "kappa": 221.80034832238576,
+  "gamma_constructive": 0.004508537022050576,
+  "gamma_restricted_actual": 0.004508559508856863,
+  "provisional_eta_level": 0.9,
+  "provisional_kappa_level": 2110.0,
+  "provisional_levels_met": true,
+  "scope_note": "Reference-energy saved-pose screen only; no nonlinear norm equivalence or acceptance claim.",
+  "independent_current_skin": {
+    "quadrature_points": 9664,
+    "branch_signature_sha256": "f5605152edb1072d6bc1e3fac03bb2ff2fc8b133211bf9cb0d4569c90b5d2ac6",
+    "support_max_relative": 2.3731017032707555e-14,
+    "gap_max_absolute_m": 2.3164714493383726e-10,
+    "directions": [
+      {
+        "direction": "center_normal",
+        "step_m": 1e-07,
+        "algorithmic_map_relative_l2": 1.1816742599873055e-07,
+        "fixed_pressure_work_extra_l2": 1.859629728954717e-15,
+        "independent_map_l2_m2": 0.003472222205297812
+      },
+      {
+        "direction": "center_normal",
+        "step_m": 3e-07,
+        "algorithmic_map_relative_l2": 1.181648812802388e-07,
+        "fixed_pressure_work_extra_l2": 3.5500549956893287e-16,
+        "independent_map_l2_m2": 0.003472222205281865
+      },
+      {
+        "direction": "signed_checker",
+        "step_m": 1e-07,
+        "algorithmic_map_relative_l2": 9.733343817799396e-07,
+        "fixed_pressure_work_extra_l2": 4.3839804915054274e-14,
+        "independent_map_l2_m2": 0.010416666757788611
+      },
+      {
+        "direction": "signed_checker",
+        "step_m": 3e-07,
+        "algorithmic_map_relative_l2": 9.733339038081748e-07,
+        "fixed_pressure_work_extra_l2": 1.501399594375887e-14,
+        "independent_map_l2_m2": 0.010416666757552071
+      },
+      {
+        "direction": "smallest_singular",
+        "step_m": 1e-07,
+        "algorithmic_map_relative_l2": 3.770835378246844e-06,
+        "fixed_pressure_work_extra_l2": 4.0491487885799065e-14,
+        "independent_map_l2_m2": 0.005088031315793092
+      },
+      {
+        "direction": "smallest_singular",
+        "step_m": 3e-07,
+        "algorithmic_map_relative_l2": 3.770853602496673e-06,
+        "fixed_pressure_work_extra_l2": 1.4211835894006577e-14,
+        "independent_map_l2_m2": 0.00508803131586929
+      }
+    ]
+  }
+}

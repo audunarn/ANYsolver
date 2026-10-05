@@ -1,0 +1,47 @@
+{
+  "saved_pose": "docs\\d1_review_support\\d1_coupled_contrast_12q4_32s3_20260929.json",
+  "oracle": "docs\\d1_review_support\\d1_fixed_bump_contrast_source12_20260929.json",
+  "oracle_scope": "same_mesh_small_motion_linear_q1_mortar",
+  "solver_status": "completed",
+  "accepted_steps": 2,
+  "certificate": "overlap_local_dev",
+  "production_integrated_normal_force_n": 0.01859519320535152,
+  "oracle_integrated_normal_force_n": 0.018594500096627938,
+  "relative_integrated_force_difference": 3.727493183360392e-05,
+  "production_active_node_ids": [
+    83,
+    84
+  ],
+  "oracle_active_node_ids": [
+    83,
+    84
+  ],
+  "production_source_vertical_displacement_m": [
+    -0.00019294817299968104,
+    -0.0001808498778110128,
+    -0.00010527535234980688
+  ],
+  "oracle_source_vertical_displacement_m": [
+    -0.00019295725441197096,
+    -0.00018085823055827294,
+    -0.0001052801450516939
+  ],
+  "relative_source_displacement_difference": [
+    4.706437349347397e-05,
+    4.618394879982474e-05,
+    4.5523321464553684e-05
+  ],
+  "independent_projected_lower_gap_m": -1.787612843480127e-05,
+  "registered_gap_tolerance_m": 5e-05,
+  "production_contact_force_balance_n": [
+    -2.541098841762901e-21,
+    5.082197683525802e-21,
+    0.0
+  ],
+  "production_contact_moment_balance_nm": [
+    -1.734723475976807e-18,
+    0.0,
+    2.964615315390051e-21
+  ],
+  "active_rim_pressure_pa": {}
+}

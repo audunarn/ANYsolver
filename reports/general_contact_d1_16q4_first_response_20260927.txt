@@ -1,0 +1,6 @@
+{
+  "status": "diverged",
+  "initial_residual_pa": 0.040244648811536485,
+  "required_residual_pa": 0.030183486608652364,
+  "best_bounded_residual_pa": 1.8152857612356255e-07
+}

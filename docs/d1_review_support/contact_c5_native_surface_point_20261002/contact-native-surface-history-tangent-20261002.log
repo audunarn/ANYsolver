@@ -1,0 +1,10 @@
+[development] exact targets=1; record=C:\ANYworkspaceWork\contact-native-surface-history-tangent-20261002\anysolver-portable-ci-855gj321\P01
+[portable-ci] starting P01/01 with 1 modules
+..                                                                       [100%]
+============================ slowest 10 durations =============================
+0.03s call     tests/test_general_contact_native_surface_s3_friction.py::test_native_surface_retained_history_tangent_with_changing_target_frame[0.02-stick]
+0.03s call     tests/test_general_contact_native_surface_s3_friction.py::test_native_surface_retained_history_tangent_with_changing_target_frame[0.2-slip]
+
+(4 durations < 0.005s hidden.  Use -vv to show these durations.)
+2 passed in 3.69s
+[portable-ci] P01 exit=0

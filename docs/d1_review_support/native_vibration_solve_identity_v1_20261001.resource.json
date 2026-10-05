@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.200229700014461,
+  "peak_process_tree_memory_mb": 207.712256,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_vibration_solve_identity_v1_20261001.entry.source.py"
+  ],
+  "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_vibration_solve_identity_v1_20261001.log"
+}

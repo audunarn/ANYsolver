@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="4.374" timestamp="2026-10-01T01:20:11.903271+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_ge_beam3_native_dynamic_analysis" name="test_two_step_native_dynamic_interface" time="3.881"><failure message="ValueError: midpoint stage residual backtracking failed">tests\test_ge_beam3_native_dynamic_analysis.py:98: in test_two_step_native_dynamic_interface
+    candidate = analysis.trial(state,dt=.001)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_native_dynamic_analysis.py:88: in trial
+    return self._owner().trial(accepted, dt=dt, cancellation_token=cancellation_token)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_native_midpoint.py:582: in trial
+    raise ValueError('midpoint stage residual backtracking failed')
+E   ValueError: midpoint stage residual backtracking failed</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 14.930420199991204,
+  "peak_process_tree_memory_mb": 279.314432,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_analytic_strip_dev.py",
+    "16",
+    "docs/d1_review_support/d1_interior_analytic_strip16_shift_20260929.json",
+    "--shifted-target"
+  ],
+  "log": "docs\\d1_review_support\\d1_interior_analytic_strip16_shift_20260929.log"
+}

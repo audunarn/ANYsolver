@@ -1,0 +1,49 @@
+{
+  "status": "development_saved_pose_structural_linearization_check",
+  "saved_source_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "saved_runtime_identity": {
+    "python": "3.14.2",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py",
+    "compiled_bjet_mul_enabled": false
+  },
+  "source_nodes": 153,
+  "structural_dofs": 942,
+  "model_bc_free_coordinates": 297,
+  "controlled_nodes": [
+    1,
+    18
+  ],
+  "controlled_dofs": [
+    0,
+    102
+  ],
+  "authoritative_free_coordinates": 295,
+  "maximum_source_inplane_displacement_m": 1.6326996721945734e-09,
+  "maximum_source_rotation_rad": 0.0,
+  "maximum_transverse_secant_slope": 0.00011663543552371206,
+  "maximum_source_deflection_m": 4.0924058409429904e-05,
+  "reduced_nonlinear_force_norm_n": 0.022476705875539512,
+  "reduced_nonlinear_minus_linear_norm_n": 1.2630544434736783e-05,
+  "relative_to_total_applied_force": 4.2101814782455944e-05,
+  "maximum_reduced_force_difference_n": 7.4647001624216575e-06,
+  "source_component_force_difference_norm_n": {
+    "ux": 1.2630544434736778e-05,
+    "uy": 0.0,
+    "uz": 3.668048825332805e-13,
+    "rx": 0.0,
+    "ry": 0.0,
+    "rz": 0.0
+  },
+  "source_component_linear_response_max": {
+    "ux": 1.6326996721945628e-09,
+    "uy": 0.0,
+    "uz": 1.453884746182564e-16,
+    "rx": 0.0,
+    "ry": 0.0,
+    "rz": 0.0
+  },
+  "linear_compliance_estimate_max_displacement_m": 1.6326996721945628e-09,
+  "linear_compliance_estimate_relative_to_max_source_deflection": 3.9895839651581306e-05,
+  "contact_reaction_n": 0.10380210457097483
+}

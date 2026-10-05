@@ -1,0 +1,1 @@
+{"status": "diverged", "failure_reason": "contact_semismooth_backtracking_failed", "swept_fraction": 0.0, "reported_lower_gap_m": -4.999997895234383e-05, "pairs_total": 128, "pairs_with_negative_bound": 128, "pairs_with_disjoint_xy_boxes_and_negative_bound": 78}

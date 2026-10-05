@@ -1,0 +1,36 @@
+{"stage": "effective_environment_preimport", "environment": {"PYTHONPATH": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver", "PYTHONDONTWRITEBYTECODE": "1", "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMBA_CACHE_DIR": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.numba_cache", "D6_FREE_TEMPORAL_OUTPUT": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.json"}, "source_file_count": 441}
+{"stage": "effective_import_verified", "anysolver": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "module_paths": {"_ge_beam3_native_midpoint.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py", "_ge_beam3_dynamic_elastic_state.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py", "_ge_beam3_centered_finite_inertia.py": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py"}, "cache": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.numba_cache"}
+{"stage": "session_controls_complete", "elapsed_seconds": 0.3359453000011854}
+{"stage": "translation_coarse_initialized", "elapsed_seconds": 1.2163851999794133}
+{"stage": "translation_coarse_step_1", "elapsed_seconds": 2.141615299973637}
+{"stage": "translation_coarse_step_2", "elapsed_seconds": 3.0856862999789882}
+{"stage": "translation_coarse_step_3", "elapsed_seconds": 4.019678399985423}
+{"stage": "translation_coarse_step_4", "elapsed_seconds": 4.9322652999835555}
+{"stage": "translation_fine_initialized", "elapsed_seconds": 5.822065699991072}
+{"stage": "translation_fine_step_1", "elapsed_seconds": 6.81447169999592}
+{"stage": "translation_fine_step_2", "elapsed_seconds": 7.756510899984278}
+{"stage": "translation_fine_step_3", "elapsed_seconds": 8.692435799981467}
+{"stage": "translation_fine_step_4", "elapsed_seconds": 9.621536499995273}
+{"stage": "translation_fine_step_5", "elapsed_seconds": 10.541114699997706}
+{"stage": "translation_fine_step_6", "elapsed_seconds": 11.46012669999618}
+{"stage": "translation_fine_step_7", "elapsed_seconds": 12.376515499985544}
+{"stage": "translation_fine_step_8", "elapsed_seconds": 13.301914599986048}
+{"stage": "translation_resolution_comparison", "elapsed_seconds": 13.304156399972271}
+{"stage": "anisotropic_spin_coarse_initialized", "elapsed_seconds": 14.185511599993333}
+{"stage": "anisotropic_spin_coarse_step_1", "elapsed_seconds": 16.146711799985496}
+{"stage": "anisotropic_spin_coarse_step_2", "elapsed_seconds": 18.056168299983256}
+{"stage": "anisotropic_spin_coarse_step_3", "elapsed_seconds": 19.998549199983245}
+{"stage": "anisotropic_spin_coarse_step_4", "elapsed_seconds": 21.926802399975713}
+{"stage": "anisotropic_spin_fine_initialized", "elapsed_seconds": 22.80743239997537}
+{"stage": "anisotropic_spin_fine_step_1", "elapsed_seconds": 24.713938699977007}
+{"stage": "anisotropic_spin_fine_step_2", "elapsed_seconds": 26.67346489999909}
+{"stage": "anisotropic_spin_fine_step_3", "elapsed_seconds": 28.59890839998843}
+{"stage": "anisotropic_spin_fine_step_4", "elapsed_seconds": 30.522137799998745}
+{"stage": "anisotropic_spin_fine_step_5", "elapsed_seconds": 32.45736589998705}
+{"stage": "anisotropic_spin_fine_step_6", "elapsed_seconds": 34.38499089999823}
+{"stage": "anisotropic_spin_fine_step_7", "elapsed_seconds": 36.34167819999857}
+{"stage": "anisotropic_spin_fine_step_8", "elapsed_seconds": 38.334780899982434}
+{"stage": "anisotropic_spin_resolution_comparison", "elapsed_seconds": 38.339901100000134}
+{"stage": "completed", "elapsed_seconds": 38.34808199998224}
+.
+1 passed, 2 deselected in 38.63s

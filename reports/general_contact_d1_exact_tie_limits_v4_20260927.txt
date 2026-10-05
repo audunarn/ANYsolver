@@ -1,0 +1,12 @@
+{'offset_m': 1.2e-07, 'two_sided_residual_difference': 6.342325904385856e-09, 'two_sided_tangent_difference': 6.81433467261249e-07, 'two_sided_slide_action_difference': 8.395619434978574e-09, 'two_sided_normal_action_difference': 6.715052522311164e-07, 'residual_midpoint_norm': 0.00944494143855736}
+{'-1': 'smooth', '1': 'smooth'}
+{'offset_m': 6e-08, 'two_sided_residual_difference': 3.171162998650496e-09, 'two_sided_tangent_difference': 3.4071669221511086e-07, 'two_sided_slide_action_difference': 4.197809715920075e-09, 'two_sided_normal_action_difference': 3.3575257711621197e-07, 'residual_midpoint_norm': 0.009444941438557666}
+{'-1': 'smooth', '1': 'smooth'}
+{'offset_m': 3e-08, 'two_sided_residual_difference': 1.5855815218050377e-09, 'two_sided_tangent_difference': 1.7035833556862766e-07, 'two_sided_slide_action_difference': 2.098904825858299e-09, 'two_sided_normal_action_difference': 1.6787627618532846e-07, 'residual_midpoint_norm': 0.009444941438557742}
+{'-1': 'smooth', '1': 'smooth'}
+{'offset_m': 1.5e-08, 'two_sided_residual_difference': 7.927907101298124e-10, 'two_sided_tangent_difference': 8.51791652052397e-08, 'two_sided_slide_action_difference': 1.0494524333684405e-09, 'two_sided_normal_action_difference': 8.393813517594187e-08, 'residual_midpoint_norm': 0.009444941438557774}
+{'-1': 'smooth', '1': 'smooth'}
+{'offset_m': 3e-09}
+{'-1': 'unresolved', '1': 'smooth'}
+{'offset_m': 3e-10}
+{'-1': 'unresolved', '1': 'smooth'}

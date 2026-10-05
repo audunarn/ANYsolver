@@ -1,0 +1,1 @@
+{"status": "stopped_at_limit", "failure_reason": "contact_d1_interior_profile_rejected", "accepted_steps": 5, "elapsed_seconds": 45.17411749999155, "contact_failure": {"step_index": 6, "issue": "active pressure at physical source rim node 25 (0.0085 N)"}}

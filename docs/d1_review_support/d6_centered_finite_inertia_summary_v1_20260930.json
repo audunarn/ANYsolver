@@ -1,0 +1,238 @@
+{
+  "status": "development_centered_finite_inertia_locally_tested",
+  "accepted": false,
+  "released": false,
+  "midpoint_implemented": false,
+  "unique_passing_checks": 14,
+  "runs": {
+    "d6_centered_finite_inertia_v1_20260930": {
+      "resources": {
+        "status": "completed",
+        "exit_code": 2,
+        "elapsed_seconds": 2.9070919000077993,
+        "peak_process_tree_memory_mb": 187.858944,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "-m",
+          "pytest",
+          "tests/test_ge_beam3_centered_finite_inertia.py",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-o",
+          "junit_family=legacy",
+          "--junitxml=C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_centered_finite_inertia_v1_20260930.xml"
+        ],
+        "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v1_20260930.log"
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "1",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "1",
+          "time": "1.473",
+          "timestamp": "2026-09-30T18:02:41.014366+02:00",
+          "hostname": "WORK_STABEIST1"
+        }
+      ],
+      "passed_tests": []
+    },
+    "d6_centered_finite_inertia_v2_20260930": {
+      "resources": {
+        "status": "completed",
+        "exit_code": 1,
+        "elapsed_seconds": 3.8637020000023767,
+        "peak_process_tree_memory_mb": 199.041024,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_centered_finite_inertia_v2_20260930.entry.source.py"
+        ],
+        "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.log"
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "10",
+          "skipped": "0",
+          "tests": "14",
+          "time": "0.657",
+          "timestamp": "2026-09-30T18:06:57.468012+02:00",
+          "hostname": "WORK_STABEIST1"
+        }
+      ],
+      "passed_tests": [
+        "test_typed_order_rejection[True]",
+        "test_typed_order_rejection[5]",
+        "test_typed_order_rejection[8.0]",
+        "test_invalid_compensated_position_and_origin_rejection"
+      ]
+    },
+    "d6_centered_finite_inertia_v3_20260930": {
+      "resources": {
+        "status": "completed",
+        "exit_code": 0,
+        "elapsed_seconds": 5.766518899996299,
+        "peak_process_tree_memory_mb": 197.337088,
+        "time_limit_seconds": 180.0,
+        "memory_limit_bytes": 1073741824,
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_centered_finite_inertia_v3_20260930.entry.source.py"
+        ],
+        "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v3_20260930.log"
+      },
+      "suites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "10",
+          "time": "2.336",
+          "timestamp": "2026-09-30T18:09:52.879708+02:00",
+          "hostname": "WORK_STABEIST1"
+        }
+      ],
+      "passed_tests": [
+        "test_zero_velocity_exact_parity_and_rest_guard",
+        "test_nonzero_finite_work_cross_inertia_and_acceleration",
+        "test_velocity_directional_derivative[1e-05]",
+        "test_velocity_directional_derivative[2e-06]",
+        "test_left_configuration_directional_derivative[1e-05]",
+        "test_left_configuration_directional_derivative[2e-06]",
+        "test_acceleration_directional_mass",
+        "test_compensated_momentum_large_translation_and_origin",
+        "test_rigid_rotation_momentum_and_inertia_covariance",
+        "test_exact_algebraic_zero_extension_and_immutable_arrays"
+      ]
+    }
+  },
+  "property_evidence": [
+    {
+      "test": "test_zero_velocity_exact_parity_and_rest_guard",
+      "name": "effective_import_identity",
+      "value": {
+        "module": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py",
+        "sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+        "anysolver": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py"
+      }
+    },
+    {
+      "test": "test_zero_velocity_exact_parity_and_rest_guard",
+      "name": "effective_import_identity",
+      "value": {
+        "module": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py",
+        "sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+        "anysolver": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py"
+      }
+    },
+    {
+      "test": "test_nonzero_finite_work_cross_inertia_and_acceleration",
+      "name": "finite_work",
+      "value": {
+        "energy": 0.1697912438771668,
+        "gyro_norm": 0.056388420738233413,
+        "cross_inertia_force_difference": 0.04178486333493723,
+        "velocity_derivative_nonsymmetry": 0.2917889645880566
+      }
+    },
+    {
+      "test": "test_velocity_directional_derivative[1e-05]",
+      "name": "velocity_directional",
+      "value": {
+        "step": 1e-05,
+        "relative_error": 7.828536116284836e-11
+      }
+    },
+    {
+      "test": "test_velocity_directional_derivative[2e-06]",
+      "name": "velocity_directional",
+      "value": {
+        "step": 2e-06,
+        "relative_error": 6.726169311212288e-10
+      }
+    },
+    {
+      "test": "test_left_configuration_directional_derivative[1e-05]",
+      "name": "configuration_directional",
+      "value": {
+        "step": 1e-05,
+        "relative_error": 1.5905742021585937e-10
+      }
+    },
+    {
+      "test": "test_left_configuration_directional_derivative[2e-06]",
+      "name": "configuration_directional",
+      "value": {
+        "step": 2e-06,
+        "relative_error": 8.311487891190958e-10
+      }
+    },
+    {
+      "test": "test_acceleration_directional_mass",
+      "name": "acceleration_directional",
+      "value": {
+        "step": 3e-06,
+        "relative_error": 2.1425659587216323e-11
+      }
+    },
+    {
+      "test": "test_compensated_momentum_large_translation_and_origin",
+      "name": "momentum_translation",
+      "value": {
+        "common_translation": [
+          1099511627776.0,
+          -1099511627776.0,
+          2199023255552.0
+        ],
+        "moving_origin_error": 0.0,
+        "fixed_origin_pair_covariance_error": 4.921480590889562e-21,
+        "discarded_low_error": 6.770003272208916e-05,
+        "maximum_position_low": 9.765724999999445e-05
+      }
+    },
+    {
+      "test": "test_rigid_rotation_momentum_and_inertia_covariance",
+      "name": "rigid_rotation_covariance",
+      "value": {
+        "inertia": 6.229106727293698e-16,
+        "mass": 1.5944512849079337e-16,
+        "linear_momentum": 9.501617766219642e-17,
+        "angular_momentum": 4.4348228181907676e-16
+      }
+    }
+  ],
+  "evidence_sha256": {
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v1_20260930.inputs.json": "54bc1a8d037c3d6b9c622f55125d7c61d5b632d20162e180dcbbd80121a4d7dd",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v1_20260930.log": "246cec77f1c46aa28bcea3b3d3e0fcdccdd60a36976f84c2209d4ac6d37bb1c2",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v1_20260930.module.source.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v1_20260930.resource.json": "afb6c70e921c90054ae32515e8110d5d05e7ed0576715f4ac6164da2b8961c0e",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v1_20260930.tests.source.py": "416105c01a1c80d5d234c18b82bba74a8fab7133d863074596c2eba27fc25a88",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v1_20260930.xml": "f500b1eff33e895f5ab59024031b575a986a5b2c04010b787c08835feab73ae2",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.entry.source.py": "67cb356171e837759cf568074bc8813615fe7971c2b6d04b77d548c52d375960",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.inputs.json": "3f996e754abb0cf524bea9aa8d0189a7f04fb5de2a23ed1f9844e11f1bccaf9e",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.log": "897390e1545fa289347ea7633232216386a4137557c9c632735ab417be9aa6cc",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.module.source.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.resource.json": "c4332e072f5407f95e65113925a4c3a1a828d421f10452c5fd7794911cf65c5f",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.tests.source.py": "416105c01a1c80d5d234c18b82bba74a8fab7133d863074596c2eba27fc25a88",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.xml": "fad7f0c07822826f886e7490747f38d14b1eae8bd52df942019b55b4c07f30e4",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v3_20260930.entry.source.py": "0f8dc852265671d09dffffaf0b6179c026f6503d7786a134edea41c3d2d8efce",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v3_20260930.inputs.json": "733540aae7b9144b5af8d872eb74f55a89336a4bd134d4fa99f07911f0cf158a",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v3_20260930.log": "1fba1cbe2158ce83214304d59771a5c5a68861746dc915e59c04ca3af580fcd5",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v3_20260930.module.source.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v3_20260930.resource.json": "d48541c4f70b96c2910ab58602d76f258a2469097eba54a0e60e338aa82aa7a8",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v3_20260930.tests.source.py": "a15cf51f0ad38262b4a0fc9c0178c8218898828ab57d64b9089904ff0185485d",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v3_20260930.xml": "fd642e9bc69767fc97cf2501083ca0e54b74fb18063b9bc75b78186be39bdfa5"
+  },
+  "managed_worktree": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver",
+  "implementation_sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+  "current_tests_sha256": "a15cf51f0ad38262b4a0fc9c0178c8218898828ab57d64b9089904ff0185485d",
+  "scope": "pure centered finite inertial owner;14 distinct focused checks;v1/v2 failures preserved;review/acceptance pending"
+}

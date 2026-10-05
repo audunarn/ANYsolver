@@ -1,0 +1,8 @@
+......................................................                   [100%]
+============================= slowest 5 durations =============================
+0.44s call     tests/test_general_contact_hemisphere_sphere.py::test_actual_sphere_cap_exception_or_cancellation_preserves_fresh_replay[False]
+0.43s call     tests/test_general_contact_hemisphere_sphere.py::test_coupled_bar_force_displacement_restart_and_explicit_scope
+0.38s call     tests/test_general_contact_hemisphere_sphere.py::test_actual_sphere_cap_exception_or_cancellation_preserves_fresh_replay[True]
+0.23s call     tests/test_general_contact_hemisphere_sphere.py::test_runnable_sphere_cap_example
+0.04s call     tests/test_general_contact_hemisphere_sphere.py::test_complete_line_cap_work_sparse_tangent_and_sphere_reaction[True]
+54 passed in 3.70s

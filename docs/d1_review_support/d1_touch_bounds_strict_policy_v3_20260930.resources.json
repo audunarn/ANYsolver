@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 2.7710751999984495,
+  "peak_process_tree_memory_mb": 202.911744,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_touching_bounds.py::test_strict_underflow_policy_retains_original_segment_exception"
+  ],
+  "log": "docs\\d1_review_support\\d1_touch_bounds_strict_policy_v3_20260930.log"
+}

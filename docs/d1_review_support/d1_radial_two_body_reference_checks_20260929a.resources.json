@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 1.606988800005638,
+  "peak_process_tree_memory_mb": 109.34272,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_radial_reference.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_two_body_reference_checks_20260929a.log"
+}

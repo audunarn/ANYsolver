@@ -1,0 +1,10 @@
+*** Begin Patch
+*** Update File: src/anysolver/general_contact/semismooth_path.py
+@@
+             pivot_trace.append({"from": list(signature),
+                                 "to": np.flatnonzero(predicted_active).tolist()})
++            if pivot == 0:  # temporary experiment: globalize current active set
++                break
+             if np.array_equal(predicted_active, pivot_active):
+                 break
+*** End Patch

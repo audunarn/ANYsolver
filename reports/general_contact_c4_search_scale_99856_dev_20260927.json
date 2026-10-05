@@ -1,0 +1,28 @@
+{
+  "candidate": "c4_patch_search_scale_dev",
+  "grid": 316,
+  "face_count": 99856,
+  "results_equal": true,
+  "rows": {
+    "historical": {
+      "build_seconds": 0.9368887000018731,
+      "query_seconds": 0.23537010001018643,
+      "rss_before_bytes": 162996224,
+      "rss_after_build_bytes": 182308864,
+      "rss_build_increment_bytes": 19312640,
+      "query_count": 1000,
+      "candidate_count": 8952,
+      "responses_sha256": "9762c1e6135f954ad2d8d39a1f32f80217304b463ce6d561be4c3507765ef211"
+    },
+    "owner": {
+      "build_seconds": 2.5508892000070773,
+      "query_seconds": 0.12791049998486415,
+      "rss_before_bytes": 166264832,
+      "rss_after_build_bytes": 346710016,
+      "rss_build_increment_bytes": 180445184,
+      "query_count": 1000,
+      "candidate_count": 8952,
+      "responses_sha256": "9762c1e6135f954ad2d8d39a1f32f80217304b463ce6d561be4c3507765ef211"
+    }
+  }
+}

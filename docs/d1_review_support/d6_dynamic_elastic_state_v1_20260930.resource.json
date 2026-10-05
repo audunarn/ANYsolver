@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 3.900297500018496,
+  "peak_process_tree_memory_mb": 201.1136,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_dynamic_elastic_state_v1_20260930.entry.source.py"
+  ],
+  "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_dynamic_elastic_state_v1_20260930.log"
+}

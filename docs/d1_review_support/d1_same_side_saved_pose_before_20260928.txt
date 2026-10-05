@@ -1,0 +1,30 @@
+elapsed=7.861847
+overlap_pairs=148
+integration_triangles=1184
+support_sum=0.900000000000099
+         19034180 function calls in 7.861 seconds
+
+   Ordered by: internal time
+   List reduced from 107 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   168744    1.469    0.000    4.306    0.000 numeric.py:1567(cross)
+  1020997    1.019    0.000    1.610    0.000 numeric.py:1431(normalize_axis_tuple)
+   506232    0.670    0.000    2.565    0.000 numeric.py:1493(moveaxis)
+    17155    0.395    0.000    2.802    0.000 overlap.py:21(__post_init__)
+    21904    0.327    0.000    1.490    0.000 overlap.py:66(shape_values_and_gradient)
+  3545907    0.226    0.000    0.226    0.000 {built-in method builtins.len}
+   216925    0.219    0.000    0.219    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+  2041994    0.201    0.000    0.293    0.000 numeric.py:1480(<genexpr>)
+   135166    0.200    0.000    0.382    0.000 _linalg.py:2599(norm)
+    60578    0.185    0.000    0.403    0.000 overlap.py:116(_to_frame)
+    10952    0.171    0.000    2.408    0.000 q4_source_overlap.py:299(sample)
+    43966    0.162    0.000    0.394    0.000 _linalg.py:362(solve)
+    71530    0.148    0.000    0.207    0.000 _shape_base_impl.py:625(column_stack)
+  1527229    0.142    0.000    0.142    0.000 {built-in method numpy.lib.array_utils.normalize_axis_index}
+    43966    0.111    0.000    0.159    0.000 overlap.py:103(_q4_shape)
+     8512    0.108    0.000    2.743    0.000 q4_source_overlap.py:40(projected_q4_source_face)
+  1096755    0.108    0.000    0.108    0.000 {built-in method builtins.isinstance}
+     8385    0.106    0.000    1.073    0.000 overlap.py:169(planar_projected_overlap)
+   381454    0.101    0.000    0.101    0.000 {method 'astype' of 'numpy.ndarray' objects}
+   506232    0.095    0.000    0.095    0.000 {built-in method builtins.sorted}

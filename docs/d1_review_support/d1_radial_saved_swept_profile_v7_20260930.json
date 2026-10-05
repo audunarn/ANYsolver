@@ -1,0 +1,33 @@
+{
+  "source_guided_shear_n_m": 1602.5641025641025,
+  "target_guided_shear_n_m": 3163.400547104653,
+  "target_phi_squared_range": [
+    0.39479238827866037,
+    0.3947923882786611
+  ],
+  "target_p1_energy_max_relative_error": 4.491729488897204e-16,
+  "target_cells": 12,
+  "target_y0_m": -0.113,
+  "target_right_x_m": 1.297,
+  "gap_m": 7.741263872132846e-06,
+  "exact_force_n": 0.020435219974701022,
+  "status": "development_saved_swept_profile",
+  "admissible": true,
+  "elapsed_seconds": 52.661914700001944,
+  "coarse_inclusive_counters": {
+    "_gap_lower": {
+      "calls": 2,
+      "seconds": 4.670279899990419
+    },
+    "swept_projected_coverage_admissible": {
+      "calls": 1,
+      "seconds": 0.9602201000088826
+    },
+    "overlap_local_swept_lower": {
+      "calls": 968,
+      "seconds": 7.391197499906411
+    }
+  },
+  "input_sha256": "990504ca994a38e75b199e46abd0a611ce3ed5ecfdd46fabf47a14b35e2a1bcc",
+  "scope": "one zero-to-saved-linear-pose path; no solve or swept acceptance claim"
+}

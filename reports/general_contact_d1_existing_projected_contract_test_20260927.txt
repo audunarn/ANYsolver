@@ -1,0 +1,23 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+___________ test_q4_s3_projected_profile_is_exact_and_restart_bound ___________
+
+    def test_q4_s3_projected_profile_is_exact_and_restart_bound():
+        model, definition, settings = _projected_case()
+        report = validate_general_contact(model, definition, settings)
+        assert report.valid, report.issues
+>       assert report.profile == (
+            "Q4_S3_PATCH_GENERAL_NODAL_PRIMAL_MORTAR_AUGMENTED_STATIC_DEV_V1"
+        )
+E       AssertionError: assert 'Q4_S3_PATCH_...STATIC_DEV_V2' == 'Q4_S3_PATCH_...STATIC_DEV_V1'
+E         
+E         Skipping 52 identical leading characters in diff, use -v to show
+E         - ATIC_DEV_V1
+E         ?           ^
+E         + ATIC_DEV_V2
+E         ?           ^
+
+tests\test_general_contact_q4_s3_projected_profile.py:33: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_q4_s3_projected_profile.py::test_q4_s3_projected_profile_is_exact_and_restart_bound
+1 failed in 1.45s

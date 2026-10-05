@@ -1,0 +1,14 @@
+{
+  "relative_error": 1.73316378467733e-14,
+  "reference_displacements_m": [
+    -0.0020017998198592264,
+    0.0020017998198592264
+  ],
+  "actual_displacements_m": [
+    -0.0020017998198592194,
+    0.002001799819859261
+  ],
+  "reference_delta_m": 1.7998198592265388e-06,
+  "registered_development_target": 1e-06,
+  "gap_budget_m": 1e-05
+}

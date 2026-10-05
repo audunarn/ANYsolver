@@ -1,0 +1,2845 @@
+{
+  "status": "development_projected_penalty_coupled_shell_slice",
+  "accepted": false,
+  "released": false,
+  "inputs": {
+    "stiffness_pa_per_m": [
+      1000000.0,
+      10000000.0
+    ],
+    "source_z_m": 0.0401,
+    "source_thickness_m": 0.05,
+    "target_thickness_m": 0.05,
+    "target_offset_m": 0.01,
+    "young_pa": 100000.0,
+    "poisson": 0.3,
+    "peak_force_n": 0.5,
+    "source_left_prescribed_nodes": [
+      1,
+      4
+    ],
+    "source_load_nodes": [
+      3,
+      6
+    ],
+    "force_per_node_history_n": [
+      0.0,
+      -0.25,
+      0.0,
+      -0.25
+    ],
+    "steps_per_segment": 1,
+    "max_iterations": 18,
+    "tolerance": 1e-08,
+    "physical_gap_budget_m": 5e-05,
+    "force_balance_relative": 1e-06,
+    "full_virtual_work_relative": 1e-10,
+    "target_static": true,
+    "source_rotations_prescribed_zero": true,
+    "emit_restart_checkpoint": true
+  },
+  "cap": {
+    "time_limit_seconds": 180,
+    "memory_limit_bytes": 1073741824,
+    "maximum_executions": 1
+  },
+  "adapter": {
+    "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_shell_dev.py",
+    "sha256": "acf22f3dfe022e3baea2ee1bf55db1a6d2344c34af676580cf4b11e3f479cfb1"
+  },
+  "python_executable": "C:\\Python\\Python314\\python.exe",
+  "actual_modules": {
+    "anysolver": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+      "sha256": "677237ea706773bfa0e511c77e368f37f55a3289b073a872437909be51d82ebe"
+    },
+    "anysolver.general_contact.core": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\core.py",
+      "sha256": "6103c85cf42f9f893f6d2aafa85de5466012a313712badc4734d92818eb01b24"
+    },
+    "anysolver.general_contact.s3_patch_static": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_static.py",
+      "sha256": "835bfbcc65d4c71abd75f1d3bf584d0e18fc3db2fe82a8303c0c5bc8c2d457f4"
+    },
+    "anysolver.general_contact.static_path": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\static_path.py",
+      "sha256": "7e773b38f037da6632e85342aae03c78d6d9b587ee90bcdb06b5a5c7042e120d"
+    },
+    "anysolver.general_contact.s3_patch_augmented": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\general_contact\\s3_patch_augmented.py",
+      "sha256": "a1d960c3dfe7f5920a13aff4365ed7223d19fcf1c7a83e031ed477ed8c231660"
+    }
+  },
+  "rows": [
+    {
+      "stiffness_pa_per_m": 1000000.0,
+      "validation": {
+        "valid": true,
+        "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+        "issues": []
+      },
+      "program": {
+        "controls": [
+          {
+            "terms": [
+              [
+                2,
+                "ux",
+                1.0
+              ]
+            ]
+          },
+          {
+            "terms": [
+              [
+                2,
+                "uy",
+                1.0
+              ]
+            ]
+          }
+        ],
+        "waypoints": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "steps_per_segment": 1,
+        "nodal_forces": [
+          {
+            "node_id": 3,
+            "dof": "uz",
+            "values_n": [
+              0.0,
+              -0.25,
+              0.0,
+              -0.25
+            ]
+          },
+          {
+            "node_id": 6,
+            "dof": "uz",
+            "values_n": [
+              0.0,
+              -0.25,
+              0.0,
+              -0.25
+            ]
+          }
+        ]
+      },
+      "solver_status": "completed",
+      "failure_reason": null,
+      "solve_seconds": 8.36210279999068,
+      "steps": [
+        {
+          "step_index": 1,
+          "load_factor": 0.3333333333333333,
+          "iterations": 4,
+          "residual_norm": 4.760747955134809e-14,
+          "displacement_norm": 0.00022204934436293808,
+          "max_equivalent_plastic_strain": 0.0,
+          "control_value": null,
+          "active_stage": "segment_1",
+          "deleted_element_count": 0,
+          "max_fracture_utilization": 0.0,
+          "support_reactions": {
+            "left": [
+              -2.709373186796343e-05,
+              -2.829714458873432e-07,
+              0.15911703812309097,
+              0.000395830130111018,
+              -0.039779258857705974,
+              -8.330855824548053e-22
+            ],
+            "target": [
+              4.5102837607041414e-05,
+              6.66401120061667e-07,
+              0.34088296187700357,
+              -9.996016800925002e-09,
+              6.765425641056212e-07,
+              0.0
+            ],
+            "guided": [
+              0.0,
+              0.0,
+              0.0,
+              0.004321127213894548,
+              -0.1988760009715177,
+              -4.16574869652382e-21
+            ],
+            "in_plane": [
+              2.7378469796779164e-05,
+              1.0347023494032306e-05,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "step_index": 2,
+          "load_factor": 0.6666666666666666,
+          "iterations": 4,
+          "residual_norm": 2.0583416073395309e-19,
+          "displacement_norm": 4.09402723711684e-25,
+          "max_equivalent_plastic_strain": 0.0,
+          "control_value": null,
+          "active_stage": "segment_2",
+          "deleted_element_count": 0,
+          "max_fracture_utilization": 0.0,
+          "support_reactions": {
+            "left": [
+              -3.374066907739901e-22,
+              9.841028480908039e-22,
+              -5.178163890681516e-24,
+              2.1575682877839653e-25,
+              1.2945409726703787e-24,
+              9.84102848090804e-23
+            ],
+            "target": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "guided": [
+              0.0,
+              0.0,
+              0.0,
+              1.7260546302271733e-24,
+              1.2945409726703787e-24,
+              -9.84102848090804e-23
+            ],
+            "in_plane": [
+              3.3740669077399007e-22,
+              7.985291681651096e-22,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "step_index": 3,
+          "load_factor": 1.0,
+          "iterations": 4,
+          "residual_norm": 4.760747955090453e-14,
+          "displacement_norm": 0.00022204934436293808,
+          "max_equivalent_plastic_strain": 0.0,
+          "control_value": null,
+          "active_stage": "segment_3",
+          "deleted_element_count": 0,
+          "max_fracture_utilization": 0.0,
+          "support_reactions": {
+            "left": [
+              -2.709373186796341e-05,
+              -2.829714458873466e-07,
+              0.15911703812309097,
+              0.000395830130111018,
+              -0.039779258857705974,
+              -4.57174094212605e-22
+            ],
+            "target": [
+              4.5102837607041414e-05,
+              6.66401120061667e-07,
+              0.34088296187700357,
+              -9.996016800925002e-09,
+              6.765425641056212e-07,
+              0.0
+            ],
+            "guided": [
+              0.0,
+              0.0,
+              0.0,
+              0.004321127213894548,
+              -0.1988760009715177,
+              -2.3008591463618227e-21
+            ],
+            "in_plane": [
+              2.7378469796779178e-05,
+              1.0347023494032311e-05,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ],
+      "solver_info": {
+        "control": "contact_path",
+        "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_PATH_DEV_V0",
+        "general_contact_profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+        "qualified_q4_committed_state_lifecycle": {
+          "schema": "ANYSOLVER_Q4_COMMITTED_STATE_LIFECYCLE_V1",
+          "ordinary_restart": false,
+          "preflight_count": 1,
+          "validated_bound_element_ids": [],
+          "migrated_historical_unbound_element_ids": [],
+          "stripped_internal_binding_element_ids": [],
+          "fresh_unbound_element_ids": [],
+          "explicit_initial_material_state_element_ids": [],
+          "restored_deleted_frozen_element_ids": [],
+          "input_states_deep_copied": true,
+          "final_state_policy": "DETERMINISTIC_RESEAL_AFTER_MATERIALIZATION",
+          "sealed_final_element_ids": [
+            1,
+            2
+          ],
+          "sealed_deleted_frozen_element_ids": [],
+          "origin_materialized_from_unevaluated_parent_element_ids": [],
+          "sealed_final_state_digests": [
+            {
+              "element_id": 1,
+              "state_integrity_sha256": "440CAC4EE5FA722A64FDD48046046C021077807E39889A2653A8B18EC7BE7522"
+            },
+            {
+              "element_id": 2,
+              "state_integrity_sha256": "7335B9A29B1DFB0A17239ACACD2980553C1B7D47D7BAA9F8A8463AB69724D9D6"
+            }
+          ]
+        },
+        "qualified_s3_committed_state_lifecycle": {
+          "schema": "ANYSOLVER_S3_COMMITTED_STATE_LIFECYCLE_V1",
+          "ordinary_restart": false,
+          "preflight_count": 1,
+          "validated_active_element_ids": [],
+          "restored_deleted_frozen_element_ids": [],
+          "input_states_deep_copied": true,
+          "final_state_policy": "ACTIVE_ONLY_OR_EXPLICIT_NONCURRENT_DISPOSITION",
+          "sealed_active_element_ids": [
+            3,
+            4
+          ],
+          "sealed_deleted_frozen_element_ids": [],
+          "sealed_final_state_digests": [
+            {
+              "element_id": 3,
+              "state_integrity_sha256": "F19AC418E58B6AC8016D6745FFF4CE9A8DD52C8C156498D454A5BE34CF5FB910"
+            },
+            {
+              "element_id": 4,
+              "state_integrity_sha256": "C227C37E951D9E9BC564013339CB8B7B1712DA5112664677ACD85636E4D23846"
+            }
+          ]
+        },
+        "nonlinear_state_storage": {
+          "activated": false,
+          "eligible_batch_count": 0,
+          "fallback_reason": "no_plastic_shell_batch",
+          "batch_eligibility": []
+        },
+        "failure_reason": null,
+        "status_category": "completed",
+        "stop_reason": null,
+        "total_newton_iterations": 12,
+        "force_displacement_history": [
+          {
+            "step_index": 1,
+            "target": [
+              0.0,
+              0.0
+            ],
+            "reaction_generalized": [
+              -4.538757553585552e-05,
+              -1.0730453168206655e-05
+            ],
+            "residual_norm": 4.760747955134809e-14,
+            "constraint_error": 1.039757530027554e-23,
+            "augmentation_iterations": 1,
+            "normal_multiplier_change": 0.0,
+            "contact": {
+              "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+              "minimum_gap": -3.399789217965369e-05,
+              "sampled_overlap_gap": -3.117388588028059e-05,
+              "penalty_energy": 0.0,
+              "current_overlap_area": 0.8100000042189481,
+              "reference_overlap_area": 0.8099999949383598,
+              "overlapping_pairs": 4,
+              "integration_force": [
+                4.510283760704136e-05,
+                6.664011200616934e-07,
+                0.3408829618770036
+              ],
+              "target_force": [
+                -4.5102837607041414e-05,
+                -6.66401120061667e-07,
+                -0.34088296187700357
+              ],
+              "integration_moment": [
+                0.19941696287427152,
+                -0.29543122144857004,
+                -2.54297037646087e-05
+              ],
+              "target_moment": [
+                -0.19941696287427155,
+                0.29543122144857004,
+                2.542970376460878e-05
+              ],
+              "gap_tolerance_met": true,
+              "active_pressure_dofs": 2,
+              "source_pressure_node_ids": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+              ],
+              "normalized_weighted_gap_m": [
+                8.3622481867307e-05,
+                4.417123290364905e-05,
+                -1.8148658154608805e-06,
+                8.335302950076499e-05,
+                4.3380595074797985e-05,
+                -3.0423703899414643e-06
+              ],
+              "numerical_pressure_pa": [
+                0.0,
+                0.0,
+                1.8148658154608805,
+                0.0,
+                0.0,
+                3.0423703899414645
+              ],
+              "reference_support_m2": [
+                0.12375000000000272,
+                0.2425499994558416,
+                0.07919999781808956,
+                0.10125000000000309,
+                0.19844999954243553,
+                0.06479999812198724
+              ],
+              "energy_evaluations": 6,
+              "weighted_gap_integration_error_m3": 5.7970140816696264e-18,
+              "integration_triangles": 32,
+              "area_integration_error_m2": 9.574979698001584e-14,
+              "augmented_merit_j": 0.0,
+              "normal_multiplier_estimate_pa": [],
+              "pair_geometry_evaluations": 10,
+              "pressure_gram_rank": 6,
+              "pressure_gram_condition_estimate": 24.835368479048174,
+              "pressure_gram_supported_modes": 6,
+              "pressure_gram_scaled_rank": 6,
+              "pressure_gram_scaled_condition_estimate": 13.221046282224236,
+              "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+              "regularization_storage_j": 4.3032697957190745e-07
+            },
+            "nodal_forces_n": [
+              -0.25,
+              -0.25
+            ],
+            "external_nodal_work_trapezoid_j": 3.723039643442553e-05
+          },
+          {
+            "step_index": 2,
+            "target": [
+              0.0,
+              0.0
+            ],
+            "reaction_generalized": [
+              -2.0328790734103208e-19,
+              3.049318610115481e-20
+            ],
+            "residual_norm": 2.0583416073395309e-19,
+            "constraint_error": 4.0938678480577444e-25,
+            "augmentation_iterations": 1,
+            "normal_multiplier_change": 0.0,
+            "contact": {
+              "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+              "minimum_gap": 9.999999996873031e-05,
+              "sampled_overlap_gap": 9.999999999998899e-05,
+              "penalty_energy": 0.0,
+              "current_overlap_area": 0.81,
+              "reference_overlap_area": 0.809999999999999,
+              "overlapping_pairs": 4,
+              "integration_force": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "target_force": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "integration_moment": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "target_moment": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "gap_tolerance_met": true,
+              "active_pressure_dofs": 0,
+              "source_pressure_node_ids": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+              ],
+              "normalized_weighted_gap_m": [
+                9.999999999999414e-05,
+                9.999999999999415e-05,
+                9.999999999999416e-05,
+                9.999999999999431e-05,
+                9.999999999999431e-05,
+                9.999999999999448e-05
+              ],
+              "numerical_pressure_pa": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "reference_support_m2": [
+                0.12374999999999997,
+                0.24254999999999988,
+                0.07919999999999981,
+                0.10124999999999988,
+                0.19844999999999974,
+                0.06479999999999979
+              ],
+              "energy_evaluations": 4,
+              "weighted_gap_integration_error_m3": 1.2896076621946723e-19,
+              "integration_triangles": 32,
+              "area_integration_error_m2": 7.45931094670027e-17,
+              "augmented_merit_j": 0.0,
+              "normal_multiplier_estimate_pa": [],
+              "pair_geometry_evaluations": 4,
+              "pressure_gram_rank": 6,
+              "pressure_gram_condition_estimate": 24.83536746512242,
+              "pressure_gram_supported_modes": 6,
+              "pressure_gram_scaled_rank": 6,
+              "pressure_gram_scaled_condition_estimate": 13.221046154195163,
+              "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+              "regularization_storage_j": 0.0
+            },
+            "nodal_forces_n": [
+              0.0,
+              0.0
+            ],
+            "external_nodal_work_trapezoid_j": -3.723039643442553e-05
+          },
+          {
+            "step_index": 3,
+            "target": [
+              0.0,
+              0.0
+            ],
+            "reaction_generalized": [
+              -4.5387575535855564e-05,
+              -1.0730453168206657e-05
+            ],
+            "residual_norm": 4.760747955090453e-14,
+            "constraint_error": 5.736709140394809e-24,
+            "augmentation_iterations": 1,
+            "normal_multiplier_change": 0.0,
+            "contact": {
+              "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+              "minimum_gap": -3.399789217965369e-05,
+              "sampled_overlap_gap": -3.117388588028059e-05,
+              "penalty_energy": 0.0,
+              "current_overlap_area": 0.8100000042189481,
+              "reference_overlap_area": 0.8099999949383598,
+              "overlapping_pairs": 4,
+              "integration_force": [
+                4.510283760704136e-05,
+                6.664011200616934e-07,
+                0.3408829618770036
+              ],
+              "target_force": [
+                -4.5102837607041414e-05,
+                -6.66401120061667e-07,
+                -0.34088296187700357
+              ],
+              "integration_moment": [
+                0.19941696287427152,
+                -0.29543122144857004,
+                -2.54297037646087e-05
+              ],
+              "target_moment": [
+                -0.19941696287427155,
+                0.29543122144857004,
+                2.542970376460878e-05
+              ],
+              "gap_tolerance_met": true,
+              "active_pressure_dofs": 2,
+              "source_pressure_node_ids": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+              ],
+              "normalized_weighted_gap_m": [
+                8.3622481867307e-05,
+                4.417123290364905e-05,
+                -1.8148658154608805e-06,
+                8.335302950076499e-05,
+                4.3380595074797985e-05,
+                -3.0423703899414643e-06
+              ],
+              "numerical_pressure_pa": [
+                0.0,
+                0.0,
+                1.8148658154608805,
+                0.0,
+                0.0,
+                3.0423703899414645
+              ],
+              "reference_support_m2": [
+                0.12375000000000272,
+                0.2425499994558416,
+                0.07919999781808956,
+                0.10125000000000309,
+                0.19844999954243553,
+                0.06479999812198724
+              ],
+              "energy_evaluations": 6,
+              "weighted_gap_integration_error_m3": 5.7970140816696264e-18,
+              "integration_triangles": 32,
+              "area_integration_error_m2": 9.574979698001584e-14,
+              "augmented_merit_j": 0.0,
+              "normal_multiplier_estimate_pa": [],
+              "pair_geometry_evaluations": 10,
+              "pressure_gram_rank": 6,
+              "pressure_gram_condition_estimate": 24.835368479048174,
+              "pressure_gram_supported_modes": 6,
+              "pressure_gram_scaled_rank": 6,
+              "pressure_gram_scaled_condition_estimate": 13.221046282224236,
+              "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+              "regularization_storage_j": 4.3032697957190745e-07
+            },
+            "nodal_forces_n": [
+              -0.25,
+              -0.25
+            ],
+            "external_nodal_work_trapezoid_j": 3.723039643442553e-05
+          }
+        ],
+        "contact_path": {
+          "accepted_step": 3,
+          "total_steps": 3,
+          "targets": [
+            0.0,
+            0.0
+          ],
+          "reaction_generalized": [
+            -4.5387575535855564e-05,
+            -1.0730453168206657e-05
+          ],
+          "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_PATH_DEV_V0",
+          "nodal_forces_n": [
+            -0.25,
+            -0.25
+          ]
+        },
+        "general_contact": {
+          "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+          "minimum_gap": -3.399789217965369e-05,
+          "sampled_overlap_gap": -3.117388588028059e-05,
+          "penalty_energy": 0.0,
+          "current_overlap_area": 0.8100000042189481,
+          "reference_overlap_area": 0.8099999949383598,
+          "overlapping_pairs": 4,
+          "integration_force": [
+            4.510283760704136e-05,
+            6.664011200616934e-07,
+            0.3408829618770036
+          ],
+          "target_force": [
+            -4.5102837607041414e-05,
+            -6.66401120061667e-07,
+            -0.34088296187700357
+          ],
+          "integration_moment": [
+            0.19941696287427152,
+            -0.29543122144857004,
+            -2.54297037646087e-05
+          ],
+          "target_moment": [
+            -0.19941696287427155,
+            0.29543122144857004,
+            2.542970376460878e-05
+          ],
+          "gap_tolerance_met": true,
+          "active_pressure_dofs": 2,
+          "source_pressure_node_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "normalized_weighted_gap_m": [
+            8.3622481867307e-05,
+            4.417123290364905e-05,
+            -1.8148658154608805e-06,
+            8.335302950076499e-05,
+            4.3380595074797985e-05,
+            -3.0423703899414643e-06
+          ],
+          "numerical_pressure_pa": [
+            0.0,
+            0.0,
+            1.8148658154608805,
+            0.0,
+            0.0,
+            3.0423703899414645
+          ],
+          "reference_support_m2": [
+            0.12375000000000272,
+            0.2425499994558416,
+            0.07919999781808956,
+            0.10125000000000309,
+            0.19844999954243553,
+            0.06479999812198724
+          ],
+          "energy_evaluations": 6,
+          "weighted_gap_integration_error_m3": 5.7970140816696264e-18,
+          "integration_triangles": 32,
+          "area_integration_error_m2": 9.574979698001584e-14,
+          "augmented_merit_j": 0.0,
+          "normal_multiplier_estimate_pa": [],
+          "pair_geometry_evaluations": 10,
+          "pressure_gram_rank": 6,
+          "pressure_gram_condition_estimate": 24.835368479048174,
+          "pressure_gram_supported_modes": 6,
+          "pressure_gram_scaled_rank": 6,
+          "pressure_gram_scaled_condition_estimate": 13.221046282224236,
+          "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+          "regularization_storage_j": 4.3032697957190745e-07
+        }
+      },
+      "final_displacements": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        5.736709140394809e-24,
+        -1.039214820716547e-26,
+        -4.8162527047281385e-05,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.00014599877819493953,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -5.1126503061552686e-05,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.00015184439328046472,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "restart_checkpoint": {
+        "schema": "ANYSOLVER_NONLINEAR_CHECKPOINT_V2",
+        "version": 2,
+        "integrity_id": "SHA256_CANONICAL_JSON_EXCLUDING_SELF_V1",
+        "analysis_kind": "static",
+        "model_fingerprint": "310000A420F492CD152773BB84D2BBA3874D66E168CAE32D1BB605D512DAFAB5",
+        "analysis_fingerprint": "D3E1E705AACAE5F18754F6C4802667DEE686B8738751B964F3FF76BAAD1CE6D3",
+        "total_dofs": 60,
+        "displacements": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          5.736709140394809e-24,
+          -1.039214820716547e-26,
+          -4.8162527047281385e-05,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -0.00014599877819493953,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -5.1126503061552686e-05,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -0.00015184439328046472,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "element_states": [
+          {
+            "element_id": 1,
+            "state": {
+              "plastic_strain": [
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "alpha": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "layer_strain": [
+                [
+                  4.760711356204404e-09,
+                  1.961645724686365e-13,
+                  6.111899566702221e-11
+                ],
+                [
+                  4.760711356204404e-09,
+                  1.961645724686365e-13,
+                  6.111899566702221e-11
+                ],
+                [
+                  4.760711356204404e-09,
+                  1.961645724686365e-13,
+                  6.111899566702221e-11
+                ],
+                [
+                  4.760711356204404e-09,
+                  1.961645724686365e-13,
+                  6.111899566702221e-11
+                ],
+                [
+                  4.760711356204404e-09,
+                  1.961645724686365e-13,
+                  6.111899566702221e-11
+                ],
+                [
+                  4.760711356204404e-09,
+                  2.7322200319232245e-12,
+                  2.280991971369077e-10
+                ],
+                [
+                  4.760711356204404e-09,
+                  2.7322200319232245e-12,
+                  2.280991971369077e-10
+                ],
+                [
+                  4.760711356204404e-09,
+                  2.7322200319232245e-12,
+                  2.280991971369077e-10
+                ],
+                [
+                  4.760711356204404e-09,
+                  2.7322200319232245e-12,
+                  2.280991971369077e-10
+                ],
+                [
+                  4.760711356204404e-09,
+                  2.7322200319232245e-12,
+                  2.280991971369077e-10
+                ],
+                [
+                  5.100528528352958e-09,
+                  1.9616457246863543e-13,
+                  6.326272198153937e-11
+                ],
+                [
+                  5.100528528352958e-09,
+                  1.9616457246863543e-13,
+                  6.326272198153937e-11
+                ],
+                [
+                  5.100528528352958e-09,
+                  1.9616457246863543e-13,
+                  6.326272198153937e-11
+                ],
+                [
+                  5.100528528352958e-09,
+                  1.9616457246863543e-13,
+                  6.326272198153937e-11
+                ],
+                [
+                  5.100528528352958e-09,
+                  1.9616457246863543e-13,
+                  6.326272198153937e-11
+                ],
+                [
+                  5.100528528352958e-09,
+                  2.7322200319232245e-12,
+                  2.360996926602087e-10
+                ],
+                [
+                  5.100528528352958e-09,
+                  2.7322200319232245e-12,
+                  2.360996926602087e-10
+                ],
+                [
+                  5.100528528352958e-09,
+                  2.7322200319232245e-12,
+                  2.360996926602087e-10
+                ],
+                [
+                  5.100528528352958e-09,
+                  2.7322200319232245e-12,
+                  2.360996926602087e-10
+                ],
+                [
+                  5.100528528352958e-09,
+                  2.7322200319232245e-12,
+                  2.360996926602087e-10
+                ]
+              ],
+              "qualified_q4_committed_binding": {
+                "schema_id": "E4_PL_Q4_COMMITTED_STATE_ALGORITHMIC_TANGENT_BINDING_V2",
+                "algorithmic_origin_schema_id": "E4_PL_Q4_ACCEPTED_DISCRETE_RETURN_MAP_ORIGIN_V1",
+                "formulation_id": "E4_PL_QUALIFIED_Q4_HYBRID_V2",
+                "implementation_id": "E4_PL_Q4_HYBRID_STATIONARY_RECOVERY_DIRECTOR_RUIZ_V7",
+                "element_id": 1,
+                "node_ids": [
+                  1,
+                  2,
+                  5,
+                  4
+                ],
+                "num_layers": 5,
+                "reference_coordinates_sha256": "5F5CF21612B0A7E2DC75037E0B7D7CF8A2CF5D3EC8635C4F7AABF7630A3D6333",
+                "element_configuration_sha256": "9650C31139615F8226E3FEC18768508AC6BCC838918A1CB3DAB406264237109D",
+                "material_or_section_sha256": "52B8851C49BAE35EF80073240DA53DADC5A940AC413B3F54238D85B88AA5A913",
+                "decomposition_policy_id": "Q4_VON_KARMAN_ACCEPTED_ALGORITHMIC_MATERIAL_PLUS_MEMBRANE_STRESS_HESSIAN_V2",
+                "projection_policy_id": "Q4_NO_INTERNAL_BUBBLE_IDENTITY_PROJECTION_V1",
+                "committed_total_u": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  5.736709140394809e-24,
+                  -1.039214820716547e-26,
+                  -4.8162527047281385e-05,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  -5.1126503061552686e-05,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "committed_total_u_sha256": "7BFBAA14A085F3F7410037FB0099E629CB2193F83A29EC3796B8DBCDEDB76563",
+                "state_payload_sha256": "0EF96F24509FCA30476C030B332F06D7BE1A63E636F28921BA4AACB0386C918E",
+                "accepted_algorithmic_update_sha256": null,
+                "state_integrity_sha256": "440CAC4EE5FA722A64FDD48046046C021077807E39889A2653A8B18EC7BE7522"
+              },
+              "state_integrity_sha256": "440CAC4EE5FA722A64FDD48046046C021077807E39889A2653A8B18EC7BE7522"
+            }
+          },
+          {
+            "element_id": 2,
+            "state": {
+              "plastic_strain": [
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "alpha": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "layer_strain": [
+                [
+                  1.938291997899645e-08,
+                  6.382942987177992e-12,
+                  7.034772864875337e-10
+                ],
+                [
+                  1.938291997899645e-08,
+                  6.382942987177992e-12,
+                  7.034772864875337e-10
+                ],
+                [
+                  1.938291997899645e-08,
+                  6.382942987177992e-12,
+                  7.034772864875337e-10
+                ],
+                [
+                  1.938291997899645e-08,
+                  6.382942987177992e-12,
+                  7.034772864875337e-10
+                ],
+                [
+                  1.938291997899645e-08,
+                  6.382942987177992e-12,
+                  7.034772864875337e-10
+                ],
+                [
+                  1.938291997899645e-08,
+                  1.371126782730672e-11,
+                  1.031046860442869e-09
+                ],
+                [
+                  1.938291997899645e-08,
+                  1.371126782730672e-11,
+                  1.031046860442869e-09
+                ],
+                [
+                  1.938291997899645e-08,
+                  1.371126782730672e-11,
+                  1.031046860442869e-09
+                ],
+                [
+                  1.938291997899645e-08,
+                  1.371126782730672e-11,
+                  1.031046860442869e-09
+                ],
+                [
+                  1.938291997899645e-08,
+                  1.371126782730672e-11,
+                  1.031046860442869e-09
+                ],
+                [
+                  2.004359502273177e-08,
+                  6.382942987177968e-12,
+                  7.153659882554641e-10
+                ],
+                [
+                  2.004359502273177e-08,
+                  6.382942987177968e-12,
+                  7.153659882554641e-10
+                ],
+                [
+                  2.004359502273177e-08,
+                  6.382942987177968e-12,
+                  7.153659882554641e-10
+                ],
+                [
+                  2.004359502273177e-08,
+                  6.382942987177968e-12,
+                  7.153659882554641e-10
+                ],
+                [
+                  2.004359502273177e-08,
+                  6.382942987177968e-12,
+                  7.153659882554641e-10
+                ],
+                [
+                  2.004359502273177e-08,
+                  1.371126782730672e-11,
+                  1.048471458035452e-09
+                ],
+                [
+                  2.004359502273177e-08,
+                  1.371126782730672e-11,
+                  1.048471458035452e-09
+                ],
+                [
+                  2.004359502273177e-08,
+                  1.371126782730672e-11,
+                  1.048471458035452e-09
+                ],
+                [
+                  2.004359502273177e-08,
+                  1.371126782730672e-11,
+                  1.048471458035452e-09
+                ],
+                [
+                  2.004359502273177e-08,
+                  1.371126782730672e-11,
+                  1.048471458035452e-09
+                ]
+              ],
+              "qualified_q4_committed_binding": {
+                "schema_id": "E4_PL_Q4_COMMITTED_STATE_ALGORITHMIC_TANGENT_BINDING_V2",
+                "algorithmic_origin_schema_id": "E4_PL_Q4_ACCEPTED_DISCRETE_RETURN_MAP_ORIGIN_V1",
+                "formulation_id": "E4_PL_QUALIFIED_Q4_HYBRID_V2",
+                "implementation_id": "E4_PL_Q4_HYBRID_STATIONARY_RECOVERY_DIRECTOR_RUIZ_V7",
+                "element_id": 2,
+                "node_ids": [
+                  2,
+                  3,
+                  6,
+                  5
+                ],
+                "num_layers": 5,
+                "reference_coordinates_sha256": "B3DBF79825D1FA6A033EE53EB2CAB903BD26DE76C0561E0AEA5541FD98F8C213",
+                "element_configuration_sha256": "90037A2F0EE4C2909BB438291EBCD3E43190A57F26734B1D2E5958E02E042FD6",
+                "material_or_section_sha256": "52B8851C49BAE35EF80073240DA53DADC5A940AC413B3F54238D85B88AA5A913",
+                "decomposition_policy_id": "Q4_VON_KARMAN_ACCEPTED_ALGORITHMIC_MATERIAL_PLUS_MEMBRANE_STRESS_HESSIAN_V2",
+                "projection_policy_id": "Q4_NO_INTERNAL_BUBBLE_IDENTITY_PROJECTION_V1",
+                "committed_total_u": [
+                  5.736709140394809e-24,
+                  -1.039214820716547e-26,
+                  -4.8162527047281385e-05,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  -0.00014599877819493953,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  -0.00015184439328046472,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  -5.1126503061552686e-05,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "committed_total_u_sha256": "C2429C8A5EC1E71B1B15AAC86BDD9B79F7EBB45BF206E24B42249943A859A9AE",
+                "state_payload_sha256": "36E8FB8A3CAB0F2370124F4C5739E4E6AB4AF17A5D3807058D727E70B34F9088",
+                "accepted_algorithmic_update_sha256": null,
+                "state_integrity_sha256": "7335B9A29B1DFB0A17239ACACD2980553C1B7D47D7BAA9F8A8463AB69724D9D6"
+              },
+              "state_integrity_sha256": "7335B9A29B1DFB0A17239ACACD2980553C1B7D47D7BAA9F8A8463AB69724D9D6"
+            }
+          },
+          {
+            "element_id": 3,
+            "state": {
+              "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+              "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+              "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+              "material_mode": "LAYERED_PLANE_STRESS",
+              "element_id": 3,
+              "node_ids": [
+                7,
+                8,
+                10
+              ],
+              "element_identity_sha256": "3E3EBA0B55ED68E191971AA47DA38D2F84A0CF8D7A6C0A24C860D61B4A7A3B7D",
+              "num_layers": 5,
+              "committed_total_u": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "committed_constitutive_u": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "solver_kinematics": "VON_KARMAN",
+              "qualified_s3_activity_disposition": null,
+              "plastic_strain": [
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "alpha": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "layer_strain": [
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "layer_stress": [
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "station_generalized_strain": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "station_generalized_resultant": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "initial_generalized_prestrain": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "initial_generalized_resultant": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "initial_field_provenance": {},
+              "state_integrity_sha256": "F19AC418E58B6AC8016D6745FFF4CE9A8DD52C8C156498D454A5BE34CF5FB910"
+            }
+          },
+          {
+            "element_id": 4,
+            "state": {
+              "schema": "anysolver.e4-pl-s3-v2d-native-committed-state-v3",
+              "formulation_id": "CANDIDATE_E4_PL_S3_V2D_NATIVE_PARITY_V1",
+              "state_layout_id": "S3_V2D_HAMMER3_LAYERED_OR_GENERALIZED_ACTIVITY_STATE_V3",
+              "material_mode": "LAYERED_PLANE_STRESS",
+              "element_id": 4,
+              "node_ids": [
+                8,
+                9,
+                10
+              ],
+              "element_identity_sha256": "FDC0F6D3E9199A35A42AED1950E59F0C57F9375E3494518AE5B91D77F92E0CD6",
+              "num_layers": 5,
+              "committed_total_u": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "committed_constitutive_u": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "solver_kinematics": "VON_KARMAN",
+              "qualified_s3_activity_disposition": null,
+              "plastic_strain": [
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "alpha": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "layer_strain": [
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "layer_stress": [
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "station_generalized_strain": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "station_generalized_resultant": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "initial_generalized_prestrain": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "initial_generalized_resultant": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              ],
+              "initial_field_provenance": {},
+              "state_integrity_sha256": "C227C37E951D9E9BC564013339CB8B7B1712DA5112664677ACD85636E4D23846"
+            }
+          }
+        ],
+        "deleted_element_ids": [],
+        "activity_state": null,
+        "path_state": {
+          "mode": "contact_path",
+          "accepted_step": 3,
+          "multipliers": [
+            -4.5387575535855564e-05,
+            -1.0730453168206657e-05
+          ],
+          "reduced_coordinates": [
+            5.736709140394809e-24,
+            -1.039214820716547e-26,
+            -4.8162527047281385e-05,
+            -0.00014599877819493953,
+            -5.1126503061552686e-05,
+            -0.00015184439328046472
+          ],
+          "steps": [
+            {
+              "step_index": 1,
+              "load_factor": 0.3333333333333333,
+              "iterations": 4,
+              "residual_norm": 4.760747955134809e-14,
+              "displacement_norm": 0.00022204934436293808,
+              "max_equivalent_plastic_strain": 0.0,
+              "control_value": null,
+              "active_stage": "segment_1",
+              "deleted_element_count": 0,
+              "max_fracture_utilization": 0.0,
+              "support_reactions": {
+                "left": [
+                  -2.709373186796343e-05,
+                  -2.829714458873432e-07,
+                  0.15911703812309097,
+                  0.000395830130111018,
+                  -0.039779258857705974,
+                  -8.330855824548053e-22
+                ],
+                "target": [
+                  4.5102837607041414e-05,
+                  6.66401120061667e-07,
+                  0.34088296187700357,
+                  -9.996016800925002e-09,
+                  6.765425641056212e-07,
+                  0.0
+                ],
+                "guided": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.004321127213894548,
+                  -0.1988760009715177,
+                  -4.16574869652382e-21
+                ],
+                "in_plane": [
+                  2.7378469796779164e-05,
+                  1.0347023494032306e-05,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            },
+            {
+              "step_index": 2,
+              "load_factor": 0.6666666666666666,
+              "iterations": 4,
+              "residual_norm": 2.0583416073395309e-19,
+              "displacement_norm": 4.09402723711684e-25,
+              "max_equivalent_plastic_strain": 0.0,
+              "control_value": null,
+              "active_stage": "segment_2",
+              "deleted_element_count": 0,
+              "max_fracture_utilization": 0.0,
+              "support_reactions": {
+                "left": [
+                  -3.374066907739901e-22,
+                  9.841028480908039e-22,
+                  -5.178163890681516e-24,
+                  2.1575682877839653e-25,
+                  1.2945409726703787e-24,
+                  9.84102848090804e-23
+                ],
+                "target": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "guided": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.7260546302271733e-24,
+                  1.2945409726703787e-24,
+                  -9.84102848090804e-23
+                ],
+                "in_plane": [
+                  3.3740669077399007e-22,
+                  7.985291681651096e-22,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            },
+            {
+              "step_index": 3,
+              "load_factor": 1.0,
+              "iterations": 4,
+              "residual_norm": 4.760747955090453e-14,
+              "displacement_norm": 0.00022204934436293808,
+              "max_equivalent_plastic_strain": 0.0,
+              "control_value": null,
+              "active_stage": "segment_3",
+              "deleted_element_count": 0,
+              "max_fracture_utilization": 0.0,
+              "support_reactions": {
+                "left": [
+                  -2.709373186796341e-05,
+                  -2.829714458873466e-07,
+                  0.15911703812309097,
+                  0.000395830130111018,
+                  -0.039779258857705974,
+                  -4.57174094212605e-22
+                ],
+                "target": [
+                  4.5102837607041414e-05,
+                  6.66401120061667e-07,
+                  0.34088296187700357,
+                  -9.996016800925002e-09,
+                  6.765425641056212e-07,
+                  0.0
+                ],
+                "guided": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.004321127213894548,
+                  -0.1988760009715177,
+                  -2.3008591463618227e-21
+                ],
+                "in_plane": [
+                  2.7378469796779178e-05,
+                  1.0347023494032311e-05,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            }
+          ],
+          "history": [
+            {
+              "step_index": 1,
+              "target": [
+                0.0,
+                0.0
+              ],
+              "reaction_generalized": [
+                -4.538757553585552e-05,
+                -1.0730453168206655e-05
+              ],
+              "residual_norm": 4.760747955134809e-14,
+              "constraint_error": 1.039757530027554e-23,
+              "augmentation_iterations": 1,
+              "normal_multiplier_change": 0.0,
+              "contact": {
+                "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+                "minimum_gap": -3.399789217965369e-05,
+                "sampled_overlap_gap": -3.117388588028059e-05,
+                "penalty_energy": 0.0,
+                "current_overlap_area": 0.8100000042189481,
+                "reference_overlap_area": 0.8099999949383598,
+                "overlapping_pairs": 4,
+                "integration_force": [
+                  4.510283760704136e-05,
+                  6.664011200616934e-07,
+                  0.3408829618770036
+                ],
+                "target_force": [
+                  -4.5102837607041414e-05,
+                  -6.66401120061667e-07,
+                  -0.34088296187700357
+                ],
+                "integration_moment": [
+                  0.19941696287427152,
+                  -0.29543122144857004,
+                  -2.54297037646087e-05
+                ],
+                "target_moment": [
+                  -0.19941696287427155,
+                  0.29543122144857004,
+                  2.542970376460878e-05
+                ],
+                "gap_tolerance_met": true,
+                "active_pressure_dofs": 2,
+                "source_pressure_node_ids": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ],
+                "normalized_weighted_gap_m": [
+                  8.3622481867307e-05,
+                  4.417123290364905e-05,
+                  -1.8148658154608805e-06,
+                  8.335302950076499e-05,
+                  4.3380595074797985e-05,
+                  -3.0423703899414643e-06
+                ],
+                "numerical_pressure_pa": [
+                  0.0,
+                  0.0,
+                  1.8148658154608805,
+                  0.0,
+                  0.0,
+                  3.0423703899414645
+                ],
+                "reference_support_m2": [
+                  0.12375000000000272,
+                  0.2425499994558416,
+                  0.07919999781808956,
+                  0.10125000000000309,
+                  0.19844999954243553,
+                  0.06479999812198724
+                ],
+                "energy_evaluations": 6,
+                "weighted_gap_integration_error_m3": 5.7970140816696264e-18,
+                "integration_triangles": 32,
+                "area_integration_error_m2": 9.574979698001584e-14,
+                "augmented_merit_j": 0.0,
+                "normal_multiplier_estimate_pa": [],
+                "pair_geometry_evaluations": 10,
+                "pressure_gram_rank": 6,
+                "pressure_gram_condition_estimate": 24.835368479048174,
+                "pressure_gram_supported_modes": 6,
+                "pressure_gram_scaled_rank": 6,
+                "pressure_gram_scaled_condition_estimate": 13.221046282224236,
+                "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+                "regularization_storage_j": 4.3032697957190745e-07
+              },
+              "nodal_forces_n": [
+                -0.25,
+                -0.25
+              ],
+              "external_nodal_work_trapezoid_j": 3.723039643442553e-05
+            },
+            {
+              "step_index": 2,
+              "target": [
+                0.0,
+                0.0
+              ],
+              "reaction_generalized": [
+                -2.0328790734103208e-19,
+                3.049318610115481e-20
+              ],
+              "residual_norm": 2.0583416073395309e-19,
+              "constraint_error": 4.0938678480577444e-25,
+              "augmentation_iterations": 1,
+              "normal_multiplier_change": 0.0,
+              "contact": {
+                "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+                "minimum_gap": 9.999999996873031e-05,
+                "sampled_overlap_gap": 9.999999999998899e-05,
+                "penalty_energy": 0.0,
+                "current_overlap_area": 0.81,
+                "reference_overlap_area": 0.809999999999999,
+                "overlapping_pairs": 4,
+                "integration_force": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "target_force": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "integration_moment": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "target_moment": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "gap_tolerance_met": true,
+                "active_pressure_dofs": 0,
+                "source_pressure_node_ids": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ],
+                "normalized_weighted_gap_m": [
+                  9.999999999999414e-05,
+                  9.999999999999415e-05,
+                  9.999999999999416e-05,
+                  9.999999999999431e-05,
+                  9.999999999999431e-05,
+                  9.999999999999448e-05
+                ],
+                "numerical_pressure_pa": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "reference_support_m2": [
+                  0.12374999999999997,
+                  0.24254999999999988,
+                  0.07919999999999981,
+                  0.10124999999999988,
+                  0.19844999999999974,
+                  0.06479999999999979
+                ],
+                "energy_evaluations": 4,
+                "weighted_gap_integration_error_m3": 1.2896076621946723e-19,
+                "integration_triangles": 32,
+                "area_integration_error_m2": 7.45931094670027e-17,
+                "augmented_merit_j": 0.0,
+                "normal_multiplier_estimate_pa": [],
+                "pair_geometry_evaluations": 4,
+                "pressure_gram_rank": 6,
+                "pressure_gram_condition_estimate": 24.83536746512242,
+                "pressure_gram_supported_modes": 6,
+                "pressure_gram_scaled_rank": 6,
+                "pressure_gram_scaled_condition_estimate": 13.221046154195163,
+                "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+                "regularization_storage_j": 0.0
+              },
+              "nodal_forces_n": [
+                0.0,
+                0.0
+              ],
+              "external_nodal_work_trapezoid_j": -3.723039643442553e-05
+            },
+            {
+              "step_index": 3,
+              "target": [
+                0.0,
+                0.0
+              ],
+              "reaction_generalized": [
+                -4.5387575535855564e-05,
+                -1.0730453168206657e-05
+              ],
+              "residual_norm": 4.760747955090453e-14,
+              "constraint_error": 5.736709140394809e-24,
+              "augmentation_iterations": 1,
+              "normal_multiplier_change": 0.0,
+              "contact": {
+                "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+                "minimum_gap": -3.399789217965369e-05,
+                "sampled_overlap_gap": -3.117388588028059e-05,
+                "penalty_energy": 0.0,
+                "current_overlap_area": 0.8100000042189481,
+                "reference_overlap_area": 0.8099999949383598,
+                "overlapping_pairs": 4,
+                "integration_force": [
+                  4.510283760704136e-05,
+                  6.664011200616934e-07,
+                  0.3408829618770036
+                ],
+                "target_force": [
+                  -4.5102837607041414e-05,
+                  -6.66401120061667e-07,
+                  -0.34088296187700357
+                ],
+                "integration_moment": [
+                  0.19941696287427152,
+                  -0.29543122144857004,
+                  -2.54297037646087e-05
+                ],
+                "target_moment": [
+                  -0.19941696287427155,
+                  0.29543122144857004,
+                  2.542970376460878e-05
+                ],
+                "gap_tolerance_met": true,
+                "active_pressure_dofs": 2,
+                "source_pressure_node_ids": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ],
+                "normalized_weighted_gap_m": [
+                  8.3622481867307e-05,
+                  4.417123290364905e-05,
+                  -1.8148658154608805e-06,
+                  8.335302950076499e-05,
+                  4.3380595074797985e-05,
+                  -3.0423703899414643e-06
+                ],
+                "numerical_pressure_pa": [
+                  0.0,
+                  0.0,
+                  1.8148658154608805,
+                  0.0,
+                  0.0,
+                  3.0423703899414645
+                ],
+                "reference_support_m2": [
+                  0.12375000000000272,
+                  0.2425499994558416,
+                  0.07919999781808956,
+                  0.10125000000000309,
+                  0.19844999954243553,
+                  0.06479999812198724
+                ],
+                "energy_evaluations": 6,
+                "weighted_gap_integration_error_m3": 5.7970140816696264e-18,
+                "integration_triangles": 32,
+                "area_integration_error_m2": 9.574979698001584e-14,
+                "augmented_merit_j": 0.0,
+                "normal_multiplier_estimate_pa": [],
+                "pair_geometry_evaluations": 10,
+                "pressure_gram_rank": 6,
+                "pressure_gram_condition_estimate": 24.835368479048174,
+                "pressure_gram_supported_modes": 6,
+                "pressure_gram_scaled_rank": 6,
+                "pressure_gram_scaled_condition_estimate": 13.221046282224236,
+                "contact_work_convention": "projected_weak_gap_nonpotential_v1",
+                "regularization_storage_j": 4.3032697957190745e-07
+              },
+              "nodal_forces_n": [
+                -0.25,
+                -0.25
+              ],
+              "external_nodal_work_trapezoid_j": 3.723039643442553e-05
+            }
+          ],
+          "total_iterations": 12,
+          "terminal_status": "completed"
+        },
+        "contact_state": {},
+        "checkpoint_sha256": "737F2C941B349F1C96B7B7A1DA00547F3A416A13C92AE3935E83CF6E38A690FF"
+      },
+      "poses": [],
+      "manager_restart_contract": {
+        "profile": "Q4_S3_PATCH_REFINED_PROJECTED_FINITE_PENALTY_STATIC_DEV_V0",
+        "surfaces": [
+          {
+            "name": "q4_source",
+            "element_ids": [
+              1,
+              2
+            ],
+            "side": "bottom"
+          },
+          {
+            "name": "s3_target",
+            "element_ids": [
+              3,
+              4
+            ],
+            "side": "top"
+          }
+        ],
+        "interaction": {
+          "name": "pair",
+          "surface": "q4_source",
+          "target": "s3_target",
+          "normal_stiffness": 1000000.0,
+          "gap_tolerance": 5e-05,
+          "normal_law": "projected_penalty"
+        },
+        "projected_penalty_contract": {
+          "revision": "finite_projected_weak_gap_v1",
+          "multipliers": "identically_zero",
+          "work": "projected_weak_gap_nonpotential_v1",
+          "storage": "support_weighted_penalty_not_work"
+        },
+        "settings": {
+          "pair_motion": "general",
+          "normal_discretization": "primal_mortar",
+          "general_s3_difference_step": 2e-05,
+          "general_s3_differentiation": "jet2_q4_s3_dev",
+          "maximum_general_s3_energy_evaluations": 5000,
+          "q4_target_weighted_gap_tolerance": null,
+          "maximum_q4_target_integration_triangles": null,
+          "q4_source_area_tolerance": 1e-09,
+          "q4_source_weighted_gap_tolerance": 1e-10,
+          "q4_source_support_gradient_tolerance": 1e-05,
+          "q4_source_support_hessian_tolerance": 1e-05,
+          "q4_source_weighted_gap_gradient_tolerance": 1e-05,
+          "q4_source_weighted_gap_hessian_tolerance": 1e-05,
+          "maximum_q4_source_integration_triangles": 128,
+          "q4_source_gap_certificate": "overlap_local_dev",
+          "maximum_swept_subdivisions": 14,
+          "maximum_candidate_pairs": 100000
+        }
+      },
+      "failure": {
+        "type": "ValueError",
+        "message": "independent guided skin oracle requires exactly zero in-plane/rotation motion",
+        "traceback": "Traceback (most recent call last):\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_shell_dev.py\", line 245, in main\n    pose = pose_diagnostics(model, definition, manager, snapshot, program, history)\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_shell_dev.py\", line 125, in pose_diagnostics\n    raise ValueError(\"independent guided skin oracle requires exactly zero in-plane/rotation motion\")\nValueError: independent guided skin oracle requires exactly zero in-plane/rotation motion\n"
+      }
+    }
+  ],
+  "failures": [
+    {
+      "stiffness_pa_per_m": 1000000.0,
+      "type": "ValueError",
+      "message": "independent guided skin oracle requires exactly zero in-plane/rotation motion",
+      "traceback": "Traceback (most recent call last):\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_shell_dev.py\", line 245, in main\n    pose = pose_diagnostics(model, definition, manager, snapshot, program, history)\n  File \"C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d2_projected_penalty_shell_dev.py\", line 125, in pose_diagnostics\n    raise ValueError(\"independent guided skin oracle requires exactly zero in-plane/rotation motion\")\nValueError: independent guided skin oracle requires exactly zero in-plane/rotation motion\n"
+    }
+  ],
+  "elapsed_seconds": 8.483610299997963,
+  "development_checks_met": false,
+  "limits": [
+    "Finite penalty development; no exact complementarity or accepted new method.",
+    "Target static and rotations guided; no moving active rim or finite rotation admission.",
+    "Prescribed source rows remain supported; active prescribed-row pressure is measured, not assumed."
+  ]
+}

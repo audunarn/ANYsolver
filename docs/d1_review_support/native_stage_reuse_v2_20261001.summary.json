@@ -1,0 +1,47 @@
+{
+  "status": "DEVELOPMENT_PASS_INDEPENDENTLY_ASSESSED",
+  "solver_committed_steps": 4,
+  "gate_passing_steps": 4,
+  "physical_payload_bitwise_parity": true,
+  "stage_call_counts": {
+    "physical_steps": [
+      3,
+      3,
+      3,
+      3
+    ],
+    "total_physical_steps": 12,
+    "saved_physical_steps": [
+      5,
+      5,
+      5,
+      5
+    ],
+    "saved_total_physical_steps": 20,
+    "rejected_controls": 2
+  },
+  "guard_controls": {
+    "stale_rejected_before_stage": true,
+    "accepted_line_cancelled_at_reuse_guard": true,
+    "no_solve_after_cancellation": true,
+    "current_and_issuance_unchanged": true,
+    "physical_steps": 4,
+    "extra_commits": 0
+  },
+  "complete_instrumented_route_seconds": 21.85716000001412,
+  "peak_process_tree_memory_mb": 269.221888,
+  "performance_disposition": "40% reduction in physical stage evaluations (20 to12); no balanced complete-runtime speedup claim. This run includes2additional rejected controls absent from earlier half-control.",
+  "retained_failure": "Stage-reuseV1 incorrect context-inequality assertion after physical/parityPASS, guard checks unissued. NativeN16 energyNONPASS unchanged.",
+  "next": "Verify opt-in acceleration chart official restart/continuation before choosing a bounded full-angle trajectory route. No automatic macro or restored deadline authority.",
+  "claim_boundary": "No full-angle temporal/spatial accuracy, installed new-chart, scientificC7 or release claim.",
+  "bindings": {
+    "inputs.json": "0fe134265e11cdc57d8e72b69ffc36525f2787b6c8e287358cfbcd4ec692387c",
+    "proposal.json": "f8aa00a680114266e5cbc508e9cc39b38884ea163a608b2c08133f911d4cc49a",
+    "test.source.py": "45bfd1000be27f7b570163d612bea5f7d9453f03e0ab8e323b2044751932c524",
+    "raw.json": "f42520630d4dc5bfcb69ed42cbb2be09d71f78daa9f918050e17413e026cc154",
+    "resources.json": "90b5c95b25b669dfca726d215b3612ff7437a7d092c0e14d6c77dd48fa88bc01",
+    "log": "e203c4b8e7365a2e21437ac85c51ccce93570cb084bde646120b330f7f1783ee",
+    "xml": "dce15c7e12c71b89af1e426ed6f8ed9b00a365f3c5d1557d15e34130e5894278",
+    "review.md": "f19e4cabe9ab7589982952f13cb237bf1724cb59dff35dc8280f141d94700333"
+  }
+}

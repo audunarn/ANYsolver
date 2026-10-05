@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 4.885701199993491,
+  "peak_process_tree_memory_mb": 225.267712,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_projected_penalty.py::test_smooth_both_body_skin_directional_tangent_interval",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d2_skin_tangent_interval_v1_20260930.log"
+}

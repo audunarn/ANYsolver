@@ -1,0 +1,262 @@
+{
+  "status": "NONPASS",
+  "checks": {},
+  "elapsed_seconds": 0.011707900004694238,
+  "source_identity": {
+    "module": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py",
+    "sha256": "f57b842452d3462c391019a4b0bc4b69bf96bd737f51a8daa20403be713dd423",
+    "test_sha256": "ae3812ed6760feb9b40ad05bf72874364a3016351189066ad765eae5a4a7dd33",
+    "cache": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_dynamic_elastic_state_v1_20260930.numba_cache"
+  },
+  "definition": {
+    "dynamic_policy": "RETAIN_PHYSICAL_CELL_INERTIA_NO_STATIC_MASS_SUBSTITUTION",
+    "element_id": 1,
+    "element_identity": "370310ed90463f72ad1a19ecde2b33df49343fd00950eabc2d0487f5851de41c",
+    "family": "RESULTANT_ELLIPSOID",
+    "formulation_id": "CANDIDATE_GE_BEAM3_NATIVE_GENERALIZED_ELLIPSOID_DISTRIBUTED_STATIC_V1",
+    "node_ids": [
+      1,
+      2,
+      3
+    ],
+    "operator_identity": "7bca9a387342efb1da7980dcc2b03db861b80da0724f25111e2d9b2bcfb4b503",
+    "production_qualified": false,
+    "quadrature": 4,
+    "reference": {
+      "coordinates": [
+        [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.2,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "evaluation_id": "CENTERED_Q2_TWO_COMPONENT_COEFFICIENT_ANALYTIC_LIFT_V1",
+      "frame_tolerance": 1e-12,
+      "nodal_triads": [
+        [
+          [
+            0.9284766908852594,
+            0.0,
+            0.3713906763541038
+          ],
+          [
+            0.3713906763541038,
+            0.0,
+            -0.9284766908852594
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            1.0,
+            0.0,
+            -0.0
+          ],
+          [
+            -0.0,
+            0.0,
+            -1.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.9284766908852594,
+            0.0,
+            -0.3713906763541038
+          ],
+          [
+            -0.3713906763541038,
+            0.0,
+            -0.9284766908852594
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "regularity_relative_tolerance": 1.4210854715202004e-14,
+      "rotation_tolerance": 1e-11
+    },
+    "schema": "GE_BEAM3_NATIVE_RECONSTRUCTIBLE_DEFINITION_V1",
+    "section": {
+      "elastic": [
+        [
+          30000.0,
+          0.0,
+          0.0,
+          4.898979485566357,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          10000.0,
+          0.0,
+          0.0,
+          0.0,
+          3.6742346141747664
+        ],
+        [
+          0.0,
+          0.0,
+          8571.42857142857,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          4.898979485566357,
+          0.0,
+          0.0,
+          2.0008000000000004,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          3.6742346141747664,
+          0.0,
+          0.0,
+          0.0,
+          1.5013499999999997
+        ]
+      ],
+      "hardening": 1.0,
+      "metric": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "policy": "GE_BEAM3_SIX_RESULTANT_ASSOCIATED_ELLIPSOID_HARDENING_V1",
+      "yield_force": 1000000.0
+    },
+    "section_identity": "e163a44de6b2080a96a5eb6a0548841e40ba48f99f46b5a5641866178634829e",
+    "section_inertia": [
+      [
+        2.7,
+        0.0,
+        0.0,
+        -0.0,
+        0.032400000000000005,
+        0.0675
+      ],
+      [
+        0.0,
+        2.7,
+        0.0,
+        -0.032400000000000005,
+        -0.0,
+        0.09450000000000001
+      ],
+      [
+        0.0,
+        0.0,
+        2.7,
+        -0.0675,
+        -0.09450000000000001,
+        -0.0
+      ],
+      [
+        0.0,
+        -0.032400000000000005,
+        -0.0675,
+        0.1220763,
+        0.0023625000000000005,
+        -0.0011340000000000002
+      ],
+      [
+        0.032400000000000005,
+        0.0,
+        -0.09450000000000001,
+        0.0023625000000000005,
+        0.17369630000000003,
+        0.0008100000000000002
+      ],
+      [
+        0.0675,
+        0.09450000000000001,
+        0.0,
+        -0.0011340000000000002,
+        0.0008100000000000002,
+        0.194995
+      ]
+    ],
+    "static_policy": "EIGHTEEN_EXTERNAL_TWENTY_FOUR_INTERNAL_STATIC_STATIONARITY"
+  },
+  "failure": "AssertionError(\"Regex pattern did not match.\\n  Expected regex: 'homogeneous supported selection'\\n  Actual message: 'supported distributed model required'\")",
+  "last_stage": "failed"
+}

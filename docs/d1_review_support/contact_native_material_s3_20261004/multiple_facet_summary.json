@@ -1,0 +1,94 @@
+{
+  "status": "implemented and installed-tested development; not engineering accepted/released",
+  "source_candidate": "fbdd5c27",
+  "wheel_sha256": "db29c3e1c28a53f1d6e4cf5f56727f2216c8c953adf7fc77be46392b2bfdd360",
+  "raw_root": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate03",
+  "runtime_package": {
+    "source_files": 517,
+    "imported_modules": 223,
+    "source_installed_errors": [],
+    "extra_installed_files": [],
+    "outcomes": {
+      "passed": 31
+    },
+    "runs": {
+      "installed_checks": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 142.03249470004812,
+          "peak_bytes": 188338176
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 24
+        }
+      },
+      "installed_compat": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 6.164271799963899,
+          "peak_bytes": 325988352
+        },
+        "runtime_errors": [],
+        "import_errors": [],
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "outcomes": {
+          "passed": 7
+        }
+      }
+    }
+  },
+  "response": {
+    "profile": "NATIVE_B3_GE_MULTIPLE_MATERIAL_PATCHES_S3_STATIC_DEV_V1",
+    "coordinates": 120,
+    "metrics": [
+      7.922942248774484e-12,
+      6.067667721636199e-17,
+      6.401665780236224e-12
+    ],
+    "contact_tangent_errors": [
+      1.776689361176339e-10,
+      4.250428944428292e-10
+    ],
+    "owner_tangent_errors": [
+      9.761417751797487e-09,
+      1.8278256209899673e-09
+    ],
+    "normalized_force_balance": 1.4012618550303857e-09,
+    "normalized_moment_balance": 1.2500243778604498e-09,
+    "minimum_gap_m": -3.1555777917871204e-05,
+    "shell_displacement_norm": 7.004686950269242e-05,
+    "pair_forces": [
+      [
+        3.599478054640803e-08,
+        -1.1998260182136012e-08,
+        0.005493107556852393
+      ],
+      [
+        8.117124400342207e-09,
+        0.003279134730511038,
+        2.7057081334474025e-09
+      ],
+      [
+        2.1316354862739652e-08,
+        -7.1054516209132184e-09,
+        0.0032530558098581696
+      ]
+    ],
+    "checkpoint_sha256": "cd28c9f78ee3ea18184a803641c40555b2fd3859cd66aba718df071b8244f2c6"
+  }
+}

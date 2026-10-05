@@ -1,0 +1,21 @@
+{
+  "source_bindings_verified": true,
+  "scope": "nonguided partial-overlap planar S3 development, not engineering acceptance or release",
+  "checkpoint": "separation_full_v1_checkpoint.json",
+  "checkpoint_sha256": "BD3E9F8A06DD51C09A5075C9544384A88DF79F7A08121A6FD798BFB4F6525398",
+  "status": "passed full five-increment development workflow",
+  "resource": {
+    "peak_sampled_bytes": 224055296,
+    "limit_mib": 953,
+    "elapsed_seconds": 519.4752154999878,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "restart_completed": false,
+  "id": "C5_PARTIAL_REPLAY_SEPARATION_FULL_V1_20261002",
+  "pytest_call_seconds": 513.9,
+  "accepted_step": 5,
+  "authority_consumed": true
+}

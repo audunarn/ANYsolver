@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 218.6236598000105,
+  "peak_process_tree_memory_mb": 348.790784,
+  "time_limit_seconds": 900.0,
+  "memory_limit_bytes": 4000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_radial_target12_coupled_v1_20260930.json",
+    "--radial-solve",
+    "--radial-target-cells",
+    "12"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_target12_coupled_v1_20260930.log"
+}

@@ -1,0 +1,29 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.4392143999866676,
+  "peak_process_tree_memory_mb": 159.379456,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d1_installed_entry.py",
+    "--expected-root",
+    "C:\\ANYworkspaceWork\\general-contact-final-0b2ac9be\\target",
+    "--identity-output",
+    "docs/d1_review_support/d1_final_spatial_v7_20260930_radial_assess.import.json",
+    "--script",
+    "scripts/general_contact_d1_interior_press_dev.py",
+    "--",
+    "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial_assess.json",
+    "--radial-spatial-assess",
+    "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial.json",
+    "--radial-bin-evidence",
+    "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial_bins.json",
+    "--radial-wrench-evidence",
+    "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial_wrench.json",
+    "--radial-linear-assessment",
+    "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial_linear_assess.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial_assess.log"
+}

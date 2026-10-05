@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 3.0906614999985322,
+  "peak_process_tree_memory_mb": 213.815296,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_general_contact_d1_interior_profile.py::test_planar_q4_source_vertical_energy_tracks_q1_shear"
+  ],
+  "log": "docs\\d1_review_support\\d1_source_q4_shear_tilted_20260929.log"
+}

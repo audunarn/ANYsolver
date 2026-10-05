@@ -1,0 +1,14 @@
+{
+  "case_id": "general_contact_d1_affine_partial_pressure_v1",
+  "record_type": "post-run transcription of the recorded tool invocation; not in-process provenance",
+  "working_directory": "C:/ANYworkspaceWork/ANYsolver-general-contact",
+  "branch_head_at_launch": "f1fbddd45e8051efeb91edbe94eca96296b42942",
+  "environment_assignment": {
+    "PYTHONPATH": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src;C:\\Github\\ANYmaterial\\src;C:\\ANYworkspaceWork\\ANYsolver-general-contact"
+  },
+  "command": "python scripts/general_contact_d1_pressure_space_probe.py reports/.general_contact_d1_affine_pressure_v1_formal_20260927.partial.json 32 64 --rows 4",
+  "stdout_stderr_redirection": "reports/.general_contact_d1_affine_pressure_v1_formal_20260927.partial.txt",
+  "observed_exit_code": 0,
+  "post_run_action": "Adjudicated the unchanged temporary JSON, then moved its bytes and text log to the canonical report names after verdict pass",
+  "limitation": "The result JSON does not itself encode source or interpreter import identity; the tool invocation and adjudicator source checks jointly support provenance."
+}

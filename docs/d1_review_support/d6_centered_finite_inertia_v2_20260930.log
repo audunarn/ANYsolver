@@ -1,0 +1,447 @@
+{"stage": "effective_environment_preimport", "environment": {"PYTHONPATH": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver", "PYTHONDONTWRITEBYTECODE": "1", "OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMBA_CACHE_DIR": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.numba_cache"}}
+{"stage": "effective_import_verified", "module": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py", "module_sha256": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84", "anysolver": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\__init__.py", "numba_cache_dir": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_centered_finite_inertia_v2_20260930.numba_cache", "numba_cache_directory_present": true}
+FFFFFFFFFF....                                                           [100%]
+================================== FAILURES ===================================
+_______________ test_zero_velocity_exact_parity_and_rest_guard ________________
+
+record_property = <function record_property.<locals>.append_property at 0x000001747CD1DA60>
+
+    def test_zero_velocity_exact_parity_and_rest_guard(record_property):
+        expected = Path(__file__).resolve().parents[1]/"src/anysolver/_ge_beam3_centered_finite_inertia.py"
+        imported = Path(inspect.getsourcefile(evaluate)).resolve()
+        assert imported == expected
+        record(record_property, "effective_import_identity", dict(module=str(imported),
+               sha256=hashlib.sha256(imported.read_bytes()).hexdigest(), anysolver=anysolver.__file__))
+        data = fixture()
+        ref, section, high, low, cells, _, _ = data
+>       response = run(data, velocity=np.zeros(24), acceleration=np.zeros(24))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ge_beam3_centered_finite_inertia.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_ge_beam3_centered_finite_inertia.py:52: in run
+    return evaluate(**values)
+           ^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:152: in evaluate_centered_finite_inertia
+    kernel = _CenteredFiniteKernel(reference, section_inertia, order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:29: in __init__
+    centered = _CenteredRestInertia(reference, section_inertia, order=order)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_p5_centered\mass.py:72: in __init__
+    self.section_mass = _readonly(validate_section(section_mass))
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+section = array([[ 2.700000e+00,  0.000000e+00,  0.000000e+00, -0.000000e+00,
+         3.240000e-02,  6.750000e-02],
+       [ 0....00000e-04],
+       [ 6.750000e-02,  9.450000e-02,  0.000000e+00, -1.134000e-03,
+         8.100000e-04,  1.949950e-01]])
+
+    def validate_section(section: Any) -> np.ndarray:
+        made = np.array(section, dtype=float, copy=True)
+        if made.shape != (6, 6) or not np.isfinite(made).all():
+            raise ValueError("section must be finite 6 by 6")
+        if not np.array_equal(made, made.T):
+>           raise ValueError("probe section must be exactly symmetric")
+E           ValueError: probe section must be exactly symmetric
+
+src\anysolver\_ge_beam3_p5\algebra.py:56: ValueError
+___________ test_nonzero_finite_work_cross_inertia_and_acceleration ___________
+
+record_property = <function record_property.<locals>.append_property at 0x000001747D017480>
+
+    def test_nonzero_finite_work_cross_inertia_and_acceleration(record_property):
+        data = fixture()
+>       response = run(data)
+                   ^^^^^^^^^
+
+tests\test_ge_beam3_centered_finite_inertia.py:84: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_ge_beam3_centered_finite_inertia.py:52: in run
+    return evaluate(**values)
+           ^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:152: in evaluate_centered_finite_inertia
+    kernel = _CenteredFiniteKernel(reference, section_inertia, order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:29: in __init__
+    centered = _CenteredRestInertia(reference, section_inertia, order=order)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_p5_centered\mass.py:72: in __init__
+    self.section_mass = _readonly(validate_section(section_mass))
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+section = array([[ 2.700000e+00,  0.000000e+00,  0.000000e+00, -0.000000e+00,
+         3.240000e-02,  6.750000e-02],
+       [ 0....00000e-04],
+       [ 6.750000e-02,  9.450000e-02,  0.000000e+00, -1.134000e-03,
+         8.100000e-04,  1.949950e-01]])
+
+    def validate_section(section: Any) -> np.ndarray:
+        made = np.array(section, dtype=float, copy=True)
+        if made.shape != (6, 6) or not np.isfinite(made).all():
+            raise ValueError("section must be finite 6 by 6")
+        if not np.array_equal(made, made.T):
+>           raise ValueError("probe section must be exactly symmetric")
+E           ValueError: probe section must be exactly symmetric
+
+src\anysolver\_ge_beam3_p5\algebra.py:56: ValueError
+_________________ test_velocity_directional_derivative[1e-05] _________________
+
+step = 1e-05
+record_property = <function record_property.<locals>.append_property at 0x000001747D017530>
+
+    @pytest.mark.parametrize("step", (1e-5, 2e-6))
+    def test_velocity_directional_derivative(step, record_property):
+        data = fixture()
+        direction = np.sin(np.arange(24)+.4)
+        direction /= np.linalg.norm(direction)
+>       response = run(data)
+                   ^^^^^^^^^
+
+tests\test_ge_beam3_centered_finite_inertia.py:109: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_ge_beam3_centered_finite_inertia.py:52: in run
+    return evaluate(**values)
+           ^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:152: in evaluate_centered_finite_inertia
+    kernel = _CenteredFiniteKernel(reference, section_inertia, order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:29: in __init__
+    centered = _CenteredRestInertia(reference, section_inertia, order=order)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_p5_centered\mass.py:72: in __init__
+    self.section_mass = _readonly(validate_section(section_mass))
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+section = array([[ 2.700000e+00,  0.000000e+00,  0.000000e+00, -0.000000e+00,
+         3.240000e-02,  6.750000e-02],
+       [ 0....00000e-04],
+       [ 6.750000e-02,  9.450000e-02,  0.000000e+00, -1.134000e-03,
+         8.100000e-04,  1.949950e-01]])
+
+    def validate_section(section: Any) -> np.ndarray:
+        made = np.array(section, dtype=float, copy=True)
+        if made.shape != (6, 6) or not np.isfinite(made).all():
+            raise ValueError("section must be finite 6 by 6")
+        if not np.array_equal(made, made.T):
+>           raise ValueError("probe section must be exactly symmetric")
+E           ValueError: probe section must be exactly symmetric
+
+src\anysolver\_ge_beam3_p5\algebra.py:56: ValueError
+_________________ test_velocity_directional_derivative[2e-06] _________________
+
+step = 2e-06
+record_property = <function record_property.<locals>.append_property at 0x000001747F1C8300>
+
+    @pytest.mark.parametrize("step", (1e-5, 2e-6))
+    def test_velocity_directional_derivative(step, record_property):
+        data = fixture()
+        direction = np.sin(np.arange(24)+.4)
+        direction /= np.linalg.norm(direction)
+>       response = run(data)
+                   ^^^^^^^^^
+
+tests\test_ge_beam3_centered_finite_inertia.py:109: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_ge_beam3_centered_finite_inertia.py:52: in run
+    return evaluate(**values)
+           ^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:152: in evaluate_centered_finite_inertia
+    kernel = _CenteredFiniteKernel(reference, section_inertia, order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:29: in __init__
+    centered = _CenteredRestInertia(reference, section_inertia, order=order)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_p5_centered\mass.py:72: in __init__
+    self.section_mass = _readonly(validate_section(section_mass))
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+section = array([[ 2.700000e+00,  0.000000e+00,  0.000000e+00, -0.000000e+00,
+         3.240000e-02,  6.750000e-02],
+       [ 0....00000e-04],
+       [ 6.750000e-02,  9.450000e-02,  0.000000e+00, -1.134000e-03,
+         8.100000e-04,  1.949950e-01]])
+
+    def validate_section(section: Any) -> np.ndarray:
+        made = np.array(section, dtype=float, copy=True)
+        if made.shape != (6, 6) or not np.isfinite(made).all():
+            raise ValueError("section must be finite 6 by 6")
+        if not np.array_equal(made, made.T):
+>           raise ValueError("probe section must be exactly symmetric")
+E           ValueError: probe section must be exactly symmetric
+
+src\anysolver\_ge_beam3_p5\algebra.py:56: ValueError
+____________ test_left_configuration_directional_derivative[1e-05] ____________
+
+step = 1e-05
+record_property = <function record_property.<locals>.append_property at 0x000001747F1C8460>
+
+    @pytest.mark.parametrize("step", (1e-5, 2e-6))
+    def test_left_configuration_directional_derivative(step, record_property):
+        data = fixture()
+        direction = np.zeros(24)
+        direction[18:] = np.array((.31, -.27, .16, -.22, .13, .29))
+>       response = run(data)
+                   ^^^^^^^^^
+
+tests\test_ge_beam3_centered_finite_inertia.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_ge_beam3_centered_finite_inertia.py:52: in run
+    return evaluate(**values)
+           ^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:152: in evaluate_centered_finite_inertia
+    kernel = _CenteredFiniteKernel(reference, section_inertia, order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:29: in __init__
+    centered = _CenteredRestInertia(reference, section_inertia, order=order)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_p5_centered\mass.py:72: in __init__
+    self.section_mass = _readonly(validate_section(section_mass))
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+section = array([[ 2.700000e+00,  0.000000e+00,  0.000000e+00, -0.000000e+00,
+         3.240000e-02,  6.750000e-02],
+       [ 0....00000e-04],
+       [ 6.750000e-02,  9.450000e-02,  0.000000e+00, -1.134000e-03,
+         8.100000e-04,  1.949950e-01]])
+
+    def validate_section(section: Any) -> np.ndarray:
+        made = np.array(section, dtype=float, copy=True)
+        if made.shape != (6, 6) or not np.isfinite(made).all():
+            raise ValueError("section must be finite 6 by 6")
+        if not np.array_equal(made, made.T):
+>           raise ValueError("probe section must be exactly symmetric")
+E           ValueError: probe section must be exactly symmetric
+
+src\anysolver\_ge_beam3_p5\algebra.py:56: ValueError
+____________ test_left_configuration_directional_derivative[2e-06] ____________
+
+step = 2e-06
+record_property = <function record_property.<locals>.append_property at 0x000001747F1C90C0>
+
+    @pytest.mark.parametrize("step", (1e-5, 2e-6))
+    def test_left_configuration_directional_derivative(step, record_property):
+        data = fixture()
+        direction = np.zeros(24)
+        direction[18:] = np.array((.31, -.27, .16, -.22, .13, .29))
+>       response = run(data)
+                   ^^^^^^^^^
+
+tests\test_ge_beam3_centered_finite_inertia.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_ge_beam3_centered_finite_inertia.py:52: in run
+    return evaluate(**values)
+           ^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:152: in evaluate_centered_finite_inertia
+    kernel = _CenteredFiniteKernel(reference, section_inertia, order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:29: in __init__
+    centered = _CenteredRestInertia(reference, section_inertia, order=order)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_p5_centered\mass.py:72: in __init__
+    self.section_mass = _readonly(validate_section(section_mass))
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+section = array([[ 2.700000e+00,  0.000000e+00,  0.000000e+00, -0.000000e+00,
+         3.240000e-02,  6.750000e-02],
+       [ 0....00000e-04],
+       [ 6.750000e-02,  9.450000e-02,  0.000000e+00, -1.134000e-03,
+         8.100000e-04,  1.949950e-01]])
+
+    def validate_section(section: Any) -> np.ndarray:
+        made = np.array(section, dtype=float, copy=True)
+        if made.shape != (6, 6) or not np.isfinite(made).all():
+            raise ValueError("section must be finite 6 by 6")
+        if not np.array_equal(made, made.T):
+>           raise ValueError("probe section must be exactly symmetric")
+E           ValueError: probe section must be exactly symmetric
+
+src\anysolver\_ge_beam3_p5\algebra.py:56: ValueError
+_____________________ test_acceleration_directional_mass ______________________
+
+record_property = <function record_property.<locals>.append_property at 0x000001747F1C9010>
+
+    def test_acceleration_directional_mass(record_property):
+        data = fixture()
+        direction = np.cos(np.arange(24)*.7)
+        direction /= np.linalg.norm(direction)
+        h = 3e-6
+>       response = run(data)
+                   ^^^^^^^^^
+
+tests\test_ge_beam3_centered_finite_inertia.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_ge_beam3_centered_finite_inertia.py:52: in run
+    return evaluate(**values)
+           ^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:152: in evaluate_centered_finite_inertia
+    kernel = _CenteredFiniteKernel(reference, section_inertia, order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:29: in __init__
+    centered = _CenteredRestInertia(reference, section_inertia, order=order)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_p5_centered\mass.py:72: in __init__
+    self.section_mass = _readonly(validate_section(section_mass))
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+section = array([[ 2.700000e+00,  0.000000e+00,  0.000000e+00, -0.000000e+00,
+         3.240000e-02,  6.750000e-02],
+       [ 0....00000e-04],
+       [ 6.750000e-02,  9.450000e-02,  0.000000e+00, -1.134000e-03,
+         8.100000e-04,  1.949950e-01]])
+
+    def validate_section(section: Any) -> np.ndarray:
+        made = np.array(section, dtype=float, copy=True)
+        if made.shape != (6, 6) or not np.isfinite(made).all():
+            raise ValueError("section must be finite 6 by 6")
+        if not np.array_equal(made, made.T):
+>           raise ValueError("probe section must be exactly symmetric")
+E           ValueError: probe section must be exactly symmetric
+
+src\anysolver\_ge_beam3_p5\algebra.py:56: ValueError
+___________ test_compensated_momentum_large_translation_and_origin ____________
+
+record_property = <function record_property.<locals>.append_property at 0x000001747F1CA610>
+
+    def test_compensated_momentum_large_translation_and_origin(record_property):
+        data = fixture()
+        small = np.array(((1e-9, -2e-9, 3e-9), (-4e-9, 2e-9, 1e-9), (2e-9, 5e-9, -3e-9)))
+        high, low = np.empty((3, 3)), np.empty((3, 3))
+        for index in np.ndindex(high.shape):
+            high[index], low[index] = _rounded_pair(F(float(data[2][index]))+F(float(small[index])))
+        translation = np.array((2.**40, -2.**40, 2.**41))
+        shifted_high, shifted_low = shift_pairs(high, low, translation)
+        origin = np.array((.07, -.12, .03))
+        shifted_origin, shifted_origin_low = shift_pairs(origin, np.zeros(3), translation)
+>       base = run(data, positions_high=high, positions_low=low, momentum_origin_high=origin)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ge_beam3_centered_finite_inertia.py:174: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_ge_beam3_centered_finite_inertia.py:52: in run
+    return evaluate(**values)
+           ^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:152: in evaluate_centered_finite_inertia
+    kernel = _CenteredFiniteKernel(reference, section_inertia, order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:29: in __init__
+    centered = _CenteredRestInertia(reference, section_inertia, order=order)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_p5_centered\mass.py:72: in __init__
+    self.section_mass = _readonly(validate_section(section_mass))
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+section = array([[ 2.700000e+00,  0.000000e+00,  0.000000e+00, -0.000000e+00,
+         3.240000e-02,  6.750000e-02],
+       [ 0....00000e-04],
+       [ 6.750000e-02,  9.450000e-02,  0.000000e+00, -1.134000e-03,
+         8.100000e-04,  1.949950e-01]])
+
+    def validate_section(section: Any) -> np.ndarray:
+        made = np.array(section, dtype=float, copy=True)
+        if made.shape != (6, 6) or not np.isfinite(made).all():
+            raise ValueError("section must be finite 6 by 6")
+        if not np.array_equal(made, made.T):
+>           raise ValueError("probe section must be exactly symmetric")
+E           ValueError: probe section must be exactly symmetric
+
+src\anysolver\_ge_beam3_p5\algebra.py:56: ValueError
+_____________ test_rigid_rotation_momentum_and_inertia_covariance _____________
+
+record_property = <function record_property.<locals>.append_property at 0x000001747F1CADA0>
+
+    def test_rigid_rotation_momentum_and_inertia_covariance(record_property):
+        data = fixture()
+        rotation = exp((.41, -.23, .17))
+>       base = run(data)
+               ^^^^^^^^^
+
+tests\test_ge_beam3_centered_finite_inertia.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_ge_beam3_centered_finite_inertia.py:52: in run
+    return evaluate(**values)
+           ^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:152: in evaluate_centered_finite_inertia
+    kernel = _CenteredFiniteKernel(reference, section_inertia, order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:29: in __init__
+    centered = _CenteredRestInertia(reference, section_inertia, order=order)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_p5_centered\mass.py:72: in __init__
+    self.section_mass = _readonly(validate_section(section_mass))
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+section = array([[ 2.700000e+00,  0.000000e+00,  0.000000e+00, -0.000000e+00,
+         3.240000e-02,  6.750000e-02],
+       [ 0....00000e-04],
+       [ 6.750000e-02,  9.450000e-02,  0.000000e+00, -1.134000e-03,
+         8.100000e-04,  1.949950e-01]])
+
+    def validate_section(section: Any) -> np.ndarray:
+        made = np.array(section, dtype=float, copy=True)
+        if made.shape != (6, 6) or not np.isfinite(made).all():
+            raise ValueError("section must be finite 6 by 6")
+        if not np.array_equal(made, made.T):
+>           raise ValueError("probe section must be exactly symmetric")
+E           ValueError: probe section must be exactly symmetric
+
+src\anysolver\_ge_beam3_p5\algebra.py:56: ValueError
+__________ test_exact_algebraic_zero_extension_and_immutable_arrays ___________
+
+    def test_exact_algebraic_zero_extension_and_immutable_arrays():
+>       response = run()
+                   ^^^^^
+
+tests\test_ge_beam3_centered_finite_inertia.py:218: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_ge_beam3_centered_finite_inertia.py:52: in run
+    return evaluate(**values)
+           ^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:152: in evaluate_centered_finite_inertia
+    kernel = _CenteredFiniteKernel(reference, section_inertia, order)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_centered_finite_inertia.py:29: in __init__
+    centered = _CenteredRestInertia(reference, section_inertia, order=order)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\anysolver\_ge_beam3_p5_centered\mass.py:72: in __init__
+    self.section_mass = _readonly(validate_section(section_mass))
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+section = array([[ 2.700000e+00,  0.000000e+00,  0.000000e+00, -0.000000e+00,
+         3.240000e-02,  6.750000e-02],
+       [ 0....00000e-04],
+       [ 6.750000e-02,  9.450000e-02,  0.000000e+00, -1.134000e-03,
+         8.100000e-04,  1.949950e-01]])
+
+    def validate_section(section: Any) -> np.ndarray:
+        made = np.array(section, dtype=float, copy=True)
+        if made.shape != (6, 6) or not np.isfinite(made).all():
+            raise ValueError("section must be finite 6 by 6")
+        if not np.array_equal(made, made.T):
+>           raise ValueError("probe section must be exactly symmetric")
+E           ValueError: probe section must be exactly symmetric
+
+src\anysolver\_ge_beam3_p5\algebra.py:56: ValueError
+=========================== short test summary info ===========================
+FAILED tests/test_ge_beam3_centered_finite_inertia.py::test_zero_velocity_exact_parity_and_rest_guard
+FAILED tests/test_ge_beam3_centered_finite_inertia.py::test_nonzero_finite_work_cross_inertia_and_acceleration
+FAILED tests/test_ge_beam3_centered_finite_inertia.py::test_velocity_directional_derivative[1e-05]
+FAILED tests/test_ge_beam3_centered_finite_inertia.py::test_velocity_directional_derivative[2e-06]
+FAILED tests/test_ge_beam3_centered_finite_inertia.py::test_left_configuration_directional_derivative[1e-05]
+FAILED tests/test_ge_beam3_centered_finite_inertia.py::test_left_configuration_directional_derivative[2e-06]
+FAILED tests/test_ge_beam3_centered_finite_inertia.py::test_acceleration_directional_mass
+FAILED tests/test_ge_beam3_centered_finite_inertia.py::test_compensated_momentum_large_translation_and_origin
+FAILED tests/test_ge_beam3_centered_finite_inertia.py::test_rigid_rotation_momentum_and_inertia_covariance
+FAILED tests/test_ge_beam3_centered_finite_inertia.py::test_exact_algebraic_zero_extension_and_immutable_arrays
+10 failed, 4 passed in 0.66s

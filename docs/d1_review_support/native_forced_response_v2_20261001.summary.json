@@ -1,0 +1,248 @@
+{
+  "status": "DEVELOPMENT_PASS_PENDING_INDEPENDENT_SAVED_ASSESSMENT",
+  "accepted_steps": 20,
+  "elapsed_seconds": 94.9816845000023,
+  "peak_process_tree_memory_mb": 222.0032,
+  "source_binding_count": 445,
+  "criteria": {
+    "duration_seconds": 0.004,
+    "coarse_steps": 4,
+    "fine_steps": 8,
+    "half_load_fine_steps": 8,
+    "maximum_accepted_steps": 20,
+    "internal_time_limit_seconds": 120.0,
+    "force_density_n_per_m": [
+      0.2,
+      -0.15,
+      0.1
+    ],
+    "couple_density_nm_per_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "explicit_stage_solve_tolerance": 1e-12,
+    "scientific_stage_gate": 1e-11,
+    "endpoint_balance_gate": 1e-11,
+    "normalized_defect_limit": 1e-06,
+    "elastic_witness_limit": 1e-10,
+    "nonlinear_to_discrete_limit": 0.002,
+    "trajectory_floor": 1e-06,
+    "invariant_floor": 1e-10,
+    "time_refinement_ratio": 0.4,
+    "amplitude_refinement_ratio": 0.75,
+    "resolved_coarse_phase_limit": 0.4,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "shared_spatial_errors": {
+    "K42": 0.0,
+    "M42": 0.0,
+    "Z": 0.0,
+    "Ke15": 9.952997632396803e-17
+  },
+  "maximum_stage_norm": 4.747138167484896e-16,
+  "maximum_endpoint_algebraic_norm": 6.780412886941309e-17,
+  "maximum_discrete_trajectory_errors": {
+    "configuration": 1.12641232094047e-08,
+    "velocity": 2.1099363771619942e-08,
+    "elastic_configuration": 7.740975830879253e-08,
+    "elastic_velocity": 1.595812488486269e-07
+  },
+  "maximum_step_defects": {
+    "P": 2.4839483562956223e-16,
+    "H_path": 4.4042375907188766e-17,
+    "H_midpoint": 4.25419594639278e-17,
+    "E_exact_work": 1.2899813183626163e-11,
+    "E_midpoint_work": 1.3392102998501164e-11
+  },
+  "maximum_cumulative_defects": {
+    "P": 2.817962624283774e-16,
+    "H_path": 7.360020983189231e-17,
+    "H_midpoint": 7.468240411369802e-17,
+    "E_exact_work": 2.2510179289397046e-11,
+    "E_midpoint_work": 2.5796221142534047e-11
+  },
+  "comparisons": {
+    "errors_continuous_configuration": {
+      "coarse": 0.0009975385832212591,
+      "fine": 0.00025146516217397296,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.25208565002261846
+    },
+    "predicted_dispersion_configuration": {
+      "coarse": 0.0009975448630103502,
+      "fine": 0.00025147102087512077,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.25208993620220926
+    },
+    "amplitude_configuration": {
+      "coarse": 1.071499142948583e-08,
+      "fine": 5.354666231286917e-09,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "errors_continuous_velocity": {
+      "coarse": 0.0003257833985555941,
+      "fine": 8.190256258480809e-05,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2514018914037194
+    },
+    "predicted_dispersion_velocity": {
+      "coarse": 0.00032578847333783917,
+      "fine": 8.190751308469248e-05,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2514131707777005
+    },
+    "amplitude_velocity": {
+      "coarse": 2.1099363771619942e-08,
+      "fine": 1.0545096481289456e-08,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "errors_continuous_elastic_configuration": {
+      "coarse": 0.00899796941670695,
+      "fine": 0.002268258968483913,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2520856499325648
+    },
+    "predicted_dispersion_elastic_configuration": {
+      "coarse": 0.008998026061724212,
+      "fine": 0.0022683118158458733,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2520899362022093
+    },
+    "amplitude_elastic_configuration": {
+      "coarse": 7.341837593888312e-08,
+      "fine": 3.6675582703924226e-08,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "errors_continuous_elastic_velocity": {
+      "coarse": 0.0031794141791506316,
+      "fine": 0.0007993107362395515,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.25140189078891395
+    },
+    "predicted_dispersion_elastic_velocity": {
+      "coarse": 0.003179463705942705,
+      "fine": 0.0007993590516836736,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2514131707777005
+    },
+    "amplitude_elastic_velocity": {
+      "coarse": 1.595812488486269e-07,
+      "fine": 7.973287155179655e-08,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "invariant_P": {
+      "coarse": 2.1937809276915525e-16,
+      "fine": 2.817962624283774e-16,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "invariant_H_path": {
+      "coarse": 2.469287655359804e-17,
+      "fine": 3.789999769202842e-17,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "invariant_H_midpoint": {
+      "coarse": 4.096642814849505e-17,
+      "fine": 3.7428536492229365e-17,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "invariant_E_exact_work": {
+      "coarse": 2.2510179289397046e-11,
+      "fine": 9.644770617579678e-12,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "invariant_E_midpoint_work": {
+      "coarse": 2.5796221142534047e-11,
+      "fine": 6.282991869846519e-12,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    }
+  },
+  "artifacts": {
+    ".inputs.json": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_v2_20261001.inputs.json",
+      "sha256": "83cee9ac5da6621bb2c61f5033ba3491cca6b9c17a097df5b3a60c8907731c96"
+    },
+    ".raw.json": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_v2_20261001.raw.json",
+      "sha256": "b87f5207e7c23ed49741d73ee99971da49243ab4b019df9ead477f3340d2b9c1"
+    },
+    ".resources.json": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_v2_20261001.resources.json",
+      "sha256": "aaf67bc1af5b6d4866071d7a108e369bd8062b3345eaf0d31a50e9f538098e3e"
+    },
+    ".log": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_v2_20261001.log",
+      "sha256": "8f31035a3378d53e49de1d7e6011296789713d66cbbe2c0a89a7889ee1ec2def"
+    },
+    ".xml": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_v2_20261001.xml",
+      "sha256": "a506667e0e41256168036a4d0cac155e4adc8b42c11cfd7f11618bf383e27236"
+    }
+  },
+  "retained_failures": {
+    "native_forced_response_v1_20261001": {
+      "status": "time_limit_exceeded",
+      "exit_code": 15,
+      "elapsed_seconds": 180.02861470001517,
+      "peak_process_tree_memory_mb": 116.8384,
+      "time_limit_seconds": 180.0,
+      "memory_limit_bytes": 1073741824,
+      "command": [
+        "C:/Python/Python314/python.exe",
+        "docs/d1_review_support/contact_development_check.py",
+        "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_forced_response_v1_20261001.inputs.json"
+      ],
+      "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_v1_20261001.log"
+    },
+    "native_forced_response_startup_v1_20261001": {
+      "status": "time_limit_exceeded",
+      "exit_code": 15,
+      "elapsed_seconds": 40.01268970000092,
+      "peak_process_tree_memory_mb": 116.44928,
+      "time_limit_seconds": 40.0,
+      "memory_limit_bytes": 1073741824,
+      "command": [
+        "C:/Python/Python314/python.exe",
+        "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_forced_response_startup_v1_20261001.py",
+        "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_forced_response_v1_20261001.inputs.json"
+      ],
+      "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_forced_response_startup_v1_20261001.log"
+    }
+  },
+  "limits": "Temporal small-motion control against authenticated shared spatial operators, no C7/continuum/installed acceptance; prior failures unchanged"
+}

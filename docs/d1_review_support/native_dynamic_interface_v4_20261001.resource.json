@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 7.300906899996335,
+  "peak_process_tree_memory_mb": 201.486336,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/native_dynamic_interface_v4_20261001.entry.source.py"
+  ],
+  "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_dynamic_interface_v4_20261001.log"
+}

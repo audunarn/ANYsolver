@@ -1,0 +1,3 @@
+divisions=4 supported=16 rank=16 condition=16.4068 area=0.3894
+divisions=8 supported=49 rank=49 condition=16.751 area=0.3894
+divisions=16 supported=132 rank=132 condition=12.6963 area=0.3894

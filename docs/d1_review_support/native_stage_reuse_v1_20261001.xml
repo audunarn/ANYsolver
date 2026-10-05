@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="18.320" timestamp="2026-10-01T06:37:23.882221+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_ge_beam3_native_finite_spin_acceleration_chart" name="test_stage_reuse_bitwise_half_step" time="17.677"><properties><property name="finite_spin_trajectory_summary" value="{&quot;solver_committed_steps&quot;: 4, &quot;gate_passing_steps&quot;: 4, &quot;final_cell_attitude_rad&quot;: [0.04743072870418769, 0.04743169889831064]}" /></properties><failure message="AssertionError: assert 'b96cbba573bf7401d963ac96584196398edb0dcd70e31ffd746839f5b9b82f61' != 'b96cbba573bf7401d963ac96584196398edb0dcd70e31ffd746839f5b9b82f61'">record_property = &lt;function record_property.&lt;locals&gt;.append_property at 0x0000020078378720&gt;
+
+    def test_stage_reuse_bitwise_half_step(record_property):
+        """NEW source-bound cache control: one existing4-step loop + rejected attempts."""
+        from anysolver.control import CancellationToken, SolveCancelled
+        started = perf_counter()
+        inputs = json.loads(Path(os.environ['NATIVE_FINITE_SPIN_TRAJECTORY_INPUTS']).read_text(encoding='utf-8-sig'))
+        output = Path(os.environ['NATIVE_FINITE_SPIN_TRAJECTORY_RAW_OUTPUT'])
+        assert inputs.get('verification_mode') == 'stage_reuse_v1' and type(inputs['verification_mode']) is str
+        assert inputs['criteria'] == finite_spin_trajectory_criteria(4, .001)
+        baseline_ref = inputs['historical']['passed_half_raw']
+        baseline_bytes = Path(baseline_ref['path']).read_bytes()
+        assert baseline_ref['sha256'] == sha256(baseline_bytes).hexdigest() == '2e232aa32e5f535bc6b50f28f2f3ef13d4aa18fc1e3667fc26c160b69f893846'
+        baseline = json.loads(baseline_bytes)
+        assert baseline['status'] == 'PASS' and baseline['solver_committed_steps'] == baseline['gate_passing_steps'] == 4
+        evidence = None
+        def save(label):
+            evidence.update(last_stage=label, elapsed_seconds=perf_counter()-started)
+            output.write_text(json.dumps(evidence, indent=2, allow_nan=False)+'\n')
+            print(json.dumps(dict(stage=label, elapsed_seconds=evidence['elapsed_seconds'])), flush=True)
+            assert evidence['elapsed_seconds'] &lt; 120.
+        try:
+            owner, genesis, current = test_free_finite_spin_trajectory(record_property)
+            c = owner._context
+            evidence = json.loads(output.read_text())
+            evidence.update(physical_fixture_status=evidence['status'], status='RUNNING_STAGE_REUSE_CONTROLS',
+                verification_mode='stage_reuse_v1', bitwise_parity=[], rejected_attempts=[])
+            for kind, actual, expected in [('initial', evidence['initial'], baseline['initial']),
+                *[('endpoint', a, b) for a, b in zip(evidence['endpoints'], baseline['endpoints'])]]:
+                ap, bp = stage_reuse_physical_payload(actual, kind), stage_reuse_physical_payload(expected, kind)
+                equal = canonical(ap) == canonical(bp)
+                evidence['bitwise_parity'].append(dict(kind=kind, epoch=actual['state']['epoch'],
+                    actual_physical_sha256=sha(ap), saved_physical_sha256=sha(bp), bitwise_equal=equal))
+                save('physical_bit_parity_before_gate')
+                assert equal, 'initial/issued endpoint/accounting/audit physical payload differs from saved halfPASS'
+            assert len(evidence['endpoints']) == len(baseline['endpoints']) == 4
+&gt;           assert evidence['initial']['state']['context_sha256'] != baseline['initial']['state']['context_sha256']
+E           AssertionError: assert 'b96cbba573bf7401d963ac96584196398edb0dcd70e31ffd746839f5b9b82f61' != 'b96cbba573bf7401d963ac96584196398edb0dcd70e31ffd746839f5b9b82f61'
+
+tests\test_ge_beam3_native_finite_spin_acceleration_chart.py:784: AssertionError</failure></testcase></testsuite></testsuites>

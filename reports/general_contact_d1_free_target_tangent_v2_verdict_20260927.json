@@ -1,0 +1,79 @@
+{
+  "registration": "docs\\reference_cases\\general_contact_d1_free_target_tangent_v2.json",
+  "registration_sha256": "97aaadcad12a6e2e95514ed70fa77fbb22781f35b600cb76924a9a2684a91b93",
+  "raw_report": "reports\\general_contact_d1_free_target_tangent_v2_formal_20260927.json",
+  "raw_sha256": "9137d3140a1d4fcb8c6e6fb5f0270aa0174363c5c3965386bb85eb3651420a03",
+  "checks": {
+    "saved_pose_sha256": true,
+    "status": true,
+    "free_dofs": true,
+    "force_rows": true,
+    "moment_rows": true,
+    "target_weights": true,
+    "source_weight": true,
+    "difference_order": true,
+    "active_modes": true,
+    "pair_branches": true,
+    "pressure_replay": true,
+    "pose_constraints": true,
+    "steps": true,
+    "reported_steps": true,
+    "smooth_branch": true,
+    "wall_limit": true,
+    "coupled_force_action": true,
+    "coupled_force_error": true,
+    "coupled_moment_action": true,
+    "coupled_moment_error": true,
+    "mapped_contact_force_action": true,
+    "mapped_contact_force_error": true,
+    "mapped_contact_moment_action": true,
+    "mapped_contact_moment_error": true
+  },
+  "runs": [
+    {
+      "step_m": 8e-07,
+      "branch_checks": {
+        "pressure_active": true,
+        "reference_support": true,
+        "overlap_signature": true,
+        "pair_derivatives": true
+      },
+      "smooth_branch": true,
+      "relative_coupled_error": 5.482120132846289e-11,
+      "relative_mapped_contact_error": 9.261148826218992e-12,
+      "coupled_action_n_per_m": 23802.013048026507,
+      "mapped_contact_action_n_per_m": 684.800133025847,
+      "coupled_force_error": 5.482120149089313e-11,
+      "coupled_force_action": 23802.01297750324,
+      "mapped_contact_force_error": 9.261148825215248e-12,
+      "mapped_contact_force_action": 684.8001330257729,
+      "coupled_moment_error": 5.0877488417204385e-14,
+      "coupled_moment_action": 1.832264032002811,
+      "mapped_contact_moment_error": 2.9318304841858225e-10,
+      "mapped_contact_moment_action": 0.0003186401797084568
+    },
+    {
+      "step_m": 4e-07,
+      "branch_checks": {
+        "pressure_active": true,
+        "reference_support": true,
+        "overlap_signature": true,
+        "pair_derivatives": true
+      },
+      "smooth_branch": true,
+      "relative_coupled_error": 1.2535623812420373e-10,
+      "relative_mapped_contact_error": 7.992563073575085e-12,
+      "coupled_action_n_per_m": 23802.013048026507,
+      "mapped_contact_action_n_per_m": 684.800133031171,
+      "coupled_force_error": 1.253562384956232e-10,
+      "coupled_force_action": 23802.01297750324,
+      "mapped_contact_force_error": 7.992563073517104e-12,
+      "mapped_contact_force_action": 684.8001330310968,
+      "coupled_moment_error": 1.1454794326266054e-14,
+      "coupled_moment_action": 1.8322640320027452,
+      "mapped_contact_moment_error": 6.591434119007222e-11,
+      "mapped_contact_moment_action": 0.0003186401797084568
+    }
+  ],
+  "status": "pass"
+}

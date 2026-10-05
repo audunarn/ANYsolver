@@ -1,0 +1,23 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 88.55298800001037,
+  "peak_process_tree_memory_mb": 416.82944,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "docs/d1_review_support/d1_installed_entry.py",
+    "--expected-root",
+    "C:\\ANYworkspaceWork\\general-contact-final-0b2ac9be\\target",
+    "--identity-output",
+    "docs/d1_review_support/d1_final_spatial_v7_20260930_radial_wrench.import.json",
+    "--script",
+    "scripts/general_contact_d1_interior_press_dev.py",
+    "--",
+    "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial_wrench.json",
+    "--radial-wrench-check",
+    "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_final_spatial_v7_20260930_radial_wrench.log"
+}

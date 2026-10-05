@@ -1,0 +1,18 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 4.438975199998822,
+  "peak_process_tree_memory_mb": 205.467648,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_s3_q4_overlap_derivatives.py",
+    "-q",
+    "--junitxml=docs/d1_review_support/d2_s3_q4_jet2_local_v1_20260930.xml",
+    "--basetemp=docs/d1_review_support/pytest_tmp_d2_s3q4_v1_20260930"
+  ],
+  "log": "docs\\d1_review_support\\d2_s3_q4_jet2_local_v1_20260930.log"
+}

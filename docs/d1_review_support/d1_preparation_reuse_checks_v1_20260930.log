@@ -1,0 +1,441 @@
+.FFFFF..................                                                 [100%]
+================================== FAILURES ===================================
+_ test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates[0.0] __
+
+shift = 0.0
+
+    @pytest.mark.parametrize('shift', [0., .95, 1.3, 50.])
+    def test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates(shift):
+>       manager, source, target = gap_fixture()
+                                  ^^^^^^^^^^^^^
+
+tests\test_general_contact_preparation_reuse.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_general_contact_preparation_reuse.py:45: in gap_fixture
+    law = MovingS3PatchPrimalMortarPenalty(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <anysolver.general_contact.s3_patch_mortar_energy.MovingS3PatchPrimalMortarPenalty object at 0x00000265638650F0>
+source_faces = (S3PatchFace(node_ids=(1, 2, 3, 4), reference_positions=array([[0., 0., 0.],
+       [1., 0., 0.],
+       [1., 1., 0.],...rence_positions=array([[6.5, 0. , 0. ],
+       [7.5, 0. , 0. ],
+       [7.5, 1. , 0. ],
+       [6.5, 1. , 0. ]])), ...)
+target_faces = (S3PatchFace(node_ids=(37, 38, 39), reference_positions=array([[0.2, 0.1, 0. ],
+       [0.6, 0.1, 0. ],
+       [0.2, 0...e_ids=(52, 53, 54), reference_positions=array([[6.7, 0.1, 0. ],
+       [7.1, 0.1, 0. ],
+       [6.7, 0.3, 0. ]])), ...)
+stiffness = 1000.0
+
+    def __init__(self, source_faces: tuple[S3PatchFace, ...],
+                 target_faces: tuple[S3PatchFace, ...], stiffness: float,
+                 *, difference_step: float,
+                 maximum_energy_evaluations: int = 1500,
+                 q4_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_integration_triangles: int | None = None,
+                 q4_source_area_tolerance: float | None = None,
+                 q4_source_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_source_integration_triangles: int | None = None,
+                 q4_source_derivative_tolerances: tuple[float | None, ...] | None = None,
+                 differentiation: str = "global",
+                 maximum_candidate_pairs: int = 4,
+                 pair_broadphase: bool = True):
+        self.source_faces = tuple(source_faces)
+        self.target_faces = tuple(target_faces)
+        if differentiation not in {"global", "pair_local", "jet2_s3", "jet2_q4_s3"}:
+            raise ValueError("S3 patch differentiation mode is invalid")
+        self.differentiation = differentiation
+        if type(pair_broadphase) is not bool:
+            raise ValueError("patch pair broad phase selection must be boolean")
+        self.pair_broadphase = pair_broadphase
+        if (type(maximum_candidate_pairs) is not int or maximum_candidate_pairs < 1
+                or len(self.source_faces)*len(self.target_faces) > maximum_candidate_pairs):
+            raise MemoryError("S3 patch exceeds declared candidate-pair budget")
+        q4_pair = (len(self.source_faces) == len(self.target_faces) == 1
+                   and len(self.source_faces[0].node_ids) == 4
+                   and len(self.target_faces[0].node_ids) == 4)
+        bounded = (1 <= len(self.source_faces) <= 2
+                   and 1 <= len(self.target_faces) <= 2
+                   and (len(self.source_faces)+len(self.target_faces) >= 3
+                        or q4_pair))
+        refined_s3 = (differentiation in {"pair_local", "jet2_s3"}
+                      and len(self.source_faces)+len(self.target_faces) >= 3
+                      and all(len(face.node_ids) == 3
+                              for face in (*self.source_faces, *self.target_faces)))
+        refined_q4 = (differentiation in {"pair_local", "jet2_q4_s3"}
+                      and len(self.source_faces) >= 2
+                      and all(len(face.node_ids) == 4 for face in self.source_faces)
+                      and all(len(face.node_ids) == 3 for face in self.target_faces))
+        refined = refined_s3 or refined_q4
+        if not (bounded or refined):
+            raise ValueError("development shell patch needs three faces or one Q4/Q4 pair")
+        if differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3"} and not refined:
+            raise ValueError("local differentiation needs S3 faces or Q4 source/S3 target faces")
+        if differentiation == "jet2_s3" and not refined_s3:
+            raise ValueError("Jet2 overlap derivatives need at least three S3 faces")
+        if differentiation == "jet2_q4_s3" and not refined_q4:
+            raise ValueError("Jet2 Q4/S3 overlap derivatives need a refined Q4/S3 patch")
+        if differentiation == "jet2_q4_s3" and (
+            q4_source_derivative_tolerances is None
+            or len(q4_source_derivative_tolerances) != 4
+            or any(value is None or not np.isfinite(value) or value <= 0.0
+                   for value in q4_source_derivative_tolerances)
+        ):
+>           raise ValueError("Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances")
+E           ValueError: Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances
+
+src\anysolver\general_contact\s3_patch_mortar_energy.py:124: ValueError
+_ test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates[0.95] _
+
+shift = 0.95
+
+    @pytest.mark.parametrize('shift', [0., .95, 1.3, 50.])
+    def test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates(shift):
+>       manager, source, target = gap_fixture()
+                                  ^^^^^^^^^^^^^
+
+tests\test_general_contact_preparation_reuse.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_general_contact_preparation_reuse.py:45: in gap_fixture
+    law = MovingS3PatchPrimalMortarPenalty(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <anysolver.general_contact.s3_patch_mortar_energy.MovingS3PatchPrimalMortarPenalty object at 0x00000265691F5940>
+source_faces = (S3PatchFace(node_ids=(1, 2, 3, 4), reference_positions=array([[0., 0., 0.],
+       [1., 0., 0.],
+       [1., 1., 0.],...rence_positions=array([[6.5, 0. , 0. ],
+       [7.5, 0. , 0. ],
+       [7.5, 1. , 0. ],
+       [6.5, 1. , 0. ]])), ...)
+target_faces = (S3PatchFace(node_ids=(37, 38, 39), reference_positions=array([[0.2, 0.1, 0. ],
+       [0.6, 0.1, 0. ],
+       [0.2, 0...e_ids=(52, 53, 54), reference_positions=array([[6.7, 0.1, 0. ],
+       [7.1, 0.1, 0. ],
+       [6.7, 0.3, 0. ]])), ...)
+stiffness = 1000.0
+
+    def __init__(self, source_faces: tuple[S3PatchFace, ...],
+                 target_faces: tuple[S3PatchFace, ...], stiffness: float,
+                 *, difference_step: float,
+                 maximum_energy_evaluations: int = 1500,
+                 q4_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_integration_triangles: int | None = None,
+                 q4_source_area_tolerance: float | None = None,
+                 q4_source_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_source_integration_triangles: int | None = None,
+                 q4_source_derivative_tolerances: tuple[float | None, ...] | None = None,
+                 differentiation: str = "global",
+                 maximum_candidate_pairs: int = 4,
+                 pair_broadphase: bool = True):
+        self.source_faces = tuple(source_faces)
+        self.target_faces = tuple(target_faces)
+        if differentiation not in {"global", "pair_local", "jet2_s3", "jet2_q4_s3"}:
+            raise ValueError("S3 patch differentiation mode is invalid")
+        self.differentiation = differentiation
+        if type(pair_broadphase) is not bool:
+            raise ValueError("patch pair broad phase selection must be boolean")
+        self.pair_broadphase = pair_broadphase
+        if (type(maximum_candidate_pairs) is not int or maximum_candidate_pairs < 1
+                or len(self.source_faces)*len(self.target_faces) > maximum_candidate_pairs):
+            raise MemoryError("S3 patch exceeds declared candidate-pair budget")
+        q4_pair = (len(self.source_faces) == len(self.target_faces) == 1
+                   and len(self.source_faces[0].node_ids) == 4
+                   and len(self.target_faces[0].node_ids) == 4)
+        bounded = (1 <= len(self.source_faces) <= 2
+                   and 1 <= len(self.target_faces) <= 2
+                   and (len(self.source_faces)+len(self.target_faces) >= 3
+                        or q4_pair))
+        refined_s3 = (differentiation in {"pair_local", "jet2_s3"}
+                      and len(self.source_faces)+len(self.target_faces) >= 3
+                      and all(len(face.node_ids) == 3
+                              for face in (*self.source_faces, *self.target_faces)))
+        refined_q4 = (differentiation in {"pair_local", "jet2_q4_s3"}
+                      and len(self.source_faces) >= 2
+                      and all(len(face.node_ids) == 4 for face in self.source_faces)
+                      and all(len(face.node_ids) == 3 for face in self.target_faces))
+        refined = refined_s3 or refined_q4
+        if not (bounded or refined):
+            raise ValueError("development shell patch needs three faces or one Q4/Q4 pair")
+        if differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3"} and not refined:
+            raise ValueError("local differentiation needs S3 faces or Q4 source/S3 target faces")
+        if differentiation == "jet2_s3" and not refined_s3:
+            raise ValueError("Jet2 overlap derivatives need at least three S3 faces")
+        if differentiation == "jet2_q4_s3" and not refined_q4:
+            raise ValueError("Jet2 Q4/S3 overlap derivatives need a refined Q4/S3 patch")
+        if differentiation == "jet2_q4_s3" and (
+            q4_source_derivative_tolerances is None
+            or len(q4_source_derivative_tolerances) != 4
+            or any(value is None or not np.isfinite(value) or value <= 0.0
+                   for value in q4_source_derivative_tolerances)
+        ):
+>           raise ValueError("Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances")
+E           ValueError: Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances
+
+src\anysolver\general_contact\s3_patch_mortar_energy.py:124: ValueError
+_ test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates[1.3] __
+
+shift = 1.3
+
+    @pytest.mark.parametrize('shift', [0., .95, 1.3, 50.])
+    def test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates(shift):
+>       manager, source, target = gap_fixture()
+                                  ^^^^^^^^^^^^^
+
+tests\test_general_contact_preparation_reuse.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_general_contact_preparation_reuse.py:45: in gap_fixture
+    law = MovingS3PatchPrimalMortarPenalty(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <anysolver.general_contact.s3_patch_mortar_energy.MovingS3PatchPrimalMortarPenalty object at 0x000002656B41C170>
+source_faces = (S3PatchFace(node_ids=(1, 2, 3, 4), reference_positions=array([[0., 0., 0.],
+       [1., 0., 0.],
+       [1., 1., 0.],...rence_positions=array([[6.5, 0. , 0. ],
+       [7.5, 0. , 0. ],
+       [7.5, 1. , 0. ],
+       [6.5, 1. , 0. ]])), ...)
+target_faces = (S3PatchFace(node_ids=(37, 38, 39), reference_positions=array([[0.2, 0.1, 0. ],
+       [0.6, 0.1, 0. ],
+       [0.2, 0...e_ids=(52, 53, 54), reference_positions=array([[6.7, 0.1, 0. ],
+       [7.1, 0.1, 0. ],
+       [6.7, 0.3, 0. ]])), ...)
+stiffness = 1000.0
+
+    def __init__(self, source_faces: tuple[S3PatchFace, ...],
+                 target_faces: tuple[S3PatchFace, ...], stiffness: float,
+                 *, difference_step: float,
+                 maximum_energy_evaluations: int = 1500,
+                 q4_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_integration_triangles: int | None = None,
+                 q4_source_area_tolerance: float | None = None,
+                 q4_source_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_source_integration_triangles: int | None = None,
+                 q4_source_derivative_tolerances: tuple[float | None, ...] | None = None,
+                 differentiation: str = "global",
+                 maximum_candidate_pairs: int = 4,
+                 pair_broadphase: bool = True):
+        self.source_faces = tuple(source_faces)
+        self.target_faces = tuple(target_faces)
+        if differentiation not in {"global", "pair_local", "jet2_s3", "jet2_q4_s3"}:
+            raise ValueError("S3 patch differentiation mode is invalid")
+        self.differentiation = differentiation
+        if type(pair_broadphase) is not bool:
+            raise ValueError("patch pair broad phase selection must be boolean")
+        self.pair_broadphase = pair_broadphase
+        if (type(maximum_candidate_pairs) is not int or maximum_candidate_pairs < 1
+                or len(self.source_faces)*len(self.target_faces) > maximum_candidate_pairs):
+            raise MemoryError("S3 patch exceeds declared candidate-pair budget")
+        q4_pair = (len(self.source_faces) == len(self.target_faces) == 1
+                   and len(self.source_faces[0].node_ids) == 4
+                   and len(self.target_faces[0].node_ids) == 4)
+        bounded = (1 <= len(self.source_faces) <= 2
+                   and 1 <= len(self.target_faces) <= 2
+                   and (len(self.source_faces)+len(self.target_faces) >= 3
+                        or q4_pair))
+        refined_s3 = (differentiation in {"pair_local", "jet2_s3"}
+                      and len(self.source_faces)+len(self.target_faces) >= 3
+                      and all(len(face.node_ids) == 3
+                              for face in (*self.source_faces, *self.target_faces)))
+        refined_q4 = (differentiation in {"pair_local", "jet2_q4_s3"}
+                      and len(self.source_faces) >= 2
+                      and all(len(face.node_ids) == 4 for face in self.source_faces)
+                      and all(len(face.node_ids) == 3 for face in self.target_faces))
+        refined = refined_s3 or refined_q4
+        if not (bounded or refined):
+            raise ValueError("development shell patch needs three faces or one Q4/Q4 pair")
+        if differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3"} and not refined:
+            raise ValueError("local differentiation needs S3 faces or Q4 source/S3 target faces")
+        if differentiation == "jet2_s3" and not refined_s3:
+            raise ValueError("Jet2 overlap derivatives need at least three S3 faces")
+        if differentiation == "jet2_q4_s3" and not refined_q4:
+            raise ValueError("Jet2 Q4/S3 overlap derivatives need a refined Q4/S3 patch")
+        if differentiation == "jet2_q4_s3" and (
+            q4_source_derivative_tolerances is None
+            or len(q4_source_derivative_tolerances) != 4
+            or any(value is None or not np.isfinite(value) or value <= 0.0
+                   for value in q4_source_derivative_tolerances)
+        ):
+>           raise ValueError("Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances")
+E           ValueError: Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances
+
+src\anysolver\general_contact\s3_patch_mortar_energy.py:124: ValueError
+_ test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates[50.0] _
+
+shift = 50.0
+
+    @pytest.mark.parametrize('shift', [0., .95, 1.3, 50.])
+    def test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates(shift):
+>       manager, source, target = gap_fixture()
+                                  ^^^^^^^^^^^^^
+
+tests\test_general_contact_preparation_reuse.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_general_contact_preparation_reuse.py:45: in gap_fixture
+    law = MovingS3PatchPrimalMortarPenalty(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <anysolver.general_contact.s3_patch_mortar_energy.MovingS3PatchPrimalMortarPenalty object at 0x00000265692F9370>
+source_faces = (S3PatchFace(node_ids=(1, 2, 3, 4), reference_positions=array([[0., 0., 0.],
+       [1., 0., 0.],
+       [1., 1., 0.],...rence_positions=array([[6.5, 0. , 0. ],
+       [7.5, 0. , 0. ],
+       [7.5, 1. , 0. ],
+       [6.5, 1. , 0. ]])), ...)
+target_faces = (S3PatchFace(node_ids=(37, 38, 39), reference_positions=array([[0.2, 0.1, 0. ],
+       [0.6, 0.1, 0. ],
+       [0.2, 0...e_ids=(52, 53, 54), reference_positions=array([[6.7, 0.1, 0. ],
+       [7.1, 0.1, 0. ],
+       [6.7, 0.3, 0. ]])), ...)
+stiffness = 1000.0
+
+    def __init__(self, source_faces: tuple[S3PatchFace, ...],
+                 target_faces: tuple[S3PatchFace, ...], stiffness: float,
+                 *, difference_step: float,
+                 maximum_energy_evaluations: int = 1500,
+                 q4_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_integration_triangles: int | None = None,
+                 q4_source_area_tolerance: float | None = None,
+                 q4_source_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_source_integration_triangles: int | None = None,
+                 q4_source_derivative_tolerances: tuple[float | None, ...] | None = None,
+                 differentiation: str = "global",
+                 maximum_candidate_pairs: int = 4,
+                 pair_broadphase: bool = True):
+        self.source_faces = tuple(source_faces)
+        self.target_faces = tuple(target_faces)
+        if differentiation not in {"global", "pair_local", "jet2_s3", "jet2_q4_s3"}:
+            raise ValueError("S3 patch differentiation mode is invalid")
+        self.differentiation = differentiation
+        if type(pair_broadphase) is not bool:
+            raise ValueError("patch pair broad phase selection must be boolean")
+        self.pair_broadphase = pair_broadphase
+        if (type(maximum_candidate_pairs) is not int or maximum_candidate_pairs < 1
+                or len(self.source_faces)*len(self.target_faces) > maximum_candidate_pairs):
+            raise MemoryError("S3 patch exceeds declared candidate-pair budget")
+        q4_pair = (len(self.source_faces) == len(self.target_faces) == 1
+                   and len(self.source_faces[0].node_ids) == 4
+                   and len(self.target_faces[0].node_ids) == 4)
+        bounded = (1 <= len(self.source_faces) <= 2
+                   and 1 <= len(self.target_faces) <= 2
+                   and (len(self.source_faces)+len(self.target_faces) >= 3
+                        or q4_pair))
+        refined_s3 = (differentiation in {"pair_local", "jet2_s3"}
+                      and len(self.source_faces)+len(self.target_faces) >= 3
+                      and all(len(face.node_ids) == 3
+                              for face in (*self.source_faces, *self.target_faces)))
+        refined_q4 = (differentiation in {"pair_local", "jet2_q4_s3"}
+                      and len(self.source_faces) >= 2
+                      and all(len(face.node_ids) == 4 for face in self.source_faces)
+                      and all(len(face.node_ids) == 3 for face in self.target_faces))
+        refined = refined_s3 or refined_q4
+        if not (bounded or refined):
+            raise ValueError("development shell patch needs three faces or one Q4/Q4 pair")
+        if differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3"} and not refined:
+            raise ValueError("local differentiation needs S3 faces or Q4 source/S3 target faces")
+        if differentiation == "jet2_s3" and not refined_s3:
+            raise ValueError("Jet2 overlap derivatives need at least three S3 faces")
+        if differentiation == "jet2_q4_s3" and not refined_q4:
+            raise ValueError("Jet2 Q4/S3 overlap derivatives need a refined Q4/S3 patch")
+        if differentiation == "jet2_q4_s3" and (
+            q4_source_derivative_tolerances is None
+            or len(q4_source_derivative_tolerances) != 4
+            or any(value is None or not np.isfinite(value) or value <= 0.0
+                   for value in q4_source_derivative_tolerances)
+        ):
+>           raise ValueError("Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances")
+E           ValueError: Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances
+
+src\anysolver\general_contact\s3_patch_mortar_energy.py:124: ValueError
+_________________ test_remote_malformed_target_still_rejected _________________
+
+    def test_remote_malformed_target_still_rejected():
+>       manager, source, target = gap_fixture()
+                                  ^^^^^^^^^^^^^
+
+tests\test_general_contact_preparation_reuse.py:81: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_general_contact_preparation_reuse.py:45: in gap_fixture
+    law = MovingS3PatchPrimalMortarPenalty(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <anysolver.general_contact.s3_patch_mortar_energy.MovingS3PatchPrimalMortarPenalty object at 0x00000265692F96A0>
+source_faces = (S3PatchFace(node_ids=(1, 2, 3, 4), reference_positions=array([[0., 0., 0.],
+       [1., 0., 0.],
+       [1., 1., 0.],...rence_positions=array([[6.5, 0. , 0. ],
+       [7.5, 0. , 0. ],
+       [7.5, 1. , 0. ],
+       [6.5, 1. , 0. ]])), ...)
+target_faces = (S3PatchFace(node_ids=(37, 38, 39), reference_positions=array([[0.2, 0.1, 0. ],
+       [0.6, 0.1, 0. ],
+       [0.2, 0...e_ids=(52, 53, 54), reference_positions=array([[6.7, 0.1, 0. ],
+       [7.1, 0.1, 0. ],
+       [6.7, 0.3, 0. ]])), ...)
+stiffness = 1000.0
+
+    def __init__(self, source_faces: tuple[S3PatchFace, ...],
+                 target_faces: tuple[S3PatchFace, ...], stiffness: float,
+                 *, difference_step: float,
+                 maximum_energy_evaluations: int = 1500,
+                 q4_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_integration_triangles: int | None = None,
+                 q4_source_area_tolerance: float | None = None,
+                 q4_source_weighted_gap_tolerance: float | None = None,
+                 maximum_q4_source_integration_triangles: int | None = None,
+                 q4_source_derivative_tolerances: tuple[float | None, ...] | None = None,
+                 differentiation: str = "global",
+                 maximum_candidate_pairs: int = 4,
+                 pair_broadphase: bool = True):
+        self.source_faces = tuple(source_faces)
+        self.target_faces = tuple(target_faces)
+        if differentiation not in {"global", "pair_local", "jet2_s3", "jet2_q4_s3"}:
+            raise ValueError("S3 patch differentiation mode is invalid")
+        self.differentiation = differentiation
+        if type(pair_broadphase) is not bool:
+            raise ValueError("patch pair broad phase selection must be boolean")
+        self.pair_broadphase = pair_broadphase
+        if (type(maximum_candidate_pairs) is not int or maximum_candidate_pairs < 1
+                or len(self.source_faces)*len(self.target_faces) > maximum_candidate_pairs):
+            raise MemoryError("S3 patch exceeds declared candidate-pair budget")
+        q4_pair = (len(self.source_faces) == len(self.target_faces) == 1
+                   and len(self.source_faces[0].node_ids) == 4
+                   and len(self.target_faces[0].node_ids) == 4)
+        bounded = (1 <= len(self.source_faces) <= 2
+                   and 1 <= len(self.target_faces) <= 2
+                   and (len(self.source_faces)+len(self.target_faces) >= 3
+                        or q4_pair))
+        refined_s3 = (differentiation in {"pair_local", "jet2_s3"}
+                      and len(self.source_faces)+len(self.target_faces) >= 3
+                      and all(len(face.node_ids) == 3
+                              for face in (*self.source_faces, *self.target_faces)))
+        refined_q4 = (differentiation in {"pair_local", "jet2_q4_s3"}
+                      and len(self.source_faces) >= 2
+                      and all(len(face.node_ids) == 4 for face in self.source_faces)
+                      and all(len(face.node_ids) == 3 for face in self.target_faces))
+        refined = refined_s3 or refined_q4
+        if not (bounded or refined):
+            raise ValueError("development shell patch needs three faces or one Q4/Q4 pair")
+        if differentiation in {"pair_local", "jet2_s3", "jet2_q4_s3"} and not refined:
+            raise ValueError("local differentiation needs S3 faces or Q4 source/S3 target faces")
+        if differentiation == "jet2_s3" and not refined_s3:
+            raise ValueError("Jet2 overlap derivatives need at least three S3 faces")
+        if differentiation == "jet2_q4_s3" and not refined_q4:
+            raise ValueError("Jet2 Q4/S3 overlap derivatives need a refined Q4/S3 patch")
+        if differentiation == "jet2_q4_s3" and (
+            q4_source_derivative_tolerances is None
+            or len(q4_source_derivative_tolerances) != 4
+            or any(value is None or not np.isfinite(value) or value <= 0.0
+                   for value in q4_source_derivative_tolerances)
+        ):
+>           raise ValueError("Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances")
+E           ValueError: Jet2 Q4/S3 overlap derivatives need four positive derivative tolerances
+
+src\anysolver\general_contact\s3_patch_mortar_energy.py:124: ValueError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_preparation_reuse.py::test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates[0.0]
+FAILED tests/test_general_contact_preparation_reuse.py::test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates[0.95]
+FAILED tests/test_general_contact_preparation_reuse.py::test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates[1.3]
+FAILED tests/test_general_contact_preparation_reuse.py::test_warped_instantaneous_bound_matches_exhaustive_and_new_candidates[50.0]
+FAILED tests/test_general_contact_preparation_reuse.py::test_remote_malformed_target_still_rejected
+5 failed, 19 passed in 12.98s

@@ -1,0 +1,52 @@
+{
+  "cases": [
+    {
+      "input": "docs\\d1_review_support\\d1_pressure_work_16q4_press_20260929.json",
+      "source_q4_faces": 16,
+      "target_s3_faces": 2,
+      "oracle_active_node_id": 12,
+      "production_active_node_ids": [
+        12
+      ],
+      "oracle_integrated_normal_force_n": 0.0020328433202545138,
+      "production_integrated_normal_force_n": 0.0020329288669614282,
+      "integrated_force_relative_difference": 4.208229235481201e-05,
+      "displacement_relative_l2_difference": 0.00010140645019355436,
+      "pressure_relative_l2_difference": 4.207472023785113e-05,
+      "oracle_initial_gap_m": 4.0000000000001575e-05,
+      "oracle_structural_free_coordinates": 120
+    },
+    {
+      "input": "docs\\d1_review_support\\d1_interior_pressure_family_8x4_20260929.json",
+      "source_q4_faces": 32,
+      "target_s3_faces": 4,
+      "oracle_active_node_id": 22,
+      "production_active_node_ids": [
+        22
+      ],
+      "oracle_integrated_normal_force_n": 0.003155812767202828,
+      "production_integrated_normal_force_n": 0.0031558419959257333,
+      "integrated_force_relative_difference": 9.261868514151578e-06,
+      "displacement_relative_l2_difference": 8.518853943783679e-05,
+      "pressure_relative_l2_difference": 9.232130776948324e-06,
+      "oracle_initial_gap_m": 4.0000000000001575e-05,
+      "oracle_structural_free_coordinates": 224
+    },
+    {
+      "input": "docs\\d1_review_support\\d1_pressure_family_8x8_20260929.json",
+      "source_q4_faces": 64,
+      "target_s3_faces": 4,
+      "oracle_active_node_id": 40,
+      "production_active_node_ids": [
+        40
+      ],
+      "oracle_integrated_normal_force_n": 0.003152679928683261,
+      "production_integrated_normal_force_n": 0.0031527152997965916,
+      "integrated_force_relative_difference": 1.1219379743750094e-05,
+      "displacement_relative_l2_difference": 8.603168372646026e-05,
+      "pressure_relative_l2_difference": 1.1209565132839465e-05,
+      "oracle_initial_gap_m": 4.0000000000001575e-05,
+      "oracle_structural_free_coordinates": 396
+    }
+  ]
+}

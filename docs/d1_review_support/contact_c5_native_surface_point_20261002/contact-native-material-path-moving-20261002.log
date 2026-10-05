@@ -1,0 +1,9 @@
+[development] exact targets=1; record=C:\ANYworkspaceWork\contact-native-material-path-moving-20261002\anysolver-portable-ci-vay5lbo0\P01
+[portable-ci] starting P01/01 with 1 modules
+.                                                                        [100%]
+============================ slowest 10 durations =============================
+0.01s call     tests/test_general_contact_native_surface_path.py::test_affine_target_tilt_and_edge_contraction_with_rotating_source
+
+(2 durations < 0.005s hidden.  Use -vv to show these durations.)
+1 passed in 3.41s
+[portable-ci] P01 exit=0

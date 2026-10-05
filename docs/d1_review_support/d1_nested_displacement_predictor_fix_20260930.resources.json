@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 13.427828000014415,
+  "peak_process_tree_memory_mb": 350.830592,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_q4_s3_jet2_static_owner.py::test_q4_s3_jet2_runs_coupled_static_path_and_restart",
+    "tests/test_general_contact_q4_s3_refined_patch.py::test_refined_q4_pressure_failure_uses_path_transaction",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_nested_displacement_predictor_fix_20260930.log"
+}

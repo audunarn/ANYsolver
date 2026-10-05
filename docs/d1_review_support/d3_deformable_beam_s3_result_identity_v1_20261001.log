@@ -1,0 +1,63 @@
+{"anysolver_file": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py", "input_sha256": "849a321b57870295fc0b1a48603305fef2d3f5d4ab75dcedb97f27d74f626c0f", "numpy": "2.4.6", "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]", "scipy": "1.17.1", "threadpools": [{"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.31.188.0"}, {"architecture": "SkylakeX", "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll", "internal_api": "openblas", "num_threads": 1, "prefix": "libscipy_openblas", "threading_layer": "pthreads", "user_api": "blas", "version": "0.3.30"}]}
+{
+  "status": "completed",
+  "contact": {
+    "profile": "JET2_ROUND_BEAM_DEFORMABLE_FIXED_DIRECTOR_S3_STATIC_DEV_V0",
+    "minimum_gap": -3.97025136537367e-06,
+    "line_contact_energy": 5.085677328922796e-10,
+    "algorithmic_contact_potential": 5.085677328922796e-10,
+    "active_line_length": 0.0019358158652385826,
+    "active_intervals": 1,
+    "integration_points": 3,
+    "integration_relative_error": 0.0,
+    "minimum_rim_clearance": 0.35356034088160143,
+    "beam_force": [
+      0.0,
+      3.7333432800456344e-07,
+      0.00038428359775528274
+    ],
+    "shell_force": [
+      0.0,
+      -3.733343280045634e-07,
+      -0.0003842835977552828
+    ],
+    "beam_moment": [
+      -7.103003135057025e-09,
+      -0.0001918938314492127,
+      1.864262618305518e-07
+    ],
+    "shell_moment": [
+      7.1030031350487015e-09,
+      0.0001918938314492126,
+      -1.864262618305519e-07
+    ],
+    "gap_tolerance_met": true,
+    "normal_law": "penalty",
+    "line_stiffness_N_per_m2": 100000.0,
+    "pair_identity": "line",
+    "physical_features": {
+      "beam": {
+        "surface": "tube",
+        "element_id": 1
+      },
+      "shell": {
+        "surface": "skin",
+        "element_id": 2
+      }
+    },
+    "moment_origin_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "contact_integration_measure": "reference_line_length",
+    "integration_rule": "three_gauss_points_per_exact_active_interval",
+    "integration_error_semantics": "polynomial_truncation_only",
+    "gap_tolerance": 1e-05,
+    "maximum_candidate_pairs": 100000,
+    "swept_trial_cutbacks": 3
+  }
+}
+.
+1 passed, 4 deselected in 1.53s
+{"pytest_exit_code": 0, "verified_source_count": 446}

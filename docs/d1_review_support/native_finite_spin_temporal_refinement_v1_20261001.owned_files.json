@@ -1,0 +1,147 @@
+{
+  "status": "AUTHOR_FILES_STABLE_NO_FURTHER_EDITS_OR_RUNS",
+  "prefix": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001",
+  "files": [
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.comparison.json",
+      "bytes": 27602,
+      "sha256": "2dff58e5f49481994794f9d045657fa74699f7ead91423d08adbecded28e1f23"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.entry.py",
+      "bytes": 297,
+      "sha256": "00b7cf7aaac415ff56e771cce304334009a8bf97e1f5822111cb321113f4fe99"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.md",
+      "bytes": 4864,
+      "sha256": "acb0dbf57cd284e0ac9a173948d0e93cf83a147a48eb1223a9ab3fa00271e3f9"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.endpoints.jsonl",
+      "bytes": 70410435,
+      "sha256": "43797114af8560e64ad4ce16af084534b22abea6258c75d6b36acb52f7db83d0"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.inputs.json",
+      "bytes": 84691,
+      "sha256": "3fd6b2d8fa11561d18b7fd897fca9b871254ed8f26829b7e5507e937ca31ce84"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.inputs.v2.json",
+      "bytes": 85025,
+      "sha256": "0a84315fb326192927930b0316393e053ef88afe95c49416d0636d682640f9b8"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.log",
+      "bytes": 49915,
+      "sha256": "b20b6fa0b0d55073caa098c0d0bfad2389b0e4736591938068c136b86b55aa11"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.progress.json",
+      "bytes": 89,
+      "sha256": "3c8d84f8aefee6f40c3f6a24e14b17edd62e77b249efc9fda12ee9c26d7ea014"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.raw.json",
+      "bytes": 35491939,
+      "sha256": "bdb38c5478678c197a273793fa3f2c305ea99da41563db0cf5ca3ea583c15518"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.resources.json",
+      "bytes": 629,
+      "sha256": "27fb38195c4ad67afdcd43b38d16d5fad1d17334d5b41f3db6aeb8c8217819c8"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.stages.jsonl",
+      "bytes": 42135773,
+      "sha256": "a884f8557d6135cd4f8236c80af11333bf65c15f3217d298f9b1606ee4d09bf1"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n162.summary.json",
+      "bytes": 4365,
+      "sha256": "2b35f063fc0c967352db67a78983d89c704bf8a77fde7f3564f7b223dbb87459"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n216.endpoints.jsonl",
+      "bytes": 93804815,
+      "sha256": "a23a503be517588db6a90287b5e2f61a084bcdb2ce1b1276ecb58cf633575fb9"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n216.inputs.json",
+      "bytes": 84691,
+      "sha256": "549c82aa67620900239b788361f7f11ef58de0d9e936de9ed283ebda3b2279c9"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n216.inputs.v2.json",
+      "bytes": 85025,
+      "sha256": "d0c6af89147394f10eda331393322c790783c7e4835611e2637be1bdf6991612"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n216.log",
+      "bytes": 66509,
+      "sha256": "ec454092cbc551e2c46c4ba221767f90da5f99e8575a12ff0c955b7f3b4aabed"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n216.progress.json",
+      "bytes": 90,
+      "sha256": "e1b2b3b9d669ae772005e7ef733aec3233178d66844df6a4025067e2f7e77d46"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n216.raw.json",
+      "bytes": 47199624,
+      "sha256": "1e25cd275ea2f7b29cdfad2db2a91efc5d44d5b85fe4a24a54c1150d94d0cbea"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n216.resources.json",
+      "bytes": 630,
+      "sha256": "9d0a11bc95c05c3d5dc989c3ceab0d8f099ae7aec8c147954931d398f18c60f2"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n216.stages.jsonl",
+      "bytes": 56138281,
+      "sha256": "75c7f6e8f5c1a21784ebf4abdf87a888dc55e6c1fae9ee766be0f5725173768c"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.n216.summary.json",
+      "bytes": 4235,
+      "sha256": "7f7a22724297d4600fe35ca4b686b3f7e0dd08f00cf6752ea67c2c6d733a272b"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.preflight.md",
+      "bytes": 6494,
+      "sha256": "adb752413dd5b6f3361df356937aee0e4e68d5098683f7bf62cad61da6d3d14c"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.programme.summary.json",
+      "bytes": 16050,
+      "sha256": "90def010ceac8bb5d439d15fc32585c38413658cba0bc7c6073e08ea597b8272"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.proposal.json",
+      "bytes": 8664,
+      "sha256": "7be98c19bf562ed140c1cfdd348673c6b5478ce92af55ed7535d416cc5d4b7e2"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.results.md",
+      "bytes": 3114,
+      "sha256": "e98f915fc20a8c18f4a3ed2081ca1500cda2156d0c2ce3e2878df63d01653f13"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.runner.py",
+      "bytes": 21271,
+      "sha256": "792600dcdf50751236e5ecf4b78f226928aa603fc9759925b2d2376e4f7227a4"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.runner.source.py",
+      "bytes": 20223,
+      "sha256": "c075556b5acac0718347c3d416b11f7e24a908efffabc824fb39cf5edb86e6ed"
+    },
+    {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_finite_spin_temporal_refinement_v1_20261001.runner.v2.source.py",
+      "bytes": 21271,
+      "sha256": "792600dcdf50751236e5ecf4b78f226928aa603fc9759925b2d2376e4f7227a4"
+    }
+  ],
+  "ownership": "These programme files only; independent review remains reviewer-owned. No production or old evidence changed. Task-owned external cache/tmp directories are disposable and not checkpoint files."
+}

@@ -1,0 +1,19 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 18.41049639999983,
+  "peak_process_tree_memory_mb": 414.90432,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_checkpoint_inert_node_observation.py",
+    "tests/test_nonlinear_checkpoint_guarded_normalization.py",
+    "tests/test_e4_pl_q4_state_lifecycle.py::test_q4_checkpoint_nested_mapping_observation_is_guarded_before_normalization",
+    "tests/test_e4_pl_q4_state_lifecycle.py::test_q4_checkpoint_producer_guards_module_helpers_before_fingerprint"
+  ],
+  "log": "docs\\d1_review_support\\d1_checkpoint_node_controls_v1_20260930.log"
+}

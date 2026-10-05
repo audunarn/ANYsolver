@@ -1,0 +1,20 @@
+{
+  "reference": "reports\\general_contact_d1_distributed_cycle_response_v1_formal_20260927.json",
+  "candidate": "distributed_24q4_selected_tangent_dev",
+  "source_nodes": [
+    20,
+    45
+  ],
+  "selected_axes": [
+    57,
+    59,
+    132,
+    134
+  ],
+  "pressure_replay_error_pa": 0.0,
+  "force_replay_error_n": 0.20775767451045174,
+  "base_active_modes": 18,
+  "status": "failed_development",
+  "error": "ValueError: saved pose and multipliers do not replay",
+  "elapsed_seconds": 5.548677899991162
+}

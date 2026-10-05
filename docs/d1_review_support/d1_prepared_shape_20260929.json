@@ -1,0 +1,49 @@
+{
+  "status": "development_value_only_shape_parity",
+  "source_commit": "6efbe8fae32b74ba38fa0bf24e956e3d1ac24f9e",
+  "saved_source_sha256": "ba2e0be212ee6ac25b9d208a7f2fb9644cba69330dd357810caef1ef41094bdb",
+  "probe_sha256": "7302f3160717341ed754ef5f47763b5c5f8c78291a719cd4d03646011865a61c",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "observations": [
+    {
+      "profile": "legacy",
+      "seconds": 13.508868099997926,
+      "evaluations": 2524,
+      "integration_triangles": 2416,
+      "overlapping_pairs": 476
+    },
+    {
+      "profile": "value_only",
+      "seconds": 12.738417200002004,
+      "evaluations": 2524,
+      "integration_triangles": 2416,
+      "overlapping_pairs": 476
+    },
+    {
+      "profile": "value_only",
+      "seconds": 12.67317809999804,
+      "evaluations": 2524,
+      "integration_triangles": 2416,
+      "overlapping_pairs": 476
+    },
+    {
+      "profile": "legacy",
+      "seconds": 13.743977099999029,
+      "evaluations": 2524,
+      "integration_triangles": 2416,
+      "overlapping_pairs": 476
+    }
+  ],
+  "relative_errors": {
+    "reference_support": 0.0,
+    "reference_weighted_gap": 0.0,
+    "normalized_gap": 0.0,
+    "pressure_gram": 0.0,
+    "force": 0.0,
+    "gap_gradient": 0.0,
+    "tangent": 0.0
+  },
+  "legacy_median_seconds": 13.626422599998477,
+  "value_only_median_seconds": 12.705797650000022,
+  "local_time_ratio": 1.0724570763173182
+}

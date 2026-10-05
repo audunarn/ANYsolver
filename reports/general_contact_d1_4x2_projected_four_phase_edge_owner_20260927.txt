@@ -1,0 +1,15 @@
+{
+  "columns": 4,
+  "rows": 2,
+  "edge_control": true,
+  "gap_certificate": "projected_matching",
+  "gap_tolerance_m": 5e-05,
+  "normal_approach_m": 0.01504,
+  "four_phase": true,
+  "slide_distance_m": 0.05000003,
+  "elapsed_seconds": 96.61211660000845,
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 4,
+  "has_restart_checkpoint": true
+}

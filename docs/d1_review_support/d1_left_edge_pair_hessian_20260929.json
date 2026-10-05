@@ -1,0 +1,127 @@
+{
+  "pose_file": "tests\\fixtures\\general_contact_d1_left_edge_slide_pose.json",
+  "step_m": 5e-07,
+  "active_source_node": 13,
+  "pairs": [
+    {
+      "pair_index": 10,
+      "branch_same": true,
+      "integration_triangles": [
+        8,
+        8,
+        8
+      ],
+      "support_hessian_directional_error": 0.9996560606181403,
+      "weighted_gap_hessian_directional_error": 6.188737258681109e-10,
+      "overlap_areas_m2": [
+        0.06250681549877066,
+        0.06250683078944666,
+        0.06250680020809468
+      ]
+    },
+    {
+      "pair_index": 11,
+      "overlap_state": [
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "pair_index": 12,
+      "branch_same": true,
+      "integration_triangles": [
+        12,
+        12,
+        12
+      ],
+      "support_hessian_directional_error": 3.123280268362674e-10,
+      "weighted_gap_hessian_directional_error": 2.0151952792945447e-10,
+      "overlap_areas_m2": [
+        0.037191189253581745,
+        0.03719117401613697,
+        0.03719120449075275
+      ]
+    },
+    {
+      "pair_index": 13,
+      "branch_same": true,
+      "integration_triangles": [
+        4,
+        4,
+        4
+      ],
+      "support_hessian_directional_error": 2.6265613721345906e-10,
+      "weighted_gap_hessian_directional_error": 2.2769258811233222e-10,
+      "overlap_areas_m2": [
+        0.025315830151527666,
+        0.025315830040368036,
+        0.02531583026296118
+      ]
+    },
+    {
+      "pair_index": 18,
+      "branch_same": true,
+      "integration_triangles": [
+        12,
+        12,
+        12
+      ],
+      "support_hessian_directional_error": 2.9986158948224593e-10,
+      "weighted_gap_hessian_directional_error": 2.8528048066727315e-10,
+      "overlap_areas_m2": [
+        0.03719082619218864,
+        0.03719082917568979,
+        0.037190823208462155
+      ]
+    },
+    {
+      "pair_index": 19,
+      "branch_same": true,
+      "integration_triangles": [
+        4,
+        4,
+        4
+      ],
+      "support_hessian_directional_error": 2.9672703312501414e-10,
+      "weighted_gap_hessian_directional_error": 2.8981703288229383e-10,
+      "overlap_areas_m2": [
+        0.02531598930268814,
+        0.025316001609862523,
+        0.025315976995739158
+      ]
+    },
+    {
+      "pair_index": 20,
+      "branch_same": true,
+      "integration_triangles": [
+        4,
+        4,
+        4
+      ],
+      "support_hessian_directional_error": 1.23536480816209e-10,
+      "weighted_gap_hessian_directional_error": 6.003040815151351e-11,
+      "overlap_areas_m2": [
+        0.00031247880779697947,
+        0.0003124758973585897,
+        0.000312481718371639
+      ]
+    },
+    {
+      "pair_index": 21,
+      "branch_same": true,
+      "integration_triangles": [
+        12,
+        12,
+        12
+      ],
+      "support_hessian_directional_error": 3.381969340589833e-10,
+      "weighted_gap_hessian_directional_error": 2.829618802790886e-10,
+      "overlap_areas_m2": [
+        0.062194540595301384,
+        0.062194528157135096,
+        0.06219455303333141
+      ]
+    }
+  ]
+}

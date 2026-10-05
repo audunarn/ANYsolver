@@ -1,0 +1,31 @@
+{
+  "status": "development_two_body_work_transfer_non_success",
+  "source_commit": "c1c4e042670dbea12a35a94748e2a792bb0a9ae0",
+  "probe_sha256": "8463ce4c4e3707bb1fa6cbc65b6f2e7a0d00eedfaac828634e55176ec2640dd3",
+  "saved_source_sha256": "ba2e0be212ee6ac25b9d208a7f2fb9644cba69330dd357810caef1ef41094bdb",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "runtime_identity": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "openblas_threads": "1",
+    "omp_threads": "1"
+  },
+  "source_q4_faces": 4,
+  "coarse_target_s3_faces": 128,
+  "fine_target_s3_faces": 512,
+  "pressure_modes": 10,
+  "active_pressure_modes": [
+    2,
+    7
+  ],
+  "pose_prolongation_maximum_error": 0.0,
+  "source_skin_maximum_error_m": 0.0,
+  "target_skin_maximum_error_m": 3.1401849173675503e-16,
+  "coarse_saved_support_relative_error": 0.0,
+  "support_l2_relative_error": 5.390449012598373e-16,
+  "normalized_gap_maximum_error_m": 3.698753618754699e-11,
+  "structural_prolongation_reconstruction_relative": 0.0,
+  "pressure_work_prolongation_relative_error": 0.00021636374215667004,
+  "elapsed_seconds": 31.2498665000021
+}

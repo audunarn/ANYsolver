@@ -1,0 +1,143 @@
+{
+  "scope": "D3 explicit multiple fixed-plane actual hemisphere support work, development/code verification only",
+  "source_parent": "8691c2b8aaa54716c5437a8df076dd501db74414",
+  "source_files": {
+    "src/anysolver/general_contact/multiple_beam_rigid.py": "a318e1a5ad419f1b4c5ef3e871841b99edfb494003d15a00e0559e75c1b8e2cd",
+    "src/anysolver/general_contact/beam_hemisphere_support.py": "fbf796afc22f7f19c6bbdd83db3a00c920d6bd6b9e3d3b3d4a9bcbe4dd4f3349",
+    "src/anysolver/general_contact/beam_hemisphere_plane.py": "94dc85cc4ff0fa8b86d209ddf6e180a134479a1d31874f1cf2203cc15eb4316e",
+    "src/anysolver/general_contact/core.py": "8fe826d7d8bae2f3f4b0fa61d49c460b66f06a72eb75a5e376a618b940b46816",
+    "tests/test_general_contact_multiple_hemisphere_planes.py": "ea0f7fa10d7bfadfe1843f5a0e237fb28cea15473e9abac3e9990b6c5040e796",
+    "examples/general_contact_multiple_hemisphere_planes.py": "8e7d2ed548e86264d6d00a0727653cf3c79427ba52b921f7e6bcbdbba7df4e73"
+  },
+  "wheels": {
+    "anyfem-0.4.1-py3-none-any.whl": "eae3844a729630cac29203bfa04c552708adaea068caa1096e8e61dc774c2f88",
+    "anysolver-0.4.7-py3-none-any.whl": "fcda0d2849f2b7089298d5567d67d584d422552a6a8858b218b4966a19538927"
+  },
+  "runs": {
+    "build": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 12.379004800051916,
+        "peak_bytes": 110694400
+      },
+      "outcomes": null
+    },
+    "install": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 3.8336972999968566,
+        "peak_bytes": 94109696
+      },
+      "outcomes": null
+    },
+    "installed_final": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 11.680871599994134,
+        "peak_bytes": 355713024
+      },
+      "outcomes": {
+        "passed": 50
+      }
+    },
+    "source01": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 4.720388800022192,
+        "peak_bytes": 185237504
+      },
+      "outcomes": {
+        "passed": 6
+      }
+    }
+  },
+  "installed_modules_matching": 239,
+  "installed_package_files_matching": 502,
+  "effective_jit_disabled": true,
+  "effective_numba_threads": 1,
+  "effective_pools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+      "version": "0.3.31.188.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+      "version": "0.3.30",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "vcomp",
+      "filepath": "C:\\Windows\\System32\\vcomp140.dll",
+      "version": null
+    }
+  ],
+  "independent_two_plane_bar": {
+    "relative_error": 1.73316378467733e-14,
+    "reference_displacements_m": [
+      -0.0020017998198592264,
+      0.0020017998198592264
+    ],
+    "actual_displacements_m": [
+      -0.0020017998198592194,
+      0.002001799819859261
+    ],
+    "reference_delta_m": 1.7998198592265388e-06,
+    "registered_development_target": 1e-06,
+    "gap_budget_m": 1e-05
+  },
+  "directional_tangent_target": 1e-05,
+  "bar_response_target": 1e-06,
+  "raw_records": 33,
+  "raw_sha256": "d3e2c36f75d0a00d5fce74155fed1506be6c54a215d3eb62ad1e7f3c50472f20",
+  "environment": {
+    "python": "3.14.2 (tags/v3.14.2:df79316, Dec  5 2025, 17:18:21) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "versions": {
+      "numpy": "2.4.6",
+      "scipy": "1.17.1",
+      "numba": "0.65.1",
+      "ANYmaterial": "0.2.0",
+      "ANYgeometry": "0.4.3"
+    }
+  },
+  "review_disposition": "same-family source scrutiny identified required child protocol, rejection and accounting conditions; actual installed tests exercise complete shared B3 work, both orthogonal body wrenches, unsupported selectors/nonplanes, common fraction, duplicate/resource admission and restart/state. No independent engineering acceptance.",
+  "preserved_failures": [
+    "none in this measured slice; all predecessor owned-point mechanical nonpasses and fixture failures retained unchanged"
+  ],
+  "unchanged": [
+    "default owned_point multiple/fixed-rigid law arithmetic and profile identity",
+    "line/end units and dimensional criteria",
+    "normal application admission false",
+    "no-contact/historical defaults/sphere APIs",
+    "frozen authority and historical failures",
+    "ANYfem source"
+  ],
+  "limits": [
+    "explicit fixed planes only for new selector",
+    "scalar isotropic elastic concentric B2/B3 von Karman",
+    "genuine all-material-node physical ends",
+    "exterior gap tolerance below radius",
+    "aggregate active endpoint counts are endpoint-target pairs, not unique physical ends",
+    "frictionless centreline-tangent support springs, not material-surface integration/spin",
+    "pair/radial/shell-boundary cap transitions and engineering qualification remain",
+    "full C0-C9 programme incomplete"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 1.6668146000010893,
+  "peak_process_tree_memory_mb": 119.259136,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_guided_wrench.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_guided_wrench_checks_v1_20260930.log"
+}

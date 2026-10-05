@@ -1,0 +1,54 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 948, in <module>
+    radial_solve(arguments.output)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_interior_press_dev.py", line 690, in radial_solve
+    result = solve_static_nonlinear(model, contact=definition, contact_settings=settings,
+        contact_path_program=program, max_iterations=18, emit_restart_checkpoint=True,
+        record_increment_snapshots=True)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_static.py", line 7713, in solve_static_nonlinear
+    return solve_static_contact_path(
+        model, contact, contact_settings, contact_path_program,
+    ...<5 lines>...
+        cancellation_token=cancellation_token,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1700, in solve_static_contact_path
+    return _run_with_qualified_assembly_runtime_lease(
+        model, context="solve_static_contact_path", operation=operation,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3651, in _run_with_qualified_assembly_runtime_lease
+    raise scoped_operation_error
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\matrix_assembly.py", line 3626, in _run_with_qualified_assembly_runtime_lease
+    result = operation(lease)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 1698, in operation
+    return _run_with_nonlinear_state_cleanup(run)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\nonlinear_state.py", line 271, in _run_with_nonlinear_state_cleanup
+    return operation(*args, **kwargs)
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\static_path.py", line 703, in run
+    step_result = solve_semismooth_increment(
+        model=model, manager=manager, settings=settings,
+    ...<9 lines>...
+        cancellation_token=cancellation_token, step=step,
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\semismooth_path.py", line 417, in solve_increment
+    "swept_proposed_gap_lower_m": manager._gap_lower(
+                                  ~~~~~~~~~~~~~~~~~~^
+        manager._positions(proposed_u)),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py", line 565, in _gap_lower
+    return min(
+        max(q4_source_projected_gap_lower(source[si], target[ti]),
+    ...<2 lines>...
+        for ti in self.law.target_face_indices
+    )
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\s3_patch_static.py", line 566, in <genexpr>
+    max(q4_source_projected_gap_lower(source[si], target[ti]),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py", line 134, in q4_source_projected_gap_lower
+    _, projection = projected_q4_source_face(first)
+                    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\src\anysolver\general_contact\q4_source_overlap.py", line 50, in projected_q4_source_face
+    raise ValueError("Q4 source has inverted or folded bilinear geometry")
+ValueError: Q4 source has inverted or folded bilinear geometry

@@ -1,0 +1,59 @@
+{
+  "managed_worktree": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver",
+  "git_head": "23e845e131a8ea0c3457d10d9355ecdd5d1dd28e",
+  "source_sha256": {
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py": "6f5607aed1efcc23d4da96882882540236d2293ecb7f49f5e2909a3e2c09abab",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py": "38cdec0d9a79315ca744f4434fcf8c937cedf4026b54d7ca4ac38fe0e92b34e3",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_retained_generalized_state.py": "e4965fd3cc8cd8c498a8fd21247bc8ce09a073fdf245dca1b3b10b084cfde719",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_retained_generalized.py": "39121d4d76a5524579c2ea506c9bdf968a3d254cb7e6740de6173eb5aa7e6787",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_generalized_static_boundary.py": "8ea10a90290ab89a413d7c947a6cd3a50c71331f2a89e41e4b94f7248f1b2085",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_analysis.py": "168be571e8f91c0a9d1fde58314659bdda2a83e32bf79e5d9b05c1ff18e9860d",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_definition.py": "07611697125258bbd6a338f1a4ad316c08de3a5f78b96242d71356cb1ed7d1b0",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\ge_beam3_native.py": "45cf3507bfe1da798c206a05370365e02475a77c3925d7355a970a20154f80ea",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_p5\\inertia.py": "4274095b7a010a707aff68ede94c342f3b4504395dc0b3c9fc5bad075e269dfa",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_p5_centered\\mass.py": "f1f0de6eb24d8759b0f4c6d4515d65c5c7bb7487354ed4637ba07ad9d5d403b5",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_p5_centered\\positions.py": "86e709ecaf06d7cc396cf283e6e12bdb33f08544e893661ad0b0382a7fa96587",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_generalized_cell.py": "d98b5d1d353c11221fd6447ea44d349622d373583232f3aaebcddd3e37c93034",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_generalized_ellipsoid_section.py": "dbe6ff691190eae66f92d7ef39f4220c862958a44e7d8b43512f04f69f42fd80",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_dynamic_elastic_state.py": "f57b842452d3462c391019a4b0bc4b69bf96bd737f51a8daa20403be713dd423",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/tests/test_ge_beam3_dynamic_elastic_state.py": "ae3812ed6760feb9b40ad05bf72874364a3016351189066ad765eae5a4a7dd33",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_fibre_line_work.py": "4967febb2c623622082d688218a286a10ebec3297a0d694078d5fcb4d6c6f0bf",
+    "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src/anysolver/_ge_beam3_native_generalized_restart.py": "e933bfde2dc0339b6002d068af333118c3020e85ab9d5595917cb62527dc8c0a",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_dynamic_elastic_state_v1_20260930.entry.source.py": "a6c8467eaad36983088fdd582603a8b143187e0cb4843bf9bfc069bdfa9aee1e",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_native_midpoint_v2_20260930.json": "8b564fd4494d98953cb8d840475744a9f0dfb869ab0705e1907e278b7510bf7e"
+  },
+  "environment": {
+    "PYTHONPATH": "C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver/src;C:/Users/AudunArnesenNyhus/.codex/worktrees/general-contact-native-dynamics/ANYsolver",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_CACHE_DIR": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_dynamic_elastic_state_v1_20260930.numba_cache",
+    "D6_DYNAMIC_ELASTIC_OUTPUT": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_dynamic_elastic_state_v1_20260930.json",
+    "D6_DYNAMIC_ELASTIC_CLAMP_REFERENCE": "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_native_midpoint_v2_20260930.json"
+  },
+  "resource_caps": {
+    "seconds": 180,
+    "process_tree_bytes": 1073741824,
+    "internal_context_seconds": 120
+  },
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_dynamic_elastic_state_v1_20260930.entry.source.py"
+  ],
+  "pytest_args": [
+    "tests/test_ge_beam3_dynamic_elastic_state.py",
+    "-q",
+    "-s",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "junit_family=legacy",
+    "--junitxml=C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_dynamic_elastic_state_v1_20260930.xml"
+  ],
+  "scope": "One free reference C_z27 and physical M15 rank/mass check, complete42 work/tangent/objectivity, algebraic consistency at fixed physical pose, clamp parity to frozen v2 K/M; no time steps; no static Context or source edits to reviewed owners",
+  "accepted": false,
+  "released": false,
+  "replaces": "New disjoint evaluator assignment; no prior checks replayed"
+}

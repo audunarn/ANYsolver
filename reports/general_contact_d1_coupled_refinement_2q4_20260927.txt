@@ -1,0 +1,8 @@
+{
+  "columns": 2,
+  "elapsed_seconds": 27.409568299975945,
+  "status": "completed",
+  "failure_reason": null,
+  "accepted_steps": 1,
+  "has_restart_checkpoint": true
+}

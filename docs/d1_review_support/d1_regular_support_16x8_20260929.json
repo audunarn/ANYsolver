@@ -1,0 +1,503 @@
+{
+  "status": "development_source_transverse_active_witness",
+  "source_commit": "28232667dd5b8464a5ca0ee5cef9eca10bdd1850",
+  "probe_sha256": "a24759d1801dacc5af5c94e2413af45dbe415e9dbe794cce7e674a0d9a816ff6",
+  "independent_gram_oracle_sha256": "299e2e6f6a7cd46de667ede590900a5f8426840ab131fcb0a29c6db012f84a64",
+  "saved_source_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "saved_runtime_identity": {
+    "python": "3.14.2",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py",
+    "compiled_bjet_mul_enabled": false
+  },
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "active_modes": 48,
+  "active_pressure_node_ids": [
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    148,
+    149,
+    150,
+    151,
+    152,
+    153
+  ],
+  "oracle_quadrature_points": 4736,
+  "oracle_topology_count": 256,
+  "oracle_support_relative_error": 5.342143030533312e-13,
+  "oracle_gap_maximum_error_m": 5.110498206258376e-13,
+  "source_trial_constraint_relative_error": 0.0,
+  "source_trial_energy_scaled_minimum_eigenvalue": 0.053644380713385335,
+  "physical_pressure_gram_scaled_minimum_eigenvalue": 0.26021442932085154,
+  "source_trial_work_relative_gram_difference": 1.8610825100243645e-13,
+  "complete_source_transverse_work_relative_oracle_error": 2.5984619104170195e-13,
+  "source_trial_work_skew_relative": 7.005642712131372e-14,
+  "source_trial_work_relative_gram_eigenvalue_range": [
+    0.9999999998517147,
+    1.000000000000608
+  ],
+  "source_witness_to_full_dual_squared_ratio_range": [
+    0.0002015367364260738,
+    1.0000000000000722
+  ],
+  "all_free_source_transverse": {
+    "coordinates": 144,
+    "squared_dual_ratio_range": [
+      0.9999999999998573,
+      1.0000000000001363
+    ]
+  },
+  "free_target_only": {
+    "coordinates": 0,
+    "squared_dual_ratio_range": [
+      0.0,
+      0.0
+    ]
+  },
+  "all_source_transverse_plus_target": {
+    "coordinates": 144,
+    "squared_dual_ratio_range": [
+      0.9999999999998573,
+      1.0000000000001363
+    ]
+  },
+  "all_admissible_coordinates": {
+    "coordinates": 295,
+    "squared_dual_ratio_range": [
+      0.9999999999998753,
+      1.000000000000124
+    ]
+  },
+  "scalar_q1_gradient_fit": {
+    "fitted_shear_stiffness_n_per_m": 1602.5641025641028,
+    "relative_matrix_error": 2.972249135329629e-16,
+    "independent_material_shear_stiffness_n_per_m": 1602.5641025641025,
+    "material_scale_relative_error": 1.418811734765768e-16
+  },
+  "guided_fourier_reference": {
+    "modes_each_axis": 512,
+    "target_contact_y_upper_m": 1.0,
+    "maximum_source_ux_m": 1.6326996721945734e-09,
+    "spectral_gram_relative_oracle_error": 1.4932636519509846e-15,
+    "finite_compliance_scaled_minimum_eigenvalue": 0.0037639836159946453,
+    "parseval_tail_coefficient_m3_per_n": 2.4118178671788056e-10,
+    "maximum_relative_tail_bound": 0.0128412717048239,
+    "minimum_discrete_to_continuum_squared_ratio_lower": 0.5916164881059052,
+    "minimum_discrete_to_continuum_squared_ratio_upper": 0.593137472613071,
+    "maximum_discrete_to_continuum_squared_ratio_upper": 0.9985671912426763,
+    "regular_support_discriminator": {
+      "full_settled_active_control": {
+        "name": "full_settled_active",
+        "fixed_relative_support_rectangle_m": [
+          0.0,
+          1.0,
+          0.0,
+          1.0
+        ],
+        "mode_count": 48,
+        "selected_pressure_node_ids": [
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          148,
+          149,
+          150,
+          151,
+          152,
+          153
+        ],
+        "minimum_squared_ratio_interval": [
+          0.5916164881059052,
+          0.593137472613071
+        ],
+        "minimum_mode_relative_coefficients": [
+          5.8469355200044316e-05,
+          3.502995687786078e-05,
+          6.335881433172537e-05,
+          6.834979461888834e-05,
+          7.37008043813534e-05,
+          7.705493793461716e-05,
+          -5.119032597247386e-05,
+          -2.327323828928466e-05,
+          -4.9529579063976416e-05,
+          -5.192135998836442e-05,
+          -5.577921934648863e-05,
+          -5.882631670730263e-05,
+          -1.4869443757164181e-05,
+          -3.950205888169386e-05,
+          -4.22994060106967e-05,
+          -5.151514552442497e-05,
+          -5.6371714695345866e-05,
+          -5.6997224509490544e-05,
+          0.00023241949359205637,
+          0.00024946336341651504,
+          0.0003486756581797337,
+          0.00039748474317327626,
+          0.0004308424082782404,
+          0.00044412267218142654,
+          -0.0008125970921534626,
+          -0.0008911197183201473,
+          -0.0012369981044197769,
+          -0.001414118640137408,
+          -0.0015314531647711391,
+          -0.0015792116663345256,
+          0.0020659495290380084,
+          0.0025830503098601635,
+          0.003417451997542681,
+          0.00395633369283621,
+          0.004283199753517358,
+          0.004408371281858139,
+          -0.0035459950897693757,
+          -0.0047149227960333615,
+          -0.006132403254094508,
+          -0.007136633061111077,
+          -0.00771747897232598,
+          -0.007947542747703712,
+          0.4129833700086839,
+          0.6139370547466065,
+          0.7519960053071647,
+          0.9032889082768292,
+          0.959444690786205,
+          1.0
+        ],
+        "minimum_mode_coefficient_energy_by_y_row": {
+          "0": 6.416245931645423e-09,
+          "1": 3.865934308710987e-09,
+          "2": 3.286174961961425e-09,
+          "3": 2.0226917856778488e-07,
+          "4": 2.551727316587526e-06,
+          "5": 1.9754789039630218e-05,
+          "6": 6.391691342705111e-05,
+          "8": 0.999913560732683
+        },
+        "dominant_mode_nodes": [
+          {
+            "node_id": 153,
+            "x_column": 16,
+            "y_row": 8,
+            "relative_coefficient": 1.0
+          },
+          {
+            "node_id": 152,
+            "x_column": 15,
+            "y_row": 8,
+            "relative_coefficient": 0.959444690786205
+          },
+          {
+            "node_id": 151,
+            "x_column": 14,
+            "y_row": 8,
+            "relative_coefficient": 0.9032889082768292
+          },
+          {
+            "node_id": 150,
+            "x_column": 13,
+            "y_row": 8,
+            "relative_coefficient": 0.7519960053071647
+          },
+          {
+            "node_id": 149,
+            "x_column": 12,
+            "y_row": 8,
+            "relative_coefficient": 0.6139370547466065
+          },
+          {
+            "node_id": 148,
+            "x_column": 11,
+            "y_row": 8,
+            "relative_coefficient": 0.4129833700086839
+          },
+          {
+            "node_id": 119,
+            "x_column": 16,
+            "y_row": 6,
+            "relative_coefficient": -0.007947542747703712
+          },
+          {
+            "node_id": 118,
+            "x_column": 15,
+            "y_row": 6,
+            "relative_coefficient": -0.00771747897232598
+          }
+        ]
+      },
+      "regular_rim_excluded": {
+        "name": "regular_rim_excluded",
+        "fixed_relative_support_rectangle_m": [
+          0.125,
+          1.0,
+          0.0,
+          0.75
+        ],
+        "mode_count": 24,
+        "selected_pressure_node_ids": [
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68
+        ],
+        "minimum_squared_ratio_interval": [
+          0.7724233376786893,
+          0.7728426154338023
+        ],
+        "minimum_mode_relative_coefficients": [
+          0.20467872097698903,
+          -0.5632162442080696,
+          0.5975730136018956,
+          -0.08430111622321963,
+          -0.6540084705280725,
+          1.0,
+          0.1891165310516637,
+          -0.515695699651792,
+          0.5483356608230541,
+          -0.07561317783402531,
+          -0.5988843803195825,
+          0.9177832118874943,
+          0.1466788565832197,
+          -0.3954478610502752,
+          0.4193282578893047,
+          -0.05784684533131758,
+          -0.45819040364509034,
+          0.7013901281691498,
+          0.07111268115356954,
+          -0.21118415040139424,
+          0.22817262090104418,
+          -0.03456464899623766,
+          -0.24865830708804282,
+          0.3817221893178131
+        ],
+        "minimum_mode_coefficient_energy_by_y_row": {
+          "0": 0.4036060226335798,
+          "1": 0.33944506507189903,
+          "2": 0.1986969460477125,
+          "3": 0.05825196624680866
+        },
+        "dominant_mode_nodes": [
+          {
+            "node_id": 17,
+            "x_column": 16,
+            "y_row": 0,
+            "relative_coefficient": 1.0
+          },
+          {
+            "node_id": 34,
+            "x_column": 16,
+            "y_row": 1,
+            "relative_coefficient": 0.9177832118874943
+          },
+          {
+            "node_id": 51,
+            "x_column": 16,
+            "y_row": 2,
+            "relative_coefficient": 0.7013901281691498
+          },
+          {
+            "node_id": 16,
+            "x_column": 15,
+            "y_row": 0,
+            "relative_coefficient": -0.6540084705280725
+          },
+          {
+            "node_id": 33,
+            "x_column": 15,
+            "y_row": 1,
+            "relative_coefficient": -0.5988843803195825
+          },
+          {
+            "node_id": 14,
+            "x_column": 13,
+            "y_row": 0,
+            "relative_coefficient": 0.5975730136018956
+          },
+          {
+            "node_id": 13,
+            "x_column": 12,
+            "y_row": 0,
+            "relative_coefficient": -0.5632162442080696
+          },
+          {
+            "node_id": 31,
+            "x_column": 13,
+            "y_row": 1,
+            "relative_coefficient": 0.5483356608230541
+          }
+        ]
+      },
+      "strict_interior": {
+        "name": "strict_interior",
+        "fixed_relative_support_rectangle_m": [
+          0.125,
+          0.875,
+          0.2,
+          0.75
+        ],
+        "mode_count": 6,
+        "selected_pressure_node_ids": [
+          46,
+          47,
+          48,
+          63,
+          64,
+          65
+        ],
+        "minimum_squared_ratio_interval": [
+          0.8224234305511336,
+          0.822838394905785
+        ],
+        "minimum_mode_relative_coefficients": [
+          0.49114630113039914,
+          -0.8907306990133477,
+          0.4786482610346223,
+          -0.552302312272113,
+          1.0,
+          -0.5381865682952572
+        ],
+        "minimum_mode_coefficient_energy_by_y_row": {
+          "2": 0.442109023133878,
+          "3": 0.557890976866122
+        },
+        "dominant_mode_nodes": [
+          {
+            "node_id": 64,
+            "x_column": 12,
+            "y_row": 3,
+            "relative_coefficient": 1.0
+          },
+          {
+            "node_id": 47,
+            "x_column": 12,
+            "y_row": 2,
+            "relative_coefficient": -0.8907306990133477
+          },
+          {
+            "node_id": 63,
+            "x_column": 11,
+            "y_row": 3,
+            "relative_coefficient": -0.552302312272113
+          },
+          {
+            "node_id": 65,
+            "x_column": 13,
+            "y_row": 3,
+            "relative_coefficient": -0.5381865682952572
+          },
+          {
+            "node_id": 46,
+            "x_column": 11,
+            "y_row": 2,
+            "relative_coefficient": 0.49114630113039914
+          },
+          {
+            "node_id": 48,
+            "x_column": 13,
+            "y_row": 2,
+            "relative_coefficient": 0.4786482610346223
+          }
+        ]
+      }
+    }
+  },
+  "full_minus_witness_scaled_minimum_eigenvalue": -3.9938458528567225e-15,
+  "full_response_relative_residual": 7.062993399675664e-15,
+  "elapsed_seconds": 9.77479250000033,
+  "peak_process_working_set_mb": 417.247232
+}

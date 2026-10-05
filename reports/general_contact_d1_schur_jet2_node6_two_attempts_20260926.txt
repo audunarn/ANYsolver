@@ -1,0 +1,7 @@
+normal_control_node=6
+status=completed reason=None accepted_steps=1
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\tests\diagnose_general_contact_schur_jet2_path.py", line 52, in <module>
+    trace = result.steps[-1].get("augmentation_trace", ())
+            ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NonlinearStaticStep' object has no attribute 'get'

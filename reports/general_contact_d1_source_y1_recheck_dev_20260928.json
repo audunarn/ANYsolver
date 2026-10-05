@@ -1,0 +1,25 @@
+{
+  "method": "source_q4_y_resolution_against_independent_scalar_obstacle_dev",
+  "continuum_grid": [
+    256,
+    320
+  ],
+  "continuum_contact_reaction_n": 0.10380440239149635,
+  "cases": [
+    {
+      "nx": 16,
+      "ny": 1,
+      "pressure_modes": 34,
+      "unsupported_pressure_modes": 0,
+      "active_modes": 12,
+      "integrated_reaction_n": 0.10387155974559999,
+      "minimum_weak_gap_m": -8.365757503746176e-21,
+      "minimum_represented_gap_m": -1.940178007687446e-08,
+      "equilibrium_residual_n": 6.928446527319869e-16,
+      "force_difference_n": 6.715735410353987e-05,
+      "x_force_l1_relative": 0.02739940076179145,
+      "x_force_l2_relative": 0.036559025044111654,
+      "cumulative_force_max_relative": 0.011435861160963057
+    }
+  ]
+}

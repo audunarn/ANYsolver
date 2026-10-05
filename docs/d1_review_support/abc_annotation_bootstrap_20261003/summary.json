@@ -1,0 +1,145 @@
+{
+  "scope": "isolated development; no engineering acceptance, release or application admission",
+  "solver_parent": "4a87da5581b5eaa4a3e43b1f580803a29c027c20",
+  "app_sha": "3d6a7bb",
+  "wheel_hashes": {
+    "anyfem-0.4.1-py3-none-any.whl": "6a3ba3a6b1724ac522b0985cb23c81923c2154853e0e348c666a2d4ce08726e0",
+    "anysolver-0.4.7-py3-none-any.whl": "c2ea2dc991182d5b18d07784c592dd2371520430b05b0c22950467e7695e0586"
+  },
+  "python_package_byte_changes_from_baseline": [
+    "anysolver/__init__.py",
+    "anysolver/elements.py"
+  ],
+  "python_package_normalized_changes_from_baseline": [
+    "anysolver/__init__.py"
+  ],
+  "loaded_module_agreement": {
+    "installed_preimport_final": {
+      "modules": 258,
+      "path_errors": [],
+      "byte_mismatches": [],
+      "runtime": {
+        "scope": "source development only",
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "numba_threads": 1,
+        "jit_disabled": true,
+        "errors": [],
+        "plugin_autoload_disabled": false,
+        "collected": 25,
+        "failed": 0,
+        "pytest_exit_code": 0,
+        "outcomes": {
+          "passed": 25
+        },
+        "exit_code": 0
+      }
+    },
+    "installed_order_final": {
+      "modules": 247,
+      "path_errors": [],
+      "byte_mismatches": [],
+      "runtime": {
+        "scope": "source development only",
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "numba_threads": 1,
+        "jit_disabled": true,
+        "errors": [],
+        "plugin_autoload_disabled": false,
+        "collected": 4,
+        "failed": 0,
+        "pytest_exit_code": 0,
+        "outcomes": {
+          "passed": 4
+        },
+        "exit_code": 0
+      }
+    },
+    "installed_mechanics_final": {
+      "modules": 312,
+      "path_errors": [],
+      "byte_mismatches": [],
+      "runtime": {
+        "scope": "source development only",
+        "effective_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\numpy.libs\\libscipy_openblas64_-63c857e738469261263c764a36be9436.dll",
+            "version": "0.3.31.188.0",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          },
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1,
+            "prefix": "libscipy_openblas",
+            "filepath": "C:\\Python\\Python314\\Lib\\site-packages\\scipy.libs\\libscipy_openblas-64eda39e79589aedb16f58e5547eb599.dll",
+            "version": "0.3.30",
+            "threading_layer": "pthreads",
+            "architecture": "SkylakeX"
+          }
+        ],
+        "numba_threads": 1,
+        "jit_disabled": true,
+        "errors": [],
+        "plugin_autoload_disabled": true,
+        "collected": 4,
+        "failed": 0,
+        "pytest_exit_code": 0,
+        "outcomes": {
+          "passed": 4
+        },
+        "exit_code": 0
+      }
+    }
+  },
+  "source_file_hashes": {
+    "src\\anysolver\\__init__.py": "6537ca69cef320339439c1946a269dbc7088b43d4b0c36c4bef624c912997e85",
+    "tests\\test_abc_annotation_authority.py": "142785c75b2fca465d4e46c40d4bd0dccbaa16ad25031c7fe909269d3ef2c768"
+  }
+}

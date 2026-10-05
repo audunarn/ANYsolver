@@ -1,0 +1,12 @@
+{
+  "status": "fixed-pose new mixed E4-PL block; contact bubble geometry absent",
+  "theta": 0.1,
+  "enriched_to_production_e4pl_nodal_core_relative": 0.0,
+  "bubble_stiffness_n_per_m": 11396.011396011407,
+  "condensed_bubble_stiffness_n_per_m": 11396.011396011407,
+  "exact_bubble_contact_force_n": -0.0001306770244627319,
+  "condensed_bubble_contact_force_n": -0.0001306770244627328,
+  "condensed_contact_force_over_theta_squared": -0.013067702446273277,
+  "bubble_energy_dual_increment_j": 1.498461534393553e-12,
+  "nodal_energy_dual_j": 3.3442029420715893e-08
+}

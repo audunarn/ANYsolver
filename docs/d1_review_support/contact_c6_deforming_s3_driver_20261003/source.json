@@ -1,0 +1,249 @@
+{
+  "parent": "90e21716e93d566d823b5520b005e0831438191c",
+  "numerical_environment": {
+    "numpy": "2.4.6",
+    "scipy": "1.17.1",
+    "numba": "0.65.1",
+    "llvmlite": "0.47.0",
+    "pytest": "9.0.3",
+    "psutil": "7.2.2"
+  },
+  "source_sha256": {
+    "src/anysolver/general_contact/transient.py": "6c73fe3987acb9c169c8ce186d8bf7d8ecc5b7717bce40459d455bee8b43be61",
+    "src/anysolver/general_contact/normal_s3_skin_path.py": "5580bfcbaa57d29afa44f0801abc87f22563422be7d064dfde57dcbc7d272b0b",
+    "src/anysolver/general_contact/shell_pair_hermite_sweep.py": "c8e988d2b31cc240aa552bbaf1c5261dc5d1201b43b9e24b6f9309d2e06c736d",
+    "examples/general_contact_deforming_s3_impact_dev.py": "fd6b45e678f4d6eca21f614048a5569176f7e3f046534a821e145aea831ca198",
+    "examples/general_contact_nonuniform_s3_impact_dev.py": "d7c89ad41dfe0c3ce25f2e85ac5d9393e2ec5823607b1fd368412c3d7f1ccb96",
+    "tests/test_general_contact_transient_deforming_s3.py": "2bc5efbce67610c0f8f7de1f256f4f45d42963849ad9b5fb4c2e577196d67f29",
+    "tests/test_general_contact_transient_nonuniform_s3.py": "e1d9a6184a0d60cc8ae7047804a557080af5f96838851572422999f55e59b91f"
+  },
+  "wheel_sha256": "fce7269612702ccfb9bff8a417c963071bbb513a203b33f168987852a3a4156e",
+  "installed_import_hashes": 232,
+  "example_parity": true,
+  "runtimes": [
+    {
+      "label": "contact_nonuniform_s3_xy_a_20261003",
+      "outcomes": {
+        "passed": 1
+      },
+      "exit": 0,
+      "imported_modules": 231,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 9.687191999983042,
+      "peak_sampled_bytes": 186527744
+    },
+    {
+      "label": "contact_deforming_s3_local_a_20261003",
+      "outcomes": {
+        "failed": 2,
+        "passed": 1
+      },
+      "exit": 1,
+      "imported_modules": 227,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 7.528286300017498,
+      "peak_sampled_bytes": 190922752
+    },
+    {
+      "label": "contact_deforming_s3_local_b_20261003",
+      "outcomes": {
+        "passed": 2
+      },
+      "exit": 0,
+      "imported_modules": 227,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 5.4680859000072815,
+      "peak_sampled_bytes": 190701568
+    },
+    {
+      "label": "contact_deforming_s3_impact_c_20261003",
+      "outcomes": {
+        "failed": 1
+      },
+      "exit": 1,
+      "imported_modules": 232,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 10.05575390002923,
+      "peak_sampled_bytes": 201216000
+    },
+    {
+      "label": "contact_deforming_s3_impact_d_20261003",
+      "outcomes": {
+        "passed": 1
+      },
+      "exit": 0,
+      "imported_modules": 232,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 8.48302230000263,
+      "peak_sampled_bytes": 189624320
+    },
+    {
+      "label": "contact_deforming_s3_guard_e_20261003",
+      "outcomes": {
+        "passed": 3
+      },
+      "exit": 0,
+      "imported_modules": 232,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 8.991451900044922,
+      "peak_sampled_bytes": 185012224
+    },
+    {
+      "label": "contact_deforming_s3_state_f_20261003",
+      "outcomes": {
+        "passed": 17
+      },
+      "exit": 0,
+      "imported_modules": 232,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 23.47343810001621,
+      "peak_sampled_bytes": 187338752
+    },
+    {
+      "label": "contact_deforming_s3_temporal_g_20261003",
+      "outcomes": {
+        "passed": 3
+      },
+      "exit": 0,
+      "imported_modules": 232,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 15.441778999986127,
+      "peak_sampled_bytes": 191033344
+    },
+    {
+      "label": "contact_deforming_s3_open_h_20261003",
+      "outcomes": {
+        "failed": 1
+      },
+      "exit": 1,
+      "imported_modules": 232,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 7.958213400037494,
+      "peak_sampled_bytes": 189349888
+    },
+    {
+      "label": "contact_deforming_s3_open_i_20261003",
+      "outcomes": {
+        "passed": 1
+      },
+      "exit": 0,
+      "imported_modules": 232,
+      "jit_disabled": true,
+      "numba_threads": 1,
+      "pool_threads": [
+        1,
+        1
+      ],
+      "elapsed_s": 10.251596500049345,
+      "peak_sampled_bytes": 190775296
+    }
+  ],
+  "package_resources": {
+    "source": {
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-I",
+        "C:\\ANYworkspaceWork\\contact_deforming_s3_package_20261003\\example_check.py",
+        "C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001/src",
+        "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_deforming_s3_impact_dev.py",
+        "C:\\ANYworkspaceWork\\contact_deforming_s3_package_20261003\\source.json"
+      ],
+      "elapsed_s": 4.518859399948269,
+      "peak_sampled_bytes": 162402304,
+      "exit": 0,
+      "limit_s": 180,
+      "limit_mib": 953
+    },
+    "installed": {
+      "command": [
+        "C:\\Python\\Python314\\python.exe",
+        "-I",
+        "C:\\ANYworkspaceWork\\contact_deforming_s3_package_20261003\\example_check.py",
+        "C:/ANYworkspaceWork/contact_deforming_s3_package_20261003/installed",
+        "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001\\examples\\general_contact_deforming_s3_impact_dev.py",
+        "C:\\ANYworkspaceWork\\contact_deforming_s3_package_20261003\\installed.json"
+      ],
+      "elapsed_s": 4.12470270000631,
+      "peak_sampled_bytes": 162471936,
+      "exit": 0,
+      "limit_s": 180,
+      "limit_mib": 953
+    }
+  },
+  "temporal": {
+    "reference": {
+      "method": "independent DOP853",
+      "rtol": 2e-11,
+      "max_step_s": 1e-05,
+      "nfev": 5060,
+      "displacement_scale_m": 0.0002,
+      "velocity_scale_m_s": 0.1
+    },
+    "runs": [
+      {
+        "dt_s": 2.5e-05,
+        "states": 121,
+        "cutbacks": 0,
+        "displacement_error_on_gap_scale": 0.00048451112773367495,
+        "velocity_error_on_initial_speed_scale": 0.004702151238518346,
+        "reachable_energy_relative_defect": 0.0007342697331067516,
+        "minimum_swept_gap_m": -1.2219819919316769e-05
+      },
+      {
+        "dt_s": 1.25e-05,
+        "states": 241,
+        "cutbacks": 0,
+        "displacement_error_on_gap_scale": 0.00012115763297045946,
+        "velocity_error_on_initial_speed_scale": 0.0011829041240405368,
+        "reachable_energy_relative_defect": 0.00045072336640905597,
+        "minimum_swept_gap_m": -1.2213172016417767e-05
+      }
+    ]
+  },
+  "raw_records": 64
+}

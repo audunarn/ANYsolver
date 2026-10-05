@@ -1,0 +1,14 @@
+{
+  "status": "resource_limited_incomplete",
+  "source_commit_before_run": "b66c2fb7",
+  "command": "ANY_RUN_C1_TIGHT_PATH=1 python -m pytest -q tests/test_general_contact_q4_s3_tight_path.py",
+  "limit_seconds": 180,
+  "limit_rss_bytes": 1000000000,
+  "observed_wall_seconds": 180.064,
+  "observed_peak_rss_bytes": 339554304,
+  "process_exit_code_after_kill": 1,
+  "completed_checks": "one quick validation check; long four-phase plus split-restart check did not finish",
+  "stdout_file": "reports/general_contact_d1_tight_path_current_20260928.log",
+  "stderr_file": "reports/general_contact_d1_tight_path_current_20260928.err",
+  "interpretation": "The opt-in historical example uses the finite-difference penalty profile. This timeout does not establish a mechanics failure or qualify the Jet2 augmented D1 candidate. No resource limit was increased."
+}

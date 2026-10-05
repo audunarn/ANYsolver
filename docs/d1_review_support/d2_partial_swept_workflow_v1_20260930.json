@@ -1,0 +1,14 @@
+{
+  "checks": {
+    "baseline": true,
+    "authentic_restart": true,
+    "old_analysis_rejected": true,
+    "old_bytes_unchanged": true,
+    "source_unchanged": true
+  },
+  "development_checks_met": true,
+  "old_checkpoint_sha256": "cc6fecf8894bdc9b254bda34b47d7055155cb73502cac2380c4d6d55c7c40d6e",
+  "rejection": "checkpoint analysis contract is incompatible",
+  "accepted": false,
+  "released": false
+}

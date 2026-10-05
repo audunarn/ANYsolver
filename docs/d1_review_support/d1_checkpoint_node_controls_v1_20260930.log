@@ -1,0 +1,158 @@
+FFFFFFFFF.....................                                           [100%]
+================================== FAILURES ===================================
+___ test_plain_node_descriptor_has_exact_coordinates_and_keeps_outer_guards ___
+
+    def test_plain_node_descriptor_has_exact_coordinates_and_keeps_outer_guards():
+>       model, node = model_and_node()
+                      ^^^^^^^^^^^^^^^^
+
+tests\test_checkpoint_inert_node_observation.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def model_and_node():
+>       model = FEModel()
+                ^^^^^^^^^
+E       TypeError: FEModel.__init__() missing 1 required positional argument: 'name'
+
+tests\test_checkpoint_inert_node_observation.py:11: TypeError
+__________ test_changed_node_method_keeps_its_post_observation_guard __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EF5582E8B0>
+
+    def test_changed_node_method_keeps_its_post_observation_guard(monkeypatch):
+>       model, _ = model_and_node()
+                   ^^^^^^^^^^^^^^^^
+
+tests\test_checkpoint_inert_node_observation.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def model_and_node():
+>       model = FEModel()
+                ^^^^^^^^^
+E       TypeError: FEModel.__init__() missing 1 required positional argument: 'name'
+
+tests\test_checkpoint_inert_node_observation.py:11: TypeError
+_____ test_coordinate_property_is_not_invoked_by_proof_and_stays_guarded ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EF5B498D60>
+
+    def test_coordinate_property_is_not_invoked_by_proof_and_stays_guarded(monkeypatch):
+>       model, node = model_and_node()
+                      ^^^^^^^^^^^^^^^^
+
+tests\test_checkpoint_inert_node_observation.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def model_and_node():
+>       model = FEModel()
+                ^^^^^^^^^
+E       TypeError: FEModel.__init__() missing 1 required positional argument: 'name'
+
+tests\test_checkpoint_inert_node_observation.py:11: TypeError
+____________ test_restoring_numpy_array_conversion_remains_guarded ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EF5B416F90>
+
+    def test_restoring_numpy_array_conversion_remains_guarded(monkeypatch):
+>       model, _ = model_and_node()
+                   ^^^^^^^^^^^^^^^^
+
+tests\test_checkpoint_inert_node_observation.py:63: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def model_and_node():
+>       model = FEModel()
+                ^^^^^^^^^
+E       TypeError: FEModel.__init__() missing 1 required positional argument: 'name'
+
+tests\test_checkpoint_inert_node_observation.py:11: TypeError
+_____________ test_effectful_coordinate_conversion_stays_guarded ______________
+
+    def test_effectful_coordinate_conversion_stays_guarded():
+>       model, node = model_and_node()
+                      ^^^^^^^^^^^^^^^^
+
+tests\test_checkpoint_inert_node_observation.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def model_and_node():
+>       model = FEModel()
+                ^^^^^^^^^
+E       TypeError: FEModel.__init__() missing 1 required positional argument: 'name'
+
+tests\test_checkpoint_inert_node_observation.py:11: TypeError
+_________________ test_effectful_dof_conversion_stays_guarded _________________
+
+    def test_effectful_dof_conversion_stays_guarded():
+>       model, node = model_and_node()
+                      ^^^^^^^^^^^^^^^^
+
+tests\test_checkpoint_inert_node_observation.py:89: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def model_and_node():
+>       model = FEModel()
+                ^^^^^^^^^
+E       TypeError: FEModel.__init__() missing 1 required positional argument: 'name'
+
+tests\test_checkpoint_inert_node_observation.py:11: TypeError
+____ test_node_subclasses_instance_overrides_and_large_integers_fall_back _____
+
+    def test_node_subclasses_instance_overrides_and_large_integers_fall_back():
+>       _, node = model_and_node()
+                  ^^^^^^^^^^^^^^^^
+
+tests\test_checkpoint_inert_node_observation.py:102: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def model_and_node():
+>       model = FEModel()
+                ^^^^^^^^^
+E       TypeError: FEModel.__init__() missing 1 required positional argument: 'name'
+
+tests\test_checkpoint_inert_node_observation.py:11: TypeError
+______________ test_changed_original_function_code_is_not_inert _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EF5B5949E0>
+
+    def test_changed_original_function_code_is_not_inert(monkeypatch):
+>       _, node = model_and_node()
+                  ^^^^^^^^^^^^^^^^
+
+tests\test_checkpoint_inert_node_observation.py:114: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def model_and_node():
+>       model = FEModel()
+                ^^^^^^^^^
+E       TypeError: FEModel.__init__() missing 1 required positional argument: 'name'
+
+tests\test_checkpoint_inert_node_observation.py:11: TypeError
+____________ test_class_getter_descriptor_is_not_invoked_by_proof _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EF5B594F30>
+
+    def test_class_getter_descriptor_is_not_invoked_by_proof(monkeypatch):
+>       _, node = model_and_node()
+                  ^^^^^^^^^^^^^^^^
+
+tests\test_checkpoint_inert_node_observation.py:122: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def model_and_node():
+>       model = FEModel()
+                ^^^^^^^^^
+E       TypeError: FEModel.__init__() missing 1 required positional argument: 'name'
+
+tests\test_checkpoint_inert_node_observation.py:11: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_checkpoint_inert_node_observation.py::test_plain_node_descriptor_has_exact_coordinates_and_keeps_outer_guards
+FAILED tests/test_checkpoint_inert_node_observation.py::test_changed_node_method_keeps_its_post_observation_guard
+FAILED tests/test_checkpoint_inert_node_observation.py::test_coordinate_property_is_not_invoked_by_proof_and_stays_guarded
+FAILED tests/test_checkpoint_inert_node_observation.py::test_restoring_numpy_array_conversion_remains_guarded
+FAILED tests/test_checkpoint_inert_node_observation.py::test_effectful_coordinate_conversion_stays_guarded
+FAILED tests/test_checkpoint_inert_node_observation.py::test_effectful_dof_conversion_stays_guarded
+FAILED tests/test_checkpoint_inert_node_observation.py::test_node_subclasses_instance_overrides_and_large_integers_fall_back
+FAILED tests/test_checkpoint_inert_node_observation.py::test_changed_original_function_code_is_not_inert
+FAILED tests/test_checkpoint_inert_node_observation.py::test_class_getter_descriptor_is_not_invoked_by_proof
+9 failed, 21 passed in 16.62s

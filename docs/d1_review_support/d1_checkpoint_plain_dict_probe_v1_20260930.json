@@ -1,0 +1,25 @@
+{
+  "status": "development_complete",
+  "scope": "Compare guarded normalization of one saved checkpoint, without a solve.\n\nOnly the named normalization function changes. Full model guards delegate\nunchanged. Timing is this saved canonical serialization layer, not checkpoint\ncreation or a complete coupled route.\n",
+  "saved_sha256": "96f0bcec3b5a3fcc6bd913d3cff192e8b66a7ba9d34e2d3d0dedeaea7c0fc001",
+  "baseline_source_sha256": "0725578746d807f504a45f3940646d498f92964b0f77bef658d97b6d72316a39",
+  "candidate_source_sha256": "51b517d9e2aff2e60020fc0dcc0c78f884cd678ef7afc691e72052bdf1369f3b",
+  "imported_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "phases": {
+    "baseline": {
+      "guard_calls": 1307,
+      "guard_seconds": 48.102717699686764,
+      "elapsed_seconds": 48.22262800001772,
+      "canonical_sha256": "300b7828cfcebdbdf6989da38c7c2a10938ccd6d6262af1f19a0e2a3db6aab35",
+      "exact_payload_parity": true
+    },
+    "candidate": {
+      "guard_calls": 0,
+      "guard_seconds": 0.0,
+      "elapsed_seconds": 0.11413770000217482,
+      "canonical_sha256": "300b7828cfcebdbdf6989da38c7c2a10938ccd6d6262af1f19a0e2a3db6aab35",
+      "exact_payload_parity": true
+    }
+  },
+  "original_input_unchanged": true
+}

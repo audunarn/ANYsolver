@@ -1,0 +1,70 @@
+{
+  "reference": "reports\\general_contact_d1_free_target_8q4_press_pose_dev_20260927.json",
+  "candidate": "equilibrated_8q4_free_target_tangent_dev",
+  "free_dofs": 46,
+  "free_force_rows": 40,
+  "free_moment_rows": 6,
+  "target_z_weights": [
+    0.5,
+    0.5
+  ],
+  "source_weight": 0.1,
+  "difference_order": 2,
+  "steps_m": [
+    3e-07,
+    1.5e-07
+  ],
+  "pose_constraint_error_m": 0.0,
+  "pressure_replay_error_pa": 0.0,
+  "base_active_modes": 1,
+  "overlap_pair_branches": 16,
+  "mapped_contact_force_norm_n": 0.0001210508709044453,
+  "runs": [
+    {
+      "step_m": 3e-07,
+      "branch_checks": {
+        "pressure_active": true,
+        "reference_support": true,
+        "overlap_signature": true,
+        "pair_derivatives": true
+      },
+      "smooth_branch": true,
+      "relative_coupled_error": 1.7490808327967094e-13,
+      "relative_mapped_contact_error": 1.0720933912262646e-11,
+      "coupled_action_n_per_m": 7935.4100633029975,
+      "mapped_contact_action_n_per_m": 108.36512477206061,
+      "coupled_force_error": 1.7490808604331812e-13,
+      "coupled_force_action": 7935.409851689814,
+      "mapped_contact_force_error": 1.0720933912204068e-11,
+      "mapped_contact_force_action": 108.36512477204406,
+      "coupled_moment_error": 1.1165178975394011e-13,
+      "coupled_moment_action": 1.8326141800191829,
+      "mapped_contact_moment_error": 6.498157234103888e-11,
+      "mapped_contact_moment_action": 5.9922594785781215e-05
+    },
+    {
+      "step_m": 1.5e-07,
+      "branch_checks": {
+        "pressure_active": true,
+        "reference_support": true,
+        "overlap_signature": true,
+        "pair_derivatives": true
+      },
+      "smooth_branch": true,
+      "relative_coupled_error": 3.764946241491873e-13,
+      "relative_mapped_contact_error": 1.0879814832290743e-11,
+      "coupled_action_n_per_m": 7935.41006330353,
+      "mapped_contact_action_n_per_m": 108.36512477207788,
+      "coupled_force_error": 3.7649463406302184e-13,
+      "coupled_force_action": 7935.409851690346,
+      "mapped_contact_force_error": 1.087981483228117e-11,
+      "mapped_contact_force_action": 108.36512477206132,
+      "coupled_moment_error": 4.219881490558483e-14,
+      "coupled_moment_action": 1.8326141800190547,
+      "mapped_contact_moment_error": 2.8276278729057332e-11,
+      "mapped_contact_moment_action": 5.992259478375812e-05
+    }
+  ],
+  "status": "passed_development",
+  "elapsed_seconds": 25.78715430002194
+}

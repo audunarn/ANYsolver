@@ -1,0 +1,31 @@
+{
+  "status": "exploratory_saved_pose_pressure_screen",
+  "saved_pose": "docs\\d1_review_support\\d1_coupled_contrast_12q4_32s3_20260929.json",
+  "source_cells": [
+    12,
+    12
+  ],
+  "target_cells": [
+    4,
+    4
+  ],
+  "target_y0_m": -0.1,
+  "source_reference_normal": [
+    -9.999999949998899e-05,
+    0.0,
+    0.9999999950000001
+  ],
+  "signed_interior_modes": 121,
+  "active_modes": 0,
+  "reference_support_min_m2": 0.006944444479166605,
+  "reference_support_max_m2": 0.006944444479166723,
+  "mass_minimum_eigenvalue_m2": 0.0008250844151871093,
+  "path_control_error": 0.0,
+  "eta": 0.9999975409545713,
+  "kappa": 221.80034832238576,
+  "gamma_constructive": 0.004508537022050576,
+  "provisional_eta_level": 0.9,
+  "provisional_kappa_level": 2110.0,
+  "provisional_levels_met": true,
+  "scope_note": "Reference-energy saved-pose screen only; no nonlinear norm equivalence or acceptance claim."
+}

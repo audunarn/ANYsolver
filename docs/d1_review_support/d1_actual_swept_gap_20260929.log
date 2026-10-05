@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_actual_swept_gap_dev.py", line 137, in <module>
+    main(args.saved, args.output)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_actual_swept_gap_dev.py", line 128, in main
+    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+                      ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Python\Python314\Lib\json\__init__.py", line 242, in dumps
+    **kw).encode(obj)
+          ~~~~~~^^^^^
+  File "C:\Python\Python314\Lib\json\encoder.py", line 202, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+  File "C:\Python\Python314\Lib\json\encoder.py", line 263, in iterencode
+    return _iterencode(o, 0)
+  File "C:\Python\Python314\Lib\json\encoder.py", line 182, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+                    f'is not JSON serializable')
+TypeError: Object of type bool is not JSON serializable
+when serializing dict item 'admissible_under_unchanged_gap_budget'
+when serializing list item 0
+when serializing dict item 'results'

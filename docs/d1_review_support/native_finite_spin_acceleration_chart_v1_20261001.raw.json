@@ -1,0 +1,44 @@
+{
+  "status": "NONPASS",
+  "accepted_steps": 0,
+  "criteria": {
+    "spatial_spin_rad_per_s": [
+      35.0,
+      -25.0,
+      20.0
+    ],
+    "dt_seconds": 0.0005,
+    "maximum_accepted_steps": 1,
+    "internal_time_limit_seconds": 120.0,
+    "explicit_stage_solve_tolerance": 1e-12,
+    "scientific_stage_gate": 1e-11,
+    "endpoint_balance_gate": 1e-11,
+    "normalized_defect_limit": 1e-06,
+    "elastic_witness_limit": 1e-10,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "length_scale_m": 2.0,
+    "maximum_returned_stage_observations": 128,
+    "stage_coordinates": "acceleration",
+    "directional_intervals": [
+      1e-05,
+      5e-06
+    ],
+    "directional_tangent_limit": 1e-05,
+    "arithmetic_gamma_operations": 64
+  },
+  "unissued_stages": [],
+  "scope": "One finite-spin convergence/resolution screen; no finite-angle trajectory/reference claim",
+  "failure_type": "AssertionError",
+  "failure": "assert '2c8e243e74f0...89e10b2f265df' == 'f2c494a93315...704638f03f71a'\n  \n  - f2c494a93315b541500a8f6aa7330bfae2f731ac9f2251f1585704638f03f71a\n  + 2c8e243e74f0b6eafff485b536f08242a51154d31dd8500afe689e10b2f265df",
+  "last_stage": "failure",
+  "elapsed_seconds": 0.04129850000026636
+}

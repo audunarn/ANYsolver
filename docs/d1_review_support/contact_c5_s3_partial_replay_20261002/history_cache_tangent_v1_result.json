@@ -1,0 +1,21 @@
+{
+  "authority_consumed": true,
+  "source_bindings_verified": true,
+  "scope": "Development only, no workflow/restart/acceptance claim; earlier 374.553s pose identity unestablished",
+  "id": "C5_RECONTACT_HISTORY_CACHE_TANGENT_V1_20261002",
+  "cost": {
+    "elapsed_seconds": 343.48068040004,
+    "material_cache_points": 8294,
+    "evaluations": 46
+  },
+  "resource": {
+    "peak_sampled_bytes": 207151104,
+    "limit_mib": 953,
+    "elapsed_seconds": 349.53735009999946,
+    "status": "terminal",
+    "child_exit_codes": [
+      0
+    ]
+  },
+  "status": "passed retained tangent derivative and integration checks"
+}

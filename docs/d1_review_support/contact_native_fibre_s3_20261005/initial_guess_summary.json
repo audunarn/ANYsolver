@@ -1,0 +1,160 @@
+{
+  "raw_root": "C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate08",
+  "independent_control": {
+    "checkpoint_sha256": "2c96b3194034fe153a8e0e15ca4882d0b235cbdc1e75b2580f14210e1c15755c",
+    "scope": "fixed-pose independent residual and local sensitivity only",
+    "elapsed_s": 6.744543300010264,
+    "controls": [
+      {
+        "error_estimate": 4.122875884109417E-12,
+        "evaluations": 651,
+        "angular_order": 12,
+        "tolerance": 1E-10
+      },
+      {
+        "error_estimate": 1.429300272411139E-14,
+        "evaluations": 819,
+        "angular_order": 24,
+        "tolerance": 1E-12
+      }
+    ],
+    "relative_residual_difference": 1.7211959239539786E-14,
+    "residual_refinement_norm": 7.258187516682397E-15,
+    "tip_correction_m": -1.4123038851882334E-19,
+    "tip_relative_correction": 9.092546894644124E-16,
+    "refinement_tip_correction_m": 2.8087523371176617E-19,
+    "refinement_tip_relative_correction": 1.808301500018871E-15
+  },
+  "tenth_budget": {
+    "checkpoint_sha256": "2c96b3194034fe153a8e0e15ca4882d0b235cbdc1e75b2580f14210e1c15755c",
+    "scope": "saved fine pose only; local linearized error estimate, no new solve",
+    "base_settings": {
+      "energy_absolute_tolerance": 1E-10,
+      "force_absolute_tolerance": 1E-08,
+      "tangent_absolute_tolerance": 1E-06,
+      "max_intervals": 64,
+      "characteristic_length_m": 2.0
+    },
+    "control_settings": {
+      "energy_absolute_tolerance": 1.0000000000000001E-11,
+      "force_absolute_tolerance": 1E-09,
+      "tangent_absolute_tolerance": 1E-07,
+      "max_intervals": 64,
+      "characteristic_length_m": 2.0
+    },
+    "status": "control_rejected",
+    "error": "curved axial front bracket work uncertainty exceeds integration budget",
+    "diagnostics": {
+      "root_brackets": [
+        {
+          "cell": 1,
+          "lower": 0.8479177538119984,
+          "upper": 0.8479177582606041,
+          "features": [
+            2
+          ],
+          "representation_gap_m": 4.722709568835759E-13,
+          "active_angular_width_bound": 1.610096500689275E-05,
+          "angular_fallback": false,
+          "representative_xi": 0.8479177549241499,
+          "error_bounds": [
+            1.4767178907901584E-21,
+            1.415159848506485E-16,
+            2.6830572694696167E-07
+          ],
+          "enclosure_refinement": "declared_material_arc"
+        }
+      ],
+      "error_bounds": [
+        1.4767178907901584E-21,
+        1.415159848506485E-16,
+        2.6830572694696167E-07
+      ]
+    },
+    "elapsed_s": 6.40818439994473
+  },
+  "parent_head": "84583d4b9817dee68f715b224c5bae19928b7e12",
+  "response": {
+    "stiffness_Pa_per_m": 20000000.0,
+    "previous_stiffness_Pa_per_m": 10000000.0,
+    "response_relative_errors": {
+      "contact_force_n": 0.003101867042789107,
+      "contact_moment_nm": 0.0011747406352875503,
+      "tip_z_m": 0.030111971138901298,
+      "target_z_m": 0.002160074026562761
+    },
+    "response_target": 0.02,
+    "production_gap_lower_m": -1.1207836723437235E-05,
+    "independent_sampled_refined_gap_m": -1.1207200617478377E-05,
+    "previous_gap_lower_m": -1.501308397780244E-05,
+    "quantities": {
+      "contact_force_n": [
+        2.197673605799782E-08,
+        -7.3255786859992736E-09,
+        0.005385393944408101
+      ],
+      "contact_moment_nm": [
+        0.00023301583299040478,
+        -0.010152416799893269,
+        -1.4760898905489574E-08
+      ],
+      "tip_z_m": -0.00015532544418551608,
+      "target_z_m": -4.080803797244555E-05
+    }
+  },
+  "source_hashes": {
+    "docs/d1_review_support/contact_native_fibre_s3_20261005/initial_guess_tenth_budget_control.py": "c38c2ecf85728e81431a5aec47d706dc5775b622070fec7512df425a1652a283",
+    "docs/d1_review_support/contact_native_fibre_s3_20261005/initial_guess_independent_residual_control.py": "abdc5ed424ea927f9ba65c0f18bc8805033c0566f0f5fde2e478e73a84b005b8",
+    "tests/test_general_contact_native_initial_guess.py": "8f4d769ee6d259e710d73955da1fe1ba6c66b70ae1f82769d915c21317810a06",
+    "src/anysolver/general_contact/native_initial_guess.py": "e5e9ded2b445f4bbfa2f4524cf0bec0d05edc6c59f63703404000abbb019ef99",
+    "tests/test_general_contact_native_fibre_enforcement.py": "0da7b5f72a6b7782747d4ef19c2419ceb83d6749e6c39087e9efe055d8098f41",
+    "src/anysolver/general_contact/native_shell_static_driver.py": "d5ec8e3a632d27c4cc6039e86ff1e7b80474134cb404737e261f4efa7d6db862",
+    "src/anysolver/general_contact/native_multi_s3_static.py": "7f139907e2d00c5ab7136d4d81894e72ec61638b448b3aee532c08d0e53bce79"
+  },
+  "disposition": "implemented/tested initialization; enforcement response NONPASS; no independent acceptance or release",
+  "wheel_sha256": "167b465dfb959a1b4cd6cc232138c7c129c07f5f2bd591f04eadba221189d0fb",
+  "jobs": {
+    "installed_seeded_enforcement_k2e7": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 96.13814910000656,
+      "peak_bytes": 186023936
+    },
+    "final_guess_contracts": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 59.09221809997689,
+      "peak_bytes": 191578112
+    },
+    "installed_fine_pose_integration_control": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 9.287905200035311,
+      "peak_bytes": 183652352
+    },
+    "installed_initial_guess_contracts": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 67.65063319995534,
+      "peak_bytes": 193171456
+    },
+    "installed_independent_fine_residual_repaired": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 9.489226400037296,
+      "peak_bytes": 183046144
+    },
+    "installed_independent_fine_residual_reference_frame_corrected": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 9.504132300033234,
+      "peak_bytes": 182001664
+    },
+    "installed_independent_fine_residual": {
+      "status": "completed",
+      "returncode": 1,
+      "elapsed_s": 9.696735599893145,
+      "peak_bytes": 181813248
+    }
+  }
+}

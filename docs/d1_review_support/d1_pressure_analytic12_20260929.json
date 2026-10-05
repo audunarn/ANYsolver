@@ -1,0 +1,37 @@
+{
+  "status": "exploratory_transport_pose_pressure_screen",
+  "saved_pose": "docs\\d1_review_support\\d1_coupled_contrast_12q4_32s3_20260929.json",
+  "pose_rule": "smooth_analytic_press",
+  "source_cells": [
+    12,
+    12
+  ],
+  "target_cells": [
+    4,
+    4
+  ],
+  "target_y0_m": -0.113,
+  "source_reference_normal": [
+    -9.999999949998899e-05,
+    0.0,
+    0.9999999950000001
+  ],
+  "signed_interior_modes": 121,
+  "active_modes": 0,
+  "negative_gap_interior_modes": 26,
+  "minimum_interior_gap_m": -1.576607166807529e-05,
+  "reference_support_min_m2": 0.0069444444791663396,
+  "reference_support_max_m2": 0.006944444479167078,
+  "mass_minimum_eigenvalue_m2": 0.0008250844151871093,
+  "path_control_error": 0.0,
+  "full_constrained_energy_dimension": 916,
+  "full_constrained_stiffness_symmetry_error": 1.1072863669684128e-18,
+  "full_constrained_minimum_cholesky_pivot": 0.6902334357371475,
+  "eta": 0.999999960549596,
+  "kappa": 221.80034832238576,
+  "gamma_constructive": 0.004508558839798116,
+  "provisional_eta_level": 0.9,
+  "provisional_kappa_level": 2110.0,
+  "provisional_levels_met": true,
+  "scope_note": "Reference-energy saved-pose screen only; no nonlinear norm equivalence or acceptance claim."
+}

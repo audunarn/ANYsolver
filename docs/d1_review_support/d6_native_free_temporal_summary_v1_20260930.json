@@ -1,0 +1,518 @@
+{
+  "status": "local_development_PASS",
+  "accepted": false,
+  "released": false,
+  "counts": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "old_midpoint_checks_deselected": 2,
+  "accepted_steps": 24,
+  "resource": {
+    "status": "completed",
+    "exit_code": 0,
+    "elapsed_seconds": 42.28115120000439,
+    "peak_process_tree_memory_mb": 203.620352,
+    "time_limit_seconds": 180.0,
+    "memory_limit_bytes": 1073741824,
+    "command": [
+      "C:/Python/Python314/python.exe",
+      "C:/ANYworkspaceWork/ANYsolver-general-contact/docs/d1_review_support/d6_native_free_temporal_v1_20260930.entry.source.py"
+    ],
+    "log": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.log"
+  },
+  "checks": {
+    "scoped_work_issuance": {
+      "thread_bound": true,
+      "nested_rejected": true,
+      "scoped_capacity": 128,
+      "over_capacity_rejected": true,
+      "ephemeral_invalid_after_exit": true,
+      "standalone_states_preserved": true,
+      "no_eviction": true
+    },
+    "free_publication_rollback": {
+      "real_native_exit_guard_completed": true,
+      "scoped_tokens_expired": true,
+      "visible_prior_until_exit": true,
+      "issuance_and_candidate_restored": true,
+      "cancelled_commit_restored": true,
+      "route_identity_bound": true,
+      "same_ready_candidate_reused": true,
+      "observations": [
+        {
+          "visible_prior": true,
+          "scoped_closed": true,
+          "work_session_closed": true
+        }
+      ]
+    },
+    "public_profile_unchanged": true,
+    "legacy_default_identity_payload": {
+      "explicit_new_owner_only": true,
+      "default": "legacy_clamp",
+      "default_payload_unchanged": true
+    }
+  },
+  "source_sha256": {
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_centered_finite_inertia.py": "3334699c5a4c14ef67cbfcef3ad54c3be8c80a15b98f2c34aa6840be70d32f84",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_dynamic_elastic_state.py": "8c3cd98ea263e43fa238964acd39f0d6502700467986fabceb707e560a72d032",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src\\anysolver\\_ge_beam3_native_midpoint.py": "05e77d96a2d18c46911b63a48534024ad14cffc66c73aa33a775f0028c25c4cc",
+    "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\tests\\test_ge_beam3_native_midpoint.py": "40417905296f9ece5af97c42650932dc5af6963608247928bb7a8d7d93d4d5e2"
+  },
+  "verified_in_process_environment": {
+    "PYTHONPATH": "C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver\\src;C:\\Users\\AudunArnesenNyhus\\.codex\\worktrees\\general-contact-native-dynamics\\ANYsolver",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMBA_CACHE_DIR": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.numba_cache",
+    "D6_FREE_TEMPORAL_OUTPUT": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.json"
+  },
+  "all_frozen_source_files_unchanged_postrun": true,
+  "evidence_files": {
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.inputs.json": "7dba6c5b1eb71d63dbb1a08e139d767ca1abe8290c9773d29fc5092664423c12",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.entry.source.py": "6565c6608411fccf5dd8539d55d722c9cb153a745f1b5a9fa22e04270acf8f9c",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.midpoint.source.py": "05e77d96a2d18c46911b63a48534024ad14cffc66c73aa33a775f0028c25c4cc",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.dynamic.source.py": "8c3cd98ea263e43fa238964acd39f0d6502700467986fabceb707e560a72d032",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.test.source.py": "40417905296f9ece5af97c42650932dc5af6963608247928bb7a8d7d93d4d5e2",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.json": "1ffc47b49472eeeb8b875a1570686c28d7c641ae2b17b21d829da3ba0d362b94",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.xml": "6be64a64e42692f4ba299116cbeca5d4a19f5454186825a352ffeabfade2f338",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.log": "645a577374d7172687fa917c2e887ee6be39309e4f29b053c299c9341cf8f71c",
+    "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\d6_native_free_temporal_v1_20260930.resource.json": "fd6993c010d01b846944eb85d86586cf5a7fb3bfff1b3c4a083f80c95dc508d1"
+  },
+  "cases": {
+    "translation": {
+      "comparison": {
+        "normalized_linear": {
+          "coarse": 0.0,
+          "fine": 0.0,
+          "fine_coarse_ratio": null,
+          "disposition": "resolution_limited",
+          "passes": true
+        },
+        "normalized_angular": {
+          "coarse": 1.0317545518958182e-20,
+          "fine": 2.1920691505324548e-20,
+          "fine_coarse_ratio": null,
+          "disposition": "resolution_limited",
+          "passes": true
+        },
+        "normalized_energy": {
+          "coarse": 0.0,
+          "fine": 0.0,
+          "fine_coarse_ratio": null,
+          "disposition": "resolution_limited",
+          "passes": true
+        }
+      },
+      "resolutions": {
+        "coarse": {
+          "scales": {
+            "mass": 5.540727404304961,
+            "length": 2.0,
+            "energy": 0.06454947426015278,
+            "velocity": 0.15264337522473748,
+            "momentum": 0.8457553321933078,
+            "angular_momentum": 1.6915106643866156,
+            "angular_velocity": 0.07632168761236874
+          },
+          "initial_rank_mass": {
+            "algebraic_condition": 46900.21092266667,
+            "algebraic_rank": 27,
+            "algebraic_sigma_max": 1.617335709717673,
+            "algebraic_sigma_min": 3.448461484287316e-05,
+            "physical_mass_condition": 17.433616647030846,
+            "physical_mass_max_eigenvalue": 2.1685761019501215,
+            "physical_mass_min_eigenvalue": 0.12439048912547104
+          },
+          "final_accounting": {
+            "time_seconds": 0.004,
+            "epoch": 4,
+            "state_sha256": "deb07a4bb941a56e4e676c7757804778797aa02464ad4d3b32fd6dad955cfd40",
+            "linear_momentum_kg_m_per_s": [
+              0.6648872885165953,
+              -0.4432581923443969,
+              0.277036370215248
+            ],
+            "linear_momentum_low_kg_m_per_s": [
+              -4.166188381650052e-18,
+              6.950541880788014e-18,
+              -2.8330448133778597e-18
+            ],
+            "angular_momentum_kg_m2_per_s": [
+              0.02224508382704676,
+              -0.026072182212914883,
+              -0.09510369272557602
+            ],
+            "angular_momentum_low_kg_m2_per_s": [
+              1.6637002421153739e-18,
+              -4.715786489615061e-19,
+              -3.661312635957852e-19
+            ],
+            "kinetic_energy_j": 0.06454947426015278,
+            "consistent_elastic_energy_j": 0.0,
+            "total_energy_j": 0.06454947426015278,
+            "elastic_consistency_witness_j": 0.0,
+            "resultant_compatibility18": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rank_mass_checks": {
+              "algebraic_condition": 46900.21092266667,
+              "algebraic_rank": 27,
+              "algebraic_sigma_max": 1.617335709717673,
+              "algebraic_sigma_min": 3.448461484287316e-05,
+              "physical_mass_condition": 17.433616647030846,
+              "physical_mass_max_eigenvalue": 2.1685761019501215,
+              "physical_mass_min_eigenvalue": 0.12439048912547104
+            }
+          },
+          "step_defect_maximum": {
+            "normalized_linear": 0.0,
+            "normalized_angular": 5.578104577120815e-21,
+            "normalized_energy": 0.0
+          },
+          "cumulative_defect_maximum": {
+            "normalized_linear": 0.0,
+            "normalized_angular": 1.0317545518958182e-20,
+            "normalized_energy": 0.0
+          },
+          "max_elastic_witness_normalized": 0.0,
+          "max_stage_residual": 9.840816644204153e-19,
+          "max_endpoint_algebraic_residual": 0.0,
+          "max_translation_error": {
+            "position_over_length": 2.112095246515556e-20,
+            "velocity_over_speed": 0.0,
+            "cell_frame": 0.0,
+            "nodal_frame": 0.0
+          }
+        },
+        "fine": {
+          "scales": {
+            "mass": 5.540727404304961,
+            "length": 2.0,
+            "energy": 0.06454947426015278,
+            "velocity": 0.15264337522473748,
+            "momentum": 0.8457553321933078,
+            "angular_momentum": 1.6915106643866156,
+            "angular_velocity": 0.07632168761236874
+          },
+          "initial_rank_mass": {
+            "algebraic_condition": 46900.21092266667,
+            "algebraic_rank": 27,
+            "algebraic_sigma_max": 1.617335709717673,
+            "algebraic_sigma_min": 3.448461484287316e-05,
+            "physical_mass_condition": 17.433616647030846,
+            "physical_mass_max_eigenvalue": 2.1685761019501215,
+            "physical_mass_min_eigenvalue": 0.12439048912547104
+          },
+          "final_accounting": {
+            "time_seconds": 0.004,
+            "epoch": 8,
+            "state_sha256": "df7ba9f9646cd0470f5b1e02dcda10859ca82f11cb617daf380a20588a2eea7f",
+            "linear_momentum_kg_m_per_s": [
+              0.6648872885165953,
+              -0.4432581923443969,
+              0.277036370215248
+            ],
+            "linear_momentum_low_kg_m_per_s": [
+              -4.166188381650052e-18,
+              6.950541880788014e-18,
+              -2.8330448133778597e-18
+            ],
+            "angular_momentum_kg_m2_per_s": [
+              0.02224508382704676,
+              -0.026072182212914883,
+              -0.09510369272557602
+            ],
+            "angular_momentum_low_kg_m2_per_s": [
+              1.6757147794931688e-18,
+              -4.544044655185043e-19,
+              -3.674874597936899e-19
+            ],
+            "kinetic_energy_j": 0.06454947426015278,
+            "consistent_elastic_energy_j": 0.0,
+            "total_energy_j": 0.06454947426015278,
+            "elastic_consistency_witness_j": 0.0,
+            "resultant_compatibility18": [
+              6.776263578034403e-21,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rank_mass_checks": {
+              "algebraic_condition": 46900.21092266667,
+              "algebraic_rank": 27,
+              "algebraic_sigma_max": 1.617335709717673,
+              "algebraic_sigma_min": 3.448461484287316e-05,
+              "physical_mass_condition": 17.433616647030846,
+              "physical_mass_max_eigenvalue": 2.1685761019501215,
+              "physical_mass_min_eigenvalue": 0.12439048912547104
+            }
+          },
+          "step_defect_maximum": {
+            "normalized_linear": 0.0,
+            "normalized_angular": 6.756977602311211e-21,
+            "normalized_energy": 0.0
+          },
+          "cumulative_defect_maximum": {
+            "normalized_linear": 0.0,
+            "normalized_angular": 2.1920691505324548e-20,
+            "normalized_energy": 0.0
+          },
+          "max_elastic_witness_normalized": 0.0,
+          "max_stage_residual": 9.84080206278533e-19,
+          "max_endpoint_algebraic_residual": 6.776263578034403e-21,
+          "max_translation_error": {
+            "position_over_length": 3.0399772120785825e-20,
+            "velocity_over_speed": 0.0,
+            "cell_frame": 0.0,
+            "nodal_frame": 0.0
+          }
+        }
+      }
+    },
+    "anisotropic_spin": {
+      "comparison": {
+        "normalized_linear": {
+          "coarse": 2.075768089711586e-12,
+          "fine": 5.197887975519585e-13,
+          "fine_coarse_ratio": null,
+          "disposition": "resolution_limited",
+          "passes": true
+        },
+        "normalized_angular": {
+          "coarse": 1.9524815930771148e-13,
+          "fine": 4.912204385011556e-14,
+          "fine_coarse_ratio": null,
+          "disposition": "resolution_limited",
+          "passes": true
+        },
+        "normalized_energy": {
+          "coarse": 5.8386559300928205e-09,
+          "fine": 1.4602713940825062e-09,
+          "fine_coarse_ratio": 0.2501040327716813,
+          "disposition": "decreasing",
+          "passes": true
+        }
+      },
+      "resolutions": {
+        "coarse": {
+          "scales": {
+            "mass": 5.540727404304961,
+            "length": 2.0,
+            "energy": 0.1382497463856634,
+            "velocity": 0.22339002537412614,
+            "momentum": 1.2377432354388012,
+            "angular_momentum": 2.4754864708776023,
+            "angular_velocity": 0.4743416490252569
+          },
+          "initial_rank_mass": {
+            "algebraic_condition": 46900.21092266667,
+            "algebraic_rank": 27,
+            "algebraic_sigma_max": 1.617335709717673,
+            "algebraic_sigma_min": 3.448461484287316e-05,
+            "physical_mass_condition": 17.433616647030846,
+            "physical_mass_max_eigenvalue": 2.1685761019501215,
+            "physical_mass_min_eigenvalue": 0.12439048912547104
+          },
+          "final_accounting": {
+            "time_seconds": 0.004,
+            "epoch": 4,
+            "state_sha256": "e3cd40611d166874e137c744d6565eb548f8a1a02d5f0b76fc6c3e4f6ef2ec47",
+            "linear_momentum_kg_m_per_s": [
+              -0.09867660826327303,
+              0.08628136478808907,
+              0.28053577044893885
+            ],
+            "linear_momentum_low_kg_m_per_s": [
+              -5.592571263815227e-18,
+              -3.745681567166113e-18,
+              1.2271615613149233e-17
+            ],
+            "angular_momentum_kg_m2_per_s": [
+              0.12543005939995602,
+              -0.5608120963247977,
+              0.4619797395013286
+            ],
+            "angular_momentum_low_kg_m2_per_s": [
+              2.9661535806436657e-18,
+              1.8955576101755125e-17,
+              -1.3042057570563934e-17
+            ],
+            "kinetic_energy_j": 0.1382497245268594,
+            "consistent_elastic_energy_j": 2.2665996698769787e-08,
+            "total_energy_j": 0.1382497471928561,
+            "elastic_consistency_witness_j": 3.5055685346218634e-21,
+            "resultant_compatibility18": [
+              8.95543563838252e-23,
+              2.2732592156352814e-23,
+              3.3355349566656727e-23,
+              4.8602001410751715e-23,
+              2.3136931834109266e-23,
+              1.8831752231787324e-23,
+              2.9775354411714698e-15,
+              -4.837548712804468e-16,
+              -1.6733548292067069e-15,
+              1.9464096777920693e-16,
+              -2.3159278523389975e-16,
+              -8.727250548610894e-17,
+              -6.511451855436284e-16,
+              6.527650563874975e-16,
+              3.8890760225431566e-16,
+              3.6849365778035967e-16,
+              -7.079404095100278e-17,
+              -1.4100216609995312e-15
+            ],
+            "rank_mass_checks": {
+              "algebraic_condition": 46900.21092266232,
+              "algebraic_rank": 27,
+              "algebraic_sigma_max": 1.6173357097177299,
+              "algebraic_sigma_min": 3.448461484287757e-05,
+              "physical_mass_condition": 17.433616644265527,
+              "physical_mass_max_eigenvalue": 2.1685761019473144,
+              "physical_mass_min_eigenvalue": 0.12439048914504083
+            }
+          },
+          "step_defect_maximum": {
+            "normalized_linear": 5.595105574711952e-13,
+            "normalized_angular": 6.252150681997874e-14,
+            "normalized_energy": 2.467223440630236e-09
+          },
+          "cumulative_defect_maximum": {
+            "normalized_linear": 2.075768089711586e-12,
+            "normalized_angular": 1.9524815930771148e-13,
+            "normalized_energy": 5.8386559300928205e-09
+          },
+          "max_elastic_witness_normalized": 2.5356780943689264e-20,
+          "max_stage_residual": 1.1776182385631003e-13,
+          "max_endpoint_algebraic_residual": 3.889641991206093e-15
+        },
+        "fine": {
+          "scales": {
+            "mass": 5.540727404304961,
+            "length": 2.0,
+            "energy": 0.1382497463856634,
+            "velocity": 0.22339002537412614,
+            "momentum": 1.2377432354388012,
+            "angular_momentum": 2.4754864708776023,
+            "angular_velocity": 0.4743416490252569
+          },
+          "initial_rank_mass": {
+            "algebraic_condition": 46900.21092266667,
+            "algebraic_rank": 27,
+            "algebraic_sigma_max": 1.617335709717673,
+            "algebraic_sigma_min": 3.448461484287316e-05,
+            "physical_mass_condition": 17.433616647030846,
+            "physical_mass_max_eigenvalue": 2.1685761019501215,
+            "physical_mass_min_eigenvalue": 0.12439048912547104
+          },
+          "final_accounting": {
+            "time_seconds": 0.004,
+            "epoch": 8,
+            "state_sha256": "4050a52cc0c2e3b144aa1cdeb1797be0a7e26076610415dbeb8d8861cce9d54e",
+            "linear_momentum_kg_m_per_s": [
+              -0.09867660826510712,
+              0.08628136478777224,
+              0.28053577044943373
+            ],
+            "linear_momentum_low_kg_m_per_s": [
+              3.6012243878021355e-18,
+              4.166260573516908e-18,
+              5.372672737525149e-18
+            ],
+            "angular_momentum_kg_m2_per_s": [
+              0.12543005939994703,
+              -0.5608120963244361,
+              0.46197973950133564
+            ],
+            "angular_momentum_low_kg_m2_per_s": [
+              4.5280796622875806e-18,
+              -2.8151226869645545e-17,
+              2.745208341060774e-17
+            ],
+            "kinetic_energy_j": 0.13824972389671666,
+            "consistent_elastic_energy_j": 2.2690828881040085e-08,
+            "total_energy_j": 0.13824974658754555,
+            "elastic_consistency_witness_j": 8.779685415980652e-22,
+            "resultant_compatibility18": [
+              3.782948560083556e-23,
+              8.431453014451033e-24,
+              -3.792344605691586e-23,
+              -3.1881265988832987e-24,
+              1.6400836848379565e-24,
+              -3.259126442873904e-23,
+              7.449356255973319e-16,
+              -1.0822955279562398e-16,
+              -4.1853768980684067e-16,
+              4.880930588664974e-17,
+              -5.787176559126649e-17,
+              -2.1980895707599867e-17,
+              -1.6314801730583533e-16,
+              1.634150105215376e-16,
+              9.75025533427198e-17,
+              9.200178773074673e-17,
+              -6.271217407316243e-18,
+              -3.520262093853454e-16
+            ],
+            "rank_mass_checks": {
+              "algebraic_condition": 46900.21092258326,
+              "algebraic_rank": 27,
+              "algebraic_sigma_max": 1.6173357097177303,
+              "algebraic_sigma_min": 3.448461484293571e-05,
+              "physical_mass_condition": 17.433616644259065,
+              "physical_mass_max_eigenvalue": 2.168576101947312,
+              "physical_mass_min_eigenvalue": 0.12439048914508684
+            }
+          },
+          "step_defect_maximum": {
+            "normalized_linear": 7.139297205935728e-14,
+            "normalized_angular": 8.312460337935299e-15,
+            "normalized_energy": 3.2632807081348657e-10
+          },
+          "cumulative_defect_maximum": {
+            "normalized_linear": 5.197887975519585e-13,
+            "normalized_angular": 4.912204385011556e-14,
+            "normalized_energy": 1.4602713940825062e-09
+          },
+          "max_elastic_witness_normalized": 6.350597845936527e-21,
+          "max_stage_residual": 1.754576929390532e-13,
+          "max_endpoint_algebraic_residual": 9.712299297422105e-16
+        }
+      }
+    }
+  }
+}

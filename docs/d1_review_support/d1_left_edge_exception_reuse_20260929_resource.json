@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 65.26290380000137,
+  "peak_process_tree_memory_mb": 415.588352,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_d1_interior_profile.py::test_guarded_left_edge_contact_exception_restores_model",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_left_edge_exception_reuse_20260929.log"
+}

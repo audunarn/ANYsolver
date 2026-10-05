@@ -1,0 +1,111 @@
+{
+  "source_commit": "773f0adef996e8c076c6af3b855cd1115cec71cb",
+  "environment": [
+    "3.14.2",
+    "2.4.6",
+    "1.17.1",
+    "1",
+    "1"
+  ],
+  "run_order": [
+    "nested_1",
+    "monolithic_1",
+    "monolithic_2",
+    "nested_2",
+    "nested_3",
+    "monolithic_3"
+  ],
+  "nested": {
+    "process_seconds": [
+      22.889170399997965,
+      22.79185750000761,
+      30.068685899997945
+    ],
+    "solve_seconds": [
+      21.168465800001286,
+      21.166844099992886,
+      28.453219500006526
+    ],
+    "peak_process_tree_memory_mb": [
+      302.65344,
+      305.025024,
+      309.714944
+    ]
+  },
+  "monolithic": {
+    "process_seconds": [
+      13.898871500001405,
+      14.32237689998874,
+      13.909447900005034
+    ],
+    "solve_seconds": [
+      12.32986839998921,
+      12.664594300003955,
+      12.365603099999134
+    ],
+    "peak_process_tree_memory_mb": [
+      275.90656,
+      280.723456,
+      280.240128
+    ],
+    "candidate_evaluations_per_step": [
+      [
+        5,
+        5
+      ],
+      [
+        5,
+        5
+      ],
+      [
+        5,
+        5
+      ]
+    ],
+    "backtracks_per_step": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ]
+    ]
+  },
+  "paired_parity": [
+    {
+      "maximum_absolute_displacement_difference": 1.7754309532876875e-13,
+      "maximum_absolute_contact_force_difference_n": 2.8699265186560297e-14,
+      "maximum_absolute_pressure_difference_pa": 6.9802497115745155e-12,
+      "maximum_absolute_minimum_gap_difference_m": 0.0
+    },
+    {
+      "maximum_absolute_displacement_difference": 1.7754309532876875e-13,
+      "maximum_absolute_contact_force_difference_n": 2.8699265186560297e-14,
+      "maximum_absolute_pressure_difference_pa": 6.9802497115745155e-12,
+      "maximum_absolute_minimum_gap_difference_m": 0.0
+    },
+    {
+      "maximum_absolute_displacement_difference": 1.7754309532876875e-13,
+      "maximum_absolute_contact_force_difference_n": 2.8699265186560297e-14,
+      "maximum_absolute_pressure_difference_pa": 6.9802497115745155e-12,
+      "maximum_absolute_minimum_gap_difference_m": 0.0
+    }
+  ],
+  "median_process_speed_ratio_nested_over_monolithic": 1.645584394474038,
+  "paired_process_speed_ratios": [
+    1.646836608281158,
+    1.5913460216247715,
+    2.161745463670565
+  ],
+  "median_peak_memory_mb": {
+    "nested": 305.025024,
+    "monolithic": 280.240128
+  },
+  "twofold_median_target_met": false
+}

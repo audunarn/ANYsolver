@@ -1,0 +1,102 @@
+{
+  "status": "passes_named_time_screen",
+  "run_id": "d1_final_0b2_20260930_q4_nocontact",
+  "source_identity": {
+    "baseline": {
+      "commit": "be41a77a62e1cd7e1767bda6e955253af0819f91",
+      "verified_git_blobs": 363,
+      "source": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\reports\\general_contact_nocontact_baseline_be41a77a\\src",
+      "python_file_count": 363,
+      "tree_sha256": "76a234e2bc53cfbc6e52cac5e56c2f7697a7532def41b517838ea98a1e9a99f7"
+    },
+    "current": {
+      "head": "0b2ac9be8d069d6708068c8b2ff2b638b1ae70e1",
+      "source": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src",
+      "python_file_count": 433,
+      "tree_sha256": "a2e5678e8c6334f6895df4341dd5f1e8e0c518ae0e42d2b6c9a5141ae19fab1f"
+    }
+  },
+  "fixture_sha256": {
+    "reports\\d1_no_contact_shell_route.py": "dbacf5c7f7d0ca9ad2820b392b9621a05d912424c7d6ce6a337c5ce3562ef0f7",
+    "scripts\\qualify_nonlinear_representative.py": "6f677fdf43e6e4b449d32cdf8a0a31ef38f3f923388a631c5c617eba4c4f6552",
+    "docs\\reference_cases\\nonlinear_static_representative_manifest.json": "eab3a18084758d91b803e3bb6c01519ab237e863c2b9e7a29b8f849fa2b8114d"
+  },
+  "timing_scope": "fresh-process cold route: model construction and solve after imports",
+  "preflight": "one excluded fresh-process run per source and case",
+  "pair_order": "AB/BA alternating, exactly balanced",
+  "pairs_per_case": 12,
+  "selected_cases": [
+    "clamped_q4"
+  ],
+  "resource_caps": {
+    "child_wall_seconds": 180.0,
+    "child_tree_memory_bytes": 1000000000,
+    "outer_wall_seconds": 900.0,
+    "outer_tree_memory_bytes": 4000000000
+  },
+  "statistical_rule": "exact binomial one-sided >=95% upper confidence bound for population median paired current/baseline whole-route ratio <=1.05",
+  "cases": {
+    "clamped_q4": {
+      "case": "clamped_q4",
+      "paired_ratios_current_over_baseline": [
+        1.0152359033974232,
+        0.9904971351748689,
+        1.0134511531011936,
+        0.9951356731031801,
+        1.0188719908674733,
+        1.0405293513012082,
+        1.0873235434858208,
+        1.0459139823354795,
+        1.0279752112671512,
+        1.012315903364316,
+        1.0174667655584835,
+        1.0111868495310732
+      ],
+      "median_ratio": 1.0163513344779533,
+      "ratio_range": [
+        0.9904971351748689,
+        1.0873235434858208
+      ],
+      "one_sided_median_upper_bound": {
+        "rank": 10,
+        "coverage": 0.980712890625,
+        "one_sided_upper": 1.0405293513012082
+      },
+      "peak_working_set_bytes": {
+        "baseline": [
+          229920768,
+          230518784,
+          229634048,
+          229470208,
+          229900288,
+          230027264,
+          229732352,
+          229707776,
+          229478400,
+          229666816,
+          229777408,
+          229769216
+        ],
+        "current": [
+          228552704,
+          228708352,
+          229527552,
+          229150720,
+          228958208,
+          229150720,
+          229269504,
+          229453824,
+          228884480,
+          229224448,
+          229380096,
+          229081088
+        ]
+      },
+      "median_peak_working_set_bytes": {
+        "baseline": 229750784.0,
+        "current": 229150720.0
+      },
+      "passes_5_percent_time_gate": true
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 86.01435389998369,
+  "peak_process_tree_memory_mb": 428.05248,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_press_dev",
+    "docs/d1_review_support/d1_radial_saved_physical_bins_v10_20260930.json",
+    "--radial-source-bin-check",
+    "docs/d1_review_support/d1_radial_nonmatching_swept_search_coupled_v8_20260930.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_radial_saved_physical_bins_v10_20260930.log"
+}

@@ -1,0 +1,29 @@
+{
+  "status": "development_q4_stiffness_component_discriminator",
+  "source_commit": "6333ec9568cbccf09d4914dbf8642cce23fedd20",
+  "probe_sha256": "5204737a28ede3ec3fad7b41b3be40144bb7e939379b591a9fadccb923f3ae5a",
+  "saved_pose_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "coarse_q4_elements": 128,
+  "fine_q4_elements": 256,
+  "reconstruction_relative": 0.0,
+  "coarse_component_closure_relative": 9.155196394092573e-17,
+  "fine_component_closure_relative": 3.379692971805012e-16,
+  "total_restricted_energy_difference_relative": 0.03806245438603462,
+  "restricted_energy_ratio_minimum": 0.9999999999999738,
+  "restricted_energy_ratio_maximum": 1.4497470753395068,
+  "components": {
+    "core": {
+      "coarse_norm_over_total": 0.9869056355075908,
+      "difference_over_total": 0.038062454386034644
+    },
+    "pl": {
+      "coarse_norm_over_total": 0.0437971932557782,
+      "difference_over_total": 1.1912120687820233e-17
+    },
+    "hourglass": {
+      "coarse_norm_over_total": 0.0,
+      "difference_over_total": 0.0
+    }
+  },
+  "elapsed_seconds": 1.863292400004866
+}

@@ -1,0 +1,21 @@
+{
+  "status": "completed",
+  "exit_code": 1,
+  "elapsed_seconds": 4.665950200025691,
+  "peak_process_tree_memory_mb": 220.635136,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1073741824,
+  "command": [
+    "C:/Python/Python314/python.exe",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_s3_projected_penalty.py",
+    "-q",
+    "-s",
+    "--maxfail=1",
+    "-k",
+    "not test_scalar_p1_plane_full_both_body_work_and_prescribed_reaction",
+    "--junitxml=docs/d1_review_support/d2_s3_projected_penalty_unit_v3_20260930.xml"
+  ],
+  "log": "docs\\d1_review_support\\d2_s3_projected_penalty_unit_v3_20260930.log"
+}

@@ -1,0 +1,20 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 33.86639439999999,
+  "peak_process_tree_memory_mb": 223.15008,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-u",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_s3_patch_mortar_energy.py",
+    "tests/test_general_contact_q4_s3_patch_static.py",
+    "-k",
+    "not four_phase_path_and_restart",
+    "-q"
+  ],
+  "log": "reports\\d1_same_side_tree_patch_focused_20260928.txt"
+}

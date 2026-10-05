@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 45.75211090000812,
+  "peak_process_tree_memory_mb": 345.6,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/test_general_contact_monolithic_exact_seam.py",
+    "-q"
+  ],
+  "log": "docs\\d1_review_support\\d1_resolution_monolithic_seam_20260929.log"
+}

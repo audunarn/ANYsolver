@@ -1,0 +1,12 @@
+{
+  "fine_status": "completed",
+  "selected_status": "completed",
+  "fine_seconds": 58.77539239998441,
+  "selected_seconds": 61.73909360001562,
+  "comparison": {
+    "pressure_nodal_relative_l2": 0.006080063506071934,
+    "displacement_relative_l2": 0.0002956756028440499,
+    "normal_force_difference_n": 3.924094007509704e-05,
+    "minimum_gap_difference_m": 9.339343858047924e-09
+  }
+}

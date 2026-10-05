@@ -1,0 +1,29 @@
+[development] exact targets=2; record=C:\ANYworkspaceWork\contact-native-material-owner-20261002\anysolver-portable-ci-ur_8x_q5\P01
+[portable-ci] starting P01/01 with 2 modules
+.F                                                                       [100%]
+================================== FAILURES ===================================
+___ test_existing_owner_material_driver_cancellation_preserves_transaction ____
+
+    def test_existing_owner_material_driver_cancellation_preserves_transaction():
+        owner,bridge,_=_contributor(radius=.049)
+        transaction=NativeS3MaterialTransaction(bridge)
+        before=transaction.checkpoint()
+        token=CancellationToken();token.cancel('before solve')
+        with pytest.raises(SolveCancelled):owner.solve_material_increment(transaction,.001,cancellation_token=token)
+        assert transaction.checkpoint()==before
+        # Public snapshots detach native history dictionaries from the issued state.
+        snapshot=transaction.accepted
+>       snapshot.native_histories[0].clear()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'GeneralizedCellHistory' object has no attribute 'clear'
+
+tests\test_general_contact_native_surface_transaction.py:131: AttributeError
+============================ slowest 10 durations =============================
+1.47s call     tests/test_general_contact_native_surface_transaction.py::test_existing_owner_material_driver_and_restored_driver_match_open_reference
+0.17s call     tests/test_general_contact_native_surface_transaction.py::test_existing_owner_material_driver_cancellation_preserves_transaction
+
+(4 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_native_surface_transaction.py::test_existing_owner_material_driver_cancellation_preserves_transaction
+1 failed, 1 passed in 6.03s
+[portable-ci] P01 exit=1

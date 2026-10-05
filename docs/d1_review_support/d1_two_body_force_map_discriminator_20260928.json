@@ -1,0 +1,61 @@
+{
+  "status": "development_two_body_force_map_discriminator",
+  "saved_comparison_sha256": "ef69c6d174c3c189fc1d3f1f3fe809f5182b5f5b0799abffcfd1330290050311",
+  "support_relative_l2": 2.449367540961915e-14,
+  "complete_residual_difference_norm": 5.9404286912533566e-09,
+  "contact_residual_norm": 0.00011686248269651571,
+  "component_norms": {
+    "source": {
+      "ux": {
+        "production_norm": 3.920608667352487e-09,
+        "difference_norm": 3.920608667352487e-09
+      },
+      "uy": {
+        "production_norm": 1.2315081654151683e-10,
+        "difference_norm": 1.2315081654151683e-10
+      },
+      "uz": {
+        "production_norm": 7.716002702751438e-05,
+        "difference_norm": 7.851645572121982e-14
+      },
+      "rx": {
+        "production_norm": 3.078770413537921e-12,
+        "difference_norm": 3.078770413537921e-12
+      },
+      "ry": {
+        "production_norm": 9.801521668381217e-11,
+        "difference_norm": 9.801521668381217e-11
+      },
+      "rz": {
+        "production_norm": 0.0,
+        "difference_norm": 0.0
+      }
+    },
+    "target": {
+      "ux": {
+        "production_norm": 4.459599521587534e-09,
+        "difference_norm": 4.459599521587534e-09
+      },
+      "uy": {
+        "production_norm": 1.5316812360562135e-11,
+        "difference_norm": 1.5316812360562135e-11
+      },
+      "uz": {
+        "production_norm": 8.776770508460382e-05,
+        "difference_norm": 8.748093994838992e-13
+      },
+      "rx": {
+        "production_norm": 2.29752185408432e-13,
+        "difference_norm": 2.29752185408432e-13
+      },
+      "ry": {
+        "production_norm": 6.689399282381302e-11,
+        "difference_norm": 6.689399282381302e-11
+      },
+      "rz": {
+        "production_norm": 0.0,
+        "difference_norm": 0.0
+      }
+    }
+  }
+}

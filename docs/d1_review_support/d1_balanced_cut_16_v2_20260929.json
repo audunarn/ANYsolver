@@ -1,0 +1,50 @@
+{
+  "status": "development_balanced_cut_scalar",
+  "source_commit": "2f08ec2b079933af0819149f43a8178d15495b71",
+  "probe_sha256": "ed11a12160e7d930f6090dae7a2c5b2fee9cd5a5fea0bec24cae9b899279fb5e",
+  "fourier_helper_sha256": "2a323715a85a15e5299f844343f9e6b67ca4583d0699eea4fa079b6c37dcdc96",
+  "runtime_identity": {
+    "python": "3.14.2",
+    "numpy": "2.4.6",
+    "scipy": "1.17.1"
+  },
+  "cells_each_axis": 16,
+  "contact_y_m": 0.9,
+  "cut_cell_y_index": 14,
+  "cut_fraction": 0.1,
+  "fourier_modes_each_axis": 512,
+  "minimum_y_cell_to_x_cell_ratio": 0.6999999999999993,
+  "maximum_y_cell_to_x_cell_ratio": 1.3000000000000007,
+  "active_x_node_columns": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "active_pressure_mode_count": 6,
+  "minimum_positive_reference_support_m2": 9.765625000000104e-06,
+  "minimum_squared_detection_ratio_interval": [
+    0.5628635765657075,
+    0.5677614672900838
+  ],
+  "alternating_mode_ratio_interval": [
+    0.7716849451788219,
+    0.775157078505743
+  ],
+  "minimum_mode_relative_coefficients": [
+    -0.11236836901016525,
+    0.3391646318132351,
+    -0.5847656415064565,
+    0.8023653339637485,
+    -0.9479925061945804,
+    1.0
+  ],
+  "maximum_relative_fourier_tail_bound": 0.008717554968972899,
+  "independent_gram_relative_error": 0.0,
+  "independent_element_energy_relative_error": 2.424864029581722e-16,
+  "structural_response_relative_residual": 7.422654967099723e-15,
+  "compliance_symmetry_relative_error": 2.1932495842140855e-16,
+  "elapsed_seconds": 0.10019570000440581
+}

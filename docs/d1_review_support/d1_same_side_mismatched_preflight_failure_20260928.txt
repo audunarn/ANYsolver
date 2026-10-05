@@ -1,0 +1,21 @@
+{
+  "status": "diverged",
+  "failure_reason": "contact_semismooth_pivot_limit",
+  "elapsed_seconds": 37.7316531999968,
+  "accepted_steps": 0,
+  "step_counters": []
+}
+Traceback (most recent call last):
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_profile_coupled.py", line 381, in <module>
+    main(args.output, candidate_rows=args.candidate_rows,
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         candidate_columns=args.candidate_columns,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+         checkpoint_guard_counts=args.checkpoint_guard_counts,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+         omit_checkpoint=args.omit_checkpoint)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_profile_coupled.py", line 181, in main
+    raise RuntimeError("timed monolithic fixture did not complete")
+RuntimeError: timed monolithic fixture did not complete

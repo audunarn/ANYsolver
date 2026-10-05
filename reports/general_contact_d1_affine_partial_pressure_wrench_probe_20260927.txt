@@ -1,0 +1,42 @@
+[
+  {
+    "divisions": 8,
+    "rows": 4,
+    "elapsed_seconds": 5.587190299993381,
+    "reaction_z_n": 0.1609465388429428,
+    "source_force_n": [
+      -4.281815271802888e-06,
+      -7.779964533306246e-20,
+      0.1609465388429428
+    ],
+    "target_force_n": [
+      4.28181527180287e-06,
+      2.7740329022578336e-20,
+      -0.1609465388429428
+    ],
+    "force_balance_norm_n": 5.341524238754802e-20,
+    "source_moment_about_origin_nm": [
+      0.075644873256183,
+      -0.05371805928442019,
+      2.012453177747341e-06
+    ],
+    "target_moment_about_origin_nm": [
+      -0.07564487325618302,
+      0.05371805928442018,
+      -2.012453177747338e-06
+    ],
+    "moment_balance_norm_nm": 1.5515838741020367e-17,
+    "continuous_local_plane_reference_z_n": 0.17225,
+    "relative_reference_error": 0.06562241600613752,
+    "minimum_gap_m": -2.4999999917173637e-05,
+    "gap_tolerance_met": true,
+    "active_pressure_dofs": 16,
+    "supported_pressure_modes": 28,
+    "scaled_pressure_rank": 28,
+    "overlapping_pairs": 26,
+    "integration_triangles": 200,
+    "area_integration_error_m2": 4.885008413405001e-17,
+    "weighted_gap_integration_error_m3": 6.071345429895541e-20,
+    "integration_force_error_indicator_n": 6.193470640230666e-15
+  }
+]

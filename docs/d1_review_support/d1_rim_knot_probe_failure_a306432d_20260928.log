@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_fixed_structure_pressure_probe.py", line 710, in <module>
+    run_rim_knot(Path(sys.argv[2]))
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_fixed_structure_pressure_probe.py", line 438, in run_rim_knot
+    "active_work_rank": active_work_rank_record(
+                        ~~~~~~~~~~~~~~~~~~~~~~~^
+        x, pressure_y, x, y, bins,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        diagnostics["active_pressure_modes"])}
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ANYworkspaceWork\ANYsolver-general-contact\scripts\general_contact_d1_fixed_structure_pressure_probe.py", line 149, in active_work_rank_record
+    raise AssertionError("QP active-set replay differs from saved field")
+AssertionError: QP active-set replay differs from saved field

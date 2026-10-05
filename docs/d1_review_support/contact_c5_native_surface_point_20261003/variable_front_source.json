@@ -1,0 +1,169 @@
+{
+  "base": "a8f59047",
+  "date": "2026-10-03",
+  "scope": "source development, no qualification/installed admission",
+  "worktree": "C:\\ANYworkspaceWork\\ANYsolver-contact-main-reconcile-20261001",
+  "files": {
+    "src/anysolver/general_contact/native_surface_friction_integral.py": "cd78e4db492f7c81705ceddc6183953f1ac5729abb0aebd0b7dd44e0bd6681e8",
+    "src/anysolver/general_contact/native_surface_front.py": "1d4120b81db88233f5a379bd14986554c5512c58eba180b07d9874de6ff07ccf",
+    "src/anysolver/general_contact/native_surface_front_work.py": "fe1e82fd7376476269508074856a4f66161473c425a45903ddf1e09e4b179621",
+    "tests/test_general_contact_native_surface_local_fronts.py": "7686d83bbaa49c04ede755d0795d3dc31fde385b8dd49573014692f312d1f410"
+  },
+  "source_binding": "final checkpoint only; earlier per-run selected test hashes retained; no captured exact full-kernel hash at each failed intermediate run",
+  "runs": [
+    {
+      "run": "contact_variable_front_controls_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 183279616,
+          "limit_mib": 953,
+          "elapsed_seconds": 7.947390899993479,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact_variable_front_controls_fix_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 182956032,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.584434300020803,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact_variable_front_controls_fix2_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 185044992,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.477774799976032,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact_variable_front_controls_fix3_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 183848960,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.3969642000156455,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact_boundary_ending_integral_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 192782336,
+          "limit_mib": 953,
+          "elapsed_seconds": 10.165879699983634,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact_boundary_ending_point_discriminator_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 193232896,
+          "limit_mib": 953,
+          "elapsed_seconds": 10.309511900006328,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact_boundary_ending_open_strip_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 195244032,
+          "limit_mib": 953,
+          "elapsed_seconds": 12.445960899989586,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact_boundary_ending_interval_cuts_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 197324800,
+          "limit_mib": 953,
+          "elapsed_seconds": 16.001506500004325,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact_history_strip_inherited_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 184025088,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.3655152000137605,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact_history_strip_inherited_fix_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 185683968,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.186445700004697,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact_variable_front_closed_control_20261003",
+      "resources": [
+        {
+          "peak_sampled_bytes": 191655936,
+          "limit_mib": 953,
+          "elapsed_seconds": 7.3869238999905065,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    }
+  ]
+}

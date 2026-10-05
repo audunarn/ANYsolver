@@ -1,0 +1,13 @@
+{
+  "force": {
+    "max_absolute": 0.0,
+    "relative": 0.0
+  },
+  "tangent": {
+    "max_absolute": 0.0,
+    "relative": 0.0
+  },
+  "cached_seconds": 343.48068040004,
+  "uncached_seconds": 622.7629597000196,
+  "scope": "single matched retained tangent, not balanced whole-route qualification"
+}

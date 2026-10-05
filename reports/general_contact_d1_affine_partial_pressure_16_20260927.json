@@ -1,0 +1,33 @@
+{
+  "profile": "fixed_affine_partial_pressure_central_q4_s3_dev",
+  "target_x_range_m": [
+    0.24,
+    0.77
+  ],
+  "target_y_range_m": [
+    0.21,
+    0.73
+  ],
+  "left_penetration_m": 2.5e-05,
+  "gap_slope": 9.433962264150943e-05,
+  "normal_stiffness_pa_per_m": 100000.0,
+  "reference_assumption": "continuous local-plane positive-part pressure over the fixed target rectangle; finite-slope projection differences remain",
+  "rows": [
+    {
+      "divisions": 16,
+      "elapsed_seconds": 44.911547199997585,
+      "reaction_z_n": 0.16976139758984166,
+      "continuous_local_plane_reference_z_n": 0.17225,
+      "relative_reference_error": 0.014447619217174633,
+      "minimum_gap_m": -2.4999999917175232e-05,
+      "gap_tolerance_met": true,
+      "active_pressure_dofs": 60,
+      "supported_pressure_modes": 110,
+      "scaled_pressure_rank": 110,
+      "overlapping_pairs": 108,
+      "integration_triangles": 856,
+      "area_integration_error_m2": 1.3422422895370545e-16,
+      "weighted_gap_integration_error_m3": 7.056940177040423e-20
+    }
+  ]
+}

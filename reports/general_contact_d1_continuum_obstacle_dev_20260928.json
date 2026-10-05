@@ -1,0 +1,82 @@
+{
+  "method": "independent_scalar_shear_finite_volume_obstacle_dev",
+  "shear_rigidity_n_per_m": 1602.5641025641025,
+  "full_width_control": {
+    "nx": 64,
+    "ny": 80,
+    "contact_height_m": 1.0,
+    "iterations": 26,
+    "active_cells": 1840,
+    "contact_reaction_n": 0.10389152764915408,
+    "left_support_n": 0.19610847235095621,
+    "equilibrium_defect_n": 1.103006574965093e-13,
+    "minimum_cell_gap_m": 0.0,
+    "minimum_active_cell_reaction_n": 9.581595613467606e-06,
+    "reaction_x_quantile_m": {
+      "0.05": 0.6640625,
+      "0.5": 0.8203125,
+      "0.95": 0.9765625
+    },
+    "minimum_displacement_m": -4e-05,
+    "exact_front_m": 0.6537204504606136,
+    "exact_contact_reaction_n": 0.10388386486181593,
+    "reaction_error_n": 7.662787338144628e-06,
+    "maximum_cell_displacement_error_m": 5.675534537269486e-09
+  },
+  "partial_width": [
+    {
+      "nx": 32,
+      "ny": 40,
+      "contact_height_m": 0.9,
+      "iterations": 13,
+      "active_cells": 432,
+      "contact_reaction_n": 0.10380104802734519,
+      "left_support_n": 0.19619895197268097,
+      "equilibrium_defect_n": 2.6145752229922437e-14,
+      "minimum_cell_gap_m": 0.0,
+      "minimum_active_cell_reaction_n": 1.977734876688008e-05,
+      "reaction_x_quantile_m": {
+        "0.05": 0.671875,
+        "0.5": 0.828125,
+        "0.95": 0.984375
+      },
+      "minimum_displacement_m": -4.1160513675092187e-05
+    },
+    {
+      "nx": 64,
+      "ny": 80,
+      "contact_height_m": 0.9,
+      "iterations": 26,
+      "active_cells": 1657,
+      "contact_reaction_n": 0.10380195272074635,
+      "left_support_n": 0.19619804727935916,
+      "equilibrium_defect_n": 1.0552669849062113e-13,
+      "minimum_cell_gap_m": 0.0,
+      "minimum_active_cell_reaction_n": 9.759050432390224e-06,
+      "reaction_x_quantile_m": {
+        "0.05": 0.6640625,
+        "0.5": 0.8203125,
+        "0.95": 0.9765625
+      },
+      "minimum_displacement_m": -4.104692902765539e-05
+    },
+    {
+      "nx": 128,
+      "ny": 160,
+      "contact_height_m": 0.9,
+      "iterations": 54,
+      "active_cells": 6491,
+      "contact_reaction_n": 0.1038032310730419,
+      "left_support_n": 0.19619676892738147,
+      "equilibrium_defect_n": 4.2338355044080345e-13,
+      "minimum_cell_gap_m": 0.0,
+      "minimum_active_cell_reaction_n": 1.0785092641735211e-06,
+      "reaction_x_quantile_m": {
+        "0.05": 0.66796875,
+        "0.5": 0.82421875,
+        "0.95": 0.98046875
+      },
+      "minimum_displacement_m": -4.098968012731304e-05
+    }
+  ]
+}

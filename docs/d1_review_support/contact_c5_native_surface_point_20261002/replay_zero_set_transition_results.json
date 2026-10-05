@@ -1,0 +1,109 @@
+{
+  "base": "6ef1fa05",
+  "source_sha256": {
+    "src/anysolver/general_contact/native_surface_friction_integral.py": "49d52a349a60907ddeba477613ffa85232d8a60094811016aeee94d7db23fe41",
+    "src/anysolver/general_contact/native_surface_crossing.py": "6c1ad00359b0e51630e17bd44fa9ff3f5fb484b2d6ee41b18d00af93fd7dbdbe",
+    "tests/test_general_contact_native_surface_support.py": "462e3347dee88e5849264c501417c1688953fd8333642ed2c750f01e7a58ce80",
+    "tests/test_general_contact_native_surface_crossing.py": "5cefca610c70a289155e975b893b2fa1bc77eccd26e898b5997225ecf9ab4af7"
+  },
+  "runs": [
+    {
+      "run": "contact-native-proof-local-origin-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 200724480,
+          "limit_mib": 953,
+          "elapsed_seconds": 12.695811999961734,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-unresolved-support-region-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 195928064,
+          "limit_mib": 953,
+          "elapsed_seconds": 11.584555900015403,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-temporal-derivative-enclosure-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 200351744,
+          "limit_mib": 953,
+          "elapsed_seconds": 13.95814679999603,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-temporal-enclosure-shortcircuit-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 195579904,
+          "limit_mib": 953,
+          "elapsed_seconds": 10.746694299974479,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-support-diagnostics-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 186605568,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.470140100049321,
+          "status": "terminal",
+          "child_exit_codes": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-support-diagnostics-corrected-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 184135680,
+          "limit_mib": 953,
+          "elapsed_seconds": 5.208611599984579,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "run": "contact-native-zero-set-certificate-20261002",
+      "resources": [
+        {
+          "peak_sampled_bytes": 166203392,
+          "limit_mib": 953,
+          "elapsed_seconds": 4.561391900002491,
+          "status": "terminal",
+          "child_exit_codes": [
+            0
+          ]
+        }
+      ]
+    }
+  ]
+}

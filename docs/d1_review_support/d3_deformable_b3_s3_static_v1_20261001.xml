@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.756" timestamp="2026-10-01T01:50:26.702886+02:00" hostname="WORK_STABEIST1"><testcase classname="tests.test_general_contact_deformable_b3_s3_static" name="test_actual_quadratic_beam_coupling_and_restart" time="1.152"><failure message="assert np.float64(5.542971550662277e-07) &gt; 1e-06&#10; +  where np.float64(5.542971550662277e-07) = abs((np.float64(-0.0004922957509331665) - (0.5 * np.float64(-0.0009857000961764654))))">def test_actual_quadratic_beam_coupling_and_restart():
+        example = runpy.run_path("examples/general_contact_deformable_round_beam_s3.py")
+        m, definition, settings = example["fixture"]()
+        m.add_node(6,.25,0.,.02005)
+        section = dict(m.mesh.elements[1].cross_section)
+        m.mesh.elements[1] = QuadraticBeamElement(1,[1,6,2],"beam",section)
+        example["constraints"](m)
+        m.add_boundary_condition(BoundaryCondition("midpoint_guides",[6],dict.fromkeys(("ux","uy","rx","ry","rz"),0.)))
+        load = LoadCase("press");load.add_nodal_load(2,forces=(0.,0.,-.001))
+        controls = dict(contact=definition,contact_settings=settings,num_steps=4,max_iterations=20,
+                        tolerance=1e-10,kinematics="von_karman",emit_restart_checkpoint=True)
+        full = solve_static_nonlinear(m,load,**controls)
+        assert full.status == "completed", full.failure_reason
+        indices = np.array([m.mesh.dof_manager.get_node_dofs(n)[2] for n in (2,6,5)])
+        x = full.displacements[indices]
+        # A genuinely quadratic field, not the B2 interpolant under another label.
+&gt;       assert abs(x[1]-.5*x[0]) &gt; 1e-6
+E       assert np.float64(5.542971550662277e-07) &gt; 1e-06
+E        +  where np.float64(5.542971550662277e-07) = abs((np.float64(-0.0004922957509331665) - (0.5 * np.float64(-0.0009857000961764654))))
+
+tests\test_general_contact_deformable_b3_s3_static.py:53: AssertionError</failure></testcase></testsuite></testsuites>

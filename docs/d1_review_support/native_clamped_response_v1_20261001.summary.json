@@ -1,0 +1,256 @@
+{
+  "status": "DEVELOPMENT_PASS_INDEPENDENT_ASSESSMENT_RECORDED_SEPARATELY",
+  "accepted_steps": 20,
+  "elapsed_seconds": 97.49965430001612,
+  "peak_process_tree_memory_mb": 222.941184,
+  "source_binding_count": 447,
+  "criteria": {
+    "duration_seconds": 0.004,
+    "coarse_steps": 4,
+    "fine_steps": 8,
+    "half_load_fine_steps": 8,
+    "maximum_accepted_steps": 20,
+    "internal_time_limit_seconds": 120.0,
+    "force_density_n_per_m": [
+      0.2,
+      -0.15,
+      0.1
+    ],
+    "couple_density_nm_per_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "explicit_stage_solve_tolerance": 1e-12,
+    "scientific_stage_gate": 1e-11,
+    "endpoint_balance_gate": 1e-11,
+    "normalized_defect_limit": 1e-06,
+    "elastic_witness_limit": 1e-10,
+    "nonlinear_to_discrete_limit": 0.002,
+    "trajectory_floor": 1e-06,
+    "invariant_floor": 1e-10,
+    "time_refinement_ratio": 0.4,
+    "amplitude_refinement_ratio": 0.75,
+    "resolved_coarse_phase_limit": 0.4,
+    "origin_high_m": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "origin_low_m": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "maximum_stage_norm": 3.988909451378255e-16,
+  "maximum_endpoint_algebraic_norm": 6.714300373481048e-17,
+  "stage_iterations": 40,
+  "stage_backtracks": 0,
+  "comparisons": {
+    "errors_continuous_configuration": {
+      "coarse": 0.0027750417925002987,
+      "fine": 0.0007003416139766348,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2523715555813776
+    },
+    "predicted_dispersion_configuration": {
+      "coarse": 0.002775048134387936,
+      "fine": 0.0007003474730609091,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2523730901753809
+    },
+    "amplitude_configuration": {
+      "coarse": 1.1018245605786728e-08,
+      "fine": 5.508077674900868e-09,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "errors_continuous_velocity": {
+      "coarse": 0.0008868829986675203,
+      "fine": 0.00022301795801077585,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.25146266006434304
+    },
+    "predicted_dispersion_velocity": {
+      "coarse": 0.0008868874689607357,
+      "fine": 0.00022302246973827694,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2514664797323352
+    },
+    "amplitude_velocity": {
+      "coarse": 2.636848324695373e-08,
+      "fine": 1.318177873706724e-08,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "errors_continuous_elastic_configuration": {
+      "coarse": 0.0027750417925003004,
+      "fine": 0.0007003416139766352,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2523715555813776
+    },
+    "predicted_dispersion_elastic_configuration": {
+      "coarse": 0.0027750481343879383,
+      "fine": 0.0007003474730609094,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2523730901753808
+    },
+    "amplitude_elastic_configuration": {
+      "coarse": 1.1018245605786733e-08,
+      "fine": 5.50807767490087e-09,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "errors_continuous_elastic_velocity": {
+      "coarse": 0.0008868829986675209,
+      "fine": 0.00022301795801077598,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.251462660064343
+    },
+    "predicted_dispersion_elastic_velocity": {
+      "coarse": 0.0008868874689607363,
+      "fine": 0.00022302246973827708,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2514664797323352
+    },
+    "amplitude_elastic_velocity": {
+      "coarse": 2.6368483246953736e-08,
+      "fine": 1.3181778737067241e-08,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "support_impulse_time_force": {
+      "coarse": 0.00034157424851739414,
+      "fine": 8.549175435941426e-05,
+      "passes": true,
+      "disposition": "resolved comparison",
+      "ratio": 0.2502874696511576
+    },
+    "support_impulse_amplitude_force": {
+      "coarse": 1.1209622053028619e-09,
+      "fine": 5.611021968113554e-10,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "support_impulse_time_couple": {
+      "coarse": 4.972501176212953e-08,
+      "fine": 1.243448385577878e-08,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "support_impulse_amplitude_couple": {
+      "coarse": 3.253632263849568e-13,
+      "fine": 1.6267328126022003e-13,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "invariant_P": {
+      "coarse": 1.5512373704084118e-16,
+      "fine": 5.571512558869063e-16,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "invariant_H_path": {
+      "coarse": 4.0673786992413526e-17,
+      "fine": 3.5224532803547174e-17,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "invariant_H_midpoint": {
+      "coarse": 4.113339239421661e-17,
+      "fine": 2.394546050243395e-17,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "invariant_E_exact_work": {
+      "coarse": 1.7581580201082065e-11,
+      "fine": 6.461707444855669e-12,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    },
+    "invariant_E_midpoint_work": {
+      "coarse": 1.9439088120623315e-11,
+      "fine": 5.669745625771589e-12,
+      "passes": true,
+      "disposition": "resolution limited",
+      "ratio": null
+    }
+  },
+  "artifacts": {
+    ".inputs.json": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_clamped_response_v1_20261001.inputs.json",
+      "sha256": "785573bc4b57b7496ab2d50f64348ff0acc386ccd8f885043f25b11d904ed9c4"
+    },
+    ".raw.json": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_clamped_response_v1_20261001.raw.json",
+      "sha256": "b68642d1cbe0be85d3ce493e8426056e634c8f7323269b7e2e9920e9c69f48a5"
+    },
+    ".resources.json": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_clamped_response_v1_20261001.resources.json",
+      "sha256": "2e0bad13856eea8a284f4665e21a77583f20da6aea26e6f0961669438a398e5f"
+    },
+    ".log": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_clamped_response_v1_20261001.log",
+      "sha256": "3e044f14bdcf9472728d22175b047425c5e4d306490cd0bd8ba8ee55389df100"
+    },
+    ".xml": {
+      "path": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\docs\\d1_review_support\\native_clamped_response_v1_20261001.xml",
+      "sha256": "527d6cab2210de1f4cfea5755a66ee2af4aa03507c589a5102d2e7efb874f45d"
+    }
+  },
+  "scope": "Shared spatial matrices/quadrature are explicit inputs; only constrained semidiscrete small-motion temporal/reaction development. Nonprincipal finite-angle torque-free elastic reference remains open; noC7/release claim",
+  "independent_assessment": "Separate reviewed disposition; no C7 promotion",
+  "maximum_errors_discrete": {
+    "configuration": 1.1821531088477802e-08,
+    "velocity": 2.636848324695373e-08,
+    "elastic_configuration": 1.1821531088477805e-08,
+    "elastic_velocity": 2.6368483246953736e-08
+  },
+  "maximum_step_defects": {
+    "P": 1.8799755386500827e-16,
+    "H_path": 2.7818415421448406e-17,
+    "H_midpoint": 2.5890539896134362e-17,
+    "E_exact_work": 1.765905170322991e-11,
+    "E_midpoint_work": 1.958825901120422e-11
+  },
+  "maximum_cumulative_defects": {
+    "P": 5.571512558869063e-16,
+    "H_path": 4.346666346761082e-17,
+    "H_midpoint": 4.113339239421661e-17,
+    "E_exact_work": 1.7581580201082065e-11,
+    "E_midpoint_work": 1.9439088120623315e-11
+  },
+  "maximum_reaction_errors_discrete": {
+    "force": 4.119961273455965e-09,
+    "couple": 1.2442992867422434e-12
+  },
+  "maximum_support_impulse_errors_discrete": {
+    "force": 1.1209622053028619e-09,
+    "couple": 3.253632263849568e-13
+  },
+  "maximum_support_impulse_errors_continuous": {
+    "force": 0.00034157424851739414,
+    "couple": 4.972501176212953e-08
+  },
+  "maximum_absolute_support_work_j": 0.0
+}

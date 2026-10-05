@@ -1,0 +1,363 @@
+{
+  "source_sha": "14fedcbefe1862f8bf730ebaea93955bc739fb2b",
+  "profile": "NATIVE_B3_GE_RETAINED_CURVED_MATERIAL_PLANE_STATIC_DEV_V1",
+  "status": {
+    "implemented": true,
+    "source_tested": true,
+    "installed_tested": true,
+    "independently_accepted": false,
+    "released": false
+  },
+  "scope": "one elastic curved retained B3-GE interior material patch against one fixed plane; development verification",
+  "mechanics": {
+    "radius_m": 0.03,
+    "tip_force_n": 0.005,
+    "normal_stiffness_N_per_m3": 10000000.0,
+    "gap_budget_m": 3e-05,
+    "energy_integration_budget_j": 1e-10,
+    "force_integration_budget_n": 1e-08,
+    "tangent_integration_budget_N_per_m": 1e-06,
+    "maximum_integration_intervals": 64,
+    "maximum_path_intervals": 128,
+    "equilibrium_tolerance": 1e-10
+  },
+  "package": {
+    "source_sha": "14fedcbefe1862f8bf730ebaea93955bc739fb2b",
+    "source_files": 522,
+    "imported_modules": 220,
+    "source_installed_errors": [],
+    "extra_installed_files": [],
+    "outcomes": {
+      "passed": 38
+    },
+    "runs": {
+      "installed_curved_work_v7": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 93.58270400005858,
+          "peak_bytes": 183717888
+        },
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "runtime_errors": [],
+        "import_errors": [],
+        "outcomes": {
+          "passed": 35
+        }
+      },
+      "installed_curved_restart_compatibility_v7": {
+        "resource": {
+          "status": "completed",
+          "returncode": 0,
+          "elapsed_s": 93.57165599998552,
+          "peak_bytes": 185892864
+        },
+        "jit_disabled": true,
+        "numba_threads": 1,
+        "pool_threads": [
+          1,
+          1
+        ],
+        "runtime_errors": [],
+        "import_errors": [],
+        "outcomes": {
+          "passed": 3
+        }
+      }
+    },
+    "wheel_sha256": "dfa3964a5cd87c7c409885d6f39f5e3d7907350f01ad5c7bef2c6a927bef9f9c",
+    "frozen_fixture_sha256": "3a75bff0d2bc0201e867c4d98011e4db8edfad0b1d288590404e886d68d8a96f",
+    "example_sha256": "2ef29a00e4b0ba3af17f9cf23a45dcb045dad75cc1893f7e421e13d422601095"
+  },
+  "source_runs": {
+    "curved_resolved_band_reference": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 42.084605899988674,
+      "peak_bytes": 186396672
+    },
+    "curved_cycle_v7": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 62.793828599969856,
+      "peak_bytes": 165023744
+    },
+    "curved_restart_atomic_v7": {
+      "status": "completed",
+      "returncode": 0,
+      "elapsed_s": 86.15666290000081,
+      "peak_bytes": 173039616
+    }
+  },
+  "installed_coupled": {
+    "status": "completed",
+    "failure": null,
+    "completed": 1,
+    "gap_bound_m": -1.4358551827903202e-05,
+    "force_n": [
+      0.0,
+      0.0,
+      0.005414355840998849
+    ],
+    "normalized_force_balance": 2.0834028946481453e-13,
+    "normalized_moment_balance": 1.9504696949243595e-13,
+    "tangent_errors": [
+      1.1591860090975915e-07,
+      4.742871660386353e-09
+    ],
+    "checkpoint_sha256": "b7147f29b6cbe441875aeb76dadde7123699217f73e470f1e25e62109c7fd0d0"
+  },
+  "independent_gap_check": {
+    "sampled_axial_station_count": 401,
+    "exact_angular_extrema": true,
+    "gap_estimates_m": [
+      -1.4358004253828505e-05,
+      9.99999999999994e-05,
+      -1.4358004253828505e-05
+    ],
+    "whole_gap_certificate": false
+  },
+  "independent_axial_reference": {
+    "energy_error_j": 2.9976021664879227e-15,
+    "force_error_n": 1.4210854715202004e-14,
+    "moment_error_nm": 1.4888583356622763e-14,
+    "tangent_errors": [
+      3.2198044654734946e-10,
+      9.131490642979894e-10
+    ],
+    "intervals": 56,
+    "evaluations": 40320,
+    "errors": [
+      2.460483856745474e-11,
+      9.67061353416632e-10,
+      1.7704633164019083e-07
+    ],
+    "root_brackets": [
+      {
+        "cell": 0,
+        "lower": -0.6250000000031792,
+        "upper": -0.6249999999968208,
+        "features": [
+          3
+        ],
+        "representation_gap_m": 2.5432663057933263e-13,
+        "active_angular_width_bound": 5.6,
+        "angular_fallback": false,
+        "representative_xi": -0.6250000000015896,
+        "error_bounds": [
+          4.260605608273765e-21,
+          5.857585262939945e-20,
+          7.26508206863319e-08
+        ]
+      },
+      {
+        "cell": 0,
+        "lower": -0.3245009990513272,
+        "upper": -0.3245009990449688,
+        "features": [
+          0
+        ],
+        "representation_gap_m": 2.5432663057933263e-13,
+        "active_angular_width_bound": 2.8584073464621085,
+        "angular_fallback": false,
+        "representative_xi": -0.3245009990497376,
+        "error_bounds": [
+          2.1746666730965684e-21,
+          2.9897848363252915e-20,
+          3.708250243254928e-08
+        ]
+      },
+      {
+        "cell": 0,
+        "lower": -0.07577418272302018,
+        "upper": -0.0757741827166619,
+        "features": [
+          1
+        ],
+        "representation_gap_m": 2.5432663057933263e-13,
+        "active_angular_width_bound": 2.1752220392593418,
+        "angular_fallback": false,
+        "representative_xi": -0.0757741827214306,
+        "error_bounds": [
+          1.6548595026278058e-21,
+          2.2751410578069043e-20,
+          2.821907812866241e-08
+        ]
+      },
+      {
+        "cell": 1,
+        "lower": 0.12499999999682083,
+        "upper": 0.12500000000317912,
+        "features": [
+          2
+        ],
+        "representation_gap_m": 2.5432954169084744e-13,
+        "active_angular_width_bound": 1.426409567315672e-05,
+        "angular_fallback": false,
+        "representative_xi": 0.12499999999841041,
+        "error_bounds": [
+          1.085185306094004e-26,
+          1.491939041228896e-25,
+          1.8504800959337883e-13
+        ]
+      }
+    ]
+  },
+  "partial_reference": {
+    "energy_error_j": 5.551115123125783e-16,
+    "force_error_n": 5.684341886080802e-14,
+    "moment_error_nm": 1.6125774456909663e-14,
+    "intervals": 22,
+    "evaluations": 8960,
+    "estimated_errors": [
+      1.9203423573532774e-12,
+      4.494830722900911e-10,
+      3.3739552001126744e-07
+    ]
+  },
+  "restart": {
+    "authentic_prefix": true,
+    "full_checkpoint_byte_identical": true,
+    "precommit_exception_and_cancellation_preserve_prefix": true,
+    "incompatible_stiffness_rejected": true,
+    "frozen_checkpoint_sha256": "3a75bff0d2bc0201e867c4d98011e4db8edfad0b1d288590404e886d68d8a96f"
+  },
+  "review": "curved_static_review.md: same-family Read supporting scrutiny; not independent engineering acceptance",
+  "retained_nonpasses": {
+    "curved_cycle_measured_fallback": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 66.18074680003338,
+        "peak_bytes": 175886336
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_cycle_measured_fallback\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_cycle_measured_fallback\\run.log"
+    },
+    "curved_cycle_v6": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.526638700044714,
+        "peak_bytes": 165969920
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_cycle_v6\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_cycle_v6\\run.log"
+    },
+    "curved_owner_active_band": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 9.930582799948752,
+        "peak_bytes": 165818368
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_active_band\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_active_band\\run.log"
+    },
+    "curved_owner_contact_fraction": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 4.89934300002642,
+        "peak_bytes": 174694400
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_contact_fraction\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_contact_fraction\\run.log"
+    },
+    "curved_owner_declared_penalty": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.4826669000322,
+        "peak_bytes": 165179392
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_declared_penalty\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_declared_penalty\\run.log"
+    },
+    "curved_owner_first": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 11.277880499954335,
+        "peak_bytes": 165117952
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_first\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_first\\run.log"
+    },
+    "curved_owner_gap_preflight": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.609583599958569,
+        "peak_bytes": 165220352
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_gap_preflight\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_gap_preflight\\run.log"
+    },
+    "curved_owner_lower_skin": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 10.106745000113733,
+        "peak_bytes": 166707200
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_lower_skin\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_lower_skin\\run.log"
+    },
+    "curved_owner_projected_bounds": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 45.2828835999826,
+        "peak_bytes": 178524160
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_projected_bounds\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_projected_bounds\\run.log"
+    },
+    "curved_owner_trial_trace": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 2.634598599979654,
+        "peak_bytes": 166109184
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_trial_trace\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_owner_trial_trace\\run.log"
+    },
+    "curved_path_first": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 4.006837300024927,
+        "peak_bytes": 175669248
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_path_first\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\curved_path_first\\run.log"
+    },
+    "installed_curved_work": {
+      "resource": {
+        "status": "completed",
+        "returncode": 1,
+        "elapsed_s": 56.44414959999267,
+        "peak_bytes": 186093568
+      },
+      "inputs": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\installed_curved_work\\inputs.json",
+      "log": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10\\installed_curved_work\\run.log"
+    }
+  },
+  "raw_evidence_root": "C:\\ANYworkspaceWork\\contact_native_material_s3_20261004\\candidate10",
+  "limits": [
+    "Gauss8/16 differences remain error estimates",
+    "conservative circumscribed-tube gap can reject safe selected patches",
+    "no exact differentiation claim across adaptive representative switches",
+    "no penalty convergence claim",
+    "no curved plasticity/deformable target/friction/dynamics/application admission",
+    "no whole-route speedup claim"
+  ],
+  "full_programme_complete": false
+}

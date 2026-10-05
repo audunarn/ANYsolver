@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 13.918798700004118,
+  "peak_process_tree_memory_mb": 180.232192,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "-m",
+    "scripts.general_contact_d1_interior_two_body_oracle_dev",
+    "--lowload-current-skin-check",
+    "docs/d1_review_support/d1_lowload_current_skin_v3_20260929.json",
+    "docs/d1_review_support/d1_lowload_clearance5_coupled_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_lowload_current_skin_v3_20260929.log"
+}

@@ -1,0 +1,49 @@
+.............F......                                                     [100%]
+================================== FAILURES ===================================
+_____ test_far_rejection_avoids_segments_but_near_rounding_uses_old_loop ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001BE6D16E520>
+
+    def test_far_rejection_avoids_segments_but_near_rounding_uses_old_loop(monkeypatch):
+        calls = []
+        original = np.clip
+        def clip(*args, **kwargs):
+            calls.append(1)
+            return original(*args, **kwargs)
+        monkeypatch.setattr(np, "clip", clip)
+        first = PlanarFace((1, 0), _quad())
+        second = PlanarFace((2, 0), _quad()+np.array((4., 0., 0.)))
+        assert not _touching_projected_boundaries(first, second)
+        assert not calls
+>       first = PlanarFace((1, 0), _quad(1e12))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_general_contact_touching_bounds.py:63: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+<string>:5: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = PlanarFace(feature_id=(1, 0), corners=array([[0.e+00, 0.e+00, 0.e+00],
+       [1.e+12, 0.e+00, 0.e+00],
+       [1.e+12, 1.e+00, 0.e+00],
+       [0.e+00, 1.e+00, 0.e+00]]))
+
+    def __post_init__(self) -> None:
+        points = np.asarray(self.corners, dtype=float)
+        if points.shape not in {(3, 3), (4, 3)} or not np.all(np.isfinite(points)):
+            raise ValueError("a planar contact face needs three or four finite 3D corners")
+        points = points.copy()
+        scale = float(np.max(np.linalg.norm(points - points[0], axis=1)))
+        if scale <= 0.0:
+            raise ValueError("contact face is degenerate")
+        normal = np.cross(points[1] - points[0], points[-1] - points[0])
+        magnitude = float(np.linalg.norm(normal))
+        if magnitude <= 1.0e-12 * scale * scale:
+>           raise ValueError("contact face is degenerate")
+E           ValueError: contact face is degenerate
+
+src\anysolver\general_contact\overlap.py:32: ValueError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_touching_bounds.py::test_far_rejection_avoids_segments_but_near_rounding_uses_old_loop
+1 failed, 19 passed in 1.60s

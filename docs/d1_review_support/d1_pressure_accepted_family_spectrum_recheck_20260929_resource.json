@@ -1,0 +1,17 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "elapsed_seconds": 19.59490709999227,
+  "peak_process_tree_memory_mb": 206.700544,
+  "time_limit_seconds": 180.0,
+  "memory_limit_bytes": 1000000000,
+  "command": [
+    "python",
+    "scripts/general_contact_d1_interior_work_spectrum_dev.py",
+    "docs/d1_review_support/d1_pressure_accepted_family_spectrum_recheck_20260929.json",
+    "docs/d1_review_support/d1_pressure_work_16q4_press_20260929.json",
+    "docs/d1_review_support/d1_interior_pressure_family_8x4_20260929.json",
+    "docs/d1_review_support/d1_pressure_family_8x8_20260929.json"
+  ],
+  "log": "docs\\d1_review_support\\d1_pressure_accepted_family_spectrum_recheck_20260929.log"
+}

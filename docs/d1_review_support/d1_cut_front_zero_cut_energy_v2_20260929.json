@@ -1,0 +1,13 @@
+{
+  "status": "development_zero_cut_structural_energy",
+  "source_commit": "664b023ce202a243c72f09f1e4f6ce77c3ebfad2",
+  "probe_sha256": "08d4015d6181c59719903f005a3b8c4b45a98aca0899210c542be3c695198722",
+  "model_builder_sha256": "de28b67c2a5386f8d68ec1a41daf3f8e41d0fe5313808571c33935814a289e1f",
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "python": "3.14.2",
+  "free_coordinates": 84,
+  "minimum_eigenvalue": 0.09306774473613608,
+  "maximum_eigenvalue": 30584.513832248907,
+  "symmetry_relative": 0.0,
+  "diagonal_minimum": 2.765508404191062
+}

@@ -1,0 +1,44 @@
+.....F.......                                                            [100%]
+================================== FAILURES ===================================
+___ test_warped_independent_bins_match_production_pair_work_before_assembly ___
+
+    def test_warped_independent_bins_match_production_pair_work_before_assembly():
+        from anysolver.general_contact.s3_patch_mortar_energy import (
+            MovingS3PatchPrimalMortarPenalty, S3PatchFace,
+        )
+        source, target, force = _faces(warped=True)
+        geometry = MovingS3PatchPrimalMortarPenalty(
+>           tuple(S3PatchFace(face.node_ids, face.reference_positions) for face in source),
+            ^^^^^
+            tuple(S3PatchFace(face.node_ids, face.reference_positions) for face in target),
+            1000., difference_step=1e-6, differentiation="jet2_q4_s3",
+            maximum_candidate_pairs=16, maximum_energy_evaluations=1500,
+            q4_source_area_tolerance=1e-10, q4_source_weighted_gap_tolerance=1e-11,
+            maximum_q4_source_integration_triangles=256,
+            q4_source_derivative_tolerances=(1e-8,)*4)
+
+tests\test_general_contact_d1_radial_source_bin_work.py:116: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_general_contact_d1_radial_source_bin_work.py:116: in <genexpr>
+    tuple(S3PatchFace(face.node_ids, face.reference_positions) for face in source),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<string>:5: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = S3PatchFace(node_ids=(np.int64(1), np.int64(2), np.int64(5), np.int64(4)), reference_positions=array([[0.1 , 0.1 , 0.04],
+       [0.6 , 0.1 , 0.04],
+       [0.6 , 0.6 , 0.04],
+       [0.1 , 0.6 , 0.04]]))
+
+    def __post_init__(self):
+        nodes = tuple(self.node_ids)
+        if (len(nodes) not in {3, 4} or len(set(nodes)) != len(nodes)
+                or any(type(node) is not int or node <= 0 for node in nodes)):
+>           raise ValueError("shell patch face needs three or four distinct material nodes")
+E           ValueError: shell patch face needs three or four distinct material nodes
+
+src\anysolver\general_contact\s3_patch_mortar_energy.py:25: ValueError
+=========================== short test summary info ===========================
+FAILED tests/test_general_contact_d1_radial_source_bin_work.py::test_warped_independent_bins_match_production_pair_work_before_assembly
+1 failed, 12 passed in 1.72s

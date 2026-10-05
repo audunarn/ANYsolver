@@ -1,0 +1,18 @@
+{"stage": "uninterrupted1", "elapsed_seconds": 4.9374911000195425}
+{"stage": "uninterrupted2", "elapsed_seconds": 7.918940700008534}
+{"stage": "split1", "elapsed_seconds": 12.795602400001371}
+{"stage": "restored2", "elapsed_seconds": 26.801117599999998}
+{"stage": "complete", "elapsed_seconds": 27.884785300004296}
+..
+============================== warnings summary ===============================
+tests/test_ge_beam3_native_dynamic_restart.py::test_committed_native_dynamic_split_restart
+  tests\test_ge_beam3_native_dynamic_restart.py:28: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_committed_native_dynamic_split_restart(record_property):
+
+tests/test_ge_beam3_native_dynamic_restart.py::test_package_manifest_relative_transitive_binding
+  tests\test_ge_beam3_native_dynamic_restart.py:207: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_package_manifest_relative_transitive_binding(tmp_path, monkeypatch, record_property):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2 passed, 2 warnings in 28.16s
+{"status": "PASS_INSTALLED_DEVELOPMENT_ROUTING_ONLY", "source_commit": "248867b6f12d50284ac638cecdb5f021b5b1f380", "installed_python_source_count": 446, "wheel_sha256": "18d8046d611395a501eead749871172be62d32b529d7699684f2264f686d731d"}

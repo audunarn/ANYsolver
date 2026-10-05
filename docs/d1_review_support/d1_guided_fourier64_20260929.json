@@ -1,0 +1,129 @@
+{
+  "status": "development_source_transverse_active_witness",
+  "source_commit": "f6f17b65a8842e681bf0abaf4e71d37e4a2e6a53",
+  "probe_sha256": "f71588d074027e5ccfa671e1644c808a0692532f5ac64c23e44575e85ec24604",
+  "independent_gram_oracle_sha256": "299e2e6f6a7cd46de667ede590900a5f8426840ab131fcb0a29c6db012f84a64",
+  "saved_source_sha256": "8293e528837cc2a8a25444aa079944c9f8371f5a5b50280bb6dc91816d19b852",
+  "saved_runtime_identity": {
+    "python": "3.14.2",
+    "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+    "anymaterial_module": "C:\\Github\\ANYmaterial\\src\\anymaterial\\__init__.py",
+    "compiled_bjet_mul_enabled": false
+  },
+  "anysolver_module": "C:\\ANYworkspaceWork\\ANYsolver-general-contact\\src\\anysolver\\__init__.py",
+  "active_modes": 48,
+  "active_pressure_node_ids": [
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    148,
+    149,
+    150,
+    151,
+    152,
+    153
+  ],
+  "oracle_quadrature_points": 4736,
+  "oracle_topology_count": 256,
+  "oracle_support_relative_error": 5.342143030533312e-13,
+  "oracle_gap_maximum_error_m": 5.110498206258376e-13,
+  "source_trial_constraint_relative_error": 0.0,
+  "source_trial_energy_scaled_minimum_eigenvalue": 0.053644380713385335,
+  "physical_pressure_gram_scaled_minimum_eigenvalue": 0.26021442932085154,
+  "source_trial_work_relative_gram_difference": 1.8610825100243645e-13,
+  "source_trial_work_skew_relative": 7.005642712131372e-14,
+  "source_trial_work_relative_gram_eigenvalue_range": [
+    0.9999999998517147,
+    1.000000000000608
+  ],
+  "source_witness_to_full_dual_squared_ratio_range": [
+    0.0002015367364260738,
+    1.0000000000000722
+  ],
+  "all_free_source_transverse": {
+    "coordinates": 144,
+    "squared_dual_ratio_range": [
+      0.9999999999998573,
+      1.0000000000001363
+    ]
+  },
+  "free_target_only": {
+    "coordinates": 0,
+    "squared_dual_ratio_range": [
+      0.0,
+      0.0
+    ]
+  },
+  "all_source_transverse_plus_target": {
+    "coordinates": 144,
+    "squared_dual_ratio_range": [
+      0.9999999999998573,
+      1.0000000000001363
+    ]
+  },
+  "all_admissible_coordinates": {
+    "coordinates": 295,
+    "squared_dual_ratio_range": [
+      0.9999999999998753,
+      1.000000000000124
+    ]
+  },
+  "scalar_q1_gradient_fit": {
+    "fitted_shear_force_scale_n": 1602.5641025641028,
+    "relative_matrix_error": 2.972249135329629e-16
+  },
+  "guided_fourier_reference": {
+    "modes_each_axis": 64,
+    "target_contact_y_upper_m": 1.0,
+    "maximum_source_ux_m": 1.6326996721945734e-09,
+    "spectral_gram_relative_oracle_error": 1.4932636519509846e-15,
+    "finite_compliance_scaled_minimum_eigenvalue": 0.003763254404235249,
+    "parseval_tail_coefficient_m_per_n": 1.543470701075832e-08,
+    "maximum_relative_tail_bound": 0.9317744704145985,
+    "discrete_to_continuum_squared_ratio_lower": 0.3625365668079388,
+    "discrete_to_continuum_squared_ratio_upper": 0.9985843882550229
+  },
+  "full_minus_witness_scaled_minimum_eigenvalue": -3.9938458528567225e-15,
+  "full_response_relative_residual": 7.062993399675664e-15,
+  "elapsed_seconds": 10.47718029999669,
+  "peak_process_working_set_mb": 219.574272
+}

@@ -1,0 +1,242 @@
+{
+  "status": "development_scale_screen_only",
+  "source": "production structural/contact work, independent exact support/jump",
+  "rows": [
+    {
+      "theta": 0.1,
+      "pressure_node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "nonzero_pressure_coefficients_pa": [
+        {
+          "node_id": 3,
+          "pressure_pa": 0.0023521864403291746
+        },
+        {
+          "node_id": 4,
+          "pressure_pa": -0.006439897302735421
+        },
+        {
+          "node_id": 8,
+          "pressure_pa": -0.004704372880658349
+        },
+        {
+          "node_id": 9,
+          "pressure_pa": 0.012879794605470842
+        },
+        {
+          "node_id": 13,
+          "pressure_pa": 0.3430831936537267
+        },
+        {
+          "node_id": 14,
+          "pressure_pa": -0.939305020870409
+        }
+      ],
+      "global_reduced_compliance_m3_per_pa": 3.344202942071213e-08,
+      "exact_individual_hat_compliance_m3_per_pa": 4.532523407220601e-05,
+      "individual_hat_diagonal_proxy_m3_per_pa": 1.358555321118405e-06,
+      "projected_jump_m2": 0.0005458552362538703,
+      "exact_hat_to_jump_scale_m_per_pa": 0.08303526477691572,
+      "diagonal_proxy_to_exact_hat_ratio": 0.02997348715186201,
+      "proxy_to_jump_scale_m_per_pa": 0.0024888564419423436,
+      "global_over_theta6": 0.033442029420712116,
+      "exact_hat_over_theta4": 0.45325234072206005,
+      "proxy_over_theta4": 0.013585553211184048,
+      "jump_over_theta4": 5.458552362538702,
+      "pressure_support_max_abs_error_m2": 5.551115123125783e-16,
+      "full_support_max_abs_error_m2": 1.6653345369377348e-16
+    },
+    {
+      "theta": 0.05,
+      "pressure_node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "nonzero_pressure_coefficients_pa": [
+        {
+          "node_id": 3,
+          "pressure_pa": 0.0006966400095195405
+        },
+        {
+          "node_id": 4,
+          "pressure_pa": -0.0019072850864894182
+        },
+        {
+          "node_id": 8,
+          "pressure_pa": -0.001393280019039081
+        },
+        {
+          "node_id": 9,
+          "pressure_pa": 0.0038145701729788363
+        },
+        {
+          "node_id": 13,
+          "pressure_pa": 0.3430831936537267
+        },
+        {
+          "node_id": 14,
+          "pressure_pa": -0.939305020870409
+        }
+      ],
+      "global_reduced_compliance_m3_per_pa": 6.534939757713675e-10,
+      "exact_individual_hat_compliance_m3_per_pa": 3.405977168556085e-06,
+      "individual_hat_diagonal_proxy_m3_per_pa": 9.194111190021503e-08,
+      "projected_jump_m2": 3.790698559609141e-05,
+      "exact_hat_to_jump_scale_m_per_pa": 0.0898509104587645,
+      "diagonal_proxy_to_exact_hat_ratio": 0.02699404821295151,
+      "proxy_to_jump_scale_m_per_pa": 0.002425439808901478,
+      "global_over_theta6": 0.041823614449367504,
+      "exact_hat_over_theta4": 0.5449563469689735,
+      "proxy_over_theta4": 0.014710577904034402,
+      "jump_over_theta4": 6.065117695374624,
+      "pressure_support_max_abs_error_m2": 5.828670879282072e-16,
+      "full_support_max_abs_error_m2": 1.6653345369377348e-16
+    },
+    {
+      "theta": 0.025,
+      "pressure_node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "nonzero_pressure_coefficients_pa": [
+        {
+          "node_id": 3,
+          "pressure_pa": 0.00019211773149304182
+        },
+        {
+          "node_id": 4,
+          "pressure_pa": -0.0005259865628153806
+        },
+        {
+          "node_id": 8,
+          "pressure_pa": -0.00038423546298608363
+        },
+        {
+          "node_id": 9,
+          "pressure_pa": 0.001051973125630761
+        },
+        {
+          "node_id": 13,
+          "pressure_pa": 0.3430831936537267
+        },
+        {
+          "node_id": 14,
+          "pressure_pa": -0.939305020870409
+        }
+      ],
+      "global_reduced_compliance_m3_per_pa": 1.1726750118405183e-11,
+      "exact_individual_hat_compliance_m3_per_pa": 2.3819086298287966e-07,
+      "individual_hat_diagonal_proxy_m3_per_pa": 6.0744005639856114e-09,
+      "projected_jump_m2": 2.5332456706485397e-06,
+      "exact_hat_to_jump_scale_m_per_pa": 0.09402596271758361,
+      "diagonal_proxy_to_exact_hat_ratio": 0.025502240043616696,
+      "proxy_to_jump_scale_m_per_pa": 0.002397872671555971,
+      "global_over_theta6": 0.04803276848498761,
+      "exact_hat_over_theta4": 0.6097686092361718,
+      "proxy_over_theta4": 0.015550465443803162,
+      "jump_over_theta4": 6.48510891686026,
+      "pressure_support_max_abs_error_m2": 5.273559366969494e-16,
+      "full_support_max_abs_error_m2": 1.6653345369377348e-16
+    },
+    {
+      "theta": 0.0125,
+      "pressure_node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "nonzero_pressure_coefficients_pa": [
+        {
+          "node_id": 3,
+          "pressure_pa": 5.065862458748301e-05
+        },
+        {
+          "node_id": 4,
+          "pressure_pa": -0.00013869493261578502
+        },
+        {
+          "node_id": 8,
+          "pressure_pa": -0.00010131724917496603
+        },
+        {
+          "node_id": 9,
+          "pressure_pa": 0.00027738986523157005
+        },
+        {
+          "node_id": 13,
+          "pressure_pa": 0.3430831936537267
+        },
+        {
+          "node_id": 14,
+          "pressure_pa": -0.939305020870409
+        }
+      ],
+      "global_reduced_compliance_m3_per_pa": 1.9801306949017156e-13,
+      "exact_individual_hat_compliance_m3_per_pa": 1.5853344230648028e-08,
+      "individual_hat_diagonal_proxy_m3_per_pa": 3.924536908024732e-10,
+      "projected_jump_m2": 1.645857367769897e-07,
+      "exact_hat_to_jump_scale_m_per_pa": 0.0963227102244527,
+      "diagonal_proxy_to_exact_hat_ratio": 0.024755262050247622,
+      "proxy_to_jump_scale_m_per_pa": 0.0023844939329963925,
+      "global_over_theta6": 0.05190793808843151,
+      "exact_hat_over_theta4": 0.6493529796873431,
+      "proxy_over_theta4": 0.0160749031752693,
+      "jump_over_theta4": 6.741431778385498,
+      "pressure_support_max_abs_error_m2": 4.996003610813204e-16,
+      "full_support_max_abs_error_m2": 1.6653345369377348e-16
+    }
+  ]
+}

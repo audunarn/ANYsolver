@@ -1,0 +1,20 @@
+{
+  "source_guided_shear_n_m": 1602.5641025641025,
+  "target_guided_shear_n_m": 3158.962046209225,
+  "target_phi_squared_range": [
+    0.3942384633669111,
+    0.39423846336691204
+  ],
+  "target_p1_energy_max_relative_error": 3.8412498258918547e-16,
+  "target_cells": 12,
+  "target_y0_m": -0.113,
+  "gap_m": 7.741263872132846e-06,
+  "exact_force_n": 0.02042556989989151,
+  "zero_structural_normal_tangent_relative_error": 1.4672419466233973e-16,
+  "zero_internal_force_norm_n": 0.0,
+  "first_step_normal_internal_relative_difference": 7.13150578387726e-11,
+  "normal_operator_target_met": true,
+  "status": "development_actual_structural_operator_check",
+  "input_sha256": "0898d442a96ebc82edd549ca6b7b7a663e881a1ff3c9741e1b53642f13ee7da3",
+  "num_layers": 5
+}

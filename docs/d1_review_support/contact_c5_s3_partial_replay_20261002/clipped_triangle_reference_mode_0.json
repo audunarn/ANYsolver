@@ -1,0 +1,50 @@
+[
+  {
+    "level": 1,
+    "omit_history": false,
+    "reaction": 0.004750006666666684,
+    "reference": 0.004750006666666667,
+    "relative_error": 3.469442082561217e-15,
+    "points": 96
+  },
+  {
+    "level": 1,
+    "omit_history": true,
+    "reaction": 0.004750006118574461,
+    "reference": 0.004750006666666667,
+    "relative_error": 1.1538767093013984e-07,
+    "points": 48
+  },
+  {
+    "level": 2,
+    "omit_history": false,
+    "reaction": 0.004750006666666674,
+    "reference": 0.004750006666666667,
+    "relative_error": 1.460817718973144e-15,
+    "points": 384
+  },
+  {
+    "level": 2,
+    "omit_history": true,
+    "reaction": 0.004750006396361695,
+    "reference": 0.004750006666666667,
+    "relative_error": 5.6906230022518e-08,
+    "points": 192
+  },
+  {
+    "level": 3,
+    "omit_history": false,
+    "reaction": 0.004750006666666676,
+    "reference": 0.004750006666666667,
+    "relative_error": 1.82602214871643e-15,
+    "points": 1536
+  },
+  {
+    "level": 3,
+    "omit_history": true,
+    "reaction": 0.00475000653525529,
+    "reference": 0.004750006666666667,
+    "relative_error": 2.766551431636466e-08,
+    "points": 768
+  }
+]

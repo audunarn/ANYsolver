@@ -1,0 +1,30 @@
+{
+  "status": "DEVELOPMENT_NONPASS_INDEPENDENTLY_ASSESSED",
+  "solver_committed_steps": 3,
+  "gate_passing_steps": 2,
+  "planned_steps": 16,
+  "complete_route_seconds": 18.808533800009172,
+  "peak_process_tree_memory_mb": 240.349184,
+  "blocking_gate": "Step and cumulative normalized energy defect exceed unchanged1e-6 limit at step3; stop before step4",
+  "step3_energy_defect": 1.1741240973762397e-6,
+  "cumulative_energy_defect": 2.0937914418056918e-6,
+  "cumulative_linear_momentum_defect": 1.8616008215504602e-7,
+  "cumulative_angular_momentum_defect": 1.5107533164329635e-8,
+  "saved_work_decomposition_joules": {
+    "endpoint_kinetic_change": -0.03816568596766956,
+    "endpoint_elastic_change": 0.039788909554531605,
+    "midpoint_residual_contraction": 1.5288367963384412e-15,
+    "elastic_endpoint_minus_midpoint": 0.0016533529118265486,
+    "kinetic_endpoint_minus_midpoint": -0.000030129324966023108
+  },
+  "disposition": "Finite-step endpoint/storage versus midpoint-work discrepancy; stage residual and P/H gates pass. No causal or temporal-order conclusion. One prospective half-step shared-time discriminator selected; consumedN16 is not replayed.",
+  "claim_boundary": "Development evidence only; no completed finite-angle trajectory, C7 acceptance, installed new-chart, spatial accuracy or release claim.",
+  "bindings": {
+    "inputs": "ef6df767b2ab800a102b2b37ae7defb0159e21188c1213ca0352efbb35702a0d",
+    "test_source": "f387b825cac5d6bd8493e6176ff397a1177641a56ef9480f7da51992fa85af0e",
+    "proposal": "9069f34873e133c3fe24816ae568fdace4739ab217cd6b2ee6e4e32f63edd7ce",
+    "raw": "21971d5cda63617f1b9fbb55f42fab0495b82683d1ab819bd88f9a41269ea7a7",
+    "resources": "fcc4a209cd40d1a2731a3c284f67f5b2cd0c62fbfa4f4440a1480acd8190b0ca",
+    "review_snapshot": "7b4f4e41d3610190c4e997c147d9a06e16a179bd0b2b2801169c6266ffeccc07"
+  }
+}

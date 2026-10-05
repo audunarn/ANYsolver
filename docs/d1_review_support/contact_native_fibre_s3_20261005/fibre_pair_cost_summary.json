@@ -1,0 +1,295 @@
+{
+  "scope": "V6_GLOBAL_CHORD geometry and exact-candidate reuse; development only, no completed coupled route or native acceptance",
+  "source_parent": "71212782",
+  "source_hashes": {
+    "src/anysolver/general_contact/native_curve_union.py": "e039c3da50d62255053b1016d39eaa8c2b55b4f55ca67f76029e2dae6e2e4640",
+    "src/anysolver/general_contact/native_retained_whole_pair.py": "f146dfe8fdc203507cfd1c52478bee707fedb6f330cdd9363cf31d9b228a41d8",
+    "src/anysolver/general_contact/native_retained_pair_static.py": "4973427512d3e3e83a30bfa1623c052267768cf43dd98cf1412445077af3cfa1",
+    "tests/test_general_contact_native_curve_union.py": "2f8fed213918c92332e97b626597fd3a84118ad9f09c59ece232b142a4efdc4d",
+    "tests/test_general_contact_native_fibre_pair_static.py": "ee2b835dcba5f998030a1b69a05345084bcdae9a51f3d55d2583061e9d49f2a7"
+  },
+  "wheel_sha256": "96aa9e3b57f353d75011542dad5ec2e45c19ec53ef90f37d19d7f7da3c25a36e",
+  "parity": {
+    "files": 527,
+    "mismatches": []
+  },
+  "runs": {
+    "candidate14/installed_first_newton_cost": {
+      "resource": {
+        "status": "completed",
+        "returncode": 4,
+        "elapsed_s": 0.7611654000356793,
+        "peak_bytes": 60743680
+      }
+    },
+    "candidate14/installed_first_newton_cost_corrected": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 43.33069279999472,
+        "peak_bytes": 198197248
+      },
+      "actual_result.json-first-newton-cost.json": {
+        "scope": "first Newton cost diagnostic only",
+        "operations": [
+          {
+            "operation": "initial_assembly",
+            "status": "completed",
+            "elapsed_s": 1.168644499965012
+          },
+          {
+            "operation": "initial_step",
+            "status": "completed",
+            "elapsed_s": 0.007810299983248115
+          },
+          {
+            "operation": "endpoint_cut_0",
+            "status": "ValueError",
+            "failure": "native whole pair target ownership is unresolved: source cell 0, interval [0.9990234375, 1.0]",
+            "elapsed_s": 1.937451200094074
+          },
+          {
+            "operation": "endpoint_cut_1",
+            "status": "completed",
+            "elapsed_s": 5.963456799974665,
+            "gap_lower_m": -0.002758901951310219,
+            "potential_j": 4.9481095246278634e-05
+          },
+          {
+            "operation": "endpoint_cut_2",
+            "status": "completed",
+            "elapsed_s": 6.90824830008205,
+            "gap_lower_m": -0.0003920138939207257,
+            "potential_j": 1.049974182362412e-06
+          },
+          {
+            "operation": "endpoint_cut_3",
+            "status": "completed",
+            "elapsed_s": 4.076335599995218,
+            "gap_lower_m": 2.518333627604674e-07,
+            "potential_j": 0.0
+          },
+          {
+            "operation": "swept_cut_3",
+            "status": "completed",
+            "elapsed_s": 16.007172200013883,
+            "admissible": true
+          },
+          {
+            "operation": "candidate_assembly",
+            "status": "completed",
+            "elapsed_s": 4.180161800002679,
+            "metrics": [
+              0.0021875000422173284,
+              0.00012312124458761344
+            ]
+          }
+        ]
+      }
+    },
+    "candidate15/installed_global_chord_controls": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 19.139691699994728,
+        "peak_bytes": 198623232
+      }
+    },
+    "candidate15/installed_reuse_cancellation": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 2.676860100007616,
+        "peak_bytes": 182046720
+      }
+    },
+    "candidate15/installed_global_chord_first_newton": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 13.12414150009863,
+        "peak_bytes": 189935616
+      },
+      "actual_result.json-first-newton-cost.json": {
+        "scope": "first Newton cost diagnostic only",
+        "operations": [
+          {
+            "operation": "initial_assembly",
+            "status": "completed",
+            "elapsed_s": 0.0830640000058338
+          },
+          {
+            "operation": "initial_step",
+            "status": "completed",
+            "elapsed_s": 0.0077272000489756465
+          },
+          {
+            "operation": "endpoint_cut_0",
+            "status": "ValueError",
+            "failure": "native whole pair target ownership is unresolved: source cell 0, interval [0.9990234375, 1.0]",
+            "elapsed_s": 1.9519660999067128
+          },
+          {
+            "operation": "endpoint_cut_1",
+            "status": "completed",
+            "elapsed_s": 2.6370106999529526,
+            "gap_lower_m": -0.001784027782873912,
+            "potential_j": 4.9481095246278634e-05
+          },
+          {
+            "operation": "endpoint_cut_2",
+            "status": "completed",
+            "elapsed_s": 5.759583099978045,
+            "gap_lower_m": -0.0003920138939207257,
+            "potential_j": 1.049974182362412e-06
+          },
+          {
+            "operation": "endpoint_cut_3",
+            "status": "completed",
+            "elapsed_s": 0.013882100000046194,
+            "gap_lower_m": 0.00030399305055593684,
+            "potential_j": 0.0
+          },
+          {
+            "operation": "swept_cut_3",
+            "status": "completed",
+            "elapsed_s": 0.004930899944156408,
+            "admissible": true
+          },
+          {
+            "operation": "candidate_assembly",
+            "status": "completed",
+            "elapsed_s": 0.08320709993131459,
+            "metrics": [
+              0.0021875000422173284,
+              0.00012312124458761344
+            ]
+          }
+        ]
+      }
+    },
+    "candidate15/installed_global_chord_first_target": {
+      "resource": {
+        "status": "timeout",
+        "returncode": 15,
+        "elapsed_s": 120.1141974000493,
+        "peak_bytes": 198377472
+      }
+    },
+    "candidate15/installed_ten_contact_path": {
+      "resource": {
+        "status": "completed",
+        "returncode": 0,
+        "elapsed_s": 18.156208700034767,
+        "peak_bytes": 198782976
+      },
+      "actual_result.json-contact-path.json": {
+        "scope": "ten-call diagnostic only",
+        "calls": [
+          {
+            "caller": "_assemble",
+            "index": 0,
+            "status": "completed",
+            "gap_lower_m": 0.0009999999950308508,
+            "potential_j": 0.0,
+            "elapsed_s": 0.006268400000408292
+          },
+          {
+            "caller": "_solve",
+            "index": 1,
+            "status": "ValueError",
+            "failure": "native whole pair target ownership is unresolved: source cell 0, interval [0.9990234375, 1.0]",
+            "elapsed_s": 0.9732425999827683
+          },
+          {
+            "caller": "_solve",
+            "index": 2,
+            "status": "completed",
+            "gap_lower_m": -0.001784027782873912,
+            "potential_j": 4.9481095246278634e-05,
+            "elapsed_s": 1.3330401999410242
+          },
+          {
+            "caller": "_solve",
+            "index": 3,
+            "status": "completed",
+            "gap_lower_m": -0.0003920138939207257,
+            "potential_j": 1.049974182362412e-06,
+            "elapsed_s": 2.8096092001069337
+          },
+          {
+            "caller": "_solve",
+            "index": 4,
+            "status": "completed",
+            "gap_lower_m": 0.00030399305055593684,
+            "potential_j": 0.0,
+            "elapsed_s": 0.006693299976177514
+          },
+          {
+            "caller": "_solve",
+            "index": 5,
+            "status": "ValueError",
+            "failure": "native whole pair target ownership is unresolved: source cell 0, interval [0.9990234375, 1.0]",
+            "elapsed_s": 0.7687774000223726
+          },
+          {
+            "caller": "_solve",
+            "index": 6,
+            "status": "ValueError",
+            "failure": "native whole pair target ownership is unresolved: source cell 0, interval [0.9990234375, 1.0]",
+            "elapsed_s": 1.165149400010705
+          },
+          {
+            "caller": "_solve",
+            "index": 7,
+            "status": "completed",
+            "gap_lower_m": -0.0016150467248140926,
+            "potential_j": 3.910038241191626e-05,
+            "elapsed_s": 1.4810422000009567
+          },
+          {
+            "caller": "_solve",
+            "index": 8,
+            "status": "completed",
+            "gap_lower_m": -0.0006555268371286616,
+            "potential_j": 4.12950724257838e-06,
+            "elapsed_s": 2.6082206999417394
+          },
+          {
+            "caller": "_solve",
+            "index": 9,
+            "status": "completed",
+            "gap_lower_m": -0.00017576689328660522,
+            "potential_j": 1.1208914647332682e-07,
+            "elapsed_s": 2.6734594999579713
+          }
+        ],
+        "solver_status": "failed",
+        "failure": "RuntimeError: bounded ten-contact-call diagnostic stop",
+        "completed_targets": 0
+      },
+      "independent_last_trial_gap.json": {
+        "scope": "independent finite-segment geometric oracle; straight reference has zero retained lift",
+        "cell_pair_gaps_m": [
+          0.0006318727941352908,
+          0.0006318399464473878,
+          0.000631872794141064,
+          -0.00017576688826495546
+        ],
+        "minimum_gap_m": -0.00017576688826495546,
+        "reported_lower_gap_m": -0.00017576689328660522,
+        "gap_budget_m": 5e-05
+      }
+    },
+    "candidate15/installed_staged_fibre_pair": {
+      "resource": {
+        "status": "timeout",
+        "returncode": 15,
+        "elapsed_s": 120.13698969990946,
+        "peak_bytes": 199602176
+      }
+    }
+  },
+  "supporting_review": "same-family; no consequential source defect; active curved pocket and cancellation-on-reuse controls added and passed",
+  "next": "Extend/reuse the independent small-motion Timoshenko foundation discriminator for a tip-loaded relative pair; assess line regularization/gap feasibility before any further coupled campaign. No unchanged full replay/cap/gap/stiffness increase."
+}

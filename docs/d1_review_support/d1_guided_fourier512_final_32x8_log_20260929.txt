@@ -1,0 +1,14 @@
+{
+  "status": "development_source_transverse_active_witness",
+  "active_modes": 96,
+  "oracle_support_relative_error": 5.811281561789028e-13,
+  "source_trial_work_relative_gram_eigenvalue_range": [
+    0.9999999998502833,
+    1.0000000000020643
+  ],
+  "source_witness_to_full_dual_squared_ratio_range": [
+    0.00016791732337918995,
+    1.0000000000002711
+  ],
+  "elapsed_seconds": 21.249321600000258
+}
