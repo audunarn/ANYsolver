@@ -3058,3 +3058,22 @@ weak. Enforcement alone does not explain difference; body/primal/broken-trace
 and convergence remain open. No physical accuracy, multiplier selection, F03
 consumption, scientific gate closure or release. Raw weak-continuum-dev-20261006-v1
 handoff.json/integration-binding.json/independent-review.md bind DEV applicability.
+
+
+### 6 October - body-port discriminator failed; comparison withheld
+
+FAILED: common-density native body-port development comparison. Six distinct
+prerequisite controls passed; two rejected shell calculations; zero beam,
+coupled-native or external computations. Slot51 loaded-row ratio.00302139 >
+original1e-8; closed work cannot override failure. Native matrix bytes absent;
+residual observed/source-consistent, not independently reproduced from saved K.
+Root selected hashes/424 immutable site-wheel modules/242 observed imports and
+V2 runtime verified; non-author review preserves unexecuted beam/gauge/material
+paths. V1 slot race remains; no serialization/resource-pass claim. Stop arithmetic
+branch without cause allocation or formulation-failure claim. Raw body-port-dev-
+20261006-v1/integration-binding.json,independent-review.md,integration-disposition.md.
+Scientific failing assertion unchanged; explicit DEV skips are not passes.
+Native BL5 material candidate remains unqualified: same-law failed continuation
+retains .284375 prefix with fibre activity/shell elastic; fixed-predecessor
+actual-update tangent is next discriminator. No simultaneous yielding or aggregate
+acceptance follows. No F03 authority consumed, criteria changed or release.
