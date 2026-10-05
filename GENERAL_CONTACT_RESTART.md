@@ -1,64 +1,56 @@
-# General contact — active restart point
+# General contact - active restart point
 
-## Authority and ownership
+## Authority / ownership
+Full C0-C9 ACTIVE/incomplete. Goal/plan2026-10-05.2; only checkout
+C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
+branch codex/contact-main-reconcile-20261001. Parent HEAD84583d4b; new source hashes
+and wheel bind the implemented slice. No live owned numerical jobs.
+Never access protected original general-contact checkout despite stale goal paths.
+Main/ANYfem/other chats separately owned; no other-chat messages, merge, push,
+publication, release or defaults changes. Local commits authorized.
+Expanded Mistral ownership applies; cached Local/Mistral unavailable, no reprobe
+without changed availability. Same-family scrutiny is not independent acceptance.
 
-Full C0–C9 ACTIVE/incomplete. Goal/plan2026-10-05.2; only checkout
-C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001, branch
-codex/contact-main-reconcile-20261001. ParentHEADa519f5af; current source hashes
-and wheel in linked evidence bind this slice. No live owned numerical job.
-Never access protected original ANYsolver-general-contact despite stale goal
-paths. Main/ANYfem/other chats separately owned. No other-chat messages, merge,
-publication, release or default changes. Local commits authorized.
-Expanded Mistral ownership applies, but cached Local/Mistral unavailable: do not
-reprobe without changed availability. Same-family review is supporting scrutiny,
-not independent engineering acceptance. No blocked audit: this slice is progress.
+## Current implemented slice / actual result
+Coordinates-only first-target Newton initialization implemented through the
+existing owner/driver. Fine virgin origins, initial checkpoint and accepted state
+remain unchanged; structure/fingerprint, supports/rotation chart, endpoint and
+full swept path validated inside cancellation/rollback. No resumed/empty guesses.
+22 source controls59.092s;22 installed67.651s;526files/222imports match,JIT0/pools1.
+Candidate08 wheel167b465dfb959a1b4cd6cc232138c7c129c07f5f2bd591f04eadba221189d0fb.
+Seeded2e7 accepts target1 in96.138s/186023936B,26candidates,no curved failures.
+Response NONPASS: tip3.011197% >2%; force0.310187%,moment0.117474%,target0.216007%.
+Gap lower improves15.013084 to11.207837um; independent sampled/refined11.207201um.
+Actual fine checkpoint SHA2c96b3194034fe153a8e0e15ca4882d0b235cbdc1e75b2580f14210e1c15755c.
+[Evidence and raw paths](docs/d1_review_support/contact_native_fibre_s3_20261005/initial_guess.md)
+[Exact summary](docs/d1_review_support/contact_native_fibre_s3_20261005/initial_guess_summary.json).
 
-## Current integrated slice
+## Discriminator / next bounded action
+Tenth-budget saved-pose control rejects: root tangent2.683057e-7 >1e-7;
+energy/force bounds below budget. No relaxation. Independent analytic-surface
+residual agrees1.721196e-14 relative; refinement7.258188e-15; constrained virgin-
+origin tip correction9.092547e-16 relative, negligible. This supports enforcement
+sensitivity as principal discrepancy at this pose, not global integration/solution
+acceptance. Oracle unpacking and wrong reference-measure attempts preserved as
+invalid evidence; corrected result9.504s/182001664B. No stiffness solve this turn.
+Next one prospective4e7 comparison with actual2e7 checkpoint as coordinates-only
+source; fine virgin histories and full initial-to-guess admission. Adapt existing
+parameterized enforcement runner to source stiffness/checkpoint, save results
+before assertions, compare all4 responses with unchanged2% and gap/work gates.
+120s/953MiB from owner construction including idle; no reset. Further failure
+requires classification, not automatic level/cap increase. No whole-route speedup.
 
-Candidate-local exact rational axial reuse preserves centre+arm rounding, high/low
-parts and origin. Cache cleared in finally; direct calls uncached. No mechanics,
-settings, identities or passing diagnostics changed. Fourteen installed checks
-pass15.771s/187076608B;525source files/221imports match, paths correct,JIT0/pools1.
-Bitwise full residual/tangent/contact-field and exact active/open replay pass.
-WheelSHA5da880d0f091b10b428b906b5b5bec69a8a25acaed206ec914658b87ca95e4fc;
-raw C:/ANYworkspaceWork/contact_native_fibre_s3_20261005/candidate07.
-
-Balanced four-pair saved-pose local median2.553095s cached versus2.871090s original
-(11.08% less local time); same11intervals/10880evaluations and bitwise work.
-No whole-route speedup or memory saving. Corrected installed2e7 attempt still
-resource NONPASS120.062s/183242752B, no returned result/checkpoint/comparison.
-No unchanged retry, cap increase, owner reset or stiffness escalation.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/exact_axial_reuse.md).
-
-## Next authorized integrated action
-
-Implement a validated first-target Newton guess through the existing driver,
-using copied coarse mechanical/shell coordinates only. Keep fine virgin material
-origins, committed initial state, contact definition and empty checkpoint intact.
-Validate exact structural identities/order, finite coordinates, supports,
-endpoint and complete swept path from fine initial to guess. Setup belongs inside
-rollback/cancellation. Reject resumed-prefix guesses; preserve the default path
-exactly and record provenance separately. Test origin/rollback/path/restart
-contracts before a bounded new2e7 solve; no saving or convergence assumed.
-Supporting Read review found a narrow hook after origins assignment in
-native_shell_static_driver.py; no seed implementation exists yet. No new beam,
-friction/dynamic or application prototype is needed to solve this cost question.
-
-## Preserved evidence and restrictions
-
-[Full preceding restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261005_PRE_EXACT_AXIAL.md)
-links all exact prior histories, source/package identities and failures. Existing
-material reporting and actual plastic press/open/recontact remain development
-coverage, not native engineering acceptance. Coarse active/open fixtures remain
-byte-preserved. Conditional arc/PSD enclosures preserve old passing diagnostics;
-former geometry/replay failures and120s source timeout remain NONPASS.
-Native owner expires120s from construction including idle; never reset clocks.
+## Retained restrictions / history
+[Previous restart](docs/d1_review_support/GENERAL_CONTACT_RESTART_HISTORY_20261005_PRE_INITIAL_GUESS.md)
+retains exact preceding states, failed evidence and links. Original120h consumed
+432011s; later resumption allows bounded work without resetting accounting.
 Routine180s1GB/private180s953MiB/native120s; named900s4GB prospective only.
-No frozen/consumed authority renewed. Original120h consumed432011s; later explicit
-resumption permits bounded work without duration/accounting reset. ANYfem434ec004
-untouched/appfalse. Free-rim continuum negative/guided reference retained.
-ImpactV4/V16 NONPASS900s at1.79779ms/3ms: no unchanged/full replay or cap/gap
-relaxation. Native grazing friction NONPASS−1.33564e-13m: missing closed derivative/
-mixed enclosure; no saved/full/owner/split retry/reset/zero/native admission.
-Q4FDappcycle180.124s: no unchanged retry. All earlier enforcement/penalty failures,
-scientific tolerances and independent acceptance requirements stay binding.
+ANYfem434ec004 untouched/appfalse. Native engineering acceptance, enforcement/
+material convergence and full beam/friction/dynamic/application/scale programme
+remain incomplete. Exact coarse fixtures preserved. Historical enforcement,
+geometry/replay/timeouts remain NONPASS. Free-rim continuum negative/guided
+reference retained. ImpactV4/V16 NONPASS900s at1.79779ms/3ms: no unchanged/full
+replay or cap/gap relaxation. Native grazing friction NONPASS-1.33564e-13m:
+missing closed derivative/mixed enclosure; no saved/full/owner/split retry/reset/
+zero/native admission. Q4FDappcycle180.124s: no unchanged retry. All scientific
+criteria, frozen/consumed restrictions and independent acceptance remain binding.

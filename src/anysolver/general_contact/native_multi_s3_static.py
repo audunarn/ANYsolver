@@ -531,13 +531,24 @@ class NativeRetainedMultiS3Analysis:
         return accepted, records
 
     def solve(self, *, checkpoint=None, expected_sha256=None, stop_after=None,
-              cancellation_token=None, progress=None):
+              cancellation_token=None, progress=None, initial_guess=None):
         operation=self.context.operation(cancellation_token) if self._fibre_mode else nullcontext()
         with operation:
             result=solve_native_shell(self, self.schema, self.run_type, checkpoint=checkpoint,
                 expected_sha256=expected_sha256, stop_after=stop_after,
-                cancellation_token=cancellation_token, progress=progress)
+                cancellation_token=cancellation_token, progress=progress,initial_guess=initial_guess)
         return replace(result,profile=self.profile) if self._material_mode else result
+
+    def make_initial_guess(self,source_analysis,checkpoint,expected_sha256):
+        """Prepare coordinates-only initialization from a bound first target."""
+        from .native_initial_guess import make_guess
+        return make_guess(self,source_analysis,checkpoint,expected_sha256)
+
+    def _initial_guess_trial(self,guess,cancellation_token):
+        if not self._fibre_mode or not self._curved_mode:
+            raise ValueError('first-target guess requires curved physical-fibre owner')
+        from .native_initial_guess import prepare_trial
+        return prepare_trial(self,guess,cancellation_token)
 
     def _begin_candidate_context(self,cancellation_token):
         if self._fibre_mode:self.context.activate_cancellation(cancellation_token)

@@ -147,3 +147,31 @@ replaying a consumed run or increasing any execution budget.
 materials, pairings, finite overlap, convergence, friction, native dynamics and
 application admission remain required by the full programme. Same-family
 supporting scrutiny does not establish independent acceptance.
+
+### Coordinates-only first-target initialization
+
+The curved physical-fibre development owner can prepare a first-target Newton
+guess from another identically structured owner's bound first-target checkpoint:
+
+```python
+from hashlib import sha256
+
+guess = fine.make_initial_guess(coarse, coarse_checkpoint,
+                                sha256(coarse_checkpoint).hexdigest())
+run = fine.solve(stop_after=1, initial_guess=guess)
+```
+
+The source owner validates its checkpoint. The fine owner copies coordinates,
+reconstructs them through its ordinary retained update, and evaluates all material
+work from its bound virgin origin. Structural/layout identities, supports,
+rotation chart, endpoint geometry and the complete initial-to-guess path are
+checked before fine assembly. Failure or cancellation retains the empty prefix.
+The default solve path remains available. Guess use requires a fresh nonempty
+solve; passing a checkpoint together with a guess fails explicitly.
+
+Record `guess.fingerprint`, `guess.source_owner_identity` and
+`guess.source_checkpoint_sha256` with development evidence. Fine accepted
+checkpoints bind the fine definition and committed history and resume through
+ordinary checkpoint controls. Preparing or using a guess retains the original
+owner deadline. Convergence, branch selection and performance require measured
+evidence for each admitted workflow.

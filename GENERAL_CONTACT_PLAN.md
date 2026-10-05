@@ -30,15 +30,17 @@ independent gap and material/storage outputs with dimensional scales. State the
 hypothesis and stopping decision before a new solve; do not renew the historical
 failed convergence campaign or infer convergence from a gap/residual alone.
 
-**Latest discriminator disposition:** candidate-local exact axial reuse passes14
-installed checks with bitwise work and active/open replay parity. Balanced local
-median falls2.871090 to2.553095s (11.08%); no whole-route saving established.
-The changed installed2e7 attempt still hits120s without a mechanical result.
-Stop unchanged retries. Next add a validated first-target Newton guess using
-coarse coordinates only, fine virgin histories and full initial-to-guess path
-admission. Preserve the default route, checkpoint binding, rollback/cancellation
-and resource caps; prove those contracts before another coupled solve.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/exact_axial_reuse.md).
+**Latest discriminator disposition:** coordinates-only first-target initialization
+passes22 installed checks; seeded2e7 accepts target1 in96.138s. Tip changes3.011197%
+against2%: response NONPASS. Tenth-budget pose integration rejects its root tangent
+enclosure; independent analytic residual agrees1.72e-14 relative, with negligible
+constrained tip correction. This supports enforcement sensitivity, not convergence.
+Next one4e7 comparison seeds actual2e7 coordinates only, preserving fine virgin
+histories and full path admission. Keep120s/953MiB, save outputs before assertions
+and compare all four response quantities with unchanged gap/work gates. No
+automatic next level/cap increase. Defaults, restart and rollback remain unchanged.
+No whole-route saving claimed.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/initial_guess.md).
 
 Latest D3 material/history slice: explicit physical fibres Y2Pa/H1e5Pa through
 the same owner now press, unload/open and recontact with actual committed history.

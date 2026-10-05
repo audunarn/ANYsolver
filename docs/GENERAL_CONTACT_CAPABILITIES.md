@@ -2390,3 +2390,14 @@ route saving established. Changed installed2e7 still resource NONPASS120.062s,
 no returned mechanical result. Validated virgin-origin Newton seeding is next;
 no limit/tolerance change or enforcement acceptance follows.
 [Evidence](d1_review_support/contact_native_fibre_s3_20261005/exact_axial_reuse.md).
+
+### Native first-target guess - installed development, 5 October2026
+
+Bound coordinates-only initialization preserves virgin material origins, full
+endpoint/swept admission and atomic rejection;22 installed checks pass. Seeded2e7
+accepts target1 within96.138s, but tip response3.011197% exceeds2%: enforcement
+convergence NONPASS. Independent saved-pose residual agrees1.72e-14 relative;
+local tangent response supports enforcement sensitivity as principal cause.
+Tighter root-enclosure rejection and invalid oracle attempts remain retained.
+Implemented/tested only, not independently accepted/released.
+[Evidence](d1_review_support/contact_native_fibre_s3_20261005/initial_guess.md).

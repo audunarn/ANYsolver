@@ -9,7 +9,7 @@ from anysolver._ge_beam3_p5_seeded.core import sha
 
 
 def solve_native_shell(owner, schema, run_type, *, checkpoint=None,
-        expected_sha256=None, stop_after=None, cancellation_token=None, progress=None):
+        expected_sha256=None, stop_after=None, cancellation_token=None, progress=None,initial_guess=None):
     def admitted(contact):
         gate = getattr(owner, '_contact_admissible', None)
         return (gate(contact) if gate is not None else
@@ -17,6 +17,8 @@ def solve_native_shell(owner, schema, run_type, *, checkpoint=None,
     end = len(owner.program.targets) if stop_after is None else stop_after
     if type(end) is not int or not 0 <= end <= len(owner.program.targets):
         raise ValueError("native/S3 bounded stop target")
+    if initial_guess is not None and (checkpoint is not None or end==0):
+        raise ValueError('first-target guess requires a fresh nonempty solve')
     if checkpoint is None:
         if expected_sha256 is not None:
             raise ValueError("native/S3 hash requires checkpoint")
@@ -36,6 +38,8 @@ def solve_native_shell(owner, schema, run_type, *, checkpoint=None,
             trial = accepted.mechanical
             u = accepted.shell_displacement.copy()
             origins = accepted.native_histories
+            if initial_guess is not None and index==0:
+                trial,u=owner._initial_guess_trial(initial_guess,cancellation_token)
             for iteration in range(owner.program.max_iterations+1):
                 cancellation_safe_point(cancellation_token, 'native/S3 candidate')
                 r, j, metrics, responses, contact = owner._assemble(

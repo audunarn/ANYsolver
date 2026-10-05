@@ -81,12 +81,29 @@ def test_enforcement_coarse_independent_gap_and_fixture_preflight():
 
 @pytest.mark.parametrize('stiffness',(2e7,),ids=('k2e7',))
 def test_native_fibre_enforcement_successive_response(stiffness):
+    _enforcement_case(stiffness)
+
+
+def test_native_fibre_enforcement_seeded_successive_response():
+    _enforcement_case(2e7,seeded=True)
+
+
+def _enforcement_case(stiffness,seeded=False):
     owner=_analysis(physical_fibres=True,plastic_fibres=True,normal_stiffness_Pa_per_m=stiffness)
-    run=owner.solve(stop_after=1)
     output=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    guess=None
+    if seeded:
+        source=_analysis(physical_fibres=True,plastic_fibres=True)
+        raw=(DATA/BASE).read_bytes()
+        guess=owner.make_initial_guess(source,raw,sha256(raw).hexdigest())
+        if output:Path(output+'-initial-guess-provenance.json').write_text(json.dumps(dict(
+            fingerprint=guess.fingerprint,owner_identity=guess.owner_identity,
+            structure_identity=guess.structure_identity,source_owner_identity=guess.source_owner_identity,
+            source_checkpoint_sha256=guess.source_checkpoint_sha256),indent=2))
+    run=owner.solve(stop_after=1,initial_guess=guess)
     if output:
         Path(output+'-enforcement.checkpoint').write_bytes(run.checkpoint)
-        Path(output+'-enforcement-run.json').write_text(json.dumps(dict(stiffness_Pa_per_m=stiffness,
+        Path(output+'-enforcement-run.json').write_text(json.dumps(dict(stiffness_Pa_per_m=stiffness,seeded=seeded,
             status=run.status,failure=run.failure,completed=run.accepted.completed_targets,
             candidates=owner.candidate_evaluations,trial_failures=owner.curved_trial_failures),indent=2))
     assert run.status=='paused',run.failure
