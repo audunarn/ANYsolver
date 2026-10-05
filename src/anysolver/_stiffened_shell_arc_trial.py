@@ -255,7 +255,13 @@ def correct(driver, *, load_direction, metric, radius, predictor_dof,
         if evaluation[2]<=1e-8 and evaluation[3]<=1e-9 and abs(gap)/radius<=1e-9:
             with owner._commit_lock:
                 current()
-                return trial_snapshot()
+                trial=trial_snapshot()
+                from ._stiffened_shell_arc_checkpoint import requires_coordinate_progress
+                if requires_coordinate_progress(owner):
+                    progress=orientation*(state.q[predictor_dof]-parent.q[predictor_dof])
+                    if not progress>0.:
+                        raise ArcTrialFailure("native arc selected coordinate made no oriented progress",trial)
+                return trial
         if iteration==max_iterations:
             raise ArcTrialFailure("local arc Newton limit",trial_snapshot())
         step,delta=bordered_path_correction(evaluation[1],evaluation[0],direction,gradient,gap,free);solves+=1

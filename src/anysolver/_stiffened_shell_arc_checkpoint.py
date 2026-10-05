@@ -38,12 +38,14 @@ def require_native_seed(owner,driver):
         raise ValueError('native arc excludes staged/external force seeds')
 
 
-def identities(owner):
+def identities(owner, *, native_version=2):
     from ._stiffened_shell_affine_endpoint import is_native_point_material
     if is_native_point_material(owner):
         from ._stiffened_shell_displacement_checkpoint import identities as displacement_identities
         kind,policy,_,_=displacement_identities(owner)
-        return kind.replace('finite_displacement_','finite_arc_'),policy.replace('DISPLACEMENT_','TANGENT_PLANE_')
+        if native_version not in (1,2):raise ValueError('native arc policy version')
+        return (kind.replace('finite_displacement_','finite_arc_'),
+                policy.replace('DISPLACEMENT_','TANGENT_PLANE_').replace('_V1_DEV',f'_V{native_version}_DEV'))
     if getattr(owner, '_curved_material', False):
         return 'finite_arc_curved_material', 'B3_GE_CURVED_MATERIAL_POINT_TANGENT_PLANE_V1_DEV'
     if getattr(owner, '_curved_reference', False):
@@ -51,6 +53,17 @@ def identities(owner):
     if owner._bl5_shell_material:
         return KIND, POLICY
     raise ValueError('admitted material or curved elastic point arc owner required')
+
+
+def active_policy(owner):
+    """Fresh seeds select V2; accepted V1 arc prefixes retain their semantics."""
+    saved=getattr(owner,'_arc_snapshot',None)
+    return identities(owner)[1] if saved is None else saved[1]['policy']
+
+
+def requires_coordinate_progress(owner):
+    from ._stiffened_shell_affine_endpoint import is_native_point_material
+    return is_native_point_material(owner) and active_policy(owner)==identities(owner)[1]
 
 
 CONTROL_LIMITS=(('max_cutbacks',0,8),('max_attempts',1,64),
@@ -154,7 +167,8 @@ def decode_snapshot(owner,raw):
           'amplitude_origin','attempt_history','predecessor_sha256'}
     if native:keys.add('native_chart_policy')
     if (type(m) is not dict or set(m)!=keys or canonical(m)!=header
-            or m['policy']!=identities(owner)[1] or m['model']!=owner._identity
+            or m['policy'] not in ((identities(owner,native_version=1)[1],identities(owner)[1])
+                if native else (identities(owner)[1],)) or m['model']!=owner._identity
             or (native and m['native_chart_policy']!=NATIVE_CHART_POLICY)):
         raise ValueError('incompatible arc metadata')
     if (any(type(m[k]) is not int for k in ('generation','seed_generation','steps','predictor_dof','orientation'))
@@ -219,6 +233,9 @@ def decode_snapshot(owner,raw):
     if abs(norm-1.)>1e-10:raise ValueError('arc physical normal is not unit')
     frames=np.concatenate((physical_frames(a['q'][:owner._shell_count],a['shell_anchors']),a['frames']))
     delta=a['q'][:nodes*6].reshape(-1,6)[:,:3]-a['origin_translations']
+    if native and m['policy']==identities(owner)[1]:
+        progress=m['orientation']*delta[dof//6,dof%6]
+        if not progress>0.:raise ValueError('native arc selected coordinate made no oriented progress')
     distance,_,_=metric.plane(delta,frames,a['origin_frames'],translations,spins)
     if abs(distance-radius)/radius>1e-9:raise ValueError('arc path endpoint mismatch')
     return m,a
@@ -271,7 +288,7 @@ def from_selection(owner,selection,*,seed_generation,seed_sha256,history=(),atte
         attempts=[asdict(row) for row in selection.attempts],
         max_cutbacks=selection.max_cutbacks,max_attempts=selection.max_attempts,
         max_iterations=selection.max_iterations,max_backtracks=selection.max_backtracks)
-    m=dict(policy=identities(owner)[1],model=owner._identity,generation=trial.accepted_generation+1,
+    m=dict(policy=active_policy(owner),model=owner._identity,generation=trial.accepted_generation+1,
         seed_generation=seed_generation,seed_sha256=seed_sha256,steps=len(history)+1,
         metric_length=trial.metric.length,predictor_dof=trial.predictor_dof,orientation=trial.orientation,
         predecessor_sha256=predecessor_sha256,

@@ -107,3 +107,22 @@ Other limits include the explicit per-step budgets. These development limits do 
 programme's scale or capacity requirements. The standing test is
 `tests/test_stiffened_shell_arc_trial.py`; accepted evidence is tracked in the
 programme acceptance matrix.
+
+Fresh native ordinary/displacement seeds select version 2 of their existing
+`B3_GE_NATIVE_POINT_*_TANGENT_PLANE_V2_DEV` policy. In addition to equilibrium,
+constraints and the frozen tangent plane, an accepted endpoint must satisfy
+`orientation * (q[predictor_dof] - parent.q[predictor_dof]) > 0`.
+Zero or negative progress raises a typed trial failure and enters the existing
+bounded radius cutback from the unchanged accepted parent. Exhaustion leaves
+that parent intact. This exact sign check introduces no physical tolerance and
+performs no tangent or branch switching; the chosen coordinate must remain a
+usable local branch coordinate.
+
+Checkpoint decoding binds that endpoint check to V2 metadata. Historical native
+V1 arc snapshots restore exactly and continue with V1 semantics; legacy BL5 and
+curved-point policies retain their existing behavior. Forward predictor orientation
+alone does not guarantee forward corrected coordinate progress. The planar
+counterexample `q(s)=(-s**2,s)` can alternate endpoints `s=+a` and `s=-a` under
+valid freshly oriented frozen planes with radius `2*a/sqrt(4*a**2+1)`; V2 rejects
+the zero-coordinate-progress endpoint. This is a local safeguard, not evidence
+of branch uniqueness or a capacity/limit-point qualification.

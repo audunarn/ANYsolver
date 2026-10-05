@@ -1587,3 +1587,53 @@ bounded physical continuation/restart check. Derive its expected turning mode,
 supports/load/section idealization before executing; no broad parameter sweep.
 Small arc advances do not close G4D. Connection/work/multiplier and all remaining
 programme obligations remain mandatory. FormalF03 untouched; no main/push/release.
+
+## 5 October 2026 - bounded native turning diagnosis
+Installed wheel e66a4da0, unchanged source1029f1a2: two prescribed48-step
+screens completed without the registered descending sequence. Two-Q4 skin:
+32.63s/157749248B, finalw.01153431546/P915.0262869. Four-Q4 skin with same
+beam/physical ties/supports/load:197.61s/159223808B, finalw.03357442634/
+P19.54894931. Pools1/affinity1/JIToff; no refinement extension authorized.
+The clamped one-mode comparator is explanatory, not an exact coarse3D oracle.
+Original shell transfers902N of915N through apex and permits eccentric roll;
+its missing intermediate director pitch makes the shell-only resolution
+comparison useful, not a unique causal allocation or convergence result.
+Exact saved endpoint restores passed. Refined late scalar w/load alternates;
+full physical-state recurrence is not proven. Pure stdlib checksum/array audit
+shows final oriented corrected apexincrement -1.623826686e-7m despite forward
+predictor component .000301716931; translational plane contribution2.04705e-10
+ofradius.003. No new solve in that audit. Existing equilibrium/path acceptance
+alone permits leaving the selected local-coordinate neighborhood.
+Supporting independent OpenAI Read review supplies exact counterexample
+q(s)=(-s^2,s): positive-x fresh tangent planes permit endpoint two-cycle.
+Adopted next implementation: NEW native arc V2 requires strictly positive
+oriented corrected coordinate progress before commit; failure uses existing
+bounded cutback. Preserve nativeV1 checkpoint restore/continuation semantics
+and legacyBL5/curved policies. No automatic sign switching or tolerance change.
+OpenAI fallback Edit worker owns connected arc policy/trial/tests/docs slice;
+Mistral cached unavailable, no repeated probe. Implementation/testing pending.
+Raw .qualification/b3-ge-e4-pl/r8-native-turning-dev-20261005-v1 contains scripts,
+versioned results, endpoints, resource logs and saved-step-audit-v1.json.
+G4D remainsOPEN; no first-instability/descending-branch/capacity qualification.
+Do not resume finer axial/skin/beam campaigns automatically. Independent matched
+3D beam+shell displacement-controlled reference remains missing. Full programme,
+scientific criteria and authorities preserved; formalF03 unconsumed.
+### Native arc progress safeguard verified
+Fresh native point arc V2 now rejects zero/negative oriented corrected selected
+translation before commit; typed failure uses existing cutback/exhaustion.
+NativeV1 exact restore/continuation semantics and legacyBL5/curved policy remain.
+Focused source23PASS42.36s, supervisor43.26s/188477440B/max1. Installed17PASS
+39.48s, supervisor41.95s/193351680B/max1; actual520 source/installed package
+bytes and imported solver/consumer sites checked. New solverwheel
+bd170f6c4f36f61fab6ec3f3c0c398d30e31a3c75cea99b7566bc9307e022dd8;
+unchangedconsumer626f27b61cfe8ad6dda80e3800e60ecf925fe4d6e1dd55da236a3f27be26c02f.
+Supporting Read review found no concrete implementation defect, but positive
+endpoint progress does not prove monotonic travel between endpoints or branch
+validity. Analytic test endpoint snap is isolated to its verification oracle.
+Raw source/install resources and artifacts under existing turning-dev root.
+No physical screen repeated for V2 yet. NEXT: one same-fixture prospectiveV2
+screen, stop after first progress rejection/cutback or explicit exhaustion;
+question is whether backward acceptance becomes bounded forward recovery or
+reports loss of local coordinate. Do not extend/refine on an unresolved outcome.
+A correct safeguard does not establish a physical limit point/descending branch.
+G4D and full acceptance remainOPEN; no publication/main changes/authority renewal.

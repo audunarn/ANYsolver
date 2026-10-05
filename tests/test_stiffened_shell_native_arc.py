@@ -154,3 +154,32 @@ def test_stable_elastic_s3_force_seed_arc_and_historical_rejection(request,monke
     assert legacy.recover() is before and legacy._generation==generation
     assert legacy.checkpoint()==historical and not legacy._finite_driver._stable_s3
     assert getattr(legacy,'_arc_snapshot',None) is None
+
+
+@pytest.mark.parametrize('family',('q4-generalized','s3-fibre'))
+def test_native_arc_v2_progress_metadata_and_v1_restore_continuation(request,family):
+    model,analysis,control,actions=seed(request,family)
+    analysis.continue_arc_length(actions,control)
+    m,a=decode_snapshot(analysis,analysis.checkpoint())
+    assert m['policy'].endswith('_V2_DEV')
+    dof=m['predictor_dof'];node,component=divmod(dof,6)
+    assert m['orientation']*(a['q'][dof]-a['origin_translations'][node,component])>0.
+    # A checksum-valid orientation change preserves equilibrium and frozen plane,
+    # but contradicts the V2 corrected-coordinate direction contract.
+    with pytest.raises(ValueError,match='no oriented progress'):
+        encode_snapshot(analysis,dict(m,orientation=-m['orientation']),a)
+    for sign in (0.,-1.):
+        forged=dict(a);forged['origin_translations']=a['origin_translations'].copy()
+        forged['origin_translations'][node,component]=a['q'][dof]-sign*m['orientation']*control.radius
+        with pytest.raises(ValueError,match='no oriented progress'):
+            encode_snapshot(analysis,m,forged)
+    legacy_metadata=dict(m,policy=identities(analysis,native_version=1)[1])
+    legacy_raw=encode_snapshot(analysis,legacy_metadata,a)
+    legacy=owner(request,model);legacy.restore(legacy_raw)
+    assert legacy.checkpoint()==legacy_raw
+    legacy.continue_arc_length(actions,control)
+    continued,arrays=decode_snapshot(legacy,legacy.checkpoint())
+    assert continued['policy']==legacy_metadata['policy']
+    resumed=owner(request,model);resumed.restore(legacy_raw)
+    resumed.continue_arc_length(actions,control)
+    assert resumed.checkpoint()==legacy.checkpoint()

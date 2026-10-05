@@ -304,3 +304,6 @@ tests/data/native_s3_fibre_history/** -text
 /src/anysolver/_stiffened_shell_arc_checkpoint.py -text
 /src/anysolver/_stiffened_shell_arc_publication.py -text
 /docs/stiffened_shell_arc_development.md -text
+
+/tests/test_stiffened_shell_native_arc_progress.py -text
+/docs/agent_plans/history/B3_GE_E4_PL_ACTIVE_STATE_PRE_TURNING_20261005.md -text
