@@ -29,6 +29,7 @@ class FoundationReference:
     front_residual: float
     contact_velocity_lower: float
     endpoint_stiffness: float = 0.
+    tip_force: float = 0.
 
     def state(self, x):
         """Return w[m], theta[rad], M[Nm], Q[N] on original physical x."""
@@ -47,13 +48,16 @@ class FoundationReference:
 
     @property
     def reaction(self):
-        return self.load*self.length-self.state(0)[3]
+        return self.load*self.length+self.tip_force-self.state(0)[3]
 
 
 def cantilever_foundation_reference(*, length, clearance, bending, shear,
-                                    load, line_stiffness, endpoint_stiffness=0.):
+                                    load, line_stiffness, endpoint_stiffness=0.,
+                                    tip_force=0.):
     values = np.array((length,clearance,bending,shear,load,line_stiffness),float)
-    if not np.all(np.isfinite(values)) or np.min(values) <= 0:
+    P=float(tip_force)
+    if (not np.all(np.isfinite(values)) or np.min(values[[0,1,2,3,5]]) <= 0
+            or values[4]<0 or not np.isfinite(P) or P<0 or values[4]+P<=0):
         raise ValueError("reference parameters must be finite and positive")
     L,c,D,S,q,k = values
     ke = float(endpoint_stiffness)
@@ -63,7 +67,8 @@ def cantilever_foundation_reference(*, length, clearance, bending, shear,
     sigma = D/(S*L**2)
     beta = k*L**4/D
     qbar = q*L**4/(D*c)
-    free_tip = qbar/8+sigma*qbar/2
+    pbar = P*L**3/(D*c)
+    free_tip = qbar/8+sigma*qbar/2+pbar/3+sigma*pbar
     if free_tip <= 1:
         raise ValueError("reference has no active foundation interval")
 
@@ -81,15 +86,18 @@ def cantilever_foundation_reference(*, length, clearance, bending, shear,
     def initial(a):
         total = expm(active*(1-a))@expm(opened*a)
         seed = np.array((0.,0.,0.,0.,1.))
-        # Natural tip work: M(L)=0 and Q(L)+ke*(w(L)-c)=0.
+        # Natural tip work: M(L)=0 and Q(L)+ke*(w(L)-c)=P.
         # This branch is checked active/monotone below. The zero-ke path
         # retains the original operations and numerical reference identity.
-        if ke == 0.:
+        if ke == 0. and P == 0.:
             seed[2:4] = np.linalg.solve(total[2:4,2:4],-total[2:4,4])
+        elif ke == 0.:
+            seed[2:4] = np.linalg.solve(total[2:4,2:4],
+                np.array((0.,pbar))-total[2:4,4])
         else:
             rows = np.vstack((total[2],total[3]+endpoint_scaled*total[0]))
             seed[2:4] = np.linalg.solve(rows[:,2:4],
-                np.array((0.,endpoint_scaled))-rows[:,4])
+                np.array((0.,endpoint_scaled+pbar))-rows[:,4])
         return seed
 
     def front_equation(a):
@@ -101,8 +109,9 @@ def cantilever_foundation_reference(*, length, clearance, bending, shear,
     seed = initial(a)
     at_front = expm(opened*a)@seed
     at_end = expm(active*(1-a))@at_front
-    boundary = float(np.linalg.norm(at_end[2:4])) if ke == 0. else float(np.linalg.norm(
-        (at_end[2],at_end[3]+endpoint_scaled*(at_end[0]-1.))))
+    boundary = (float(np.linalg.norm(at_end[2:4])) if P == 0. and ke == 0.
+        else float(np.linalg.norm((at_end[2],
+            at_end[3]+endpoint_scaled*(at_end[0]-1.)-pbar))))
     front_error = abs(float(at_front[0]-1))
     if max(boundary,front_error)>1e-9:
         raise ValueError("reference transfer boundary/front solve is unresolved")
@@ -136,4 +145,4 @@ def cantilever_foundation_reference(*, length, clearance, bending, shear,
     if not np.isfinite(lower) or lower <= 1e-9:
         raise ValueError("reference single active branch is not resolved monotone")
     return FoundationReference(L,c,D,S,q,k,a*L,seed,opened,active,
-                               boundary,front_error,lower*c/L,ke)
+                               boundary,front_error,lower*c/L,ke,P)

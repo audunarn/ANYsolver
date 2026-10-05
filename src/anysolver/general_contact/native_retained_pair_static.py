@@ -37,6 +37,18 @@ FIBRE_WHOLE_PROFILE = "NATIVE_B3_GE_PHYSICAL_FIBRE_WHOLE_CURVE_PAIR_STATIC_DEV_V
 FIBRE_WHOLE_CHECKPOINT_SCHEMA = "NATIVE_PHYSICAL_FIBRE_WHOLE_CURVE_PAIR_CHECKPOINT_DEV_V1"
 
 
+def _gap_limited_fraction(fraction, origin_gap, candidate_gap, tolerance):
+    """Suggest a shorter trial; gap and swept checks must still certify it.
+
+    Interpolate towards the interior of the permitted gap budget. This is
+    globalization, not a crossing certificate or a change to the normal law.
+    Safeguards enforce strict progress even on a nonmonotone gap branch.
+    """
+    target=min(-.5*tolerance,.5*(origin_gap-tolerance))
+    predicted=fraction*(origin_gap-target)/(origin_gap-candidate_gap)
+    return min(.9*fraction,max(.1*fraction,predicted))
+
+
 @dataclass(frozen=True)
 class NativeRetainedPairAccepted:
     mechanical: object
@@ -65,7 +77,9 @@ class NativeRetainedRoundPairAnalysis:
                  boundaries: tuple, program: NativeNodalProgram,
                  contact: NativeRetainedSelectedCellPair | NativeRetainedWholeCurvePair, *,
                  gap_tolerance_m: float, equilibrium_tolerance: float,
-                 maximum_swept_intervals: int):
+                 maximum_swept_intervals: int, gap_step_control: bool = False):
+        if type(gap_step_control) is not bool:
+            raise TypeError('native pair gap step control must be bool')
         if (type(definitions) is not tuple or len(definitions) != 2
                 or any(type(item) is not NativeBeamDefinition for item in definitions)):
             raise ValueError("native pair owner needs two exact beam definitions")
@@ -96,6 +110,8 @@ class NativeRetainedRoundPairAnalysis:
             self.profile=FIBRE_WHOLE_PROFILE
             self.checkpoint_schema=FIBRE_WHOLE_CHECKPOINT_SCHEMA
         else:
+            if gap_step_control:
+                raise ValueError('gap step control requires the physical-fibre whole-pair profile')
             if (type(contact) is NativeRetainedWholeCurvePair
                     and contact.certify_open_intervals):
                 raise ValueError('chord open certificates require the physical-fibre pair profile')
@@ -127,6 +143,7 @@ class NativeRetainedRoundPairAnalysis:
         self.gap_tolerance = float(gap_tolerance_m)
         self.equilibrium_tolerance = float(equilibrium_tolerance)
         self.maximum_swept_intervals = maximum_swept_intervals
+        self.gap_step_control = gap_step_control
         self.identity = self._identity()
         initial = self.context.initial
         first = self._contact(initial.mechanical)
@@ -145,7 +162,7 @@ class NativeRetainedRoundPairAnalysis:
         )
 
     def _identity(self) -> str:
-        return sha(dict(
+        values=dict(
             profile=self.profile,
             native_model=self.context.identity,
             native_support_sha256=sha256(self.context.support_identity).hexdigest(),
@@ -153,7 +170,11 @@ class NativeRetainedRoundPairAnalysis:
             gap_tolerance_m=self.gap_tolerance,
             equilibrium_tolerance=self.equilibrium_tolerance,
             maximum_swept_intervals=self.maximum_swept_intervals,
-        ))
+        )
+        # Preserve the historical false/default checkpoint identity exactly.
+        if self.gap_step_control:
+            values['gap_step_control']='SAFEGUARDED_CERTIFIED_GAP_SECANT_GEOMETRY_PATH_DEV_V2'
+        return sha(values)
 
     def _guard(self) -> None:
         if self._identity() != self.identity:
@@ -333,6 +354,23 @@ class NativeRetainedRoundPairAnalysis:
                    float(np.linalg.norm(scaled[self.context.compatibility])))
         return residual, tangent, metrics, responses, contact
 
+    def _swept_gap(self, mechanical):
+        if not self.gap_step_control:
+            return self._contact(mechanical).conservative_lower_gap_m
+        self._guard()
+        a,b=self.indices
+        value=self.contact.geometry_gap_lower(
+            mechanical.positions[self.context.nodes[a]],
+            mechanical.position_low[self.context.nodes[a]],
+            mechanical.cell_rotations[a],
+            mechanical.positions[self.context.nodes[b]],
+            mechanical.position_low[self.context.nodes[b]],
+            mechanical.cell_rotations[b],
+            minimum_gap_m=-self.gap_tolerance,
+        )
+        self._guard()
+        return value
+
     def _swept_admissible(self, start, increment, end,
                           start_gap: float, end_gap: float) -> bool:
         self._guard()
@@ -373,7 +411,7 @@ class NativeRetainedRoundPairAnalysis:
             middle = 0.5*(left+right)
             state = self.context.advance(start, middle*increment)
             try:
-                gap = self._contact(state).conservative_lower_gap_m
+                gap = self._swept_gap(state)
             except (ValueError, MemoryError) as exc:
                 if self._recoverable_trial_contact_error(exc):
                     return False
@@ -460,8 +498,9 @@ class NativeRetainedRoundPairAnalysis:
                     )
                     rejected = dict(geometry=0, gap=0, swept=0, merit=0)
                     last_rejection = ""
+                    trial_fraction = fraction
                     for cut in range(self.program.max_backtracks+1):
-                        increment = step*(fraction*0.5**cut)
+                        increment = step*trial_fraction
                         candidate = self.context.advance(trial, increment)
                         try:
                             candidate_contact = self._contact(candidate)
@@ -470,6 +509,7 @@ class NativeRetainedRoundPairAnalysis:
                                 rejected["geometry"] += 1
                                 last_rejection = (f"geometry {type(exc).__name__}: "
                                                   f"{str(exc)[:320]}")
+                                trial_fraction *= .5
                                 continue
                             raise
                         if (candidate_contact.conservative_lower_gap_m
@@ -479,6 +519,10 @@ class NativeRetainedRoundPairAnalysis:
                                 "gap lower bound "
                                 f"{candidate_contact.conservative_lower_gap_m} m"
                             )
+                            trial_fraction = (_gap_limited_fraction(
+                                trial_fraction,contact.conservative_lower_gap_m,
+                                candidate_contact.conservative_lower_gap_m,self.gap_tolerance,
+                            ) if self.gap_step_control else .5*trial_fraction)
                             continue
                         if not self._swept_admissible(
                                     trial, increment, candidate,
@@ -487,6 +531,7 @@ class NativeRetainedRoundPairAnalysis:
                                 ):
                             rejected["swept"] += 1
                             last_rejection = "swept gap not certified"
+                            trial_fraction *= .5
                             continue
                         fibre = self.native._family == 'PHYSICAL_FIBRE_NODAL'
                         evaluated = self._assemble(candidate, parameter, origins,
@@ -498,6 +543,7 @@ class NativeRetainedRoundPairAnalysis:
                             break
                         rejected["merit"] += 1
                         last_rejection = f"merit {max(changed)} >= {max(metrics)}"
+                        trial_fraction *= .5
                     else:
                         if type(self.contact) is NativeRetainedWholeCurvePair:
                             raise RuntimeError(

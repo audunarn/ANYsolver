@@ -15,11 +15,39 @@ from anysolver._ge_beam3_p5_seeded.core import sha
 
 from .beam_curve_pair import (
     _GAUSS_8, _GAUSS_16, _bezier_controls, _curve,
-    _endpoint_projection_cuts, b3_distance_jet, closest_on_b3,
+    _endpoint_projection_cuts, _source_interval_target_gap_lower,
+    b3_distance_jet, closest_on_b3,
 )
-from .native_curve_union import NativeTwoCellUnionSearch
+from .native_curve_union import NativeTwoCellUnionSearch, NativeUnionNearest
 from .native_retained_curve_cell import NativeRetainedCurveCell
 from .native_retained_station import _readonly
+
+
+class _GeometryGapUnionSearch(NativeTwoCellUnionSearch):
+    """Use the union scan without requiring a mechanical projection owner.
+
+    The minimum distance to the complete target union is defined even when
+    several material points attain it. The representative fields below only
+    satisfy the scan record; no normal, pressure or contact work is selected.
+    """
+
+    def nearest(self, source_station: float) -> NativeUnionNearest:
+        if (type(source_station) not in (int, float)
+                or not isfinite(source_station)
+                or not 0.0 <= source_station <= 1.0):
+            raise ValueError("native union source station must lie in [0,1]")
+        point = _curve(self.source, float(source_station))[0]
+        projections = tuple(closest_on_b3(point, target)
+                            for target in self.targets)
+        distances = tuple(float(projection.distance)
+                          for projection in projections)
+        representative = 0 if distances[0] <= distances[1] else 1
+        station = float(projections[representative].minimizers[0])
+        return NativeUnionNearest(
+            min(distances)-self.radius, representative, station,
+            _readonly(_curve(self.targets[representative], station)[0]),
+            distances, False,
+        )
 
 
 def _straight_join_owner(source: np.ndarray,
@@ -666,6 +694,71 @@ class NativeRetainedWholeCurvePair:
             maximum_integration_intervals=self.maximum_integration_intervals,
             reference_curves=self.reference_curves,
         ))
+
+    def geometry_gap_lower(self, positions_a: np.ndarray,
+                           position_low_a: np.ndarray,
+                           cell_rotations_a: np.ndarray,
+                           positions_b: np.ndarray,
+                           position_low_b: np.ndarray,
+                           cell_rotations_b: np.ndarray, *,
+                           minimum_gap_m: float | None = None) -> float:
+        """Conservatively bound the complete physical pair's minimum gap.
+
+        This geometry certificate includes both retained cells in both
+        directions, including their internal rotation lifts. It does not
+        admit a force law: ambiguous nearest points and unresolved intervals
+        still contribute their conservative bounds. Search controls and
+        finite budgets are the same as for the full mechanical evaluation.
+        With a finite requested minimum, the complete-source chord bound may
+        return early only when it certifies that minimum for the whole pair.
+        """
+        if self._fingerprint() != self.identity:
+            raise ValueError("native whole pair definition changed")
+        if (minimum_gap_m is not None
+                and (type(minimum_gap_m) not in (int, float)
+                     or not isfinite(minimum_gap_m))):
+            raise ValueError("native whole pair minimum gap must be finite")
+        current = tuple(
+            cell.evaluate(positions, low, rotations).positions
+            for cells, positions, low, rotations in (
+                (self.cells_a, positions_a, position_low_a, cell_rotations_a),
+                (self.cells_b, positions_b, position_low_b, cell_rotations_b),
+            )
+            for cell in cells
+        )
+        searches = []
+        for source_beam, target_beam in ((0, 1), (1, 0)):
+            source_base, target_base = 2*source_beam, 2*target_beam
+            ids = self.node_ids_b if target_beam else self.node_ids_a
+            target_ids = ((ids[0], ids[1]), (ids[1], ids[2]))
+            for source_cell in (0, 1):
+                searches.append(_GeometryGapUnionSearch(
+                    current[source_base+source_cell],
+                    (current[target_base], current[target_base+1]),
+                    target_ids,
+                    combined_radius_m=self.radius,
+                    distance_tolerance_m=self.distance_tolerance,
+                    feature_tolerance_m=self.feature_tolerance,
+                    parameter_tolerance=self.search_parameter_tolerance,
+                    maximum_depth=self.maximum_search_depth,
+                    maximum_cells=self.maximum_search_cells,
+                    certify_open_intervals=self.certify_open_intervals,
+                ))
+        if minimum_gap_m is not None:
+            # Constructors above validate every physical cell, topology and
+            # control before any early return. Both directional bounds cover
+            # every complete target cell and include the helper's roundoff
+            # guards; sampled gaps cannot authorize this certificate.
+            lower = min(
+                _source_interval_target_gap_lower(
+                    search.source, 0.0, 1.0, target, self.radius,
+                )
+                for search in searches for target in search.targets
+            )
+            if lower >= minimum_gap_m:
+                return lower
+        return min(search.scan().conservative_lower_gap_m
+                   for search in searches)
 
     def evaluate(self, positions_a: np.ndarray, position_low_a: np.ndarray,
                  cell_rotations_a: np.ndarray,

@@ -1,5 +1,7 @@
 # General contact — current delivery plan
 
+**Current development result, 5 October 2026.** Opt-in native physical-fibre beam-pair solve now completes at k4000; independent material/restart verification passes from its saved state. k8000 sensitivity case passes within unchanged limits; all integrated response changes <0.11%, penetration19.61→13.78um. Installed28focused controls pass. This is development evidence, not independent native acceptance. Next resolve curved pair ownership and spatial coverage; fullC0–C9 and all retained gates remain. [Restart](GENERAL_CONTACT_RESTART.md) / [evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair_event_control.md).
+
 ### Latest native pair cost/continuation checkpoint - 5 October 2026
 
 V6_GLOBAL_CHORD and exact-pose/next-Newton reuse installed; 14focused controls
