@@ -3027,3 +3027,18 @@ Post-test example EOF-only trim preserves AST, original bytes and delta binding;
 all99 package modules unchanged. Raw/author/root disposition retained in ANYfem
 .qualification/r8-native-bl5-consumer-20261005-v1. Different-family/physical/
 scale/platform/plastic BL5 and complete-release gates remain OPEN.
+
+### 6 October - matched native/common-work development decision
+
+IMPLEMENTED_NOT_QUALIFIED: matched8Q4/2native rectangular specimen and actual
+102node continuum affine work lift. Signed five-channel transpose/density work,
+supported fields, broken-side counterexample and ONE public calibration verified.
+All13 controls covered by V2ten/V3one/V4two passes; failures preserved and affected
+checks repaired without tolerance changes. Root424module source/wheel/site and
+242loaded-root inspection; independent non-author DEV review clear. Evidence:
+r8-bl5-matched-native-dev-20261005-v1/integration-binding.json and handoff.json.
+Strong25/weak20 and reduced body/primal differences prevent physical score.
+Next action is same-support weak continuum work, not automatic finer refinement.
+No F01-F13/E01/F03/aggregate gate closure or release. Required independent review
+remains governed by programme/specific registrations; different families preferred
+by global AGENTS, no new blanket family gate. Historical dispositions unchanged.

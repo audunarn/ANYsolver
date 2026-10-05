@@ -358,3 +358,9 @@ tests/data/native_s3_fibre_history/** -text
 /scripts/r8_bl5_released_director_reference.py -text whitespace=cr-at-eol
 /tests/test_r8_bl5_released_director_reference.py -text whitespace=cr-at-eol
 /docs/reference_cases/stiffened_shell_bl5_released_reference.md -text whitespace=cr-at-eol
+
+/.qualification/b3-ge-e4-pl/r8-bl5-matched-native-dev-20261005-v1/** -text -whitespace
+/scripts/r8_bl5_matched_native_reference.py -text whitespace=cr-at-eol
+/tests/test_r8_bl5_matched_native_reference.py -text whitespace=cr-at-eol
+/docs/reference_cases/stiffened_shell_bl5_matched_native_reference.md -text whitespace=cr-at-eol
+/docs/agent_plans/history/PRE_MATCHED_BL5_WORK_20261006.md -text
