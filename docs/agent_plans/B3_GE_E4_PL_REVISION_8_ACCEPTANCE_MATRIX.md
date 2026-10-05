@@ -2994,3 +2994,18 @@ released, complete work/cuts and independent transverse shear. Collocated
 station reference differs from native weak discretization; verify mechanism
 before response scoring, physical matching/convergence still required. New
 reference source preparation/offline checks only; no external launch yet.
+
+
+### 5 October - executed released-director reference development
+
+IMPLEMENTED_NOT_QUALIFIED: one exact pinned CCX2.23 102node/8C3D20/25row smoke
+completed; V2 offline27PASS and affected V3 15PASS/14 unchanged reused.
+Independent saved-output work/cuts and actual constraint mapping support this
+DEV tooling route. Raw RF is internal-root output in this specimen; physical
+support includes recovered MPC action. Both fields/discrepancy retained.
+Collocated five-row reference is NOT native weak BL5 equivalence or accuracy.
+V1 byte-binding failure/warning/raw/versions/review retained at
+r8-bl5-released-reference-dev-20261005-v1/integration-disposition.md.
+Physical/converged/different-family acceptance, aggregate gates and F03 OPEN.
+Next integration slice extends existing ANYfem input/persistence to delivered
+elastic native Q4/S3/mixed policies under distinct v5 schema, old routes intact.

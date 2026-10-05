@@ -78,14 +78,22 @@ development checks, acceptance and release are separate. Matrix:
 B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md. Plastic/S3 native BL5, footprint
 combinations, consumer, physical references, stability/capacity, scale/platform
 and different-family acceptance remain OPEN; no permanent scope exclusions.
-Next scientific deliverable: independent reference preparation for a linear
-zero-width director hinge, with explicit material-face pairs and normal spin
-released. Five collocated stations are NOT algebraically equivalent to native
-weak BL5. /root/test_campaign_sweep owns new reference script/test/doc/raw only,
-35min budget/final8 handoff, sole offline-test slot. No external CCX launch yet.
-/root/fast_test_runner independently reviews that construction (Read/no jobs).
-Saved five-channel Fy/Mx/Mz already exist: no new Mz replay for the obsolete gap.
-Root owns reserved decisions/integration; no closed campaign or fixture repeated.
+Current scientific result: released-director CCX reference route is usable for
+DEV tooling. ONE exact 102node/8C3D20/25row smoke completed; V2 offline27PASS,
+V3 affected15PASS/14reused. Independent internal/action/support work closes;
+raw RF differs from physical support47.5N but matches internal root g1e-11N.
+Preserve this empirical output distinction and V1 byte-binding defect. No
+native accuracy score, convergence or acceptance follows. Exact code/run/raw/
+root review: r8-bl5-released-reference-dev-20261005-v1/integration-disposition.md.
+Formal F03 unchanged; no automatic reference refinement/retry/closed campaign.
+Reference owner finished and released numerical slot. Active implementation:
+/root/native_bl5_consumer owns ONLY ANYfem adapter/project seams plus new native
+BL5 test/example/doc/raw at its experimental-ge-panel-consumer worktree. New
+v5 input schema preserves old routes; public solver owns physical admission.
+Outcome: native Q4/S3/mixed BL5 construction/save-reopen/solve/recovery/fresh
+restart/continue through consumer, source and installed dual graph. 30min/final8
+handoff; sole600s/2GiB/affinity1/pools1/JIToff check slot. Solver product untouched.
+Root owns integration/adoption; cached Mistral unavailable; no contact messages.
 Common-main PR62 remains NONPASS; local02ca395e repairs unpushed. Main untouched.
 No merge/publication or contact-task communication is authorized by this slice.
 

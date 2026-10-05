@@ -730,3 +730,11 @@ plastic shell records; detailed outcomes and retained failures are in the groupe
 Mandatory CalculiX row, connection/capacity and aggregate acceptance remain OPEN.
 Next: justified restricted CalculiX representation and actual material-output
 comparison, without reopening closed connection/refinement campaigns.
+
+
+Current forward priority (5 October): consolidate delivered elastic native
+Q4/S3/mixed BL5 in the existing ANYfem consumer and exact installed graph.
+The new executed released-director reference resolves tooling feasibility;
+common work-space/physical matching and converged comparison remain required.
+No new isolated refinement or closed campaign follows automatically. See the
+living active state and reference integration disposition for exact evidence.
