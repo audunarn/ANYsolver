@@ -117,6 +117,12 @@ class NativeFibreContactContext:
     def advance(self,state,step):
         self.guard();return self._backend.layout.advance(state,step)
 
+    def step(self,state,residual,tangent):
+        from anysolver._native_retained_step import retained_newton_step
+        self.guard()
+        result=retained_newton_step(self,state,residual,tangent,family='physical-fibre')
+        self.guard();return result
+
     def histories(self,values,*,decoded=False):
         self.guard();return self._backend.history(values,decoded=decoded)
 

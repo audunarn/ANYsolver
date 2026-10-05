@@ -33,23 +33,37 @@ from anysolver.general_contact.native_retained_whole_pair import (
 )
 
 
-def analysis() -> NativeRetainedRoundPairAnalysis:
+def analysis(*,physical_fibres=False,plastic_fibres=False,separation=0.13,force=-0.05,
+             targets=(0.0,0.1,0.2,0.3),line_stiffness_n_per_m2=100.0,
+             gap_tolerance_m=1e-3) -> NativeRetainedRoundPairAnalysis:
+    if plastic_fibres and not physical_fibres:
+        raise ValueError('plastic fibre pair requires the physical-fibre section family')
     def reference(y: float) -> CenteredCurvedBeam3ReferenceGeometry:
         return CenteredCurvedBeam3ReferenceGeometry(
             np.array(((0.0, y, 0.0), (1.0, y, 0.0), (2.0, y, 0.0))),
             np.tile(np.eye(3), (3, 1, 1)),
         )
 
-    a, b = reference(0.0), reference(0.13)
-    section = EllipsoidalGeneralizedSection(
-        np.diag((1000.0, 400.0, 350.0, 0.8, 1.0, 1.2)),
-        np.eye(6), 1e6, 1.0,
-    )
+    a, b = reference(0.0), reference(separation)
+    if physical_fibres:
+        from anysolver._ge_beam3_fibre_section import Fibre,FlowCurve,PhysicalFibreSection
+        from anysolver._ge_beam3_native_fibre_static_element import NativeFibreStaticElement
+        curve=FlowCurve.linear(2.,1e5) if plastic_fibres else FlowCurve((0.,),(1e6,),1.)
+        fibres=tuple(Fibre(str(i),y,z,.00025,1e6,curve) for i,(y,z) in enumerate(
+            ((.03,0.),(-.03,0.),(0.,.03),(0.,-.03))))
+        section=PhysicalFibreSection(fibres,np.diag(np.sqrt((0.,400.,350.,.8,.55,.75))))
+        element_type=NativeFibreStaticElement
+    else:
+        section = EllipsoidalGeneralizedSection(
+            np.diag((1000.0, 400.0, 350.0, 0.8, 1.0, 1.2)),
+            np.eye(6), 1e6, 1.0,
+        )
+        element_type=NativeGeneralizedStaticElement
     inertia = np.diag((2.0, 2.0, 2.0, 0.07, 0.09, 0.11))
-    first = NativeGeneralizedStaticElement(
+    first = element_type(
         11, (1, 2, 3), a, section, order=4,
     )
-    second = NativeGeneralizedStaticElement(
+    second = element_type(
         12, (4, 5, 6), b, section, order=4,
     )
     definitions = (NativeBeamDefinition.capture(first, inertia),
@@ -58,15 +72,15 @@ def analysis() -> NativeRetainedRoundPairAnalysis:
     boundaries = (BoundaryCondition("first-root", [1], fixed),
                   BoundaryCondition("second-root", [4], fixed))
     program = Program(
-        (0.0, 0.1, 0.2, 0.3),
+        targets,
         DistributedPattern(LinePattern(()), ()),
-        NodalDeadForces(((6, 0.0, -0.05, 0.0),)),
+        NodalDeadForces(((6, 0.0, force, 0.0),)),
         max_iterations=24,
     )
     contact = NativeRetainedWholeCurvePair(
         11, a, (1, 2, 3), 0.05,
         12, b, (4, 5, 6), 0.05,
-        line_stiffness_n_per_m2=100.0,
+        line_stiffness_n_per_m2=line_stiffness_n_per_m2,
         distance_tolerance_m=1e-10,
         feature_tolerance_m=1e-9,
         search_parameter_tolerance=1e-3,
@@ -76,10 +90,11 @@ def analysis() -> NativeRetainedRoundPairAnalysis:
         force_tolerance_n=1e-7,
         tangent_tolerance_n_per_m=1e-6,
         maximum_integration_intervals=1000,
+        certify_open_intervals=physical_fibres,
     )
     return NativeRetainedRoundPairAnalysis(
         definitions, boundaries, program, contact,
-        gap_tolerance_m=1e-3, equilibrium_tolerance=1e-8,
+        gap_tolerance_m=gap_tolerance_m, equilibrium_tolerance=1e-8,
         maximum_swept_intervals=128,
     )
 

@@ -33,6 +33,8 @@ PROFILE = "NATIVE_B3_GE_SELECTED_CELL_PAIR_STATIC_DEV_V1"
 CHECKPOINT_SCHEMA = "NATIVE_RETAINED_SELECTED_CELL_PAIR_CHECKPOINT_DEV_V1"
 WHOLE_PROFILE = "NATIVE_B3_GE_WHOLE_CURVE_PAIR_STATIC_DEV_V4"
 WHOLE_CHECKPOINT_SCHEMA = "NATIVE_RETAINED_WHOLE_CURVE_PAIR_CHECKPOINT_DEV_V4"
+FIBRE_WHOLE_PROFILE = "NATIVE_B3_GE_PHYSICAL_FIBRE_WHOLE_CURVE_PAIR_STATIC_DEV_V1"
+FIBRE_WHOLE_CHECKPOINT_SCHEMA = "NATIVE_PHYSICAL_FIBRE_WHOLE_CURVE_PAIR_CHECKPOINT_DEV_V1"
 
 
 @dataclass(frozen=True)
@@ -85,11 +87,24 @@ class NativeRetainedRoundPairAnalysis:
         if type(maximum_swept_intervals) is not int or maximum_swept_intervals < 1:
             raise ValueError("native pair owner needs finite swept interval budget")
         self.native = NativeBeamAnalysis(definitions, boundaries)
-        self.context = NativeNodalContext(self.native.model, program)
+        if self.native._family=='PHYSICAL_FIBRE_NODAL':
+            if type(contact) is not NativeRetainedWholeCurvePair:
+                raise ValueError('physical-fibre pair currently requires whole-curve geometry')
+            from .native_fibre_context import NativeFibreContactContext,NativeRetainedFibreElement
+            self.context=NativeFibreContactContext(self.native,program)
+            expected=NativeRetainedFibreElement
+            self.profile=FIBRE_WHOLE_PROFILE
+            self.checkpoint_schema=FIBRE_WHOLE_CHECKPOINT_SCHEMA
+        else:
+            if (type(contact) is NativeRetainedWholeCurvePair
+                    and contact.certify_open_intervals):
+                raise ValueError('chord open certificates require the physical-fibre pair profile')
+            self.context = NativeNodalContext(self.native.model, program)
+            expected=NativeGeneralizedStaticElement
         if (len(self.context.elements) != 2
-                or any(type(element) is not NativeGeneralizedStaticElement
+                or any(type(element) is not expected
                        for _, element in self.context.elements)):
-            raise ValueError("native pair owner needs two generalized elements")
+            raise ValueError("native pair owner needs two exact homogeneous retained elements")
         ids = (contact.cells_a[0].element_id, contact.cells_b[0].element_id)
         index = {element_id: i for i, (element_id, _) in enumerate(self.context.elements)}
         if set(index) != set(ids):
@@ -146,6 +161,7 @@ class NativeRetainedRoundPairAnalysis:
         if self.contact._fingerprint() != self.contact.identity:
             raise ValueError("native pair contact definition changed")
         self.native._guard()
+        if self.native._family=='PHYSICAL_FIBRE_NODAL':self.context.guard()
 
     def _record(self, target: int, mechanical, origins,
                 previous_sha256: str):
@@ -369,7 +385,16 @@ class NativeRetainedRoundPairAnalysis:
 
     def solve(self, *, checkpoint: bytes | None = None,
               expected_sha256: str | None = None,
-              stop_after: int | None = None) -> NativeRetainedPairRun:
+              stop_after: int | None = None, cancellation_token=None) -> NativeRetainedPairRun:
+        if self.native._family=='PHYSICAL_FIBRE_NODAL':
+            with self.context.operation(cancellation_token):
+                return self._solve(checkpoint=checkpoint,expected_sha256=expected_sha256,
+                    stop_after=stop_after,cancellation_token=cancellation_token)
+        if cancellation_token is not None:
+            raise ValueError('cancellation token requires the physical-fibre pair profile')
+        return self._solve(checkpoint=checkpoint,expected_sha256=expected_sha256,stop_after=stop_after)
+
+    def _solve(self, *, checkpoint=None,expected_sha256=None,stop_after=None,cancellation_token=None):
         end = len(self.program.targets) if stop_after is None else stop_after
         if type(end) is not int or not 0 <= end <= len(self.program.targets):
             raise ValueError("native pair bounded stop target")
@@ -383,6 +408,7 @@ class NativeRetainedRoundPairAnalysis:
             capsule = checkpoint
         if accepted.completed_targets > end:
             raise ValueError("native pair accepted target cannot rewind")
+        if self.native._family=='PHYSICAL_FIBRE_NODAL':self.context.activate_cancellation(cancellation_token)
         try:
             for index in range(accepted.completed_targets, end):
                 parameter = self.program.targets[index]
@@ -404,6 +430,8 @@ class NativeRetainedRoundPairAnalysis:
                         )
                         next_records = (*records, record)
                         staged = self._checkpoint(next_records)
+                        if self.native._family == 'PHYSICAL_FIBRE_NODAL':
+                            self.context._safe_point()
                         accepted, records, capsule = proposed, next_records, staged
                         break
                     if iteration == self.program.max_iterations:
@@ -460,7 +488,7 @@ class NativeRetainedRoundPairAnalysis:
                         rejected["merit"] += 1
                         last_rejection = f"merit {max(changed)} >= {max(metrics)}"
                     else:
-                        if self.profile == WHOLE_PROFILE:
+                        if type(self.contact) is NativeRetainedWholeCurvePair:
                             raise RuntimeError(
                                 "native whole pair line-search/gap limit: "
                                 f"iteration={iteration}, rejected={rejected}, "

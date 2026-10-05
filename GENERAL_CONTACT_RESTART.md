@@ -86,3 +86,29 @@ complete retained blocks, transactional histories and explicit new restart bindi
 Read exact existing driver/work/context symbols and provide bounded ownership
 before implementation. Cached Mistral unavailable; no repeated probes. No live
 owned jobs, fullC0-C9 remains active. All earlier resource/no-replay gates retained.
+
+Prospective native beam-beam fibre integration: existing whole-curve owner now
+composes NativeFibreContactContext; distinct profile/schema, no generic model
+insertion or condensation. Shared retained Newton step preserves generalized
+math/default identities. Physical solve owns operation lock, committed-origin
+histories and cancellation after replay. Three source step/binding/rollback
+controls pass7.619s. Next complete actual-update local tangent and independent
+material returns, then installed/legacy checks before one coupled first target.
+Native120s953MiB from construction, no reset. New fixture explicit50um gap (1e-3
+radius),100N/m2 line law,0.101m separation,0.0025N tip load. No altered historical
+case/enforcement criteria. Question: consistent family work/transactions versus
+specific adapter defect; failed local gate gets targeted diagnosis before solve.
+
+
+### Latest native beam-pair checkpoint - 5 October 2026
+
+Physical-fibre whole-curve owner, retained work/history and precommit cancellation
+implemented. Explicit V5_CHORD_OPEN option preserves historical generalized V4
+geometry/restart behavior. Final candidate14 installed controls11pass33.643s;
+all527Python files match wheel. Local tangent <=6.47e-8; independent plastic
+returns/history controls pass. Prototype full first target TIMEOUT120.152s,
+no accepted target; retain without unchanged replay. Supporting same-family
+review findings resolved; native engineering acceptance remains incomplete.
+Next profile bounded first-Newton endpoint/swept costs, then one measured fix;
+no cap/tolerance/stiffness increases. No live owned jobs; cached Mistral unavailable.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair.md).

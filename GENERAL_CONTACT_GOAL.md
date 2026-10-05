@@ -1,5 +1,19 @@
 # General contact — goal
 
+### Latest native beam-pair checkpoint - 5 October 2026
+
+Physical-fibre whole-curve owner, retained work/history and precommit cancellation
+implemented. Explicit V5_CHORD_OPEN option preserves historical generalized V4
+geometry/restart behavior. Final candidate14 installed controls11pass33.643s;
+all527Python files match wheel. Local tangent <=6.47e-8; independent plastic
+returns/history controls pass. Prototype full first target TIMEOUT120.152s,
+no accepted target; retain without unchanged replay. Supporting same-family
+review findings resolved; native engineering acceptance remains incomplete.
+Next profile bounded first-Newton endpoint/swept costs, then one measured fix;
+no cap/tolerance/stiffness increases. No live owned jobs; cached Mistral unavailable.
+[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair.md).
+
+
 ### Latest development decision - 5 October 2026
 
 Two curved physical-fibre beams / two connected deformable S3 patches now pass

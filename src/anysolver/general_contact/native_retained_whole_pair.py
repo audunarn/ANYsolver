@@ -589,7 +589,11 @@ class NativeRetainedWholeCurvePair:
                  energy_tolerance_j: float,
                  force_tolerance_n: float,
                  tangent_tolerance_n_per_m: float,
-                 maximum_integration_intervals: int):
+                 maximum_integration_intervals: int,
+                 certify_open_intervals: bool = False):
+        if type(certify_open_intervals) is not bool:
+            raise ValueError('native whole pair open certificate selection must be bool')
+        self.certify_open_intervals = certify_open_intervals
         if (type(element_a) is not int or type(element_b) is not int
                 or element_a <= 0 or element_b <= 0 or element_a == element_b):
             raise ValueError("native whole pair needs distinct beam identities")
@@ -642,7 +646,8 @@ class NativeRetainedWholeCurvePair:
 
     def _fingerprint(self) -> str:
         return sha(dict(
-            profile="NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V4",
+            profile=("NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V5_CHORD_OPEN"
+                     if self.certify_open_intervals else "NATIVE_RETAINED_WHOLE_Q2_PAIR_DEV_V4"),
             cells_a=[(cell.element_id, cell.cell,
                       cell.reference.canonical_data()) for cell in self.cells_a],
             cells_b=[(cell.element_id, cell.cell,
@@ -698,6 +703,7 @@ class NativeRetainedWholeCurvePair:
                     parameter_tolerance=self.search_parameter_tolerance,
                     maximum_depth=self.maximum_search_depth,
                     maximum_cells=self.maximum_search_cells,
+                    certify_open_intervals=self.certify_open_intervals,
                 )
                 scan = search.scan()
                 search_cells += scan.visited_cells

@@ -11,6 +11,7 @@ from .beam_curve_pair import (
     _bezier_controls,
     _curve,
     _positions,
+    _source_interval_target_gap_lower,
     closest_on_b3,
 )
 
@@ -60,7 +61,11 @@ class NativeTwoCellUnionSearch:
                  target_node_ids: tuple[tuple[int, int], tuple[int, int]],
                  *, combined_radius_m: float, distance_tolerance_m: float,
                  feature_tolerance_m: float, parameter_tolerance: float,
-                 maximum_depth: int, maximum_cells: int):
+                 maximum_depth: int, maximum_cells: int,
+                 certify_open_intervals: bool = False):
+        if type(certify_open_intervals) is not bool:
+            raise ValueError('native union open certificate selection must be bool')
+        self.certify_open_intervals = certify_open_intervals
         self.source = _owned(_positions(source, "native union source"))
         if type(target_cells) is not tuple or len(target_cells) != 2:
             raise ValueError("native union needs two ordered target half-cells")
@@ -150,6 +155,15 @@ class NativeTwoCellUnionSearch:
             separation = abs(nearest.distances_m[0]-nearest.distances_m[1])
             owner_certified = (separation > 2.0*reach
                                + self.distance_tolerance+2.0*self.roundoff)
+            if (self.certify_open_intervals and lower < 0.0 and upper >= 0.0
+                    and right-left <= self.parameter_tolerance):
+                # Ownership is unnecessary for a certified open interval.
+                # Bound against both complete target curves, never samples.
+                lower = max(lower, min(
+                    _source_interval_target_gap_lower(
+                        self.source, left, right, target, self.radius,
+                    ) for target in self.targets
+                ))
             if lower >= 0.0:
                 leaves.append(NativeUnionInterval(
                     left, right, "open", None, lower, upper,

@@ -1,0 +1,51 @@
+{
+  "scope": "physical-fibre whole-curve native beam pair: local development tested, coupled first target incomplete; no engineering acceptance",
+  "source_parent": "047278a1",
+  "source_hashes": {
+    "src/anysolver/_native_retained_step.py": "f7e2975b659c25747afa962933630cf5bc1fd9bdc0c17cf4aed9f7a281d43458",
+    "src/anysolver/_ge_beam3_retained_generalized_state.py": "d073fdaa7d85dd1fdd987282ed308939268b9d71bb2e20d1649fdeeb78fc796b",
+    "src/anysolver/general_contact/native_fibre_context.py": "9d12f55d0bb1674974893075c3786cb9464c6d45fe0020651ec0e030d3217de2",
+    "src/anysolver/general_contact/native_retained_pair_static.py": "71cde2a3219969d074f6e0b8330f708368a29971580fe7ea8e2bad9d3eb05d54",
+    "src/anysolver/general_contact/native_retained_whole_pair.py": "43e083b0c983a9e686ce968a7c32afd5adb1cf538276bc127ae62a4d266d137d",
+    "src/anysolver/general_contact/native_curve_union.py": "4f5b434b5392affaf711908b3edd72eabc489e27b973b8405ea1856b399fa40f",
+    "examples/general_contact_native_retained_whole_pair.py": "a15b88501b00cab3322d4066f7d4426b1078b38e5a9ab6f0b06787de9ee5effa",
+    "tests/test_general_contact_native_fibre_pair_static.py": "7b4cf02d1e83a3836560ee2248da40ffac170a6e276eb8b416f6a281fe19e642",
+    "tests/test_general_contact_native_curve_union.py": "14ec8882872b31899c61d32f869c977c00ec723acbef1209f25c9f81b031461d"
+  },
+  "wheel_sha256": "314ebc96a539e6d05a973ad12f450be40642e7fa09df4a898d4de5b236a8c688",
+  "source_install_parity": {
+    "files": 527,
+    "mismatches": []
+  },
+  "controls": {
+    "status": "completed",
+    "returncode": 0,
+    "elapsed_s": 33.64274119993206,
+    "peak_bytes": 198062080
+  },
+  "local_work": {
+    "material": {
+      "yielded": 56,
+      "dissipation_j": 1.2073592534553838e-07
+    },
+    "directional_errors": [
+      2.2442401485754233e-08,
+      6.461222055930288e-08
+    ],
+    "energy_j": 1.3890378853069255e-05
+  },
+  "prototype_full_timeout": {
+    "status": "timeout",
+    "returncode": 15,
+    "elapsed_s": 120.15196829999331,
+    "peak_bytes": 198438912
+  },
+  "review": "same-family supporting source review; precommit cancellation and compatibility findings repaired; different-family acceptance unavailable",
+  "retained_failures": [
+    "candidate12/source_fibre_pair_local",
+    "candidate12/source_fibre_pair_poststage_smooth",
+    "candidate12/source_fibre_pair_certified_open",
+    "candidate13/installed_fibre_pair_first_target"
+  ],
+  "next_decision": "Profile bounded first-Newton endpoint and swept geometry costs before any new coupled first target; no unchanged full replay/cap/tolerance increase."
+}
