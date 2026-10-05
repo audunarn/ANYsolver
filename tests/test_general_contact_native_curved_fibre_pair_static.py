@@ -14,8 +14,8 @@ from test_general_contact_native_fibre_pair_static import (
 )
 
 
-def _curved_owner():
-    return _owner(line_stiffness=4000.,gap_step_control=True,
+def _curved_owner(line_stiffness=4000.):
+    return _owner(line_stiffness=line_stiffness,gap_step_control=True,
         reference_rise_m=.005,certify_curved_ownership=True)
 
 
@@ -48,10 +48,8 @@ def test_opt_in_straight_pair_preserves_analytic_line_law():
     np.testing.assert_allclose(actual.beam_b_force_n,-actual.beam_a_force_n,atol=1e-12)
 
 
-@pytest.mark.skipif(os.environ.get('CONTACT_NATIVE_CURVED_PAIR_SOLVE')!='1',
-    reason='explicit bounded actual-curved coupled development run')
-def test_actual_curved_plastic_pair_commit_material_work_and_exact_restart():
-    owner=_curved_owner()
+def _coupled_curved(line_stiffness=4000.):
+    owner=_curved_owner(line_stiffness)
     evaluate=owner._contact
     query=owner._physical_gap
     def trace_context():
@@ -79,7 +77,7 @@ def test_actual_curved_plastic_pair_commit_material_work_and_exact_restart():
                 pose={key:np.asarray(value).tolist()
                       for key,value in state.descriptor().items()},
                 reference_rise_m=.005,gap_tolerance_m=5e-5,
-                line_stiffness_n_per_m2=4000.),indent=2))
+                line_stiffness_n_per_m2=owner.contact.stiffness),indent=2))
         try:
             result=query(state)
             event.update(status='completed',lower_gap_m=result)
@@ -108,7 +106,7 @@ def test_actual_curved_plastic_pair_commit_material_work_and_exact_restart():
                 pose={key:np.asarray(value).tolist()
                       for key,value in state.descriptor().items()},
                 reference_rise_m=.005,gap_tolerance_m=5e-5,
-                line_stiffness_n_per_m2=4000.),indent=2))
+                line_stiffness_n_per_m2=owner.contact.stiffness),indent=2))
         try:
             result=evaluate(state)
             event.update(status='completed', **{key:getattr(result,key)
@@ -126,7 +124,7 @@ def test_actual_curved_plastic_pair_commit_material_work_and_exact_restart():
                     pose={key:np.asarray(value).tolist()
                           for key,value in state.descriptor().items()},
                     reference_rise_m=.005,gap_tolerance_m=5e-5,
-                    line_stiffness_n_per_m2=4000.),indent=2))
+                    line_stiffness_n_per_m2=owner.contact.stiffness),indent=2))
             raise
         finally:
             output=os.environ.get('CONTACT_APP_RESULT_RECORD')
@@ -135,5 +133,44 @@ def test_actual_curved_plastic_pair_commit_material_work_and_exact_restart():
                 with Path(output+'-contact-trace.ndjson').open('a',encoding='utf8') as stream:
                     stream.write(json.dumps(event)+'\n')
     owner._contact=recorded_contact
-    record=_check_coupled_commit_and_restart(owner,restart_factory=_curved_owner)
+    record=_check_coupled_commit_and_restart(owner,
+        restart_factory=lambda:_curved_owner(line_stiffness))
     assert record['gap_lower_m']>=-5e-5
+    return record
+
+
+@pytest.mark.skipif(os.environ.get('CONTACT_NATIVE_CURVED_PAIR_SOLVE')!='1',
+    reason='explicit bounded actual-curved coupled development run')
+def test_actual_curved_plastic_pair_commit_material_work_and_exact_restart():
+    _coupled_curved()
+
+
+@pytest.mark.skipif(os.environ.get('CONTACT_NATIVE_CURVED_PAIR_REFINE')!='1',
+    reason='explicit fixed-discretization normal-enforcement sensitivity run')
+def test_actual_curved_pair_normal_enforcement_sensitivity():
+    data=Path(__file__).parent/'data'
+    reference=json.loads((data/'general_contact_native_curved_fibre_pair_v14_response.json').read_text())
+    capsule=(data/'general_contact_native_curved_fibre_pair_v14.checkpoint').read_bytes()
+    assert sha256(capsule).hexdigest()==reference['checkpoint_sha256']==(
+        'a1d72a795421b1d7351d9bcbcfb06faa55c7fe1a3a732a204bd92c27de879086')
+    assert reference['status']=='completed' and reference['line_stiffness_n_per_m2']==4000.
+    current=_coupled_curved(8000.)
+    errors={}
+    for key in ('force_a_n','moment_a_nm'):
+        before=np.asarray(reference[key]);after=np.asarray(current[key])
+        errors[key]=float(np.linalg.norm(after-before)/np.linalg.norm(before))
+    # Independently declared reference tip positions of the two curved beams.
+    before=np.asarray(reference['positions']);after=np.asarray(current['positions'])
+    for index,name,tip in ((2,'beam_a_tip',(2.,0.,0.)),
+                           (5,'beam_b_tip',(2.,.101,0.))):
+        errors[name]=float(np.linalg.norm(after[index]-before[index])/
+            np.linalg.norm(before[index]-np.asarray(tip)))
+    output=os.environ.get('CONTACT_APP_RESULT_RECORD')
+    if output:
+        Path(output+'-normal-sensitivity.json').write_text(json.dumps(dict(
+            scope='fixed-discretization development enforcement comparison only',
+            reference_checkpoint_sha256=reference['checkpoint_sha256'],
+            current_checkpoint_sha256=current['checkpoint_sha256'],
+            stiffnesses_n_per_m2=[4000.,8000.],response_target=.02,
+            gaps_m=[reference['gap_lower_m'],current['gap_lower_m']],errors=errors),indent=2))
+    assert max(errors.values())<=.02

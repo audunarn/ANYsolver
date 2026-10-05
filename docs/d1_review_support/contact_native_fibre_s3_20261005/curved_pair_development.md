@@ -204,3 +204,22 @@ controls failed fixture direction/support/hash setup; logs retained. The matched
 controls preserve physical hidden-collision and resource refusal, not a weaker
 product. Curved normal-enforcement sensitivity, spatial/section breadth, native
 engineering acceptance, friction/dynamics and full programme remain open.
+## Curved normal-enforcement discriminator - 5 October 2026
+
+The unchanged-mechanics cold k8000 attempt is TIMEOUT/NONPASS120.111375s,
+peak200200192B, no accepted checkpoint. Thirteen recorded contact calls use
+107.504591s;38resolved gap calls4.153895s. Repeated active/open backtracking
+consumes the route budget. Timings exclude construction and unfinished calls.
+No k4000/k8000 response-convergence result exists. Parent requested JIT0/pools1;
+termination prevented final runtime/import records, so effective configuration
+was not independently captured for this failed attempt. The reused installed
+artifact has528source-file byte parity; no source change preceded the run.
+Raw candidate23/installed_curved_normal_refinement includes poses, traces,
+resource/input hashes and disposition.json. Preserve the failure, do not replay
+cold8k unchanged or increase any cap/tolerance/physical stiffness.
+
+Same implementation owner now has one bounded trial-initialization/globalisation
+unblock-and-deliver assignment. A frozen4k geometry may only supply a disposable
+trial; initial physical history remains virgin, and incompatible4k checkpoints
+remain rejected. One saved-state discriminator precedes any changed route.
+Scientific convergence/native acceptance/fullC0-C9 remain open.
