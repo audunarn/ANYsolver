@@ -1,223 +1,29 @@
-# General contact — goal
+# General contact - goal
 
-**Current result, 5 October 2026.** Actual curved native physical-fibre pair press/open/recontact and plastic split restart now pass. Source press30.493s; installed opening70.959s (zero contact, +0.900mm gap), recontact64.464s (-13.54um). Independent current-origin returns pass at every stage; byte-exact full-chain replay and each beam's support/load/contact wrench balance pass (errors<=5.89e-9 against1e-6). Fixed-mesh normal sensitivity is also closed. Native engineering acceptance and spatial/section breadth remain open. Next extend through an explicit multi-element body profile to permit real native spatial refinement, preserving existing guards, identities and complete retained work. [Lifecycle evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_lifecycle.json) / [restart](GENERAL_CONTACT_RESTART.md). This supersedes older next-action text; full C0-C9 remains required.
+**Status:** ACTIVE; full C0-C9 incomplete. Updated 6 October 2026.
+**Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1,2026-09-24.2.
 
-**Current result, 5 October 2026.** Curved native physical-fibre pair normal-enforcement comparison now passes: explicit model-bound disposable virgin trial, installed k8000 solve74.680s/200192000B, all four4k/8k response changes<=0.106% against2%, penetration19.43->13.60um. Independent plastic-history, gap/wrench and exact restart pass;4installed state/admission controls pass,528package files match. Preserve the earlier cold8k timeout; no general2x speedup or native engineering-acceptance claim. Next close actual curved-pair opening/recontact and split-restart history using the demonstrated law and shared owner, then programme spatial/section breadth. No further blind enforcement doubling. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_development.md) / [restart](GENERAL_CONTACT_RESTART.md). This supersedes older next-action text.
+## Required outcome and authority
 
-**Current action, 5 October 2026.** Cold curved-pair k8000 normal refinement timed out at120.111s with no accepted checkpoint; convergence remains unproven. Recorded contact work107.505s dominates the4.154s scalar-gap work. Preserve the failure. The same owner is assigned one disposable-trial/globalisation discriminator within unchanged mechanics, virgin origin history, gates and caps; no unchanged replay. [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_development.md). This supersedes older next-action text.
+Complete every required capability in the [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md): qualified shells, classical and retained-native beams; static contact, objective friction, automatic/self-contact, nonlinear impact and finite-velocity native dynamics; ANYfem/ANYstructure workflows, installed packages, documentation and measured resources. Engineering acceptance and release remain separate. No accepted subset or prototype completes this goal.
 
-**Current curved-pair result, 5 October 2026.** The installed actual-curved native physical-fibre beam-pair case passes in 91.599 s within the unchanged 120 s limit, including independent plastic-history returns, gap/wrench gates and exact restart. V12 fixes the saved quadrature counterexample; V13 resolves the scalar gap cheaply; V14 certifies the actual swept path using its curvature bound. Intermediate gap queries fall from 335 in the timed-out V13 run to 14 in the completed V14 run (34.24 to 2.14 s); no twofold complete-route claim follows from censored comparisons. Development-tested only: native engineering acceptance, spatial/section breadth and full C0–C9 remain open. Next assess curved normal-enforcement sensitivity against this frozen accepted development state, then choose the remaining programme slice by the capability ledger. No cap, tolerance or physical-law rescue. [Restart](GENERAL_CONTACT_RESTART.md) / [curved evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_development.md). This entry supersedes conflicting historical next-action text.
+The goal governs scope and acceptance; the [plan](GENERAL_CONTACT_PLAN.md) is an adaptable implementation route. Read the [restart note](GENERAL_CONTACT_RESTART.md) for current ownership and execution state, and the [capability ledger](docs/GENERAL_CONTACT_CAPABILITIES.md) for exact dispositions.
 
-**Current development result, 5 October 2026.** Opt-in native physical-fibre beam-pair solve now completes at k4000; independent material/restart verification passes from its saved state. k8000 sensitivity case passes within unchanged limits; all integrated response changes <0.11%, penetration19.61→13.78um. Installed28focused controls pass. This is development evidence, not independent native acceptance. Next resolve curved pair ownership and spatial coverage; fullC0–C9 and all retained gates remain. [Restart](GENERAL_CONTACT_RESTART.md) / [evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair_event_control.md).
+Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on codex/contact-main-reconcile-20261001. Never access the protected original general-contact checkout. Concurrent main/application work is separately owned; do not communicate with other chats. Authorized local checkpoints are permitted; no push, merge, publication, release or historical default changes.
 
-### Latest native pair cost/continuation checkpoint - 5 October 2026
+## Current position
 
-V6_GLOBAL_CHORD and exact-pose/next-Newton reuse installed; 14focused controls
-plus1reuse-cancellation control pass, all527Python files byte-match wheel.
-First-Newton diagnostic43.331->13.124s (~3.3x), not whole-route speed evidence.
-Single-jump and staged same-final-force routes both TIMEOUT120s, no persisted
-accepted prefix. Ten-call trace and independent last-trial gap show real
-penetration; neither law/gap nor clocks changed. Stop further blind full runs.
-Next independent small-motion tip-loaded relative-pair foundation discriminator
-using existing Timoshenko reference to distinguish enforcement feasibility from
-nonlinear path/globalization. No cap/tolerance/stiffness rescue or regrade.
-Mistral cached unavailable; supporting same-family review only. No live owned
-jobs; fullC0-C9/native engineering acceptance incomplete.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair_cost.md).
+Named D1-interior and bounded D2 partial-shell handoffs retain their exact historical independent acceptance. Broader shell geometry/search, beam/native acceptance, friction/continuation, impact, native dynamics, application admission and C9 remain open.
 
+Latest native development: curved physical-fibre beam-pair normal sensitivity, actual press/open/recontact, current-origin plastic-history checks and exact complete-chain restart pass in the private installed artifact. Each body's support/load/contact force and moment errors are below 5.89e-9 against 1e-6. These results do not establish native engineering acceptance or spatial convergence.
 
-### Latest native beam-pair checkpoint - 5 October 2026
+Next enable actual spatial refinement through explicit connected multi-element native beam bodies. Preserve authoritative retained coordinates and every structural/contact cross block, true physical geometry/junction/end identity and existing native guards/default identities. No independent-element condensation or insertion of B3-GE into generic FEModel. [Latest evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_lifecycle.json).
 
-Physical-fibre whole-curve owner, retained work/history and precommit cancellation
-implemented. Explicit V5_CHORD_OPEN option preserves historical generalized V4
-geometry/restart behavior. Final candidate14 installed controls11pass33.643s;
-all527Python files match wheel. Local tangent <=6.47e-8; independent plastic
-returns/history controls pass. Prototype full first target TIMEOUT120.152s,
-no accepted target; retain without unchanged replay. Supporting same-family
-review findings resolved; native engineering acceptance remains incomplete.
-Next profile bounded first-Newton endpoint/swept costs, then one measured fix;
-no cap/tolerance/stiffness increases. No live owned jobs; cached Mistral unavailable.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fibre_pair.md).
+## Preserved history and decisions
 
+The [unaltered prior goal](GENERAL_CONTACT_GOAL_HISTORY_20261005.md) and [prior plan](GENERAL_CONTACT_PLAN_HISTORY_20261005.md) retain all development decisions, counterexamples, failures, references and source identities. Unaffected scientific contracts, registered criteria, frozen/consumed authorities and assessed capability boundaries remain binding. Historical chronological next actions are superseded by this live goal/plan; this consolidation changes no mechanics or acceptance target and authorizes no repeated campaign.
 
-### Latest development decision - 5 October 2026
-
-Two curved physical-fibre beams / two connected deformable S3 patches now pass
-installed coupled first-target history/equilibrium/restart in 78.662 s / 184262656 B.
-Both beams yield and contact their right patches; left patches remain open.
-Independent local work/tangent, per-patch gaps, full reaction wrench and CLI
-material recovery pass. Source examples and default identities remain unchanged.
-Prior fine lifecycle and one-patch multibeam evidence are reused, not replayed.
-Next extend the existing native beam-beam static owner to the physical-fibre
-family using its retained work/state context, with an explicit capability/restart
-identity and local work/history checks before a bounded coupled case.
-Mistral cached unavailable; no repeated probe. Same-family supporting review
-finds no consequential delta defect. Native engineering acceptance, spatial and
-material breadth, friction/dynamics/applications and full C0-C9 remain incomplete.
-Earlier entries below retain history; this decision supersedes proposed next
-actions where they conflict.
-[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/two_beam_two_patch.md).
-**Revision:** 2026-10-05.2. **Status:** ACTIVE after explicit resumption; full C0–C9 incomplete. Named D1-interior and bounded D2 partial-shell handoffs retain their historical independent acceptance; later development profiles are not thereby accepted. **Plan:** [GENERAL_CONTACT_PLAN.md](GENERAL_CONTACT_PLAN.md), revision 2026-10-05.2. **Policy:** ANY_ECOSYSTEM_RISK_PROPORTIONATE_ENGINEERING_V1, revision 2026-09-24.2.
-
-This goal defines the outcome, acceptance boundary and delegated authority. The plan is an adaptable route to that outcome. Its order and implementation choices may change within this authority; they are not additional acceptance gates. This revision incorporates the user's request for a more flexible and decisive development route. Development resumed on the user's subsequent instruction; this revision establishes no new numerical acceptance.
-
-On resumption, this goal prevails over conflicting future instructions in the 28 September Review-adjusted Delivery Plan, the [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md), the [D1 gap map](docs/GENERAL_CONTACT_D1_ACCEPTANCE_GAP_MAP.md) and the [living note](GENERAL_CONTACT_RESTART.md). Preserve their unaffected requirements and historical dispositions. Frozen or consumed case registrations and execution authorities are not renewed.
-
-## Current milestone and next delivery
-
-Seeded2e7 accepts target1 in96.138s but tip changes3.011197% against2%: enforcement
-convergence remains unproven. Both next4e7 attempts hit120s without a result.
-Curved path/work separation now passes17 installed checks; identical first-step
-body time37.199 to22.879s, unchanged step/metrics/rejection. The full4e7 route
-still hits120s without a result. Stop full retries; next explicit quadrature
-budget candidate uses certified-active support with unchanged global tolerances,
-physical measure and limits. Preserve old defaults/checkpoints; verify the saved
-rejected pose and independent work/tangent before another complete candidate.
-Preserve all scientific/resource and programme requirements.
-[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/geometry_only_path.md).
-
-Committed native material recovery/reporting now passes six installed checks,
-including independent rational energy checks, bound histories, detached optional
-fields and interrupted publication. Stored material energy and contact storage
-remain distinct from plastic dissipation and incremental variational potential.
-This closes development reporting coverage, not physical energy-balance or native
-engineering qualification. Next address native enforcement convergence within
-unchanged scientific/resource contracts.
-[Material reporting](docs/d1_review_support/contact_native_fibre_s3_20261005/material_results.md).
-
-The same retained owner now has actual plastic-fibre press/open/recontact history,
-nonvirgin rollback and exact staged complete-chain replay in installed development
-checks. Independent rational returns validate local constitutive histories, not
-an independent coupled solution. Material recovery/reporting, convergence and
-independent engineering acceptance remain required; fullC0–C9 remains incomplete.
-[Plastic-history evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/plastic_history.md).
-
-Current progress extends the existing retained native/S3 owner to the physical-fibre
-section family, preserving all internal unknowns and real fibre histories. Local
-elastic sectional/spatial work and actual coupled first contact/restart have passed
-development checks. Final guarded installed verification passes14checks. Plastic/contact
-history qualification remains required; this does not establish native
-engineering acceptance. See the current
-[slice evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/README.md).
-
-The completed bounded D2 slice is a planar Q4/S3 partial-overlap workflow using
-the explicitly selected projected finite-penalty law: active prescribed-source
-pressure, moving overlap, opening/recontact, physical reactions/work, gap checks
-and restart. Controlled press/open/recontact, moving fronts and authentic active/
-open restart continuation and the named guided partial-foundation benchmark are
-independently accepted within their exact parameter sets; see the
-[handoff assessment](docs/d1_review_support/D2_PARTIAL_SHELL_HANDOFF_REVIEW_20260930.md).
-The refined point-load gap/operator nonpasses
-remain unchanged. This subset does not complete D2 or qualify arbitrary cuts;
-all remaining D2 geometry/search and D3–D8 programme outcomes remain required.
-
-D1-interior is independently accepted in its bounded documented profile, through
-current installed0b2ac9be evidence and explicit impact reuse of scoped87c science.
-[Handoff](docs/GENERAL_CONTACT_D1_INTERIOR_SHELL_HANDOFF_20260930.md) and
-[final assessment](docs/d1_review_support/D1_CHECKPOINT_SUCCESSOR_REVIEW_20260930.md)
-bind the exact controls, materials, geometry, finite qualification and limitations.
-This establishes neither release, arbitrary exact-model/application admission nor
-full C0–C9 completion. Every historical failure and consumed authority remains.
-
-## Programme outcome and current delivery choice
-
-**Current focus:** curved native material contact. Source14fedcbe now has the
-whole-patch affine/Exp controls and existing-owner elastic press/open/recontact,
-rollback and exact split restart. Explicit1e7N/m³ regularization meets this fixture's
-unchanged30um gap budget; the previous1e6 prototype and installedV6 regression
-retain their failures.38installed checks and source/import identity verification
-pass; extend the existing
-paired owner toward a finite/deformable S3 target with complete retained/both-body
-work. No complete-solve speedup, general penalty convergence or independent
-engineering acceptance follows. Full C0–C9 remains required and incomplete.
-
-Complete every required C0–C9 capability in the [full programme](docs/GENERAL_CONTACT_FULL_PROGRAMME_20260929.md): shells, classical and retained-native beams, static contact, objective friction, automatic/self-contact, nonlinear and native dynamics, applications, installed packages and measured resources. Required scientific acceptance and release remain distinct. The accepted D1/D2 subsets do not complete this programme.
-
-Work only in `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`, branch `codex/contact-main-reconcile-20261001`; historical assessed source is `8be4c355`; current Git HEAD and linked package hashes bind subsequent corrections. Its opt-in coupled-tool candidate is installed-tested and remains development-only. The protected original worktree is not an evidence-recovery route. Main and other tasks remain separately owned; do not communicate with the other chat.
-
-**Current outcome:** the existing B2/B3 fixed/prescribed-translating cylinder route now has its named33-row benchmark assessment and73installed representation-correction checks. The actual-tangent free-rim admission question is resolved negatively for the current C0 Timoshenko/vonKarman energy space: a fixed-tip bubble changes cap energy by a nonzero amount while structural cost tends to zero with cell length. Preserve the guided discrete rim benchmark; do not claim general free-rim mesh acceptance or tune stiffness to hide the defect. Move the already required swept round material-section profile ahead of attempted general rim admission. Its rotations must come from formulation-owned section coordinates and carry physical work/couples; it is a distinct declared geometry, not a silent replacement for the centreline tube. First verify its structural work/regularity contract before expanding contact or friction. Broader D3 and all C0–C9 outcomes remain required. Performance is not a new acceptance gate.
-
-The first material-section slice is installed-tested at `f08d3d80`: one straight
-native interior patch against a fixed plane, with physical section couples, retained
-coordinates, path checks, rollback and split restart. Its 21 focused checks pass;
-this establishes no general native/continuum admission. Reaction changes 2.21%
-under the tested penalty refinement, so convergence remains open. Extend existing
-native owners toward the required deformable-target pairing after checking the
-shell work map and complete normal path; preserve the parked grazing-friction
-restrictions. [Evidence](docs/d1_review_support/contact_native_material_plane_20261004/README.md).
-
-This ownership extension is now installed-tested atfbdd5c27: two native beams,
-three interior material patches and two physical S3 skins retain120coordinates;
-one beam/two facets retain78. Complete work/tangents, corner-order correction,
-per-pair paths/cycles, rollback and restart pass. Supplementalbe0fa6bf checks show
-local plastic work/disposal and exact nonzero-plastic prefix restart, but the
-historical default low-yield load path remainsNONPASS at gap/merit. No material/continuum
-acceptance follows. Existing work maps/owners were extended without another
-solver stack. [Current evidence](docs/d1_review_support/contact_native_material_s3_20261004/README.md).
-Its separate.75-peak seven-target unload/reload cycle and exact split restart now
-pass on the same private wheel; this neither regrades target1 nor establishes
-engineering acceptance.
-
-Prioritize a missing capability requirement, a necessary correctness repair or a measured end-to-end bottleneck. Reuse existing contributor, state, restart, search and test infrastructure. Add a profile/restart identity only when its mechanical or compatibility contract differs; do not create new public options for internal optimizations. Existing identities and explicit selection stay valid.
-
-**Latest gate advance (`ce3e5495`):** explicit material-area first-contact
-fraction control resolves the bounded higher-penalty yielding overshoot. Full-load
-press/open/recontact, complete plastic-increment derivatives, exact split restart,
-multiple physical facets and staged rollback pass;15installed checks verify the
-candidate. Historical default failures remain NONPASS. This is code/workflow
-verification, not engineering/material/application admission. Convergence,
-broader angular admission, curved geometry, friction/dynamics and full C0–C9 remain open.
-[Current evidence](docs/d1_review_support/contact_native_material_s3_20261004/activation_summary.json).
-
-**Current arithmetic correction (f11f6ce7):** reconstructed uniform-pose failure
-resolved with precise scalar partition arithmetic, unchanged Jet2 work/error gates
-and explicit underflow rejection.38fresh installed checks,519files/220imports.
-Supporting scrutiny only; historical failures retain source identity. Next required
-slice: curved native material geometry/work, full-patch bounds before owner admission.
-[Evidence](docs/d1_review_support/contact_native_material_s3_20261004/angular_summary.json).
-
-**Curved search slice (5818670d):** full material current/affine-Exp boxes now
-retain Q2 lift and cell rotation at fixed nodes;26installed checks. This closes
-a geometry/search prerequisite, not curved coupled contact. Next: continuous
-orientation/physical plane-gap controls and fixed-pose normal work before owner
-admission. [Guide](docs/GENERAL_CONTACT_NATIVE_CURVED_BOUNDS_DEV.md).
-
-**Curved normal-work slice (dfd884aa):** whole-patch orientation/plane controls
-and complete fixed-area retained work tested in12installed checks. Origin
-projection defect reproduced and fixed. Only open/fully compressed local poses
-admitted; curved contact fronts and actual coupled owner remain required.
-Next: shared-kernel segmentation and thin-support controls, then curved coupled
-press/open/recontact and restart. No engineering/application promotion.
-[Guide](docs/GENERAL_CONTACT_NATIVE_CURVED_PLANE_WORK_DEV.md).
-
-**Latest curved coupled slice (`12ae5bbc`):** complete retained native / deformable
-S3 material work, bounded active/open/recontact checkpoint stages and precommit
-rollback now pass19installed checks. Full represented patch containment, explicit
-elastic fixture and dimensional controls remain the scope. Finite overlap,
-convergence, broader sections/materials, friction/dynamics and independent acceptance
-remain required. See [guide](docs/GENERAL_CONTACT_NATIVE_CURVED_S3_WORK_DEV.md).
-Earlier “next” markers above describe historical slice boundaries now superseded
-by this result; they do not create a requirement to repeat completed work.
-
-**Multiple-facet curved coverage:** a one-target coupled solve now includes two
-connected deformable S3 facets and shared-vertex retained assembly. Actual left
-lift-off/right activation, whole-system reactions and exact saved-state restart
-are checked. Independent fixed-area nodal work and mixed tangents also pass with
-both local patches active at a declared verification pose. Failed full test batches
-remain NONPASS. No coupled simultaneous-contact, complete multifacet cycle,
-convergence, section/material or independent engineering acceptance is inferred.
-[Current evidence](docs/d1_review_support/contact_native_curved_multifacet_20261005/README.md).
-
-**Budget disposition:** the original 120-hour allocation remains consumed:
-428891+3120=432011 active seconds (120.003 hours). The user subsequently directed
-“Proceed developing”, authorizing further development beyond that boundary.
-No new duration was specified; do not invent an eight-hour allocation or reset
-historical accounting. The bounded material-area activation slice is completed and checkpointed.
-Continue with the next bounded requirement in the plan. Full C0–C9 scope, scientific gates and consumed
-execution restrictions remain intact; a completion forecast is unsupported.
-
-This is a prospective workflow change. Preserve existing equations, dimensional settings, acceptance criteria, exact accepted scopes, contrary evidence and frozen/consumed authorities. The [previous goal](docs/d1_review_support/GENERAL_CONTACT_GOAL_HISTORY_20260930_REV4.md) remains historical evidence.
-
+Original 120-hour authority is consumed (432011 s). Subsequent explicit resumption authorizes bounded further work; it does not renew that allocation or frozen runs. Current stricter per-owner/per-job limits are in the restart note.
 ## Accepted D1 outcome and preserved contract
 
 Deliver **D1-interior**: an independently assessed, installed ANYsolver capability for planar, nonmatching Q4/S3 frictionless shell-static contact through the ordinary nonlinear static solver. It covers press, slide, opening and recontact; force and displacement control; physical skins and offsets; a deformable S3 target; both-body work and reactions; independent physical gaps; rejected trials, cutback, cancellation and exception rollback; and deterministic restart.
@@ -295,32 +101,3 @@ D2 method selection remains delegated: pressure agglomeration, dual mortar with 
 Use focused development checks, one affected integrated route, and one installed verification per coherent claim-bearing delivery. Repeat checks when their implementation, inputs or assumptions change or a concrete concern remains. Freeze acceptance inputs before formal execution; routine helper edits do not require a new dossier or wheel. Keep source-tested, installed-tested, independently accepted and released status explicit.
 
 Pending choices are resolved in the plan: retain impact hidden-point safeguards; park restricted native grazing retries; keep normal application admission disabled without the required source/model evidence; do not replay the timed-out application fixture unchanged. These are deferred dependencies, not waived requirements. No publication, merge or release is authorized.
-
-Latest complete candidate: installed4e7 certified-active returns accepted target1
-and checkpoint in11.973217s/184225792B, but tip2.293585% response exceeds2%
-(convergence NONPASS). Force/moment/target/gap/wrench pass. Independent accepted-
-pose residual agrees1.886145e-14; local quadrature tip correction negligible.
-Next one4e7->8e7 enforcement comparison, same explicit certified-active policy,
-saved4e7 coordinates-only virgin initialization and unchanged criteria/120s953MiB.
-This is an evidence-led prospective convergence test, no automatic sweep/cap or
-stiffness increase to rescue a resource failure. No live jobs; full goal incomplete.
-8e7 enforcement test NONPASS before target acceptance: root-band scaled tangent
-uncertainty1.141856e-6 exceeds1e-6;3.005341s/183189504B. No changed8e7 response.
-Next examine conservative root tangent enclosure versus representation floor at
-that initial-guess pose, keeping full work columns/root uncertainty/tolerances.
-A componentwise leading-term bound is under supporting review, not adopted.
-No new solve/cap/stiffness escalation pending that discriminator. No live jobs.
-Latest installed component-enclosure8e7 comparison passes the four2% successive-
-response gates (tip1.744162%), gap/wrench/storage checks in14.679s. Independent
-accepted-pose residual/work sensitivity passes. Native engineering acceptance
-and full C0–C9 remain incomplete. Stop enforcement doubling; next restore the
-saved fine8e7 checkpoint for separately bounded opening/recontact/state coverage.
-No changed defaults/caps/tolerances or automatic policy switching.
-[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/component_enclosure.md).
-Fine opening resource NONPASS120.155s, no accepted target2/checkpoint. Corrected
-one actual opening Newton observation passes20.047s with unchanged physical
-prefix/history and cleanup. Dominant cost: full step root uncertainty1.717674e-6
-rejects; half step contact12.350s/64intervals rejects; quarter trial/path pass.
-Next local anchored-gradient root-bound discriminator, keeping all work/uncertainty/
-tolerances. No full opening retry or recontact. No live jobs.
-[Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/fine_lifecycle.md).

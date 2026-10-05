@@ -1,10 +1,10 @@
-# General contact - restart (5 October 2026)
+# General contact - restart (6 October 2026)
 
 ## Scope and ownership
 
 Worktree: C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001.
 Branch: codex/contact-main-reconcile-20261001. Current HEAD from Git; preceding
-checkpoint 3fddf6b5. Current dirty source is the completed lifecycle integration.
+checkpoint 24b14ff2. The verified lifecycle slice is committed; grouped-body work is next.
 Full C0-C9 remains authorized and incomplete; no push, merge or release.
 Never access the protected original general-contact checkout. Main, applications
 and common testing remain separately owned. No other-chat communication.
@@ -13,7 +13,7 @@ and common testing remain separately owned. No other-chat communication.
 Global AGENTS reread:4233b732fa295b1e5862cc643a9c78413a47ec2c14c2976f84d35f9c43c96a1a.
 Early worker checkpoint, explicit handoff and same-owner continuation apply.
 Mistral/local remain cached unavailable; OpenAI fallback used. Workers/reviewer
-held, no owned numerical job active (41978 completed PASS).
+assigned to the grouped-body milestone/supporting review; no numerical job active at dispatch.
 
 ## Latest completed slices
 
@@ -61,7 +61,7 @@ complete work/geometry and production checks; if a prerequisite is barred, ident
 that exact contract rather than repeat fixed-mesh penalty tuning. Reuse unaffected
 local/history evidence. Section breadth, independent native engineering acceptance,
 friction/automatic/self-contact, dynamics, applications and full C0-C9 remain open.
-No new numerical authority or worker assignment is active yet.
+Same implementation owner assigned candidate28: explicit two connected-element bodies, complete retained work and focused production/refusal/restart verification. Owned contact modules/new body example/tests only; native core guards unchanged. Source numerical budget180s cumulative, perjob120s/953MiB, one job/JIT0/pools1; no frozen campaign authority renewed. Root owns contracts, integration and artifact acceptance; separate Read reviewer examines grouped-body invariants/reference obligations. Early design checkpoint and explicit final handoff required. No timed root job while worker checks.
 
 ## Binding limits
 
@@ -72,3 +72,5 @@ No cap, gap, tolerance or physical-stiffness rescue or historical regrade. Ledge
 has historical invalid UTF8: append ASCII only. Claim-bearing acceptance requires
 frozen inputs, exact identity and independent assessment. No release authority.
 [Archived restart](docs/d1_review_support/contact_native_fibre_s3_20261005/restart_curved_development_history_20261005.md).
+
+Live goal/plan consolidated on6October; exact historical copies GENERAL_CONTACT_GOAL_HISTORY_20261005.md and GENERAL_CONTACT_PLAN_HISTORY_20261005.md preserve prior decisions/failed evidence/authorities. Optional explicit512-coordinate grouped adapter adopted from existing core budget; default256/coreguards unchanged, no time/memory budget increase.
