@@ -6,7 +6,7 @@ Current turn PROGRESS: inverse CCX eight-state response completed; no product ch
 
 ## Identity and delivered behavior
 Canonical root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
-branch codex/stiffened-main-reconcile-20261001; product ec4bd257; preceding HEAD74319629.
+branch codex/stiffened-main-reconcile-20261001; product ec4bd257; evidence HEAD6666cd03.
 ANYfem9faed76 unchanged. No main/push/publication/contact-worker communication.
 Native arc guard, supplemental OpenSees material comparison and prior delivered
 GE/B2/consumer behavior remain as recorded in linked history/results/matrix.
@@ -31,12 +31,18 @@ Success supports compatible admitted material response under changed boundary
 parameterization, not unique allocation to the external predictor/constitutive code.
 
 ## Next connected action
-Read owner /root/restricted_nonlinear_reference is deriving the accepted-state
-conservative GE/Q4 point buckling split from actual existing local operators.
-Astra must adopt the coordinate/work/material-vs-prestress contract before Edit.
+Read owner /root/restricted_nonlinear_reference completed local split derivation;
+/root/nonlinear_external_scope_audit is reviewing the accepted-state conservative
+GE/Q4 point buckling contract against actual source, with no edits/jobs.
+Astra must resolve review and adopt the work/material-vs-prestress contract before Edit.
+Beam full42 mixed Hessian is available; Q4 objective component extraction and
+chart-covector corrections are required. Historical corotational equivalence
+remains unestablished; no silent admission or permanent scope reduction.
 Preserve retained/algebraic variables and constraint curvature; no SPD assumption,
 artificial mass or global dense inverse. No numerical job live.
-Current slice source/test/doc/evidence needs scoped local commit after finaldiff.
+Current inverse slice source/test/doc/evidence committed6666cd03, canonical clean
+before this restart-note delta. Next implementation owner receives one connected
+mixed operator/pencil slice after contract adoption, not isolated helper requests.
 
 ## Preserved execution boundaries
 Mistral/local cached unavailable for this goal; OpenAI fallback does not supply
