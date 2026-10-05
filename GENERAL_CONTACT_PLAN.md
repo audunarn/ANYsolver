@@ -2,20 +2,21 @@
 
 ### Latest development decision - 5 October 2026
 
-Two separately clamped curved physical-fibre beams now act on one deformable S3
-patch through the existing retained owner. Installed first-target equilibrium,
-per-beam plastic history and exact restart pass in 76.167 s / 183566336 B.
-Independent both-beam work/tangent, physical gaps, full support/load wrench and
-CLI material-energy recovery pass. Explicit example flags reproduce the tested
-definition. Existing single-beam checkpoint identity and defaults are preserved.
-Earlier fine anchored opening/recontact evidence remains valid and is not replayed.
-Next address multiple native beams/physical-fibre shell patches or the remaining
-spatial-accuracy requirement. Do not repeat this first-target solve for reporting.
-Supporting review is same-family only; native engineering acceptance and full
-C0-C9 remain incomplete. Cached Mistral unavailable; no repeated probe.
-Earlier entries below retain history; this current decision supersedes proposed
-next actions where they conflict.
-[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/two_beam.md).
+Two curved physical-fibre beams / two connected deformable S3 patches now pass
+installed coupled first-target history/equilibrium/restart in 78.662 s / 184262656 B.
+Both beams yield and contact their right patches; left patches remain open.
+Independent local work/tangent, per-patch gaps, full reaction wrench and CLI
+material recovery pass. Source examples and default identities remain unchanged.
+Prior fine lifecycle and one-patch multibeam evidence are reused, not replayed.
+Next extend the existing native beam-beam static owner to the physical-fibre
+family using its retained work/state context, with an explicit capability/restart
+identity and local work/history checks before a bounded coupled case.
+Mistral cached unavailable; no repeated probe. Same-family supporting review
+finds no consequential delta defect. Native engineering acceptance, spatial and
+material breadth, friction/dynamics/applications and full C0-C9 remain incomplete.
+Earlier entries below retain history; this decision supersedes proposed next
+actions where they conflict.
+[Current evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/two_beam_two_patch.md).
 **Revision:** 2026-10-05.2. **Status:** ACTIVE after explicit user resumption; full programme incomplete.
 **Authority:** [goal](GENERAL_CONTACT_GOAL.md), revision 2026-10-05.2, and the adopted risk-proportionate philosophy.
 **Worktree:** `C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001`.
