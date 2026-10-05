@@ -1442,3 +1442,21 @@ r8-bl5-released-reference-dev-20261005-v1/integration-disposition.md.
 Physical/converged/different-family acceptance, aggregate gates and F03 OPEN.
 Next integration slice extends existing ANYfem input/persistence to delivered
 elastic native Q4/S3/mixed policies under distinct v5 schema, old routes intact.
+
+
+### 5 October - installed native BL5 ANYfem integration
+
+IMPLEMENTED_NOT_QUALIFIED: ANYfem df9d1d7 extends existing BL5 panel/native
+Project route through distinct native-elastic-v5 inputs for delivered Q4/S3/
+mixed policies. Exact owned beam bytes, case/Project save-reopen, finite
+physical recovery/fresh restart/continue and typed refusal/cancellation pass.
+Source26PASS+sole assertion defect repaired by impact (both failed assertions
+retained); installed23PASS64.808s. Three default Project reference-linear
+caller smokes complete with original equilibrium/compatibility criteria.
+Root independently verified99fem/424solver module bytes and310/307 import
+prefixes; wheel a8a255eb26696543e31f27d7a49a1df15af8f16c7a1ef341953f02028df545bc,
+solver artifact b3d5f572797f3c2954d1bf9dc1c6b4293da14c5812e543dbde7f314a60207291.
+Post-test example EOF-only trim preserves AST, original bytes and delta binding;
+all99 package modules unchanged. Raw/author/root disposition retained in ANYfem
+.qualification/r8-native-bl5-consumer-20261005-v1. Different-family/physical/
+scale/platform/plastic BL5 and complete-release gates remain OPEN.

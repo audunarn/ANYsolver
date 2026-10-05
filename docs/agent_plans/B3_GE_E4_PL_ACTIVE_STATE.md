@@ -50,7 +50,7 @@ Exact source/artifact/runtime/handoff-s3.md remain in the same evidence root.
 
 Native point Q4/S3/generalized/fibre/mixed buckling at888be00b already has
 installed52PASS/public example and original residual/checkpoint evidence.
-Do not rerun unchanged coverage. ANYfem9faed76 unchanged this slice.
+Do not rerun unchanged coverage. ANYfem native consumer now atdf9d1d7 (details below).
 
 Connection discriminator atdf094d6b:16new prescribed-field controls pass.
 Polar and L1 six-channel maps impose DIFFERENT section rotations/chord shear;
@@ -86,13 +86,26 @@ Preserve this empirical output distinction and V1 byte-binding defect. No
 native accuracy score, convergence or acceptance follows. Exact code/run/raw/
 root review: r8-bl5-released-reference-dev-20261005-v1/integration-disposition.md.
 Formal F03 unchanged; no automatic reference refinement/retry/closed campaign.
-Reference owner finished and released numerical slot. Active implementation:
-/root/native_bl5_consumer owns ONLY ANYfem adapter/project seams plus new native
-BL5 test/example/doc/raw at its experimental-ge-panel-consumer worktree. New
-v5 input schema preserves old routes; public solver owns physical admission.
-Outcome: native Q4/S3/mixed BL5 construction/save-reopen/solve/recovery/fresh
-restart/continue through consumer, source and installed dual graph. 30min/final8
-handoff; sole600s/2GiB/affinity1/pools1/JIToff check slot. Solver product untouched.
+ANYfem native BL5 consumer now committed atdf9d1d7; both worktrees clean.
+Existing panel/Project route, distinct native-elastic-v5, Q4/S3/mixed inputs,
+finite recovery/fresh restart/continue and typed refusals/cancellation verified.
+Installed23PASS64.808s; all99fem/424solver package bytes and310loadedprefixes
+root-verified. Three default Project linear solves completed at original
+residual limits. Source assertion failures preserved/repaired by impact;
+example EOF-only trim is AST-identical with tested snapshot/delta retained.
+Wheel a8a255eb26696543e31f27d7a49a1df15af8f16c7a1ef341953f02028df545bc;
+solver wheel b3d5f572797f3c2954d1bf9dc1c6b4293da14c5812e543dbde7f314a60207291.
+ANYfem raw: .qualification/r8-native-bl5-consumer-20261005-v1/handoff.md and
+integration-disposition.md. No jobs/workers active; sole numerical slot free.
+Next scientific deliverable: prepare genuinely physically matched native input
+and five-channel common-work correspondence for the executed released-director
+specimen. Existing arbitrary-section consumer demo is NOT that comparator.
+Resolve section/shear/torsion idealizations, support equivalence and collocated
+versus weak/broken traces BEFORE any numerical response score or refinement.
+If common-work mapping is insufficient, identify exact missing component and
+use focused mechanics review; do not auto launch a finer mesh/new norm/campaign.
+Final plastic/topology/load/stability/capacity/scale/platform/family acceptance
+continues in named programme milestones; no permanent elastic-only scope.
 Root owns integration/adoption; cached Mistral unavailable; no contact messages.
 Common-main PR62 remains NONPASS; local02ca395e repairs unpushed. Main untouched.
 No merge/publication or contact-task communication is authorized by this slice.
