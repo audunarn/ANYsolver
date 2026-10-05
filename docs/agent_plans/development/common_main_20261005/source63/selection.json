@@ -1,0 +1,50 @@
+{
+  "scope": "focused source development, not qualification",
+  "targets": [
+    "tests/test_general_contact_lazy_import.py::test_no_contact_static_route_leaves_contact_kernel_unloaded",
+    "tests/test_general_contact_native_fibre_pair_static.py::test_fibre_pair_context_step_complete_constrained_rank_one_reference",
+    "tests/test_general_contact_native_fibre_pair_static.py::test_fibre_pair_family_binding_and_empty_restart",
+    "tests/test_general_contact_native_retained_whole_pair_static.py::test_whole_pair_open_static_route_and_checkpoint_restart",
+    "tests/test_nonlinear_restart_checkpoint.py::test_legacy_checkpoint_contract_omits_unused_armijo_scaling",
+    "tests/test_nonlinear_restart_checkpoint.py::test_legacy_checkpoint_contract_preserves_valid_setting_casing",
+    "tests/test_authority_signature_immutable_cache.py",
+    "tests/test_stiffened_shell_ge_point_buckling.py",
+    "tests/test_stiffened_shell_ge_line_buckling.py"
+  ],
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-p",
+    "scripts.development_test_runtime",
+    "--durations=10",
+    "--basetemp=C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\anysolver-portable-ci-72y3ixwq\\P01\\basetemp",
+    "tests/test_general_contact_lazy_import.py::test_no_contact_static_route_leaves_contact_kernel_unloaded",
+    "tests/test_general_contact_native_fibre_pair_static.py::test_fibre_pair_context_step_complete_constrained_rank_one_reference",
+    "tests/test_general_contact_native_fibre_pair_static.py::test_fibre_pair_family_binding_and_empty_restart",
+    "tests/test_general_contact_native_retained_whole_pair_static.py::test_whole_pair_open_static_route_and_checkpoint_restart",
+    "tests/test_nonlinear_restart_checkpoint.py::test_legacy_checkpoint_contract_omits_unused_armijo_scaling",
+    "tests/test_nonlinear_restart_checkpoint.py::test_legacy_checkpoint_contract_preserves_valid_setting_casing",
+    "tests/test_authority_signature_immutable_cache.py",
+    "tests/test_stiffened_shell_ge_point_buckling.py",
+    "tests/test_stiffened_shell_ge_line_buckling.py"
+  ],
+  "source_root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\common-main-20261005",
+  "timeout_seconds": 180,
+  "selected_file_sha256": {
+    "tests/test_general_contact_lazy_import.py": "1ac0395956a160cff14897940c8a238f80c197091fd7ec0f6e2a1a073685b4eb",
+    "tests/test_general_contact_native_fibre_pair_static.py": "515d2a9bcab59e17e6096e9429595e2cc0f91909c526e39b8ee7a46acfd1fbc7",
+    "tests/test_general_contact_native_retained_whole_pair_static.py": "47e9aaba1343c477b7210dcbe18ae081ee1a7e31ec8e9c2bae3e727bf0f6419c",
+    "tests/test_nonlinear_restart_checkpoint.py": "4ba2b7240d493638d7411194d338dda43a5ee3ffcc94bfc8423cfa0434fcefbf",
+    "tests/test_authority_signature_immutable_cache.py": "9e0d921cf0a77fe6888cb9dd8fc0eb026fe0e075dc9dbca53df85f267eea4c3c",
+    "tests/test_stiffened_shell_ge_point_buckling.py": "33b9988547ae5c5e25e1fd41d2b0366aec74ddc7813c43712b5bcd9ba94997a1",
+    "tests/test_stiffened_shell_ge_line_buckling.py": "3500a2da56f520a4338107ae8429660403cd429d5c871d7692db31f1d0404701"
+  },
+  "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+  "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+  "memory_limit_mib": 1024,
+  "jit": "off"
+}

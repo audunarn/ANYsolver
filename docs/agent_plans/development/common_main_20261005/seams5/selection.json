@@ -1,0 +1,31 @@
+{
+  "scope": "focused source development, not qualification",
+  "targets": [
+    "tests/test_common_main_integration.py",
+    "tests/test_e4_pl_s3_state_lifecycle.py::test_s3_active_state_rejects_foreign_q4_lifecycle_marker"
+  ],
+  "command": [
+    "C:\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-p",
+    "scripts.development_test_runtime",
+    "--durations=10",
+    "--basetemp=C:\\Users\\AudunArnesenNyhus\\AppData\\Local\\Temp\\anysolver-portable-ci-2c1bpfnn\\P01\\basetemp",
+    "tests/test_common_main_integration.py",
+    "tests/test_e4_pl_s3_state_lifecycle.py::test_s3_active_state_rejects_foreign_q4_lifecycle_marker"
+  ],
+  "source_root": "C:\\Github\\ANYsolver\\.perf2-worktrees\\common-main-20261005",
+  "timeout_seconds": 180,
+  "selected_file_sha256": {
+    "tests/test_common_main_integration.py": "5e41a533a2d84496c80da874dfe514c41bb060b99775a8d6fb0c29b34ecb75e8",
+    "tests/test_e4_pl_s3_state_lifecycle.py": "9c04139d3acac3e12bbf0a0aec71625cdabdb3ad68b2f1034b950d87474a3fd6"
+  },
+  "runner_sha256": "7f4ff98a4d4d66b2bf40ae4e007ad8e3df9cf7db7f7c901de1ed1c888f04b0de",
+  "source_identity_scope": "working-tree paths and selected files; not an installed artifact binding",
+  "memory_limit_mib": 1024,
+  "jit": "off"
+}

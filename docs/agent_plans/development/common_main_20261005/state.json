@@ -1,0 +1,63 @@
+{
+  "status": "VERIFIED_PROVISIONAL_FULL_CI_PENDING",
+  "main": "1a0ae90122995b8419f1ed87cf770590b4bd8c05",
+  "stiffened": "8c827d1a5039ea1d6fdc79e29c71ace0c4163239",
+  "contact": "5a56024d1ed41e70a8192a5180a3cd26cfe42744",
+  "candidate": "680df57dad0df8d2561e3eb13ffcb14d712b6b96",
+  "worktree": "C:\\Github\\ANYsolver\\.perf2-worktrees\\common-main-20261005",
+  "source_checks_session": 78077,
+  "source_checks_record": "C:/Users/AudunArnesenNyhus/AppData/Local/Temp/anysolver-portable-ci-72y3ixwq/P01",
+  "scientific_qualification": false,
+  "dirty_development_scopes": "preserved/excluded",
+  "attributes_resolution": "identical/disjoint union, centered_finite_inertia -text with actual contact source bytes preserved",
+  "initial_merge_failures": "new --no-checkout worktree had uninitialized index; no scientific runs; isolated index materialized before successful merges",
+  "merged_files": {
+    "src/anysolver/__init__.py": "78abbfab20b8ec250ae0ad5e9d689a47e4eaf4a2e54bde8efd45cd5357627b34",
+    "src/anysolver/_ge_beam3_centered_finite_inertia.py": "86d340b182d21880b1a255b1f59d75f385903e229d62c63cc245e87a18fe636f",
+    ".gitattributes": "9bd64e8d6cd1b41d8a8671eab93c807b8fe31168530005db4b1aaca1b5c6904f"
+  },
+  "source_checks": {
+    "source63": "63PASS38.90s",
+    "seams5": "5PASS8.68s",
+    "inventory53": "53PASS5.22s"
+  },
+  "installed_tests": 16,
+  "installed_example": "COMPLETED_DEVELOPMENT",
+  "wheel": {
+    "wheel": "C:\\Github\\ANYsolver\\.perf2-worktrees\\common-main-20261005\\.qualification\\common-main-20261005\\solver-dist-v1\\anysolver-0.4.7-py3-none-any.whl",
+    "sha256": "8254faccbc457084a195b2e9ebf59eb401a6a3efe104996e8aae7dff950ee6f9",
+    "commands": [
+      [
+        "C:/Python/Python314/python.exe",
+        "-m",
+        "pip",
+        "wheel",
+        ".",
+        "--no-index",
+        "--no-deps",
+        "--no-build-isolation",
+        "--no-cache-dir",
+        "-w",
+        "C:\\Github\\ANYsolver\\.perf2-worktrees\\common-main-20261005\\.qualification\\common-main-20261005\\solver-dist-v1"
+      ],
+      [
+        "C:/Python/Python314/python.exe",
+        "-m",
+        "pip",
+        "install",
+        "--no-index",
+        "--no-deps",
+        "--no-cache-dir",
+        "--target",
+        "C:\\Github\\ANYsolver\\.perf2-worktrees\\common-main-20261005\\.qualification\\common-main-20261005\\site-v1",
+        "C:\\Github\\ANYsolver\\.perf2-worktrees\\common-main-20261005\\.qualification\\common-main-20261005\\solver-dist-v1\\anysolver-0.4.7-py3-none-any.whl"
+      ]
+    ],
+    "scope": "Common-main installed development compatibility, no qualification or release"
+  },
+  "full_portable_modules": 923,
+  "license": "PASS after missing optional ANYgeometry inventory entry repaired",
+  "review": "Supporting independent OpenAI seamreview no blocker; not scientific acceptance",
+  "installed_import": "C:\\Github\\ANYsolver\\.perf2-worktrees\\common-main-20261005\\.qualification\\common-main-20261005\\site-v1\\anysolver\\__init__.py",
+  "installed_source_files": 586
+}

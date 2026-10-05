@@ -19,7 +19,9 @@
     "tests/test_ge_beam3_public_workflows.py",
     "tests/test_ge_beam3_shell_joint_state.py",
     "tests/test_ge_beam3_shell_joint_trial.py",
-    "tests/test_ge_beam3_variational_shell.py"
+    "tests/test_ge_beam3_variational_shell.py",
+    "tests/test_ge_beam3_branch_direction.py",
+    "tests/test_ge_beam3_mixed_ad_scalars.py"
   ],
   "extended": [
     "tests/test_ge_beam3_g1_confirmation.py",
@@ -482,6 +484,7 @@
     "tests/test_ge_beam3_uniform_arch_reference.py",
     "tests/test_ge_beam3_uniform_arch_refinement.py",
     "tests/test_ge_beam3_uniform_arch_sixteen.py",
-    "tests/test_ge_beam3_virgin_reference_modes.py"
+    "tests/test_ge_beam3_virgin_reference_modes.py",
+    "tests/test_ge_beam3_native_dynamic_restart.py"
   ]
 }

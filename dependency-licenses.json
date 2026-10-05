@@ -83,6 +83,13 @@
       "requirement": "twine>=5",
       "scope": "development",
       "status": "not-bundled"
+    },
+    {
+      "distribution": "ANYgeometry",
+      "licence": "MPL-2.0",
+      "requirement": "ANYgeometry>=0.4.3,<0.5",
+      "scope": "optional-runtime",
+      "status": "not-bundled"
     }
   ],
   "project": "ANYsolver",
