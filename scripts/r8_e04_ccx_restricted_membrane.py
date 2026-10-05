@@ -35,6 +35,38 @@ IP_IDS = tuple((e, p) for e in (1, 2) for p in range(1, 9))
 FORCE_GATE_N = 1e-4
 WORK_GATE_J = 1e-8
 REFERENCE_TOLERANCE = .01
+INVERSE_FIELD_LINES = ('*CONTROLS,PARAMETERS=FIELD',
+    '1.e-10,1.e-8,,,1.e-10,,1.e-8,1.e-10')
+
+
+def elastic_patch_strain():
+    return patch.TARGETS[0] * patch.FORCE / (2 * patch.E * patch.AREA
+        + patch.WIDTH * patch.THICKNESS * patch.E / (1 - patch.NU**2))
+
+
+def native_motion(path):
+    """Pinned actual native endpoints, validated before inverse deck creation."""
+    rows, status = patch.read_completed_input(path, 'native')
+    if status.get('script_sha256') != NATIVE_V3_SHA256:
+        raise ReferenceError('inverse motion requires pinned executed native v3 source')
+    signature = status.get('fixture_signature_sha256')
+    if signature is not None and signature != patch.fixture_signature():
+        raise ReferenceError('native physical/history fixture differs')
+    if len(rows) != len(patch.TARGETS):
+        raise ReferenceError('complete eight native motion endpoints required')
+    motion = []
+    for factor, row in zip(patch.TARGETS, rows, strict=True):
+        strain = row.get('engineering_axial_strain')
+        if (row.get('factor') != factor or isinstance(strain, bool)
+                or not isinstance(strain, (int, float)) or not math.isfinite(strain) or strain <= 0
+                or len(row.get('layer_stress_pa', ())) != 3):
+            raise ReferenceError('native motion factor/dimension/nonfinite contract')
+        motion.append(strain * patch.LENGTH)
+        layers = row.get('actual_layers', ())
+        if not layers or any(not isinstance(layer.get('alpha'), (int, float))
+                or not math.isfinite(layer['alpha']) or not 0 <= layer['alpha'] < .01 for layer in layers):
+            raise ReferenceError('native actual history inventory/branch contract')
+    return rows, tuple(motion)
 ITERATION_DIAGNOSTIC_LINES = ('*CONTROLS,PARAMETERS=TIME INCREMENTATION',
     '25,25,25,24,10,4,0,5,0,0', '0.25,0.5,0.75,0.85,0.,0.,1.5,0.')
 ITERATION_DIAGNOSTIC_CONTROLS = dict(I0=25, IR=25, IP=25, IC=24,
@@ -63,10 +95,19 @@ def expected_nodes(mode):
     raise ValueError('unknown mode')
 
 
-def deck(mode, *, iteration_diagnostic=False):
+def deck(mode, *, iteration_diagnostic=False, inverse_motion=None, inverse_elastic_control=False):
     """Absolute forces in consecutive steps; no nonlinear geometric switch."""
     if iteration_diagnostic and mode != 'full':
         raise ValueError('iteration diagnostic is admitted only for full history')
+    inverse = inverse_motion is not None or inverse_elastic_control
+    if inverse and (mode != 'full' or iteration_diagnostic):
+        raise ValueError('inverse case is full-only and excludes iteration diagnostic')
+    if inverse_elastic_control and inverse_motion is not None:
+        raise ValueError('inverse control and native motion are mutually exclusive')
+    motions = (elastic_patch_strain() * patch.LENGTH,) if inverse_elastic_control else inverse_motion
+    if motions is not None and (len(motions) != (1 if inverse_elastic_control else 8)
+            or any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v <= 0 for v in motions)):
+        raise ValueError('inverse motion requires finite positive dimensional tip UX endpoints')
     nodes = expected_nodes(mode)
     lines = ['*HEADING', 'Restricted axial response: CPS4 plus derived elastic half-cell springs', '*NODE']
     for n in nodes:
@@ -105,15 +146,19 @@ def deck(mode, *, iteration_diagnostic=False):
         for shell, beam in patch.PAIRS:
             if shell not in (1, 4):
                 lines += ['*EQUATION', '2', f'{beam},1,1.,{shell},1,-1.']
-    factors = patch.TARGETS if mode == 'full' else (patch.TARGETS[0],)
-    for factor in factors:
+    factors = (patch.TARGETS[0],) if inverse_elastic_control else (patch.TARGETS if mode == 'full' else (patch.TARGETS[0],))
+    for index, factor in enumerate(factors):
         lines += ['*STEP,INC=100', '*STATIC,DIRECT', '1.,1.']
         if iteration_diagnostic:
             lines += ITERATION_DIAGNOSTIC_LINES
-        lines += ['*CLOAD,OP=NEW']
-        if mode == 'spring-control':
+        if inverse:
+            lines += INVERSE_FIELD_LINES
+            lines += ['*BOUNDARY', *(f'{n},1,1,{motions[index]:.13e}' for n in (3, 6))]
+        elif mode == 'spring-control':
+            lines += ['*CLOAD,OP=NEW']
             lines += [f'102,1,{factor * patch.FORCE:.17g}']
         else:
+            lines += ['*CLOAD,OP=NEW']
             lines += [f'{n},1,{factor * patch.FORCE / 2:.17g}' for n in (3, 6)]
         lines += ['*NODE PRINT,NSET=ALL,FREQUENCY=1,GLOBAL=YES', 'U,RF']
         if mode != 'spring-control':
@@ -159,7 +204,7 @@ def printed_number(token):
     return value, .5 * quantum
 
 
-def parse_dat(text, mode, partial=None):
+def parse_dat(text, mode, partial=None, *, endpoint_count=None):
     """Strict complete integration-point inventory, preserving valid prefixes."""
     partial = [] if partial is None else partial
     blocks = {}
@@ -217,7 +262,10 @@ def parse_dat(text, mode, partial=None):
         elif active is not None:
             active = None
     times = sorted({time for time, _ in blocks})
-    endpoints = tuple(float(i) for i in range(1, len(patch.TARGETS) + 1)) if mode == 'full' else (1.,)
+    count = (len(patch.TARGETS) if mode == 'full' else 1) if endpoint_count is None else endpoint_count
+    if count not in (1, 8):
+        raise ReferenceError('unsupported endpoint inventory')
+    endpoints = tuple(float(i) for i in range(1, count + 1))
     if not times or times[-1] != endpoints[-1] or any(t > endpoints[-1] for t in times):
         raise ReferenceError('missing or unexpected final total step time')
     for time in times:
@@ -232,13 +280,18 @@ def parse_dat(text, mode, partial=None):
 
 
 def clean_execution(returncode, stdout, stderr):
+    """Screen terminal execution; accepted STA/DAT inventories remain mandatory.
+
+    CCX prints 'no convergence' after ordinary intermediate Newton iterations,
+    including successful jobs. That progress message is not a terminal error.
+    """
     log = stdout + '\n' + stderr
     if returncode != 0 or 'Job finished' not in stdout or re.search(
-            r'\*ERROR|\bFATAL\b|no convergence|too many cutbacks', log, re.I):
+            r'\*ERROR|\bFATAL\b|too many cutbacks', log, re.I):
         raise ReferenceError('CalculiX did not finish cleanly; raw logs retained')
 
 
-def parse_sta(text, mode):
+def parse_sta(text, mode, *, endpoint_count=None):
     rows = []
     for line in text.splitlines():
         tokens = line.split()
@@ -254,7 +307,9 @@ def parse_sta(text, mode):
             raise ReferenceError('duplicate/out-of-order accepted increments')
         rows.append(dict(step=step, increment=increment, attempt=attempt, iterations=iterations,
                          total_time=total_time, step_time=step_time, increment_time=increment_time))
-    count = len(patch.TARGETS) if mode == 'full' else 1
+    count = (len(patch.TARGETS) if mode == 'full' else 1) if endpoint_count is None else endpoint_count
+    if count not in (1, 8):
+        raise ReferenceError('unsupported endpoint inventory')
     if not rows or {r['step'] for r in rows} != set(range(1, count + 1)) or rows[-1]['total_time'] != count:
         raise ReferenceError('incomplete accepted increment history')
     matched = len(rows) == count and all(r['step'] == i and r['increment'] == 1
@@ -451,7 +506,7 @@ def balance_checks(row):
     return checks
 
 
-def compare(native, external):
+def compare(native, external, *, include_axial_strain=True):
     if len(native) != len(patch.TARGETS) or len(external) != len(patch.TARGETS):
         raise ReferenceError('complete matched eight-step history required')
     elastic_eps = patch.TARGETS[0] * patch.FORCE / (
@@ -468,6 +523,8 @@ def compare(native, external):
             ('axial_strain', e['engineering_axial_strain'], n['engineering_axial_strain'], e['axial_strain_print_bound'], elastic_eps),
             ('sigma_xx', e['layer_stress_pa'][0], n['layer_stress_pa'][0], e['layer_stress_print_bounds_pa'][0], elastic_stress),
             ('sigma_yy', e['layer_stress_pa'][1], n['layer_stress_pa'][1], e['layer_stress_print_bounds_pa'][1], patch.NU * elastic_stress)):
+            if name == 'axial_strain' and not include_axial_strain:
+                continue
             if not all(map(math.isfinite, (measured, reference, bound, floor))) or bound < 0:
                 raise ReferenceError('finite comparison quantities and nonnegative print bounds required')
             scale = max(abs(reference), abs(floor))
@@ -503,6 +560,148 @@ def control_authority(path, mode):
     return sha256(path.read_bytes()).hexdigest()
 
 
+def inverse_control_authority(path):
+    data = json.loads(path.read_text(encoding='utf-8'))
+    expected = sha256(deck('full', inverse_elastic_control=True).encode('ascii')).hexdigest()
+    if (data.get('status') != 'COMPLETED_INVERSE_CONTROL'
+            or data.get('case_kind') != 'inverse-elastic-control' or data.get('exe_sha256') != EXE_SHA256
+            or data.get('fixture_signature_sha256') != patch.fixture_signature()
+            or data.get('deck_sha256') != expected or data.get('imposed_boundary_verified') is not True):
+        raise ReferenceError('completed exact pinned inverse elastic control required')
+    return sha256(path.read_bytes()).hexdigest()
+
+
+def verify_inverse_boundary(record, prescribed_tip_ux):
+    """Verify actual execution of imposed UX; this is not response scoring."""
+    if (isinstance(prescribed_tip_ux, bool) or not isinstance(prescribed_tip_ux, (int, float))
+            or not math.isfinite(prescribed_tip_ux) or prescribed_tip_ux <= 0):
+        raise ReferenceError('finite positive prescribed tip UX required')
+    checks = []
+    for node in (3, 6):
+        actual = record['U']['rows'][node][0]
+        bound = record['U']['rounding'][node][0]
+        if not math.isfinite(actual) or not math.isfinite(bound) or bound < 0:
+            raise ReferenceError('finite actual boundary UX and nonnegative print bound required')
+        residual = actual-prescribed_tip_ux
+        uncertain_check(residual, bound, 1e-10, 'inverse imposed tip UX execution')
+        checks.append(dict(node=node, actual_tip_ux=actual, prescribed_tip_ux=prescribed_tip_ux,
+            residual=residual, independent_print_bound=bound, physical_threshold=1e-10))
+    return dict(imposed_boundary_verified=True, imposed_strain_scored=False,
+                imposed_boundary_execution_checks=checks)
+
+
+def inverse_observables(record, factor, *, elastic_control=False):
+    result = shell_observables(record, factor,
+        elastic_expected=elastic_patch_strain() if elastic_control else None)
+    for layer in result['actual_layers']:
+        key = (layer['element'], layer['point'])
+        layer['tensor_strain_print_bounds'] = record['E']['rounding'][key]
+        layer['actual_peeq_print_bound'] = record['PEEQ']['rounding'][key][0]
+        if elastic_control:
+            expected_ezz = -patch.NU/(1-patch.NU)*elastic_patch_strain()
+            uncertain_check(layer['tensor_strain'][2]-expected_ezz,
+                layer['tensor_strain_print_bounds'][2], 1e-10,
+                'inverse elastic actual thickness strain')
+    u, ub = record['U']['rows'], record['U']['rounding']
+    rf, rb = record['RF']['rows'], record['RF']['rounding']
+    # B maps each dependent beam UX to its shell UX. B^T transfers raw
+    # element nodal forces once; roots are distinct fixed coordinates.
+    tips = {s: rf[s][0] + rf[b][0] for s, b in ((3, 103), (6, 106))}
+    bounds = {s: rb[s][0] + rb[b][0] for s, b in ((3, 103), (6, 106))}
+    force = math.fsum(tips.values())
+    force_bound = math.fsum(bounds.values())
+    if force <= 0:
+        raise ReferenceError('inverse measured actuator reaction sign must be tensile positive')
+    work = math.fsum(tips[s] * u[s][0] for s in tips)
+    work_bound = math.fsum(abs(tips[s]) * ub[s][0] + abs(u[s][0]) * bounds[s]
+                           + ub[s][0] * bounds[s] for s in tips)
+    internal_force = result['axial_force_residual_n'] + factor * patch.FORCE
+    result.update(case_kind='inverse-response', imposed_strain_scored=False,
+        actual_actuator_axial_rf_n=tips, actual_actuator_force_n=force,
+        actuator_force_print_bound_n=force_bound,
+        actuator_rf_transfer='B^T: RF(shell tip)+RF(dependent beam tip), each raw entry once',
+        external_virtual_work_j=work,
+        axial_force_residual_n=internal_force - force,
+        axial_force_print_bound_n=result['axial_force_print_bound_n'] + force_bound,
+        virtual_work_residual_j=result['shell_axial_virtual_work_j'] + result['derived_beam_axial_virtual_work_j'] - work,
+        virtual_work_print_bound_j=result['virtual_work_print_bound_j']
+            - factor * patch.FORCE * patch.LENGTH * result['axial_strain_print_bound'] + work_bound,
+        root_axial_reaction_residual_n=math.fsum(rf[n][0] for n in (1, 4, 101, 104)) + force,
+        root_axial_reaction_print_bound_n=math.fsum(rb[n][0] for n in (1, 4, 101, 104)) + force_bound)
+    if elastic_control:
+        if any(layer['actual_peeq'] != 0 for layer in result['actual_layers']):
+            raise ReferenceError('inverse elastic control actual PEEQ must be zero')
+        uncertain_check(force - patch.TARGETS[0] * patch.FORCE, force_bound, FORCE_GATE_N,
+                        'inverse elastic actual actuator force / RF transpose semantics')
+    return result
+
+
+def inverse_unload_diagnostic(left, right):
+    """Actual IP thickness increments; history differences have no new pass gate."""
+    if left['time'] != 5 or right['time'] != 6:
+        raise ReferenceError('unload thickness diagnostic requires endpoints 5 and 6')
+    first = {(l['element'], l['point']): l for l in left['actual_layers']}
+    second = {(l['element'], l['point']): l for l in right['actual_layers']}
+    if set(first) != set(IP_IDS) or set(second) != set(IP_IDS):
+        raise ReferenceError('complete actual unload thickness inventory required')
+    rows = []
+    ratio = patch.NU/(1-patch.NU)
+    for key in IP_IDS:
+        a, b = first[key], second[key]
+        dex = b['tensor_strain'][0]-a['tensor_strain'][0]
+        dez = b['tensor_strain'][2]-a['tensor_strain'][2]
+        bound = b['tensor_strain_print_bounds'][2]+a['tensor_strain_print_bounds'][2] + ratio*(
+            b['tensor_strain_print_bounds'][0]+a['tensor_strain_print_bounds'][0])
+        residual = dez+ratio*dex
+        state = 'PASS'
+        try:
+            uncertain_check(residual, bound, 1e-10, 'actual elastic unload thickness increment')
+        except InsufficientPrecision:
+            state = 'INSUFFICIENT_PRINT_PRECISION'
+        except ReferenceError:
+            state = 'MEASURED_MISMATCH'
+        rows.append(dict(element=key[0], point=key[1], actual_delta_exx=dex, actual_delta_ezz=dez,
+            elastic_expected_delta_ezz=-ratio*dex, residual=residual, independent_print_bound=bound,
+            physical_threshold=1e-10, status=state,
+            actual_peeq_before=a['actual_peeq'], actual_peeq_after=b['actual_peeq'],
+            actual_delta_peeq=b['actual_peeq']-a['actual_peeq'],
+            delta_peeq_print_bound=b['actual_peeq_print_bound']+a['actual_peeq_print_bound'],
+            history_acceptance='pending scientific review; no inferred or fabricated state equality'))
+    return rows
+
+
+def inverse_compare(native, external):
+    # Existing material stress screen retained; imposed strain deliberately omitted.
+    response = compare(native, external, include_axial_strain=False)
+    if len(response) != 8:
+        raise ReferenceError('complete inverse response history required')
+    for factor, row, measured, reference_row in zip(patch.TARGETS, response, external, native, strict=True):
+        reference = factor * patch.FORCE
+        bound = measured['actuator_force_print_bound_n']
+        value = measured['actual_actuator_force_n']
+        if not all(map(math.isfinite, (value, bound))) or bound < 0:
+            raise ReferenceError('finite measured actuator force and print bound required')
+        denominator = max(abs(reference), patch.TARGETS[0] * patch.FORCE)
+        if bound > REFERENCE_TOLERANCE * denominator:
+            raise InsufficientPrecision('inverse actuator force screen unresolved')
+        row['quantities'].append(dict(quantity='measured_actuator_force', difference=value-reference,
+            print_bound=bound, denominator=denominator, exact_elastic_floor=patch.TARGETS[0]*patch.FORCE,
+            normalized_difference=abs(value-reference)/denominator,
+            within_one_percent_response_screen=abs(value-reference)+bound <= REFERENCE_TOLERANCE*denominator))
+        row['imposed_strain_scored'] = False
+        alphas = [layer['actual_peeq'] for layer in measured['actual_layers']]
+        reference_alphas = [layer['alpha'] for layer in reference_row['actual_layers']]
+        alpha_bound = measured['actual_peeq_print_bound']
+        if not all(map(math.isfinite, (*alphas, *reference_alphas, alpha_bound))) or min(*alphas, *reference_alphas, alpha_bound) < 0:
+            raise ReferenceError('actual inverse/native history quantities required')
+        row['actual_history_differences'] = [dict(statistic=name, native_actual_alpha=operation(reference_alphas),
+            ccx_actual_peeq=operation(alphas), difference=operation(alphas)-operation(reference_alphas),
+            ccx_print_bound=alpha_bound, acceptance='pending scientific review')
+            for name, operation in (('minimum', min), ('maximum', max),
+                                     ('mean', lambda v: math.fsum(v)/len(v)))]
+    return response
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mode', choices=MODES, required=True)
@@ -512,6 +711,9 @@ def main(argv=None):
     parser.add_argument('--native-input', type=Path)
     parser.add_argument('--spring-control-json', type=Path)
     parser.add_argument('--shell-control-json', type=Path)
+    parser.add_argument('--inverse-response', action='store_true')
+    parser.add_argument('--inverse-elastic-control', action='store_true')
+    parser.add_argument('--inverse-control-json', type=Path)
     parser.add_argument('--iteration-diagnostic', action='store_true',
         help='Full-history diagnostic only: I0/IR/IP=25, nominal IC=24; effective iteration bound is not guaranteed.')
     args = parser.parse_args(argv)
@@ -519,8 +721,18 @@ def main(argv=None):
         parser.error('timeout must lie in [1,600] seconds')
     if args.iteration_diagnostic and args.mode != 'full':
         parser.error('--iteration-diagnostic is full-only')
+    inverse = args.inverse_response or args.inverse_elastic_control
+    if inverse and (args.mode != 'full' or args.iteration_diagnostic or
+                    (args.inverse_response and args.inverse_elastic_control)):
+        parser.error('inverse flags are mutually exclusive, full-only, and exclude iteration diagnostic')
+    native, motions = (None, None)
+    if args.inverse_response:
+        if args.native_input is None:
+            parser.error('inverse response requires pinned native input before deck creation')
+        native, motions = native_motion(args.native_input)
     args.output.mkdir(parents=True, exist_ok=False)
-    text = deck(args.mode, iteration_diagnostic=args.iteration_diagnostic)
+    text = deck(args.mode, iteration_diagnostic=args.iteration_diagnostic,
+                inverse_motion=motions, inverse_elastic_control=args.inverse_elastic_control)
     (args.output / 'reference.inp').write_bytes(text.encode('ascii'))
     status = dict(status='DECK_PREPARED', mode=args.mode, qualified=False,
         e04_external_row_closed=False, manual=MANUAL, output_source=PRINT_SOURCE,
@@ -533,6 +745,17 @@ def main(argv=None):
         iteration_controls=(ITERATION_DIAGNOSTIC_CONTROLS if args.iteration_diagnostic else None),
         deck_sha256=sha256(text.encode('ascii')).hexdigest(),
         python=sys.executable, python_version=sys.version)
+    if inverse:
+        status.update(case_kind='inverse-elastic-control' if args.inverse_elastic_control else 'inverse-response',
+            force_case_completed=False, g4d_closed=False, imposed_strain_scored=False, imposed_boundary_verified=False,
+            field_controls=dict(RN=1e-10, CN=1e-8, RP=1e-10, RL=1e-10, Czero=1e-8,
+                                q0='default', qu='default', epsilon='default'),
+            prescribed_motion_identity_sha256=sha256(json.dumps(motions if motions is not None else
+                (elastic_patch_strain()*patch.LENGTH,)).encode('ascii')).hexdigest())
+        if args.inverse_response:
+            status['native_input_sha256'] = sha256(args.native_input.read_bytes()).hexdigest()
+            status['native_status_sha256'] = sha256((args.native_input.parent/'status.json').read_bytes()).hexdigest()
+            status['native_originating_source_sha256'] = NATIVE_V3_SHA256
     partial = []
     observables = []
     save(args.output / 'status.json', status)
@@ -550,11 +773,15 @@ def main(argv=None):
                                                'MKL_NUM_THREADS', 'NUMEXPR_NUM_THREADS')):
             raise ReferenceError('supervised numerical environment must be one thread')
         if args.mode == 'full':
-            if args.spring_control_json is None or args.shell_control_json is None or args.native_input is None:
+            if args.spring_control_json is None or args.shell_control_json is None or (args.native_input is None and not args.inverse_elastic_control):
                 raise ReferenceError('full history requires completed spring/shell controls and actual native input')
             status['control_status_sha256'] = dict(
                 spring=control_authority(args.spring_control_json, 'spring-control'),
                 shell=control_authority(args.shell_control_json, 'shell-control'))
+            if args.inverse_response:
+                if args.inverse_control_json is None:
+                    raise ReferenceError('inverse response requires measured analytic inverse control')
+                status['inverse_control_status_sha256'] = inverse_control_authority(args.inverse_control_json)
         status['status'] = 'IN_PROGRESS'
         save(args.output / 'status.json', status)
         with (args.output / 'stdout.log').open('wb') as stdout, (args.output / 'stderr.log').open('wb') as stderr:
@@ -563,15 +790,55 @@ def main(argv=None):
         status['returncode'] = result.returncode
         clean_execution(result.returncode, (args.output / 'stdout.log').read_text(errors='replace'),
                         (args.output / 'stderr.log').read_text(errors='replace'))
-        records = parse_dat((args.output / 'reference.dat').read_text(errors='strict'), args.mode, partial)
+        inventory = dict(endpoint_count=1) if args.inverse_elastic_control else {}
+        records = parse_dat((args.output / 'reference.dat').read_text(errors='strict'), args.mode, partial, **inventory)
         save(args.output / 'parsed.json', records)
-        increments = parse_sta((args.output / 'reference.sta').read_text(errors='strict'), args.mode)
+        increments = parse_sta((args.output / 'reference.sta').read_text(errors='strict'), args.mode, **inventory)
         status.update(increments)
         save(args.output / 'accepted-increments.json', increments)
         if args.mode != 'full':
             observed = controls(records, args.mode)
             save(args.output / 'control.json', observed)
             status['status'] = 'COMPLETED_CONTROL'
+        elif inverse:
+            factors = (patch.TARGETS[0],) if args.inverse_elastic_control else patch.TARGETS
+            prescribed = (elastic_patch_strain()*patch.LENGTH,) if args.inverse_elastic_control else motions
+            for factor, row, motion in zip(factors, records, prescribed, strict=True):
+                boundary = verify_inverse_boundary(row, motion)
+                observed = inverse_observables(row, factor, elastic_control=args.inverse_elastic_control)
+                observed.update(boundary)
+                observed['actual_peeq_print_bound'] = max(b[0] for b in row['PEEQ']['rounding'].values())
+                observables.append(observed)
+                save(args.output / 'actual-observables.json', observables)
+                observed['balance_checks'] = balance_checks(observed)
+                save(args.output / 'actual-observables.json', observables)
+            status['imposed_boundary_verified'] = all(row['imposed_boundary_verified'] for row in observables)
+            if args.inverse_elastic_control:
+                validate_balances(observables[0])
+                if not increments['matched_one_increment_per_native_target']:
+                    raise ReferenceError('inverse control requires exactly one accepted increment')
+                save(args.output / 'control.json', observables[0])
+                status['status'] = 'COMPLETED_INVERSE_CONTROL'
+            else:
+                thickness = inverse_unload_diagnostic(observables[4], observables[5])
+                save(args.output / 'unload-thickness-diagnostic.json', thickness)
+                if any(row['status'] == 'MEASURED_MISMATCH' for row in thickness):
+                    raise ReferenceError('actual inverse unload thickness increment mismatch')
+                status['unload_thickness_precision_insufficient'] = any(row['status'] != 'PASS' for row in thickness)
+                peeq = [max(l['actual_peeq'] for l in row['actual_layers']) for row in observables]
+                if max(peeq) <= 0 or any(b['actual_peeq'] < a['actual_peeq']
+                        for left, right in zip(observables, observables[1:])
+                        for a, b in zip(left['actual_layers'], right['actual_layers'], strict=True)):
+                    raise ReferenceError('inverse actual PEEQ activation/history contract failed')
+                comparison = inverse_compare(native, observables)
+                save(args.output / 'comparison.json', comparison)
+                status['one_percent_response_screen_pass'] = all(q['within_one_percent_response_screen']
+                    for row in comparison for q in row['quantities'])
+                status['status'] = 'PARTIAL_INVERSE_EVIDENCE' if status['one_percent_response_screen_pass'] else 'INVERSE_RESPONSE_SCREEN_FAILED'
+                status['actual_history_acceptance'] = 'pending scientific review; actual alpha/PEEQ mean/min/max differences retained'
+                status['tight_balance_precision_insufficient'] = any(c['status'] != 'PASS'
+                    for row in observables for c in row['balance_checks'].values())
+                status['uniform_stress_precision_insufficient'] = any(row['uniform_stress_precision_insufficient'] for row in observables)
         else:
             for factor, row in zip(patch.TARGETS, records, strict=True):
                 expected = (patch.TARGETS[0] * patch.FORCE / (

@@ -1,5 +1,6 @@
 """Pure deck/parser/output contracts; numerical jobs belong to the orchestrator."""
 from hashlib import sha256
+from copy import deepcopy
 import importlib.util
 import json
 from pathlib import Path
@@ -265,6 +266,7 @@ def test_all_numeric_input_fields_fit_actual_ccx_twenty_column_readers():
 def test_iteration_diagnostic_changes_only_the_adopted_time_controls():
     m = module()
     original = m.deck('full')
+    assert sha256(original.encode('ascii')).hexdigest() == '65074358bbaf8515ffd5591e10399ec8caed9e4193be4d443189e05fb26da166'
     diagnostic = m.deck('full', iteration_diagnostic=True)
     card = '\n'.join(m.ITERATION_DIAGNOSTIC_LINES) + '\n'
     assert diagnostic.count(card) == 8
@@ -340,3 +342,237 @@ def test_failed_execution_summary_preserves_non_success_without_complete_parsing
     assert status['failed_iteration_summary']['budget_exceeded']
     assert status['failed_iteration_summary']['late_residual_switch_possible']
     assert not (output / 'comparison.json').exists()
+
+
+def inverse_elastic_record(m):
+    row = m.parse_dat(dat_fixture(m), 'full')[0]
+    force = m.patch.TARGETS[0] * m.patch.FORCE
+    for node in row['RF']['rows']:
+        value = -force/4 if node in (1, 4, 101, 104) else (force/4 if node in (3, 6, 103, 106) else 0.)
+        row['RF']['rows'][node] = (value, 0., 0.)
+        row['RF']['rounding'][node] = (0., 0., 0.)
+    return row
+
+
+def test_inverse_boundary_execution_checks_each_tip_and_independent_precision():
+    m = module()
+    row = inverse_elastic_record(m)
+    imposed = m.elastic_patch_strain()*m.patch.LENGTH
+    result = m.verify_inverse_boundary(row, imposed)
+    assert result['imposed_boundary_verified'] and not result['imposed_strain_scored']
+    assert [check['node'] for check in result['imposed_boundary_execution_checks']] == [3, 6]
+    # Opposite errors preserve the mean strain but violate each actuator's input.
+    for node, sign in ((3, 1), (6, -1)):
+        row['U']['rows'][node] = (imposed+sign*2e-10, 0., 0.)
+        row['U']['rounding'][node] = (0., 0., 0.)
+    with pytest.raises(m.ReferenceError, match='imposed tip UX execution'):
+        m.verify_inverse_boundary(row, imposed)
+    # An interval crossing the existing floor cannot certify execution.
+    row['U']['rows'][3] = (imposed+.8e-10, 0., 0.)
+    row['U']['rounding'][3] = (.4e-10, 0., 0.)
+    with pytest.raises(m.InsufficientPrecision, match='cannot certify'):
+        m.verify_inverse_boundary(row, imposed)
+    for node in (3, 6):
+        row['U']['rows'][node] = (imposed, 0., 0.)
+        row['U']['rounding'][node] = (2e-10, 0., 0.)
+    with pytest.raises(m.InsufficientPrecision):
+        m.verify_inverse_boundary(row, imposed)
+
+
+def test_inverse_decks_preserve_primitives_and_boundary_history():
+    m = module()
+    motions = tuple(m.elastic_patch_strain()*m.patch.LENGTH*f/m.patch.TARGETS[0] for f in m.patch.TARGETS)
+    text = m.deck('full', inverse_motion=motions)
+    original = m.deck('full')
+    assert text.split('*STEP,')[0] == original.split('*STEP,')[0]
+    assert '*CLOAD' not in text and 'OP=NEW' not in text
+    assert text.count('*BOUNDARY') == 9 and text.count('*STATIC,DIRECT\n1.,1.') == 8
+    assert text.count('\n'.join(m.INVERSE_FIELD_LINES)) == 8
+    assert m.INVERSE_FIELD_LINES[1].split(',') == ['1.e-10', '1.e-8', '', '', '1.e-10', '', '1.e-8', '1.e-10']
+    for step in text.split('*STEP,')[1:]:
+        boundary = step.split('*BOUNDARY\n')[1].split('*NODE PRINT')[0]
+        assert [line.split(',')[:3] for line in boundary.splitlines()] == [['3','1','1'], ['6','1','1']]
+    control = m.deck('full', inverse_elastic_control=True)
+    assert control.count('*STEP,') == 1 and '*PLASTIC' in control and 'S,E,PEEQ' in control
+    assert '*CONTROLS,PARAMETERS=FIELD' not in original
+    for mode in ('spring-control', 'shell-control'):
+        with pytest.raises(ValueError, match='full-only'):
+            m.deck(mode, inverse_elastic_control=True)
+    for bad in ((1.,), (float('nan'),)*8, (-1.,)*8, ((1.,),)*8):
+        with pytest.raises(ValueError, match='dimensional'):
+            m.deck('full', inverse_motion=bad)
+
+
+def test_inverse_native_motion_rejects_source_shape_and_factor_mismatch(tmp_path, monkeypatch):
+    m = module()
+    rows = [dict(factor=f, engineering_axial_strain=m.elastic_patch_strain(),
+                 layer_stress_pa=[1., 2., 0.], actual_layers=[dict(alpha=0.)]) for f in m.patch.TARGETS]
+    status = dict(script_sha256=m.NATIVE_V3_SHA256, fixture_signature_sha256=m.patch.fixture_signature())
+    monkeypatch.setattr(m.patch, 'read_completed_input', lambda *args: (rows, status))
+    assert m.native_motion(tmp_path/'native.json')[1] == (m.elastic_patch_strain()*m.patch.LENGTH,)*8
+    status['script_sha256'] = 'other'
+    with pytest.raises(m.ReferenceError, match='pinned'):
+        m.native_motion(tmp_path/'native.json')
+    status['script_sha256'] = m.NATIVE_V3_SHA256
+    rows[0]['engineering_axial_strain'] = [1.]
+    with pytest.raises(m.ReferenceError, match='dimension'):
+        m.native_motion(tmp_path/'native.json')
+
+
+def test_inverse_actual_rf_work_and_elastic_history_are_independent():
+    m = module()
+    row = inverse_elastic_record(m)
+    result = m.inverse_observables(row, m.patch.TARGETS[0], elastic_control=True)
+    m.validate_balances(result)
+    assert result['actual_actuator_force_n'] == 20.
+    assert result['external_virtual_work_j'] == pytest.approx(20.*m.elastic_patch_strain()*m.patch.LENGTH)
+    assert not result['imposed_strain_scored']
+    result['virtual_work_residual_j'] = 2*m.WORK_GATE_J
+    result['virtual_work_print_bound_j'] = 0.
+    with pytest.raises(m.ReferenceError, match='endpoint virtual work'):
+        m.validate_balances(result)
+    row['RF']['rows'][103] = (0., 0., 0.)
+    with pytest.raises(m.ReferenceError, match='actuator force'):
+        m.inverse_observables(row, m.patch.TARGETS[0], elastic_control=True)
+    row = inverse_elastic_record(m)
+    row['PEEQ']['rows'][1, 1] = (1e-12,)
+    with pytest.raises(m.ReferenceError, match='PEEQ must be zero'):
+        m.inverse_observables(row, m.patch.TARGETS[0], elastic_control=True)
+    row = inverse_elastic_record(m)
+    row['RF']['rows'][3] = (-100., 0., 0.)
+    with pytest.raises(m.ReferenceError, match='sign'):
+        m.inverse_observables(row, m.patch.TARGETS[0])
+    row = inverse_elastic_record(m)
+    e = list(row['E']['rows'][1, 1])
+    e[2] += 1e-8
+    row['E']['rows'][1, 1] = tuple(e)
+    with pytest.raises(m.ReferenceError, match='thickness strain'):
+        m.inverse_observables(row, m.patch.TARGETS[0], elastic_control=True)
+
+
+def test_inverse_unload_reports_actual_thickness_and_history_differences():
+    m = module()
+    left = m.inverse_observables(inverse_elastic_record(m), m.patch.TARGETS[0])
+    right = deepcopy(left)
+    left['time'], right['time'] = 5., 6.
+    ratio = m.patch.NU/(1-m.patch.NU)
+    for a, b in zip(left['actual_layers'], right['actual_layers'], strict=True):
+        a['tensor_strain'] = (1e-5, 0., -ratio*1e-5, 0., 0., 0.)
+        b['tensor_strain'] = (7.5e-6, 0., -ratio*7.5e-6, 0., 0., 0.)
+        a['tensor_strain_print_bounds'] = b['tensor_strain_print_bounds'] = (0.,)*6
+        a['actual_peeq'] = b['actual_peeq'] = 5e-6
+        a['actual_peeq_print_bound'] = b['actual_peeq_print_bound'] = 5e-13
+    rows = m.inverse_unload_diagnostic(left, right)
+    assert len(rows) == 16 and all(row['status'] == 'PASS' for row in rows)
+    assert rows[0]['actual_delta_peeq'] == 0 and rows[0]['delta_peeq_print_bound'] == 1e-12
+    assert rows[0]['actual_delta_ezz'] == pytest.approx(-ratio*(-2.5e-6))
+    b = right['actual_layers'][0]
+    b['tensor_strain'] = (7.5e-6, 0., -ratio*7.5e-6+1e-8, 0., 0., 0.)
+    b['actual_peeq'] += 1e-7
+    rows = m.inverse_unload_diagnostic(left, right)
+    assert rows[0]['status'] == 'MEASURED_MISMATCH'
+    assert rows[0]['actual_delta_peeq'] == pytest.approx(1e-7)
+    assert 'pending scientific review' in rows[0]['history_acceptance']
+
+
+def test_inverse_comparison_scores_measured_force_and_reports_actual_history_only():
+    m = module()
+    native, external = [], []
+    for factor in m.patch.TARGETS:
+        native.append(dict(factor=factor, engineering_axial_strain=float('nan'),
+                           layer_stress_pa=[100., 30., 0.], actual_layers=[dict(alpha=2e-6)]))
+        external.append(dict(factor=factor, engineering_axial_strain=float('nan'), axial_strain_print_bound=float('inf'),
+            layer_stress_pa=[100., 30., 0.], layer_stress_print_bounds_pa=[0.,0.,0.],
+            actual_actuator_force_n=factor*m.patch.FORCE, actuator_force_print_bound_n=0.,
+            actual_layers=[dict(actual_peeq=3e-6)], actual_peeq_print_bound=0.))
+    answer = m.inverse_compare(native, external)
+    assert all('axial_strain' not in [q['quantity'] for q in row['quantities']] for row in answer)
+    assert answer[0]['actual_history_differences'][0]['difference'] == pytest.approx(1e-6)
+    assert answer[0]['actual_history_differences'][0]['acceptance'] == 'pending scientific review'
+    external[0]['actual_actuator_force_n'] *= 2
+    assert not m.inverse_compare(native, external)[0]['quantities'][-1]['within_one_percent_response_screen']
+
+
+def test_inverse_one_step_inventory_requires_explicit_admission():
+    m = module()
+    text = dat_fixture(m).split('displacements (vx,vy,vz) for set ALL and time 2.')[0]
+    assert len(m.parse_dat(text, 'full', endpoint_count=1)) == 1
+    with pytest.raises(m.ReferenceError, match='final total'):
+        m.parse_dat(text, 'full')
+    sta = '1 1 1 2 1.000000E+00 1.000000E+00 1.000000E+00\n'
+    assert m.parse_sta(sta, 'full', endpoint_count=1)['matched_one_increment_per_native_target']
+    with pytest.raises(m.ReferenceError, match='incomplete'):
+        m.parse_sta(sta, 'full')
+
+
+def test_terminal_classification_allows_actual_shaped_intermediate_newton_reports():
+    m = module()
+    stdout = ('iteration 1\n largest residual force= 0.000000 in node 2 and dof 1\n'
+              'no convergence\n\niteration 2\n largest residual force= 0.000000 in node 2 and dof 3\n'
+              'convergence\n\nJob finished\n')
+    m.clean_execution(0, stdout, '')
+    text = dat_fixture(m).split('displacements (vx,vy,vz) for set ALL and time 2.')[0]
+    assert len(m.parse_dat(text, 'full', endpoint_count=1)) == 1
+    accepted = '1 1 1 2 1.000000E+00 1.000000E+00 1.000000E+00\n'
+    assert m.parse_sta(accepted, 'full', endpoint_count=1)['matched_one_increment_per_native_target']
+    # A clean process/log screen never authorizes a partial material history.
+    with pytest.raises(m.ReferenceError):
+        m.parse_dat(text.split('equivalent plastic strain')[0], 'full', endpoint_count=1)
+    with pytest.raises(m.ReferenceError):
+        m.parse_sta('1 1 1U 4 0.000000E+00 0.000000E+00 1.000000E+00\n', 'full', endpoint_count=1)
+    with pytest.raises(m.ReferenceError, match='incomplete'):
+        m.parse_sta(accepted, 'full')
+
+
+@pytest.mark.parametrize('returncode,stdout,stderr', [
+    (201, 'iteration 1\nno convergence\nJob finished\n', ''),
+    (0, 'iteration 1\nno convergence\n', ''),
+    (0, '*ERROR: too many iterations\nJob finished\n', ''),
+    (0, 'Job finished\n', 'FATAL: material update failed'),
+    (0, 'too many cutbacks\nJob finished\n', ''),
+])
+def test_terminal_execution_failures_remain_rejected(returncode, stdout, stderr):
+    m = module()
+    with pytest.raises(m.ReferenceError, match='finish cleanly'):
+        m.clean_execution(returncode, stdout, stderr)
+
+
+def test_inverse_control_deck_status_has_no_force_case_completion(tmp_path):
+    m = module()
+    output = tmp_path/'inverse-control'
+    m.main(['--mode', 'full', '--inverse-elastic-control', '--output', str(output)])
+    status = json.loads((output/'status.json').read_text())
+    assert status['status'] == 'DECK_PREPARED' and status['case_kind'] == 'inverse-elastic-control'
+    assert not status['force_case_completed'] and not status['qualified'] and not status['g4d_closed']
+    assert status['field_controls']['RL'] == 1e-10
+    with pytest.raises(SystemExit):
+        m.main(['--mode','spring-control','--inverse-response','--output',str(tmp_path/'invalid')])
+    assert not (tmp_path/'invalid').exists()
+    fake = tmp_path/'unrelated-control.json'
+    fake.write_text(json.dumps(dict(status='COMPLETED_INVERSE_CONTROL', case_kind='inverse-elastic-control',
+        mode='full', exe_sha256=m.EXE_SHA256, fixture_signature_sha256=m.patch.fixture_signature(),
+        deck_sha256=sha256(m.deck('full').encode('ascii')).hexdigest())))
+    with pytest.raises(m.ReferenceError, match='exact pinned inverse'):
+        m.inverse_control_authority(fake)
+
+
+def test_failed_inverse_execution_keeps_non_success_and_raw_prefix(tmp_path, monkeypatch):
+    m = module()
+    exe = tmp_path/'fake.exe'
+    exe.write_bytes(b'fake inverse failure')
+    monkeypatch.setattr(m, 'EXE_SHA256', sha256(exe.read_bytes()).hexdigest())
+    monkeypatch.setattr(m, 'control_authority', lambda *args: 'control-binding')
+    for name in ('OMP_NUM_THREADS','OPENBLAS_NUM_THREADS','MKL_NUM_THREADS','NUMEXPR_NUM_THREADS'):
+        monkeypatch.setenv(name, '1')
+    def failed(*args, stdout, stderr, **kwargs):
+        stdout.write(b'*ERROR inverse nonconvergence\n')
+        return SimpleNamespace(returncode=201)
+    monkeypatch.setattr(m.subprocess, 'run', failed)
+    output = tmp_path/'failed-inverse'
+    with pytest.raises(m.ReferenceError, match='finish cleanly'):
+        m.main(['--mode','full','--inverse-elastic-control','--exe',str(exe),'--output',str(output),
+                '--spring-control-json','spring','--shell-control-json','shell'])
+    status = json.loads((output/'status.json').read_text())
+    assert status['status'] == 'NUMERICAL_NON_SUCCESS' and status['case_kind'] == 'inverse-elastic-control'
+    assert not status['force_case_completed']
+    assert (output/'partial-parser-prefix.json').exists() and not (output/'comparison.json').exists()

@@ -1,5 +1,15 @@
 # B3-GE / E4-PL stiffened shells: Revision 8 development plan
 
+**5 October execution delta:** the separately identified prescribed-motion CCX
+material comparison completed eight endpoints. Measured force/stress response
+passes the prospective screen; actual plastic-history differences are retained
+for review. Print-limited balance/uniformity checks leave the evidence partial;
+original force-controlled failures and E04/G4D remain open. Do not extend the
+closed force-iteration route. The next connected missing behavior is conservative
+accepted-state mixed GE/Q4 point buckling: adopt the coordinate/material/prestress
+split from actual local operators before implementation, retaining algebraic
+coordinates and multiplier curvature. No scope or acceptance threshold changes.
+
 **Status 4 October 2026: planning update adopted; explicitly resumed by the user.**
 This is the current Revision 8 development basis. The user delegated pending
 planning decisions; those decisions are recorded below. Development authority

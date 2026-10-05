@@ -202,3 +202,114 @@ actual inventory rejection, analytical controls, accepted paths, uncertainty
 counterexamples and a failed execution with retained raw logs. Source-v4's
 21-test pass and failed full-v4 evidence remain preserved. After this result
 correction final source-v5 passed23focusedchecks(.42s). Offline actual v3/v4 summaries verify five accepted steps and the v4 nominal-budget overrun. No physical execution was repeated for this reporting correction.
+
+The inverse-response discriminator is a separate prospective case. It preserves
+all eight accepted-state targets and the physical model, but prescribes shell
+UX at tips 3 and 6 from pinned native-v3 actual engineering axial strain times
+L. Beam tip UX remains dependent through the original equations. Each step uses
+BOUNDARY's default modification semantics, preserving roots and transverse
+restraints; inverse decks contain no CLOAD. The original force decks, including
+the consumed full-v3/v4 failures, remain unchanged. Inverse evidence cannot
+complete the force case, close E04/G4D, or establish qualification.
+
+Before full inverse execution, an independent one-step inverse elastic control
+prescribes epsilon0=20/[2EA+width*t*E/(1-nu^2)], derived analytically without
+native fitting. It retains the plastic law and requires actual PEEQ=0 at every
+point, measured tensile actuator force 20 N, actual analytic membrane stresses,
+root reaction balance and endpoint virtual work. Original exact spring/shell
+control evidence remains prerequisite. An exact completed inverse-control deck,
+fixture and executable binding is additionally required for full inverse history.
+
+Only inverse decks tighten FIELD entries RN/RP/RL to 1e-10 and CN/Czero to 1e-8.
+The eight fields are RN,CN,q0,qu,RP,epsilon,Czero,RL; q0,qu and epsilon remain
+blank/default. The primary parser is
+https://raw.githubusercontent.com/Dhondtguido/CalculiX/master/src/controlss.f.
+STATIC,DIRECT retains one increment per target; accepted STA inventory is still
+checked. No iteration diagnostic, substep replacement or geometry change is
+combined with this case.
+
+For the declared raw nodal RF convention, the transpose of each beam UX = shell
+UX map transfers beam-tip force to its shell actuator coordinate. Thus each
+actuator force is RF(shell tip)+RF(dependent beam tip), including each raw entry
+once. Roots remain separate fixed coordinates. The independent elastic control
+must demonstrate this convention; a different CCX RF convention fails the
+control instead of selecting a fitted transfer. Endpoint actuator virtual work
+is the measured actuator force times actual tip displacement, summed across the
+two tips. Target force is used for response comparison only. This is endpoint
+virtual work, not integrated plastic energy or a full support-wrench claim.
+
+Full inverse comparison screens measured actuator force and actual sigma_xx/
+sigma_yy against native endpoints using the prospective 1% response screen and
+exact elastic load-scale floors. Imposed strain is never scored as independent
+response accuracy. Actual CCX PEEQ versus actual native alpha mean/min/max
+values, differences and independent CCX print bounds are retained; their
+scientific acceptance remains pending. PEEQ activation, first-branch bounds and
+per-point history monotonicity are separately checked. Physical plane-stress,
+force and endpoint-work thresholds stay 0.01 Pa, 1e-4 N and 1e-8 J, with
+independent printing uncertainty; insufficient precision is explicit.
+
+Preparation/execution uses --mode full --inverse-elastic-control for the first
+analytic control, then --mode full --inverse-response --native-input <v3 JSON>
+--inverse-control-json <completed inverse-control status.json>, together with
+the existing --spring-control-json/--shell-control-json and optional pinned
+--exe. Full native source, fixture, endpoint dimensions and material branch are
+validated before writing the inverse deck; payload/status and prescribed-motion
+hashes are recorded. A fresh output directory is required. One-step DAT/STA
+inventory is admitted explicitly only for the analytic control. Successful
+inverse controls use COMPLETED_INVERSE_CONTROL; full inverse results remain
+PARTIAL_INVERSE_EVIDENCE or INVERSE_RESPONSE_SCREEN_FAILED. Failed executions
+remain NUMERICAL_NON_SUCCESS with raw logs and partial prefixes.
+
+The orchestrator executed 38 focused checks successfully (0.49 s). The analytic
+inverse control completed with a measured 20 N actuator force and passed force,
+reaction, endpoint-work, thickness and prescribed-boundary checks. Its original
+log parser falsely rejected an intermediate Newton `no convergence` report;
+that failure remains preserved. Re-adjudication used the unchanged completed raw
+execution with the repaired parser, without repeating the physical run.
+
+The full inverse history completed all eight one-increment endpoints. Maximum
+normalized force/stress difference including independent print uncertainty is
+8.580e-7; maximum actual native-alpha/CCX-PEEQ statistic difference is 3.170e-13.
+All 16 unloading-thickness checks pass; maximum actual absolute Szz is
+9.401e-8 Pa. Twenty balance checks pass and four remain print-precision limited;
+uniform-stress precision also remains insufficient. These are partial development
+results, not scientific acceptance of material-state equality or closure of E04.
+The original force-controlled failures and G4D remain open.
+
+Evidence is retained in `.qualification/b3-ge-e4-pl/
+r8-ccx-inverse-material-dev-20261005-v1`: exact executed v1/v2 sources, failed
+initial adjudication, repaired control adjudication, complete inverse raw output,
+source checks, execution records and summary-v3.json. Full execution took
+0.317 s with sampled process-tree peak 27.7 MB; one-CPU affinity was set before
+execution, declared numerical pools were one, and sampled numerical/unresolved
+thread maximum was one. This is resource evidence, not a performance gain.
+Supporting independent OpenAI Read review found no unresolved defect; required
+different-model-family acceptance is not supplied by that review.
+
+The analytic inverse control additionally checks actual IP ezz against
+-nu/(1-nu)*epsilon0 at the existing 1e-10 strain threshold. For full inverse
+history, unload-thickness-diagnostic.json retains all 16 actual step-5-to-6
+increments, compares Delta ezz with -nu/(1-nu)*Delta exx with independent print
+bounds and the same 1e-10 threshold, and reports actual PEEQ before/after/change
+and its printed bounds. Thickness mismatch remains non-success; actual history
+agreement is reported for scientific review without inventing a state-equality
+gate from merely monotone PEEQ.
+
+Every inverse endpoint additionally verifies each actual printed tip UX (nodes
+3 and 6 separately) against its pinned prescribed motion, or the analytic
+control motion, at the unchanged 1e-10 m displacement floor with independent
+print bounds. Opposite tip errors cannot cancel through an averaged strain.
+A mismatch fails; an uncertainty interval crossing the floor cannot certify
+execution. Records/status label this imposed_boundary_verified, explicitly not
+independent strain response agreement. Completed inverse-control authority also
+requires this verified execution flag.
+
+The saved inverse-control-v1 process exited 0 and printed ordinary Newton
+`no convergence` at iteration 1, followed by `convergence` at iteration 2 and
+`Job finished`. The prior terminal-log screen incorrectly rejected that progress
+message. The corrected screen rejects nonzero exit, *ERROR, FATAL, exhausted
+cutbacks and a missing completion marker; intermediate Newton nonconvergence is
+not a terminal error. Strict complete accepted STA and actual DAT inventories
+remain mandatory after the process/log screen. The original v1 raw failure and
+source snapshot remain retained; this parser correction does not itself claim
+that control evidence passed its mechanical checks or authorize another run.

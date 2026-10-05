@@ -2795,3 +2795,20 @@ response comparison; no E04 closure. Effective IC bound not demonstrated; late
 residual-switch exclusion not established in v4. Historical failures retained.
 Source/parser focused checks and supporting OpenAI review do not supply the
 required different-family acceptance. All aggregate pending rows remain pending.
+
+### 5 October - restricted inverse CCX response, aggregate unchanged
+
+IMPLEMENTED_NOT_QUALIFIED: prescribed-motion comparator completes8 actual
+material endpoints; measured force/stress response screen passes (maximum
+normalized difference+printbound8.580e-7). Imposed strain is input only.
+Actual alpha/PEEQ statistic difference<=3.170e-13 is reported, not a new
+state-equality acceptance threshold. Unload thickness16PASS; actualSzz<=9.401e-8Pa.
+Focusedsource38PASS(.49s); measuredanalytic20N control passes unchangedphysical
+guards after offline repair of intermediate-Newton log classification. Initial
+parser failure retained. Fullroute.317s/27.7MB sampledpeak/max1thread; no gainclaim.
+Twenty balance checks PASS, four print-limited; uniformstressprecision unresolved.
+SupportingOpenAIRead finds no unresolved defect, not different-family acceptance.
+Original force8/v4 failures preserved. E04/G4D/F03/fullacceptance remainOPEN.
+Raw: .qualification/b3-ge-e4-pl/r8-ccx-inverse-material-dev-20261005-v1.
+Next connected capability: conservative accepted-state GE/Q4 point buckling,
+subject to an adopted coordinate/material/prestress split contract; no job yet.

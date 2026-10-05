@@ -1,56 +1,48 @@
 # Current state - 5 October 2026
-Full Revision 8 goal ACTIVE; aggregate G0-G6/F01-F13/V01-V28/B01-B18 incomplete.
-Previous goal turn PROGRESS: committed executed nonlinear material reference d2b4f6ef.
-Current turn PROGRESS: actual CCX controls pass; fixed-increment unloading fails and rules out automatic iteration extension. Full external history remains incomplete.
+
+Full Revision8 goal ACTIVE; aggregate G0-G6/F01-F13/V01-V28/B01-B18 incomplete.
+Previous goal turn PROGRESS: retained CCX force-control failures at74319629.
+Current turn PROGRESS: inverse CCX eight-state response completed; no product change.
 
 ## Identity and delivered behavior
-Root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
-branch codex/stiffened-main-reconcile-20261001; product HEAD ec4bd257.
-ANYfem9faed76 unchanged. No main/push/release/contact-worker communication.
-Native V2 arc guard: source23PASS/installed17PASS, actual520package bytes/sites.
-Historical V1 restart/continuation preserved; fresh corrected endpoint must progress.
-Fresh32-step physical screen terminal NO_GUARD_EVENT; not a safeguard pass.
-Exact saved step33 trial-only discriminator rejects radius.003 backward trial,
-recovers positive1.809655975626434e-7m at.0015, parent checkpoint byte-identical.
-Not public V2 restart/migration, descending branch or capacity acceptance.
-Details: development/r8-distributing-reference-linear-20261004/results.md.
+Canonical root C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
+branch codex/stiffened-main-reconcile-20261001; product ec4bd257; preceding HEAD74319629.
+ANYfem9faed76 unchanged. No main/push/publication/contact-worker communication.
+Native arc guard, supplemental OpenSees material comparison and prior delivered
+GE/B2/consumer behavior remain as recorded in linked history/results/matrix.
+Historical active note preserved byte-exact at history/PRE_CCX_INVERSE_20261005.md.
 
-## Decision, uncertainty and next action
-Seek actual compatible nonlinear native/external material response evidence.
-New restricted axial-patch harness uses actual Q4 J2 layers, retained elastic
-beam stations and exact fixed-rotation pose bonds; OpenSees is supplemental.
-Three files: scripts/r8_e04_restricted_membrane.py, corresponding test and
-reference-case doc. Final source9PASS1.52s; comparator-v4 complete. Split-runtime v3 completes native and
-OpenSees eight-factor loading/unloading/reloading with actual shell plasticity.
-Max strain difference1.870e-13, stress.01575Pa, actual native alpha5.837e-6.
-Native6.164s/162MB, external.297s/41MB; effective pools1 and sampledmax1.
-Installed solver ec4bd257; ANYmaterial imported from sibling source, not full
-installed dependency graph. Two pre-evaluation harness failures preserved.
-Supporting Read review confirms v3 evidence; reusable input-identity finding
-repaired and negative regression passes. Executed v3 source preserved byte-exact.
-Final diff review confirms no changed physical solve/material equations.
-Raw .qualification/b3-ge-e4-pl/r8-restricted-nonlinear-reference-dev-20261005-v1.
-Next: mandatory CalculiX restricted nonlinear work/material comparison, with
-actual output and a justified exact reduced axial representation. No product
-physics changes in preceding slice; preceding committed reference HEAD d2b4f6ef; current tooling identity is bound by Git HEAD and saved source hashes.
-New CCX owner: scripts/r8_e04_ccx_restricted_membrane.py + matching test/doc.
-Read contract review supports exact SPRING2 axial reduction k=EA/half-length,
-actual offset nodes retained; original CPS4 z auto-restraint not duplicated.
-Actual S/E/PEEQ, monotone plastic history and ordered eight steps required.
-DAT rounding may limit tight external balance verification; response agreement
-and balance observability remain separate. No changed scientific tolerances.
-Prospective decision .qualification/b3-ge-e4-pl/
-r8-ccx-restricted-nonlinear-dev-20261005-v1/decision.md. No numerical job live.
-Actual CCX v3: source19PASS; spring and elastic CPS4 controls PASS. Full direct history accepted steps1-5 but failed unloading step6 at iteration4 (exit201).
-Final source-v5 23PASS(.42s), reviewed failure parser; v4 source21PASS; full-only controls I0/IR/IP25, IC24 still failed at step6/28 iterations, with residual1915%/2800% two-cycle. Nominal IC24 was not enforced; late relaxed criterion may activate after25, with no accepted endpoint. Stop this route; next identify a concrete predictor/constitutive-tangent explanation before another physical run. Preserve raw v3/v4 failures and exact snapshots.
-All numerical jobs terminal; no roof/connection/capacity qualification follows.
+## Decision and evidence
+Separate inverse prescribed-motion CCX comparator completes8 one-increment
+endpoints with actual plasticity. Applied motions are verified but not scored as
+independent accuracy. Measured force/stress maximum normalized difference plus
+printbound8.580e-7; actual alpha/PEEQ statistic difference<=3.170e-13 (reported,
+state acceptance pending). All16 unload thickness checks PASS; |Szz|<=9.401e-8Pa.
+Analytic20N inverse control validates actual RF-transpose/work/thickness mapping.
+Initial parser falsely rejected intermediate Newton nonconvergence; preserved
+failure re-adjudicated offline against unchanged completed raw, no physical replay.
+Source38PASS(.49s); full.317s/27.7MB sampledpeak/max1 numerical/unresolvedthread.
+Twenty balance checks PASS/four print-limited; uniformstressprecision unresolved.
+Evidence .qualification/b3-ge-e4-pl/r8-ccx-inverse-material-dev-20261005-v1;
+source c42bfd20f26e926cb6696eedf0a55859b116b4aa5c8095493c0cdc4efc1a1732.
+Supporting OpenAI Read review no unresolved defect; no different-family acceptance.
+Original force8 and extended-iteration force failures remain failed, E04/G4D open.
+Success supports compatible admitted material response under changed boundary
+parameterization, not unique allocation to the external predictor/constitutive code.
 
-## Preserved boundaries
-Mistral/local cached unavailable for this goal; supporting OpenAI review is not
+## Next connected action
+Read owner /root/restricted_nonlinear_reference is deriving the accepted-state
+conservative GE/Q4 point buckling split from actual existing local operators.
+Astra must adopt the coordinate/work/material-vs-prestress contract before Edit.
+Preserve retained/algebraic variables and constraint curvature; no SPD assumption,
+artificial mass or global dense inverse. No numerical job live.
+Current slice source/test/doc/evidence needs scoped local commit after finaldiff.
+
+## Preserved execution boundaries
+Mistral/local cached unavailable for this goal; OpenAI fallback does not supply
 required different-family acceptance. Max3workers, ONE numerical job;
 600s/2GiB/affinity1/pools1/JIToff. FormalF03 UNCONSUMED; never execute/copy/
 substitute scripts/b3_e4_f03_c1_fy_supported_reference.py. Never inspect/copy/
 archive us3-modal-canary; no Get-CimInstance. FrozenG3c reviewedlease required.
-Protected evidence and historical failures unchanged. No automatic refinement,
-closed pressure/BL5/native80 campaign replay or adaptive1.01 retry.
-Archived preceding active note byte-exact: history/PRE_CCX_RESTRICTED_20261005.md; earlier reference checkpoint history remains unchanged.
+No consumed authority renewal, automatic refinement, closed campaign replay,
+adaptive1.01 retry or release/main action. Existing scientific tolerances intact.

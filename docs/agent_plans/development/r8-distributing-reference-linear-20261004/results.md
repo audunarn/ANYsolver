@@ -1714,3 +1714,15 @@ Retained development failures: v1 focused14PASS2FAIL; v2 focused18PASS then spri
 Final source-v5 focused23PASS .42s, supervisor.787015s/56967168B/samplemax1. v4full.253672s/34705408B/samplemax1, affinity1/pools1/JIToff. Existing supervisor600s/2GiB bounds. Offlinev5 failure summaries source-bound to originalCVG/STA/status, bothacceptedsteps1-5. Defaultdecks/controlhashes unchanged; explicit diagnosticoption neverqualifies.
 Supporting independent OpenAI Read review checked reduced operator, precision, controls and failure reporting; not different-model-family acceptance. No product changes, installed-package campaign, G4D/E04/aggregate closure, main/push/publication. Next: evidence/source discrimination of signed unloading predictor, predecessor restoration and tangentbranch before any new physicalrun.
 Raw: .qualification/b3-ge-e4-pl/r8-ccx-restricted-nonlinear-dev-20261005-v1. Exactexecutedsource snapshotsv2/v3/v4/v5 and failedrawretained; no pytesttemporarydirectories staged.
+5 October 2026: restricted inverse CalculiX response completed8 endpoints.
+Source38PASS(.49s), analytic20N control actual force/work/reactions/thickness PASS.
+Original control parser failure retained; offline repaired adjudication reusedraw.
+Measured forces/stresses maxnormalizeddiff+printbound8.580e-7; actualalpha/PEEQ
+statisticdiff<=3.170e-13, not a new accepted state-tolerance. Unload16PASS;
+actualmaxSzz9.401e-8Pa. TwentybalancechecksPASS/fourprintlimited; uniformstress
+precision remainsinsufficient. Fullroute.317s/27.7MB sampledpeak/max1thread.
+SupportingOpenAIRead no unresolveddefect; different-family acceptance absent.
+Original force8 failures/E04/G4D/fullprogramme remainopen. No productphysics edit.
+Raw .qualification/b3-ge-e4-pl/r8-ccx-inverse-material-dev-20261005-v1.
+Next: adopt conservative accepted-state mixedGE/Q4 buckling split from actual
+operators, then connected implementation; no artificialinertia/SPD/globalinverse.
