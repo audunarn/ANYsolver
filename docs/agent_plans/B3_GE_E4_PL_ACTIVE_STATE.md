@@ -1,98 +1,85 @@
-# Current state - 5 October2026
+# Current state - 5 October 2026
 
-Revision8 goal ACTIVE after user resumption. G0-G6/F01-F13/V01-V28/B01-B18
-aggregate incomplete. User now explicitly requires separate work: no contact-
-worker communication. Replacement AGENTS applies prospectively.
+Revision8 goal ACTIVE. Canonical worktree:
+C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001; delivered HEAD545ec27b.
+User requires separate work: NO contact-worker communication. Replacement
+AGENTS applies. Mistral/local cached unavailable; OpenAI supporting review
+cannot satisfy required different-family scientific acceptance.
 
-## Current delivered slice
-Canonical C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001;
-branch codex/stiffened-main-reconcile-20261001; delivered commit888be00b,
-source parent8c827d1a. Test repair/diagnostic commitc4169681 follows;
-product mapping, old fixtures and strict checkpoint guards are unchanged.
-Mixed conservative buckling: separate GEMixedBucklingRequest/result; matching
-points, elastic Q4/S3/mixed shells, generalized/fibre/mixed native families.
-S3 uses actual stable arithmetic/anchors and coordinate material/prestress split;
-all42/member retained. Every fibre requires unchanged history, elastic branch
-and relative yield/ULP witness. No altered equations/defaults/tolerances.
-Shared point/BL5/mixed capture now validates current replayed equilibrium/gaps
-before factorization, not only cached convergence figures. Corrupted q/resultants
-and NaN cached witnesses reject without state publication.
-Installed52PASS26.628s; public mixed example and diagnostic tool complete with
-checkpoint unchanged. Factors11211.39615199803/41263.84675594574 are frozen-
-prestress predictions, not lowest/limit-load claims; residuals<=1.0531e-15.
-Wheel9fd1400670a09e6b011f0b307d851b9a79b6c9db0beabaaf7cc8acaecd84de80.
-All423package/import bytes and effective pools1/JIToff/affinity1 verified.
-Supporting independent OpenAI review clear on tested scope; required different-
-family scientific acceptance remains OPEN. ANYfem9faed76 unchanged; no new
-consumer, scale, platform, external or aggregate qualification claimed.
+## Current decisions and next actions
 
-## Evidence and testing transition
-Raw .qualification/b3-ge-e4-pl/r8-ge-mixed-buckling-dev-20261005-v1 binds source,
-actual commands/runtime/JUnit, wheel/source hashes, sparse packets and checkpoint.
-Bundledruntime startup lackedpsutil before child. Sourcev1:19PASS1FAIL16ERROR;
-allS3 fixture chose invalid Q4policy, oracle G=H-Km suffered cancellation.
-Repaired fixture/analytic G oracle, unchanged tolerances; affectedv2:24PASS.
-Current-state guard and point/BL5 seamsv3:22PASS. Failed runs preserved.
-Use exact changed checks during development, installed at integrated boundaries,
-no unchanged point/line campaign replay. Historical full prepared runner remains
-unexecuted. Pre-pause note byte-exact in history/PRE_MIXED_BUCKLING_20261005.md.
+Portable S3 restart: distinguish exact archive identity from numerical
+mechanical consistency without silent guard/tolerance changes. Exact CI library
+versions alone did not reproduce the failure. Actual Haswell dispatch does:
+all8 accepted/predecessor local vectors differ by <=8.132e-20; one component
+matches CI exactly. Stop backend/version sweeps. Strict defaults/readers/fixture
+bytes stay unchanged; no dependency pin, forced production CPU or new history.
 
-## Next action / unresolved boundaries
-Next ready correctness priority: investigate shared S3 accepted/predecessor
-checkpoint binding failures exposed in common-main CI (native arc restore),
-without changing checkpoint semantics/tolerances or repeating closed campaigns.
-Exact local reproduction: four S3 arc cases pass; two displacement tests contain
-obsolete rebase-rejection expectations. Their replacement checks the existing
-admitted event, physical/history invariance, stale generation and restart/continue.
-Decision sought: whether fresh LAPACK-dependent local-coordinate arithmetic can
-serve as an exact archived-state identity check. One bounded eigenvalue-ULP
-diagnostic distinguishes arithmetic portability from malformed state; independent
-Read review examines existing payload/contracts. No binding relaxation adopted.
-ULP witness: all eight accepted/predecessor local vectors change by <=5.421e-20
-with proper-fit residual <=2.809e-16; unchanged fixture bytes. CI fails the saved
-seed before new arc steps. CI NumPy2.5.3/SciPy1.18.1 differs from successful local
-2.4.6/1.17.1. Restricted-network download failed and is preserved. Root authorized
-network setup downloaded exact CI wheels into task-local storage, including
-Numba0.68.0/llvmlite0.50.0 to preserve their version guard; global packages unchanged.
-The exact-CI-library screen passes all six selectors (31.84s pytest), with all
-four imported versions/sites verified. Dependency versions alone do not explain
-the CI failure. CI/source S3 mapping/state/restore files and fixture are identical.
-The final fixed-coordinate Haswell-vs-SkylakeX discriminator reproduces exact
-binding failure for all eight vectors without perturbing the eigensolver.
-Saved element1/component2 is 5.082197683525802e-21; Haswell returns
-6.776263578034403e-21, the CI recomputed component. Maximum delta8.132e-20;
-fit/work residuals<=6.662e-16. Actual CI CPU dispatch remains unknown.
-Decision: stop backend sweeps; no dependency pin, forced production CPU,
-fixture regeneration or silent tolerance change. A forward portable-restart
-candidate must distinguish exact archive identity from numerical mechanical
-consistency under an explicit reviewed compatibility/error contract. Historical
-exact binding/replay remain enforced meanwhile. Repaired tests include fresh
-rebased-archive continuation; both pass (12.63s pytest), all six pass on CI libs.
-Common-main PR62 is NONPASS:7portable deadlines plus fixture/state/mechanics
-failures. Local02ca395e repairs license inventory and collection stub order;
-other failures remain open. No common-main promotion or package publication.
-Keep common integration and this feature branch distinct until coherent checks
-pass. No communication with contact task; preserve its dirty work.
+/root/mixed_buckling_finish owns the opt-in CANDIDATE
+B3_GE_S3_RESTART_PORTABLE_CONSISTENCY_V1_DEV: paired archived-fit association,
+fixed-parent elastic AND plastic certificates, full pullback/chart uncertainty
+and atomic publication of ORIGINAL histories. Global force uncertainty must
+include the derivative-map term, not only D.T delta_f. Syntax is not admission.
+Next: one focused old-seed Haswell/corruption/material check when complete,
+then actual restore/continue and independent review. Original equilibrium1e-8
+and gap1e-9 caps remain mandatory; uncertifiable cases reject. Grouped checkpoint:
+docs/reference_cases/stiffened_shell_s3_portable_restart.md.
 
-## Execution / ownership
-Bounded S3 diagnosis/test repair completed by /root/mixed_buckling_finish; no
-numerical jobs active. Same owner now has a bounded Read-only, code-ready
-portable-binding proposal (error contract/versioning/counterexamples); no product
-adoption or extra run authority. Independent external review found no existing
-raw closes full E01/E04. /root/test_campaign_sweep completed the source-only E01
-material-frame/adjoint work-map feasibility tool (three NEW files): 15PASS and
-two original hash-bound saved fields, whole job0.846s/61MB/pool1. Initial three
-oracle cancellation failures preserved; binary-exact synthetic fixture repaired
-without changing1e-17 assertion. Nodal yaw differs from recovered polar spin;
-independent director cannot be replaced by surface normal under transverse shear.
-Root math/source review supports these distinct linear-law conclusions; no
-production adoption, external accuracy score or scientific gate closure. No
-external run; closed campaigns stay closed. Full E01 requires matched physical
-sampling/work maps before another solver case. No numerical job currently active.
-Root owns integration/review; source and tests stay
-in the existing stiffened subsystem. Check worker status before launching checks. Mistral/local cached
-unavailable; OpenAI fallback does not supply required different-family acceptance.
-ONE numerical job,max3workers,600s/2GiB process tree,affinity1/pools1/JIToff.
-FormalF03 UNCONSUMED; never execute/copy/substitute its prepared script. Never
-inspect/copy/archive us3-modal-canary; no Get-CimInstance. FrozenG3c lease and
-all consumed-authority/closed Fy/pressure/native80/turning exclusions remain.
+Connection/reference: nodal drilling yaw, material polar spin and line-tangent
+yaw are DIFFERENT laws. Director tilt cannot be replaced by surface normal under
+transverse shear. Linear material-frame/adjoint tool committed545ec27b:15PASS
+and both original hash-bound saved fields, whole0.846s/61MB. Failures retained.
+
+Finite projected-polar/director trace is UNADOPTED, with full local multiplier
+Jacobian/Hessian and actual left updates; no native-port substitution/product
+dispatch. V1:31PASS (16finite+15linear). Independent review then found a genuine
+large-offset gauge cancellation: offset2^54 erased a real1m displacement.
+Equivalent algebra removes the cancelling terms. V2 affected18PASS, whole2.743s,
+177070080B, pools1/affinity1/JIToff; unchanged linear controls not rerun. RawV1
+and bindings preserved. Supporting independent review finds the blocker repaired;
+combined symmetric shear/director tilt induces yaw by the declared polar law.
+That physical interpretation remains reserved. Next: bounded actual-native port
+composition and combined-field control, then decide the matched reference needed
+to distinguish transfer. No structural/external campaign follows automatically. F03/fullE01/E04
+remain OPEN; rank, gaps or one quotient cannot select multipliers. Grouped report:
+docs/reference_cases/stiffened_shell_e01_material_frame_work.md.
+
+## Delivered behavior and remaining acceptance
+
+888be00b: experimental mixed conservative POINT buckling, Q4/S3/mixed elastic
+shells, generalized/fibre/mixed native families, full42/member retained. S3 actual
+stable coordinate/material/prestress split; every-fibre elastic branch/history
+witnesses. Current equilibrium/gaps replay-validated before factorization;
+corrupt q/resultants/NaN reject without publication. Installed52PASS26.628s,
+public example/diagnostic complete with unchanged checkpoint. Wheel:
+9fd1400670a09e6b011f0b307d851b9a79b6c9db0beabaaf7cc8acaecd84de80;
+423package bytes verified. Factors11211.39615199803/41263.84675594574 are frozen-
+prestress predictions, not lowest/limit loads. Supporting review only for tested
+scope. c4169681 repairs obsolete S3 rebase-rejection tests with physical/history
+invariance, stale-generation and fresh restart/continuation checks. ANYfem9faed76
+unchanged. No aggregateG4B, external/platform/scale or release acceptance claimed.
+
+Full Revision8 G0-G6/F01-F13/V01-V28/B01-B18 remains mandatory and incomplete.
+Authoritative matrix: B3_GE_E4_PL_REVISION_8_ACCEPTANCE_MATRIX.md.
+Common-main PR62 remains NONPASS; local02ca395e license/collection repairs are
+unpushed. Keep common integration and feature separate; main untouched.
+
+## Evidence, ownership and execution
+
+Raw roots under .qualification/b3-ge-e4-pl/:
+r8-ge-mixed-buckling-dev-20261005-v1;
+r8-native-s3-restart-binding-dev-20261005-v1;
+r8-e01-material-frame-work-dev-20261005-v1;
+r8-e01-objective-polar-trace-dev-20261005-v1.
+Root owns integration/Git/this note. E01 author owns its scripts/tests/grouped
+report; S3 author owns certificate/opt-in subsystem/grouped report. Preserve
+concurrent dirt; check worker state before checks. Numerical slot currently
+FREE after E01V2. ONE job,max3workers,600s/2GiB process tree,affinity1/pools1/
+JIToff. Supervisor thread ceiling8, observed1. FormalF03 UNCONSUMED: never
+execute/copy/substitute prepared F03 script. Never inspect/traverse/copy/archive
+us3-modal-canary; no Get-CimInstance. FrozenG3c lease and closed Fy/pressure/
+native80/material/turning campaigns remain binding; no adaptive1.01 retry,
+authority renewal, main merge or publication. Previous detailed note preserved
+byte-exact in history/PRE_FINITE_TRACE_REVIEW_20261005.md, SHA:
+c0d5ca73376717b2dc882d8489fa4d04bc94397f7d60f3d01c242a33eef03162.

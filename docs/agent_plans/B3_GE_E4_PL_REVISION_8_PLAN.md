@@ -5,10 +5,15 @@ material comparison completed eight endpoints. Measured force/stress response
 passes the prospective screen; actual plastic-history differences are retained
 for review. Print-limited balance/uniformity checks leave the evidence partial;
 original force-controlled failures and E04/G4D remain open. Do not extend the
-closed force-iteration route. The next connected missing behavior is conservative
-accepted-state mixed GE/Q4 point buckling: adopt the coordinate/material/prestress
-split from actual local operators before implementation, retaining algebraic
-coordinates and multiplier curvature. No scope or acceptance threshold changes.
+closed force-iteration route. Point, BL5 and mixed Q4/S3/native-family conservative
+buckling now have experimental installed evidence; aggregate G4B stays open.
+Current connected work resolves S3 numerical restart portability through an
+explicit consistency candidate and the physical connection/reference distinction
+through a finite objective projected-polar/director candidate. Strict legacy
+default binding and existing point/BL5 identities stay unchanged. Complete these
+bounded slices and review their actual work maps before another structural or
+external campaign. See the active note for exact evidence and remaining decisions.
+No scope or scientific acceptance threshold changes.
 
 **Status 4 October 2026: planning update adopted; explicitly resumed by the user.**
 This is the current Revision 8 development basis. The user delegated pending

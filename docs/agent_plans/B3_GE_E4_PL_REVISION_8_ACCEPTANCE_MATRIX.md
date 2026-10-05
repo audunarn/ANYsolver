@@ -2890,3 +2890,18 @@ scientific acceptance, fullG4B, mass/modes/B2/line-fibre/footprint/J2 active-pla
 coverage, external/platform/scale/consumer and aggregate release remain OPEN.
 No global dense production path, altered physical threshold, spectral
 completeness/lowest-factor/nonlinear limit-load or speedup claim.
+
+### 5 October - connection work and finite trace development
+
+IMPLEMENTED_NOT_QUALIFIED: separate linear material-frame/adjoint work tool
+at545ec27b; 15PASS and original hash-bound native/external saved fields.
+Finite projected-polar/independent-director candidate remains UNADOPTED; no
+product dispatch or substitution for nodal points/BL5/native retained ports.
+V1 31PASS did not catch large-offset gauge cancellation; independent review
+found the2^54offset/1m displacement counterexample. Equivalent algebra repairs
+this; affectedV2 18PASS, unchanged linear controls not rerun. Original binding,
+raw evidence and exact hash-verified V1 script/test snapshots are retained in
+r8-e01-objective-polar-trace-dev-20261005-v1. Physical-reference correspondence,
+admitted finite domain, native composition and scientific acceptance remainOPEN.
+No F03/E01/E04/G0/G4B or aggregate gate closure; formalF03 unconsumed. No new
+structural/external campaign, tolerance relaxation, main merge or publication.
