@@ -53,3 +53,18 @@ def workflow_provenance(analysis):
                 analysis_sha256=analysis.identity, status='DEVELOPMENT',
                 production_qualified=False, restart_supported=True,
                 acceptance='EXTERNAL_FULL_C7_OPEN')
+
+
+def solve_transient(analysis, config, *, checkpoint=None, expected_sha256=None,
+                    max_steps=10000, max_cutbacks=8, minimum_dt=None,
+                    cancellation_token=None):
+    """Opt-in contact-free native midpoint trajectory DEVELOPMENT workflow.
+
+    Uses existing TransientConfig time/physical15 initial/output controls;
+    Newmark/HHT/damping/recovery are unsupported. No C7 acceptance is implied.
+    """
+    from ._ge_beam3_native_transient import solve_native_transient
+    return solve_native_transient(analysis, config, checkpoint=checkpoint,
+        expected_sha256=expected_sha256, max_steps=max_steps,
+        max_cutbacks=max_cutbacks, minimum_dt=minimum_dt,
+        cancellation_token=cancellation_token)

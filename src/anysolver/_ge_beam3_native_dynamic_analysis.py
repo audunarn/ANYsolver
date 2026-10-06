@@ -77,6 +77,13 @@ class NativeDynamicAnalysis:
         Omitted positions/frames are the owned reference configuration.
         Histories/resultants and algebraic frame guesses are not public inputs.
         """
+        context, mechanical, velocity24 = self._initial_inputs(
+            positions, cell_rotations, physical_velocity15, position_low)
+        # No outer operation lock: the composed owner authenticates atomically.
+        return context.initialize(mechanical, velocity24, time=time,
+                                  cancellation_token=cancellation_token)
+
+    def _initial_inputs(self, positions, cell_rotations, physical_velocity15, position_low):
         context = self._owner()
         reference = context._reference_mechanical
         positions = reference.positions if positions is None else _array(positions, (3,3), 'positions')
@@ -87,9 +94,19 @@ class NativeDynamicAnalysis:
         velocity24[list(PHYSICAL_DOFS)] = velocity
         mechanical = Mechanical(_owned(positions), _owned(low),
             _owned(reference.nodal_frames), _owned(cells), _owned(np.zeros((1,18))))
-        # No outer operation lock: the composed owner authenticates atomically.
-        return context.initialize(mechanical, velocity24, time=time,
-                                  cancellation_token=cancellation_token)
+        return context, mechanical, velocity24
+
+    def _prepare_initial(self, positions, cell_rotations, physical_velocity15, *,
+                         position_low, cancellation_token, prepare):
+        context, mechanical, velocity24 = self._initial_inputs(
+            positions, cell_rotations, physical_velocity15, position_low)
+        return context._prepare_initialize(mechanical, velocity24, time=0.,
+            cancellation_token=cancellation_token, prepare=prepare)
+
+    def _prepare_restore(self, checkpoint, *, expected_sha256,
+                         cancellation_token, prepare):
+        return self._owner()._prepare_restore(checkpoint, expected_sha256=expected_sha256,
+            cancellation_token=cancellation_token, prepare=prepare)
 
     def trial(self, accepted, *, dt, cancellation_token=None):
         return self._owner().trial(accepted, dt=dt, cancellation_token=cancellation_token)
@@ -105,6 +122,14 @@ class NativeDynamicAnalysis:
 
     def endpoint_accounting(self, state):
         return self._owner().endpoint_accounting(state)
+
+    def candidate_endpoint_accounting(self, candidate, *, cancellation_token=None):
+        return self._owner().candidate_endpoint_accounting(candidate,
+            cancellation_token=cancellation_token)
+
+    def prepare_candidate_checkpoint(self, candidate, *, cancellation_token=None):
+        return self._owner().prepare_candidate_checkpoint(candidate,
+            cancellation_token=cancellation_token)
 
     def physical_load_accounting(self, mechanical):
         return self._owner().physical_load_accounting(mechanical)

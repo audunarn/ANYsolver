@@ -244,3 +244,41 @@ self-convergence for this named finite-spin fixture, not continuum/spatial accur
 a certified error bound, general nonprincipal-motion admission or fullC7 acceptance.
 See `d1_review_support/native_finite_spin_temporal_refinement_v1_20261001.comparison.json`
 and adjacent `.review.md`. All older failures retain their original meaning.
+
+## Native trajectory controller (development subset, 2026-10-06)
+
+`ge_beam3_native_dynamics.solve_transient(analysis, TransientConfig(...))` adds
+bounded multi-step control around the existing native SO(3) midpoint owner.
+The new example is `examples/native_contact_free_transient_dev.py` (free or
+homogeneous first-node clamp; optional existing constant line load).
+Private installed manual/split, cancellation and interrupt checks: **3PASS**;
+loaded/clamped CLI passes. Full module source runs timed out; C7 stays open.
+
+Here `initial_displacement` is binary64 physical15: nine reference nodal
+translation increments followed by two spatial cell rotation vectors, applied
+by left SO(3) multiplication. Positions retain compensated high/low parts.
+`initial_velocity` uses the same physical15 ordering. The native initializer
+solves nodal-frame algebraics and owns all histories, states and candidates.
+`dt`, `t_end` and `save_every` come from the existing TransientConfig; default
+beta/gamma are unused compatibility placeholders, not a Newmark selection.
+HHT, damping, output subsets, stress/recovery and resource overrides refuse.
+
+Only native Newton iteration/backtracking nonconvergence permits bounded
+halving; mutation, cancellation and other failures do not switch algorithms.
+All candidate accounting and checkpoint/result bytes prepare before one commit.
+Genesis and restore preparation run inside the native-owned atomic operation.
+Exceptions preserve the accepted prefix; controller code never resets owner data.
+
+The new V1 controller capsule embeds the exact native capsule and complete step
+journal. A trusted external SHA and matching fresh owner are required. Initial15,
+dt/cadence/cutback bounds bind identity; t_end can extend. Cadence counts all
+accepted steps; final state is always available separately. A split at a truncated
+endpoint changes the time grid and is not promised identical to an unsplit run.
+Both capsule and result use the existing 2MiB native canonical codec bound.
+Endpoint energy/momentum and midpoint load/support work/impulses are diagnostics,
+not added energy gates or exact continuous integrals. The fixed-frame clamp
+couple is a genuine stage reaction despite zero frame inertia; free algebraics
+and resultants are not inertial loads. Source-prepared tests retain separate
+force/moment scales; old finite-spin NONPASS is not regraded. Seven jobs used
+165.463618/180s; raw `contact_native_transient_20261006/native_transient_*` holds
+545-payload parity, runtime/import evidence, partial source runs and fixture2FAIL.

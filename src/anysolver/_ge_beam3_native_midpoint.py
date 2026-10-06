@@ -530,31 +530,59 @@ class MidpointContext:
     def initialize(self, mechanical=None, physical_velocity24=None, *, time=0.,
                    cancellation_token=None):
         with self._atomic_operation():
-            self._guard(cancellation_token, 'midpoint.initialize')
-            if self.current is not None or type(time) is not float or not np.isfinite(time):
-                raise ValueError('one finite typed midpoint initialization required')
-            mechanical = self._reference_mechanical if mechanical is None else mechanical
-            if type(mechanical) is not Mechanical:
-                raise ValueError('exact retained mechanical input required')
-            mechanical = self._make(mechanical.descriptor())
-            velocity = np.zeros(24) if physical_velocity24 is None else np.asarray(physical_velocity24)
-            if velocity.shape != (24,) or velocity.dtype != np.float64 or not np.isfinite(velocity).all():
-                raise ValueError('finite binary64 physical velocity24 required')
-            inactive = tuple(i for i in range(24) if i not in self.physical_free)
-            if np.any(velocity[list(inactive)]):
-                raise ValueError('fixed velocity/algebraic inertial placeholders must be zero')
-            velocity = _owned(velocity)
-            origins = self._reference_origins
-            mechanical, _, _, _, _ = self._solve_algebraic(mechanical, origins, cancellation_token)
-            acceleration, _, checks = self._endpoint_acceleration(mechanical, origins, velocity)
-            state = MidpointState(mechanical, origins, origins, velocity, acceleration,
-                time, 0, self._identity, self._identity)
-            self._guard(cancellation_token, 'midpoint.initialize.commit')
-            self._initial_checks = canonical(checks)
-            self._issued[id(state)] = (state, canonical(state))
-            self._current = state
-            self._current_bytes = canonical(state)
-            return state
+            return self._initialize_state(mechanical, physical_velocity24, time=time,
+                                          cancellation_token=cancellation_token)
+
+    def _initialize_state(self, mechanical, physical_velocity24, *, time, cancellation_token):
+        self._guard(cancellation_token, 'midpoint.initialize')
+        if self.current is not None or type(time) is not float or not np.isfinite(time):
+            raise ValueError('one finite typed midpoint initialization required')
+        mechanical = self._reference_mechanical if mechanical is None else mechanical
+        if type(mechanical) is not Mechanical:
+            raise ValueError('exact retained mechanical input required')
+        mechanical = self._make(mechanical.descriptor())
+        velocity = np.zeros(24) if physical_velocity24 is None else np.asarray(physical_velocity24)
+        if velocity.shape != (24,) or velocity.dtype != np.float64 or not np.isfinite(velocity).all():
+            raise ValueError('finite binary64 physical velocity24 required')
+        inactive = tuple(i for i in range(24) if i not in self.physical_free)
+        if np.any(velocity[list(inactive)]):
+            raise ValueError('fixed velocity/algebraic inertial placeholders must be zero')
+        velocity = _owned(velocity)
+        origins = self._reference_origins
+        mechanical, _, _, _, _ = self._solve_algebraic(mechanical, origins, cancellation_token)
+        acceleration, _, checks = self._endpoint_acceleration(mechanical, origins, velocity)
+        state = MidpointState(mechanical, origins, origins, velocity, acceleration,
+            time, 0, self._identity, self._identity)
+        self._guard(cancellation_token, 'midpoint.initialize.commit')
+        self._initial_checks = canonical(checks)
+        self._issued[id(state)] = (state, canonical(state))
+        self._current = state
+        self._current_bytes = canonical(state)
+        return state
+
+    def _prepare_initialize(self, mechanical, physical_velocity24, *, time,
+                            cancellation_token, prepare):
+        """Trusted internal trajectory preparation before genesis publication."""
+        from ._ge_beam3_native_dynamic_restart import _encode_body, require_contract
+        with self._atomic_operation():
+            state = self._initialize_state(mechanical, physical_velocity24, time=time,
+                                           cancellation_token=cancellation_token)
+            accounting = self._endpoint_accounting(state)
+            load = self._physical_load_accounting(state.mechanical)
+            native = _encode_body(self, state, header=require_contract(self))
+            prepared = prepare(state, accounting, load, native)
+            self._guard(cancellation_token, 'midpoint.trajectory_origin.ready')
+            self._require_prepared_origin(state)
+            return state, prepared
+
+    def _require_prepared_origin(self, state):
+        """Authenticate provisional origin while visible current stays fresh."""
+        record = self._issued.get(id(state))
+        if (type(state) is not MidpointState or state is not self._current
+                or record is None or record[0] is not state
+                or canonical(state) != record[1] or record[1] != self._current_bytes
+                or state.context_sha256 != self._identity):
+            raise ValueError('issued immutable prepared native origin required')
 
     def _stage(self, accepted, u, h, token=None):
         self._guard(token, 'midpoint.stage')
@@ -799,46 +827,61 @@ class MidpointContext:
         """
         from ._ge_beam3_native_dynamic_restart import decode
         with self._atomic_operation():
-            self._guard(cancellation_token, 'midpoint.restore.capture')
-            if (self._current is not None or self._visible_current is not None
-                    or self._current_bytes is not None or self._issued or self._candidates
-                    or self._initial_checks is not None or self._restore_checks is not None):
-                raise ValueError('fresh never-initialized midpoint owner required for restore')
-            if self.structural_owner != 'dynamic_elastic':
-                raise ValueError('dynamic elastic midpoint restart only')
-            dynamic = self._dynamic
-            if len(dynamic._issued) != 1 or id(dynamic._reference) not in dynamic._issued:
-                raise ValueError('fresh elastic work owner required for restore')
-            dynamic._require(dynamic._reference)
-            state, initial = decode(self, raw, expected_sha256)
-            work = self._loaded_work(state.mechanical, state.histories)
-            inertia = self._inertia(state.mechanical, state.physical_velocity24,
-                                    state.physical_acceleration24)
-            rank_mass = self._block_checks(work.spatial_jacobian, inertia)
-            z = list(self.algebraic_free)
-            step = np.zeros(42)
-            step[z] = np.linalg.solve(work.spatial_jacobian[np.ix_(z,z)], -work.residual[z])
-            # Exact DynamicElasticContext._consistent392–402 normalization.
-            correction = max(float(np.linalg.norm(step[[i for i in z if i < 24]])),
-                float(np.linalg.norm(step[24:]))/max(1., float(np.linalg.norm(state.mechanical.resultants))))
-            algebraic = self._norm(work.residual, z)
-            physical = self._norm(work.residual+inertia.mixed_inertia, self.physical_free)
-            if (not np.isfinite((correction, algebraic, physical)).all() or algebraic > 1e-11
-                    or correction > 1e-11 or physical > 1e-11):
-                raise ValueError('stored dynamic endpoint residual/correction balance failed')
-            if canonical(work.state.mechanical) != canonical(state.mechanical):
-                raise ValueError('dynamic restore validation changed stored coordinates')
-            checks = canonical(dict(state_sha256=sha(state), epoch=state.epoch, time=state.time,
-                algebraic_residual_norm=algebraic, algebraic_correction_norm=correction,
-                physical_balance_norm=physical, rank_mass=rank_mass,
-                elastic_consistency_witness=abs(float(state.mechanical.resultants[0]@work.residual[24:42]))))
-            self._guard(cancellation_token, 'midpoint.restore.ready')
-            self._issued[id(state)] = (state, canonical(state))
-            self._current = state
-            self._current_bytes = canonical(state)
-            self._initial_checks = initial
-            self._restore_checks = checks
-            return state
+            return self._restore_state(raw, expected_sha256, cancellation_token)
+
+    def _restore_state(self, raw, expected_sha256, cancellation_token):
+        from ._ge_beam3_native_dynamic_restart import decode
+        self._guard(cancellation_token, 'midpoint.restore.capture')
+        if (self._current is not None or self._visible_current is not None
+                or self._current_bytes is not None or self._issued or self._candidates
+                or self._initial_checks is not None or self._restore_checks is not None):
+            raise ValueError('fresh never-initialized midpoint owner required for restore')
+        if self.structural_owner != 'dynamic_elastic':
+            raise ValueError('dynamic elastic midpoint restart only')
+        dynamic = self._dynamic
+        if len(dynamic._issued) != 1 or id(dynamic._reference) not in dynamic._issued:
+            raise ValueError('fresh elastic work owner required for restore')
+        dynamic._require(dynamic._reference)
+        state, initial = decode(self, raw, expected_sha256)
+        work = self._loaded_work(state.mechanical, state.histories)
+        inertia = self._inertia(state.mechanical, state.physical_velocity24,
+                                state.physical_acceleration24)
+        rank_mass = self._block_checks(work.spatial_jacobian, inertia)
+        z = list(self.algebraic_free)
+        step = np.zeros(42)
+        step[z] = np.linalg.solve(work.spatial_jacobian[np.ix_(z,z)], -work.residual[z])
+        # Exact DynamicElasticContext._consistent392–402 normalization.
+        correction = max(float(np.linalg.norm(step[[i for i in z if i < 24]])),
+            float(np.linalg.norm(step[24:]))/max(1., float(np.linalg.norm(state.mechanical.resultants))))
+        algebraic = self._norm(work.residual, z)
+        physical = self._norm(work.residual+inertia.mixed_inertia, self.physical_free)
+        if (not np.isfinite((correction, algebraic, physical)).all() or algebraic > 1e-11
+                or correction > 1e-11 or physical > 1e-11):
+            raise ValueError('stored dynamic endpoint residual/correction balance failed')
+        if canonical(work.state.mechanical) != canonical(state.mechanical):
+            raise ValueError('dynamic restore validation changed stored coordinates')
+        checks = canonical(dict(state_sha256=sha(state), epoch=state.epoch, time=state.time,
+            algebraic_residual_norm=algebraic, algebraic_correction_norm=correction,
+            physical_balance_norm=physical, rank_mass=rank_mass,
+            elastic_consistency_witness=abs(float(state.mechanical.resultants[0]@work.residual[24:42]))))
+        self._guard(cancellation_token, 'midpoint.restore.ready')
+        self._issued[id(state)] = (state, canonical(state))
+        self._current = state
+        self._current_bytes = canonical(state)
+        self._initial_checks = initial
+        self._restore_checks = checks
+        return state
+
+    def _prepare_restore(self, raw, *, expected_sha256, cancellation_token, prepare):
+        """Trusted internal trajectory validation before restore publication."""
+        with self._atomic_operation():
+            state = self._restore_state(raw, expected_sha256, cancellation_token)
+            accounting = self._endpoint_accounting(state)
+            load = self._physical_load_accounting(state.mechanical)
+            prepared = prepare(state, accounting, load, raw)
+            self._guard(cancellation_token, 'midpoint.trajectory_restore.ready')
+            self._require_prepared_origin(state)
+            return state, prepared
 
     def _make(self, data):
         if self.structural_owner == 'legacy_clamp':
@@ -850,20 +893,49 @@ class MidpointContext:
         with self._atomic_operation():
             self._guard()
             self._require_current(state)
-            if self.structural_owner != 'dynamic_elastic':
-                raise ValueError('endpoint accounting requires explicit dynamic elastic owner')
-            work = self._loaded_work(state.mechanical, state.histories)
-            inertia = self._inertia(state.mechanical, state.physical_velocity24,
-                state.physical_acceleration24)
-            compatibility = work.residual[24:42]
-            witness = abs(float(state.mechanical.resultants[0]@compatibility))
-            total = float(inertia.kinetic_energy+work.mixed_potential)
-            checks = self._block_checks(work.spatial_jacobian, inertia)
-            return EndpointAccounting(sha(state), state.time, state.epoch,
-                inertia.linear_momentum, inertia.linear_momentum_low,
-                inertia.angular_momentum, inertia.angular_momentum_low,
-                inertia.kinetic_energy, work.mixed_potential, total, witness,
-                _owned(compatibility), canonical(checks))
+            return self._endpoint_accounting(state)
+
+    def _endpoint_accounting(self, state):
+        """Same endpoint formula; caller owns authentication and atomic scope."""
+        if self.structural_owner != 'dynamic_elastic':
+            raise ValueError('endpoint accounting requires explicit dynamic elastic owner')
+        work = self._loaded_work(state.mechanical, state.histories)
+        inertia = self._inertia(state.mechanical, state.physical_velocity24,
+            state.physical_acceleration24)
+        compatibility = work.residual[24:42]
+        witness = abs(float(state.mechanical.resultants[0]@compatibility))
+        total = float(inertia.kinetic_energy+work.mixed_potential)
+        checks = self._block_checks(work.spatial_jacobian, inertia)
+        return EndpointAccounting(sha(state), state.time, state.epoch,
+            inertia.linear_momentum, inertia.linear_momentum_low,
+            inertia.angular_momentum, inertia.angular_momentum_low,
+            inertia.kinetic_energy, work.mixed_potential, total, witness,
+            _owned(compatibility), canonical(checks))
+
+    def candidate_endpoint_accounting(self, candidate, *, cancellation_token=None):
+        """Authenticated disposable endpoint evidence; never commits a state."""
+        with self._atomic_operation():
+            self._guard(cancellation_token, 'midpoint.candidate_endpoint_accounting')
+            self._require_candidate(candidate)
+            result = self._endpoint_accounting(candidate.endpoint)
+            self._guard(cancellation_token, 'midpoint.candidate_endpoint_accounting.ready')
+            self._require_candidate(candidate)
+            return result
+
+    def prepare_candidate_checkpoint(self, candidate, *, cancellation_token=None):
+        """Prepare bytes for an issued candidate; no acceptance or publication.
+
+        Only committing this exact candidate makes the capsule a committed
+        snapshot. Serialization and ordinary export use the same body encoder.
+        """
+        from ._ge_beam3_native_dynamic_restart import _encode_body, require_contract
+        with self._atomic_operation():
+            self._guard(cancellation_token, 'midpoint.candidate_checkpoint.capture')
+            self._require_candidate(candidate)
+            raw = _encode_body(self, candidate.endpoint, header=require_contract(self))
+            self._guard(cancellation_token, 'midpoint.candidate_checkpoint.ready')
+            self._require_candidate(candidate)
+            return raw
 
     def physical_load_accounting(self, mechanical):
         """Pure current physical load view; not endpoint/time state acceptance.
@@ -875,27 +947,32 @@ class MidpointContext:
         from fractions import Fraction
         with self._atomic_operation():
             self._guard()
-            if self.structural_owner != 'dynamic_elastic' or type(mechanical) is not Mechanical:
-                raise ValueError('explicit dynamic elastic physical mechanical load view required')
-            work = self._loaded_work(mechanical, self._reference_origins)
-            mechanical = work.state.mechanical
-            loads = work.external_load42
-            force = sum((loads[6*n:6*n+3] for n in range(3)), np.zeros(3))
-            moment = [Fraction(0)]*3
-            origin = [Fraction(float(h))+Fraction(float(l)) for h, l in zip(
-                self.momentum_origin_high, self.momentum_origin_low)]
-            for node in range(3):
-                lever = [Fraction(float(h))+Fraction(float(l))-o for h, l, o in zip(
-                    mechanical.positions[node], mechanical.position_low[node], origin)]
-                f = [Fraction(float(v)) for v in loads[6*node:6*node+3]]
-                cross = (lever[1]*f[2]-lever[2]*f[1], lever[2]*f[0]-lever[0]*f[2],
-                    lever[0]*f[1]-lever[1]*f[0])
-                for axis in range(3):
-                    moment[axis] += cross[axis]
-            for cell in (0, 1):
-                for axis in range(3):
-                    moment[axis] += Fraction(float(loads[18+3*cell+axis]))
-            return PhysicalLoadAccounting(self._identity, work.load_sha256,
-                loads, work.external_spatial_jacobian42, work.line_work, work.applied_couple42,
-                _owned(force), _owned([float(v) for v in moment]), self.momentum_origin_high,
-                self.momentum_origin_low, not work.conservative_potential)
+            return self._physical_load_accounting(mechanical)
+
+    def _physical_load_accounting(self, mechanical):
+        """Existing load formula; caller owns guarded native operation scope."""
+        from fractions import Fraction
+        if self.structural_owner != 'dynamic_elastic' or type(mechanical) is not Mechanical:
+            raise ValueError('explicit dynamic elastic physical mechanical load view required')
+        work = self._loaded_work(mechanical, self._reference_origins)
+        mechanical = work.state.mechanical
+        loads = work.external_load42
+        force = sum((loads[6*n:6*n+3] for n in range(3)), np.zeros(3))
+        moment = [Fraction(0)]*3
+        origin = [Fraction(float(h))+Fraction(float(l)) for h, l in zip(
+            self.momentum_origin_high, self.momentum_origin_low)]
+        for node in range(3):
+            lever = [Fraction(float(h))+Fraction(float(l))-o for h, l, o in zip(
+                mechanical.positions[node], mechanical.position_low[node], origin)]
+            f = [Fraction(float(v)) for v in loads[6*node:6*node+3]]
+            cross = (lever[1]*f[2]-lever[2]*f[1], lever[2]*f[0]-lever[0]*f[2],
+                lever[0]*f[1]-lever[1]*f[0])
+            for axis in range(3):
+                moment[axis] += cross[axis]
+        for cell in (0, 1):
+            for axis in range(3):
+                moment[axis] += Fraction(float(loads[18+3*cell+axis]))
+        return PhysicalLoadAccounting(self._identity, work.load_sha256,
+            loads, work.external_spatial_jacobian42, work.line_work, work.applied_couple42,
+            _owned(force), _owned([float(v) for v in moment]), self.momentum_origin_high,
+            self.momentum_origin_low, not work.conservative_potential)

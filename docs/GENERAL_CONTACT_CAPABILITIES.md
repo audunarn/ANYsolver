@@ -2748,3 +2748,50 @@ untruncated final step. Historical profiles/defaults remain unchanged.
 Explicit user+60 recorded; C6 total409.0956022000173/420s,70terminaljobs; other
 purses unchanged. Evidence: multiple_pair_development.md and raw extension
 final_manifest/worker_handoff/root_final_audit.json. No further optional runs.
+
+
+## C7 native midpoint trajectory controller - 2026-10-06 development delivery
+
+Profile NATIVE_CONTACT_FREE_MIDPOINT_TRAJECTORY_DEV_V1: implemented and tested
+within the existing single centered elastic generalized-ellipsoid native owner,
+free or homogeneous full first-node clamp, constant admitted distributed loads.
+Public native solve_transient uses TransientConfig; physical15 initial map,
+SO3 stages, retained inertia, algebraic equations and all states remain native-owned.
+No B3-GE insertion into generic FEModel, artificial inertia, default/profile change,
+physics/tolerance change or independent element condensation.
+
+Candidate endpoint accounting, native capsule, controller journals and result bytes
+prepare before one commit. Genesis/restore preparation is inside native atomic
+publication; precommit failure/cancellation/KeyboardInterrupt leaves a usable prefix
+and cleans owned pending candidates. Full controller/native identity, global output
+cadence and reduced cutback dt bind restart. Grid-truncated splits are not claimed
+identical to unsplit integration. Constrained frame reaction couple is retained
+despite zero algebraic inertia; homogeneous support work is exactly zero.
+
+Installed workflow3PASS: actual manual/two-step/split parity plus in-flight cancellation
+and KeyboardInterrupt cleanup. Actual installed loaded clamped CLI1step PASS.545
+source/wheel/installed package payloads and6 metadata files match,194 imports/errors0,
+JITdisabled/Numba1/all native pools1. Source analytic translation/SO3 and loaded
+free/clamped checks produced saved passing partial results, not a full-module pass.
+Saved free P/H defects4.46e-11/4.85e-11 and clamped1.55e-8/6.61e-9 satisfy the
+separate .03N/.05Nm and dt.001s controls. Work dot-product is journal self-consistency;
+injected cutback is a controller oracle, not independent nonlinear mechanics.
+
+Preserved source1 TIMEOUT60.064912800095044s with12PASS/2FAIL markers; terminal
+loaded recovery2FAIL2.4411632999544963s traced to bare LinePattern instead of the
+existing required DistributedPattern. Only example adapter repaired with identical
+loads. Source repair TIMEOUT35.068712599924766s after3 passing markers; unfinished
+safety cases passed on installed artifact. Full new module never completed.
+
+Distinct user C7 authority180s:7terminal jobs165.46361799992155s, remaining
+14.536382000078447s. Prior120h and all other purses unchanged. No optional reruns.
+Wheel1b90d1bd2f36614f5031b941ddfdbc54c29a73573eb64c316ec321b679fa47f7.
+Raw C:/ANYworkspaceWork/contact_native_transient_20261006 contains exact authority,
+commands/candidate hashes/runtime/results/failures, root package/formula/metric
+audits and supporting independent source review. Guide GENERAL_CONTACT_NATIVE_DYNAMIC_DEVELOPMENT.md.
+
+Status: IMPLEMENTED; BOUNDED DEVELOPMENT TESTED; NOT INDEPENDENTLY ACCEPTED;
+NOT RELEASED. Same-family source scrutiny does not establish engineering acceptance.
+Existing finite-spin N16 NONPASS, half-step evidence and every historical criterion
+remain untouched. Broader finite-angle trajectories/refinement/sections, connected
+native dynamics and common-stage native/shell impact remain open; full C0-C9 incomplete.

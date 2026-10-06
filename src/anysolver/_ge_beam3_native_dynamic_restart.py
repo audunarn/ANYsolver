@@ -187,6 +187,11 @@ def encode(context, state):
     context._require_current(state)
     if context._candidates:
         raise ValueError('commit/discard pending candidates before dynamic checkpoint')
+    return _encode_body(context, state, header=header)
+
+
+def _encode_body(context, state, *, header):
+    """Existing serialization formula; caller must authenticate its state."""
     if type(context._initial_checks) is not bytes:
         raise ValueError('complete original dynamic initial checks required')
     initial = json.loads(context._initial_checks)

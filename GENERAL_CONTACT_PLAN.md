@@ -8,6 +8,28 @@ are historical evidence, not renewed or additional execution authority.
 The separately opted-in equilibrated V20 slice is implemented and tested below.
 ## Current delivered development
 
+### Latest production progress and next slice
+
+Multiple B2/B3-to-shared-S3 impact is development verified at e01164d3:
+six source and six installed checks, complete split restart, and 0.0463843%
+energy defect. Its existing scope and failures remain unchanged.
+[Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/multiple_pair_development.md).
+
+The opt-in native contact-free trajectory now composes the existing retained
+inertia/SO3 midpoint owner, TransientConfig, transactional journals and complete
+restart. Three installed workflow/safety checks and the loaded clamped CLI pass;
+all545 package files and6 metadata files match. Native formulas/defaults/profile
+remain unchanged. The two source timeouts, original load-adapter2FAIL and passing
+partial prefixes remain explicit; the full new test module did not complete.
+C7 execution165.46361799992155/180s used;14.536382000078447s remains, scoped
+only to this slice. No complete C7 acceptance, energy-conservation or release claim.
+
+Next: close consequential C7 retained finite-velocity scientific gaps using the
+existing owner/controller and references; preserve the prior finite-spin NONPASS.
+Do not repeat unchanged long test files: use recorded case costs, targeted groups
+and eager per-case results. Source development can proceed; new numerical scope
+requires its actual authority. Native coupled impact still depends on C7 acceptance.
+
 ### Independent represented-path gap: development verified
 
 All 80 coarse and 160 fine loaded-impact Hermite segments now pass a separate
