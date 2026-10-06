@@ -1108,7 +1108,11 @@ class ExperimentalGEAnalysis:
         from ._stiffened_shell_ge_distributed_load import admits_owner as admits_distributed
         from ._stiffened_shell_ge_body_load import admits_owner as admits_body
         if self._modal_only:
-            return dict(self.reference_modal_capabilities, profile=PROFILE,
+            from ._stiffened_shell_ge_reference_modal import GE_MIXED_FREE_FREE_MODAL_ONLY_V1
+            modal = (self.mixed_reference_modal_capabilities
+                     if self._definition.modal_boundary_policy == GE_MIXED_FREE_FREE_MODAL_ONLY_V1
+                     else self.reference_modal_capabilities)
+            return dict(modal, profile=PROFILE,
                         modal_boundary_policy=self._definition.modal_boundary_policy,
                         accepted_state_writes=False)
         attachment = (("reference point pose",) if self._connections else ())

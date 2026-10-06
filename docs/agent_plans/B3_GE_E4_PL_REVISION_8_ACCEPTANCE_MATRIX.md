@@ -3349,3 +3349,27 @@ CLI standalone example and installed artifact NOT YET EXECUTED. 2% spectral
 convergence/external references, required different-family review and aggregate
 programme acceptance remain open. No formalF03/bodyretry/closedcampaign authority
 used, no release/push/main/sibling/contact action.
+
+
+## 6 October 2026 - modal-only public capability finding and source correction
+
+ROOT_FINDING_SOURCE_CORRECTED_RUNTIME_UNVERIFIED. Generic capabilities on the new
+modal-only boundary incorrectly delegated to legacy admission, reporting old
+ineligible scope while the new request operated. Prior passing tests/reviews
+missed this consumer seam; preserve those bytes and do not use them as proof of
+correct new generic capabilities. Same author now selects mixed descriptor only
+for the explicit new boundary; historical boundary branch stays unchanged. Three
+existing free-free cases gain actual public eligible/policy/scope/preflight and
+legacy-metadata assertions. Two AST parses PASS; changed assertions UNEXECUTED.
+Owner708ca8ea633ac929d3382ff35765b68ae326a7cf2b9045bd8c5f901059c2df08;
+test1d84bd69a27f227c7bdb501ce26104c142299fe1b9fb8564704e632b91125b48.
+Root reviews actual dispatch/regression delta. No physical law, inertia, tangent,
+solver, norm or numerical tolerance change;76instance inventory remains.
+Initial isolated wheel5639b79bda929f5b3dd86dbecfdd831fa7fc5900efa9d2e2077e1378c9adf3e6
+at26640171 built/installed successfully,427package files exact equal source/stage/
+wheel/site. Build supervision6.1138s130424832B sampled. Its numerical job was held
+BEFORE execution. Preserve wheel/provenance/superseded-artifact-v1.json; rebuild
+VERSIONEDfixed artifact for changed source. Not an installed pass or failure.
+New raw r8-ge-mixed-reference-modal-installed-dev-20261006-v1/source-fix-v1/
+records before/after source and disposition. Installed workflow and all scientific
+convergence/external/different-family/aggregate/release obligations stay open.

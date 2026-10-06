@@ -100,6 +100,25 @@ def test_new_free_boundary_six_rigid_fields(shell,beams):
     model = definition(shell,"biaxial",beams,"point",free=True)
     owner = ss.create_analysis(definition=model)
     try:
+        capabilities=owner.capabilities
+        assert capabilities['eligible']
+        assert capabilities['policy']==ss.GE_MIXED_FREE_FREE_MODAL_ONLY_V1
+        assert capabilities['modal_boundary_policy']==ss.GE_MIXED_FREE_FREE_MODAL_ONLY_V1
+        assert capabilities['scope']==owner.mixed_reference_modal_capabilities['scope']
+        assert capabilities['accepted_state_writes'] is False
+        preflight=owner.preflight()
+        assert preflight['modal_boundary_policy']==ss.GE_MIXED_FREE_FREE_MODAL_ONLY_V1
+        assert preflight['identity']==owner._identity
+        if shell=='q4' and beams=='generalized':
+            legacy=ss.create_analysis(definition=replace(model,
+                modal_boundary_policy=ss.GE_FREE_FREE_MODAL_ONLY_V1))
+            try:
+                assert legacy.capabilities['eligible']
+                assert legacy.capabilities['policy']==ss.GE_FREE_FREE_MODAL_ONLY_V1
+                assert legacy.capabilities['scope']==legacy.reference_modal_capabilities['scope']
+                assert legacy.capabilities['accepted_state_writes'] is False
+                assert legacy.preflight()['modal_boundary_policy']==ss.GE_FREE_FREE_MODAL_ONLY_V1
+            finally:legacy.close()
         result = owner.modes(ss.GEMixedReferenceModesRequest(count=1))
         assert result.status == "completed", result.failure_reason
         assert result.policy == ss.GE_MIXED_FREE_FREE_MODAL_ONLY_V1

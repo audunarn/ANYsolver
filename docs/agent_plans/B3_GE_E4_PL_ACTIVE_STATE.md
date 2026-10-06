@@ -101,7 +101,7 @@ Author owns modal/owner-dispatch/facade + new mass/tests/example/docs/raw; root
 owns contracts/adoption/note/matrix/Git. Non-author mechanics reviewer separate.
 New raw r8-ge-mixed-reference-modal-dev-20261006-v1/. Root adopts experimental
 V2D linear nodal mid-surface/director kinetics only: triangleG=A/12(ones+I),
-rhoh translation and rhohÂ³/12 tangential rotation. This is a declared approximation,
+rhoh translation and rho*h**3/12 tangential rotation. This is a declared approximation,
 not full MIN3 displacement-correction inertia or legacy S3 mass. Actual V2D has
 18 corner coordinates; the separate bubble-S3 family is NOT admitted. No physical
 bubble static/dynamic reduction. Distinct request/mass policy; no qualification.
@@ -115,9 +115,14 @@ curved-frame tests V3:3PASS,73DESELECT. Root verifies22 frozen snapshots and onl
 two test-function changes;76 unique instances by impact reuse, no full rerun.
 V2 root launcher path error caught pinned-version guard BEFORE pytest; preserved.
 V3 original CI/affinity0/pools1/Numba1/JIToff verified,5.463s228888576B sampled.
-Independent source/V3 review has no blocking development finding. Installed
-artifact + standalone example NEXT; 2% spectral convergence/external/different-
-family scientific acceptance remain OPEN. No body retry/F03; owned jobs terminal.
+Prior non-author review found no blocker; ROOT subsequently caught a public
+capability defect: new free-free owner delegated generic capabilities to legacy
+ineligible descriptor. Same owner corrected metadata selection and added public
+capability/preflight + legacy regression assertions;2 AST PASS, runtime UNEXECUTED.
+Owner708ca8ea/test1d84bd69; old reviews/source snapshots preserved. Wheel5639b79b
+(427 equal source/stage/wheel/site modules) superseded UNEXECUTED. Build fixed
+VERSIONED artifact next;2% convergence/external/different-family acceptance OPEN.
+No body retry/F03; owned jobs terminal.
 
 ## Preserved restrictions and history
 
