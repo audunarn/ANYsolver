@@ -54,6 +54,14 @@ independent engineering acceptance remain open. The nonlinear correction is an
 estimate, not a rigorous model-error enclosure.
 [Patch evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/patch_development.md).
 
+C9 ordinary-static contact result export now has source and installed development
+evidence: all eight producer fields, complete steps/snapshots/material data and
+checkpoint survive inert export/read. A direct producer-field/raw-byte oracle
+passes; existing transient output matches its protected baseline byte-for-byte.
+All537 package payloads match. This closes the solver-side static export gap,
+not application admission, model persistence, physical qualification or C9.
+[Static export evidence](docs/d1_review_support/contact_transient_archive_20261006/static_development.md).
+
 ## Preserved history and decisions
 
 The [unaltered prior goal](GENERAL_CONTACT_GOAL_HISTORY_20261005.md) and [prior plan](GENERAL_CONTACT_PLAN_HISTORY_20261005.md) retain all development decisions, counterexamples, failures, references and source identities. Unaffected scientific contracts, registered criteria, frozen/consumed authorities and assessed capability boundaries remain binding. Historical chronological next actions are superseded by this live goal/plan; this consolidation changes no mechanics or acceptance target and authorizes no repeated campaign.

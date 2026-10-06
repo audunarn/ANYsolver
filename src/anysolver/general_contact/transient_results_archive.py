@@ -187,7 +187,7 @@ def _record_roles(cls,data):
         else:_fail('unrecognized producer record role')
 
 
-def _decode(value, budget, records, depth=0, gap=False):
+def _decode(value, budget, records, depth=0, gap=False, record_roles=None):
     budget.visit(depth)
     if value is None or type(value) in (bool,int,str):
         if type(value) is int and not -(2**63) <= value < 2**64:
@@ -234,7 +234,7 @@ def _decode(value, budget, records, depth=0, gap=False):
     if tag in ('tuple','list'):
         _keys(value,('tag','items'))
         if type(value['items']) is not list:_fail('invalid sequence')
-        result=[_decode(x,budget,records,depth+1,gap) for x in value['items']]
+        result=[_decode(x,budget,records,depth+1,gap,record_roles) for x in value['items']]
         return tuple(result) if tag=='tuple' else result
     if tag=='mapping':
         _keys(value,('tag','items'))
@@ -242,18 +242,18 @@ def _decode(value, budget, records, depth=0, gap=False):
         result={}
         for row in value['items']:
             if type(row) is not list or len(row)!=2:_fail('invalid mapping entry')
-            key=_decode(row[0],budget,records,depth+1)
+            key=_decode(row[0],budget,records,depth+1,False,record_roles)
             if type(key) not in (str,int) or key in result:_fail('invalid or duplicate mapping key')
-            result[key]=_decode(row[1],budget,records,depth+1,gap or key in _GAPS)
+            result[key]=_decode(row[1],budget,records,depth+1,gap or key in _GAPS,record_roles)
         return result
     if tag=='record':
         _keys(value,('tag','record_type','fields','summary'))
         name=value['record_type']
         if type(name) is not str or name not in records:_fail('unknown producer record type')
-        data=_decode(value['fields'],budget,records,depth+1,gap)
+        data=_decode(value['fields'],budget,records,depth+1,gap,record_roles)
         if type(data) is not dict or set(data)!={f.name for f in fields(records[name])}:
             _fail('producer record field inventory mismatch')
-        _record_roles(records[name],data)
+        (record_roles or _record_roles)(records[name],data)
         for field,item in data.items():
             if field in ('shell_force','rigid_force','beam_force','integration_force','target_force',
                     'shell_moment','rigid_moment','beam_moment','integration_moment','target_moment',
@@ -276,7 +276,7 @@ def _decode(value, budget, records, depth=0, gap=False):
                           'normal_multiplier_estimate_pa'):
                 if field in data and len(data[field]) not in (0,n):_fail('invalid pressure/support dimensions')
         return {'record_type':name,'fields':data,
-                'summary':_decode(value['summary'],budget,records,depth+1,gap)}
+                'summary':_decode(value['summary'],budget,records,depth+1,gap,record_roles)}
     _fail('unknown archive tag')
 
 
@@ -347,7 +347,7 @@ def _pairs(rows):
     return result
 
 
-def _read(raw,cap):
+def _read(raw,cap, *, schema=SCHEMA, conventions=CONVENTIONS, records=None, validator=None, record_roles=None):
     if type(raw) is not bytes:_fail('archive input must be bytes')
     if len(raw)>cap:_fail('archive input byte limit exceeded before parsing')
     # Bound parser nesting and possible container allocation before json.loads.
@@ -373,16 +373,16 @@ def _read(raw,cap):
     except (ValueError,UnicodeError,RecursionError) as exc:
         raise TransientContactArchiveError('invalid strict archive JSON') from exc
     _keys(doc,('schema','version','conventions','payload','sha256'))
-    if doc['schema']!=SCHEMA or type(doc['version']) is not int or doc['version']!=1:
+    if doc['schema']!=schema or type(doc['version']) is not int or doc['version']!=1:
         _fail('unknown archive schema/version')
-    if doc['conventions']!=CONVENTIONS:_fail('stale archive conventions')
+    if doc['conventions']!=conventions:_fail('stale archive conventions')
     expected=dict(doc);digest=expected.pop('sha256')
     if type(digest) is not str or digest!=hashlib.sha256(_canonical(expected)).hexdigest():
         _fail('archive integrity mismatch')
     if _canonical(doc)!=raw:_fail('archive JSON must use canonical encoding')
-    _,records=_types()
-    data=_decode(doc['payload'],_Budget(cap),records)
-    _validate(data)
+    if records is None:_,records=_types()
+    data=_decode(doc['payload'],_Budget(cap),records,record_roles=record_roles)
+    (validator or _validate)(data)
     return data
 
 
@@ -407,12 +407,7 @@ class ContactTransientArchive:
         return _read(self._raw,self._max_bytes)
 
 
-def serialize_transient_contact_results(results, *, max_bytes=MAX_BYTES):
-    """Snapshot every exact producer field into bounded strict JSON bytes."""
-    cap=_limit(max_bytes)
-    producer,records=_types()
-    if type(results) is not producer:_fail('exact TransientContactResults required')
-    data={f.name:getattr(results,f.name) for f in fields(results)}
+def _prepare_material_data(data, cap):
     # Explicit solver state protocol only. Each element is materialized once;
     # known state buffers are preflighted before the owned-copy operation.
     from anysolver.nonlinear_state import NonlinearStateStore
@@ -467,8 +462,18 @@ def serialize_transient_contact_results(results, *, max_bytes=MAX_BYTES):
         buffers(mapping)
         return mapping.materialize_owned()
     data['element_states']=material_mapping(data['element_states'])
-    if type(data['material_state_history']) is tuple:
+    if type(data.get('material_state_history')) is tuple:
         data['material_state_history']=tuple(material_mapping(x) for x in data['material_state_history'])
+    return data
+
+
+def serialize_transient_contact_results(results, *, max_bytes=MAX_BYTES):
+    """Snapshot every exact producer field into bounded strict JSON bytes."""
+    cap=_limit(max_bytes)
+    producer,records=_types()
+    if type(results) is not producer:_fail('exact TransientContactResults required')
+    data={f.name:getattr(results,f.name) for f in fields(results)}
+    data=_prepare_material_data(data,cap)
     payload=_encode(data,_Budget(cap),records)
     document=dict(schema=SCHEMA,version=1,conventions=dict(CONVENTIONS),payload=payload)
     document['sha256']=hashlib.sha256(_canonical(document)).hexdigest()

@@ -764,6 +764,11 @@ class NonlinearStaticResult:
     snapshots: Tuple[NonlinearIncrementSnapshot, ...] = field(default_factory=tuple)
     restart_checkpoint: Optional[Dict[str, Any]] = field(default=None, repr=False)
 
+    def to_contact_archive_bytes(self, *, max_bytes=16 * 1024 * 1024) -> bytes:
+        """Export inert bounded contact data; this is not a restart operation."""
+        from .general_contact.static_results_archive import serialize_static_contact_results
+        return serialize_static_contact_results(self, max_bytes=max_bytes)
+
     @property
     def converged(self) -> bool:
         return self.status in {"completed", "stopped_at_limit"}

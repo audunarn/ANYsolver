@@ -5,6 +5,13 @@ This plan changes the route, not scientific obligations or execution authority.
 
 ## Current delivered development
 
+Ordinary-static contact results now use the same bounded archive infrastructure
+as transient results. Installed16controls, then changed preservation2controls and
+explicit byte-compatibility1control pass; all537 payloads match. Actual two-step/
+two-snapshot producer preserves all eight fields and full checkpoint under an
+independent raw-data oracle. No physics/default/admission change.
+[Static export evidence](docs/d1_review_support/contact_transient_archive_20261006/static_development.md).
+
 Finite planar triangulated rigid obstacles now execute through the ordinary
 static solver against one elastic S3 physical skin, now extended to a connected
 multi-element S3 patch with an explicit separate profile. Patch installed4PASS;
@@ -223,6 +230,50 @@ required row; preserve this candidate. No native or frozen authority is renewed.
 ## Programme disposition and subsequent order
 
 ### Independent current slice: transient result archive
+
+#### Delivered continuation: static contact result export
+
+Previous goal turn was progress: connected S3 patch development and installed
+checkpointd55deab7. Next close the distinct C9 ordinary-static result export gap
+through the existing archive infrastructure. This extends producer/consumer
+integration, not a new mechanics prototype or held numerical campaign.
+
+One sustained implementation owner delivers a bounded immutable static contact
+archive/public reader and an opt-in NonlinearStaticResult convenience method.
+Preserve all eight result fields, actual steps/snapshots/material data, contact
+diagnostics/histories and full checkpoint as inert data. Reuse the existing exact
+binary numeric codec through a small shared internal interface; preserve the
+existing transient wire schema/bytes, limits and public behavior. Refuse arbitrary
+objects/active material trials before copying, malformed schemas and exhausted
+resources. Decoding grants no restart, model admission or engineering acceptance.
+
+Question: can the actual static producer's contact/history/state shapes use the
+same closed bounded encoding without loss or a parallel serialization engine?
+Bounded experiment: one actual small static contact producer through export/read,
+exact fields/checkpoint/detached views; synthetic adversarial inputs; affected
+transient codec compatibility. A shape mismatch gets one targeted compatible
+repair; unresolved identity or material ownership remains an explicit refusal.
+
+Use ONLY the archive remaining83.859029000276s (96.140970999724/180s spent),
+including source/build/install. Onejob120s/953MiB,JIT0/Numba1/pools1/watchdog.
+No allocation reset/borrowing or held native/domain/C4 replay. Worker owns archive
+subsystem, static convenience/lazy exports and focused tests/example/guide; root
+owns records/Git/contracts. Freeze source/new-file review before final private
+artifact. Inspect actual installed imports/payloads and consumer behavior before
+development handoff; application integration and scientific acceptance remain.
+
+Delivered within the SAME archive purse: eleven additional terminal jobs,
+41.609207399888s including five retained NONPASS runs/build/install; total
+137.750178399612/180s,42.249821600388s remain. One final product build;
+later preservation-oracle/effective-baseline repairs were test-only, using the
+same artifact. Actual2steps/2snapshots,74,798archive bytes, exact full fields and
+checkpoint; immutable/detached and pre-copy/refusal controls pass. Protected
+transient baseline path/hash and actual6,692byte equality are recorded. Supporting
+review closed its named findings; root independently checked537 payload hashes,
+seven held file hashes, source changes and effective installed configuration.
+No engineering acceptance or complete-route speed claim. Next work must advance
+an actual remaining application/admission/geometry/mechanics requirement, rather
+than replay unchanged codecs or renew held numerical purses.
 
 The additional coupled-test allocation is still pending; its remaining5.973s
 and the native residual purse remain held. Advance the distinct C9 solver-side

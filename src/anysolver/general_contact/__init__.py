@@ -31,6 +31,8 @@ _TRANSIENT_EXPORTS = frozenset({
 _NATIVE_EXPORTS = frozenset({'NativeS3ContactPair', 'create_native_contact_analysis'})
 _ARCHIVE_EXPORTS = frozenset({'TransientContactArchiveError','ContactTransientArchive',
     'serialize_transient_contact_results','read_transient_contact_results'})
+_STATIC_ARCHIVE_EXPORTS = frozenset({'StaticContactArchiveError','ContactStaticArchive',
+    'serialize_static_contact_results','read_static_contact_results'})
 _AUTOMATIC_EXPORTS = frozenset({
     'AutomaticContactDomainError', 'AutomaticContactParticipant',
     'AutomaticContactDefaults', 'AutomaticContactDomain',
@@ -60,6 +62,8 @@ def __getattr__(name: str):
         module = "native_multi_s3_static"
     elif name in _ARCHIVE_EXPORTS:
         module = 'transient_results_archive'
+    elif name in _STATIC_ARCHIVE_EXPORTS:
+        module = 'static_results_archive'
     elif name in _AUTOMATIC_EXPORTS:
         module = 'automatic_domain'
     elif name == 'NativeContactActivationSettings':
@@ -77,6 +81,7 @@ def __dir__():
 __all__ = [
     "TriangulatedRigidContactBody",
     *sorted(_ARCHIVE_EXPORTS),
+    *sorted(_STATIC_ARCHIVE_EXPORTS),
     *sorted(_AUTOMATIC_EXPORTS),
     "NativeS3ContactPair", "create_native_contact_analysis",
     "NativeContactActivationSettings",
