@@ -1196,6 +1196,7 @@ class ExperimentalGEAnalysis:
             if self._bl5_native_material:
                 capabilities.update(analysis=("reference_linear", "experimental_native_fibre_material_bl5"),
                     retained_coordinate_scale_policy="native_force_moment_roles_v1",
+                    finite_trial_proposal="experimental_fixed_origin_fibre_boundary_v1; actual strict merit; unchanged candidate budget",
                     native_bl5_material_domain="existing physical-fibre and generalized constitutive histories; elastic or isotropic Q4 J2 shell",
                     native_bl5_checkpoint="existing native-material/native-shell binary schema; explicit model/line/material-policy identity",
                     excluded=tuple(v for v in capabilities["excluded"] if v not in ("shell J2 plastic", "generalized B3 plastic finite BL5")) +

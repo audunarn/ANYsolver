@@ -122,10 +122,28 @@ Same-parent trials/atomic state; transient owned event data cannot outlive inval
 Full first trial and original13 evaluation budget; fallback remains halving.
 No legacy dispatch/default/API/checkpoint identity or numerical-backend change.
 Owner /root/native_bl5_material, bounded90 active minutes/final20 reserved; exact
-ownership/check ceilings in root brief. FIRST one changed-candidate saved.3125
-screen, stop at first acceptance or failure; no extension on nonconvergence.
-Only if passing: unchanged two strict full histories, focused old-route impacts,
-new isolated installed artifact. Review actual source/results before integration.
+ownership/check ceilings in root brief. The saved.3125 screen PASSES: restored
+controller retained, actual factor.31250000000000006/gen6,5 Newton iterations/8
+candidates, equilibrium6.997e-11/gap1.070e-17; cancellation stops another solve.
+One unchanged full-history/impact cohort ends2FAIL/6PASS,442.42s/199MBsampled,
+effective pools1/affinity1/JIT-off. Elastic-shell case reaches.5/1 equilibrium,
+then its prescribed FD field changes activity: no smooth derivative verdict.
+Shell-J2 case stops at.875 on backtrack/cutback exhaustion; shell and fibre
+advance together at.75/.875 (partial history only). Its final proposal isNone
+and all13 dyadic trials fail: event starvation does not explain this rejection.
+No new installed wheel or complete material acceptance. Non-author complete-path
+review finished: two schema/iterable findings repaired,15 focused checks pass;
+no additional concrete programming flaw. Scientific checks bind pre-repair source,
+final focused checks bind amended source. Owner RELEASED; owned processes0,
+cohort session42384 terminal. Exact184 raw files and current6 source paths bound
+by boundary-candidate-v5/handoff.json, artifact-sha256.json and root-binding-v1.json.
+Root verified760/779 historical artifacts,33 local-audit files, older424 wheel
+payloads and unchanged acceptance prefix; no numerical evaluation by root.
+Next decision: establish a branch-consistent assessment for the unchanged FD
+field and capture the missing last J2 trial state/operators before allocating
+its failure to shell material, chart/assembly or globalization. Do not repeat
+the full failed cohort, tune fields/fixtures/tolerances or launch another proposal
+automatically. G3 remains open; preserve useful candidate and all failed runs.
 All jobs DEV600s/2GiB/affinity1/pools1/JIT-off, ONE job at a time. No F03/closed
 campaign renewal, automatic alternate candidate or physical-limit conclusion.
 

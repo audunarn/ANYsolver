@@ -44,8 +44,8 @@ differences remains unresolved. The rich direction changes constitutive branches
 and cannot establish a smooth tangent. A new-policy safeguarded quadratic
 candidate reached smaller descending steps but exhausted the same 24 Newton
 iterations at `.3125` (equilibrium ratio `.0712213640`). Its exact source and
-failure are preserved; its product dispatch was removed. The final driver retains
-historical dyadic backtracking. The global equilibrium obstruction is unresolved;
+failure are preserved; its product dispatch was removed. At that checkpoint the
+driver retained historical dyadic backtracking. The global equilibrium obstruction was unresolved;
 no limit-load or formulation failure conclusion follows from these controls.
 
 The runnable example deliberately reports a **partial fibre-active control**:
@@ -69,10 +69,71 @@ without skips or expected-failure markers. Their full material milestone is
 unmet; selected partial checks are not a full-file, CI or qualification pass.
 The original mixed fixture's generalized member remains elastic (`1e20`
 generalized yield strength). Yielded generalized/native simultaneous activity
-and same-increment shell/fibre activity still require evidence.
+still requires evidence. The boundary-informed candidate below observes
+same-increment shell/fibre advancement on an accepted partial prefix; its full
+material lifecycle gates remain unmet.
 Full material, chart, physics, stability,
 resolution, consumer, scale and programme obligations remain open.
 
 Public source example: `examples/stiffened_shell_native_fibre_bl5_material.py`.
 Focused source tests: `tests/test_stiffened_shell_native_fibre_bl5_material.py`.
 Raw evidence: `.qualification/b3-ge-e4-pl/r8-native-fibre-bl5-material-dev-20261006-v1/`.
+
+## Boundary-informed force trial candidate (DEV)
+
+Only the explicit native material BL5 identity uses this internal proposal.
+The coupled cell already computes `T^-1 L` for its compliance. An owned immutable
+payload captures current station strains and their derivatives from that same
+solve, bound to the actual cell, accepted origin, state and generation. For each
+physical fibre, existing yield and table boundaries are
+`e_boundary = z_origin +/- (a-p_origin + flow(a)/E)`, where `a` is the accepted
+accumulation or a subsequent table knot. The first positive crossing predicted
+by the current affine material branch supplies an amount.
+
+The proposal adds a propagated binary64 multiply/add rounding bound, followed
+by an outward `nextafter`. Half an ULP bounds each update operation; the bound
+uses the full `[0,1]` correction range and the captured station derivative,
+rather than a fixture-specific slack. This is a local force-chart proposal,
+not an exact global geometric event. The full first trial is preserved. After
+its rejection the next amount is at most `.5`, using the guarded boundary when
+smaller, followed by deterministic halves. Every candidate still requires the
+existing strict actual `max(relative equilibrium, scaled gap)` merit decrease.
+The 13-candidate budget, 24-Newton limit at the test control, physical acceptance
+`1e-8`/`1e-9`, laws, retained coordinates and checkpoint identity are unchanged.
+No additional material response or local compliance solve is introduced.
+Trial payloads are never checkpointed; they are calculated before rejected
+candidates invalidate parent recovery. Legacy policies retain their historical
+trial sequence, response bytes and private `Evaluation` type/fields.
+
+The one changed-source screen restored the original `.284375`, generation 5,
+checkpoint and pending controller. It accepted the controller's represented
+`.31250000000000006` at generation 6 after five Newton iterations, equilibrium
+`6.99675e-11` and gap `1.06984e-17`, then stopped via cancellation. This is a
+narrow convergence result, not completion of the full material gate.
+
+The two unchanged strict `(.5,1)` lifecycle cases were then run once. The elastic
+shell case accepted both loads but failed its first `h=1e-4` branch-consistency
+assertion: positive/negative material activity differs. No smooth tangent error
+was computed. The J2 case accepted `.5`, `.75`, `.875`, then exhausted the
+unchanged backtrack/cutback controls at `.90625`. Its final boundary proposal
+was absent and all 13 historical dyadic amounts were used; tiny-event proposal
+starvation therefore does not explain this terminal rejection. Failed-trial
+residual/tangent and final equilibrium/gap were not serialized by that cohort,
+so no governing-cause conclusion follows.
+
+The J2 prefix has actual simultaneous advancement: at `.75`, five shell layer
+inventories and four physical-fibre station inventories advance; at `.875`,
+fourteen shell layer and four fibre station inventories advance. At `.875`,
+shell alpha maximum is `4.4809561e-6` and fibre station alpha maximum is
+`4.6869135e-5`. The generalized member remains elastic under its original
+`1e20` strength. Full material lifecycle, smooth tangent and global continuation
+remain unresolved. Six selected historical native-elastic/generalized/POINT
+checks passed. Post-terminal schema and one-shot-iterable ownership repairs pass
+15 focused helper/admission checks; no scientific cohort was repeated.
+
+No candidate wheel was built: the required full cohort failed. The older
+`ca2503...` installed evidence binds older source only. New source, progressive
+accepted checkpoints, test/resource/import records, failed harness attempts and
+preservation hashes are under the raw root's `boundary-candidate-v5/` directory.
+The candidate remains partial and unqualified; aggregate material/connection,
+chart, scientific and programme authorities remain open.

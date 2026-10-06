@@ -7,6 +7,7 @@ reevaluated at fixed origin throughout the coupled solve. Not a public route.
 from dataclasses import dataclass
 from decimal import Decimal as D, localcontext
 import hashlib
+from math import isfinite, nextafter, ulp
 from time import monotonic
 
 from ._ge_beam3_fibre_section import (
@@ -24,6 +25,16 @@ POLICY = 'GE_BEAM3_COUPLED_PHYSICAL_FIBRE_CELL_CONJUGATE_V1'
 class CellHistory:
     cell_identity: str
     stations: tuple
+
+
+@dataclass(frozen=True)
+class FibreTrialState:
+    """Owned local branch linearization; never accepted/checkpoint state."""
+    cell_identity: str
+    origin: CellHistory
+    resultants: tuple
+    strains: tuple
+    strain_compliances: tuple
 
 
 def _section_response(section, strain, origins, check, *, include_energy=False):
@@ -171,9 +182,63 @@ class FibreCellConjugate:
             slope += curvature*(right-left)
         return D(1), evaluations
 
-    def response(self, resultants, origin=None, *, check=None, include_energy=False):
+    def boundary_amount(self, trial, direction, *, origin, check=None):
+        """First fixed-origin yield/table crossing, guarded for binary64 updates.
+
+        Within the current affine material branch, dx/dp = T^-1 L. This is a
+        local force-chart proposal; actual global merit still decides acceptance.
+        """
+        if (type(trial) is not FibreTrialState or trial.cell_identity != self.identity or
+                trial.origin is not origin or len(trial.resultants) != 18):
+            raise ValueError('current cell/origin-bound fibre trial linearization required')
+        started = monotonic()
+        def guard():
+            if check is not None: check()
+            if monotonic()-started > 60.: raise TimeoutError('fibre boundary proposal deadline')
+        with localcontext() as context:
+            context.prec = 80
+            correction = tuple(direction)
+            dp = tuple(dec(v) for v in correction)
+            if len(dp) != 18: raise ValueError('18 retained resultant corrections required')
+            origins = self._origins(origin)
+            first = None
+            for strain, compliance, history in zip(trial.strains, trial.strain_compliances, origins):
+                guard()
+                change = mv(compliance, dp)
+                for fibre, (z0, p0) in zip(self.section.fibres, history):
+                    guard(); b = self.section._map(fibre)
+                    ef = dot(b, strain); de = dot(b, change)
+                    if de == 0: continue
+                    sensitivity = mv(tr(compliance), b)
+                    levels = (p0,)+tuple(D.from_float(k) for k in fibre.curve.plastic_strain if D.from_float(k) > p0)
+                    for accumulated in levels:
+                        guard(); flow = fibre.curve._at(accumulated)[0]
+                        for sign in (-1, 1):
+                            boundary = z0+sign*(accumulated-p0+flow/dec(fibre.young))
+                            amount = (boundary-ef)/de
+                            if not 0 < amount < 1: continue
+                            if first is None or amount < first[0]:
+                                first = amount, de, sensitivity
+            if first is None: return None
+            amount, de, sensitivity = first
+            # _advance performs amount*dp then p+product, each round-to-nearest.
+            # Half an ULP bounds each operation; this uniform [0,1] bound avoids
+            # fixture-dependent slack and includes subnormal arithmetic.
+            strain_rounding = D(0)
+            for p, d, coefficient in zip(trial.resultants, correction, sensitivity):
+                upper = nextafter(abs(p)+abs(d), float('inf'))
+                if not isfinite(upper): return None
+                bound = (D.from_float(ulp(d))+D.from_float(ulp(upper)))/2
+                strain_rounding += abs(coefficient)*bound
+            proposed = nextafter(float(amount+strain_rounding/abs(de)), float('inf'))
+            return proposed if isfinite(proposed) and 0 < proposed < 1 else None
+
+    def response(self, resultants, origin=None, *, check=None, include_energy=False,
+                 capture_trial=False):
         if type(include_energy) is not bool:
             raise ValueError('explicit native energy recovery policy required')
+        if type(capture_trial) is not bool:
+            raise ValueError('explicit fibre trial capture policy required')
         started = monotonic()
         def guard():
             if check is not None: check()
@@ -217,7 +282,8 @@ class FibreCellConjugate:
                 x = proposed
             try: cholesky(tangent)
             except ValueError as error: raise ValueError('nonpositive accepted fibre cell tangent; smooth compliance unavailable') from error
-            compliance = mul(tr(self.load_map), solve(tangent, [list(row) for row in self.load_map], guard))
+            strain_compliance = solve(tangent, [list(row) for row in self.load_map], guard)
+            compliance = mul(tr(self.load_map), strain_compliance)
             gradient = mv(tr(self.load_map), x)
             history = CellHistory(self.identity, tuple(FibreHistory(self.section.identity, row[2]) for row in fields))
             self._origins(history)
@@ -231,6 +297,11 @@ class FibreCellConjugate:
                 residual=str(max(abs(v) for v in residual)),
                 derivative_kind='SEMISMOOTH_BRANCH_SELECTION' if boundary else 'CLASSICAL_SMOOTH_BRANCH',
                 production_qualified=False)
+            if capture_trial:
+                response['_trial_state'] = FibreTrialState(self.identity, origin, tuple(float(v) for v in p),
+                    tuple(tuple(row[0]) for row in fields),
+                    tuple(frozen(mul(mapping, [strain_compliance[i] for i in indices]))
+                          for _, _, mapping, indices in self.stations))
             if include_energy:
                 stored = D(0); previous_hardening = D(0); dissipation = D(0)
                 for (_, weight, _, _), predecessor, fields_row, station in zip(

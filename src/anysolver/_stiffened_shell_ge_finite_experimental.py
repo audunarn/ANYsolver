@@ -559,6 +559,7 @@ class FinitePointDriver:
         self._point_trial_recovery = None
         self._distributing_trial_recovery = None
         self._generalized_trial_recovery = None
+        self._native_boundary_trial = None
 
     def _load(self, actions):
         return _nodal_translation_pattern(self.owner, actions)
@@ -661,6 +662,9 @@ class FinitePointDriver:
         shell_candidates = []
         beam_candidates = []
         generalized_material = []
+        native_boundary_material = []
+        if owner._bl5_native_material:
+            self._native_boundary_trial = None
         beam_displacement = state.q[
             owner._shell_count:owner._shell_count+self._beam_nodal
         ].reshape(-1, 6)[:, :3]
@@ -721,11 +725,16 @@ class FinitePointDriver:
 
         for i, ((element, slots, _), origin) in enumerate(
                 zip(owner._beam_parts, beam_origins)):
+            from ._ge_beam3_retained_fibre import RetainedFibreOperator
+            capture_boundary = owner._bl5_native_material and type(element.operator) is RetainedFibreOperator
             nodes = np.array([owner._beam_index[node] for node in element.node_ids])
             response = element.operator.evaluate(
                 beam_positions[nodes], beam_low[nodes], state.frames[nodes],
                 state.cells[i], state.resultants[i], origin=origin,
-                check=element.operator.guard)
+                check=element.operator.guard,
+                **({'capture_trial': True} if capture_boundary else {}))
+            if capture_boundary:
+                native_boundary_material.append((i, response.trial_material))
             tangent = spatial_jacobian(
                 response.residual, response.hessian+response.hessian_low)
             scatter(slots+owner._shell_count, response.residual, tangent)
@@ -845,7 +854,29 @@ class FinitePointDriver:
         self._point_trial_recovery = (state, tuple(point_records))
         self._distributing_trial_recovery = (state, tuple(distributing_records))
         self._generalized_trial_recovery = (state,beam_origins,tuple(generalized_material))
+        if owner._bl5_native_material:
+            self._native_boundary_trial = (state, beam_origins, owner._generation,
+                                           tuple(native_boundary_material))
         return residual, matrix, relative, constraint, tuple(shell_candidates), tuple(beam_candidates)
+
+    def _native_boundary_amount(self, state, increment):
+        """Copy the proposal before any candidate invalidates parent recovery."""
+        if not self.owner._bl5_native_material: return None
+        cached = self._native_boundary_trial
+        if (cached is None or cached[0] is not state or cached[1] is not self._beam_origins or
+                cached[2] != self.owner._generation):
+            raise ValueError('stale native material boundary trial')
+        amounts = []
+        retained = self.owner._shell_count+self._beam_nodal
+        for i, material in cached[3]:
+            operator = self.owner._beam_parts[i][0].operator
+            if material.resultants != tuple(state.resultants[i]):
+                raise ValueError('changed native material boundary resultants')
+            dp = increment[retained+24*i+6:retained+24*i+24].tolist()
+            amount = operator.cell.boundary_amount(material, dp,
+                origin=self._beam_origins[i], check=operator.guard)
+            if amount is not None: amounts.append(amount)
+        return min(amounts) if amounts else None
 
     def _generalized_records(self,state,origins,accepted,*,include_native=False):
         if not (self.owner._bl5_material or self.owner._bl5_native_material or self.owner._curved_material or self.owner._distributing_material or
@@ -1085,11 +1116,14 @@ class FinitePointDriver:
                         trial_ratio = _trial_work_ratio
                     old_merit = max(trial_ratio(residual[owner._free],
                         merit_applied[owner._free], owner._coordinate_scale[owner._free]), gap)
+                boundary_amount = self._native_boundary_amount(trial, full) if owner._bl5_native_material else None
+                first_cutback = .5 if boundary_amount is None else min(.5, boundary_amount)
                 for backtrack in range(max_backtracks+1):
                     cancellation_safe_point(
                         cancellation_token, "stiffened-shell.finite.backtrack")
                     try:
-                        candidate = self._advance(trial, full, .5**backtrack)
+                        amount = 1. if backtrack == 0 else first_cutback*.5**(backtrack-1)
+                        candidate = self._advance(trial, full, amount)
                     except _RotationStepTooLarge:
                         counts["rejected_trials"] += 1
                         continue

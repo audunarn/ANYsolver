@@ -379,3 +379,6 @@ tests/data/native_s3_fibre_history/** -text
 /examples/stiffened_shell_native_fibre_bl5_material.py -text whitespace=cr-at-eol
 /tests/test_stiffened_shell_native_fibre_bl5_material.py -text whitespace=cr-at-eol
 /docs/reference_cases/stiffened_shell_native_fibre_bl5_material.md -text whitespace=cr-at-eol
+/src/anysolver/_ge_beam3_fibre_cell.py -text whitespace=cr-at-eol
+/src/anysolver/_ge_beam3_retained_fibre.py -text whitespace=cr-at-eol
+/tests/test_native_fibre_boundary_proposal.py -text whitespace=cr-at-eol

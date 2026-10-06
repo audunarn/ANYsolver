@@ -36,6 +36,12 @@ class Evaluation:
 
 
 @dataclass(frozen=True)
+class BoundaryEvaluation(Evaluation):
+    """New-policy-only owned payload; historical Evaluation schema stays fixed."""
+    trial_material: object = None
+
+
+@dataclass(frozen=True)
 class MaterialRecovery:
     """Native beam material quantities in J, not the mixed saddle potential."""
     stations: tuple
@@ -81,7 +87,10 @@ class RetainedFibreOperator:
         if self.reference.fingerprint() != self._reference_identity:
             raise ValueError('captured retained fibre reference changed')
 
-    def evaluate(self, positions, position_low, vertices, rotations, resultants, *, origin=None, increment=None, check=None):
+    def evaluate(self, positions, position_low, vertices, rotations, resultants, *, origin=None, increment=None, check=None,
+                 capture_trial=False):
+        if type(capture_trial) is not bool:
+            raise ValueError('explicit fibre trial capture policy required')
         self.guard()
         if check is not None: check()
         x = _array(positions, (3, 3), 'fibre positions'); low = _array(position_low, (3, 3), 'fibre low positions')
@@ -103,7 +112,9 @@ class RetainedFibreOperator:
                 ell.extend(sign*v for v in so3_log(matmul(transpose(frame), made_q[node])))
         values = z+ell; k = np.array([v.value for v in values]); j = np.array([v.gradient for v in values])
         p = p+delta[24:]
-        response = self.cell.response(p.tolist(), origin, check=check)
+        response = self.cell.response(p.tolist(), origin, check=check,
+                                      **({'capture_trial': True} if capture_trial else {}))
+        trial_material = response.pop('_trial_state', None)
         gh, gl = response['gradient']
         compatibility = [fsum((float(v), -h, -l)) for v, h, l in zip(k, gh, gl)]
         residual = np.r_[j.T@p, compatibility]
@@ -116,8 +127,9 @@ class RetainedFibreOperator:
         if not np.isfinite(potential): raise ValueError('finite retained fibre potential required')
         self.guard()
         if check is not None: check()
-        return Evaluation(potential, _owned(residual), _owned(hessian), _owned(hessian_low), _owned(k),
-                          response['history'], canonical(response))
+        fields = (potential, _owned(residual), _owned(hessian), _owned(hessian_low), _owned(k),
+                  response['history'], canonical(response))
+        return BoundaryEvaluation(*fields, trial_material=trial_material) if capture_trial else Evaluation(*fields)
 
     def recover(self, rotations, resultants, *, origin=None, check=None):
         self.guard(); u = _frames(rotations, 2, 'retained fibre recovery rotations')

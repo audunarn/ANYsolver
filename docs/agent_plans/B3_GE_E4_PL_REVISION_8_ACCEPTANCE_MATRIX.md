@@ -3128,3 +3128,23 @@ implementation candidate; unchanged laws, tolerances, original screen controls,
 full-first and13trial budget, strict actual merit, legacy dispatch and checkpoints.
 First changed-source.3125 screen must pass before unchanged fullhistories or
 installed candidate campaign. No automatic alternate or failed-campaign renewal.
+
+## 6 October - native material boundary proposal, partial DEV delivery
+
+IMPLEMENTED_NOT_QUALIFIED: new-policy-only fixed-origin fibre boundary proposal,
+owned station compliance, binary64 multiply/add guard, generation/origin/state
+cache and unchanged full-first/strict-merit/physical-acceptance/trial budgets.
+Earlier-source saved .3125 screen passes5Newton/8candidates, eq6.997e-11 and
+ gap1.070e-17; same pending controller and accepted predecessor. Full unchanged
+cohort is2FAIL/6PASS: elastic-shell .5/1 solves, then coarse FD field changes
+activity before derivative errors; J2 history accepts .5/.75/.875, simultaneous
+shell/fibre advancement at .75/.875, then backtrack/cutback exhaustion at .90625.
+Final absent event plus13 historical dyadics rules out proposal starvation alone.
+Failed J2 trial R/K/norms absent; causal/tangent/full lifecycle conclusions remain
+unproved. No new wheel/installed claim. Earlier ca2503 artifact remains old source.
+Post-terminal iterator and unused Evaluation-schema repairs pass15 focused checks;
+non-author review finds no further concrete programming defect. Exact source/run
+versions, failed harnesses and current review: material-dev-20261006-v1 /
+boundary-candidate-v5. No scientific cohort repeated; no fixture/tolerance change,
+new authority, qualification, main/push/release or measured speedup. G3 and full
+G0-G6/F01-F13/V01-V28/B01-B18 completion remain OPEN.
