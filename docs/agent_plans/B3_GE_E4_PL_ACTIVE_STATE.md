@@ -43,14 +43,17 @@ Step-size ratios/cosines do not fit pure h-squared truncation or a sole fixed
 operator-error vector. Cancellation contribution plausible but unbounded; smaller
 operator defect still possible. No coordinate/load/predecessor bug identified.
 Missing data: actual per-sign element force/covector/local-deformation contributions.
-Author /root/native_capacity_candidate prepares only3NEW local-diagnostic
+Author /root/native_capacity_candidate delivered3NEW local-diagnostic
 example/test/doc files. Same boundg13 and fixed h1e-5/1e-6; passive Q4 aliases,
 owned captures, original return objects and finally-restored instrumentation.
 Derived D.T*f labelled diagnostic, not observed intermediate. Ordinary trial-cache
 lifecycle retained; accepted public/bytes preserved and fresh owner closed.
 Q4-only summation bounds do not certify unobserved element arithmetic.
 All new local checks UNRUN; no interpreter/model/test/build authority inferred.
-Next: source review, then concrete scope amendment before numerical execution.
+Source review repaired understated rounding and remainder attribution; all controls UNRUN.
+Pendingv2 proposal/harness uses SAMEledger244.3197409remaining,60sreserve,
+focusedlocalcontrols and ONEg13 capture:1border/5assemblies. No budget renewal.
+Next: approve scope amendment, verify controls, run once, interpret local contributions.
 No automatic finersteps, whole3state rerun, tolerance/denominator change or campaign.
 
 ## Preserved authorities and boundaries

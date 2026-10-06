@@ -4100,3 +4100,18 @@ assessment-dev/root-result-v2.json. Supporting Read review clean on evidence.
 Local Q4 capture source preparation only; no new numerical run authorized.
 G4D/F03,first/simplefold,capacity/stability,external/scale/platform/different-family
 and complete programme acceptance remain OPEN. No main/push/release action.
+
+## 2026-10-06 - local Q4 contribution diagnostic source, UNRUN
+
+Source-only passive capture for boundg13: baseline plus four existing fixedh
+assemblies and one sparse border; original return objects and ordinary caches.
+Owned actual element deformation/force/tangent/residuals; aliases restorefinally;
+full public/checkpoint preservation and durable partial callback controls.
+Independent source review repaired understated computed-result rounding bound
+and misleading non-Q4 attribution of assembled-minus-reconstruction remainder.
+Given-float conditional bounds do not certify internal element arithmetic;
+unchanged1e-6 remains, no fold/operator/capacity acceptance claim.
+All new controls UNRUN. Pendingv2 scope amendment preserves SAME300ledger,
+55.6802591used/244.3197409remaining and60sreserve; no budget renewal.
+No new run until direct human scope approval; originalONE assessment CONSUMED.
+G4D/F03 and complete programme remain OPEN; no main/push/release.
