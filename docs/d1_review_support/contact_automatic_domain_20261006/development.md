@@ -49,3 +49,30 @@ D2 allowance does not renew the held native or frozen campaign authorities.
 Use the same compiler with an existing suitable nonmatching Q4/S3 fixture and
 compare its actual ordinary coupled solver workflow against the explicit pair.
 Keep both-body work, gaps, restart and capability scope separate from role tests.
+
+## Coupled continuation - partial candidate
+
+The attempted single-Q4/two-S3 ordinary penalty path with one free target uz
+timed out at 100.16106090007816 s before returning a phase or checkpoint. Its
+initial unsupported Jet2 choice was refused. The current builder/test isolate
+fresh models and retain fixed skins, offsets, k1000 and the 50 um gap.
+
+A separately named refined two-Q4/two-S3 projected_penalty/Jet2 press uses existing
+exact-support and overlap-local certificate admission. The solver returned in a
+17.00 s test call, but the evidence writer failed on a NumPy boolean before status,
+checkpoint and mechanics gates were saved. Job NONPASS19.40499930002261 s,
+peak189853696 bytes. Constructor refusals for the law token and incomplete
+certificate selection are retained. This is not proven active mechanics or a
+same-mechanics speed comparison. The serializer repair is AST-checked only.
+
+Package source still matches the earlier installed payload. The changed tests,
+example and guide have exact final hashes in raw shell_pair_final_hashes.json;
+failed executed inputs remain in each job. Projected-job effective installed
+JIT0/Numba1/pools1 and import/runtime errors[] were recorded. The killed long FD
+job lacks terminal effective-runtime records; requested settings alone do not
+prove its effective state.
+
+Current cumulative174.026839300175/180 s; remaining5.973160699825 s. A further
+180 s repaired-workflow allocation is requested, not granted. No full solve fits
+the current purse. Actual target motion, gaps, both-body resultants, checkpoint,
+explicit parity, opening/recontact and split restart remain unverified.

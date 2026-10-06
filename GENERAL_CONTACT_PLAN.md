@@ -80,12 +80,33 @@ refusal. Supporting source review found no high-consequence defect; it is not
 engineering acceptance. Numerical/build/install use46.996418299968/180s,
 remaining133.003581700032s; perjob caps unchanged. The oblique persistence
 discriminator NONPASS and pre-child runner syntax failure remain preserved.
-Next extend the same owner and new example/test boundary to an actual
-automatically selected nonmatching Q4/S3 coupled workflow, reusing a suitable
-existing fixture and actual solver; compare against its explicit definition.
-Do not substitute reference-role tests for both-body contact mechanics. Reuse
-the current wheel for unchanged implementation; new test/example edits alone
-do not require another build. No native authority is renewed.
+The next single-Q4/two-S3 penalty/deformable-target attempt exposed its derivative
+boundary: Jet2 selection refused (2.467404s); its actually admitted finite-
+difference route TIMEOUT100.161061s before returning a phase/checkpoint. Preserve
+both results; target motion, lifecycle and explicit/split parity are unverified.
+Do not replay that costly route unchanged.
+
+Prospective next route: reuse the already admitted refined two-Q4/two-S3
+projected_penalty + Jet2 profile for an actual deformable-target press (the
+development profile is labelled projected_penalty_dev; the public law token
+is projected_penalty).
+This is a DIFFERENT law/mesh fixture, not an identical-mechanics speed comparison
+or D1 regrade. Same owner, new example/test boundary; package unchanged. Require
+active mechanics, actual target motion, existing dimensional gap and both-body
+wrench checks; do not count role or open-pose controls as that result.
+That complete-profile press returned in a17.00s test call but report writing
+failed on a NumPy boolean before returned status, checkpoint or mechanical gates
+were saved (job NONPASS19.4049993s). Two constructor refusals, the earlier FD
+timeout and exact failed inputs remain. The serializer is now repaired and
+AST-checked, UNEXECUTED; active mechanics are still unverified.
+
+Current domain allowance174.026839300175/180s;5.973160699825s remain. No full
+press/lifecycle retry fits it. A specific further180s allocation for the repaired
+coherent workflow has been requested; elapsed time is not approval. If granted,
+retain fixed inputs/gates, reuse the matching wheel, and complete actual press,
+both-body gap/wrench/target motion, then lifecycle/parity/split restart within
+that total and existing per-job caps. Otherwise advance a genuinely separate
+required row; preserve this candidate. No native or frozen authority is renewed.
 ## Programme disposition and subsequent order
 
 | Delivery | Current disposition | Required next breadth |

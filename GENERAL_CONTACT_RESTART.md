@@ -3,7 +3,7 @@
 ## Authority
 
 Worktree C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001; parent checkpoint3b2b8647.
+branch codex/contact-main-reconcile-20261001; domain checkpoint7503785f.
 Full C0-C9 ACTIVE/incomplete. Local commits permitted; no push/merge/release,
 protected original checkout access, sibling edits or other-chat messages.
 [Goal](GENERAL_CONTACT_GOAL.md), [plan](GENERAL_CONTACT_PLAN.md),
@@ -30,8 +30,15 @@ admission and independent acceptance remain open.
 Raw C:/ANYworkspaceWork/contact_automatic_domain_20261006: worker_handoff.md,
 summary.json, final_installed_input_hashes.json, installed_payload_parity.json,
 perjob runtime/imports/resources/results. Failed oblique-normal discriminator
-and corrected pre-child harness SyntaxError preserved. No current worker/job live.
-Numerical/build/install cumulative46.996418299968/180s;133.003581700032s remain.
+and corrected pre-child harness SyntaxError preserved. At checkpoint7503785f,
+all first-delivery jobs/workers were terminal; the same owner now continues the
+actual Q4/S3 integration below. Verify its live handle before any numerical work.
+First delivery used46.996418299968s. Subsequent single-face Jet2 refusal and FD
+TIMEOUT100.161061s returned no phase/checkpoint. Separate projected-profile
+constructor refusals are retained. Complete-profile solver then returned but
+NumPy boolean serialization failed before status/checkpoint/gates saved:
+NONPASS19.4049993s, not verified active mechanics. Serializer repaired/AST only.
+Current cumulative174.026839300175/180s;5.973160699825s remain.
 ONE job; perjob120s/953MiB/JIT0/pools1. Native purse below remains separate.
 
 ## Next authorized action / ownership
@@ -39,12 +46,19 @@ ONE job; perjob120s/953MiB/JIT0/pools1. Native purse below remains separate.
 Root owns living records, ledger, integration/Git. /root/pair_geometry_swept owns
 new automatic_domain.py, lazy general_contact/__init__.py exports, new domain
 example/test/guide. /root/curved_switch_review gave Read-only supporting scrutiny.
-Inspect status before continuation; both terminal at this checkpoint. Extend same
-owner to actual automatically selected nonmatching Q4/S3 coupled mechanics using
-an existing suitable fixture, explicit-definition comparison and actual static
-caller. Keep reference roles fixed; do not use role controls as mechanics proof.
-Reuse held wheel when package source is unchanged. Preserve failed evidence and
-all caps. No other-source/native/core edits or old campaign replay.
+Inspect status before continuation. /root/pair_geometry_swept retains ownership of
+automatically selected nonmatching Q4/S3 coupled mechanics. After the above
+decisive FD timeout, root adopted a separate already supported refined two-Q4/
+two-S3 projected_penalty + Jet2 fixture (projected_penalty_dev profile).
+Worker terminal, source held; no job live. New test/example/guide edits are
+unverified after the writer repair; package bytes still match the verified wheel.
+Further180s repaired-workflow allocation is REQUESTED, not yet granted. No full
+press fits the current5.97s purse. If granted, fixed fixture/scales/gates and
+existing perjob caps apply; actual press/gap/wrench/target motion/checkpoint,
+then lifecycle/parity/restart. Different law/mesh from the FD fixture, no speed
+claim or regrade. Otherwise select a genuinely separate required row. Preserve
+failures; no other-source/native/core edits or campaigns. Final source hashes:
+raw shell_pair_final_hashes.json; each failed job retains its executed hashes.
 
 ## Native spatial candidate - held, not removed from goal
 

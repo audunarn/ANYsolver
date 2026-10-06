@@ -65,3 +65,50 @@ records; use `compiled_interaction_name` to look up solver pair results.
 Old core dataclasses, ordinary explicit definitions and restart identities are
 unchanged. Package exports are lazy. This is development implementation and
 focused-check evidence, not engineering qualification or release acceptance.
+
+## Nonmatching shell-pair workflow candidate
+
+`examples.general_contact_automatic_domain.build_shell_pair()` declares one
+Q4 bottom skin and two S3 top faces as two stable bodies. Reference face
+medians 1 m2 and 0.5 m2 select the Q4 integration side automatically. The S3
+physical offset is 0.01 m, thickness is 0.05 m, penalty stiffness is
+1000 N/m3 and the gap budget is 50 um. One target node's uz is free; other
+target translations/rotations are guided or supported, with no added springs.
+The proposed path presses, opens and recontacts through the existing ordinary
+finite-difference penalty profile. `solve_shell_pair()` verifies the compiled
+reference contract immediately before execution.
+
+The opt-in test `test_actual_nonmatching_shell_pair_path_parity_and_restart`
+is selected with `ANY_RUN_AUTOMATIC_SHELL_PAIR=1`. It uses fresh models for
+automatic, explicit, prefix and restart comparisons. Declared input scales
+are 0.02 N, 0.02 Nm and 2e-7 J; both-body wrench and explicit response errors
+must be <=1e-6 independently. Displacement/restart comparison uses rtol1e-7
+and atol1e-9 m, and every accepted phase must satisfy the 50 um gap.
+
+This candidate is **not mechanically verified**. The installed single-Q4
+Jet2 proposal was correctly refused because that derivative profile needs a
+refined source patch. The admitted ordinary penalty caller then timed out
+at 100.161 s before its first full path returned. No accepted phase,
+checkpoint, target displacement, parity or restart result was obtained.
+Fresh-model isolation and before-solve runtime recording added afterward
+have only syntax inspection. Earlier installed shell/rigid evidence remains
+separate; it does not establish shell-pair mechanics.
+
+
+A separate prospective builder, `build_projected_shell_pair()`, uses two
+Q4 source faces, two S3 target faces and the admitted `projected_penalty`
+normal law with Jet2, exact fine-Q1 support and `overlap_local_dev` gap
+certificate. The geometric footprint, skins, k1000 and 50 um gap remain;
+mesh/law differ from the timed-out single-Q4 ordinary penalty fixture.
+It tests one press, not lifecycle or same-mechanics performance parity.
+The test is opt-in with `ANY_RUN_AUTOMATIC_PROJECTED_SHELL_PAIR=1`.
+
+The installed projected solver call returned after a17.00s test call, but
+NumPy boolean report serialization failed before returned status, checkpoint
+or mechanics assertions were saved. This is a retained NONPASS, not an
+active-mechanics success. Two preceding constructor refusals (law token and
+missing overlap-local setting) are also retained. The serializer was repaired
+without another solve; that final test edit is AST-checked, unexecuted.
+Effective installed JITdisabled/Numba1/pools1 were recorded before this solve
+and terminal runtime/import records have no errors. Actual active contact,
+target motion, complete gap/wrench and checkpoint remain unverified.

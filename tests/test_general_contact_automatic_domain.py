@@ -246,3 +246,134 @@ def test_oblique_rigid_component_persistence_is_bit_exact():
             rigid=next(row for row in malformed['participants'] if row['kind']=='rigid')
             rigid['participant']['normal']=invalid
             with pytest.raises(AutomaticContactDomainError):Domain.from_dict(malformed)
+
+
+@pytest.mark.skipif(os.environ.get('ANY_RUN_AUTOMATIC_SHELL_PAIR')!='1',
+                   reason='bounded ordinary Q4/S3 automatic-domain integration')
+def test_actual_nonmatching_shell_pair_path_parity_and_restart():
+    from anysolver import ContactDefinition,solve_static_nonlinear
+    from examples.general_contact_automatic_domain import build_shell_pair,solve_shell_pair
+    model,domain,settings,resolution,path=build_shell_pair()
+    selected=next(row for row in resolution.selections if row.disposition=='resolved')
+    assert (selected.source,selected.target)==('q4_source','s3_target')
+    assert selected.source_reference_median_area_m2==pytest.approx(1.)
+    assert selected.target_reference_median_area_m2==pytest.approx(.5)
+    report=dict(identity=resolution.identity,target_scope='one free S3 uz; remaining target coordinates guided',
+                selection=asdict(selected),settings=asdict(settings),stages={},
+                criteria=dict(force_scale_n=.02,moment_scale_nm=.02,energy_scale_j=2e-7,
+                    scale_basis='k1000 * Q4 area1 * nominal 20um penetration; moment lever1m',
+                    wrench_normalized_tolerance=1e-6,explicit_response_normalized_tolerance=1e-6,
+                    displacement_rtol=1e-7,displacement_atol_m=1e-9,gap_budget_m=5e-5))
+    def save():
+        if os.environ.get('AUTOMATIC_DOMAIN_RESULT'):
+            Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(report,indent=2,default=lambda x:x.tolist()),encoding='utf-8')
+    def record(name,result):
+        report['stages'][name]=dict(status=result.status,failure_reason=result.failure_reason,
+            contact=result.info.get('general_contact'),phases=result.info.get('force_displacement_history'))
+        if result.restart_checkpoint is not None:report['stages'][name]['checkpoint']=result.to_restart_checkpoint()
+        save()
+        assert result.status=='completed',result.failure_reason
+    import anysolver,numba
+    from threadpoolctl import threadpool_info
+    report['runtime_before_solve']=dict(anysolver_path=anysolver.__file__,
+        automatic_domain_path=__import__('inspect').getfile(resolve),
+        jit_disabled=bool(numba.config.DISABLE_JIT),numba_threads=int(numba.get_num_threads()),
+        pools=threadpool_info())
+    save()
+    full=solve_shell_pair(model,domain,settings,resolution,path,emit_restart_checkpoint=True)
+    record('automatic_full',full)
+    phases=full.info['force_displacement_history']
+    assert len(phases)==3
+    assert [row['contact']['active_pressure_dofs']>0 for row in phases]==[True,False,True]
+    wrench_errors=[]
+    for row in phases:
+        contact=row['contact'];force=np.array(contact['integration_force']);target=np.array(contact['target_force'])
+        moment=np.array(contact['integration_moment']);target_moment=np.array(contact['target_moment'])
+        wrench_errors.append(dict(force=float(np.linalg.norm(force+target)/.02),
+                                  moment=float(np.linalg.norm(moment+target_moment)/.02)))
+        assert contact['wrench_origin_m']==[0.,0.,0.]
+        assert contact['gap_tolerance_met']
+        assert contact['minimum_gap']>=-5e-5
+    report['phase_wrench_errors']=wrench_errors
+    target_dof=model.mesh.dof_manager.get_node_dofs(7)[2]
+    report['target_node7_uz_m']=float(full.displacements[target_dof]);save()
+    assert abs(full.displacements[target_dof])>1e-10
+    assert max(error for row in wrench_errors for error in row.values())<=1e-6
+    assert phases[1]['contact']['penalty_energy']==0.
+    assert all(phases[i]['contact']['penalty_energy']>0 for i in (0,2))
+    original=ContactInteraction('ordinary-explicit','q4_source','s3_target',1000.,5e-5)
+    explicit_model,explicit_domain,explicit_settings,explicit_resolution,explicit_path=build_shell_pair()
+    assert explicit_resolution.identity==resolution.identity
+    explicit=ContactDefinition(explicit_resolution.definition.surfaces,(),(original,))
+    verify(explicit_model,explicit_domain,explicit_resolution,explicit_settings)
+    plain=solve_static_nonlinear(explicit_model,contact=explicit,contact_settings=explicit_settings,
+        contact_path_program=explicit_path,max_iterations=15,emit_restart_checkpoint=True)
+    record('explicit_full',plain)
+    np.testing.assert_allclose(full.displacements,plain.displacements,rtol=1e-7,atol=1e-9)
+    parity_errors={}
+    for key in ('integration_force','target_force','integration_moment','target_moment','minimum_gap','penalty_energy'):
+        np.testing.assert_allclose(full.info['general_contact'][key],plain.info['general_contact'][key],rtol=1e-6,atol=1e-9)
+        scale=2e-7 if key=='penalty_energy' else (5e-5 if key=='minimum_gap' else .02)
+        parity_errors[key]=float(np.linalg.norm(np.asarray(full.info['general_contact'][key])-plain.info['general_contact'][key])/scale)
+    report['explicit_normalized_response_errors']=parity_errors;save()
+    assert max(parity_errors.values())<=1e-6
+    prefix_model,prefix_domain,prefix_settings,prefix_resolution,prefix_path=build_shell_pair()
+    assert prefix_resolution.identity==resolution.identity
+    half=solve_shell_pair(prefix_model,prefix_domain,prefix_settings,prefix_resolution,prefix_path,
+        max_load_factor=2/3,emit_restart_checkpoint=True)
+    record('automatic_open_prefix',half)
+    assert half.info['general_contact']['active_pressure_dofs']==0
+    restart_model,restart_domain,restart_settings,restart_resolution,restart_path=build_shell_pair()
+    assert restart_resolution.identity==resolution.identity
+    resumed=solve_shell_pair(restart_model,restart_domain,restart_settings,restart_resolution,restart_path,
+        restart_checkpoint=half.to_restart_checkpoint(),emit_restart_checkpoint=True)
+    record('automatic_resumed',resumed)
+    np.testing.assert_allclose(full.displacements,resumed.displacements,rtol=1e-7,atol=1e-9)
+    changed_model,base_domain,changed_settings,_,changed_path=build_shell_pair()
+    changed=replace(base_domain,name='changed-shell-provenance')
+    changed_resolution=resolve(changed_model,changed,changed_settings,analysis_control='displacement')
+    with pytest.raises(ValueError,match='incompatible'):
+        solve_shell_pair(changed_model,changed,changed_settings,changed_resolution,changed_path,
+                         restart_checkpoint=half.to_restart_checkpoint())
+    report['explicit_parity']=True;report['split_restart_parity']=True;report['provenance_refusal']=True;save()
+
+
+@pytest.mark.skipif(os.environ.get('ANY_RUN_AUTOMATIC_PROJECTED_SHELL_PAIR')!='1',
+                   reason='bounded refined projected Q4/S3 automatic-domain press')
+def test_actual_projected_shell_pair_press_and_checkpoint():
+    from examples.general_contact_automatic_domain import build_projected_shell_pair,solve_shell_pair
+    import anysolver,numba
+    from threadpoolctl import threadpool_info
+    model,domain,settings,resolution,path=build_projected_shell_pair()
+    report=dict(fixture='refined_projected_penalty_separate_from_single_Q4_penalty',
+        identity=resolution.identity,selections=[asdict(x) for x in resolution.selections],
+        domain=domain.to_dict(),settings=asdict(settings),
+        criteria=dict(force_scale_n=.02,moment_scale_nm=.02,energy_scale_j=2e-7,
+            scale_basis='k1000 * total Q4 area1 * nominal20um penetration; lever1m',
+            wrench_normalized_tolerance=1e-6,gap_budget_m=5e-5),
+        runtime_before_solve=dict(anysolver_path=anysolver.__file__,
+            automatic_domain_path=__import__('inspect').getfile(resolve),
+            jit_disabled=bool(numba.config.DISABLE_JIT),numba_threads=int(numba.get_num_threads()),
+            pools=threadpool_info()))
+    def save():
+        if os.environ.get('AUTOMATIC_DOMAIN_RESULT'):
+            Path(os.environ['AUTOMATIC_DOMAIN_RESULT']).write_text(json.dumps(report,indent=2,default=lambda x:x.tolist()),encoding='utf-8')
+    save()
+    result=solve_shell_pair(model,domain,settings,resolution,path,emit_restart_checkpoint=True)
+    report.update(status=result.status,failure_reason=result.failure_reason,
+        contact=result.info.get('general_contact'),phases=result.info.get('force_displacement_history'))
+    if result.restart_checkpoint is not None:report['checkpoint']=result.to_restart_checkpoint()
+    save()
+    assert result.status=='completed',result.failure_reason
+    contact=result.info['general_contact']
+    force_error=float(np.linalg.norm(np.array(contact['integration_force'])+contact['target_force'])/.02)
+    moment_error=float(np.linalg.norm(np.array(contact['integration_moment'])+contact['target_moment'])/.02)
+    target_dof=model.mesh.dof_manager.get_node_dofs(9)[2]
+    report.update(force_balance_error=force_error,moment_balance_error=moment_error,
+        target_node9_uz_m=float(result.displacements[target_dof]));save()
+    assert contact['active_pressure_dofs']>0 and contact['penalty_energy']>0.
+    assert contact['gap_tolerance_met'] and contact['minimum_gap']>=-5e-5
+    assert contact['wrench_origin_m']==[0.,0.,0.]
+    assert max(force_error,moment_error)<=1e-6
+    assert abs(result.displacements[target_dof])>1e-10
+    assert report['checkpoint']
