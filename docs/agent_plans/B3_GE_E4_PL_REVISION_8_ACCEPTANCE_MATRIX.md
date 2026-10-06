@@ -3962,3 +3962,26 @@ its own source/wheels, not this new candidate. Fresh300s focused source/legacy
 and installed verification is requested; existing120s/150s scopes are not
 transferred. G4D capacity, physical/mesh/unit/limit/descending branch, F03,
 external/scale/platform and all aggregate programme/release duties stay OPEN.
+## 6 October 2026: director metric scoped installed development PASS
+
+Candidate4295a3da; human-approved fresh300s verification, separate from old
+native300/120 and consumer150 allowances. Source17/17 and installed17/17 pass
+without failures/skips. New13 cases cover owned definitions, drill/tilt,
+objectivity, actual-update derivatives, predictor norm, domain/cutback work,
+loaded-prefix restart/continue, cancellation and atomic identity/refusal paths.
+Affected legacy4 cases pass. Standalone new example remains UNRUN.
+One wheel0.4.7 SHA6464174eb675c4eafd72f01a8ac707bb44d39946c5a7919126e316bc148a63c7;
+all430 source/wheel/site modules match,997 actual imported files. CPU0/pools1/
+Numba1/JIToff before/after; installed sampled tree peak203149312bytes. Four jobs
+used73.2825702s/300s;226.7174298s remains only in this approved verification
+scope. All jobs terminal. Failedv1 preparation retained; correctedv2 input
+closure and pending-authority refusal proof preserved before Python launch.
+Evidence: raw/r8-native-director-arc-metric-dev-20261006-v1/
+root-installed-director-proof-v2.json, exact process receipts/ledger, input
+snapshots, runtime/import/payload bindings, full reports and stdout/stderr.
+The complete-slice source review and root evidence inspection leave no blocking
+DEV finding. Different-family scientific acceptance is not supplied. This does
+not accept F03, engineering mesh/unit invariance, capacity/first limit point/
+descending branch, G4D, external/scale/platform or aggregate G0-G6 obligations.
+No element/material/attachment equation, default, tolerance or version changed.
+No main merge, push, capacity/body/closed campaign or release authority follows.

@@ -143,7 +143,7 @@ publication refuse crossing old/new metric prefixes. Fresh restoration remains
 the existing strict public endpoint validation route; the new option supplies
 no codec bypass or synthetic history substitution.
 
-## Pending verification
+## Scoped development verification, 6 October 2026
 
 `tests/test_stiffened_shell_native_director_arc_metric.py` specifies immutable
 ownership, exact admission, pure drill versus tilt, rotated-parent drill null,
@@ -160,11 +160,27 @@ input. It refuses the helper's fresh-load fallback. That fixture, its restored
 material histories, and the common fixed predecessor remain provenance; no raw
 evidence was traversed or altered for this source change.
 
-All test functions and `examples/stiffened_shell_native_director_arc_metric.py`
-remain **UNRUN**. No interpreter, build/install, numerical benchmark, loaded
-fixture restore, or numerical verification was executed. Later execution needs
-separate authority and must preserve historical failed evidence and scientific
-acceptance gates. This candidate does not demonstrate the full G4D capacity goal.
+At source commit `4295a3da`, the tests and example were unrun. Under the subsequently
+approved fresh 300-second allowance, **17 source and 17 installed checks passed**,
+without failures or skips. These include actual-update derivatives, admissibility,
+loaded-prefix continuation, fresh restore/continue, cancellation and atomic
+refusals, plus four affected legacy cases. The standalone example remains unrun.
+The earlier preparation's nonexistent input was corrected before launching Python;
+its failed preparation and the corrected version are preserved.
+
+One isolated 0.4.7 wheel was built and installed. All 430 package modules match
+source, wheel and installed site; 997 actually imported files were recorded.
+Before/after checks confirm CPU affinity `[0]`, numerical pools and Numba at one
+thread, and disabled JIT. Installed sampled process-tree peak memory was
+203,149,312 bytes. Four processes used **73.2825702 seconds**, leaving
+226.7174298 seconds in this exact verification scope. No old allowance was reused.
+
+Evidence: `.qualification/b3-ge-e4-pl/r8-native-director-arc-metric-dev-20261006-v1/`
+contains versioned inputs, commands, process-wall ledger, reports, import/payload
+bindings and `root-installed-director-proof-v2.json`. Wheel SHA256:
+`6464174eb675c4eafd72f01a8ac707bb44d39946c5a7919126e316bc148a63c7`.
+This is limited installed development evidence. Physical mesh/unit qualification,
+capacity, a first limit point, descending branch and complete G4D remain open.
 
 ## Complete-slice source review
 
@@ -176,7 +192,6 @@ The final source assessment found no blocking defect. Root inspected the source
 and scoped changes; Git whitespace checks passed. No Python or numerical check
 ran. This review is not installed verification or different-family acceptance.
 
-Next verification requires a fresh bounded allowance: focused new metric and
-affected legacy checks, one isolated wheel build/install, and the installed
-loaded-prefix/restart/refusal workflow. Existing remaining Jacobian/consumer
-allowances exclude this new slice. Preserve their accounting without transfer.
+The approved bounded source and installed verification is now complete. That
+does not supply different-family scientific acceptance, F03 authority or a
+capacity campaign. Existing Jacobian/consumer allowances remain separate.

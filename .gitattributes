@@ -449,3 +449,4 @@ src/anysolver/_stiffened_shell_arc_metric.py -text whitespace=cr-at-eol
 tests/test_stiffened_shell_native_director_arc_metric.py -text whitespace=cr-at-eol
 examples/stiffened_shell_native_director_arc_metric.py -text whitespace=cr-at-eol
 docs/development/stiffened_shell_native_director_arc_metric.md -text whitespace=cr-at-eol
+/.qualification/b3-ge-e4-pl/r8-native-director-arc-metric-dev-20261006-v1/** -text -whitespace

@@ -1,7 +1,7 @@
 # Current state - 6 October 2026
 
-Revision8 goal ACTIVE after human approval of120s native directional and150s
-consumer verification/repair; confirmed by goal tool. Complete G0-G6/F01-F13/
+Revision8 goal ACTIVE after human approval of fresh300s director-metric
+verification/repair. Complete G0-G6/F01-F13/
 V01-V28/B01-B18, physical/external/scale/platform/consumer/release duties remain
 incomplete. Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
 branch codex/stiffened-main-reconcile-20261001; actual Git is authoritative.
@@ -16,14 +16,18 @@ Source candidate4295a3da: explicit NativeDirectorChordMetric for admitted flat
 native material BL5, shell position/director and full beam frames. Predictor,
 actual-update path rows, typed initial-domain cutback and distinct metric restart
 identity are integrated. Legacy full-frame default/equations are preserved.
-Independent complete-slice source review found no blocking defect after guard
-placement/retry and full-record atomicity-test repairs. New tests/example UNRUN;
-Git whitespace checks only. No interpreter/build/numerical campaign ran.
-Next: fresh300s cumulative focused source/legacy, one wheel build/install and
-installed loaded-prefix/restart/refusal verification, 60s final-check reserve,
-existing2GiB/CPU0/one-thread/JIToff/one-job limits. Approval is still required;
-remaining120s/150s allowances do not cover this slice. Body/F03/main/release and
-closed campaigns remain unavailable. Then address genuine physical capacity.
+Independent source review found no blocking defect after guard/retry and full
+atomicity-test repairs. Source17/17 and installed17/17 PASS, no skips/failures;
+standalone example UNRUN. Wheel6464174e binds all430 source/wheel/site modules,
+997 actual imports. CPU0/pools1/Numba1/JIToff confirmed before/after; installed
+sampled tree peak203149312bytes. Scope includes loaded-prefix restore/continue,
+old/new identity refusal, actual-update rows and atomic cancellation.
+Fresh300s:73.2825702used/226.7174298remaining; four jobs terminal. Raw
+r8-native-director-arc-metric-dev-20261006-v1/root-installed-director-proof-v2.json
+records exact evidence. Failedv1 preparation preserved; correctedv2 inputs.
+Next: genuine physical capacity/mesh/unit obligations with a bounded discriminator
+and its specific authority. This allowance excludes capacity/body/F03/closed
+campaigns/main/push/release; old120s/150s remain separate. G0-G6 still incomplete.
 
 Prior native material BL5 candidate9bc30096 has LIMITED INSTALLED DEVELOPMENT
 verification: one source core and seven distinct installed cases. Those results
