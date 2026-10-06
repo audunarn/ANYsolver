@@ -82,6 +82,7 @@ from ._stiffened_shell_b2_q4_panel_experimental import (
     ExperimentalB2LoadedPointCapabilities, B2_FIXED_END_LOADED_POINT_TRACE_V1_DEV,
     B2BodyLoadedPanelSelectedCase, B2BodyLoadedFootprintSelectedCase,
     B2FootprintReferenceModesResult, B2ModalConstraintRow,
+    B2PhysicalRigidFootprintSelectedCase, B2PhysicalRigidFootprintBatchResult,
     ExperimentalB2Q4FootprintResult, ExperimentalB2Q4FootprintSelectedCase,
     ExperimentalB2Q4FootprintBatchResult, ExperimentalB2Q4FootprintCapabilities,
 )
@@ -279,6 +280,7 @@ def create_analysis(*, definition, resources=None):
 
 __all__ = [
     "B2PhysicalRigidFootprintDefinition", "B2PhysicalRigidFootprint", "B2PhysicalRigidFootprintSelection",
+    "B2PhysicalRigidFootprintSelectedCase", "B2PhysicalRigidFootprintBatchResult",
     "B2PhysicalRigidFootprintWrench", "B2PhysicalFootprintBucklingRequest", "B2PhysicalFootprintBucklingResult",
     "B2_PHYSICAL_RIGID_FOOTPRINT_DIRECTOR_REFERENCE_V1_EXPERIMENTAL",
     "AdaptiveIncrementControl", "IncrementAttempt", "FiniteIncrementFailure",

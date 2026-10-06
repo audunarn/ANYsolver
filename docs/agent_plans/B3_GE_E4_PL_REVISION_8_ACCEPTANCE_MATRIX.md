@@ -3590,3 +3590,39 @@ differentfamily/platform/external/refinement or completeprogramme acceptance.
 Next public units/member-reversal/datum/cancellation/bending-preload controls;
 physical external/drilling/thickness/refinement and broaderattachments stayOPEN.
 No bodyretry/formalF03/closedcampaign/sibling/contact/main/push/release authority.
+
+
+## 2026-10-06 physical B2 footprint selected-batch source development
+
+Implemented/source-development verified, not scientific acceptance or installed
+batch verification. Existing five-row physical law and six-row/POINT identities
+remain separate. Typed physical selected-case/batch results preserve requested
+DOF/reaction/member/wrench outputs and compact constraints with global row IDs.
+1/10/100 cases use one eligible eager factor and single RHS chunks. Complete-case
+pre/mid/final cancellation/close, inventory/value mutation, callback errors and
+failed-prefix/factory-factor failure with nonzero offset controls pass. Actual
+two-disjoint-pad selection checks only nonfirst pad rows20..39; no unselected
+wrench/full per-case arrays. Typed-body refusal is metadata only: NO BODY RUN.
+Full public isotropic fixture dimensional scales length.25/4 and force2/3, global
+rotation and endpoint reversal preserve responses/wrenches/energy within scoped
+limits; these are physical SI rescalings, not alternate units in _m/_N fields.
+29uniquePASS by impact reuse: V1 24PASS/2FAIL, V2 fiveaffected/newPASS. Both original
+failures incorrectly expected lazy factorization; preserved, assertions corrected
+to entry-count invariance. No product law/tolerance repair. V1 PID117008 terminal
+10.819680700078607s224751616B; V2 PID127120 terminal5.588849199935794s220495872B.
+Pinned numerical CI/affinity0/pools1/Numba1/JIToff/unforced effective pre/post;
+serial600s/2GiB sampled-tree limits, no peak-memory/performance qualification.
+Finalpanel5f67a9604775dec26f9a0ada4703ee01b32ce4895a5934d5e92a090a0fd5f5a5
+differs only by two selector annotations from tested panel a2474667. Bodies are
+AST-identical; source evidence reuses unchanged bodies, not exact final bytes.
+Raw r8-b2-physical-footprint-batch-dev-20261006-v1/ manifestV2 SHA1ac0cce9d73f3e03
+feafdaccda19623b641116656a528a149d491965cb7cf079 corrects duplicate normalized
+path keys in preserved manifestV1/handoffV1. Root independently verifies34raw
+bindings,6finalsource hashes,12snapshots,29case identities and246actual source
+import origins/run. Origin records do not prove every loaded module's bytes.
+Non-author OpenAI review e90e25571fc8842e90450835b1195551f7393f330426cb30df18aac62
+bb58e9e closes returned code/coverage/metadata findings; not different-family
+scientific acceptance. root-source-verification-v1.json binds the exact scope.
+Installed new-batch workflow, broader external/refinement/drilling/attachment/
+consumer/platform and aggregate B05-B07/F04/F12/F13/G4/G6 remain unfinished.
+No bodyretry/F03/closedcampaign/sibling/contact/main/push/release authority.

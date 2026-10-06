@@ -422,3 +422,7 @@ tests/data/native_s3_fibre_history/** -text
 /examples/stiffened_shell_b2_physical_rigid_footprint.py -text whitespace=cr-at-eol,-blank-at-eof
 /docs/reference_cases/stiffened_shell_b2_physical_rigid_footprint.md -text whitespace=cr-at-eol,-blank-at-eof
 /.qualification/b3-ge-e4-pl/r8-b2-physical-rigid-footprint-installed-dev-20261006-v1/** -text -whitespace
+
+.qualification/b3-ge-e4-pl/r8-b2-physical-footprint-batch-dev-20261006-v1/** -text -whitespace
+
+tests/test_stiffened_shell_b2_physical_footprint_batch.py -text whitespace=cr-at-eol,-blank-at-eof

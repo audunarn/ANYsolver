@@ -88,8 +88,6 @@ def test_explicit_refusals_and_legacy_request(owner):
         owner.buckling(api.B2ReferenceBucklingRequest(preload(),traction_sources()))
     with pytest.raises(ValueError,match="mass"):
         owner.modes(api.B2ReferenceModesRequest(count=1))
-    with pytest.raises(ValueError,match="batched"):
-        owner.solve_linear_many((("case",preload()),),selected_dofs=(0,))
     with pytest.raises(ValueError):owner.solve_linear(preload(),selected_footprints=api.B2NodalRigidFootprintSelection(("physical-left",)))
     with pytest.raises(ValueError,match="patch_cells"):
         replace(definition().physical_footprints[0],patch_cells=())

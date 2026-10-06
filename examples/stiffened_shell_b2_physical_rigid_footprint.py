@@ -26,4 +26,15 @@ def workflow():
         return dict(static_status=static.status,status=spectral.status,load_factors=spectral.load_factors,failure_reason=spectral.failure_reason,policy=spectral.policy,production_qualified=False)
     finally:owner.close()
 
+def batch_workflow(count=10):
+    owner=api.create_analysis(definition=definition())
+    try:
+        selection=api.B2PhysicalRigidFootprintSelection(("physical-left",))
+        result=owner.solve_linear_many(tuple((f"case-{i}",(i+1)*preload()) for i in range(count)),
+            selected_dofs=(12,13,36,41),selected_footprints=selection,recover_members={"beam-right":(0.,.5,1.)})
+        return dict(status=result.status,case_count=len(result.cases),factorization_count=result.factorization_count,
+            solve_count=result.solve_count,maximum_rhs_chunk=result.maximum_rhs_chunk,
+            footprint_law_id=result.footprint_law_id,production_qualified=False)
+    finally:owner.close()
+
 if __name__=="__main__":print(json.dumps(workflow(),indent=2))

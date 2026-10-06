@@ -490,6 +490,22 @@ class B2PhysicalRigidFootprintResult(ExperimentalB2Q4PanelResult):
 
 
 @dataclass(frozen=True)
+class B2PhysicalRigidFootprintSelectedCase(ExperimentalB2Q4PanelSelectedCase):
+    """Only requested physical outputs from one complete batch case."""
+    footprint_wrenches: tuple[B2PhysicalRigidFootprintWrench, ...] = ()
+    constraint_multipliers: tuple[float, ...] = ()
+    constraint_gaps: tuple[float, ...] = ()
+    footprint_law_id: str = PHYSICAL_FOOTPRINT_LAW_ID
+
+
+@dataclass(frozen=True)
+class B2PhysicalRigidFootprintBatchResult(ExperimentalB2Q4PanelBatchResult):
+    selected_footprints: tuple[str, ...] = ()
+    constraint_rows: tuple = ()
+    footprint_law_id: str = PHYSICAL_FOOTPRINT_LAW_ID
+
+
+@dataclass(frozen=True)
 class ExperimentalB2Q4FootprintSelectedCase(ExperimentalB2Q4PanelSelectedCase):
     footprint_wrenches: tuple[B2NodalRigidFootprintWrench, ...] = ()
 
@@ -1229,7 +1245,7 @@ class ExperimentalB2Q4PanelAnalysis:
         if self._physical_footprint_law:
             return B2PhysicalRigidFootprintCapabilities(
                 attachment="physical rigid-region translations and director tangents; five rows per selected node",
-                operations=("solve_linear","buckling","close"),
+                operations=("solve_linear","solve_linear_many","buckling","close"),
                 spectral_domain="explicit physical-footprint conservative reference buckling request; modes unavailable without mass contract",
                 footprints=self.footprints)
         if self._modal_only:
@@ -1581,7 +1597,7 @@ class ExperimentalB2Q4PanelAnalysis:
         return ExperimentalB2Q4PanelResult(*args, **kwargs)
 
     def solve_linear(self, load, *, recover_members=None,
-                     selected_footprints: B2NodalRigidFootprintSelection | None = None
+                     selected_footprints: B2NodalRigidFootprintSelection | B2PhysicalRigidFootprintSelection | None = None
                      ) -> ExperimentalB2Q4PanelResult:
         if self._closed:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
@@ -1820,7 +1836,7 @@ class ExperimentalB2Q4PanelAnalysis:
             self, cases: Sequence[tuple[str, object]], *,
             selected_dofs: Sequence[int],
             selected_points: Sequence[str] = (),
-            selected_footprints: B2NodalRigidFootprintSelection | None = None,
+            selected_footprints: B2NodalRigidFootprintSelection | B2PhysicalRigidFootprintSelection | None = None,
             recover_members: Mapping[str, Sequence[float]] | None = None,
             cancellation_token: CancellationToken | None = None,
             on_case: Callable[[str], None] | None = None,
@@ -1840,9 +1856,8 @@ class ExperimentalB2Q4PanelAnalysis:
             raise ExperimentalB2Q4PanelError("experimental panel is closed")
         if self._modal_only:
             raise ValueError("free-free modal-only policy does not admit static solves")
-        if self._physical_footprint_law:
-            raise ValueError("physical rigid footprint batched recovery not implemented")
-        chosen_footprints = checked_selection(selected_footprints, self.footprints)
+        selector = checked_physical_selection if self._physical_footprint_law else checked_selection
+        chosen_footprints = selector(selected_footprints, self.footprints)
         try:
             chosen = tuple(selected_dofs)
             chosen_points = tuple(selected_points)
@@ -1868,6 +1883,11 @@ class ExperimentalB2Q4PanelAnalysis:
         # Snapshot their inventory/references now; later load-value mutation
         # remains checked by the existing bounded fingerprints below.
         submitted = tuple((case_id, load) for case_id, load in submitted)
+        if self._physical_footprint_law and any(isinstance(load,B2ReferenceBodyLoad) for _,load in submitted):
+            raise ValueError("physical footprint body-load driver not admitted")
+        selected_rows = tuple((item.row_start+j,item.footprint_id,item.shell_node,item.beam_node,component)
+            for item in self._footprint_incidence if item.footprint_id in chosen_footprints
+            for j,component in enumerate(("translation_x","translation_y","translation_z","director_1","director_2"))) if self._physical_footprint_law else ()
         if cancellation_token is not None and not isinstance(
                 cancellation_token, CancellationToken):
             raise TypeError("B2 panel cancellation token required")
@@ -1907,6 +1927,9 @@ class ExperimentalB2Q4PanelAnalysis:
             result_type = (ExperimentalB2Q4FootprintBatchResult if self.footprints
                            else ExperimentalB2Q4PanelBatchResult)
             extra = {"selected_footprints": chosen_footprints} if self.footprints else {}
+            if self._physical_footprint_law:
+                result_type = B2PhysicalRigidFootprintBatchResult
+                extra["constraint_rows"] = selected_rows
             return result_type(
                 status, chosen, chosen_points, tuple(completed),
                 factorization_count, solve_count,
@@ -1932,6 +1955,11 @@ class ExperimentalB2Q4PanelAnalysis:
             case_type = (ExperimentalB2Q4FootprintSelectedCase if self.footprints
                          else ExperimentalB2Q4PanelSelectedCase)
             extra = {"footprint_wrenches": result.footprint_wrenches} if self.footprints else {}
+            if self._physical_footprint_law:
+                case_type = B2PhysicalRigidFootprintSelectedCase
+                row_indices = tuple(row[0] for row in selected_rows)
+                extra.update(constraint_multipliers=tuple(result.constraint_multipliers[i] for i in row_indices),
+                             constraint_gaps=tuple(result.constraint_gaps[i] for i in row_indices))
             if isinstance(load, B2ReferenceBodyLoad):
                 case_type = B2BodyLoadedFootprintSelectedCase if self.footprints else B2BodyLoadedPanelSelectedCase
                 extra.update(body_model_identity=result.body_model_identity,

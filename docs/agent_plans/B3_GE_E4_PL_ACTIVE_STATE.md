@@ -119,9 +119,15 @@ payloads,434source+build-metadata bindings,10inputs,246actualwheelimports and
 Raw r8-b2-physical-rigid-footprint-installed-dev-20261006-v1/: manifestSHA
 bf7f3b99/handoff/root-installed-verification-v1.json. No product drift/rebuild.
 Installed child117840 terminal42.6933s220889088B sampled RSS. No qualification.
-NEXT public full-model units/member-
-reversal and physical/external/drilling/refinement obligations. New mixed POINT/
-pad, batches/modes/S3/lines/distributing breadth and completeF04/F12/B10/B14 OPEN.
+B2 physical-pad batches SOURCE DEVELOPMENT VERIFIED by impact: 29uniquePASS,
+1/10/100 cases with one eligible factor and bounded selected recovery; nonfirst-
+pad row20..39, lifetime/mutation/failure and public dimensional/frame/reversal
+controls pass. V1 two eager-factor test-premise failures preserved; V2fivePASS.
+Finalpanel5f67a960 differs only by two selector annotations from tested bodies.
+Raw r8-b2-physical-footprint-batch-dev-20261006-v1/ manifestV2 SHA1ac0cce9,
+root-source-verification-v1.json/non-author review bind exact scope. No scientific
+acceptance. NEXT commit and fresh installed batch verification. Mixed POINT/pad,
+modes/S3/lines/distributing, external/refinement and completeF04/F12/B10/B14 OPEN.
 Body approval PENDING; no body/F03/closedcampaign restart. No live owned job.
 
 ## Preserved restrictions and history
