@@ -112,6 +112,16 @@ solver-side archive family for these three ordinary analysis results; applicatio
 adapters, admission and C9 engineering acceptance remain open.
 [Arc export evidence](docs/d1_review_support/contact_transient_archive_20261006/arc_development.md).
 
+C9 native checkpoint DATA consumption now has original source4/installed4
+controls and root543payload/189import parity, without native construction/replay.
+The file example is repaired to cap its read before allocation; stdlib check PASS.
+New full pytest/example-import checks at repaired hashes remain UNEXECUTED;
+reader/lazy-export package hashes are unchanged. The SAME archive purse now has
+177.698497499572/180s spent,2.301502500428s remaining across34terminaljobs.
+Incidental V19 packaging supplies no C6 mechanics evidence. Broader native,
+application and C9 acceptance remains open.
+[Native DATA evidence](docs/d1_review_support/contact_transient_archive_20261006/native_reader_development.md).
+
 ## Preserved history and decisions
 
 The [unaltered prior goal](GENERAL_CONTACT_GOAL_HISTORY_20261005.md) and [prior plan](GENERAL_CONTACT_PLAN_HISTORY_20261005.md) retain all development decisions, counterexamples, failures, references and source identities. Unaffected scientific contracts, registered criteria, frozen/consumed authorities and assessed capability boundaries remain binding. Historical chronological next actions are superseded by this live goal/plan; this consolidation changes no mechanics or acceptance target and authorizes no repeated campaign.

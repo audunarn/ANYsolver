@@ -5,6 +5,21 @@ This plan changes the route, not scientific obligations or execution authority.
 
 ## Current delivered development
 
+### Delivered bounded C9 native checkpoint DATA consumer
+
+The existing physical-fibre whole-curve beam-pair capsule now has an additive
+inert public reader, immutable original bytes and detached complete data views.
+Original source4/installed4 controls PASS; root543payload/189import checks match.
+No native construction, mechanical replay, restart or application admission ran.
+Supporting review found and repaired the example's unbounded file read;
+0.139554s stdlib file-I/O control PASS. New full pytest/import checks at repaired
+example/test hashes are UNEXECUTED; packaged reader/lazy exports are unchanged.
+The SAME C9 purse records177.698497499572/180s used across34terminaljobs,
+2.301502500428s remains. No additional build/impact/native authority is inferred.
+Incidental packaging of V19 source does not qualify its C6 mechanics.
+[Evidence](docs/d1_review_support/contact_transient_archive_20261006/native_reader_development.md),
+[usage](docs/GENERAL_CONTACT_NATIVE_CHECKPOINT_RESULTS_DEV.md).
+
 ### Delivered C6 development: beam/deformable-S3 impact
 
 The shared Newmark route now executes elastic B2/B3 round-centreline contact
@@ -84,9 +99,10 @@ additive result method/lazy exports touch the arc module; driver AST is unchange
 This advances C9 persistence, not mechanical/application admission or acceptance.
 [Arc export evidence](docs/d1_review_support/contact_transient_archive_20261006/arc_development.md).
 
-The SAME archive purse now records157.759157099645/180s spent,22.240842900355s
-remaining across29terminaljobs. Earlier42.2498s remainder is historical; no other
-authority was consumed or renewed. Broader application adapters, persistence,
+The arc checkpoint recorded157.759157099645/180s spent across29terminaljobs.
+The native DATA-reader slice above now brings that SAME archive purse to
+177.698497499572/180s across34terminaljobs,2.301502500428s remaining.
+Earlier residues are historical; no other authority was consumed or renewed. Broader application adapters, persistence,
 visualization, admission and package completion remain required. Select the next
 unblocked complete programme outcome by dependency and valid authority; no new
 mechanical campaign fits the held native/domain/C5 residues.

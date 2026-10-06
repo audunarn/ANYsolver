@@ -35,6 +35,8 @@ _STATIC_ARCHIVE_EXPORTS = frozenset({'StaticContactArchiveError','ContactStaticA
     'serialize_static_contact_results','read_static_contact_results'})
 _ARC_ARCHIVE_EXPORTS = frozenset({'ArcContactArchiveError','ContactArcArchive',
     'serialize_arc_contact_results','read_arc_contact_results'})
+_NATIVE_RESULTS_EXPORTS = frozenset({'NativeContactCheckpointResults',
+    'NativeContactCheckpointResultError', 'read_native_contact_checkpoint_results'})
 _AUTOMATIC_EXPORTS = frozenset({
     'AutomaticContactDomainError', 'AutomaticContactParticipant',
     'AutomaticContactDefaults', 'AutomaticContactDomain',
@@ -68,6 +70,8 @@ def __getattr__(name: str):
         module = 'static_results_archive'
     elif name in _ARC_ARCHIVE_EXPORTS:
         module = 'arc_results_archive'
+    elif name in _NATIVE_RESULTS_EXPORTS:
+        module = 'native_checkpoint_results'
     elif name in _AUTOMATIC_EXPORTS:
         module = 'automatic_domain'
     elif name == 'NativeContactActivationSettings':
@@ -87,6 +91,7 @@ __all__ = [
     *sorted(_ARCHIVE_EXPORTS),
     *sorted(_STATIC_ARCHIVE_EXPORTS),
     *sorted(_ARC_ARCHIVE_EXPORTS),
+    *sorted(_NATIVE_RESULTS_EXPORTS),
     *sorted(_AUTOMATIC_EXPORTS),
     "NativeS3ContactPair", "create_native_contact_analysis",
     "NativeContactActivationSettings",
