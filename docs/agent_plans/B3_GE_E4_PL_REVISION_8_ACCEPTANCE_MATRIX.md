@@ -3261,3 +3261,33 @@ non-author Read review SHA995fe368850659b8d54dacb3967900736959df63da0a3fdae3cff9
 No consequential defect identified in bounded source scope; actual specimen and
 Lo-preserving downstream material/trace consumers untested. Different-family
 scientific acceptance and all aggregate G0-G6/F/V/B duties remain open.
+
+
+## 6 October 2026 - represented body-workflow integration, admission failure
+
+PARTIAL_IMPLEMENTATION_ADMISSION_FAILED; no successful body-work discriminator.
+Complete both-part work/trace/material consumer reviewed with strict virgin-elastic
+superposition and actual guards. Independent review found beam-local/full-owner
+slot mismatch; fixed before execution, complete mocked production-caller regression
+added. Diagnostic-preservation delta root-inspected, exact review versions retained.
+V1 consumer5PASS0.32s. Immutable historical wheelb3d5f572, all424 operator module
+bytes/all242 actual imports, exact CI, affinity[0]/pools1/JIT-off/unforced backend
+verified. Original V2 load/density/common-wrench preflight matches exactly.
+One attempted shell solver INVOCATION failed fixed-index type admission at core
+line147 before any LU or linear solve. No shell response, beam solve, material
+evaluation or compliance result. Runtime BODY_RHS_STARTED label preserved as
+invocation intent; actual saved traceback establishes admission-only failure.
+Supervisor3.104208s/180613120B sampled tree; owned PID124584 absent.
+Safe caller tuple(int(i)...) repair and affected mocked assertion syntax-checked
+only; final script4d695503/tests5f745d52 unexecuted. Executed bytesfeb1c1e1/2c10428b
+and failed outputs retained. Automatic approval review REJECTED second numerical
+job under explicit no-rerun restriction; no second command/job ran. User approval
+requested, pending answer does not authorize execution. Original physical criteria,
+V1/V2 failures, protected references and F03 UNCONSUMED remain unchanged.
+Raw .qualification/b3-ge-e4-pl/r8-bl5-body-port-twofold-specimen-dev-20261006-v1/:
+41-file raw-artifact-sha256.json SHAa9bc308a31b8d3d120c651a4c57f448f4d59a84e91fd40f4e7797145ddc9ec5e;
+handoff SHA f194319901654b9e918d63f2b81006525f0e57b6e194df58ef0eb62038ce8506;
+non-author review SHA f2e741ef581c4c52fb4684da5f6f03035733dbcd10c4e6b382f4fa84a284296b.
+Root verifies41 raw/three final snapshots/seven executed source/two tools/424
+operator files/wheel; no physical comparison, qualification or release claim.
+All aggregate G0-G6/F/V/B, external/scale/platform/consumer/release duties open.
