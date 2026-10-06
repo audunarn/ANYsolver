@@ -63,6 +63,10 @@ Fresh300s proposal at native-fold-assessment-dev/authority-proposal-v1.json;
 Candidate8d1373cf committed; approval question issued, response PENDING.
 Harness prepared/source-reviewed, bindings5inputs/6savedartifacts/430modules;
 zero usage/no interpreter. Prior-screen allowance does not cover this slice.
+Approval blocker revalidated over3consecutive goal turns; no numericaljob live.
+Goal BLOCKED pending the existing300s question; programme scope unchanged.
+On approval: bind authority/ledger, focused tests, ONE saved-endpoint assessment;
+no new primary continuation, repeated question or transfer of old authority.
 No validated first limit point or qualified descending branch is established.
 Archive of the prior full active note is root-active-before-proportional-preparation-v1.md
 in new raw; prior records remain byte-preserved in Git and their evidence directories.
