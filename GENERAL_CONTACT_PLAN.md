@@ -8,6 +8,23 @@ are historical evidence, not renewed or additional execution authority.
 The separately opted-in equilibrated V20 slice is implemented and tested below.
 ## Current delivered development
 
+### Independent represented-path gap: development verified
+
+All 80 coarse and 160 fine loaded-impact Hermite segments now pass a separate
+complete time/space enclosure: gap lower bounds -1.422/-1.404um against10um,
+rim lower >=.999999768m against.02m, positive orientation/nondegeneracy.
+The oracle uses its own exact binary nodal/affine-skin/Q2 controls and directed
+interval arithmetic; no production contact/path/work-map kernel is called.
+Tensor-interior penetration with four safe boundaries, reversed/degenerate faces
+and exhausted subdivision refuse. Review's subtraction-cancellation defect and
+the earlier test PASS remain preserved; repaired source and installed producer
+check pass. Saved trajectory NPZs permit future checks without rerunning impact.
+This closes a fixture-specific represented-path evidence gap, not nonlinear
+DAE-lift, general geometry or engineering acceptance. C6 now60jobs,
+343.0953081998741/360s used;16.904691800125875s remains.
+[Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/represented_path_development.md).
+
+
 ## C6 loaded tilted impact: installed development verified
 
 The explicit V20 acceleration-unknown option now completes the same loaded

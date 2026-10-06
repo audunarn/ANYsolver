@@ -315,3 +315,25 @@ true endpoints and every interior stationary point for all 81 coarse and
 line length. Their reported minimum-gap agreement meets the prospectively
 frozen 1e-12 m length criterion; see `tilted_impact_installed_gap1` and the
 separate gap manifest. This check reran only coarse/fine gap verification.
+
+
+### Independent represented-path verification
+
+The separate `general_contact_beam_s3_loaded_path_reference` verification
+helper constructs its own rational nodal Hermite and Q2 Bezier controls and
+outward interval normal/rim/gap bounds; it imports no production geometry,
+contact, work-map or path kernel. For this fixed top-skin h=1/128/Z fixture,
+all 80 coarse and 160 fine represented segments satisfy the 10 um gap gate,
+.02 m rim gate and positive orientation/nondegeneracy floors. Bound minima
+are -1.4217921 um and -1.4032591 um. This covers the entire time/space hull,
+not only its edges or sampled points, and is not a nonlinear DAE-lift claim.
+The repaired check retains an exact subtraction-cancellation counterexample,
+uses per-operation outward padding, and refuses a tensor-interior bow whose
+four domain boundaries are safe but midpoint gap is -44.822693 um. Direct
+reversed/degenerate faces and finite-budget exhaustion also refuse. Coarse/fine
+endpoint trajectories and rates are saved as hashed NPZ data. Initial PASS
+with compound rounding remains historical; the repaired source/test PASS is
+recorded separately in `tilted_path_installed_repaired1`. This verification
+helper is fixture-specific development evidence, not a new public admission
+service or engineering acceptance. See `tilted_path_final_manifest.json` and
+`tilted_path_worker_handoff.md` for exact hashes/runtime/resources.
