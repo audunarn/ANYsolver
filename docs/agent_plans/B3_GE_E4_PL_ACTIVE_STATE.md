@@ -1,93 +1,75 @@
 # Current state - 6 October 2026
 
-Revision8 goal BLOCKED pending execution approval, confirmed by goal tool after
-three consecutive no-progress goal turns. Complete G0-G6/F01-F13/V01-V28/B01-B18, physical/external,
-scale/platform/consumer, publication and clean-main duties remain incomplete.
-Canonical repository: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001
-Branch: codex/stiffened-main-reconcile-20261001. Actual Git is authoritative.
+Revision8 goal ACTIVE after human approval of120s native directional and150s
+consumer verification/repair; confirmed by goal tool. Complete G0-G6/F01-F13/
+V01-V28/B01-B18, physical/external/scale/platform/consumer/release duties remain
+incomplete. Canonical worktree C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001,
+branch codex/stiffened-main-reconcile-20261001; actual Git is authoritative.
 Use the goal, plan and acceptance matrix beside this one living note.
-Main and remote untouched; no contact-worker communication.
-Restart from1a1c3d39 source/preparation. Human approval is still needed for the
-pending120s native directional and150s consumer requests; no numerical job lives.
-Resume the existing frozen inputs/guards after applicable approval, not a rebuild.
-Global/repository AGENTS + philosophy rev2026-09-24.2 apply.
-Mistral/local remain cached unavailable; OpenAI authors/reviewers are fallback,
-not different-family scientific acceptance. Max3 workers/ONE numerical job.
+Main/remote untouched; no contact-worker communication. Global/repository AGENTS
+and philosophy2026-09-24.2 apply. Mistral/local cached unavailable; OpenAI fallback
+is not different-family scientific acceptance. Max3 workers/ONE numerical job.
 
 ## Decision, established facts, uncertainty and next action
 
-Deliver native material BL5 continuation using the existing owner and services,
-then close its missing verification and capacity obligations. Do not rebuild
-previous GE/B2 owners or treat this small development route as programme completion.
-Source candidate9bc30096728ec535bf197e66c548f18295c173db now has LIMITED INSTALLED
-DEVELOPMENT verification: one source core and six distinct installed cases.
-The mixed/biaxial/P1 fixed-translation endpoint has direct positive S3/physical
-fibre histories; public arc, exact fresh restart and continued stepping pass.
-Installed cancellation preserves precommit checkpoint and committed prefix.
-Admission refusal, full-frame metric behavior, actual-update PATH ROW derivative
-and full retained manufactured bordered algebra pass. The latter two do NOT
-establish a whole equilibrium Jacobian, constitutive tangent or limit point.
+Native material BL5 continuation has LIMITED INSTALLED DEVELOPMENT verification:
+product9bc30096 unchanged, one source core and seven distinct installed cases.
+Latest common-origin full retained bordered DIRECTION passes at h1e-5/h1e-6:
+equilibrium/material relative errors7.143930645e-10/8.794909493e-12, path errors
+8.012254055e-17/3.265654213e-15. Shape147x147,88 actual branch labels, same newly
+accepted predecessors; accepted checkpoint70b16259 remains byte-identical.
+One mixed-unit direction does NOT establish every row/block/column or capacity.
+The independent source review found no blocking sign/update/origin defect.
 
-ANYfem source-only slice saved at58a1d3d4 in its isolated consumer worktree:
-existing v6 panel/Project bridge, new example/test/development note, no product
-source/API/schema changes. Complete source review passed after cleanup repair.
-All99 source modules match existing d1c9714d wheel; reuse avoids another build.
-Both new tests UNRUN. Fresh150s consumer authority requested and still pending;
-no consumer runtime allowance inferred from solver remainder.
-Consumer source/harness committed3bbc1a65; both tests UNRUN, approval/ledger
-PENDING/zero. Common-origin bordered directional oracle source SHAce945cb9 is
-prepared with phased PARTIAL diagnostics and station-local JSONL; NOT executed.
-Its first attempt FAILED8.1333663s on a test status error after strict restore:
-fixed displacement returns completed, whereas arc publication is accepted_prefix.
-The exact expectation was corrected; no product status/physics change.
-Separate installed old-checkpoint compatibility PASS6.5698668s: authentic
-gen3 mixed/biaxial/P1 checkpoint70b16259 restores byte-identically, retained,
-load/frame, Q4/S3 and beam material arrays match; finite physical recovery and
-existing equilibrium/constraint thresholds pass. Full arc Jacobian NOT executed.
-Independent evidence review confirms three earlier installed full equilibrium
-directional checks apply to unchanged assembly/update modules. Their endpoint
-predecessors differ from arc's newly accepted origins; a common-state full arc
-bordered derivative remains unverified. See the existing arc review's appended
-applicability analysis. Independent source review found no blocking sign/update/
-origin defect; one unweighted direction cannot establish all rows/columns.
-Fresh120s request PENDING/zero,20s reserve; exact seven inputs/entry prepared,
-native approval guard refusal verified without interpreter launch. Consumer150s
-independently PENDING. Broader legacy,
-other parameter routes,
-same-origin full arc Jacobian, real cutback/turning point,
-mesh/unit capacity and physical/scientific acceptance remain OPEN. A failed or
-missing gate remains visible; do not rerun a timeout just to reconstruct evidence.
-The current connection law/F03, external references and aggregate gates remain
+ANYfem dd75542 now delivers installed mixed/biaxial/P1 native arc workflow through
+existing v6 case/Project bridge and public owner: save/reopen, loaded gen3,
+accepted prefix4, fresh restore/continued gen5, exact checkpoint/recovery parity.
+Both final installed cases PASS; positive physical-fibre alpha3.676299624e-5 and
+S3 alpha2.159173519e-6. Cancellation before step/atomic commit/after prefix and
+corrupt checkpoint, admitted wrong-model and changed-controller refusals pass.
+Density-only wrong model has a distinct public compiled identity; geometry,
+reference arms and J2 data stay unchanged. No new schema/package API/product
+source/version/default changes. Final equilibrium6.029523875e-11 and constraint
+8.214266714e-18 meet existing limits. This is one experimental fixture.
+
+First full-direction attempt's incorrect completed/accepted_prefix expectation
+and consumer pre-case origin failures, wrong filename and invalid thickness/arm
+negative control are preserved. Same source owner repaired consumer paths/model;
+exact source snapshots and all attempt logs remain immutable.
+
+Next: independent assessment of the complete tested continuation/consumer slice,
+then the genuine physical capacity/cutback/mesh-unit and broader-domain obligations.
+Do not replace those by more small-direction or compatibility tests. No retries
+of closed turning/adaptive/force/parity/reference campaigns follow this success.
+Connection law/F03, matched external/physical evidence and aggregate gates remain
 open. No declared limit point, descending branch or production qualification.
 
-## Exact latest artifact and bounded verification
+## Exact artifacts and bounded authority
 
-Wheel0.4.7 SHA4c027af197b7d8337e9ceb1d106e2b77befbb493179a7e6528ba9fb6e6cbf98a.
-One offline build/install; all430 source/wheel/site module bytes match.
-Root verifies250 actual core/control solver imports +748 dependency files,
-249 derivative imports +748 dependencies,6 frozen inputs and5 snapshot example
-origins; effective before/after affinity[0], pools1, NumBa1/JIToff match.
-Successful installed jobs:34.1895612s/38.5294439s/8.4307776s/6.5698668s; six cases.
-Raw: .qualification/b3-ge-e4-pl/r8-native-material-bl5-arc-dev-20261006-v1/.
-Latest author handoff-v2.md SHA658e5eeb; final-manifest-v2.json SHAf306dfdb.
-Independent review docs/development/stiffened_shell_native_material_bl5_arc_independent_review.md
-Source review includes the diagnostic delta and mathematical applicability;
-no scientific acceptance or different-family independence is established.
-Root artifact/core/controls/derivative proof files and preserved failures are in raw.
+Solver0.4.7 wheel4c027af197b7d8337e9ceb1d106e2b77befbb493179a7e6528ba9fb6e6cbf98a;
+all430 source/wheel/site modules bound,997 actual full-direction imports.
+ANYfem0.4.1 wheeld1c9714d7ca3e21d5d95c4ab9813bbf40d635c99cfa732a5f9284242f45d8daf;
+all99 package source/wheel/site modules match; final1591 actual imported files,
+including250 solver and65 consumer modules, exact dependency/fixture bindings.
+Before/after affinity[0], pools1,Numba1,JIToff; sampled treeRSS191635456(native)
+and203509760(consumer) bytes, within2GiB. No new build/install was needed.
+Native proof: existing raw/root-common-origin-directional-proof-v3.json and
+installed-common-origin-full-jacobian-v3; source oraclece945cb9.
+Consumer proof: ANYfem raw/r8-native-material-bl5-arc-consumer-dev-20261006-v1/
+root-installed-consumer-proof-v5.json and installed-v1 through installed-v5.
+Final consumer example9b482803/testae49b8f0; source review and root inspection
+remain scoped DEV evidence, not scientific or different-family acceptance.
 
-NEW user-approved300s ledger:296.4024299s used,3.5975701s remain. All jobs
-terminal; no numerical work running. Remaining authority is ONLY this approved
-candidate's checks/repair scope,2GiB treeRSS/affinity0/pools1/JIToff/backend unforced.
-Sixty seconds were reserved FOR final verification and used during that stage;
-not an unused remainder after it. Earlier84s approval rejection preserved;
-root supplied original approval/ledger proof for final50s and20s commands.
-The source impact batch TIMEOUT135.224522s retains8 UNBOUND progress dots;
-no terminal JUnit/post-runtime/import proof or persisted peakRSS. Peak UNKNOWN;
-do not claim full source campaign or complete cumulative memory compliance.
-Startup conhost guard exit15 and invalid-selector exit4 were pre-case failures,
-not product defects. Both preserved. Improved harness flushes subsequent results.
-Historical600s allowance stays UNPROVEN (589.865712700 supervised versus
-601.903202000 conservative upper bound); no remainder is reused or renewed.
+Fresh120s ledger14.2529351used/105.7470649remaining;20s reserved FOR final checks.
+Fresh150s ledger53.5811519used/96.4188481remaining;30s reserved FOR final checks.
+Final installed runs/post-audits complete; no repeat needed without changed inputs
+or findings. Remaining allowance stays in its exact approved scope, not new
+capacity/body/F03/scale campaigns. All owned numerical jobs terminal.
+Original300s ledger296.4024299used/3.5975701remaining is separate. Source impact
+TIMEOUT135.224522 retains8 UNBOUND dots, missing terminal/import/peak proof;
+no full source campaign or complete cumulative memory claim. Original600s remains
+UNPROVEN (589.865712700 supervised vs601.903202000 conservative upper bound);
+no old remainder inferred. Earlier guard/selector/auto-review failures preserved.
 
 ## Unchanged mechanics, identities and delivered adjacent work
 
