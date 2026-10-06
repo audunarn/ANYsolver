@@ -31,7 +31,8 @@ All99 source modules match existing d1c9714d wheel; reuse avoids another build.
 Both new tests UNRUN. Fresh150s consumer authority requested and still pending;
 no consumer runtime allowance inferred from solver remainder.
 Consumer source/harness committed3bbc1a65; both tests UNRUN, approval/ledger
-PENDING/zero. Independent full Jacobian oracle source SHAae256679 is prepared.
+PENDING/zero. Common-origin bordered directional oracle source SHAce945cb9 is
+prepared with phased PARTIAL diagnostics and station-local JSONL; NOT executed.
 Its first attempt FAILED8.1333663s on a test status error after strict restore:
 fixed displacement returns completed, whereas arc publication is accepted_prefix.
 The exact expectation was corrected; no product status/physics change.
@@ -43,8 +44,11 @@ Independent evidence review confirms three earlier installed full equilibrium
 directional checks apply to unchanged assembly/update modules. Their endpoint
 predecessors differ from arc's newly accepted origins; a common-state full arc
 bordered derivative remains unverified. See the existing arc review's appended
-applicability analysis. Fresh120s full-Jacobian allowance requested/PENDING,
-20s final reserve; no launch. Consumer150s independently PENDING. Broader legacy,
+applicability analysis. Independent source review found no blocking sign/update/
+origin defect; one unweighted direction cannot establish all rows/columns.
+Fresh120s request PENDING/zero,20s reserve; exact seven inputs/entry prepared,
+native approval guard refusal verified without interpreter launch. Consumer150s
+independently PENDING. Broader legacy,
 other parameter routes,
 same-origin full arc Jacobian, real cutback/turning point,
 mesh/unit capacity and physical/scientific acceptance remain OPEN. A failed or
@@ -63,7 +67,8 @@ Successful installed jobs:34.1895612s/38.5294439s/8.4307776s/6.5698668s; six cas
 Raw: .qualification/b3-ge-e4-pl/r8-native-material-bl5-arc-dev-20261006-v1/.
 Latest author handoff-v2.md SHA658e5eeb; final-manifest-v2.json SHAf306dfdb.
 Independent review docs/development/stiffened_shell_native_material_bl5_arc_independent_review.md
-SHA4947c4da: source/status repair and compatibility oracle, not scientific acceptance.
+Source review includes the diagnostic delta and mathematical applicability;
+no scientific acceptance or different-family independence is established.
 Root artifact/core/controls/derivative proof files and preserved failures are in raw.
 
 NEW user-approved300s ledger:296.4024299s used,3.5975701s remain. All jobs

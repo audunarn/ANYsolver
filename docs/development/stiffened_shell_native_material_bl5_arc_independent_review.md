@@ -204,3 +204,31 @@ The compatibility case additionally decodes each original accepted S3 blob using
 
 Final compatibility-source test SHA256: `ae2566791951c75498384d91a87d5fc520452c7d741264c39a23e563ca3ea53a`.
 
+
+## 2026-10-06 — incremental full-oracle failure diagnostics (source only)
+
+Root reports installed old-checkpoint compatibility v2 one PASS in6.5698668 seconds, with exact checkpoint/Q4/S3/beam-history checks and unchanged wheel, committed fea87b1c. That is a reported compatibility-only outcome, not a full-Jacobian pass and not a new exhaustive evidence audit by this reviewer. Original native allowance is296.4024299/300 seconds used,3.5975701 remaining. The requested separate full-Jacobian120-second authority is pending; none is consumed or inferred here.
+
+The full common-origin case now creates `same-origin-arc-jacobian.json` with **PARTIAL_UNVERIFIED** status from owner construction onward and updates it atomically through a temporary sibling file. It records actual fixture/accepted generation/checkpoint hash/model identity, accepted shell/native material origins, controller/metric/frozen-normal/candidate/load/direction metadata, and each center/plus/minus assembly's actual state, residual, sparse matrix shape/nonzero count, scalar path and row. Material inventory emits binding, shell alpha/drive/switch/knot, actual physical-fibre and generalized-station diagnostics before their assertions. Each available stencil records actual differences/errors/branch equality/margin movements before its acceptance assertions. Final ownership/origin/checkpoint identities and hash are saved before those assertions.
+
+The status changes to **EXECUTED_PASS_DEVELOPMENT_DIRECTIONAL_CHECK** only after every existing branch/stencil/norm/path/ownership/checkpoint criterion passes. Incomplete assembly, failed branch selection, switched stencils, nonfinite/error/ownership failure or interruption therefore cannot acquire a pass label merely from an available numerical error. The artifact preserves actual available values rather than manufacturing absent responses; partial data can include nonfinite diagnostic values and must not be treated as accepted scientific JSON evidence. The complete successful summary includes the incremental record. The separate compatibility case's behavior, geometry, seed, stencils, scientific thresholds and normalization are unchanged.
+
+Only the independently owned test and this note were edited; no interpreter/AST/import/test/build/worker/Git/runtime/evidence operation was performed. Updated full-oracle diagnostics remain **implemented, unverified** until separately authorized execution. Mathematical independent review is also pending with root's separate reviewer; this authoring cannot supply its own sole acceptance. Full-Jacobian, real cutback, capacity/limit-point and scientific/different-family gates retain their distinct disposition.
+
+Incremental-diagnostics test SHA256: `a7d821f8fa5010271a9947ab5fb8903c11245b2c0674a75fe2d2bb7872a3f327`.
+
+
+### Logging source refinement before execution
+
+Root's source review identified two logging issues before any execution of this version. Missing capture now has an explicit assertion after the saved capture-present event and before indexing. Station-local inventory events are appended immediately to `same-origin-arc-material-events.jsonl`, labeled center/plus/minus evaluation; the full partial JSON references that log and is persisted at phase/assembly/inventory/stencil boundaries. Thus a mid-inventory assertion leaves the prior actual state/residual plus the precise event without repeatedly rewriting all growing global arrays for each station. These are source repairs only, with unchanged criteria and unchanged compatibility behavior.
+
+The all-row unweighted aggregate norm establishes one full-residual directional comparison only. It does not independently bound each row, column, family or physical-unit error; this limitation is preserved, not addressed by changing tolerance or acceptance. No runtime or resource efficiency claim is made. This final logging source is implemented-unverified.
+
+Final phase/JSONL logging test SHA256: `ce945cb90e672f9090b7241890af81ebbd183d9d588d9fd44d4fc84f64bfa3a0`.
+
+
+## 2026-10-06 — independent mathematical source assessment before the remaining run
+
+Independent OpenAI Read reviewer native_arc_oracle_review inspected the pre-logging oracle ae256679 and actual assembly/update/restore contracts. No blocking mathematical source defect was found: the bordered residual is (R(x;H)-b-aP, phi(x;x0,N)-r), with columns [J,-P] and path row [phi_x,0]; both signs use actual updates and the same newly accepted shell/beam histories. Restore promotes accepted material histories to the arc origins while preserving earlier increment predecessors separately. Shell branch guards use actual alpha growth, hardening bands and switch/knot margins. Actual fibre/generalized recovery supplies the beam branches. The fixed fixture's FlowCurve((0.,),(yield_stress,),1e9) has no positive table knot; omission of fibre segment identity is a limitation for other curves, not this case. Strict digest/size/model/pose/material restore and byte equality remain mandatory.
+
+Evidence limits remain explicit: the adopted unweighted global directional norm can hide errors in small row subsets, and one direction cannot establish every Jacobian column. Removing the dead-load contribution prevents that specific dominance only. No norm/threshold/physics has changed and no blockwise/full-column accuracy is claimed. Candidate smooth-branch suitability, actual stencil errors and final immutability still require execution. This Read reviewer ran no interpreter/numerical/build/import work and supplies neither scientific acceptance nor different-family independence. The final source ce945cb9 adds only phased partial diagnostics and station-local JSONL events; root inspected that delta, unchanged criteria and compatibility behavior. New inputs/entry/approval guard are prepared in the existing raw directory, with fresh120s status PENDING/zero; old300s and consumer150s remain distinct.

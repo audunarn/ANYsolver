@@ -1,0 +1,7 @@
+{
+  "status": "PENDING",
+  "total_seconds": 120,
+  "used_seconds": 0,
+  "attempts": [],
+  "accounting": "Whole interpreter process launch through terminal; old300s ledger remains distinct; no inferred authority"
+}

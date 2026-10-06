@@ -80,7 +80,7 @@ def _json_record(value):
     return value
 
 
-def _inventory(owner, driver, state, shell, beam, evaluation):
+def _inventory(owner, driver, state, shell, beam, evaluation, trace=None):
     """Read actual material recovery and fixed-origin shell switch diagnostics.
 
     The existing scalar consistency kernel at zero multiplier supplies the
@@ -92,12 +92,20 @@ def _inventory(owner, driver, state, shell, beam, evaluation):
     labels = []
     margins = []
     knots = []
+    trace = (lambda event: None) if trace is None else trace
     captures = driver._q4_boundary_trial
+    trace(dict(stage='capture binding', capture_present=captures is not None))
+    assert captures is not None, 'missing fixed-origin shell material capture'
+    trace(dict(stage='capture identity', state_matches=captures[0] is state,
+               origins_match=captures[1] is shell, capture_count=len(captures[3])))
     assert captures[0] is state and captures[1] is shell
     assert len(captures[3]) == len(owner._shell_parts)
     for part, origin, candidate, (slots, capture) in zip(
             owner._shell_parts, shell, evaluation[4], captures[3], strict=True):
         eid, element, actual_slots, _ = part
+        trace(dict(stage='shell origin binding', element_id=int(eid),
+                   slots_match=tuple(actual_slots) == slots, origin_matches=capture.origin is origin,
+                   origin_values_match=capture.origin_values == _origin_values(origin)))
         assert tuple(actual_slots) == slots
         assert capture.origin is origin
         assert capture.origin_values == _origin_values(origin)
@@ -116,13 +124,17 @@ def _inventory(owner, driver, state, shell, beam, evaluation):
                 float(old), material.elastic_modulus/(3*(1-material.poisson_ratio)),
                 material.elastic_modulus/(2*(1+material.poisson_ratio)), *parameters)
             margin = float(value-capture.tolerance*max(flow*flow, 1.))
-            assert np.isfinite(margin) and margin != 0., 'shell switch: no smooth-branch claim'
             plastic = bool(new > old)
+            band = int(np.searchsorted((curve.eps_p_y1, curve.eps_p_y2), new))
+            distances = (float(new-curve.eps_p_y1), float(new-curve.eps_p_y2))
+            trace(dict(stage='shell station', family=family, element_id=int(eid), station=station,
+                       previous_alpha=float(old), candidate_alpha=float(new), plastic=plastic,
+                       scalar_drive=float(value), flow=float(flow), switch_margin=margin,
+                       hardening_band=band, hardening_distances=distances))
+            assert np.isfinite(margin) and margin != 0., 'shell switch: no smooth-branch claim'
             assert plastic == (margin > 0.), 'shell scalar/candidate branch disagreement'
             if not plastic:
                 assert new == old
-            band = int(np.searchsorted((curve.eps_p_y1, curve.eps_p_y2), new))
-            distances = (float(new-curve.eps_p_y1), float(new-curve.eps_p_y2))
             assert all(value != 0. for value in distances), 'shell hardening knot'
             labels.append((family, int(eid), station, 'PLASTIC' if plastic else 'ELASTIC', band))
             margins.append(margin)
@@ -130,6 +142,8 @@ def _inventory(owner, driver, state, shell, beam, evaluation):
     fibres, _ = _fibre_recovery(owner, state, beam, evaluation[5])
     for station in fibres:
         for fibre in station.fibres:
+            trace(dict(stage='physical fibre', element_id=station.element_id, cell=station.cell,
+                       station=station.station, fibre=_json_record(fibre)))
             assert fibre.branch not in ('YIELD_BOUNDARY', 'HARDENING_KNOT')
             assert all(np.isfinite(fibre.algorithmic_modulus))
             labels.append(('FIBRE', station.element_id, station.cell, station.station,
@@ -137,26 +151,55 @@ def _inventory(owner, driver, state, shell, beam, evaluation):
     generalized = driver._generalized_records(state, beam, evaluation[5], include_native=True)
     for member in generalized:
         for station in member.stations:
+            trace(dict(stage='generalized station', element_id=member.element_id,
+                       recovery=_json_record(station)))
             assert station.branch in ('ELASTIC', 'PLASTIC'), 'generalized yield boundary'
             labels.append(('GENERALIZED', member.element_id, station.cell, station.station, station.branch))
     return tuple(labels), np.asarray(margins), np.asarray(knots)
 
 
 def test_common_accepted_origins_full_arc_residual_direction(request, tmp_path):
+    diagnostic = dict(status='PARTIAL_UNVERIFIED', stage='owner construction', evaluations={}, stencils=[])
+    artifact = tmp_path/'same-origin-arc-jacobian.json'
+    event_log = tmp_path/'same-origin-arc-material-events.jsonl'
+    diagnostic['material_event_log'] = event_log.name
+    def persist():
+        pending = artifact.with_suffix('.json.pending')
+        pending.write_text(json.dumps(_json_record(diagnostic), indent=2))
+        pending.replace(artifact)
+    persist()
     owner = ss.create_analysis(definition=definition('mixed', 'biaxial', 'mixed', 'continuous_p1_coarse'))
     request.addfinalizer(owner.close)
     loaded, fixture_provenance = _loaded_seed(owner, tmp_path)
+    diagnostic.update(stage='loaded seed', fixture=fixture_provenance,
+                      loaded_generation=loaded.generation, loaded_status=loaded.status)
+    persist()
     assert any(np.any(row.alpha > 0.) for row in loaded.shell_s3_material)
     driver = owner._finite_driver
     saved = owner.checkpoint()
     parent = driver._state
     shell, beam = driver._shell_origins, driver._beam_origins
     histories = dict(beam_arrays(owner._beam_parts, beam, 'beam_origin'))
+    diagnostic.update(stage='accepted origins', accepted_checkpoint_sha256=hashlib.sha256(saved).hexdigest(),
+                      model_identity=owner._identity,
+                      shell_origins=[_origin_values(origin) for origin in shell], beam_origins=histories)
+    persist()
     assert np.any(histories['beam_origin_fibres'][:, 2:] > 0.)
     control = arc_control(owner)
+    diagnostic.update(stage='arc correction', control=dict(radius=control.radius,
+        orientation=control.orientation, max_iterations=control.max_iterations,
+        max_backtracks=control.max_backtracks, metric_weights=control.metric.weights,
+        metric_length=control.metric.length))
+    persist()
     trial = correct(driver, load_direction=driver._load(ACTIONS), metric=control.metric,
         radius=control.radius, predictor_dof=CONTROL.dof(owner), orientation=control.orientation,
         max_iterations=control.max_iterations, max_backtracks=control.max_backtracks)
+    diagnostic.update(stage='arc candidate returned', candidate=_json_record(trial.state),
+        amplitude=trial.amplitude, base_load=trial.base_load, load_direction=trial.load_direction,
+        normal_translations=trial.normal_translations, normal_spins=trial.normal_spins,
+        predecessor_matches=trial.predecessor_state is parent,
+        shell_origins_match=trial.shell_predecessor is shell, beam_origins_match=trial.beam_predecessor is beam)
+    persist()
     assert trial.predecessor_state is parent
     assert trial.shell_predecessor is shell and trial.beam_predecessor is beam
     state = trial.state
@@ -177,15 +220,36 @@ def test_common_accepted_origins_full_arc_residual_direction(request, tmp_path):
     direction[n:] = np.cos(np.arange(size-n)+1.)
     amplitude_direction = .003
     load_column = np.r_[trial.load_direction, np.zeros(size-n)]
+    diagnostic.update(stage='direction defined', direction=direction,
+        amplitude_direction=amplitude_direction, load_column=load_column,
+        material_criterion=1e-5, norm='all-row unweighted L2; denominator max(norm(expected),1)',
+        path_criteria=dict(relative=1e-8, absolute=1e-10))
+    persist()
 
-    def evaluate(point, amplitude):
+    def evaluate(point, amplitude, label):
+        packet = dict(stage='assembly requested', amplitude=amplitude, state=_json_record(point),
+                      material_event_log=event_log.name)
+        diagnostic['evaluations'][label] = packet
+        diagnostic['stage'] = label
+        persist()
         evaluation = driver._assemble(point, 0., shell, beam,
             applied_load=trial.base_load+amplitude*trial.load_direction)
-        inventory = _inventory(owner, driver, point, shell, beam, evaluation)
         value, row = path_row(driver, point, parent, control.metric, normal)
+        packet.update(stage='assembled', residual=evaluation[0], matrix_shape=list(evaluation[1].shape),
+                      matrix_nnz=evaluation[1].nnz, path_value=value-trial.radius, path_row=row)
+        persist()
+        def trace(event):
+            # Station-local actual values only; phase label binds them to the
+            # already persisted state/residual without copying global arrays.
+            with event_log.open('a', encoding='utf-8') as stream:
+                stream.write(json.dumps(_json_record(dict(evaluation=label, event=event)))+'\n')
+        inventory = _inventory(owner, driver, point, shell, beam, evaluation, trace=trace)
+        packet.update(stage='inventory passed', branches=inventory[0], shell_switch_margins=inventory[1],
+                      hardening_distances=inventory[2])
+        persist()
         return np.r_[evaluation[0], value-trial.radius], evaluation[1], row, inventory
 
-    residual, matrix, row, center = evaluate(state, trial.amplitude)
+    residual, matrix, row, center = evaluate(state, trial.amplitude, 'center')
     assert matrix.shape == (size, size)
     assert any(label[-1] == 'PLASTIC' or (label[0] in ('Q4', 'S3') and label[-2] == 'PLASTIC')
                for label in center[0]), 'chosen arc trial has no active plastic material branch'
@@ -194,40 +258,63 @@ def test_common_accepted_origins_full_arc_residual_direction(request, tmp_path):
                           [sparse.csc_matrix(row[None, :]), sparse.csc_matrix((1, 1))]], format='csc')
     expected = border @ np.r_[direction, amplitude_direction]
     material_expected = matrix @ direction
+    diagnostic.update(border_shape=list(border.shape), expected=expected, material_expected=material_expected)
+    persist()
     errors = []
     inventories = []
     for h in (1e-5, 1e-6):
         plus_state = driver._advance(state, direction, h)
         minus_state = driver._advance(state, direction, -h)
+        stencil = dict(h=h, stage='updates made', plus_state=_json_record(plus_state),
+                       minus_state=_json_record(minus_state))
+        diagnostic['stencils'].append(stencil)
+        persist()
         assert np.any(plus_state.cells != state.cells) and np.any(plus_state.resultants != state.resultants)
         assert np.any(plus_state.frames != state.frames) and np.any(plus_state.multipliers != state.multipliers)
-        plus, _, _, upper = evaluate(plus_state, trial.amplitude+h*amplitude_direction)
-        minus, _, _, lower = evaluate(minus_state, trial.amplitude-h*amplitude_direction)
-        assert upper[0] == center[0] == lower[0], 'central stencil changes actual material branch'
-        for slot in (1, 2):
-            movement = np.maximum(abs(upper[slot]-center[slot]), abs(lower[slot]-center[slot]))
-            assert np.all(abs(center[slot]) > movement), 'stencil reaches shell switch/knot margin'
+        plus, _, _, upper = evaluate(plus_state, trial.amplitude+h*amplitude_direction, f'plus-{h}')
+        minus, _, _, lower = evaluate(minus_state, trial.amplitude-h*amplitude_direction, f'minus-{h}')
         difference = (plus-minus)/(2*h)
         equilibrium_error = float(np.linalg.norm(difference[:-1]-expected[:-1])/max(np.linalg.norm(expected[:-1]), 1.))
         # Removing the exact dead-load column prevents it masking J-direction error.
         material_error = float(np.linalg.norm(difference[:-1]+load_column*amplitude_direction-material_expected)/max(np.linalg.norm(material_expected), 1.))
+        stencil.update(stage='stencil available, criteria unverified', derivative=difference,
+            equilibrium_error=equilibrium_error, material_error=material_error,
+            path_error=float(abs(difference[-1]-expected[-1])), branches_match=upper[0] == center[0] == lower[0],
+            margins=[dict(center=center[slot], plus=upper[slot], minus=lower[slot],
+                movement=np.maximum(abs(upper[slot]-center[slot]), abs(lower[slot]-center[slot])))
+                     for slot in (1, 2)])
+        persist()
+        assert upper[0] == center[0] == lower[0], 'central stencil changes actual material branch'
+        for slot in (1, 2):
+            movement = np.maximum(abs(upper[slot]-center[slot]), abs(lower[slot]-center[slot]))
+            assert np.all(abs(center[slot]) > movement), 'stencil reaches shell switch/knot margin'
         assert equilibrium_error <= 1e-5 and material_error <= 1e-5
         assert difference[-1] == pytest.approx(float(row @ direction), rel=1e-8, abs=1e-10)
+        stencil['stage'] = 'stencil criteria passed; ownership/checkpoint still unverified'
+        persist()
         errors.append(dict(h=h, equilibrium=equilibrium_error, material=material_error,
                           path=float(abs(difference[-1]-expected[-1]))))
         inventories.append(dict(h=h, plus=upper[0], minus=lower[0],
                                 shell_switch_margins=[upper[1].tolist(), lower[1].tolist()]))
+    diagnostic.update(stage='final ownership/checkpoint assertions', driver_matches=owner._finite_driver is driver,
+                      state_matches=driver._state is parent, shell_origins_match=driver._shell_origins is shell,
+                      beam_origins_match=driver._beam_origins is beam,
+                      final_checkpoint_sha256=hashlib.sha256(owner.checkpoint()).hexdigest())
+    persist()
     assert owner._finite_driver is driver and driver._state is parent
     assert driver._shell_origins is shell and driver._beam_origins is beam
     assert owner.checkpoint() == saved
-    (tmp_path/'same-origin-arc-jacobian.json').write_text(json.dumps(dict(
-        status='EXECUTED_DEVELOPMENT_DIRECTIONAL_CHECK', errors=errors,
+    diagnostic.update(status='EXECUTED_PASS_DEVELOPMENT_DIRECTIONAL_CHECK', stage='all criteria passed')
+    persist()
+    (tmp_path/'same-origin-arc-jacobian.json').write_text(json.dumps(_json_record(dict(
+        status='EXECUTED_PASS_DEVELOPMENT_DIRECTIONAL_CHECK', errors=errors,
+        diagnostic=diagnostic,
         fixture=fixture_provenance,
         center_branches=center[0], stencil=inventories, direction=direction.tolist(),
         amplitude_direction=amplitude_direction, shape=list(border.shape),
         material_criterion=1e-5, norm='all-row unweighted L2; denominator max(norm(expected),1)',
         path_criteria=dict(relative=1e-8, absolute=1e-10),
-        production_qualified=False), indent=2))
+        production_qualified=False)), indent=2))
 
 
 def test_authentic_old_loaded_checkpoint_current_owner_recovery(request, tmp_path):
