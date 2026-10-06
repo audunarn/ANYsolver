@@ -24,10 +24,19 @@ Admission refusal, full-frame metric behavior, actual-update PATH ROW derivative
 and full retained manufactured bordered algebra pass. The latter two do NOT
 establish a whole equilibrium Jacobian, constitutive tangent or limit point.
 
-Next: close missing checkpoint/refusal/legacy coverage by impact, and exercise
-native BL5 arc through the existing ANYfem v6 panel/Project owner bridge. Prepare
-source/input work without a replacement API. Broader legacy, other parameter
-routes, smooth same-predecessor equilibrium Jacobian, real cutback/turning point,
+ANYfem source-only slice saved at58a1d3d4 in its isolated consumer worktree:
+existing v6 panel/Project bridge, new example/test/development note, no product
+source/API/schema changes. Complete source review passed after cleanup repair.
+All99 source modules match existing d1c9714d wheel; reuse avoids another build.
+Both new tests UNRUN. Fresh150s consumer authority requested and still pending;
+no consumer runtime allowance inferred from23.331s.
+Independent evidence review confirms three earlier installed full equilibrium
+directional checks apply to unchanged assembly/update modules. Their endpoint
+predecessors differ from arc's newly accepted origins; a common-state full arc
+bordered derivative remains unverified. See the existing arc review's appended
+applicability analysis. Next: review the complete consumer slice, then verify
+under its own explicit allowance. Broader legacy, other parameter routes,
+same-origin full arc Jacobian, real cutback/turning point,
 mesh/unit capacity and physical/scientific acceptance remain OPEN. A failed or
 missing gate remains visible; do not rerun a timeout just to reconstruct evidence.
 The current connection law/F03, external references and aggregate gates remain
@@ -44,7 +53,7 @@ Successful installed jobs:34.1895612s/38.5294439s/8.4307776s; five cases.
 Raw: .qualification/b3-ge-e4-pl/r8-native-material-bl5-arc-dev-20261006-v1/.
 Latest author handoff-v2.md SHA658e5eeb; final-manifest-v2.json SHAf306dfdb.
 Independent review docs/development/stiffened_shell_native_material_bl5_arc_independent_review.md
-SHAd383855f: no new blocking finding in TESTED SCOPE, not scientific acceptance.
+SHA442d92e4: no new blocking finding in TESTED SCOPE, not scientific acceptance.
 Root artifact/core/controls/derivative proof files and preserved failures are in raw.
 
 NEW user-approved300s ledger:276.6687038s used,23.3312962s remain. All jobs

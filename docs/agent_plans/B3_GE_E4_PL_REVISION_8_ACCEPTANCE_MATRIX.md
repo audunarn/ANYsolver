@@ -3876,3 +3876,28 @@ its new checks require explicit bounded authority, not this exhausted allowance.
 - Earlier source-only records remain historical. Source/test/example unchanged
   after single build/install; no new API/equations/tolerances/defaults/versions.
   No F03/body/closed-campaign/main/push/publication authority follows.
+
+## 2026-10-06 — Native arc evidence applicability and consumer source slice
+
+Implementation/qualification remain separate. Independent appended review
+`docs/development/stiffened_shell_native_material_bl5_arc_independent_review.md`
+SHA442d92e46c0a78c1e2815c6f5502d77abf46631dcf20af17b6eb7c88b16468fa confirms
+three historical installed full uncondensed equilibrium directional checks.
+Root reread their terminal JUnit (three PASS) and verified the unchanged finite
+assembly module SHA111f9e0d1142648efebe4bb6ca1b819b7e89ddfd8f4a67de5ecb4e523a4532f4
+against its historical installed bytes. Those checks use endpoint predecessors;
+new arc trials use newly accepted origins. A common-state full arc border check
+remains OPEN; no new derivative run or scientific acceptance is inferred.
+
+Separate ANYfem source candidate: examples/test/development note for the existing
+v6 Project -> public owner -> yielded seed -> arc -> cancellation -> checkpoint
+-> fresh restore -> continuation workflow. Example SHA7382caab8ac85d8e676be1bc6b529c87e9a01c728ef188888d75d4ebe2a77bc6;
+test SHA77c2109cdc4a336615e58943e00031d3e98553e283fe7eaf2850f985f4d4ad5c.
+No product source/schema/API changes. Independent source review found no further
+blocking defect after construction cleanup and valid wrong-model control repair.
+Both tests UNRUN. Root native byte comparison confirms all99 current ANYfem
+modules match existing wheel d1c9714d7ca3e21d5d95c4ab9813bbf40d635c99cfa732a5f9284242f45d8daf;
+this permits artifact reuse, not a consumer execution claim. Fresh150s scope is
+requested, not assumed. Solver23.3312962s remains untouched. No new campaign,
+release/main authority or aggregate gate acceptance follows. Existing failures,
+scientific tolerances, protected history and open full programme remain binding.
