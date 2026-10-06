@@ -13,6 +13,31 @@ Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on co
 
 ## Current position
 
+## C5 preload-to-opening candidate: partial, repairs UNEXECUTED
+
+The distinct reversed-load fixture reached six accepted ordinary arc steps;
+the six physical 50um gap assertions passed. The consumer report then failed
+on a NumPy Boolean before opening, independent response/path/wrench gates and
+split restart were asserted. No machine numerical result or checkpoint was saved
+by that version. This is a report-writer failure, not established mechanics
+failure and not a successful opening workflow.
+
+Test-only repairs use strict NumPy scalar conversion, preserve actual full and
+prefix checkpoints before consumer checks, and require inactive pressure AND
+positive final physical minimum gap. Zero active pressure alone does not prove
+pointwise opening. Supporting source review found the latter coverage defect;
+the same owner repaired it. AST/bytes checks only: all repairs and complete
+release/reference/wrench/restart assertions remain UNEXECUTED.
+
+No solver/API/physics/tolerance changes or new build. Existing C9 installed
+artifact matches all543source payloads; actual failed-job224installed imports
+match, errors0/JIT0/Numba1/pools1. Failed process6.905068299966s,
+peak167473152B. SAME C5 purse:27terminaljobs,177.751535299816/180s used,
+2.248464700184s remains. A complete rerun does not fit; do not borrow or renew
+authority. All previous successful and failed evidence retains its original scope.
+[Evidence](docs/d1_review_support/contact_arc_length_20261006/release_development.md).
+
+
 The connected V19 development candidate adds exact one-sided full-line activation
 to the beam/affine-S3 descriptor route. Source checks cover an independent
 quadratic rate oracle, actual first touch and exact split restart; focused repair

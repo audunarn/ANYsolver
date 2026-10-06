@@ -2606,3 +2606,20 @@ Implemented additive immutable native physical-fibre whole-curve pair DATA reade
 ## C4 connected S3/tool reference invariance development - 2026-10-06
 
 Four actual installed equilibria (reference, frame only, node numbering only, combined) pass: mapped response<=2.722e-12, each-body shifted-origin wrench<=1.585e-11, local full skin work/H covariance<=2.619e-10, directional tangent<=6.695e-7. Retained1e-6/1e-5 gates and explicit separate N/Nm/work scales; actual gaps~2.159um versus50um development cap. Proper cyclic reference rotation/translation, not arbitrary oblique or finite-motion/rim admission. Partial-footprint derivative pose is not lifecycle evidence. No product edits/rebuild;222installed imports/errors0/JIT0/Numba1/pools1;543payloads match reused C9 wheel. No incidental V19/C6 verification. Final PASS6.337499s; prior abs(tuple) harness NONPASS and superseded relative-reporting PASS preserved. SAME C4 purse33terminaljobs/172.931528899935s spent/7.068471100065s left. Supporting same-family review is not engineering acceptance/release. Evidence: docs/d1_review_support/contact_triangulated_rigid_20261006/invariance_development.md; raw invariance_worker_handoff.md under C:/ANYworkspaceWork/contact_triangulated_rigid_20261006. Full C0-C9 remains ACTIVE/incomplete.
+
+
+### 6 October 2026 - C5 reverse-load arc opening candidate: PARTIAL
+
+New frozen preload .01N/down/reference .05N/up affine-support fixture reached
+six accepted steps and six50um gap assertions in matching installed solver.
+NONPASS writer np.True_ JSON failure before opening/reference/path/wrench/restart
+assertions. No saved numerical result/checkpoint; do not infer missing passes.
+Strict scalar writer/capsule preservation and positive physical final gap plus
+inactive pressure repaired TESTONLY; AST/bytes only, UNEXECUTED. Source review
+closed the opening-coverage finding; not independent engineering acceptance.
+No solver/API/law/tolerance/build changes. Root543payload/224actualimport parity,
+errors0/JIT0/Numba1/pools1. Process6.905068299966s/167473152B.
+C5 SAME27terminaljobs177.751535299816/180s used,2.248464700184s remaining.
+All failures/protected evidence preserved; no rerun/borrowed/renewed authority.
+Complete release/reference/wrench/split restart and C0-C9 acceptance remain OPEN.
+Evidence: docs/d1_review_support/contact_arc_length_20261006/release_development.md

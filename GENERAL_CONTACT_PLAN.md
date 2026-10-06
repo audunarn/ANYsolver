@@ -351,6 +351,38 @@ retain fixed inputs/gates, reuse the matching wheel, and complete actual press,
 both-body gap/wrench/target motion, then lifecycle/parity/split restart within
 that total and existing per-job caps. Otherwise advance a genuinely separate
 required row; preserve this candidate. No native or frozen authority is renewed.
+## C5 preload-to-opening candidate: partial, repairs UNEXECUTED
+
+The distinct reversed-load fixture reached six accepted ordinary arc steps;
+the six physical 50um gap assertions passed. The consumer report then failed
+on a NumPy Boolean before opening, independent response/path/wrench gates and
+split restart were asserted. No machine numerical result or checkpoint was saved
+by that version. This is a report-writer failure, not established mechanics
+failure and not a successful opening workflow.
+
+Test-only repairs use strict NumPy scalar conversion, preserve actual full and
+prefix checkpoints before consumer checks, and require inactive pressure AND
+positive final physical minimum gap. Zero active pressure alone does not prove
+pointwise opening. Supporting source review found the latter coverage defect;
+the same owner repaired it. AST/bytes checks only: all repairs and complete
+release/reference/wrench/restart assertions remain UNEXECUTED.
+
+No solver/API/physics/tolerance changes or new build. Existing C9 installed
+artifact matches all543source payloads; actual failed-job224installed imports
+match, errors0/JIT0/Numba1/pools1. Failed process6.905068299966s,
+peak167473152B. SAME C5 purse:27terminaljobs,177.751535299816/180s used,
+2.248464700184s remains. A complete rerun does not fit; do not borrow or renew
+authority. All previous successful and failed evidence retains its original scope.
+[Evidence](docs/d1_review_support/contact_arc_length_20261006/release_development.md).
+
+Next C5 action requires explicit sufficient runtime for the frozen repaired
+candidate, including full6/prefix3/resume3, independent P1 response and spherical
+path, actual positive-gap opening, per-body wrench and checkpoint comparison.
+Preserve the .01N downward preload/.05N upward proportional forces, affine
+-2um*(1+lambda), six .05-controlled steps, existing normal1e6/gap50um and
+separate .15N/.15Nm/10um scales. No retuning after the failed writer.
+Root integration/records and source scrutiny are complete; workers terminal.
+
 ## Programme disposition and subsequent order
 
 ### Delivered C5 continuation: ordinary contact-aware arc length
@@ -399,8 +431,9 @@ preload response1.6935e-11, spherical4.039e-16 and wrench4.6874e-12 pass retaine
 results; engineering acceptance/application admission/release remain separate.
 [Affine evidence](docs/d1_review_support/contact_arc_length_20261006/affine_development.md).
 
-The SAME C5 purse now records26terminaljobs,170.846466999850/180s used and
-9.153533000150s remaining, including every failure/build/install/check. The earlier
+Before the release attempt, the C5 purse recorded26terminaljobs,170.846466999850/180s used and
+9.153533000150s remaining; this is historical, superseded by the current27-job
+177.751535299816s total above. The earlier
 103.567s remainder is historical. No new mechanical campaign fits this residual
 time; do not renew or borrow another purse. General shell/deformable-target,
 augmented/friction, nonlinear-material and parameter-dependent tool continuation,

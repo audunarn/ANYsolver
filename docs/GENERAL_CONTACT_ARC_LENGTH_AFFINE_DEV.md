@@ -38,3 +38,29 @@ virtual-work/tangent controls retain the 1e-5 criterion.
 This is development evidence, not engineering acceptance. Nonlinear/seeded
 material, imperfection, friction, augmented enforcement, moving/free tools and
 finite-rotation arc profiles remain unsupported.
+# Prospective reverse-load opening control
+
+The separate `test_general_contact_arc_length_release.py` freezes a connected
+two-S3/fixed-tool case: physical preload0.01N downward at nodes2/3/4, reversed
+proportional force0.05N upward at each node, affine root offset-2um, normal
+stiffness1e6 and50um gap gate. Ordinary spherical increments are initial/max0.05,
+min5e-7, load scaling0.01, growth1, six steps and two physical preload steps.
+The support remains the adopted additive staged offset -2um*(1+lambda).
+
+The prepared oracle independently assembles P1 M/S, uses separately assembled
+no-contact structural K and enumerates pressure active sets for the actual load
+-0.01+0.05*lambda. It checks response/path/support-load-contact wrench at the
+existing1e-6 gates and separate0.15N/0.15Nm scales, actual active preload/final
+opening, and complete prefix3/resume3 capsule equality. Activation/release is
+decided from production histories and gaps, not assumed from lambda0.2.
+Final opening requires both inactive pressure and a strictly positive production
+minimum physical gap; inactive weighted pressure alone is insufficient.
+
+The bounded installed attempt reached six accepted public arc steps, then failed
+in the test evidence writer on a NumPy boolean. The active/open, numerical
+response/wrench and complete-restart assertions were not reached. The local
+writer is repaired to preserve NumPy scalar values and save accepted capsules
+before postchecks, but this repaired candidate has NOT been run. This is an open
+development verification obligation, not release evidence or a passed lifecycle.
+No production solver/physics/parameters were changed, no failed input was tuned,
+and no new resource authority is implied.
