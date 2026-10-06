@@ -933,3 +933,65 @@ def test_verification_report_family_mode_runs_independent_transient_family() -> 
     finally:
         if output_dir.exists():
             shutil.rmtree(output_dir)
+
+
+
+@pytest.mark.parametrize("base_location", ["base_prefix", "base_exec_prefix"])
+def test_mkl_runtime_discovery_checks_virtualenv_base_prefixes(monkeypatch, tmp_path, base_location):
+    import ctypes.util
+    import site
+    monkeypatch.setattr(linalg, "_HAS_PYPARDISO", True)
+    monkeypatch.setattr(linalg, "_MKL_RT_ENV_READY", False)
+    monkeypatch.setenv("PYPARDISO_MKL_RT", "")
+    monkeypatch.delenv("CONDA_PREFIX", raising=False)
+    monkeypatch.setattr(sys, "prefix", str(tmp_path / "venv"))
+    monkeypatch.setattr(sys, "base_prefix", str(tmp_path / "python"))
+    monkeypatch.setattr(sys, "base_exec_prefix", str(tmp_path / "exec-python"))
+    monkeypatch.setattr(site, "USER_BASE", str(tmp_path / "user"))
+    monkeypatch.setattr(ctypes.util, "find_library", lambda name: None)
+    runtime = Path(getattr(sys, base_location)) / "Library" / "bin" / "mkl_rt.3.dll"
+    directories = []
+    def glob(directory, pattern):
+        assert pattern == "mkl_rt*"
+        directories.append(directory)
+        return [runtime] if directory == runtime.parent else []
+    monkeypatch.setattr(Path, "glob", glob)
+    loaded = []
+    monkeypatch.setattr(linalg.ctypes, "CDLL", lambda path: loaded.append(path))
+    linalg._ensure_mkl_rt_env()
+    expected = os.path.normcase(os.path.abspath(str(runtime)))
+    assert os.environ["PYPARDISO_MKL_RT"] == expected
+    assert loaded == [expected]
+    assert runtime.parent in directories
+    assert len(directories) == len(set(directories))
+
+
+def test_mkl_runtime_discovery_deduplicates_prefixes(monkeypatch, tmp_path):
+    import ctypes.util
+    import site
+    monkeypatch.setattr(linalg, "_HAS_PYPARDISO", True)
+    monkeypatch.setattr(linalg, "_MKL_RT_ENV_READY", False)
+    monkeypatch.setenv("PYPARDISO_MKL_RT", "")
+    prefix = str(tmp_path / "python")
+    monkeypatch.setenv("CONDA_PREFIX", prefix)
+    for name in ("prefix", "base_prefix", "base_exec_prefix"):
+        monkeypatch.setattr(sys, name, prefix)
+    monkeypatch.setattr(site, "USER_BASE", prefix)
+    monkeypatch.setattr(ctypes.util, "find_library", lambda name: None)
+    directories = []
+    monkeypatch.setattr(Path, "glob", lambda directory, pattern: directories.append(directory) or [])
+    linalg._ensure_mkl_rt_env()
+    assert directories == [Path(prefix) / "Library" / "bin", Path(prefix) / "DLLs", Path(prefix) / "lib"]
+
+
+def test_mkl_runtime_discovery_preserves_explicit_environment(monkeypatch):
+    monkeypatch.setattr(linalg, "_HAS_PYPARDISO", True)
+    monkeypatch.setattr(linalg, "_MKL_RT_ENV_READY", False)
+    monkeypatch.setenv("PYPARDISO_MKL_RT", "explicit-runtime.dll")
+    def unexpected(*args):
+        pytest.fail("Explicit MKL runtime must not trigger discovery or loading")
+    monkeypatch.setattr(Path, "glob", unexpected)
+    monkeypatch.setattr(linalg.ctypes, "CDLL", unexpected)
+    linalg._ensure_mkl_rt_env()
+    assert os.environ["PYPARDISO_MKL_RT"] == "explicit-runtime.dll"
+    assert linalg._MKL_RT_ENV_READY is True

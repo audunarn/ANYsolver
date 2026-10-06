@@ -227,11 +227,19 @@ def _ensure_mkl_rt_env() -> None:
 
     path = find_library("mkl_rt") or find_library("mkl_rt.1")
     if path is None:
-        prefixes = [os.environ.get("CONDA_PREFIX"), sys.prefix, site.USER_BASE]
+        prefixes = [
+            os.environ.get("CONDA_PREFIX"), sys.prefix,
+            sys.base_prefix, sys.base_exec_prefix, site.USER_BASE,
+        ]
         directories: List[Path] = []
+        seen_prefixes = set()
         for prefix in prefixes:
             if not prefix:
                 continue
+            normalized = os.path.normcase(os.path.abspath(str(prefix)))
+            if normalized in seen_prefixes:
+                continue
+            seen_prefixes.add(normalized)
             base = Path(prefix)
             directories.extend((base / "Library" / "bin", base / "DLLs", base / "lib"))
         candidates: List[Path] = []

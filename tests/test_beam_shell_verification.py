@@ -192,7 +192,8 @@ def test_nonlinear_framework_ingredients_are_cached_only_within_one_report(
     assert second["results"][0]["checks"]["nested"]["value"] == 0.0
 
 
-def test_beam_shell_verification_report_separates_pass_and_xfail() -> None:
+def test_beam_shell_verification_report_separates_pass_and_xfail(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
     report = run_beam_shell_verification()
 
     assert report["status"] == "passed"
@@ -402,9 +403,8 @@ def test_vvr_preserves_and_rejects_invalid_executed_evidence(
     assert report_path.read_text(encoding="utf-8") == original
 
 
-def test_beam_shell_verification_report_writer_and_cli() -> None:
-    output_dir = Path(".pytest_tmp_beam_shell_verification")
-    output_dir.mkdir(exist_ok=True)
+def test_beam_shell_verification_report_writer_and_cli(tmp_path: Path) -> None:
+    output_dir = tmp_path
     output = output_dir / "beam_shell_verification.json"
     markdown = output_dir / "beam_shell_verification.md"
 

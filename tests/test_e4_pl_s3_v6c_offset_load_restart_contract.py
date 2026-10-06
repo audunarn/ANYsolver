@@ -109,8 +109,20 @@ def test_v6c_capability_boundary_and_defaults_are_exact() -> None:
         "default_activation",
     }
     assert "ELEMENT_NODAL_REFERENCE_SURFACE_V1" in element_source
-    assert anysolver.DEFAULT_Q4_FORMULATION == "e4-pl"
-    assert anysolver.DEFAULT_S3_FORMULATION == "legacy-s3"
+    # This archived V6C gate binds defaults at its pinned authority. The later
+    # V6W activation intentionally changed the live S3 default to V2D.
+    defaults = {
+        target.id: node.value.value
+        for node in ast.parse(_authority_source("src/anysolver/elements.py")).body
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Constant)
+        for target in node.targets
+        if isinstance(target, ast.Name) and target.id in {
+            "DEFAULT_Q4_FORMULATION", "DEFAULT_S3_FORMULATION"
+        }
+    }
+    assert defaults == {
+        "DEFAULT_Q4_FORMULATION": "e4-pl", "DEFAULT_S3_FORMULATION": "legacy-s3"
+    }
 
 
 def test_v6c_implementation_is_native_and_restart_route_is_exactly_scoped() -> None:

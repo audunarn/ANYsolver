@@ -12,6 +12,7 @@ import pytest
 import anysolver
 from anysolver.boundary import LoadCase
 from anysolver.e4_pl_element import QualifiedE4PLShellElement
+from anysolver.e4_pl_s3_v2d_element import NativeParityE4PLS3V2DShellElement
 from anysolver.element_capabilities import ElementCapabilityError
 from anysolver.e4_pl_s3_v2_element import (
     EQUATION_MAP_SHA256,
@@ -147,10 +148,14 @@ def _rigid_modes(coordinates: np.ndarray) -> np.ndarray:
 
 def test_explicit_selector_preserves_every_existing_default_and_q4_route() -> None:
     assert DEFAULT_Q4_FORMULATION == "e4-pl"
-    assert DEFAULT_S3_FORMULATION == "legacy-s3"
+    assert DEFAULT_S3_FORMULATION == "e4-pl-s3-v2d"
+    # The registry retains the legacy implementation identity; public current
+    # factories apply the independently activated topology-specific policy.
     assert ELEMENT_TYPES["s3"] is ShellElement
-    assert type(create_shell_element(1, [1, 2, 3], "steel")) is ShellElement
-    assert type(create_element("s3", 2, [1, 2, 3], "steel")) is ShellElement
+    assert type(create_shell_element(1, [1, 2, 3], "steel", reference_normal=NORMAL)) is NativeParityE4PLS3V2DShellElement
+    assert type(create_element("s3", 2, [1, 2, 3], "steel", reference_normal=NORMAL)) is NativeParityE4PLS3V2DShellElement
+    assert type(create_shell_element(11, [1, 2, 3], "steel", formulation="legacy-s3")) is ShellElement
+    assert type(create_element("legacy-s3", 12, [1, 2, 3], "steel")) is ShellElement
     assert type(create_shell_element(3, [1, 2, 3, 4], "steel")) is (
         QualifiedE4PLShellElement
     )

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
-import uuid
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -30,21 +30,17 @@ from anysolver.boundary import LoadCase
 from anysolver.elements import BeamElement
 
 
-def _make_repo_local_temp_dir() -> Path:
-    """Create a test temp directory without using pytest's global temp fixture.
+def _make_reference_temp_dir() -> Path:
+    """Create disposable scratch outside the repository using the temp policy.
 
-    Some Windows setups can deny access to pytest's default AppData temp base.
-    These tests only need a scratch folder, so use the current working tree.
+    A runner can set TMP/TEMP to an accessible external evidence root on
+    Windows. Existing repository-local evidence is never reused or removed.
     """
-    root = Path.cwd() / ".pytest_local_tmp"
-    root.mkdir(exist_ok=True)
-    path = root / f"reference_cases_{uuid.uuid4().hex}"
-    path.mkdir()
-    return path
+    return Path(tempfile.mkdtemp(prefix="anysolver-reference-cases-"))
 
 
 def test_reference_case_discovery_finds_local_inp_frd_pair() -> None:
-    repo_root = _make_repo_local_temp_dir()
+    repo_root = _make_reference_temp_dir()
     try:
         case_dir = repo_root / "tests" / "reference_cases" / "flat_plate"
         case_dir.mkdir(parents=True)
@@ -80,7 +76,7 @@ def test_reference_case_discovery_finds_local_inp_frd_pair() -> None:
 
 
 def test_reference_case_discovery_can_report_input_only_cases() -> None:
-    repo_root = _make_repo_local_temp_dir()
+    repo_root = _make_reference_temp_dir()
     try:
         case_dir = repo_root / "reference_cases"
         case_dir.mkdir(parents=True)
@@ -106,7 +102,7 @@ def test_reference_case_discovery_can_report_input_only_cases() -> None:
 
 
 def test_generated_external_reference_decks_are_discoverable_input_cases() -> None:
-    repo_root = _make_repo_local_temp_dir()
+    repo_root = _make_reference_temp_dir()
     try:
         deck_dir = repo_root / "reference_cases"
         cases = generate_external_reference_cases(deck_dir)
@@ -131,7 +127,7 @@ def test_generated_external_reference_decks_are_discoverable_input_cases() -> No
 
 
 def test_calculix_gravity_uses_magnitude_unit_direction_and_defined_all_set() -> None:
-    repo_root = _make_repo_local_temp_dir()
+    repo_root = _make_reference_temp_dir()
     try:
         model = FEModel("gravity_export")
         model.add_material("steel", 210.0e9, 0.3, density=7850.0)
@@ -155,7 +151,7 @@ def test_calculix_gravity_uses_magnitude_unit_direction_and_defined_all_set() ->
 
 
 def test_external_reference_report_cli_artifacts_are_written() -> None:
-    repo_root = _make_repo_local_temp_dir()
+    repo_root = _make_reference_temp_dir()
     try:
         output = repo_root / "external_reference_report.json"
         markdown = repo_root / "external_reference_report.md"
@@ -201,7 +197,7 @@ def test_upstream_calculix_shell_reference_manifest_is_available() -> None:
 
 
 def test_shell_convergence_result_file_is_parsed_and_normalized() -> None:
-    repo_root = _make_repo_local_temp_dir()
+    repo_root = _make_reference_temp_dir()
     try:
         result_file = repo_root / "S4.txt"
         result_file.write_text(
@@ -229,7 +225,7 @@ def test_shell_convergence_result_file_is_parsed_and_normalized() -> None:
 
 
 def test_shell_convergence_table_discovery_reads_known_element_files() -> None:
-    repo_root = _make_repo_local_temp_dir()
+    repo_root = _make_reference_temp_dir()
     try:
         (repo_root / "S4.txt").write_text("# size NoN smax umax\n100 12 0.616489 0.013121\n", encoding="utf-8")
         (repo_root / "S8.txt").write_text("# size NoN smax umax\n50 40 1.500000 0.050000\n", encoding="utf-8")
@@ -284,7 +280,7 @@ def test_internal_shell_convergence_runner_returns_ordered_points() -> None:
 
 
 def test_internal_shell_table_writer_and_loose_reference_comparison() -> None:
-    repo_root = _make_repo_local_temp_dir()
+    repo_root = _make_reference_temp_dir()
     try:
         internal_results = run_simple_supported_shell_convergence(
             divisions=(1, 2),
