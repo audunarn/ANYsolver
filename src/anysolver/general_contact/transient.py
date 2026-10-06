@@ -428,6 +428,11 @@ class TransientContactResults:
     constraint_reactions: np.ndarray = field(default_factory=lambda: np.empty((0, 0)))
     pair_swept_minimum_gaps: tuple[dict[str,float], ...] = ()
 
+    def to_archive_bytes(self, *, max_bytes=16 * 1024 * 1024):
+        """Export an independent strict-data snapshot; never admit a restart."""
+        from .transient_results_archive import serialize_transient_contact_results
+        return serialize_transient_contact_results(self,max_bytes=max_bytes)
+
 
 def _restart_analysis_contract(transient, controls, manager, profile,
                                base_load_case, external_load,

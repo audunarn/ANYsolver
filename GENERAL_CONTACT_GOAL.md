@@ -28,6 +28,14 @@ Actual automatically selected shell-shell mechanics and independent acceptance
 remain open; native spatial verification remains required. See the
 [automatic-domain guide](docs/GENERAL_CONTACT_AUTOMATIC_DOMAIN_DEV.md).
 
+C9 solver-side transient result export now has source and private installed
+development evidence: all 26 producer fields and seven contact variants are
+preserved as bounded inert data; an actual impact/export/read workflow and 14
+installed controls pass. All 534 package files match source. This does not close
+application adapters, impact qualification or C9 acceptance. Coupled automatic
+and native verification remain held under their recorded limits; no authority
+is renewed. [Archive evidence](docs/d1_review_support/contact_transient_archive_20261006/development.md).
+
 ## Preserved history and decisions
 
 The [unaltered prior goal](GENERAL_CONTACT_GOAL_HISTORY_20261005.md) and [prior plan](GENERAL_CONTACT_PLAN_HISTORY_20261005.md) retain all development decisions, counterexamples, failures, references and source identities. Unaffected scientific contracts, registered criteria, frozen/consumed authorities and assessed capability boundaries remain binding. Historical chronological next actions are superseded by this live goal/plan; this consolidation changes no mechanics or acceptance target and authorizes no repeated campaign.

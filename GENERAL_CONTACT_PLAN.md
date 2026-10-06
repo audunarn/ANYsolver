@@ -5,6 +5,12 @@ This plan changes the route, not scientific obligations or execution authority.
 
 ## Current delivered development
 
+The solver-side transient result archive is implemented and installed-development
+verified: actual impact/export/read, 14 controls, all 534 source/wheel/package
+files matching. Exact producer fields, contact variants, flags and checkpoint
+remain inert data. No mechanics/admission/release change; application adapters and
+full C9 remain open. [Evidence](docs/d1_review_support/contact_transient_archive_20261006/development.md).
+
 Declared automatic shell/rigid domains compile once into ordinary contact
 definitions. Source and installed focused controls pass; the actual two distinct
 tools, split restart and per-body force/moment checks pass. The private wheel's
@@ -108,6 +114,36 @@ both-body gap/wrench/target motion, then lifecycle/parity/split restart within
 that total and existing per-job caps. Otherwise advance a genuinely separate
 required row; preserve this candidate. No native or frozen authority is renewed.
 ## Programme disposition and subsequent order
+
+### Independent current slice: transient result archive
+
+The additional coupled-test allocation is still pending; its remaining5.973s
+and the native residual purse remain held. Advance the distinct C9 solver-side
+export requirement through the existing transient result producer. One sustained
+owner implements a bounded, versioned, immutable result archive and public reader,
+preserving all producer fields/identities and exact checkpoint bytes/values.
+Handle NumPy scalars and legitimate no-overlap gaps explicitly in strict JSON;
+refuse invalid/nonfinite mechanics, malformed schemas and resource exhaustion.
+Do not reinterpret generalized reactions as physical moments or confer admission.
+
+Exercise an actual existing small impact solve through export/read and a matching
+private installed package. This is producer/consumer integration, not another
+mechanics prototype, repeated frozen campaign or the held shell-pair rerun.
+New distinct archive milestone180s cumulative including build/install, perjob
+120s/953MiB/JIT0/pools1/one job. Root owns contracts, reconciliation and acceptance;
+worker owns the new archive module/test/example/guide and narrow result-method/
+lazy-export edits only. Raw C:/ANYworkspaceWork/contact_transient_archive_20261006.
+
+Delivery completed within96.140970999724/180s; all14jobs terminal,83.859029000276s
+remain in this archive purse. Final installed14PASS, source/wheel/installed534
+files parity, effective JIT0/Numba1/pools1/errors[]. Actual141-state impact includes
+23active states and release; exact arrays/reactions/restart survive export/read.
+Supporting scoped review findings repaired; no further consequential defect
+found. Root inspected source/evidence and adopts this development interface,
+not engineering acceptance. Both prior NONPASS runs and artifacts remain retained.
+Do not repeat passed archive checks without changed inputs or a concrete concern;
+advance the next required unblocked programme row. Held domain/native purses and
+the requested further coupled allocation remain unchanged.
 
 | Delivery | Current disposition | Required next breadth |
 |---|---|---|
