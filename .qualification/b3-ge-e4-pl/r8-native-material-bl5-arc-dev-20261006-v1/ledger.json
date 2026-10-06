@@ -2,7 +2,7 @@
   "status": "USER_APPROVED_NEW_ALLOWANCE",
   "candidate": "9bc30096728ec535bf197e66c548f18295c173db",
   "total_seconds": 300.0,
-  "used_seconds": 276.6687038,
+  "used_seconds": 281.6991968,
   "final_verification_reserve_seconds": 60.0,
   "memory_limit_bytes": 2147483648,
   "affinity": [
@@ -215,6 +215,28 @@
         "remaining_seconds": 23.331296199999997,
         "supervisor_sha256": "5ceaeaf0365d797dd6083b49a73d0ac37ff2ca1c0a85e6e7ce1afe460a6013e7",
         "entry_sha256": "e789092b7f67a53182f8c24bfdb0ef4436fbc8c56ba59d697ff8fceb2cc3c362",
+        "tree_memory": "entry psutil sampled entire process tree, 2GiB ceiling; native timeout kills entire tree"
+      }
+    },
+    {
+      "path": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\.qualification\\b3-ge-e4-pl\\r8-native-material-bl5-arc-dev-20261006-v1\\installed-collect-native-jacobian-v1",
+      "receipt": {
+        "command": [
+          "C:/Python/Python314/python.exe",
+          "-I",
+          "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\.qualification\\b3-ge-e4-pl\\r8-native-material-bl5-arc-dev-20261006-v1\\entry-collect-v1.py",
+          "installed",
+          "installed-collect-native-jacobian-v1"
+        ],
+        "cwd": "C:\\Github\\ANYsolver\\.perf2-worktrees\\stiffened-main-reconcile-20261001\\.qualification\\b3-ge-e4-pl\\r8-native-material-bl5-arc-dev-20261006-v1",
+        "status": "completed",
+        "exit_code": 0,
+        "process_wall_seconds": 5.030493,
+        "seconds_limit": 12.0,
+        "cumulative_used_seconds": 281.6991968,
+        "remaining_seconds": 18.300803199999997,
+        "supervisor_sha256": "0dbdb59e674c698c3b4a629ff27b0eee093dc0b92a38e14c3fc34df3a497fe46",
+        "entry_sha256": "9ef03cf786f3e2f8aadf3786ac205a4af9a8bf2935285b48bfad78b530d8bc90",
         "tree_memory": "entry psutil sampled entire process tree, 2GiB ceiling; native timeout kills entire tree"
       }
     }

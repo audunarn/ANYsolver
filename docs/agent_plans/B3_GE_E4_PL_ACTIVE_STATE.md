@@ -29,7 +29,12 @@ existing v6 panel/Project bridge, new example/test/development note, no product
 source/API/schema changes. Complete source review passed after cleanup repair.
 All99 source modules match existing d1c9714d wheel; reuse avoids another build.
 Both new tests UNRUN. Fresh150s consumer authority requested and still pending;
-no consumer runtime allowance inferred from23.331s.
+no consumer runtime allowance inferred from solver remainder.
+Source-only follow-through: same consumer author prepares frozen installed-check
+harness; independent verification owner writes a common-state/new-origin arc
+border derivative oracle. Both source-only assignments completed. Root bounded
+collection imported that oracle:1 collected/ZERO executed,5.030493s; derivative
+branch/criteria remain UNRUN. Consumer approval/ledger remains PENDING/zero.
 Independent evidence review confirms three earlier installed full equilibrium
 directional checks apply to unchanged assembly/update modules. Their endpoint
 predecessors differ from arc's newly accepted origins; a common-state full arc
@@ -53,10 +58,10 @@ Successful installed jobs:34.1895612s/38.5294439s/8.4307776s; five cases.
 Raw: .qualification/b3-ge-e4-pl/r8-native-material-bl5-arc-dev-20261006-v1/.
 Latest author handoff-v2.md SHA658e5eeb; final-manifest-v2.json SHAf306dfdb.
 Independent review docs/development/stiffened_shell_native_material_bl5_arc_independent_review.md
-SHA442d92e4: no new blocking finding in TESTED SCOPE, not scientific acceptance.
+SHAfa97020a: no new blocking finding in TESTED SCOPE, not scientific acceptance.
 Root artifact/core/controls/derivative proof files and preserved failures are in raw.
 
-NEW user-approved300s ledger:276.6687038s used,23.3312962s remain. All jobs
+NEW user-approved300s ledger:281.6991968s used,18.3008032s remain. All jobs
 terminal; no numerical work running. Remaining authority is ONLY this approved
 candidate's checks/repair scope,2GiB treeRSS/affinity0/pools1/JIToff/backend unforced.
 Sixty seconds were reserved FOR final verification and used during that stage;

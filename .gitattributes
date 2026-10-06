@@ -444,3 +444,4 @@ tests/test_stiffened_shell_b2_physical_footprint_batch.py -text whitespace=cr-at
 /docs/development/stiffened_shell_native_material_bl5_arc_independent_review.md -text whitespace=cr-at-eol,-blank-at-eof
 
 /.qualification/b3-ge-e4-pl/r8-native-material-bl5-arc-dev-20261006-v1/** -text -whitespace
+tests/test_native_material_bl5_arc_same_origin_jacobian.py -text whitespace=cr-at-eol
