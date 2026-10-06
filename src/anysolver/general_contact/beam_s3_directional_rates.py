@@ -171,3 +171,26 @@ def recover_directional_rates(manager,full,T,M,basis,tangent,velocity,accelerati
     if not np.isfinite(v).all() or not np.isfinite(a).all() or np.linalg.norm(M@(a-acceleration))>1.e-10*max(1.,np.linalg.norm(M@acceleration)):
         raise ValueError('directional rates changed physical inertia or became nonfinite')
     return v,a
+
+
+EQUILIBRATED_PROFILE='ELASTIC_B2_B3_AFFINE_S3_EQUILIBRATED_DIRECTIONAL_HERMITE_DEV_V1'
+EQUILIBRATED_RESTART_SCHEMA='ANYSOLVER_BEAM_S3_EQUILIBRATED_DIRECTIONAL_DEV_CHECKPOINT_V20'
+
+
+class EquilibratedDirectionalBeamS3Manager(DirectionalBeamS3Manager):
+    def restart_contract(self):
+        data=super().restart_contract()
+        data.update(profile=EQUILIBRATED_PROFILE,initial_policy='ELASTIC_COMPLETE_EQUILIBRIUM_CONSTANT_DEADLOAD_V1')
+        return data
+
+    def evaluate(self,*args,**kwargs):
+        r,K,summary=super().evaluate(*args,**kwargs)
+        return r,K,replace(summary,profile=EQUILIBRATED_PROFILE)
+
+
+@contextmanager
+def equilibrated_directional_scope(model,definition,settings,initial_displacement=None):
+    manager=EquilibratedDirectionalBeamS3Manager(model,definition,settings,initial_displacement)
+    token=_ACTIVE_CONTACT.set(manager)
+    try:yield manager
+    finally:_ACTIVE_CONTACT.reset(token)

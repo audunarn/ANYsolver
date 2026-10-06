@@ -2658,3 +2658,21 @@ Same-family supporting scrutiny only; no independent engineering acceptance.
 Equilibrated tilted dynamic full-touch nonzeroB*Z, general finite rotation/DAE
 lift/native/friction/multiple-face impact and C0-C9 completion remain OPEN.
 Evidence: docs/d1_review_support/contact_c6_beam_s3_20261006/directional_coupling_development.md
+
+
+## 2026-10-06 C6 V20 equilibrated tilted initial entry - development tested
+
+Separate exclusive opt-in/schema20 admits exact tilted full-touch and constant
+nodal-only manufactured equilibrium load after full reduced force/null-rate
+consistency. Installed three active increments/exact restart, independent
+directional work-rate, complete force/rotary/reduced/null equilibrium without
+reactions, both-body wrenches, refusal/cancel/exception/retry and V17-V19 old
+checkpoint compatibility PASS. Physical ry coupling6.103422494164e-5m/rad,
+rank1/nullity2; earlier .0009765625 is unnormalized numerator, not m/rad.
+Radial loaded-energy integration is source-justified, not an independent law
+oracle. Loaded opening/refinement, independent nonlinear energy, V20 DATA codec,
+C2 DAE/finite rotation and engineering acceptance remain OPEN.543payloads match
+held wheel395fceef892e3feb6650364897628f611060886c6898743c4a70f03c4701642e.
+Nine new jobs41.218985400163s; C6 47jobs265.488399300026/360s,
+94.511600699974s remains. No other authority or historical defaults changed.
+Evidence: docs/d1_review_support/contact_c6_beam_s3_20261006/tilted_initial_development.md

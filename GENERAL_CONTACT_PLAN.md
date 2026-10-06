@@ -2,8 +2,43 @@
 
 **Updated:** 6 October 2026. **Goal:** [complete C0-C9](GENERAL_CONTACT_GOAL.md).
 This plan changes the route, not scientific obligations or execution authority.
+The restart note holds current execution balances. Older milestone counts below
+are historical evidence, not renewed or additional execution authority.
 
+The separately opted-in equilibrated V20 slice is implemented and tested below.
 ## Current delivered development
+
+## C6 V20 equilibrated tilted entry: installed development verified
+
+The new exclusive opt-in profile admits a supplied nonzero elastic pose and
+constant serializable nodal-only LoadCase after exact full-line touch, complete
+reduced equilibrium and directional null-velocity consistency. V17-V19 guards
+and checkpoint identities remain intact. Physical uniform-ry gap coupling is
+6.103422494164e-5m/rad (rank1/nullity2); the earlier .0009765625 numerator norm
+is NOT a normalized geometric derivative. Three accepted active steps, maximum
+penetration .353980122um and exact active split restart pass on the new artifact.
+
+Installed8 controls plus targeted fresh-load refusal1 and corrected equilibrium1
+pass; public example passes. Complete reduced balance excludes stored reactions;
+maximum normalized residual5.70592e-9, rotary/null about4.814e-17 versus1e-6.
+Independent moving-normal force-rate errors<=8.360e-7 versus1e-5. Cancellation,
+exception/retry, corrupt secant and incompatible-load/profile restart are covered;
+protected pre-V20 prefixes continue exactly under V17-V19. All543 source/wheel/
+installed payloads agree. No hidden inertia, snapping or historical-default change.
+
+The equilibrium load is manufactured from production structural/contact force.
+Loaded energy uses radial structural work, subtracts initial storage/deadload
+work and uses positive impact kinetic scale3.21995e-8J; its6.973e-12 defect is
+source-justified integration evidence, NOT independent structural-law acceptance.
+Loaded opening/refinement, independent nonlinear potential, C2 DAE, finite
+rotation, V20 archive consumer and engineering acceptance remain OPEN.
+
+Nine new jobs cost41.218985400163s including build/install. C6 now records
+47terminal jobs265.488399300026/360s used;94.511600699974s remains.
+Other purses/consumed authorities are unchanged. Supporting same-family review
+found no remaining consequential defect in this slice; it is not engineering
+acceptance. [Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/tilted_initial_development.md).
+
 
 ### Delivered bounded C9 native checkpoint DATA consumer
 
@@ -75,9 +110,10 @@ repairs; no final complete-suite or installed parity claim is made.
 The former held V19 local/first-touch/impact gate is now development-tested
 in the matching installed artifact, as recorded below; no redundant rebuild.
 Its178.223450/180s source-phase figures and unanswered C6 request are historical:
-user explicitly granted180additional seconds, current224.269414/360s. Dynamic
-equilibrated nonzero full-touch coupling remains the next mechanics gate; local
-off-equilibrium data cannot substitute for it. Descriptor/secant/Hermite semantics
+user explicitly granted180additional seconds;224.269414/360s was the pre-V20
+balance. The distinct V20 delivery above now verifies equilibrated nonzero
+full-touch coupling; the local off-equilibrium data retains its original scope.
+Descriptor/secant/Hermite semantics
 and all existing legacy/frozen boundaries remain unchanged.
 General rotation/friction, multiple faces, materials, other
 impact pairings and full C6 acceptance remain separate obligations.
@@ -343,6 +379,16 @@ retain fixed inputs/gates, reuse the matching wheel, and complete actual press,
 both-body gap/wrench/target motion, then lifecycle/parity/split restart within
 that total and existing per-job caps. Otherwise advance a genuinely separate
 required row; preserve this candidate. No native or frozen authority is renewed.
+## Resolved C6 tilted-entry question
+
+V19's virgin/unforced guard correctly excludes a deformed equilibrated touch.
+S3 facet-normal reference directors rule out virgin-reference tilt as a substitute
+for nonzero rotational coupling. The separately selected V20 profile solves the
+public entry/restart question with explicit constant nodal loads and complete
+initial force/rate checks. Both15s-bounded probes and all installed follow-through
+are retained in tilted_entry_* evidence; no existing guard was relaxed.
+Current C6 balance is47jobs265.488399300026/360s,94.511600699974s remaining.
+
 ## C6 V19 coupling and impact: installed development evidence
 
 The prepared nonzero production B*Z discriminator now passes against the
@@ -373,15 +419,12 @@ jobs224.269413899863/360s used,135.730586100137s remains. Other limits unchanged
 Supporting Read scrutiny is development evidence, not independent engineering
 acceptance. [Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/directional_coupling_development.md).
 
-Next bounded mechanics question: can an equilibrated tilted full-touch event
-with actual nonzero contact-null coupling be initialized and stepped through
-the public V19 route? Use the SAME135.730586s remaining C6 allowance, existing
-physics/identity and independent work/rate/mass references. Freeze a small
-discriminating fixture before its run. A guard/exact-representation conflict
-requires a concrete counterexample or compatible repair, not snapping, hidden
-mass, tolerance relaxation or an off-equilibrium state relabelled as admissible.
-Retain one implementation owner and reserve verification/handoff; root adopts
-any genuine profile/physics/architecture change. Broader C0-C9 remains required.
+Next bounded C6 slice: extend the held V20 loaded fixture through opening and
+temporal/work refinement under the same remaining94.511600699974s purse.
+Freeze the actual comparison and preserve independent-work versus radial-source
+energy distinctions. Keep one implementation owner and explicit handoff reserve;
+no new physics, snapping, hidden inertia or criterion relaxation. Broader C0-C9
+and independent engineering acceptance remain required.
 
 ## C5 preload-to-opening workflow: installed development check PASS
 

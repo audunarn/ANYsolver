@@ -2,137 +2,90 @@
 
 ## Scope and ownership
 
-Work ONLY in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
+Work ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
 branch codex/contact-main-reconcile-20261001. Inspect current HEAD/status;
-parent0966a6cfc570b72934b786693dce35e1e7d406cb holds C5 opening/restart;
-installed C4 controls remain at5e722d3d.
+c057d319 holds prior V19 installed evidence, this successor adds V20 entry.
 Full C0-C9 stays ACTIVE/incomplete: [goal](GENERAL_CONTACT_GOAL.md),
 [plan](GENERAL_CONTACT_PLAN.md), [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
-No protected-original access, sibling edits, other-chat messaging, publication,
-push/merge/release or default changes. Local Git checkpoints authorized.
-Global AGENTS reread; apply current worker ownership, early checkpoints and
-precise resource accounting. Only the explicit C5/C6 extensions below change
-execution authority. Mistral/local
-cached unavailable; OpenAI fallback. Author/reviewer terminal, no job live.
-Same-family scrutiny is not independent engineering acceptance.
-Ledger append ASCII BYTES ONLY; preserve working and Git prefixes separately.
+No protected-original access, sibling edits, other-chat messaging, push/merge,
+publication/release/default changes. Local checkpoints authorized. Global AGENTS
+reread; Mistral/local cached unavailable, OpenAI fallback. Author/reviewer terminal,
+no owned job live. Same-family scrutiny is not independent engineering acceptance.
+Ledger append ASCII BYTES ONLY, preserving working and Git prefixes separately.
 
-## C6 V19 coupling and impact: installed development evidence
+## C6 V20 equilibrated tilted entry: installed development verified
 
-The prepared nonzero production B*Z discriminator now passes against the
-independent moving-normal/mass/rate oracle. Nullity2, contact-null rank1 at
-the tilted local pose; uniformry coupling6.103422494164e-5m/rad, force-rate
-error<=1.10e-9 at three perturbations versus1e-5. Connected velocity/secant
-recovery preserves physical mass action. It is off equilibrium, NOT an admitted
-dynamic state or proof that both null modes couple at the touch event.
+The new exclusive opt-in profile admits a supplied nonzero elastic pose and
+constant serializable nodal-only LoadCase after exact full-line touch, complete
+reduced equilibrium and directional null-velocity consistency. V17-V19 guards
+and checkpoint identities remain intact. Physical uniform-ry gap coupling is
+6.103422494164e-5m/rad (rank1/nullity2); the earlier .0009765625 numerator norm
+is NOT a normalized geometric derivative. Three accepted active steps, maximum
+penetration .353980122um and exact active split restart pass on the new artifact.
 
-The public V19 flat-first-touch impact has81states/32active, minimumgap-5.374um
-within10um, final OPEN+24.293um, exact accepted-time split restart. Independent
-line-potential error<=3.595e-19J; energy defect0.0315729%->0.00772189% at
-10->5us, below1% and improving. Algebraic<=1.787e-16, sampled per-body work
-wrench<=5.552e-17 at separate0.5N/0.25Nm and1e-6 gates. Target rotations
-<=3.29e-7rad; no broad finite-rotation or dynamic nonzero full-touch B*Z claim.
+Installed8 controls plus targeted fresh-load refusal1 and corrected equilibrium1
+pass; public example passes. Complete reduced balance excludes stored reactions;
+maximum normalized residual5.70592e-9, rotary/null about4.814e-17 versus1e-6.
+Independent moving-normal force-rate errors<=8.360e-7 versus1e-5. Cancellation,
+exception/retry, corrupt secant and incompatible-load/profile restart are covered;
+protected pre-V20 prefixes continue exactly under V17-V19. All543 source/wheel/
+installed payloads agree. No hidden inertia, snapping or historical-default change.
 
-Final6installed controls and5env-absent portable controls PASS; public installed
-example, cancellation/exception, retry prefix and re-signed secant-corruption
-refusal pass. Three failed fixture checks remain retained: nominal split-time
-roundoff, truncated-step checkpoint request, wrong fingerprint import. Repairs
-preserve physics/gates and exact restart. Historical local installed_route=False
-was hardcoded; actual installed imports prove routing and final metadata is fixed.
+The equilibrium load is manufactured from production structural/contact force.
+Loaded energy uses radial structural work, subtracts initial storage/deadload
+work and uses positive impact kinetic scale3.21995e-8J; its6.973e-12 defect is
+source-justified integration evidence, NOT independent structural-law acceptance.
+Loaded opening/refinement, independent nonlinear potential, C2 DAE, finite
+rotation, V20 archive consumer and engineering acceptance remain OPEN.
 
-No product changes/build; all543source payloads match the reused private wheel.
-Actual203-229installed imports, errors0/JIT0/Numba1/pools1. Nine new jobs cost
-46.045963600045s including failures. Explicit user+180C6 allowance:38terminal
-jobs224.269413899863/360s used,135.730586100137s remains. Other limits unchanged.
-Supporting Read scrutiny is development evidence, not independent engineering
-acceptance. [Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/directional_coupling_development.md).
+Nine new jobs cost41.218985400163s including build/install. C6 now records
+47terminal jobs265.488399300026/360s used;94.511600699974s remains.
+Other purses/consumed authorities are unchanged. Supporting same-family review
+found no remaining consequential defect in this slice; it is not engineering
+acceptance. [Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/tilted_initial_development.md).
 
-Next bounded mechanics question: can an equilibrated tilted full-touch event
-with actual nonzero contact-null coupling be initialized and stepped through
-the public V19 route? Use the SAME135.730586s remaining C6 allowance, existing
-physics/identity and independent work/rate/mass references. Freeze a small
-discriminating fixture before its run. A guard/exact-representation conflict
-requires a concrete counterexample or compatible repair, not snapping, hidden
-mass, tolerance relaxation or an off-equilibrium state relabelled as admissible.
-Retain one implementation owner and reserve verification/handoff; root adopts
-any genuine profile/physics/architecture change. Broader C0-C9 remains required.
+## Execution authority
 
-## C5 preload-to-opening workflow: installed development check PASS
-
-The unchanged frozen reverse-load candidate now passes the complete installed
-test: actual active physical preload, positive final gap7.598713707817um,
-independent structural/P1 response, spherical path, support/load/contact and
-both-body wrench gates, exact full6/prefix3+resume3 checkpoint. Maximum response
-1.641e-11, sphere3.008e-7 and wrench3.710e-12 satisfy unchanged1e-6 gates;
-separate .15N/.15Nm/10um scales remain. The earlier writer failure is preserved,
-not retrospectively passed. Inactive pressure plus positive physical gap is
-required for opening; no load/regularization/tolerance/solver changes were made.
-
-One installed test PASS8.291037200019s/167657472B; actual224installed imports,
-errors0/JIT0/Numba1/pools1. Root543payload/source agreement and protected hashes
-match. Supporting source/evidence review found no remaining consequential defect
-in this fixture; it is not independent engineering acceptance or broader C5
-admission. No product changes/build; unaffected prior evidence is reused.
-
-User approved an additional60s for this C5 check/repair scope: total240s,
-28terminaljobs186.042572499835s used,53.957427500165s remains. All other
-authorities unchanged; no borrowing or fresh campaign implied. Author/reviewer
-terminal, no process live. [Evidence](docs/d1_review_support/contact_arc_length_20261006/release_development.md).
-
-## Held authorities
-
-| Milestone | Used / allowance (seconds) | Remaining seconds |
+| Scope | Used/total seconds | Remaining seconds |
 |---|---:|---:|
-| C6 beam/S3 |224.269413899863 /360|135.730586100137|
-| C5 arc |186.042572499835 /240|53.957427500165|
-| C4 triangulated/connected S3 |172.931528899935 /180|7.068471100065|
-| C9 archives |177.698497499572 /180|2.301502500428|
-| Automatic domains |174.026839300175 /180|5.973160699825|
-| Native connected spatial |177.357927799691 /180|2.642072200309|
+| C6 beam/S3 |265.488399300026/360|94.511600699974|
+| C5 arc |186.042572499835/240|53.957427500165|
+| C4 triangulated/connected S3 |172.931528899935/180|7.068471100065|
+| C9 archives |177.698497499572/180|2.301502500428|
+| Automatic domains |174.026839300175/180|5.973160699825|
+| Native connected spatial |177.357927799691/180|2.642072200309|
 
-C6/C5/C4/C9 terminal jobs:38/28/33/34. Onejob/953MiB/JIT0/Numba1/pools1;
-watchdog<=min60s,remaining-1; stricter frozen limits prevail. Original120h
-consumed432011s. C6+180s approved; domain180s request remains UNANSWERED.
-No borrowing/renewal from elapsed time, preselection, policy or goal continuation.
-Domain refined writer NONPASS/FD100.161s timeout; nativeV8 NONPASS/V9 full
-156-coordinate R/H/gap/wrench/solve/restart UNVERIFIED. Preserve failures.
+Terminal jobs C6/C5/C4/C9:47/28/33/34. Onejob/953MiB/JIT0/Numba1/pools1,
+watchdog<=min60s,actualremaining; stricter frozen limits prevail. Original120h
+consumed432011s. Explicit C6+180 and C5+60 approvals retain their scoped meanings;
+domain180s request UNANSWERED. No borrowing, renewal or new campaign implied.
 
-## Next mechanics gates and retained deliveries
+## Next decision and retained deliveries
 
-C5 frozen complete opening/reference/wrench/split-restart check is now PASS.
-Raw release_installed2 preserves actual_result.json and full/prefix capsules;
-release_extension_authority.json, release_extension_final_manifest.json and
-release_extension_worker_handoff.md bind source/inputs/limits. Root
-release_extension_root_reconciliation.json verifies actual evidence, imports,
-payloads and cumulative accounting without another numerical job. Prior failed
-release_installed1 and repaired preparation remain immutable. Broader C5
-acceptance is OPEN; the extra allowance covers this check and focused repairs.
+Next useful C6 slice is the loaded tilted fixture's activation/opening and
+temporal/work refinement using the held artifact and remaining same C6 purse.
+State the discriminating question and freeze controls/reference scales before
+execution; do not present radial production-energy agreement as independent
+structural qualification. Broader profile review/acceptance stays separate.
 
-C6 now has installed local discriminator/flat-first-touch impact and safety
-evidence; dynamic nonzero full-touch remains unverified. Raw directory
-C:/ANYworkspaceWork/contact_c6_beam_s3_20261006 contains coupling_extension_*
-authority/final_manifest/worker_handoff/root_reconciliation and nine immutable
-job folders. Final6controls and env-absent5controls pass at held hashes. Earlier
-source and failed fixture candidates retain their original meaning. Product
-unchanged, source/installed543payloads match; do not claim broader admission.
-V18 installed tiny-angle rotational impact retains its own protected scope;
-no finite-rotation, continuum null-acceleration or nonlinear DAE-path acceptance.
+C5 opening/reference/wrench/exact split restart PASS is retained at0966a6cf;
+raw release_extension_* and release_installed2 keep its complete evidence.
+C4 installed reference/numbering controls at5e722d3d remain fixed planar only.
+C9 native inert DATA reader source4/installed4 remains separate: repaired file
+example full import/test is unexecuted; new V20 archive consumer is not admitted.
+Protected codec and prior packaged artifact remain unchanged.
+Domain refined writer NONPASS/FD100.161s timeout and nativeV8 NONPASS/V9
+full156-coordinate R/H/gap/wrench/solve/restart UNVERIFIED remain historical.
 
-C4 four installed reference/numbering force equilibria/local work-H checks pass;
-directional error6.695e-7, separate wrench/response scales. Fixed planar profile
-only, no finite-motion/rim/self-contact admission. Product unchanged,543payloads
-match C9 wheel. [C4 evidence](docs/d1_review_support/contact_triangulated_rigid_20261006/invariance_development.md).
-C9 native DATA reader source4/installed4 and543payload/189import checks pass;
-bounded file-example repair stdlib check passes but new full pytest/import path
-is UNEXECUTED. Inert data only, no native replay/restart/scientific admission.
-[C9 evidence](docs/d1_review_support/contact_transient_archive_20261006/native_reader_development.md).
-Wheel2a1cca8e20055337f164dce87a6557c4031e5556b114cf9573c71dfaf2047f9d,
-private C:/ANYworkspaceWork/contact_transient_archive_20261006/native_reader_installed1.
-Incidental V19 packaging supplies no C6 numerical verification.
+Raw C6 directory C:/ANYworkspaceWork/contact_c6_beam_s3_20261006 retains
+tilted_entry_final_manifest.json PLUS equilibrium_final_manifest/handoff_delta
+and units_clarification; the companions correct only the earlier translational
+equilibrium label and numerator-unit claim. Original records are immutable.
+Root reconciliation verifies source/AST/protected hashes,543payloads and exact
+process-wall accounting without importing solver or launching numerics.
+New private wheel395fceef892e3feb6650364897628f611060886c6898743c4a70f03c4701642e,
+installed raw/tilted_entry_installed1. New driver product hashes bind this artifact.
 
-Complete prior restart/history remains immutable at
-C:/ANYworkspaceWork/contact_arc_length_20261006/release_extension_prior_restart.md
-and earlier release_root_prior_restart.md. Raw release_worker_handoff.md includes original
-writer failure, no-launch preparation error, repaired source hashes and limits.
-Author/reviewer terminal; next C6 question above has remaining authority.
-Full programme completion/acceptance remains open.
+Complete previous note retained at raw/tilted_entry_root_prior_restart.md,
+initial slice note at raw/tilted_entry_prior_restart.md; earlier C5/C6 history links
+remain in those preserved records. Full programme and engineering acceptance OPEN.

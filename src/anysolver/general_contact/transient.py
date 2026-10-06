@@ -206,8 +206,15 @@ class ContactTransientSolverControls:
     allow_deformable_beam_s3_dev: bool = False
     allow_rotational_beam_s3_dev: bool = False
     allow_directional_beam_s3_dev: bool = False
+    allow_equilibrated_directional_beam_s3_dev: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.allow_equilibrated_directional_beam_s3_dev) is not bool:
+            raise ValueError('equilibrated directional selection must be boolean')
+        if self.allow_equilibrated_directional_beam_s3_dev and any(value for name,value in vars(self).items()
+                if name.endswith('_dev') and name.startswith(('allow_', 's3_', 'q4_'))
+                and name!='allow_equilibrated_directional_beam_s3_dev'):
+            raise ValueError('equilibrated directional requires its separate profile')
         if type(self.allow_directional_beam_s3_dev) is not bool:
             raise ValueError('directional beam-S3 selection must be boolean')
         if self.allow_directional_beam_s3_dev and any(value for name,value in vars(self).items()
@@ -526,7 +533,7 @@ def _restart_analysis_contract(transient, controls, manager, profile,
             physical_path_policy='both_body_complete_cubic_hull_moving_normal_v1',
             maximum_path_intervals=controls.maximum_beam_swept_subdivisions,
             maximum_path_depth=manager.settings.maximum_swept_subdivisions)
-    if controls.allow_directional_beam_s3_dev:
+    if _directional_selected(controls):
         contract['controls'].update(allow_directional_beam_s3_dev=True,
             directional_policy='EXACT_FULL_LINE_RATIONAL_WORK_V1',
             descriptor_rate_policy='DIRECTIONAL_VELOCITY_NULL_SECANT_ACCELERATION_V1',
@@ -576,6 +583,9 @@ def _restart_analysis_contract(transient, controls, manager, profile,
                      "s3_event_gap_tolerance_m", "maximum_event_localizations",
                      "maximum_event_root_iterations"):
             contract["controls"][name] = getattr(controls, name)
+    if controls.allow_equilibrated_directional_beam_s3_dev:
+        contract['controls'].update(allow_equilibrated_directional_beam_s3_dev=True,
+            initial_policy='ELASTIC_COMPLETE_EQUILIBRIUM_CONSTANT_DEADLOAD_V1')
     return contract
 
 
@@ -587,7 +597,7 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
                             plane_pressure_features=None,guided_shell_pair=False,
                             fixed_projection_s3_target=False,normal_s3_skin_hermite=False,
                             normal_s3_polygon_pressure=False,beam_s3=False,rotational_beam_s3=False,
-                            rotational_previous_velocity=None,rotational_last_dt=0.,directional_beam_s3=False) -> dict:
+                            rotational_previous_velocity=None,rotational_last_dt=0.,directional_beam_s3=False,equilibrated_directional=False) -> dict:
     payload = {
         "schema": (_HISTORY_RESTART_SCHEMA if external_work_j is not None
                    else _RESTART_SCHEMA),
@@ -648,6 +658,9 @@ def _new_restart_checkpoint(model_fingerprint, analysis_fingerprint,
     if directional_beam_s3:
         from .beam_s3_directional_rates import RESTART_SCHEMA
         payload['schema'],payload['version']=RESTART_SCHEMA,19
+    if equilibrated_directional:
+        from .beam_s3_directional_rates import EQUILIBRATED_RESTART_SCHEMA
+        payload['schema'],payload['version']=EQUILIBRATED_RESTART_SCHEMA,20
     payload["checkpoint_sha256"] = analysis_configuration_fingerprint(payload)
     return payload
 
@@ -690,7 +703,7 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
                              q4_material_state=False,plane_event_state=False,
                              plane_pressure_features=None,guided_shell_pair=False,
                              fixed_projection_s3_target=False,normal_s3_skin_hermite=False,
-                             normal_s3_polygon_pressure=False,beam_s3=False,rotational_beam_s3=False,directional_beam_s3=False):
+                             normal_s3_polygon_pressure=False,beam_s3=False,rotational_beam_s3=False,directional_beam_s3=False,equilibrated_directional=False):
     if not isinstance(value, Mapping) or set(value) != {
         "schema", "version", "model_fingerprint", "analysis_fingerprint",
         "state", "checkpoint_sha256",
@@ -736,6 +749,9 @@ def _read_restart_checkpoint(value, model_fingerprint, analysis_fingerprint,
     if directional_beam_s3:
         from .beam_s3_directional_rates import RESTART_SCHEMA
         expected_schema,expected_version=RESTART_SCHEMA,19
+    if equilibrated_directional:
+        from .beam_s3_directional_rates import EQUILIBRATED_RESTART_SCHEMA
+        expected_schema,expected_version=EQUILIBRATED_RESTART_SCHEMA,20
     if payload["schema"] != expected_schema or payload["version"] != expected_version:
         raise ValueError("transient contact checkpoint version is incompatible")
     if payload["model_fingerprint"] != model_fingerprint:
@@ -1124,6 +1140,10 @@ def _free_shell_sphere_path_on_selected_side(manager,start,end,start_velocity,
     return True,count
 
 
+def _directional_selected(controls):
+    return controls.allow_directional_beam_s3_dev or controls.allow_equilibrated_directional_beam_s3_dev
+
+
 def _admit_free_shell_coordinates(model, transformation, prescribed):
     """Guided Q4 profile: fixed in-plane geometry and zero shell rotations.
 
@@ -1157,12 +1177,14 @@ def _admit_free_shell_coordinates(model, transformation, prescribed):
 
 def _admit(model, definition: ContactDefinition, settings: ContactSolverSettings,
            controls: ContactTransientSolverControls) -> str:
-    if controls.allow_deformable_beam_s3_dev or controls.allow_rotational_beam_s3_dev or controls.allow_directional_beam_s3_dev:
+    if controls.allow_deformable_beam_s3_dev or controls.allow_rotational_beam_s3_dev or _directional_selected(controls):
         from .beam_s3_transient import PROFILE
         if controls.allow_rotational_beam_s3_dev:
             from .beam_s3_rotational_transient import PROFILE
-        if controls.allow_directional_beam_s3_dev:
+        if _directional_selected(controls):
             from .beam_s3_directional_rates import PROFILE
+            if controls.allow_equilibrated_directional_beam_s3_dev:
+                from .beam_s3_directional_rates import EQUILIBRATED_PROFILE as PROFILE
         from .deformable_beam_s3_static import PROFILE as STATIC_PROFILE
         report=validate_general_contact(model,definition,settings)
         elements=tuple(model.mesh.elements.values())
@@ -1459,7 +1481,7 @@ def solve_transient_contact(
             count = max(1, int(np.ceil(max(0., b-a-roundoff)/transient.dt)))
             if (b-a)/count < controls.minimum_dt-roundoff:
                 raise ValueError("tool/load knot intervals cannot fit dt and minimum_dt")
-    rotational_descriptor = controls.allow_rotational_beam_s3_dev or controls.allow_directional_beam_s3_dev
+    rotational_descriptor = controls.allow_rotational_beam_s3_dev or _directional_selected(controls)
     s3_descriptor = profile in (_S3_PROFILE, _S3_HISTORY_PROFILE)
     if controls.s3_one_sided_rates_dev:
         profile = (_S3_DIRECTIONAL_HISTORY_PROFILE if nodal_load_history is not None
@@ -1617,9 +1639,12 @@ def solve_transient_contact(
     if rotational_descriptor:
         from .beam_s3_rotational_transient import rotational_scope
         selected_scope=rotational_scope
-        if controls.allow_directional_beam_s3_dev:
+        if _directional_selected(controls):
             from .beam_s3_directional_rates import directional_scope
             selected_scope=directional_scope
+            if controls.allow_equilibrated_directional_beam_s3_dev:
+                from .beam_s3_directional_rates import equilibrated_directional_scope
+                selected_scope=equilibrated_directional_scope
     if controls.allow_deformable_beam_s3_dev:
         from .beam_s3_transient import beam_s3_scope
         selected_scope=beam_s3_scope
@@ -1629,13 +1654,23 @@ def solve_transient_contact(
         if rotational_descriptor:
             from .beam_s3_rotational_transient import RotationalBeamS3Manager, recover_rates
             expected_manager=RotationalBeamS3Manager
-            if controls.allow_directional_beam_s3_dev:
+            if _directional_selected(controls):
                 from .beam_s3_directional_rates import DirectionalBeamS3Manager,recover_directional_rates
                 expected_manager=DirectionalBeamS3Manager
-            if base_load_case is not None or nodal_load_history is not None:
-                raise ValueError('rotational descriptor currently requires unforced impact')
-            if np.any(initial_displacement != 0.):
-                raise ValueError('rotational descriptor requires a virgin zero initial pose')
+                if controls.allow_equilibrated_directional_beam_s3_dev:
+                    from .beam_s3_directional_rates import EquilibratedDirectionalBeamS3Manager
+                    expected_manager=EquilibratedDirectionalBeamS3Manager
+            if controls.allow_equilibrated_directional_beam_s3_dev:
+                if base_load_case is None or nodal_load_history is not None or transient.initial_displacement is None or not np.any(initial_displacement):
+                    raise ValueError('equilibrated directional requires constant nodal LoadCase and supplied nonzero elastic initial pose')
+                from .beam_s3_directional_rates import exact_gap_polynomial
+                if not exact_gap_polynomial(manager,initial_displacement)[0]:
+                    raise ValueError('equilibrated directional initial geometry needs exact full-line touch')
+            else:
+                if base_load_case is not None or nodal_load_history is not None:
+                    raise ValueError('rotational descriptor currently requires unforced impact')
+                if np.any(initial_displacement != 0.):
+                    raise ValueError('rotational descriptor requires a virgin zero initial pose')
         elif controls.allow_deformable_beam_s3_dev:
             from .beam_s3_transient import BeamS3TransientManager
             expected_manager=BeamS3TransientManager
@@ -1742,7 +1777,8 @@ def solve_transient_contact(
                     normal_s3_polygon_pressure=controls.normal_s3_polygon_pressure_bounds_dev,
                     beam_s3=controls.allow_deformable_beam_s3_dev,
                     rotational_beam_s3=rotational_descriptor,
-                    directional_beam_s3=controls.allow_directional_beam_s3_dev,
+                    directional_beam_s3=_directional_selected(controls),
+                    equilibrated_directional=controls.allow_equilibrated_directional_beam_s3_dev,
                 )
             current_time, accepted_steps, q, vred, resumed_acceleration, resumed_work, last_path_active = resumed[:7]
             if rotational_descriptor:
@@ -1860,7 +1896,7 @@ def solve_transient_contact(
         if rotational_descriptor:
             # Check total algebraic equilibrium and supplied velocity, including
             # on resume. Null acceleration is a numerical endpoint-rate record.
-            if controls.allow_directional_beam_s3_dev:
+            if _directional_selected(controls):
                 recovered,_=recover_directional_rates(manager,full0,T,Mred,descriptor_basis,
                     initial_tangent,vred,np.zeros_like(vred),vred,1.,contact0)
             else:
@@ -1874,7 +1910,7 @@ def solve_transient_contact(
         if resumed_acceleration is None:
             if rotational_descriptor:
                 if np.linalg.norm(force0)>controls.equilibrium_tolerance:
-                    raise ValueError('rotational descriptor needs a stress-free initial pose')
+                    raise ValueError('equilibrated directional initial total force is inconsistent' if controls.allow_equilibrated_directional_beam_s3_dev else 'rotational descriptor needs a stress-free initial pose')
                 acceleration=np.zeros_like(q) # declared numerical null-rate seed
             elif s3_descriptor:
                 basis = descriptor_basis.reduced_basis
@@ -2139,7 +2175,7 @@ def solve_transient_contact(
                                     event_gap_tolerance=controls.s3_event_gap_tolerance_m,
                                 )
                             )
-                        if controls.allow_directional_beam_s3_dev:
+                        if _directional_selected(controls):
                             candidate_velocity,candidate_acceleration=recover_directional_rates(
                                 manager,full,T,Mred,descriptor_basis,tangent,candidate_velocity,
                                 candidate_acceleration,vred,step,contact_result)
@@ -2627,7 +2663,8 @@ def solve_transient_contact(
             rotational_descriptor,
             rotational_previous_velocity if rotational_descriptor else None,
             rotational_last_dt if rotational_descriptor else 0.,
-            controls.allow_directional_beam_s3_dev,
+            _directional_selected(controls),
+            controls.allow_equilibrated_directional_beam_s3_dev,
         ) if emit_restart_checkpoint else None
     )
     return TransientContactResults(

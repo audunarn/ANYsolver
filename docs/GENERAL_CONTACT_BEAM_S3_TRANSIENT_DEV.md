@@ -216,3 +216,27 @@ First-touch and installed public example execution complement the local tilted
 oracle. They do not establish nonzero null coupling at an equilibrated tilted
 full-touch event, a C2 DAE acceleration, finite rotations or engineering acceptance.
 No product changes, mass modifications, branch snapping or new wheel were needed.
+
+
+## Equilibrated loaded initial directional profile V20
+
+`allow_equilibrated_directional_beam_s3_dev=True` is a separate exclusive
+DEVELOPMENT profile. It accepts only a supplied nonzero elastic initial pose
+and a constant serializable nodal-only LoadCase, with genuinely exact full-line
+touch, complete reduced structural/contact-minus-load equilibrium and consistent
+true-null directional velocity. No time load history or callback is admitted.
+The zero initial null-acceleration seed is numerical and allowed only after full
+equilibrium; subsequent secant/represented-Hermite semantics are unchanged.
+Load, initial pose, setting and profile bind a separate V20 restart; V19 guards
+and all inactive-setting legacy identities remain unchanged.
+
+The tilted example uses an explicitly manufactured equilibrium load from actual
+structural/contact assembly. That construction is not independent validation
+of structural constitutive laws. Work balance subtracts initial stored energy
+and constant-load work, normalized by a positive frozen impact kinetic scale.
+A half-u-dot-force number is labelled heuristic only; nonlinear storage uses
+elastic radial work without commits and is source-justified, not an independent
+structural formulation oracle. The independent directional reference uses
+rational moving-normal coefficients and analytical negative-rate integration.
+The affine nodal-work versus geometric-skin wrench distinction still applies.
+No C2 DAE, finite-rotation or engineering-acceptance claim follows.
