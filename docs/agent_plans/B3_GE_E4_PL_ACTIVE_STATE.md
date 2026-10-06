@@ -123,11 +123,13 @@ Wheel5639b79b superseded/unexecuted; installedV2/V3 access guards FAILED BEFORE
 tests. Samewheelhost-install recovery preserved, no ACL/source changes. Raw
 r8-ge-mixed-reference-modal-installed-dev-20261006-v1/: finalhandoff/manifest-v2
 and root-integrated-verification-v1.json. Scientific2% convergence/external/
-different-family and aggregateF07/G4B remainOPEN. NEXT: independent Read of B2
-F12/B14 element AND attachment prestress in existing owner, no numericaljob.
-Adopt governing contract before implementation; no inventedWagner/zero-affine-
-Hessian accuracy claim/legacyfloor. Body retry still needs explicit approval.
-No F03/closedcampaign restart. Owned modal jobs terminal.
+different-family and aggregateF07/G4B remainOPEN. Independent B2F12/B14 Read
+identifies centerline axial law, missing general bendingWagner data and physical
+port curvature beyond affinejoint Hessian. NEXT: sustained OpenAI fallback owner
+unblocks/delivers existing B2 point reference-buckling route; early completework
+contract goes to root before numerical execution/physical adoption. Full broader
+F12/B14 remains mandatory. No inventeddata/affine-Hessian accuracy/legacyfloor.
+Body retry needs explicit approval; no F03/closedcampaign restart. Modal terminal.
 
 ## Preserved restrictions and history
 
