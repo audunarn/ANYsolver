@@ -19,6 +19,15 @@ Latest native development: curved physical-fibre beam-pair normal sensitivity, a
 
 Next enable actual spatial refinement through explicit connected multi-element native beam bodies. Preserve authoritative retained coordinates and every structural/contact cross block, true physical geometry/junction/end identity and existing native guards/default identities. No independent-element condensation or insertion of B3-GE into generic FEModel. [Latest evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_lifecycle.json).
 
+The connected-body endpoint candidate is locally checkpointed but its integrated
+verification is held within its remaining authority. D2 declared-domain automatic
+pairing now has source and private installed development evidence: the actual
+two-tool static solve, split restart and per-tool force/moment checks pass. Exact
+persistence, fixed shell role/reference controls and complete-pair refusals pass.
+Actual automatically selected shell-shell mechanics and independent acceptance
+remain open; native spatial verification remains required. See the
+[automatic-domain guide](docs/GENERAL_CONTACT_AUTOMATIC_DOMAIN_DEV.md).
+
 ## Preserved history and decisions
 
 The [unaltered prior goal](GENERAL_CONTACT_GOAL_HISTORY_20261005.md) and [prior plan](GENERAL_CONTACT_PLAN_HISTORY_20261005.md) retain all development decisions, counterexamples, failures, references and source identities. Unaffected scientific contracts, registered criteria, frozen/consumed authorities and assessed capability boundaries remain binding. Historical chronological next actions are superseded by this live goal/plan; this consolidation changes no mechanics or acceptance target and authorizes no repeated campaign.

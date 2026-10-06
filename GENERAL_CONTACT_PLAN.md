@@ -5,11 +5,19 @@ This plan changes the route, not scientific obligations or execution authority.
 
 ## Current delivered development
 
+Declared automatic shell/rigid domains compile once into ordinary contact
+definitions. Source and installed focused controls pass; the actual two distinct
+tools, split restart and per-body force/moment checks pass. The private wheel's
+533 package files match source. These are development results, with shell-shell
+roles/reference controls but no actual automatically selected shell-shell solve
+or independent engineering acceptance yet. Raw evidence:
+C:/ANYworkspaceWork/contact_automatic_domain_20261006.
+
 Local checkpoint 24b14ff2 completes actual curved native physical-fibre beam-pair press/open/recontact and canonical split restart. Installed opening 70.959 s, recontact 64.464 s; final exact replay/program refusal 37.388 s. Independent current-origin material returns and both-body support/contact/load wrenches pass. Fixed-mesh4k/8k normal sensitivity also passes (all integrated response changes <=0.106% against 2%). Native engineering acceptance and spatial/section breadth remain open. The earlier cold8k timeout remains NONPASS; no general twofold speed claim follows.
 
 [Lifecycle guide](docs/GENERAL_CONTACT_NATIVE_CURVED_PAIR_LIFECYCLE_DEV.md), [curated evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/curved_pair_lifecycle.json), [restart/ownership](GENERAL_CONTACT_RESTART.md).
 
-## Next integrated outcome: native spatial refinement
+## Held integrated outcome: native spatial refinement
 
 One implementation owner extends the existing mechanics/transaction services with an explicit connected multi-element beam-body contact profile. Supporting review covers consequential grouped-body invariants and independent reference obligations. Mistral remains cached unavailable; same-owner OpenAI fallback continues. Do not repeat completed single-element lifecycle tests merely to generate fresh evidence.
 
@@ -44,6 +52,40 @@ do not squeeze a full route into the residual purse or replay resolved diagnosti
 Before further execution select a genuinely unblocked programme requirement or
 obtain the specific execution decision needed for this changed integrated route.
 [Evidence](docs/d1_review_support/contact_native_fibre_s3_20261005/grouped_body_development.md).
+
+### Current unblocked integrated row: D2 declared-domain pairing
+
+The native source checkpoint is held without renewing its residual test purse.
+Advance automatic shell/rigid pairing through a standalone immutable declaration
+and resolution service feeding the existing ordinary static solver. Preserve
+existing definitions/signatures/default identities; fixed role selection uses
+reference face area and stable participant IDs. Explicit exclusions precede pair
+overrides and domain defaults; conflicting equal-priority declarations refuse.
+Represent every potential admitted cross-body pair, independent of initial gap.
+The current validator remains the mechanics gate; this adds no self-contact,
+beam/native automatic-pairing or application admission claim.
+
+One sustained owner implements declaration, deterministic resolution/provenance,
+actual static/restart integration, focused refusals and a runnable example.
+New automatic-domain checks have a separate180s cumulative routine milestone
+allowance, perjob120s/953MiB, one numerical job, JIT0/pools1; it is not an extension
+of the native177.357928/180s authority or any frozen campaign. Raw evidence:
+C:/ANYworkspaceWork/contact_automatic_domain_20261006. Root adopts interface and
+reference/restart contracts before promotion; independent acceptance remains open.
+
+The first coherent compiler delivery is implemented and installed-development
+verified: installed10PASS plus actual example, normalized each-tool force/moment
+error <=7.43e-13 against1e-6, exact split restart and incompatible-provenance
+refusal. Supporting source review found no high-consequence defect; it is not
+engineering acceptance. Numerical/build/install use46.996418299968/180s,
+remaining133.003581700032s; perjob caps unchanged. The oblique persistence
+discriminator NONPASS and pre-child runner syntax failure remain preserved.
+Next extend the same owner and new example/test boundary to an actual
+automatically selected nonmatching Q4/S3 coupled workflow, reusing a suitable
+existing fixture and actual solver; compare against its explicit definition.
+Do not substitute reference-role tests for both-body contact mechanics. Reuse
+the current wheel for unchanged implementation; new test/example edits alone
+do not require another build. No native authority is renewed.
 ## Programme disposition and subsequent order
 
 | Delivery | Current disposition | Required next breadth |
