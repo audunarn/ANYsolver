@@ -4083,3 +4083,20 @@ Package source unchanged; wheel6464174e eligible for reuse. Source and proposal:
 .qualification/b3-ge-e4-pl/r8-native-fold-assessment-dev-20261006-v1/.
 Any sign bracket is CANDIDATE only; branch margin, forward accuracy, simple/first
 fold, capacity/stability, G4D, F03 and complete programme acceptance remain OPEN.
+
+## 2026-10-06 - installed saved native tangent diagnostic INCONCLUSIVE
+
+Candidate8d1373cf/wheel6464174e. Fresh300s APPROVED;16analytic/refusal PASS.
+ONE installed g13/g14/g15 assessment completed, state/checkpoint unchanged.
+All3directional checks INCONCLUSIVE: mechanical errors1.61-5.32e-6 and every
+plateau above unchanged1e-6. Reported+,+,- slopes do not certify a fold.
+430modules/5inputs/6savedartifacts and runtime/import/budget bindings checked.
+11.4990092+44.1812499=55.6802591s used;244.3197409s scoped remainder.
+ONE assessment CONSUMED; no automatic rerun/new discriminator/authority transfer.
+Saved vectors localize94.32-98.36% squared error to shellz; noise contribution
+plausible but unbounded and smaller operator defect unresolved. No criteria change.
+Report development/stiffened_shell_native_fold_result_20261006.md; raw native-fold-
+assessment-dev/root-result-v2.json. Supporting Read review clean on evidence.
+Local Q4 capture source preparation only; no new numerical run authorized.
+G4D/F03,first/simplefold,capacity/stability,external/scale/platform/different-family
+and complete programme acceptance remain OPEN. No main/push/release action.
