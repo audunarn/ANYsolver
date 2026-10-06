@@ -45,3 +45,23 @@ Raw evidence: `C:/ANYworkspaceWork/contact_native_transient_20261006`, including
 manifest/worker handoff, exact executed snapshots and failed-fixture reconstruction,
 job inputs/logs/resource/runtime/import records, root audits and source review.
 [Current restart](../../../GENERAL_CONTACT_RESTART.md) gives ownership and all budgets.
+
+## Follow-up interruption repair - implemented, verification open
+
+Baseline36e99e02 installed evidence remains bound to its held artifact. Subsequent
+source review found two return-time windows: an accepted native commit before
+controller publication, and authentic trial issuance before caller assignment.
+The controller now uses actual published endpoint identity; native-owned private
+receipt preparation/cleanup tracks only its exact candidate, including rollback.
+Original control signals and their matching complete accepted prefix are retained.
+No equations/profile/defaults/codec/scientific gates changed. Root AST audit shows
+original trial body equal,43 other midpoint methods and all old facade methods equal.
+Supporting same-family source review found no consequential residual defect.
+
+One authentic postcommit source check TIMEOUT12.064423200092278s, setup only.
+No call/import/runtime/result completion; no pass or mechanics failure inferred.
+Eight terminal jobs total177.52804120001383/180s, residual2.4719587999861687s.
+Prepared five safety cases and updated private artifact verification remain open.
+A90-second scoped extension was requested, not presumed. No original authority,
+failed evidence or prior package is replaced. Root raw safety audits/review and
+worker receipt handoff are retained under the existing evidence directory.

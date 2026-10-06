@@ -250,11 +250,11 @@ def test_controller_cutback_and_precommit_failure_oracle(monkeypatch):
     state = owner.current
     controller = capsule['controller']; contract = capsule['contract']
     native = capsule['native_checkpoint'].encode('ascii')
-    original_trial = owner.trial
+    original_trial = owner._prepare_trial
     class Delegate:
         def __init__(self):
             self.calls = 0
-        def trial(self, accepted, **kwargs):
+        def _prepare_trial(self, accepted, **kwargs):
             self.calls += 1
             if self.calls == 1:
                 raise ValueError('midpoint stage iteration limit')
@@ -312,3 +312,77 @@ def test_keyboard_interrupt_precommit_discards_candidate(monkeypatch):
             row['native_checkpoint'].encode('ascii'), None, previous)
     assert error.value.partial is previous and owner.current.epoch == 0
     assert not owner._owner()._candidates
+
+
+def test_keyboard_interrupt_after_authentic_commit_publishes_prepared_prefix(monkeypatch):
+    owner, config = build(t_end=0.)
+    previous = solve_transient(owner, config)
+    row = json.loads(previous.checkpoint)
+    original = MidpointContext.commit
+    signal = KeyboardInterrupt('after authentic commit before controller return')
+    def interrupt_after_commit(self, candidate, **kwargs):
+        original(self, candidate, **kwargs)
+        raise signal
+    monkeypatch.setattr(MidpointContext, 'commit', interrupt_after_commit)
+    with pytest.raises(KeyboardInterrupt) as error:
+        _advance(owner, owner.current, .001, row['identity'], row['contract'], row['controller'],
+            row['native_checkpoint'].encode('ascii'), None, previous)
+    assert error.value is signal
+    partial = error.value.partial
+    assert partial is not previous and partial.success
+    assert owner.current.epoch == 1 and owner.current.time == .001
+    assert error.value.accepted_state is owner.current
+    assert not owner._owner()._candidates
+    capsule = json.loads(partial.checkpoint)
+    assert capsule['controller']['accepted_steps'] == 1
+    assert error.value.native_checkpoint == capsule['native_checkpoint'].encode('ascii')
+    assert owner.create_checkpoint() == error.value.native_checkpoint
+    assert partial.to_dict()['final']['epoch'] == owner.current.epoch
+    save_result('postcommit_interrupt_prefix', partial)
+
+
+@pytest.mark.parametrize('control_signal', [KeyboardInterrupt, SystemExit])
+def test_control_signal_before_commit_preserves_old_prefix(monkeypatch, control_signal):
+    owner, config = build(t_end=0.)
+    previous = solve_transient(owner, config)
+    row = json.loads(previous.checkpoint)
+    signal = control_signal('before native commit')
+    def interrupt_before_commit(self, candidate, **kwargs):
+        raise signal
+    monkeypatch.setattr(MidpointContext, 'commit', interrupt_before_commit)
+    with pytest.raises(control_signal) as error:
+        _advance(owner, owner.current, .001, row['identity'], row['contract'], row['controller'],
+            row['native_checkpoint'].encode('ascii'), None, previous)
+    assert error.value is signal and error.value.partial is previous
+    assert error.value.accepted_state is owner.current and owner.current.epoch == 0
+    assert error.value.native_checkpoint == row['native_checkpoint'].encode('ascii')
+    assert not owner._owner()._candidates
+
+
+@pytest.mark.parametrize('after_atomic_exit', [True, False])
+def test_trial_receipt_control_signal_cleans_only_actual_issuance(monkeypatch, after_atomic_exit):
+    owner, config = build(t_end=0.)
+    previous = solve_transient(owner, config)
+    row = json.loads(previous.checkpoint)
+    signal = KeyboardInterrupt('after issued trial' if after_atomic_exit else 'captured then native rollback')
+    original = MidpointContext._prepare_trial
+    captured = []
+    def interrupted_trial(self, accepted, *, prepare, **kwargs):
+        def receive(candidate):
+            captured.append(candidate)
+            prepare(candidate)
+            if not after_atomic_exit:
+                raise signal
+        result = original(self, accepted, prepare=receive, **kwargs)
+        assert captured and result is captured[0]
+        raise signal
+    monkeypatch.setattr(MidpointContext, '_prepare_trial', interrupted_trial)
+    with pytest.raises(KeyboardInterrupt) as error:
+        _advance(owner, owner.current, .001, row['identity'], row['contract'], row['controller'],
+            row['native_checkpoint'].encode('ascii'), None, previous)
+    assert captured and error.value is signal
+    assert error.value.partial is previous and owner.current.epoch == 0
+    assert error.value.accepted_state is owner.current
+    assert error.value.native_checkpoint == row['native_checkpoint'].encode('ascii')
+    assert not owner._owner()._candidates
+    assert owner.create_checkpoint() == error.value.native_checkpoint

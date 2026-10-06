@@ -662,92 +662,118 @@ class MidpointContext:
 
     def trial(self, accepted, *, dt, cancellation_token=None):
         with self._atomic_operation():
-            self._time_step(dt)
-            self._guard(cancellation_token, 'midpoint.trial')
-            predecessor = self._require_current(accepted)
-            free = list(map(int, self.free))
-            p = list(self.physical_free)
-            u = np.zeros(42)
-            acceleration_chart = self.stage_coordinates == 'acceleration'
-            u[p] = (accepted.physical_acceleration24[p] if acceleration_chart
-                    else dt*accepted.physical_velocity24[p])
-            backtracks = 0
-            stage = self._stage(accepted, u, dt, cancellation_token)
-            for iteration in range(self.max_iterations+1):
-                # A successful line-search evaluation already belongs to the
-                # exact next unknown and the same committed origin. Keep its
-                # immutable work instead of assembling it a second time.
-                # Validate ownership/cancellation at every Newton iteration,
-                # including iterations which reuse that disposable stage.
-                self._guard(cancellation_token, 'midpoint.stage')
-                self._require_current(accepted)
-                step = np.zeros(42)
-                step[free] = np.linalg.solve(stage.jacobian[np.ix_(free, free)], -stage.residual[free])
-                norm = self._norm(stage.residual, free)
-                correction_step = np.array(step, copy=True)
-                if acceleration_chart:
-                    correction_step[p] *= .5*dt*dt
-                if norm <= self.stage_residual_tolerance and self._correction(stage.mechanical, correction_step) <= 1e-11:
-                    break
-                if iteration == self.max_iterations:
-                    raise ValueError('midpoint stage iteration limit')
-                for cut in range(self.max_backtracks+1):
-                    self._guard(cancellation_token, 'midpoint.stage.trial')
-                    proposed = u+2.**(-cut)*step
-                    next_stage = self._stage(accepted, proposed, dt, cancellation_token)
-                    backtracks += int(cut > 0)
-                    if self._norm(next_stage.residual, free) < norm:
-                        u = proposed
-                        stage = next_stage
-                        break
-                else:
-                    raise ValueError('midpoint stage residual backtracking failed')
-            endpoint_step = np.zeros(42)
-            endpoint_step[p] = (dt*accepted.physical_velocity24[p]+(.5*dt*dt)*u[p]
-                                if acceleration_chart else u[p])
-            if self.structural_owner == 'legacy_clamp':
-                endpoint_mechanical = self._static.advance(accepted.mechanical, endpoint_step)
-            else:
-                high = np.array(accepted.mechanical.positions, copy=True)
-                low = np.array(accepted.mechanical.position_low, copy=True)
-                for node in range(3):
-                    for axis in range(3):
-                        terms = (float(high[node, axis]), float(low[node, axis]))
-                        if acceleration_chart:
-                            terms += (dt*float(accepted.physical_velocity24[6*node+axis]),
-                                      .5*dt*dt*float(u[6*node+axis]))
-                        else:
-                            terms += (float(u[6*node+axis]),)
-                        high[node, axis], low[node, axis] = split_sum(terms)
-                cells = np.array([rotation(endpoint_step[18+3*c:21+3*c])@accepted.mechanical.cell_rotations[0, c]
-                    for c in (0, 1)]).reshape(1, 2, 3, 3)
-                endpoint_mechanical = self._make(dict(positions=high, position_low=low,
-                    nodal_frames=accepted.mechanical.nodal_frames, cell_rotations=cells,
-                    resultants=accepted.mechanical.resultants))
-            # Stage algebraics are a starting guess, not accepted endpoint data.
-            endpoint_mechanical = self._make(dict(
-                positions=endpoint_mechanical.positions, position_low=endpoint_mechanical.position_low,
-                nodal_frames=stage.mechanical.nodal_frames,
-                cell_rotations=endpoint_mechanical.cell_rotations,
-                resultants=stage.mechanical.resultants))
-            endpoint_mechanical, _, _, alg_norm, _ = self._solve_algebraic(
-                endpoint_mechanical, accepted.histories, cancellation_token)
-            velocity = np.zeros(24)
-            velocity[p] = (accepted.physical_velocity24[p]+dt*u[p] if acceleration_chart
-                           else 2*stage.physical_velocity24[p]-accepted.physical_velocity24[p])
-            acceleration, reaction, _ = self._endpoint_acceleration(
-                endpoint_mechanical, accepted.histories, velocity)
-            if not np.isfinite(accepted.time+dt) or accepted.time+dt <= accepted.time:
-                raise ValueError('midpoint time increment is not representable')
-            endpoint = MidpointState(endpoint_mechanical, accepted.histories, accepted.histories,
-                _owned(velocity), acceleration, accepted.time+dt, accepted.epoch+1,
-                predecessor, self._identity)
-            candidate = MidpointCandidate(endpoint, stage, _owned(u), dt, predecessor,
-                iteration, backtracks, norm, alg_norm, reaction)
-            self._guard(cancellation_token, 'midpoint.trial.ready')
+            return self._trial_state(accepted, dt, cancellation_token)
+
+    def _trial_state(self, accepted, dt, cancellation_token):
+        self._time_step(dt)
+        self._guard(cancellation_token, 'midpoint.trial')
+        predecessor = self._require_current(accepted)
+        free = list(map(int, self.free))
+        p = list(self.physical_free)
+        u = np.zeros(42)
+        acceleration_chart = self.stage_coordinates == 'acceleration'
+        u[p] = (accepted.physical_acceleration24[p] if acceleration_chart
+                else dt*accepted.physical_velocity24[p])
+        backtracks = 0
+        stage = self._stage(accepted, u, dt, cancellation_token)
+        for iteration in range(self.max_iterations+1):
+            # A successful line-search evaluation already belongs to the
+            # exact next unknown and the same committed origin. Keep its
+            # immutable work instead of assembling it a second time.
+            # Validate ownership/cancellation at every Newton iteration,
+            # including iterations which reuse that disposable stage.
+            self._guard(cancellation_token, 'midpoint.stage')
             self._require_current(accepted)
-            self._candidates[id(candidate)] = (candidate, canonical(candidate))
+            step = np.zeros(42)
+            step[free] = np.linalg.solve(stage.jacobian[np.ix_(free, free)], -stage.residual[free])
+            norm = self._norm(stage.residual, free)
+            correction_step = np.array(step, copy=True)
+            if acceleration_chart:
+                correction_step[p] *= .5*dt*dt
+            if norm <= self.stage_residual_tolerance and self._correction(stage.mechanical, correction_step) <= 1e-11:
+                break
+            if iteration == self.max_iterations:
+                raise ValueError('midpoint stage iteration limit')
+            for cut in range(self.max_backtracks+1):
+                self._guard(cancellation_token, 'midpoint.stage.trial')
+                proposed = u+2.**(-cut)*step
+                next_stage = self._stage(accepted, proposed, dt, cancellation_token)
+                backtracks += int(cut > 0)
+                if self._norm(next_stage.residual, free) < norm:
+                    u = proposed
+                    stage = next_stage
+                    break
+            else:
+                raise ValueError('midpoint stage residual backtracking failed')
+        endpoint_step = np.zeros(42)
+        endpoint_step[p] = (dt*accepted.physical_velocity24[p]+(.5*dt*dt)*u[p]
+                            if acceleration_chart else u[p])
+        if self.structural_owner == 'legacy_clamp':
+            endpoint_mechanical = self._static.advance(accepted.mechanical, endpoint_step)
+        else:
+            high = np.array(accepted.mechanical.positions, copy=True)
+            low = np.array(accepted.mechanical.position_low, copy=True)
+            for node in range(3):
+                for axis in range(3):
+                    terms = (float(high[node, axis]), float(low[node, axis]))
+                    if acceleration_chart:
+                        terms += (dt*float(accepted.physical_velocity24[6*node+axis]),
+                                  .5*dt*dt*float(u[6*node+axis]))
+                    else:
+                        terms += (float(u[6*node+axis]),)
+                    high[node, axis], low[node, axis] = split_sum(terms)
+            cells = np.array([rotation(endpoint_step[18+3*c:21+3*c])@accepted.mechanical.cell_rotations[0, c]
+                for c in (0, 1)]).reshape(1, 2, 3, 3)
+            endpoint_mechanical = self._make(dict(positions=high, position_low=low,
+                nodal_frames=accepted.mechanical.nodal_frames, cell_rotations=cells,
+                resultants=accepted.mechanical.resultants))
+        # Stage algebraics are a starting guess, not accepted endpoint data.
+        endpoint_mechanical = self._make(dict(
+            positions=endpoint_mechanical.positions, position_low=endpoint_mechanical.position_low,
+            nodal_frames=stage.mechanical.nodal_frames,
+            cell_rotations=endpoint_mechanical.cell_rotations,
+            resultants=stage.mechanical.resultants))
+        endpoint_mechanical, _, _, alg_norm, _ = self._solve_algebraic(
+            endpoint_mechanical, accepted.histories, cancellation_token)
+        velocity = np.zeros(24)
+        velocity[p] = (accepted.physical_velocity24[p]+dt*u[p] if acceleration_chart
+                       else 2*stage.physical_velocity24[p]-accepted.physical_velocity24[p])
+        acceleration, reaction, _ = self._endpoint_acceleration(
+            endpoint_mechanical, accepted.histories, velocity)
+        if not np.isfinite(accepted.time+dt) or accepted.time+dt <= accepted.time:
+            raise ValueError('midpoint time increment is not representable')
+        endpoint = MidpointState(endpoint_mechanical, accepted.histories, accepted.histories,
+            _owned(velocity), acceleration, accepted.time+dt, accepted.epoch+1,
+            predecessor, self._identity)
+        candidate = MidpointCandidate(endpoint, stage, _owned(u), dt, predecessor,
+            iteration, backtracks, norm, alg_norm, reaction)
+        self._guard(cancellation_token, 'midpoint.trial.ready')
+        self._require_current(accepted)
+        self._candidates[id(candidate)] = (candidate, canonical(candidate))
+        return candidate
+
+    def _prepare_trial(self, accepted, *, dt, cancellation_token=None, prepare):
+        """Trusted internal receipt; not a user callback or candidate commit."""
+        with self._atomic_operation():
+            candidate = self._trial_state(accepted, dt, cancellation_token)
+            self._require_candidate(candidate)
+            prepare(candidate)
+            self._guard(cancellation_token, 'midpoint.trial.receipt_ready')
+            self._require_candidate(candidate)
             return candidate
+
+    def _discard_prepared_trial(self, candidate):
+        """Clean this exact receipt, or no-op if native rollback removed it."""
+        with self._atomic_operation():
+            self._guard()
+            if type(candidate) is not MidpointCandidate:
+                raise ValueError('typed midpoint prepared trial receipt required')
+            record = self._candidates.get(id(candidate))
+            if record is None:
+                return False
+            self._require_candidate(candidate)
+            del self._candidates[id(candidate)]
+            return True
 
     def _require_candidate(self, candidate):
         record = self._candidates.get(id(candidate))

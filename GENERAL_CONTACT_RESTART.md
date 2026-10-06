@@ -3,7 +3,7 @@
 ## Scope and ownership
 
 ONLY C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001,
-branch codex/contact-main-reconcile-20261001. Source-start e01164d3; inspect
+branch codex/contact-main-reconcile-20261001. Source-start36e99e02; inspect
 HEAD/status for the local checkpoint. Full C0-C9 ACTIVE/incomplete:
 [goal](GENERAL_CONTACT_GOAL.md), [plan](GENERAL_CONTACT_PLAN.md),
 [ledger](docs/GENERAL_CONTACT_CAPABILITIES.md).
@@ -12,6 +12,26 @@ release or historical defaults changes. Local checkpoints authorized. All owned
 workers/jobs terminal. Mistral/local cached unavailable; sustained OpenAI fallback
 plus supporting Read review. Same-family scrutiny is not engineering acceptance.
 Ledger append ASCII BYTES ONLY; preserve working-CRLF/Git-LF prefixes.
+
+## Current interruption repair - implemented, verification open
+
+Follow-up to36e99e02: actual published endpoint identity reconciles an authentic
+commit with already prepared controller/native/result bytes. Native-owned private
+trial receipt captures issuance before caller return; cleanup deletes only that
+exact authentic pending candidate, or no-ops if atomic rollback already removed it.
+Original control signals retain the matching full accepted prefix; no accepted
+mechanics rollback, state transplant, unrelated candidate clear or changed physics.
+Root AST audit: exact original trial body;43 other midpoint and all original facade
+methods unchanged. Supporting same-family source review found no residual defect.
+
+Five new safety cases are prepared. Authentic postcommit source attempt TIMEOUT
+12.064423200092278s, setup only; no call/result/runtime/import completion. Current
+repair is NOT numerically/installed verified. Prior held wheel still binds its old
+checks.90-second extension requested for new build/private install/targeted5cases;
+PENDING, no approval presumed. Source work and authorized local checkpoint complete.
+Mistral/local remain cached unavailable; sustained fallback ownership preserved.
+Raw native_transient_receipt_worker_handoff.md/final_manifest/source_audit and
+root safety_formula_audit/source_review/start plus exact timeout snapshots retained.
 
 ## Latest delivery - native contact-free trajectory
 
@@ -50,7 +70,7 @@ exact reconstructed failed fixture and binding correction are retained.
 
 | Scope | Used/total seconds | Remaining seconds |
 |---|---:|---:|
-| New C7 native trajectory |165.46361799992155/180|14.536382000078447|
+| New C7 native trajectory |177.52804120001383/180|2.4719587999861687|
 | C6 beam/S3 |409.0956022000173/420|10.90439779998269|
 | C5 arc |186.04257249983493/240|53.95742750016507|
 | C4 triangulated/connected S3 |172.93152889993507/180|7.068471100064926|
@@ -58,7 +78,7 @@ exact reconstructed failed fixture and binding correction are retained.
 | Automatic domains |174.026839300175/180|5.973160699825|
 | Native connected spatial |177.357927799691/180|2.642072200309|
 
-C7 seven jobs terminal; authority native_transient_authority.json. Onejob60s,
+C7 eight jobs terminal; authority native_transient_authority.json. Onejob60s,
 953MiB/JIT0/Numba1/pools1, actual remainder and reserve. All failures/imports/
 build/install count. C6/C5/C4/C9 terminaljobs70/28/33/34. Original120h consumed
 432011s. No borrowing/replay/renewal. Domain180 request unanswered; remaining
@@ -72,12 +92,11 @@ and common-stage native/shell impact remain open. Keep accepted physical inertia
 retained coordinates and complete work maps. New numerical scope needs its actual
 authority; source work can proceed within authorized ownership.
 
-Before any broader interruption claim, inspect the asynchronous window after
-native commit returns but before controller local publication; current tests prove
-precommit cleanup only. An exception injected immediately after authentic commit
-is a bounded discriminator; do not infer rollback or silently regrade a signal as
-mechanical rejection. This is a source-identified review question, not an executed
-failure. Keep the old native finite-spin failure as a separate scientific gap.
+First close the current return-time interruption repair using its concrete
+verification proposal and actual approval. Do not execute the pending extension.
+Prior installed precommit checks are unaffected historical evidence, not current
+repair verification. No full-suite replay. Preserve the old finite-spin NONPASS as
+a separate scientific gap; this state repair does not adjudicate it.
 
 Use measured case costs and eager per-case reports; whole17case file exceeds
 current60s job cap. Reuse unaffected evidence, targeted groups and held artifacts;

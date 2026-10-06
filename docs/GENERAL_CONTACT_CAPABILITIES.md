@@ -2795,3 +2795,27 @@ NOT RELEASED. Same-family source scrutiny does not establish engineering accepta
 Existing finite-spin N16 NONPASS, half-step evidence and every historical criterion
 remain untouched. Broader finite-angle trajectories/refinement/sections, connected
 native dynamics and common-stage native/shell impact remain open; full C0-C9 incomplete.
+
+
+### Native trajectory return-time interruption repair (2026-10-06)
+
+- Status: implemented; numerical and updated installed safety verification OPEN.
+- Baseline:36e99e02, existing installed3PASS and loadedCLI remain artifact-scoped.
+- Actual published endpoint identity selects prepared accepted controller/native
+  prefix after authentic commit, even if a control signal precedes caller return.
+- Private native trial receipt captures exact issuance before caller assignment.
+  Cleanup deletes only that authentic pending candidate, or no-ops after rollback.
+- Original control signals retain matching partial/native_checkpoint/accepted_state;
+  accepted mechanics are never discarded/rolled back. Cleanup refusal is explicit.
+- No physical equations/profile/defaults/codec/tolerances altered. Source AST audit:
+  trial body equal;43 other midpoint and all original facade methods unchanged.
+- Supporting same-family source review found no consequential residual defect;
+  this is neither independent engineering acceptance nor release.
+- Actual authentic postcommit check TIMEOUT12.064423200092278s, setup only;
+  no call outcome/import/runtime/result completion, no PASS inferred.
+- Eight C7 jobs177.52804120001383/180s;2.4719587999861687s remains.
+  Further90s request is pending, not execution authority.
+- Prepared five focused safety cases and updated private installed package OPEN.
+- Evidence:docs/d1_review_support/contact_native_transient_20261006/trajectory_development.md;
+  raw C:/ANYworkspaceWork/contact_native_transient_20261006 safety audits/handoff.
+- Prior finite-spin NONPASS and full C7/C0-C9 acceptance gaps remain unchanged.

@@ -111,6 +111,13 @@ class NativeDynamicAnalysis:
     def trial(self, accepted, *, dt, cancellation_token=None):
         return self._owner().trial(accepted, dt=dt, cancellation_token=cancellation_token)
 
+    def _prepare_trial(self, accepted, *, dt, cancellation_token=None, prepare):
+        return self._owner()._prepare_trial(accepted, dt=dt,
+            cancellation_token=cancellation_token, prepare=prepare)
+
+    def _discard_prepared_trial(self, candidate):
+        return self._owner()._discard_prepared_trial(candidate)
+
     def candidate_stage_audit(self, candidate, *, cancellation_token=None):
         return self._owner().candidate_stage_audit(candidate, cancellation_token=cancellation_token)
 
