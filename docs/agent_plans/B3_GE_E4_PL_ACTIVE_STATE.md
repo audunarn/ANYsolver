@@ -4,7 +4,7 @@ Revision8 programme/goal ACTIVE; G0–G6/F01–F13/V01–V28/B01–B18,
 external, scale, independent acceptance and release remain incomplete.
 Canonical: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001
 Branch: codex/stiffened-main-reconcile-20261001. Source candidate151cb3d4;
-last checkpoint commit3ebed69b. Actual Git/ledger is authoritative.
+input checkpoint3ebed69b; result/evidence commit9ac90504. Actual Git is authoritative.
 Use the Revision8 goal/plan and authoritative acceptance matrix beside this note.
 No contact-worker communication, sibling edits, main operations, push or release.
 Mistral/local cached unavailable; OpenAI fallback is not different-family acceptance.
