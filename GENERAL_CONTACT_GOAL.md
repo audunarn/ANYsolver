@@ -13,6 +13,40 @@ Work only in C:/ANYworkspaceWork/ANYsolver-contact-main-reconcile-20261001 on co
 
 ## Current position
 
+## C6 loaded tilted impact: installed development verified
+
+The explicit V20 acceleration-unknown option now completes the same loaded
+impact through OPEN:81/161 states at10/5us over.8ms. Independent Q2 beam,
+tied-rotation MIN3 shell, physical mass and affine-skin line references give
+energy defects.238204%->.0473241%, below1% and improving. Initial storage and
+constant-load work are subtracted; positive impact scale3.219950866699218e-8J
+is retained. Reduced structural-gradient error1.151e-17, mass3.253e-19,
+complete reduced equilibrium7.703e-13 (without reactions), null9.541e-17 and
+separate .5N/.25Nm work wrenches pass. Active and OPEN splits are exact.
+
+Independent physical-gap checks cover every81/161 accepted pose: minimum
+about-1.197um, finalOPEN+4.867um, agreement<=1.20e-17m within frozen10um gap
+and1e-12m comparison. This is an interior-plane gap oracle, not an independent
+swept-path certificate. Work/H passes at1e-7/1e-8; retained1e-9 NONPASS prevents
+broader perturbation claims. Actual installed CLI, transactions and numerical
+option/restart refusals pass;543 source/wheel/installed payloads match.
+
+The opt-in solves Ma+F(qpredictor+beta*h2*a), with Jacobian M+beta*h2*K;
+its solved endpoint-roundoff policy and unknown layout bind restart. Default
+FALSE preserves V17-V20 behavior and identities. Old fine-step roundoff floor,
+active/default fresh-split discrepancies, test inventory failure and failed
+installed compatibility comparison remain immutable. Paired prechange-driver
+comparison proves default compatibility, not repaired default restart.
+
+C6 now58terminal jobs332.025019599823/360s used;27.974980400177s remains.
+This slice cost66.536620299797s including failures, diagnostics, build/install
+and CLI/gap controls. No other purse changed. Small-strain/tied-trace/reference
+scope, numerical null secant and represented Hermite path remain explicit;
+no general finite rotation, continuous DAE acceleration, native dynamics,
+independent engineering acceptance or release is claimed.
+[Evidence](docs/d1_review_support/contact_c6_beam_s3_20261006/loaded_impact_development.md).
+
+
 ## C6 V20 equilibrated tilted entry: installed development verified
 
 The new exclusive opt-in profile admits a supplied nonzero elastic pose and

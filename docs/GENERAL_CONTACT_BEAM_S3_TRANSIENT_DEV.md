@@ -240,3 +240,78 @@ structural formulation oracle. The independent directional reference uses
 rational moving-normal coefficients and analytical negative-rate integration.
 The affine nodal-work versus geometric-skin wrench distinction still applies.
 No C2 DAE, finite-rotation or engineering-acceptance claim follows.
+
+
+## Loaded tilted V20 impact reference (development candidate)
+
+`general_contact_beam_s3_transient_directional_loaded_impact` preserves the
+manufactured constant equilibrium load and exact dyadic tilted initial pose.
+The declared horizon is 0.8 ms, with 10 us and 5 us steps, a 10 um gap gate,
+and positive impact kinetic scale 3.219950866699218e-8 J. Load construction uses
+production structural assembly and is not independent constitutive validation.
+The new independent reference uses actual L=0.49999237060546875 m, shell
+thickness 1/64 m, Q2 beam von Karman axial/bending/shear energy, recomputed
+MIN3 trace relaxation, lumped S3 translational mass, consistent beam normal
+and rotary mass, and exact polynomial negative-gap integration. Uniform tied
+shell rotation derivatives are compared after the actual constraint pullback;
+this is not an independent full unconstrained shell-force oracle.
+
+The installed coarse trajectory reaches actual positive-gap opening. Its
+independent loaded-energy defect is 0.238204%, after subtracting initial
+prestrain and constant-load work. Independent mass, reduced structural
+potential gradient, complete reduced/null equilibrium without subtracting
+stored reactions, and separately scaled body work wrenches pass their stated
+gates. The 5 us trajectory presently fails at 90 us after finite Newton
+cutbacks; its last nominal-step residual stalls at 1.15385e-8 against the
+unchanged 1e-8 gate. The open split is byte-exact; the active split is not.
+These are retained failures, so temporal refinement and complete split restart
+are **not verified** for this loaded horizon. Local work/H passes at h=1e-7
+and 1e-8; h=1e-9 exceeds the normalized force-rate gate and remains NONPASS.
+No tolerance, load, profile, inertia or physical-law change is made here.
+
+
+### Explicit equilibrated acceleration iteration
+
+`equilibrated_newmark_acceleration_unknown_dev=True` is valid only with the
+V20 equilibrated directional profile. It solves the same Newmark endpoint
+system using acceleration as the Newton unknown: u=predictor+beta*dt^2*a,
+Jacobian M+beta*dt^2*K. It avoids division of a rounded pose subtraction by
+dt^2. Only this option matches a nominal solved step to an endpoint differing
+within an operand-scaled 128-epsilon arithmetic bound; it always solves that
+step. No material, inertia, contact, gap, residual tolerance or actual event
+is changed. The two numerical policies are conditional restart-contract
+fields. Default False keeps the historical V17--V20 contract and equations.
+The original loaded fine-step and active-split failures above remain evidence
+for that default. The opt-in source check meets both independent energy gates
+(0.238204% at 10 us, 0.0473241% at 5 us), exact active/open splits and the
+same equilibrium/work gates. Installed verification is recorded separately.
+
+
+The changed numerical option is also verified with the private installed
+artifact: actual 81/161-state loaded impact, independent reference gates,
+10/5 us energy improvement, exact active and open splits, and in-flight
+cancel/exception/rejected-path retry controls. Opposite-option continuation is
+refused; exact-bool and profile prerequisites are enforced. Default V20's
+protected pre-change complete capsule and continuation behavior are unchanged;
+its historical fresh-versus-split endpoint discrepancy is retained explicitly.
+V17--V19 protected checkpoint continuation controls pass. Installed tests call
+the new public example `run` function; a separate CLI example run was not
+performed. These development checks do not establish engineering acceptance,
+finite-rotation dynamics or C2 descriptor acceleration.
+
+
+The held example's actual `__main__` has now also run against the private
+installed artifact. It completed 80 accepted steps/81 states, 32 active
+records, then zero active line length and final physical gap +4.868695 um.
+The separate `tilted_impact_installed_cli1` evidence records CLI output,
+actual producer diagnostics, imported payload hashes and effective settings.
+The earlier final manifest remains immutable; this CLI evidence is a delta.
+
+
+The independent direct Q2 affine-skin gap polynomial is now minimized at its
+true endpoints and every interior stationary point for all 81 coarse and
+161 fine accepted states. Both independent histories satisfy the frozen
+10 um penetration gate and finish at positive physical gap with zero active
+line length. Their reported minimum-gap agreement meets the prospectively
+frozen 1e-12 m length criterion; see `tilted_impact_installed_gap1` and the
+separate gap manifest. This check reran only coarse/fine gap verification.

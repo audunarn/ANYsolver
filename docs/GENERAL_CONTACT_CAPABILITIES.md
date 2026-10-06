@@ -2676,3 +2676,21 @@ held wheel395fceef892e3feb6650364897628f611060886c6898743c4a70f03c4701642e.
 Nine new jobs41.218985400163s; C6 47jobs265.488399300026/360s,
 94.511600699974s remains. No other authority or historical defaults changed.
 Evidence: docs/d1_review_support/contact_c6_beam_s3_20261006/tilted_initial_development.md
+
+
+## 2026-10-06 C6 loaded tilted impact - installed development tested
+
+Explicit V20 acceleration-unknown/solved-end-roundoff option completes81/161
+states at10/5us: independent Q2/MIN3/mass/gradient/line energy .238204%->.0473241%,
+reduced equilibrium7.703e-13, null9.541e-17, separate bodywork wrench gatesPASS.
+Exact active/open restart and transactions/pass-refusals covered. Independent
+endpoint/stationary-Q2gap on everypose min-1.197um/finalOPEN+4.867um,
+agreement1.20e-17m within10um/1e-12m; actual installedCLI PASS.543payloads match
+wheelb5c7910d474ec202ab42d5049e5f89bdbcf22bddf3df385b4a406c0fb115fca3.
+DefaultFalse identity/behavior remains exact versus protectedprechange driver;
+oldfine-floor/defaultfresh-split and h1e-9 NONPASS retained. Original5PASS1FAIL
+and repaired compatibility1PASS remain distinct; no retrospectivepromotion.
+58jobs332.025019599823/360s used,27.974980400177s remains; no otherauthority.
+Tied/interior/smallstrain chart only, no C2 DAE/finite rotations/native dynamics,
+independent swept certificate, engineering acceptance or release. Full C0-C9 OPEN.
+Evidence: docs/d1_review_support/contact_c6_beam_s3_20261006/loaded_impact_development.md

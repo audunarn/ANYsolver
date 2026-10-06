@@ -208,7 +208,13 @@ class ContactTransientSolverControls:
     allow_directional_beam_s3_dev: bool = False
     allow_equilibrated_directional_beam_s3_dev: bool = False
 
+    equilibrated_newmark_acceleration_unknown_dev: bool = False
+
     def __post_init__(self) -> None:
+        if type(self.equilibrated_newmark_acceleration_unknown_dev) is not bool:
+            raise ValueError("equilibrated acceleration selection must be boolean")
+        if self.equilibrated_newmark_acceleration_unknown_dev and not self.allow_equilibrated_directional_beam_s3_dev:
+            raise ValueError("equilibrated acceleration requires the equilibrated directional profile")
         if type(self.allow_equilibrated_directional_beam_s3_dev) is not bool:
             raise ValueError('equilibrated directional selection must be boolean')
         if self.allow_equilibrated_directional_beam_s3_dev and any(value for name,value in vars(self).items()
@@ -496,6 +502,10 @@ def _restart_analysis_contract(transient, controls, manager, profile,
     if load_history is not None:
         contract["nodal_load_history"] = [list(point)
                                           for point in load_history.points]
+    if controls.equilibrated_newmark_acceleration_unknown_dev:
+        contract['controls'].update(equilibrated_newmark_acceleration_unknown_dev=True,
+            newmark_iteration_policy='ACCELERATION_UNKNOWN_V1',
+            endpoint_roundoff_policy='ULP_MATCHED_NOMINAL_SOLVED_STEP_V1')
     if controls.s3_one_sided_rates_dev:
         # Absent for historical profiles, preserving their checkpoint contract.
         contract["controls"]["s3_one_sided_rates_dev"] = True
@@ -2015,6 +2025,11 @@ def solve_transient_contact(
                current_time < transient.t_end - 1.0e-14 * max(1.0, transient.t_end)):
             remaining = transient.t_end - current_time
             step = min(transient.dt, remaining)
+            if controls.equilibrated_newmark_acceleration_unknown_dev:
+                # Match the nominal solved family when only endpoint arithmetic differs.
+                allowance=128*np.finfo(float).eps*max(abs(current_time),abs(transient.t_end),abs(transient.dt),np.finfo(float).tiny)
+                if abs(remaining-transient.dt)<=allowance:
+                    step=transient.dt
             if nodal_load_history is not None and not tool_histories and free_body is None:
                 knot_index = bisect_right(
                     nodal_load_history.points, (current_time, float("inf")),
@@ -2144,10 +2159,12 @@ def solve_transient_contact(
                     if controls.q4_plane_event_subdivision_dev or controls.allow_normal_s3_skin_hermite_dev:
                         consume_plane_stage()
                         candidate=predictor+beta*step*step*event_acceleration
+                    if controls.equilibrated_newmark_acceleration_unknown_dev:
+                        candidate=predictor+beta*step*step*event_acceleration
                     full, internal, tangent, trial = evaluate(
                         candidate, current_time+step, tangent=True,
                     )
-                    candidate_acceleration = (event_acceleration.copy() if controls.s3_event_subdivision_dev or controls.q4_plane_event_subdivision_dev or controls.allow_normal_s3_skin_hermite_dev or tool_histories or free_body is not None
+                    candidate_acceleration = (event_acceleration.copy() if controls.equilibrated_newmark_acceleration_unknown_dev or controls.s3_event_subdivision_dev or controls.q4_plane_event_subdivision_dev or controls.allow_normal_s3_skin_hermite_dev or tool_histories or free_body is not None
                                               else (candidate - predictor) / (beta * step * step))
                     residual = Mred @ candidate_acceleration + internal
                     scale = max(1.0, float(np.linalg.norm(Mred @ candidate_acceleration)),
@@ -2474,7 +2491,7 @@ def solve_transient_contact(
                                      else swept_gap >= -manager.gap_tolerance)):
                             converged = True
                         break
-                    if controls.q4_plane_event_subdivision_dev or controls.allow_normal_s3_skin_hermite_dev:
+                    if controls.equilibrated_newmark_acceleration_unknown_dev or controls.q4_plane_event_subdivision_dev or controls.allow_normal_s3_skin_hermite_dev:
                         jacobian=(Mred+beta*step*step*(T.T@tangent@T)).tocsr()
                         delta_acceleration=np.asarray(spsolve(jacobian,-residual)).reshape(-1)
                         if not np.isfinite(delta_acceleration).all():
