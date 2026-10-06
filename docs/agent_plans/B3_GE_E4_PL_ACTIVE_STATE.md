@@ -1,11 +1,15 @@
 # Current state - 6 October 2026
 
-Revision8 goal ACTIVE. Complete G0-G6/F01-F13/V01-V28/B01-B18, physical/external,
+Revision8 goal BLOCKED pending execution approval, confirmed by goal tool after
+three consecutive no-progress goal turns. Complete G0-G6/F01-F13/V01-V28/B01-B18, physical/external,
 scale/platform/consumer, publication and clean-main duties remain incomplete.
 Canonical repository: C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001
 Branch: codex/stiffened-main-reconcile-20261001. Actual Git is authoritative.
 Use the goal, plan and acceptance matrix beside this one living note.
 Main and remote untouched; no contact-worker communication.
+Restart from1a1c3d39 source/preparation. Human approval is still needed for the
+pending120s native directional and150s consumer requests; no numerical job lives.
+Resume the existing frozen inputs/guards after applicable approval, not a rebuild.
 Global/repository AGENTS + philosophy rev2026-09-24.2 apply.
 Mistral/local remain cached unavailable; OpenAI authors/reviewers are fallback,
 not different-family scientific acceptance. Max3 workers/ONE numerical job.
