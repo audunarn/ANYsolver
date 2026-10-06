@@ -5,21 +5,15 @@ scale/platform/consumer and release/main duties remain incomplete. Use the goal,
 plan and single acceptance matrix beside this note. Canonical worktree:
 C:/Github/ANYsolver/.perf2-worktrees/stiffened-main-reconcile-20261001.
 Branch codex/stiffened-main-reconcile-20261001; actual git log is authoritative.
-Main untouched. Isolated ANYfem94a0b0c: material consumer installed DEV verified;
+Main untouched. Isolated ANYfem67744ba7: B2 physical-pad consumer installed checks pass;
 no contact-worker communication. Global/repository AGENTS and adopted philosophy
 rev2026-09-24.2 apply; cached Mistral/local unavailable, no repeated probes.
 ## Decision and delivered behavior
 
-Native physical-fibre BL5 fixed-translation displacement control works through
-public solve/recover/checkpoint/restore with distinct native-history ownership.
-Ordinary nonadaptive force seed only; pending adaptive cursors explicitly refused.
-Earlier Q4 route has no adaptive/event/chart/rebase/arc/S3 plastic admission.
-Source a5c7dec; installed DEVELOPMENT415a4ac5 with fresh wheel02f3506c:
-425 source/wheel/site payloads and245 actual imports verified; public axial Q4J2/
-biaxial load-unload-resume and6 selected checks pass. Known same-origin force/
-control parity FAILED, explicitly1DESELECT; no full-file/qualification claim.
-Original transverse material force target remains failed; no further force retry.
-Prior Q4 source/installed raw r8-native-fibre-bl5-displacement-*-20261006-v1/ retain identities.
+Native material BL5 fixed-translation solve/recovery/checkpoint/restore delivered;
+ordinary nonadaptive force seeds only. Q4a5c7dec/415a4ac5/wheel02f3506c:6PASS,
+knownforce/control parityFAILED(1DESELECT), transverse-force targetFAILED.
+No force/parity/adaptive/event/chart/arc campaign renewal; Gitd97dea66 retains detail.
 
 Reviewed two-part body solution committed689a37f2. Physical q and gauge eta retain
 binary64 high/low parts; exact dyadic contractions keep original K/load/gauge and
@@ -131,9 +125,15 @@ Installed8 unique by impact(7V2+1V3), persistence/native bytes/refusal/cancel pa
 Axial S3elastic/fibreyield; mixedP1bothyield; history3/recovery4, exact restart.
 Root99modules/65fem+250solverimports/742dependencies incl117frozen siblings match.
 Independent code/evidence closure71294770; pre-case origin/root LF-reader bugs kept.
-Ledger563.074610200s/600,remaining36.925389800s; no livejob/authority renewal.
-NEXT B2 physical-pad static/batch/buckling consumer; checks within residual authority.
-Body approval PENDING; fullprogramme/scientific/G3/G6/scale/external remainOPEN.
+Prior consumer ledger563.074610200s/600 was inherited by B2.
+B2 physical-pad consumer67744ba7/wheeld1c9714d:3installedPASS; oldlaws unchanged.
+Case/Project/static1/10/100/buckling, fullmapping/refusal/cancel; root99modules,
+65fem+246solver/742deps/reviewc02d0091. RawANYfem/r8-b2-physical-footprint-consumer-20261006-v1/.
+V1/V2 defects repaired; V3wrongstatus/eagerfactor assertions:1PASS2FAIL retained.
+Supervised589.865712700s/conservative601.903202000s inclUNKNOWN ASTbound;
+600s complianceUNPROVEN; zero assumed checks/no livejobs. NEXTsource-first native
+materialBL5 arc via existingservices; no closed targets; checks need fresh authority.
+Body approvalPENDING; fullprogramme/scientific/G3/G6/scale/external remainOPEN.
 ## Preserved restrictions and history
 
 Max3 workers/ONE numerical job. DEV600s/2GiB,affinity[0],pools1,JIT-off, exact CI

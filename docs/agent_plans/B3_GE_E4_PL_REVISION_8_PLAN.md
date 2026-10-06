@@ -1491,3 +1491,27 @@ Raw consumer evidence and root disposition are in the isolated ANYfem worktree a
 .qualification/r8-native-bl5-mixed-j2-consumer-20261006-v1; the acceptance matrix
 binds exact commits and artifacts. Current active note takes precedence over older
 next-action paragraphs; no main/push/publication action follows this slice.
+
+### 6 October — installed physical B2 footprint consumer and next capacity slice
+
+IMPLEMENTED_NOT_QUALIFIED: isolated ANYfem67744ba7/wheeld1c9714d, unchanged
+solver375e9e45, now completes distinct physical five-row case/Project persistence,
+static/1/10/100 selected batches and typed physical buckling. Three installed
+impact checks pass, including complete selected wrenches, member stations,
+coordinates/reactions, old-law refusal, cancellation prefix and callback errors.
+Root byte/import audit and non-author review close this consumer slice. Source
+V1/V2 defects, V3 bad public-semantic assertions and failed metadata readers
+remain preserved. Exact supervised589.865712700s plus uncertain setup/AST bounds
+yield a601.903202000s conservative upper bound against600; actual cumulative
+resource compliance is UNPROVEN, not inferred failed from the editing envelope.
+Assume no remaining check authority. See ANYfem raw resource adjudication.
+
+The consumer gap is now delivered; do not expand this format into another
+optional route. Next mandatory source-first outcome is native material BL5
+arc-length admission using existing native point/material continuation, atomic
+state and checkpoint services. Current public capabilities exclude this route.
+Preserve retained-coordinate physical metrics, constitutive predecessors,
+original work/equilibrium tolerances, legacy identities and closed campaigns.
+Implement a reversible candidate before seeking any new bounded verification
+allowance; no current job, F03, body retry, main merge or publication is renewed.
+This development ordering does not qualify capacity or close aggregate G4D.

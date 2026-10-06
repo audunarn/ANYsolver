@@ -3780,3 +3780,48 @@ IMPLEMENTED_NOT_QUALIFIED only: G0–G6/F01–F13/V01–V28/B01–B18, matched p
 external references, scale/platform, final artifact/consumer/scientific and release
 obligations remainOPEN. F03 unconsumed; separate body retry approval PENDING.
 Next existing B2 physical-pad consumer bridge must preserve old nodal/POINT routes.
+
+## 6 October 2026 — B2 physical rigid-footprint consumer development
+
+Implementation: IMPLEMENTED_NOT_QUALIFIED. Isolated ANYfem67744ba7 adds the
+explicit five-row physical position/director schema and uses only the public
+B2PhysicalRigidFootprintDefinition. Historical POINT/six-row nodal identities,
+public defaults, versions and mechanics remain unchanged. Existing B2 Project
+selection now exercises case/Project save-reopen, static and1/10/100 compatible
+selected batches, typed physical buckling, refusal, mutation and cancellation.
+
+Evidence: ANYfem .qualification/r8-b2-physical-footprint-consumer-20261006-v1/.
+Consumer wheel d1c9714d7ca3e21d5d95c4ab9813bbf40d635c99cfa732a5f9284242f45d8daf;
+unchanged solver375e9e4525c93aaa4e1d75a26bbbd8fb506494064ae3a698e5ea67603c9b5a9b.
+Installed3PASS0failure/error/skip; child6.201009300071746s185741312B sampled RSS.
+Exact selected displacement/reaction/member-station/full-footprint-wrench values
+and descriptors/frames agree with direct original public definition. One eligible
+factorization per1/10/100 batch; selected100 cases use bounded chunks. Prepared
+pre-cancel retains factor1/solve0; accepted-prefix cancellation and callback error
+propagation actually executed. Root99source/wheel/site modules,65fem+246solver
+actual imports and742dependency bytes including117unchanged frozen siblings pass.
+Non-author closurec02d00910c706c95326380e14ff5b1c10e2a8b5879b7b88cbaf347e3ba26bd18
+leaves no consequential caller/source finding, not scientific-family acceptance.
+
+Failures preserved: sourceV1/V2 codec/method defects repaired; sourceV3 remains
+1PASS2FAIL from incorrect buckling-status/prepared-factor test premises. Source
+numerical campaign was not repeated; final installed inputs test corrected public
+semantics plus selected wrench contents. Author bookkeeping wrong pytest path and
+root whole-JSON comparison failure are retained; original sourceV3 fields match
+installed exactly, two new fields explicitly describe wrench parity/selected IDs.
+
+Resource acceptance: UNPROVEN. Known precise supervised589.8657126999195s;
+recovered conservative setup/AST upper bound601.9032020000751s versus600. Initial
+AST child timing UNKNOWN;10.5s outer bound includes editing. This does not prove
+an actual overrun. Pre-recovery ledger/raw scripts preserved, no reconstruction
+rerun, no positive remaining check authority assumed. Resource adjudication binds
+this boundary independently of successful installed behavior and byte checks.
+
+Applicability: B03/B05-B07/B10/B17 and G6consumer implementation evidence only,
+with the existing admitted physical static/buckling operator. No mass/modes,
+nonlinear/material, external/converged/scale/platform or fullG4/G6 qualification.
+Complete G0-G6/F01-F13/V01-V28/B01-B18, scientific/different-family and coordinated
+release/main obligations remain OPEN. No F03/body/closed campaign/main/push or
+publication authority consumed/renewed. Next mandatory source-first capacity
+slice targets currently excluded native materialBL5 arc via existing services;
+its new checks require explicit bounded authority, not this exhausted allowance.
